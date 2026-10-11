@@ -128,6 +128,9 @@ pub struct KeyboardView {
     /// Caps Lock is on, as far as the keyboard knows (it counts its own Caps Lock presses).
     #[serde(default)]
     pub caps: bool,
+    /// What's been typed lately, as far as the keyboard can tell, for the line above its keys.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub typed: String,
 }
 
 /// Where a key sits in its layout, counting every slot in reading order: the number the motion
@@ -202,6 +205,8 @@ pub struct OverlayController {
     backspace: Option<Instant>,
     /// The key held with A needed Shift to type its digit (a numpad digit in AZERTY).
     pressed_shift: bool,
+    /// What's been typed lately (see [`KeyboardView::typed`]).
+    typed: String,
 }
 
 fn code(name: &str) -> Option<KeyCode> {
@@ -229,6 +234,7 @@ impl OverlayController {
             caps: false,
             backspace: None,
             pressed_shift: false,
+            typed: String::new(),
         }
     }
 
@@ -257,6 +263,7 @@ impl OverlayController {
                 .map(|t| (now.duration_since(t).as_secs_f32() / HOLD_TO_CLOSE.as_secs_f32()).min(1.0))
                 .unwrap_or(0.0),
             caps: self.caps,
+            typed: self.typed.clone(),
         }
     }
 
@@ -381,6 +388,7 @@ impl OverlayController {
         if self.pressed.is_some() {
             return Vec::new();
         }
+        self.note_typed(name);
         self.pressed = Some(k);
         // The numpad types digits: with Shift where the layout puts them there.
         let label = keyboard::key_at(self.board, self.cursor).label;
@@ -401,10 +409,34 @@ impl OverlayController {
 
     /// Whether Shift is already down: latched, or held by the trigger.
     fn shift_down(&self) -> bool {
-        self.trigger_shift || self.latched.contains(&KeyCode::KEY_LEFTSHIFT)
+        self.trigger_shift || self.latched.iter().any(|k| matches!(*k, KeyCode::KEY_LEFTSHIFT | KeyCode::KEY_RIGHTSHIFT))
+    }
+
+    /// Follows what key `code` types, for the line above the keys: a character in the user's
+    /// layout, a space, or a backspace; Enter starts afresh. A shortcut (Ctrl, Alt, AltGr or
+    /// Super latched) types nothing it can tell.
+    fn note_typed(&mut self, code: &str) {
+        const KEEP: usize = 60;
+        let shortcut = self.latched.iter().any(|k| {
+            matches!(*k, KeyCode::KEY_LEFTCTRL | KeyCode::KEY_RIGHTCTRL | KeyCode::KEY_LEFTALT | KeyCode::KEY_RIGHTALT | KeyCode::KEY_LEFTMETA | KeyCode::KEY_RIGHTMETA)
+        });
+        match code {
+            _ if shortcut => {}
+            "KEY_BACKSPACE" => drop(self.typed.pop()),
+            "KEY_ENTER" | "KEY_KPENTER" | "KEY_ESC" => self.typed.clear(),
+            "KEY_SPACE" => self.typed.push(' '),
+            "KEY_KPMINUS" => self.typed.push('-'),
+            _ if self.board == Board::Numpad => self.typed.push_str(keyboard::key_at(self.board, self.cursor).label),
+            _ => self.typed.push_str(&keyboard::typed(code, self.shift_down(), self.caps).unwrap_or_default()),
+        }
+        let extra = self.typed.chars().count().saturating_sub(KEEP);
+        if extra > 0 {
+            self.typed = self.typed.chars().skip(extra).collect();
+        }
     }
 
     fn shortcut(&mut self, name: &str) -> Vec<OverlayAction> {
+        self.note_typed(name);
         let mut out = tap(name);
         out.extend(self.release_latched());
         out
@@ -935,6 +967,28 @@ mod tests {
         assert!(keyboard::find(Board::Basic, "KEY_F1").is_none() && keyboard::find(Board::Full, "KEY_F1").is_some());
         assert!(keyboard::find(Board::Basic, "KEY_LEFT").is_some(), "the basic board has the arrows");
         assert!(keyboard::find(Board::Numpad, "KEY_KPMINUS").is_some(), "and the numpad a minus");
+    }
+
+    #[test]
+    fn the_keyboard_follows_what_it_types() {
+        let mut c = OverlayController::new(Board::Basic, keyboard::find(Board::Basic, "KEY_H").unwrap());
+        let t0 = Instant::now();
+        let press = |c: &mut OverlayController, b| {
+            c.handle(InputEvent::Button(b, true), t0);
+            c.handle(InputEvent::Button(b, false), t0);
+        };
+        press(&mut c, Button::South);
+        c.handle(InputEvent::Axis(Axis::LeftTrigger, 1.0), t0);
+        press(&mut c, Button::South);
+        c.handle(InputEvent::Axis(Axis::LeftTrigger, 0.0), t0);
+        press(&mut c, Button::North);
+        let typed = c.view(t0).typed;
+        // The labels come from the desktop's layout; H is h in every Latin one.
+        assert!(typed.eq_ignore_ascii_case("hh ") && typed.starts_with('h'), "{typed:?}");
+        press(&mut c, Button::West);
+        assert_eq!(c.view(t0).typed.chars().count(), 2);
+        press(&mut c, Button::Start);
+        assert!(c.view(t0).typed.is_empty(), "Enter starts afresh");
     }
 
     #[test]

@@ -33,6 +33,12 @@ pub fn cap_label(key: &Key, board: Board, shift: bool, caps: bool) -> String {
     }
 }
 
+/// What `code` types in the user's layout, with `shift` and `caps`; `None` for a key that types
+/// no character.
+pub fn typed(code: &str, shift: bool, caps: bool) -> Option<String> {
+    labels().get(code).map(|t| pick(t, shift, caps).to_string())
+}
+
 /// Whether `code` needs Shift to type `text` in the user's layout (AZERTY's digits do); `None`
 /// when it doesn't type it either way, or the layout is unknown.
 pub fn needs_shift(code: &str, text: &str) -> Option<bool> {

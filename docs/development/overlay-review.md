@@ -224,9 +224,10 @@ Tick an item when it's done and merged.
     images needs iced's `image` feature, which brings new crates into the Flatpak's vendored sources.
 - [x] 43. **Recent items in the Guide menu.** Show the last few menu items you chose, or the
   last macro run, so a common action is one press away.
-- [ ] 44. **Typed-text preview and suggestions on the keyboard.** A line above the keys showing
+- [x] 44. **Typed-text preview and suggestions on the keyboard.** A line above the keys showing
   what's been typed this session, which helps when the game's text field is hidden behind the
   overlay. Word suggestions on the bumpers could come later.
+  - The typed line is done. Word suggestions aren't: the bumpers now move the text cursor (28).
 - [ ] 45. **Search or jump-to in long lists.** In Edit Controls' key picker and long action menus,
   a letter jump (hold a bumper and move a letter wheel) or the on-screen keyboard as a filter.
 - [ ] 46. **Haptics on navigation.** The sound effects give feedback for each step and pick. A

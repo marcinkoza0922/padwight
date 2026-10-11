@@ -244,6 +244,7 @@ fn keyboard_preview(layout: Layout, style: &OverlayStyle, font: iced::Font, glyp
         pressed: None,
         closing: 0.0,
         caps: false,
+        typed: String::new(),
     };
     preview(crate::overlay::draw::keyboard_panel(&sample, font, glyphs, &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still()))
 }

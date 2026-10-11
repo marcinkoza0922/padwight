@@ -357,7 +357,12 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::in
         .align_x(Horizontal::Center);
         (legend.into(), v.board.units_wide() * (unit + gap))
     };
-    let mut body = column![rows, legend].spacing(12.0 * s).width(width).align_x(Alignment::Center);
+    let mut body = column![].spacing(12.0 * s).width(width).align_x(Alignment::Center);
+    // What's been typed, above the keys, for when the game's own text box is hidden behind them.
+    if !v.typed.is_empty() {
+        body = body.push(text(format!("{}▏", v.typed)).font(c.font).size(18.0 * s).color(c.background_text));
+    }
+    body = body.push(rows).push(legend);
     if v.closing > 0.0 {
         body = body.push(progress_bar(0.0..=1.0, v.closing).girth(4.0 * s));
     }

@@ -12,7 +12,7 @@ const GAP: f32 = 3.0;
 mod boards;
 mod xkb;
 pub use boards::{Board, Cursor, find, key_at, step};
-pub use xkb::{cap_label, needs_shift};
+pub use xkb::{cap_label, needs_shift, typed};
 
 /// One key cap. An empty `code` is a blank spacer used for alignment.
 pub struct Key {
