@@ -82,6 +82,25 @@ pub fn tick(path: PathBuf, on: bool) {
 }
 
 const TICK: Duration = Duration::from_millis(40);
+/// How long a pick's pulse lasts.
+const PICK: Duration = Duration::from_millis(25);
+
+/// Plays a faint pulse on the controller at `path` in the background, as an overlay's item is
+/// picked. It follows the rumble strength.
+pub fn pick(path: PathBuf) {
+    thread::spawn(move || {
+        let data = FFEffectData { replay: FFReplay { length: PICK.as_millis() as u16, delay: 0 }, ..at_strength(rumble(0, 0x6000)) };
+        let played = Device::open(&path).and_then(|mut dev| {
+            let mut effect = dev.upload_ff_effect(data)?;
+            effect.play(1)?;
+            thread::sleep(PICK * 2);
+            Ok(())
+        });
+        if let Err(e) = played {
+            log!("rumble pulse on {} failed: {e}", path.display());
+        }
+    });
+}
 
 fn play_tick(path: &PathBuf, on: bool) -> io::Result<()> {
     let mut dev = Device::open(path)?;

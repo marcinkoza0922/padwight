@@ -2421,6 +2421,9 @@ pub struct Config {
     /// How strongly the controllers rumble, as a share of what games ask for (0 to 1).
     #[serde(default = "full_rumble", skip_serializing_if = "is_full_rumble")]
     pub rumble_strength: f32,
+    /// The controller gives a faint pulse as an overlay's item is picked (a key, a menu item).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub pick_rumble: bool,
     #[serde(default = "default_numpad_style")]
     pub numpad_style: OverlayStyle,
     #[serde(default = "default_media_style")]
@@ -2497,6 +2500,7 @@ impl Default for Config {
             keyboard_style: OverlayStyle::keyboard(),
             full_keyboard: false,
             rumble_strength: 1.0,
+            pick_rumble: false,
             numpad_style: OverlayStyle::numpad(),
             media_style: OverlayStyle::media(),
             menu_style: OverlayStyle::default(),

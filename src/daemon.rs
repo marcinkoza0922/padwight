@@ -2286,6 +2286,14 @@ impl Daemon {
         if let Some(spec) = feedback.and_then(|f| self.scope.sounds.cue(overlay, f)) {
             self.sounds.play(&spec);
         }
+        // A pick can be felt too, on the controller driving the overlay.
+        if feedback == Some(sound::Feedback::Pick)
+            && self.config.pick_rumble
+            && let Some(dev) = self.overlay_driver().and_then(|id| self.devices.get(&id))
+            && dev.ff.is_some()
+        {
+            rumble::pick(dev.path.clone());
+        }
     }
 
     /// Feeds an input to the on-screen keyboard or numpad, and sounds its step or key press.

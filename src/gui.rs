@@ -484,6 +484,8 @@ enum Message {
     SetFullKeyboard(bool),
     /// How strongly the controllers rumble, 0 to 1.
     SetRumbleStrength(f32),
+    /// Whether picking an overlay's item gives a faint pulse.
+    SetPickRumble(bool),
     /// The font of all overlays (`None`: the system's), or the shown game's own.
     SetOverlayFont(Option<String>),
     SetColorblindTones(bool),

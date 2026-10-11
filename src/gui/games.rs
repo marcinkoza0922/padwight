@@ -127,6 +127,7 @@ impl App {
             Message::SetKeyboardStyle(style) => self.config.keyboard_style = style,
             Message::SetFullKeyboard(full) => self.config.full_keyboard = full,
             Message::SetRumbleStrength(strength) => self.config.rumble_strength = strength,
+            Message::SetPickRumble(on) => self.config.pick_rumble = on,
             Message::SetOverlayFont(font) => self.config.overlay_font = font,
             Message::SetColorblindTones(on) => self.config.colorblind_tones = on,
             Message::SetPerformance(performance) => self.config.performance = performance,
