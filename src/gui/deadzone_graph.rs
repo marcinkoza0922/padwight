@@ -5,14 +5,14 @@
 
 use std::fmt::Write;
 
-use iced::widget::{column, row, svg};
-use iced::{Element, Length};
+use iced::Element;
+use iced::widget::svg;
 
 use super::*;
 use crate::engine::apply_deadzone;
 
 /// Side of each picture, and the margin kept clear inside it, in logical pixels.
-const SIDE: f32 = 150.0;
+const SIDE: f32 = 120.0;
 const PAD: f32 = 10.0;
 const PANEL: &str = "#1d2026";
 const DEAD: &str = "#3d434e";
@@ -86,25 +86,21 @@ fn response_svg(deadzone: f32, live: Option<(f32, f32)>) -> String {
     out
 }
 
-/// The deadzone's two pictures, side by side, and what they say in words.
-pub(super) fn view<'a>(deadzone: f32, live: Option<(f32, f32)>) -> Element<'a, Message> {
+/// The deadzone's two pictures, for the stick's row of pictures.
+pub(super) fn figures<'a>(deadzone: f32, live: Option<(f32, f32)>) -> [Element<'a, Message>; 2] {
     let travel = svg(svg::Handle::from_memory(travel_svg(deadzone, live).into_bytes())).width(SIDE).height(SIDE);
     let response = svg(svg::Handle::from_memory(response_svg(deadzone, live).into_bytes())).width(SIDE).height(SIDE);
-    let words = if deadzone <= 0.0 {
+    let note = if deadzone <= 0.0 { "No deadzone".to_string() } else { format!("Flat for the first {:.0}%", deadzone * 100.0) };
+    [figure("Stick travel", travel, None, SIDE), figure("Response", response, Some(note), SIDE)]
+}
+
+/// What the deadzone does, in words, for the Deadzone row's ⓘ.
+pub(super) fn explain(deadzone: f32) -> String {
+    if deadzone <= 0.0 {
         "No deadzone: every push counts.".to_string()
     } else {
         format!("The first {:.0}% of the stick's travel does nothing. Past it, the stick counts from 0 again.", deadzone * 100.0)
-    };
-    column![
-        row![
-            column![text("Stick travel").size(13).color(MUTED_COLOR), travel].spacing(6),
-            column![text("Response").size(13).color(MUTED_COLOR), response].spacing(6),
-        ]
-        .spacing(24),
-        text(words).size(13).width(Length::Fixed(2.0 * SIDE + 24.0)),
-    ]
-    .spacing(6)
-    .into()
+    }
 }
 
 #[cfg(test)]

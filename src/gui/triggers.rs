@@ -31,8 +31,13 @@ pub(super) enum ZonePreset {
     Walk,
 }
 
-/// Extra actions held while the stick/trigger is within a range of travel.
+/// Extra actions held while the stick/trigger is within a range of travel, in a labeled row.
 pub(super) fn zone_editor<'a>(analog: Analog, zones: &'a [Zone], names: &Names) -> Element<'a, Message> {
+    labeled("    Zones", zone_list(analog, zones, names))
+}
+
+/// The zones and the buttons that add them: the editor part of a zone row.
+pub(super) fn zone_list<'a>(analog: Analog, zones: &'a [Zone], names: &Names) -> Element<'a, Message> {
     let what = match analog {
         Analog::Stick(_) => "pushed",
         Analog::Trigger(_) => "pulled",
@@ -80,7 +85,7 @@ pub(super) fn zone_editor<'a>(analog: Analog, zones: &'a [Zone], names: &Names) 
                 .on_press(Message::AddZone(analog, ZonePreset::Walk)),
         );
     }
-    labeled("    Zones", col.push(buttons.push(zones_help)).into())
+    col.push(buttons.push(zones_help)).into()
 }
 
 /// What a trigger does, in one list: pass through as an analog trigger, or act as a button

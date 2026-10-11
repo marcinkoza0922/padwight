@@ -238,7 +238,7 @@ pub(super) fn view_profile<'a>(p: &'a Profile, ui: &Ui, tab: ProfileTab, guide: 
             let mut sticks = Vec::new();
             for s in [Stick::Left, Stick::Right] {
                 let base = ui.layer.map_or(p.stick(s), |m| m.base.stick(s));
-                sticks.extend(layer_part(ui, LayerPart::Stick(s), s.to_string(), stick_summary(base), || vec![stick_editor(s, p.stick(s), ui)]));
+                sticks.push(stick_box(layer_part(ui, LayerPart::Stick(s), s.to_string(), stick_summary(base), || vec![stick_editor(s, p.stick(s), ui)])));
             }
             let mut triggers = Vec::new();
             for t in [Trigger::Left, Trigger::Right] {
