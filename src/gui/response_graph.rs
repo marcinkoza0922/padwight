@@ -15,9 +15,9 @@ use crate::engine::stick::{OUTER_EDGE, steady_speed};
 
 /// The curve's size, and the side of the direction shape, in logical pixels; `PAD` is kept clear
 /// inside both.
-const W: f32 = 280.0;
-const H: f32 = 170.0;
-const SIDE: f32 = 170.0;
+const W: f32 = 220.0;
+const H: f32 = 120.0;
+const SIDE: f32 = 120.0;
 const PAD: f32 = 10.0;
 const PANEL: &str = "#1d2026";
 const GRID: &str = "#30343c";
@@ -157,32 +157,22 @@ fn curve_readout(s: &Shown) -> String {
     }
 }
 
-/// Both pictures, side by side. Hovering the curve sets the push both of them show.
-pub(super) fn view<'a>(shown: Shown) -> Element<'a, Message> {
+/// Both pictures, for the stick's row of pictures. Hovering the curve sets the push both of them
+/// show.
+pub(super) fn figures<'a>(shown: Shown) -> [Element<'a, Message>; 2] {
     let curve_pic = mouse_area(svg(svg::Handle::from_memory(curve_svg(&shown).into_bytes())).width(W).height(H))
         .on_move(|at| Message::ProbeStick(((at.x - PAD) / (W - 2.0 * PAD)).clamp(0.0, 1.0)))
         .on_exit(Message::ProbeStick(1.0));
     let shape_pic = svg(svg::Handle::from_memory(shape_svg(&shown).into_bytes())).width(SIDE).height(SIDE);
 
-    let faint = |s: &'static str| text(s).size(12).color(MUTED_COLOR);
+    let faint = |s: &'static str| text(s).size(11).color(MUTED_COLOR);
     let ticks = row![faint("0%"), space().width(Length::Fill), faint("Stick push"), space().width(Length::Fill), faint("100%")].width(W);
-    let curve_col = column![
-        text("Acceleration curve").size(13).color(MUTED_COLOR),
-        curve_pic,
-        ticks,
-        text(curve_readout(&shown)).size(13),
-    ]
-    .spacing(6)
-    .width(W);
     let sideways = shown.held(shown.push());
-    let shape_col = column![
-        text("Pointer speed by direction").size(13).color(MUTED_COLOR),
-        shape_pic,
-        text(format!("Sideways {sideways:.0} px/s, up and down {:.0} px/s", sideways * shown.response.y_scale)).size(13),
+    let across = format!("{sideways:.0} px/s across, {:.0} up and down", sideways * shown.response.y_scale);
+    [
+        figure("Pointer speed", column![curve_pic, ticks].spacing(2), Some(curve_readout(&shown)), W),
+        figure("Speed by direction", shape_pic, Some(across), SIDE + 110.0),
     ]
-    .spacing(6)
-    .width(W);
-    row![curve_col, shape_col].spacing(24).into()
 }
 
 #[cfg(test)]

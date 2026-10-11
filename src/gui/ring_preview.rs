@@ -3,15 +3,15 @@
 
 use std::fmt::Write;
 
-use iced::widget::{container, svg};
-use iced::{Element, Length};
+use iced::Element;
+use iced::widget::svg;
 
 use super::*;
 use crate::engine::stick::ring_sector_at;
 
 /// Side of the square preview, in logical pixels.
-const SIZE: f32 = 180.0;
-const RADIUS: f32 = 84.0;
+const SIZE: f32 = 120.0;
+const RADIUS: f32 = 56.0;
 const IDLE: &str = "#1d2026";
 const EDGE: &str = "#5d6470";
 const ACTIVE: &str = "#4ea1ff";
@@ -63,7 +63,7 @@ pub(super) fn render(sectors: u8, start_angle: f32, inner_radius: f32, active: O
 pub(super) fn view<'a>(sectors: u8, start_angle: f32, inner_radius: f32, stick: Option<(f32, f32)>) -> Element<'a, Message> {
     let active = stick.and_then(|pos| ring_sector_at(pos, sectors, start_angle, inner_radius));
     let handle = svg::Handle::from_memory(render(sectors, start_angle, inner_radius, active, stick).into_bytes());
-    container(svg(handle).width(SIZE).height(SIZE)).width(Length::Fill).center_x(Length::Fill).padding(8).into()
+    figure("Ring", svg(handle).width(SIZE).height(SIZE), None, SIZE)
 }
 
 #[cfg(test)]

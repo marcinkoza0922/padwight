@@ -40,6 +40,34 @@ pub fn output_list(theme: &Theme) -> container::Style {
     }
 }
 
+/// A sub-section inside an inset box (an "Advanced" fold, a stick's pictures): the card's color,
+/// a step off the box around it, so it reads as its own block.
+pub fn panel(theme: &Theme) -> container::Style {
+    let p = theme.extended_palette();
+    container::Style {
+        background: Some(p.background.weakest.color.into()),
+        text_color: Some(p.background.weakest.text),
+        border: Border { width: 1.0, radius: 6.0.into(), color: p.background.strong.color },
+        ..container::Style::default()
+    }
+}
+
+/// The header of a fold: accent text that marks it as something to open, tinted on hover.
+pub fn fold_header(theme: &Theme, status: button::Status) -> button::Style {
+    let p = theme.extended_palette();
+    let hovered = matches!(status, button::Status::Hovered | button::Status::Pressed);
+    let accent = p.primary.base.color;
+    // Lifted toward white in dark mode, where the accent itself is too dark to read.
+    let lift = |c: f32| c + (1.0 - c) * 0.5;
+    let text_color = if p.is_dark { Color { r: lift(accent.r), g: lift(accent.g), b: lift(accent.b), ..accent } } else { accent };
+    button::Style {
+        background: hovered.then(|| Color { a: 0.08, ..accent }.into()),
+        text_color,
+        border: Border { radius: 5.0.into(), ..Border::default() },
+        ..button::Style::default()
+    }
+}
+
 /// Tooltip bubbles.
 pub fn tooltip(theme: &Theme) -> container::Style {
     let p = theme.extended_palette();

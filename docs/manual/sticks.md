@@ -10,9 +10,11 @@
 
 ## Tuning
 
-- **Deadzone**: how far the stick must move before it counts. Raise it if the stick drifts when resting. The two pictures under it show the dead middle of the stick's travel, and how the response starts only past it.
+Each stick has a box of its own: its mode and Invert Y on the top line, then its settings, an *Advanced* fold for the finer ones (click its bar to open it; while shut it lists what it holds), a *Visualizers* panel with the stick's pictures, and last its direction buttons and zones.
+
+- **Deadzone**: how far the stick must move before it counts. Raise it if the stick drifts when resting. The *Stick travel* and *Response* pictures show the dead middle of the stick's travel, and how the response starts only past it.
 - **Response curve**: how quickly the output grows as you push further. A gentler curve gives finer control near the center.
-- **Response graphs**: under the curve, the mouse speed against how far the stick is pushed, and the speed in each direction. Hover the graph to read the speed at any push; the picture on the right follows it.
+- **Speed visualizers**: for a mouse stick, *Pointer speed* shows the speed against how far the stick is pushed, and *Speed by direction* the speed in each direction. Hover the speed graph to read the speed at any push; the picture beside it follows it.
 - **Invert Y**: flips up and down.
 
 ## Stick directions as buttons
