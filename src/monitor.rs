@@ -1,7 +1,7 @@
 //! Live one-line view of gamepad input, shown when the daemon runs in a terminal.
 
 use std::{
-    collections::{BTreeSet, HashMap},
+    collections::{BTreeMap, BTreeSet, HashMap},
     fmt::{self, Write as _},
     io::{IsTerminal, Write},
     sync::{Mutex, OnceLock},
@@ -11,7 +11,7 @@ use evdev::KeyCode;
 
 use crate::{
     config::{Button, MouseButton},
-    input::{Axis, InputEvent},
+    input::{Axis, InputEvent, TouchpadEvent},
     ipc::InputSnapshot,
     output::OutEvent,
 };
@@ -103,6 +103,9 @@ pub struct InputView {
     buttons: BTreeSet<Button>,
     axes: HashMap<Axis, f32>,
     gyro: Option<[f32; 3]>,
+    /// Fingers on the touchpad by slot, and whether it is clicked.
+    touches: BTreeMap<u8, (f32, f32)>,
+    touch_click: bool,
 }
 
 impl InputView {
@@ -117,7 +120,13 @@ impl InputView {
             InputEvent::Axis(a, v) => {
                 self.axes.insert(a, v);
             }
-            InputEvent::Touchpad(_) => {}
+            InputEvent::Touchpad(TouchpadEvent::Touch { finger, x, y, .. }) => {
+                self.touches.insert(finger, (x, y));
+            }
+            InputEvent::Touchpad(TouchpadEvent::Lift { finger }) => {
+                self.touches.remove(&finger);
+            }
+            InputEvent::Touchpad(TouchpadEvent::Click(down)) => self.touch_click = down,
         }
     }
 
@@ -146,6 +155,8 @@ impl InputView {
             right_trigger: a(Axis::RightTrigger),
             gyro: self.gyro,
             gyro_out: None,
+            touches: self.touches.values().copied().collect(),
+            touch_click: self.touch_click,
         }
     }
 

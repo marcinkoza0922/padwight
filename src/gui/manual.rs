@@ -15,6 +15,7 @@ const CHAPTERS: &[(&str, &str)] = &[
     ("buttons.md", include_str!("../../docs/manual/buttons.md")),
     ("sticks.md", include_str!("../../docs/manual/sticks.md")),
     ("gyro.md", include_str!("../../docs/manual/gyro.md")),
+    ("touchpad.md", include_str!("../../docs/manual/touchpad.md")),
     ("layers.md", include_str!("../../docs/manual/layers.md")),
     ("macros.md", include_str!("../../docs/manual/macros.md")),
     ("menus.md", include_str!("../../docs/manual/menus.md")),

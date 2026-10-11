@@ -1,6 +1,6 @@
 # `.padpack` format reference
 
-A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 15**, the format the current app writes. For a walkthrough of building one, see [tutorial-deus-ex-pack.md](tutorial-deus-ex-pack.md). The shipped examples are in `packs/`.
+A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 16**, the format the current app writes. For a walkthrough of building one, see [tutorial-deus-ex-pack.md](tutorial-deus-ex-pack.md). The shipped examples are in `packs/`.
 
 The easiest way to write a pack is in the app, then **Details → Export…**. Read this page when you want to edit the file by hand, check a value, or understand what the export produced.
 
@@ -213,6 +213,40 @@ The touchpad's mouse motion takes the same `curve`, with speeds in pad widths/se
 
 Everything in this section beyond `mode`, `horizontal`, the inverts, `noise_threshold`, `activation` and `recenter` is format 15; older app versions can't read packs that use the new modes or spaces.
 
+## Touchpad
+
+DualShock 4 and DualSense touchpads. Left out, the pad works as a laptop trackpad: mouse motion at 1200 pixels across the pad, and the click is the left mouse button.
+
+```toml
+[profiles.touchpad]
+click = "disabled"                  # what pressing the pad does, like any button
+
+[profiles.touchpad.motion.menu]     # or: "off", mouse = {...}, joystick = {...}, swipe = {...}
+menu = "Build"                      # the menu the pad is divided into
+choose = "click"                    # or "lift"
+overlay = true                      # show the menu while a finger is on the pad
+
+[profiles.touchpad.right]           # optional: splits the pad, this is its right half
+click = { mouse = "Left" }
+
+[profiles.touchpad.right.motion.mouse]
+speed = 1200.0                      # pixels across the whole pad
+tap = true                          # a quick tap runs the click
+scroll = true                       # two fingers scroll
+inertia = true                      # a flick keeps gliding
+```
+
+- `motion`: what fingers do on the whole pad, or on its left half when `right` is set.
+  - `"off"`.
+  - `mouse = { speed, curve, tap, scroll, inertia }`. `curve` is as for gyro, in pad widths/second; `tap`, `scroll` and `inertia` default to off.
+  - `joystick = { stick, relative, radius, deadzone }`: the finger pushes a virtual stick. With `relative`, center is where the finger lands and `radius` pad widths from there is full; otherwise the middle of the pad (or half) is center and its edges are full. Pushes under `deadzone` (0..1) are ignored.
+  - `menu = { menu, choose, overlay }`: the pad is divided into the menu's items as the menu is drawn (a radial menu by direction from the middle, a grid by cells, a list by rows, a carousel from left to right). `choose = "click"` holds the item under the finger while the pad is clicked; `"lift"` taps it when the finger lifts (a click still works). `overlay = false` hides the menu.
+  - `swipe = { up, down, left, right, distance }`: a quick stroke at least `distance` pad widths long (default 0.2) taps the action for its direction. Each direction is optional.
+- `click`: any action. In menu mode it's what a click does with the finger off the items. With a split pad, a click runs the click of the half the first finger is on.
+- `right` (optional): `{ motion, click }` for the right half. Each finger belongs to the half it lands on.
+
+The touchpad modes other than mouse, mouse's `tap`, `scroll` and `inertia`, and `right` are format 16.
+
 ## Controller identity
 
 `controllers` says which other controllers the game has explicit support for: `dualshock` (DualShock 4), `dualsense` and `switch_pro` (Switch Pro Controller). Each is optional and off by default. While the game is active, a physical controller of a ticked kind makes the virtual pad present itself as that kind: its USB IDs, name and button labels, so the game sees a DualShock, DualSense or Pro controller. Any other controller, or a kind left unticked, is seen as an Xbox 360 pad, as before.
@@ -224,10 +258,10 @@ The Mappings overlay draws each mapped output as the controller the pad presents
 A profile says what it cannot be played without, so the app can offer only profiles a player's controller supports:
 
 ```toml
-requires = ["gyro", "back_paddles"]
+requires = ["gyro", "back_paddles", "touchpad"]
 ```
 
-`gyro` and `back_paddles` exist today. Don't set `requires` for a profile that only *adds* gyro or paddle inputs to a scheme that works without them: leave it out. The export dialog lists declared needs and warns about gyro or paddle use that isn't declared, but doesn't block. Paddle buttons (`LeftPaddle`, `RightPaddle`, `LeftPaddle2`, `RightPaddle2`) are format 13 and can't be read by older app versions.
+`gyro`, `back_paddles` and `touchpad` exist today. Don't set `requires` for a profile that only *adds* gyro, paddle or touchpad inputs to a scheme that works without them: leave it out. The export dialog lists declared needs and warns about gyro, paddle or touchpad use that isn't declared (a touchpad set up differently from the default counts as use), but doesn't block. `touchpad` is format 16. Paddle buttons (`LeftPaddle`, `RightPaddle`, `LeftPaddle2`, `RightPaddle2`) are format 13 and can't be read by older app versions.
 
 ## Menus
 
@@ -362,7 +396,7 @@ keys = ["KEY_TAB"]
 speed = 1600.0
 ```
 
-A layer can override `buttons`, `gestures`, `combos`, `disabled_combos`, `left_stick`, `right_stick`, `left_trigger`, `right_trigger` and `gyro`. Each override replaces the profile's setting for that input only.
+A layer can override `buttons`, `gestures`, `combos`, `disabled_combos`, `left_stick`, `right_stick`, `left_trigger`, `right_trigger`, `gyro` and `touchpad`. Each override replaces the profile's setting for that input only.
 
 **Guide** is special. In a pack, every profile's `Guide` button must hold the layer named `Guide`, and the pack must contain that layer: the library check fails otherwise. Every game gets the system shortcuts while Guide is down, whether or not its pack carries them: the app fills in whatever a game's Guide layer leaves unset when it loads, imports or saves a setup. A pack's Guide layer must still carry all of them, so the pack file shows what Guide does, and the library check fails otherwise. The shortcuts: `+ X` keyboard, `+ Y` numpad, `+ LB` media controls, `+ RB` screenshot, `+ Left stick` recording, `+ B` force-quit, `+ RT` / `+ LT` clicks, `+ Right stick` mouse, `+ D-pad` Enter, Tab and Escape, and so on. Its bindings are listed in [the Guide design notes](development/guide.md).
 
@@ -444,7 +478,7 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
 
 ## Versioning
 
-- `format` is an integer. The app writes `13` and reads up to `13`. A pack with a newer `format` is refused with "update the app to import it". Older formats are upgraded when read.
+- `format` is an integer. The app writes `16` and reads up to `16`. A pack with a newer `format` is refused with "update the app to import it". Older formats are upgraded when read.
 - Format history:
   - 2 added layers.
   - 3 added toggles that start on.
@@ -457,6 +491,10 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
   - 10 added menu sounds, radial arcs and corner rounding.
   - 11 added how each overlay moves (`motion`).
   - 12 replaced the menu sounds with a set of sounds for each overlay (`[sounds.<overlay>]`).
+  - 13 added back paddles (their button names and the `back_paddles` feature).
+  - 14 added overlay decorations (outlines, shadows, gradients, glows and text colors).
+  - 15 added gyro acceleration curves, axes, player and world space, the position mode, smoothing and pausing, and the touchpad's curve.
+  - 16 added the touchpad's joystick, menu and swipe modes, tapping, scrolling and gliding, the split pad, and layers' touchpads.
 - Bump `format` only for a breaking change to the shape. Adding an optional key with a default doesn't need it.
 
 ## Checks

@@ -495,6 +495,51 @@ fn debug_gyro_turns_the_mouse() {
     assert_eq!(env.state()["gyro"], Value::Null, "the pad stops turning afterwards");
 }
 
+/// The config with the active profile's touchpad split: a grid menu of A to D on the left half,
+/// and swipes on the right (right is D, the click R).
+fn touchpad_config() -> String {
+    let touchpad = "[general.profiles.touchpad]\nclick = \"disabled\"\n\
+        [general.profiles.touchpad.motion.menu]\nmenu = \"Pad\"\n\
+        [general.profiles.touchpad.right]\nclick = { keys = [\"KEY_R\"] }\n\
+        [general.profiles.touchpad.right.motion.swipe]\nright = { keys = [\"KEY_D\"] }\n\n";
+    let text = hold_config().replacen("[general.profiles.gyro]", &format!("{touchpad}[general.profiles.gyro]"), 1);
+    let shared = "[shared]\nmacros = []\nmenus = []";
+    assert!(text.contains(shared), "the default config has no shared menus");
+    let mut text = text.replacen(shared, "[shared]\nmacros = []", 1);
+    text.push_str("\n[[shared.menus]]\nname = \"Pad\"\nkind = { grid = { columns = 2 } }\n");
+    for k in ["A", "B", "C", "D"] {
+        text.push_str(&format!("[[shared.menus.items]]\nlabel = \"{k}\"\naction = {{ keys = [\"KEY_{k}\"] }}\n"));
+    }
+    text
+}
+
+#[test]
+#[ignore]
+fn debug_touchpad_menus_and_swipes_reach_the_mappings() {
+    let _serial = serial();
+    let env = Env::new();
+    let _daemon = debug_daemon(&env, &touchpad_config());
+    let _session = env.session(&["--attach", "--model", "dualsense"]);
+    // Top right of the left half is the grid's second item; the click holds it.
+    env.ok(&["touch", "0.4", "0.1"]);
+    env.ok(&["pad-click", "down"]);
+    env.ok(&["expect", "output", "key KEY_B down"]);
+    env.ok(&["touch", "0.1", "0.9"]);
+    env.ok(&["pad-click", "up"]);
+    env.ok(&["expect", "output", "key KEY_B up"]);
+    env.ok(&["lift"]);
+    env.ok(&["output", "clear"]);
+    // A quick stroke right across the right half.
+    env.ok(&["swipe", "0.6", "0.5", "0.95", "0.5", "120"]);
+    env.ok(&["expect", "output", "key KEY_D down"]);
+    env.ok(&["expect", "output", "key KEY_D up"]);
+    // The right half's click, with a finger there.
+    env.ok(&["touch", "0.8", "0.5"]);
+    env.ok(&["pad-click", "30"]);
+    env.ok(&["expect", "output", "key KEY_R down"]);
+    env.ok(&["lift"]);
+}
+
 #[test]
 #[ignore]
 fn debug_live_output_reaches_the_virtual_keyboard() {

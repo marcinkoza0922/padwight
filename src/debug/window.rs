@@ -14,11 +14,15 @@ use crate::{
     ipc::InputSnapshot,
     pad_svg::{self, Part},
     pad_widget::controller_drawing,
+    touchpad_widget::{PadPicture, touchpad_picture},
 };
+
+/// How wide the touchpad is drawn, in logical pixels.
+const TOUCHPAD_WIDTH: f32 = 360.0;
 
 pub fn run(session: Session, socket: String) -> iced::Result {
     let app = iced::application(
-        move || (Window { session: session.clone(), socket: socket.clone(), cursor: Point::ORIGIN, grab: None, problem: None }, Task::none()),
+        move || (Window { session: session.clone(), socket: socket.clone(), cursor: Point::ORIGIN, grab: None, touch_cursor: Point::ORIGIN, touching: false, problem: None }, Task::none()),
         Window::update,
         Window::view,
     )
@@ -36,6 +40,9 @@ struct Window {
     cursor: Point,
     /// What the pointer is holding.
     grab: Option<Grab>,
+    /// The pointer over the touchpad, in pixels, and whether it is held down there (a finger).
+    touch_cursor: Point,
+    touching: bool,
     /// Why the daemon didn't take the last change, when attached to it.
     problem: Option<String>,
 }
@@ -54,6 +61,13 @@ enum Message {
     Down,
     Up,
     RightDown,
+    TouchMoved(Point),
+    TouchDown,
+    TouchUp,
+    /// Right click: the pad's click goes down, or up again.
+    TouchClick,
+    /// Middle click: a second finger stays where the pointer is, or lifts.
+    TouchSecond,
     Model(ModelChoice),
     Family(PadFamily),
     Reset,
@@ -85,6 +99,37 @@ impl Window {
             Message::Down => self.grab_at_cursor(),
             Message::Up => self.let_go(),
             Message::RightDown => self.toggle_at_cursor(),
+            Message::TouchMoved(p) => {
+                self.touch_cursor = p;
+                if self.touching {
+                    let at = self.touch_at();
+                    self.session.pad().touch(0, at);
+                }
+            }
+            Message::TouchDown => {
+                self.touching = true;
+                let at = self.touch_at();
+                self.session.pad().touch(0, at);
+            }
+            Message::TouchUp => {
+                if std::mem::take(&mut self.touching) {
+                    self.session.pad().lift(0);
+                }
+            }
+            Message::TouchClick => {
+                let mut pad = self.session.pad();
+                let down = !pad.touch_click();
+                pad.set_touch_click(down);
+            }
+            Message::TouchSecond => {
+                let at = self.touch_at();
+                let mut pad = self.session.pad();
+                if pad.touches().iter().any(|(n, _)| *n == 1) {
+                    pad.lift(1);
+                } else {
+                    pad.touch(1, at);
+                }
+            }
             Message::Model(ModelChoice(model)) => self.session.pad().set_model(model),
             Message::Family(family) => self.session.pad().family = family,
             Message::Reset => self.session.pad().reset(),
@@ -92,6 +137,12 @@ impl Window {
         // Whatever changed reaches the daemon right away, when attached.
         self.problem = self.session.flush().err().map(|e| format!("{e:#}"));
         Task::none()
+    }
+
+    /// The pointer's place on the touchpad, each 0..1 across it.
+    fn touch_at(&self) -> (f32, f32) {
+        let height = TOUCHPAD_WIDTH * self.session.pad().touchpad_height();
+        (self.touch_cursor.x / TOUCHPAD_WIDTH, self.touch_cursor.y / height)
     }
 
     fn part_at_cursor(&self) -> Option<Part> {
@@ -181,6 +232,22 @@ impl Window {
             .on_right_press(Message::RightDown)
             .interaction(iced::mouse::Interaction::Pointer);
 
+        let picture = PadPicture { settings: None, touches: &snapshot.touches, click: snapshot.touch_click, height: pad.touchpad_height(), width: TOUCHPAD_WIDTH };
+        let touchpad = mouse_area(touchpad_picture(&picture))
+            .on_move(Message::TouchMoved)
+            .on_press(Message::TouchDown)
+            .on_release(Message::TouchUp)
+            .on_exit(Message::TouchUp)
+            .on_right_press(Message::TouchClick)
+            .on_middle_press(Message::TouchSecond)
+            .interaction(iced::mouse::Interaction::Crosshair);
+        let touchpad = column![
+            text("Touchpad").size(16),
+            touchpad,
+            text("Drag to move a finger. Right-click clicks the pad down (again to let go); middle-click puts a second finger down or lifts it.").size(12).width(TOUCHPAD_WIDTH),
+        ]
+        .spacing(6);
+
         let link = match (self.session.attached(), &self.problem) {
             (_, Some(problem)) => format!("Daemon: {problem}"),
             (Some(device), None) => format!("Attached to the daemon as {device}: the active profile maps this controller."),
@@ -197,7 +264,7 @@ impl Window {
             controls,
             hint,
             text(link).size(12),
-            virtual_pad,
+            row![virtual_pad, touchpad].spacing(24),
             text(readout(&snapshot)).size(13),
             text("Every model, showing the virtual controller's input").size(20),
             gallery(&snapshot),
@@ -219,6 +286,12 @@ fn readout(s: &InputSnapshot) -> String {
     if let Some([p, y, r]) = s.gyro {
         line.push_str(&format!("  gyro {p:.0} / {y:.0} / {r:.0} °/s"));
     }
+    for (x, y) in &s.touches {
+        line.push_str(&format!("  finger ({x:.2}, {y:.2})"));
+    }
+    if s.touch_click {
+        line.push_str("  touchpad clicked");
+    }
     line
 }
 
@@ -239,7 +312,7 @@ mod tests {
     use super::*;
 
     fn window() -> Window {
-        Window { session: Session::default(), socket: String::new(), cursor: Point::ORIGIN, grab: None, problem: None }
+        Window { session: Session::default(), socket: String::new(), cursor: Point::ORIGIN, grab: None, touch_cursor: Point::ORIGIN, touching: false, problem: None }
     }
 
     fn move_to(w: &mut Window, x: f32, y: f32) {
@@ -267,6 +340,22 @@ mod tests {
         assert_eq!(w.session.pad().stick(Stick::Left), (1.0, 0.0));
         let _ = w.update(Message::Up);
         assert_eq!(w.session.pad().stick(Stick::Left), (0.0, 0.0));
+    }
+
+    #[test]
+    fn dragging_on_the_touchpad_moves_a_finger_and_letting_go_lifts_it() {
+        let mut w = window();
+        let height = TOUCHPAD_WIDTH * w.session.pad().touchpad_height();
+        let _ = w.update(Message::TouchMoved(Point::new(TOUCHPAD_WIDTH / 2.0, height / 2.0)));
+        assert!(w.session.pad().touches().is_empty(), "hovering isn't touching");
+        let _ = w.update(Message::TouchDown);
+        let _ = w.update(Message::TouchMoved(Point::new(TOUCHPAD_WIDTH, height / 4.0)));
+        assert_eq!(w.session.pad().touches(), [(0, (1.0, 0.25))]);
+        let _ = w.update(Message::TouchSecond);
+        let _ = w.update(Message::TouchClick);
+        assert!(w.session.pad().touch_click());
+        let _ = w.update(Message::TouchUp);
+        assert_eq!(w.session.pad().touches(), [(1, (1.0, 0.25))], "the second finger stays");
     }
 
     #[test]

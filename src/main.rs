@@ -35,6 +35,7 @@ mod style;
 mod layout_editor;
 mod sound;
 mod system_menu;
+mod touchpad_widget;
 mod tray;
 
 use anyhow::{Result, bail};

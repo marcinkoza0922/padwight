@@ -22,8 +22,9 @@ use crate::config::{
 /// 12, the sounds of each overlay (replacing the menu sounds); 13, back paddles (their button
 /// names and the `back_paddles` feature); 14, overlay decorations (outlines, shadows, gradients,
 /// glows and text colors); 15, gyro acceleration curves, axes, player and world space, the
-/// position mode, smoothing and pausing, and the touchpad's curve.
-pub const FORMAT: u32 = 15;
+/// position mode, smoothing and pausing, and the touchpad's curve; 16, the touchpad's joystick,
+/// menu and swipe modes, tapping, scrolling and gliding, the split pad, and layers' touchpads.
+pub const FORMAT: u32 = 16;
 pub const EXTENSION: &str = "padpack";
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -250,6 +251,8 @@ fn references(profiles: &[Profile], menus: &[Menu], macros: &[Macro], layers: &[
             refs.insert((ItemKind::Info, name.clone()));
         }
     }
+    let pads = profiles.iter().map(|p| &p.touchpad).chain(layers.iter().filter_map(|l| l.touchpad.as_ref()));
+    refs.extend(pads.flat_map(crate::config::TouchpadConfig::menus).map(|name| (ItemKind::Menu, name.clone())));
     refs
 }
 
@@ -296,6 +299,7 @@ pub fn features(game: &Game) -> Vec<FeatureUse> {
         let uses = [
             (Feature::Gyro, p.gyro.mode != GyroMode::Off),
             (Feature::BackPaddles, uses_paddles(&p.buttons, &p.gestures, &p.combos)),
+            (Feature::Touchpad, !p.touchpad.is_default()),
         ];
         Feature::ALL.into_iter().filter_map(move |feature| {
             let required = p.requires.contains(&feature);
@@ -305,7 +309,7 @@ pub fn features(game: &Game) -> Vec<FeatureUse> {
     });
     let layers = game.layers.iter().flat_map(|l| {
         let gyro = l.gyro.as_ref().is_some_and(|g| g.mode != GyroMode::Off);
-        [(Feature::Gyro, gyro), (Feature::BackPaddles, uses_paddles(&l.buttons, &l.gestures, &l.combos))]
+        [(Feature::Gyro, gyro), (Feature::BackPaddles, uses_paddles(&l.buttons, &l.gestures, &l.combos)), (Feature::Touchpad, l.touchpad.is_some())]
             .into_iter()
             .filter(|(_, used)| *used)
             .map(move |(feature, _)| FeatureUse { feature, place: format!("layer “{}”", l.name), required: false })
@@ -947,6 +951,26 @@ mod tests {
         game.profiles[0].set_button(Button::LeftPaddle, ButtonAction::Disabled);
         let out = export(game, &config.shared, &draft(game, false));
         assert!(!out.features.iter().any(|u| u.feature == Feature::BackPaddles));
+    }
+
+    #[test]
+    fn a_touchpad_setup_is_listed_and_a_declared_need_travels() {
+        let mut config = setup();
+        let game = &mut config.games[0];
+        let out = export(game, &config.shared, &draft(game, false));
+        assert!(!out.features.iter().any(|u| u.feature == Feature::Touchpad), "the default touchpad isn't a use");
+
+        game.profiles[0].touchpad.motion = crate::config::TouchpadMotion::Off;
+        let touchpad = |required| FeatureUse { feature: Feature::Touchpad, place: "profile “Play”".into(), required };
+        let out = export(game, &config.shared, &draft(game, false));
+        assert!(out.features.contains(&touchpad(false)), "a changed touchpad is listed as an undeclared use");
+
+        game.profiles[0].requires = vec![Feature::Touchpad];
+        let out = export(game, &config.shared, &draft(game, false));
+        assert!(out.features.contains(&touchpad(true)));
+        assert_eq!(out.pack.needing(Feature::Touchpad), ["Play"]);
+        let back = parse(&out.pack.to_toml().unwrap()).unwrap();
+        assert_eq!(back.profiles[0].requires, [Feature::Touchpad]);
     }
 
     #[test]

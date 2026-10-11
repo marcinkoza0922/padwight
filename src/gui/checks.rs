@@ -185,6 +185,7 @@ pub(super) fn section_has_problem(p: &Profile, tab: ProfileTab, names: &Names) -
             zones || triggers || rings || two_flicks
         }
         ProfileTab::Combos => p.combos.iter().any(|c| c.buttons.len() < 2 || bad(&c.action)),
+        ProfileTab::Touchpad => p.touchpad.actions().into_iter().any(bad) || super::touchpad::touchpad_problem(&p.touchpad, names).is_some(),
         ProfileTab::Gyro | ProfileTab::Guide => false,
     }
 }
@@ -308,6 +309,7 @@ fn bad_target(p: &Profile, names: &Names) -> Option<Target> {
     for s in [Stick::Left, Stick::Right] {
         all.extend(p.stick(s).action.ring_actions().iter().enumerate().map(|(i, a)| (Target::RingSector(s, i), a)));
     }
+    all.extend(p.touchpad.slots().into_iter().filter_map(|slot| p.touchpad.slot(slot).map(|a| (Target::Touch(slot), a))));
     all.into_iter().find(|(_, a)| action_problem(a, names).is_some()).map(|(t, _)| t)
 }
 

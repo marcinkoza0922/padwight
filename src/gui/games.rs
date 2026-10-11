@@ -172,6 +172,11 @@ impl App {
         self.status.as_ref().is_some_and(|s| s.devices.iter().any(|d| d.gyro))
     }
 
+    /// Whether any managed controller has a touchpad (only affects hints).
+    pub(super) fn any_touchpad(&self) -> bool {
+        self.status.as_ref().is_some_and(|s| s.devices.iter().any(|d| d.touchpad))
+    }
+
     /// Whether any managed controller has back paddles (only affects hints).
     pub(super) fn any_paddles(&self) -> bool {
         self.status.as_ref().is_some_and(|s| s.devices.iter().any(|d| d.paddles))

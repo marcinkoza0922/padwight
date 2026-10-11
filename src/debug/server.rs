@@ -78,6 +78,14 @@ impl Session {
                 self.flush()?;
             }
             DebugRequest::Gyro { rates, ms } if self.attached().is_some() => self.turn(rates, if ms == 0 { 100 } else { ms })?,
+            DebugRequest::PadClick { ms: Some(ms), .. } => {
+                self.pad().set_touch_click(true);
+                self.flush()?;
+                thread::sleep(Duration::from_millis(ms));
+                self.pad().set_touch_click(false);
+                self.flush()?;
+            }
+            DebugRequest::Swipe { from, to, ms } => self.swipe(from, to, ms)?,
             other => {
                 self.apply(other);
                 self.flush()?;
@@ -97,8 +105,27 @@ impl Session {
             DebugRequest::Stick { stick, x, y } => pad.set_stick(stick, (x, y)),
             DebugRequest::Trigger { trigger, value } => pad.set_trigger(trigger, value),
             DebugRequest::Gyro { rates, .. } => pad.set_gyro(Some(rates)),
+            DebugRequest::Touch { finger, x, y } => pad.touch(finger, (x, y)),
+            DebugRequest::Lift(Some(finger)) => pad.lift(finger),
+            DebugRequest::Lift(None) => pad.touches().to_vec().into_iter().for_each(|(finger, _)| pad.lift(finger)),
+            DebugRequest::PadClick { down, .. } => pad.set_touch_click(down),
             _ => {}
         }
+    }
+
+    /// Strokes finger 0 across the touchpad in even steps over `ms`, then lifts it.
+    fn swipe(&self, from: (f32, f32), to: (f32, f32), ms: u64) -> Result<()> {
+        const STEPS: u32 = 10;
+        for i in 0..=STEPS {
+            let t = i as f32 / STEPS as f32;
+            self.pad().touch(0, (from.0 + (to.0 - from.0) * t, from.1 + (to.1 - from.1) * t));
+            self.flush()?;
+            if i < STEPS {
+                thread::sleep(Duration::from_millis(ms) / STEPS);
+            }
+        }
+        self.pad().lift(0);
+        self.flush()
     }
 
     fn render(&self) -> String {

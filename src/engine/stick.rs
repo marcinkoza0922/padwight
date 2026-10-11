@@ -68,7 +68,8 @@ impl Engine {
         };
         let (mx, my) = self.macro_sticks.get(&target).copied().unwrap_or_default();
         let (bx, by) = self.pushed(target);
-        let (mut x, mut y) = (px + gx + mx + bx, py + gy + my + by);
+        let (tx, ty) = self.touch.stick_push(target);
+        let (mut x, mut y) = (px + gx + mx + bx + tx, py + gy + my + by + ty);
         let mag = x.hypot(y);
         if mag > 1.0 {
             x /= mag;

@@ -37,6 +37,14 @@ pub enum DebugRequest {
     /// Motion rates in degrees per second. While attached to the daemon the pad turns at them
     /// for `ms` (100 when 0), then stops; otherwise they are just set.
     Gyro { rates: [f32; 3], ms: u64 },
+    /// Puts a finger on the touchpad at (x, y), each 0..1 across it, or moves it there.
+    Touch { finger: u8, x: f32, y: f32 },
+    /// Lifts a finger off the touchpad; `None` lifts them all.
+    Lift(Option<u8>),
+    /// Clicks the touchpad down or lets it go; with `ms`, clicks for that long.
+    PadClick { down: bool, ms: Option<u64> },
+    /// Strokes finger 0 from one point to another over `ms`, then lifts it.
+    Swipe { from: (f32, f32), to: (f32, f32), ms: u64 },
     /// What the daemon's mappings have output for this controller, one event per line; needs
     /// `--attach`. `clear` forgets what was returned.
     Output { clear: bool },
@@ -93,6 +101,12 @@ pub const COMMANDS: &str = "\
   trigger <left|right> <0..1>    pull a trigger
   gyro <pitch> <yaw> <roll> [ms] set the motion rates, in degrees per second; attached, the
                                  pad turns that way for ms (default 100), then stops
+  touch <x> <y> [finger]         put a finger (default 0) on the touchpad, or move it; x and y
+                                 go 0..1 across the pad from its top left corner
+  lift [finger]                  lift a finger off the touchpad (default: all of them)
+  pad-click [down|up|ms]         click the touchpad: hold it down, let it go, or click for ms
+                                 (default 50)
+  swipe <x0> <y0> <x1> <y1> [ms] stroke a finger across the touchpad over ms (default 150)
   output [clear]                 attached: print what the daemon's mappings have output
                                  (key KEY_A down, pad South up, mouse-move 3 -2, ...)
   expect model <name>            exit with an error unless the pad is that model
@@ -138,6 +152,23 @@ pub fn parse(words: &[&str]) -> Result<Command> {
             rates: [number(p)?, number(y)?, number(r)?],
             ms: ms.parse().map_err(|_| anyhow!("not a number of milliseconds: {ms}"))?,
         },
+        ["touch", x, y] => DebugRequest::Touch { finger: 0, x: number(x)?, y: number(y)? },
+        ["touch", x, y, finger] => DebugRequest::Touch { finger: finger_number(finger)?, x: number(x)?, y: number(y)? },
+        ["lift"] | ["lift", "all"] => DebugRequest::Lift(None),
+        ["lift", finger] => DebugRequest::Lift(Some(finger_number(finger)?)),
+        ["pad-click"] => DebugRequest::PadClick { down: true, ms: Some(50) },
+        ["pad-click", "down"] => DebugRequest::PadClick { down: true, ms: None },
+        ["pad-click", "up"] => DebugRequest::PadClick { down: false, ms: None },
+        ["pad-click", ms] => DebugRequest::PadClick { down: true, ms: Some(millis(ms)?) },
+        ["swipe", x0, y0, x1, y1, rest @ ..] => DebugRequest::Swipe {
+            from: (number(x0)?, number(y0)?),
+            to: (number(x1)?, number(y1)?),
+            ms: match rest {
+                [] => 150,
+                [ms] => millis(ms)?,
+                _ => bail!("swipe takes two points and how long, in milliseconds"),
+            },
+        },
         ["output"] => DebugRequest::Output { clear: false },
         ["output", "clear"] => DebugRequest::Output { clear: true },
         ["expect", rest @ ..] => DebugRequest::Expect(expectation(rest)?),
@@ -163,6 +194,14 @@ fn expectation(words: &[&str]) -> Result<Expectation> {
 
 fn number(s: &str) -> Result<f32> {
     s.parse().map_err(|_| anyhow!("not a number: {s}"))
+}
+
+fn millis(s: &str) -> Result<u64> {
+    s.parse().map_err(|_| anyhow!("not a number of milliseconds: {s}"))
+}
+
+fn finger_number(s: &str) -> Result<u8> {
+    s.parse().map_err(|_| anyhow!("not a finger number (0, 1, …): {s}"))
 }
 
 /// A pad identity by its slug, or `auto` for none.
@@ -277,6 +316,19 @@ mod tests {
         assert_eq!(req("output clear"), DebugRequest::Output { clear: true });
         assert_eq!(req("gyro 1 2 3 250"), DebugRequest::Gyro { rates: [1.0, 2.0, 3.0], ms: 250 });
         assert_eq!(parse(&["sleep", "20"]).unwrap(), Command::Sleep(20));
+    }
+
+    #[test]
+    fn touchpad_commands_parse() {
+        assert_eq!(req("touch 0.25 0.5"), DebugRequest::Touch { finger: 0, x: 0.25, y: 0.5 });
+        assert_eq!(req("touch 1 0 1"), DebugRequest::Touch { finger: 1, x: 1.0, y: 0.0 });
+        assert_eq!(req("lift"), DebugRequest::Lift(None));
+        assert_eq!(req("lift 1"), DebugRequest::Lift(Some(1)));
+        assert_eq!(req("pad-click"), DebugRequest::PadClick { down: true, ms: Some(50) });
+        assert_eq!(req("pad-click up"), DebugRequest::PadClick { down: false, ms: None });
+        assert_eq!(req("pad-click 300"), DebugRequest::PadClick { down: true, ms: Some(300) });
+        assert_eq!(req("swipe 0.2 0.5 0.8 0.5"), DebugRequest::Swipe { from: (0.2, 0.5), to: (0.8, 0.5), ms: 150 });
+        assert!(parse(&["touch", "0.5", "0.5", "thumb"]).is_err());
     }
 
     #[test]

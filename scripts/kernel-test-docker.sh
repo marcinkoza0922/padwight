@@ -6,6 +6,11 @@
 # Caveat: the container can read every host input device, including your real keyboard. The
 # test only opens its own virtual nodes, but the mount makes the others visible to it.
 #
+# Caveat: every checkout is mounted at /src and shares the padwight-kernel-target volume, and Cargo
+# rebuilds by file times. After running from another checkout, touch this one's sources first, or
+# the run tests the other checkout's build (the test count gives it away). A padwight daemon on
+# the host can also make the virtual-keyboard tests watch its keyboard; see docs/development/qa-plan.md.
+#
 # Usage: scripts/kernel-test-docker.sh [test filter, default: nothing_stays]
 #   scripts/kernel-test-docker.sh daemon_   runs the daemon-exit scenarios
 set -eu

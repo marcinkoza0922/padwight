@@ -92,6 +92,11 @@ impl PadModel {
         Self::ALL.into_iter().find(|m| norm(m.slug()) == want).map(Some)
     }
 
+    /// Whether the model has a touchpad Padwight reads.
+    pub fn has_touchpad(self) -> bool {
+        matches!(self, Self::DualShock4 | Self::DualSense | Self::DualSenseEdge)
+    }
+
     /// Whose button glyphs the model uses.
     pub fn family(self) -> PadFamily {
         match self {

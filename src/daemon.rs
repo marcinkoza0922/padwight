@@ -1208,12 +1208,23 @@ impl Daemon {
             }
             Some(Active::Offer(o)) => Some(OverlayView::Offer(o.view())),
             Some(Active::Settings(m, _)) => Some(OverlayView::Menu(m.view(&self.config))),
-            None => self.guide_menu.as_ref().map(|menu| {
-                let profile = self.config.active().map(|p| p.name.as_str()).unwrap_or_default();
-                let style = self.config.active_menu_style().clone();
-                OverlayView::Menu(crate::guide_menu::view(menu.steam, menu.cursor, profile, style))
-            }),
+            None => match &self.guide_menu {
+                Some(menu) => {
+                    let profile = self.config.active().map(|p| p.name.as_str()).unwrap_or_default();
+                    let style = self.config.active_menu_style().clone();
+                    Some(OverlayView::Menu(crate::guide_menu::view(menu.steam, menu.cursor, profile, style)))
+                }
+                None => self.touch_menu_view(),
+            },
         }
+    }
+
+    /// The menu a finger on a controller's touchpad is showing, if any. It never takes the
+    /// controller: the game keeps getting input while it shows.
+    fn touch_menu_view(&self) -> Option<OverlayView> {
+        let shown = self.devices.values().find_map(|d| d.engine.touch_menu())?;
+        let menu = self.scope.menus.iter().find(|m| m.name == shown.menu)?;
+        Some(OverlayView::Menu(crate::menu::touch_view(menu, shown.item, shown.choose, shown.picks)))
     }
 
     fn broadcast_overlay(&mut self) {
@@ -1898,6 +1909,9 @@ impl Daemon {
         let media = dev.engine.take_media_toggle();
         let menu_request = dev.engine.take_menu_request();
         let guide_keys = dev.engine.take_guide_nav();
+        if dev.engine.take_touch_menu_changed() {
+            self.broadcast_overlay();
+        }
         if let Some(layout) = toggle_overlay {
             self.toggle_overlay(layout);
         }
@@ -1951,7 +1965,8 @@ impl Daemon {
         (!self.devices.is_empty()).then(|| {
             let gyro = self.devices.values().any(|d| d.motion.is_some()).then_some(Feature::Gyro);
             let paddles = self.devices.values().any(|d| d.paddles).then_some(Feature::BackPaddles);
-            gyro.into_iter().chain(paddles).collect()
+            let touchpad = self.devices.values().any(|d| d.touchpad.is_some()).then_some(Feature::Touchpad);
+            gyro.into_iter().chain(paddles).chain(touchpad).collect()
         })
     }
 
@@ -2388,6 +2403,7 @@ impl Daemon {
         self.scope = self.config.scope();
         for dev in self.devices.values_mut() {
             dev.engine.set_macros(&self.scope.macros);
+            dev.engine.set_menus(&self.scope.menus);
         }
         self.sync_identities();
     }
@@ -2466,6 +2482,8 @@ impl Daemon {
             dev.engine.release_all(keep_toggled_layers, &mut out);
             dev.dispatch(&mut self.kbm, out);
         }
+        // A touch menu that was up goes away with the fingers.
+        self.broadcast_overlay();
     }
 
     /// Re-applies analog state under the active profile (and each controller's layers, which
@@ -2509,6 +2527,7 @@ impl Daemon {
                 analog_triggers: pad.analog_triggers,
                 rumble: pad.rumble,
                 paddles: pad.paddles,
+                touchpad: self.devices.values().any(|d| &d.path == path && d.touchpad.is_some()),
                 family: self.devices.values().find(|d| &d.path == path).and_then(|d| d.family),
                 model: self.devices.values().find(|d| &d.path == path).and_then(|d| d.model),
             })
@@ -2685,6 +2704,7 @@ impl Daemon {
     fn new_managed(&mut self, path: PathBuf, name: String, pad: Option<VirtualPad>, stop: Arc<AtomicBool>) -> Managed {
         let mut engine = Engine::default();
         engine.set_macros(&self.scope.macros);
+        engine.set_menus(&self.scope.menus);
         Managed {
             path,
             name,
