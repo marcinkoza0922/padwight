@@ -1,6 +1,7 @@
 //! The profile's Touchpad tab: what fingers on the pad do (mouse, a stick, a menu laid out on
 //! the pad, or swipes), on the whole pad or on each half of a split one, what the click does,
-//! and a picture of the pad with the fingers on it.
+//! and a picture of the pad with the fingers on it. Each side sits in a box laid out as a stick's
+//! (see `device_box`).
 
 use iced::widget::{Column, column};
 
@@ -24,7 +25,7 @@ pub(super) enum TouchModeKind {
 }
 
 impl TouchModeKind {
-    const ALL: [TouchModeKind; 5] = [TouchModeKind::Mouse, TouchModeKind::Joystick, TouchModeKind::Menu, TouchModeKind::Swipe, TouchModeKind::Off];
+    const ALL: [TouchModeKind; 5] = [TouchModeKind::Off, TouchModeKind::Mouse, TouchModeKind::Joystick, TouchModeKind::Menu, TouchModeKind::Swipe];
 
     fn of(motion: &TouchpadMotion) -> Self {
         match motion {
@@ -57,7 +58,7 @@ impl TouchModeKind {
 impl fmt::Display for TouchModeKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            TouchModeKind::Off => "Nothing",
+            TouchModeKind::Off => "Off",
             TouchModeKind::Mouse => "Mouse pointer",
             TouchModeKind::Joystick => "Gamepad stick",
             TouchModeKind::Menu => "Menu zones",
@@ -69,7 +70,7 @@ impl fmt::Display for TouchModeKind {
 /// A short description of the touchpad's settings, for "Same as …" in layers.
 pub(super) fn touchpad_summary(cfg: &TouchpadConfig) -> String {
     let one = |m: &TouchpadMotion| match m {
-        TouchpadMotion::Off => "nothing".to_string(),
+        TouchpadMotion::Off => "off".to_string(),
         TouchpadMotion::Mouse { .. } => "mouse".to_string(),
         TouchpadMotion::Joystick { stick, .. } => stick.to_string().to_lowercase(),
         TouchpadMotion::Menu { menu, .. } => format!("menu “{menu}”"),
@@ -102,17 +103,15 @@ pub(super) fn touchpad_sections<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, 
                 .into(),
         );
     }
-    rows.extend(layer_part(ui, LayerPart::Touchpad, "Touchpad".into(), touchpad_summary(base), || touchpad_rows(&p.touchpad, ui.names)));
+    let part = layer_part(ui, LayerPart::Touchpad, "Touchpad".into(), touchpad_summary(base), || touchpad_rows(&p.touchpad, ui.names));
+    // A layer's "Same as base" line sits in a box, as a stick's does; the editor boxes each side.
+    if ui.layer.is_some_and(|m| !m.overrides(LayerPart::Touchpad)) {
+        rows.push(device_box(part));
+    } else {
+        rows.extend(part);
+        rows.push(pictures(p, ui));
+    }
     let mut sections = vec![section("Touchpad", Some(help.into()), rows)];
-    let picture = PadPicture {
-        settings: Some((&p.touchpad, &ui.menus)),
-        touches: ui.live_touch.as_ref().map_or(&[], |(t, _)| t.as_slice()),
-        click: ui.live_touch.as_ref().is_some_and(|(_, c)| *c),
-        height: ui.touchpad_height,
-        width: 420.0,
-    };
-    let help = "Where each side's job is on the pad. Fingers on the controller's touchpad show up here.";
-    sections.push(section("Picture", Some(help.into()), vec![container(touchpad_picture(&picture)).center_x(Length::Fill).into()]));
     if ui.layer.is_none() {
         sections.push(section(
             "Controller requirements",
@@ -123,7 +122,23 @@ pub(super) fn touchpad_sections<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, 
     sections
 }
 
-/// The settings: whether the pad is split, and each side's mode and click.
+/// The picture of the pad, with where each side's job is and the fingers on it.
+fn pictures<'a>(p: &'a Profile, ui: &Ui) -> Element<'a, Message> {
+    let picture = PadPicture {
+        settings: Some((&p.touchpad, &ui.menus)),
+        touches: ui.live_touch.as_ref().map_or(&[], |(t, _)| t.as_slice()),
+        click: ui.live_touch.as_ref().is_some_and(|(_, c)| *c),
+        height: ui.touchpad_height,
+        width: PAD_WIDTH,
+    };
+    let why = if ui.any_touchpad { "Where each side's job is on the pad. Fingers on the controller's touchpad show up here." } else { "Where each side's job is on the pad. Connect a controller with a touchpad to see fingers on it." };
+    visualizer_panel(vec![figure("Pad (live)", touchpad_picture(&picture), None, PAD_WIDTH)], Some(why), None)
+}
+
+/// The width of the pad's picture.
+const PAD_WIDTH: f32 = 420.0;
+
+/// The settings: whether the pad is split, and each side's box.
 pub(super) fn touchpad_rows<'a>(cfg: &'a TouchpadConfig, names: &Names) -> Vec<Element<'a, Message>> {
     let with = move |f: &dyn Fn(&mut TouchpadConfig)| {
         let mut c = cfg.clone();
@@ -144,48 +159,51 @@ pub(super) fn touchpad_rows<'a>(cfg: &'a TouchpadConfig, names: &Names) -> Vec<E
         rows.push(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR).into());
     }
     for &side in cfg.sides() {
-        let mut col = Column::new().spacing(10);
-        if cfg.right.is_some() {
-            col = col.push(text(if side == TouchSide::Left { "Left half" } else { "Right half" }).size(15).color(style_accent()));
-        }
-        col = side_rows(col, cfg, side, names, with);
-        rows.push(container(col).padding(10).style(style::inset).width(Length::Fill).into());
+        let col = side_rows(Column::new().spacing(8), cfg, side, names, with);
+        rows.push(device_box(vec![col.into()]));
     }
     rows
 }
 
-/// One side's mode, its settings and its click.
+/// One side's header line (its name, its mode and the stick it sends), its settings and its
+/// click.
 fn side_rows<'a>(rows: Column<'a, Message>, cfg: &'a TouchpadConfig, side: TouchSide, names: &Names, with: impl Fn(&dyn Fn(&mut TouchpadConfig)) -> Message + Copy + 'a) -> Column<'a, Message> {
+    let name = match (cfg.right.is_some(), side) {
+        (false, _) => "Whole pad",
+        (true, TouchSide::Left) => "Left half",
+        (true, TouchSide::Right) => "Right half",
+    };
     let menus = names.menus.clone();
-    let rows = rows.push(labeled(
-        "Fingers",
-        dropdown(TouchModeKind::ALL, Some(TouchModeKind::of(cfg.motion(side))), move |k| with(&|c| *c.motion_mut(side) = k.motion(&menus))).width(SETTING_WIDTH).into(),
-    ));
     let set = move |m: TouchpadMotion| with(&|c| *c.motion_mut(side) = m.clone());
+    let options = match cfg.motion(side) {
+        &TouchpadMotion::Joystick { relative, radius, deadzone, stick } => Vec::from(as_stick(stick, move |s| set(TouchpadMotion::Joystick { stick: s, relative, radius, deadzone }))),
+        _ => Vec::new(),
+    };
+    let rows = rows.push(box_header(name.into(), TouchModeKind::ALL, TouchModeKind::of(cfg.motion(side)), move |k| with(&|c| *c.motion_mut(side) = k.motion(&menus)), options));
     let rows = match cfg.motion(side) {
         TouchpadMotion::Off => rows,
         TouchpadMotion::Mouse { speed, curve, tap, scroll, inertia } => mouse_rows(rows, (*speed, *curve, *tap, *scroll, *inertia), set),
         TouchpadMotion::Joystick { stick, relative, radius, deadzone } => joystick_rows(rows, (*stick, *relative, *radius, *deadzone), set),
         TouchpadMotion::Menu { menu, choose, overlay } => menu_rows(rows, (menu, *choose, *overlay), names, set),
         TouchpadMotion::Swipe { distance, .. } => {
-            let mut rows = rows.push(value_slider("    Swipe length", 0.1..=0.6, *distance, 0.01, "pad widths", move |v| {
+            let mut rows = rows.push(box_row("Swipe length", slider_editor(0.1..=0.6, *distance, 0.01, "pad widths", move |v| {
                 with(&|c| {
                     if let TouchpadMotion::Swipe { distance, .. } = c.motion_mut(side) {
                         *distance = v;
                     }
                 })
-            }));
+            })));
             for dir in SwipeDirection::ALL {
                 rows = rows.push(slot_editor(cfg, TouchSlot::Swipe(side, dir), names));
             }
             rows
         }
     };
-    let click_help = match cfg.motion(side) {
-        TouchpadMotion::Menu { .. } => "    Click (off the items)",
-        _ => "    Click",
+    let click = match cfg.motion(side) {
+        TouchpadMotion::Menu { .. } => "Click (off the items)",
+        _ => "Click",
     };
-    rows.push(labeled(click_help, slot_action(cfg, TouchSlot::Click(side), names)))
+    rows.push(box_row(click, slot_action(cfg, TouchSlot::Click(side), names)))
 }
 
 /// The pointer's speed and acceleration, and tapping, scrolling and gliding.
@@ -197,41 +215,40 @@ fn mouse_rows<'a>(rows: Column<'a, Message>, (speed, curve, tap, scroll, inertia
         mouse(speed, picked, tap, scroll, inertia)
     });
     let mut rows = rows
-        .push(value_slider("    Speed", 200.0..=4000.0, speed, 50.0, "px across the pad", move |v| mouse(v, curve, tap, scroll, inertia)))
-        .push(labeled("    Acceleration", picker));
+        .push(box_row("Speed", slider_editor(200.0..=4000.0, speed, 50.0, "px across the pad", move |v| mouse(v, curve, tap, scroll, inertia))))
+        .push(box_row("Response", picker));
     if !curve.is_flat() {
         rows = rows
-            .push(value_slider("      Slow fingers", 0.1..=3.0, curve.slow_gain, 0.05, "×", move |v| mouse(speed, SpeedCurve { slow_gain: v, ..curve }, tap, scroll, inertia)))
-            .push(value_slider("      Fast fingers", 0.1..=4.0, curve.fast_gain, 0.05, "×", move |v| mouse(speed, SpeedCurve { fast_gain: v, ..curve }, tap, scroll, inertia)))
-            .push(value_slider("      Shape", 0.25..=4.0, curve.power, 0.05, "(1 = straight, more = slow for longer)", move |v| {
-                mouse(speed, SpeedCurve { power: v, ..curve }, tap, scroll, inertia)
-            }));
+            .push(sub_row("Slow sensitivity", slider_editor(0.1..=3.0, curve.slow_gain, 0.05, "×", move |v| mouse(speed, SpeedCurve { slow_gain: v, ..curve }, tap, scroll, inertia))))
+            .push(sub_row("Fast sensitivity", slider_editor(0.1..=4.0, curve.fast_gain, 0.05, "×", move |v| mouse(speed, SpeedCurve { fast_gain: v, ..curve }, tap, scroll, inertia))))
+            .push(sub_row(
+                "Shape",
+                slider_editor(0.25..=4.0, curve.power, 0.05, "(1 = straight, more = slow for longer)", move |v| mouse(speed, SpeedCurve { power: v, ..curve }, tap, scroll, inertia)),
+            ));
     }
     let checks = column![
-        checkbox(tap).label("Tap to click (runs the click below)").on_toggle(move |v| mouse(speed, curve, v, scroll, inertia)),
+        with_help(checkbox(tap).label("Tap to click").on_toggle(move |v| mouse(speed, curve, v, scroll, inertia)), "A tap runs the click below."),
         checkbox(scroll).label("Two fingers scroll").on_toggle(move |v| mouse(speed, curve, tap, v, inertia)),
         checkbox(inertia).label("Keep gliding after a flick").on_toggle(move |v| mouse(speed, curve, tap, scroll, v)),
     ]
     .spacing(6);
-    rows.push(labeled("", checks.into()))
+    rows.push(box_row("", checks.into()))
 }
 
-/// The stick the finger pushes and how.
+/// How the finger pushes the stick (which stick is on the header line).
 fn joystick_rows<'a>(rows: Column<'a, Message>, (stick, relative, radius, deadzone): (Stick, bool, f32, f32), set: impl Fn(TouchpadMotion) -> Message + Copy + 'a) -> Column<'a, Message> {
-    let joystick = move |stick: Stick, relative: bool, radius: f32, deadzone: f32| set(TouchpadMotion::Joystick { stick, relative, radius, deadzone });
-    let mut rows = rows
-        .push(labeled("    Output stick", dropdown([Stick::Left, Stick::Right], Some(stick), move |s| joystick(s, relative, radius, deadzone)).width(170).into()))
-        .push(labeled(
-            "",
-            checkbox(relative)
-                .label("Center where the finger lands (otherwise the middle of the pad is center)")
-                .on_toggle(move |v| joystick(stick, v, radius, deadzone))
-                .into(),
-        ));
+    let joystick = move |relative: bool, radius: f32, deadzone: f32| set(TouchpadMotion::Joystick { stick, relative, radius, deadzone });
+    let mut rows = rows.push(box_row(
+        "",
+        with_help(
+            checkbox(relative).label("Center where the finger lands").on_toggle(move |v| joystick(v, radius, deadzone)),
+            "Otherwise the middle of the pad is the center.",
+        ),
+    ));
     if relative {
-        rows = rows.push(value_slider("    Full push at", 0.05..=0.5, radius, 0.01, "pad widths from center", move |v| joystick(stick, relative, v, deadzone)));
+        rows = rows.push(box_row("Full push at", slider_editor(0.05..=0.5, radius, 0.01, "pad widths from center", move |v| joystick(relative, v, deadzone))));
     }
-    rows.push(value_slider("    Deadzone", 0.0..=0.5, deadzone, 0.01, "of a full push", move |v| joystick(stick, relative, radius, v)))
+    rows.push(box_row("Deadzone", slider_editor(0.0..=0.5, deadzone, 0.01, "of a full push", move |v| joystick(relative, radius, v))))
 }
 
 /// The menu laid out on the pad, and how its items are chosen.
@@ -240,34 +257,34 @@ fn menu_rows<'a>(rows: Column<'a, Message>, (menu, choose, overlay): (&'a String
     let picked = names.menus.contains(menu).then(|| menu.clone());
     let menu_name = menu.clone();
     let rows = if names.menus.is_empty() {
-        rows.push(labeled("    Menu", note("Make a menu on the Menus tab first, then pick it here.").into()))
+        rows.push(box_row("Menu", note("Make a menu on the Menus tab first, then pick it here.").into()))
     } else {
-        rows.push(labeled(
-            "    Menu",
+        rows.push(box_row(
+            "Menu",
             dropdown(names.menus.clone(), picked, move |m| entry(m, choose, overlay)).placeholder("Pick a menu…").width(SETTING_WIDTH).into(),
         ))
     };
     let name = menu_name.clone();
-    rows.push(labeled("    Choose by", dropdown(TouchChoose::ALL, Some(choose), move |c| entry(name.clone(), c, overlay)).width(SETTING_WIDTH).into()))
-        .push(labeled("", checkbox(overlay).label("Show the menu while a finger is on the pad").on_toggle(move |v| entry(menu_name.clone(), choose, v)).into()))
-        .push(labeled(
-            "",
-            note(
-                "The pad is divided the way the menu is drawn: a radial menu by direction from the middle, a grid into its cells, \
-                 a list into rows, a carousel from left to right. A clicked item stays pressed until the click lets go. The game \
-                 keeps getting input while the menu shows.",
-            )
-            .into(),
-        ))
+    let picker = dropdown(TouchChoose::ALL, Some(choose), move |c| entry(name.clone(), c, overlay)).width(SETTING_WIDTH);
+    rows.push(box_row(
+        "Choose by",
+        with_help(
+            picker,
+            "The pad is divided the way the menu is drawn: a radial menu by direction from the middle, a grid into its cells, \
+             a list into rows, a carousel from left to right. A clicked item stays pressed until the click lets go. The game \
+             keeps getting input while the menu shows.",
+        ),
+    ))
+    .push(box_row("", checkbox(overlay).label("Show the menu while a finger is on the pad").on_toggle(move |v| entry(menu_name.clone(), choose, v)).into()))
 }
 
 /// A labeled action editor for one of the touchpad's action slots.
 fn slot_editor<'a>(cfg: &'a TouchpadConfig, slot: TouchSlot, names: &Names) -> Element<'a, Message> {
     let label = match slot {
-        TouchSlot::Click(_) => "    Click".to_string(),
-        TouchSlot::Swipe(_, dir) => format!("    {dir}"),
+        TouchSlot::Click(_) => "Click".to_string(),
+        TouchSlot::Swipe(_, dir) => dir.to_string(),
     };
-    labeled(label, slot_action(cfg, slot, names))
+    box_row(label, slot_action(cfg, slot, names))
 }
 
 fn slot_action<'a>(cfg: &'a TouchpadConfig, slot: TouchSlot, names: &Names) -> Element<'a, Message> {

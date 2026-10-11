@@ -1,9 +1,9 @@
 //! Sticks on the Sticks & triggers tab: each stick's mode (gamepad, mouse, scroll, button ring,
 //! flick stick) and its settings.
 //!
-//! Each stick sits in a box of its own, in the same order whatever its mode: the mode and its
-//! output options on the header line, then the settings, an "Advanced" fold where the mode has
-//! one, one row of pictures, and last the stick's direction buttons and zones.
+//! Each stick sits in a box of its own (see `device_box`), in the same order whatever its mode:
+//! the mode and its output options on the header line, then the settings, an "Advanced" fold
+//! where the mode has one, one row of pictures, and last the stick's direction buttons and zones.
 
 use iced::widget::{Column, column, row};
 
@@ -16,7 +16,7 @@ use mouse::{mouse_advanced, mouse_rows};
 /// A stick's mode in a few words.
 pub(super) fn stick_summary(cfg: &StickConfig) -> String {
     let mode = match &cfg.action {
-        StickAction::Disabled => "Disabled".to_string(),
+        StickAction::Disabled => "off".to_string(),
         StickAction::Gamepad { stick, .. } => format!("pad {stick}"),
         StickAction::Mouse { speed, response, .. } if response.accel > 0.0 => {
             format!("mouse, {speed:.0} px/s, accel {:.0}%", response.accel * 100.0)
@@ -42,7 +42,7 @@ pub(super) enum StickKind {
 impl fmt::Display for StickKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            StickKind::Disabled => "Disabled",
+            StickKind::Disabled => "Off",
             StickKind::Gamepad => "Gamepad stick",
             StickKind::Mouse => "Mouse pointer",
             StickKind::Scroll => "Scroll wheel",
@@ -52,27 +52,9 @@ impl fmt::Display for StickKind {
     }
 }
 
-/// The space between a box's edge (a stick's, or an "Advanced" one in it) and the rows in it.
-const BOX_PADDING: f32 = 12.0;
-
-/// The label column in a stick's box: narrower by the box's padding, so the stick's editors line
-/// up with the triggers' below.
-const ROW_LABEL: f32 = LABEL_WIDTH - BOX_PADDING;
-
-/// A labeled row in a stick's box.
-fn stick_row<'a>(label: impl text::IntoFragment<'a>, editor: Element<'a, Message>) -> Element<'a, Message> {
-    labeled_in(ROW_LABEL, label, editor)
-}
-
-/// One stick's rows (its editor, or a layer's "Same as base" line) in a box of their own, so the
-/// two sticks read as two separate blocks.
-pub(super) fn stick_box<'a>(rows: Vec<Element<'a, Message>>) -> Element<'a, Message> {
-    container(Column::with_children(rows).spacing(10)).padding(BOX_PADDING).width(Length::Fill).style(style::inset).into()
-}
-
 pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> Element<'a, Message> {
     let live = ui.live_sticks.map(|l| l[usize::from(s == Stick::Right)]);
-    let open = ui.expanded.contains(&Target::StickResponse(s));
+    let open = ui.expanded.contains(&Target::StickAdvanced(s));
     let with = move |action: StickAction| {
         let mut c = cfg.clone();
         c.action = action;
@@ -91,7 +73,7 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
         StickAction::Mouse { .. } => rows = mouse_rows(rows, s, cfg, with),
         StickAction::Scroll { speed, invert_y } => {
             let invert_y = *invert_y;
-            rows = rows.push(stick_row("Speed", slider_editor(1.0..=60.0, *speed, 1.0, "notches/s", move |v| with(StickAction::Scroll { speed: v, invert_y }))));
+            rows = rows.push(box_row("Speed", slider_editor(1.0..=60.0, *speed, 1.0, "notches/s", move |v| with(StickAction::Scroll { speed: v, invert_y }))));
         }
         StickAction::Ring { .. } => rows = ring_settings(rows, cfg, with),
         StickAction::Flick { .. } => rows = flick_rows(rows, cfg, with),
@@ -99,10 +81,10 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
     }
     // A mouse stick's curve is part of its response, with the preset.
     if matches!(cfg.action, StickAction::Scroll { .. }) {
-        rows = rows.push(stick_row("Curve", slider_editor(1.0..=3.0, cfg.curve, 0.1, "(1 = linear)", set(|c, v| c.curve = v))));
+        rows = rows.push(box_row("Curve", slider_editor(1.0..=3.0, cfg.curve, 0.1, "(1 = straight, more = finer near center)", set(|c, v| c.curve = v))));
     }
     if !matches!(cfg.action, StickAction::Disabled) {
-        rows = rows.push(stick_row(
+        rows = rows.push(box_row(
             "Deadzone",
             row![slider_editor(0.0..=0.5, cfg.deadzone, 0.01, "", set(|c, v| c.deadzone = v)), help(deadzone_graph::explain(cfg.deadzone))]
                 .spacing(10)
@@ -127,8 +109,8 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
         rows = rows.push(rule::horizontal(1));
     }
     // The stick's direction buttons and zones work in every mode, so they come last, apart.
-    rows.push(stick_row("Directions press at", slider_editor(0.05..=0.95, cfg.key_threshold, 0.05, "", set(|c, v| c.key_threshold = v))))
-        .push(stick_row("Zones", zone_list(Analog::Stick(s), &cfg.zones, ui.names)))
+    rows.push(box_row("Directions press at", slider_editor(0.05..=0.95, cfg.key_threshold, 0.05, "", set(|c, v| c.key_threshold = v))))
+        .push(box_row("Zones", zone_list(Analog::Stick(s), &cfg.zones, ui.names)))
         .into()
 }
 
@@ -144,7 +126,7 @@ fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message
         StickAction::Flick { .. } => StickKind::Flick,
     };
     let kinds = [StickKind::Disabled, StickKind::Gamepad, StickKind::Mouse, StickKind::Scroll, StickKind::Ring, StickKind::Flick];
-    let picker = dropdown(kinds, Some(kind), move |k| {
+    let pick = move |k| {
         with(match k {
             StickKind::Disabled => StickAction::Disabled,
             StickKind::Gamepad => StickAction::Gamepad { stick: s, invert_y: false },
@@ -153,26 +135,19 @@ fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message
             StickKind::Ring => StickAction::ring(8),
             StickKind::Flick => StickAction::flick(),
         })
-    })
-    .width(170);
-    let mut line = row![text(s.to_string()).size(16).width(ROW_LABEL), picker].spacing(10).align_y(Alignment::Center);
-    let invert = |on: bool, set: Box<dyn Fn(bool) -> Message + 'a>| checkbox(on).label("Invert Y").on_toggle(set);
-    match cfg.action {
+    };
+    let invert = |on: bool, set: Box<dyn Fn(bool) -> Message + 'a>| checkbox(on).label("Invert Y").on_toggle(set).into();
+    let options: Vec<Element<'a, Message>> = match cfg.action {
         StickAction::Gamepad { stick, invert_y } => {
-            line = line
-                .push(text("as").size(13).color(MUTED_COLOR))
-                .push(dropdown([Stick::Left, Stick::Right], Some(stick), move |t| with(StickAction::Gamepad { stick: t, invert_y })).width(150))
-                .push(invert(invert_y, Box::new(move |inv| with(StickAction::Gamepad { stick, invert_y: inv }))));
+            let mut options = Vec::from(as_stick(stick, move |t| with(StickAction::Gamepad { stick: t, invert_y })));
+            options.push(invert(invert_y, Box::new(move |inv| with(StickAction::Gamepad { stick, invert_y: inv }))));
+            options
         }
-        StickAction::Mouse { speed, response, invert_y } => {
-            line = line.push(invert(invert_y, Box::new(move |inv| with(StickAction::Mouse { speed, response, invert_y: inv }))));
-        }
-        StickAction::Scroll { speed, invert_y } => {
-            line = line.push(invert(invert_y, Box::new(move |inv| with(StickAction::Scroll { speed, invert_y: inv }))));
-        }
-        _ => {}
-    }
-    line.into()
+        StickAction::Mouse { speed, response, invert_y } => vec![invert(invert_y, Box::new(move |inv| with(StickAction::Mouse { speed, response, invert_y: inv })))],
+        StickAction::Scroll { speed, invert_y } => vec![invert(invert_y, Box::new(move |inv| with(StickAction::Scroll { speed, invert_y: inv })))],
+        _ => Vec::new(),
+    };
+    box_header(s.to_string(), kinds, kind, pick, options)
 }
 
 /// The stick's pictures in a panel of their own, centered in one row that wraps when the window
@@ -188,18 +163,7 @@ fn visualizers<'a>(cfg: &StickConfig, live: Option<(f32, f32)>, probe: f32) -> O
     if let StickAction::Mouse { speed, response, .. } = cfg.action {
         pics.extend(response_graph::figures(response_graph::Shown { speed, curve: cfg.curve, response, deadzone: cfg.deadzone, probe, live }));
     }
-    let pics = iced::widget::Row::with_children(pics).spacing(20).wrap().vertical_spacing(12);
-    let body = column![text("Visualizers").size(14), container(pics).center_x(Length::Fill)].spacing(8);
-    Some(container(body).padding(BOX_PADDING).width(Length::Fill).style(style::panel).into())
-}
-
-/// A picture with a small caption above it and an optional note under it, `width` wide.
-pub(super) fn figure<'a>(title: &'a str, picture: impl Into<Element<'a, Message>>, note: Option<String>, width: f32) -> Element<'a, Message> {
-    let mut col = column![text(title).size(12).color(MUTED_COLOR), picture.into()].spacing(4).width(width);
-    if let Some(note) = note {
-        col = col.push(text(note).size(12).color(MUTED_COLOR));
-    }
-    col.into()
+    Some(visualizer_panel(pics, None, None))
 }
 
 /// A button ring's settings: its sectors and where they start.
@@ -213,10 +177,10 @@ fn ring_settings<'a>(rows: Column<'a, Message>, cfg: &'a StickConfig, with: impl
         actions.resize(usize::from(sectors), ButtonAction::Disabled);
         with(StickAction::Ring { sectors, start_angle, inner_radius, hysteresis, actions })
     };
-    rows.push(stick_row("Sectors", dropdown([4_u8, 8, 12], Some(sectors), move |n| set(n, start_angle, inner_radius, hysteresis)).width(170).into()))
-        .push(stick_row("First sector at", slider_editor(0.0..=345.0, start_angle, 15.0, "° from up", move |v| set(sectors, v, inner_radius, hysteresis))))
-        .push(stick_row("Starts at", slider_editor(0.05..=0.95, inner_radius, 0.05, "of the way out", move |v| set(sectors, start_angle, v, hysteresis))))
-        .push(stick_row("Stickiness", slider_editor(0.0..=0.4, hysteresis, 0.05, "of a sector", move |v| set(sectors, start_angle, inner_radius, v))))
+    rows.push(box_row("Sectors", dropdown([4_u8, 8, 12], Some(sectors), move |n| set(n, start_angle, inner_radius, hysteresis)).width(170).into()))
+        .push(box_row("First sector at", slider_editor(0.0..=345.0, start_angle, 15.0, "° from up", move |v| set(sectors, v, inner_radius, hysteresis))))
+        .push(box_row("Starts at", slider_editor(0.05..=0.95, inner_radius, 0.05, "of the way out", move |v| set(sectors, start_angle, v, hysteresis))))
+        .push(box_row("Stickiness", slider_editor(0.0..=0.4, hysteresis, 0.05, "of a sector", move |v| set(sectors, start_angle, inner_radius, v))))
 }
 
 /// A button ring's action for each sector, with presets that fill them all.
@@ -230,7 +194,7 @@ fn ring_sectors<'a>(
     let StickAction::Ring { sectors, start_angle, actions, .. } = &cfg.action else {
         return rows;
     };
-    rows = rows.push(stick_row(
+    rows = rows.push(box_row(
         "Sector actions",
         row![
             text("Fill with").size(13).color(MUTED_COLOR),
@@ -254,33 +218,6 @@ fn ring_sectors<'a>(
         list = list.push(row![label, editor].spacing(10));
     }
     rows.push(list)
-}
-
-/// The space around an "Advanced" fold's header and its rows; with the rows' own inset it adds up
-/// to `BOX_PADDING`, so `boxed_row` lines up.
-const FOLD_PADDING: f32 = 4.0;
-
-/// An "Advanced" fold: a panel whose whole header line opens it, naming what it holds while it's
-/// shut, so it's hard to miss. `rows` are its rows when open.
-fn advanced_fold<'a>(title: &str, holds: &'a str, s: Stick, rows: Option<Column<'a, Message>>) -> Element<'a, Message> {
-    let chevron = if rows.is_some() { "▾" } else { "▸" };
-    let mut line = row![text(format!("{chevron}  {title}")).size(14), space::horizontal()].align_y(Alignment::Center);
-    if rows.is_none() {
-        line = line.push(text(holds).size(12).color(MUTED_COLOR));
-    }
-    let header = button(line).style(style::fold_header).padding([6.0, BOX_PADDING - FOLD_PADDING]).width(Length::Fill);
-    let mut body = column![header.on_press(Message::ToggleExpanded(Target::StickResponse(s)))];
-    if let Some(rows) = rows {
-        let inner = BOX_PADDING - FOLD_PADDING;
-        body = body.push(container(rows.spacing(8)).padding(iced::Padding { top: FOLD_PADDING, right: inner, bottom: inner, left: inner }));
-    }
-    container(body).padding(FOLD_PADDING).width(Length::Fill).style(style::panel).into()
-}
-
-/// A row in an "Advanced" fold. Its label column is narrower by the fold's padding, so its editor
-/// lines up with the editors outside it.
-fn boxed_row<'a>(label: &'a str, editor: Element<'a, Message>) -> Element<'a, Message> {
-    labeled_in(ROW_LABEL - BOX_PADDING, label, editor)
 }
 
 /// The fields of a flick stick, for changing one of them.
@@ -309,8 +246,8 @@ fn flick_rows<'a>(rows: Column<'a, Message>, cfg: &StickConfig, with: impl Fn(St
     let (full_turn_px, flick_threshold, ..) = flick_fields!(cfg, rows);
     let a = cfg.action.clone();
     let b = a.clone();
-    rows.push(stick_row("Turn size", slider_editor(1000.0..=30000.0, full_turn_px, 100.0, "px per 360°", move |v| flick_with!(with, a.clone(), full_turn_px, v))))
-        .push(stick_row(
+    rows.push(box_row("Turn size", slider_editor(1000.0..=30000.0, full_turn_px, 100.0, "px per 360°", move |v| flick_with!(with, a.clone(), full_turn_px, v))))
+        .push(box_row(
             "",
             row![
                 button(text("Test turn").size(13)).style(style::secondary).on_press(Message::TestTurn(full_turn_px as i32)),
@@ -324,7 +261,7 @@ fn flick_rows<'a>(rows: Column<'a, Message>, cfg: &StickConfig, with: impl Fn(St
             .align_y(Alignment::Center)
             .into(),
         ))
-        .push(stick_row("Flick at", slider_editor(0.5..=1.0, flick_threshold, 0.05, "of the way out", move |v| flick_with!(with, b.clone(), flick_threshold, v))))
+        .push(box_row("Flick at", slider_editor(0.5..=1.0, flick_threshold, 0.05, "of the way out", move |v| flick_with!(with, b.clone(), flick_threshold, v))))
 }
 
 /// A flick stick's "Advanced flick" fold.
@@ -332,15 +269,15 @@ fn flick_advanced<'a>(rows: Column<'a, Message>, cfg: &StickConfig, open: bool, 
     let (_, _, flick_time_ms, rotate_smoothing_ms, forward_deadzone, vertical, vertical_speed) = flick_fields!(cfg, rows);
     const HOLDS: &str = "Flick time, smoothing, dead angle, looking up and down";
     if !open {
-        return rows.push(advanced_fold("Advanced flick", HOLDS, s, None));
+        return rows.push(advanced_fold("Advanced flick", HOLDS, Target::StickAdvanced(s), None));
     }
     let a = cfg.action.clone();
     let (a1, a2, a3, a4) = (a.clone(), a.clone(), a.clone(), a.clone());
     let mut advanced = column![
-        boxed_row("Flick time", slider_editor(0.0..=300.0, flick_time_ms as f32, 10.0, "ms", move |v| flick_with!(with, a1.clone(), flick_time_ms, v as u32))),
-        boxed_row("Turning smoothing", slider_editor(0.0..=200.0, rotate_smoothing_ms as f32, 5.0, "ms", move |v| flick_with!(with, a2.clone(), rotate_smoothing_ms, v as u32))),
-        boxed_row("Dead angle", slider_editor(0.0..=30.0, forward_deadzone, 1.0, "° around forward", move |v| flick_with!(with, a3.clone(), forward_deadzone, v))),
-        boxed_row(
+        fold_row("Flick time", slider_editor(0.0..=300.0, flick_time_ms as f32, 10.0, "ms", move |v| flick_with!(with, a1.clone(), flick_time_ms, v as u32))),
+        fold_row("Turning smoothing", slider_editor(0.0..=200.0, rotate_smoothing_ms as f32, 5.0, "ms", move |v| flick_with!(with, a2.clone(), rotate_smoothing_ms, v as u32))),
+        fold_row("Dead angle", slider_editor(0.0..=30.0, forward_deadzone, 1.0, "° around forward", move |v| flick_with!(with, a3.clone(), forward_deadzone, v))),
+        fold_row(
             "",
             checkbox(vertical == FlickVertical::Look)
                 .label("Also look up and down with the stick")
@@ -349,7 +286,7 @@ fn flick_advanced<'a>(rows: Column<'a, Message>, cfg: &StickConfig, open: bool, 
         ),
     ];
     if vertical == FlickVertical::Look {
-        advanced = advanced.push(boxed_row("Vertical speed", slider_editor(100.0..=4000.0, vertical_speed, 50.0, "px/s", move |v| flick_with!(with, a.clone(), vertical_speed, v))));
+        advanced = advanced.push(fold_row("Vertical speed", slider_editor(100.0..=4000.0, vertical_speed, 50.0, "px/s", move |v| flick_with!(with, a.clone(), vertical_speed, v))));
     }
-    rows.push(advanced_fold("Advanced flick", HOLDS, s, Some(advanced)))
+    rows.push(advanced_fold("Advanced flick", HOLDS, Target::StickAdvanced(s), Some(advanced)))
 }

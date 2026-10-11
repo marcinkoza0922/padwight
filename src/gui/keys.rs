@@ -220,7 +220,7 @@ impl App {
                     Target::RingSector(st, i) => p.stick_mut(st).action.ring_actions_mut().get_mut(i),
                     Target::Touch(slot) => p.touchpad.slot_mut(slot),
                     // Handled above, outside any profile.
-                    Target::MacroStep(..) | Target::MenuItem(..) | Target::StickResponse(_) => None,
+                    Target::MacroStep(..) | Target::MenuItem(..) | Target::StickAdvanced(_) | Target::GyroAdvanced => None,
                 };
                 if let Some(action) = root.and_then(|a| action_at(a, &path)) {
                     *action = ButtonAction::Keys(keys);

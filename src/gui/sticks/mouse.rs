@@ -25,22 +25,22 @@ pub(super) fn mouse_rows<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a Stick
         set(curve, response)
     });
     let rows = rows
-        .push(stick_row("Speed", slider_editor(100.0..=4000.0, speed, 50.0, "px/s", move |v| with(StickAction::Mouse { speed: v, response, invert_y }))))
-        .push(stick_row("Response", picker));
+        .push(box_row("Speed", slider_editor(100.0..=4000.0, speed, 50.0, "px/s", move |v| with(StickAction::Mouse { speed: v, response, invert_y }))))
+        .push(box_row("Response", picker));
     if preset == CurvePreset::Linear {
         return rows;
     }
     let rows = rows
-        .push(stick_row("    Curve", slider_editor(1.0..=3.0, curve, 0.05, "(1 = straight, more = finer near center)", move |v| set(v, response))))
-        .push(stick_row(
-            "    Acceleration",
+        .push(sub_row("Curve", slider_editor(1.0..=3.0, curve, 0.05, "(1 = straight, more = finer near center)", move |v| set(v, response))))
+        .push(sub_row(
+            "Acceleration",
             slider_editor(0.0..=100.0, response.accel * 100.0, 5.0, "% faster while held at full push", move |v| {
                 set(curve, MouseResponse { accel: v / 100.0, ..response })
             }),
         ));
     let rows = if response.accel > 0.0 {
-        rows.push(stick_row(
-            "    Ramp time",
+        rows.push(sub_row(
+            "Ramp time",
             slider_editor(100.0..=2000.0, response.accel_ramp_ms as f32, 50.0, "ms to full acceleration", move |v| {
                 set(curve, MouseResponse { accel_ramp_ms: v as u32, ..response })
             }),
@@ -48,8 +48,8 @@ pub(super) fn mouse_rows<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a Stick
     } else {
         rows
     };
-    rows.push(stick_row(
-        "    Outer boost",
+    rows.push(sub_row(
+        "Outer boost",
         slider_editor(0.0..=1.0, response.outer_boost, 0.05, "more speed near the edge", move |v| set(curve, MouseResponse { outer_boost: v, ..response })),
     ))
 }
@@ -68,12 +68,12 @@ pub(super) fn mouse_advanced<'a>(rows: Column<'a, Message>, cfg: &StickConfig, o
     };
     const HOLDS: &str = "Vertical speed, smoothing";
     if !open {
-        return rows.push(advanced_fold("Advanced", HOLDS, s, None));
+        return rows.push(advanced_fold("Advanced", HOLDS, Target::StickAdvanced(s), None));
     }
     let set = move |r: MouseResponse| with(StickAction::Mouse { speed, response: r, invert_y });
-    rows.push(advanced_fold("Advanced", HOLDS, s, Some(column![
-        boxed_row("Vertical speed", slider_editor(0.25..=2.0, response.y_scale, 0.05, "× horizontal", move |v| set(MouseResponse { y_scale: v, ..response }))),
-        boxed_row("Smoothing", slider_editor(0.0..=200.0, response.smoothing_ms as f32, 5.0, "ms", move |v| set(MouseResponse { smoothing_ms: v as u32, ..response }))),
+    rows.push(advanced_fold("Advanced", HOLDS, Target::StickAdvanced(s), Some(column![
+        fold_row("Vertical speed", slider_editor(0.25..=2.0, response.y_scale, 0.05, "× horizontal", move |v| set(MouseResponse { y_scale: v, ..response }))),
+        fold_row("Smoothing", slider_editor(0.0..=200.0, response.smoothing_ms as f32, 5.0, "ms", move |v| set(MouseResponse { smoothing_ms: v as u32, ..response }))),
     ])))
 }
 

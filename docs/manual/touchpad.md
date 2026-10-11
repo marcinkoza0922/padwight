@@ -4,16 +4,16 @@ DualShock 4 and DualSense controllers have a touchpad, which you can also press 
 
 ## What fingers do
 
-Pick one of these for **Fingers**:
+The pad (or each half of a split pad) has a box laid out like a stick's, with its mode on the top line. Pick one of these:
 
-- **Mouse pointer**: works like a laptop trackpad. **Speed** is how far the pointer moves when your finger crosses the whole pad, and **Acceleration** offers the same presets as gyro (see [Gyro](gyro.md)); any preset except Linear shows the sensitivity for slow and fast fingers and the shape of the blend to fine-tune. There are three extras:
+- **Off**: fingers do nothing. The click still works.
+- **Mouse pointer**: works like a laptop trackpad. **Speed** is how far the pointer moves when your finger crosses the whole pad, and **Response** offers the same presets as gyro (see [Gyro](gyro.md)); any preset except Linear shows the sensitivity for slow and fast fingers and the shape of the blend to fine-tune. There are three extras:
   - **Tap to click**: a quick tap runs the click action, so you don't have to press the pad down.
   - **Two fingers scroll**: move two fingers together to scroll.
   - **Keep gliding after a flick**: flick and lift your finger, and the pointer keeps sliding and slows to a stop, like a trackball. Touching the pad stops it.
-- **Gamepad stick**: your finger pushes a stick of the virtual controller, on top of the real stick. With **Center where the finger lands**, the stick's center is wherever you put your finger, and moving **Full push at** away from there is a full push. Without it, the middle of the pad is center and its edges are a full push. **Deadzone** ignores small pushes.
+- **Gamepad stick**: your finger pushes a stick of the virtual controller (picked beside the mode), on top of the real stick. With **Center where the finger lands**, the stick's center is wherever you put your finger, and moving **Full push at** away from there is a full push. Without it, the middle of the pad is center and its edges are a full push. **Deadzone** ignores small pushes.
 - **Menu zones**: the pad is divided into the items of one of your menus (see [On-screen menus](menus.md)). While a finger is on the pad, the menu shows on screen with the item under your finger picked. The game keeps getting your input while the menu shows.
 - **Swipes**: a quick stroke across the pad runs the action for its direction: up, down, left or right. **Swipe length** is how far the stroke has to go.
-- **Nothing**: fingers do nothing. The click still works.
 
 ## Menu zones
 
@@ -46,7 +46,7 @@ Tick **Split into a left and a right half** to give each half a job of its own, 
 
 ## The picture
 
-Under the settings, a picture of the pad shows each half's job and where a menu's items lie. Fingers on your controller's touchpad show up on it, and the item under each finger lights up.
+The *Visualizers* panel under the boxes has a picture of the pad. It shows each half's job and where a menu's items lie. Fingers on your controller's touchpad show up on it, and the item under each finger lights up.
 
 ## Profiles that need a touchpad
 
