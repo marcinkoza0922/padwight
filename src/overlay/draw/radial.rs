@@ -159,9 +159,9 @@ fn radial_hub<'a, M: 'a>(m: &MenuView, c: Colors, s: f32, hub: f32, size: f32) -
     let center: Element<'a, M> = pin(center).x(size / 2.0 - hub / 2.0).y(size / 2.0 - hub / 2.0).into();
     // A dot just outside the hub shows where the stick points.
     let Some(degrees) = m.aim else { return center };
-    let dot = 8.0 * s;
+    let dot = 11.0 * s;
     let (sin, cos) = degrees.to_radians().sin_cos();
-    let reach = hub / 2.0 + 1.0 * s;
+    let reach = hub / 2.0 + 10.0 * s;
     let marker = container(space()).width(dot).height(dot).style(move |_: &iced::Theme| container::Style {
         background: Some(c.selected_text.into()),
         border: Border { width: 1.0, radius: (dot / 2.0).into(), color: c.selected },
