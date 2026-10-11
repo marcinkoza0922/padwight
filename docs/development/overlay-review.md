@@ -135,7 +135,7 @@ Tick an item when it's done and merged.
   `OverlayStyle::default()`, centered (`src/offer.rs:132`), and `overlay_view` doesn't override it
   as it does for the keyboard, numpad and media. Use the menu style, or add an offer style, so
   scale, colors and fonts apply.
-- [ ] 22. **Tones only show in lists.** Add and remove rows are tinted (and get +/− in
+- [x] 22. **Tones only show in lists.** Add and remove rows are tinted (and get +/− in
   color-blind mode) only in `list()`. Grid, carousel, radial and directional ignore `tone`.
   Directional slots also never show the cursor or a pick flash: in a held directional menu,
   choosing a slot gives no visual sign that it fired.
@@ -148,7 +148,7 @@ Tick an item when it's done and merged.
   from `guide_menu.rs`. The offer has a cursor list drawn with its own `offer_panel` instead of
   `menu_panel`. Moving the offer's pickers and the Guide menu onto `MenuView` / list drawing would
   get the motion, sounds, tones and scrolling for free.
-- [ ] 25. **Hints don't show every control.**
+- [x] 25. **Hints don't show every control.**
   - The keyboard legend leaves out moving (D-pad or stick), Guide closing it, and that picking a
     latched modifier again turns it off. It says "Shift, Ctrl and Alt" though Super and AltGr
     latch too.

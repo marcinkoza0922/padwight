@@ -128,14 +128,3 @@ pub(super) fn lit_cell_style(c: Colors, selected: bool, height: f32) -> impl Fn(
         ..container::Style::default()
     }
 }
-
-/// An item's box in its plain colors, or the selected ones.
-pub(super) fn cell_style(c: Colors, selected: bool, height: f32) -> impl Fn(&iced::Theme) -> container::Style {
-    let lit = if selected { 1.0 } else { 0.0 };
-    move |_| container::Style {
-        background: Some(if selected { c.selected } else { c.item }.into()),
-        border: item_outline(&c, selected, lit, c.corners * height / 2.0),
-        shadow: item_glow(&c, lit),
-        ..container::Style::default()
-    }
-}

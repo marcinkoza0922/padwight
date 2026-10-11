@@ -12,7 +12,7 @@ pub use glyphs::icon_svg;
 pub use log_panel::log_panel;
 
 use glyphs::{segment_element, state_icon};
-use look::{Look, cell_style, lit_cell_style, panel_style};
+use look::{Look, lit_cell_style, panel_style};
 use radial::radial;
 
 use iced::{
@@ -499,19 +499,28 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
 fn item_cell<'a, M: 'a>(m: &MenuView, i: usize, c: Colors, size: f32) -> (Element<'a, M>, Colors, bool) {
     let item = &m.items[i];
     let selected = m.selected == Some(i);
-    let lit = c.lit_item(m, i);
-    (item_text(lit, item, &item.label, size, lit.item_text), lit, selected)
+    let lit = toned(c, item.tone).lit_item(m, i);
+    (item_text(lit, item, &toned_label(c, item), size, lit.item_text), lit, selected)
+}
+
+/// An item's label, with a + or − in front of adding and removing rows in color-blind mode.
+fn toned_label(c: Colors, item: &crate::menu::ItemView) -> String {
+    match (c.colorblind, item.tone) {
+        (true, crate::menu::Tone::Add) => format!("+ {}", item.label),
+        (true, crate::menu::Tone::Remove) => format!("− {}", item.label),
+        _ => item.label.clone(),
+    }
 }
 
 fn directional<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
     let (w, h) = (190.0 * s, 52.0 * s);
+    // The slot picked last stays lit, and flashes as it's picked.
     let slot = |i: usize| -> Element<'a, M> {
         match m.items.get(i).filter(|item| !item.label.is_empty()) {
-            Some(item) => container(item_text(c, item, &item.label, 16.0 * s, c.item_text))
-                .center_x(w)
-                .center_y(h)
-                .style(cell_style(c, false, h))
-                .into(),
+            Some(_) => {
+                let (label, lit, selected) = item_cell(m, i, c, 16.0 * s);
+                container(label).center_x(w).center_y(h).style(lit_cell_style(lit, selected, h)).into()
+            }
             None => space().width(w).height(h).into(),
         }
     };
@@ -547,15 +556,7 @@ fn list<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
     let len = m.items.len();
     let cursor = m.selected.unwrap_or(0);
     let cell = |i: usize| -> Element<'a, M> {
-        let item = &m.items[i];
-        let selected = m.selected == Some(i);
-        let lit = toned(c, item.tone).lit_item(m, i);
-        let label = match (c.colorblind, item.tone) {
-            (true, crate::menu::Tone::Add) => format!("+ {}", item.label),
-            (true, crate::menu::Tone::Remove) => format!("− {}", item.label),
-            _ => item.label.clone(),
-        };
-        let content = item_text(lit, item, &label, 17.0 * s, lit.item_text);
+        let (content, lit, selected) = item_cell(m, i, c, 17.0 * s);
         container(content).padding([10.0 * s, 14.0 * s]).width(Length::Fill).style(lit_cell_style(lit, selected, 40.0 * s)).into()
     };
     let marker = |t: &'static str| text(t).font(c.font).size(13.0 * s).color(c.muted);
@@ -601,11 +602,10 @@ fn carousel<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
             continue;
         };
         let big = if m.touch { m.selected == Some(i) } else { i == selected };
-        let item = &m.items[i];
-        let lit = c.lit_item(m, i);
         let height = if big { 80.0 } else { 60.0 } * s;
+        let (label, lit, _) = item_cell(m, i, c, if big { 19.0 } else { 14.0 } * s);
         line = line.push(
-            container(item_text(lit, item, &item.label, if big { 19.0 } else { 14.0 } * s, lit.item_text))
+            container(label)
                 .center_x(if big { 170.0 } else { 120.0 } * s)
                 .center_y(height)
                 .style(lit_cell_style(lit, big, height)),

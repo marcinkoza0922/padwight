@@ -398,6 +398,12 @@ impl MenuSession {
         match menu.kind {
             MenuKind::Directional { cluster } => {
                 let slot = cluster.slots().iter().position(|s| *s == b)?;
+                // The slot picked stays lit, so a menu that stays up shows what fired.
+                if menu.items.get(slot).is_some_and(|item| item.action != ButtonAction::Disabled)
+                    && let Some(frame) = self.stack.last_mut()
+                {
+                    frame.cursor = Some(slot);
+                }
                 self.choose(menus, slot)
             }
             MenuKind::Radial { .. } => {
