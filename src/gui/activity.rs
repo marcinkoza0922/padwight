@@ -1,5 +1,5 @@
 //! The Overview's "What's happening": the latest presses of the controller in use with what each
-//! did, beside the buttons Padwight sent to the game for them, and the profile switches the daemon made,
+//! did, beside what Padwight sent the game for them (gamepad buttons, keys, mouse buttons), and the profile switches the daemon made,
 //! each with the reason for it.
 
 use iced::widget::{column, row};
@@ -59,9 +59,10 @@ impl App {
                 text("What's happening").size(20),
                 help(
                     "The latest presses on the controller in use, one line per burst, as the controller labels them, \
-                     with what each did when it's mapped to something else. Beside them, the buttons Padwight \
-                     sent to the game for those presses, labeled as the game's controller would be, and each \
-                     profile switch with the rule or action that made it."
+                     with what each did when it's mapped to something else. Beside them, what Padwight sent the game \
+                     for those presses: gamepad buttons, labeled as the game's controller would be, and keys, \
+                     mouse buttons and wheel turns. Below, each profile \
+                     switch and the rule or action that made it."
                         .into(),
                 ),
             ]

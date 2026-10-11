@@ -195,7 +195,7 @@ pub fn stick_page(stick: Stick, profile: Option<&Profile>) -> (Vec<ItemView>, &'
             item(format!("Invert Y: {invert}")),
             item(format!("Deadzone: {deadzone:.2}")),
         ],
-        "A change · ◀ ▶ adjust · B back",
+        "{south} change · {left} {right} adjust · {east} back",
     )
 }
 
@@ -212,7 +212,7 @@ pub fn trigger_page(trigger: Trigger, profile: Option<&Profile>) -> (Vec<ItemVie
             item(format!("Acts as: {acts}")),
             item(format!("Press at: {threshold}")),
         ],
-        "A change · ◀ ▶ adjust · B back",
+        "{south} change · {left} {right} adjust · {east} back",
     )
 }
 
@@ -229,7 +229,7 @@ pub fn gyro_page(profile: Option<&Profile>) -> (Vec<ItemView>, &'static str) {
             item(format!("Noise threshold: {:.1}", gyro.map_or(0.0, |g| g.noise_threshold))),
             item(format!("Activation: {}", gyro.map_or("always".into(), |g| activation_name(g.activation)))),
         ],
-        "A change · ◀ ▶ adjust · B back",
+        "{south} change · {left} {right} adjust · {east} back",
     )
 }
 

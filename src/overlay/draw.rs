@@ -12,7 +12,7 @@ pub use glyphs::icon_svg;
 pub use log_panel::log_panel;
 
 use glyphs::{segment_element, state_icon};
-use look::{Look, cell_style, lit_cell_style, panel_style};
+use look::{Look, lit_cell_style, panel_style};
 use radial::radial;
 
 use iced::{
@@ -39,12 +39,12 @@ const GAP: f32 = 4.0;
 const KEYBOARD_PADDING: f32 = 16.0;
 
 /// The width of a keyboard's body at scale 1: the legend's or the keys', whichever is wider.
-fn keyboard_body_width(numpad: bool) -> f32 {
-    if numpad {
+fn keyboard_body_width(board: crate::keyboard::Board) -> f32 {
+    if board == crate::keyboard::Board::Numpad {
         // Numpad keys are fewer, so bigger; its body has a floor of 230 at any scale.
-        (3.0 * (UNIT * 1.5 + GAP)).max(230.0)
+        (board.units_wide() * (UNIT * 1.5 + GAP)).max(230.0)
     } else {
-        15.0 * (UNIT + GAP)
+        board.units_wide() * (UNIT + GAP)
     }
 }
 /// Distance from the screen edge for edge and corner positions.
@@ -131,6 +131,35 @@ impl Colors {
             selected_text: f(self.selected_text),
             look: self.look.faded(f),
             ..self
+        }
+    }
+}
+
+impl Colors {
+    /// These colors with button glyphs drawn as `glyphs` says.
+    fn with_glyphs(self, glyphs: crate::info::Glyphs) -> Colors {
+        Colors { family: glyphs.family, nintendo_layout: glyphs.nintendo_layout, ..self }
+    }
+}
+
+/// Text whose controller tokens (`{south}`, `{lt}`…) are drawn as the pad's glyphs, sized for
+/// text of `size`. Plain text stays one text widget.
+fn rich_text<'a, M: 'a>(t: &str, c: Colors, size: f32, color: Color) -> Element<'a, M> {
+    let glyphs = crate::info::Glyphs { family: c.family, nintendo_layout: c.nintendo_layout };
+    let segments = crate::info::glyph_text(t, glyphs);
+    let plain = |t: &str| -> Element<'a, M> { text(t.to_string()).font(c.font).size(size).color(color).into() };
+    match segments.as_slice() {
+        [] => plain(""),
+        [Segment::Text(t)] => plain(t),
+        _ => {
+            let mut line = row![].spacing(size * 0.3).align_y(Alignment::Center);
+            for seg in &segments {
+                line = line.push(match seg {
+                    Segment::Text(t) => plain(t.trim()),
+                    glyph => segment_element(glyph, c, size / 17.0, c.anim.opacity()),
+                });
+            }
+            line.into()
         }
     }
 }
@@ -260,23 +289,24 @@ fn info_cell<'a, M: 'a>(segments: &[Segment], c: Colors, s: f32, opacity: f32) -
 }
 
 #[expect(clippy::too_many_lines, reason = "predates the size lints")]
-pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, fit: &Fit, anim: &Anim) -> Element<'a, M> {
-    let c = colors(&v.style, font).faded(anim.opacity());
-    let numpad = v.layout == crate::keyboard::Layout::Numpad;
+pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::info::Glyphs, fit: &Fit, anim: &Anim) -> Element<'a, M> {
+    let c = colors(&v.style, font).with_glyphs(glyphs).faded(anim.opacity());
+    let numpad = v.board == crate::keyboard::Board::Numpad;
     // A set width fits the keys (and their text) to it; otherwise the style's scale applies.
     let s = match fit.width {
-        Some(w) => w / (keyboard_body_width(numpad) + 2.0 * KEYBOARD_PADDING),
+        Some(w) => w / (keyboard_body_width(v.board) + 2.0 * KEYBOARD_PADDING),
         None => v.style.scale.clamp(0.5, 2.0),
     };
     // Numpad keys are fewer, so bigger.
     let unit = if numpad { UNIT * 1.5 } else { UNIT } * s;
     let gap = GAP * s;
-    let cursor_code = keyboard::key_at(v.layout, v.cursor).code;
+    let cursor_code = keyboard::key_at(v.board, v.cursor).code;
+    let shifted = v.latched.iter().any(|l| l == "KEY_LEFTSHIFT" || l == "KEY_RIGHTSHIFT");
     let label_size = if numpad { 22.0 } else { 14.0 };
     let mut rows = column![].spacing(gap);
     // Keys are numbered in reading order, as the motion tracking numbers them.
     let mut slot = 0u32;
-    for keys in v.layout.rows().iter() {
+    for keys in v.board.rows().iter() {
         let mut line = row![].spacing(gap);
         for key in keys.iter() {
             let here = slot;
@@ -289,7 +319,8 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, fit: &Fit, anim: 
             let cursor = key.code == cursor_code;
             let pressed = v.pressed.as_deref() == Some(key.code);
             let selected = cursor || pressed;
-            let latched = v.latched.iter().any(|l| l == key.code);
+            // Caps Lock lights up like a latched key while it's on.
+            let latched = v.latched.iter().any(|l| l == key.code) || (v.caps && key.code == "KEY_CAPSLOCK");
             // The cursor's key lights up and the one it left goes dark, sliding between them.
             let lit = if pressed { 1.0 } else { anim.lit(cursor, anim.timing.from == Some(here)) };
             let round = c.corners * unit / 2.0;
@@ -305,7 +336,7 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, fit: &Fit, anim: 
                     look::item_glow(&c, lit),
                 )
             };
-            let cap = container(text(key.label).font(c.font).size(if selected { label_size + 2.0 } else { label_size } * s).color(fg))
+            let cap = container(text(keyboard::cap_label(key, v.board, shifted, v.caps)).font(c.font).size(if selected { label_size + 2.0 } else { label_size } * s).color(fg))
                 .center_x(width)
                 .center_y(unit)
                 .style(move |_| container::Style { background: Some(bg.into()), border, shadow: glow, ..container::Style::default() });
@@ -313,33 +344,25 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, fit: &Fit, anim: 
         }
         rows = rows.push(line);
     }
-    let hint = |t: &'static str| text(t).font(c.font).size(14.0 * s).color(c.background_text);
+    let hint = |t: &'static str| rich_text::<M>(t, c, 14.0 * s, c.background_text);
     let (legend, width): (Element<'a, M>, f32) = if numpad {
-        let legend = column![
-            row![hint("A  press"), hint("X  backspace")].spacing(14.0 * s).wrap().align_x(Horizontal::Center),
-            row![hint("Start  enter"), hint("hold B to close")].spacing(14.0 * s).wrap().align_x(Horizontal::Center),
-        ]
-        .spacing(4.0 * s)
-        .align_x(Alignment::Center);
-        (legend.into(), (3.0 * (unit + gap)).max(230.0 * s))
+        let legend = row(super::NUMPAD_LEGEND.iter().map(|t| hint(t))).spacing(14.0 * s).wrap().vertical_spacing(4.0 * s).align_x(Horizontal::Center);
+        (legend.into(), (v.board.units_wide() * (unit + gap)).max(230.0 * s))
     } else {
-        let legend = row![
-            hint("A  press"),
-            hint("X  backspace"),
-            hint("Y  space"),
-            hint("Start  enter"),
-            hint("hold LT  shift"),
-            hint("Shift, Ctrl and Alt stay on for one key"),
-            hint("hold B to close"),
-        ]
+        let legend = row(super::KEYBOARD_LEGEND.iter().map(|t| hint(t)))
         .spacing(18.0 * s)
         .align_y(Alignment::Center)
         .wrap()
         .vertical_spacing(4.0 * s)
         .align_x(Horizontal::Center);
-        (legend.into(), 15.0 * (unit + gap))
+        (legend.into(), v.board.units_wide() * (unit + gap))
     };
-    let mut body = column![rows, legend].spacing(12.0 * s).width(width).align_x(Alignment::Center);
+    let mut body = column![].spacing(12.0 * s).width(width).align_x(Alignment::Center);
+    // What's been typed, above the keys, for when the game's own text box is hidden behind them.
+    if !v.typed.is_empty() {
+        body = body.push(text(format!("{}▏", v.typed)).font(c.font).size(18.0 * s).color(c.background_text));
+    }
+    body = body.push(rows).push(legend);
     if v.closing > 0.0 {
         body = body.push(progress_bar(0.0..=1.0, v.closing).girth(4.0 * s));
     }
@@ -350,17 +373,19 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, fit: &Fit, anim: 
 /// text badge (a stick's LS, say) is drawn as a small tag.
 fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, size: f32, fg: Color) -> Element<'a, M> {
     let font = c.font;
+    // Glyphs, badges and icons fade in and out with the label.
+    let fade = fg.a;
     let mut line = row![].spacing(size * 0.5).align_y(Alignment::Center);
     // The glyphs are sized from the label, which is 17 units when the scale is 1.
     for b in &item.buttons {
-        line = line.push(segment_element(&crate::info::button_glyph(*b, c.family, c.nintendo_layout), c, size / 17.0, 1.0));
+        line = line.push(segment_element(&crate::info::button_glyph(*b, c.family, c.nintendo_layout), c, size / 17.0, fade));
     }
     if let Some(b) = item.button.as_deref().filter(|b| !b.is_empty()) {
         line = line.push(
-            container(text(b.to_string()).font(font).size(size - 2.0).color(Color::BLACK))
+            container(text(b.to_string()).font(font).size(size - 2.0).color(Color::BLACK.scale_alpha(fade)))
                 .padding([1.0, size * 0.4])
-                .style(|_| container::Style {
-                    background: Some(Color::from_rgb(0.85, 0.87, 0.9).into()),
+                .style(move |_| container::Style {
+                    background: Some(Color::from_rgb(0.85, 0.87, 0.9).scale_alpha(fade).into()),
                     border: Border { radius: 5.0.into(), ..Border::default() },
                     ..container::Style::default()
                 }),
@@ -368,18 +393,18 @@ fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, si
     }
     if let Some(k) = item.keyword {
         let icon = iced::widget::svg::Handle::from_memory(crate::keyword_icon::svg(k).into_bytes());
-        line = line.push(iced::widget::svg(icon).width(size).height(size));
+        line = line.push(iced::widget::svg(icon).width(size).height(size).opacity(fade));
     }
-    line = line.push(text(label.to_string()).font(font).size(size).color(fg));
+    line = line.push(rich_text(label, c, size, fg));
     if item.submenu {
-        line = line.push(text("▸").font(font).size(size).color(Color { a: 0.7, ..fg }));
+        line = line.push(text("▸").font(font).size(size).color(fg.scale_alpha(0.7)));
     }
     line.into()
 }
 
 /// The media controls: what is playing, how far along, and the volume.
-pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, fit: &Fit, anim: &Anim) -> Element<'a, M> {
-    let c = colors(&m.style, font).faded(anim.opacity());
+pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, glyphs: crate::info::Glyphs, fit: &Fit, anim: &Anim) -> Element<'a, M> {
+    let c = colors(&m.style, font).with_glyphs(glyphs).faded(anim.opacity());
     let s = m.style.scale.clamp(0.5, 2.0);
     let width = 560.0 * s;
     let body: Element<'a, M> = match &m.player {
@@ -390,8 +415,15 @@ pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, fit: &Fit, anim: &Anim)
             let progress = if m.length_ms > 0 { (m.position_ms as f32 / m.length_ms as f32).clamp(0.0, 1.0) } else { 0.0 };
             let times = format!("{} / {}", media::clock(m.position_ms), if m.length_ms > 0 { media::clock(m.length_ms) } else { "--:--".into() });
             let mut meta = row![text(times).font(c.font).size(14.0 * s).color(c.muted)].spacing(16.0 * s);
+            // The system's sound, which the D-pad changes, then the player's own volume.
+            match (m.system_volume, m.muted) {
+                (Some(_), true) => meta = meta.push(text("Sound muted").font(c.font).size(14.0 * s).color(c.muted)),
+                (Some(v), false) => meta = meta.push(text(format!("Sound {:.0}%", v * 100.0)).font(c.font).size(14.0 * s).color(c.muted)),
+                (None, _) => {}
+            }
             if let Some(v) = m.volume {
-                meta = meta.push(text(format!("Volume {:.0}%", v * 100.0)).font(c.font).size(14.0 * s).color(c.muted));
+                let what = if m.system_volume.is_some() { "Player" } else { "Volume" };
+                meta = meta.push(text(format!("{what} {:.0}%", v * 100.0)).font(c.font).size(14.0 * s).color(c.muted));
             }
             if m.players > 1 {
                 meta = meta.push(text(format!("{} players", m.players)).font(c.font).size(14.0 * s).color(c.muted));
@@ -414,39 +446,29 @@ pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, fit: &Fit, anim: &Anim)
             .into()
         }
     };
-    let contents = column![body, text(m.hint.clone()).font(c.font).size(12.0 * s).color(c.muted)]
+    let contents = column![body, rich_text(&m.hint, c, 12.0 * s, c.muted)]
         .spacing(12.0 * s)
         .width(width)
         .align_x(Alignment::Center);
     framed(contents.into(), c, 18.0 * s, fit)
 }
 
-/// The offer to add a library game: the question and its answers, or the packs to pick from.
-pub fn offer_panel<'a, M: 'a>(o: &OfferView, font: Font, fit: &Fit, anim: &Anim) -> Element<'a, M> {
-    let c = colors(&o.style, font).faded(anim.opacity());
+/// The offer to add a library game: the question and its answers. (Its lists are menus.)
+pub fn offer_panel<'a, M: 'a>(o: &OfferView, font: Font, glyphs: crate::info::Glyphs, fit: &Fit, anim: &Anim) -> Element<'a, M> {
+    let c = colors(&o.style, font).with_glyphs(glyphs).faded(anim.opacity());
     let s = o.style.scale.clamp(0.5, 2.0);
     let cell = |label: String, lit: Colors, selected: bool| {
-        container(text(label).font(c.font).size(16.0 * s).color(lit.item_text))
+        container(rich_text::<M>(&label, lit, 16.0 * s, lit.item_text))
             .padding([8.0 * s, 16.0 * s])
             .style(lit_cell_style(lit, selected, 36.0 * s))
     };
-    let body: Element<'a, M> = if o.choices.is_empty() {
-        let answers = o.answers.iter().map(|(button, what)| cell(format!("{button}  {what}"), c, false).into());
-        row(answers).spacing(10.0 * s).into()
-    } else {
-        let items = o.choices.iter().enumerate().map(|(i, name)| {
-            let selected = i == o.selected;
-            let lit = anim.lit(selected, anim.timing.from == Some(i as u32));
-            let tinted = Colors { item: blend(c.item, c.selected, lit), item_text: blend(c.item_text, c.selected_text, lit), ..c };
-            cell(name.clone(), tinted, selected).width(Length::Fill).into()
-        });
-        column(items).spacing(6.0 * s).width(360.0 * s).into()
-    };
+    let answers = o.answers.iter().map(|(button, what)| cell(format!("{button}  {what}"), c, false).into());
+    let body: Element<'a, M> = row(answers).spacing(10.0 * s).into();
     let contents = column![
         text(o.title.clone()).font(c.font).size(20.0 * s).color(c.background_text),
         text(o.detail.clone()).font(c.font).size(14.0 * s).color(c.muted).width(520.0 * s).align_x(Alignment::Center),
         body,
-        text(o.hint.clone()).font(c.font).size(12.0 * s).color(c.muted),
+        rich_text(&o.hint, c, 12.0 * s, c.muted),
     ]
     .spacing(14.0 * s)
     .align_x(Alignment::Center);
@@ -461,10 +483,11 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
         colorblind: look.colorblind,
         ..colors(&m.style, font)
     };
+    let solid = c;
     let c = c.faded(look.anim.opacity());
     let s = m.style.scale.clamp(0.5, 2.0);
     let body: Element<'a, M> = match m.kind {
-        MenuKind::Radial { .. } => radial(m, c, s),
+        MenuKind::Radial { .. } => radial(m, solid, s),
         MenuKind::Directional { .. } => directional(m, c, s),
         MenuKind::List | MenuKind::Buttons => list(m, c, s),
         MenuKind::Carousel { .. } => carousel(m, c, s),
@@ -481,7 +504,7 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
     let contents = column![
         heading,
         body,
-        text(m.hint.clone()).font(c.font).size(13.0 * s).color(c.muted),
+        rich_text(&m.hint, c, 13.0 * s, c.muted),
     ]
     .spacing(14.0 * s)
     .align_x(Alignment::Center);
@@ -493,19 +516,28 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
 fn item_cell<'a, M: 'a>(m: &MenuView, i: usize, c: Colors, size: f32) -> (Element<'a, M>, Colors, bool) {
     let item = &m.items[i];
     let selected = m.selected == Some(i);
-    let lit = c.lit_item(m, i);
-    (item_text(lit, item, &item.label, size, lit.item_text), lit, selected)
+    let lit = toned(c, item.tone).lit_item(m, i);
+    (item_text(lit, item, &toned_label(c, item), size, lit.item_text), lit, selected)
+}
+
+/// An item's label, with a + or − in front of adding and removing rows in color-blind mode.
+fn toned_label(c: Colors, item: &crate::menu::ItemView) -> String {
+    match (c.colorblind, item.tone) {
+        (true, crate::menu::Tone::Add) => format!("+ {}", item.label),
+        (true, crate::menu::Tone::Remove) => format!("− {}", item.label),
+        _ => item.label.clone(),
+    }
 }
 
 fn directional<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
     let (w, h) = (190.0 * s, 52.0 * s);
+    // The slot picked last stays lit, and flashes as it's picked.
     let slot = |i: usize| -> Element<'a, M> {
         match m.items.get(i).filter(|item| !item.label.is_empty()) {
-            Some(item) => container(item_text(c, item, &item.label, 16.0 * s, c.item_text))
-                .center_x(w)
-                .center_y(h)
-                .style(cell_style(c, false, h))
-                .into(),
+            Some(_) => {
+                let (label, lit, selected) = item_cell(m, i, c, 16.0 * s);
+                container(label).center_x(w).center_y(h).style(lit_cell_style(lit, selected, h)).into()
+            }
             None => space().width(w).height(h).into(),
         }
     };
@@ -519,20 +551,24 @@ fn directional<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
     .into()
 }
 
-/// Items in rows of equal cells, read left to right; a short last row keeps to the left.
+/// Items in rows of equal cells, read left to right; a short last row keeps to the left. A
+/// merged item covers several cells, and the items under it aren't drawn.
 fn grid<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
-    let columns = m.kind.grid_columns().unwrap_or(1);
-    let (w, h) = (150.0 * s, 64.0 * s);
-    let mut rows = column![].spacing(8.0 * s);
-    for start in (0..m.items.len()).step_by(columns) {
-        let mut line = row![].spacing(8.0 * s);
-        for i in start..(start + columns).min(m.items.len()) {
-            let (label, lit, selected) = item_cell(m, i, c, 16.0 * s);
-            line = line.push(container(label).center_x(w).center_y(h).padding([0.0, 6.0 * s]).style(lit_cell_style(lit, selected, h)));
-        }
-        rows = rows.push(line);
+    let spans: Vec<_> = m.items.iter().map(|item| item.span).collect();
+    let layout = crate::menu::GridLayout::new(&spans, m.kind.grid_columns().unwrap_or(1));
+    let (w, h, gap) = (150.0 * s, 64.0 * s, 8.0 * s);
+    // How far `n` cells reach, with the gaps between them.
+    let reach = |n: usize, size: f32| n as f32 * size + n.saturating_sub(1) as f32 * gap;
+    let mut cells = iced::widget::Stack::new().width(reach(layout.columns, w)).height(reach(layout.rows, h));
+    for i in 0..m.items.len() {
+        let Some(at) = layout.cells(i) else { continue };
+        let (label, lit, selected) = item_cell(m, i, c, 16.0 * s);
+        let (cw, ch) = (reach(at.columns, w), reach(at.rows, h));
+        let cell = container(label).center_x(cw).center_y(ch).padding([0.0, 6.0 * s]).style(lit_cell_style(lit, selected, h));
+        let (x, y) = (at.column as f32 * (w + gap), at.row as f32 * (h + gap));
+        cells = cells.push(column![space().height(y), row![space().width(x), cell]]);
     }
-    rows.into()
+    cells.into()
 }
 
 /// A list: one column while it is short, two once it is longer. Two columns fill top to
@@ -541,15 +577,7 @@ fn list<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
     let len = m.items.len();
     let cursor = m.selected.unwrap_or(0);
     let cell = |i: usize| -> Element<'a, M> {
-        let item = &m.items[i];
-        let selected = m.selected == Some(i);
-        let lit = toned(c, item.tone).lit_item(m, i);
-        let label = match (c.colorblind, item.tone) {
-            (true, crate::menu::Tone::Add) => format!("+ {}", item.label),
-            (true, crate::menu::Tone::Remove) => format!("− {}", item.label),
-            _ => item.label.clone(),
-        };
-        let content = item_text(lit, item, &label, 17.0 * s, lit.item_text);
+        let (content, lit, selected) = item_cell(m, i, c, 17.0 * s);
         container(content).padding([10.0 * s, 14.0 * s]).width(Length::Fill).style(lit_cell_style(lit, selected, 40.0 * s)).into()
     };
     let marker = |t: &'static str| text(t).font(c.font).size(13.0 * s).color(c.muted);
@@ -579,16 +607,26 @@ fn carousel<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
     let selected = m.selected.unwrap_or(0);
     let arrow = |t: &'static str| text(t).font(c.font).size(22.0 * s).color(c.muted);
     let mut line = row![arrow("◀")].spacing(12.0 * s).align_y(Alignment::Center);
-    // The selected item in the middle, with up to two neighbors on each side.
+    // The selected item in the middle, with up to two neighbors on each side. An even count
+    // leaves the right side one short, so a blank keeps the selected item centered.
     let shown = n.min(5) as i32;
-    for offset in -(shown / 2)..=(shown - 1 - shown / 2) {
-        let i = (selected as i32 + offset).rem_euclid(n as i32) as usize;
-        let big = offset == 0;
-        let item = &m.items[i];
-        let lit = c.lit_item(m, i);
+    let (before, after) = (shown / 2, shown - 1 - shown / 2);
+    // On a touchpad the items stay put, all of them in order, the way the pad lays them out.
+    let slots: Vec<Option<usize>> = if m.touch {
+        (0..n).map(Some).collect()
+    } else {
+        (-before..=before).map(|offset| (offset <= after).then(|| (selected as i32 + offset).rem_euclid(n as i32) as usize)).collect()
+    };
+    for slot in slots {
+        let Some(i) = slot else {
+            line = line.push(space().width(120.0 * s).height(60.0 * s));
+            continue;
+        };
+        let big = if m.touch { m.selected == Some(i) } else { i == selected };
         let height = if big { 80.0 } else { 60.0 } * s;
+        let (label, lit, _) = item_cell(m, i, c, if big { 19.0 } else { 14.0 } * s);
         line = line.push(
-            container(item_text(lit, item, &item.label, if big { 19.0 } else { 14.0 } * s, lit.item_text))
+            container(label)
                 .center_x(if big { 170.0 } else { 120.0 } * s)
                 .center_y(height)
                 .style(lit_cell_style(lit, big, height)),

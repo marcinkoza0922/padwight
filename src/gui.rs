@@ -48,6 +48,9 @@ mod guide_tab;
 mod gyro;
 mod gyro_graph;
 mod items;
+mod menu_grid;
+#[cfg(test)]
+mod menu_suite;
 mod keys;
 mod layers;
 mod logs;
@@ -76,6 +79,7 @@ use checks::*;
 use device_box::*;
 use sounds::overlay_sounds;
 use items::*;
+use menu_grid::*;
 use keys::*;
 use layers::IndicatorChoice;
 use packs::{BrowseSource, Dialog, PackField};
@@ -126,6 +130,8 @@ const LABEL_WIDTH: f32 = 170.0;
 const SIDEBAR_WIDTH: f32 = 210.0;
 const ERROR_COLOR: Color = Color::from_rgb(0.9, 0.3, 0.3);
 const MUTED_COLOR: Color = Color::from_rgb(0.55, 0.55, 0.6);
+/// Something that saves but likely won't work as meant, such as a menu item nothing can pick.
+const WARNING_COLOR: Color = Color::from_rgb(0.85, 0.58, 0.1);
 
 /// A controller as the editor sees it: its model (`None` for a generic pad) and the family whose
 /// button glyphs it uses.
@@ -482,6 +488,12 @@ enum Message {
     SetMenuKind(usize, MenuKind),
     SetMenuStyle(usize, OverlayStyle),
     SetKeyboardStyle(OverlayStyle),
+    /// The on-screen keyboard's keys: all of them, or the basic ones.
+    SetFullKeyboard(bool),
+    /// How strongly the controllers rumble, 0 to 1.
+    SetRumbleStrength(f32),
+    /// Whether picking an overlay's item gives a faint pulse.
+    SetPickRumble(bool),
     /// The font of all overlays (`None`: the system's), or the shown game's own.
     SetOverlayFont(Option<String>),
     SetColorblindTones(bool),
@@ -505,7 +517,13 @@ enum Message {
     MoveMenuItem(usize, usize, bool),
     SetMenuItemLabel(usize, usize, String),
     SetMenuItemButton(usize, usize, QuickChoice),
+    /// A menu's close button: its kind's own, another, or none.
+    SetMenuCancel(usize, items::CloseChoice),
     SetMenuItemWeight(usize, usize, f32),
+    /// A grid item's merged cells.
+    SetMenuItemSpan(usize, usize, crate::config::Span),
+    /// The cell a grid's cursor starts on.
+    SetMenuStart(usize, usize),
     OpenKeyPicker(KeyField, Vec<String>, bool),
     PickerKey(&'static str),
     PickerClear,
@@ -1330,7 +1348,7 @@ mod tests {
     #[test]
     fn every_page_tab_and_dialog_builds() {
         let mut app = with_game();
-        app.config.general.menus.push(Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![], cancel: None, style: OverlayStyle::default() });
+        app.config.general.menus.push(Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![], cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() });
         app.config.games[0].info.push(InfoOverlay { name: "Controls".into(), always: true, on_start: None, linger: None, title: None, current_input: Default::default(), style: OverlayStyle::info(), rows: vec![vec!["{south}".into()]] });
         app.config.games[0].macros.push(Macro { name: "Dodge".into(), steps: vec![MacroStep::Wait(5)] });
         app.config.games[0].layers.push(crate::config::Layer::new("Hotkeys"));

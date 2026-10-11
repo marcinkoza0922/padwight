@@ -160,6 +160,21 @@ impl App {
             .into()
     }
 
+    /// How strongly every controller rumbles, as a share of what games ask for.
+    fn rumble_strength_row(&self) -> Element<'_, Message> {
+        let strength = self.config.rumble_strength;
+        row![
+            text("Rumble strength").width(140),
+            iced::widget::slider(0.0..=1.0, strength, Message::SetRumbleStrength).step(0.05_f32).width(240),
+            text(format!("{:.0}%", strength * 100.0)).size(13).color(MUTED_COLOR),
+            checkbox(self.config.pick_rumble).label("A faint pulse as an overlay item is picked").on_toggle(Message::SetPickRumble),
+        ]
+        .spacing(12)
+        .align_y(Alignment::Center)
+        .wrap()
+        .into()
+    }
+
     #[expect(clippy::too_many_lines, reason = "predates the size lints")]
     pub(super) fn view_devices(&self) -> Element<'_, Message> {
         let mut list = column![text("Controllers").size(20)].spacing(8);
@@ -214,6 +229,7 @@ impl App {
             Some(_) => list = list.push(text("No controllers detected.").color(MUTED_COLOR)),
             None => list = list.push(text(NEEDS_DAEMON).size(13).color(MUTED_COLOR)),
         }
+        list = list.push(self.rumble_strength_row());
         if let Some(status) = &self.status
             && !status.motion_access_denied.is_empty()
         {

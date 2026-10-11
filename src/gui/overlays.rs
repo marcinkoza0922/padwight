@@ -77,6 +77,43 @@ impl App {
 
     /// How menu previews are drawn: the color-blind setting, and the controller the info
     /// glyphs are drawn for when none is detected.
+    /// What this game could draw at `position` at the same time as something there. The
+    /// keyboard, numpad, media controls and menus are never up together, but any of them can be
+    /// up with info and log overlays: so a `panel` shares its spot with the overlays there, and
+    /// an overlay with the panels (overlays at one spot stack rather than overlap).
+    pub(super) fn sharing_spot(&self, position: crate::config::ScreenPosition, panel: bool) -> Vec<String> {
+        let game = self.game();
+        let found: Vec<(String, crate::config::ScreenPosition)> = if panel {
+            let info = game.info.iter().map(|o| (format!("info overlay “{}”", o.name), o.style.position));
+            info.chain(game.logs.iter().map(|o| (format!("log “{}”", o.name), o.style.position))).collect()
+        } else {
+            let fixed = [
+                ("the on-screen keyboard", game.keyboard_style.as_ref().unwrap_or(&self.config.keyboard_style)),
+                ("the on-screen numpad", game.numpad_style.as_ref().unwrap_or(&self.config.numpad_style)),
+                ("the media controls", game.media_style.as_ref().unwrap_or(&self.config.media_style)),
+                ("the in-game menu", game.menu_style.as_ref().unwrap_or(&self.config.menu_style)),
+            ]
+            .map(|(name, style)| (name.to_string(), style.position));
+            fixed.into_iter().chain(game.menus.iter().map(|m| (format!("menu “{}”", m.name), m.style.position))).collect()
+        };
+        found.into_iter().filter(|(_, at)| *at == position).map(|(name, _)| name).collect()
+    }
+
+    /// A note under an Appearance section when something that can be on screen at the same time
+    /// is drawn at the same spot. Not an error: the two may never be up at once.
+    pub(super) fn spot_note<'a>(&self, position: crate::config::ScreenPosition, panel: bool) -> Option<Element<'a, Message>> {
+        let others = self.sharing_spot(position, panel);
+        (!others.is_empty()).then(|| {
+            let note = format!("⚠ {position} also has {}: they overlap if they're on screen together.", others.join(", "));
+            text(note).size(12).color(WARNING_COLOR).into()
+        })
+    }
+
+    /// How previews draw button glyphs: the Settings page's glyphs, with the Nintendo layout.
+    pub(super) fn glyphs(&self) -> crate::info::Glyphs {
+        crate::info::Glyphs { family: self.config.info_glyphs, nintendo_layout: self.nintendo_layout() }
+    }
+
     pub(super) fn menu_look(&self) -> crate::overlay::draw::MenuLook {
         crate::overlay::draw::MenuLook {
             anim: Default::default(),
@@ -132,27 +169,28 @@ impl App {
         let game = self.game();
         let font = self.preview_font();
         let look = self.menu_look();
+        let glyphs = self.glyphs();
         column![
             game_overlay_card(
                 "On-screen keyboard",
                 game.keyboard_style.as_ref(),
                 &self.config.keyboard_style,
                 |s| Message::SetGameOverlayStyle(Layout::Keyboard, s),
-                move |style| keyboard_preview(Layout::Keyboard, style, font),
+                move |style| keyboard_preview(Layout::Keyboard, style, font, glyphs),
             ),
             game_overlay_card(
                 "On-screen numpad",
                 game.numpad_style.as_ref(),
                 &self.config.numpad_style,
                 |s| Message::SetGameOverlayStyle(Layout::Numpad, s),
-                move |style| keyboard_preview(Layout::Numpad, style, font),
+                move |style| keyboard_preview(Layout::Numpad, style, font, glyphs),
             ),
             game_overlay_card(
                 "Media controls",
                 game.media_style.as_ref(),
                 &self.config.media_style,
                 Message::SetGameMediaStyle,
-                move |style| preview(crate::overlay::draw::media_panel(&crate::media::MediaView::sample(preview_style(style)), font, &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())),
+                move |style| preview(crate::overlay::draw::media_panel(&crate::media::MediaView::sample(preview_style(style)), font, glyphs, &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())),
             ),
             game_overlay_card(
                 "In-game menu",
@@ -193,9 +231,9 @@ fn game_overlay_card<'a>(
 }
 
 /// A keyboard or numpad drawn with `style`, with the cursor on a key, for the card's preview.
-fn keyboard_preview(layout: Layout, style: &OverlayStyle, font: iced::Font) -> Element<'static, Message> {
+fn keyboard_preview(layout: Layout, style: &OverlayStyle, font: iced::Font, glyphs: crate::info::Glyphs) -> Element<'static, Message> {
     let sample = KeyboardView {
-        layout,
+        board: layout.into(),
         style: preview_style(style),
         cursor: match layout {
             Layout::Keyboard => crate::keyboard::find(layout, "KEY_H").unwrap_or_default(),
@@ -204,8 +242,10 @@ fn keyboard_preview(layout: Layout, style: &OverlayStyle, font: iced::Font) -> E
         latched: Vec::new(),
         pressed: None,
         closing: 0.0,
+        caps: false,
+        typed: String::new(),
     };
-    preview(crate::overlay::draw::keyboard_panel(&sample, font, &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still()))
+    preview(crate::overlay::draw::keyboard_panel(&sample, font, glyphs, &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still()))
 }
 
 /// What each motion style is like, for the settings to explain them.
@@ -233,6 +273,19 @@ pub(super) fn motion_rows<'a>(set: MotionSet, change: fn(OverlayKind, MotionStyl
 mod tests {
     use super::*;
     use crate::{config::ScreenPosition, gui::tests::*};
+
+    #[test]
+    fn panels_and_overlays_at_one_spot_are_pointed_out_but_panels_together_are_not() {
+        let mut app = with_game();
+        let bottom = app.config.keyboard_style.position;
+        assert!(app.sharing_spot(bottom, true).is_empty(), "the numpad never shows with the keyboard");
+        let _ = app.update(Message::NewInfo);
+        let info = &mut app.game_mut().info[0];
+        info.name = "Ammo".into();
+        info.style.position = bottom;
+        assert_eq!(app.sharing_spot(bottom, true), ["info overlay “Ammo”"]);
+        assert!(app.sharing_spot(bottom, false).iter().any(|n| n == "the on-screen keyboard"));
+    }
 
     #[test]
     fn a_game_can_override_the_keyboard_and_numpad_styles() {

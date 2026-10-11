@@ -19,6 +19,7 @@ pub(super) fn segment_element<'a, M: 'a>(seg: &Segment, c: Colors, s: f32, opaci
         Segment::Dpad(lit) => dpad_glyph(*lit, c, s),
         Segment::StickClick { right } => stick_click_glyph(*right, c, s),
         Segment::Icon(icon) => icon_glyph(icon, c, s),
+        Segment::Bar(done) => iced::widget::progress_bar(0.0..=1.0, *done).length(160.0 * s).girth(6.0 * s).into(),
     }
 }
 
@@ -32,7 +33,7 @@ fn dpad_glyph<'a, M: 'a>([up, down, left, right]: [bool; 4], c: Colors, s: f32) 
             .height(cell)
             .style(move |_: &iced::Theme| container::Style {
                 background: Some(color.into()),
-                border: Border { width: 1.0, radius: (1.5 * s).into(), color: Color { a: 0.35, ..c.item_text } },
+                border: Border { width: 1.0, radius: (1.5 * s).into(), color: c.item_text.scale_alpha(0.35) },
                 ..container::Style::default()
             })
             .into()
@@ -54,7 +55,7 @@ fn stick_click_glyph<'a, M: 'a>(right: bool, c: Colors, s: f32) -> Element<'a, M
     .center_y(size);
     cap.style(move |_: &iced::Theme| container::Style {
         background: Some(c.item.into()),
-        border: Border { width: 2.0, radius: (size / 2.0).into(), color: Color { a: 0.6, ..c.item_text } },
+        border: Border { width: 2.0, radius: (size / 2.0).into(), color: c.item_text.scale_alpha(0.6) },
         ..container::Style::default()
     })
     .into()
@@ -80,7 +81,7 @@ fn glyph<'a, M: 'a>(label: &str, fill: Option<[u8; 3]>, round: bool, c: Colors, 
         border: Border {
             width: 1.0,
             radius: if disc { size / 2.0 } else { 6.0 * s }.into(),
-            color: Color { a: 0.2, ..fg },
+            color: fg.scale_alpha(0.2),
         },
         ..container::Style::default()
     })

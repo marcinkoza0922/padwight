@@ -121,6 +121,7 @@ impl App {
         if appearance_open {
             let e = edit.clone();
             rows.push(style_editor(&o.style, Rc::new(move |style| e(&|o| o.style = style.clone()))));
+            rows.extend(self.spot_note(o.style.position, false));
         }
         let sample = crate::inputlog::Inputs::sample();
         let now = sample.now.unwrap_or_else(std::time::Instant::now);

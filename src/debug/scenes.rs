@@ -7,11 +7,11 @@ use std::time::Instant;
 use anyhow::{Result, bail};
 
 use crate::{
-    config::{Button, ButtonAction, CarouselControls, Cluster, InfoOverlay, InputLogSettings, Menu, MenuItem, MenuKind, OverlayStyle, Stick},
+    config::{Button, ButtonAction, CarouselControls, Span, Cluster, InfoOverlay, InputLogSettings, Menu, MenuItem, MenuKind, OverlayStyle, Stick},
     engine::Opener,
     info::{self, Glyphs, Live, PadFamily},
     inputlog,
-    keyboard::{self, Layout},
+    keyboard::{self, Board},
     media::MediaView,
     menu::MenuSession,
     offer::OfferView,
@@ -19,8 +19,9 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 17] = [
-    ("keyboard", "the on-screen keyboard, Shift latched, the cursor on H"),
+pub const SCENES: [(&str, &str); 18] = [
+    ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
+    ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
     ("menu-list", "a list menu"),
     ("menu-buttons", "a menu with quick-select buttons"),
@@ -43,8 +44,9 @@ pub const SCENES: [(&str, &str); 17] = [
 pub fn frame(name: &str) -> Result<OverlayFrame> {
     let active = |view| OverlayFrame { active: Some(view), ..OverlayFrame::default() };
     Ok(match name {
-        "keyboard" => active(OverlayView::Keyboard(keyboard_view(Layout::Keyboard))),
-        "numpad" => active(OverlayView::Keyboard(keyboard_view(Layout::Numpad))),
+        "keyboard" => active(OverlayView::Keyboard(keyboard_view(Board::Basic))),
+        "keyboard-full" => active(OverlayView::Keyboard(keyboard_view(Board::Full))),
+        "numpad" => active(OverlayView::Keyboard(keyboard_view(Board::Numpad))),
         "menu-list" => active(menu(MenuKind::List)),
         "menu-buttons" => active(menu(MenuKind::Buttons)),
         "menu-grid" => active(menu(MenuKind::Grid { columns: 3 })),
@@ -64,18 +66,18 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
     })
 }
 
-fn keyboard_view(layout: Layout) -> KeyboardView {
-    let (style, cursor, latched) = match layout {
-        Layout::Keyboard => (OverlayStyle::keyboard(), keyboard::find(layout, "KEY_H").unwrap_or_default(), vec!["KEY_LEFTSHIFT".into()]),
-        Layout::Numpad => (OverlayStyle::numpad(), layout.home(), Vec::new()),
+fn keyboard_view(board: Board) -> KeyboardView {
+    let (style, cursor, latched) = match board {
+        Board::Basic | Board::Full => (OverlayStyle::keyboard(), keyboard::find(board, "KEY_H").unwrap_or_default(), vec!["KEY_LEFTSHIFT".into()]),
+        Board::Numpad => (OverlayStyle::numpad(), board.home(), Vec::new()),
     };
-    KeyboardView { layout, style, cursor, latched, pressed: None, closing: 0.0 }
+    KeyboardView { board, style, cursor, latched, pressed: None, closing: 0.0, caps: false, typed: String::new() }
 }
 
 /// A menu of this kind, open with the cursor on its second item: keys, a toggle, a submenu, a
 /// mouse click and an overlay.
 fn menu(kind: MenuKind) -> OverlayView {
-    let item = |label: &str, action: ButtonAction, button: Option<Button>| MenuItem { label: label.into(), action, button, weight: 1.0 };
+    let item = |label: &str, action: ButtonAction, button: Option<Button>| MenuItem { label: label.into(), action, button, weight: 1.0, span: Span::ONE };
     let keys = |k: &str| ButtonAction::Keys(vec![k.into()]);
     let items = vec![
         item("Quick save", keys("KEY_F5"), Some(Button::South)),
@@ -85,8 +87,8 @@ fn menu(kind: MenuKind) -> OverlayView {
         item("Keyboard", ButtonAction::ToggleOverlay, Some(Button::LeftBumper)),
     ];
     let menus = vec![
-        Menu { name: "Actions".into(), kind, items, cancel: None, style: OverlayStyle::default() },
-        Menu { name: "Weapons".into(), kind: MenuKind::List, items: vec![item("Pistol", keys("KEY_1"), None)], cancel: None, style: OverlayStyle::default() },
+        Menu { name: "Actions".into(), kind, items, cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() },
+        Menu { name: "Weapons".into(), kind: MenuKind::List, items: vec![item("Pistol", keys("KEY_1"), None)], cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() },
     ];
     let opener = Opener { buttons: vec![Button::LeftBumper], ..Opener::default() };
     let session = MenuSession::open(&menus, "Actions", opener).expect("the sample menu has items");
@@ -100,8 +102,6 @@ fn offer() -> OfferView {
     OfferView {
         title: "Add Deus Ex?".into(),
         detail: "The library has controls for this game.".into(),
-        choices: Vec::new(),
-        selected: 0,
         answers: vec![("A".into(), "Add".into()), ("B".into(), "Not now".into()), ("Y".into(), "Never".into())],
         hint: "A add · B not now · Y never".into(),
         style: OverlayStyle::default(),

@@ -1,0 +1,44 @@
+name = "Radial"
+
+[kind.radial]
+stick = "Right"
+
+[[items]]
+label = "Item 1"
+
+[items.action]
+keys = ["KEY_N"]
+
+[[items]]
+label = "Item 2"
+
+[items.action]
+keys = ["KEY_Y"]
+
+[[items]]
+label = "Item 3"
+
+[items.action]
+keys = ["KEY_M"]
+
+[[items]]
+label = "Item 4"
+
+[items.action]
+keys = ["KEY_5"]
+
+[style]
+position = "center"
+scale = 1.0
+
+[style.background]
+color = "#16181c"
+opacity = 0.92
+
+[style.items]
+color = "#30343c"
+opacity = 0.95
+
+[style.selected]
+color = "#2f5db0"
+opacity = 1.0

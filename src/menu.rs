@@ -9,20 +9,26 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    config::{Button, ButtonAction, CarouselControls, Keyword, Menu, MenuKind, OverlayStyle, Stick, Trigger},
+    config::{Button, ButtonAction, CarouselControls, Keyword, Menu, MenuKind, OverlayStyle, Span, Stick, Trigger},
     engine::Opener,
     input::{Axis, InputEvent},
 };
 
-/// Stick deflection that aims a radial menu or steps a list.
-const STICK_PRESS: f32 = 0.6;
-const STICK_RELEASE: f32 = 0.45;
+/// Stick deflection that aims a radial menu.
+const STICK_PRESS: f32 = crate::nav::STICK_PRESS;
+/// A menu nothing holds up (see [`Mode::Unwatched`]) closes after this long without input, so
+/// it can't keep the controller forever.
+const IDLE_CLOSE: Duration = Duration::from_secs(30);
+/// The button that pins a held menu open.
+const PIN: Button = Button::RightStick;
+/// Holding the close button in a submenu this long closes the whole menu, rather than going back.
+const HOLD_TO_CLOSE: Duration = crate::overlay::HOLD_TO_CLOSE;
+/// Stick deflection from which a radial menu shows where the stick points.
+const AIM_SHOWN: f32 = 0.3;
 /// A trigger opener counts as let go below this.
 const TRIGGER_RELEASE: f32 = 0.3;
 /// Trigger pull that steps a trigger-driven carousel.
 const TRIGGER_PRESS: f32 = 0.6;
-const REPEAT_DELAY: Duration = Duration::from_millis(350);
-const REPEAT_EVERY: Duration = Duration::from_millis(110);
 
 /// What the overlay draws for an open menu.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -41,6 +47,14 @@ pub struct MenuView {
     pub hint: String,
     #[serde(default)]
     pub style: OverlayStyle,
+    /// Laid out on a touchpad: the items stay where the pad has them, so a carousel is drawn as
+    /// a fixed strip rather than turning under the finger.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub touch: bool,
+    /// Where a radial menu's stick points, in degrees clockwise from up (rounded to a few), or
+    /// `None` while it rests in the middle.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aim: Option<f32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -62,6 +76,16 @@ pub struct ItemView {
     /// The share of a radial menu's circle its arc takes.
     #[serde(default = "crate::config::default_weight")]
     pub weight: f32,
+    /// The cells of a grid it covers.
+    #[serde(default, skip_serializing_if = "Span::is_one")]
+    pub span: Span,
+}
+
+impl ItemView {
+    /// A row with just a label to fill in: no button, glyphs, icon or tint.
+    pub fn plain() -> Self {
+        ItemView { label: String::new(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: Span::ONE }
+    }
 }
 
 /// What kind of row an item is. The overlay tints each kind differently, so a row that adds to
@@ -88,8 +112,8 @@ pub enum MenuOutcome {
 enum Mode {
     /// Up while the opener is held; letting go closes it (a radial menu chooses first).
     Held,
-    /// Opened by a Toggle: up until the opener is pressed again.
-    Toggled,
+    /// Pinned with R3: up until the opener is pressed again.
+    Pinned,
     /// Opened by something that can't be held (the command line, an analog zone): up until
     /// an item is chosen or the menu's back button closes it.
     Unwatched,
@@ -113,18 +137,22 @@ pub struct MenuSession {
     mode: Mode,
     /// Whether the opener was down after the last event.
     opener_down: bool,
-    /// A toggled menu closes on the opener's next press, once it has been let go.
+    /// A pinned menu closes on the opener's next press, once it has been let go.
     armed: bool,
+    /// When the close button went down in a submenu: let go, it goes back; held, it closes.
+    closing: Option<Instant>,
     axes: HashMap<Axis, f32>,
     held: HashSet<Button>,
-    /// Direction (x, y) stepping through a list, grid or carousel, and when it repeats.
-    stepping: Option<(Step, Instant)>,
+    /// The direction stepping through a list, grid or carousel, repeating while held.
+    stepping: crate::nav::Repeat,
     /// Which step direction the stick currently holds.
-    stick_step: Option<Step>,
+    stick_step: crate::nav::StickDir,
     /// Which carousel trigger is currently pulled past the step point.
     trigger_step: Option<Trigger>,
     /// How many items have been chosen so far, shown to the overlay so it can animate the pick.
     picks: u32,
+    /// The last input, for closing an unwatched menu left alone.
+    last_input: Instant,
 }
 
 fn find(menus: &[Menu], name: &str) -> Option<usize> {
@@ -172,11 +200,7 @@ impl MenuSession {
             return None;
         }
         let watchable = !opener.buttons.is_empty() || opener.trigger.is_some();
-        let mode = match (opener.toggled, watchable) {
-            (_, false) => Mode::Unwatched,
-            (true, true) => Mode::Toggled,
-            (false, true) => Mode::Held,
-        };
+        let mode = if watchable { Mode::Held } else { Mode::Unwatched };
         let mut session = MenuSession {
             stack: Vec::new(),
             opener,
@@ -184,12 +208,14 @@ impl MenuSession {
             // Assumed held, as it just opened the menu; `prime` checks.
             opener_down: true,
             armed: false,
+            closing: None,
             axes: HashMap::new(),
             held: HashSet::new(),
-            stepping: None,
-            stick_step: None,
+            stepping: crate::nav::Repeat::default(),
+            stick_step: crate::nav::StickDir::default(),
             trigger_step: None,
             picks: 0,
+            last_input: Instant::now(),
         };
         // Until `prime` says otherwise, the opener is taken to be held (it just fired).
         for b in session.opener.buttons.clone() {
@@ -212,17 +238,14 @@ impl MenuSession {
     }
 
     /// Tells the session what the controller is holding as the menu opens. Returns false if
-    /// the opener is already let go (e.g. a quick tap), so the menu shouldn't show at all;
-    /// a tap opens a menu only through a Toggle.
+    /// the opener is already let go (e.g. a quick tap), so the menu shouldn't show at all.
     #[must_use]
     pub fn prime(&mut self, menus: &[Menu], buttons: impl IntoIterator<Item = Button>, axes: impl IntoIterator<Item = (Axis, f32)>) -> bool {
         self.held = buttons.into_iter().collect();
         self.axes = axes.into_iter().collect();
         self.opener_down = self.opener_is_down();
-        match self.mode {
-            Mode::Held if !self.opener_down => return false,
-            Mode::Toggled if !self.opener_down => self.armed = true,
-            _ => {}
+        if self.mode == Mode::Held && !self.opener_down {
+            return false;
         }
         if let Some(menu) = self.top(menus).cloned()
             && let MenuKind::Radial { stick, .. } = menu.kind
@@ -251,20 +274,24 @@ impl MenuSession {
 
     /// The input that opened the menu, for hints.
     fn opener_label(&self) -> String {
-        let mut parts: Vec<&str> = self.opener.buttons.iter().map(|b| button_badge(*b)).collect();
+        let mut parts: Vec<String> = self.opener.buttons.iter().map(|b| crate::info::button_hint(*b)).collect();
         if let Some(t) = self.opener.trigger {
-            parts.push(if t == Trigger::Left { "LT" } else { "RT" });
+            parts.push(if t == Trigger::Left { "{lt}" } else { "{rt}" }.into());
         }
-        parts.join("+")
+        parts.join(" + ")
     }
 
     fn push(&mut self, menus: &[Menu], menu: usize) {
         let cursor = match menus[menu].kind {
-            MenuKind::Radial { .. } | MenuKind::Directional { .. } => None,
-            MenuKind::List | MenuKind::Buttons | MenuKind::Carousel { .. } | MenuKind::Grid { .. } => Some(0),
+            // A button menu has no cursor: each item is chosen by its own button.
+            MenuKind::Radial { .. } | MenuKind::Directional { .. } | MenuKind::Buttons => None,
+            MenuKind::List | MenuKind::Carousel { .. } => Some(0),
+            // A grid starts where it's set to, or on the item merged over that cell.
+            MenuKind::Grid { .. } => GridLayout::of(&menus[menu]).map(|grid| grid.owner(menus[menu].start)),
         };
         self.stack.push(Frame { menu, cursor });
-        self.stepping = None;
+        self.stepping.stop();
+        self.closing = None;
     }
 
     fn top<'m>(&self, menus: &'m [Menu]) -> Option<&'m Menu> {
@@ -276,25 +303,17 @@ impl MenuSession {
         let menu = menus.get(frame.menu)?;
         let items = item_views(menu);
         let radial = matches!(menu.kind, MenuKind::Radial { .. });
-        // How the menu goes away (and, for a radial menu, chooses).
-        let close = match (self.mode, radial) {
-            (Mode::Held, true) => "let go to choose".to_string(),
-            (Mode::Held, false) => "let go to close".to_string(),
-            (Mode::Toggled, true) => format!("{} again to choose", self.opener_label()),
-            (Mode::Toggled, false) => format!("{} again to close", self.opener_label()),
-            (Mode::Unwatched, true) => format!("A choose · {} close", button_badge(menu.cancel_button())),
-            (Mode::Unwatched, false) => {
-                let back = if self.stack.len() > 1 { "back" } else { "close" };
-                format!("{} {back}", button_badge(menu.cancel_button()))
-            }
-        };
+        let close = self.close_hint(menu, radial);
         let hint = match menu.kind {
-            MenuKind::Radial { stick, .. } => format!("Aim the {stick} · {close}"),
+            MenuKind::Radial { stick: Stick::Left, .. } => format!("Aim {{ls}} · {close}"),
+            MenuKind::Radial { stick: Stick::Right, .. } => format!("Aim {{rs}} · {close}"),
             MenuKind::Directional { cluster } => format!("Press a {} direction · {close}", cluster.to_string().to_lowercase()),
-            MenuKind::List => format!("↑↓ move · A choose · {close}"),
-            MenuKind::Buttons => format!("Press an item's button, or ↑↓ and A · {close}"),
-            MenuKind::Carousel { controls } => format!("{controls} to cycle · A choose · {close}"),
-            MenuKind::Grid { .. } => format!("↑↓←→ move · A choose · {close}"),
+            MenuKind::List if pages(menu) => format!("{{dpad}} move · {{lb}} {{rb}} page · {{south}} choose · {close}"),
+            MenuKind::List if list_columns(menu.items.len()) == 2 => format!("{{dpad}} move · {{south}} choose · {close}"),
+            MenuKind::List => format!("{{up}} {{down}} move · {{south}} choose · {close}"),
+            MenuKind::Buttons => format!("Press an item's button · {close}"),
+            MenuKind::Carousel { controls } => format!("{} to cycle · {{south}} choose · {close}", carousel_hint(controls)),
+            MenuKind::Grid { .. } => format!("{{dpad}} move · {{south}} choose · {close}"),
         };
         Some(MenuView {
             title: menu.name.clone(),
@@ -305,7 +324,43 @@ impl MenuSession {
             crumbs: self.stack[..self.stack.len() - 1].iter().filter_map(|f| menus.get(f.menu)).map(|m| m.name.clone()).collect(),
             hint,
             style: menu.style.clone(),
+            touch: false,
+            aim: self.live_aim(menu),
         })
+    }
+
+    /// How the menu goes away (and, for a radial menu, chooses), for its hint. The close button,
+    /// when it has one, backs out of a submenu and closes the menu at the top (a radial menu
+    /// without choosing).
+    fn close_hint(&self, menu: &Menu, radial: bool) -> String {
+        let deep = self.stack.len() > 1;
+        let opener = self.opener_label();
+        let Some(cancel) = menu.cancel_button().map(crate::info::button_hint) else {
+            // Nothing can pin a menu without a close button, so it's only ever held or unwatched.
+            return match (self.mode, radial) {
+                (Mode::Held | Mode::Pinned, true) => "let go to choose".into(),
+                (Mode::Held | Mode::Pinned, false) => "let go to close".into(),
+                (Mode::Unwatched, _) => "{south} choose".into(),
+            };
+        };
+        let pin = if self.can_pin(menu) { " · {r3} pin" } else { "" };
+        match (self.mode, radial) {
+            (Mode::Held, true) => format!("let go to choose · {cancel} cancel{pin}"),
+            (Mode::Held, false) if deep => format!("{cancel} back (hold to close) · let go to close{pin}"),
+            (Mode::Held, false) => format!("let go or {cancel} to close{pin}"),
+            (Mode::Pinned, true) => format!("{opener} again to choose · {cancel} cancel"),
+            (Mode::Pinned, false) if deep => format!("{cancel} back (hold to close) · {opener} again to close"),
+            (Mode::Pinned, false) => format!("{opener} again or {cancel} to close"),
+            (Mode::Unwatched, true) => format!("{{south}} choose · {cancel} close"),
+            (Mode::Unwatched, false) if deep => format!("{cancel} back (hold to close)"),
+            (Mode::Unwatched, false) => format!("{cancel} close"),
+        }
+    }
+
+    /// Whether R3 can pin the menu: a held one, not one that closes as it picks, and only with a
+    /// close button to put it away again.
+    fn can_pin(&self, menu: &Menu) -> bool {
+        self.mode == Mode::Held && !fires_at_once(menu) && menu.cancel_button().is_some() && !uses(menu, PIN, self.mode)
     }
 
     /// The item the cursor is on in the menu on top, if it has one.
@@ -323,14 +378,15 @@ impl MenuSession {
     }
 
     fn act(&mut self, menus: &[Menu], ev: InputEvent, now: Instant) -> Option<MenuOutcome> {
+        self.last_input = now;
         let menu = self.top(menus)?.clone();
         let mut fresh_press = false;
         match ev {
             InputEvent::Button(b, true) => fresh_press = self.held.insert(b),
             InputEvent::Button(b, false) => {
                 self.held.remove(&b);
-                if self.stepping.is_some() && matches!(b, Button::DpadUp | Button::DpadDown | Button::DpadLeft | Button::DpadRight) {
-                    self.stepping = None;
+                if let Some(dir) = crate::nav::dpad_dir(b) {
+                    self.stepping.release(dir);
                 }
             }
             InputEvent::Axis(axis, value) => {
@@ -343,12 +399,17 @@ impl MenuSession {
         let was_down = std::mem::replace(&mut self.opener_down, down);
         match self.mode {
             Mode::Held if was_down && !down => return Some(self.finish(&menu)),
-            Mode::Toggled if !down => self.armed = true,
-            Mode::Toggled if self.armed && !was_down => return Some(self.finish(&menu)),
+            Mode::Pinned if !down => self.armed = true,
+            Mode::Pinned if self.armed && !was_down => return Some(self.finish(&menu)),
             _ => {}
         }
 
         match ev {
+            // Letting go of the close button soon enough backs out of the submenu.
+            InputEvent::Button(b, false) if self.closing.is_some() && Some(b) == menu.cancel_button() => {
+                self.closing = None;
+                self.back()
+            }
             // The opener's own buttons only hold the menu up.
             InputEvent::Button(b, true) if fresh_press && !self.opener.buttons.contains(&b) => {
                 self.button_pressed(menus, &menu, b, now)
@@ -359,7 +420,7 @@ impl MenuSession {
         }
     }
 
-    /// The opener was let go (or pressed again, for a toggled menu): a radial menu chooses
+    /// The opener was let go (or pressed again, for a pinned menu): a radial menu chooses
     /// what it's aimed at, and the menu closes with all its submenus.
     fn finish(&mut self, menu: &Menu) -> MenuOutcome {
         let aimed = self.stack.last().and_then(|f| f.cursor);
@@ -374,13 +435,33 @@ impl MenuSession {
     }
 
     fn button_pressed(&mut self, menus: &[Menu], menu: &Menu, b: Button, now: Instant) -> Option<MenuOutcome> {
-        // A menu that can't be let go of needs a button to back out with.
-        if self.mode == Mode::Unwatched && b == menu.cancel_button() {
+        // R3 pins a held menu: it stays up once let go, until the opener is pressed again or its
+        // close button closes it.
+        if b == PIN && self.can_pin(menu) {
+            self.mode = Mode::Pinned;
+            self.armed = !self.opener_down;
+            return None;
+        }
+        // The cancel button backs out of a submenu, or closes the menu at the top. A menu that
+        // can't be let go of always needs it; one that can be lets the menu use it first (a
+        // button menu's item, a face-button slot).
+        if Some(b) == menu.cancel_button() && (self.mode == Mode::Unwatched || !uses(menu, b, self.mode)) {
+            // In a submenu it waits to see whether it's held (closing) or let go (going back).
+            if self.stack.len() > 1 {
+                self.closing = Some(now);
+                return None;
+            }
             return self.back();
         }
         match menu.kind {
             MenuKind::Directional { cluster } => {
                 let slot = cluster.slots().iter().position(|s| *s == b)?;
+                // The slot picked stays lit, so a menu that stays up shows what fired.
+                if menu.items.get(slot).is_some_and(|item| item.action != ButtonAction::Disabled)
+                    && let Some(frame) = self.stack.last_mut()
+                {
+                    frame.cursor = Some(slot);
+                }
                 self.choose(menus, slot)
             }
             MenuKind::Radial { .. } => {
@@ -388,19 +469,12 @@ impl MenuSession {
                 (self.mode == Mode::Unwatched && b == Button::South).then(|| self.choose_cursor(menus)).flatten()
             }
             MenuKind::Buttons => {
-                if let Some(i) = menu.items.iter().position(|item| item.button == Some(b)) {
-                    return self.choose(menus, i);
-                }
-                self.list_button(menus, menu, b, now)
+                let i = menu.items.iter().position(|item| item.button == Some(b))?;
+                self.choose(menus, i)
             }
             MenuKind::List | MenuKind::Grid { .. } => self.list_button(menus, menu, b, now),
             MenuKind::Carousel { controls } => {
-                let step = match (controls, b) {
-                    (CarouselControls::Bumpers, Button::LeftBumper) | (CarouselControls::DPad, Button::DpadLeft) => Some((-1, 0)),
-                    (CarouselControls::Bumpers, Button::RightBumper) | (CarouselControls::DPad, Button::DpadRight) => Some((1, 0)),
-                    _ => None,
-                };
-                if let Some(step) = step {
+                if let Some(step) = carousel_step(controls, b) {
                     self.start_stepping(menu, step, now);
                     return None;
                 }
@@ -409,18 +483,29 @@ impl MenuSession {
         }
     }
 
-    /// The D-pad moves a list up and down, and a grid in all four directions; A chooses.
+    /// The D-pad moves a list up and down (and between its columns once it has two), and a grid
+    /// in all four directions; A chooses.
     fn list_button(&mut self, menus: &[Menu], menu: &Menu, b: Button, now: Instant) -> Option<MenuOutcome> {
-        let grid = matches!(menu.kind, MenuKind::Grid { .. });
+        let sideways = moves_sideways(menu);
         match b {
             Button::DpadUp => self.start_stepping(menu, (0, -1), now),
             Button::DpadDown => self.start_stepping(menu, (0, 1), now),
-            Button::DpadLeft if grid => self.start_stepping(menu, (-1, 0), now),
-            Button::DpadRight if grid => self.start_stepping(menu, (1, 0), now),
+            Button::DpadLeft if sideways => self.start_stepping(menu, (-1, 0), now),
+            Button::DpadRight if sideways => self.start_stepping(menu, (1, 0), now),
+            Button::LeftBumper | Button::RightBumper if pages(menu) => self.jump_page(menu, if b == Button::LeftBumper { -1 } else { 1 }),
             Button::South => return self.choose_cursor(menus),
             _ => {}
         }
         None
+    }
+
+    /// Moves a long list's cursor a page of rows up or down, stopping at the ends.
+    fn jump_page(&mut self, menu: &Menu, dir: i32) {
+        let last = menu.items.len().saturating_sub(1) as i32;
+        if let Some(frame) = self.stack.last_mut() {
+            let at = frame.cursor.unwrap_or(0) as i32;
+            frame.cursor = Some((at + dir * VISIBLE_ROWS as i32).clamp(0, last) as usize);
+        }
     }
 
     fn axis_moved(&mut self, menu: &Menu, axis: Axis, value: f32, now: Instant) -> Option<MenuOutcome> {
@@ -436,13 +521,13 @@ impl MenuSession {
                 }
                 None
             }
-            MenuKind::List | MenuKind::Buttons => {
+            MenuKind::List if !moves_sideways(menu) => {
                 if axis == Axis::LeftY {
                     self.stick_step(menu, (0.0, value), now);
                 }
                 None
             }
-            MenuKind::Grid { .. } => {
+            MenuKind::List | MenuKind::Grid { .. } => {
                 if matches!(axis, Axis::LeftX | Axis::LeftY) {
                     self.stick_step(menu, (self.axis(Axis::LeftX), self.axis(Axis::LeftY)), now);
                 }
@@ -460,36 +545,34 @@ impl MenuSession {
                             self.start_stepping(menu, (if t == Trigger::Left { -1 } else { 1 }, 0), now);
                         } else if value < TRIGGER_RELEASE && self.trigger_step == Some(t) {
                             self.trigger_step = None;
-                            self.stepping = None;
+                            self.stepping.stop();
                         }
                     }
                     _ => {}
                 }
                 None
             }
-            MenuKind::Directional { .. } => None,
+            MenuKind::Directional { .. } | MenuKind::Buttons => None,
         }
     }
 
     /// A stick used like a D-pad: up/down for lists, left/right for carousels, all four for
     /// grids (whichever way it leans most).
-    fn stick_step(&mut self, menu: &Menu, (x, y): (f32, f32), now: Instant) {
-        let threshold = if self.stick_step.is_some() { STICK_RELEASE } else { STICK_PRESS };
-        let dir = if x.abs().max(y.abs()) < threshold {
-            None
-        } else if x.abs() > y.abs() {
-            Some((x.signum() as i32, 0))
-        } else {
-            Some((0, y.signum() as i32))
-        };
-        if dir == self.stick_step {
-            return;
+    fn stick_step(&mut self, menu: &Menu, pos: (f32, f32), now: Instant) {
+        match self.stick_step.update(pos) {
+            Some(Some(d)) => self.start_stepping(menu, d, now),
+            Some(None) => self.stepping.stop(),
+            None => {}
         }
-        self.stick_step = dir;
-        match dir {
-            Some(d) => self.start_stepping(menu, d, now),
-            None => self.stepping = None,
-        }
+    }
+
+    /// Where a radial menu's stick points right now, for the overlay to show, in steps of a few
+    /// degrees so small wobbles don't redraw it.
+    fn live_aim(&self, menu: &Menu) -> Option<f32> {
+        let MenuKind::Radial { stick, .. } = menu.kind else { return None };
+        let (ax, ay) = stick_axes(stick);
+        let (x, y) = (self.axis(ax), self.axis(ay));
+        (x.hypot(y) >= AIM_SHOWN).then(|| (x.atan2(-y).to_degrees().rem_euclid(360.0) / 3.0).round() * 3.0)
     }
 
     /// Points a radial menu's selection where the stick is aimed (first item at the top,
@@ -514,7 +597,7 @@ impl MenuSession {
 
     fn start_stepping(&mut self, menu: &Menu, dir: Step, now: Instant) {
         self.step(menu, dir);
-        self.stepping = Some((dir, now + REPEAT_DELAY));
+        self.stepping.start(dir, now);
     }
 
     fn step(&mut self, menu: &Menu, (dx, dy): Step) {
@@ -523,8 +606,8 @@ impl MenuSession {
             && n > 0
         {
             let cursor = frame.cursor.unwrap_or(0).min(n - 1);
-            frame.cursor = Some(match menu.kind.grid_columns() {
-                Some(columns) => grid_step(cursor, n, columns, (dx, dy)),
+            frame.cursor = Some(match GridLayout::of(menu) {
+                Some(grid) => grid.step(cursor, (dx, dy)),
                 None if matches!(menu.kind, MenuKind::List | MenuKind::Buttons) => list_step(cursor, n, (dx, dy)),
                 // Carousels are one line, whichever way it runs.
                 None => (cursor as i32 + dx + dy).rem_euclid(n as i32) as usize,
@@ -537,8 +620,9 @@ impl MenuSession {
         self.choose(menus, i)
     }
 
-    /// Chooses item `i`: opens its submenu, or hands back its action to run. A held or
-    /// toggled menu stays up after an action, so several can be picked in one go.
+    /// Chooses item `i`: opens its submenu in its place, or hands back its action to run. A
+    /// directional or button menu is for quick actions, so it closes as it picks; any other held
+    /// or pinned menu stays up after an action, so several can be picked in one go.
     fn choose(&mut self, menus: &[Menu], i: usize) -> Option<MenuOutcome> {
         let menu = self.top(menus)?;
         let item = menu.items.get(i)?;
@@ -549,38 +633,96 @@ impl MenuSession {
                 self.push(menus, sub);
                 None
             }
-            action => Some(MenuOutcome::Choose {
-                menu: menu.name.clone(),
-                item: i,
-                action: action.clone(),
-                close: self.mode == Mode::Unwatched,
-            }),
+            action => {
+                let close = self.mode == Mode::Unwatched || fires_at_once(menu);
+                // A menu that closes as it picks shows the item it picked as it goes.
+                if close && let Some(frame) = self.stack.last_mut() {
+                    frame.cursor = Some(i);
+                }
+                Some(MenuOutcome::Choose { menu: menu.name.clone(), item: i, action: action.clone(), close })
+            }
         }
     }
 
     /// Cancel: back out of a submenu, or close.
     fn back(&mut self) -> Option<MenuOutcome> {
         self.stack.pop();
-        self.stepping = None;
+        self.stepping.stop();
+        self.closing = None;
         if self.stack.is_empty() { Some(MenuOutcome::Close) } else { None }
     }
 
     /// List/carousel repeat while a direction is held. Returns whether the view changed.
     pub fn tick(&mut self, menus: &[Menu], now: Instant) -> bool {
-        let Some((dir, mut next)) = self.stepping else { return false };
         let Some(menu) = self.top(menus).cloned() else { return false };
-        let mut changed = false;
-        while now >= next {
-            self.step(&menu, dir);
-            next += REPEAT_EVERY;
-            changed = true;
-        }
-        self.stepping = Some((dir, next));
-        changed
+        let Some(dir) = self.stepping.due(now) else { return false };
+        self.step(&menu, dir);
+        true
     }
 
     pub fn next_deadline(&self) -> Option<Instant> {
-        self.stepping.map(|(_, t)| t)
+        let idle = (self.mode == Mode::Unwatched).then_some(self.last_input + IDLE_CLOSE);
+        let closing = self.closing.map(|t| t + HOLD_TO_CLOSE);
+        self.stepping.deadline().into_iter().chain(idle).chain(closing).min()
+    }
+
+    /// Whether the menu closes by itself now: its close button has been held down in a submenu,
+    /// or it's unwatched and has been left alone long enough.
+    pub fn expired(&self, now: Instant) -> bool {
+        self.closing.is_some_and(|t| now >= t + HOLD_TO_CLOSE) || (self.mode == Mode::Unwatched && now >= self.last_input + IDLE_CLOSE)
+    }
+}
+
+/// The controls that cycle a carousel, as hint tokens.
+fn carousel_hint(controls: CarouselControls) -> &'static str {
+    match controls {
+        CarouselControls::Bumpers => "{lb} {rb}",
+        CarouselControls::Triggers => "{lt} {rt}",
+        CarouselControls::DPad => "{left} {right}",
+        CarouselControls::LeftStick => "{ls}",
+        CarouselControls::RightStick => "{rs}",
+    }
+}
+
+/// The step a carousel's stepping button makes, if `b` is one.
+fn carousel_step(controls: CarouselControls, b: Button) -> Option<Step> {
+    match (controls, b) {
+        (CarouselControls::Bumpers, Button::LeftBumper) | (CarouselControls::DPad, Button::DpadLeft) => Some((-1, 0)),
+        (CarouselControls::Bumpers, Button::RightBumper) | (CarouselControls::DPad, Button::DpadRight) => Some((1, 0)),
+        _ => None,
+    }
+}
+
+/// Whether picking an item also closes the menu: a directional or button menu, made for firing
+/// one quick action.
+fn fires_at_once(menu: &Menu) -> bool {
+    matches!(menu.kind, MenuKind::Directional { .. } | MenuKind::Buttons)
+}
+
+/// Whether the bumpers jump a page: in a list too long to show at once.
+fn pages(menu: &Menu) -> bool {
+    matches!(menu.kind, MenuKind::List) && menu.items.len() > 2 * VISIBLE_ROWS
+}
+
+/// Whether left and right move the cursor: in a grid, and in a list long enough for two columns.
+fn moves_sideways(menu: &Menu) -> bool {
+    match menu.kind {
+        MenuKind::Grid { .. } => true,
+        MenuKind::List => list_columns(menu.items.len()) == 2,
+        _ => false,
+    }
+}
+
+/// Whether `menu` itself does something with a press of `b` (in `mode`), so the press isn't
+/// free to cancel.
+fn uses(menu: &Menu, b: Button, mode: Mode) -> bool {
+    let dpad = matches!(b, Button::DpadUp | Button::DpadDown) || (moves_sideways(menu) && matches!(b, Button::DpadLeft | Button::DpadRight));
+    match menu.kind {
+        MenuKind::Directional { cluster } => cluster.slots().contains(&b),
+        MenuKind::Radial { .. } => mode == Mode::Unwatched && b == Button::South,
+        MenuKind::Buttons => menu.items.iter().any(|item| item.button == Some(b)),
+        MenuKind::List | MenuKind::Grid { .. } => dpad || b == Button::South || (pages(menu) && matches!(b, Button::LeftBumper | Button::RightBumper)),
+        MenuKind::Carousel { controls } => carousel_step(controls, b).is_some() || b == Button::South,
     }
 }
 
@@ -595,16 +737,17 @@ fn item_views(menu: &Menu) -> Vec<ItemView> {
         .enumerate()
         .map(|(i, item)| ItemView {
             label: item.label.clone(),
-            button: match (slots, item.button) {
-                (Some(slots), _) => slots.get(i).map(|b| button_badge(*b).to_string()),
-                (None, Some(b)) => Some(button_badge(b).to_string()),
-                (None, None) => None,
-            },
+            button: None,
             submenu: matches!(item.action, ButtonAction::OpenMenu(_)),
             weight: item.weight,
-            buttons: Vec::new(),
+            // The slot's or item's button, drawn as the pad's glyph.
+            buttons: match slots {
+                Some(slots) => slots.get(i).copied().into_iter().collect(),
+                None => item.button.into_iter().collect(),
+            },
             tone: Tone::Normal,
             keyword: None,
+            span: item.span,
         })
         .collect()
 }
@@ -649,21 +792,13 @@ pub fn list_start(cursor: usize, n: usize) -> usize {
     if row >= VISIBLE_ROWS { row + 1 - VISIBLE_ROWS } else { 0 }
 }
 
-/// Moves through `n` items laid out `columns` wide, wrapping within the row or column (the
-/// last row may be short, so its columns are too).
-fn grid_step(cursor: usize, n: usize, columns: usize, (dx, dy): Step) -> usize {
-    let (col, row) = (cursor % columns, cursor / columns);
-    let row_len = (n - row * columns).min(columns);
-    let col_len = (n - col).div_ceil(columns);
-    let col = (col as i32 + dx).rem_euclid(row_len as i32) as usize;
-    let row = (row as i32 + dy).rem_euclid(col_len as i32) as usize;
-    row * columns + col
-}
-
-/// Whether `parent` may open `child` as a submenu: only menus of the same kind, and never
-/// from a radial menu (aiming a second wheel with the same release is awkward).
+/// Whether `parent` may open `child` as a submenu: only when both have the same close button
+/// (which backs out of the submenu), and never from a radial menu, which chooses as it's let go.
 pub fn can_open(parent: &Menu, child: &Menu) -> bool {
-    !matches!(parent.kind, MenuKind::Radial { .. }) && parent.kind.tag() == child.kind.tag() && !child.items.is_empty()
+    !matches!(parent.kind, MenuKind::Radial { .. })
+        && parent.cancel_button().is_some()
+        && parent.cancel_button() == child.cancel_button()
+        && !child.items.is_empty()
 }
 
 fn stick_axes(s: Stick) -> (Axis, Axis) {
@@ -680,8 +815,13 @@ fn trigger_axis(t: Trigger) -> Axis {
     }
 }
 
+mod grid;
+pub use grid::GridLayout;
 mod touch;
 pub use touch::{ItemShape, TOUCH_CENTER_RADIUS, item_at, item_shapes, touch_view};
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod suite;

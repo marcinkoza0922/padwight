@@ -17,24 +17,36 @@ Opening one closes the other.
 |---|---|
 | D-pad / left stick | Move between keys (repeats while held) |
 | A | Press the selected key. Holding A holds the key. |
-| Shift / Ctrl / Alt / Super | Latch for the next key |
-| X / Y / Start | Backspace / Space / Enter |
+| Shift / Ctrl / Alt / AltGr / Super | Latch for the next key; press it again to let go |
+| X | Backspace (repeats while held) |
+| Y / Start | Space / Enter |
+| LB / RB | Move the text cursor left / right |
 | Hold LT | Hold Shift |
-| Hold B | Close |
+| Hold B, or press Guide | Close |
+
+The hints at the bottom show your controller's own buttons.
+
+### Basic or full
+
+The **Settings** page chooses the keys. **Basic**, the default, has what typing into a game needs: letters, digits and symbols, Tab, Enter, Backspace, Esc, Ctrl, Alt, AltGr and the arrows. **Full** adds the function keys, the editing keys (Insert, Delete, Home, End, Page Up and Down) and the rest of a whole keyboard.
+
+### Your keyboard layout
+
+Keys are labelled with what they type in your keyboard layout, so a German layout shows Z where a US one shows Y, and the labels change while Shift is on. Caps Lock lights up when the keyboard turned it on. The layout is the first one your desktop is set to (KDE, GNOME, Sway, Hyprland, or the system's X11 or console setting), else the one your locale suggests. Set `PADWIGHT_KEYBOARD_LAYOUT` (for example `de` or `fr(azerty)`) in the daemon's environment to choose another.
 
 ## Numpad controls
 
-The numpad has the digits 0 to 9 and a dot, for codes and number fields.
+The numpad has the digits 0 to 9, a dot, a comma and a minus, plus Backspace and Enter keys, for codes and number fields.
 
 | Control | Action |
 |---|---|
 | D-pad / left stick | Move |
-| A | Press the selected number |
-| X | Backspace |
+| A | Press the selected key |
+| X | Backspace (repeats while held) |
 | Start | Enter |
-| Hold B | Close |
+| Hold B, or press Guide | Close |
 
-The numpad types the top-row number keys, so it works whatever the Num Lock state is.
+The numpad types the top-row number keys, so it works whatever the Num Lock state is. On a layout that types digits with Shift (AZERTY), it holds Shift for them.
 
 ## Appearance
 

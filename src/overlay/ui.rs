@@ -14,7 +14,11 @@ use iced_layershell::{
 };
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
-use super::{OverlayFrame, OverlayView, draw, fit::Fit};
+use super::{
+    OverlayFrame, OverlayView, draw,
+    fit::Fit,
+    timing::{frame_summary, menu_log, timing_log, unix_ns},
+};
 use crate::{
     config::ScreenPosition,
     info::InfoView,
@@ -113,7 +117,7 @@ fn namespace() -> String {
 fn update(state: &mut Overlay, message: Message) -> Task<Message> {
     match message {
         Message::State(mut frame) => {
-            timing_log(&format!("recv {}", unix_ns()));
+            timing_log(&format!("recv {} {}", unix_ns(), frame_summary(&frame)));
             frame.apply_lite();
             let now = Instant::now();
             let was_shown = state.shown();
@@ -183,25 +187,10 @@ fn view(state: &Overlay) -> Element<'_, Message> {
     responsive(move |display| {
         let started = Instant::now();
         let built: Element<'_, Message> = stack(layers(state, display, Instant::now())).into();
-        timing_log(&format!("built {} {}", unix_ns(), started.elapsed().as_nanos()));
+        timing_log(&format!("built {} {} {}x{}", unix_ns(), started.elapsed().as_nanos(), display.width, display.height));
         built
     })
     .into()
-}
-
-/// Profiling only. When `PADWIGHT_OVERLAY_TIMING` names a file, each received frame and each
-/// build of the overlay's widgets is appended to it, as `recv <ns>` and `built <ns> <build ns>`.
-/// Unset, this does nothing; the file is opened per call, so it is only for measuring.
-fn timing_log(entry: &str) {
-    use std::io::Write;
-    let Some(path) = std::env::var_os("PADWIGHT_OVERLAY_TIMING") else { return };
-    if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
-        let _ = writeln!(file, "{entry}");
-    }
-}
-
-fn unix_ns() -> u128 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_nanos())
 }
 
 /// The overlays on screen at `now`, sized for a display of `display`.
@@ -224,11 +213,12 @@ fn layers(state: &Overlay, display: Size, now: Instant) -> Vec<Element<'_, Messa
             layers.push(draw::place(column(panels).spacing(12).into(), style, &fit, &Anim::still()));
         }
     }
+    let glyphs = crate::info::Glyphs { family: state.frame.family, nintendo_layout: state.frame.nintendo_layout };
     for (view, anim) in state.panels.shown(now, motion) {
         layers.push(match view {
             OverlayView::Keyboard(k) => {
                 let fit = Fit::of(&k.style, display);
-                draw::place(draw::keyboard_panel(k, font, &fit, &anim), &k.style, &fit, &anim)
+                draw::place(draw::keyboard_panel(k, font, glyphs, &fit, &anim), &k.style, &fit, &anim)
             }
             OverlayView::Menu(m) => {
                 let look = draw::MenuLook {
@@ -237,16 +227,17 @@ fn layers(state: &Overlay, display: Size, now: Instant) -> Vec<Element<'_, Messa
                     nintendo_layout: state.frame.nintendo_layout,
                     anim,
                 };
+                menu_log(m, &anim);
                 let fit = Fit::of(&m.style, display);
                 draw::place(draw::menu_panel(m, font, look, &fit), &m.style, &fit, &anim)
             }
             OverlayView::Media(m) => {
                 let fit = Fit::of(&m.style, display);
-                draw::place(draw::media_panel(m, font, &fit, &anim), &m.style, &fit, &anim)
+                draw::place(draw::media_panel(m, font, glyphs, &fit, &anim), &m.style, &fit, &anim)
             }
             OverlayView::Offer(o) => {
                 let fit = Fit::of(&o.style, display);
-                draw::place(draw::offer_panel(o, font, &fit, &anim), &o.style, &fit, &anim)
+                draw::place(draw::offer_panel(o, font, glyphs, &fit, &anim), &o.style, &fit, &anim)
             }
         });
     }
@@ -280,6 +271,8 @@ mod motion_tests {
             crumbs: Vec::new(),
             hint: String::new(),
             style: Default::default(),
+            touch: false,
+            aim: None,
         };
         OverlayFrame {
             active: Some(OverlayView::Menu(view)),
@@ -296,6 +289,37 @@ mod motion_tests {
         let _ = update(&mut state, Message::State(OverlayFrame { motion: menu_frame(MotionStyle::Subtle).motion, ..Default::default() }));
         assert!(state.shown(), "fading out, so the surface stays up");
         assert!(state.busy(Instant::now()));
+    }
+
+    #[test]
+    fn a_frame_stands_in_for_an_older_one_only_when_nothing_opened_closed_or_was_picked() {
+        let open = menu_frame(MotionStyle::Subtle);
+        let mut moved = open.clone();
+        let mut picked = open.clone();
+        if let (Some(OverlayView::Menu(m)), Some(OverlayView::Menu(p))) = (&mut moved.active, &mut picked.active) {
+            m.selected = Some(1);
+            p.picks = 1;
+        }
+        assert!(moved.stands_in_for(&open), "a cursor move can be skipped in a burst");
+        assert!(!picked.stands_in_for(&open), "the frame before a pick still shows");
+        assert!(!OverlayFrame::default().stands_in_for(&picked), "a pick isn't lost to the close after it");
+        assert!(!open.stands_in_for(&OverlayFrame::default()), "nor an opening");
+    }
+
+    #[test]
+    fn a_menu_closed_by_a_pick_holds_its_pick_a_moment_even_with_motion_off() {
+        let mut state = Overlay::new();
+        let _ = update(&mut state, Message::State(menu_frame(MotionStyle::Off)));
+        let mut picked = menu_frame(MotionStyle::Off);
+        if let Some(OverlayView::Menu(m)) = &mut picked.active {
+            m.picks = 1;
+        }
+        let _ = update(&mut state, Message::State(picked));
+        let _ = update(&mut state, Message::State(OverlayFrame { motion: menu_frame(MotionStyle::Off).motion, ..Default::default() }));
+        assert!(state.shown(), "held so the pick is seen");
+        let later = Instant::now() + Duration::from_secs_f32(crate::motion::PICK_HOLD + 0.05);
+        state.prune(later);
+        assert!(!state.shown(), "then gone");
     }
 
     #[test]

@@ -1,7 +1,7 @@
 //! Menus laid out on a touchpad: which item is under a finger, and what the overlay shows while
 //! a finger is on the pad. The engine runs the items; nothing here takes the controller.
 
-use super::{MenuView, item_views, list_columns};
+use super::{GridLayout, MenuView, item_views, list_columns};
 use crate::config::{Menu, MenuKind, TouchChoose};
 
 /// A finger this close to the middle (in widths of the area) points at nothing in a radial or
@@ -45,9 +45,9 @@ pub fn item_at(menu: &Menu, (x, y): (f32, f32), height: f32) -> Option<usize> {
                 (false, _, false) => 0,
             }
         }
-        MenuKind::Grid { columns } => {
-            let columns = usize::from(columns).clamp(1, n);
-            strip(y, n.div_ceil(columns)) * columns + strip(x, columns)
+        MenuKind::Grid { .. } => {
+            let grid = GridLayout::of(menu)?;
+            return grid.at(strip(x, grid.columns), strip(y, grid.rows));
         }
         MenuKind::List | MenuKind::Buttons => {
             let columns = list_columns(n);
@@ -67,6 +67,8 @@ pub enum ItemShape {
     /// A slice of the circle round the middle, between two angles (degrees clockwise from
     /// straight up), outside the middle that picks nothing.
     Slice(f32, f32),
+    /// Nowhere: a grid item under another merged over its cell.
+    Hidden,
 }
 
 /// The radius of the middle that picks nothing in a radial or directional menu, in widths of
@@ -86,13 +88,16 @@ pub fn item_shapes(menu: &Menu) -> Vec<ItemShape> {
             crate::radial::for_menu(boxes, &weights).into_iter().map(|(a, b)| ItemShape::Slice(a, b)).collect()
         }
         MenuKind::Directional { .. } => (0..n.min(4)).map(|i| ItemShape::Slice(i as f32 * 90.0 - 45.0, i as f32 * 90.0 + 45.0)).collect(),
-        MenuKind::Grid { columns } => {
-            let columns = usize::from(columns).clamp(1, n);
-            let rows = n.div_ceil(columns);
+        MenuKind::Grid { .. } => {
+            let Some(grid) = GridLayout::of(menu) else { return Vec::new() };
             (0..n)
-                .map(|i| {
-                    let ((x0, x1), (y0, y1)) = (share(i % columns, columns), share(i / columns, rows));
-                    ItemShape::Cell(x0, y0, x1, y1)
+                .map(|i| match grid.cells(i) {
+                    Some(at) => {
+                        let ((x0, _), (y0, _)) = (share(at.column, grid.columns), share(at.row, grid.rows));
+                        let ((_, x1), (_, y1)) = (share(at.column + at.columns - 1, grid.columns), share(at.row + at.rows - 1, grid.rows));
+                        ItemShape::Cell(x0, y0, x1, y1)
+                    }
+                    None => ItemShape::Hidden,
                 })
                 .collect()
         }
@@ -131,6 +136,8 @@ pub fn touch_view(menu: &Menu, selected: Option<usize>, choose: TouchChoose, pic
         crumbs: Vec::new(),
         hint: hint.into(),
         style: menu.style.clone(),
+        touch: true,
+        aim: None,
     }
 }
 
@@ -140,8 +147,8 @@ mod tests {
     use crate::config::{ButtonAction, Cluster, MenuItem, OverlayStyle, Stick};
 
     fn menu(kind: MenuKind, n: usize) -> Menu {
-        let items = (0..n).map(|i| MenuItem { label: i.to_string(), action: ButtonAction::Disabled, button: None, weight: 1.0 }).collect();
-        Menu { name: "M".into(), kind, items, cancel: None, style: OverlayStyle::default() }
+        let items = (0..n).map(|i| MenuItem::new(i.to_string(), ButtonAction::Disabled)).collect();
+        Menu { name: "M".into(), kind, items, cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() }
     }
 
     #[test]
@@ -163,6 +170,17 @@ mod tests {
         assert_eq!(item_at(&m, (0.9, 0.9), 0.5), None);
         // The edges belong to the cells next to them.
         assert_eq!(item_at(&m, (1.0, 0.0), 0.5), Some(1));
+    }
+
+    #[test]
+    fn a_merged_grid_item_covers_its_cells_and_hides_the_ones_under_it() {
+        let mut m = menu(MenuKind::Grid { columns: 2 }, 4);
+        m.items[0].span = crate::config::Span { columns: 2, rows: 1 };
+        assert_eq!(item_at(&m, (0.9, 0.1), 0.5), Some(0));
+        assert_eq!(item_at(&m, (0.9, 0.9), 0.5), Some(3));
+        let shapes = item_shapes(&m);
+        assert_eq!(shapes[0], ItemShape::Cell(0.0, 0.0, 1.0, 0.5));
+        assert_eq!(shapes[1], ItemShape::Hidden);
     }
 
     #[test]
@@ -198,6 +216,7 @@ mod tests {
                         let mid = ((a + b) / 2.0).to_radians();
                         (0.5 + 0.25 * mid.sin(), 0.5 - 0.25 * mid.cos() / height)
                     }
+                    ItemShape::Hidden => continue,
                 };
                 assert_eq!(item_at(&m, middle, height), Some(i), "{kind:?} item {i}");
             }

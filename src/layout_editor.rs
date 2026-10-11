@@ -3,8 +3,9 @@
 //! active profile only, so it is the pack of the game being played (the daemon makes one first
 //! when there isn't one).
 
-mod buttons;
+pub(crate) mod buttons;
 mod macros;
+mod menus;
 mod values;
 mod views;
 mod zones;
@@ -32,10 +33,12 @@ enum Top {
     Combos,
     Layers,
     Macros,
+    Menus,
+    Infos,
 }
 
-fn top_rows() -> Vec<Top> {
-    Button::ALL
+fn top_rows(inputs: &[Button]) -> Vec<Top> {
+    inputs
         .iter()
         .map(|&b| Top::Button(b))
         .chain([
@@ -47,6 +50,8 @@ fn top_rows() -> Vec<Top> {
             Top::Combos,
             Top::Layers,
             Top::Macros,
+            Top::Menus,
+            Top::Infos,
         ])
         .collect()
 }
@@ -78,6 +83,13 @@ enum Page {
     Stick(Stick),
     Trigger(Trigger),
     Gyro,
+    /// The game's menus, one menu, and one of its items.
+    Menus,
+    Menu(usize),
+    MenuItem(usize, usize),
+    /// The game's info overlays, and one of them.
+    Infos,
+    Info(usize),
 }
 
 /// What the editor asks of the menu after a step.
@@ -103,6 +115,10 @@ pub struct LayoutEditor {
     cursor: usize,
     /// The page and cursor each open page was entered from, innermost last.
     history: Vec<(Page, usize)>,
+    /// The controller has back paddles, so they can be set too.
+    paddles: bool,
+    /// A delete row was chosen once: choosing it again deletes. Any move disarms it.
+    armed: bool,
 }
 
 impl Default for LayoutEditor {
@@ -113,13 +129,33 @@ impl Default for LayoutEditor {
 
 impl LayoutEditor {
     pub fn new() -> Self {
-        LayoutEditor { page: Page::Top, cursor: 0, history: Vec::new() }
+        LayoutEditor { page: Page::Top, cursor: 0, history: Vec::new(), paddles: false, armed: false }
+    }
+
+    /// This editor, for a controller with back paddles (or without).
+    pub fn with_paddles(self, paddles: bool) -> Self {
+        LayoutEditor { paddles, ..self }
+    }
+
+    /// The buttons a profile sets here: every button but Guide, which works the same in every
+    /// game, and the back paddles when the controller has them.
+    fn inputs(&self) -> Vec<Button> {
+        let paddles = Button::PADDLES.iter().filter(|_| self.paddles);
+        Button::ALL.iter().filter(|&&b| b != Button::Guide).chain(paddles).copied().collect()
     }
 
     /// Moves the cursor on the current page: (x, y), y positive down. Pages in two columns move
     /// between them with x.
     pub fn move_cursor(&mut self, step: (i32, i32), config: &Config) {
+        self.armed = false;
         self.cursor = crate::menu::list_step(self.cursor, self.rows(config), step);
+    }
+
+    /// Moves the cursor a page of rows up or down (`dir` -1 or 1), stopping at the ends.
+    pub fn jump_page(&mut self, dir: i32, config: &Config) {
+        self.armed = false;
+        let last = self.rows(config).saturating_sub(1) as i32;
+        self.cursor = (self.cursor as i32 + dir * crate::menu::VISIBLE_ROWS as i32).clamp(0, last) as usize;
     }
 
     /// Whether the current page is in two columns, so left and right move between them rather
@@ -131,18 +167,18 @@ impl LayoutEditor {
     /// How many rows the current page has.
     pub fn rows(&self, config: &Config) -> usize {
         match self.page {
-            Page::Top => top_rows().len(),
+            Page::Top => top_rows(&self.inputs()).len(),
             Page::Action(slot) => page_rows(slot, &current_action(config, slot)).len(),
             Page::Pad(_) => Button::ALL.len(),
             Page::Gestures(_) => GestureKind::ALL.len(),
             Page::Combos => combos(config).len() + 1,
-            Page::Combo(_) => Button::ALL.len() + 2,
+            Page::Combo(_) => self.inputs().len() + 2,
             Page::Layers => layers(config).len() + 1,
             Page::Keys(_) => buttons::KEY_PICKS.len() + 1,
             Page::MacroPick(..) => Button::ALL.len(),
             Page::Pick(_, p) => picker_names(config, p).len(),
             Page::MacroStick(_) => macros::STICK_STEPS,
-            Page::Layer(_) => Button::ALL.len(),
+            Page::Layer(_) => self.inputs().len(),
             Page::Macros => config.active_game().macros.len() + 1,
             Page::Macro(i) => macro_rows(config, i),
             Page::Stick(_) => values::STICK_ROWS + 1,
@@ -150,11 +186,15 @@ impl LayoutEditor {
             Page::Zones(a) => zones::zones_rows(config, a).len(),
             Page::Zone(..) => ZONE_ROWS,
             Page::Gyro => values::GYRO_ROWS,
+            Page::Menus | Page::Menu(_) | Page::MenuItem(..) | Page::Infos | Page::Info(_) => menus::page(self.page, config).0.len(),
         }
     }
 
     /// Chooses the highlighted row.
     pub fn choose(&mut self, config: &mut Config) -> EditStep {
+        if self.first_delete_press(config) {
+            return EditStep::Stay;
+        }
         match self.page {
             Page::Top => self.open_top_row(),
             Page::Action(slot) => self.choose_action(slot, config),
@@ -181,7 +221,7 @@ impl LayoutEditor {
                 EditStep::Changed
             }
             Page::Layer(i) => {
-                self.push(Page::Action(Slot::Layer(i, Button::ALL[self.cursor])));
+                self.push(Page::Action(Slot::Layer(i, self.inputs()[self.cursor])));
                 EditStep::Stay
             }
             Page::Macros => self.choose_macros_row(config),
@@ -198,36 +238,60 @@ impl LayoutEditor {
                 EditStep::Changed
             }
             Page::Macro(i) => self.choose_macro_row(i, config),
-            Page::Stick(stick) if self.cursor == values::STICK_ROWS => {
-                self.push(Page::Zones(Analog::Stick(stick)));
-                EditStep::Stay
-            }
-            Page::Stick(stick) => values::stick_choose(stick, self.cursor, config),
-            Page::Trigger(trigger) if self.cursor == values::TRIGGER_ROWS => {
-                self.push(Page::Zones(Analog::Trigger(trigger)));
-                EditStep::Stay
-            }
-            Page::Trigger(trigger) => values::trigger_choose(trigger, self.cursor, config),
+            Page::Stick(_) | Page::Trigger(_) => self.choose_analog_row(config),
             Page::Zones(a) => self.choose_zones(a, config),
             Page::Zone(a, i) => self.choose_zone(a, i, config),
             Page::Gyro => values::gyro_choose(self.cursor, config),
+            Page::Menus | Page::Menu(_) | Page::MenuItem(..) | Page::Infos | Page::Info(_) => self.choose_on_menu_pages(config),
         }
     }
 
-    /// Changes the highlighted number by one step (`dir` is -1 or 1). Pages without numbers do
-    /// nothing.
+    /// Deleting takes a second press, so a stray A doesn't lose a combo, zone or macro: true
+    /// for the first press on a delete row, which only arms it.
+    fn first_delete_press(&mut self, config: &Config) -> bool {
+        let armed = std::mem::take(&mut self.armed);
+        self.armed = !armed && self.on_delete_row(config);
+        self.armed
+    }
+
+    /// The page's rows, with an armed delete row asking for its second press.
+    fn armed_rows(&self, mut items: Vec<ItemView>) -> Vec<ItemView> {
+        if self.armed
+            && let Some(row) = items.get_mut(self.cursor)
+        {
+            row.label = "Press {south} again to delete".into();
+        }
+        items
+    }
+
+    /// Whether the cursor is on a row that deletes something.
+    fn on_delete_row(&self, config: &Config) -> bool {
+        match self.page {
+            Page::Macro(i) => macros::is_delete_row(config, i, self.cursor),
+            Page::Combo(_) => self.cursor == self.inputs().len() + 1,
+            Page::Zone(..) => self.cursor == ZONE_DELETE,
+            _ => self.on_menu_delete_row(config),
+        }
+    }
+
+    /// Changes the highlighted number (or kind, or position) by one step (`dir` is -1 or 1).
+    /// Pages without one do nothing.
     pub fn adjust(&mut self, dir: i32, config: &mut Config) -> EditStep {
+        self.armed = false;
         match self.page {
             Page::Stick(stick) => values::stick_adjust(stick, self.cursor, dir, config),
             Page::Trigger(trigger) => values::trigger_adjust(trigger, self.cursor, dir, config),
             Page::Gyro => values::gyro_adjust(self.cursor, dir, config),
             Page::Zone(a, i) => zones::adjust_zone(config, a, i, self.cursor, dir),
+            Page::Menu(m) => self.adjust_menu(m, dir, config),
+            Page::Info(i) => self.adjust_info(i, dir, config),
             _ => EditStep::Stay,
         }
     }
 
     /// Goes back one page. From the top page it leaves the editor.
     pub fn back(&mut self) -> EditStep {
+        self.armed = false;
         if self.page == Page::Top || !self.pop() {
             self.page = Page::Top;
             self.cursor = 0;
@@ -255,7 +319,7 @@ impl LayoutEditor {
     }
 
     fn open_top_row(&mut self) -> EditStep {
-        let page = match top_rows()[self.cursor] {
+        let page = match top_rows(&self.inputs())[self.cursor] {
             Top::Button(b) => Page::Action(Slot::Button(b)),
             Top::Stick(s) => Page::Stick(s),
             Top::Trigger(t) => Page::Trigger(t),
@@ -263,6 +327,8 @@ impl LayoutEditor {
             Top::Combos => Page::Combos,
             Top::Layers => Page::Layers,
             Top::Macros => Page::Macros,
+            Top::Menus => Page::Menus,
+            Top::Infos => Page::Infos,
         };
         self.push(page);
         EditStep::Stay
@@ -307,6 +373,18 @@ impl LayoutEditor {
                 EditStep::Changed
             }
         }
+    }
+
+    /// A stick's or trigger's row: a value, or its zones on the last row.
+    fn choose_analog_row(&mut self, config: &mut Config) -> EditStep {
+        match self.page {
+            Page::Stick(stick) if self.cursor == values::STICK_ROWS => self.push(Page::Zones(Analog::Stick(stick))),
+            Page::Trigger(trigger) if self.cursor == values::TRIGGER_ROWS => self.push(Page::Zones(Analog::Trigger(trigger))),
+            Page::Stick(stick) => return values::stick_choose(stick, self.cursor, config),
+            Page::Trigger(trigger) => return values::trigger_choose(trigger, self.cursor, config),
+            _ => {}
+        }
+        EditStep::Stay
     }
 
     fn choose_combo_row(&mut self, config: &mut Config) -> EditStep {
@@ -408,17 +486,18 @@ impl LayoutEditor {
     }
 
     fn choose_combo_member(&mut self, i: usize, config: &mut Config) -> EditStep {
-        let members = Button::ALL.len();
+        let inputs = self.inputs();
+        let members = inputs.len();
         match self.cursor {
             row if row < members => {
-                let b = Button::ALL[row];
+                let b = inputs[row];
                 let Some(profile) = active_profile_mut(config) else { return EditStep::Stay };
                 let Some(combo) = profile.combos.get_mut(i) else { return EditStep::Stay };
                 if let Some(at) = combo.buttons.iter().position(|&x| x == b) {
                     combo.buttons.remove(at);
                 } else {
                     combo.buttons.push(b);
-                    combo.buttons.sort_by_key(|x| Button::ALL.iter().position(|y| y == x));
+                    combo.buttons.sort_by_key(|x| inputs.iter().position(|y| y == x));
                 }
                 EditStep::Changed
             }
@@ -445,57 +524,60 @@ impl LayoutEditor {
         let style = config.active_menu_style().clone();
         let profile = config.active();
         let (items, hint) = match self.page {
-            Page::Top => (top_rows().into_iter().map(|row| top_item(row, config)).collect(), "A change · B back"),
+            Page::Top => (top_rows(&self.inputs()).into_iter().map(|row| top_item(row, config)).collect(), "{south} change · {east} back"),
             Page::Action(slot) => {
                 let current = current_action(config, slot);
-                (page_rows(slot, &current).into_iter().map(|row| ItemView { keyword: action_row_keyword(row), ..item(action_row_label(row, &current)) }).collect(), "A choose · B back")
+                (page_rows(slot, &current).into_iter().map(|row| ItemView { keyword: action_row_keyword(row), ..item(action_row_label(row, &current)) }).collect(), "{south} choose · {east} back")
             }
-            Page::Pad(_) => (Button::ALL.iter().map(|&p| button_item(p, String::new())).collect(), "A choose · B back"),
+            Page::Pad(_) => (Button::ALL.iter().map(|&p| button_item(p, String::new())).collect(), "{south} choose · {east} back"),
             Page::Gestures(b) => (
                 GestureKind::ALL.iter().map(|&k| button_item(b, buttons::gesture_row_label(profile, b, k))).collect(),
-                "A choose · B back",
+                "{south} choose · {east} back",
             ),
             Page::Combos => {
                 let mut rows: Vec<ItemView> = combos(config).iter().map(|c| combo_item(&c.buttons, &c.action)).collect();
                 rows.push(add_item("Add combo".into()));
-                (rows, "A open · B back")
+                (rows, "{south} open · {east} back")
             }
-            Page::Combo(i) => combo_page(config, i),
+            Page::Combo(i) => combo_page(config, i, &self.inputs()),
             Page::Layers => {
                 let mut rows: Vec<ItemView> = layers(config).iter().map(|l| item(format!("{} ({} bound)", l.name, l.buttons.len()))).collect();
                 rows.push(add_item("Add layer".into()));
-                (rows, "A open · B back")
+                (rows, "{south} open · {east} back")
             }
             Page::Pick(_, p) => {
                 let rows = picker_names(config, p).into_iter().map(item).collect();
-                (rows, "A choose · B back")
+                (rows, "{south} choose · {east} back")
             }
-            Page::Layer(i) => layer_page(config, i),
+            Page::Layer(i) => layer_page(config, i, &self.inputs()),
             Page::Keys(slot) => keys_page(config, slot),
-            Page::MacroPick(..) => (Button::ALL.iter().map(|&b| button_item(b, String::new())).collect(), "A choose · B back"),
+            Page::MacroPick(..) => (Button::ALL.iter().map(|&b| button_item(b, String::new())).collect(), "{south} choose · {east} back"),
             Page::Macros => {
                 let mut rows: Vec<ItemView> = config.active_game().macros.iter().map(|m| item(format!("{} ({} steps)", m.name, m.steps.len()))).collect();
                 rows.push(add_item("Add macro".into()));
-                (rows, "A open · B back")
+                (rows, "{south} open · {east} back")
             }
             Page::Macro(i) => macro_page(config, i),
-            Page::MacroStick(_) => ((0..macros::STICK_STEPS).map(|r| item(macros::stick_row_label(r))).collect(), "A choose · B back"),
+            Page::MacroStick(_) => ((0..macros::STICK_STEPS).map(|r| item(macros::stick_row_label(r))).collect(), "{south} choose · {east} back"),
             Page::Stick(stick) => with_zones_row(values::stick_page(stick, profile), config, Analog::Stick(stick)),
             Page::Trigger(trigger) => with_zones_row(values::trigger_page(trigger, profile), config, Analog::Trigger(trigger)),
-            Page::Zones(a) => (zones::zones_rows(config, a), "A open or add · B back"),
+            Page::Zones(a) => (zones::zones_rows(config, a), "{south} open or add · {east} back"),
             Page::Zone(a, i) => zones::zone_page(config, a, i),
+            Page::Menus | Page::Menu(_) | Page::MenuItem(..) | Page::Infos | Page::Info(_) => menus::page(self.page, config),
             Page::Gyro => values::gyro_page(profile),
         };
         let crumbs = parents.iter().cloned().chain(self.history.iter().map(|&(page, _)| page_title(page, config))).collect();
         MenuView {
             title: page_title(self.page, config),
             kind: MenuKind::List,
-            items,
+            items: self.armed_rows(items),
             selected: Some(self.cursor),
             picks: 0,
             crumbs,
             hint: hint.into(),
             style,
+            touch: false,
+            aim: None,
         }
     }
 }
@@ -511,7 +593,7 @@ fn keys_page(config: &Config, slot: Slot) -> (Vec<ItemView>, &'static str) {
         .map(|code| item(format!("[{}] {}", if pressed.iter().any(|k| k == code) { "x" } else { " " }, buttons::key_label(code))))
         .collect();
     rows.push(item("Done".into()));
-    (rows, "A toggle a key · B back")
+    (rows, "{south} toggle a key · {east} back")
 }
 
 /// A stick's or trigger's page with its zones row added after its own rows.
@@ -529,6 +611,7 @@ fn current_action(config: &Config, slot: Slot) -> ButtonAction {
         Slot::Combo(i) => profile.combos.get(i).map_or(ButtonAction::Disabled, |c| c.action.clone()),
         Slot::Layer(i, b) => layers(config).get(i).and_then(|l| l.buttons.get(&b)).cloned().unwrap_or(ButtonAction::Disabled),
         Slot::Zone(a, i) => zones::zone_action(config, a, i),
+        Slot::MenuItem(m, i) => menus::item_action(config, m, i),
     }
 }
 
@@ -554,6 +637,11 @@ fn page_title(page: Page, config: &Config) -> String {
         Page::Gyro => "Gyro".into(),
         Page::Zones(a) => format!("{} zones", analog_name(a)),
         Page::Zone(_, i) => format!("Zone {}", i + 1),
+        Page::Menus => "Menus".into(),
+        Page::Menu(m) => menus::menu_name(config, m).unwrap_or("Menu").into(),
+        Page::MenuItem(m, i) => format!("{} · item {}", menus::menu_name(config, m).unwrap_or("Menu"), i + 1),
+        Page::Infos => "Info overlays".into(),
+        Page::Info(i) => config.active_game().info.get(i).map_or_else(|| "Info overlay".into(), |o| o.name.clone()),
     }
 }
 
@@ -593,6 +681,10 @@ fn toggle_key(config: &mut Config, slot: Slot, code: &str) {
 }
 
 fn set_slot(config: &mut Config, slot: Slot, action: Option<ButtonAction>) {
+    if let Slot::MenuItem(m, i) = slot {
+        menus::set_item_action(config, m, i, action.unwrap_or(ButtonAction::Disabled));
+        return;
+    }
     if let Slot::Zone(a, i) = slot {
         zones::set_zone_action(config, a, i, action.unwrap_or(ButtonAction::Disabled));
         return;

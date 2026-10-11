@@ -16,7 +16,7 @@ pub use view::{Inputs, LogCell, LogView, line_life, log_view, merged, next_chang
 pub use view::LogLine;
 
 use crate::{
-    config::{Button, ButtonAction, Stick, StickConfig, Trigger, TriggerAction},
+    config::{Button, ButtonAction, MouseButton, Stick, StickConfig, Trigger, TriggerAction, WheelDirection},
     input::{Axis, InputEvent},
 };
 
@@ -103,6 +103,11 @@ pub enum Input {
     Trigger(Trigger),
     /// Buttons that fired a combo together, in the order they were pressed.
     Combo(Vec<Button>),
+    /// What a controller sent as a keyboard and mouse: a key (by its evdev code), a mouse
+    /// button, or a turn of the wheel.
+    Key(String),
+    Mouse(MouseButton),
+    Wheel(WheelDirection),
 }
 
 /// One press: what, when, for how long, and what it did.
@@ -119,6 +124,9 @@ pub struct Entry {
     id: u64,
 }
 
+/// Wheel turns closer together than this are one entry.
+const WHEEL_MERGE: std::time::Duration = std::time::Duration::from_millis(300);
+
 /// Where an input is held; each holds at most one entry.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Slot {
@@ -126,6 +134,10 @@ enum Slot {
     Dpad,
     Stick(Stick),
     Trigger(Trigger),
+    Key(u16),
+    Mouse(MouseButton),
+    /// Never held: a turn of the wheel is let go as it's recorded.
+    Wheel,
 }
 
 /// How analog input becomes presses: the profile's own settings, so the log agrees with
@@ -226,6 +238,41 @@ impl InputLog {
             }
             // Touchpad clicks don't go in the log yet.
             InputEvent::Touchpad(_) => false,
+        }
+    }
+
+    /// Records what the mappings sent as a keyboard and mouse: a key or a mouse button going
+    /// down or up, or a turn of the wheel (a tap). Returns whether the log changed.
+    pub fn output(&mut self, ev: &crate::output::OutEvent, now: Instant) -> bool {
+        use crate::output::OutEvent;
+        match *ev {
+            OutEvent::Key(k, true) => self.press(Slot::Key(k.code()), Input::Key(format!("{k:?}")), now),
+            OutEvent::Key(k, false) => self.release(Slot::Key(k.code()), now),
+            OutEvent::MouseButton(m, true) => self.press(Slot::Mouse(m), Input::Mouse(m), now),
+            OutEvent::MouseButton(m, false) => self.release(Slot::Mouse(m), now),
+            OutEvent::Wheel { vertical, horizontal } => {
+                let dir = match (vertical.signum(), horizontal.signum()) {
+                    (1, _) => WheelDirection::Up,
+                    (-1, _) => WheelDirection::Down,
+                    (_, 1) => WheelDirection::Right,
+                    (_, -1) => WheelDirection::Left,
+                    _ => return false,
+                };
+                // A turn has no length; one already showing for this direction isn't repeated
+                // while the wheel keeps turning.
+                if self.entries.last().is_some_and(|e| e.input == Input::Wheel(dir) && now.duration_since(e.pressed) < WHEEL_MERGE) {
+                    return false;
+                }
+                let id = self.next_id;
+                self.press(Slot::Wheel, Input::Wheel(dir), now);
+                self.open.retain(|(_, open)| *open != id);
+                if let Some(e) = self.entries.last_mut() {
+                    e.released = Some(now);
+                }
+                true
+            }
+            OutEvent::PadButton(b, pressed) => self.event(InputEvent::Button(b, pressed), Thresholds::default(), now),
+            OutEvent::PadAxis(..) | OutEvent::MouseMove(..) => false,
         }
     }
 

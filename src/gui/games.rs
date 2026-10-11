@@ -130,6 +130,9 @@ impl App {
             Message::ClearGameSounds => self.game_mut().sounds = None,
             Message::PreviewSound(spec) => self.sounds.play(&spec),
             Message::SetKeyboardStyle(style) => self.config.keyboard_style = style,
+            Message::SetFullKeyboard(full) => self.config.full_keyboard = full,
+            Message::SetRumbleStrength(strength) => self.config.rumble_strength = strength,
+            Message::SetPickRumble(on) => self.config.pick_rumble = on,
             Message::SetOverlayFont(font) => self.config.overlay_font = font,
             Message::SetColorblindTones(on) => self.config.colorblind_tones = on,
             Message::SetPerformance(performance) => self.config.performance = performance,
@@ -516,26 +519,40 @@ impl App {
             .spacing(12)
             .align_y(Alignment::Center)
             .into(),
+            labeled(
+                "Keys",
+                row![
+                    iced::widget::radio("Basic: what typing into a game needs", false, Some(self.config.full_keyboard), Message::SetFullKeyboard).size(16),
+                    iced::widget::radio("Full: function and editing keys too", true, Some(self.config.full_keyboard), Message::SetFullKeyboard).size(16),
+                ]
+                .spacing(16)
+                .into(),
+            ),
         ];
         if appearance_open {
             let style = &self.config.keyboard_style;
             rows.push(style_editor(style, Rc::new(Message::SetKeyboardStyle)));
+            rows.extend(self.spot_note(style.position, true));
+            let board = if self.config.full_keyboard { crate::keyboard::Board::Full } else { crate::keyboard::Board::Basic };
             let sample = crate::overlay::KeyboardView {
-                layout: Layout::Keyboard,
+                board,
                 style: preview_style(style),
-                cursor: crate::keyboard::find(Layout::Keyboard, "KEY_H").unwrap_or_default(),
+                cursor: crate::keyboard::find(board, "KEY_H").unwrap_or_default(),
                 latched: vec!["KEY_LEFTSHIFT".into()],
                 pressed: None,
                 closing: 0.0,
+                caps: false,
+                typed: String::new(),
             };
-            rows.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
+            rows.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         }
         section(
             "On-screen keyboard",
             Some(
                 "A keyboard over everything, typed with the controller: D-pad or stick to move, A to \
-                 press, X backspace, Y space, Start enter, hold LT for Shift, hold B to close. Map \"On-screen keyboard\" \
-                 to a button or gesture to open it from the controller."
+                 press, X backspace (hold to keep deleting), Y space, Start enter, LB and RB move the text \
+                 cursor, hold LT for Shift, hold B or press Guide to close. Keys are labelled in your \
+                 keyboard layout. Map \"On-screen keyboard\" to a button or gesture to open it from the controller."
                     .into(),
             ),
             rows,
@@ -547,8 +564,9 @@ impl App {
         if self.media_appearance {
             let style = &self.config.media_style;
             rows.push(style_editor(style, Rc::new(Message::SetMediaStyle)));
+            rows.extend(self.spot_note(style.position, true));
             let sample = crate::media::MediaView::sample(preview_style(style));
-            rows.push(preview(crate::overlay::draw::media_panel(&sample, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
+            rows.push(preview(crate::overlay::draw::media_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         }
         section(
             "Media controls",
@@ -566,6 +584,7 @@ impl App {
         if self.menu_appearance {
             let style = &self.config.menu_style;
             rows.push(style_editor(style, Rc::new(Message::SetInGameMenuStyle)));
+            rows.extend(self.spot_note(style.position, true));
             let sample = crate::system_menu::main_page(preview_style(style), 0);
             rows.push(preview(crate::overlay::draw::menu_panel(&sample, self.preview_font(), self.menu_look(), &crate::overlay::fit::Fit::contents())));
         }
@@ -596,15 +615,18 @@ impl App {
         if self.numpad_appearance {
             let style = &self.config.numpad_style;
             rows.push(style_editor(style, Rc::new(Message::SetNumpadStyle)));
+            rows.extend(self.spot_note(style.position, true));
             let sample = crate::overlay::KeyboardView {
-                layout: Layout::Numpad,
+                board: crate::keyboard::Board::Numpad,
                 style: preview_style(style),
                 cursor: Layout::Numpad.home(),
                 latched: Vec::new(),
                 pressed: None,
                 closing: 0.0,
+                caps: false,
+                typed: String::new(),
             };
-            rows.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
+            rows.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         }
         section(
             "On-screen numpad",

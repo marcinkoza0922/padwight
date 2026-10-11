@@ -132,6 +132,7 @@ impl PadPicture<'_> {
                             let ((ax, ay), (bx, by)) = (area.at((x0, y0)), area.at((x1, y1)));
                             let _ = write!(s, r#"<rect x="{ax}" y="{ay}" width="{}" height="{}" fill="{fill}" fill-opacity="{opacity}" stroke="{EDGE}"/>"#, bx - ax, by - ay);
                         }
+                        ItemShape::Hidden => {}
                         ItemShape::Slice(a, b) => {
                             slices = true;
                             let ((cx, cy), (sx, sy), (ex, ey)) = (area.polar(0.0, 0.0), area.polar(a, reach), area.polar(b, reach));
@@ -194,6 +195,7 @@ impl PadPicture<'_> {
                                 let (x, y) = area.polar((a + b) / 2.0, area.w.min(area.h) * 0.36);
                                 ((x - 40.0, y - 9.0), (80.0, 18.0))
                             }
+                            ItemShape::Hidden => continue,
                         };
                         pins.push(label(item.label.clone(), picked.contains(&i), at, size));
                     }
@@ -241,10 +243,10 @@ mod tests {
 
     #[test]
     fn every_mode_draws_and_fingers_light_up_their_item() {
-        let items = ["A", "B"].map(|l| MenuItem { label: l.into(), action: ButtonAction::Disabled, button: None, weight: 1.0 }).to_vec();
+        let items = ["A", "B"].map(|l| MenuItem::new(l, ButtonAction::Disabled)).to_vec();
         let menus = [
-            Menu { name: "Grid".into(), kind: MenuKind::Grid { columns: 2 }, items: items.clone(), cancel: None, style: OverlayStyle::default() },
-            Menu { name: "Ring".into(), kind: MenuKind::Radial { stick: Stick::Right, boxes: false }, items, cancel: None, style: OverlayStyle::default() },
+            Menu { name: "Grid".into(), kind: MenuKind::Grid { columns: 2 }, items: items.clone(), cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() },
+            Menu { name: "Ring".into(), kind: MenuKind::Radial { stick: Stick::Right, boxes: false }, items, cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() },
         ];
         let modes = [
             TouchpadMotion::Off,

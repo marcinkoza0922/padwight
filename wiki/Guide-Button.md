@@ -9,8 +9,8 @@ Tap Guide to open the overlay, and tap it again to close it. It opens when you l
 The overlay has four parts:
 
 - **Notes** on the left: what the game's author wants you to know, such as limits in the control scheme, or when to switch layers. Set on the profile's **Guide** tab.
-- **The menu** in the middle: Quick Settings, Edit Controls, the on-screen keyboard and numpad, mouse mode, media controls, the next profile and, while Steam runs, the Steam overlay.
-- **The Mappings box** on the right: what each button, trigger and stick does in the current profile, with its gestures and combos. The text, and which rows show, can be changed on the **Guide** tab.
+- **The menu** in the middle: Quick Settings, Edit Controls, the on-screen keyboard and numpad, mouse mode, media controls, the next profile and, while Steam runs, the Steam overlay. Below them, the last three items you picked from your menus, marked "Again", to pick once more (press Up from the top to reach the newest).
+- **The Mappings box** on the right: what each button, trigger and stick does in the current profile, with its gestures and combos. The text, and which rows show, can be changed on the **Guide** tab. A long list shows a page at a time; the right stick turns the pages. While the overlay is open, the sticks drive it and don't reach the game.
 - **Shortcuts** in the bottom left corner: the Guide shortcuts listed below, and the mouse-mode controls while mouse mode is on.
 
 Move the menu with the D-pad or the left stick (hold it to repeat), choose with **A**, and close it with **B**.
@@ -30,7 +30,7 @@ Hold Guide and press one of these, or, with the overlay open, press it alone. Ei
 
 Anything else pressed with Guide held does nothing, so it never reaches the game underneath. These shortcuts are fixed. To reach the same actions from other buttons, bind them on the **Buttons** tab, as usual.
 
-Pressing Guide also closes the on-screen keyboard, numpad or media controls, however they were opened.
+Pressing Guide also closes anything else on screen, however it was opened: the on-screen keyboard or numpad, the media controls, a menu, the in-game menu (it asks first about unsaved changes), or the library offer (as "Not now").
 
 ### Force quit
 

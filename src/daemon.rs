@@ -32,7 +32,6 @@ use crate::{
     focus::{self, FocusEvent},
     input::{self, InputEvent, MotionFrame, MotionNormalizer, MotionSample, Normalizer},
     ipc::{self, DeviceInfo, Feeds, FocusBackend, InputSnapshot, Request, Response, Status, WindowInfo},
-    inputlog::Thresholds,
     keyboard::Layout,
     monitor::{self, InputView, OutputView, log},
     output::{OutEvent, VIRTUAL_PREFIX, VirtualKbm, VirtualPad},
@@ -217,10 +216,9 @@ impl Managed {
     /// is also recorded, and without a pad it goes no further.
     fn dispatch(&mut self, kbm: &mut VirtualKbm, out: Vec<OutEvent>) {
         let now = Instant::now();
+        // What the game is sent, gamepad and keyboard and mouse alike, for the Overview's feed.
         for ev in &out {
-            if let OutEvent::PadButton(b, pressed) = ev {
-                self.exports.event(InputEvent::Button(*b, *pressed), Thresholds::default(), now);
-            }
+            self.exports.output(ev, now);
         }
         if let Some(recorded) = &mut self.recorded {
             inject::record(recorded, &out);
@@ -284,6 +282,38 @@ struct SeenGamepad {
     analog_triggers: bool,
     rumble: bool,
     paddles: bool,
+}
+
+/// What an engine asked the daemon to do after input or a timer.
+struct Requests {
+    overlay: Option<Layout>,
+    screenshot: bool,
+    recording: bool,
+    media: bool,
+    menu: Option<(String, Opener)>,
+}
+
+impl Requests {
+    fn take(engine: &mut Engine) -> Self {
+        Requests {
+            overlay: engine.take_overlay_toggle(),
+            screenshot: engine.take_screenshot(),
+            recording: engine.take_recording_toggle(),
+            media: engine.take_media_toggle(),
+            menu: engine.take_menu_request(),
+        }
+    }
+}
+
+/// Who drives the overlay, and what the on-screen layouts remember between uses.
+#[derive(Default)]
+struct Driving {
+    /// The controller driving the keyboard, numpad, media controls or offer: the one that
+    /// opened it, else the first to send it input. Menus keep their own (see
+    /// [`Daemon::drives_overlay`]).
+    owner: Option<u64>,
+    /// Where each on-screen layout's cursor was left, to pick up there next time.
+    cursors: HashMap<crate::keyboard::Board, crate::keyboard::Cursor>,
 }
 
 /// What the overlay is showing.
@@ -354,10 +384,12 @@ struct PadWatch {
 struct Offers {
     /// When Guide went down, while nothing else has been pressed with it.
     guide_tap: Option<Instant>,
-    /// The library entries the offer on screen is for.
+    /// The library entries the offer on screen is for, and the process of the window it's over.
     shown: Vec<crate::library::Entry>,
-    /// Library packs answered "no" to since the app started.
-    declined: HashSet<String>,
+    shown_pid: u32,
+    /// Library packs answered "not now" to, with the game process they were declined for: they
+    /// are offered again once the game has started again, as a new process.
+    declined: HashMap<String, u32>,
 }
 
 /// The Guide overlay's menu while it's up: the cursor, and whether Steam was running when it
@@ -365,6 +397,8 @@ struct Offers {
 struct GuideMenu {
     cursor: usize,
     steam: bool,
+    /// The page of Mappings on show.
+    page: usize,
     /// Set once an item is chosen: its pick is what's heard, not the menu closing behind it.
     chosen: bool,
 }
@@ -406,9 +440,8 @@ struct Daemon {
     scan_target: Option<ProfileRef>,
     /// What the on-screen overlay is showing; while set it gets all controller input.
     active: Option<Active>,
-    /// Where the overlay keyboard's cursor was, for the next time it opens.
-    /// Where each on-screen layout's cursor was left, to pick up there next time.
-    overlay_cursors: HashMap<Layout, crate::keyboard::Cursor>,
+    /// Who drives the overlay, and where the keyboard and numpad cursors were left.
+    driving: Driving,
     /// When a held ForceQuit started counting, and whether it has already fired.
     quit_hold: Option<(Instant, bool)>,
     /// The screen recorder's process, once running, and whether one is being started.
@@ -426,6 +459,8 @@ struct Daemon {
     last_frame: Option<OverlayFrame>,
     /// The Guide overlay's menu while the overlay is up.
     guide_menu: Option<GuideMenu>,
+    /// Menu items picked lately, which the Guide menu offers again (newest last).
+    recent_picks: Vec<crate::guide_menu::Recent>,
     /// When shown info overlays with live values next refresh.
     info_refresh: Option<Instant>,
     /// When an info overlay that hides after a while next needs redrawing (fading or gone).
@@ -484,6 +519,62 @@ fn log_path() -> PathBuf {
     dirs::state_dir().unwrap_or_else(std::env::temp_dir).join("padwight").join("daemon.log")
 }
 
+impl Daemon {
+    fn new(config: Config, kbm: VirtualKbm, injection: inject::Injection, tx: Sender<Msg>) -> Self {
+        Daemon {
+            scope: config.scope(),
+            sounds: sound::Sounds::start(),
+            config,
+            kbm,
+            devices: HashMap::new(),
+            next_id: 0,
+            injection,
+            identity_override: None,
+            skipped: HashSet::new(),
+            gamepads: HashMap::new(),
+            motion_nodes: HashMap::new(),
+            touch_nodes: HashMap::new(),
+            motion_denied: HashMap::new(),
+            watchers: Vec::new(),
+            feed_watchers: Vec::new(),
+            activity: activity::Activity::default(),
+            last_active: None,
+            last_draw: Instant::now(),
+            focus_backend: FocusBackend::ProcessScan,
+            focused: None,
+            recent_windows: Vec::new(),
+            scan_target: None,
+            active: None,
+            driving: Driving::default(),
+            quit_hold: None,
+            recording: None,
+            recording_starting: false,
+            offers: Offers::default(),
+            pads: PadWatch::default(),
+            recording_target: None,
+            layer_started: HashMap::new(),
+            overlay_watchers: Vec::new(),
+            last_frame: None,
+            guide_menu: None,
+            recent_picks: Vec::new(),
+            info_refresh: None,
+            info_fade: None,
+            info_timers: crate::info::Timers::default(),
+            toast: None,
+            log_timers: crate::info::Timers::default(),
+            log_redraw: None,
+            shows_input: false,
+            launches: HashMap::new(),
+            sampler: crate::info::Sampler::default(),
+            overlay_started: None,
+            overlay_process: None,
+            settings_process: None,
+            tray: None,
+            tx,
+        }
+    }
+}
+
 /// Runs the service. With `debug`, controllers can also be injected over IPC (`padwight debug`).
 pub fn run(debug: bool) -> Result<()> {
     let config = Config::load()?;
@@ -492,56 +583,7 @@ pub fn run(debug: bool) -> Result<()> {
     serve_ipc(tx.clone())?;
 
     let kbm = VirtualKbm::new().context("creating virtual keyboard/mouse (do you have write access to /dev/uinput?)")?;
-    let mut daemon = Daemon {
-        scope: config.scope(),
-        sounds: sound::Sounds::start(),
-        config,
-        kbm,
-        devices: HashMap::new(),
-        next_id: 0,
-        injection: inject::Injection::new(debug)?,
-        identity_override: None,
-        skipped: HashSet::new(),
-        gamepads: HashMap::new(),
-        motion_nodes: HashMap::new(),
-        touch_nodes: HashMap::new(),
-        motion_denied: HashMap::new(),
-        watchers: Vec::new(),
-        feed_watchers: Vec::new(),
-        activity: activity::Activity::default(),
-        last_active: None,
-        last_draw: Instant::now(),
-        focus_backend: FocusBackend::ProcessScan,
-        focused: None,
-        recent_windows: Vec::new(),
-        scan_target: None,
-        active: None,
-        overlay_cursors: HashMap::new(),
-        quit_hold: None,
-        recording: None,
-        recording_starting: false,
-        offers: Offers::default(),
-        pads: PadWatch::default(),
-        recording_target: None,
-        layer_started: HashMap::new(),
-        overlay_watchers: Vec::new(),
-        last_frame: None,
-        guide_menu: None,
-        info_refresh: None,
-        info_fade: None,
-        info_timers: crate::info::Timers::default(),
-        toast: None,
-        log_timers: crate::info::Timers::default(),
-        log_redraw: None,
-        shows_input: false,
-        launches: HashMap::new(),
-        sampler: crate::info::Sampler::default(),
-        overlay_started: None,
-        overlay_process: None,
-        settings_process: None,
-        tray: None,
-        tx,
-    };
+    let mut daemon = Daemon::new(config, kbm, inject::Injection::new(debug)?, tx);
     log!("padwight daemon started, socket at {}", ipc::socket_path().display());
     daemon.start_services();
     daemon.scan();
@@ -702,7 +744,8 @@ impl Daemon {
             Some(Active::Menu { session, .. }) => session.next_deadline(),
             Some(Active::Media(m)) => m.next_deadline(),
             Some(Active::Offer(o)) => o.next_deadline(),
-            Some(Active::Settings(..)) | None => None,
+            Some(Active::Settings(m, _)) => m.next_deadline(),
+            None => None,
         };
         self.devices
             .values()
@@ -732,6 +775,7 @@ impl Daemon {
                 (keyboard_actions, changed) = k.tick(now);
                 repeated_step = (k.cursor() != before).then_some(overlay);
             }
+            Some(Active::Menu { session, .. }) if session.expired(now) => return self.close_overlay(),
             Some(Active::Menu { session, .. }) if session.next_deadline().is_some_and(|d| d <= now) => {
                 let before = session.cursor();
                 changed = session.tick(&self.scope.menus, now);
@@ -744,6 +788,18 @@ impl Daemon {
                 }
             }
             Some(Active::Offer(o)) if o.expired(now) => return self.answer_offer(OfferOutcome::No),
+            Some(Active::Offer(o)) if o.next_deadline().is_some_and(|d| d <= now) => {
+                if o.tick(now) {
+                    repeated_step = Some(sound::SoundOverlay::Offer);
+                    changed = true;
+                }
+            }
+            Some(Active::Settings(m, _)) if m.next_deadline().is_some_and(|d| d <= now) => {
+                if !self.settings_step(|menu, config| menu.tick(now, config)) {
+                    self.broadcast_overlay();
+                }
+                return;
+            }
             _ => {}
         }
         if let Some(overlay) = repeated_step {
@@ -760,11 +816,7 @@ impl Daemon {
         let now = Instant::now();
         self.tick_overlays(now);
         let Some(base) = self.config.active() else { return };
-        let mut toggle_overlay = None;
-        let mut screenshot = false;
-        let mut recording = false;
-        let mut media = false;
-        let mut menu_request = None;
+        let mut requests = Vec::new();
         let mut fired = Vec::new();
         let mut guide_keys = Vec::new();
         for (id, dev) in self.devices.iter_mut() {
@@ -782,30 +834,11 @@ impl Daemon {
                 dev.engine.resync(layered(&dev.layered, base), &mut out);
             }
             dev.dispatch(&mut self.kbm, out);
-            toggle_overlay = dev.engine.take_overlay_toggle().or(toggle_overlay);
-            screenshot |= dev.engine.take_screenshot();
-            recording |= dev.engine.take_recording_toggle();
-            media |= dev.engine.take_media_toggle();
-            if let Some(request) = dev.engine.take_menu_request() {
-                menu_request = Some((*id, request));
-            }
+            requests.push((*id, Requests::take(&mut dev.engine)));
             dev.draw_status();
         }
-        if let Some(layout) = toggle_overlay {
-            self.toggle_overlay(layout);
-        }
-        if screenshot {
-            self.take_screenshot();
-        }
-        if recording {
-            self.toggle_recording();
-        }
-        if media {
-            self.toggle_media();
-        }
-        self.update_force_quit();
-        if let Some((id, (name, opener))) = menu_request {
-            self.open_menu(id, &name, opener);
+        for (id, asked) in requests {
+            self.run_requests(id, asked);
         }
         for (id, keys) in guide_keys {
             self.guide_keys(id, &keys);
@@ -841,11 +874,18 @@ impl Daemon {
         let held = self.devices.values().any(|d| d.engine.force_quit_held());
         let now = Instant::now();
         match (held, self.quit_hold) {
+            // Let go before it fired: the countdown goes at once.
+            (false, Some((_, false))) => {
+                self.quit_hold = None;
+                self.toast = None;
+                self.broadcast_overlay();
+            }
             (false, _) => self.quit_hold = None,
             (true, None) => {
                 self.quit_hold = Some((now, false));
                 let game = self.focused_target().map_or(String::new(), |(game, _)| format!(" {game}"));
-                self.say(vec![format!("Keep holding to force quit{game}…")]);
+                self.toast = Some(crate::info::Toast::filling(vec![format!("Keep holding to force quit{game}…")], now, FORCE_QUIT_HOLD));
+                self.broadcast_overlay();
             }
             (true, Some((since, false))) if now.duration_since(since) >= FORCE_QUIT_HOLD => {
                 self.quit_hold = Some((since, true));
@@ -926,34 +966,41 @@ impl Daemon {
         });
     }
 
-    /// Opens or closes the on-screen keyboard or numpad (one replaces the other).
-    fn toggle_overlay(&mut self, layout: Layout) {
+    /// Opens or closes the on-screen keyboard or numpad (one replaces the other), for the
+    /// controller `by` (`None`: whichever sends it input first).
+    fn toggle_overlay(&mut self, layout: Layout, by: Option<u64>) {
         match &self.active {
             Some(Active::Keyboard(k)) if k.layout() == layout => return self.close_overlay(),
             Some(Active::Keyboard(_)) => self.close_overlay(),
             Some(Active::Menu { .. } | Active::Media(_) | Active::Offer(_) | Active::Settings(..)) => return,
             None => {}
         }
+        self.driving.owner = by;
         if !self.ensure_overlay_process() {
             return;
         }
         self.release_mappings();
         log!("on-screen {} open", layout_name(layout));
-        let cursor = self.overlay_cursors.get(&layout).copied().unwrap_or(layout.home());
-        let mut controller = OverlayController::new(layout, cursor);
+        let board = match layout {
+            Layout::Keyboard if self.config.full_keyboard => crate::keyboard::Board::Full,
+            _ => layout.into(),
+        };
+        let cursor = self.driving.cursors.get(&board).copied().unwrap_or(board.home());
+        let mut controller = OverlayController::new(board, cursor);
         controller.set_guide_held(self.devices.values().any(|d| d.view.buttons().any(|b| b == crate::config::Button::Guide)));
         self.active = Some(Active::Keyboard(controller));
         self.broadcast_overlay();
         self.overlay_sound(keyboard_sound(layout), Some(sound::Feedback::Open));
     }
 
-    /// Opens or closes the media controls.
-    fn toggle_media(&mut self) {
+    /// Opens or closes the media controls, for the controller `by`.
+    fn toggle_media(&mut self, by: Option<u64>) {
         match &self.active {
             Some(Active::Media(_)) => return self.close_overlay(),
             Some(_) => return,
             None => {}
         }
+        self.driving.owner = by;
         if !self.ensure_overlay_process() {
             return;
         }
@@ -998,10 +1045,10 @@ impl Daemon {
         self.overlay_sound(sound::SoundOverlay::Menu, Some(sound::Feedback::Open));
     }
 
-    /// Makes sure the (normally resident) overlay window process is running.
     /// Starts what runs beside the input loop: focus tracking, the overlay window (started now so
     /// menus appear instantly; it idles invisibly) and the tray icon.
     fn start_services(&mut self) {
+        rumble::set_strength(self.config.rumble_strength);
         let tx = self.tx.clone();
         focus::spawn(move |ev| {
             let _ = tx.send(Msg::Focus(ev));
@@ -1081,6 +1128,7 @@ impl Daemon {
         }
     }
 
+    /// Makes sure the (normally resident) overlay window process is running.
     fn ensure_overlay_process(&mut self) -> bool {
         if let Some(child) = &mut self.overlay_process
             && child.try_wait().ok().flatten().is_some()
@@ -1115,10 +1163,11 @@ impl Daemon {
     }
 
     fn close_overlay(&mut self) {
+        self.driving.owner = None;
         let closing = self.active.as_ref().map(active_sound);
         match self.active.take() {
             Some(Active::Keyboard(mut k)) => {
-                self.overlay_cursors.insert(k.layout(), k.cursor());
+                self.driving.cursors.insert(k.board(), k.cursor());
                 let actions = k.release_all();
                 self.apply_keyboard(actions);
                 log!("on-screen {} closed", layout_name(k.layout()));
@@ -1164,33 +1213,33 @@ impl Daemon {
             dev.engine.resync(layered(&dev.layered, base), &mut out);
         }
         dev.dispatch(&mut self.kbm, out);
-        let toggle_overlay = dev.engine.take_overlay_toggle();
-        let screenshot = dev.engine.take_screenshot();
-        let recording = dev.engine.take_recording_toggle();
-        let media = dev.engine.take_media_toggle();
-        let menu_request = dev.engine.take_menu_request();
+        let asked = Requests::take(&mut dev.engine);
         // Opening the keyboard closes a menu that is still up.
-        let menu_up = matches!(self.active, Some(Active::Menu { .. }));
-        if menu_up && toggle_overlay.is_some() {
+        if asked.overlay.is_some() && matches!(self.active, Some(Active::Menu { .. })) {
             self.close_overlay();
         }
-        if let Some(layout) = toggle_overlay {
-            self.toggle_overlay(layout);
+        self.run_requests(device, asked);
+        self.check_info_changes();
+    }
+
+    /// Carries out what controller `id`'s engine asked for, opening anything on its behalf.
+    fn run_requests(&mut self, id: u64, asked: Requests) {
+        if let Some(layout) = asked.overlay {
+            self.toggle_overlay(layout, Some(id));
         }
-        if screenshot {
+        if asked.screenshot {
             self.take_screenshot();
         }
-        if recording {
+        if asked.recording {
             self.toggle_recording();
         }
-        if media {
-            self.toggle_media();
+        if asked.media {
+            self.toggle_media(Some(id));
         }
         self.update_force_quit();
-        if let Some((name, opener)) = menu_request {
-            self.open_menu(device, &name, opener);
+        if let Some((name, opener)) = asked.menu {
+            self.open_menu(id, &name, opener);
         }
-        self.check_info_changes();
     }
 
     fn overlay_view(&self) -> Option<OverlayView> {
@@ -1209,13 +1258,13 @@ impl Daemon {
                 view.style = self.config.active_media_style().clone();
                 Some(OverlayView::Media(view))
             }
-            Some(Active::Offer(o)) => Some(OverlayView::Offer(o.view())),
+            Some(Active::Offer(o)) => Some(o.view(self.config.active_menu_style())),
             Some(Active::Settings(m, _)) => Some(OverlayView::Menu(m.view(&self.config))),
             None => match &self.guide_menu {
                 Some(menu) => {
                     let profile = self.config.active().map(|p| p.name.as_str()).unwrap_or_default();
                     let style = self.config.active_menu_style().clone();
-                    Some(OverlayView::Menu(crate::guide_menu::view(menu.steam, menu.cursor, profile, style)))
+                    Some(OverlayView::Menu(crate::guide_menu::view(menu.steam, menu.cursor, profile, style, &self.recent_picks)))
                 }
                 None => self.touch_menu_view(),
             },
@@ -1333,7 +1382,8 @@ impl Daemon {
         if self.devices.values().any(|d| d.engine.guide_overlay_open())
             && let Some(profile) = self.config.active()
         {
-            shown.extend(crate::info::guide_overlays(profile).into_iter().map(|o| (o, true)));
+            let page = self.guide_menu.as_ref().map_or(0, |m| m.page);
+            shown.extend(crate::info::guide_overlays(profile, page).into_iter().map(|o| (o, true)));
         }
         // Each active layer's indicator: its name, or an info overlay of the game's.
         for name in self.active_layers() {
@@ -1439,7 +1489,7 @@ impl Daemon {
         let open = self.devices.values().any(|d| d.engine.guide_overlay_open());
         match (open, self.guide_menu.as_ref().map(|menu| menu.chosen)) {
             (true, None) => {
-                self.guide_menu = Some(GuideMenu { cursor: 0, steam: crate::guide_menu::steam_running(), chosen: false });
+                self.guide_menu = Some(GuideMenu { cursor: 0, steam: crate::guide_menu::steam_running(), page: 0, chosen: false });
                 self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Open));
             }
             (false, Some(chosen)) => {
@@ -1456,12 +1506,18 @@ impl Daemon {
         use crate::config::Button;
         for &key in keys {
             let Some(menu) = self.guide_menu.as_mut() else { return };
-            let len = crate::guide_menu::items(menu.steam).len();
+            let len = crate::guide_menu::items(menu.steam, self.recent_picks.len()).len();
             match key {
                 Button::DpadUp | Button::LeftStickUp => menu.cursor = (menu.cursor + len - 1) % len,
                 Button::DpadDown | Button::LeftStickDown => menu.cursor = (menu.cursor + 1) % len,
+                // The right stick turns the Mappings' pages.
+                Button::RightStickUp => menu.page = menu.page.saturating_sub(1),
+                Button::RightStickDown => {
+                    let pages = self.config.active().map_or(1, crate::info::guide_mapping_pages);
+                    menu.page = (menu.page + 1).min(pages - 1);
+                }
                 Button::South => {
-                    let item = crate::guide_menu::items(menu.steam)[menu.cursor];
+                    let item = crate::guide_menu::items(menu.steam, self.recent_picks.len())[menu.cursor];
                     menu.chosen = true;
                     self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Pick));
                     self.guide_choose(device, item);
@@ -1475,6 +1531,13 @@ impl Daemon {
         }
         // The cursor is part of the drawn frame, so the overlay has to be sent again to move it.
         self.broadcast_overlay();
+    }
+
+    /// Keeps a menu item just picked among the recent ones the Guide menu offers again.
+    fn remember_pick(&mut self, menu: &str, item: usize, action: &crate::config::ButtonAction) {
+        let label = self.scope.menus.iter().find(|m| m.name == menu).and_then(|m| m.items.get(item)).map_or_else(|| action.summary(), |i| i.label.clone());
+        let pick = crate::guide_menu::Recent { menu: menu.to_string(), item, label, action: action.clone() };
+        crate::guide_menu::remember(&mut self.recent_picks, pick);
     }
 
     /// Runs a Guide menu item. The overlay goes away first, except for Quick Settings and Edit Controls, which open the Guide + Start menu on their page.
@@ -1495,15 +1558,21 @@ impl Daemon {
             Item::Keyboard | Item::Numpad | Item::Media | Item::NextProfile | Item::Steam => {
                 self.guide_close(device);
                 match item {
-                    Item::Keyboard => self.toggle_overlay(Layout::Keyboard),
-                    Item::Numpad => self.toggle_overlay(Layout::Numpad),
-                    Item::Media => self.toggle_media(),
+                    Item::Keyboard => self.toggle_overlay(Layout::Keyboard, Some(device)),
+                    Item::Numpad => self.toggle_overlay(Layout::Numpad, Some(device)),
+                    Item::Media => self.toggle_media(Some(device)),
                     Item::NextProfile => {
                         if let Some(next) = self.config.next_profile(self.pad_features().as_deref()) {
                             self.switch_profile(next, BY_HAND);
                         }
                     }
                     _ => self.send_steam_overlay(device),
+                }
+            }
+            Item::Recent(i) => {
+                self.guide_close(device);
+                if let Some(pick) = self.recent_picks.get(i).cloned() {
+                    self.run_menu_item(device, &pick.menu, pick.item, &pick.action);
                 }
             }
             Item::MouseMode => {
@@ -1892,13 +1961,35 @@ impl Daemon {
             self.last_active = None;
             self.broadcast(None);
         }
+        // An overlay its controller left can't be driven any more.
+        if self.active.is_some() && self.overlay_driver() == Some(id) {
+            self.close_overlay();
+        }
+    }
+
+    /// The controller the overlay on screen belongs to, if it has one yet.
+    fn overlay_driver(&self) -> Option<u64> {
+        match &self.active {
+            Some(Active::Menu { device, .. } | Active::Settings(_, device)) => Some(*device),
+            _ => self.driving.owner,
+        }
+    }
+
+    /// Whether controller `id` drives the overlay on screen. The keyboard, numpad, media controls
+    /// and offer go to the first controller that sends them input; the others keep playing.
+    fn drives_overlay(&mut self, id: u64) -> bool {
+        match &self.active {
+            Some(Active::Menu { device, .. } | Active::Settings(_, device)) => *device == id,
+            Some(_) => *self.driving.owner.get_or_insert(id) == id,
+            None => false,
+        }
     }
 
     fn input(&mut self, id: u64, events: Vec<InputEvent>) {
         let logged = self.log_input(id, &events, Instant::now());
         let tapped = self.guide_tapped(&events);
         self.chord_opens_menu(id, &events);
-        if self.active.is_some() {
+        if self.drives_overlay(id) {
             return self.overlay_input(id, events);
         }
         self.sync_face_swap(id);
@@ -1915,31 +2006,12 @@ impl Daemon {
             let snapshot = dev.snapshot();
             self.watchers.retain(|w| w.send(Some(snapshot.clone())).is_ok());
         }
-        let toggle_overlay = dev.engine.take_overlay_toggle();
-        let screenshot = dev.engine.take_screenshot();
-        let recording = dev.engine.take_recording_toggle();
-        let media = dev.engine.take_media_toggle();
-        let menu_request = dev.engine.take_menu_request();
+        let asked = Requests::take(&mut dev.engine);
         let guide_keys = dev.engine.take_guide_nav();
         if dev.engine.take_touch_menu_changed() {
             self.broadcast_overlay();
         }
-        if let Some(layout) = toggle_overlay {
-            self.toggle_overlay(layout);
-        }
-        if screenshot {
-            self.take_screenshot();
-        }
-        if recording {
-            self.toggle_recording();
-        }
-        if media {
-            self.toggle_media();
-        }
-        self.update_force_quit();
-        if let Some((name, opener)) = menu_request {
-            self.open_menu(id, &name, opener);
-        }
+        self.run_requests(id, asked);
         if !guide_keys.is_empty() {
             self.guide_keys(id, &guide_keys);
         }
@@ -1948,7 +2020,7 @@ impl Daemon {
         }
         self.check_info_changes();
         if tapped {
-            self.offer_library_game();
+            self.offer_library_game(id);
         }
     }
 
@@ -2002,27 +2074,31 @@ impl Daemon {
         }
         log!("opening the settings menu");
         self.release_mappings();
-        self.active = Some(Active::Settings(SystemMenu::new(&self.config).on_page(page), device));
+        let paddles = self.devices.get(&device).is_some_and(|d| d.paddles);
+        self.active = Some(Active::Settings(SystemMenu::new(&self.config).with_paddles(paddles).on_page(page), device));
         self.broadcast_overlay();
         self.overlay_sound(sound::SoundOverlay::Menu, Some(sound::Feedback::Open));
     }
 
     /// Runs one event on the Guide + Start menu. `true` when the menu closed.
     fn settings_input(&mut self, ev: InputEvent) -> bool {
+        let now = Instant::now();
+        self.settings_step(|menu, config| menu.handle(ev, now, config))
+    }
+
+    /// Runs one step of the Guide + Start menu (an event, or a held direction's repeat) and does
+    /// what it asks. `true` when the menu closed.
+    fn settings_step(&mut self, step: impl FnOnce(&mut SystemMenu, &mut Config) -> Option<SystemOutcome>) -> bool {
         // Outside any game, General is what a change would land in: keep a copy so the change
         // can move into a new pack instead.
         let general = self.config.active_ref().game.is_none().then(|| self.config.general.clone());
-        let device = match self.active {
-            Some(Active::Settings(_, device)) => device,
-            _ => 0,
-        };
-        let (outcome, moved) = match &mut self.active {
-            Some(Active::Settings(menu, _)) => {
+        let (outcome, moved, device) = match &mut self.active {
+            Some(Active::Settings(menu, device)) => {
                 let before = menu.cursor();
-                let outcome = menu.handle(ev, &mut self.config);
-                (outcome, menu.cursor() != before)
+                let outcome = step(menu, &mut self.config);
+                (outcome, menu.cursor() != before, *device)
             }
-            _ => (None, false),
+            _ => (None, false, 0),
         };
         let picked = matches!(outcome, Some(SystemOutcome::Changed | SystemOutcome::EditControls | SystemOutcome::Switch(_)));
         self.overlay_sound(sound::SoundOverlay::Menu, sound::Feedback::of(picked, moved && outcome.is_none()));
@@ -2056,13 +2132,18 @@ impl Daemon {
                 self.close_overlay();
                 return true;
             }
-            Some(SystemOutcome::Switch(target)) => self.switch_profile(target, "Chosen in the in-game menu"),
-            Some(SystemOutcome::ReturnToGuide) => {
-                self.close_overlay();
-                if let Some(dev) = self.devices.get_mut(&device) {
-                    dev.engine.open_guide_overlay();
+            Some(SystemOutcome::Switch(target)) => {
+                self.switch_profile(target, "Chosen in the in-game menu");
+                if let Some(Active::Settings(menu, _)) = &mut self.active {
+                    menu.profile_switched(&self.config);
                 }
-                self.engine_changed(device);
+            }
+            Some(SystemOutcome::ReturnToGuide) => {
+                self.return_to_guide(device);
+                return true;
+            }
+            Some(SystemOutcome::RemappingOff) => {
+                self.remapping_off();
                 return true;
             }
             None => {}
@@ -2070,17 +2151,40 @@ impl Daemon {
         false
     }
 
-    /// Moves what General's active profile is into a new pack for the window in front, and puts
-    /// General back as `general` was. Returns false, changing nothing, without a window: there is
-    /// nothing to name the pack after, so the change stays in General.
+    /// Quick Settings' Turn remapping off: closes the menu and lets go of every controller. It
+    /// isn't saved, like the menu's other changes until Save, so a restart turns it back on.
+    fn remapping_off(&mut self) {
+        self.close_overlay();
+        self.config.enabled = false;
+        self.release_devices(|_| true);
+        self.say(vec!["Remapping is off".into(), "Turn it back on from the tray or the settings window".into()]);
+    }
+
+    /// Closes the Guide + Start menu and puts the Guide overlay it was opened from back up.
+    fn return_to_guide(&mut self, device: u64) {
+        self.close_overlay();
+        if let Some(dev) = self.devices.get_mut(&device) {
+            dev.engine.open_guide_overlay();
+        }
+        self.engine_changed(device);
+    }
+
     /// Edit Controls was chosen. Outside a game it makes the window's pack first. `false` when
-    /// there is nothing to edit: the menu goes back to its main page.
+    /// there is nothing to edit: the menu goes back to where it was opened from.
     fn edit_controls(&mut self) -> bool {
         // Outside any game there is no game to edit, and no window to name a pack after.
-        // Refuse, and go back to the menu's main page.
+        // Refuse, and go back to the menu's main page, or to the Guide overlay.
         if self.config.active_ref().game.is_none() && self.focused.is_none() {
-            if let Some(Active::Settings(menu, _)) = &mut self.active {
-                menu.back_to_main();
+            let back = match &mut self.active {
+                Some(Active::Settings(menu, device)) if menu.opened_from_guide() => Some(*device),
+                Some(Active::Settings(menu, _)) => {
+                    menu.back_to_main();
+                    None
+                }
+                _ => None,
+            };
+            if let Some(device) = back {
+                self.return_to_guide(device);
             }
             self.say(vec!["Edit Controls needs a setup".into(), "Focus a game window first".into()]);
             return false;
@@ -2092,25 +2196,35 @@ impl Daemon {
         true
     }
 
+    /// Moves what General's active profile is into a new pack for the window in front, and puts
+    /// General back as `general` was. The pack keeps the game-wide choices General had, the
+    /// Nintendo layout included, as they were edited. Returns false, changing nothing, without a
+    /// window: there is nothing to name the pack after, so the change stays in General.
     fn pack_from_general(&mut self, general: Game) -> bool {
         let Some(window) = self.focused.clone() else { return false };
         let Some(edited) = self.config.active().cloned() else { return false };
+        let nintendo_layout = self.config.general.nintendo_layout;
         self.config.general = general;
         let at = self.config.add_game_for_window(&window, edited);
+        if let Some(game) = self.config.game_mut(at.game.as_deref()) {
+            game.nintendo_layout = nintendo_layout;
+        }
         log!("made a pack for {} from General", describe(&window));
         self.say(vec![format!("Made a pack: {}", at.game.as_deref().unwrap_or_default())]);
         self.set_profile(at, &format!("Made a pack for {}", describe(&window)));
         true
     }
 
-    /// Applies a Quick Settings or Edit Controls change to the running mappings. It reaches the
+    /// Applies a Quick Settings or Edit Controls change to the running mappings, and to the
+    /// macros, menus and layers the game has (which Edit Controls can change too). It reaches the
     /// config file only when the menu's Save is chosen.
     fn apply_settings_change(&mut self) {
+        self.refresh_scope();
         self.resync_all();
     }
 
     /// Asks whether to add the focused game's profiles, when the library has some for it.
-    fn offer_library_game(&mut self) {
+    fn offer_library_game(&mut self, by: u64) {
         if self.active.is_some() || !self.config.enabled {
             return;
         }
@@ -2118,13 +2232,15 @@ impl Daemon {
         let library = crate::library::entries();
         let have = self.pad_features();
         let mut found = crate::offer::candidates(&self.config, &library, &window, have.as_deref());
-        found.retain(|&i| !self.offers.declined.contains(&library[i].pack.pack.id));
+        found.retain(|&i| self.offers.declined.get(&library[i].pack.pack.id) != Some(&window.pid));
         if found.is_empty() || !self.ensure_overlay_process() {
             return;
         }
         log!("offering library profiles for {}", describe(&window));
         self.release_mappings();
         self.offers.shown = found.iter().map(|&i| library[i].clone()).collect();
+        self.offers.shown_pid = window.pid;
+        self.driving.owner = Some(by);
         let session = OfferSession::new(&library, &found, have.as_deref(), Instant::now());
         self.active = Some(Active::Offer(session));
         self.broadcast_overlay();
@@ -2138,7 +2254,10 @@ impl Daemon {
         let offered = std::mem::take(&mut self.offers.shown);
         self.close_overlay();
         match outcome {
-            OfferOutcome::No => self.offers.declined.extend(ids),
+            OfferOutcome::No => {
+                let pid = self.offers.shown_pid;
+                self.offers.declined.extend(ids.into_iter().map(|id| (id, pid)));
+            }
             OfferOutcome::Never => {
                 let mut config = self.config.clone();
                 config.declined_packs.extend(ids);
@@ -2177,6 +2296,14 @@ impl Daemon {
         if let Some(spec) = feedback.and_then(|f| self.scope.sounds.cue(overlay, f)) {
             self.sounds.play(&spec);
         }
+        // A pick can be felt too, on the controller driving the overlay.
+        if feedback == Some(sound::Feedback::Pick)
+            && self.config.pick_rumble
+            && let Some(dev) = self.overlay_driver().and_then(|id| self.devices.get(&id))
+            && dev.ff.is_some()
+        {
+            rumble::pick(dev.path.clone());
+        }
     }
 
     /// Feeds an input to the on-screen keyboard or numpad, and sounds its step or key press.
@@ -2213,6 +2340,54 @@ impl Daemon {
         outcome
     }
 
+    /// Guide was pressed over the overlay: closes it. `true` when it closed.
+    fn guide_closes_overlay(&mut self) -> bool {
+        match &mut self.active {
+            Some(Active::Offer(_)) => self.answer_offer(OfferOutcome::No),
+            Some(Active::Settings(menu, _)) => {
+                if menu.guide_pressed(&self.config) != Some(SystemOutcome::Close) {
+                    self.broadcast_overlay();
+                    return false;
+                }
+                self.close_overlay();
+            }
+            Some(_) => self.close_overlay(),
+            None => {}
+        }
+        true
+    }
+
+    /// Runs one event on the open menu, and the item it chooses. `true` when the menu is no
+    /// longer up.
+    fn menu_input(&mut self, id: u64, ev: InputEvent, now: Instant) -> bool {
+        let Some(Active::Menu { session, device }) = &mut self.active else { return true };
+        let device = *device;
+        let before = session.cursor();
+        let outcome = session.handle(&self.scope.menus, ev, now);
+        let picked = matches!(outcome, Some(MenuOutcome::Choose { .. }));
+        let moved = outcome.is_none() && session.cursor() != before;
+        self.overlay_sound(sound::SoundOverlay::Menu, sound::Feedback::of(picked, moved));
+        match outcome {
+            Some(MenuOutcome::Choose { menu, item, action, close }) => {
+                self.log_menu_choice(id, ev, &action);
+                self.remember_pick(&menu, item, &action);
+                if close {
+                    // The picked item, lit, is the last the overlay draws of the menu.
+                    self.broadcast_overlay();
+                    self.close_overlay();
+                }
+                // Otherwise the menu stays up for more picks, unless the item put it away.
+                self.run_menu_item(device, &menu, item, &action);
+                !matches!(self.active, Some(Active::Menu { .. }))
+            }
+            Some(MenuOutcome::Close) => {
+                self.close_overlay();
+                true
+            }
+            None => false,
+        }
+    }
+
     /// While the overlay shows something, controller input drives it instead of the mappings.
     /// (Every way out redraws, so the input log's view of it shows too.)
     fn overlay_input(&mut self, id: u64, events: Vec<InputEvent>) {
@@ -2224,39 +2399,21 @@ impl Daemon {
             dev.draw_status();
         }
         for ev in events {
-            // Guide closes the keyboard, numpad or media controls, as well as their own close inputs.
-            // The tap it ends isn't a Guide tap, so it doesn't offer a library game on release.
-            if let InputEvent::Button(crate::config::Button::Guide, true) = ev
-                && matches!(self.active, Some(Active::Keyboard(_) | Active::Media(_)))
-            {
+            // Guide closes whatever is up, as well as its own close inputs: the offer as "not now",
+            // the in-game menu once any unsaved changes are answered. The tap it ends isn't a
+            // Guide tap, so it doesn't offer a library game on release.
+            if let InputEvent::Button(crate::config::Button::Guide, true) = ev {
                 self.offers.guide_tap = None;
-                return self.close_overlay();
+                if self.guide_closes_overlay() {
+                    return;
+                }
+                continue;
             }
             match &mut self.active {
                 Some(Active::Keyboard(_)) => self.keyboard_input(id, ev, now),
-                Some(Active::Menu { session, device }) => {
-                    let device = *device;
-                    let before = session.cursor();
-                    let outcome = session.handle(&self.scope.menus, ev, now);
-                    let picked = matches!(outcome, Some(MenuOutcome::Choose { .. }));
-                    let moved = outcome.is_none() && session.cursor() != before;
-                    self.overlay_sound(sound::SoundOverlay::Menu, sound::Feedback::of(picked, moved));
-                    match outcome {
-                        Some(MenuOutcome::Choose { menu, item, action, close }) => {
-                            self.log_menu_choice(id, ev, &action);
-                            if close {
-                                self.close_overlay();
-                                self.run_menu_item(device, &menu, item, &action);
-                                return;
-                            }
-                            // The menu stays up for more picks.
-                            self.run_menu_item(device, &menu, item, &action);
-                            if !matches!(self.active, Some(Active::Menu { .. })) {
-                                return;
-                            }
-                        }
-                        Some(MenuOutcome::Close) => return self.close_overlay(),
-                        None => {}
+                Some(Active::Menu { .. }) => {
+                    if self.menu_input(id, ev, now) {
+                        return;
                     }
                 }
                 Some(Active::Settings(..)) => {
@@ -2325,11 +2482,11 @@ impl Daemon {
             // Handled by the connection thread, which registers through `Msg::Watch`.
             Request::WatchInput | Request::WatchFeed => Response::Error("watch requests must be the only request".into()),
             Request::ToggleOverlay => {
-                self.toggle_overlay(Layout::Keyboard);
+                self.toggle_overlay(Layout::Keyboard, None);
                 Response::Ok
             }
             Request::ToggleNumpad => {
-                self.toggle_overlay(Layout::Numpad);
+                self.toggle_overlay(Layout::Numpad, None);
                 Response::Ok
             }
             Request::OpenMenu(name) => {
@@ -2413,6 +2570,7 @@ impl Daemon {
     /// Recomputes what the active profile can use, after a config or game change.
     fn refresh_scope(&mut self) {
         self.scope = self.config.scope();
+        rumble::set_strength(self.config.rumble_strength);
         for dev in self.devices.values_mut() {
             dev.engine.set_macros(&self.scope.macros);
             dev.engine.set_menus(&self.scope.menus);
@@ -2955,14 +3113,19 @@ fn serve_client(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
 fn watch_overlay(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
     let (view_tx, view_rx) = mpsc::channel::<OverlayFrame>();
     tx.send(Msg::WatchOverlay(view_tx))?;
-    while let Ok(mut view) = view_rx.recv() {
-        while let Ok(newer) = view_rx.try_recv() {
-            view = newer;
-        }
-        let mut line = serde_json::to_string(&view)?;
-        line.push('\n');
-        if conn.write_all(line.as_bytes()).is_err() {
-            return Ok(());
+    while let Ok(first) = view_rx.recv() {
+        // Frames that came while the last was written: those a newer one stands in for are
+        // skipped, so a burst doesn't pile up, but each opening, closing and pick is sent.
+        let pending: Vec<OverlayFrame> = std::iter::once(first).chain(view_rx.try_iter()).collect();
+        for (i, view) in pending.iter().enumerate() {
+            if pending.get(i + 1).is_some_and(|newer| newer.stands_in_for(view)) {
+                continue;
+            }
+            let mut line = serde_json::to_string(view)?;
+            line.push('\n');
+            if conn.write_all(line.as_bytes()).is_err() {
+                return Ok(());
+            }
         }
     }
     Ok(())

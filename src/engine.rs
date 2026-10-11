@@ -37,8 +37,8 @@ const WHEEL_REPEAT_DELAY: f32 = 0.35;
 /// ...at this many notches per second.
 const WHEEL_REPEAT_RATE: f32 = 10.0;
 /// Holding a Guide menu direction repeats it: after this delay, then at this interval.
-const GUIDE_REPEAT_DELAY: Duration = Duration::from_millis(400);
-const GUIDE_REPEAT_RATE: Duration = Duration::from_millis(125);
+const GUIDE_REPEAT_DELAY: Duration = crate::nav::REPEAT_DELAY;
+const GUIDE_REPEAT_RATE: Duration = crate::nav::REPEAT_EVERY;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Source {
@@ -67,8 +67,6 @@ pub struct Opener {
     pub buttons: Vec<Button>,
     /// Released when this trigger drops below the menu's release point.
     pub trigger: Option<Trigger>,
-    /// Opened through a Toggle: the menu stays until the opener is pressed again.
-    pub toggled: bool,
 }
 
 impl Source {
@@ -206,8 +204,6 @@ pub struct Engine {
     force_quit_holds: u32,
     /// Set when an OpenMenu action fires; the daemon takes it.
     menu_request: Option<(String, Opener)>,
-    /// Set while a Toggle turns its inner action on.
-    toggling: bool,
     /// Info overlays shown by held (or toggled) ShowInfo actions, with how many hold each.
     info_holds: HashMap<String, u32>,
     /// Log overlays shown by held (or toggled) ShowLog actions, likewise.
@@ -952,7 +948,7 @@ impl Engine {
         }
         ButtonAction::OpenMenu(name) => {
             if pressed {
-                self.menu_request = Some((name.clone(), Opener { toggled: self.toggling, ..src.opener() }));
+                self.menu_request = Some((name.clone(), src.opener()));
             }
         }
         ButtonAction::Layer(name) => self.hold_layer(name, pressed),
@@ -1029,10 +1025,7 @@ impl Engine {
     /// Turns a Toggle (at `slot` of `src`'s action) on, pressing its inner action.
     fn toggle_on(&mut self, src: &Source, inner: &ButtonAction, slot: usize, out: &mut Vec<OutEvent>) {
         self.toggled.insert((src.clone(), slot), inner.clone());
-        // A menu opened from here stays up until toggled off.
-        let was = std::mem::replace(&mut self.toggling, true);
         self.emit(src, inner, true, slot + 1, out);
-        self.toggling = was;
     }
 
     /// Switches on every Toggle set to start on, in the profile's mappings and the game's menu
@@ -1290,9 +1283,9 @@ impl Engine {
     }
 }
 
-/// Difference between two angles in degrees, wrapped to -180..180.
 /// Whether a button drives the Guide overlay's menu rather than closing the overlay: the D-pad
-/// and left stick move the highlight, A chooses and B closes.
+/// and left stick move the highlight, A chooses and B closes, and the right stick turns the
+/// Mappings' pages.
 fn guide_nav(b: Button) -> bool {
     matches!(
         b,
@@ -1304,6 +1297,8 @@ fn guide_nav(b: Button) -> bool {
             | Button::LeftStickDown
             | Button::LeftStickLeft
             | Button::LeftStickRight
+            | Button::RightStickUp
+            | Button::RightStickDown
             | Button::South
             | Button::East
     )
@@ -1321,6 +1316,7 @@ fn count_hold(holds: &mut HashMap<String, u32>, name: &str, pressed: bool) {
     }
 }
 
+/// Difference between two angles in degrees, wrapped to -180..180.
 fn angle_diff(a: f32, b: f32) -> f32 {
     (a - b + 540.0).rem_euclid(360.0) - 180.0
 }
@@ -1676,6 +1672,20 @@ mod tests {
         assert!(e.take_guide_nav().is_empty());
         press(&mut e, &on, Button::Start, true, ms(t0, 500));
         assert!(e.layers().is_empty(), "any other button closes it");
+    }
+
+    #[test]
+    fn the_left_stick_moves_the_guide_menu_not_the_game() {
+        let (base, on) = guide_setup();
+        let mut e = Engine::default();
+        let t0 = Instant::now();
+        assert!(!axis(&mut e, &base, Axis::LeftY, 0.5).is_empty(), "the game gets the stick normally");
+        axis(&mut e, &base, Axis::LeftY, 0.0);
+        press(&mut e, &base, Button::Guide, true, t0);
+        press(&mut e, &base, Button::Guide, false, ms(t0, 80));
+        let out = axis(&mut e, &on, Axis::LeftY, 0.9);
+        assert!(!out.iter().any(|o| matches!(o, OutEvent::PadAxis(_, v) if *v != 0.0)), "only recentered: {out:?}");
+        assert_eq!(e.take_guide_nav(), [Button::LeftStickDown]);
     }
 
     #[test]
@@ -2613,10 +2623,6 @@ mod tests {
         assert_eq!(e.take_menu_request(), None);
         axis(&mut e, &p, Axis::LeftTrigger, 1.0);
         assert_eq!(e.take_menu_request().map(|(n, o)| (n, o.trigger)), Some(("Wheel".into(), Some(Trigger::Left))));
-        // Through a Toggle, the menu is marked to stay up until pressed again.
-        p.set_button(Button::North, toggle(ButtonAction::OpenMenu("Pause".into())));
-        run(&mut e, &p, InputEvent::Button(Button::North, true));
-        assert_eq!(e.take_menu_request().map(|(_, o)| o.toggled), Some(true));
 
         let mut out = Vec::new();
         let toggle_c = toggle(key("KEY_C"));
@@ -2645,8 +2651,8 @@ mod tests {
         let menu = Menu {
             name: "M".into(),
             kind: crate::config::MenuKind::List,
-            items: vec![crate::config::MenuItem { label: "x".into(), action: starting(ButtonAction::Keys(vec!["KEY_M".into()])), button: None, weight: 1.0 }],
-            cancel: None,
+            items: vec![crate::config::MenuItem::new("x", starting(ButtonAction::Keys(vec!["KEY_M".into()])))],
+            cancel: None, no_cancel: false, start: 0,
             style: Default::default(),
         };
         let mut e = Engine::default();

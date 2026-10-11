@@ -9,6 +9,11 @@ use iced::{
 const UNIT: f32 = 30.0;
 const GAP: f32 = 3.0;
 
+mod boards;
+mod xkb;
+pub use boards::{Board, Cursor, find, key_at, step};
+pub use xkb::{cap_label, needs_shift, typed};
+
 /// One key cap. An empty `code` is a blank spacer used for alignment.
 pub struct Key {
     pub label: &'static str,
@@ -81,15 +86,6 @@ const NUMPAD: [&[Key]; 6] = [
     &[w("0", "KEY_KP0", 2.0), k(".", "KEY_KPDOT"), gap(1.0)],
 ];
 
-/// The on-screen numpad. Digits are the top-row keys, which type numbers whatever the
-/// Num Lock state (keypad keys turn into arrows and Home/End with it off).
-pub const PAD: [&[Key]; 4] = [
-    &[k("7", "KEY_7"), k("8", "KEY_8"), k("9", "KEY_9")],
-    &[k("4", "KEY_4"), k("5", "KEY_5"), k("6", "KEY_6")],
-    &[k("1", "KEY_1"), k("2", "KEY_2"), k("3", "KEY_3")],
-    &[w("0", "KEY_0", 2.0), k(".", "KEY_DOT")],
-];
-
 /// Which on-screen key layout the controller drives.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -100,20 +96,9 @@ pub enum Layout {
 }
 
 impl Layout {
-    pub fn rows(self) -> &'static [&'static [Key]] {
-        match self {
-            Layout::Keyboard => &MAIN,
-            Layout::Numpad => &PAD,
-        }
-    }
-
-    /// Where the cursor starts the first time.
+    /// Where the cursor starts the first time, on the layout's basic board.
     pub fn home(self) -> Cursor {
-        let code = match self {
-            Layout::Keyboard => "KEY_Q",
-            Layout::Numpad => "KEY_5",
-        };
-        find(self, code).unwrap_or_default()
+        Board::from(self).home()
     }
 }
 
@@ -200,7 +185,8 @@ pub fn label(code: &str) -> String {
 
 /// Every key the layouts draw, spacers left out.
 pub fn drawn_keys() -> impl Iterator<Item = &'static Key> {
-    MAIN.iter().chain(NAV.iter()).chain(NUMPAD.iter()).chain(PAD.iter()).flat_map(|r| r.iter()).chain(MEDIA).filter(|k| !k.code.is_empty())
+    let boards = [Board::Basic, Board::Full, Board::Numpad].into_iter().flat_map(Board::keys);
+    MAIN.iter().chain(NAV.iter()).chain(NUMPAD.iter()).flat_map(|r| r.iter()).chain(MEDIA).filter(|k| !k.code.is_empty()).chain(boards)
 }
 
 /// The evdev code of the drawn key whose [`label`] is `name`, ignoring case.
@@ -219,67 +205,6 @@ pub fn code_for_token(name: &str) -> Option<&'static str> {
     drawn_keys().find(|k| k.code.trim_start_matches("KEY_").eq_ignore_ascii_case(name)).map(|k| k.code)
 }
 
-/// A key position in a layout for controller navigation (gaps skipped).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
-pub struct Cursor {
-    pub row: usize,
-    pub col: usize,
-}
-
-/// A layout without spacers: each key with its horizontal center in key units.
-pub fn grid(layout: Layout) -> Vec<Vec<(&'static Key, f32)>> {
-    layout
-        .rows()
-        .iter()
-        .map(|row| {
-            let mut x = 0.0;
-            let mut keys = Vec::new();
-            for key in row.iter() {
-                if !key.code.is_empty() {
-                    keys.push((key, x + key.width / 2.0));
-                }
-                x += key.width;
-            }
-            keys
-        })
-        .collect()
-}
-
-/// The key under the cursor (clamped into the grid).
-pub fn key_at(layout: Layout, cursor: Cursor) -> &'static Key {
-    let grid = grid(layout);
-    let row = &grid[cursor.row.min(grid.len() - 1)];
-    row[cursor.col.min(row.len() - 1)].0
-}
-
-/// Moves the cursor one step: left/right along the row (wrapping), up/down to the key in
-/// the next row whose center lines up best (also wrapping).
-pub fn step(layout: Layout, cursor: Cursor, dx: i32, dy: i32) -> Cursor {
-    let grid = grid(layout);
-    let row = cursor.row.min(grid.len() - 1);
-    let col = cursor.col.min(grid[row].len() - 1);
-    if dy == 0 {
-        let len = grid[row].len() as i32;
-        return Cursor { row, col: (col as i32 + dx).rem_euclid(len) as usize };
-    }
-    let x = grid[row][col].1;
-    let new_row = (row as i32 + dy).rem_euclid(grid.len() as i32) as usize;
-    let new_col = grid[new_row]
-        .iter()
-        .enumerate()
-        .min_by(|a, b| (a.1.1 - x).abs().total_cmp(&(b.1.1 - x).abs()))
-        .map(|(i, _)| i)
-        .unwrap_or(0);
-    Cursor { row: new_row, col: new_col }
-}
-
-/// Where a key code sits in the grid.
-pub fn find(layout: Layout, code: &str) -> Option<Cursor> {
-    grid(layout).iter().enumerate().find_map(|(row, keys)| {
-        keys.iter().position(|(k, _)| k.code == code).map(|col| Cursor { row, col })
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
@@ -289,7 +214,7 @@ mod tests {
     use super::*;
 
     fn all_keys() -> impl Iterator<Item = &'static Key> {
-        MAIN.iter().chain(NAV.iter()).chain(NUMPAD.iter()).chain(PAD.iter()).flat_map(|r| r.iter()).chain(MEDIA)
+        drawn_keys()
     }
 
     #[test]
@@ -314,7 +239,8 @@ mod tests {
 
     #[test]
     fn rows_in_a_block_have_equal_width() {
-        for block in [&MAIN[..], &NAV[..], &NUMPAD[..], &PAD[..]] {
+        let boards = [Board::Basic, Board::Full, Board::Numpad].map(Board::rows);
+        for block in [&MAIN[..], &NAV[..], &NUMPAD[..]].into_iter().chain(boards) {
             let widths: Vec<f32> = block.iter().map(|r| r.iter().map(|k| k.width).sum()).collect();
             assert!(widths.iter().all(|w| (w - widths[0]).abs() < 1e-3), "{widths:?}");
         }
@@ -334,10 +260,17 @@ mod tests {
         // Down from H reaches the space bar region of the bottom row eventually.
         let b = find("KEY_B").unwrap();
         assert_eq!(at(step(b, 0, 1)), "KEY_SPACE");
-        // Rows wrap around.
+        // Rows wrap around, and so do columns.
         let esc = find("KEY_ESC").unwrap();
-        assert_eq!(at(step(esc, -1, 0)), "KEY_F12");
+        assert_eq!(at(step(esc, -1, 0)), "KEY_RIGHT", "the basic board's bottom row ends in the arrows");
         assert_eq!(step(step(esc, 0, -1), 0, 1).row, esc.row);
+        // The full board has the function keys on top and the editing keys beside.
+        let full = |c: Cursor| key_at(Board::Full, c).code;
+        let fesc = super::find(Board::Full, "KEY_ESC").unwrap();
+        assert_eq!(full(super::step(Board::Full, fesc, -1, 0)), "KEY_PAUSE");
+        let backspace = super::find(Board::Full, "KEY_BACKSPACE").unwrap();
+        assert_eq!(full(super::step(Board::Full, backspace, 1, 0)), "KEY_INSERT");
+        assert!(Board::Full.units_wide() > Board::Basic.units_wide());
     }
 
     #[test]

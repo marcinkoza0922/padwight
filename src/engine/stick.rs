@@ -2,6 +2,8 @@
 //! scroll output driven by `tick`.
 
 use super::*;
+use std::borrow::Cow;
+
 use crate::config::{MouseResponse, StickConfig};
 
 /// Deflection above which a mouse stick counts as fully pushed, for the outer boost and acceleration.
@@ -34,8 +36,19 @@ impl Engine {
         apply_deadzone(x, y, deadzone)
     }
 
-    pub(super) fn stick(&mut self, profile: &Profile, s: Stick, out: &mut Vec<OutEvent>) {
+    /// A stick's settings as they apply now. While the Guide overlay is up the sticks move its
+    /// menu and turn its pages (through their direction buttons), so they do nothing else.
+    fn stick_cfg<'p>(&self, profile: &'p Profile, s: Stick) -> Cow<'p, StickConfig> {
         let cfg = profile.stick(s);
+        if self.guide_open {
+            Cow::Owned(StickConfig { action: StickAction::Disabled, zones: Vec::new(), ..cfg.clone() })
+        } else {
+            Cow::Borrowed(cfg)
+        }
+    }
+
+    pub(super) fn stick(&mut self, profile: &Profile, s: Stick, out: &mut Vec<OutEvent>) {
+        let cfg = &*self.stick_cfg(profile, s);
         let (x, y) = self.stick_pos(s, cfg.deadzone);
         // A virtual stick no longer fed (a layer changed this stick's mode) recenters.
         let target = match &cfg.action {
@@ -100,7 +113,7 @@ impl Engine {
     /// or a smoothed one is still settling.
     pub(super) fn sticks_need_tick(&self, profile: &Profile) -> bool {
         [Stick::Left, Stick::Right].into_iter().any(|s| {
-            let cfg = profile.stick(s);
+            let cfg = self.stick_cfg(profile, s);
             match cfg.action {
                 StickAction::Mouse { .. } | StickAction::Scroll { .. } => {
                     self.stick_pos(s, cfg.deadzone) != (0.0, 0.0) || self.stick_smooth.contains_key(&s)
@@ -148,7 +161,8 @@ impl Engine {
     /// Advances the sticks' continuous outputs (mouse motion, scrolling) by `dt` seconds.
     pub(super) fn tick_sticks(&mut self, profile: &Profile, dt: f32, out: &mut Vec<OutEvent>) {
         for s in [Stick::Left, Stick::Right] {
-            let cfg = profile.stick(s);
+            let cfg = self.stick_cfg(profile, s);
+            let cfg = &*cfg;
             if matches!(cfg.action, StickAction::Flick { .. }) {
                 self.tick_flick(s, cfg, dt, out);
                 continue;

@@ -100,7 +100,7 @@ fn input_token(input: crate::config::GuideInput) -> Option<&'static str> {
 /// The Notes and Mappings overlays of the Guide overlay, for `profile`. Notes are left out when
 /// the author wrote none. Mappings are one row per line of [`crate::config::mapping_rows`]: the
 /// glyphs of its buttons, then its text.
-pub fn guide_overlays(profile: &crate::config::Profile) -> Vec<InfoOverlay> {
+pub fn guide_overlays(profile: &crate::config::Profile, page: usize) -> Vec<InfoOverlay> {
     let mut overlays = Vec::new();
     if !profile.guide.notes.trim().is_empty() {
         overlays.push(InfoOverlay {
@@ -114,13 +114,18 @@ pub fn guide_overlays(profile: &crate::config::Profile) -> Vec<InfoOverlay> {
             rows: profile.guide.notes.lines().map(|line| vec![line.to_string()]).collect(),
         });
     }
-    let rows = crate::config::mapping_rows(profile)
+    let rows: Vec<Vec<String>> = crate::config::mapping_rows(profile)
         .into_iter()
         .map(|row| {
             let glyphs: Vec<String> = row.inputs.iter().filter_map(|i| input_token(*i)).map(|t| format!("{{{t}}}")).collect();
             vec![row.shape.join(&glyphs), row.text]
         })
         .collect();
+    // A long list shows a page at a time; the right stick turns them.
+    let pages = mapping_pages(rows.len());
+    let page = page.min(pages - 1);
+    let title = if pages > 1 { format!("Mappings {}/{pages} · {{rs}} more", page + 1) } else { "Mappings".into() };
+    let rows = rows.into_iter().skip(page * MAPPING_ROWS).take(MAPPING_ROWS).collect();
     overlays.push(InfoOverlay {
         name: "guide mappings".into(),
         always: true,
@@ -128,10 +133,23 @@ pub fn guide_overlays(profile: &crate::config::Profile) -> Vec<InfoOverlay> {
         linger: None,
         current_input: Default::default(),
         style: OverlayStyle { position: ScreenPosition::CenterRight, ..OverlayStyle::info() },
-        title: Some("Mappings".into()),
+        title: Some(title),
         rows,
     });
     overlays
+}
+
+/// Rows of the Guide overlay's Mappings shown at once.
+const MAPPING_ROWS: usize = 14;
+
+/// How many pages a Mappings list of `rows` takes (at least one).
+pub fn mapping_pages(rows: usize) -> usize {
+    rows.div_ceil(MAPPING_ROWS).max(1)
+}
+
+/// How many pages `profile`'s Mappings take.
+pub fn guide_mapping_pages(profile: &crate::config::Profile) -> usize {
+    mapping_pages(crate::config::mapping_rows(profile).len())
 }
 
 /// Whose button names and symbols to show.
@@ -428,6 +446,8 @@ pub enum Segment {
     StickClick { right: bool },
     /// A drawn icon: the form factor, the controller's kind, or a gauge.
     Icon(Icon),
+    /// A bar filled from 0 to 1, such as how long is left to hold a button.
+    Bar(f32),
 }
 
 /// What an icon shows.
@@ -581,22 +601,41 @@ pub const TOAST_TIME: Duration = Duration::from_millis(2500);
 pub struct Toast {
     lines: Vec<String>,
     end: Instant,
+    /// A bar under the lines that fills from `.0` over `.1`: how long a hold has left to go.
+    progress: Option<(Instant, Duration)>,
 }
+
+/// How often a toast's bar redraws while it fills.
+const BAR_FRAME: Duration = Duration::from_millis(50);
 
 impl Toast {
     pub fn new(lines: Vec<String>, now: Instant) -> Self {
-        Toast { lines, end: now + TOAST_TIME }
+        Toast { lines, end: now + TOAST_TIME, progress: None }
+    }
+
+    /// A toast with a bar that fills over `length`, for a button held that long; it stays until
+    /// replaced or dropped.
+    pub fn filling(lines: Vec<String>, now: Instant, length: Duration) -> Self {
+        Toast { lines, end: now + length + TOAST_TIME, progress: Some((now, length)) }
     }
 
     /// What to draw now, or `None` once it's gone.
     pub fn view(&self, now: Instant) -> Option<InfoView> {
         let opacity = fade(now, self.end)?;
-        let rows = self.lines.iter().map(|l| vec![vec![Segment::Text(l.clone())]]).collect();
+        let mut rows: Vec<Vec<Vec<Segment>>> = self.lines.iter().map(|l| vec![vec![Segment::Text(l.clone())]]).collect();
+        if let Some((start, length)) = self.progress {
+            let done = now.saturating_duration_since(start).as_secs_f32() / length.as_secs_f32().max(f32::EPSILON);
+            rows.push(vec![vec![Segment::Bar(done.min(1.0))]]);
+        }
         Some(InfoView { name: "toast".into(), style: OverlayStyle::toast(), title: None, rows, opacity })
     }
 
     pub fn next_redraw(&self, now: Instant, frame: Duration) -> Instant {
-        redraw_at(self.end, now, frame)
+        let fading = redraw_at(self.end, now, frame);
+        match self.progress {
+            Some((start, length)) if now < start + length => fading.min(now + BAR_FRAME),
+            _ => fading,
+        }
     }
 }
 
@@ -707,6 +746,36 @@ pub fn nintendo_face(b: Button) -> Button {
 pub struct Glyphs {
     pub family: PadFamily,
     pub nintendo_layout: bool,
+}
+
+/// `text` with its controller tokens (`{south}`, `{lt}`, `{ls}`, `{dpad}`, `{keyboard:a}`…) as
+/// glyphs in `glyphs`' labels, for hints and menu labels. Other tokens stay as written.
+pub fn glyph_text(text: &str, glyphs: Glyphs) -> Vec<Segment> {
+    let Glyphs { family, nintendo_layout } = glyphs;
+    let mut segments: Vec<Segment> = Vec::new();
+    for part in parse(text) {
+        let segment = match part {
+            Ok(t) => Segment::Text(t),
+            Err(Token::Button(b) | Token::PadButton(b)) => button_glyph(b, family, nintendo_layout),
+            Err(Token::Key(code)) => key_glyph(code),
+            Err(Token::Mouse(m)) => mouse_glyph(m),
+            Err(Token::Trigger(t)) => trigger_glyph(t, family),
+            Err(Token::Stick(Stick::Left)) => glyph("LS", None, true),
+            Err(Token::Stick(Stick::Right)) => glyph("RS", None, true),
+            Err(Token::Dpad) => glyph("✚", None, false),
+            Err(_) => continue,
+        };
+        match (segments.last_mut(), segment) {
+            (Some(Segment::Text(prev)), Segment::Text(t)) => prev.push_str(&t),
+            (_, segment) => segments.push(segment),
+        }
+    }
+    segments
+}
+
+/// The `{token}` text that draws `b` in a hint, or its plain badge for a button without one.
+pub fn button_hint(b: Button) -> String {
+    button_token(b).map_or_else(|| crate::menu::button_badge(b).to_string(), |t| format!("{{{t}}}"))
 }
 
 /// A button's glyph as the given family labels it. Face buttons are round and, for Xbox
@@ -1105,14 +1174,44 @@ mod tests {
         use crate::config::{ButtonAction, Profile};
         let mut p = Profile::passthrough("p");
         p.set_button(crate::config::Button::South, ButtonAction::Keys(vec!["KEY_E".into()]));
-        let overlays = super::guide_overlays(&p);
+        let overlays = super::guide_overlays(&p, 0);
         assert_eq!(overlays.len(), 1, "no notes, so only the mappings");
         assert_eq!(overlays[0].name, "guide mappings");
         assert!(overlays[0].rows.iter().any(|r| r == &vec!["{south}".to_string(), "{keyboard:e}".to_string()]));
         p.guide.notes = "Hold LB for the radial menu.\nEsc is Start.".into();
-        let overlays = super::guide_overlays(&p);
+        let overlays = super::guide_overlays(&p, 0);
         assert_eq!(overlays[0].name, "guide notes");
         assert_eq!(overlays[0].rows.len(), 2, "one row per line");
+    }
+
+    #[test]
+    fn a_long_mappings_list_shows_a_page_at_a_time() {
+        use crate::config::{Button, ButtonAction, Profile};
+        let mut p = Profile::passthrough("p");
+        let keys = ["KEY_A", "KEY_B", "KEY_C", "KEY_D", "KEY_E", "KEY_F", "KEY_G", "KEY_H", "KEY_I", "KEY_J", "KEY_K", "KEY_L", "KEY_M", "KEY_N", "KEY_O"];
+        for (b, key) in Button::ALL.into_iter().zip(keys) {
+            p.set_button(b, ButtonAction::Keys(vec![key.into()]));
+        }
+        for (i, key) in ["KEY_P", "KEY_Q", "KEY_R"].into_iter().enumerate() {
+            p.gestures.insert(Button::ALL[i], crate::config::Gestures { long_press: Some(ButtonAction::Keys(vec![key.into()])), ..Default::default() });
+        }
+        let pages = super::guide_mapping_pages(&p);
+        assert!(pages > 1, "{} rows", crate::config::mapping_rows(&p).len());
+        let first = &super::guide_overlays(&p, 0)[0];
+        assert_eq!(first.rows.len(), super::MAPPING_ROWS);
+        assert!(first.title.as_deref().is_some_and(|t| t.starts_with("Mappings 1/")));
+        let last = &super::guide_overlays(&p, 99)[0];
+        assert!(last.title.as_deref().is_some_and(|t| t.starts_with(&format!("Mappings {pages}/"))), "past the end shows the last page");
+    }
+
+    #[test]
+    fn a_filling_toast_draws_its_bar_and_redraws_while_it_fills() {
+        let t0 = Instant::now();
+        let toast = Toast::filling(vec!["Keep holding".into()], t0, Duration::from_secs(2));
+        let bar = |at| toast.view(at).unwrap().rows.last().unwrap()[0][0].clone();
+        assert_eq!(bar(t0), Segment::Bar(0.0));
+        assert_eq!(bar(t0 + Duration::from_secs(1)), Segment::Bar(0.5));
+        assert!(toast.next_redraw(t0, Duration::from_millis(33)) <= t0 + BAR_FRAME);
     }
 
     #[test]
@@ -1169,8 +1268,7 @@ mod tests {
                 Segment::Glyph { label, .. } => Some(label.as_str()),
                 Segment::Dpad(_) => Some("dpad"),
                 Segment::StickClick { .. } => Some("stick"),
-                Segment::Icon(_) => None,
-                Segment::Text(_) => None,
+                Segment::Icon(_) | Segment::Text(_) | Segment::Bar(_) => None,
             })
             .collect();
         assert_eq!(labels, ["dpad", "dpad", "dpad", "B"]);

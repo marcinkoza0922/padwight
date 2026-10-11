@@ -103,7 +103,7 @@ pub(super) fn item_outline(c: &Colors, selected: bool, lit: f32, radius: f32) ->
         Some((width, color)) => (width, lit_color(color)),
         // Plain items are bare, and only the selected one is outlined.
         None if c.look.plain => (if selected { 2.0 } else { 0.0 }, c.selected_text),
-        None => (if selected { 2.0 } else { 1.0 }, lit_color(Color { a: 0.12, ..c.item_text })),
+        None => (if selected { 2.0 } else { 1.0 }, lit_color(c.item_text.scale_alpha(0.12))),
     };
     Border { width, radius: radius.into(), color }
 }
@@ -123,17 +123,6 @@ pub(super) fn lit_cell_style(c: Colors, selected: bool, height: f32) -> impl Fn(
     let lit = if selected { 1.0 } else { 0.0 };
     move |_| container::Style {
         background: Some(c.item.into()),
-        border: item_outline(&c, selected, lit, c.corners * height / 2.0),
-        shadow: item_glow(&c, lit),
-        ..container::Style::default()
-    }
-}
-
-/// An item's box in its plain colors, or the selected ones.
-pub(super) fn cell_style(c: Colors, selected: bool, height: f32) -> impl Fn(&iced::Theme) -> container::Style {
-    let lit = if selected { 1.0 } else { 0.0 };
-    move |_| container::Style {
-        background: Some(if selected { c.selected } else { c.item }.into()),
         border: item_outline(&c, selected, lit, c.corners * height / 2.0),
         shadow: item_glow(&c, lit),
         ..container::Style::default()

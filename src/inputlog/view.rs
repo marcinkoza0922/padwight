@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use super::{Entry, Input};
 use crate::{
     config::{CurrentInput, InputLogSettings, InputTracking, LogEnd, OverlayStyle, Stick, TrackedInput},
-    info::{Glyphs, PadFamily, Segment, button_glyph, glyph, trigger_glyph},
+    info::{Glyphs, PadFamily, Segment, button_glyph, glyph, key_glyph, mouse_glyph, trigger_glyph},
 };
 
 impl crate::motion::Tracked for LogView {
@@ -95,6 +95,8 @@ fn tracked(entries: &[Entry], t: &InputTracking) -> Vec<Entry> {
         Input::Direction(Some(s), _) => t.tracks(TrackedInput::Stick(*s)),
         Input::Trigger(tr) => t.tracks(TrackedInput::Trigger(*tr)),
         Input::Combo(members) => members.iter().any(|b| t.tracks(TrackedInput::Button(*b))),
+        // Only exports have these, and an export log shows all of them.
+        Input::Key(_) | Input::Mouse(_) | Input::Wheel(_) => true,
     };
     entries.iter().filter(|e| follows(&e.input)).cloned().collect()
 }
@@ -131,6 +133,16 @@ fn cells(seq: &[Entry], merge: bool, max: u8, family: PadFamily, swapped: bool) 
         .collect()
 }
 
+fn wheel_arrow(d: crate::config::WheelDirection) -> &'static str {
+    use crate::config::WheelDirection;
+    match d {
+        WheelDirection::Up => "↑",
+        WheelDirection::Down => "↓",
+        WheelDirection::Left => "←",
+        WheelDirection::Right => "→",
+    }
+}
+
 /// An input's glyphs: the button's own, the D-pad cross for a D-pad direction, an arrow in
 /// a disc with the stick's letter for a stick, and a combo's buttons joined by `+`.
 pub fn input_glyph(input: &Input, family: PadFamily, swapped: bool) -> Vec<Segment> {
@@ -142,6 +154,9 @@ pub fn input_glyph(input: &Input, family: PadFamily, swapped: bool) -> Vec<Segme
             vec![glyph(&format!("{letter}{}", d.arrow()), None, true)]
         }
         Input::Trigger(t) => vec![trigger_glyph(*t, family)],
+        Input::Key(code) => vec![key_glyph(code)],
+        Input::Mouse(m) => vec![mouse_glyph(*m)],
+        Input::Wheel(d) => vec![glyph(&format!("Wheel {}", wheel_arrow(*d)), None, false)],
         Input::Combo(members) => {
             let mut out = Vec::new();
             for (i, b) in members.iter().enumerate() {

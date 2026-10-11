@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    config::{Button, Config, Feature, OverlayStyle, ScreenPosition},
+    config::{Button, Config, Feature, OverlayStyle},
     focus,
     input::InputEvent,
     ipc::WindowInfo,
@@ -45,12 +45,9 @@ pub fn candidates(config: &Config, library: &[Entry], window: &WindowInfo, have:
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OfferView {
     pub title: String,
-    /// What the pack is, or what to pick between.
+    /// What the pack is.
     pub detail: String,
-    /// The packs to pick from; empty while asking yes or no.
-    pub choices: Vec<String>,
-    pub selected: usize,
-    /// The answers on offer while asking: (button, what it does).
+    /// The answers on offer: (button, what it does).
     pub answers: Vec<(String, String)>,
     pub hint: String,
     pub style: OverlayStyle,
@@ -61,7 +58,7 @@ pub enum OfferOutcome {
     /// Add the candidate at this position, with this one of its profiles in use for the
     /// window (`None`: the pack's own rules stand).
     Add(usize, Option<usize>),
-    /// Not now; ask again next time the game is started.
+    /// Not now: asked again once the game has been started again (a tap of Guide in it).
     No,
     /// Never ask about these packs again.
     Never,
@@ -91,6 +88,9 @@ pub struct OfferSession {
     stage: Stage,
     selected: usize,
     last_input: Instant,
+    /// The left stick, read as a D-pad, and the direction repeating while held.
+    stick_dir: crate::nav::StickDir,
+    repeat: crate::nav::Repeat,
 }
 
 impl OfferSession {
@@ -120,7 +120,14 @@ impl OfferSession {
                 }
             })
             .collect();
-        OfferSession { packs, stage: Stage::Ask, selected: 0, last_input: now }
+        OfferSession {
+            packs,
+            stage: Stage::Ask,
+            selected: 0,
+            last_input: now,
+            stick_dir: crate::nav::StickDir::default(),
+            repeat: crate::nav::Repeat::default(),
+        }
     }
 
     /// The IDs of the packs on offer.
@@ -128,22 +135,30 @@ impl OfferSession {
         self.packs.iter().map(|p| p.id.as_str())
     }
 
-    pub fn view(&self) -> OfferView {
-        let style = OverlayStyle { position: ScreenPosition::Center, ..OverlayStyle::default() };
-        let pick = |detail: String, choices: Vec<String>| OfferView {
-            title: "Which profiles?".into(),
-            detail,
-            choices,
-            selected: self.selected,
-            answers: Vec::new(),
-            hint: "D-pad ▲ ▼ choose   A add   B back".into(),
-            style: style.clone(),
+    /// What the overlay draws, in `style` (the menus' look): the question, or the list to pick
+    /// a set of profiles from, drawn as a list menu.
+    pub fn view(&self, style: &OverlayStyle) -> crate::overlay::OverlayView {
+        use crate::{menu::MenuView, overlay::OverlayView};
+        let pick = |title: String, choices: Vec<String>| {
+            let items = choices.into_iter().map(|label| crate::menu::ItemView { label, ..crate::menu::ItemView::plain() }).collect();
+            OverlayView::Menu(MenuView {
+                title,
+                kind: crate::config::MenuKind::List,
+                items,
+                selected: Some(self.selected),
+                picks: 0,
+                crumbs: vec!["Add controller profiles".into()],
+                hint: "{up} {down} choose · {south} add · {east} back".into(),
+                style: style.clone(),
+                touch: false,
+                aim: None,
+            })
         };
         match self.stage {
-            Stage::Pack => {
-                return pick("Several sets of profiles fit this game".into(), self.packs.iter().map(|p| p.name.clone()).collect());
+            Stage::Pack => return pick("Which set of profiles?".into(), self.packs.iter().map(|p| p.name.clone()).collect()),
+            Stage::Profile(i) => {
+                return pick(format!("Which {} profile?", self.packs[i].name), self.packs[i].profiles.iter().map(|(_, n)| n.clone()).collect());
             }
-            Stage::Profile(i) => return pick(format!("{} has several profiles", self.packs[i].name), self.packs[i].profiles.iter().map(|(_, n)| n.clone()).collect()),
             Stage::Ask => {}
         }
         let (title, detail) = match self.packs.as_slice() {
@@ -151,21 +166,45 @@ impl OfferSession {
             [p, ..] => (format!("Add controller profiles for {}?", p.name), format!("{} sets of profiles fit this game", self.packs.len())),
             [] => (String::new(), String::new()),
         };
-        let answers = [("A", "Yes"), ("B", "No"), ("X", "No, don't ask again")];
-        OfferView {
+        let answers = [("{south}", "Yes"), ("{east}", "Not now"), ("{west}", "Never")];
+        OverlayView::Offer(OfferView {
             title,
             detail,
-            choices: Vec::new(),
-            selected: 0,
             answers: answers.iter().map(|(b, t)| ((*b).into(), (*t).into())).collect(),
-            hint: "To be asked again, tap Guide in a game Padwight doesn't know yet".into(),
-            style,
-        }
+            hint: "Not now asks again the next time this game starts and you tap Guide in it".into(),
+            style: style.clone(),
+        })
     }
 
     pub fn handle(&mut self, ev: InputEvent, now: Instant) -> Option<OfferOutcome> {
-        let InputEvent::Button(b, true) = ev else { return None };
         self.last_input = now;
+        // Up and down move through a list, from the D-pad or the left stick, repeating while held.
+        let dir = match ev {
+            InputEvent::Button(b, pressed) if crate::nav::dpad_dir(b).is_some() => {
+                let dir = crate::nav::dpad_dir(b)?;
+                if !pressed {
+                    self.repeat.release(dir);
+                    return None;
+                }
+                Some(dir)
+            }
+            InputEvent::Axis(crate::input::Axis::LeftY, v) => match self.stick_dir.update((0.0, v))? {
+                Some(dir) => Some(dir),
+                None => {
+                    self.repeat.stop();
+                    return None;
+                }
+            },
+            _ => None,
+        };
+        if let Some(dir) = dir {
+            if self.stage != Stage::Ask && dir.1 != 0 {
+                self.repeat.start(dir, now);
+                self.move_cursor(dir.1);
+            }
+            return None;
+        }
+        let InputEvent::Button(b, true) = ev else { return None };
         if self.stage != Stage::Ask {
             return self.handle_pick(b);
         }
@@ -195,14 +234,24 @@ impl OfferSession {
         Some(OfferOutcome::Add(i, only))
     }
 
-    fn handle_pick(&mut self, b: Button) -> Option<OfferOutcome> {
+    /// Moves the highlight `dy` rows through the list on show, wrapping.
+    fn move_cursor(&mut self, dy: i32) {
         let len = match self.stage {
             Stage::Profile(i) => self.packs[i].profiles.len(),
             _ => self.packs.len(),
         };
+        self.selected = (self.selected as i32 + dy).rem_euclid(len.max(1) as i32) as usize;
+    }
+
+    /// Repeats a held direction once it's due. Returns whether the highlight moved.
+    pub fn tick(&mut self, now: Instant) -> bool {
+        let Some(dir) = self.repeat.due(now) else { return false };
+        self.move_cursor(dir.1);
+        true
+    }
+
+    fn handle_pick(&mut self, b: Button) -> Option<OfferOutcome> {
         match (b, self.stage) {
-            (Button::DpadUp, _) => self.selected = self.selected.checked_sub(1).unwrap_or(len - 1),
-            (Button::DpadDown, _) => self.selected = (self.selected + 1) % len,
             (Button::South, Stage::Profile(i)) => return Some(OfferOutcome::Add(i, Some(self.packs[i].profiles[self.selected].0))),
             (Button::South, _) => return self.chosen_pack(self.selected),
             (Button::East, Stage::Profile(_)) if self.packs.len() > 1 => {
@@ -220,7 +269,8 @@ impl OfferSession {
     }
 
     pub fn next_deadline(&self) -> Option<Instant> {
-        Some(self.last_input + IDLE_CLOSE)
+        let idle = self.last_input + IDLE_CLOSE;
+        Some(self.repeat.deadline().map_or(idle, |r| r.min(idle)))
     }
 }
 
@@ -245,6 +295,14 @@ mod tests {
 
     fn press(s: &mut OfferSession, b: Button) -> Option<OfferOutcome> {
         s.handle(InputEvent::Button(b, true), Instant::now())
+    }
+
+    /// The list on show, if the offer is at one, and its highlighted row.
+    fn choices(s: &OfferSession) -> (Vec<String>, Option<usize>) {
+        match s.view(&OverlayStyle::default()) {
+            crate::overlay::OverlayView::Menu(m) => (m.items.into_iter().map(|i| i.label).collect(), m.selected),
+            _ => (Vec::new(), None),
+        }
     }
 
     #[test]
@@ -273,7 +331,7 @@ mod tests {
 
         let mut two = OfferSession::new(&library, &[0, 1], None, Instant::now());
         assert_eq!(press(&mut two, Button::South), None, "yes leads to the list");
-        assert_eq!(two.view().choices, ["Doom", "Doom Remix"]);
+        assert_eq!(choices(&two).0, ["Doom", "Doom Remix"]);
         press(&mut two, Button::DpadDown);
         press(&mut two, Button::DpadDown);
         press(&mut two, Button::DpadUp);
@@ -285,11 +343,11 @@ mod tests {
         let library = vec![multi];
         let mut s = OfferSession::new(&library, &[0], None, Instant::now());
         assert_eq!(press(&mut s, Button::South), None);
-        assert_eq!(s.view().choices, ["P", "Alt"]);
+        assert_eq!(choices(&s).0, ["P", "Alt"]);
         press(&mut s, Button::DpadDown);
         assert_eq!(press(&mut s, Button::South), Some(OfferOutcome::Add(0, Some(1))));
         press(&mut s, Button::East);
-        assert!(s.view().choices.is_empty(), "B from the profile list goes back to the question");
+        assert!(choices(&s).0.is_empty(), "B from the profile list goes back to the question");
 
     }
 
@@ -303,12 +361,12 @@ mod tests {
         let library = vec![gyro];
         let mut s = OfferSession::new(&library, &[0], Some(&[]), Instant::now());
         press(&mut s, Button::South);
-        assert_eq!(s.view().choices, ["Plain", "Plain 2"]);
+        assert_eq!(choices(&s).0, ["Plain", "Plain 2"]);
         press(&mut s, Button::DpadDown);
         assert_eq!(press(&mut s, Button::South), Some(OfferOutcome::Add(0, Some(2))), "the position in the pack");
         let mut s = OfferSession::new(&library, &[0], Some(&[Feature::Gyro]), Instant::now());
         press(&mut s, Button::South);
-        assert_eq!(s.view().choices, ["P", "Plain", "Plain 2"]);
+        assert_eq!(choices(&s).0, ["P", "Plain", "Plain 2"]);
 
         let mut one = entry("Doom", "doom.exe");
         one.pack.profiles[0].requires = vec![Feature::Gyro];
@@ -324,11 +382,25 @@ mod tests {
     }
 
     #[test]
+    fn the_stick_moves_through_the_list_and_holding_repeats() {
+        let library = vec![entry("A", "a.exe"), entry("B", "a.exe"), entry("C", "a.exe")];
+        let t0 = Instant::now();
+        let mut s = OfferSession::new(&library, &[0, 1, 2], None, t0);
+        press(&mut s, Button::South);
+        s.handle(InputEvent::Axis(crate::input::Axis::LeftY, 0.9), t0);
+        assert_eq!(choices(&s).1.unwrap(), 1);
+        assert!(s.tick(t0 + crate::nav::REPEAT_DELAY));
+        assert_eq!(choices(&s).1.unwrap(), 2);
+        s.handle(InputEvent::Axis(crate::input::Axis::LeftY, 0.0), t0);
+        assert!(!s.tick(t0 + crate::nav::REPEAT_DELAY * 4));
+    }
+
+    #[test]
     fn b_goes_back_to_the_question() {
         let library = vec![entry("Doom", "doom.exe"), entry("Doom Remix", "doom.exe")];
         let mut back = OfferSession::new(&library, &[0, 1], None, Instant::now());
         press(&mut back, Button::South);
         assert_eq!(press(&mut back, Button::East), None, "B goes back to the question");
-        assert!(back.view().choices.is_empty());
+        assert!(choices(&back).0.is_empty());
     }
 }

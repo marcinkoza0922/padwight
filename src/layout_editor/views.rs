@@ -9,9 +9,9 @@ use crate::{
 use super::{Top, values};
 use super::buttons::Slot;
 
-pub(super) fn combo_page(config: &Config, i: usize) -> (Vec<ItemView>, &'static str) {
+pub(super) fn combo_page(config: &Config, i: usize, inputs: &[Button]) -> (Vec<ItemView>, &'static str) {
     let combo = combos(config).get(i);
-    let mut rows: Vec<ItemView> = Button::ALL
+    let mut rows: Vec<ItemView> = inputs
         .iter()
         .map(|&b| {
             let member = combo.is_some_and(|c| c.buttons.contains(&b));
@@ -21,22 +21,23 @@ pub(super) fn combo_page(config: &Config, i: usize) -> (Vec<ItemView>, &'static 
     let action = combo.map_or("Disabled".into(), |c| c.action.summary());
     rows.push(item(format!("Action: {action}")));
     rows.push(remove_item("Delete combo".into()));
-    (rows, "A toggle or change · B back")
+    (rows, "{south} toggle or change · {east} back")
 }
-pub(super) fn layer_page(config: &Config, i: usize) -> (Vec<ItemView>, &'static str) {
+pub(super) fn layer_page(config: &Config, i: usize, inputs: &[Button]) -> (Vec<ItemView>, &'static str) {
     let layer = layers(config).get(i);
-    let rows = Button::ALL
+    let rows = inputs
         .iter()
         .map(|&b| {
             let bound = layer.and_then(|l| l.buttons.get(&b)).map_or("not set".into(), ButtonAction::summary);
             button_item(b, bound)
         })
         .collect();
-    (rows, "A change · B back")
+    (rows, "{south} change · {east} back")
 }
 pub(super) fn layer_name(config: &Config, slot: Slot) -> Option<&str> {
     match slot {
         Slot::Layer(i, _) => layers(config).get(i).map(|l| l.name.as_str()),
+        Slot::MenuItem(m, _) => config.active_game().menus.get(m).map(|menu| menu.name.as_str()),
         _ => None,
     }
 }
@@ -54,22 +55,20 @@ pub(super) fn top_item(row: Top, config: &Config) -> ItemView {
             let action = profile.map_or(ButtonAction::Disabled, |p| p.button(b).clone());
             ItemView { keyword: action.keyword(), ..button_item(b, action.summary()) }
         }
-        Top::Stick(s) => badged(if s == Stick::Left { "LS" } else { "RS" }, format!("{} stick", values::side(s == Stick::Left))),
-        Top::Trigger(t) => badged(if t == Trigger::Left { "LT" } else { "RT" }, format!("{} trigger", values::side(t == Trigger::Left))),
+        // The `{token}` in front draws the stick's or trigger's glyph, as the buttons have theirs.
+        Top::Stick(s) => item(format!("{} {} stick", if s == Stick::Left { "{ls}" } else { "{rs}" }, values::side(s == Stick::Left))),
+        Top::Trigger(t) => item(format!("{} {} trigger", if t == Trigger::Left { "{lt}" } else { "{rt}" }, values::side(t == Trigger::Left))),
         Top::Gyro => item("Gyro".into()),
         Top::Combos => item(format!("Combos ({})", profile.map_or(0, |p| p.combos.len()))),
         Top::Layers => item("Layers".into()),
         Top::Macros => item(format!("Macros ({macro_count})")),
+        Top::Menus => item(format!("Menus ({})", config.active_game().menus.len())),
+        Top::Infos => item(format!("Info overlays ({})", config.active_game().info.len())),
     }
 }
 
-/// A row with a button's chip in front of its label.
-pub(super) fn badged(badge: &str, label: String) -> ItemView {
-    ItemView { label, button: Some(badge.into()), submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0 }
-}
-
 pub(super) fn item(label: String) -> ItemView {
-    ItemView { label, button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0 }
+    ItemView { label, button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE }
 }
 
 /// A row for a button: its glyph in front of the label.

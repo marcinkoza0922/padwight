@@ -19,6 +19,7 @@ mod library;
 mod media;
 mod offer;
 mod menu;
+mod nav;
 mod monitor;
 mod motion;
 mod output;

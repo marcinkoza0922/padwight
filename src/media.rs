@@ -19,6 +19,8 @@ use crate::{
     monitor::log,
 };
 
+mod mixer;
+
 const PREFIX: &str = "org.mpris.MediaPlayer2.";
 const PATH: &str = "/org/mpris/MediaPlayer2";
 const ROOT: &str = "org.mpris.MediaPlayer2";
@@ -30,8 +32,8 @@ const POLL: Duration = Duration::from_millis(500);
 /// The overlay closes by itself after this long without input, so it can't hold the
 /// controller forever.
 const IDLE_CLOSE: Duration = Duration::from_secs(10);
-const REPEAT_DELAY: Duration = Duration::from_millis(400);
-const REPEAT_EVERY: Duration = Duration::from_millis(120);
+const REPEAT_DELAY: Duration = crate::nav::REPEAT_DELAY;
+const REPEAT_EVERY: Duration = crate::nav::REPEAT_EVERY;
 const VOLUME_STEP: f64 = 0.05;
 const SEEK_STEP_US: i64 = 10_000_000;
 
@@ -56,6 +58,8 @@ pub struct MediaState {
     pub volume: Option<f64>,
     /// How many players are running, to offer switching between them.
     pub players: usize,
+    /// The system's sound, when there's a mixer to read it from.
+    pub system: Option<mixer::Level>,
 }
 
 /// What the overlay draws.
@@ -70,12 +74,17 @@ pub struct MediaView {
     /// 0..1.
     pub volume: Option<f32>,
     pub players: usize,
+    /// The system's volume (0..1) and whether it's muted, when there's a mixer.
+    #[serde(default)]
+    pub system_volume: Option<f32>,
+    #[serde(default)]
+    pub muted: bool,
     pub hint: String,
     pub style: OverlayStyle,
 }
 
 /// The controls, as the overlay reminds you.
-const HINT: &str = "D-pad ◀ ▶ seek   ▲ ▼ volume   LB RB track   A play / pause   Y player   B close";
+const HINT: &str = "{left} {right} seek · {up} {down} volume · {west} mute · {lb} {rb} track · {south} play / pause · {north} player · {east} close";
 
 impl MediaView {
     /// A made-up track, drawn with `style`, for the settings previews.
@@ -89,6 +98,8 @@ impl MediaView {
             length_ms: 215_000,
             volume: Some(0.7),
             players: 1,
+            system_volume: Some(0.45),
+            muted: false,
             hint: HINT.into(),
             style,
         }
@@ -102,8 +113,10 @@ pub enum Command {
     Previous,
     /// Microseconds, negative to go back.
     Seek(i64),
-    /// Added to the volume (0..1 scale).
+    /// Added to the volume (0..1 scale): the system's, or the player's without a mixer.
     Volume(f64),
+    /// Mutes the system's sound, or unmutes it.
+    Mute,
     CyclePlayer,
 }
 
@@ -152,6 +165,8 @@ impl MediaSession {
             length_ms: s.length_us / 1000,
             volume: s.volume.map(|v| v as f32),
             players: s.players,
+            system_volume: s.system.map(|l| l.volume),
+            muted: s.system.is_some_and(|l| l.muted),
             hint: HINT.into(),
             style: OverlayStyle::media(),
         }
@@ -178,6 +193,7 @@ impl MediaSession {
             Button::RightBumper => Command::Next,
             Button::LeftBumper => Command::Previous,
             Button::North => Command::CyclePlayer,
+            Button::West => Command::Mute,
             other => {
                 let command = repeating(other)?;
                 self.repeat = Some((other, now + REPEAT_DELAY));
@@ -228,6 +244,10 @@ pub fn worker(commands: &Receiver<Command>, publish: impl Fn(MediaState) -> bool
             Ok(command) => {
                 if command == Command::CyclePlayer {
                     chosen = next_player(&names, chosen.as_deref());
+                } else if command == Command::Mute {
+                    mixer::toggle_mute();
+                } else if matches!(command, Command::Volume(delta) if mixer::change(delta)) {
+                    // The system's volume changed; the player's stays as it is.
                 } else if let Some(name) = chosen.as_deref().or(names.first().map(String::as_str))
                     && let Err(e) = send(&conn, name, command)
                 {
@@ -238,7 +258,7 @@ pub fn worker(commands: &Receiver<Command>, publish: impl Fn(MediaState) -> bool
             Err(RecvTimeoutError::Disconnected) => return,
         }
         let names = players(&conn).unwrap_or_default();
-        let state = read_all(&conn, &names, &mut chosen);
+        let state = MediaState { system: mixer::read(), ..read_all(&conn, &names, &mut chosen) };
         if !publish(state) {
             return;
         }
@@ -277,7 +297,7 @@ fn send(conn: &Connection, name: &str, command: Command) -> Result<()> {
             let volume = (current + delta).clamp(0.0, 1.0);
             conn.call_method(Some(name), PATH, Some(PROPERTIES), "Set", &(PLAYER, "Volume", Value::from(volume)))?;
         }
-        Command::CyclePlayer => {}
+        Command::CyclePlayer | Command::Mute => {}
     }
     Ok(())
 }
@@ -319,6 +339,7 @@ fn read_all(conn: &Connection, names: &[String], chosen: &mut Option<String>) ->
         length_us: metadata.get("mpris:length").and_then(integer).unwrap_or(0),
         volume: props.get("Volume").and_then(|v| v.downcast_ref::<f64>().ok()),
         players: names.len(),
+        system: None,
     }
 }
 
@@ -372,6 +393,7 @@ mod tests {
             (Button::DpadUp, Command::Volume(VOLUME_STEP)),
             (Button::DpadRight, Command::Seek(SEEK_STEP_US)),
             (Button::North, Command::CyclePlayer),
+            (Button::West, Command::Mute),
         ] {
             assert_eq!(press(&mut s, b, now), None);
             assert_eq!(rx.try_recv(), Ok(c));
