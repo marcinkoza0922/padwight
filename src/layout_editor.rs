@@ -151,6 +151,13 @@ impl LayoutEditor {
         self.cursor = crate::menu::list_step(self.cursor, self.rows(config), step);
     }
 
+    /// Moves the cursor a page of rows up or down (`dir` -1 or 1), stopping at the ends.
+    pub fn jump_page(&mut self, dir: i32, config: &Config) {
+        self.armed = false;
+        let last = self.rows(config).saturating_sub(1) as i32;
+        self.cursor = (self.cursor as i32 + dir * crate::menu::VISIBLE_ROWS as i32).clamp(0, last) as usize;
+    }
+
     /// Whether the current page is in two columns, so left and right move between them rather
     /// than changing a value.
     pub fn two_columns(&self, config: &Config) -> bool {

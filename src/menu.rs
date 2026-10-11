@@ -316,6 +316,7 @@ impl MenuSession {
             MenuKind::Radial { stick: Stick::Left, .. } => format!("Aim {{ls}} · {close}"),
             MenuKind::Radial { stick: Stick::Right, .. } => format!("Aim {{rs}} · {close}"),
             MenuKind::Directional { cluster } => format!("Press a {} direction · {close}", cluster.to_string().to_lowercase()),
+            MenuKind::List if pages(menu) => format!("{{dpad}} move · {{lb}} {{rb}} page · {{south}} choose · {close}"),
             MenuKind::List if list_columns(menu.items.len()) == 2 => format!("{{dpad}} move · {{south}} choose · {close}"),
             MenuKind::List => format!("{{up}} {{down}} move · {{south}} choose · {close}"),
             MenuKind::Buttons => format!("Press an item's button · {close}"),
@@ -448,10 +449,20 @@ impl MenuSession {
             Button::DpadDown => self.start_stepping(menu, (0, 1), now),
             Button::DpadLeft if sideways => self.start_stepping(menu, (-1, 0), now),
             Button::DpadRight if sideways => self.start_stepping(menu, (1, 0), now),
+            Button::LeftBumper | Button::RightBumper if pages(menu) => self.jump_page(menu, if b == Button::LeftBumper { -1 } else { 1 }),
             Button::South => return self.choose_cursor(menus),
             _ => {}
         }
         None
+    }
+
+    /// Moves a long list's cursor a page of rows up or down, stopping at the ends.
+    fn jump_page(&mut self, menu: &Menu, dir: i32) {
+        let last = menu.items.len().saturating_sub(1) as i32;
+        if let Some(frame) = self.stack.last_mut() {
+            let at = frame.cursor.unwrap_or(0) as i32;
+            frame.cursor = Some((at + dir * VISIBLE_ROWS as i32).clamp(0, last) as usize);
+        }
     }
 
     fn axis_moved(&mut self, menu: &Menu, axis: Axis, value: f32, now: Instant) -> Option<MenuOutcome> {
@@ -633,6 +644,11 @@ fn carousel_step(controls: CarouselControls, b: Button) -> Option<Step> {
     }
 }
 
+/// Whether the bumpers jump a page: in a list too long to show at once.
+fn pages(menu: &Menu) -> bool {
+    matches!(menu.kind, MenuKind::List) && menu.items.len() > 2 * VISIBLE_ROWS
+}
+
 /// Whether left and right move the cursor: in a grid, and in a list long enough for two columns.
 fn moves_sideways(menu: &Menu) -> bool {
     match menu.kind {
@@ -650,7 +666,7 @@ fn uses(menu: &Menu, b: Button, mode: Mode) -> bool {
         MenuKind::Directional { cluster } => cluster.slots().contains(&b),
         MenuKind::Radial { .. } => mode == Mode::Unwatched && b == Button::South,
         MenuKind::Buttons => menu.items.iter().any(|item| item.button == Some(b)),
-        MenuKind::List | MenuKind::Grid { .. } => dpad || b == Button::South,
+        MenuKind::List | MenuKind::Grid { .. } => dpad || b == Button::South || (pages(menu) && matches!(b, Button::LeftBumper | Button::RightBumper)),
         MenuKind::Carousel { controls } => carousel_step(controls, b).is_some() || b == Button::South,
     }
 }

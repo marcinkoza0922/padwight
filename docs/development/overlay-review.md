@@ -228,8 +228,10 @@ Tick an item when it's done and merged.
   what's been typed this session, which helps when the game's text field is hidden behind the
   overlay. Word suggestions on the bumpers could come later.
   - The typed line is done. Word suggestions aren't: the bumpers now move the text cursor (28).
-- [ ] 45. **Search or jump-to in long lists.** In Edit Controls' key picker and long action menus,
+- [x] 45. **Search or jump-to in long lists.** In Edit Controls' key picker and long action menus,
   a letter jump (hold a bumper and move a letter wheel) or the on-screen keyboard as a filter.
+  - Done as page jumps: LB and RB move a page through a long list menu and Edit Controls' pages.
+    A letter wheel or filter isn't there.
 - [ ] 46. **Haptics on navigation.** The sound effects give feedback for each step and pick. A
   short rumble pulse on picks (optional, per overlay like the sounds) would help with the sound
   off.

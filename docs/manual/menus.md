@@ -14,4 +14,4 @@ Wrap **Open menu…** in **Toggle**. The menu then stays up until you press the 
 
 Move with the Left Stick or D-pad, and press A to choose. B goes back one level, or closes the menu at the top; on a radial menu it closes without choosing. In a **Button menu** each item has its own button instead: press it to choose the item.
 
-> **Tip:** a list with more than eight rows is shown in two columns. Left and right move between them.
+> **Tip:** a list with more than eight rows is shown in two columns. Left and right move between them, and in a list too long to show at once, LB and RB jump a page.

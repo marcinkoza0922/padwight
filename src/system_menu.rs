@@ -139,8 +139,14 @@ impl SystemMenu {
             }
             InputEvent::Button(Button::South, true) => Step::Pick,
             InputEvent::Button(Button::East, true) => Step::Back,
-            InputEvent::Button(Button::RightBumper, held) => {
-                self.big_steps = held;
+            // On Quick Settings RB makes big steps; in Edit Controls the bumpers jump a page.
+            InputEvent::Button(b @ (Button::LeftBumper | Button::RightBumper), held) => {
+                self.big_steps = held && b == Button::RightBumper;
+                if let Screen::Editor(editor) = &mut self.screen
+                    && held
+                {
+                    editor.jump_page(if b == Button::LeftBumper { -1 } else { 1 }, config);
+                }
                 return None;
             }
             InputEvent::Axis(axis @ (Axis::LeftX | Axis::LeftY), v) => {

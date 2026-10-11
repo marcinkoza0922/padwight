@@ -24,7 +24,7 @@ Opens the full editor for the game in front of you: its buttons (and back paddle
 - **Menus**: add a menu, add items and pick each one's action (an item is named after its action), set an item's own button in a button menu, move items up and down, change the menu's kind with left and right, and remove items or the menu. Naming a menu, and a menu that a button opens, are left to the settings window.
 - **Info overlays**: choose whether each one is always on screen, and move it round the screen with left and right.
 
-Deleting a combo, zone, macro, menu item or menu asks you to press A a second time.
+Deleting a combo, zone, macro, menu item or menu asks you to press A a second time. LB and RB jump a page up or down a long list.
 
 If you close the menu with unsaved changes, you can **Save and close**, **Discard and close**, or **Keep editing**.
 

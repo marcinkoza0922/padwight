@@ -266,6 +266,24 @@ fn b_backs_out_of_a_held_submenu_and_cancels_a_held_radial() {
 }
 
 #[test]
+fn the_bumpers_jump_a_page_through_a_long_list() {
+    let menus = [menu("Long", MenuKind::List, numbers(30)), menu("Short", MenuKind::List, numbers(10))];
+    let mut s = MenuSession::open(&menus, "Long", Opener::default()).unwrap();
+    press(&mut s, &menus, Button::RightBumper);
+    assert_eq!(s.view(&menus).unwrap().selected, Some(VISIBLE_ROWS));
+    for _ in 0..5 {
+        press(&mut s, &menus, Button::RightBumper);
+    }
+    assert_eq!(s.view(&menus).unwrap().selected, Some(29), "stops at the end");
+    press(&mut s, &menus, Button::LeftBumper);
+    assert_eq!(s.view(&menus).unwrap().selected, Some(29 - VISIBLE_ROWS));
+    assert!(s.view(&menus).unwrap().hint.contains("{lb} {rb} page"));
+    let mut short = MenuSession::open(&menus, "Short", Opener::default()).unwrap();
+    press(&mut short, &menus, Button::RightBumper);
+    assert_eq!(short.view(&menus).unwrap().selected, Some(0), "a list that fits doesn't page");
+}
+
+#[test]
 fn a_late_tick_steps_once() {
     let menus = [menu("L", MenuKind::List, numbers(8))];
     let mut s = MenuSession::open(&menus, "L", Opener::default()).unwrap();
