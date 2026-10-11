@@ -2,6 +2,7 @@
 //! when something is picked there. A setup sets them for each kind of overlay, and any kind can
 //! be silenced. Playback runs on its own thread so a slow audio device never holds up input.
 
+mod effects;
 mod player;
 mod synth;
 
@@ -151,8 +152,9 @@ impl fmt::Display for SoundKind {
     }
 }
 
-/// One cue: its kind, how loud it is, how high, and how long. Volume, pitch and length are
-/// factors on the default, so 1.0 is what the kind sounds like on its own.
+/// One cue: its kind, how loud it is, how high, and how long, and the effects on it. Volume,
+/// pitch and length are factors on the default, so 1.0 is what the kind sounds like on its own;
+/// with every effect at 0 the cue is as the kind makes it.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct SoundSpec {
     #[serde(default)]
@@ -166,6 +168,26 @@ pub struct SoundSpec {
     /// 0.5..=2 (half as long, or twice as long).
     #[serde(default = "default_length")]
     pub length: f32,
+    /// -12..=12 dB: the lows turned down or up.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub bass: f32,
+    /// -12..=12 dB: the highs turned down or up.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub treble: f32,
+    /// 0..=1: how hard it's pushed into soft clipping, gritty and thick.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub drive: f32,
+    /// 0..=1: how loud and how many the echoes after it are.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub echo: f32,
+    /// 0..=1: how much of a room it rings in, and how big.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub reverb: f32,
+}
+
+#[expect(clippy::trivially_copy_pass_by_ref, reason = "serde passes a reference")]
+fn is_zero(v: &f32) -> bool {
+    *v == 0.0
 }
 
 fn default_volume() -> f32 {
@@ -182,12 +204,13 @@ fn default_length() -> f32 {
 
 impl SoundSpec {
     pub fn new(kind: SoundKind, volume: f32, pitch: f32) -> Self {
-        SoundSpec { kind, volume, pitch, length: default_length() }
+        SoundSpec { kind, volume, pitch, length: default_length(), bass: 0.0, treble: 0.0, drive: 0.0, echo: 0.0, reverb: 0.0 }
     }
 
-    /// How long the cue plays.
+    /// How long the cue plays, with any echo and reverb after it.
     pub fn duration(&self) -> std::time::Duration {
-        std::time::Duration::from_secs_f32(self.kind.seconds() * self.length.clamp(0.5, 2.0))
+        let tail = effects::tail(self) as f32 / RATE as f32;
+        std::time::Duration::from_secs_f32(self.kind.seconds() * self.length.clamp(0.5, 2.0) + tail)
     }
 
     /// The cue's samples, mono at [`RATE`], with volume applied.
@@ -196,7 +219,10 @@ impl SoundSpec {
         let length = self.length.clamp(0.5, 2.0);
         let volume = self.volume.clamp(0.0, 1.0);
         let mut out = synthesize(self.kind, pitch, length);
-        let peak = out.iter().fold(0.0_f32, |p, s| p.max(s.abs())).max(f32::EPSILON);
+        effects::apply(&mut out, self);
+        // The cue peaks at 1 before its effects. Echoes piling up, or boosted bass, can push it
+        // past that, so it comes back down; a cut leaves it quieter, as a cut should.
+        let peak = out.iter().fold(0.0_f32, |p, s| p.max(s.abs())).max(1.0);
         let gain = PEAK / peak * volume;
         for s in &mut out {
             *s *= gain;
@@ -364,7 +390,7 @@ impl SoundSet {
 }
 
 /// What happened in an overlay: a pick, a step of the cursor, or it popping in or out.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Feedback {
     Step,
     Pick,

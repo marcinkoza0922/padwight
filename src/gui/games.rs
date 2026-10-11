@@ -30,6 +30,11 @@ impl App {
                     self.open_sounds.insert(overlay);
                 }
             }
+            Message::ToggleSoundEdit(overlay, feedback) => {
+                if !self.open_cue_edits.remove(&(overlay, feedback)) {
+                    self.open_cue_edits.insert((overlay, feedback));
+                }
+            }
             Message::SetNumpadStyle(style) => self.config.numpad_style = style,
             Message::ToggleMediaAppearance => self.media_appearance = !self.media_appearance,
             Message::SetMediaStyle(style) => self.config.media_style = style,
@@ -297,7 +302,7 @@ impl App {
         let global = self.config.sounds;
         let mut rows = own_rows("sounds", own.is_some(), move |on| if on { Message::SetGameSounds(global) } else { Message::ClearGameSounds });
         if let Some(set) = own {
-            rows.extend(SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, self.open_sounds.contains(&overlay), Message::SetGameSounds)));
+            rows.extend(SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, &self.open_sounds, &self.open_cue_edits, Message::SetGameSounds)));
             rows.push(button(text("Turn every sound off").size(13)).style(style::secondary).on_press(Message::SetGameSounds(set.silenced())).into());
         }
         section(
@@ -612,62 +617,6 @@ impl App {
             rows,
         )
     }
-
-}
-
-/// One overlay's sounds: on or off, and (when on and opened) its step, pick, open and close cues.
-pub(super) fn overlay_sounds<'a>(set: SoundSet, overlay: SoundOverlay, open: bool, change: fn(SoundSet) -> Message) -> Element<'a, Message> {
-    let current = set.get(overlay);
-    let put = move |sounds: OverlaySounds| {
-        let mut next = set;
-        next.set(overlay, sounds);
-        change(next)
-    };
-    let toggle = toggler(current.enabled).label(overlay.label()).on_toggle(move |on| put(OverlaySounds { enabled: on, ..current }));
-    let mut head = row![container(toggle).width(220)].align_y(Alignment::Center);
-    if current.enabled {
-        head = head.push(disclosure("Adjust", open, Message::ToggleSoundCues(overlay)));
-    }
-    let mut block = column![head].spacing(6);
-    if current.enabled && open {
-        block = block.push(cue_row("Step", current.step, move |step| put(OverlaySounds { step, ..current })));
-        block = block.push(cue_row("Pick", current.pick, move |pick| put(OverlaySounds { pick, ..current })));
-        block = block.push(cue_row("Open", current.open, move |open| put(OverlaySounds { open, ..current })));
-        block = block.push(cue_row("Close", current.close, move |close| put(OverlaySounds { close, ..current })));
-    }
-    block.into()
-}
-
-/// One cue on one line: its label, kind and preview, then its volume, pitch and length.
-fn cue_row<'a>(label: &'static str, spec: SoundSpec, put: impl Fn(SoundSpec) -> Message + Copy + 'a) -> Element<'a, Message> {
-    let knob = |name: &'static str, value: f32, range: std::ops::RangeInclusive<f32>, set: fn(&mut SoundSpec, f32)| {
-        row![
-            text(name).width(56),
-            slider(range, value, move |v| {
-                let mut next = spec;
-                set(&mut next, v);
-                put(next)
-            })
-            .step(5.0_f32)
-            .width(90),
-            text(format!("{value:.0}%")).size(13).color(MUTED_COLOR).width(40),
-        ]
-        .spacing(6)
-        .align_y(Alignment::Center)
-    };
-    let line = row![
-        text(label).width(48),
-        dropdown(SoundKind::ALL, Some(spec.kind), move |kind| put(SoundSpec { kind, ..spec })).width(110),
-        button(text("Play")).style(style::secondary).on_press(Message::PreviewSound(spec)),
-        space().width(8),
-        knob("Volume", spec.volume * 100.0, 0.0..=100.0, |s, v| s.volume = v / 100.0),
-        knob("Pitch", spec.pitch * 100.0, 50.0..=200.0, |s, v| s.pitch = v / 100.0),
-        knob("Length", spec.length * 100.0, 50.0..=200.0, |s, v| s.length = v / 100.0),
-    ]
-    .spacing(8)
-    .align_y(Alignment::Center)
-    .wrap();
-    container(line).padding(iced::Padding::ZERO.left(28)).into()
 }
 
 #[cfg(test)]

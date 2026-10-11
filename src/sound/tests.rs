@@ -111,6 +111,50 @@ fn a_rise_ends_higher_than_it_starts_and_a_fall_lower() {
     assert!(end < start, "fall: {start} then {end}");
 }
 
+#[test]
+fn echo_and_reverb_add_a_tail_that_ends_quietly_within_range() {
+    let dry = SoundSpec::new(SoundKind::Click, 1.0, 1.0);
+    for wet in [SoundSpec { echo: 1.0, ..dry }, SoundSpec { reverb: 1.0, ..dry }, SoundSpec { echo: 0.5, reverb: 0.5, bass: 12.0, ..dry }] {
+        let samples = wet.samples();
+        assert!(samples.len() > dry.samples().len() * 10, "{wet:?}");
+        assert_eq!(samples.len(), (wet.duration().as_secs_f32() * RATE as f32).round() as usize, "{wet:?}");
+        assert!(samples.iter().all(|s| s.abs() <= PEAK + 1e-4), "{wet:?}");
+        assert!(samples.last().is_some_and(|s| s.abs() < 1e-3), "{wet:?}");
+        // Something is heard after the click itself has died.
+        assert!(samples[RATE as usize / 5..].iter().any(|s| s.abs() > 0.01), "{wet:?}");
+    }
+}
+
+#[test]
+fn bass_and_treble_move_the_weight_of_a_cue() {
+    let zero_crossings = |v: &[f32]| v.windows(2).filter(|w| (w[0] < 0.0) != (w[1] < 0.0)).count();
+    let crunch = SoundSpec::new(SoundKind::Crunch, 1.0, 1.0);
+    let dark = zero_crossings(&SoundSpec { bass: 12.0, treble: -12.0, ..crunch }.samples());
+    let bright = zero_crossings(&SoundSpec { bass: -12.0, treble: 12.0, ..crunch }.samples());
+    assert!(bright > dark, "{dark} vs {bright}");
+    assert_eq!(SoundSpec { bass: 0.0, ..crunch }.samples().len(), crunch.samples().len());
+}
+
+#[test]
+fn drive_thickens_a_tone_without_raising_its_peak() {
+    // A struck sine dies away; driven, its quiet end is lifted toward its peak.
+    let beep = SoundSpec::new(SoundKind::Beep, 1.0, 1.0);
+    let energy = |v: &[f32]| v.iter().map(|s| s * s).sum::<f32>();
+    let clean = beep.samples();
+    let driven = SoundSpec { drive: 1.0, ..beep }.samples();
+    assert_eq!(driven.len(), clean.len());
+    assert!(energy(&driven) > energy(&clean) * 1.5);
+    assert!(driven.iter().all(|s| s.abs() <= PEAK + 1e-4));
+}
+
+#[test]
+fn effects_load_and_save_only_when_set() {
+    let set: SoundSet = toml::from_str("[menu]\npick = { kind = \"chime\", echo = 0.4, bass = -3 }").unwrap();
+    assert_eq!((set.menu.pick.echo, set.menu.pick.bass, set.menu.pick.reverb), (0.4, -3.0, 0.0));
+    let saved = toml::to_string(&SoundSet::default()).unwrap();
+    assert!(!saved.contains("echo") && !saved.contains("reverb"), "{saved}");
+}
+
 /// Writes every kind to `sound-previews/<kind>.wav`, to listen to while tuning them.
 #[test]
 #[ignore]
