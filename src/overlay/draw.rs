@@ -135,6 +135,35 @@ impl Colors {
     }
 }
 
+impl Colors {
+    /// These colors with button glyphs drawn as `glyphs` says.
+    fn with_glyphs(self, glyphs: crate::info::Glyphs) -> Colors {
+        Colors { family: glyphs.family, nintendo_layout: glyphs.nintendo_layout, ..self }
+    }
+}
+
+/// Text whose controller tokens (`{south}`, `{lt}`…) are drawn as the pad's glyphs, sized for
+/// text of `size`. Plain text stays one text widget.
+fn rich_text<'a, M: 'a>(t: &str, c: Colors, size: f32, color: Color) -> Element<'a, M> {
+    let glyphs = crate::info::Glyphs { family: c.family, nintendo_layout: c.nintendo_layout };
+    let segments = crate::info::glyph_text(t, glyphs);
+    let plain = |t: &str| -> Element<'a, M> { text(t.to_string()).font(c.font).size(size).color(color).into() };
+    match segments.as_slice() {
+        [] => plain(""),
+        [Segment::Text(t)] => plain(t),
+        _ => {
+            let mut line = row![].spacing(size * 0.3).align_y(Alignment::Center);
+            for seg in &segments {
+                line = line.push(match seg {
+                    Segment::Text(t) => plain(t.trim()),
+                    glyph => segment_element(glyph, c, size / 17.0, c.anim.opacity()),
+                });
+            }
+            line.into()
+        }
+    }
+}
+
 fn colors(style: &OverlayStyle, font: Font) -> Colors {
     let background = paint(&style.background, [0x16, 0x18, 0x1c]);
     let item = paint(&style.items, [0x30, 0x34, 0x3c]);
@@ -260,8 +289,8 @@ fn info_cell<'a, M: 'a>(segments: &[Segment], c: Colors, s: f32, opacity: f32) -
 }
 
 #[expect(clippy::too_many_lines, reason = "predates the size lints")]
-pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, fit: &Fit, anim: &Anim) -> Element<'a, M> {
-    let c = colors(&v.style, font).faded(anim.opacity());
+pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::info::Glyphs, fit: &Fit, anim: &Anim) -> Element<'a, M> {
+    let c = colors(&v.style, font).with_glyphs(glyphs).faded(anim.opacity());
     let numpad = v.layout == crate::keyboard::Layout::Numpad;
     // A set width fits the keys (and their text) to it; otherwise the style's scale applies.
     let s = match fit.width {
@@ -313,25 +342,12 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, fit: &Fit, anim: 
         }
         rows = rows.push(line);
     }
-    let hint = |t: &'static str| text(t).font(c.font).size(14.0 * s).color(c.background_text);
+    let hint = |t: &'static str| rich_text::<M>(t, c, 14.0 * s, c.background_text);
     let (legend, width): (Element<'a, M>, f32) = if numpad {
-        let legend = column![
-            row![hint("A  press"), hint("X  backspace")].spacing(14.0 * s).wrap().align_x(Horizontal::Center),
-            row![hint("Start  enter"), hint("hold B to close")].spacing(14.0 * s).wrap().align_x(Horizontal::Center),
-        ]
-        .spacing(4.0 * s)
-        .align_x(Alignment::Center);
+        let legend = row(super::NUMPAD_LEGEND.iter().map(|t| hint(t))).spacing(14.0 * s).wrap().vertical_spacing(4.0 * s).align_x(Horizontal::Center);
         (legend.into(), (3.0 * (unit + gap)).max(230.0 * s))
     } else {
-        let legend = row![
-            hint("A  press"),
-            hint("X  backspace"),
-            hint("Y  space"),
-            hint("Start  enter"),
-            hint("hold LT  shift"),
-            hint("Shift, Ctrl and Alt stay on for one key"),
-            hint("hold B to close"),
-        ]
+        let legend = row(super::KEYBOARD_LEGEND.iter().map(|t| hint(t)))
         .spacing(18.0 * s)
         .align_y(Alignment::Center)
         .wrap()
@@ -370,7 +386,7 @@ fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, si
         let icon = iced::widget::svg::Handle::from_memory(crate::keyword_icon::svg(k).into_bytes());
         line = line.push(iced::widget::svg(icon).width(size).height(size));
     }
-    line = line.push(text(label.to_string()).font(font).size(size).color(fg));
+    line = line.push(rich_text(label, c, size, fg));
     if item.submenu {
         line = line.push(text("▸").font(font).size(size).color(Color { a: 0.7, ..fg }));
     }
@@ -378,8 +394,8 @@ fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, si
 }
 
 /// The media controls: what is playing, how far along, and the volume.
-pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, fit: &Fit, anim: &Anim) -> Element<'a, M> {
-    let c = colors(&m.style, font).faded(anim.opacity());
+pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, glyphs: crate::info::Glyphs, fit: &Fit, anim: &Anim) -> Element<'a, M> {
+    let c = colors(&m.style, font).with_glyphs(glyphs).faded(anim.opacity());
     let s = m.style.scale.clamp(0.5, 2.0);
     let width = 560.0 * s;
     let body: Element<'a, M> = match &m.player {
@@ -414,7 +430,7 @@ pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, fit: &Fit, anim: &Anim)
             .into()
         }
     };
-    let contents = column![body, text(m.hint.clone()).font(c.font).size(12.0 * s).color(c.muted)]
+    let contents = column![body, rich_text(&m.hint, c, 12.0 * s, c.muted)]
         .spacing(12.0 * s)
         .width(width)
         .align_x(Alignment::Center);
@@ -422,11 +438,11 @@ pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, fit: &Fit, anim: &Anim)
 }
 
 /// The offer to add a library game: the question and its answers, or the packs to pick from.
-pub fn offer_panel<'a, M: 'a>(o: &OfferView, font: Font, fit: &Fit, anim: &Anim) -> Element<'a, M> {
-    let c = colors(&o.style, font).faded(anim.opacity());
+pub fn offer_panel<'a, M: 'a>(o: &OfferView, font: Font, glyphs: crate::info::Glyphs, fit: &Fit, anim: &Anim) -> Element<'a, M> {
+    let c = colors(&o.style, font).with_glyphs(glyphs).faded(anim.opacity());
     let s = o.style.scale.clamp(0.5, 2.0);
     let cell = |label: String, lit: Colors, selected: bool| {
-        container(text(label).font(c.font).size(16.0 * s).color(lit.item_text))
+        container(rich_text::<M>(&label, lit, 16.0 * s, lit.item_text))
             .padding([8.0 * s, 16.0 * s])
             .style(lit_cell_style(lit, selected, 36.0 * s))
     };
@@ -446,7 +462,7 @@ pub fn offer_panel<'a, M: 'a>(o: &OfferView, font: Font, fit: &Fit, anim: &Anim)
         text(o.title.clone()).font(c.font).size(20.0 * s).color(c.background_text),
         text(o.detail.clone()).font(c.font).size(14.0 * s).color(c.muted).width(520.0 * s).align_x(Alignment::Center),
         body,
-        text(o.hint.clone()).font(c.font).size(12.0 * s).color(c.muted),
+        rich_text(&o.hint, c, 12.0 * s, c.muted),
     ]
     .spacing(14.0 * s)
     .align_x(Alignment::Center);
@@ -481,7 +497,7 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
     let contents = column![
         heading,
         body,
-        text(m.hint.clone()).font(c.font).size(13.0 * s).color(c.muted),
+        rich_text(&m.hint, c, 13.0 * s, c.muted),
     ]
     .spacing(14.0 * s)
     .align_x(Alignment::Center);

@@ -252,11 +252,11 @@ impl MenuSession {
 
     /// The input that opened the menu, for hints.
     fn opener_label(&self) -> String {
-        let mut parts: Vec<&str> = self.opener.buttons.iter().map(|b| button_badge(*b)).collect();
+        let mut parts: Vec<String> = self.opener.buttons.iter().map(|b| crate::info::button_hint(*b)).collect();
         if let Some(t) = self.opener.trigger {
-            parts.push(if t == Trigger::Left { "LT" } else { "RT" });
+            parts.push(if t == Trigger::Left { "{lt}" } else { "{rt}" }.into());
         }
-        parts.join("+")
+        parts.join(" + ")
     }
 
     fn push(&mut self, menus: &[Menu], menu: usize) {
@@ -280,7 +280,7 @@ impl MenuSession {
         let radial = matches!(menu.kind, MenuKind::Radial { .. });
         // How the menu goes away (and, for a radial menu, chooses). The cancel button backs out
         // of a submenu, and closes the menu at the top (a radial menu without choosing).
-        let cancel = button_badge(menu.cancel_button());
+        let cancel = crate::info::button_hint(menu.cancel_button());
         let deep = self.stack.len() > 1;
         let opener = self.opener_label();
         let close = match (self.mode, radial) {
@@ -290,17 +290,18 @@ impl MenuSession {
             (Mode::Toggled, true) => format!("{opener} again to choose · {cancel} cancel"),
             (Mode::Toggled, false) if deep => format!("{cancel} back · {opener} again to close"),
             (Mode::Toggled, false) => format!("{opener} again or {cancel} to close"),
-            (Mode::Unwatched, true) => format!("A choose · {cancel} close"),
+            (Mode::Unwatched, true) => format!("{{south}} choose · {cancel} close"),
             (Mode::Unwatched, false) => format!("{cancel} {}", if deep { "back" } else { "close" }),
         };
         let hint = match menu.kind {
-            MenuKind::Radial { stick, .. } => format!("Aim the {stick} · {close}"),
+            MenuKind::Radial { stick: Stick::Left, .. } => format!("Aim {{ls}} · {close}"),
+            MenuKind::Radial { stick: Stick::Right, .. } => format!("Aim {{rs}} · {close}"),
             MenuKind::Directional { cluster } => format!("Press a {} direction · {close}", cluster.to_string().to_lowercase()),
-            MenuKind::List if list_columns(menu.items.len()) == 2 => format!("↑↓←→ move · A choose · {close}"),
-            MenuKind::List => format!("↑↓ move · A choose · {close}"),
+            MenuKind::List if list_columns(menu.items.len()) == 2 => format!("{{dpad}} move · {{south}} choose · {close}"),
+            MenuKind::List => format!("{{up}} {{down}} move · {{south}} choose · {close}"),
             MenuKind::Buttons => format!("Press an item's button · {close}"),
-            MenuKind::Carousel { controls } => format!("{controls} to cycle · A choose · {close}"),
-            MenuKind::Grid { .. } => format!("↑↓←→ move · A choose · {close}"),
+            MenuKind::Carousel { controls } => format!("{} to cycle · {{south}} choose · {close}", carousel_hint(controls)),
+            MenuKind::Grid { .. } => format!("{{dpad}} move · {{south}} choose · {close}"),
         };
         Some(MenuView {
             title: menu.name.clone(),
@@ -570,6 +571,17 @@ impl MenuSession {
     }
 }
 
+/// The controls that cycle a carousel, as hint tokens.
+fn carousel_hint(controls: CarouselControls) -> &'static str {
+    match controls {
+        CarouselControls::Bumpers => "{lb} {rb}",
+        CarouselControls::Triggers => "{lt} {rt}",
+        CarouselControls::DPad => "{left} {right}",
+        CarouselControls::LeftStick => "{ls}",
+        CarouselControls::RightStick => "{rs}",
+    }
+}
+
 /// The step a carousel's stepping button makes, if `b` is one.
 fn carousel_step(controls: CarouselControls, b: Button) -> Option<Step> {
     match (controls, b) {
@@ -612,14 +624,14 @@ fn item_views(menu: &Menu) -> Vec<ItemView> {
         .enumerate()
         .map(|(i, item)| ItemView {
             label: item.label.clone(),
-            button: match (slots, item.button) {
-                (Some(slots), _) => slots.get(i).map(|b| button_badge(*b).to_string()),
-                (None, Some(b)) => Some(button_badge(b).to_string()),
-                (None, None) => None,
-            },
+            button: None,
             submenu: matches!(item.action, ButtonAction::OpenMenu(_)),
             weight: item.weight,
-            buttons: Vec::new(),
+            // The slot's or item's button, drawn as the pad's glyph.
+            buttons: match slots {
+                Some(slots) => slots.get(i).copied().into_iter().collect(),
+                None => item.button.into_iter().collect(),
+            },
             tone: Tone::Normal,
             keyword: None,
         })

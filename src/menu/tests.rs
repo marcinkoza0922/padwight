@@ -180,7 +180,7 @@ fn grid_moves_in_four_directions_and_wraps_within_rows_and_columns() {
     s.handle(&menus, InputEvent::Axis(Axis::LeftX, 0.0), now);
     assert_eq!(s.next_deadline(), None);
     assert_eq!(chose(press(&mut s, &menus, Button::South)).as_deref(), Some("KEY_6"));
-    assert!(s.view(&menus).unwrap().hint.contains("↑↓←→"));
+    assert!(s.view(&menus).unwrap().hint.contains("{dpad}"));
 }
 
 #[test]
@@ -207,7 +207,7 @@ fn a_button_menu_has_no_cursor_and_each_item_has_its_own_button() {
     let menus = [menu("Q", MenuKind::Buttons, items)];
     let mut s = MenuSession::open(&menus, "Q", Opener::default()).unwrap();
     let view = s.view(&menus).unwrap();
-    assert_eq!(view.items[0].button.as_deref(), Some("LB"));
+    assert_eq!(view.items[0].buttons, [Button::LeftBumper]);
     assert_eq!(view.selected, None, "nothing to move");
     assert_eq!(chose(press(&mut s, &menus, Button::LeftBumper)).as_deref(), Some("KEY_1"));
     let mut s = MenuSession::open(&menus, "Q", Opener::default()).unwrap();
@@ -238,7 +238,7 @@ fn a_two_column_list_switches_columns_with_left_and_right() {
     assert_eq!(s.view(&menus).unwrap().selected, Some(5), "the top of the right column");
     s.handle(&menus, InputEvent::Axis(Axis::LeftX, -0.9), Instant::now());
     assert_eq!(s.view(&menus).unwrap().selected, Some(0), "the stick goes back left");
-    assert!(s.view(&menus).unwrap().hint.contains("↑↓←→"));
+    assert!(s.view(&menus).unwrap().hint.contains("{dpad}"));
     // One column: left and right do nothing.
     let mut s = MenuSession::open(&menus, "Short", Opener::default()).unwrap();
     press(&mut s, &menus, Button::DpadRight);
@@ -255,7 +255,7 @@ fn b_backs_out_of_a_held_submenu_and_cancels_a_held_radial() {
     let mut s = MenuSession::open(&menus, "Root", held_by(Button::LeftBumper)).unwrap();
     press(&mut s, &menus, Button::South);
     assert_eq!(s.view(&menus).unwrap().title, "Sub");
-    assert!(s.view(&menus).unwrap().hint.contains("B back"));
+    assert!(s.view(&menus).unwrap().hint.contains("{east} back"));
     assert_eq!(press(&mut s, &menus, Button::East), None);
     assert_eq!(s.view(&menus).unwrap().title, "Root");
     assert_eq!(press(&mut s, &menus, Button::East), Some(MenuOutcome::Close), "B at the top closes");
@@ -336,7 +336,7 @@ fn toggled_menu_closes_on_the_next_press() {
     let now = Instant::now();
     assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), now), None, "stays up when let go");
     s.handle(&menus, InputEvent::Axis(Axis::RightX, 0.9), now);
-    assert!(s.view(&menus).unwrap().hint.contains("LB again"));
+    assert!(s.view(&menus).unwrap().hint.contains("{lb} again"));
     assert_eq!(chose(s.handle(&menus, InputEvent::Button(Button::LeftBumper, true), now)).as_deref(), Some("KEY_2"));
 }
 
@@ -352,7 +352,7 @@ fn openers_already_let_go_open_nothing_unless_toggled() {
     // With nothing to hold (the command line), B closes it.
     let mut s = MenuSession::open(&menus, "L", Opener::default()).unwrap();
     assert!(s.prime(&menus, [], []));
-    assert!(s.view(&menus).unwrap().hint.contains("B close"));
+    assert!(s.view(&menus).unwrap().hint.contains("{east} close"));
     assert_eq!(press(&mut s, &menus, Button::East), Some(MenuOutcome::Close));
 }
 

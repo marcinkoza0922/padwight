@@ -3,7 +3,7 @@
 
 use iced::{
     Border, Color, Element,
-    widget::{container, pin, space, stack, text},
+    widget::{container, pin, space, stack},
 };
 
 use super::*;
@@ -138,10 +138,10 @@ fn radial_hub<'a, M: 'a>(m: &MenuView, c: Colors, s: f32, hub: f32, size: f32) -
         MenuKind::Radial {
             stick: crate::config::Stick::Left,
             ..
-        } => "LS",
-        _ => "RS",
+        } => "{ls}",
+        _ => "{rs}",
     };
-    let center = container(text(stick).font(c.font).size(16.0 * s).color(c.item_text))
+    let center = container(rich_text(stick, c, 16.0 * s, c.item_text))
         .center_x(hub)
         .center_y(hub)
         .style(move |_: &iced::Theme| container::Style {

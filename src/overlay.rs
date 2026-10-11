@@ -37,6 +37,21 @@ const MODIFIERS: [&str; 8] = [
     "KEY_RIGHTMETA",
 ];
 
+/// The keyboard's reminder of its controls, with `{tokens}` drawn as the pad's glyphs.
+pub const KEYBOARD_LEGEND: &[&str] = &[
+    "{dpad} move",
+    "{south} press",
+    "{west} backspace",
+    "{north} space",
+    "{start} enter",
+    "hold {lt} shift",
+    "Shift, Ctrl, Alt, AltGr and Super stay on for one key; press one again to let go",
+    "hold {east} or press {guide} to close",
+];
+
+/// The numpad's reminder of its controls.
+pub const NUMPAD_LEGEND: &[&str] = &["{dpad} move", "{south} press", "{west} backspace", "{start} enter", "hold {east} or press {guide} to close"];
+
 /// What the overlay process draws.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum OverlayView {
@@ -638,11 +653,12 @@ mod ui {
                 layers.push(draw::place(column(panels).spacing(12).into(), style, &fit, &Anim::still()));
             }
         }
+        let glyphs = crate::info::Glyphs { family: state.frame.family, nintendo_layout: state.frame.nintendo_layout };
         for (view, anim) in state.panels.shown(now, motion) {
             layers.push(match view {
                 OverlayView::Keyboard(k) => {
                     let fit = Fit::of(&k.style, display);
-                    draw::place(draw::keyboard_panel(k, font, &fit, &anim), &k.style, &fit, &anim)
+                    draw::place(draw::keyboard_panel(k, font, glyphs, &fit, &anim), &k.style, &fit, &anim)
                 }
                 OverlayView::Menu(m) => {
                     let look = draw::MenuLook {
@@ -656,11 +672,11 @@ mod ui {
                 }
                 OverlayView::Media(m) => {
                     let fit = Fit::of(&m.style, display);
-                    draw::place(draw::media_panel(m, font, &fit, &anim), &m.style, &fit, &anim)
+                    draw::place(draw::media_panel(m, font, glyphs, &fit, &anim), &m.style, &fit, &anim)
                 }
                 OverlayView::Offer(o) => {
                     let fit = Fit::of(&o.style, display);
-                    draw::place(draw::offer_panel(o, font, &fit, &anim), &o.style, &fit, &anim)
+                    draw::place(draw::offer_panel(o, font, glyphs, &fit, &anim), &o.style, &fit, &anim)
                 }
             });
         }

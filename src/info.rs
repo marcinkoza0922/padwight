@@ -709,6 +709,36 @@ pub struct Glyphs {
     pub nintendo_layout: bool,
 }
 
+/// `text` with its controller tokens (`{south}`, `{lt}`, `{ls}`, `{dpad}`, `{keyboard:a}`…) as
+/// glyphs in `glyphs`' labels, for hints and menu labels. Other tokens stay as written.
+pub fn glyph_text(text: &str, glyphs: Glyphs) -> Vec<Segment> {
+    let Glyphs { family, nintendo_layout } = glyphs;
+    let mut segments: Vec<Segment> = Vec::new();
+    for part in parse(text) {
+        let segment = match part {
+            Ok(t) => Segment::Text(t),
+            Err(Token::Button(b) | Token::PadButton(b)) => button_glyph(b, family, nintendo_layout),
+            Err(Token::Key(code)) => key_glyph(code),
+            Err(Token::Mouse(m)) => mouse_glyph(m),
+            Err(Token::Trigger(t)) => trigger_glyph(t, family),
+            Err(Token::Stick(Stick::Left)) => glyph("LS", None, true),
+            Err(Token::Stick(Stick::Right)) => glyph("RS", None, true),
+            Err(Token::Dpad) => glyph("✚", None, false),
+            Err(_) => continue,
+        };
+        match (segments.last_mut(), segment) {
+            (Some(Segment::Text(prev)), Segment::Text(t)) => prev.push_str(&t),
+            (_, segment) => segments.push(segment),
+        }
+    }
+    segments
+}
+
+/// The `{token}` text that draws `b` in a hint, or its plain badge for a button without one.
+pub fn button_hint(b: Button) -> String {
+    button_token(b).map_or_else(|| crate::menu::button_badge(b).to_string(), |t| format!("{{{t}}}"))
+}
+
 /// A button's glyph as the given family labels it. Face buttons are round and, for Xbox
 /// and PlayStation, in their usual colors. `swapped` draws the Nintendo layout's labels.
 pub fn button_glyph(b: Button, family: PadFamily, swapped: bool) -> Segment {

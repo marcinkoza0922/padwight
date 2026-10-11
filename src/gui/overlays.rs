@@ -77,6 +77,11 @@ impl App {
 
     /// How menu previews are drawn: the color-blind setting, and the controller the info
     /// glyphs are drawn for when none is detected.
+    /// How previews draw button glyphs: the Settings page's glyphs, with the Nintendo layout.
+    pub(super) fn glyphs(&self) -> crate::info::Glyphs {
+        crate::info::Glyphs { family: self.config.info_glyphs, nintendo_layout: self.nintendo_layout() }
+    }
+
     pub(super) fn menu_look(&self) -> crate::overlay::draw::MenuLook {
         crate::overlay::draw::MenuLook {
             anim: Default::default(),
@@ -132,6 +137,7 @@ impl App {
         let game = self.game();
         let font = self.preview_font();
         let look = self.menu_look();
+        let glyphs = self.glyphs();
         column![
             self.view_game_font(),
             game_overlay_card(
@@ -139,21 +145,21 @@ impl App {
                 game.keyboard_style.as_ref(),
                 &self.config.keyboard_style,
                 |s| Message::SetGameOverlayStyle(Layout::Keyboard, s),
-                move |style| keyboard_preview(Layout::Keyboard, style, font),
+                move |style| keyboard_preview(Layout::Keyboard, style, font, glyphs),
             ),
             game_overlay_card(
                 "On-screen numpad",
                 game.numpad_style.as_ref(),
                 &self.config.numpad_style,
                 |s| Message::SetGameOverlayStyle(Layout::Numpad, s),
-                move |style| keyboard_preview(Layout::Numpad, style, font),
+                move |style| keyboard_preview(Layout::Numpad, style, font, glyphs),
             ),
             game_overlay_card(
                 "Media controls",
                 game.media_style.as_ref(),
                 &self.config.media_style,
                 Message::SetGameMediaStyle,
-                move |style| preview(crate::overlay::draw::media_panel(&crate::media::MediaView::sample(preview_style(style)), font, &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())),
+                move |style| preview(crate::overlay::draw::media_panel(&crate::media::MediaView::sample(preview_style(style)), font, glyphs, &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())),
             ),
             game_overlay_card(
                 "In-game menu",
@@ -194,7 +200,7 @@ fn game_overlay_card<'a>(
 }
 
 /// A keyboard or numpad drawn with `style`, with the cursor on a key, for the card's preview.
-fn keyboard_preview(layout: Layout, style: &OverlayStyle, font: iced::Font) -> Element<'static, Message> {
+fn keyboard_preview(layout: Layout, style: &OverlayStyle, font: iced::Font, glyphs: crate::info::Glyphs) -> Element<'static, Message> {
     let sample = KeyboardView {
         layout,
         style: preview_style(style),
@@ -206,7 +212,7 @@ fn keyboard_preview(layout: Layout, style: &OverlayStyle, font: iced::Font) -> E
         pressed: None,
         closing: 0.0,
     };
-    preview(crate::overlay::draw::keyboard_panel(&sample, font, &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still()))
+    preview(crate::overlay::draw::keyboard_panel(&sample, font, glyphs, &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still()))
 }
 
 /// What each motion style is like, for the settings to explain them.

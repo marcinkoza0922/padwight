@@ -107,7 +107,7 @@ pub fn zone_page(config: &Config, a: Analog, i: usize) -> (Vec<ItemView>, &'stat
         item(format!("Action: {}", zone.map_or("Disabled".into(), |z| z.action.summary()))),
         remove_item("Delete zone".into()),
     ];
-    (rows, "A choose · ◀ ▶ move an edge · B back")
+    (rows, "{south} choose · {left} {right} move an edge · {east} back")
 }
 
 #[cfg(test)]

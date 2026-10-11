@@ -130,7 +130,7 @@ pub fn delete_macro(config: &mut Config, i: usize) -> bool {
 
 pub fn macro_page(config: &Config, i: usize) -> (Vec<ItemView>, &'static str) {
     let Some(m) = config.active_game().macros.get(i) else {
-        return (Vec::new(), "B back");
+        return (Vec::new(), "{east} back");
     };
     let delete_item = if macro_in_use(config, i) { item("Used by a button: can't delete".into()) } else { remove_item("Delete macro".into()) };
     let rows = m
@@ -140,7 +140,7 @@ pub fn macro_page(config: &Config, i: usize) -> (Vec<ItemView>, &'static str) {
         .chain(ADD_LABELS.iter().map(|l| if l.starts_with("Remove") { remove_item((*l).into()) } else { add_item((*l).into()) }))
         .chain(std::iter::once(delete_item))
         .collect();
-    (rows, "A remove a step or add one · B back")
+    (rows, "{south} remove a step or add one · {east} back")
 }
 
 fn step_label(step: &MacroStep) -> String {

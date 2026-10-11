@@ -509,7 +509,7 @@ impl App {
                 pressed: None,
                 closing: 0.0,
             };
-            rows.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
+            rows.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         }
         section(
             "On-screen keyboard",
@@ -529,7 +529,7 @@ impl App {
             let style = &self.config.media_style;
             rows.push(style_editor(style, Rc::new(Message::SetMediaStyle)));
             let sample = crate::media::MediaView::sample(preview_style(style));
-            rows.push(preview(crate::overlay::draw::media_panel(&sample, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
+            rows.push(preview(crate::overlay::draw::media_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         }
         section(
             "Media controls",
@@ -585,7 +585,7 @@ impl App {
                 pressed: None,
                 closing: 0.0,
             };
-            rows.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
+            rows.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         }
         section(
             "On-screen numpad",

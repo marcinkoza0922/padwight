@@ -146,7 +146,7 @@ impl OfferSession {
             choices,
             selected: self.selected,
             answers: Vec::new(),
-            hint: "D-pad ▲ ▼ choose   A add   B back".into(),
+            hint: "{up} {down} choose · {south} add · {east} back".into(),
             style: style.clone(),
         };
         match self.stage {
@@ -161,7 +161,7 @@ impl OfferSession {
             [p, ..] => (format!("Add controller profiles for {}?", p.name), format!("{} sets of profiles fit this game", self.packs.len())),
             [] => (String::new(), String::new()),
         };
-        let answers = [("A", "Yes"), ("B", "Not now"), ("X", "Never")];
+        let answers = [("{south}", "Yes"), ("{east}", "Not now"), ("{west}", "Never")];
         OfferView {
             title,
             detail,
