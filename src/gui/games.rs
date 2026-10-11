@@ -30,6 +30,11 @@ impl App {
                     self.open_sounds.insert(overlay);
                 }
             }
+            Message::ToggleSoundEdit(overlay, feedback) => {
+                if !self.open_cue_edits.remove(&(overlay, feedback)) {
+                    self.open_cue_edits.insert((overlay, feedback));
+                }
+            }
             Message::SetNumpadStyle(style) => self.config.numpad_style = style,
             Message::ToggleMediaAppearance => self.media_appearance = !self.media_appearance,
             Message::SetMediaStyle(style) => self.config.media_style = style,
@@ -218,7 +223,7 @@ impl App {
         if self.config.games.is_empty() {
             col = col.push(text("No game setups yet. Use + Add setup to add one.").size(13).color(MUTED_COLOR));
         } else {
-            col = col.push(field("Search setups", &self.game_search).on_input(Message::SetGameSearch).size(14));
+            col = col.push(field("Search setups…", &self.game_search).on_input(Message::SetGameSearch).size(14));
         }
         let search = self.game_search.trim().to_lowercase();
         let mut games: Vec<&Game> = self.config.games.iter().filter(|g| g.name.to_lowercase().contains(&search)).collect();
@@ -229,7 +234,15 @@ impl App {
             let label = if g.name.is_empty() { "(unnamed)".to_string() } else { g.name.clone() };
             col = col.push(entry(label, Page::Game(key), note));
         }
-        col = col.push(button(text("+ Add setup").size(14)).width(Length::Fill).style(style::secondary).on_press(Message::OpenAddGame));
+        // A sidebar entry in the accent color rather than a filled button, which would look like
+        // the search field above it.
+        col = col.push(
+            button(text("+ Add setup").color(style_accent()))
+                .width(Length::Fill)
+                .padding([6, 10])
+                .style(style::nav(false))
+                .on_press(Message::OpenAddGame),
+        );
         container(scrollable(col.padding(12)).height(Length::Fill)).width(SIDEBAR_WIDTH).into()
     }
 
@@ -292,12 +305,12 @@ impl App {
         let global = self.config.sounds;
         let mut rows = own_rows("sounds", own.is_some(), move |on| if on { Message::SetGameSounds(global) } else { Message::ClearGameSounds });
         if let Some(set) = own {
-            rows.extend(SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, self.open_sounds.contains(&overlay), Message::SetGameSounds)));
+            rows.extend(SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, &self.open_sounds, &self.open_cue_edits, Message::SetGameSounds)));
             rows.push(button(text("Turn every sound off").size(13)).style(style::secondary).on_press(Message::SetGameSounds(set.silenced())).into());
         }
         section(
             "Overlay sounds",
-            Some("A faint sound as the cursor moves in an overlay, another when something is picked, and a softer one as it pops in and out. A setup's own sounds start as a copy of the ones on App settings. Any overlay can be turned off.".into()),
+            Some("A faint sound as the cursor moves in an overlay, another when something is picked, and a softer one as it pops in and out. A setup's own sounds start as a copy of the ones on App settings. Any overlay can be turned off. Info and log overlays have nothing to pick, so they make no sound.".into()),
             rows,
         )
     }
@@ -368,11 +381,11 @@ impl App {
             };
             let mut line = row![
                 checkbox(r.enabled).on_toggle(move |on| Message::SetRuleEnabled(i, on)),
-                text("When").size(14),
+                text("When"),
                 dropdown(RuleKind::ALL, Some(r.kind), move |k| Message::SetRuleKind(i, k)).width(150),
-                text("is").size(14),
+                text("is"),
                 field(placeholder, &r.value).on_input(move |v| Message::SetRuleValue(i, v)).width(200),
-                text("use").size(14),
+                text("use"),
                 dropdown(names.clone(), Some(r.profile.clone()), move |p| Message::SetRuleProfile(i, p)).width(160),
                 button(text("✕").size(13)).style(style::secondary).on_press(Message::RemoveRule(i)),
             ]
@@ -455,33 +468,39 @@ impl App {
         if !game.pack.description.is_empty() {
             pack_rows.push(text(game.pack.description.clone()).size(13).into());
         }
-        pack_rows.push(
-            row![
-                button(text("Export…")).on_press(Message::OpenExport),
-                space::horizontal(),
-                button(text("Delete setup")).style(button::danger).on_press(Message::AskDeleteGame),
-            ]
-            .spacing(8)
-            .into(),
-        );
+        pack_rows.push(button(text("Export…")).on_press(Message::OpenExport).into());
 
+        // The cards follow App settings' order, so a card is found in the same place on both.
         column![
             section(
                 "Setup",
-                None,
-                vec![labeled("Name", field("Setup name", &game.name).on_input(Message::RenameGame).width(260).into())],
+                Some("The setup's name, as the sidebar shows it. Deleting the setup removes its profiles, items and rules once you Save & apply.".into()),
+                vec![
+                    row![
+                        labeled("Name", field("Setup name", &game.name).on_input(Message::RenameGame).width(260).into()),
+                        space::horizontal(),
+                        button(text("Delete setup")).style(style::danger).on_press(Message::AskDeleteGame),
+                    ]
+                    .align_y(Alignment::Center)
+                    .into(),
+                ],
             ),
             section(
                 "Auto-switch rules",
                 Some("A rule switches to its profile when a matching window has focus, or a matching program is running. Untick a rule to turn it off.".into()),
                 vec![rules.into()],
             ),
-            self.view_game_overlays(),
             self.view_game_nintendo_layout(),
             self.view_game_controllers(),
-            self.view_game_sounds(),
+            self.view_game_font(),
             self.view_game_motion(),
-            section("Pack", None, pack_rows),
+            self.view_game_sounds(),
+            self.view_game_overlays(),
+            section(
+                "Pack",
+                Some("A pack is a setup saved as a .padpack file, to share or to keep. Export saves this setup as one.".into()),
+                pack_rows,
+            ),
         ]
         .spacing(16)
         .into()
@@ -492,7 +511,7 @@ impl App {
         let appearance_open = self.open_appearance.contains(&None);
         let mut rows: Vec<Element<'_, Message>> = vec![
             row![
-                button(text(if keyboard_open { "Close it" } else { "Open it now" }).size(14))
+                button(text(if keyboard_open { "Close it" } else { "Open it now" }).size(13))
                     .style(style::secondary)
                     .on_press(Message::ToggleOverlay),
                 disclosure("Appearance", appearance_open, Message::ToggleAppearance(None)),
@@ -584,7 +603,7 @@ impl App {
         let numpad_open = self.status.as_ref().is_some_and(|s| s.numpad_visible);
         let mut rows: Vec<Element<'_, Message>> = vec![
             row![
-                button(text(if numpad_open { "Close it" } else { "Open it now" }).size(14))
+                button(text(if numpad_open { "Close it" } else { "Open it now" }).size(13))
                     .style(style::secondary)
                     .on_press(Message::ToggleNumpad),
                 disclosure("Appearance", self.numpad_appearance, Message::ToggleNumpadAppearance),
@@ -620,62 +639,6 @@ impl App {
             rows,
         )
     }
-
-}
-
-/// One overlay's sounds: on or off, and (when on and opened) its step, pick, open and close cues.
-pub(super) fn overlay_sounds<'a>(set: SoundSet, overlay: SoundOverlay, open: bool, change: fn(SoundSet) -> Message) -> Element<'a, Message> {
-    let current = set.get(overlay);
-    let put = move |sounds: OverlaySounds| {
-        let mut next = set;
-        next.set(overlay, sounds);
-        change(next)
-    };
-    let toggle = toggler(current.enabled).label(overlay.label()).on_toggle(move |on| put(OverlaySounds { enabled: on, ..current }));
-    let mut head = row![container(toggle).width(220)].align_y(Alignment::Center);
-    if current.enabled {
-        head = head.push(disclosure("Adjust", open, Message::ToggleSoundCues(overlay)));
-    }
-    let mut block = column![head].spacing(6);
-    if current.enabled && open {
-        block = block.push(cue_row("Step", current.step, move |step| put(OverlaySounds { step, ..current })));
-        block = block.push(cue_row("Pick", current.pick, move |pick| put(OverlaySounds { pick, ..current })));
-        block = block.push(cue_row("Open", current.open, move |open| put(OverlaySounds { open, ..current })));
-        block = block.push(cue_row("Close", current.close, move |close| put(OverlaySounds { close, ..current })));
-    }
-    block.into()
-}
-
-/// One cue on one line: its label, kind and preview, then its volume, pitch and length.
-fn cue_row<'a>(label: &'static str, spec: SoundSpec, put: impl Fn(SoundSpec) -> Message + Copy + 'a) -> Element<'a, Message> {
-    let knob = |name: &'static str, value: f32, range: std::ops::RangeInclusive<f32>, set: fn(&mut SoundSpec, f32)| {
-        row![
-            text(name).width(56),
-            slider(range, value, move |v| {
-                let mut next = spec;
-                set(&mut next, v);
-                put(next)
-            })
-            .step(5.0_f32)
-            .width(90),
-            text(format!("{value:.0}%")).size(13).color(MUTED_COLOR).width(40),
-        ]
-        .spacing(6)
-        .align_y(Alignment::Center)
-    };
-    let line = row![
-        text(label).width(48),
-        dropdown(SoundKind::ALL, Some(spec.kind), move |kind| put(SoundSpec { kind, ..spec })).width(110),
-        button(text("Play")).style(style::secondary).on_press(Message::PreviewSound(spec)),
-        space().width(8),
-        knob("Volume", spec.volume * 100.0, 0.0..=100.0, |s, v| s.volume = v / 100.0),
-        knob("Pitch", spec.pitch * 100.0, 50.0..=200.0, |s, v| s.pitch = v / 100.0),
-        knob("Length", spec.length * 100.0, 50.0..=200.0, |s, v| s.length = v / 100.0),
-    ]
-    .spacing(8)
-    .align_y(Alignment::Center)
-    .wrap();
-    container(line).padding(iced::Padding::ZERO.left(28)).into()
 }
 
 #[cfg(test)]

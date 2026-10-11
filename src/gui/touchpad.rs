@@ -97,11 +97,12 @@ pub(super) fn touchpad_sections<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, 
     // Without a touchpad controller this is a status worth seeing, not just help.
     if !ui.any_touchpad {
         rows.push(
-            text("None of your managed controllers have a touchpad. These settings take effect once one is connected.")
-                .size(13)
-                .color(MUTED_COLOR)
-                .into(),
+            note("None of your managed controllers have a touchpad. These settings take effect once one is connected.").into(),
         );
+    }
+    // What the profile can't be played without sits with the feature, as the back paddles' does.
+    if ui.layer.is_none() {
+        rows.extend(requirement_rows(p, Feature::Touchpad));
     }
     let part = layer_part(ui, LayerPart::Touchpad, "Touchpad".into(), touchpad_summary(base), || touchpad_rows(&p.touchpad, ui.names));
     // A layer's "Same as base" line sits in a box, as a stick's does; the editor boxes each side.
@@ -111,15 +112,7 @@ pub(super) fn touchpad_sections<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, 
         rows.extend(part);
         rows.push(pictures(p, ui));
     }
-    let mut sections = vec![section("Touchpad", Some(help.into()), rows)];
-    if ui.layer.is_none() {
-        sections.push(section(
-            "Controller requirements",
-            Some("What the profile's author says it can't be played without. Set by the author, not worked out from the settings.".into()),
-            requirement_rows(p, Feature::Touchpad),
-        ));
-    }
-    sections
+    vec![section("Touchpad", Some(help.into()), rows)]
 }
 
 /// The picture of the pad, with where each side's job is and the fingers on it.
@@ -135,8 +128,9 @@ fn pictures<'a>(p: &'a Profile, ui: &Ui) -> Element<'a, Message> {
     visualizer_panel(vec![figure("Pad (live)", touchpad_picture(&picture), None, PAD_WIDTH)], Some(why), None)
 }
 
-/// The width of the pad's picture.
-const PAD_WIDTH: f32 = 420.0;
+/// The width of the pad's picture: wide enough for a split pad's menu labels, and no wider, as it
+/// is a dark block in light mode like the other instrument pictures.
+const PAD_WIDTH: f32 = 320.0;
 
 /// The settings: whether the pad is split, and each side's box.
 pub(super) fn touchpad_rows<'a>(cfg: &'a TouchpadConfig, names: &Names) -> Vec<Element<'a, Message>> {
@@ -228,7 +222,7 @@ fn mouse_rows<'a>(rows: Column<'a, Message>, (speed, curve, tap, scroll, inertia
     }
     let checks = column![
         with_help(checkbox(tap).label("Tap to click").on_toggle(move |v| mouse(speed, curve, v, scroll, inertia)), "A tap runs the click below."),
-        checkbox(scroll).label("Two fingers scroll").on_toggle(move |v| mouse(speed, curve, tap, v, inertia)),
+        checkbox(scroll).label("Two-finger scroll").on_toggle(move |v| mouse(speed, curve, tap, v, inertia)),
         checkbox(inertia).label("Keep gliding after a flick").on_toggle(move |v| mouse(speed, curve, tap, scroll, v)),
     ]
     .spacing(6);
@@ -248,7 +242,7 @@ fn joystick_rows<'a>(rows: Column<'a, Message>, (stick, relative, radius, deadzo
     if relative {
         rows = rows.push(box_row("Full push at", slider_editor(0.05..=0.5, radius, 0.01, "pad widths from center", move |v| joystick(relative, v, deadzone))));
     }
-    rows.push(box_row("Deadzone", slider_editor(0.0..=0.5, deadzone, 0.01, "of a full push", move |v| joystick(relative, radius, v))))
+    rows.push(box_row("Deadzone", fraction_editor(0.0..=0.5, deadzone, 0.01, "of a full push", move |v| joystick(relative, radius, v))))
 }
 
 /// The menu laid out on the pad, and how its items are chosen.

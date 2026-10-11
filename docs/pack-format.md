@@ -418,7 +418,7 @@ opacity = 0.94
 
 ## Overlay sounds
 
-`[sounds.<overlay>]` sets the sounds an overlay makes as its cursor moves (`step`), when something is picked (`pick`), and as it pops in (`open`) and out (`close`). Each overlay has its own table, and every key is optional. A missing overlay uses the defaults, and the open and close cues default to a quiet bubble.
+`[sounds.<overlay>]` sets the sounds an overlay makes as its cursor moves (`step`), when something is picked (`pick`), and as it pops in (`open`) and out (`close`). Each overlay has its own table, and every key is optional. A missing overlay uses the defaults: a click and a pop, with a quiet bubble as it opens and closes, except the Guide menus, which default to soft electronic tones (`pulse`, `glass`, `rise` and `fall`).
 
 ```toml
 [sounds.menu]
@@ -429,7 +429,7 @@ open = { kind = "swish", volume = 0.04, pitch = 1.0, length = 1.0 }
 close = { kind = "swish", volume = 0.03, pitch = 1.0, length = 1.2 }
 ```
 
-The overlays are `keyboard` (the on-screen keyboard), `numpad`, `menu` (every menu layout, and the Guide + Start menu), `media` (the media controls) and `offer` (library offers). Input logs and info overlays have no cursor, so they make no sounds, and their appearing and going make none either.
+The overlays are `keyboard` (the on-screen keyboard), `numpad`, `menu` (every menu layout), `guide` (the Guide overlay's menu and the Guide + Start menu), `media` (the media controls) and `offer` (library offers). Input logs and info overlays have no cursor, so they make no sounds, and their appearing and going make none either.
 
 | `kind` | Sounds like |
 |---|---|
@@ -444,11 +444,35 @@ The overlays are `keyboard` (the on-screen keyboard), `numpad`, `menu` (every me
 | `crunch` | A few crisp bursts of noise. |
 | `swish` | A breath of air that brightens as it passes. |
 | `keys` | A key going down on a mechanical keyboard. |
-| `typewriter` | A typebar striking paper: a hard strike, a metal ring, and the platen's thud. |
+| `typewriter` | A typewriter keystroke: the key going down, the typebar's hard clack on the platen, and the carriage ticking along. |
 | `piano` | A piano key struck: a warm note that dies away. |
 | `beep` | A clean, flat electronic beep. |
+| `drop` | A drop falling into water: a round note that leaps up. |
+| `marimba` | A wooden bar struck with a soft mallet. |
+| `glass` | A crystal glass tapped: a pure, long note that shimmers. |
+| `pulse` | A soft electronic tone with a glassy edge that melts away. |
+| `rise` | A soft tone gliding up. |
+| `fall` | A soft tone gliding down. |
+| `coin` | A retro pickup: two quick square notes. |
 
-`volume` is 0–1, `pitch` is 0.5–2 (an octave either way) and `length` is 0.5–2 (half as long, or twice as long). All three are relative to the kind's own sound.
+`volume` is 0–1, `pitch` is 0.5–2 (an octave either way) and `length` is 0.5–2 (half as long, or twice as long). All three are relative to the kind's own sound. A longer cue is the same sound played slower, not a longer tail.
+
+Five effects change a cue after it's made, and all of them are off (0) unless set:
+
+| Key | Range | Does |
+|---|---|---|
+| `bass` | -12 to 12 | Turns the lows down or up, in dB. |
+| `treble` | -12 to 12 | Turns the highs down or up, in dB. |
+| `drive` | 0–1 | Pushes the cue into soft clipping: thicker and grittier, and it carries better on small speakers. |
+| `echo` | 0–1 | Echoes after the cue, louder and more of them as it grows. Each is a little darker than the last. |
+| `reverb` | 0–1 | A room the cue rings in, more of it and bigger as it grows. |
+
+Echo and reverb add a tail after the cue, up to about two seconds each at 1, so keep them low on a step that repeats as a direction is held.
+
+```toml
+[sounds.menu]
+pick = { kind = "chime", volume = 0.3, echo = 0.3, reverb = 0.2, bass = -3 }
+```
 
 ## Overlay motion
 

@@ -25,18 +25,18 @@ pub(super) fn style_editor<'a>(style: &OverlayStyle, on_change: OnStyle<'a>) -> 
         let set = set_field(on_change.clone(), style, |s: &mut OverlayStyle, v: f32| s.scale = v);
         move |v| set((v / 100.0 * 20.0).round() / 20.0)
     });
-    let shape = stepped_slider(0.0..=100.0, style.corners * 100.0, corner_name(style.corners).into(), {
+    let shape = stepped_slider(0.0..=100.0, style.corners * 100.0, format!("{:.0}% · {}", style.corners * 100.0, corner_name(style.corners)), {
         let set = set_field(on_change.clone(), style, |s: &mut OverlayStyle, v: f32| s.corners = v);
         move |v| set((v / 100.0 * 20.0).round() / 20.0)
     });
     let width = optional_slider(
-        "Set width",
+        "Fixed",
         style.width,
         Span { default: 50.0, range: 10.0..=100.0, unit: "%" },
         set_field(on_change.clone(), style, |s: &mut OverlayStyle, v: Option<f32>| s.width = v),
     );
     let height = optional_slider(
-        "Set height",
+        "Fixed",
         style.height,
         Span { default: 50.0, range: 10.0..=100.0, unit: "%" },
         set_field(on_change.clone(), style, |s: &mut OverlayStyle, v: Option<f32>| s.height = v),
@@ -111,7 +111,8 @@ fn decorations<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a,
     let glow = Slot { label: "Glow on the selected item", get: |s| s.glow.as_ref(), put: |s, v| s.glow = v, start: |s| Shade::glow(&s.selected.color) };
     let text_color = Slot { label: "Text color", get: |s| s.text.as_ref(), put: |s, v| s.text = v, start: |_| "#ffffff".to_string() };
     column![
-        text("Decorations").size(14).color(MUTED_COLOR),
+        // Indented like the editor's labels above, so it reads as part of the editor.
+        text("    Decorations").size(14).color(MUTED_COLOR),
         optional(&border, |stroke, set| stroke_rows(stroke, 0.0..=8.0, &set), style, on_change),
         optional(&shadow, |shade, set| shade_rows(shade, &set), style, on_change),
         optional(&gradient, gradient_rows, style, on_change),
@@ -251,8 +252,9 @@ pub(super) fn paint_row<'a>(paint: &Paint, opacity: bool, on_paint: &Rc<dyn Fn(P
         let (color, on_paint) = (paint.color.clone(), on_paint.clone());
         let slide = move |v: f32| on_paint(Paint { color: color.clone(), opacity: (v / 100.0).clamp(0.0, 1.0) });
         line = line
+            .push(text("Opacity").size(13))
             .push(slider(0.0..=100.0, paint.opacity * 100.0, slide).step(5.0_f32).width(110))
-            .push(text(format!("{:.0}%", paint.opacity * 100.0)).size(12));
+            .push(text(format!("{:.0}%", paint.opacity * 100.0)).size(13));
     }
     if paint.rgb().is_none() {
         line = line.push(text("not a #rrggbb color").size(12).color(ERROR_COLOR));

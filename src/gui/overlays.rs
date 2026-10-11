@@ -128,7 +128,7 @@ impl App {
         section(
             "Menu colors",
             Some("Rows that add to a list are tinted, and rows that remove from one are tinted red. Color-blind mode uses blue and orange instead, and puts a + or − in front of each row.".into()),
-            vec![iced::widget::toggler(self.config.colorblind_tones).label("Color-blind mode").on_toggle(Message::SetColorblindTones).into()],
+            vec![toggler(self.config.colorblind_tones).label("Color-blind mode").on_toggle(Message::SetColorblindTones).into()],
         )
     }
 
@@ -143,7 +143,7 @@ impl App {
 
     /// The setup's own font. An empty name is its own choice of the system default, which `None`
     /// (follow App settings) can't say.
-    fn view_game_font(&self) -> Element<'_, Message> {
+    pub(super) fn view_game_font(&self) -> Element<'_, Message> {
         let own = self.game().overlay_font.as_deref();
         let global = self.config.overlay_font.clone();
         let mut rows = own_rows("font", own.is_some(), move |on| Message::SetGameOverlayFont(on.then(|| global.clone().unwrap_or_default())));
@@ -171,7 +171,6 @@ impl App {
         let look = self.menu_look();
         let glyphs = self.glyphs();
         column![
-            self.view_game_font(),
             game_overlay_card(
                 "On-screen keyboard",
                 game.keyboard_style.as_ref(),
@@ -251,7 +250,8 @@ fn keyboard_preview(layout: Layout, style: &OverlayStyle, font: iced::Font, glyp
 
 /// What each motion style is like, for the settings to explain them.
 pub(super) fn motion_guide() -> String {
-    MotionStyle::ALL.iter().map(|style| format!("{style}: {}", style.describe())).collect::<Vec<_>>().join(" ")
+    let styles = MotionStyle::ALL.iter().map(|style| format!("{style}: {}", style.describe())).collect::<Vec<_>>().join(" ");
+    format!("{styles} Guide menus move as Menus do.")
 }
 
 /// One row per kind of overlay, each with a dropdown for its style. `change` makes the message

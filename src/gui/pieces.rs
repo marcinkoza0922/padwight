@@ -169,21 +169,25 @@ fn chip<'a>(segment: Segment) -> Element<'a, Message> {
         _ => return space().into(),
     };
     let fill = fill.map(|[r, g, b]| Color::from_rgb8(r, g, b));
-    let label = text(label).size(12);
+    // A one-character cap is square, as wide as a round one, and a lone punctuation mark (`;`,
+    // `'`) is drawn larger, so it isn't a sliver.
+    let single = label.chars().count() == 1;
+    let punctuation = single && label.chars().all(|c| c.is_ascii_punctuation());
+    let label = text(label).size(if punctuation { 17 } else { 12 });
     let label = if fill.is_some() { label.color(Color::WHITE) } else { label };
-    let width = if round { 22.0 } else { 0.0 };
+    let width = (round || single).then_some(22.0);
     container(label)
-        .padding([1, if round { 0 } else { 6 }])
-        .width(if round { Length::Fixed(width) } else { Length::Shrink })
+        .padding([1, if width.is_some() { 0 } else { 6 }])
+        .width(width.map_or(Length::Shrink, Length::Fixed))
         .height(22)
-        .center_x(if round { Length::Fixed(width) } else { Length::Shrink })
+        .center_x(width.map_or(Length::Shrink, Length::Fixed))
         .center_y(22)
         .style(move |_| container::Style {
             background: fill.map(Background::Color),
             border: Border {
                 color: MUTED_COLOR,
                 width: if fill.is_some() { 0.0 } else { 1.0 },
-                radius: if round { (width / 2.0).into() } else { 5.0.into() },
+                radius: if round { 11.0.into() } else { 5.0.into() },
             },
             ..container::Style::default()
         })

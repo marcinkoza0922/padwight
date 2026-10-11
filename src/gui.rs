@@ -15,8 +15,8 @@ use evdev::KeyCode;
 use iced::{
     Alignment, Color, Element, Length, Subscription, Task,
     widget::{
-        button, center, checkbox, column, container, mouse_area, opaque, pick_list, row, rule,
-        rich_text, scrollable, slider, space, span, stack, svg, text, text_input, toggler, tooltip,
+        button, center, column, container, mouse_area, opaque, pick_list, row, rule,
+        rich_text, scrollable, slider, space, span, stack, svg, text, text_input, tooltip,
     },
 };
 
@@ -64,6 +64,7 @@ mod profile;
 mod response_graph;
 mod ring_preview;
 mod settings;
+mod sounds;
 mod sliders;
 mod sticks;
 mod style_editor;
@@ -76,7 +77,7 @@ mod widgets;
 use actions::*;
 use checks::*;
 use device_box::*;
-use games::*;
+use sounds::overlay_sounds;
 use items::*;
 use menu_grid::*;
 use keys::*;
@@ -212,6 +213,8 @@ struct App {
     numpad_appearance: bool,
     /// Overlays whose sound settings are open in the Overlay sounds cards.
     open_sounds: HashSet<crate::sound::SoundOverlay>,
+    /// Cues whose sliders (volume, pitch, length and effects) are open under them.
+    open_cue_edits: HashSet<(crate::sound::SoundOverlay, crate::sound::Feedback)>,
     /// The media controls' and the in-game menu's Appearance sections are open.
     media_appearance: bool,
     menu_appearance: bool,
@@ -388,6 +391,7 @@ enum Message {
     ToggleNumpad,
     ToggleNumpadAppearance,
     ToggleSoundCues(crate::sound::SoundOverlay),
+    ToggleSoundEdit(crate::sound::SoundOverlay, crate::sound::Feedback),
     SetNumpadStyle(OverlayStyle),
     ToggleMediaAppearance,
     SetMediaStyle(OverlayStyle),
@@ -632,6 +636,7 @@ impl App {
             open_appearance: HashSet::new(),
             numpad_appearance: false,
             open_sounds: HashSet::new(),
+            open_cue_edits: HashSet::new(),
             media_appearance: false,
             menu_appearance: false,
             open_infos: HashSet::new(),
@@ -1106,7 +1111,10 @@ impl App {
         }
         .spacing(16)
         .padding(20);
-        let main = column![scrollable(content).id("main").height(Length::Fill), self.view_footer()].width(Length::Fill);
+        // Nothing is edited on the Manual, so its footer shows only while there's something to save
+        // from another page, or a message.
+        let footer = self.page != Page::Manual || self.config != self.saved || self.message.is_some();
+        let main = column![scrollable(content).id("main").height(Length::Fill)].push(footer.then(|| self.view_footer())).width(Length::Fill);
         // Always a stack with the page first, popups or not: iced keeps widget state (such as
         // the page's scroll position) by place in the tree, so the shape must not change when
         // a popup opens or closes.

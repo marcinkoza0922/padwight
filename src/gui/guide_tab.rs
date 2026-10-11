@@ -144,7 +144,7 @@ pub(super) fn sections<'a>(p: &'a Profile, guide: GuideView<'a>, in_layer: bool)
             mapping_row(r, &others, guide)
         })
         .collect();
-    list.push(button(text("Add a row").size(13)).on_press(Message::Guide(GuideMsg::AddCustom)).into());
+    list.push(button(text("+ Add a row").size(13)).style(style::secondary).on_press(Message::Guide(GuideMsg::AddCustom)).into());
     vec![
         section(
             "Notes",
@@ -153,7 +153,7 @@ pub(super) fn sections<'a>(p: &'a Profile, guide: GuideView<'a>, in_layer: bool)
         ),
         section(
             "Mapping guide",
-            Some("The list behind the Mappings box on the right of the Guide overlay. Each row says what an input, gesture or combo does: change its text, or show or hide it (the mapping still works). Inputs can share a row with another input, such as both D-pad sides for \"Lean\". \"Add a row\" writes a row of your own, for things the mappings don't show, such as what a layer's chord does: choose its inputs, then its text.".into()),
+            Some("The list behind the Mappings box on the right of the Guide overlay. Each row says what an input, gesture or combo does: change its text, or show or hide it (the mapping still works). Inputs can share a row with another input, such as both D-pad sides for \"Lean\". \"+ Add a row\" writes a row of your own, for things the mappings don't show, such as what a layer's chord does: choose its inputs, then its text.".into()),
             list,
         ),
     ]
@@ -196,6 +196,7 @@ fn mapping_row<'a>(r: &crate::config::EditableRow, others: &[Choice], guide: Gui
         }
         dropdown(others.to_vec(), None::<Choice>, move |c: Choice| Message::Guide(GuideMsg::Share(key.clone(), c.0)))
             .placeholder(placeholder)
+            .style(style::action_dropdown)
             .width(Length::Fill)
             .into()
     };

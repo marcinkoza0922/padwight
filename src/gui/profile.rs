@@ -297,17 +297,7 @@ pub(super) fn view_profile<'a>(p: &'a Profile, ui: &Ui, tab: ProfileTab, guide: 
         }
         ProfileTab::Guide => guide_tab::sections(p, guide, ui.layer.is_some()),
         ProfileTab::Touchpad => touchpad::touchpad_sections(p, ui),
-        ProfileTab::Gyro => {
-            let mut sections = gyro::gyro_sections(p, ui);
-            if ui.layer.is_none() {
-                sections.push(section(
-                    "Controller requirements",
-                    Some("What the profile's author says it can't be played without. Set by the author, not worked out from the settings.".into()),
-                    requirement_rows(p, Feature::Gyro),
-                ));
-            }
-            sections
-        }
+        ProfileTab::Gyro => gyro::gyro_sections(p, ui),
     };
     column(sections).spacing(16).into()
 }
@@ -415,10 +405,7 @@ pub(super) fn paddle_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Messag
     if ui.layer.is_none() {
         if !ui.any_paddles {
             rows.push(
-                text("None of your managed controllers have back paddles. These mappings take effect once one is connected.")
-                    .size(13)
-                    .color(MUTED_COLOR)
-                    .into(),
+                note("None of your managed controllers have back paddles. These mappings take effect once one is connected.").into(),
             );
         }
         rows.extend(requirement_rows(p, Feature::BackPaddles));
@@ -573,7 +560,10 @@ pub(super) fn button_row<'a>(p: &'a Profile, b: Button, ui: &Ui) -> Vec<Element<
 #[expect(clippy::too_many_lines, reason = "predates the size lints")]
 pub(super) fn combo_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message>> {
     let mut rows: Vec<Element<'a, Message>> = Vec::new();
-    if ui.layer.is_none() {
+    // The window only means something once there is a combo to press within it.
+    if p.combos.is_empty() {
+        rows.push(text("This profile has no combos yet.").color(MUTED_COLOR).into());
+    } else if ui.layer.is_none() {
         rows.push(value_slider("Combo window", 20.0..=300.0, p.combo_window_ms as f32, 5.0, "ms", Message::SetComboWindow));
     }
     for (i, combo) in p.combos.iter().enumerate() {
@@ -638,8 +628,22 @@ pub(super) fn combo_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message
             .into(),
         );
     }
-    rows.push(button(text("+ Add combo")).style(style::secondary).on_press(Message::AddCombo).into());
+    rows.push(button(text("+ Add combo").size(13)).style(style::secondary).on_press(Message::AddCombo).into());
     rows
+}
+
+/// Deletes the profile being edited. A setup's only profile can't go, and a tooltip says why.
+fn delete_profile_button<'a>(can_delete: bool) -> Element<'a, Message> {
+    let delete = button(text("Delete")).style(style::danger).on_press_maybe(can_delete.then_some(Message::DeleteProfile));
+    if can_delete {
+        return delete.into();
+    }
+    tooltip(
+        delete,
+        container(text("A setup needs at least one profile.").size(13)).padding(8).style(style::tooltip),
+        tooltip::Position::Bottom,
+    )
+    .into()
 }
 
 pub(super) fn short_button(b: Button) -> &'static str {
@@ -1025,7 +1029,7 @@ impl App {
     fn picture_opacity(&self) -> f32 {
         match (self.status.is_some(), self.theme().extended_palette().is_dark) {
             (true, _) => 1.0,
-            (false, true) => 0.65,
+            (false, true) => 0.5,
             (false, false) => 0.3,
         }
     }
@@ -1094,26 +1098,26 @@ impl App {
             Some(at) if !active && self.status.is_some() => {
                 button(text("Make active")).style(style::secondary).on_press(Message::ActivateProfile(at)).into()
             }
-            _ if active => text("● active").size(13).color(style_accent()).into(),
+            // Nothing is active while the daemon is down, as the header's status says.
+            _ if active && self.status.is_some() => text("● active").size(13).color(style_accent()).into(),
             _ => space().into(),
         };
         column![
             row![text("Edit profile").size(20), activate].spacing(12).align_y(Alignment::Center),
             row![
-                text("Profile").size(14),
+                text("Profile"),
                 dropdown(names, current.clone(), Message::EditProfile).width(170),
-                text("Name").size(14),
+                text("Name"),
                 field("Profile name", current.as_deref().unwrap_or(""))
                     .on_input(Message::RenameProfile)
                     .width(170),
                 space::horizontal(),
                 dropdown(Template::NEW, None::<Template>, Message::AddProfile)
                     .placeholder("+ From template…")
+                    .style(style::action_dropdown)
                     .width(200),
                 button(text("Duplicate")).style(style::secondary).on_press(Message::AddProfile(Template::Duplicate)),
-                button(text("Delete"))
-                    .style(style::danger)
-                    .on_press_maybe(can_delete.then_some(Message::DeleteProfile)),
+                delete_profile_button(can_delete),
             ]
             .spacing(8)
             .align_y(Alignment::Center),

@@ -1,6 +1,6 @@
 //! The Log overlays tab: on-screen logs of the buttons pressed lately and what each did.
 
-use iced::widget::{checkbox, column, row};
+use iced::widget::{column, row};
 
 use super::*;
 use crate::{config::{InputLogSettings, LogEnd, LogSource}, info::Glyphs};

@@ -155,9 +155,12 @@ pub(super) fn trigger_editor<'a>(
         rows = rows.push(line);
         if analog {
             let inner = inner.clone();
-            rows = rows.push(value_slider("    Presses at", 0.05..=0.95, threshold, 0.05, "", move |v| {
-                Message::SetTrigger(t, TriggerAction::Button { action: inner.clone(), threshold: v })
-            }));
+            rows = rows.push(labeled(
+                "    Presses at",
+                fraction_editor(0.05..=0.95, threshold, 0.05, "of a full pull", move |v| {
+                    Message::SetTrigger(t, TriggerAction::Button { action: inner.clone(), threshold: v })
+                }),
+            ));
         }
     } else {
         rows = rows.push(line);

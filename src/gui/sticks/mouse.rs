@@ -50,7 +50,7 @@ pub(super) fn mouse_rows<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a Stick
     };
     rows.push(sub_row(
         "Outer boost",
-        slider_editor(0.0..=1.0, response.outer_boost, 0.05, "more speed near the edge", move |v| set(curve, MouseResponse { outer_boost: v, ..response })),
+        fraction_editor(0.0..=1.0, response.outer_boost, 0.05, "more speed near the edge", move |v| set(curve, MouseResponse { outer_boost: v, ..response })),
     ))
 }
 

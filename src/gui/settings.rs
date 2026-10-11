@@ -5,7 +5,7 @@ use iced::widget::{column, row};
 use super::*;
 use crate::config::Performance;
 
-/// An entry in the auto-switch "When no setup matches, use" list.
+/// An entry in the auto-switch "No setup matches" list.
 #[derive(Debug, Clone, PartialEq)]
 pub(super) struct DefaultChoice(pub(super) Option<ProfileRef>);
 
@@ -75,11 +75,11 @@ impl App {
     /// The App settings page's sounds: the set every setup without its own set uses.
     fn view_default_sounds(&self) -> Element<'_, Message> {
         let set = self.config.sounds;
-        let mut rows: Vec<Element<'_, Message>> = SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, self.open_sounds.contains(&overlay), Message::SetSounds)).collect();
-        rows.push(button(text("Turn every sound off").size(13)).style(style::secondary).on_press(Message::SetSounds(set.silenced())).into());
+        // Silencing everything is Performance's "No sounds", so this card has no button for it.
+        let rows: Vec<Element<'_, Message>> = SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, &self.open_sounds, &self.open_cue_edits, Message::SetSounds)).collect();
         section(
             "Overlay sounds",
-            Some("A faint sound as the cursor moves in an overlay, another when something is picked, and a softer one as it pops in and out. These apply to every setup that doesn't set its own on its Details tab. Any overlay can be turned off.".into()),
+            Some("A faint sound as the cursor moves in an overlay, another when something is picked, and a softer one as it pops in and out. These apply to every setup that doesn't set its own on its Details tab. Any overlay can be turned off, and \"No sounds\" under Performance silences them all. Info and log overlays have nothing to pick, so they make no sound.".into()),
             rows,
         )
     }
@@ -275,18 +275,12 @@ impl App {
         let default = DefaultChoice(auto.default_profile.clone());
         section(
             "Per-setup profiles",
-            Some("On its Details tab, each setup's rules decide which windows switch to which of its profiles.".into()),
+            Some("On its Details tab, each setup's rules decide which windows switch to which of its profiles. When no setup's rule matches, the profile picked under \"No setup matches\" is used.".into()),
+            // The dropdown sits in the label column's layout, as every other setting's does.
             vec![
-                row![
-                    toggler(auto.enabled).label("Switch profiles automatically").on_toggle(Message::SetAutoSwitch),
-                    space::horizontal(),
-                    text("When no setup matches, use"),
-                    dropdown(defaults, Some(default), Message::SetDefaultProfile).width(SETTING_WIDTH),
-                ]
-                .spacing(12)
-                .align_y(Alignment::Center)
-                .into(),
+                toggler(auto.enabled).label("Switch profiles automatically").on_toggle(Message::SetAutoSwitch).into(),
                 text(how).size(13).color(MUTED_COLOR).into(),
+                labeled("No setup matches", dropdown(defaults, Some(default), Message::SetDefaultProfile).width(SETTING_WIDTH).into()),
             ],
         )
     }
