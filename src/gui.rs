@@ -61,6 +61,7 @@ mod profile;
 mod response_graph;
 mod ring_preview;
 mod settings;
+mod sounds;
 mod sliders;
 mod sticks;
 mod style_editor;
@@ -73,7 +74,7 @@ mod widgets;
 use actions::*;
 use checks::*;
 use device_box::*;
-use games::*;
+use sounds::overlay_sounds;
 use items::*;
 use keys::*;
 use layers::IndicatorChoice;
@@ -206,6 +207,8 @@ struct App {
     numpad_appearance: bool,
     /// Overlays whose sound settings are open in the Overlay sounds cards.
     open_sounds: HashSet<crate::sound::SoundOverlay>,
+    /// Cues whose sliders (volume, pitch, length and effects) are open under them.
+    open_cue_edits: HashSet<(crate::sound::SoundOverlay, crate::sound::Feedback)>,
     /// The media controls' and the in-game menu's Appearance sections are open.
     media_appearance: bool,
     menu_appearance: bool,
@@ -382,6 +385,7 @@ enum Message {
     ToggleNumpad,
     ToggleNumpadAppearance,
     ToggleSoundCues(crate::sound::SoundOverlay),
+    ToggleSoundEdit(crate::sound::SoundOverlay, crate::sound::Feedback),
     SetNumpadStyle(OverlayStyle),
     ToggleMediaAppearance,
     SetMediaStyle(OverlayStyle),
@@ -614,6 +618,7 @@ impl App {
             open_appearance: HashSet::new(),
             numpad_appearance: false,
             open_sounds: HashSet::new(),
+            open_cue_edits: HashSet::new(),
             media_appearance: false,
             menu_appearance: false,
             open_infos: HashSet::new(),
