@@ -7,7 +7,10 @@ use iced::{
     widget::{button, column, container, mouse_area, pick_list, row, scrollable, text},
 };
 
-use super::server::Session;
+use super::{
+    server::Session,
+    sound_panel::{SoundMessage, SoundPanel},
+};
 use crate::{
     config::{Button, Stick, Trigger},
     info::{Glyphs, PadFamily, PadModel},
@@ -22,7 +25,7 @@ const TOUCHPAD_WIDTH: f32 = 360.0;
 
 pub fn run(session: Session, socket: String) -> iced::Result {
     let app = iced::application(
-        move || (Window { session: session.clone(), socket: socket.clone(), cursor: Point::ORIGIN, grab: None, touch_cursor: Point::ORIGIN, touching: false, problem: None }, Task::none()),
+        move || (Window { session: session.clone(), socket: socket.clone(), cursor: Point::ORIGIN, grab: None, touch_cursor: Point::ORIGIN, touching: false, problem: None, sounds: SoundPanel::new() }, Task::none()),
         Window::update,
         Window::view,
     )
@@ -45,6 +48,7 @@ struct Window {
     touching: bool,
     /// Why the daemon didn't take the last change, when attached to it.
     problem: Option<String>,
+    sounds: SoundPanel,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -71,6 +75,7 @@ enum Message {
     Model(ModelChoice),
     Family(PadFamily),
     Reset,
+    Sound(SoundMessage),
 }
 
 /// A model in the picker; `None` is the generic controller.
@@ -133,6 +138,7 @@ impl Window {
             Message::Model(ModelChoice(model)) => self.session.pad().set_model(model),
             Message::Family(family) => self.session.pad().family = family,
             Message::Reset => self.session.pad().reset(),
+            Message::Sound(m) => self.sounds.update(m),
         }
         // Whatever changed reaches the daemon right away, when attached.
         self.problem = self.session.flush().err().map(|e| format!("{e:#}"));
@@ -266,6 +272,7 @@ impl Window {
             text(link).size(12),
             row![virtual_pad, touchpad].spacing(24),
             text(readout(&snapshot)).size(13),
+            self.sounds.view().map(Message::Sound),
             text("Every model, showing the virtual controller's input").size(20),
             gallery(&snapshot),
         ]
@@ -312,7 +319,7 @@ mod tests {
     use super::*;
 
     fn window() -> Window {
-        Window { session: Session::default(), socket: String::new(), cursor: Point::ORIGIN, grab: None, touch_cursor: Point::ORIGIN, touching: false, problem: None }
+        Window { session: Session::default(), socket: String::new(), cursor: Point::ORIGIN, grab: None, touch_cursor: Point::ORIGIN, touching: false, problem: None, sounds: SoundPanel::new() }
     }
 
     fn move_to(w: &mut Window, x: f32, y: f32) {

@@ -13,6 +13,8 @@ mod bridge;
 mod pad;
 mod protocol;
 mod server;
+mod sound;
+mod sound_panel;
 mod window;
 
 use pad::VirtualPad;
@@ -51,12 +53,10 @@ Without a session:
   models                         list the model names
   svg [model]                    print a model's drawing at rest, as SVG
   detach-all                     remove controllers a session left in the daemon
-
-With a session:
 ";
 
 fn usage() -> String {
-    format!("{USAGE}{}", protocol::COMMANDS)
+    format!("{USAGE}{}\nWith a session:\n{}", sound::USAGE, protocol::COMMANDS)
 }
 
 #[expect(clippy::print_stdout, reason = "CLI output")]
@@ -74,6 +74,7 @@ pub fn run(args: &[&str]) -> Result<()> {
         }
         ["svg"] => println!("{}", rest_svg(None)),
         ["svg", name] => println!("{}", rest_svg(parse_model(name)?)),
+        ["sound", rest @ ..] => sound::run(rest)?,
         ["detach-all"] => ipc::request(&ipc::Request::DebugDetach("all".into())).map(drop)?,
         [] => start(&[])?,
         [first, ..] if first.starts_with("--") => start(args)?,

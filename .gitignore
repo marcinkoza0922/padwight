@@ -33,3 +33,6 @@ rustc-ice-*.txt
 
 # Screenshots taken while checking the GUI
 /screenshots/
+
+# Cues rendered by the sound tests, to listen to
+/sound-previews/
