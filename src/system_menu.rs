@@ -94,6 +94,8 @@ pub struct SystemMenu {
     /// The config as it was when the menu opened: what Discard goes back to, and what counts as
     /// unsaved.
     saved: Box<Config>,
+    /// The controller driving the menu has back paddles, which Edit Controls then lists.
+    paddles: bool,
 }
 
 impl SystemMenu {
@@ -104,7 +106,12 @@ impl SystemMenu {
 
     /// A menu over a config that is currently saved as `saved`.
     pub fn new(saved: &Config) -> Self {
-        SystemMenu { screen: Screen::Main, cursor: 0, latch_x: false, latch_y: false, from_guide: false, saved: Box::new(saved.clone()) }
+        SystemMenu { screen: Screen::Main, cursor: 0, latch_x: false, latch_y: false, from_guide: false, saved: Box::new(saved.clone()), paddles: false }
+    }
+
+    /// This menu, for a controller with back paddles (or without). Call before [`Self::on_page`].
+    pub fn with_paddles(self, paddles: bool) -> Self {
+        SystemMenu { paddles, ..self }
     }
 
     /// This menu, opened on `page`. Edit Controls still needs the daemon's checks (see
@@ -114,7 +121,7 @@ impl SystemMenu {
         self.screen = match page {
             Page::Main => Screen::Main,
             Page::Quick => Screen::Quick,
-            Page::EditControls => Screen::Editor(LayoutEditor::new()),
+            Page::EditControls => Screen::Editor(LayoutEditor::new().with_paddles(self.paddles)),
         };
         self
     }
@@ -170,7 +177,7 @@ impl SystemMenu {
                     None
                 }
                 _ => {
-                    self.screen = Screen::Editor(LayoutEditor::new());
+                    self.screen = Screen::Editor(LayoutEditor::new().with_paddles(self.paddles));
                     Some(Outcome::EditControls)
                 }
             },

@@ -1290,7 +1290,6 @@ impl Engine {
     }
 }
 
-/// Difference between two angles in degrees, wrapped to -180..180.
 /// Whether a button drives the Guide overlay's menu rather than closing the overlay: the D-pad
 /// and left stick move the highlight, A chooses and B closes.
 fn guide_nav(b: Button) -> bool {
@@ -1321,6 +1320,7 @@ fn count_hold(holds: &mut HashMap<String, u32>, name: &str, pressed: bool) {
     }
 }
 
+/// Difference between two angles in degrees, wrapped to -180..180.
 fn angle_diff(a: f32, b: f32) -> f32 {
     (a - b + 540.0).rem_euclid(360.0) - 180.0
 }

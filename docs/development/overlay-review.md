@@ -88,12 +88,12 @@ Tick an item when it's done and merged.
 - [x] 15. **The left stick may move the game while it scrolls the Guide menu** (*verify*).
   `guide_nav` takes the left stick's *direction buttons* for the menu, but nothing stops the
   stick's analog output, so a stick mapped to the gamepad's stick probably still reaches the game.
-- [ ] 16. **Edit Controls lists Guide, but Guide can't be remapped.** `top_rows` uses
+- [x] 16. **Edit Controls lists Guide, but Guide can't be remapped.** `top_rows` uses
   `Button::ALL` (`src/layout_editor.rs:37`), which includes Guide. The engine handles Guide before
   the profile sees it, so whatever is set there does nothing. On the other hand, back paddles
   aren't in `Button::ALL`, so they can't be edited in game even on pads that have them. Leave out
   Guide, and add paddles when the pad has them.
-- [ ] 17. **Small doc-comment slips** that make the code harder to read:
+- [x] 17. **Small doc-comment slips** that make the code harder to read:
   - `Daemon.overlay_cursors` has two stacked doc lines, an old one and a new one.
   - "Makes sure the (normally resident) overlay window process is running." sits on top of
     `start_services`.

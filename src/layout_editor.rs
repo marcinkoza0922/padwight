@@ -34,8 +34,8 @@ enum Top {
     Macros,
 }
 
-fn top_rows() -> Vec<Top> {
-    Button::ALL
+fn top_rows(inputs: &[Button]) -> Vec<Top> {
+    inputs
         .iter()
         .map(|&b| Top::Button(b))
         .chain([
@@ -103,6 +103,8 @@ pub struct LayoutEditor {
     cursor: usize,
     /// The page and cursor each open page was entered from, innermost last.
     history: Vec<(Page, usize)>,
+    /// The controller has back paddles, so they can be set too.
+    paddles: bool,
 }
 
 impl Default for LayoutEditor {
@@ -113,7 +115,19 @@ impl Default for LayoutEditor {
 
 impl LayoutEditor {
     pub fn new() -> Self {
-        LayoutEditor { page: Page::Top, cursor: 0, history: Vec::new() }
+        LayoutEditor { page: Page::Top, cursor: 0, history: Vec::new(), paddles: false }
+    }
+
+    /// This editor, for a controller with back paddles (or without).
+    pub fn with_paddles(self, paddles: bool) -> Self {
+        LayoutEditor { paddles, ..self }
+    }
+
+    /// The buttons a profile sets here: every button but Guide, which works the same in every
+    /// game, and the back paddles when the controller has them.
+    fn inputs(&self) -> Vec<Button> {
+        let paddles = Button::PADDLES.iter().filter(|_| self.paddles);
+        Button::ALL.iter().filter(|&&b| b != Button::Guide).chain(paddles).copied().collect()
     }
 
     /// Moves the cursor on the current page: (x, y), y positive down. Pages in two columns move
@@ -131,18 +145,18 @@ impl LayoutEditor {
     /// How many rows the current page has.
     pub fn rows(&self, config: &Config) -> usize {
         match self.page {
-            Page::Top => top_rows().len(),
+            Page::Top => top_rows(&self.inputs()).len(),
             Page::Action(slot) => page_rows(slot, &current_action(config, slot)).len(),
             Page::Pad(_) => Button::ALL.len(),
             Page::Gestures(_) => GestureKind::ALL.len(),
             Page::Combos => combos(config).len() + 1,
-            Page::Combo(_) => Button::ALL.len() + 2,
+            Page::Combo(_) => self.inputs().len() + 2,
             Page::Layers => layers(config).len() + 1,
             Page::Keys(_) => buttons::KEY_PICKS.len() + 1,
             Page::MacroPick(..) => Button::ALL.len(),
             Page::Pick(_, p) => picker_names(config, p).len(),
             Page::MacroStick(_) => macros::STICK_STEPS,
-            Page::Layer(_) => Button::ALL.len(),
+            Page::Layer(_) => self.inputs().len(),
             Page::Macros => config.active_game().macros.len() + 1,
             Page::Macro(i) => macro_rows(config, i),
             Page::Stick(_) => values::STICK_ROWS + 1,
@@ -181,7 +195,7 @@ impl LayoutEditor {
                 EditStep::Changed
             }
             Page::Layer(i) => {
-                self.push(Page::Action(Slot::Layer(i, Button::ALL[self.cursor])));
+                self.push(Page::Action(Slot::Layer(i, self.inputs()[self.cursor])));
                 EditStep::Stay
             }
             Page::Macros => self.choose_macros_row(config),
@@ -255,7 +269,7 @@ impl LayoutEditor {
     }
 
     fn open_top_row(&mut self) -> EditStep {
-        let page = match top_rows()[self.cursor] {
+        let page = match top_rows(&self.inputs())[self.cursor] {
             Top::Button(b) => Page::Action(Slot::Button(b)),
             Top::Stick(s) => Page::Stick(s),
             Top::Trigger(t) => Page::Trigger(t),
@@ -408,17 +422,18 @@ impl LayoutEditor {
     }
 
     fn choose_combo_member(&mut self, i: usize, config: &mut Config) -> EditStep {
-        let members = Button::ALL.len();
+        let inputs = self.inputs();
+        let members = inputs.len();
         match self.cursor {
             row if row < members => {
-                let b = Button::ALL[row];
+                let b = inputs[row];
                 let Some(profile) = active_profile_mut(config) else { return EditStep::Stay };
                 let Some(combo) = profile.combos.get_mut(i) else { return EditStep::Stay };
                 if let Some(at) = combo.buttons.iter().position(|&x| x == b) {
                     combo.buttons.remove(at);
                 } else {
                     combo.buttons.push(b);
-                    combo.buttons.sort_by_key(|x| Button::ALL.iter().position(|y| y == x));
+                    combo.buttons.sort_by_key(|x| inputs.iter().position(|y| y == x));
                 }
                 EditStep::Changed
             }
@@ -445,7 +460,7 @@ impl LayoutEditor {
         let style = config.active_menu_style().clone();
         let profile = config.active();
         let (items, hint) = match self.page {
-            Page::Top => (top_rows().into_iter().map(|row| top_item(row, config)).collect(), "A change · B back"),
+            Page::Top => (top_rows(&self.inputs()).into_iter().map(|row| top_item(row, config)).collect(), "A change · B back"),
             Page::Action(slot) => {
                 let current = current_action(config, slot);
                 (page_rows(slot, &current).into_iter().map(|row| ItemView { keyword: action_row_keyword(row), ..item(action_row_label(row, &current)) }).collect(), "A choose · B back")
@@ -460,7 +475,7 @@ impl LayoutEditor {
                 rows.push(add_item("Add combo".into()));
                 (rows, "A open · B back")
             }
-            Page::Combo(i) => combo_page(config, i),
+            Page::Combo(i) => combo_page(config, i, &self.inputs()),
             Page::Layers => {
                 let mut rows: Vec<ItemView> = layers(config).iter().map(|l| item(format!("{} ({} bound)", l.name, l.buttons.len()))).collect();
                 rows.push(add_item("Add layer".into()));
@@ -470,7 +485,7 @@ impl LayoutEditor {
                 let rows = picker_names(config, p).into_iter().map(item).collect();
                 (rows, "A choose · B back")
             }
-            Page::Layer(i) => layer_page(config, i),
+            Page::Layer(i) => layer_page(config, i, &self.inputs()),
             Page::Keys(slot) => keys_page(config, slot),
             Page::MacroPick(..) => (Button::ALL.iter().map(|&b| button_item(b, String::new())).collect(), "A choose · B back"),
             Page::Macros => {

@@ -1008,7 +1008,6 @@ impl Daemon {
         self.overlay_sound(sound::SoundOverlay::Menu, Some(sound::Feedback::Open));
     }
 
-    /// Makes sure the (normally resident) overlay window process is running.
     /// Starts what runs beside the input loop: focus tracking, the overlay window (started now so
     /// menus appear instantly; it idles invisibly) and the tray icon.
     fn start_services(&mut self) {
@@ -1091,6 +1090,7 @@ impl Daemon {
         }
     }
 
+    /// Makes sure the (normally resident) overlay window process is running.
     fn ensure_overlay_process(&mut self) -> bool {
         if let Some(child) = &mut self.overlay_process
             && child.try_wait().ok().flatten().is_some()
@@ -2007,7 +2007,8 @@ impl Daemon {
         }
         log!("opening the settings menu");
         self.release_mappings();
-        self.active = Some(Active::Settings(SystemMenu::new(&self.config).on_page(page), device));
+        let paddles = self.devices.get(&device).is_some_and(|d| d.paddles);
+        self.active = Some(Active::Settings(SystemMenu::new(&self.config).with_paddles(paddles).on_page(page), device));
         self.broadcast_overlay();
         self.overlay_sound(sound::SoundOverlay::Menu, Some(sound::Feedback::Open));
     }

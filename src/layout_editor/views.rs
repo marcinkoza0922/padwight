@@ -9,9 +9,9 @@ use crate::{
 use super::{Top, values};
 use super::buttons::Slot;
 
-pub(super) fn combo_page(config: &Config, i: usize) -> (Vec<ItemView>, &'static str) {
+pub(super) fn combo_page(config: &Config, i: usize, inputs: &[Button]) -> (Vec<ItemView>, &'static str) {
     let combo = combos(config).get(i);
-    let mut rows: Vec<ItemView> = Button::ALL
+    let mut rows: Vec<ItemView> = inputs
         .iter()
         .map(|&b| {
             let member = combo.is_some_and(|c| c.buttons.contains(&b));
@@ -23,9 +23,9 @@ pub(super) fn combo_page(config: &Config, i: usize) -> (Vec<ItemView>, &'static 
     rows.push(remove_item("Delete combo".into()));
     (rows, "A toggle or change · B back")
 }
-pub(super) fn layer_page(config: &Config, i: usize) -> (Vec<ItemView>, &'static str) {
+pub(super) fn layer_page(config: &Config, i: usize, inputs: &[Button]) -> (Vec<ItemView>, &'static str) {
     let layer = layers(config).get(i);
-    let rows = Button::ALL
+    let rows = inputs
         .iter()
         .map(|&b| {
             let bound = layer.and_then(|l| l.buttons.get(&b)).map_or("not set".into(), ButtonAction::summary);
