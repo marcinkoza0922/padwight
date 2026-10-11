@@ -284,6 +284,19 @@ fn the_bumpers_jump_a_page_through_a_long_list() {
 }
 
 #[test]
+fn r3_pins_a_held_menu_until_the_opener_is_pressed_again() {
+    let menus = [menu("L", MenuKind::List, numbers(3))];
+    let mut s = MenuSession::open(&menus, "L", held_by(Button::LeftBumper)).unwrap();
+    let now = Instant::now();
+    assert!(s.view(&menus).unwrap().hint.contains("{r3} pin"));
+    press(&mut s, &menus, Button::RightStick);
+    assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), now), None, "stays up when let go");
+    assert!(s.view(&menus).unwrap().hint.contains("{lb} again"));
+    assert_eq!(chose(press(&mut s, &menus, Button::South)).as_deref(), Some("KEY_1"), "picks still work");
+    assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, true), now), Some(MenuOutcome::Close));
+}
+
+#[test]
 fn a_late_tick_steps_once() {
     let menus = [menu("L", MenuKind::List, numbers(8))];
     let mut s = MenuSession::open(&menus, "L", Opener::default()).unwrap();

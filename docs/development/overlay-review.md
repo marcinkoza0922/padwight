@@ -236,5 +236,5 @@ Tick an item when it's done and merged.
   short rumble pulse on picks (optional, per overlay like the sounds) would help with the sound
   off.
   - Done as one setting for every overlay (Controllers page), rather than one per overlay.
-- [ ] 47. **Pin a menu.** A toggle (say, R3 while the menu is up) to keep a held menu open after
+- [x] 47. **Pin a menu.** A toggle (say, R3 while the menu is up) to keep a held menu open after
   letting go, for when you want several picks without holding the opener.

@@ -19,6 +19,8 @@ const STICK_PRESS: f32 = crate::nav::STICK_PRESS;
 /// A menu nothing holds up (see [`Mode::Unwatched`]) closes after this long without input, so
 /// it can't keep the controller forever.
 const IDLE_CLOSE: Duration = Duration::from_secs(30);
+/// The button that pins a held menu open.
+const PIN: Button = Button::RightStick;
 /// Stick deflection from which a radial menu shows where the stick points.
 const AIM_SHOWN: f32 = 0.3;
 /// A trigger opener counts as let go below this.
@@ -303,9 +305,9 @@ impl MenuSession {
         let deep = self.stack.len() > 1;
         let opener = self.opener_label();
         let close = match (self.mode, radial) {
-            (Mode::Held, true) => format!("let go to choose · {cancel} cancel"),
-            (Mode::Held, false) if deep => format!("{cancel} back · let go to close"),
-            (Mode::Held, false) => format!("let go or {cancel} to close"),
+            (Mode::Held, true) => format!("let go to choose · {cancel} cancel · {{r3}} pin"),
+            (Mode::Held, false) if deep => format!("{cancel} back · let go to close · {{r3}} pin"),
+            (Mode::Held, false) => format!("let go or {cancel} to close · {{r3}} pin"),
             (Mode::Toggled, true) => format!("{opener} again to choose · {cancel} cancel"),
             (Mode::Toggled, false) if deep => format!("{cancel} back · {opener} again to close"),
             (Mode::Toggled, false) => format!("{opener} again or {cancel} to close"),
@@ -404,6 +406,13 @@ impl MenuSession {
     }
 
     fn button_pressed(&mut self, menus: &[Menu], menu: &Menu, b: Button, now: Instant) -> Option<MenuOutcome> {
+        // R3 pins a held menu: it stays up once let go, as a toggled one does, until the opener
+        // is pressed again or B closes it.
+        if b == PIN && self.mode == Mode::Held && !uses(menu, b, self.mode) {
+            self.mode = Mode::Toggled;
+            self.armed = !self.opener_down;
+            return None;
+        }
         // The cancel button backs out of a submenu, or closes the menu at the top. A menu that
         // can't be let go of always needs it; one that can be lets the menu use it first (a
         // button menu's item, a face-button slot).
