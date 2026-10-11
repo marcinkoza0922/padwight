@@ -106,6 +106,10 @@ impl Daemon {
         let mut managed = self.new_managed(path.clone().into(), name, pad, Arc::new(AtomicBool::new(false)));
         managed.family = model.map(crate::info::PadModel::family);
         managed.model = model;
+        // A model with a touchpad has one here too: the session sends its fingers with the rest.
+        if model.is_some_and(crate::info::PadModel::has_touchpad) {
+            managed.touchpad = Some(path.clone().into());
+        }
         managed.recorded = Some(Vec::new());
         self.add_managed(id, managed);
         // What it output while settling into the active profile isn't what a test asks about.
@@ -122,6 +126,7 @@ impl Daemon {
             match ev {
                 DebugEvent::Button(b, down) => batch.push(InputEvent::Button(b, down)),
                 DebugEvent::Axis(axis, v) => batch.push(InputEvent::Axis(axis, v)),
+                DebugEvent::Touchpad(ev) => batch.push(InputEvent::Touchpad(ev)),
                 DebugEvent::Motion { gyro, ms } => {
                     // Motion goes in order with the buttons around it.
                     if !batch.is_empty() {
@@ -173,6 +178,7 @@ impl Daemon {
                 rumble: false,
                 gyro: true,
                 paddles: false,
+                touchpad: d.touchpad.is_some(),
                 family: d.family,
                 model: d.model,
             })

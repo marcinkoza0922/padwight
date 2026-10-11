@@ -25,7 +25,7 @@ use crate::{
         Analog, Appearance, Button, ButtonAction, CarouselControls, Cluster, Combo, Config, Feature, Game, GestureKind, GRID_MAX, GyroActivation,
         CurrentInput, GyroConfig, GyroHorizontal, GyroInput, GyroMode, InfoOverlay, ItemKind, LogOverlay, Macro, MacroStep, Menu, MenuItem,
         MenuKind, MenuKindTag, MouseButton, OverlayStyle, Paint, Profile, ProfileRef, Rule, RuleKind, ScopeRef,
-        ScreenPosition, Stick, StickAction, StickConfig, Toggled, Trigger, TriggerAction, WheelDirection, Zone, free_name,
+        ScreenPosition, Stick, StickAction, StickConfig, Toggled, TouchSlot, TouchpadConfig, Trigger, TriggerAction, WheelDirection, Zone, free_name,
     },
     engine::Opener,
     motion::{MotionStyle, OverlayKind},
@@ -64,6 +64,7 @@ mod sliders;
 mod sticks;
 mod style_editor;
 mod tab_icons;
+mod touchpad;
 mod tracking;
 mod triggers;
 mod widgets;
@@ -324,6 +325,8 @@ enum Target {
     StickResponse(Stick),
     /// Sector `.1` of a stick's button ring.
     RingSector(Stick, usize),
+    /// The touchpad's click or a swipe.
+    Touch(TouchSlot),
 }
 
 /// Open-card indices after item `i` is removed: later items move up one place.
@@ -390,6 +393,7 @@ enum Message {
     CalibrateGyro(String),
     CopyMotionRuleCommand,
     SetGyro(GyroConfig),
+    SetTouchpad(TouchpadConfig),
     Guide(guide_tab::GuideMsg),
     SetRequires(Vec<Feature>),
     AddCombo,
@@ -1013,6 +1017,10 @@ impl App {
                 self.profile_tab = ProfileTab::Sticks;
                 Task::none()
             }
+            Target::Touch(_) => {
+                self.profile_tab = ProfileTab::Touchpad;
+                Task::none()
+            }
             _ => Task::none(),
         }
     }
@@ -1305,7 +1313,7 @@ mod tests {
     }
 
     pub(super) fn device(name: &str, analog_triggers: bool, ignored: bool) -> ipc::DeviceInfo {
-        ipc::DeviceInfo { name: name.into(), path: String::new(), managed: !ignored, ignored, analog_triggers, rumble: true, gyro: false, paddles: false, family: None, model: None }
+        ipc::DeviceInfo { name: name.into(), path: String::new(), managed: !ignored, ignored, analog_triggers, rumble: true, gyro: false, paddles: false, touchpad: false, family: None, model: None }
     }
 
     pub(super) fn snapshot(buttons: &[Button], right_stick: (f32, f32)) -> InputSnapshot {
@@ -1320,6 +1328,8 @@ mod tests {
             right_trigger: 0.0,
             gyro: None,
             gyro_out: None,
+            touches: Vec::new(),
+            touch_click: false,
         }
     }
 

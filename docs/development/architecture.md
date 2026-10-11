@@ -67,12 +67,12 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 
 | Path | Responsibility |
 |---|---|
-| `input.rs`, `input/touchpad.rs` | evdev → normalized input. Handles xpad's swapped X/Y labels. |
+| `input.rs`, `input/touchpad.rs` | evdev → normalized input. Handles xpad's swapped X/Y labels. Touchpads report each finger by its contact slot, at 0..1 across the pad. |
 | `engine.rs` | Per-device mapping state for the active profile. One of the largest files; its tests are in the same file. |
 | `engine/stick.rs` | Sticks: gamepad feeds, zones, mouse and scroll output, rings. |
 | `engine/flick.rs` | Flick stick. |
-| `engine/touchpad.rs` | Touchpad click and finger-to-mouse movement. |
-| `menu.rs` | On-screen menus: all controller input while one is open. |
+| `engine/touchpad.rs` | Touchpad fingers, each on the side of the pad it landed on: mouse (tap, two-finger scroll, gliding), a virtual stick, menu zones and swipes, and the click. Menu zones never take the controller: the engine picks the item and the daemon shows the menu in the overlay. |
+| `menu.rs` | On-screen menus: all controller input while one is open. `menu/touch.rs` lays a menu out on the touchpad: which item is under a finger, and the overlay's view of it. |
 | `offer.rs` | The "add this game from the library?" panel when Guide is tapped over an unknown game. |
 | `system_menu.rs` | The Guide + Start menu over the game: Quick Settings and Edit Controls. See [in-game-editor.md](in-game-editor.md). |
 | `layout_editor.rs` | The Edit Controls page of that menu: button actions of the active profile. |
@@ -110,6 +110,7 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | `debug/window.rs` | The iced window: clickable virtual controller plus every model's drawing. |
 | `pad_svg/hit.rs` | Which part of a model's drawing a point falls on, for clicking. |
 | `pad_widget.rs` | The drawing as an iced widget, shared with the settings window. |
+| `touchpad_widget.rs` | The touchpad as a picture (each side's job, a menu's zones, the fingers), shared by the Touchpad tab and the debug window, where it can be dragged on. |
 
 **Testing mappings end to end.** Run `padwight daemon --debug` (stop the service first, or give the test daemon its own `XDG_RUNTIME_DIR` and `XDG_CONFIG_HOME`), then `padwight debug --headless --attach`. The daemon treats the virtual controller like a real one: the active profile's mappings, layers, menus and overlays all react, and `padwight debug output` lists what the mappings produced (`key KEY_A down`, `pad South up`, `mouse-move 3 -2`, ...). That output is only recorded; `--live` also sends it to the real virtual keyboard, mouse and pad. Mapping actions that aren't output (screenshots, recording, force quit, the on-screen keyboard) happen either way, which is why the daemon needs `--debug`. A `--debug` daemon saves screenshots and recordings under `$TMPDIR/padwight-debug-<uid>/` (the same `Screenshots/<game>/` layout) instead of Pictures and Videos. Each command returns once the daemon has handled its input, so `expect output ...` right after `press ...` doesn't race. `padwight debug detach-all` removes a controller a crashed session left behind. `padwight debug identify <name|auto>` forces every virtual pad on a `--debug` daemon to present as another controller, whatever the game and the controller say; `auto` goes back to choosing.
 
@@ -142,7 +143,7 @@ Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000
 | Path | Responsibility |
 |---|---|
 | `gui.rs` | The iced application shell: state, messages, and the daemon connection. The sidebar and game pages are in `gui/games.rs`. |
-| `gui/profile.rs` | The profile editor (buttons, sticks and triggers, combos, gyro) and the controller drawing. Shared with the Layers tab. |
+| `gui/profile.rs` | The profile editor (buttons, sticks and triggers, combos, gyro) and the controller drawing. Shared with the Layers tab. `gui/touchpad.rs` is its Touchpad tab. |
 | `gui/actions.rs` | The action editor, including nested Multi, Toggle and Turbo. |
 | `gui/layers.rs` | The Layers tab. |
 | `gui/items.rs` | Macros, menus and info overlays: cards and editors. |

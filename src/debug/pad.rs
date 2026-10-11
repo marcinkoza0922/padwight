@@ -3,7 +3,7 @@
 use crate::{
     config::{Button, Stick, Trigger},
     info::{PadFamily, PadModel},
-    input::Axis,
+    input::{Axis, DUALSENSE_HEIGHT, DUALSHOCK4_HEIGHT, TouchpadEvent},
     ipc::{DebugEvent, InputSnapshot},
 };
 
@@ -19,6 +19,9 @@ pub struct VirtualPad {
     left_trigger: f32,
     right_trigger: f32,
     gyro: Option<[f32; 3]>,
+    /// Fingers on the touchpad, each at (x, y) 0..1 across it, in the order they landed.
+    touches: Vec<(u8, (f32, f32))>,
+    touch_click: bool,
     /// Changes not yet sent to the daemon, while a controller is injected there.
     pending: Option<Vec<DebugEvent>>,
 }
@@ -41,6 +44,8 @@ impl VirtualPad {
             left_trigger: 0.0,
             right_trigger: 0.0,
             gyro: None,
+            touches: Vec::new(),
+            touch_click: false,
             pending: None,
         }
     }
@@ -60,6 +65,10 @@ impl VirtualPad {
         }
         for trigger in [Trigger::Left, Trigger::Right] {
             self.set_trigger(trigger, 0.0);
+        }
+        self.set_touch_click(false);
+        for (finger, _) in self.touches.clone() {
+            self.lift(finger);
         }
         self.gyro = None;
     }
@@ -85,6 +94,10 @@ impl VirtualPad {
             if self.trigger(trigger) != 0.0 {
                 events.push(DebugEvent::Axis(trigger_axis(trigger), self.trigger(trigger)));
             }
+        }
+        events.extend(self.touches.iter().map(|&(finger, at)| self.touch_event(finger, at)));
+        if self.touch_click {
+            events.push(DebugEvent::Touchpad(TouchpadEvent::Click(true)));
         }
         events
     }
@@ -158,6 +171,50 @@ impl VirtualPad {
         }
     }
 
+    /// The touchpad's height in widths: a DualShock 4's pad is wider than the others.
+    pub fn touchpad_height(&self) -> f32 {
+        if self.model == Some(PadModel::DualShock4) { DUALSHOCK4_HEIGHT } else { DUALSENSE_HEIGHT }
+    }
+
+    fn touch_event(&self, finger: u8, (x, y): (f32, f32)) -> DebugEvent {
+        DebugEvent::Touchpad(TouchpadEvent::Touch { finger, x, y, height: self.touchpad_height() })
+    }
+
+    /// Puts `finger` on the touchpad at (x, y), each held to 0..1 across it, or moves it there.
+    pub fn touch(&mut self, finger: u8, (x, y): (f32, f32)) {
+        let at = (x.clamp(0.0, 1.0), y.clamp(0.0, 1.0));
+        match self.touches.iter_mut().find(|(n, _)| *n == finger) {
+            Some((_, was)) if *was == at => return,
+            Some((_, was)) => *was = at,
+            None => self.touches.push((finger, at)),
+        }
+        self.queue([self.touch_event(finger, at)]);
+    }
+
+    /// Lifts `finger` off the touchpad.
+    pub fn lift(&mut self, finger: u8) {
+        if self.touches.iter().any(|(n, _)| *n == finger) {
+            self.touches.retain(|(n, _)| *n != finger);
+            self.queue([DebugEvent::Touchpad(TouchpadEvent::Lift { finger })]);
+        }
+    }
+
+    pub fn touches(&self) -> &[(u8, (f32, f32))] {
+        &self.touches
+    }
+
+    /// Clicks the touchpad down, or lets the click go.
+    pub fn set_touch_click(&mut self, down: bool) {
+        if self.touch_click != down {
+            self.touch_click = down;
+            self.queue([DebugEvent::Touchpad(TouchpadEvent::Click(down))]);
+        }
+    }
+
+    pub fn touch_click(&self) -> bool {
+        self.touch_click
+    }
+
     /// Degrees per second of pitch, yaw and roll; `None` is a pad that isn't turning.
     pub fn set_gyro(&mut self, rates: Option<[f32; 3]>) {
         self.gyro = rates;
@@ -177,6 +234,8 @@ impl VirtualPad {
             right_trigger: self.right_trigger,
             gyro: self.gyro,
             gyro_out: None,
+            touches: self.touches.iter().map(|(_, at)| *at).collect(),
+            touch_click: self.touch_click,
         }
     }
 }
@@ -257,6 +316,31 @@ mod tests {
             ]
         );
         assert!(pad.take_events().is_empty());
+    }
+
+    #[test]
+    fn fingers_land_move_and_lift_and_reset_lifts_them() {
+        let mut pad = VirtualPad::of(Some(PadModel::DualShock4));
+        pad.track_events();
+        pad.touch(0, (0.25, 2.0));
+        pad.touch(0, (0.25, 2.0));
+        pad.touch(1, (0.75, 0.5));
+        pad.set_touch_click(true);
+        assert_eq!(pad.snapshot().touches, [(0.25, 1.0), (0.75, 0.5)]);
+        pad.reset();
+        let touch = |finger, x, y| DebugEvent::Touchpad(TouchpadEvent::Touch { finger, x, y, height: DUALSHOCK4_HEIGHT });
+        assert_eq!(
+            pad.take_events(),
+            [
+                touch(0, 0.25, 1.0),
+                touch(1, 0.75, 0.5),
+                DebugEvent::Touchpad(TouchpadEvent::Click(true)),
+                DebugEvent::Touchpad(TouchpadEvent::Click(false)),
+                DebugEvent::Touchpad(TouchpadEvent::Lift { finger: 0 }),
+                DebugEvent::Touchpad(TouchpadEvent::Lift { finger: 1 }),
+            ]
+        );
+        assert!(pad.touches().is_empty());
     }
 
     #[test]

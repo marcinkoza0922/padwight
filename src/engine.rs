@@ -11,7 +11,8 @@ use evdev::KeyCode;
 
 use crate::{
     config::{
-        Analog, Button, ButtonAction, GUIDE_LAYER, GestureKind, MOUSE_LAYER, Macro, MacroStep, Menu, Profile, Stick, StickAction, Toggled, Trigger, TriggerAction,
+        Analog, Button, ButtonAction, GUIDE_LAYER, GestureKind, MOUSE_LAYER, Macro, MacroStep, Menu, Profile, Stick, StickAction, SwipeDirection, Toggled, TouchSide,
+        Trigger, TriggerAction,
     },
     input::{Axis, InputEvent},
     output::OutEvent,
@@ -43,8 +44,10 @@ const GUIDE_REPEAT_RATE: Duration = Duration::from_millis(125);
 enum Source {
     Button(Button),
     Trigger(Trigger),
-    /// The touchpad's click.
-    Touchpad,
+    /// The touchpad's click, with the first finger down on this side of the pad.
+    TouchClick(TouchSide),
+    /// A swipe across this side of the pad.
+    TouchSwipe(TouchSide, SwipeDirection),
     /// An active combo, identified by its sorted member buttons.
     Combo(Vec<Button>),
     /// A held double/triple-tap or long-press action.
@@ -74,7 +77,7 @@ impl Source {
         use crate::inputlog::FiredFrom;
         Some(match self {
             Source::Button(b) | Source::Gesture(b) => FiredFrom::Button(*b),
-            Source::Touchpad => FiredFrom::Touchpad,
+            Source::TouchClick(_) | Source::TouchSwipe(..) => FiredFrom::Touchpad,
             Source::Combo(members) => FiredFrom::Combo(members.clone()),
             Source::Trigger(t) | Source::Zone(Analog::Trigger(t), _) => FiredFrom::Trigger(*t),
             Source::Zone(Analog::Stick(s), _) | Source::RingSector(s, _) => FiredFrom::Stick(*s),
@@ -153,11 +156,10 @@ pub struct Engine {
     guide_repeat: Option<(Button, Instant)>,
     mouse_acc: (f32, f32),
     scroll_acc: (f32, f32),
-    /// Sub-pixel pointer movement from the touchpad, not yet sent.
-    touchpad_acc: (f32, f32),
-    /// When the finger last moved, and its smoothed speed (pad widths/second), for the
-    /// touchpad's acceleration curve.
-    touchpad_speed: (Option<Instant>, f32),
+    /// Fingers on the touchpad and what they are doing.
+    touch: touchpad::TouchState,
+    /// The menus the touchpad can lay out (see [`Engine::set_menus`]).
+    menus: Arc<Vec<Menu>>,
     /// Smoothed position of each mouse stick whose response smooths it, until it settles at rest.
     stick_smooth: HashMap<Stick, (f32, f32)>,
     /// Seconds each mouse stick has been held at full deflection, for acceleration.
@@ -375,6 +377,11 @@ impl Engine {
     pub fn set_macros(&mut self, macros: &[Macro]) {
         self.macro_defs = macros.iter().map(|m| (m.name.clone(), Arc::new(compile_macro(m)))).collect();
         self.macro_ms = macros.iter().map(|m| (m.name.clone(), m.duration_ms())).collect();
+    }
+
+    /// Replaces the menus a touchpad in menu mode can lay out (the active game's, from the config).
+    pub fn set_menus(&mut self, menus: &[Menu]) {
+        self.menus = Arc::new(menus.to_vec());
     }
 
     /// Runs a macro's operations until it has to wait or it ends. Each pass ends by releasing
@@ -1047,7 +1054,11 @@ impl Engine {
                 inputs.push((Source::Trigger(t), action));
             }
         }
-        inputs.push((Source::Touchpad, &profile.touchpad.click));
+        for &side in profile.touchpad.sides() {
+            inputs.push((Source::TouchClick(side), profile.touchpad.click(side)));
+            let swipes = SwipeDirection::ALL.into_iter().filter_map(|d| profile.touchpad.motion(side).swipe(d).map(|a| (Source::TouchSwipe(side, d), a)));
+            inputs.extend(swipes);
+        }
         for a in [Analog::Stick(Stick::Left), Analog::Stick(Stick::Right), Analog::Trigger(Trigger::Left), Analog::Trigger(Trigger::Right)] {
             inputs.extend(profile.zones(a).iter().enumerate().map(|(i, z)| (Source::Zone(a, i), &z.action)));
         }
@@ -1170,6 +1181,7 @@ impl Engine {
         self.sticks_need_tick(profile)
             || !self.turbo.is_empty()
             || !self.macros_running.is_empty()
+            || self.touch.gliding()
             || self.held.values().any(|a| !a.wheel_directions().is_empty())
     }
 
@@ -1179,6 +1191,7 @@ impl Engine {
         self.tick_wheel(dt, out);
         self.tick_turbo(dt, out);
         self.tick_macros(dt, out);
+        self.tick_touch(dt, out);
     }
 
     /// Keeps scrolling for wheel actions held past the repeat delay.
@@ -1263,6 +1276,7 @@ impl Engine {
         // Pad axes were centered above; forget what fed them. Tilt tracking carries on.
         self.pad_sticks.clear();
         self.gyro.reset();
+        self.touch.reset();
     }
 
     /// Re-applies current analog state under a (new) profile, e.g. after switching.

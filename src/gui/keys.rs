@@ -218,6 +218,7 @@ impl App {
                     Target::Gesture(b, kind) => p.gestures.get_mut(&b).and_then(|g| g.slot(kind).as_mut()),
                     Target::Zone(a, i) => p.zones_mut(a).get_mut(i).map(|z| &mut z.action),
                     Target::RingSector(st, i) => p.stick_mut(st).action.ring_actions_mut().get_mut(i),
+                    Target::Touch(slot) => p.touchpad.slot_mut(slot),
                     // Handled above, outside any profile.
                     Target::MacroStep(..) | Target::MenuItem(..) | Target::StickResponse(_) => None,
                 };

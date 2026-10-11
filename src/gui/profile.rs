@@ -14,6 +14,7 @@ pub(super) enum ProfileTab {
     Sticks,
     Combos,
     Gyro,
+    Touchpad,
     Guide,
 }
 
@@ -28,6 +29,7 @@ pub(super) struct Ui<'a> {
     pub(super) analog_triggers: bool,
     pub(super) any_gyro: bool,
     pub(super) any_paddles: bool,
+    pub(super) any_touchpad: bool,
     /// Live stick positions (left, right) for previews, when a controller is connected.
     pub(super) live_sticks: Option<[(f32, f32); 2]>,
     /// The gyro's live output and recent aim, for the Gyro tab's pictures.
@@ -43,6 +45,12 @@ pub(super) struct Ui<'a> {
     pub(super) swap: Swap,
     /// Set while editing a layer: the profile shown is the layer over `base`.
     pub(super) layer: Option<LayerMarks<'a>>,
+    /// The menus the profile can use, for the touchpad's picture.
+    pub(super) menus: Vec<&'a Menu>,
+    /// Fingers on the touchpad of the controller in use, and whether it is clicked.
+    pub(super) live_touch: Option<(Vec<(f32, f32)>, bool)>,
+    /// The touchpad's height in widths, for its picture.
+    pub(super) touchpad_height: f32,
 }
 
 /// A layer being edited, over the profile it's compared with.
@@ -61,6 +69,7 @@ pub(super) enum LayerPart {
     /// A trigger's action and zones.
     Trigger(Trigger),
     Gyro,
+    Touchpad,
 }
 
 impl LayerMarks<'_> {
@@ -73,6 +82,7 @@ impl LayerMarks<'_> {
             LayerPart::Trigger(Trigger::Left) => l.left_trigger.is_some(),
             LayerPart::Trigger(Trigger::Right) => l.right_trigger.is_some(),
             LayerPart::Gyro => l.gyro.is_some(),
+            LayerPart::Touchpad => l.touchpad.is_some(),
         }
     }
 }
@@ -286,6 +296,7 @@ pub(super) fn view_profile<'a>(p: &'a Profile, ui: &Ui, tab: ProfileTab, guide: 
             sections
         }
         ProfileTab::Guide => guide_tab::sections(p, guide, ui.layer.is_some()),
+        ProfileTab::Touchpad => touchpad::touchpad_sections(p, ui),
         ProfileTab::Gyro => {
             let mut sections = gyro::gyro_sections(p, ui);
             if ui.layer.is_none() {
@@ -330,7 +341,7 @@ pub(super) fn base_combos<'a>(marks: LayerMarks<'_>) -> Element<'a, Message> {
 }
 
 impl ProfileTab {
-    pub(super) const ALL: [ProfileTab; 5] = [ProfileTab::Buttons, ProfileTab::Sticks, ProfileTab::Combos, ProfileTab::Gyro, ProfileTab::Guide];
+    pub(super) const ALL: [ProfileTab; 6] = [ProfileTab::Buttons, ProfileTab::Sticks, ProfileTab::Combos, ProfileTab::Gyro, ProfileTab::Touchpad, ProfileTab::Guide];
 }
 
 impl fmt::Display for ProfileTab {
@@ -340,6 +351,7 @@ impl fmt::Display for ProfileTab {
             ProfileTab::Sticks => "Sticks & triggers",
             ProfileTab::Combos => "Combos",
             ProfileTab::Gyro => "Gyro",
+            ProfileTab::Touchpad => "Touchpad",
             ProfileTab::Guide => "Guide",
         })
     }
@@ -366,7 +378,7 @@ pub(super) fn newly_pressed(before: Option<&InputSnapshot>, now: &InputSnapshot)
 /// Where the profile's author says what it can't be played without. Never worked out from
 /// the settings: a profile that adds gyro aiming to a scheme that works without it leaves
 /// the box unticked.
-fn requirement_rows(p: &Profile, f: Feature) -> Vec<Element<'_, Message>> {
+pub(super) fn requirement_rows(p: &Profile, f: Feature) -> Vec<Element<'_, Message>> {
     let has = p.requires.contains(&f);
     let toggled = move |on: bool| {
         let mut all: Vec<Feature> = p.requires.iter().copied().filter(|x| *x != f).collect();
@@ -378,6 +390,11 @@ fn requirement_rows(p: &Profile, f: Feature) -> Vec<Element<'_, Message>> {
             "You decide this; it isn't detected. Tick it when the profile depends on the feature (for example a flick stick \
              setup that turns vertically with gyro). Leave it unticked when it only adds to a scheme that works without. \
              Players whose controller lacks a ticked feature aren't offered the profile, and Guide skips it."
+        }
+        Feature::Touchpad => {
+            "You decide this; it isn't detected. Tick it when the profile can't be played without the touchpad (a build menu \
+             that's only on the pad, say). Leave it unticked when the pad only adds a mouse or shortcuts to a scheme that works \
+             without it. Players whose controller has no touchpad aren't offered the profile, and Guide skips it."
         }
         Feature::BackPaddles => {
             "You decide this; it isn't detected. Tick it when the profile needs a paddle to be played (a jump that's only on \
@@ -643,6 +660,11 @@ impl App {
                     p.gyro = gyro;
                 }
             }
+            Message::SetTouchpad(touchpad) => {
+                if let Some(p) = self.profile_mut() {
+                    p.touchpad = touchpad;
+                }
+            }
             Message::EditProfile(name) => {
                 if let Some(i) = self.game().profiles.iter().position(|p| p.name == name) {
                     self.editing = i;
@@ -712,6 +734,11 @@ impl App {
                         }
                         Target::RingSector(st, i) => {
                             if let Some(a) = p.stick_mut(st).action.ring_actions_mut().get_mut(i) {
+                                *a = action;
+                            }
+                        }
+                        Target::Touch(slot) => {
+                            if let Some(a) = p.touchpad.slot_mut(slot) {
                                 *a = action;
                             }
                         }
@@ -789,7 +816,7 @@ impl App {
                     ProfileTab::Combos => {
                         (0..self.profile().map_or(0, |p| p.combos.len())).map(Target::Combo).collect()
                     }
-                    ProfileTab::Gyro | ProfileTab::Guide => Vec::new(),
+                    ProfileTab::Gyro | ProfileTab::Touchpad | ProfileTab::Guide => Vec::new(),
                 };
                 for t in targets {
                     if open {
@@ -925,7 +952,7 @@ impl App {
         let expandable = match self.profile_tab {
             ProfileTab::Buttons => true,
             ProfileTab::Combos => self.profile().is_some_and(|p| !p.combos.is_empty()),
-            ProfileTab::Sticks | ProfileTab::Gyro | ProfileTab::Guide => false,
+            ProfileTab::Sticks | ProfileTab::Gyro | ProfileTab::Touchpad | ProfileTab::Guide => false,
         };
         if expandable {
             tabs = tabs
@@ -942,6 +969,7 @@ impl App {
             analog_triggers: self.analog_triggers(),
             any_gyro: self.any_gyro(),
             any_paddles: self.any_paddles(),
+            any_touchpad: self.any_touchpad(),
             live_sticks: self.shown_input().map(|l| [l.left_stick, l.right_stick]),
             live_gyro: self.live.as_ref().and_then(|l| l.gyro_out),
             gyro_trail: &self.gyro_trail,
@@ -950,6 +978,9 @@ impl App {
             in_use: self.shown_pad().family,
             swap: self.swap_for(p),
             layer,
+            menus: self.config.scope_of(Some(self.game())).menus,
+            live_touch: self.shown_input().map(|l| (l.touches.clone(), l.touch_click)),
+            touchpad_height: if self.shown_pad().model == Some(PadModel::DualShock4) { crate::input::DUALSHOCK4_HEIGHT } else { crate::input::DUALSENSE_HEIGHT },
         };
         let guide = GuideView { notes: &self.guide_notes, family: ui.family, swap: ui.swap };
         col.push(view_profile(p, &ui, self.profile_tab, guide)).into()
@@ -1203,7 +1234,7 @@ mod tests {
         assert!(!app.finding, "one press ends find mode");
         assert_eq!((app.game_tab, app.profile_tab, app.found), (GameTab::Profiles, ProfileTab::Buttons, Some(Button::West)));
         let names = Names::default();
-        let ui = Ui { names: &names, expanded: &app.expanded, found: app.found, analog_triggers: true, any_gyro: false, any_paddles: false, live_sticks: None, live_gyro: None, gyro_trail: &app.gyro_trail, gyro_note: None, stick_probe: 1.0, family: PadFamily::default(), in_use: PadFamily::default(), swap: Swap::Off, layer: None };
+        let ui = Ui { names: &names, expanded: &app.expanded, found: app.found, analog_triggers: true, any_gyro: false, any_paddles: false, any_touchpad: false, live_sticks: None, live_gyro: None, gyro_trail: &app.gyro_trail, gyro_note: None, stick_probe: 1.0, family: PadFamily::default(), in_use: PadFamily::default(), swap: Swap::Off, layer: None, menus: Vec::new(), live_touch: None, touchpad_height: 0.5 };
         assert!(ui.is_open(Target::Button(Button::West)));
         // Presses while not finding don't move the editor.
         let _ = app.update(Message::LiveInput(Some(snapshot(&[Button::West, Button::North], (0.0, 0.0)))));

@@ -8,7 +8,7 @@ use crate::config::Button;
 
 mod touchpad;
 
-pub use touchpad::{TouchNormalizer, TouchpadEvent, is_touchpad};
+pub use touchpad::{DUALSENSE_HEIGHT, DUALSHOCK4_HEIGHT, TouchNormalizer, TouchpadEvent, is_touchpad};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum Axis {

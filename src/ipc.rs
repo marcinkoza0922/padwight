@@ -77,6 +77,8 @@ pub enum DebugEvent {
     Axis(Axis, f32),
     /// One motion reading: angular velocity in degrees/second (pitch, yaw, roll) over `ms`.
     Motion { gyro: [f32; 3], ms: u32 },
+    /// A finger on the touchpad, or its click.
+    Touchpad(crate::input::TouchpadEvent),
 }
 
 // One reply per connection, so the size difference doesn't matter.
@@ -215,6 +217,9 @@ pub struct DeviceInfo {
     /// Has back paddles.
     #[serde(default)]
     pub paddles: bool,
+    /// Its touchpad is paired with it.
+    #[serde(default)]
+    pub touchpad: bool,
     /// Whose button glyphs it uses, when it's recognized (for a managed controller).
     #[serde(default)]
     pub family: Option<crate::info::PadFamily>,
@@ -250,6 +255,12 @@ pub struct InputSnapshot {
     /// What the gyro is doing under the active profile, while it is live.
     #[serde(default)]
     pub gyro_out: Option<GyroOut>,
+    /// Fingers on the touchpad, each (x, y) 0..1 across it from its top left corner.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub touches: Vec<(f32, f32)>,
+    /// Whether the touchpad is clicked.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub touch_click: bool,
 }
 
 /// The gyro's live output, for the settings page's pictures.

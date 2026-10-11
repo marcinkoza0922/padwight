@@ -340,6 +340,7 @@ impl App {
             pads.iter().any(|d| match f {
                 pack::Feature::Gyro => d.gyro,
                 pack::Feature::BackPaddles => d.paddles,
+                pack::Feature::Touchpad => d.touchpad,
             })
         })
     }

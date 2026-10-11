@@ -196,7 +196,14 @@ scripts/kernel-test-docker.sh idle_           # H-7 (idle CPU)
 scripts/kernel-test-docker.sh process_        # D-0, process-scan switching
 scripts/kernel-test-docker.sh gui_            # U-0, the settings window under Xvfb
 scripts/kernel-test-docker.sh socket_fallback # I-9
+scripts/kernel-test-docker.sh debug_          # debug sessions against a --debug daemon (touchpad included)
 ```
+
+Things that have tripped up container runs:
+
+- **Stale builds across checkouts.** Every checkout is mounted at `/src` and shares the `padwight-kernel-target` volume, and Cargo rebuilds by file times. After a run from another checkout (a worktree of `HEAD`, say), files that are older than that build aren't rebuilt, and the run tests the other checkout's code. Check the test count, then `touch` the sources (or `docker volume rm padwight-kernel-target`) before trusting the result.
+- **A padwight daemon running on the host.** The container sees the host's `/dev/input`, so the host daemon's virtual keyboard is there too. `find_newest_node` (`tests/common/input.rs`) picks the highest event number, not the newest node, and the kernel reuses free numbers, so a test daemon's keyboard can get a lower number than the host's. The test then watches the wrong keyboard and times out waiting for a key (seen once in `debug_live_output_reaches_the_virtual_keyboard` and `debug_detaching_a_controller_lets_go_of_what_it_held`; reruns passed). Stopping the host service (`systemctl --user stop padwight`) avoids it until the helper picks the node that appeared after the daemon started.
+- Outside the container, the tests that read virtual devices need the account in the `input` group; the others only need `/dev/uinput`.
 
 Performance (not a pass/fail check). `scripts/profile.sh` runs `tests/profile` in a release build and writes one JSON file per measurement to `target/profile/`: press-to-output latency for the daemon's virtual pad, idle and under a 1 kHz stick flood; daemon CPU and memory, idle and under flood; daemon start-up, cold (no config, binary evicted from the page cache) and warm; and settings-window start-up with the daemon running. The latency figure excludes USB polling and the controller's own scan, since the test uses a uhid pad. When the run ends, `scripts/plot_profile.py` draws the charts (`target/profile/charts/*.png`) and `target/profile/report.html`, which pairs each chart with its numbers.
 

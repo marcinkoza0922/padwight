@@ -63,6 +63,12 @@ fn gyro() -> String {
     ))
 }
 
+/// A touchpad with a finger on it.
+fn touchpad() -> String {
+    let c = hex(INK);
+    svg_of(&format!("<rect x='3' y='6' width='18' height='12' rx='2.5' fill='none' stroke='{c}' stroke-width='2'/><circle cx='14' cy='12' r='2.5' fill='{c}'/>"))
+}
+
 /// The Guide button: a ring with a center dot.
 fn guide() -> String {
     let c = hex(INK);
@@ -106,6 +112,7 @@ impl ProfileTab {
             ProfileTab::Sticks => stick(),
             ProfileTab::Combos => chord(),
             ProfileTab::Gyro => gyro(),
+            ProfileTab::Touchpad => touchpad(),
             ProfileTab::Guide => guide(),
         };
         tab_svg(text)

@@ -1229,6 +1229,8 @@ pub struct Layer {
     pub right_trigger: Option<TriggerConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub gyro: Option<GyroConfig>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub touchpad: Option<TouchpadConfig>,
     /// While on, buttons the layer doesn't set do nothing (instead of keeping the profile's
     /// action), except ones that hold a layer themselves.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
@@ -1336,6 +1338,7 @@ impl Layer {
             left_trigger: None,
             right_trigger: None,
             gyro: None,
+            touchpad: None,
             swallow_unbound: false,
         }
     }
@@ -1381,6 +1384,9 @@ impl Layer {
         if let Some(g) = &self.gyro {
             p.gyro = g.clone();
         }
+        if let Some(t) = &self.touchpad {
+            p.touchpad = t.clone();
+        }
     }
 
     /// Every action it sets: buttons, gestures, combos, triggers and zones.
@@ -1398,6 +1404,7 @@ impl Layer {
             all.extend(s.zones.iter().map(|z| &z.action));
             all.extend(s.action.ring_actions());
         }
+        all.extend(self.touchpad.iter().flat_map(TouchpadConfig::actions));
         all
     }
 
@@ -1417,6 +1424,7 @@ impl Layer {
             all.extend(s.zones.iter_mut().map(|z| &mut z.action));
             all.extend(s.action.ring_actions_mut());
         }
+        all.extend(self.touchpad.iter_mut().flat_map(TouchpadConfig::actions_mut));
         all
     }
 
@@ -1426,7 +1434,7 @@ impl Layer {
             + self.gestures.len()
             + self.combos.len()
             + self.disabled_combos.len()
-            + [self.left_stick.is_some(), self.right_stick.is_some(), self.left_trigger.is_some(), self.right_trigger.is_some(), self.gyro.is_some()]
+            + [self.left_stick.is_some(), self.right_stick.is_some(), self.left_trigger.is_some(), self.right_trigger.is_some(), self.gyro.is_some(), self.touchpad.is_some()]
                 .into_iter()
                 .filter(|o| *o)
                 .count()
@@ -1509,15 +1517,17 @@ pub enum Refit {
 pub enum Feature {
     Gyro,
     BackPaddles,
+    Touchpad,
 }
 
 impl Feature {
-    pub const ALL: [Feature; 2] = [Feature::Gyro, Feature::BackPaddles];
+    pub const ALL: [Feature; 3] = [Feature::Gyro, Feature::BackPaddles, Feature::Touchpad];
 
     pub fn label(self) -> &'static str {
         match self {
             Feature::Gyro => "gyro",
             Feature::BackPaddles => "back paddles",
+            Feature::Touchpad => "touchpad",
         }
     }
 
@@ -1526,6 +1536,7 @@ impl Feature {
         match self {
             Feature::Gyro => "gyro controls won't work",
             Feature::BackPaddles => "paddle buttons won't work",
+            Feature::Touchpad => "touchpad controls won't work",
         }
     }
 }
@@ -1601,7 +1612,7 @@ impl Profile {
             all.extend(t.zones.iter().map(|z| &z.action));
         }
         all.extend(self.left_stick.zones.iter().chain(&self.right_stick.zones).map(|z| &z.action));
-        all.push(&self.touchpad.click);
+        all.extend(self.touchpad.actions());
         all.extend(self.left_stick.action.ring_actions().iter().chain(self.right_stick.action.ring_actions()));
         all
     }
@@ -1622,7 +1633,7 @@ impl Profile {
             all.extend(stick.zones.iter_mut().map(|z| &mut z.action));
             all.extend(stick.action.ring_actions_mut());
         }
-        all.push(&mut self.touchpad.click);
+        all.extend(self.touchpad.actions_mut());
         all
     }
 
@@ -2339,7 +2350,7 @@ fn rename_in(
             }
         })
     };
-    for p in profiles {
+    for p in profiles.iter_mut() {
         p.actions_mut().into_iter().for_each(&mut follow);
     }
     for m in menus {
@@ -2350,6 +2361,13 @@ fn rename_in(
     }
     for l in layers.iter_mut() {
         l.actions_mut().into_iter().for_each(&mut follow);
+    }
+    // Touchpads in menu mode name their menu outside any action.
+    if kind == ItemKind::Menu {
+        let pads = profiles.iter_mut().map(|p| &mut p.touchpad).chain(layers.iter_mut().filter_map(|l| l.touchpad.as_mut()));
+        for name in pads.flat_map(TouchpadConfig::menus_mut).filter(|n| *n == old) {
+            *name = new.to_string();
+        }
     }
     // An info overlay used as a layer's indicator follows its rename too.
     if kind == ItemKind::Info {
@@ -3440,5 +3458,8 @@ key_threshold = 0.2
         assert_eq!(toml::from_str::<Profile>(&text).unwrap(), p);
         assert!(!p.usable_with(&[Feature::Gyro]) && p.usable_with(&[Feature::BackPaddles]));
         assert_eq!(Feature::BackPaddles.label(), "back paddles");
+        let text = toml::to_string(&Profile { requires: vec![Feature::Touchpad], ..Profile::passthrough("t") }).unwrap();
+        assert!(text.contains("requires = [\"touchpad\"]"), "{text}");
+        assert!(!Profile { requires: vec![Feature::Touchpad], ..Profile::passthrough("t") }.usable_with(&[Feature::Gyro, Feature::BackPaddles]));
     }
 }

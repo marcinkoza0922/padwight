@@ -79,6 +79,9 @@ impl App {
         if before.gyro != after.gyro {
             layer.gyro = Some(after.gyro.clone());
         }
+        if before.touchpad != after.touchpad {
+            layer.touchpad = Some(after.touchpad.clone());
+        }
         if before.combos != after.combos {
             layer.combos = after.combos.clone();
         }
@@ -192,6 +195,7 @@ impl App {
                     LayerPart::Trigger(Trigger::Left) => layer.left_trigger = Some(base.left_trigger),
                     LayerPart::Trigger(Trigger::Right) => layer.right_trigger = Some(base.right_trigger),
                     LayerPart::Gyro => layer.gyro = Some(base.gyro),
+                    LayerPart::Touchpad => layer.touchpad = Some(base.touchpad),
                 }
             }
             Message::RevertInput(part) => {
@@ -207,6 +211,7 @@ impl App {
                     LayerPart::Trigger(Trigger::Left) => layer.left_trigger = None,
                     LayerPart::Trigger(Trigger::Right) => layer.right_trigger = None,
                     LayerPart::Gyro => layer.gyro = None,
+                    LayerPart::Touchpad => layer.touchpad = None,
                 }
             }
             Message::ToggleBaseCombo(key) => {
