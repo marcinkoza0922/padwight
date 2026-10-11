@@ -277,8 +277,10 @@ const STAGGER_ITEMS: f32 = 12.0;
 const NEVER: f32 = f32::INFINITY;
 /// An overlay closed this soon after a pick closed because of it...
 const PICK_WINDOW: f32 = 0.05;
-/// ...so it stays this long first, the item it picked lit, before its close plays.
-pub const PICK_HOLD: f32 = 0.12;
+/// ...so it stays this long first, the item it picked lit and blinking, before its close plays.
+pub const PICK_HOLD: f32 = 0.3;
+/// How many times the picked item blinks while it holds.
+const PICK_BLINKS: f32 = 2.0;
 
 /// How far along `curve` an event `elapsed` seconds ago is, when it takes `secs`.
 fn progress(elapsed: f32, secs: f32, curve: Curve) -> f32 {
@@ -374,6 +376,13 @@ impl Anim {
 
     /// How much a pick still flashes the item it landed on, 0 to 1.
     pub fn flash(&self) -> f32 {
+        // A pick that closes the overlay blinks its item through the hold, as strongly as the
+        // style's flash allows (not at all with motion off), so it's seen before the close.
+        let hold = self.timing.pick_hold();
+        if self.timing.picked < hold {
+            let wave = (self.timing.picked / hold * PICK_BLINKS * std::f32::consts::PI).sin();
+            return (2.0 * self.feel.flash).min(1.0) * wave * wave;
+        }
         let remaining = 1.0 - self.pick_progress();
         self.feel.flash * remaining * remaining
     }
@@ -685,6 +694,20 @@ mod tests {
         let (_, anim) = shown.shown(t1, &motion).next().unwrap();
         assert!(anim.timing.picked.abs() < 1e-3);
         assert!(anim.flash() > 0.9, "a fresh pick flashes at full strength");
+    }
+
+    #[test]
+    fn a_pick_that_closes_blinks_its_item_through_the_hold() {
+        let feel = MotionStyle::Subtle.feel();
+        let at = |picked: f32| Anim { feel, timing: Timing { opened: 1.0, closed: Some(picked - 0.01), moved: picked, picked, from: None } };
+        let peak = PICK_HOLD / (2.0 * PICK_BLINKS);
+        assert!(at(peak).flash() > 0.75, "bright at each blink's peak");
+        assert!(at(2.0 * peak).flash() < 0.05, "back to just lit between blinks");
+        assert!(at(3.0 * peak).flash() > 0.75, "and blinks again");
+        assert_eq!(at(peak).opacity(), 1.0, "fully shown while it blinks");
+        assert_eq!(at(peak).lit(true, false), 1.0);
+        let off = Anim { feel: MotionStyle::Off.feel(), ..at(peak) };
+        assert_eq!(off.flash(), 0.0, "with motion off it holds lit without blinking");
     }
 
     #[test]

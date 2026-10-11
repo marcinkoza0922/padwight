@@ -1,0 +1,76 @@
+enabled = true
+ignored_devices = []
+info_glyphs = "Xbox"
+
+[active]
+profile = "Gamepad"
+
+[auto_switch]
+enabled = false
+
+[auto_switch.default_profile]
+profile = "Gamepad"
+
+[keyboard_style]
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#16181c"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#30343c"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#2f5db0"
+opacity = 1.0
+
+[media_style]
+position = "top_center"
+scale = 1.0
+
+[media_style.background]
+color = "#16181c"
+opacity = 0.92
+
+[media_style.items]
+color = "#30343c"
+opacity = 0.95
+
+[media_style.selected]
+color = "#2f5db0"
+opacity = 1.0
+
+[menu_style]
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#16181c"
+opacity = 0.92
+
+[menu_style.items]
+color = "#30343c"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#2f5db0"
+opacity = 1.0
+
+[numpad_style]
+position = "bottom_center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#16181c"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#30343c"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#2f5db0"
+opacity = 1.0

@@ -24,6 +24,15 @@ The Overview page's **What's happening** section lists the last few profile swit
 
 They need a desktop that supports them: KDE Plasma, Sway, Hyprland or labwc. GNOME doesn't have the layer-shell they use. In a Flatpak, they don't show on Sway, labwc or Hyprland.
 
+## The on-screen keyboard shows the wrong letters
+
+The keyboard is labeled for the first layout your desktop is set to use. If it picks the wrong one, tell it yours, such as `de` or `fr(azerty)`. Run `systemctl --user edit padwight`, add these lines, save, and run `systemctl --user restart padwight`:
+
+```
+[Service]
+Environment=PADWIGHT_KEYBOARD_LAYOUT=de
+```
+
 ## Gyro does nothing on a PlayStation or Switch controller
 
 Those controllers' motion sensors need a permission rule of their own, which the README explains. Install it, then press **Calibrate gyro**.

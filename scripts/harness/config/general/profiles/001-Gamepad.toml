@@ -1,0 +1,84 @@
+name = "Gamepad"
+combos = []
+combo_window_ms = 60
+tap_window_ms = 250
+long_press_ms = 500
+
+[buttons.South]
+open_menu = "Directional"
+
+[buttons.East]
+open_menu = "Radial"
+
+[buttons.North]
+gamepad = "North"
+
+[buttons.West]
+gamepad = "West"
+
+[buttons.LeftBumper]
+gamepad = "LeftBumper"
+
+[buttons.RightBumper]
+gamepad = "RightBumper"
+
+[buttons.Select]
+gamepad = "Select"
+
+[buttons.Start]
+gamepad = "Start"
+
+[buttons.Guide]
+layer = "Guide"
+
+[buttons.LeftStick]
+gamepad = "LeftStick"
+
+[buttons.RightStick]
+gamepad = "RightStick"
+
+[buttons.DpadUp]
+gamepad = "DpadUp"
+
+[buttons.DpadDown]
+gamepad = "DpadDown"
+
+[buttons.DpadLeft]
+gamepad = "DpadLeft"
+
+[buttons.DpadRight]
+gamepad = "DpadRight"
+
+[left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.5
+
+[left_stick.action.gamepad]
+stick = "Left"
+invert_y = false
+
+[right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.5
+
+[right_stick.action.gamepad]
+stick = "Right"
+invert_y = false
+
+[left_trigger.action]
+gamepad = "Left"
+
+[right_trigger.action]
+gamepad = "Right"
+
+[gestures]
+
+[gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+activation = "always"
+noise_threshold = 1.0

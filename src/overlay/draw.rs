@@ -373,17 +373,19 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::in
 /// text badge (a stick's LS, say) is drawn as a small tag.
 fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, size: f32, fg: Color) -> Element<'a, M> {
     let font = c.font;
+    // Glyphs, badges and icons fade in and out with the label.
+    let fade = fg.a;
     let mut line = row![].spacing(size * 0.5).align_y(Alignment::Center);
     // The glyphs are sized from the label, which is 17 units when the scale is 1.
     for b in &item.buttons {
-        line = line.push(segment_element(&crate::info::button_glyph(*b, c.family, c.nintendo_layout), c, size / 17.0, 1.0));
+        line = line.push(segment_element(&crate::info::button_glyph(*b, c.family, c.nintendo_layout), c, size / 17.0, fade));
     }
     if let Some(b) = item.button.as_deref().filter(|b| !b.is_empty()) {
         line = line.push(
-            container(text(b.to_string()).font(font).size(size - 2.0).color(Color::BLACK))
+            container(text(b.to_string()).font(font).size(size - 2.0).color(Color::BLACK.scale_alpha(fade)))
                 .padding([1.0, size * 0.4])
-                .style(|_| container::Style {
-                    background: Some(Color::from_rgb(0.85, 0.87, 0.9).into()),
+                .style(move |_| container::Style {
+                    background: Some(Color::from_rgb(0.85, 0.87, 0.9).scale_alpha(fade).into()),
                     border: Border { radius: 5.0.into(), ..Border::default() },
                     ..container::Style::default()
                 }),
@@ -391,11 +393,11 @@ fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, si
     }
     if let Some(k) = item.keyword {
         let icon = iced::widget::svg::Handle::from_memory(crate::keyword_icon::svg(k).into_bytes());
-        line = line.push(iced::widget::svg(icon).width(size).height(size));
+        line = line.push(iced::widget::svg(icon).width(size).height(size).opacity(fade));
     }
     line = line.push(rich_text(label, c, size, fg));
     if item.submenu {
-        line = line.push(text("▸").font(font).size(size).color(Color { a: 0.7, ..fg }));
+        line = line.push(text("▸").font(font).size(size).color(fg.scale_alpha(0.7)));
     }
     line.into()
 }
@@ -481,10 +483,11 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
         colorblind: look.colorblind,
         ..colors(&m.style, font)
     };
+    let solid = c;
     let c = c.faded(look.anim.opacity());
     let s = m.style.scale.clamp(0.5, 2.0);
     let body: Element<'a, M> = match m.kind {
-        MenuKind::Radial { .. } => radial(m, c, s),
+        MenuKind::Radial { .. } => radial(m, solid, s),
         MenuKind::Directional { .. } => directional(m, c, s),
         MenuKind::List | MenuKind::Buttons => list(m, c, s),
         MenuKind::Carousel { .. } => carousel(m, c, s),

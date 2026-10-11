@@ -3101,14 +3101,19 @@ fn serve_client(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
 fn watch_overlay(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
     let (view_tx, view_rx) = mpsc::channel::<OverlayFrame>();
     tx.send(Msg::WatchOverlay(view_tx))?;
-    while let Ok(mut view) = view_rx.recv() {
-        while let Ok(newer) = view_rx.try_recv() {
-            view = newer;
-        }
-        let mut line = serde_json::to_string(&view)?;
-        line.push('\n');
-        if conn.write_all(line.as_bytes()).is_err() {
-            return Ok(());
+    while let Ok(first) = view_rx.recv() {
+        // Frames that came while the last was written: those a newer one stands in for are
+        // skipped, so a burst doesn't pile up, but each opening, closing and pick is sent.
+        let pending: Vec<OverlayFrame> = std::iter::once(first).chain(view_rx.try_iter()).collect();
+        for (i, view) in pending.iter().enumerate() {
+            if pending.get(i + 1).is_some_and(|newer| newer.stands_in_for(view)) {
+                continue;
+            }
+            let mut line = serde_json::to_string(view)?;
+            line.push('\n');
+            if conn.write_all(line.as_bytes()).is_err() {
+                return Ok(());
+            }
         }
     }
     Ok(())

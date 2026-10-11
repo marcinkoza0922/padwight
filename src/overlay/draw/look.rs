@@ -103,7 +103,7 @@ pub(super) fn item_outline(c: &Colors, selected: bool, lit: f32, radius: f32) ->
         Some((width, color)) => (width, lit_color(color)),
         // Plain items are bare, and only the selected one is outlined.
         None if c.look.plain => (if selected { 2.0 } else { 0.0 }, c.selected_text),
-        None => (if selected { 2.0 } else { 1.0 }, lit_color(Color { a: 0.12, ..c.item_text })),
+        None => (if selected { 2.0 } else { 1.0 }, lit_color(c.item_text.scale_alpha(0.12))),
     };
     Border { width, radius: radius.into(), color }
 }

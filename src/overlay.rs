@@ -93,6 +93,16 @@ pub struct OverlayFrame {
 }
 
 impl OverlayFrame {
+    /// Whether this frame can stand in for `older`, sent just before it, without the overlay
+    /// missing anything it animates: the same panel, or none, with the same pick. A panel opening
+    /// or closing, or a pick, must be seen even when the next frame follows at once, as the
+    /// close does after a pick that closes a menu.
+    pub fn stands_in_for(&self, older: &OverlayFrame) -> bool {
+        use crate::motion::Tracked;
+        let scene = |frame: &OverlayFrame| frame.active.as_ref().map(|view| (view.key(), view.pick()));
+        scene(self) == scene(older)
+    }
+
     /// Hands the frame's performance settings to every style in it, where the drawing reads them.
     fn apply_lite(&mut self) {
         let lite = self.lite;
@@ -530,7 +540,11 @@ mod ui {
     };
     use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
-    use super::{OverlayFrame, OverlayView, draw, fit::Fit};
+    use super::{
+        OverlayFrame, OverlayView, draw,
+        fit::Fit,
+        timing::{frame_summary, menu_log, timing_log, unix_ns},
+    };
     use crate::{
         config::ScreenPosition,
         info::InfoView,
@@ -629,7 +643,7 @@ mod ui {
     fn update(state: &mut Overlay, message: Message) -> Task<Message> {
         match message {
             Message::State(mut frame) => {
-                timing_log(&format!("recv {}", unix_ns()));
+                timing_log(&format!("recv {} {}", unix_ns(), frame_summary(&frame)));
                 frame.apply_lite();
                 let now = Instant::now();
                 let was_shown = state.shown();
@@ -699,25 +713,10 @@ mod ui {
         responsive(move |display| {
             let started = Instant::now();
             let built: Element<'_, Message> = stack(layers(state, display)).into();
-            timing_log(&format!("built {} {}", unix_ns(), started.elapsed().as_nanos()));
+            timing_log(&format!("built {} {} {}x{}", unix_ns(), started.elapsed().as_nanos(), display.width, display.height));
             built
         })
         .into()
-    }
-
-    /// Profiling only. When `PADWIGHT_OVERLAY_TIMING` names a file, each received frame and each
-    /// build of the overlay's widgets is appended to it, as `recv <ns>` and `built <ns> <build ns>`.
-    /// Unset, this does nothing; the file is opened per call, so it is only for measuring.
-    fn timing_log(entry: &str) {
-        use std::io::Write;
-        let Some(path) = std::env::var_os("PADWIGHT_OVERLAY_TIMING") else { return };
-        if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
-            let _ = writeln!(file, "{entry}");
-        }
-    }
-
-    fn unix_ns() -> u128 {
-        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_nanos())
     }
 
     /// The overlays on screen, sized for a display of `display`.
@@ -755,6 +754,7 @@ mod ui {
                         nintendo_layout: state.frame.nintendo_layout,
                         anim,
                     };
+                    menu_log(m, &anim);
                     let fit = Fit::of(&m.style, display);
                     draw::place(draw::menu_panel(m, font, look, &fit), &m.style, &fit, &anim)
                 }
@@ -807,6 +807,21 @@ mod ui {
         }
 
         #[test]
+        fn a_frame_stands_in_for_an_older_one_only_when_nothing_opened_closed_or_was_picked() {
+            let open = menu_frame(MotionStyle::Subtle);
+            let mut moved = open.clone();
+            let mut picked = open.clone();
+            if let (Some(OverlayView::Menu(m)), Some(OverlayView::Menu(p))) = (&mut moved.active, &mut picked.active) {
+                m.selected = Some(1);
+                p.picks = 1;
+            }
+            assert!(moved.stands_in_for(&open), "a cursor move can be skipped in a burst");
+            assert!(!picked.stands_in_for(&open), "the frame before a pick still shows");
+            assert!(!OverlayFrame::default().stands_in_for(&picked), "a pick isn't lost to the close after it");
+            assert!(!open.stands_in_for(&OverlayFrame::default()), "nor an opening");
+        }
+
+        #[test]
         fn a_menu_closed_by_a_pick_holds_its_pick_a_moment_even_with_motion_off() {
             let mut state = Overlay::new();
             let _ = update(&mut state, Message::State(menu_frame(MotionStyle::Off)));
@@ -836,7 +851,10 @@ mod ui {
 /// Drawing for overlays, generic over the message type so the settings GUI can show the
 /// same thing as a live preview.
 pub mod draw;
+#[cfg(test)]
+mod fade_frames;
 pub mod fit;
+mod timing;
 
 #[cfg(test)]
 mod tests {
