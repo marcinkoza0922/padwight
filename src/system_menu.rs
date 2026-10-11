@@ -52,8 +52,9 @@ enum Screen {
     Main,
     Quick,
     Editor(LayoutEditor),
-    /// Closing with changes not saved: save, discard, or keep editing.
-    Confirm,
+    /// Closing with changes not saved: save, discard, or keep editing, which goes back to the
+    /// screen (and cursor) the menu was being left from.
+    Confirm(Box<Screen>, usize),
 }
 
 /// One line of Quick Settings. Which ones show depends on the active profile.
@@ -136,7 +137,7 @@ impl SystemMenu {
         };
         match self.screen {
             Screen::Main => self.main_step(step, config),
-            Screen::Confirm => self.confirm_step(step),
+            Screen::Confirm(..) => self.confirm_step(step),
             Screen::Quick => self.quick_step(step, config),
             Screen::Editor(_) => self.editor_step(step, config),
         }
@@ -183,9 +184,36 @@ impl SystemMenu {
         if *self.saved == *config {
             return Some(if self.from_guide { Outcome::ReturnToGuide } else { Outcome::Close });
         }
-        self.screen = Screen::Confirm;
+        let left = std::mem::replace(&mut self.screen, Screen::Main);
+        self.screen = Screen::Confirm(Box::new(left), self.cursor);
         self.cursor = 0;
         None
+    }
+
+    /// Back from the unsaved-changes question to the screen it was asked on.
+    fn keep_editing(&mut self) {
+        if let Screen::Confirm(left, cursor) = std::mem::replace(&mut self.screen, Screen::Main) {
+            self.screen = *left;
+            self.cursor = cursor;
+        }
+    }
+
+    /// Whether the menu was opened from the Guide overlay, so leaving goes back to it.
+    pub fn from_guide(&self) -> bool {
+        self.from_guide
+    }
+
+    /// Puts the cursor back on Quick Settings' Profile row after a switch, whose rows may differ.
+    pub fn profile_switched(&mut self, config: &Config) {
+        if self.screen == Screen::Quick {
+            let rows = quick_rows(config);
+            self.cursor = rows.iter().position(|r| *r == Row::Profile).unwrap_or(0).min(rows.len().saturating_sub(1));
+        }
+    }
+
+    /// The breadcrumb for the menu's own pages: where it was opened from.
+    fn parent(&self) -> String {
+        if self.from_guide { "Guide" } else { "Menu" }.into()
     }
 
     fn confirm_step(&mut self, step: Step) -> Option<Outcome> {
@@ -198,12 +226,12 @@ impl SystemMenu {
                 0 => Some(Outcome::Save),
                 1 => Some(Outcome::Discard(self.saved.clone())),
                 _ => {
-                    self.back_to_main();
+                    self.keep_editing();
                     None
                 }
             },
             Step::Back => {
-                self.back_to_main();
+                self.keep_editing();
                 None
             }
             Step::Left | Step::Right => None,
@@ -269,8 +297,8 @@ impl SystemMenu {
         let style = config.active_menu_style().clone();
         match &self.screen {
             Screen::Main => main_page(style, self.cursor),
-            Screen::Editor(editor) => editor.view(config, &["Menu".to_string()]),
-            Screen::Confirm => MenuView {
+            Screen::Editor(editor) => editor.view(config, &[self.parent()]),
+            Screen::Confirm(..) => MenuView {
                 title: "Unsaved changes".into(),
                 kind: crate::config::MenuKind::List,
                 items: vec![
@@ -280,7 +308,7 @@ impl SystemMenu {
                 ],
                 selected: Some(self.cursor),
                 picks: 0,
-                crumbs: vec!["Menu".into()],
+                crumbs: vec![self.parent()],
                 hint: "A choose · B keep editing".into(),
                 style,
             },
@@ -290,7 +318,7 @@ impl SystemMenu {
                 items: quick_rows(config).into_iter().map(|row| ItemView { label: label(row, config), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0 }).collect(),
                 selected: Some(self.cursor),
                 picks: 0,
-                crumbs: vec!["Menu".into()],
+                crumbs: vec![self.parent()],
                 hint: "◀ ▶ change · A toggle or next · B back".into(),
                 style,
             },
@@ -584,7 +612,7 @@ mod tests {
         menu.handle(press(Button::East), &mut config);
         assert_eq!(menu.screen, Screen::Main);
         assert_eq!(menu.handle(press(Button::East), &mut config), None);
-        assert_eq!(menu.screen, Screen::Confirm);
+        assert!(matches!(menu.screen, Screen::Confirm(..)));
         // Keep editing goes back to the main page.
         menu.handle(press(Button::DpadDown), &mut config);
         menu.handle(press(Button::DpadDown), &mut config);
@@ -594,6 +622,38 @@ mod tests {
         menu.handle(press(Button::East), &mut config);
         menu.handle(press(Button::DpadDown), &mut config);
         assert_eq!(menu.handle(press(Button::South), &mut config), Some(Outcome::Discard(Box::new(saved.clone()))));
+    }
+
+    #[test]
+    fn keep_editing_goes_back_to_the_page_that_was_left() {
+        let mut config = mouse_config();
+        let saved = config.clone();
+        let mut menu = SystemMenu::new(&saved).on_page(Page::Quick);
+        assert_eq!(menu.view(&config).crumbs, ["Guide"], "opened from the Guide overlay");
+        menu.handle(press(Button::DpadDown), &mut config);
+        menu.handle(press(Button::South), &mut config);
+        assert_eq!(menu.handle(press(Button::East), &mut config), None, "unsaved, so it asks");
+        assert!(matches!(menu.screen, Screen::Confirm(..)));
+        assert_eq!(menu.view(&config).crumbs, ["Guide"]);
+        menu.handle(press(Button::East), &mut config);
+        assert_eq!(menu.screen, Screen::Quick, "B keeps editing on Quick Settings");
+        assert_eq!(menu.cursor, 1, "on the row it was on");
+    }
+
+    #[test]
+    fn a_profile_switch_keeps_the_cursor_on_the_profile_row() {
+        let mut config = mouse_config();
+        config.general.profiles.truncate(1);
+        let mut other = config.general.profiles[0].clone();
+        other.name = "Other".into();
+        other.left_stick.action = StickAction::Disabled;
+        config.general.profiles.push(other);
+        let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
+        menu.cursor = quick_rows(&config).len() - 1;
+        let Some(Outcome::Switch(target)) = menu.handle(press(Button::South), &mut config) else { panic!("no switch") };
+        config.active = target;
+        menu.profile_switched(&config);
+        assert_eq!(quick_rows(&config)[menu.cursor], Row::Profile, "fewer rows now, still on Profile");
     }
 
     #[test]

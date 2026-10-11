@@ -35,23 +35,23 @@ Tick an item when it's done and merged.
   back one level, or closes the menu at the top" (`docs/manual/menus.md:15`). Either make cancel
   go back one level in every mode, closing only at the top in toggled mode, or fix the manual.
   The hint line never mentions B for held menus either.
-- [ ] 4. **Quick Settings cursor runs past the end after a profile switch.** The Profile row is
+- [x] 4. **Quick Settings cursor runs past the end after a profile switch.** The Profile row is
   last. If the next profile has fewer rows (no mouse stick, no gyro mouse), `self.cursor` points
   past the end, so nothing is highlighted and left, right and A do nothing until the cursor moves
   (`src/system_menu.rs:413`, `quick_step`). Clamp the cursor after `Outcome::Switch`, or keep it
   on the Profile row.
-- [ ] 5. **"Keep editing" lands on a page the player never opened.** Opened from the Guide
+- [x] 5. **"Keep editing" lands on a page the player never opened.** Opened from the Guide
   overlay (Quick Settings or Edit Controls), leaving with unsaved changes shows the prompt, and
   both "Keep editing" and B call `back_to_main()` (`src/system_menu.rs:214`). That drops you on
   the Guide + Start "Menu" page instead of the page you were on. Remember the screen (and the
   editor's state) before `Confirm` and return to it.
-- [ ] 6. **Edit Controls from the Guide overlay, with nothing to edit, also lands on "Menu".**
+- [x] 6. **Edit Controls from the Guide overlay, with nothing to edit, also lands on "Menu".**
   `edit_controls()` refuses outside a game with no focused window and calls `back_to_main()`
   (`src/daemon.rs:2071`). From the Guide overlay that opens the Guide + Start main page. It
   should go back to the Guide overlay, with the toast.
-- [ ] 7. **Breadcrumbs say "Menu" even when you came from the Guide overlay.**
+- [x] 7. **Breadcrumbs say "Menu" even when you came from the Guide overlay.**
   (`src/system_menu.rs:272`, `283`, `293`). They should say "Guide" there.
-- [ ] 8. **Toggling the Nintendo layout outside a game is probably lost** (*verify*). The first
+- [x] 8. **Toggling the Nintendo layout outside a game is probably lost** (*verify*). The first
   Quick Settings change outside a game moves the edited *profile* into a new pack
   (`pack_from_general`, `src/daemon.rs:2083`) and puts General back as it was. The Nintendo
   layout is set on the *game*, so General's copy is undone and the new pack never gets it.

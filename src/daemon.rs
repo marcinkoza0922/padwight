@@ -2044,13 +2044,14 @@ impl Daemon {
                 self.close_overlay();
                 return true;
             }
-            Some(SystemOutcome::Switch(target)) => self.switch_profile(target, "Chosen in the in-game menu"),
-            Some(SystemOutcome::ReturnToGuide) => {
-                self.close_overlay();
-                if let Some(dev) = self.devices.get_mut(&device) {
-                    dev.engine.open_guide_overlay();
+            Some(SystemOutcome::Switch(target)) => {
+                self.switch_profile(target, "Chosen in the in-game menu");
+                if let Some(Active::Settings(menu, _)) = &mut self.active {
+                    menu.profile_switched(&self.config);
                 }
-                self.engine_changed(device);
+            }
+            Some(SystemOutcome::ReturnToGuide) => {
+                self.return_to_guide(device);
                 return true;
             }
             None => {}
@@ -2058,17 +2059,31 @@ impl Daemon {
         false
     }
 
-    /// Moves what General's active profile is into a new pack for the window in front, and puts
-    /// General back as `general` was. Returns false, changing nothing, without a window: there is
-    /// nothing to name the pack after, so the change stays in General.
+    /// Closes the Guide + Start menu and puts the Guide overlay it was opened from back up.
+    fn return_to_guide(&mut self, device: u64) {
+        self.close_overlay();
+        if let Some(dev) = self.devices.get_mut(&device) {
+            dev.engine.open_guide_overlay();
+        }
+        self.engine_changed(device);
+    }
+
     /// Edit Controls was chosen. Outside a game it makes the window's pack first. `false` when
-    /// there is nothing to edit: the menu goes back to its main page.
+    /// there is nothing to edit: the menu goes back to where it was opened from.
     fn edit_controls(&mut self) -> bool {
         // Outside any game there is no game to edit, and no window to name a pack after.
-        // Refuse, and go back to the menu's main page.
+        // Refuse, and go back to the menu's main page, or to the Guide overlay.
         if self.config.active_ref().game.is_none() && self.focused.is_none() {
-            if let Some(Active::Settings(menu, _)) = &mut self.active {
-                menu.back_to_main();
+            let back = match &mut self.active {
+                Some(Active::Settings(menu, device)) if menu.from_guide() => Some(*device),
+                Some(Active::Settings(menu, _)) => {
+                    menu.back_to_main();
+                    None
+                }
+                _ => None,
+            };
+            if let Some(device) = back {
+                self.return_to_guide(device);
             }
             self.say(vec!["Edit Controls needs a setup".into(), "Focus a game window first".into()]);
             return false;
@@ -2080,11 +2095,19 @@ impl Daemon {
         true
     }
 
+    /// Moves what General's active profile is into a new pack for the window in front, and puts
+    /// General back as `general` was. The pack keeps the game-wide choices General had, the
+    /// Nintendo layout included, as they were edited. Returns false, changing nothing, without a
+    /// window: there is nothing to name the pack after, so the change stays in General.
     fn pack_from_general(&mut self, general: Game) -> bool {
         let Some(window) = self.focused.clone() else { return false };
         let Some(edited) = self.config.active().cloned() else { return false };
+        let nintendo_layout = self.config.general.nintendo_layout;
         self.config.general = general;
         let at = self.config.add_game_for_window(&window, edited);
+        if let Some(game) = self.config.game_mut(at.game.as_deref()) {
+            game.nintendo_layout = nintendo_layout;
+        }
         log!("made a pack for {} from General", describe(&window));
         self.say(vec![format!("Made a pack: {}", at.game.as_deref().unwrap_or_default())]);
         self.set_profile(at, &format!("Made a pack for {}", describe(&window)));
