@@ -126,6 +126,7 @@ impl App {
             Message::PreviewSound(spec) => self.sounds.play(&spec),
             Message::SetKeyboardStyle(style) => self.config.keyboard_style = style,
             Message::SetFullKeyboard(full) => self.config.full_keyboard = full,
+            Message::SetRumbleStrength(strength) => self.config.rumble_strength = strength,
             Message::SetOverlayFont(font) => self.config.overlay_font = font,
             Message::SetColorblindTones(on) => self.config.colorblind_tones = on,
             Message::SetPerformance(performance) => self.config.performance = performance,

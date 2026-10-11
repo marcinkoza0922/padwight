@@ -2418,6 +2418,9 @@ pub struct Config {
     /// what typing into a game needs.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub full_keyboard: bool,
+    /// How strongly the controllers rumble, as a share of what games ask for (0 to 1).
+    #[serde(default = "full_rumble", skip_serializing_if = "is_full_rumble")]
+    pub rumble_strength: f32,
     #[serde(default = "default_numpad_style")]
     pub numpad_style: OverlayStyle,
     #[serde(default = "default_media_style")]
@@ -2470,6 +2473,14 @@ fn default_general() -> Game {
     Config::default().general
 }
 
+fn full_rumble() -> f32 {
+    1.0
+}
+
+fn is_full_rumble(strength: &f32) -> bool {
+    (*strength - 1.0).abs() < f32::EPSILON
+}
+
 impl Default for Config {
     fn default() -> Self {
         Config {
@@ -2485,6 +2496,7 @@ impl Default for Config {
             gyro_calibration: BTreeMap::new(),
             keyboard_style: OverlayStyle::keyboard(),
             full_keyboard: false,
+            rumble_strength: 1.0,
             numpad_style: OverlayStyle::numpad(),
             media_style: OverlayStyle::media(),
             menu_style: OverlayStyle::default(),

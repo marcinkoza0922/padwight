@@ -11,7 +11,7 @@ use std::{
     path::PathBuf,
     sync::{
         Arc, Mutex, MutexGuard,
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicU32, Ordering},
     },
     thread,
     time::Duration,
@@ -25,6 +25,26 @@ use evdev::{
 use crate::monitor::log;
 
 const POLL_TIMEOUT_MS: i32 = 200;
+
+/// How strongly rumble plays, in hundredths of what the game asks for: the config's rumble
+/// strength, which every controller's forwarding reads.
+static STRENGTH: AtomicU32 = AtomicU32::new(100);
+
+/// Sets how strongly rumble plays, from 0 (none) to 1 (as the game asks). Effects games upload
+/// from now on are scaled by it.
+pub fn set_strength(strength: f32) {
+    STRENGTH.store((strength.clamp(0.0, 1.0) * 100.0).round() as u32, Ordering::Relaxed);
+}
+
+/// A game's effect at the set strength: a rumble's motors turned down; other kinds as they are.
+fn at_strength(mut data: FFEffectData) -> FFEffectData {
+    let share = STRENGTH.load(Ordering::Relaxed);
+    if let FFEffectKind::Rumble { strong_magnitude, weak_magnitude } = &mut data.kind {
+        let scale = |m: u16| (u32::from(m) * share / 100) as u16;
+        (*strong_magnitude, *weak_magnitude) = (scale(*strong_magnitude), scale(*weak_magnitude));
+    }
+    data
+}
 
 /// Mirrors rumble from `pad` onto the device at `physical` until `stop` is set. Effects are
 /// erased from the physical device when the thread ends, which also stops any rumble.
@@ -131,7 +151,7 @@ fn run(pad: &Mutex<VirtualDevice>, physical: &PathBuf, stop: &AtomicBool) -> io:
                     // The game's EVIOCSFF blocks until `upload` is dropped, which ends the request.
                     let mut upload = lock(pad).process_ff_upload(ev)?;
                     let id = upload.effect_id();
-                    let data = upload.effect();
+                    let data = at_strength(upload.effect());
                     let result = match effects.get_mut(&id) {
                         Some(effect) => effect.update(data),
                         None => phys.upload_ff_effect(data).map(|effect| {

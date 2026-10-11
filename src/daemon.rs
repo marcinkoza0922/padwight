@@ -1038,6 +1038,7 @@ impl Daemon {
     /// Starts what runs beside the input loop: focus tracking, the overlay window (started now so
     /// menus appear instantly; it idles invisibly) and the tray icon.
     fn start_services(&mut self) {
+        rumble::set_strength(self.config.rumble_strength);
         let tx = self.tx.clone();
         focus::spawn(move |ev| {
             let _ = tx.send(Msg::Focus(ev));
@@ -2059,17 +2060,13 @@ impl Daemon {
         // Outside any game, General is what a change would land in: keep a copy so the change
         // can move into a new pack instead.
         let general = self.config.active_ref().game.is_none().then(|| self.config.general.clone());
-        let device = match self.active {
-            Some(Active::Settings(_, device)) => device,
-            _ => 0,
-        };
-        let (outcome, moved) = match &mut self.active {
-            Some(Active::Settings(menu, _)) => {
+        let (outcome, moved, device) = match &mut self.active {
+            Some(Active::Settings(menu, device)) => {
                 let before = menu.cursor();
                 let outcome = step(menu, &mut self.config);
-                (outcome, menu.cursor() != before)
+                (outcome, menu.cursor() != before, *device)
             }
-            _ => (None, false),
+            _ => (None, false, 0),
         };
         let picked = matches!(outcome, Some(SystemOutcome::Changed | SystemOutcome::EditControls | SystemOutcome::Switch(_)));
         self.overlay_sound(sound::SoundOverlay::Menu, sound::Feedback::of(picked, moved && outcome.is_none()));
@@ -2113,9 +2110,22 @@ impl Daemon {
                 self.return_to_guide(device);
                 return true;
             }
+            Some(SystemOutcome::RemappingOff) => {
+                self.remapping_off();
+                return true;
+            }
             None => {}
         }
         false
+    }
+
+    /// Quick Settings' Turn remapping off: closes the menu and lets go of every controller. It
+    /// isn't saved, like the menu's other changes until Save, so a restart turns it back on.
+    fn remapping_off(&mut self) {
+        self.close_overlay();
+        self.config.enabled = false;
+        self.release_devices(|_| true);
+        self.say(vec!["Remapping is off".into(), "Turn it back on from the tray or the settings window".into()]);
     }
 
     /// Closes the Guide + Start menu and puts the Guide overlay it was opened from back up.
@@ -2509,6 +2519,7 @@ impl Daemon {
     /// Recomputes what the active profile can use, after a config or game change.
     fn refresh_scope(&mut self) {
         self.scope = self.config.scope();
+        rumble::set_strength(self.config.rumble_strength);
         for dev in self.devices.values_mut() {
             dev.engine.set_macros(&self.scope.macros);
             dev.engine.set_menus(&self.scope.menus);

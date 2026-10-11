@@ -4,20 +4,15 @@
 
 use std::{collections::HashSet, time::Instant};
 
+mod quick;
+use quick::Row;
+
 use crate::{
     layout_editor::{EditStep, LayoutEditor},
-    config::{Button, Config, GyroMode, OverlayStyle, Profile, ProfileRef, Stick, StickAction},
+    config::{Button, Config, OverlayStyle, Profile, ProfileRef},
     input::{Axis, InputEvent},
     menu::{ItemView, MenuView, Tone},
 };
-
-/// One Quick Settings step multiplies or divides a value by this.
-const STEP: f32 = 1.1;
-/// With RB held, a step is this big instead.
-const BIG_STEP: f32 = 1.5;
-/// Stick speed in pixels per second, and gyro sensitivity in pixels per degree.
-const SPEED_RANGE: (f32, f32) = (10.0, 10_000.0);
-const SENSITIVITY_RANGE: (f32, f32) = (0.1, 1_000.0);
 
 /// What the menu asks the daemon to do after a choice.
 #[derive(Debug, Clone, PartialEq)]
@@ -36,6 +31,8 @@ pub enum Outcome {
     Discard(Box<Config>),
     /// Back to the Guide overlay, which the menu was opened from.
     ReturnToGuide,
+    /// Stop remapping altogether (Quick Settings' last row, chosen twice).
+    RemappingOff,
 }
 
 /// The page a menu opens on. The Guide overlay opens Quick Settings or Edit Controls directly.
@@ -54,20 +51,6 @@ enum Screen {
     /// Closing with changes not saved: save, discard, or keep editing, which goes back to the
     /// screen (and cursor) the menu was being left from.
     Confirm(Box<Screen>, usize),
-}
-
-/// One line of Quick Settings. Which ones show depends on the active profile.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Row {
-    /// Speed of a stick that moves the mouse.
-    StickSpeed(Stick),
-    GyroSensitivity,
-    /// Flips every Y inversion in the profile at once.
-    InvertY,
-    /// Next or previous profile of the active game.
-    Profile,
-    /// Button labels swapped to the Nintendo layout, for the active game.
-    NintendoLayout,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -98,6 +81,8 @@ pub struct SystemMenu {
     paddles: bool,
     /// RB is held: Quick Settings' numbers change in bigger steps.
     big_steps: bool,
+    /// Turn remapping off was chosen once; choosing it again does it.
+    remapping_armed: bool,
 }
 
 impl SystemMenu {
@@ -118,6 +103,7 @@ impl SystemMenu {
             saved: Box::new(saved.clone()),
             paddles: false,
             big_steps: false,
+            remapping_armed: false,
         }
     }
 
@@ -254,7 +240,7 @@ impl SystemMenu {
     /// Puts the cursor back on Quick Settings' Profile row after a switch, whose rows may differ.
     pub fn profile_switched(&mut self, config: &Config) {
         if self.screen == Screen::Quick {
-            let rows = quick_rows(config);
+            let rows = quick::rows(config, &self.saved);
             self.cursor = rows.iter().position(|r| *r == Row::Profile).unwrap_or(0).min(rows.len().saturating_sub(1));
         }
     }
@@ -293,12 +279,19 @@ impl SystemMenu {
     }
 
     fn quick_step(&mut self, step: Step, config: &mut Config) -> Option<Outcome> {
-        let rows = quick_rows(config);
+        let rows = quick::rows(config, &self.saved);
+        let armed = std::mem::take(&mut self.remapping_armed);
         match step {
             Step::Up | Step::Down => {
                 self.cursor = wrap(self.cursor, step, rows.len());
                 None
             }
+            // Turning remapping off takes a second press of A.
+            Step::Pick if rows.get(self.cursor) == Some(&Row::Remapping) && !armed => {
+                self.remapping_armed = true;
+                None
+            }
+            Step::Left | Step::Right if rows.get(self.cursor) == Some(&Row::Remapping) => None,
             Step::Back if self.from_guide => self.leave(config),
             Step::Back => {
                 self.screen = Screen::Main;
@@ -311,7 +304,7 @@ impl SystemMenu {
                     Step::Left => -1,
                     _ => 1,
                 };
-                adjust(row, dir, if self.big_steps { BIG_STEP } else { STEP }, config)
+                quick::adjust(row, dir, self.big_steps, config, &self.saved)
             }
         }
     }
@@ -365,7 +358,16 @@ impl SystemMenu {
             Screen::Quick => MenuView {
                 title: "Quick Settings".into(),
                 kind: crate::config::MenuKind::List,
-                items: quick_rows(config).into_iter().map(|row| ItemView { label: label(row, config, &self.saved), ..ItemView::plain() }).collect(),
+                items: quick::rows(config, &self.saved)
+                    .into_iter()
+                    .map(|row| {
+                        let label = match row {
+                            Row::Remapping if self.remapping_armed => "Press {south} again to turn remapping off".into(),
+                            row => quick::label(row, config, &self.saved),
+                        };
+                        ItemView { tone: if row == Row::Remapping { Tone::Remove } else { Tone::Normal }, label, ..ItemView::plain() }
+                    })
+                    .collect(),
                 selected: Some(self.cursor),
                 picks: 0,
                 crumbs: vec![self.parent()],
@@ -425,136 +427,6 @@ fn wrap(cursor: usize, step: Step, len: usize) -> usize {
     }
 }
 
-/// The rows Quick Settings shows for the active profile.
-fn quick_rows(config: &Config) -> Vec<Row> {
-    let mut rows = Vec::new();
-    if let Some(profile) = config.active() {
-        for (stick, cfg) in [(Stick::Left, &profile.left_stick), (Stick::Right, &profile.right_stick)] {
-            if matches!(cfg.action, StickAction::Mouse { .. }) {
-                rows.push(Row::StickSpeed(stick));
-            }
-        }
-        if matches!(profile.gyro.mode, GyroMode::Mouse { .. }) {
-            rows.push(Row::GyroSensitivity);
-        }
-        rows.push(Row::InvertY);
-    }
-    rows.push(Row::NintendoLayout);
-    if config.active_game().profiles.len() > 1 {
-        rows.push(Row::Profile);
-    }
-    rows
-}
-
-/// A row's label in `config`. A number changed since the menu opened says what it was in
-/// `saved`, so it's easy to get back to.
-fn label(row: Row, config: &Config, saved: &Config) -> String {
-    let profile = config.active();
-    let was = |now: String, then: Option<String>| match then {
-        Some(then) if then != now => format!("{now} (was {then})"),
-        _ => now,
-    };
-    match row {
-        Row::StickSpeed(stick) => {
-            let name = if stick == Stick::Left { "Left" } else { "Right" };
-            let speed = |c: &Config| {
-                c.active().and_then(|p| match &stick_config(p, stick).action {
-                    StickAction::Mouse { speed, .. } => Some(format!("{speed:.0} px/s")),
-                    _ => None,
-                })
-            };
-            format!("{name} stick speed: {}", was(speed(config).unwrap_or_default(), speed(saved)))
-        }
-        Row::GyroSensitivity => {
-            let sensitivity = |c: &Config| c.active().and_then(|p| p.gyro.sensitivity_label());
-            format!("Gyro sensitivity: {}", was(sensitivity(config).unwrap_or_default(), sensitivity(saved)))
-        }
-        Row::InvertY => {
-            let on = profile.is_some_and(inverted_y);
-            format!("Invert Y: {}", if on { "on" } else { "off" })
-        }
-        Row::Profile => format!("Profile: {}", config.active_ref().profile),
-        Row::NintendoLayout => format!("Nintendo button layout: {}", if config.active_nintendo_layout() { "on" } else { "off" }),
-    }
-}
-
-fn stick_config(profile: &Profile, stick: Stick) -> &crate::config::StickConfig {
-    if stick == Stick::Left { &profile.left_stick } else { &profile.right_stick }
-}
-
-/// Whether any of the profile's Y inversions is on.
-fn inverted_y(profile: &Profile) -> bool {
-    [&profile.left_stick, &profile.right_stick].into_iter().any(|s| match s.action {
-        StickAction::Gamepad { invert_y, .. } | StickAction::Mouse { invert_y, .. } | StickAction::Scroll { invert_y, .. } => invert_y,
-        _ => false,
-    }) || profile.gyro.invert_y
-}
-
-/// Every Y inversion in the profile, so one switch can set them all.
-fn y_flags(profile: &mut Profile) -> Vec<&mut bool> {
-    let mut flags = Vec::new();
-    for stick in [&mut profile.left_stick, &mut profile.right_stick] {
-        match &mut stick.action {
-            StickAction::Gamepad { invert_y, .. } | StickAction::Mouse { invert_y, .. } | StickAction::Scroll { invert_y, .. } => {
-                flags.push(invert_y);
-            }
-            _ => {}
-        }
-    }
-    flags.push(&mut profile.gyro.invert_y);
-    flags
-}
-
-/// Changes a row's value in the config by one step (`dir` is -1 or 1), or moves to the next
-/// profile.
-fn adjust(row: Row, dir: i32, step: f32, config: &mut Config) -> Option<Outcome> {
-    if let Row::Profile = row {
-        return next_profile(dir, config).map(Outcome::Switch);
-    }
-    if let Row::NintendoLayout = row {
-        // A game's own choice, so it's set on the game the menu is over, not on the profile.
-        let on = !config.active_nintendo_layout();
-        let at = config.active_ref();
-        config.game_mut(at.game.as_deref())?.nintendo_layout = Some(on);
-        return Some(Outcome::Changed);
-    }
-    let profile = active_profile_mut(config)?;
-    match row {
-        Row::StickSpeed(stick) => {
-            let cfg = if stick == Stick::Left { &mut profile.left_stick } else { &mut profile.right_stick };
-            let StickAction::Mouse { speed, .. } = &mut cfg.action else { return None };
-            *speed = scale(*speed, dir, step, SPEED_RANGE);
-        }
-        Row::GyroSensitivity => {
-            let GyroMode::Mouse { sensitivity } = &mut profile.gyro.mode else { return None };
-            *sensitivity = scale(*sensitivity, dir, step, SENSITIVITY_RANGE);
-        }
-        Row::InvertY => {
-            let flags = y_flags(profile);
-            let on = flags.iter().any(|f| **f);
-            for flag in flags {
-                *flag = !on;
-            }
-        }
-        Row::Profile | Row::NintendoLayout => {}
-    }
-    Some(Outcome::Changed)
-}
-
-fn scale(value: f32, dir: i32, step: f32, (low, high): (f32, f32)) -> f32 {
-    let factor = if dir < 0 { 1.0 / step } else { step };
-    (value * factor).clamp(low, high)
-}
-
-/// The profile after (or before) the active one in its game, wrapping around.
-fn next_profile(dir: i32, config: &Config) -> Option<ProfileRef> {
-    let at = config.active_ref();
-    let profiles = &config.active_game().profiles;
-    let i = profiles.iter().position(|p| p.name == at.profile)?;
-    let next = (i as i32 + dir).rem_euclid(profiles.len() as i32) as usize;
-    Some(ProfileRef::new(at.game.as_deref(), &profiles[next].name))
-}
-
 /// The profile the menu edits: the active one, in its game (or General).
 pub(crate) fn active_profile_mut(config: &mut Config) -> Option<&mut Profile> {
     let at = config.active_ref();
@@ -583,7 +455,7 @@ pub fn main_page(style: OverlayStyle, cursor: usize) -> MenuView {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::MouseResponse;
+    use crate::config::{MouseResponse, Stick, StickAction};
 
     fn press(b: Button) -> InputEvent {
         InputEvent::Button(b, true)
@@ -658,11 +530,12 @@ mod tests {
     fn quick_settings_only_lists_what_the_profile_uses() {
         let mut config = mouse_config();
         config.general.profiles.truncate(1);
-        assert_eq!(quick_rows(&config), [Row::StickSpeed(Stick::Left), Row::InvertY, Row::NintendoLayout]);
+        assert_eq!(quick::rows(&config, &config), [Row::StickSpeed(Stick::Left), Row::InvertY, Row::Deadzone(Stick::Left), Row::Deadzone(Stick::Right), Row::Rumble, Row::OverlaySize, Row::NintendoLayout, Row::Remapping]);
         // A second profile adds the profile switch.
         config.general.profiles.push(config.general.profiles[0].clone());
         config.general.profiles[1].name = "Other".into();
-        assert_eq!(quick_rows(&config), [Row::StickSpeed(Stick::Left), Row::InvertY, Row::NintendoLayout, Row::Profile]);
+        assert_eq!(quick::rows(&config, &config).last(), Some(&Row::Remapping));
+        assert!(quick::rows(&config, &config).contains(&Row::Profile));
     }
 
     #[test]
@@ -670,12 +543,12 @@ mod tests {
         let mut config = mouse_config();
         assert!(!config.active_nintendo_layout());
         // Picking the row turns it on for the game the menu is over, and leaves Settings alone.
-        assert_eq!(adjust(Row::NintendoLayout, 1, STEP, &mut config), Some(Outcome::Changed));
+        assert_eq!(quick::adjust(Row::NintendoLayout, 1, false, &mut config, &Config::default()), Some(Outcome::Changed));
         assert!(config.active_nintendo_layout());
         assert_eq!(config.general.nintendo_layout, Some(true));
         assert!(!config.nintendo_layout);
-        assert_eq!(label(Row::NintendoLayout, &config, &config), "Nintendo button layout: on");
-        assert_eq!(adjust(Row::NintendoLayout, 1, STEP, &mut config), Some(Outcome::Changed));
+        assert_eq!(quick::label(Row::NintendoLayout, &config, &config), "Nintendo button layout: on");
+        assert_eq!(quick::adjust(Row::NintendoLayout, 1, false, &mut config, &Config::default()), Some(Outcome::Changed));
         assert_eq!(config.general.nintendo_layout, Some(false));
     }
 
@@ -727,11 +600,11 @@ mod tests {
         other.left_stick.action = StickAction::Disabled;
         config.general.profiles.push(other);
         let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
-        menu.cursor = quick_rows(&config).len() - 1;
+        menu.cursor = quick::rows(&config, &config).iter().position(|r| *r == Row::Profile).unwrap();
         let Some(Outcome::Switch(target)) = menu.handle_now(press(Button::South), &mut config) else { panic!("no switch") };
         config.active = target;
         menu.profile_switched(&config);
-        assert_eq!(quick_rows(&config)[menu.cursor], Row::Profile, "fewer rows now, still on Profile");
+        assert_eq!(quick::rows(&config, &config)[menu.cursor], Row::Profile, "fewer rows now, still on Profile");
     }
 
     #[test]
@@ -792,11 +665,11 @@ mod tests {
         menu.handle_now(press(Button::DpadDown), &mut config);
         assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Changed));
         let profile = config.active().unwrap();
-        assert!(inverted_y(profile));
+        assert!(quick::inverted_y(profile));
         assert!(matches!(profile.left_stick.action, StickAction::Mouse { invert_y: true, .. }));
         assert!(profile.gyro.invert_y);
         menu.handle_now(press(Button::South), &mut config);
-        assert!(!inverted_y(config.active().unwrap()));
+        assert!(!quick::inverted_y(config.active().unwrap()));
     }
 
     #[test]

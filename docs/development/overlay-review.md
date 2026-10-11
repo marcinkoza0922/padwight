@@ -213,9 +213,10 @@ Tick an item when it's done and merged.
   triggers, gyro, combos, layers and macros, but not menus (add, rename or reorder items) or
   info overlays. Being able to add the item you just realized you need without alt-tabbing fits
   the in-game editor's goal.
-- [ ] 41. **More Quick Settings rows:** rumble strength, gyro on/off (and its button), trigger
+- [x] 41. **More Quick Settings rows:** rumble strength, gyro on/off (and its button), trigger
   dead zones, stick dead zones, overlay scale or opacity, and "Remapping on/off" (a panic switch
   to pass the raw pad through).
+  - Done except trigger dead zones: triggers have no dead zone setting to change.
 - [ ] 42. **System volume in media controls.** Now ▲▼ change the *player's* volume over MPRIS,
   which some players ignore. Offer the system's volume (PipeWire/Pulse) as an option or a second
   row. Album art next to the title would make the panel easier to recognize at a glance.
