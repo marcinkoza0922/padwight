@@ -132,6 +132,7 @@ impl App {
             Message::SetKeyboardStyle(style) => self.config.keyboard_style = style,
             Message::SetOverlayFont(font) => self.config.overlay_font = font,
             Message::SetColorblindTones(on) => self.config.colorblind_tones = on,
+            Message::SetPerformance(performance) => self.config.performance = performance,
             Message::SetMotion(kind, style) => self.config.motion.set(kind, style),
             Message::SetGameMotion(kind, style) => {
                 let mut set = self.game().motion.unwrap_or(self.config.motion);

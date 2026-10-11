@@ -1256,6 +1256,7 @@ impl Daemon {
             family: values.family,
             nintendo_layout: values.nintendo_layout,
             motion: self.config.active_motion(),
+            lite: self.config.performance.lite(),
         }
     }
 

@@ -119,7 +119,7 @@ mod tests {
             show_holds: true,
         };
         let feeds = Feeds { presses: feed.clone(), exports: feed.clone() };
-        let _ = app.update(Message::LiveFeed(Some(feeds.clone())));
+        let _ = app.update(Message::LiveFeed(Some(Box::new(feeds.clone()))));
         assert_eq!(app.feeds, Some(feeds));
         let _ = app.view();
 

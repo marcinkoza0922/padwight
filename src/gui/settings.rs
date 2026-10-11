@@ -3,6 +3,7 @@
 use iced::widget::{column, row};
 
 use super::*;
+use crate::config::Performance;
 
 /// An entry in the auto-switch "When no setup matches, use" list.
 #[derive(Debug, Clone, PartialEq)]
@@ -83,6 +84,43 @@ impl App {
         )
     }
 
+    /// What every overlay can go without, on machines where drawing them costs too much.
+    fn view_performance(&self) -> Element<'_, Message> {
+        let p = self.config.performance;
+        let switch = |on: bool, label: &'static str, what: &'static str, set: fn(&mut Performance, bool)| -> Element<'_, Message> {
+            column![
+                toggler(on).label(label).on_toggle(move |v| {
+                    let mut p = p;
+                    set(&mut p, v);
+                    Message::SetPerformance(p)
+                }),
+                note(what),
+            ]
+            .spacing(2)
+            .into()
+        };
+        let all = if p == Performance::lightest() {
+            button(text("Turn everything back on").size(13)).style(style::secondary).on_press(Message::SetPerformance(Performance::default()))
+        } else {
+            button(text("Turn everything off").size(13)).style(style::secondary).on_press(Message::SetPerformance(Performance::lightest()))
+        };
+        section(
+            "Performance",
+            Some(
+                "These apply to every overlay in every setup, whatever its own settings say. With a working \
+                 graphics card, motion is the main cost: overlays redraw every frame while something moves. \
+                 Without one (in a virtual machine, say), shadows and the other decorations cost the most."
+                    .into(),
+            ),
+            vec![
+                switch(p.still, "No motion", "Overlays appear, move and close at once. Redraws only when something changes.", |p, v| p.still = v),
+                switch(p.plain, "Plain overlays", "No shadows, outlines, gradients or glows, the default ones included.", |p, v| p.plain = v),
+                switch(p.quiet, "No sounds", "No overlay sounds, and the audio device is never opened.", |p, v| p.quiet = v),
+                all.into(),
+            ],
+        )
+    }
+
     pub(super) fn view_settings(&self) -> Element<'_, Message> {
         let glyphs = section(
             "Info overlays",
@@ -111,6 +149,7 @@ impl App {
             self.view_color_card(),
             self.view_motion_card(),
             self.view_default_sounds(),
+            self.view_performance(),
             self.view_keyboard_card(),
             self.view_numpad_card(),
             self.view_media_card(),
@@ -240,6 +279,18 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{gui::tests::with_game, motion::{MotionSet, MotionStyle}};
+
+    #[test]
+    fn performance_overrides_every_setups_motion_and_sounds() {
+        let mut app = with_game();
+        let _ = app.update(Message::SelectPage(Page::Game(Some("Doom".into()))));
+        let _ = app.update(Message::OwnGameMotion(true));
+        let _ = app.update(Message::SetPerformance(Performance { still: true, quiet: true, ..Performance::default() }));
+        assert_eq!(app.config.active_motion(), MotionSet::all(MotionStyle::Off));
+        assert_eq!(app.config.scope().sounds, app.config.sounds.silenced());
+        assert!(app.game().motion.is_some(), "the setup keeps its own motion for when performance allows it");
+    }
 
     #[test]
     fn motion_rule_command_installs_the_shipped_rule() {

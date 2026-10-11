@@ -20,8 +20,9 @@ use crate::config::{
 /// controller features they need (replacing the pack-wide list); 9, the media controls and
 /// in-game menu looks; 10, menu sounds, radial arcs and corner rounding; 11, how each overlay moves;
 /// 12, the sounds of each overlay (replacing the menu sounds); 13, back paddles (their button
-/// names and the `back_paddles` feature).
-pub const FORMAT: u32 = 13;
+/// names and the `back_paddles` feature); 14, overlay decorations (outlines, shadows, gradients,
+/// glows and text colors).
+pub const FORMAT: u32 = 14;
 pub const EXTENSION: &str = "padpack";
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -77,6 +77,26 @@ pub struct OverlayFrame {
     /// How each kind of overlay moves as it opens, closes, and as the cursor and picks move.
     #[serde(default)]
     pub motion: crate::motion::MotionSet,
+    /// What the performance settings cut from every overlay.
+    #[serde(default, skip_serializing_if = "crate::config::Lite::is_off")]
+    pub lite: crate::config::Lite,
+}
+
+impl OverlayFrame {
+    /// Hands the frame's performance settings to every style in it, where the drawing reads them.
+    fn apply_lite(&mut self) {
+        let lite = self.lite;
+        let styles = self.info.iter_mut().map(|v| &mut v.style).chain(self.logs.iter_mut().map(|v| &mut v.style));
+        let active = self.active.as_mut().map(|view| match view {
+            OverlayView::Keyboard(k) => &mut k.style,
+            OverlayView::Menu(m) => &mut m.style,
+            OverlayView::Media(m) => &mut m.style,
+            OverlayView::Offer(o) => &mut o.style,
+        });
+        for style in styles.chain(active) {
+            style.lite = lite;
+        }
+    }
 }
 
 /// The on-screen keyboard's (or numpad's) state.
@@ -533,8 +553,9 @@ mod ui {
 
     fn update(state: &mut Overlay, message: Message) -> Task<Message> {
         match message {
-            Message::State(frame) => {
+            Message::State(mut frame) => {
                 timing_log(&format!("recv {}", unix_ns()));
+                frame.apply_lite();
                 let now = Instant::now();
                 let was_shown = state.shown();
                 state.panels.update(now, frame.active.iter().cloned().collect());

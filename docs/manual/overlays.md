@@ -32,3 +32,9 @@ A small list of the buttons you pressed lately, and what each one did. It's usef
 Controls the music or video player that's running. The D-pad left and right seek, up and down change the volume, the bumpers change track, A plays or pauses, Y chooses the player, and B closes.
 
 > **Tip:** each overlay has its own position, size and colors. Set them on the App settings page.
+
+## Giving a game's overlays their own look
+
+Under each overlay's colors, **Decorations** lists extras that are off until you tick them: an outline around the panel, its shadow, a gradient that fades the background into a second color, an outline on every item, a glow around the selected item, and a color for the panel's text. A setup can have its own look on its Details tab, so a fantasy game's menus can glow gold on dark red while a shooter's stay flat and square.
+
+If overlays make your computer stutter, the Performance card on the App settings page turns decorations, motion and sounds off everywhere.

@@ -1,6 +1,6 @@
 # `.padpack` format reference
 
-A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 13**, the format the current app writes. For a walkthrough of building one, see [tutorial-deus-ex-pack.md](tutorial-deus-ex-pack.md). The shipped examples are in `packs/`.
+A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 14**, the format the current app writes. For a walkthrough of building one, see [tutorial-deus-ex-pack.md](tutorial-deus-ex-pack.md). The shipped examples are in `packs/`.
 
 The easiest way to write a pack is in the app, then **Details → Export…**. Read this page when you want to edit the file by hand, check a value, or understand what the export produced.
 
@@ -242,6 +242,40 @@ Menu kinds (`menus.kind`):
 | Grid | `[menus.kind.grid] columns = 4` | Up to 6 columns and 6 rows. |
 
 A menu item's `action` can be `open_menu = "Name"`, which opens a submenu. Radial menus can't open submenus. `style` also has `items` and `selected` paints, as in the example above. `corners` (0–1, default 0.4) sets how round boxes, keys and panels are: 0 is square and 1 is a circle wherever the shape allows.
+
+### Decorations
+
+Any overlay style (menus, the keyboard and numpad, media controls, info and log overlays, layer indicators) can also have decorations that give a game's overlays a look of their own. Each is optional, and a field left out of one takes the default shown. Sizes are pixels at scale 1 and grow with `scale`.
+
+```toml
+[menus.style.border]          # the panel's outline (default: a faint 1 px line)
+width = 2                     # 0 draws none
+color = "#c8a040"
+opacity = 1.0
+
+[menus.style.shadow]          # the panel's shadow (default: soft, dark, 6 px low)
+color = "#000000"
+opacity = 0.5                 # 0 draws none
+blur = 16
+x = 0                         # moves it right
+y = 0                         # moves it down
+
+[menus.style.gradient]        # the background fades into this color (default: one color)
+color = "#3a1010"
+opacity = 1.0
+angle = 180                   # degrees: 0 bottom to top, 90 left to right, 180 top to bottom
+
+[menus.style.item_border]     # every item's and key's outline (default: faint, 2 px on the selected one)
+width = 2                     # the selected item's turns its text color; 0 draws none at all
+color = "#806030"
+
+[menus.style.glow]            # a glow around the selected item (default: none)
+color = "#ffcc40"             # fields as for shadow; leave x and y at 0 for a glow
+opacity = 0.9
+blur = 30
+```
+
+`text = "#e8d8a8"` sets the color of the panel's own text (titles, hints, info overlay text) instead of white or near-black chosen to suit the background. Items keep their own. Radial menus drawn as arcs take the panel decorations but no item outline or glow. Decorations are format 14; older app versions can't read packs that use them. The player can turn them all off on the App settings page (Performance → Plain overlays).
 
 ## Macros
 

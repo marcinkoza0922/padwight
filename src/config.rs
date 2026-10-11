@@ -11,7 +11,9 @@ use crate::{motion::MotionSet, pad_identity::ControllerSupport, sound::SoundSet}
 
 mod guide;
 mod log;
+mod performance;
 mod store;
+mod style;
 mod summary;
 pub use summary::{Keyword, Piece};
 mod touchpad;
@@ -19,6 +21,9 @@ mod window_game;
 
 pub use guide::*;
 pub use log::*;
+pub use performance::Performance;
+pub use style::*;
+use style::{default_keyboard_style, default_media_style, default_menu_style, default_numpad_style};
 pub use touchpad::*;
 
 /// Normalized gamepad button, following the Linux gamepad spec (Documentation/input/gamepad.rst).
@@ -531,193 +536,6 @@ impl fmt::Display for ScreenPosition {
             ScreenPosition::BottomRight => "Bottom right",
         })
     }
-}
-
-/// A color (`#rrggbb`) with an opacity (0..1).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Paint {
-    pub color: String,
-    pub opacity: f32,
-}
-
-impl Paint {
-    pub fn new(color: &str, opacity: f32) -> Self {
-        Paint { color: color.into(), opacity }
-    }
-
-    /// The color as RGB, if `color` is a valid `#rrggbb`.
-    pub fn rgb(&self) -> Option<[u8; 3]> {
-        parse_hex(&self.color)
-    }
-}
-
-pub fn parse_hex(s: &str) -> Option<[u8; 3]> {
-    let hex = s.trim().strip_prefix('#')?;
-    if hex.len() != 6 {
-        return None;
-    }
-    let byte = |i: usize| u8::from_str_radix(hex.get(i..i + 2)?, 16).ok();
-    Some([byte(0)?, byte(2)?, byte(4)?])
-}
-
-/// How an overlay (a menu, or the on-screen keyboard) looks and where it sits.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct OverlayStyle {
-    #[serde(default)]
-    pub position: ScreenPosition,
-    /// Size relative to the default, 0.5..2.
-    #[serde(default = "default_scale")]
-    pub scale: f32,
-    #[serde(default = "default_background")]
-    pub background: Paint,
-    #[serde(default = "default_items")]
-    pub items: Paint,
-    #[serde(default = "default_selected")]
-    pub selected: Paint,
-    /// How round the corners are, 0..1: 0 is square, 1 is a circle wherever the shape allows.
-    #[serde(default = "default_corners", skip_serializing_if = "is_default_corners")]
-    pub corners: f32,
-    /// Width, as a percentage of the display. Unset, the overlay fits its contents.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub width: Option<f32>,
-    /// Length (height), as a percentage of the display. Unset, the overlay fits its contents.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub height: Option<f32>,
-    /// Moves the overlay right, as a percentage of the display's width (negative moves left).
-    #[serde(default, skip_serializing_if = "is_zero")]
-    pub x_offset: f32,
-    /// Moves the overlay down, as a percentage of the display's height (negative moves up).
-    #[serde(default, skip_serializing_if = "is_zero")]
-    pub y_offset: f32,
-    /// Widest the overlay may stretch, as a percentage of the display. Past it, contents wrap onto
-    /// the next line, and the overlay grows taller.
-    #[serde(default = "default_max_size", skip_serializing_if = "is_default_max_size")]
-    pub max_width: f32,
-    /// Tallest the overlay may grow, as a percentage of the display. Past it, contents scroll.
-    #[serde(default = "default_max_size", skip_serializing_if = "is_default_max_size")]
-    pub max_height: f32,
-}
-
-fn default_scale() -> f32 {
-    1.0
-}
-
-fn default_corners() -> f32 {
-    0.4
-}
-
-fn is_default_corners(corners: &f32) -> bool {
-    (corners - default_corners()).abs() < f32::EPSILON
-}
-
-/// Most of the display an overlay may cover, unless its style says less.
-fn default_max_size() -> f32 {
-    90.0
-}
-
-fn is_default_max_size(max: &f32) -> bool {
-    (max - default_max_size()).abs() < f32::EPSILON
-}
-
-fn default_background() -> Paint {
-    Paint::new("#16181c", 0.92)
-}
-
-fn default_items() -> Paint {
-    Paint::new("#30343c", 0.95)
-}
-
-fn default_selected() -> Paint {
-    Paint::new("#2f5db0", 1.0)
-}
-
-impl Default for OverlayStyle {
-    fn default() -> Self {
-        OverlayStyle {
-            position: ScreenPosition::Center,
-            scale: default_scale(),
-            background: default_background(),
-            items: default_items(),
-            selected: default_selected(),
-            corners: default_corners(),
-            width: None,
-            height: None,
-            x_offset: 0.0,
-            y_offset: 0.0,
-            max_width: default_max_size(),
-            max_height: default_max_size(),
-        }
-    }
-}
-
-impl OverlayStyle {
-    /// The on-screen keyboard's default: along the bottom of the screen.
-    pub fn keyboard() -> Self {
-        OverlayStyle { position: ScreenPosition::BottomCenter, ..OverlayStyle::default() }
-    }
-}
-
-impl OverlayStyle {
-    /// The on-screen numpad's default: bottom center, like the keyboard.
-    pub fn numpad() -> Self {
-        OverlayStyle { position: ScreenPosition::BottomCenter, ..OverlayStyle::default() }
-    }
-
-    /// The media controls: top center, like the notices.
-    pub fn media() -> Self {
-        OverlayStyle { position: ScreenPosition::TopCenter, ..OverlayStyle::default() }
-    }
-
-    /// A layer's name label: top center, small and see-through.
-    pub fn indicator() -> Self {
-        OverlayStyle {
-            position: ScreenPosition::TopCenter,
-            scale: 0.7,
-            background: Paint::new("#16181c", 0.7),
-            ..OverlayStyle::default()
-        }
-    }
-
-    /// Info overlays: top right, smaller and see-through so they can stay up during play.
-    pub fn info() -> Self {
-        OverlayStyle {
-            position: ScreenPosition::TopRight,
-            scale: 0.8,
-            background: Paint::new("#16181c", 0.7),
-            ..OverlayStyle::default()
-        }
-    }
-
-    /// A layer's generated cheat sheet: bottom left, see-through enough to play behind.
-    pub fn sheet() -> Self {
-        OverlayStyle {
-            position: ScreenPosition::BottomLeft,
-            scale: 0.8,
-            background: Paint::new("#16181c", 0.85),
-            ..OverlayStyle::default()
-        }
-    }
-
-    /// Notices such as the profile just switched to.
-    pub fn toast() -> Self {
-        OverlayStyle { position: ScreenPosition::TopCenter, background: Paint::new("#16181c", 0.85), ..OverlayStyle::default() }
-    }
-}
-
-fn default_keyboard_style() -> OverlayStyle {
-    OverlayStyle::keyboard()
-}
-
-fn default_numpad_style() -> OverlayStyle {
-    OverlayStyle::numpad()
-}
-
-fn default_media_style() -> OverlayStyle {
-    OverlayStyle::media()
-}
-
-fn default_menu_style() -> OverlayStyle {
-    OverlayStyle::default()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -2747,6 +2565,10 @@ pub struct Config {
     /// The sounds of each overlay, unless the active game sets its own.
     #[serde(default, skip_serializing_if = "SoundSet::is_default")]
     pub sounds: SoundSet,
+    /// What every overlay goes without, whatever the setups say: decorations, motion, sounds,
+    /// drawn glyphs.
+    #[serde(default, skip_serializing_if = "Performance::is_default")]
+    pub performance: Performance,
     /// Font of every overlay, menu and keyboard (a bundled or installed family); the system's
     /// own when unset.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -2779,6 +2601,7 @@ impl Default for Config {
             appearance: Appearance::Auto,
             motion: MotionSet::default(),
             sounds: SoundSet::default(),
+            performance: Performance::default(),
             gyro_calibration: BTreeMap::new(),
             keyboard_style: OverlayStyle::keyboard(),
             numpad_style: OverlayStyle::numpad(),
@@ -2886,7 +2709,7 @@ impl Config {
 
     /// How each overlay moves: the active game's own set, or the global one.
     pub fn active_motion(&self) -> MotionSet {
-        self.active_game().motion.unwrap_or(self.motion)
+        self.performance.motion(self.active_game().motion.unwrap_or(self.motion))
     }
 
     /// Like [`Config::active_keyboard_style`], for the in-game menu and Edit Controls.
@@ -3003,7 +2826,7 @@ impl Config {
             info: s.info.into_iter().cloned().collect(),
             logs: s.logs.into_iter().cloned().collect(),
             layers: s.layers.into_iter().cloned().collect(),
-            sounds: self.active_game().sounds.unwrap_or(self.sounds),
+            sounds: self.performance.sounds(self.active_game().sounds.unwrap_or(self.sounds)),
         }
     }
 

@@ -1,17 +1,22 @@
 //! Drawing the overlays: each panel as an iced element, sized by its style's `Fit` (see
 //! `fit.rs`) and laid out where its position puts it.
 
+mod glyphs;
 mod log_panel;
+mod look;
 mod radial;
 
 use std::f32::consts::TAU;
 
+pub use glyphs::icon_svg;
 pub use log_panel::log_panel;
 
+use glyphs::{segment_element, state_icon};
+use look::{Look, cell_style, lit_cell_style, panel_style};
 use radial::radial;
 
 use iced::{
-    Alignment, Border, Color, Element, Length, Padding, Shadow, Vector,
+    Alignment, Border, Color, Element, Length, Padding,
     alignment::{Horizontal, Vertical},
     widget::{column, container, progress_bar, row, scrollable, space, text},
 };
@@ -20,9 +25,9 @@ use iced::Font;
 use super::{KeyboardView, fit::Fit};
 use crate::{
     config::{MenuKind, OverlayStyle, Paint, ScreenPosition},
-    info::{Charge, FormFactor, Icon, InfoView, PadFamily, Segment},
+    info::{InfoView, Segment},
     keyboard, media,
-    media::{MediaView, PlayState},
+    media::MediaView,
     menu::MenuView,
     motion::Anim,
     offer::OfferView,
@@ -80,10 +85,8 @@ pub struct Colors {
     selected_text: Color,
     /// 0 square .. 1 round, from the style's corners setting.
     corners: f32,
+    look: Look,
 }
-
-/// Panels round to this radius at full corners; their size depends on their content.
-const PANEL_CORNER: f32 = 40.0;
 
 fn paint(p: &Paint, fallback: [u8; 3]) -> Color {
     let [r, g, b] = p.rgb().unwrap_or(fallback);
@@ -119,11 +122,6 @@ impl Colors {
     fn faded(self, opacity: f32) -> Colors {
         let f = |c: Color| Color { a: c.a * opacity.clamp(0.0, 1.0), ..c };
         Colors {
-            anim: self.anim,
-            font: self.font,
-            family: self.family,
-            nintendo_layout: self.nintendo_layout,
-            colorblind: self.colorblind,
             background: f(self.background),
             background_text: f(self.background_text),
             muted: f(self.muted),
@@ -131,7 +129,8 @@ impl Colors {
             item_text: f(self.item_text),
             selected: f(self.selected),
             selected_text: f(self.selected_text),
-            corners: self.corners,
+            look: self.look.faded(f),
+            ..self
         }
     }
 }
@@ -140,12 +139,12 @@ fn colors(style: &OverlayStyle, font: Font) -> Colors {
     let background = paint(&style.background, [0x16, 0x18, 0x1c]);
     let item = paint(&style.items, [0x30, 0x34, 0x3c]);
     let selected = paint(&style.selected, [0x2f, 0x5d, 0xb0]);
-    let background_text = text_on(background);
+    let background_text = style.text.as_deref().and_then(crate::config::parse_hex).map_or_else(|| text_on(background), |[r, g, b]| Color::from_rgb8(r, g, b));
     Colors {
         anim: Anim::still(),
         font,
         family: crate::info::PadFamily::default(),
-    nintendo_layout: false,
+        nintendo_layout: false,
         colorblind: false,
         background,
         background_text,
@@ -155,6 +154,7 @@ fn colors(style: &OverlayStyle, font: Font) -> Colors {
         selected,
         selected_text: text_on(selected),
         corners: style.corners,
+        look: Look::of(style, style.scale.clamp(0.5, 2.0), background_text),
     }
 }
 
@@ -209,15 +209,6 @@ fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, padding: impl Into<Padding
     boxed.into()
 }
 
-fn panel_style(c: Colors) -> impl Fn(&iced::Theme) -> container::Style {
-    move |_| container::Style {
-        background: Some(c.background.into()),
-        border: Border { width: 1.0, radius: (c.corners * PANEL_CORNER).into(), color: Color { a: 0.15, ..c.background_text } },
-        shadow: Shadow { color: Color { a: 0.35 * c.background.a, ..Color::BLACK }, offset: Vector::new(0.0, 6.0), blur_radius: 18.0 },
-        ..container::Style::default()
-    }
-}
-
 /// The colors of a row of this kind: adding rows are tinted green and removing ones red, so
 /// they stand out from the items they act on.
 fn toned(c: Colors, tone: crate::menu::Tone) -> Colors {
@@ -232,33 +223,6 @@ fn toned(c: Colors, tone: crate::menu::Tone) -> Colors {
     let mix = |a: f32, b: f32| a + (b - a) * share;
     let item = Color { r: mix(c.item.r, tint.r), g: mix(c.item.g, tint.g), b: mix(c.item.b, tint.b), a: c.item.a };
     Colors { item, item_text: text_on(item), ..c }
-}
-
-/// An item's box, `height` tall: its corners round by half of that at full corners, so a
-/// square cell becomes a circle.
-/// A cell whose colors already include its highlight (see `Colors::lit_item`).
-fn lit_cell_style(c: Colors, selected: bool, height: f32) -> impl Fn(&iced::Theme) -> container::Style {
-    move |_| container::Style {
-        background: Some(c.item.into()),
-        border: Border {
-            width: if selected { 2.0 } else { 1.0 },
-            radius: (c.corners * height / 2.0).into(),
-            color: if selected { c.selected_text } else { Color { a: 0.12, ..c.item_text } },
-        },
-        ..container::Style::default()
-    }
-}
-
-fn cell_style(c: Colors, selected: bool, height: f32) -> impl Fn(&iced::Theme) -> container::Style {
-    move |_| container::Style {
-        background: Some(if selected { c.selected } else { c.item }.into()),
-        border: Border {
-            width: if selected { 2.0 } else { 1.0 },
-            radius: (c.corners * height / 2.0).into(),
-            color: if selected { c.selected_text } else { Color { a: 0.12, ..c.item_text } },
-        },
-        ..container::Style::default()
-    }
 }
 
 /// An info overlay: its cells in a table, so the rows line up across the columns. A row is as
@@ -295,82 +259,6 @@ fn info_cell<'a, M: 'a>(segments: &[Segment], c: Colors, s: f32, opacity: f32) -
     line.wrap().vertical_spacing(2.0 * s).into()
 }
 
-/// One piece of an info overlay's line, or of a menu row's glyphs.
-fn segment_element<'a, M: 'a>(seg: &Segment, c: Colors, s: f32, opacity: f32) -> Element<'a, M> {
-    match seg {
-        Segment::Text(t) => Element::from(text(t.clone()).font(c.font).size(16.0 * s).color(c.background_text)),
-        Segment::Glyph { label, fill, round } => glyph(label, *fill, *round, c, s, opacity),
-        Segment::Dpad(lit) => dpad_glyph(*lit, c, s),
-        Segment::StickClick { right } => stick_click_glyph(*right, c, s),
-        Segment::Icon(icon) => icon_glyph(icon, c, s),
-    }
-}
-
-/// A cross-shaped D-pad with the pressed arms (`[up, down, left, right]`) lit.
-fn dpad_glyph<'a, M: 'a>([up, down, left, right]: [bool; 4], c: Colors, s: f32) -> Element<'a, M> {
-    let cell = 8.0 * s;
-    let arm = |on: bool| -> Element<'a, M> {
-        let color = if on { c.selected } else { c.item };
-        container(space())
-            .width(cell)
-            .height(cell)
-            .style(move |_: &iced::Theme| container::Style {
-                background: Some(color.into()),
-                border: Border { width: 1.0, radius: (1.5 * s).into(), color: Color { a: 0.35, ..c.item_text } },
-                ..container::Style::default()
-            })
-            .into()
-    };
-    let gap = || -> Element<'a, M> { space().width(cell).height(cell).into() };
-    column![row![gap(), arm(up), gap()], row![arm(left), arm(false), arm(right)], row![gap(), arm(down), gap()]]
-    .into()
-}
-
-/// A stick press: a round stick cap marked L or R, with a down arrow for the push.
-fn stick_click_glyph<'a, M: 'a>(right: bool, c: Colors, s: f32) -> Element<'a, M> {
-    let size = 26.0 * s;
-    let label = if right { "R" } else { "L" };
-    let cap = container(row![
-        text(label).font(c.font).size(12.0 * s).color(c.item_text),
-        text("↓").font(c.font).size(12.0 * s).color(c.item_text),
-    ])
-    .center_x(size)
-    .center_y(size);
-    cap.style(move |_: &iced::Theme| container::Style {
-        background: Some(c.item.into()),
-        border: Border { width: 2.0, radius: (size / 2.0).into(), color: Color { a: 0.6, ..c.item_text } },
-        ..container::Style::default()
-    })
-    .into()
-}
-
-/// A button glyph: a colored disc for face buttons, a rounded tag for the rest.
-#[expect(clippy::too_many_arguments, reason = "predates the size lints")]
-fn glyph<'a, M: 'a>(label: &str, fill: Option<[u8; 3]>, round: bool, c: Colors, s: f32, opacity: f32) -> Element<'a, M> {
-    let (bg, fg) = match fill {
-        Some([r, g, b]) => (Color::from_rgba8(r, g, b, opacity), Color { a: opacity, ..Color::WHITE }),
-        None => (c.item, c.item_text),
-    };
-    let size = 24.0 * s;
-    let disc = round && label.chars().count() <= 2;
-    let body = container(text(label.to_string()).font(c.font).size(13.0 * s).color(fg));
-    let body = if disc {
-        body.center_x(size).center_y(size)
-    } else {
-        body.padding([0.0, 7.0 * s]).height(size).center_y(size)
-    };
-    body.style(move |_: &iced::Theme| container::Style {
-        background: Some(bg.into()),
-        border: Border {
-            width: 1.0,
-            radius: if disc { size / 2.0 } else { 6.0 * s }.into(),
-            color: Color { a: 0.2, ..fg },
-        },
-        ..container::Style::default()
-    })
-    .into()
-}
-
 #[expect(clippy::too_many_lines, reason = "predates the size lints")]
 pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, fit: &Fit, anim: &Anim) -> Element<'a, M> {
     let c = colors(&v.style, font).faded(anim.opacity());
@@ -404,26 +292,23 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, fit: &Fit, anim: 
             let latched = v.latched.iter().any(|l| l == key.code);
             // The cursor's key lights up and the one it left goes dark, sliding between them.
             let lit = if pressed { 1.0 } else { anim.lit(cursor, anim.timing.from == Some(here)) };
-            let (bg, fg, border) = if latched && !selected {
+            let round = c.corners * unit / 2.0;
+            let (bg, fg, border, glow) = if latched && !selected {
                 let green = Color::from_rgb8(0x2e, 0x7d, 0x46);
-                (green, Color::WHITE, Color::from_rgb8(0x3f, 0xb9, 0x50))
+                (green, Color::WHITE, Border { width: 1.0, radius: round.into(), color: Color::from_rgb8(0x3f, 0xb9, 0x50) }, iced::Shadow::default())
             } else {
                 let flash = if pressed { anim.flash() * 0.5 } else { 0.0 };
                 (
                     blend(blend(c.item, c.selected, lit), Color::WHITE, flash),
                     blend(c.item_text, c.selected_text, lit),
-                    blend(Color { a: 0.12, ..c.item_text }, c.selected_text, lit),
+                    look::item_outline(&c, selected, lit, round),
+                    look::item_glow(&c, lit),
                 )
             };
-            let round = c.corners * unit / 2.0;
             let cap = container(text(key.label).font(c.font).size(if selected { label_size + 2.0 } else { label_size } * s).color(fg))
                 .center_x(width)
                 .center_y(unit)
-                .style(move |_| container::Style {
-                    background: Some(bg.into()),
-                    border: Border { width: if selected { 2.0 } else { 1.0 }, radius: round.into(), color: border },
-                    ..container::Style::default()
-                });
+                .style(move |_| container::Style { background: Some(bg.into()), border, shadow: glow, ..container::Style::default() });
             line = line.push(cap);
         }
         rows = rows.push(line);
@@ -490,102 +375,6 @@ fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, si
         line = line.push(text("▸").font(font).size(size).color(Color { a: 0.7, ..fg }));
     }
     line.into()
-}
-
-/// An icon in an info cell, drawn as SVG so it doesn't depend on the font having the glyph.
-fn icon_glyph<'a, M: 'a>(icon: &Icon, c: Colors, s: f32) -> Element<'a, M> {
-    let size = 22.0 * s;
-    let svg_text = icon_svg(icon, c.background_text);
-    iced::widget::svg(iced::widget::svg::Handle::from_memory(svg_text.into_bytes())).width(size).height(size).into()
-}
-
-/// The SVG for an info icon, in `ink`. A controller is drawn in its kind's color, where it
-/// has one; a battery's fill is green, amber or red by its level.
-pub fn icon_svg(icon: &Icon, ink: Color) -> String {
-    let hex = |c: [u8; 3]| format!("#{:02x}{:02x}{:02x}", c[0], c[1], c[2]);
-    let [r, g, b, _] = ink.into_rgba8();
-    let c = hex([r, g, b]);
-    let body = match icon {
-        Icon::Form(FormFactor::Desktop) => format!(
-            "<rect x='2' y='3' width='20' height='13' rx='2' fill='none' stroke='{c}' stroke-width='2'/>\
-             <path d='M8 21 H16 M12 16 V21' fill='none' stroke='{c}' stroke-width='2' stroke-linecap='round'/>"
-        ),
-        Icon::Form(FormFactor::Laptop) => format!(
-            "<rect x='5' y='4' width='14' height='11' rx='1.5' fill='none' stroke='{c}' stroke-width='2'/>\
-             <path d='M2 18 H22 L21 20.5 H3 Z' fill='{c}'/>"
-        ),
-        Icon::Form(FormFactor::Handheld) => format!(
-            "<rect x='2' y='6' width='20' height='12' rx='4' fill='none' stroke='{c}' stroke-width='2'/>\
-             <rect x='8.5' y='9' width='7' height='6' rx='1' fill='{c}'/>"
-        ),
-        Icon::Controller(family) => {
-            let tint = match family {
-                PadFamily::Xbox => hex([0x3c, 0xa0, 0x3c]),
-                PadFamily::PlayStation => hex([0x5a, 0x8c, 0xdc]),
-                PadFamily::Nintendo => c.clone(),
-            };
-            format!(
-                "<path d='M7 7 H17 C20.5 7 22.5 9.5 22.5 13.5 C22.5 17.5 20.8 18.5 19.2 18.5 \
-                 C17.8 18.5 16.9 17.2 15.9 15.8 H8.1 C7.1 17.2 6.2 18.5 4.8 18.5 \
-                 C3.2 18.5 1.5 17.5 1.5 13.5 C1.5 9.5 3.5 7 7 7 Z' fill='{tint}'/>"
-            )
-        }
-        Icon::Battery(charge) => battery_svg(*charge, &c),
-        Icon::Wifi(percent) => wifi_svg(*percent, &c),
-    };
-    format!("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' opacity='{}'>{body}</svg>", ink.a)
-}
-
-/// A battery outline filled to its level; an estimate is faded.
-fn battery_svg(charge: Charge, c: &str) -> String {
-    let percent = charge.percent.min(100);
-    let width = 14.0 * f32::from(percent) / 100.0;
-    let level = match percent {
-        50.. => [0x3c, 0xa0, 0x3c],
-        20..50 => [0xc8, 0xa0, 0x1e],
-        _ => [0xc8, 0x3c, 0x3c],
-    };
-    let level = format!("#{:02x}{:02x}{:02x}", level[0], level[1], level[2]);
-    let opacity = if charge.estimated { 0.6 } else { 1.0 };
-    format!(
-        "<rect x='1.5' y='6.5' width='18' height='11' rx='2.5' fill='none' stroke='{c}' stroke-width='2'/>\
-         <rect x='21' y='10' width='2' height='4' rx='1' fill='{c}'/>\
-         <rect x='4' y='9' width='{width:.2}' height='6' rx='1' fill='{level}' fill-opacity='{opacity}'/>"
-    )
-}
-
-/// Wi-Fi bars, lit as the signal passes each quarter.
-fn wifi_svg(percent: u8, c: &str) -> String {
-    let lit: u8 = match percent {
-        0 => 0,
-        1..=25 => 1,
-        26..=50 => 2,
-        51..=75 => 3,
-        _ => 4,
-    };
-    (0u8..4)
-        .map(|i| {
-            let height = 5.0 + 4.0 * f32::from(i);
-            let opacity = if i < lit { 1.0 } else { 0.25 };
-            format!(
-                "<rect x='{:.1}' y='{:.1}' width='3.5' height='{height:.1}' rx='1' fill='{c}' fill-opacity='{opacity}'/>",
-                2.0 + 5.5 * f32::from(i),
-                21.0 - height
-            )
-        })
-        .collect()
-}
-
-/// A play, pause or stop symbol, drawn so it doesn't depend on the font having the glyph.
-fn state_icon<'a, M: 'a>(state: PlayState, color: Color, size: f32) -> Element<'a, M> {
-    let [r, g, b, _] = color.into_rgba8();
-    let shape = match state {
-        PlayState::Playing => "<path d='M6 3 L21 12 L6 21 Z'/>",
-        PlayState::Paused => "<rect x='5' y='3' width='5' height='18' rx='1'/><rect x='14' y='3' width='5' height='18' rx='1'/>",
-        PlayState::Stopped => "<rect x='5' y='5' width='14' height='14' rx='2'/>",
-    };
-    let svg_text = format!("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='#{r:02x}{g:02x}{b:02x}' fill-opacity='{}'>{shape}</svg>", color.a);
-    iced::widget::svg(iced::widget::svg::Handle::from_memory(svg_text.into_bytes())).width(size).height(size).into()
 }
 
 /// The media controls: what is playing, how far along, and the volume.
