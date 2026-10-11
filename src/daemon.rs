@@ -2075,7 +2075,7 @@ impl Daemon {
         // Refuse, and go back to the menu's main page, or to the Guide overlay.
         if self.config.active_ref().game.is_none() && self.focused.is_none() {
             let back = match &mut self.active {
-                Some(Active::Settings(menu, device)) if menu.from_guide() => Some(*device),
+                Some(Active::Settings(menu, device)) if menu.opened_from_guide() => Some(*device),
                 Some(Active::Settings(menu, _)) => {
                     menu.back_to_main();
                     None

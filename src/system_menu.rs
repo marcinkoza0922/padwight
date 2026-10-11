@@ -199,7 +199,7 @@ impl SystemMenu {
     }
 
     /// Whether the menu was opened from the Guide overlay, so leaving goes back to it.
-    pub fn from_guide(&self) -> bool {
+    pub fn opened_from_guide(&self) -> bool {
         self.from_guide
     }
 
