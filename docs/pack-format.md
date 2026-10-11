@@ -1,6 +1,6 @@
 # `.padpack` format reference
 
-A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 14**, the format the current app writes. For a walkthrough of building one, see [tutorial-deus-ex-pack.md](tutorial-deus-ex-pack.md). The shipped examples are in `packs/`.
+A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 15**, the format the current app writes. For a walkthrough of building one, see [tutorial-deus-ex-pack.md](tutorial-deus-ex-pack.md). The shipped examples are in `packs/`.
 
 The easiest way to write a pack is in the app, then **Details → Export…**. Read this page when you want to edit the file by hand, check a value, or understand what the export produced.
 
@@ -175,21 +175,43 @@ Only meaningful for controllers with motion sensors. Written under `[profiles.gy
 
 ```toml
 [profiles.gyro]
-horizontal = "yaw"        # "yaw" (turn) | "roll" (tilt) | "yaw_and_roll"; pitch always drives vertical
+horizontal = "player_space" # "yaw" (turn) | "roll" (tilt) | "yaw_and_roll" | "player_space" | "world_space"
 invert_x = false
 invert_y = false
+axes = "both"             # optional: "both" | "horizontal" | "vertical"
+x_scale = 1.0             # optional: horizontal sensitivity, times the mode's
+y_scale = 0.8             # optional: vertical sensitivity, times the mode's
 noise_threshold = 1.0     # rotation slower than this (degrees/second) is scaled down
+smoothing_threshold = 8.0 # optional: rotation slower than this (degrees/second) is smoothed; 0 is off
+smoothing_ms = 125        # optional: over this long
+pause_with_stick = "Right" # optional: gyro pauses while this stick is pushed
+auto_calibrate = false    # optional: re-measure drift whenever the controller is set down still
+toggle_rumble = false     # optional: a short rumble when a toggle switches gyro on or off
 
-[profiles.gyro.mode.mouse]          # or: "off", stick = {...}, steering = {...}
+[profiles.gyro.mode.mouse]          # or: "off", stick = {...}, position = {...}, steering = {...}
 sensitivity = 15.0                  # pixels per degree turned
+
+[profiles.gyro.curve]               # optional acceleration curve (mouse and stick modes)
+slow_gain = 0.5                     # sensitivity, times the mode's, up to slow_speed
+fast_gain = 2.0                     # and from fast_speed
+slow_speed = 5.0                    # degrees/second
+fast_speed = 40.0
+power = 1.0                         # shape of the blend between: 1 is straight
 
 [profiles.gyro.activation.unless_held]
 button = "DpadUp"                   # or: "always", while_held, toggle
 ```
 
-- `mode`: `"off"`, `mouse = { sensitivity }`, `stick = { stick, full_rate, anti_deadzone }` (rotation speed deflects a virtual stick), or `steering = { stick, max_angle }` (tilt steers a stick).
+- `mode`: `"off"`, `mouse = { sensitivity }`, `stick = { stick, full_rate, anti_deadzone }` (rotation speed deflects a virtual stick), `position = { stick, max_angle, anti_deadzone, lock_at_edge }` (how far the controller has turned deflects a virtual stick; `max_angle` degrees is full, and with `lock_at_edge` turning further is let go, so turning back leaves the edge at once), or `steering = { stick, max_angle }` (tilt steers a stick).
+- `horizontal`: which turning aims left and right. `player_space` and `world_space` use gravity, so turning left aims left however the controller is held; `world_space` also reads up and down against the horizon.
+- `full_turn_px` (optional, mouse mode): mouse pixels that turn the game a full circle. With it, `sensitivity` is real-world: 1.0 turns the game as far as the controller turned.
+- `curve`: the app's presets are Linear (no curve), Gentle, Aggressive, Wide, Extra wide, Precision and Turn boost.
 - `activation`: `"always"`, `while_held = { button = … }`, `unless_held = { button = … }` (a clutch: off while held), or `toggle = { button = … }`. The input can also be `left_trigger` or `right_trigger`, as in `while_held = "left_trigger"`.
-- `recenter` (optional): an input that sets the current tilt as straight ahead.
+- `recenter` (optional): an input that sets the current direction as straight ahead (steering and position modes) and clears leftover motion.
+
+The touchpad's mouse motion takes the same `curve`, with speeds in pad widths/second (`[profiles.touchpad.motion.mouse.curve]`). A finger's pad widths/second feel about like 40 times as many degrees/second of gyro.
+
+Everything in this section beyond `mode`, `horizontal`, the inverts, `noise_threshold`, `activation` and `recenter` is format 15; older app versions can't read packs that use the new modes or spaces.
 
 ## Controller identity
 

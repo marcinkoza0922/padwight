@@ -187,6 +187,7 @@ mod tests {
             left_trigger: 0.0,
             right_trigger: 1.0,
             gyro: None,
+            gyro_out: None,
         };
         let live = render(Some(&input), None, Glyphs::default(), &[]);
         assert_ne!(rest, live);
@@ -265,6 +266,7 @@ mod tests {
             left_trigger: 0.0,
             right_trigger: 0.0,
             gyro: None,
+            gyro_out: None,
         };
         let a = |o: Vec<Overlay>| o.into_iter().find(|o| o.text == "A").unwrap().color;
         assert_ne!(a(overlays(None, None, Glyphs::default())), a(overlays(Some(&input), None, Glyphs::default())));

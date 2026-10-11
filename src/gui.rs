@@ -45,6 +45,8 @@ mod activity;
 mod checks;
 mod games;
 mod guide_tab;
+mod gyro;
+mod gyro_graph;
 mod items;
 mod keys;
 mod layers;
@@ -191,6 +193,8 @@ struct App {
     expanded: HashSet<Target>,
     /// How far the mouse stick's response graphs show the stick pushed (0..1), set by hovering them.
     stick_probe: f32,
+    /// Where the gyro's aim has been lately, for the Gyro tab's live picture.
+    gyro_trail: gyro_graph::Trail,
     /// Waiting for a controller button press to jump to its row.
     finding: bool,
     found: Option<Button>,
@@ -603,6 +607,7 @@ impl App {
             picture_hidden: false,
             expanded: HashSet::new(),
             stick_probe: 1.0,
+            gyro_trail: gyro_graph::Trail::default(),
             finding: false,
             found: None,
             open_macros: HashSet::new(),
@@ -906,6 +911,7 @@ impl App {
                 {
                     return self.jump_to(b);
                 }
+                self.gyro_trail.push(snapshot.as_ref().and_then(|s| s.gyro_out), Instant::now());
                 self.live = snapshot;
                 self.settle_pad(Instant::now());
             }
@@ -1313,6 +1319,7 @@ mod tests {
             left_trigger: 0.0,
             right_trigger: 0.0,
             gyro: None,
+            gyro_out: None,
         }
     }
 

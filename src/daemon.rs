@@ -231,9 +231,28 @@ impl Managed {
         }
     }
 
+    /// Runs `events` through the engine under `base` and sends what comes out, then plays the
+    /// rumble a gyro toggle asked for.
+    fn feed(&mut self, config: &Config, base: &Profile, events: Vec<InputEvent>, kbm: &mut VirtualKbm) {
+        let mut out = Vec::new();
+        for ev in events {
+            self.view.apply(&ev);
+            self.engine.handle(layered(&self.layered, base), ev, Instant::now(), &mut out);
+            // A layer started or ended: the next events use it, and sticks, triggers and
+            // gyro switch modes right away.
+            if self.refresh_layers(config) {
+                self.engine.resync(layered(&self.layered, base), &mut out);
+            }
+        }
+        self.dispatch(kbm, out);
+        if let Some(on) = self.engine.take_gyro_rumble() {
+            rumble::tick(self.path.clone(), on);
+        }
+    }
+
     /// The controller's input as the GUI's live view receives it.
     fn snapshot(&self) -> InputSnapshot {
-        InputSnapshot { model: self.model, family: self.family, ..self.view.snapshot(&self.name) }
+        InputSnapshot { model: self.model, family: self.family, gyro_out: self.engine.gyro_out(), ..self.view.snapshot(&self.name) }
     }
 
     /// Brings `layered` up to date with the engine's layers. True if they changed.
@@ -1862,17 +1881,7 @@ impl Daemon {
         self.sync_face_swap(id);
         let Some(base) = self.config.active() else { return };
         let Some(dev) = self.devices.get_mut(&id) else { return };
-        let mut out = Vec::new();
-        for ev in events {
-            dev.view.apply(&ev);
-            dev.engine.handle(layered(&dev.layered, base), ev, Instant::now(), &mut out);
-            // A layer started or ended: the next events use it, and sticks, triggers and
-            // gyro switch modes right away.
-            if dev.refresh_layers(&self.config) {
-                dev.engine.resync(layered(&dev.layered, base), &mut out);
-            }
-        }
-        dev.dispatch(&mut self.kbm, out);
+        dev.feed(&self.config, base, events, &mut self.kbm);
         if !dev.engine.needs_tick(layered(&dev.layered, base)) {
             dev.out_view.stop_motion();
         }

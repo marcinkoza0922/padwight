@@ -9,7 +9,9 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use crate::{motion::MotionSet, pad_identity::ControllerSupport, sound::SoundSet};
 
+mod curve;
 mod guide;
+mod gyro;
 mod log;
 mod performance;
 mod store;
@@ -19,7 +21,9 @@ pub use summary::{Keyword, Piece};
 mod touchpad;
 mod window_game;
 
+pub use curve::*;
 pub use guide::*;
+pub use gyro::*;
 pub use log::*;
 pub use performance::Performance;
 pub use style::*;
@@ -1426,117 +1430,6 @@ impl Layer {
                 .into_iter()
                 .filter(|o| *o)
                 .count()
-    }
-}
-
-/// Something that can switch gyro on/off or recenter it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum GyroInput {
-    Button(Button),
-    /// Pulled past halfway.
-    LeftTrigger,
-    RightTrigger,
-}
-
-impl GyroInput {
-    pub fn all() -> Vec<GyroInput> {
-        let mut all: Vec<GyroInput> = Button::ALL.into_iter().map(GyroInput::Button).collect();
-        all.extend([GyroInput::LeftTrigger, GyroInput::RightTrigger]);
-        all
-    }
-}
-
-impl fmt::Display for GyroInput {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            GyroInput::Button(b) => write!(f, "{b}"),
-            GyroInput::LeftTrigger => f.write_str("Left Trigger"),
-            GyroInput::RightTrigger => f.write_str("Right Trigger"),
-        }
-    }
-}
-
-/// When gyro output is live.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum GyroActivation {
-    Always,
-    WhileHeld(GyroInput),
-    /// Off while held: a "clutch" for repositioning the controller without moving the aim.
-    UnlessHeld(GyroInput),
-    /// Each press switches gyro on or off.
-    Toggle(GyroInput),
-}
-
-/// Which rotation drives horizontal aim. Pitch always drives vertical.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum GyroHorizontal {
-    /// Turning the controller left/right like a flashlight.
-    Yaw,
-    /// Tilting it like a steering wheel.
-    Roll,
-    /// Both added together, so either motion works.
-    YawAndRoll,
-}
-
-impl GyroHorizontal {
-    pub const ALL: [GyroHorizontal; 3] = [GyroHorizontal::Yaw, GyroHorizontal::Roll, GyroHorizontal::YawAndRoll];
-}
-
-impl fmt::Display for GyroHorizontal {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(match self {
-            GyroHorizontal::Yaw => "Yaw (turn)",
-            GyroHorizontal::Roll => "Roll (tilt)",
-            GyroHorizontal::YawAndRoll => "Yaw + roll",
-        })
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum GyroMode {
-    Off,
-    /// Rotation moves the mouse; `sensitivity` is pixels per degree turned.
-    Mouse { sensitivity: f32 },
-    /// Rotation speed deflects a virtual-pad stick (added to the physical stick). Turning at
-    /// `full_rate` degrees/second is full deflection; `anti_deadzone` is the smallest
-    /// deflection sent, to get past a game's own stick deadzone.
-    Stick { stick: Stick, full_rate: f32, anti_deadzone: f32 },
-    /// Tilting like a steering wheel moves a stick left/right; `max_angle` degrees from
-    /// center is full lock.
-    Steering { stick: Stick, max_angle: f32 },
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct GyroConfig {
-    pub mode: GyroMode,
-    pub horizontal: GyroHorizontal,
-    #[serde(default)]
-    pub invert_x: bool,
-    #[serde(default)]
-    pub invert_y: bool,
-    pub activation: GyroActivation,
-    /// Sets the current tilt as straight ahead (Steering) and clears accumulated motion.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub recenter: Option<GyroInput>,
-    /// Rotation slower than this (degrees/second) is scaled down, hiding jitter and drift.
-    pub noise_threshold: f32,
-}
-
-impl Default for GyroConfig {
-    fn default() -> Self {
-        GyroConfig {
-            mode: GyroMode::Off,
-            horizontal: GyroHorizontal::Yaw,
-            invert_x: false,
-            invert_y: false,
-            activation: GyroActivation::Always,
-            recenter: None,
-            noise_threshold: 1.0,
-        }
     }
 }
 
@@ -3173,6 +3066,11 @@ key_threshold = 0.2
             activation: GyroActivation::Toggle(GyroInput::Button(Button::RightStick)),
             recenter: Some(GyroInput::Button(Button::Select)),
             noise_threshold: 2.0,
+            axes: GyroAxes::Vertical,
+            y_scale: 1.5,
+            curve: CurvePreset::Wide.speed_curve(1.0).unwrap(),
+            pause_with_stick: Some(Stick::Right),
+            ..GyroConfig::default()
         };
         config.gyro_calibration.insert("Pad".into(), [0.1, -0.2, 0.05]);
         let back: Config = toml::from_str(&toml::to_string_pretty(&config).unwrap()).unwrap();

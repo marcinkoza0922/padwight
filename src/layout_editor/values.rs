@@ -219,10 +219,7 @@ pub fn trigger_page(trigger: Trigger, profile: Option<&Profile>) -> (Vec<ItemVie
 pub fn gyro_page(profile: Option<&Profile>) -> (Vec<ItemView>, &'static str) {
     let gyro = profile.map(|p| &p.gyro);
     let mode = gyro.map(|g| &g.mode);
-    let sensitivity = match mode {
-        Some(GyroMode::Mouse { sensitivity }) => format!("{sensitivity:.1} px/°"),
-        _ => "—".into(),
-    };
+    let sensitivity = gyro.and_then(GyroConfig::sensitivity_label).unwrap_or_else(|| "—".into());
     (
         vec![
             item(format!("Mode: {}", mode.map_or("Off", gyro_mode_name))),
@@ -281,6 +278,7 @@ fn gyro_mode_name(mode: &GyroMode) -> &'static str {
         GyroMode::Off => "Off",
         GyroMode::Mouse { .. } => "Mouse",
         GyroMode::Stick { .. } => "Stick (edit in the pack file)",
+        GyroMode::Position { .. } => "Stick position (edit in the pack file)",
         GyroMode::Steering { .. } => "Steering (edit in the pack file)",
     }
 }

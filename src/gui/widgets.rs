@@ -95,6 +95,17 @@ where
         .padding([6, 10])
 }
 
+/// A picker of acceleration presets, with what the picked one does; it shows Custom when the
+/// settings match no preset.
+pub(super) fn curve_preset_picker<'a>(selected: crate::config::CurvePreset, on_pick: impl Fn(crate::config::CurvePreset) -> Message + 'a) -> Element<'a, Message> {
+    let mut choices = crate::config::CurvePreset::NAMED.to_vec();
+    choices.push(crate::config::CurvePreset::Custom);
+    row![dropdown(choices, Some(selected), on_pick).width(170), text(selected.about()).size(12).color(MUTED_COLOR)]
+        .spacing(10)
+        .align_y(Alignment::Center)
+        .into()
+}
+
 /// An exact milliseconds entry beside a slider (sliders can't hit 17 ms on a 5 s range).
 pub(super) fn ms_field<'a>(ms: u64, on_change: impl Fn(u64) -> Message + 'a) -> Element<'a, Message> {
     row![

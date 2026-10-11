@@ -30,6 +30,11 @@ pub(super) struct Ui<'a> {
     pub(super) any_paddles: bool,
     /// Live stick positions (left, right) for previews, when a controller is connected.
     pub(super) live_sticks: Option<[(f32, f32); 2]>,
+    /// The gyro's live output and recent aim, for the Gyro tab's pictures.
+    pub(super) live_gyro: Option<crate::ipc::GyroOut>,
+    pub(super) gyro_trail: &'a super::gyro_graph::Trail,
+    /// Why the Gyro tab's live pictures don't show the settings on screen, when they don't.
+    pub(super) gyro_note: Option<&'static str>,
     /// Whose button glyphs to draw (see `App::glyph_family`).
     pub(super) family: PadFamily,
     /// Whose button names the controller in use has (see `App::shown_pad`).
@@ -282,16 +287,7 @@ pub(super) fn view_profile<'a>(p: &'a Profile, ui: &Ui, tab: ProfileTab, guide: 
         }
         ProfileTab::Guide => guide_tab::sections(p, guide, ui.layer.is_some()),
         ProfileTab::Gyro => {
-            let base = ui.layer.map_or(&p.gyro, |m| &m.base.gyro);
-            let summary = match base.mode {
-                GyroMode::Off => "off".to_string(),
-                _ => "on".to_string(),
-            };
-            let mut sections = vec![section(
-                "Gyro",
-                Some("Aim by tilting the controller. If the aim drifts, calibrate the gyro from the controller list on the Overview page.".into()),
-                layer_part(ui, LayerPart::Gyro, "Gyro".into(), summary, || gyro_rows(&p.gyro, ui.any_gyro)),
-            )];
+            let mut sections = gyro::gyro_sections(p, ui);
             if ui.layer.is_none() {
                 sections.push(section(
                     "Controller requirements",
@@ -367,57 +363,6 @@ pub(super) fn newly_pressed(before: Option<&InputSnapshot>, now: &InputSnapshot)
         .find_map(|stick| pushed(now, stick).filter(|b| before.and_then(|s| pushed(s, stick)) != Some(*b)))
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) enum GyroModeKind {
-    Off,
-    Mouse,
-    Stick,
-    Steering,
-}
-
-impl fmt::Display for GyroModeKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(match self {
-            GyroModeKind::Off => "Off",
-            GyroModeKind::Mouse => "Mouse (gyro aiming)",
-            GyroModeKind::Stick => "Gamepad stick (gyro aiming)",
-            GyroModeKind::Steering => "Steering (tilt to steer)",
-        })
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) enum ActivationKind {
-    Always,
-    WhileHeld,
-    UnlessHeld,
-    Toggle,
-}
-
-impl fmt::Display for ActivationKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(match self {
-            ActivationKind::Always => "Always on",
-            ActivationKind::WhileHeld => "Only while held",
-            ActivationKind::UnlessHeld => "Off while held (clutch)",
-            ActivationKind::Toggle => "Toggle with",
-        })
-    }
-}
-
-/// A recenter choice for a pick list, where `None` means no recenter input.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) struct RecenterChoice(pub(super) Option<GyroInput>);
-
-impl fmt::Display for RecenterChoice {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.0 {
-            Some(input) => write!(f, "{input}"),
-            None => f.write_str("(none)"),
-        }
-    }
-}
-
 /// Where the profile's author says what it can't be played without. Never worked out from
 /// the settings: a profile that adds gyro aiming to a scheme that works without it leaves
 /// the box unticked.
@@ -463,156 +408,6 @@ pub(super) fn paddle_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Messag
     }
     for b in Button::PADDLES {
         rows.extend(button_row(p, b, ui));
-    }
-    rows
-}
-
-#[expect(clippy::too_many_lines, reason = "predates the size lints")]
-pub(super) fn gyro_rows(cfg: &GyroConfig, any_gyro: bool) -> Vec<Element<'_, Message>> {
-    let with = move |f: &dyn Fn(&mut GyroConfig)| {
-        let mut c = cfg.clone();
-        f(&mut c);
-        Message::SetGyro(c)
-    };
-    // Without a gyro controller this is a status worth seeing, not just help.
-    let mut rows: Vec<Element<'_, Message>> = Vec::new();
-    if !any_gyro {
-        rows.push(
-            text(
-                "None of your managed controllers have a gyro (PlayStation and Switch controllers do). \
-                 These settings take effect once one is connected.",
-            )
-            .size(13)
-            .color(MUTED_COLOR)
-            .into(),
-        );
-    }
-
-    let kind = match cfg.mode {
-        GyroMode::Off => GyroModeKind::Off,
-        GyroMode::Mouse { .. } => GyroModeKind::Mouse,
-        GyroMode::Stick { .. } => GyroModeKind::Stick,
-        GyroMode::Steering { .. } => GyroModeKind::Steering,
-    };
-    let kinds = [GyroModeKind::Off, GyroModeKind::Mouse, GyroModeKind::Stick, GyroModeKind::Steering];
-    rows.push(labeled(
-        "Gyro",
-        dropdown(kinds, Some(kind), move |k| {
-            let mode = match k {
-                GyroModeKind::Off => GyroMode::Off,
-                GyroModeKind::Mouse => GyroMode::Mouse { sensitivity: 15.0 },
-                GyroModeKind::Stick => GyroMode::Stick { stick: Stick::Right, full_rate: 360.0, anti_deadzone: 0.15 },
-                GyroModeKind::Steering => GyroMode::Steering { stick: Stick::Left, max_angle: 45.0 },
-            };
-            with(&|c| c.mode = mode.clone())
-        })
-        .width(260)
-        .into(),
-    ));
-
-    match cfg.mode {
-        GyroMode::Off => return rows,
-        GyroMode::Mouse { sensitivity } => {
-            rows.push(value_slider("    Sensitivity", 2.0..=60.0, sensitivity, 1.0, "px per degree", move |v| {
-                with(&|c| c.mode = GyroMode::Mouse { sensitivity: v })
-            }));
-        }
-        GyroMode::Stick { stick, full_rate, anti_deadzone } => {
-            rows.push(labeled(
-                "    Output stick",
-                dropdown([Stick::Left, Stick::Right], Some(stick), move |s| {
-                    with(&|c| c.mode = GyroMode::Stick { stick: s, full_rate, anti_deadzone })
-                })
-                .width(170)
-                .into(),
-            ));
-            rows.push(value_slider("    Full tilt at", 60.0..=720.0, full_rate, 10.0, "°/s turning", move |v| {
-                with(&|c| c.mode = GyroMode::Stick { stick, full_rate: v, anti_deadzone })
-            }));
-            rows.push(value_slider("    Anti-deadzone", 0.0..=0.4, anti_deadzone, 0.01, "(beats the game's stick deadzone)", move |v| {
-                with(&|c| c.mode = GyroMode::Stick { stick, full_rate, anti_deadzone: v })
-            }));
-        }
-        GyroMode::Steering { stick, max_angle } => {
-            rows.push(labeled(
-                "    Output stick",
-                dropdown([Stick::Left, Stick::Right], Some(stick), move |s| {
-                    with(&|c| c.mode = GyroMode::Steering { stick: s, max_angle })
-                })
-                .width(170)
-                .into(),
-            ));
-            rows.push(value_slider("    Full lock at", 15.0..=90.0, max_angle, 1.0, "° tilt", move |v| {
-                with(&|c| c.mode = GyroMode::Steering { stick, max_angle: v })
-            }));
-        }
-    }
-
-    let steering = matches!(cfg.mode, GyroMode::Steering { .. });
-    if !steering {
-        rows.push(labeled(
-            "    Horizontal from",
-            dropdown(GyroHorizontal::ALL, Some(cfg.horizontal), move |h| with(&|c| c.horizontal = h))
-                .width(170)
-                .into(),
-        ));
-    }
-    let mut inverts = row![checkbox(cfg.invert_x).label("Invert horizontal").on_toggle(move |v| with(&|c| c.invert_x = v))]
-        .spacing(16);
-    if !steering {
-        inverts = inverts.push(checkbox(cfg.invert_y).label("Invert vertical").on_toggle(move |v| with(&|c| c.invert_y = v)));
-    }
-    rows.push(labeled("", inverts.into()));
-
-    let (activation_kind, activation_input) = match cfg.activation {
-        GyroActivation::Always => (ActivationKind::Always, None),
-        GyroActivation::WhileHeld(i) => (ActivationKind::WhileHeld, Some(i)),
-        GyroActivation::UnlessHeld(i) => (ActivationKind::UnlessHeld, Some(i)),
-        GyroActivation::Toggle(i) => (ActivationKind::Toggle, Some(i)),
-    };
-    let activation = move |kind: ActivationKind, input: GyroInput| match kind {
-        ActivationKind::Always => GyroActivation::Always,
-        ActivationKind::WhileHeld => GyroActivation::WhileHeld(input),
-        ActivationKind::UnlessHeld => GyroActivation::UnlessHeld(input),
-        ActivationKind::Toggle => GyroActivation::Toggle(input),
-    };
-    let current_input = activation_input.unwrap_or(GyroInput::LeftTrigger);
-    let activation_kinds = [ActivationKind::Always, ActivationKind::WhileHeld, ActivationKind::UnlessHeld, ActivationKind::Toggle];
-    let mut active_row = row![dropdown(activation_kinds, Some(activation_kind), move |k| {
-        with(&|c| c.activation = activation(k, current_input))
-    })
-    .width(220)]
-    .spacing(8)
-    .align_y(Alignment::Center);
-    if activation_input.is_some() {
-        active_row = active_row.push(
-            dropdown(GyroInput::all(), activation_input, move |i| with(&|c| c.activation = activation(activation_kind, i)))
-                .width(200),
-        );
-    }
-    rows.push(labeled("    Active", active_row.into()));
-
-    let mut recenter_choices = vec![RecenterChoice(None)];
-    recenter_choices.extend(GyroInput::all().into_iter().map(|i| RecenterChoice(Some(i))));
-    rows.push(labeled(
-        "    Recenter with",
-        row![
-            dropdown(recenter_choices, Some(RecenterChoice(cfg.recenter)), move |r: RecenterChoice| {
-                with(&|c| c.recenter = r.0)
-            })
-            .width(200),
-            text(if steering { "sets the current tilt as straight" } else { "clears leftover motion" })
-                .size(12)
-                .color(MUTED_COLOR),
-        ]
-        .spacing(8)
-        .align_y(Alignment::Center)
-        .into(),
-    ));
-    if !steering {
-        rows.push(value_slider("    Ignore jitter below", 0.0..=5.0, cfg.noise_threshold, 0.1, "°/s", move |v| {
-            with(&|c| c.noise_threshold = v)
-        }));
     }
     rows
 }
@@ -1148,6 +943,9 @@ impl App {
             any_gyro: self.any_gyro(),
             any_paddles: self.any_paddles(),
             live_sticks: self.shown_input().map(|l| [l.left_stick, l.right_stick]),
+            live_gyro: self.live.as_ref().and_then(|l| l.gyro_out),
+            gyro_trail: &self.gyro_trail,
+            gyro_note: self.gyro_note(p, layer.is_some()),
             family: self.glyph_family(),
             in_use: self.shown_pad().family,
             swap: self.swap_for(p),
@@ -1155,6 +953,21 @@ impl App {
         };
         let guide = GuideView { notes: &self.guide_notes, family: ui.family, swap: ui.swap };
         col.push(view_profile(p, &ui, self.profile_tab, guide)).into()
+    }
+
+    /// Why the live gyro pictures don't show `p`'s gyro settings: the daemon runs the saved
+    /// settings of the active profile only.
+    fn gyro_note(&self, p: &Profile, in_layer: bool) -> Option<&'static str> {
+        let at = self.profile_ref()?;
+        if in_layer {
+            None
+        } else if at != self.saved.active {
+            Some("These show the active profile's gyro. Make this profile active to see its settings live.")
+        } else if self.saved.profile(&at).is_none_or(|saved| saved.gyro != p.gyro) {
+            Some("These show the saved settings. Save & apply to see your changes live.")
+        } else {
+            None
+        }
     }
 
     /// The profile's tabs (Buttons, Sticks & triggers, Combos, Gyro, Guide) as one segmented
@@ -1368,6 +1181,20 @@ mod tests {
     }
 
     #[test]
+    fn the_gyro_pictures_say_when_they_dont_show_the_settings_on_screen() {
+        let mut app = app();
+        let note = |app: &App| app.gyro_note(app.profile().unwrap(), false);
+        assert_eq!(note(&app), None, "the active profile, saved");
+        let gyro = GyroConfig { mode: GyroMode::Mouse { sensitivity: 12.0 }, ..GyroConfig::default() };
+        let _ = app.update(Message::SetGyro(gyro));
+        assert!(note(&app).unwrap().contains("Save & apply"));
+        app.saved = app.config.clone();
+        assert_eq!(note(&app), None);
+        app.editing = 1;
+        assert!(note(&app).unwrap().contains("Make this profile active"));
+    }
+
+    #[test]
     fn find_by_pressing_opens_and_highlights_the_row() {
         let mut app = app();
         let _ = app.update(Message::StartFind);
@@ -1376,7 +1203,7 @@ mod tests {
         assert!(!app.finding, "one press ends find mode");
         assert_eq!((app.game_tab, app.profile_tab, app.found), (GameTab::Profiles, ProfileTab::Buttons, Some(Button::West)));
         let names = Names::default();
-        let ui = Ui { names: &names, expanded: &app.expanded, found: app.found, analog_triggers: true, any_gyro: false, any_paddles: false, live_sticks: None, stick_probe: 1.0, family: PadFamily::default(), in_use: PadFamily::default(), swap: Swap::Off, layer: None };
+        let ui = Ui { names: &names, expanded: &app.expanded, found: app.found, analog_triggers: true, any_gyro: false, any_paddles: false, live_sticks: None, live_gyro: None, gyro_trail: &app.gyro_trail, gyro_note: None, stick_probe: 1.0, family: PadFamily::default(), in_use: PadFamily::default(), swap: Swap::Off, layer: None };
         assert!(ui.is_open(Target::Button(Button::West)));
         // Presses while not finding don't move the editor.
         let _ = app.update(Message::LiveInput(Some(snapshot(&[Button::West, Button::North], (0.0, 0.0)))));
