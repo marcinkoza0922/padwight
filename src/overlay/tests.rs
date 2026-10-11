@@ -1,0 +1,166 @@
+use super::*;
+
+#[test]
+fn frames_from_an_older_daemon_still_load() {
+    let frame: OverlayFrame = serde_json::from_str(r#"{"info":[],"active":null}"#).unwrap();
+    assert!(frame.logs.is_empty() && frame.info.is_empty() && frame.active.is_none());
+    assert!(frame.motion.is_default(), "older frames have no motion, so the default");
+}
+
+fn at(c: &OverlayController) -> &'static str {
+    keyboard::key_at(Layout::Keyboard, c.cursor()).code
+}
+
+fn ms(t: Instant, n: u64) -> Instant {
+    t + Duration::from_millis(n)
+}
+
+fn start() -> OverlayController {
+    OverlayController::new(Layout::Keyboard, keyboard::find(Layout::Keyboard, "KEY_Q").unwrap())
+}
+
+#[test]
+fn dpad_moves_once_then_repeats_while_held() {
+    let mut c = start();
+    let t0 = Instant::now();
+    c.handle(InputEvent::Button(Button::DpadRight, true), t0);
+    assert_eq!(at(&c), "KEY_W");
+    assert!(!c.tick(ms(t0, 300)).1, "no repeat before the delay");
+    c.tick(ms(t0, 350));
+    assert_eq!(at(&c), "KEY_E");
+    c.tick(ms(t0, 350 + 90 * 2));
+    assert_eq!(at(&c), "KEY_T");
+    c.handle(InputEvent::Button(Button::DpadRight, false), ms(t0, 600));
+    c.tick(ms(t0, 2000));
+    assert_eq!(at(&c), "KEY_T", "stops when released");
+}
+
+#[test]
+fn stick_moves_like_a_dpad_with_hysteresis() {
+    let mut c = start();
+    let t0 = Instant::now();
+    c.handle(InputEvent::Axis(Axis::LeftY, 0.3), t0);
+    assert_eq!(at(&c), "KEY_Q", "a light push does nothing");
+    c.handle(InputEvent::Axis(Axis::LeftY, 0.9), t0);
+    assert_eq!(at(&c), "KEY_A");
+    c.handle(InputEvent::Axis(Axis::LeftY, 0.5), t0);
+    assert_eq!(at(&c), "KEY_A", "still held inside the release margin");
+    c.handle(InputEvent::Axis(Axis::LeftY, 0.0), t0);
+    c.handle(InputEvent::Axis(Axis::LeftY, 0.9), t0);
+    assert_eq!(at(&c), "KEY_Z", "a fresh push moves again");
+}
+
+#[test]
+fn a_holds_the_selected_key_and_modifiers_latch_for_one_key() {
+    let mut c = OverlayController::new(Layout::Keyboard, keyboard::find(Layout::Keyboard, "KEY_LEFTSHIFT").unwrap());
+    let t0 = Instant::now();
+    let shift = KeyCode::KEY_LEFTSHIFT;
+    assert_eq!(c.handle(InputEvent::Button(Button::South, true), t0), vec![OverlayAction::Key(shift, true)]);
+    assert!(c.handle(InputEvent::Button(Button::South, false), t0).is_empty(), "shift stays latched");
+    assert_eq!(c.view(t0).latched, ["KEY_LEFTSHIFT"]);
+
+    c.handle(InputEvent::Button(Button::DpadRight, true), t0);
+    c.handle(InputEvent::Button(Button::DpadRight, false), t0);
+    assert_eq!(at(&c), "KEY_Z");
+    assert_eq!(c.handle(InputEvent::Button(Button::South, true), t0), vec![OverlayAction::Key(KeyCode::KEY_Z, true)]);
+    assert_eq!(
+        c.handle(InputEvent::Button(Button::South, false), t0),
+        vec![OverlayAction::Key(KeyCode::KEY_Z, false), OverlayAction::Key(shift, false)],
+        "capital Z, then shift lets go"
+    );
+    assert!(c.view(t0).latched.is_empty());
+}
+
+#[test]
+fn left_trigger_holds_shift() {
+    let mut c = start();
+    let t0 = Instant::now();
+    let shift = KeyCode::KEY_LEFTSHIFT;
+    assert_eq!(c.handle(InputEvent::Axis(Axis::LeftTrigger, 0.8), t0), vec![OverlayAction::Key(shift, true)]);
+    assert!(c.handle(InputEvent::Axis(Axis::LeftTrigger, 0.9), t0).is_empty());
+    assert_eq!(c.view(t0).latched, ["KEY_LEFTSHIFT"]);
+    // Typing keeps it held: capitals until the trigger lets go.
+    c.handle(InputEvent::Button(Button::South, true), t0);
+    assert_eq!(c.handle(InputEvent::Button(Button::South, false), t0), vec![OverlayAction::Key(KeyCode::KEY_Q, false)]);
+    assert_eq!(c.handle(InputEvent::Axis(Axis::LeftTrigger, 0.1), t0), vec![OverlayAction::Key(shift, false)]);
+    assert!(c.view(t0).latched.is_empty());
+    // Closing while held lets go of it.
+    c.handle(InputEvent::Axis(Axis::LeftTrigger, 1.0), t0);
+    assert_eq!(c.release_all(), vec![OverlayAction::Key(shift, false)]);
+    // Not on the numpad.
+    let mut n = OverlayController::new(Layout::Numpad, Layout::Numpad.home());
+    assert!(n.handle(InputEvent::Axis(Axis::LeftTrigger, 1.0), t0).is_empty());
+}
+
+#[test]
+fn face_button_shortcuts() {
+    let mut c = start();
+    let t0 = Instant::now();
+    let tap = |k| vec![OverlayAction::Key(k, true), OverlayAction::Key(k, false)];
+    assert_eq!(c.handle(InputEvent::Button(Button::West, true), t0), tap(KeyCode::KEY_BACKSPACE));
+    assert_eq!(c.handle(InputEvent::Button(Button::North, true), t0), tap(KeyCode::KEY_SPACE));
+    assert_eq!(c.handle(InputEvent::Button(Button::Start, true), t0), tap(KeyCode::KEY_ENTER));
+}
+
+#[test]
+fn guide_with_x_closes_the_keyboard_and_with_y_the_numpad() {
+    let t0 = Instant::now();
+    let mut keyboard = OverlayController::new(Layout::Keyboard, Layout::Keyboard.home());
+    keyboard.handle(InputEvent::Button(Button::Guide, true), t0);
+    assert_eq!(keyboard.handle(InputEvent::Button(Button::West, true), t0), vec![OverlayAction::Close]);
+    let mut keyboard = OverlayController::new(Layout::Keyboard, Layout::Keyboard.home());
+    assert_eq!(keyboard.handle(InputEvent::Button(Button::West, true), t0).len(), 2, "X alone is backspace");
+
+    let mut numpad = OverlayController::new(Layout::Numpad, Layout::Numpad.home());
+    numpad.set_guide_held(true);
+    assert!(!numpad.handle(InputEvent::Button(Button::West, true), t0).contains(&OverlayAction::Close), "X doesn't close the numpad");
+    assert_eq!(numpad.handle(InputEvent::Button(Button::North, true), t0), vec![OverlayAction::Close]);
+    numpad.handle(InputEvent::Button(Button::Guide, false), t0);
+    assert!(numpad.handle(InputEvent::Button(Button::North, true), t0).is_empty());
+}
+
+#[test]
+fn numpad_types_digits_and_enter_and_closes_with_b() {
+    let mut c = OverlayController::new(Layout::Numpad, Layout::Numpad.home());
+    let t0 = Instant::now();
+    let tap = |k| vec![OverlayAction::Key(k, true), OverlayAction::Key(k, false)];
+    c.handle(InputEvent::Button(Button::DpadUp, true), t0);
+    c.handle(InputEvent::Button(Button::DpadUp, false), t0);
+    assert_eq!(c.handle(InputEvent::Button(Button::South, true), t0), vec![OverlayAction::Key(KeyCode::KEY_8, true)]);
+    assert_eq!(c.handle(InputEvent::Button(Button::South, false), t0), vec![OverlayAction::Key(KeyCode::KEY_8, false)]);
+    assert_eq!(c.handle(InputEvent::Button(Button::Start, true), t0), tap(KeyCode::KEY_ENTER));
+    assert!(c.handle(InputEvent::Button(Button::North, true), t0).is_empty(), "no space bar on a numpad");
+    assert_eq!(c.view(t0).layout, Layout::Numpad);
+    c.handle(InputEvent::Button(Button::East, true), t0);
+    assert_eq!(c.tick(ms(t0, 700)).0, vec![OverlayAction::Close]);
+}
+
+#[test]
+fn holding_east_closes_but_a_tap_does_not() {
+    let mut c = start();
+    let t0 = Instant::now();
+    c.handle(InputEvent::Button(Button::East, true), t0);
+    assert!(c.view(ms(t0, 350)).closing > 0.4);
+    c.handle(InputEvent::Button(Button::East, false), ms(t0, 400));
+    assert_eq!(c.tick(ms(t0, 2000)).0, vec![]);
+    assert_eq!(c.view(ms(t0, 2000)).closing, 0.0);
+
+    c.handle(InputEvent::Button(Button::East, true), ms(t0, 3000));
+    assert_eq!(c.next_deadline().map(|d| d <= ms(t0, 3700)), Some(true));
+    assert_eq!(c.tick(ms(t0, 3700)).0, vec![OverlayAction::Close]);
+}
+
+#[test]
+fn closing_releases_everything_held() {
+    let mut c = OverlayController::new(Layout::Keyboard, keyboard::find(Layout::Keyboard, "KEY_LEFTCTRL").unwrap());
+    let t0 = Instant::now();
+    c.handle(InputEvent::Button(Button::South, true), t0);
+    c.handle(InputEvent::Button(Button::South, false), t0);
+    c.handle(InputEvent::Button(Button::DpadUp, true), t0);
+    assert!(at(&c) != "KEY_LEFTCTRL");
+    c.handle(InputEvent::Button(Button::South, true), t0);
+    let out = c.release_all();
+    assert_eq!(out.len(), 2, "{out:?}");
+    assert!(out.contains(&OverlayAction::Key(KeyCode::KEY_LEFTCTRL, false)));
+    assert_eq!(c.next_deadline(), None);
+}

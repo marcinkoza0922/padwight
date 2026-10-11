@@ -10,9 +10,12 @@ use std::{
 use anyhow::{Context, Result, bail};
 
 mod bridge;
+mod glyphs;
+mod overlay_shot;
 mod pad;
 mod protocol;
 mod server;
+mod scenes;
 mod sound;
 mod sound_panel;
 mod window;
@@ -56,7 +59,7 @@ Without a session:
 ";
 
 fn usage() -> String {
-    format!("{USAGE}{}\nWith a session:\n{}", sound::USAGE, protocol::COMMANDS)
+    format!("{USAGE}{}{}\nWith a session:\n{}", sound::USAGE, overlay_shot::USAGE, protocol::COMMANDS)
 }
 
 #[expect(clippy::print_stdout, reason = "CLI output")]
@@ -75,6 +78,7 @@ pub fn run(args: &[&str]) -> Result<()> {
         ["svg"] => println!("{}", rest_svg(None)),
         ["svg", name] => println!("{}", rest_svg(parse_model(name)?)),
         ["sound", rest @ ..] => sound::run(rest)?,
+        ["overlay", rest @ ..] => overlay_shot::run(rest)?,
         ["detach-all"] => ipc::request(&ipc::Request::DebugDetach("all".into())).map(drop)?,
         [] => start(&[])?,
         [first, ..] if first.starts_with("--") => start(args)?,

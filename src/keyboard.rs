@@ -184,6 +184,8 @@ pub fn label(code: &str) -> String {
         "KEY_RIGHTSHIFT" | "KEY_RIGHTCTRL" | "KEY_RIGHTMETA" => {
             format!("Right {}", main_label.unwrap_or_default())
         }
+        // The numpad's cap only has room for "Num".
+        "KEY_NUMLOCK" => "Num Lock".to_string(),
         _ if code.starts_with("KEY_KP") => {
             let name = code.trim_start_matches("KEY_KP").to_lowercase();
             let mut chars = name.chars();
@@ -197,7 +199,7 @@ pub fn label(code: &str) -> String {
 }
 
 /// Every key the layouts draw, spacers left out.
-fn drawn_keys() -> impl Iterator<Item = &'static Key> {
+pub fn drawn_keys() -> impl Iterator<Item = &'static Key> {
     MAIN.iter().chain(NAV.iter()).chain(NUMPAD.iter()).chain(PAD.iter()).flat_map(|r| r.iter()).chain(MEDIA).filter(|k| !k.code.is_empty())
 }
 
@@ -359,6 +361,8 @@ mod tests {
         assert_eq!(label("KEY_RIGHTCTRL"), "Right Ctrl");
         assert_eq!(label("KEY_KP7"), "Keypad 7");
         assert_eq!(label("KEY_KPPLUS"), "Keypad Plus");
+        assert_eq!(label("KEY_NUMLOCK"), "Num Lock");
+        assert_eq!(code_for_label("num lock"), Some("KEY_NUMLOCK"));
         assert_eq!(label("KEY_A"), "A");
         assert_eq!(label("KEY_F13"), "F13");
     }
