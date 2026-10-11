@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     config::Button,
     input::{Axis, InputEvent},
-    keyboard::{self, Cursor, Layout},
+    keyboard::{self, Board, Cursor, Layout},
 };
 
 /// Holding East this long closes the overlay.
@@ -41,16 +41,18 @@ const MODIFIERS: [&str; 8] = [
 pub const KEYBOARD_LEGEND: &[&str] = &[
     "{dpad} move",
     "{south} press",
-    "{west} backspace",
+    "{west} backspace (hold to repeat)",
     "{north} space",
     "{start} enter",
+    "{lb} {rb} move the text cursor",
     "hold {lt} shift",
     "Shift, Ctrl, Alt, AltGr and Super stay on for one key; press one again to let go",
     "hold {east} or press {guide} to close",
 ];
 
 /// The numpad's reminder of its controls.
-pub const NUMPAD_LEGEND: &[&str] = &["{dpad} move", "{south} press", "{west} backspace", "{start} enter", "hold {east} or press {guide} to close"];
+pub const NUMPAD_LEGEND: &[&str] =
+    &["{dpad} move", "{south} press", "{west} backspace (hold to repeat)", "{start} enter", "hold {east} or press {guide} to close"];
 
 /// What the overlay process draws.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -110,8 +112,9 @@ impl OverlayFrame {
 /// The on-screen keyboard's (or numpad's) state.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct KeyboardView {
+    /// Which keys are drawn: the basic or full keyboard, or the numpad.
     #[serde(default)]
-    pub layout: Layout,
+    pub board: Board,
     /// Set by the daemon from the config.
     #[serde(default = "crate::config::OverlayStyle::keyboard")]
     pub style: crate::config::OverlayStyle,
@@ -122,18 +125,21 @@ pub struct KeyboardView {
     pub pressed: Option<String>,
     /// 0..1 while East is being held to close.
     pub closing: f32,
+    /// Caps Lock is on, as far as the keyboard knows (it counts its own Caps Lock presses).
+    #[serde(default)]
+    pub caps: bool,
 }
 
 /// Where a key sits in its layout, counting every slot in reading order: the number the motion
 /// tracking and the drawing both use for the cursor and the pressed key.
-fn key_index(layout: Layout, code: &str) -> Option<u32> {
-    layout.rows().iter().flat_map(|keys| keys.iter()).position(|key| key.code == code).map(|i| i as u32)
+fn key_index(board: Board, code: &str) -> Option<u32> {
+    board.rows().iter().flat_map(|keys| keys.iter()).position(|key| key.code == code).map(|i| i as u32)
 }
 
 impl crate::motion::Tracked for OverlayView {
     fn key(&self) -> String {
         match self {
-            OverlayView::Keyboard(k) => if k.layout == Layout::Numpad { "numpad" } else { "keyboard" }.into(),
+            OverlayView::Keyboard(k) => if k.board == Board::Numpad { "numpad" } else { "keyboard" }.into(),
             OverlayView::Menu(m) => format!("{}\u{0}{}", m.crumbs.join(" › "), m.title),
             OverlayView::Media(_) => "media".into(),
             OverlayView::Offer(_) => "offer".into(),
@@ -143,7 +149,7 @@ impl crate::motion::Tracked for OverlayView {
     fn kind(&self) -> crate::motion::OverlayKind {
         use crate::motion::OverlayKind;
         match self {
-            OverlayView::Keyboard(k) if k.layout == Layout::Numpad => OverlayKind::Numpad,
+            OverlayView::Keyboard(k) if k.board == Board::Numpad => OverlayKind::Numpad,
             OverlayView::Keyboard(_) => OverlayKind::Keyboard,
             OverlayView::Menu(_) => OverlayKind::Menu,
             OverlayView::Media(_) => OverlayKind::Media,
@@ -153,7 +159,7 @@ impl crate::motion::Tracked for OverlayView {
 
     fn cursor(&self) -> Option<u32> {
         match self {
-            OverlayView::Keyboard(k) => key_index(k.layout, keyboard::key_at(k.layout, k.cursor).code),
+            OverlayView::Keyboard(k) => key_index(k.board, keyboard::key_at(k.board, k.cursor).code),
             OverlayView::Menu(m) => m.selected.map(|i| i as u32),
             OverlayView::Offer(_) | OverlayView::Media(_) => None,
         }
@@ -161,7 +167,7 @@ impl crate::motion::Tracked for OverlayView {
 
     fn pick(&self) -> Option<u32> {
         match self {
-            OverlayView::Keyboard(k) => k.pressed.as_deref().and_then(|code| key_index(k.layout, code)),
+            OverlayView::Keyboard(k) => k.pressed.as_deref().and_then(|code| key_index(k.board, code)),
             OverlayView::Menu(m) => (m.picks > 0).then_some(m.picks),
             OverlayView::Offer(_) | OverlayView::Media(_) => None,
         }
@@ -176,7 +182,7 @@ pub enum OverlayAction {
 
 /// Turns controller input into keyboard navigation and key presses.
 pub struct OverlayController {
-    layout: Layout,
+    board: Board,
     cursor: Cursor,
     latched: Vec<KeyCode>,
     pressed: Option<KeyCode>,
@@ -190,6 +196,12 @@ pub struct OverlayController {
     guide_held: bool,
     /// Shift held down by the left trigger.
     trigger_shift: bool,
+    /// Caps Lock is on, counting the keyboard's own presses of it.
+    caps: bool,
+    /// X is held: when backspace next repeats.
+    backspace: Option<Instant>,
+    /// The key held with A needed Shift to type its digit (a numpad digit in AZERTY).
+    pressed_shift: bool,
 }
 
 fn code(name: &str) -> Option<KeyCode> {
@@ -201,9 +213,9 @@ fn tap(name: &str) -> Vec<OverlayAction> {
 }
 
 impl OverlayController {
-    pub fn new(layout: Layout, cursor: Cursor) -> Self {
+    pub fn new(board: impl Into<Board>, cursor: Cursor) -> Self {
         OverlayController {
-            layout,
+            board: board.into(),
             cursor,
             latched: Vec::new(),
             pressed: None,
@@ -214,6 +226,9 @@ impl OverlayController {
             east_since: None,
             guide_held: false,
             trigger_shift: false,
+            caps: false,
+            backspace: None,
+            pressed_shift: false,
         }
     }
 
@@ -222,13 +237,17 @@ impl OverlayController {
     }
 
     pub fn layout(&self) -> Layout {
-        self.layout
+        self.board.layout()
+    }
+
+    pub fn board(&self) -> Board {
+        self.board
     }
 
     pub fn view(&self, now: Instant) -> KeyboardView {
         let name = |k: KeyCode| format!("{k:?}");
         KeyboardView {
-            layout: self.layout,
+            board: self.board,
             style: crate::config::OverlayStyle::keyboard(),
             cursor: self.cursor,
             latched: self.latched.iter().chain(self.trigger_shift.then_some(&KeyCode::KEY_LEFTSHIFT)).map(|k| name(*k)).collect(),
@@ -237,6 +256,7 @@ impl OverlayController {
                 .east_since
                 .map(|t| (now.duration_since(t).as_secs_f32() / HOLD_TO_CLOSE.as_secs_f32()).min(1.0))
                 .unwrap_or(0.0),
+            caps: self.caps,
         }
     }
 
@@ -258,7 +278,7 @@ impl OverlayController {
                 self.stick_moved(now);
                 Vec::new()
             }
-            InputEvent::Axis(Axis::LeftTrigger, v) if self.layout == Layout::Keyboard => self.left_trigger(v),
+            InputEvent::Axis(Axis::LeftTrigger, v) if self.layout() == Layout::Keyboard => self.left_trigger(v),
             InputEvent::Axis(..) | InputEvent::Touchpad(_) => Vec::new(),
         }
     }
@@ -291,7 +311,8 @@ impl OverlayController {
             }
             return Vec::new();
         }
-        let closes_with = if self.layout == Layout::Keyboard { Button::West } else { Button::North };
+        let keyboard = self.layout() == Layout::Keyboard;
+        let closes_with = if keyboard { Button::West } else { Button::North };
         match (b, pressed) {
             (Button::Guide, _) => {
                 self.guide_held = pressed;
@@ -300,8 +321,19 @@ impl OverlayController {
             (b, true) if b == closes_with && self.guide_held => vec![OverlayAction::Close],
             (Button::South, true) => self.press_selected(),
             (Button::South, false) => self.release_selected(),
-            (Button::West, true) => self.shortcut("KEY_BACKSPACE"),
-            (Button::North, true) if self.layout == Layout::Keyboard => self.shortcut("KEY_SPACE"),
+            // Held, X keeps deleting at the cursor's repeat rate.
+            (Button::West, true) => {
+                self.backspace = Some(now + crate::nav::REPEAT_DELAY);
+                self.shortcut("KEY_BACKSPACE")
+            }
+            (Button::West, false) => {
+                self.backspace = None;
+                Vec::new()
+            }
+            (Button::North, true) if keyboard => self.shortcut("KEY_SPACE"),
+            // The bumpers move the text cursor, as the D-pad moves the keyboard's.
+            (Button::LeftBumper, true) if keyboard => tap("KEY_LEFT"),
+            (Button::RightBumper, true) if keyboard => tap("KEY_RIGHT"),
             (Button::Start, true) => self.shortcut("KEY_ENTER"),
             (Button::East, true) => {
                 self.east_since = Some(now);
@@ -325,13 +357,16 @@ impl OverlayController {
     }
 
     fn start_moving(&mut self, dir: (i32, i32), now: Instant) {
-        self.cursor = keyboard::step(self.layout, self.cursor, dir.0, dir.1);
+        self.cursor = keyboard::step(self.board, self.cursor, dir.0, dir.1);
         self.repeat.start(dir, now);
     }
 
     fn press_selected(&mut self) -> Vec<OverlayAction> {
-        let name = keyboard::key_at(self.layout, self.cursor).code;
+        let name = keyboard::key_at(self.board, self.cursor).code;
         let Some(k) = code(name) else { return Vec::new() };
+        if k == KeyCode::KEY_CAPSLOCK {
+            self.caps = !self.caps;
+        }
         // Modifiers latch (held down) until the next key, like sticky keys. Shift held by the
         // trigger is already down, and stays down when its latch comes off.
         if MODIFIERS.contains(&name) {
@@ -347,14 +382,26 @@ impl OverlayController {
             return Vec::new();
         }
         self.pressed = Some(k);
-        vec![OverlayAction::Key(k, true)]
+        // The numpad types digits: with Shift where the layout puts them there.
+        let label = keyboard::key_at(self.board, self.cursor).label;
+        self.pressed_shift = self.board == Board::Numpad && !self.shift_down() && keyboard::needs_shift(name, label) == Some(true);
+        let shift = self.pressed_shift.then_some(OverlayAction::Key(KeyCode::KEY_LEFTSHIFT, true));
+        shift.into_iter().chain([OverlayAction::Key(k, true)]).collect()
     }
 
     fn release_selected(&mut self) -> Vec<OverlayAction> {
         let Some(k) = self.pressed.take() else { return Vec::new() };
         let mut out = vec![OverlayAction::Key(k, false)];
+        if std::mem::take(&mut self.pressed_shift) {
+            out.push(OverlayAction::Key(KeyCode::KEY_LEFTSHIFT, false));
+        }
         out.extend(self.release_latched());
         out
+    }
+
+    /// Whether Shift is already down: latched, or held by the trigger.
+    fn shift_down(&self) -> bool {
+        self.trigger_shift || self.latched.contains(&KeyCode::KEY_LEFTSHIFT)
     }
 
     fn shortcut(&mut self, name: &str) -> Vec<OverlayAction> {
@@ -380,8 +427,14 @@ impl OverlayController {
             return (vec![OverlayAction::Close], true);
         }
         if let Some(dir) = self.repeat.due(now) {
-            self.cursor = keyboard::step(self.layout, self.cursor, dir.0, dir.1);
+            self.cursor = keyboard::step(self.board, self.cursor, dir.0, dir.1);
             changed = true;
+        }
+        if let Some(due) = self.backspace
+            && now >= due
+        {
+            self.backspace = Some(now + crate::nav::REPEAT_EVERY);
+            return (tap("KEY_BACKSPACE"), changed);
         }
         (Vec::new(), changed)
     }
@@ -389,7 +442,7 @@ impl OverlayController {
     /// When `tick` next has work (key repeat or the close countdown).
     pub fn next_deadline(&self) -> Option<Instant> {
         let close = self.east_since.map(|t| t + HOLD_TO_CLOSE);
-        let repeat = self.repeat.deadline();
+        let repeat = self.repeat.deadline().into_iter().chain(self.backspace).min();
         // While East is held the closing bar animates, so keep ticking.
         let animate = self.east_since.map(|_| Instant::now() + Duration::from_millis(30));
         [close, repeat, animate].into_iter().flatten().min()
@@ -398,11 +451,15 @@ impl OverlayController {
     /// Lets go of everything the overlay is holding (when it closes).
     pub fn release_all(&mut self) -> Vec<OverlayAction> {
         let mut out: Vec<OverlayAction> = self.pressed.take().map(|k| OverlayAction::Key(k, false)).into_iter().collect();
+        if std::mem::take(&mut self.pressed_shift) {
+            out.push(OverlayAction::Key(KeyCode::KEY_LEFTSHIFT, false));
+        }
         out.extend(self.release_latched());
         if std::mem::take(&mut self.trigger_shift) {
             out.push(OverlayAction::Key(KeyCode::KEY_LEFTSHIFT, false));
         }
         self.repeat.stop();
+        self.backspace = None;
         self.east_since = None;
         self.dpad.clear();
         self.stick_dir.clear();
@@ -851,6 +908,35 @@ mod tests {
     }
 
     #[test]
+    fn holding_x_keeps_deleting_and_the_bumpers_move_the_text_cursor() {
+        let mut c = start();
+        let t0 = Instant::now();
+        let tap = |k| vec![OverlayAction::Key(k, true), OverlayAction::Key(k, false)];
+        assert_eq!(c.handle(InputEvent::Button(Button::West, true), t0), tap(KeyCode::KEY_BACKSPACE));
+        assert!(c.tick(t0 + crate::nav::REPEAT_DELAY / 2).0.is_empty());
+        assert_eq!(c.tick(t0 + crate::nav::REPEAT_DELAY).0, tap(KeyCode::KEY_BACKSPACE));
+        c.handle(InputEvent::Button(Button::West, false), t0 + crate::nav::REPEAT_DELAY);
+        assert_eq!(c.next_deadline(), None);
+        assert_eq!(c.handle(InputEvent::Button(Button::LeftBumper, true), t0), tap(KeyCode::KEY_LEFT));
+        assert_eq!(c.handle(InputEvent::Button(Button::RightBumper, true), t0), tap(KeyCode::KEY_RIGHT));
+        let mut n = OverlayController::new(Layout::Numpad, Layout::Numpad.home());
+        assert!(n.handle(InputEvent::Button(Button::LeftBumper, true), t0).is_empty(), "no text cursor keys on the numpad");
+    }
+
+    #[test]
+    fn the_keyboard_counts_its_caps_lock_presses_and_the_full_board_has_more_keys() {
+        let mut c = OverlayController::new(Board::Basic, keyboard::find(Board::Basic, "KEY_CAPSLOCK").unwrap());
+        let t0 = Instant::now();
+        assert!(!c.view(t0).caps);
+        c.handle(InputEvent::Button(Button::South, true), t0);
+        c.handle(InputEvent::Button(Button::South, false), t0);
+        assert!(c.view(t0).caps);
+        assert!(keyboard::find(Board::Basic, "KEY_F1").is_none() && keyboard::find(Board::Full, "KEY_F1").is_some());
+        assert!(keyboard::find(Board::Basic, "KEY_LEFT").is_some(), "the basic board has the arrows");
+        assert!(keyboard::find(Board::Numpad, "KEY_KPMINUS").is_some(), "and the numpad a minus");
+    }
+
+    #[test]
     fn face_button_shortcuts() {
         let mut c = start();
         let t0 = Instant::now();
@@ -888,7 +974,7 @@ mod tests {
         assert_eq!(c.handle(InputEvent::Button(Button::South, false), t0), vec![OverlayAction::Key(KeyCode::KEY_8, false)]);
         assert_eq!(c.handle(InputEvent::Button(Button::Start, true), t0), tap(KeyCode::KEY_ENTER));
         assert!(c.handle(InputEvent::Button(Button::North, true), t0).is_empty(), "no space bar on a numpad");
-        assert_eq!(c.view(t0).layout, Layout::Numpad);
+        assert_eq!(c.view(t0).board, Board::Numpad);
         c.handle(InputEvent::Button(Button::East, true), t0);
         assert_eq!(c.tick(ms(t0, 700)).0, vec![OverlayAction::Close]);
     }

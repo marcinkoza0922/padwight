@@ -2743,6 +2743,7 @@ dependencies = [
  "wayland-client",
  "wayland-protocols-wlr",
  "winit-core",
+ "xkbcommon",
  "zbus",
 ]
 

@@ -2414,6 +2414,10 @@ pub struct Config {
     pub gyro_calibration: BTreeMap<String, [f32; 3]>,
     #[serde(default = "default_keyboard_style")]
     pub keyboard_style: OverlayStyle,
+    /// The on-screen keyboard has every key (function keys, editing keys) rather than just
+    /// what typing into a game needs.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub full_keyboard: bool,
     #[serde(default = "default_numpad_style")]
     pub numpad_style: OverlayStyle,
     #[serde(default = "default_media_style")]
@@ -2480,6 +2484,7 @@ impl Default for Config {
             performance: Performance::default(),
             gyro_calibration: BTreeMap::new(),
             keyboard_style: OverlayStyle::keyboard(),
+            full_keyboard: false,
             numpad_style: OverlayStyle::numpad(),
             media_style: OverlayStyle::media(),
             menu_style: OverlayStyle::default(),

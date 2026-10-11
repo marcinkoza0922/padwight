@@ -29,6 +29,9 @@ ksni = { version = "0.3.6", features = ["blocking"] }
 # 0.31.0-beta.3; pin the beta they were written for. Not used directly.
 winit-core = "=0.31.0-beta.2"
 rodio = { version = "0.22", default-features = false, features = ["playback"] }
+# Labels the on-screen keyboard's keys in the user's layout (keyboard/xkb.rs). Already in the
+# lock file through iced_layershell.
+xkbcommon = "0.8"
 
 [lints.clippy]
 # Keep code compact and units small so they are cheaper to read.

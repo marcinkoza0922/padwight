@@ -315,7 +315,7 @@ struct Driving {
     /// [`Daemon::drives_overlay`]).
     owner: Option<u64>,
     /// Where each on-screen layout's cursor was left, to pick up there next time.
-    cursors: HashMap<Layout, crate::keyboard::Cursor>,
+    cursors: HashMap<crate::keyboard::Board, crate::keyboard::Cursor>,
 }
 
 /// What the overlay is showing.
@@ -961,8 +961,12 @@ impl Daemon {
         }
         self.release_mappings();
         log!("on-screen {} open", layout_name(layout));
-        let cursor = self.driving.cursors.get(&layout).copied().unwrap_or(layout.home());
-        let mut controller = OverlayController::new(layout, cursor);
+        let board = match layout {
+            Layout::Keyboard if self.config.full_keyboard => crate::keyboard::Board::Full,
+            _ => layout.into(),
+        };
+        let cursor = self.driving.cursors.get(&board).copied().unwrap_or(board.home());
+        let mut controller = OverlayController::new(board, cursor);
         controller.set_guide_held(self.devices.values().any(|d| d.view.buttons().any(|b| b == crate::config::Button::Guide)));
         self.active = Some(Active::Keyboard(controller));
         self.broadcast_overlay();
@@ -1142,7 +1146,7 @@ impl Daemon {
         let closing = self.active.as_ref().map(active_sound);
         match self.active.take() {
             Some(Active::Keyboard(mut k)) => {
-                self.driving.cursors.insert(k.layout(), k.cursor());
+                self.driving.cursors.insert(k.board(), k.cursor());
                 let actions = k.release_all();
                 self.apply_keyboard(actions);
                 log!("on-screen {} closed", layout_name(k.layout()));

@@ -202,7 +202,7 @@ fn game_overlay_card<'a>(
 /// A keyboard or numpad drawn with `style`, with the cursor on a key, for the card's preview.
 fn keyboard_preview(layout: Layout, style: &OverlayStyle, font: iced::Font, glyphs: crate::info::Glyphs) -> Element<'static, Message> {
     let sample = KeyboardView {
-        layout,
+        board: layout.into(),
         style: preview_style(style),
         cursor: match layout {
             Layout::Keyboard => crate::keyboard::find(layout, "KEY_H").unwrap_or_default(),
@@ -211,6 +211,7 @@ fn keyboard_preview(layout: Layout, style: &OverlayStyle, font: iced::Font, glyp
         latched: Vec::new(),
         pressed: None,
         closing: 0.0,
+        caps: false,
     };
     preview(crate::overlay::draw::keyboard_panel(&sample, font, glyphs, &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still()))
 }

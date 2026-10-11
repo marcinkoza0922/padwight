@@ -39,12 +39,12 @@ const GAP: f32 = 4.0;
 const KEYBOARD_PADDING: f32 = 16.0;
 
 /// The width of a keyboard's body at scale 1: the legend's or the keys', whichever is wider.
-fn keyboard_body_width(numpad: bool) -> f32 {
-    if numpad {
+fn keyboard_body_width(board: crate::keyboard::Board) -> f32 {
+    if board == crate::keyboard::Board::Numpad {
         // Numpad keys are fewer, so bigger; its body has a floor of 230 at any scale.
-        (3.0 * (UNIT * 1.5 + GAP)).max(230.0)
+        (board.units_wide() * (UNIT * 1.5 + GAP)).max(230.0)
     } else {
-        15.0 * (UNIT + GAP)
+        board.units_wide() * (UNIT + GAP)
     }
 }
 /// Distance from the screen edge for edge and corner positions.
@@ -291,21 +291,22 @@ fn info_cell<'a, M: 'a>(segments: &[Segment], c: Colors, s: f32, opacity: f32) -
 #[expect(clippy::too_many_lines, reason = "predates the size lints")]
 pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::info::Glyphs, fit: &Fit, anim: &Anim) -> Element<'a, M> {
     let c = colors(&v.style, font).with_glyphs(glyphs).faded(anim.opacity());
-    let numpad = v.layout == crate::keyboard::Layout::Numpad;
+    let numpad = v.board == crate::keyboard::Board::Numpad;
     // A set width fits the keys (and their text) to it; otherwise the style's scale applies.
     let s = match fit.width {
-        Some(w) => w / (keyboard_body_width(numpad) + 2.0 * KEYBOARD_PADDING),
+        Some(w) => w / (keyboard_body_width(v.board) + 2.0 * KEYBOARD_PADDING),
         None => v.style.scale.clamp(0.5, 2.0),
     };
     // Numpad keys are fewer, so bigger.
     let unit = if numpad { UNIT * 1.5 } else { UNIT } * s;
     let gap = GAP * s;
-    let cursor_code = keyboard::key_at(v.layout, v.cursor).code;
+    let cursor_code = keyboard::key_at(v.board, v.cursor).code;
+    let shifted = v.latched.iter().any(|l| l == "KEY_LEFTSHIFT" || l == "KEY_RIGHTSHIFT");
     let label_size = if numpad { 22.0 } else { 14.0 };
     let mut rows = column![].spacing(gap);
     // Keys are numbered in reading order, as the motion tracking numbers them.
     let mut slot = 0u32;
-    for keys in v.layout.rows().iter() {
+    for keys in v.board.rows().iter() {
         let mut line = row![].spacing(gap);
         for key in keys.iter() {
             let here = slot;
@@ -318,7 +319,8 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::in
             let cursor = key.code == cursor_code;
             let pressed = v.pressed.as_deref() == Some(key.code);
             let selected = cursor || pressed;
-            let latched = v.latched.iter().any(|l| l == key.code);
+            // Caps Lock lights up like a latched key while it's on.
+            let latched = v.latched.iter().any(|l| l == key.code) || (v.caps && key.code == "KEY_CAPSLOCK");
             // The cursor's key lights up and the one it left goes dark, sliding between them.
             let lit = if pressed { 1.0 } else { anim.lit(cursor, anim.timing.from == Some(here)) };
             let round = c.corners * unit / 2.0;
@@ -334,7 +336,7 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::in
                     look::item_glow(&c, lit),
                 )
             };
-            let cap = container(text(key.label).font(c.font).size(if selected { label_size + 2.0 } else { label_size } * s).color(fg))
+            let cap = container(text(keyboard::cap_label(key, v.board, shifted, v.caps)).font(c.font).size(if selected { label_size + 2.0 } else { label_size } * s).color(fg))
                 .center_x(width)
                 .center_y(unit)
                 .style(move |_| container::Style { background: Some(bg.into()), border, shadow: glow, ..container::Style::default() });
@@ -345,7 +347,7 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::in
     let hint = |t: &'static str| rich_text::<M>(t, c, 14.0 * s, c.background_text);
     let (legend, width): (Element<'a, M>, f32) = if numpad {
         let legend = row(super::NUMPAD_LEGEND.iter().map(|t| hint(t))).spacing(14.0 * s).wrap().vertical_spacing(4.0 * s).align_x(Horizontal::Center);
-        (legend.into(), (3.0 * (unit + gap)).max(230.0 * s))
+        (legend.into(), (v.board.units_wide() * (unit + gap)).max(230.0 * s))
     } else {
         let legend = row(super::KEYBOARD_LEGEND.iter().map(|t| hint(t)))
         .spacing(18.0 * s)
@@ -353,7 +355,7 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::in
         .wrap()
         .vertical_spacing(4.0 * s)
         .align_x(Horizontal::Center);
-        (legend.into(), 15.0 * (unit + gap))
+        (legend.into(), v.board.units_wide() * (unit + gap))
     };
     let mut body = column![rows, legend].spacing(12.0 * s).width(width).align_x(Alignment::Center);
     if v.closing > 0.0 {

@@ -480,6 +480,8 @@ enum Message {
     SetMenuKind(usize, MenuKind),
     SetMenuStyle(usize, OverlayStyle),
     SetKeyboardStyle(OverlayStyle),
+    /// The on-screen keyboard's keys: all of them, or the basic ones.
+    SetFullKeyboard(bool),
     /// The font of all overlays (`None`: the system's), or the shown game's own.
     SetOverlayFont(Option<String>),
     SetColorblindTones(bool),
