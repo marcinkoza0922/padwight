@@ -103,7 +103,7 @@ Tick an item when it's done and merged.
 
 ## Inconsistencies
 
-- [ ] 18. **Hints and legends always use Xbox letters.** Menus draw item glyphs in the pad's own
+- [x] 18. **Hints and legends always use Xbox letters.** Menus draw item glyphs in the pad's own
   family (and Nintendo layout), but every hint and badge is fixed text: `button_badge` gives
   A/B/X/Y and LB/RB; the keyboard and numpad legends, the media `HINT` and the offer answers are
   literal strings. On a PlayStation pad the overlay says "A choose" next to ✕ glyphs. With the
@@ -117,7 +117,7 @@ Tick an item when it's done and merged.
   hysteresis (0.6/0.45) is written out again in `overlay.rs`, `menu.rs`, `system_menu.rs` and the
   engine. One small `nav` module (a direction source with hysteresis plus repeat) would make them
   all behave the same.
-- [ ] 20. **Closing works differently everywhere:**
+- [x] 20. **Closing works differently everywhere:**
 
   | Overlay | How it closes |
   |---|---|
@@ -139,7 +139,7 @@ Tick an item when it's done and merged.
   color-blind mode) only in `list()`. Grid, carousel, radial and directional ignore `tone`.
   Directional slots also never show the cursor or a pick flash: in a held directional menu,
   choosing a slot gives no visual sign that it fired.
-- [ ] 23. **Badges and glyphs are mixed in Edit Controls.** Button rows draw the pad's glyph,
+- [x] 23. **Badges and glyphs are mixed in Edit Controls.** Button rows draw the pad's glyph,
   stick and trigger rows draw text chips ("LS", "LT"), and the radial hub writes "LS"/"RS" as
   text. `info::trigger_glyph` exists, and a stick glyph would match.
 - [ ] 24. **Menu-like overlays only partly share code.** The Guide menu, in-game menu, offer and

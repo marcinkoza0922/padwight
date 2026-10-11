@@ -30,7 +30,7 @@ Hold Guide and press one of these, or, with the overlay open, press it alone. Ei
 
 Anything else pressed with Guide held does nothing, so it never reaches the game underneath. These shortcuts are fixed. To reach the same actions from other buttons, bind them on the **Buttons** tab, as usual.
 
-Pressing Guide also closes the on-screen keyboard, numpad or media controls, however they were opened.
+Pressing Guide also closes anything else on screen, however it was opened: the on-screen keyboard or numpad, the media controls, a menu, the in-game menu (it asks first about unsaved changes), or the library offer (as "Not now").
 
 ### Force quit
 

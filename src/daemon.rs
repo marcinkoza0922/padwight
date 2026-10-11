@@ -2267,6 +2267,23 @@ impl Daemon {
         outcome
     }
 
+    /// Guide was pressed over the overlay: closes it. `true` when it closed.
+    fn guide_closes_overlay(&mut self) -> bool {
+        match &mut self.active {
+            Some(Active::Offer(_)) => self.answer_offer(OfferOutcome::No),
+            Some(Active::Settings(menu, _)) => {
+                if menu.guide_pressed(&self.config) != Some(SystemOutcome::Close) {
+                    self.broadcast_overlay();
+                    return false;
+                }
+                self.close_overlay();
+            }
+            Some(_) => self.close_overlay(),
+            None => {}
+        }
+        true
+    }
+
     /// While the overlay shows something, controller input drives it instead of the mappings.
     /// (Every way out redraws, so the input log's view of it shows too.)
     fn overlay_input(&mut self, id: u64, events: Vec<InputEvent>) {
@@ -2278,13 +2295,15 @@ impl Daemon {
             dev.draw_status();
         }
         for ev in events {
-            // Guide closes the keyboard, numpad or media controls, as well as their own close inputs.
-            // The tap it ends isn't a Guide tap, so it doesn't offer a library game on release.
-            if let InputEvent::Button(crate::config::Button::Guide, true) = ev
-                && matches!(self.active, Some(Active::Keyboard(_) | Active::Media(_)))
-            {
+            // Guide closes whatever is up, as well as its own close inputs: the offer as "not now",
+            // the in-game menu once any unsaved changes are answered. The tap it ends isn't a
+            // Guide tap, so it doesn't offer a library game on release.
+            if let InputEvent::Button(crate::config::Button::Guide, true) = ev {
                 self.offers.guide_tap = None;
-                return self.close_overlay();
+                if self.guide_closes_overlay() {
+                    return;
+                }
+                continue;
             }
             match &mut self.active {
                 Some(Active::Keyboard(_)) => self.keyboard_input(id, ev, now),

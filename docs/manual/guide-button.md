@@ -26,7 +26,7 @@ Hold Guide and press one of these, or, with the overlay open, press it alone. Ei
 - **L3**: start or stop a screen recording.
 - **Hold Select for 2 seconds**: force quit the focused window.
 
-Pressing Guide also closes the on-screen keyboard, numpad or media controls, whichever way they were opened.
+Pressing Guide also closes anything else on screen, whichever way it was opened: the on-screen keyboard or numpad, the media controls, a menu, the in-game menu (it asks first if you changed something and haven't saved), or the offer to add a game (as "Not now").
 
 Anything else pressed with Guide held does nothing, so it never reaches the game underneath. These shortcuts are fixed. You can bind the same actions to other buttons on a profile's **Buttons** tab.
 

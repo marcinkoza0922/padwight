@@ -1246,7 +1246,8 @@ impl App {
 /// The picker for the button that chooses item `i` of button menu `mi`.
 fn item_button_picker<'a>(mi: usize, i: usize, button: Option<Button>) -> Element<'a, Message> {
     let mut options = vec![QuickChoice(None)];
-    options.extend(Button::ALL.into_iter().map(|b| QuickChoice(Some(b))));
+    // Not Guide: it closes any menu.
+    options.extend(Button::ALL.into_iter().filter(|&b| b != Button::Guide).map(|b| QuickChoice(Some(b))));
     tooltip(
         dropdown(options, Some(QuickChoice(button)), move |c| Message::SetMenuItemButton(mi, i, c)).width(90),
         container(text("The button that chooses this item").size(13)).padding(8).style(style::tooltip),

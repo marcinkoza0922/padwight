@@ -219,6 +219,16 @@ impl SystemMenu {
         None
     }
 
+    /// Guide was pressed: closes the menu outright, unless there are unsaved changes, which it
+    /// asks about first (the question then needs an answer).
+    pub fn guide_pressed(&mut self, config: &Config) -> Option<Outcome> {
+        match self.screen {
+            Screen::Confirm(..) => None,
+            _ if *self.saved == *config => Some(Outcome::Close),
+            _ => self.leave(config),
+        }
+    }
+
     /// Back from the unsaved-changes question to the screen it was asked on.
     fn keep_editing(&mut self) {
         if let Screen::Confirm(left, cursor) = std::mem::replace(&mut self.screen, Screen::Main) {
@@ -702,6 +712,17 @@ mod tests {
         config.active = target;
         menu.profile_switched(&config);
         assert_eq!(quick_rows(&config)[menu.cursor], Row::Profile, "fewer rows now, still on Profile");
+    }
+
+    #[test]
+    fn guide_closes_the_menu_but_asks_about_unsaved_changes_first() {
+        let mut config = mouse_config();
+        let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
+        assert_eq!(menu.guide_pressed(&config), Some(Outcome::Close), "closes, not back to the Guide overlay");
+        menu.handle_now(press(Button::DpadRight), &mut config);
+        assert_eq!(menu.guide_pressed(&config), None);
+        assert!(matches!(menu.screen, Screen::Confirm(..)));
+        assert_eq!(menu.guide_pressed(&config), None, "the question needs an answer");
     }
 
     #[test]
