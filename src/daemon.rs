@@ -398,6 +398,8 @@ struct Offers {
 struct GuideMenu {
     cursor: usize,
     steam: bool,
+    /// The page of Mappings on show.
+    page: usize,
 }
 
 struct Daemon {
@@ -1361,7 +1363,8 @@ impl Daemon {
         if self.devices.values().any(|d| d.engine.guide_overlay_open())
             && let Some(profile) = self.config.active()
         {
-            shown.extend(crate::info::guide_overlays(profile).into_iter().map(|o| (o, true)));
+            let page = self.guide_menu.as_ref().map_or(0, |m| m.page);
+            shown.extend(crate::info::guide_overlays(profile, page).into_iter().map(|o| (o, true)));
         }
         // Each active layer's indicator: its name, or an info overlay of the game's.
         for name in self.active_layers() {
@@ -1467,7 +1470,7 @@ impl Daemon {
         let open = self.devices.values().any(|d| d.engine.guide_overlay_open());
         match (open, self.guide_menu.is_some()) {
             (true, false) => {
-                self.guide_menu = Some(GuideMenu { cursor: 0, steam: crate::guide_menu::steam_running() });
+                self.guide_menu = Some(GuideMenu { cursor: 0, steam: crate::guide_menu::steam_running(), page: 0 });
             }
             (false, true) => self.guide_menu = None,
             _ => {}
@@ -1484,6 +1487,12 @@ impl Daemon {
             match key {
                 Button::DpadUp | Button::LeftStickUp => menu.cursor = (menu.cursor + len - 1) % len,
                 Button::DpadDown | Button::LeftStickDown => menu.cursor = (menu.cursor + 1) % len,
+                // The right stick turns the Mappings' pages.
+                Button::RightStickUp => menu.page = menu.page.saturating_sub(1),
+                Button::RightStickDown => {
+                    let pages = self.config.active().map_or(1, crate::info::guide_mapping_pages);
+                    menu.page = (menu.page + 1).min(pages - 1);
+                }
                 Button::South => {
                     let item = crate::guide_menu::items(menu.steam)[menu.cursor];
                     self.guide_choose(device, item);

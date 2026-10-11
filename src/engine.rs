@@ -1291,7 +1291,8 @@ impl Engine {
 }
 
 /// Whether a button drives the Guide overlay's menu rather than closing the overlay: the D-pad
-/// and left stick move the highlight, A chooses and B closes.
+/// and left stick move the highlight, A chooses and B closes, and the right stick turns the
+/// Mappings' pages.
 fn guide_nav(b: Button) -> bool {
     matches!(
         b,
@@ -1303,6 +1304,8 @@ fn guide_nav(b: Button) -> bool {
             | Button::LeftStickDown
             | Button::LeftStickLeft
             | Button::LeftStickRight
+            | Button::RightStickUp
+            | Button::RightStickDown
             | Button::South
             | Button::East
     )

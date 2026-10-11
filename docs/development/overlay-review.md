@@ -162,7 +162,7 @@ Tick an item when it's done and merged.
   back (`aim`, `src/menu.rs:497`), so letting go always chooses the last item aimed at. The
   touchpad version already treats the middle as "nothing". Options: a center dead zone held for
   about 150 ms clears the aim, or the cancel button closes held radials without choosing.
-- [ ] 27. **Show where the stick points on a radial menu.** Draw a needle or dot in the hub (or
+- [x] 27. **Show where the stick points on a radial menu.** Draw a needle or dot in the hub (or
   on the ring) following the live stick angle, so you can see which arc you'll land on before it
   lights up. It helps most with weighted arcs, where small arcs are hard to hit.
 - [x] 28. **The keyboard needs arrow keys and editing keys.** The controller keyboard has only
@@ -182,9 +182,10 @@ Tick an item when it's done and merged.
   on AZERTY or QWERTZ the labels are wrong (Q types A). At least note this in the manual. Better:
   read the XKB layout and label keys from it.
   - Yes, we should probably add layouts and match the user's locale and local settings
-- [ ] 33. **Long grids don't scroll with the cursor.** Lists scroll with `list_start`, but a grid
+- [x] 33. **Long grids don't scroll with the cursor.** Lists scroll with `list_start`, but a grid
   taller than its max height only gets the box's scrollbar, so the cursor can move off screen.
-- [ ] 34. **The Guide overlay's Mappings can't be scrolled.** A long Mappings panel is cut off by
+  - No change: the editor caps grids at 6×6 (`GRID_MAX`), and six rows fit at any scale up to 2.
+- [x] 34. **The Guide overlay's Mappings can't be scrolled.** A long Mappings panel is cut off by
   its max height, and there's no input to scroll it while the Guide menu is up. The right stick
   or the bumpers could page through it.
 - [ ] 35. **Show progress for the force-quit hold.** "Keep holding to force quit…" is a plain

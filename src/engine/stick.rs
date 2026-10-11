@@ -36,11 +36,11 @@ impl Engine {
         apply_deadzone(x, y, deadzone)
     }
 
-    /// A stick's settings as they apply now. While the Guide overlay is up the left stick moves
-    /// its menu (through the stick's direction buttons), so it does nothing else.
+    /// A stick's settings as they apply now. While the Guide overlay is up the sticks move its
+    /// menu and turn its pages (through their direction buttons), so they do nothing else.
     fn stick_cfg<'p>(&self, profile: &'p Profile, s: Stick) -> Cow<'p, StickConfig> {
         let cfg = profile.stick(s);
-        if self.guide_open && s == Stick::Left {
+        if self.guide_open {
             Cow::Owned(StickConfig { action: StickAction::Disabled, zones: Vec::new(), ..cfg.clone() })
         } else {
             Cow::Borrowed(cfg)

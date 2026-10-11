@@ -100,7 +100,7 @@ fn input_token(input: crate::config::GuideInput) -> Option<&'static str> {
 /// The Notes and Mappings overlays of the Guide overlay, for `profile`. Notes are left out when
 /// the author wrote none. Mappings are one row per line of [`crate::config::mapping_rows`]: the
 /// glyphs of its buttons, then its text.
-pub fn guide_overlays(profile: &crate::config::Profile) -> Vec<InfoOverlay> {
+pub fn guide_overlays(profile: &crate::config::Profile, page: usize) -> Vec<InfoOverlay> {
     let mut overlays = Vec::new();
     if !profile.guide.notes.trim().is_empty() {
         overlays.push(InfoOverlay {
@@ -114,13 +114,18 @@ pub fn guide_overlays(profile: &crate::config::Profile) -> Vec<InfoOverlay> {
             rows: profile.guide.notes.lines().map(|line| vec![line.to_string()]).collect(),
         });
     }
-    let rows = crate::config::mapping_rows(profile)
+    let rows: Vec<Vec<String>> = crate::config::mapping_rows(profile)
         .into_iter()
         .map(|row| {
             let glyphs: Vec<String> = row.inputs.iter().filter_map(|i| input_token(*i)).map(|t| format!("{{{t}}}")).collect();
             vec![row.shape.join(&glyphs), row.text]
         })
         .collect();
+    // A long list shows a page at a time; the right stick turns them.
+    let pages = mapping_pages(rows.len());
+    let page = page.min(pages - 1);
+    let title = if pages > 1 { format!("Mappings {}/{pages} · {{rs}} more", page + 1) } else { "Mappings".into() };
+    let rows = rows.into_iter().skip(page * MAPPING_ROWS).take(MAPPING_ROWS).collect();
     overlays.push(InfoOverlay {
         name: "guide mappings".into(),
         always: true,
@@ -128,10 +133,23 @@ pub fn guide_overlays(profile: &crate::config::Profile) -> Vec<InfoOverlay> {
         linger: None,
         current_input: Default::default(),
         style: OverlayStyle { position: ScreenPosition::CenterRight, ..OverlayStyle::info() },
-        title: Some("Mappings".into()),
+        title: Some(title),
         rows,
     });
     overlays
+}
+
+/// Rows of the Guide overlay's Mappings shown at once.
+const MAPPING_ROWS: usize = 14;
+
+/// How many pages a Mappings list of `rows` takes (at least one).
+pub fn mapping_pages(rows: usize) -> usize {
+    rows.div_ceil(MAPPING_ROWS).max(1)
+}
+
+/// How many pages `profile`'s Mappings take.
+pub fn guide_mapping_pages(profile: &crate::config::Profile) -> usize {
+    mapping_pages(crate::config::mapping_rows(profile).len())
 }
 
 /// Whose button names and symbols to show.
@@ -1135,14 +1153,34 @@ mod tests {
         use crate::config::{ButtonAction, Profile};
         let mut p = Profile::passthrough("p");
         p.set_button(crate::config::Button::South, ButtonAction::Keys(vec!["KEY_E".into()]));
-        let overlays = super::guide_overlays(&p);
+        let overlays = super::guide_overlays(&p, 0);
         assert_eq!(overlays.len(), 1, "no notes, so only the mappings");
         assert_eq!(overlays[0].name, "guide mappings");
         assert!(overlays[0].rows.iter().any(|r| r == &vec!["{south}".to_string(), "{keyboard:e}".to_string()]));
         p.guide.notes = "Hold LB for the radial menu.\nEsc is Start.".into();
-        let overlays = super::guide_overlays(&p);
+        let overlays = super::guide_overlays(&p, 0);
         assert_eq!(overlays[0].name, "guide notes");
         assert_eq!(overlays[0].rows.len(), 2, "one row per line");
+    }
+
+    #[test]
+    fn a_long_mappings_list_shows_a_page_at_a_time() {
+        use crate::config::{Button, ButtonAction, Profile};
+        let mut p = Profile::passthrough("p");
+        let keys = ["KEY_A", "KEY_B", "KEY_C", "KEY_D", "KEY_E", "KEY_F", "KEY_G", "KEY_H", "KEY_I", "KEY_J", "KEY_K", "KEY_L", "KEY_M", "KEY_N", "KEY_O"];
+        for (b, key) in Button::ALL.into_iter().zip(keys) {
+            p.set_button(b, ButtonAction::Keys(vec![key.into()]));
+        }
+        for (i, key) in ["KEY_P", "KEY_Q", "KEY_R"].into_iter().enumerate() {
+            p.gestures.insert(Button::ALL[i], crate::config::Gestures { long_press: Some(ButtonAction::Keys(vec![key.into()])), ..Default::default() });
+        }
+        let pages = super::guide_mapping_pages(&p);
+        assert!(pages > 1, "{} rows", crate::config::mapping_rows(&p).len());
+        let first = &super::guide_overlays(&p, 0)[0];
+        assert_eq!(first.rows.len(), super::MAPPING_ROWS);
+        assert!(first.title.as_deref().is_some_and(|t| t.starts_with("Mappings 1/")));
+        let last = &super::guide_overlays(&p, 99)[0];
+        assert!(last.title.as_deref().is_some_and(|t| t.starts_with(&format!("Mappings {pages}/"))), "past the end shows the last page");
     }
 
     #[test]
