@@ -158,27 +158,27 @@ Tick an item when it's done and merged.
 
 ## Improvements
 
-- [ ] 26. **A way to cancel a radial menu.** A radial menu's aim sticks after the stick springs
+- [x] 26. **A way to cancel a radial menu.** A radial menu's aim sticks after the stick springs
   back (`aim`, `src/menu.rs:497`), so letting go always chooses the last item aimed at. The
   touchpad version already treats the middle as "nothing". Options: a center dead zone held for
   about 150 ms clears the aim, or the cancel button closes held radials without choosing.
 - [ ] 27. **Show where the stick points on a radial menu.** Draw a needle or dot in the hub (or
   on the ring) following the live stick angle, so you can see which arc you'll land on before it
   lights up. It helps most with weighted arcs, where small arcs are hard to hit.
-- [ ] 28. **The keyboard needs arrow keys and editing keys.** The controller keyboard has only
+- [x] 28. **The keyboard needs arrow keys and editing keys.** The controller keyboard has only
   the main block: no arrows, Home/End, Delete or Page Up/Down, so you can't move the text cursor
   without retyping. Ideas: LB/RB for ← → (the D-pad is taken by the cursor), the right stick for
   arrows, or add the nav block to the layout.
   - An idea might be an option for whether the user wants a full keyboard or a basic one handling in game fields, with the basic one being the default 
   
-- [ ] 29. **Keyboard keycaps should follow Shift and Caps Lock.** With Shift latched or LT held,
+- [x] 29. **Keyboard keycaps should follow Shift and Caps Lock.** With Shift latched or LT held,
   show "!" over "1" and lower-case letters otherwise. Light up Caps Lock while it's on (the
   overlay can't see it now; the daemon could track it, since it sends the key).
-- [ ] 30. **Hold X to repeat backspace** on the keyboard and numpad, at the D-pad's repeat rate.
+- [x] 30. **Hold X to repeat backspace** on the keyboard and numpad, at the D-pad's repeat rate.
   Deleting a word now takes one tap per letter.
-- [ ] 31. **The numpad needs a minus key** (negative numbers, dates), and Backspace and Enter
+- [x] 31. **The numpad needs a minus key** (negative numbers, dates), and Backspace and Enter
   keys a mouse or touchpad user could press. Now only X and Start do those.
-- [ ] 32. **Non-US keyboard layouts.** Keys are drawn with US labels and sent as evdev codes, so
+- [x] 32. **Non-US keyboard layouts.** Keys are drawn with US labels and sent as evdev codes, so
   on AZERTY or QWERTZ the labels are wrong (Q types A). At least note this in the manual. Better:
   read the XKB layout and label keys from it.
   - Yes, we should probably add layouts and match the user's locale and local settings
