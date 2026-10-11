@@ -22,7 +22,6 @@ instead of moving the mouse. This is like Shift on a keyboard, or Steam Input's 
 | Inputs held when a layer changes | Keep doing what they started until released. The layer applies from their next press. |
 | Sticks, triggers, gyro | Their modes switch immediately when a layer starts or ends. |
 | Editor | A **Layers** tab on the game's page, using the profile editor's tabs. Inputs a layer doesn't set read "Same as Gameplay: …" (compared with a chosen profile), with an **Override** button. |
-| Shared items | Can't refer to layers. They already can't refer to any game's own macros, menus or info overlays; layers are always a game's own. |
 | Combos in a layer | Added to the base's combos. A layer combo on the same buttons replaces the base one, and a layer can switch a base combo off. |
 | Feedback | Each layer shows an on-screen **indicator** while active, which can be switched off per layer. Also a `{layer}` token for info overlays, listing all active layers. |
 | Timings | The base profile's for now. Per-layer timings get decided after trying layers out. |
@@ -159,7 +158,7 @@ example "hold Y, and the sticks lean" in a shooter. Per layer, the indicator is 
 - **Its name** (the default): a small label with the layer's name, drawn like an info
   overlay (default: top center, small, see-through), with its own position, size and colors
   under Appearance.
-- **An info overlay** of the game (or a shared one): shown only while the layer is active.
+- **An info overlay** of the game: shown only while the layer is active.
   This suits a cheat sheet such as "F1 Map · F2 Journal · F3 Skills · F4 Craft" for an F-key
   layer.
 - **Off.**
@@ -193,7 +192,7 @@ drawn by the overlay window that already shows info overlays and menus.
   as other copies do.
 - **The action.** "Layer…" appears in the action list everywhere a held action makes sense in a
   game's profiles and layers, and inside "Toggle…" in a game's menu items. It offers the game's
-  layers, plus **+ New layer** to make one in place. It isn't offered in shared items.
+  layers, plus **+ New layer** to make one in place.
 - **Indicator.** Each layer has an "Indicator" setting next to its name: Name (with Appearance
   and a preview), an info overlay of the game, or Off.
 - **Renames and deletes.** Renaming a layer updates every "Layer…" action that names it.
@@ -203,13 +202,12 @@ drawn by the overlay window that already shows info overlays and menus.
 
 - Layer names are non-empty and unique within their game.
 - "Layer…" must name a layer of the same game. In a menu item, it must be inside Toggle.
-- Shared macros, menus and info overlays can't use "Layer…" at all.
 - An indicator set to an info overlay must name one the game can use.
 - A layer's overrides get the same checks as the base: valid keys, existing macros, menus and
   info overlays, combos of at least two buttons, and zone ranges.
-- Packs: layers are part of the game, so export and import carry them like its macros. Layers are
-  never shared, so they can't clash with shared items on import. Gyro in a layer is listed in the
-  export dialog as an extra; only a profile's own declaration makes it a requirement.
+- Packs: layers are part of the game, so export and import carry them like its macros. Gyro in a
+  layer is listed in the export dialog as an extra; only a profile's own declaration makes it a
+  requirement.
 
 ## Open questions
 

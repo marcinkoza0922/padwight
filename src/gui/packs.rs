@@ -135,7 +135,7 @@ impl App {
             Message::OpenExport => {
                 if let Some(name) = self.game_key().map(str::to_string) {
                     let info = pack::draft(self.game(), false);
-                    let preview = Box::new(pack::export(self.game(), &self.config.shared, &info));
+                    let preview = Box::new(pack::export(self.game(), &info));
                     self.export_description = iced::widget::text_editor::Content::with_text(&info.description);
                     self.dialog = Some(Dialog::Export { game: name, info, library: false, preview });
                 }
@@ -316,7 +316,7 @@ impl App {
         if let Some(Dialog::Export { game, info, preview, .. }) = &mut self.dialog
             && let Some(g) = self.config.game(Some(game))
         {
-            **preview = pack::export(g, &self.config.shared, info);
+            **preview = pack::export(g, info);
         }
     }
 
@@ -432,7 +432,6 @@ impl App {
         .into()
     }
 
-    #[expect(clippy::too_many_lines, reason = "predates the size lints")]
     fn view_import<'a>(&'a self, plan: &'a Plan, choices: &'a Choices) -> Element<'a, Message> {
         let p = &plan.pack;
         let verb = plan.update_kind.map_or("Add", |k| k.verb());
@@ -471,13 +470,6 @@ impl App {
                 .spacing(6),
             );
         }
-        if !plan.shared_clashes.is_empty() {
-            let mut list = column![text("These are renamed because shared items already use their names:").size(13)].spacing(4);
-            for (kind, old, new) in &plan.shared_clashes {
-                list = list.push(text(format!("• {} “{old}” → “{new}”", kind.noun())).size(13));
-            }
-            col = col.push(list);
-        }
         let clashes: Vec<_> = pack::live_clashes(plan, choices).collect();
         if !clashes.is_empty() {
             let mut list = column![text("Another setup already has a rule for the same window. By default this setup's rule takes over:").size(13)].spacing(4);
@@ -511,10 +503,6 @@ impl App {
             text(contents_line(p)).size(13),
         ]
         .spacing(10);
-        if !out.pulled_in.is_empty() {
-            let names: Vec<String> = out.pulled_in.iter().map(|(k, n)| format!("{} “{n}”", k.noun())).collect();
-            col = col.push(note(format!("Shared items it uses are copied in: {}.", names.join(", "))));
-        }
         if !out.dangling.is_empty() {
             col = col.push(text(format!("It refers to things that don't exist: {}.", out.dangling.join(", "))).size(13).color(ERROR_COLOR));
         }
@@ -620,12 +608,12 @@ impl App {
 
     #[expect(clippy::too_many_lines, reason = "predates the size lints")]
     fn view_browse<'a>(&'a self, kind: ItemKind, from: Option<&BrowseSource>, open: Option<usize>) -> Element<'a, Message> {
-        let here = (!self.on_shared()).then(|| self.game_key().map(str::to_string));
+        let here = self.game_key().map(str::to_string);
         let mut sources: Vec<BrowseSource> = self
             .config
             .all_games()
             .map(|(key, _)| key.map(str::to_string))
-            .filter(|key| Some(key) != here.as_ref())
+            .filter(|key| *key != here)
             .map(BrowseSource::Game)
             .collect();
         let added = |id: &str| self.config.games.iter().any(|g| g.origin.as_ref().is_some_and(|o| o.id == id));
@@ -906,22 +894,22 @@ mod tests {
     #[test]
     fn importing_a_pack_file_previews_then_adds_the_game() {
         let mut app = with_game();
-        app.config.shared.macros.push(Macro { name: "Heal".into(), steps: vec![MacroStep::Wait(10)] });
+        app.config.games[0].macros.push(Macro { name: "Heal".into(), steps: vec![MacroStep::Wait(10)] });
         app.config.games[0].profiles[0].set_button(Button::North, ButtonAction::Macro { name: "Heal".into(), repeat: false });
-        let text = pack::export(&app.config.games[0], &app.config.shared, &pack::draft(&app.config.games[0], false))
+        let text = pack::export(&app.config.games[0], &pack::draft(&app.config.games[0], false))
             .pack
             .to_toml()
             .unwrap();
 
         let _ = app.update(Message::PackFileRead(Some(Ok(text))));
         let Some(Dialog::Import { plan, .. }) = &app.dialog else { panic!("no preview") };
-        assert!(plan.name_clash && plan.shared_clashes.len() == 1 && plan.rule_clashes.len() == 1);
+        assert!(plan.name_clash && plan.rule_clashes.len() == 1);
         assert_eq!(app.config.games.len(), 1, "nothing changes before confirming");
         let _ = app.update(Message::SetKeepMine(0, true));
         let _ = app.update(Message::ConfirmImport);
         assert_eq!(app.page, Page::Game(Some("Doom (2)".into())));
         let imported = app.game();
-        assert_eq!(imported.macros[0].name, "Heal (2)");
+        assert_eq!(imported.macros[0].name, "Heal", "its items are its own, so they keep their names");
         assert!(!imported.rules[0].enabled && app.config.games[0].rules[0].enabled, "kept mine");
         assert_eq!(app.validate(), None);
 

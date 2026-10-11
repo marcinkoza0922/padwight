@@ -177,12 +177,10 @@ pub(super) fn action_editor<'a>(
     names: &Names,
 ) -> Element<'a, Message> {
     let kind = action_kind(action);
-    // Shared items can't use layers, so they aren't offered there.
-    let kinds: Vec<ActionKind> = kinds.iter().copied().filter(|k| !matches!(k, ActionKind::Layer) || names.layers_allowed).collect();
     let kind_picker = {
         let on_change = on_change.clone();
         let (current, names) = (action.clone(), names.clone());
-        dropdown(kinds, Some(kind), move |k| on_change(new_action(k, default_button, &current, &names))).width(200)
+        dropdown(kinds.to_vec(), Some(kind), move |k| on_change(new_action(k, default_button, &current, &names))).width(200)
     };
     let value = action_value(action, default_button, on_change, field, names);
     // Where there isn't room beside the kind, the value goes below it.

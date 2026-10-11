@@ -65,7 +65,7 @@ pub fn updates<'a>(config: &'a Config, library: &[Entry]) -> Vec<(&'a str, usize
 #[cfg(test)]
 pub fn problems(pack: &Pack) -> Vec<String> {
     let mut problems = Vec::new();
-    let out = pack::export(&pack.to_game(), &crate::config::Shared::default(), &pack.info());
+    let out = pack::export(&pack.to_game(), &pack.info());
     problems.extend(out.dangling.iter().map(|d| format!("refers to missing {d}")));
     if pack.rules.is_empty() {
         problems.push("has no auto-switch rule".into());
@@ -97,7 +97,6 @@ mod tests {
     use std::collections::BTreeSet;
 
     use super::*;
-    use crate::config::Shared;
     use crate::config::{Button, ButtonAction, Game, Profile, Rule, RuleKind};
 
     #[test]
@@ -154,7 +153,7 @@ mod tests {
     fn the_checks_catch_broken_packs() {
         let mut game = Game::new("Doom", vec![Profile::passthrough("P")]);
         game.profiles[0].set_button(Button::North, ButtonAction::Macro { name: "Gone".into(), repeat: false });
-        let mut pack = pack::export(&game, &Shared::default(), &pack::draft(&game, false)).pack;
+        let mut pack = pack::export(&game, &pack::draft(&game, false)).pack;
         pack.profiles[0].requires = vec![crate::config::Feature::Gyro];
         let found = problems(&pack);
         assert_eq!(found.len(), 3, "{found:?}");
@@ -167,7 +166,7 @@ mod tests {
     #[test]
     fn newer_library_versions_are_offered_as_updates() {
         let game = Game::new("Doom", vec![Profile::passthrough("P")]);
-        let mut entry = Entry { file: "doom.padpack", pack: pack::export(&game, &Shared::default(), &pack::draft(&game, false)).pack };
+        let mut entry = Entry { file: "doom.padpack", pack: pack::export(&game, &pack::draft(&game, false)).pack };
         let mut config = Config::default();
         let plan = pack::plan(&config, entry.pack.clone(), true);
         pack::apply(&mut config, &plan, &pack::Choices::default());

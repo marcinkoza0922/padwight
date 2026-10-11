@@ -66,11 +66,6 @@ impl App {
                 }
             }
             Message::SystemMode(mode) => self.theme_mode = mode,
-            Message::SetSharedView(shared) => {
-                self.shared_view = shared;
-                self.reset_page_state();
-            }
-            Message::ToggleSharedSection => self.shared_open = !self.shared_open,
             Message::RenameGame(name) => {
                 let Some(old) = self.game_key().map(str::to_string) else { return Task::none() };
                 let taken = self.config.games.iter().any(|g| g.name == name && g.name != old);
@@ -236,7 +231,6 @@ impl App {
     }
 
     /// A game's (or General's) page: its name and sub-tabs.
-    #[expect(clippy::too_many_lines, reason = "predates the size lints")]
     pub(super) fn view_game(&self) -> Element<'_, Message> {
         let general = self.game_key().is_none();
         let game = self.game();
@@ -249,14 +243,12 @@ impl App {
         }
         if general {
             title = title.push(help(
-                "Profiles for no particular game, such as the desktop or a plain gamepad. Its \
-                 Macros, Menus, Info overlays and Log overlays tabs also hold the shared items every game can use."
-                    .into(),
+                "Profiles for no particular game, such as the desktop or a plain gamepad.".into(),
             ));
         }
 
         let profile_issue = self.profile().is_some_and(|p| ProfileTab::ALL.iter().any(|t| section_has_problem(p, *t, &names)));
-        let reachable = reachable_menus(&self.config, (!self.on_shared()).then_some(game));
+        let reachable = reachable_menus(&self.config, game);
         let issue = |tab: GameTab| match tab {
             GameTab::Profiles => profile_issue,
             GameTab::Layers => layers_problem(game, &names).is_some(),
@@ -278,32 +270,6 @@ impl App {
             );
         }
         let tab = if general && self.game_tab == GameTab::Details { GameTab::Profiles } else { self.game_tab };
-        let mut col = column![title, container(segments).padding(3).style(style::segments)].spacing(16);
-
-        let item_tab = matches!(tab, GameTab::Macros | GameTab::Menus | GameTab::Info | GameTab::Logs);
-        if general && item_tab {
-            let choice = |label: &'static str, shared: bool| {
-                button(text(label).size(14))
-                    .style(style::segment(self.shared_view == shared))
-                    .padding([5, 14])
-                    .on_press(Message::SetSharedView(shared))
-            };
-            col = col.push(
-                row![
-                    container(row![choice("General's own", false), choice("Shared by all setups", true)].spacing(2))
-                        .padding(3)
-                        .style(style::segments),
-                    help(
-                        "Shared macros, menus and info overlays can be used by every profile of every game. \
-                         A game's own items can't reuse a shared item's name."
-                            .into(),
-                    ),
-                ]
-                .spacing(8)
-                .align_y(Alignment::Center),
-            );
-        }
-
         let body = match tab {
             GameTab::Profiles => self.view_profile_tab(&names),
             GameTab::Layers => self.view_layers(&names),
@@ -313,41 +279,7 @@ impl App {
             GameTab::Logs => self.view_logs(),
             GameTab::Details => self.view_details(),
         };
-        col = col.push(body);
-        if item_tab && !self.on_shared() {
-            col = col.push(self.view_shared_section(match tab {
-                GameTab::Macros => ItemKind::Macro,
-                GameTab::Menus => ItemKind::Menu,
-                GameTab::Logs => ItemKind::Log,
-                _ => ItemKind::Info,
-            }));
-        }
-        col.into()
-    }
-
-    /// The shared items a game's profiles can also use, read-only.
-    pub(super) fn view_shared_section(&self, kind: ItemKind) -> Element<'_, Message> {
-        let names = Names::shared(&self.config).list(kind).to_vec();
-        let mut col = column![disclosure(
-            &format!("Shared {}s usable here ({})", kind.noun(), names.len()),
-            self.shared_open,
-            Message::ToggleSharedSection
-        )]
-        .spacing(6);
-        if self.shared_open {
-            if names.is_empty() {
-                col = col.push(text(format!("No shared {}s.", kind.noun())).size(13).color(MUTED_COLOR));
-            }
-            for name in names {
-                col = col.push(text(format!("• {name}")).size(14));
-            }
-            col = col.push(
-                button(text("Edit shared items under General").size(13))
-                    .style(button::text)
-                    .on_press(Message::SelectPage(Page::Game(None))),
-            );
-        }
-        col.into()
+        column![title, container(segments).padding(3).style(style::segments), body].spacing(16).into()
     }
 
     /// The setup's overlay sounds: each overlay's cues, on or off, and what its steps and picks sound like.

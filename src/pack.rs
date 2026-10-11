@@ -10,7 +10,7 @@ use crate::{motion::MotionSet, pad_identity::ControllerSupport};
 use crate::sound::SoundSet;
 use crate::config::{
     Button, ButtonAction, Combo, Config, Game, Gestures, GyroMode, Indicator, InfoOverlay, ItemKind, Layer, LogOverlay, Macro,
-    Menu, MacroStep, Origin, OverlayStyle, PackInfo, PackRef, Profile, Rule, Shared, free_name,
+    Menu, MacroStep, Origin, OverlayStyle, PackInfo, PackRef, Profile, Rule, free_name,
 };
 
 /// The pack format this app writes, and the newest it reads. 2 added layers; 3, toggles
@@ -340,8 +340,6 @@ impl Pack {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Export {
     pub pack: Pack,
-    /// Shared items written into the pack because the game uses them.
-    pub pulled_in: Vec<(ItemKind, String)>,
     /// References to items that exist nowhere, e.g. "macro \"Dodge\"".
     pub dangling: Vec<String>,
     pub features: Vec<FeatureUse>,
@@ -376,39 +374,14 @@ pub fn draft(game: &Game, library: bool) -> PackInfo {
     info
 }
 
-/// Writes `game` as a pack with this metadata, copying in the shared items it uses (followed
-/// through menus and macros) so the pack works on its own.
-pub fn export(game: &Game, shared: &Shared, info: &PackInfo) -> Export {
-    let mut pack_game = game.clone();
-    let mut pulled_in = Vec::new();
-    let mut dangling = BTreeSet::new();
-    // Each pass adds the shared items the previous ones referred to.
-    loop {
-        let refs = game_references(&pack_game);
-        let mut added = false;
-        for (kind, name) in refs {
-            if pack_game.names(kind).contains(&name.as_str()) {
-                continue;
-            }
-            if !shared.names(kind).contains(&name.as_str()) {
-                dangling.insert(format!("{} {name:?}", kind.noun()));
-                continue;
-            }
-            match kind {
-                ItemKind::Macro => pack_game.macros.extend(shared.macros.iter().find(|m| m.name == name).cloned()),
-                ItemKind::Menu => pack_game.menus.extend(shared.menus.iter().find(|m| m.name == name).cloned()),
-                ItemKind::Info => pack_game.info.extend(shared.info.iter().find(|o| o.name == name).cloned()),
-                ItemKind::Log => pack_game.logs.extend(shared.logs.iter().find(|o| o.name == name).cloned()),
-                // Never shared, so it was reported as dangling above.
-                ItemKind::Layer => {}
-            }
-            pulled_in.push((kind, name));
-            added = true;
-        }
-        if !added {
-            break;
-        }
-    }
+/// Writes `game` as a pack with this metadata.
+pub fn export(game: &Game, info: &PackInfo) -> Export {
+    let pack_game = game.clone();
+    let dangling: Vec<String> = game_references(game)
+        .into_iter()
+        .filter(|(kind, name)| !game.names(*kind).contains(&name.as_str()))
+        .map(|(kind, name)| format!("{} {name:?}", kind.noun()))
+        .collect();
     let features = features(&pack_game);
     let pack = Pack {
         format: FORMAT,
@@ -439,7 +412,7 @@ pub fn export(game: &Game, shared: &Shared, info: &PackInfo) -> Export {
         motion: pack_game.motion,
         controllers: pack_game.controllers,
     };
-    Export { pack, pulled_in, dangling: dangling.into_iter().collect(), features }
+    Export { pack, dangling, features }
 }
 
 /// A stable 64-bit FNV-1a hash, as hex.
@@ -567,8 +540,6 @@ pub struct Plan {
     pub name_clash: bool,
     /// The name the game gets if renamed.
     pub renamed: String,
-    /// Pack items named like shared ones, and the names they get instead.
-    pub shared_clashes: Vec<(ItemKind, String, String)>,
     pub rule_clashes: Vec<RuleClash>,
 }
 
@@ -593,18 +564,6 @@ pub fn plan(config: &Config, pack: Pack, library: bool) -> Plan {
     let name_clash = installed.is_none() && config.games.iter().any(|g| &g.name == name);
     let renamed = free_name(name, |n| config.games.iter().any(|g| g.name == n));
 
-    let game = pack.to_game();
-    let mut shared_clashes = Vec::new();
-    for kind in ItemKind::ALL {
-        let shared = config.shared.names(kind);
-        for item in game.names(kind) {
-            if shared.contains(&item) {
-                let taken = |n: &str| shared.contains(&n) || game.names(kind).contains(&n);
-                shared_clashes.push((kind, item.to_string(), free_name(item, taken)));
-            }
-        }
-    }
-
     let target = installed.map(|g| g.name.as_str());
     let mut rule_clashes = Vec::new();
     for (i, rule) in pack.rules.iter().enumerate() {
@@ -628,7 +587,6 @@ pub fn plan(config: &Config, pack: Pack, library: bool) -> Plan {
         edited: installed.map(edited_items).unwrap_or_default(),
         name_clash,
         renamed,
-        shared_clashes,
         rule_clashes,
         pack,
         library,
@@ -644,10 +602,6 @@ pub fn live_clashes<'a>(plan: &'a Plan, choices: &Choices) -> impl Iterator<Item
 /// Imports the planned pack into `config` and returns the new game's name.
 pub fn apply(config: &mut Config, plan: &Plan, choices: &Choices) -> String {
     let mut game = plan.pack.to_game();
-    for (kind, old, new) in &plan.shared_clashes {
-        game.rename_item(*kind, old, new);
-        game.rename_refs(*kind, old, new);
-    }
 
     // Rules: an update keeps each existing rule's on/off; clashes go as chosen.
     let previous = plan.update_of.as_deref().and_then(|n| config.games.iter().find(|g| g.name == n));
@@ -739,15 +693,14 @@ mod tests {
         ButtonAction::Macro { name: name.into(), repeat: false }
     }
 
-    /// A game whose profile opens shared menu "Wheel", which plays shared macro "Heal".
+    /// A game whose profile opens its menu "Wheel", which plays its macro "Heal".
     fn setup() -> Config {
         let mut config = Config::default();
-        config.shared.macros = vec![mac("Heal"), mac("Unused")];
-        config.shared.menus = vec![menu("Wheel", vec![macro_ref("Heal")])];
         let mut game = Game::new("Doom", vec![Profile::pc_action("Play")]);
         game.profiles[0].set_button(Button::Select, ButtonAction::OpenMenu("Wheel".into()));
         game.profiles[0].set_button(Button::North, macro_ref("Gone"));
-        game.macros = vec![mac("Dodge")];
+        game.macros = vec![mac("Dodge"), mac("Heal")];
+        game.menus = vec![menu("Wheel", vec![macro_ref("Heal")])];
         game.rules = vec![Rule::new(RuleKind::Executable, "doom.exe", "Play")];
         config.games.push(game);
         config
@@ -759,7 +712,7 @@ mod tests {
         let game = &mut config.games[0];
         game.profiles[0].requires = vec![Feature::Gyro];
         game.profiles.push(Profile::passthrough("Plain"));
-        let out = export(game, &config.shared, &draft(game, false));
+        let out = export(game, &draft(game, false));
         assert_eq!(out.features, [FeatureUse { feature: Feature::Gyro, place: "profile “Play”".into(), required: true }]);
         assert_eq!(out.pack.required_by_all(), []);
         assert_eq!(out.pack.needing(Feature::Gyro), ["Play"]);
@@ -779,24 +732,22 @@ mod tests {
     }
 
     #[test]
-    fn export_copies_in_used_shared_items_and_reports_problems() {
+    fn export_reports_problems() {
         let config = setup();
         let game = &config.games[0];
         let info = draft(game, false);
-        let out = export(game, &config.shared, &info);
-        assert_eq!(out.pulled_in, [(ItemKind::Menu, "Wheel".to_string()), (ItemKind::Macro, "Heal".to_string())]);
+        let out = export(game, &info);
         assert_eq!(out.dangling, ["macro \"Gone\""]);
         assert!(out.pack.pack.requires.is_empty(), "a pack doesn't state needs; its profiles do");
         let uses = FeatureUse { feature: Feature::Gyro, place: "profile “Play”".into(), required: false };
         assert_eq!(out.features, [uses], "the action template aims with gyro, which it can do without");
-        assert!(!out.pack.macros.iter().any(|m| m.name == "Unused"));
         assert_eq!(out.pack.pack.name, "Doom");
     }
 
     #[test]
     fn packs_roundtrip_and_newer_formats_are_refused() {
         let config = setup();
-        let out = export(&config.games[0], &config.shared, &draft(&config.games[0], false));
+        let out = export(&config.games[0], &draft(&config.games[0], false));
         let text = out.pack.to_toml().unwrap();
         assert_eq!(parse(&text).unwrap(), out.pack);
 
@@ -811,7 +762,7 @@ mod tests {
     #[expect(clippy::cognitive_complexity, reason = "predates the size lints")]
     fn importing_twice_renames_then_updates_by_id() {
         let mut config = setup();
-        let mut pack = export(&config.games[0], &config.shared, &draft(&config.games[0], false)).pack;
+        let mut pack = export(&config.games[0], &draft(&config.games[0], false)).pack;
         pack.pack.version = "1.0".into();
 
         // "Doom" exists (made by the user, no origin): a name clash, renamed by default.
@@ -824,11 +775,10 @@ mod tests {
         assert_eq!(name, "Doom (2)");
         assert!(!config.games[0].rules[0].enabled, "the import's rule took over");
         assert!(config.games[1].rules[0].enabled);
-        // Shared items it carries clash with the user's shared ones and get renamed.
+        // Its items keep their names: they're the setup's own.
         let imported = &config.games[1];
-        assert!(imported.menus.iter().any(|m| m.name == "Wheel (2)"));
-        assert_eq!(imported.menus[0].items[0].action, macro_ref("Heal (2)"));
-        assert_eq!(imported.profiles[0].button(Button::Select), &ButtonAction::OpenMenu("Wheel (2)".into()));
+        assert_eq!(imported.menus[0].items[0].action, macro_ref("Heal"));
+        assert_eq!(imported.profiles[0].button(Button::Select), &ButtonAction::OpenMenu("Wheel".into()));
 
         // The same ID again is an update of "Doom (2)", which the user has since edited.
         config.games[1].macros[0].steps.push(MacroStep::Wait(5));
@@ -852,7 +802,7 @@ mod tests {
     #[test]
     fn replacing_and_keeping_my_rule() {
         let mut config = setup();
-        let mut pack = export(&config.games[0], &config.shared, &draft(&config.games[0], false)).pack;
+        let mut pack = export(&config.games[0], &draft(&config.games[0], false)).pack;
         pack.pack.id = new_id();
         let p = plan(&config, pack, false);
         assert_eq!(p.rule_clashes.len(), 1, "with the same-named setup, until it's replaced");
@@ -914,10 +864,10 @@ mod tests {
         let mut deeper = Layer::new("Deeper");
         deeper.gyro = Some(crate::config::GyroConfig { mode: crate::config::GyroMode::Mouse { sensitivity: 10.0 }, ..Default::default() });
         config.games[0].layers = vec![layer.clone(), deeper];
-        config.shared.info.push(InfoOverlay { name: "Cheat sheet".into(), always: false, on_start: None, linger: None, title: None, current_input: Default::default(), style: Default::default(), rows: vec![] });
+        config.games[0].info.push(InfoOverlay { name: "Cheat sheet".into(), always: false, on_start: None, linger: None, title: None, current_input: Default::default(), style: Default::default(), rows: vec![] });
 
-        let out = export(&config.games[0], &config.shared, &draft(&config.games[0], false));
-        assert!(out.pulled_in.contains(&(ItemKind::Info, "Cheat sheet".into())), "an indicator's info overlay comes along");
+        let out = export(&config.games[0], &draft(&config.games[0], false));
+        assert_eq!(out.dangling, ["macro \"Gone\""], "the indicator's info overlay is found");
         assert_eq!(out.features, [FeatureUse { feature: Feature::Gyro, place: "layer “Deeper”".into(), required: false }]);
         let text = out.pack.to_toml().unwrap();
         assert!(text.contains(&format!("format = {FORMAT}")));
@@ -925,10 +875,10 @@ mod tests {
         assert_eq!(back.layers.len(), 2);
         assert_eq!(back.to_game().layers[0], layer);
 
-        // Copying the layer brings the layer it holds and the macro it plays.
-        // ("Heal" is shared rather than the game's own, so it isn't the source's to copy.)
+        // Copying the layer brings the macro it plays, its indicator and the layer it holds.
         let needs = dependencies(&config.games[0], ItemKind::Layer, "Hotkeys", |_, _| false);
-        assert_eq!(needs, [(ItemKind::Layer, "Hotkeys".to_string()), (ItemKind::Layer, "Deeper".to_string())]);
+        let want = [(ItemKind::Layer, "Hotkeys"), (ItemKind::Macro, "Heal"), (ItemKind::Info, "Cheat sheet"), (ItemKind::Layer, "Deeper")];
+        assert_eq!(needs, want.map(|(k, n)| (k, n.to_string())));
     }
 
     #[test]
@@ -937,19 +887,19 @@ mod tests {
         let game = &mut config.games[0];
         game.profiles[0].set_button(Button::LeftPaddle, ButtonAction::Gamepad(Button::South));
         let paddle = |required| FeatureUse { feature: Feature::BackPaddles, place: "profile “Play”".into(), required };
-        let out = export(game, &config.shared, &draft(game, false));
+        let out = export(game, &draft(game, false));
         assert!(out.features.contains(&paddle(false)), "a paddle mapping is listed as an undeclared use");
         assert!(!out.pack.needing(Feature::BackPaddles).contains(&"Play"));
 
         game.profiles[0].requires = vec![Feature::BackPaddles];
-        let out = export(game, &config.shared, &draft(game, false));
+        let out = export(game, &draft(game, false));
         assert!(out.features.contains(&paddle(true)));
         assert_eq!(out.pack.needing(Feature::BackPaddles), ["Play"]);
 
         // A paddle set to nothing isn't a use.
         game.profiles[0].requires.clear();
         game.profiles[0].set_button(Button::LeftPaddle, ButtonAction::Disabled);
-        let out = export(game, &config.shared, &draft(game, false));
+        let out = export(game, &draft(game, false));
         assert!(!out.features.iter().any(|u| u.feature == Feature::BackPaddles));
     }
 
@@ -957,16 +907,16 @@ mod tests {
     fn a_touchpad_setup_is_listed_and_a_declared_need_travels() {
         let mut config = setup();
         let game = &mut config.games[0];
-        let out = export(game, &config.shared, &draft(game, false));
+        let out = export(game, &draft(game, false));
         assert!(!out.features.iter().any(|u| u.feature == Feature::Touchpad), "the default touchpad isn't a use");
 
         game.profiles[0].touchpad.motion = crate::config::TouchpadMotion::Off;
         let touchpad = |required| FeatureUse { feature: Feature::Touchpad, place: "profile “Play”".into(), required };
-        let out = export(game, &config.shared, &draft(game, false));
+        let out = export(game, &draft(game, false));
         assert!(out.features.contains(&touchpad(false)), "a changed touchpad is listed as an undeclared use");
 
         game.profiles[0].requires = vec![Feature::Touchpad];
-        let out = export(game, &config.shared, &draft(game, false));
+        let out = export(game, &draft(game, false));
         assert!(out.features.contains(&touchpad(true)));
         assert_eq!(out.pack.needing(Feature::Touchpad), ["Play"]);
         let back = parse(&out.pack.to_toml().unwrap()).unwrap();
@@ -977,7 +927,7 @@ mod tests {
     fn the_overlay_font_travels_in_packs() {
         let mut config = setup();
         config.games[0].overlay_font = Some("Comfortaa".into());
-        let out = export(&config.games[0], &config.shared, &draft(&config.games[0], false));
+        let out = export(&config.games[0], &draft(&config.games[0], false));
         let pack = parse(&out.pack.to_toml().unwrap()).unwrap();
         assert_eq!(pack.to_game().overlay_font.as_deref(), Some("Comfortaa"));
     }
@@ -986,11 +936,11 @@ mod tests {
     fn controller_support_travels_in_packs() {
         use crate::pad_identity::ControllerSupport;
         let mut config = setup();
-        let plain = export(&config.games[0], &config.shared, &draft(&config.games[0], false)).pack.to_toml().unwrap();
+        let plain = export(&config.games[0], &draft(&config.games[0], false)).pack.to_toml().unwrap();
         assert!(!plain.contains("controllers"), "a game that ticks nothing leaves it out");
         let support = ControllerSupport { dualsense: true, switch_pro: true, ..Default::default() };
         config.games[0].controllers = Some(support);
-        let out = export(&config.games[0], &config.shared, &draft(&config.games[0], false));
+        let out = export(&config.games[0], &draft(&config.games[0], false));
         let pack = parse(&out.pack.to_toml().unwrap()).unwrap();
         assert_eq!(pack.to_game().controllers, Some(support));
     }
@@ -1000,7 +950,7 @@ mod tests {
         let mut config = setup();
         let style = OverlayStyle { scale: 1.5, ..OverlayStyle::keyboard() };
         config.games[0].keyboard_style = Some(style.clone());
-        let out = export(&config.games[0], &config.shared, &draft(&config.games[0], false));
+        let out = export(&config.games[0], &draft(&config.games[0], false));
         let pack = parse(&out.pack.to_toml().unwrap()).unwrap();
         assert_eq!(pack.to_game().keyboard_style, Some(style));
         assert_eq!(pack.to_game().numpad_style, None);
@@ -1025,7 +975,7 @@ mod tests {
         let style = OverlayStyle { scale: 1.2, ..OverlayStyle::media() };
         config.games[0].media_style = Some(style.clone());
         config.games[0].menu_style = Some(OverlayStyle::default());
-        let out = export(&config.games[0], &config.shared, &draft(&config.games[0], false));
+        let out = export(&config.games[0], &draft(&config.games[0], false));
         let pack = parse(&out.pack.to_toml().unwrap()).unwrap();
         assert_eq!(pack.to_game().media_style, Some(style));
         assert_eq!(pack.to_game().menu_style, Some(OverlayStyle::default()));
@@ -1051,13 +1001,13 @@ mod tests {
     #[test]
     fn imported_games_can_become_active() {
         let mut config = setup();
-        let mut pack = export(&config.games[0], &config.shared, &draft(&config.games[0], false)).pack;
+        let mut pack = export(&config.games[0], &draft(&config.games[0], false)).pack;
         pack.pack.name = "Quake".into();
         pack.rules.clear();
         let plan = plan(&config, pack, false);
         let name = apply(&mut config, &plan, &Choices::default());
         config.active = ProfileRef::new(Some(&name), "Play");
         assert_eq!(config.active_ref(), ProfileRef::new(Some("Quake"), "Play"));
-        assert!(config.scope().menus.iter().any(|m| m.name == "Wheel (2)"));
+        assert!(config.scope().menus.iter().any(|m| m.name == "Wheel"));
     }
 }

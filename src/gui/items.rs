@@ -647,25 +647,13 @@ impl App {
         Task::none()
     }
 
-    /// Points every reference to a renamed item at its new name: within its game, or for a
-    /// shared item, in shared items and every game that doesn't have its own of that name.
+    /// Points every reference to a renamed item in its game at its new name.
     pub(super) fn follow_item_rename(&mut self, kind: ItemKind, old: &str, new: &str) {
-        if !self.on_shared() {
-            self.game_mut().rename_refs(kind, old, new);
-            return;
-        }
-        self.config.shared.rename_refs(kind, old, new);
-        let own = |g: &Game| g.names(kind).contains(&old);
-        if !own(&self.config.general) {
-            self.config.general.rename_refs(kind, old, new);
-        }
-        for g in self.config.games.iter_mut().filter(|g| !own(g)) {
-            g.rename_refs(kind, old, new);
-        }
+        self.game_mut().rename_refs(kind, old, new);
     }
 
     /// Why an item of `kind` in the shown list (other than the one at `index`) can't be named
-    /// `name`: taken there, or clashing between a game's items and shared ones.
+    /// `name`: another one there has it.
     pub(super) fn name_clash(&self, kind: ItemKind, index: Option<usize>, name: &str) -> Option<String> {
         let list: Vec<&String> = match kind {
             ItemKind::Macro => self.macros().iter().map(|m| &m.name).collect(),
@@ -674,17 +662,7 @@ impl App {
             ItemKind::Log => self.log_names(),
             ItemKind::Layer => self.game().layers.iter().map(|l| &l.name).collect(),
         };
-        if list.iter().enumerate().any(|(i, n)| Some(i) != index && *n == name) {
-            return Some("name used twice".into());
-        }
-        let noun = kind.noun();
-        if self.on_shared() {
-            // A shared item can't take a name a game's own item uses.
-            let (game, _) = self.config.all_games().find(|(_, g)| g.names(kind).contains(&name))?;
-            Some(format!("{} has its own {noun} with this name", game.unwrap_or("General")))
-        } else {
-            self.config.shared.names(kind).contains(&name).then(|| format!("a shared {noun} has this name"))
-        }
+        list.iter().enumerate().any(|(i, n)| Some(i) != index && *n == name).then(|| "name used twice".into())
     }
 
     pub(super) fn item_name_free(&self, kind: ItemKind, index: Option<usize>, name: &str) -> bool {
@@ -970,12 +948,12 @@ impl App {
                 "Shown",
                 column![
                     checkbox(o.always)
-                        .label(if self.on_shared() { "Always, in every setup" } else { "Always, while this setup is active" })
+                        .label("Always, while this setup is active")
                         .on_toggle(move |a| Message::SetInfoAlways(i, a)),
                 ]
                 .extend((!o.always).then(|| {
                     seconds_option(
-                        if self.on_shared() { "When a game starts, for" } else { "When the game starts, for" },
+                        "When the game starts, for",
                         o.on_start,
                         DEFAULT_START_SECONDS,
                         move |v| Message::SetInfoOnStart(i, v),
@@ -1398,7 +1376,7 @@ mod tests {
     }
 
     #[test]
-    fn games_own_their_items_and_can_use_shared_ones() {
+    fn games_own_their_items() {
         let mut app = with_game();
         let _ = app.update(Message::NewMacro);
         assert_eq!(app.config.games[0].macros[0].name, "Macro");
@@ -1407,54 +1385,22 @@ mod tests {
         app.config.general.profiles[0].set_button(Button::West, ButtonAction::Macro { name: "Macro".into(), repeat: false });
         let err = app.validate().unwrap();
         assert!(err.starts_with("General: ") && err.contains("missing macro"), "{err}");
+        app.config.general.profiles[0].set_button(Button::West, ButtonAction::Disabled);
 
-        // A shared macro is usable everywhere.
-        let _ = app.update(Message::SelectPage(Page::Game(None)));
-        let _ = app.update(Message::SelectGameTab(GameTab::Macros));
-        let _ = app.update(Message::SetSharedView(true));
-        let _ = app.update(Message::NewMacro);
-        let _ = app.update(Message::RenameMacro(0, "Screenshot".into()));
-        app.config.general.profiles[0].set_button(Button::West, ButtonAction::Macro { name: "Screenshot".into(), repeat: false });
-        app.config.games[0].profiles[0].set_button(Button::West, ButtonAction::Macro { name: "Screenshot".into(), repeat: false });
-        assert_eq!(app.validate(), None);
-        // Renaming a shared item follows into every game.
+        // Renaming follows within the setup.
+        app.config.games[0].profiles[0].set_button(Button::West, ButtonAction::Macro { name: "Macro".into(), repeat: false });
         let _ = app.update(Message::RenameMacro(0, "Snap".into()));
         let snap = ButtonAction::Macro { name: "Snap".into(), repeat: false };
-        assert_eq!(app.config.general.profiles[0].button(Button::West), &snap);
         assert_eq!(app.config.games[0].profiles[0].button(Button::West), &snap);
-        // A shared name can't be taken by a game's item, and a game's name isn't taken twice.
-        let _ = app.update(Message::RenameMacro(0, "Macro".into()));
-        assert_eq!(app.config.shared.macros[0].name, "Snap", "Doom has a macro named that");
-        let _ = app.update(Message::SelectPage(Page::Game(Some("Doom".into()))));
+        assert_eq!(app.validate(), None);
+        // A name isn't taken twice, and General's names don't matter here.
+        app.config.general.macros.push(Macro { name: "Dodge".into(), steps: vec![] });
+        let _ = app.update(Message::NewMacro);
+        assert_eq!(app.config.games[0].macros[0].name, "Macro", "new ones go first");
         let _ = app.update(Message::RenameMacro(0, "Snap".into()));
         assert_eq!(app.config.games[0].macros[0].name, "Macro");
-        let _ = app.update(Message::NewMacro);
-        assert_eq!(app.config.games[0].macros[0].name, "Macro 2");
-    }
-
-    #[test]
-    fn the_shared_switch_only_applies_to_item_tabs() {
-        let mut app = app();
-        app.config.general.macros.push(Macro { name: "Mine".into(), steps: vec![] });
-        app.config.general.profiles[0].set_button(Button::West, ButtonAction::Macro { name: "Mine".into(), repeat: false });
-        let _ = app.update(Message::SelectGameTab(GameTab::Macros));
-        let _ = app.update(Message::SetSharedView(true));
-        assert!(app.on_shared() && app.macros().is_empty());
-        let _ = app.update(Message::SelectGameTab(GameTab::Profiles));
-        assert!(!app.on_shared());
-        assert!(app.names().macros.contains(&"Mine".to_string()), "General's profiles see General's macros");
-    }
-
-    #[test]
-    fn name_clashes_say_where_the_other_item_is() {
-        let mut app = with_game();
-        app.config.games[0].macros.push(Macro { name: "Dodge".into(), steps: vec![] });
-        app.config.shared.macros.push(Macro { name: "Dodge".into(), steps: vec![] });
-        assert_eq!(app.name_problem(ItemKind::Macro, 0, "Dodge").as_deref(), Some("a shared macro has this name"));
-        let _ = app.update(Message::SelectPage(Page::Game(None)));
-        let _ = app.update(Message::SelectGameTab(GameTab::Macros));
-        let _ = app.update(Message::SetSharedView(true));
-        assert_eq!(app.name_problem(ItemKind::Macro, 0, "Dodge").as_deref(), Some("Doom has its own macro with this name"));
+        assert_eq!(app.name_problem(ItemKind::Macro, 0, "Snap").as_deref(), Some("name used twice"));
+        assert_eq!(app.name_problem(ItemKind::Macro, 0, "Dodge"), None);
         assert_eq!(app.name_problem(ItemKind::Macro, 0, " ").as_deref(), Some("needs a name"));
     }
 
