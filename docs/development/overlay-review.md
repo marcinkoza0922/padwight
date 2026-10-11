@@ -12,13 +12,13 @@ Tick an item when it's done and merged.
 
 ## Bugs
 
-- [ ] 1. **Two-column lists can't switch columns.** `list_step` handles left and right (and it's
+- [x] 1. **Two-column lists can't switch columns.** `list_step` handles left and right (and it's
   tested), but `MenuSession::list_button` only sends D-pad Left/Right for grids
   (`src/menu.rs:418`), and a list's stick step only reads `LeftY`. A list of 9+ items is drawn in
   two columns, but reaching the right column means scrolling down through the whole left one.
   Edit Controls does support left and right on its two-column pages, so action menus are the odd
   one out.
-- [ ] 2. **In a Buttons menu, a quick-select button can take over navigation.** Quick-select is
+- [x] 2. **In a Buttons menu, a quick-select button can take over navigation.** Quick-select is
   checked before navigation (`src/menu.rs:391`), and the GUI offers every button as a quick-select
   (`src/gui/items.rs:1205`), including A, the D-pad and B. The sample `menu-buttons.png` shows
   this: "A Quick save" means pressing A always runs Quick save, never the highlighted "Crouch".
@@ -29,7 +29,7 @@ Tick an item when it's done and merged.
 
     - My note: The quick-select / buttons menu shouldn't allow you to move the cursor at all. The entire point is to open a menu then press a single button to select the desired action. The only real conflict might be with the opener's own buttons; we could add a check to the gui that warns the user when tries to assign a button menu to an input that warns him that the button menu has an input that conflicts with the input.
   
-- [ ] 3. **B doesn't go back in held or toggled menus.** The cancel button only works in
+- [x] 3. **B doesn't go back in held or toggled menus.** The cancel button only works in
   `Mode::Unwatched` (`src/menu.rs:378`). In a held menu you can open a submenu but you can't back
   out of it. The only way out is letting go, which closes everything. The manual says "B goes
   back one level, or closes the menu at the top" (`docs/manual/menus.md:15`). Either make cancel

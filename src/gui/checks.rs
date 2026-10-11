@@ -27,6 +27,59 @@ pub(super) fn item_problem(menu: &Menu, action: &ButtonAction, menus: &[&Menu], 
     })
 }
 
+/// The buttons that open menu `name` in `game`, one list per binding: a button or its gesture
+/// opens it alone, a combo with all its buttons. A submenu is opened by whatever opens the menus
+/// it's in, since their opener still holds it up.
+pub(super) fn menu_openers(game: &Game, name: &str) -> Vec<Vec<Button>> {
+    let mut openers = Vec::new();
+    let mut seen = vec![name.to_string()];
+    let mut queue = vec![name.to_string()];
+    let opens = |action: &ButtonAction, target: &str| {
+        let mut found = false;
+        action.walk(&mut |a| found |= matches!(a, ButtonAction::OpenMenu(n) if n == target));
+        found
+    };
+    while let Some(target) = queue.pop() {
+        let buttons = game.profiles.iter().flat_map(|p| p.buttons.iter()).chain(game.layers.iter().flat_map(|l| l.buttons.iter()));
+        let gestures = game.profiles.iter().flat_map(|p| p.gestures.iter()).chain(game.layers.iter().flat_map(|l| l.gestures.iter()));
+        let combos = game.profiles.iter().flat_map(|p| p.combos.iter()).chain(game.layers.iter().flat_map(|l| l.combos.iter()));
+        openers.extend(buttons.filter(|(_, a)| opens(a, &target)).map(|(b, _)| vec![*b]));
+        openers.extend(
+            gestures.filter(|(_, g)| GestureKind::ALL.into_iter().filter_map(|k| g.get(k)).any(|a| opens(a, &target))).map(|(b, _)| vec![*b]),
+        );
+        openers.extend(combos.filter(|c| opens(&c.action, &target)).map(|c| c.buttons.clone()));
+        for parent in game.menus.iter().filter(|m| m.items.iter().any(|item| opens(&item.action, &target))) {
+            if !seen.contains(&parent.name) {
+                seen.push(parent.name.clone());
+                queue.push(parent.name.clone());
+            }
+        }
+    }
+    openers.sort();
+    openers.dedup();
+    openers
+}
+
+/// Why item `i` of a button menu can't be picked, if it can't: it has no button, an earlier item
+/// has its button, or its button is part of what opens the menu (pressing it is holding the
+/// menu up). `openers` are [`menu_openers`]' lists. Saving still works; this is a warning.
+pub(super) fn button_item_warning(menu: &Menu, i: usize, openers: &[Vec<Button>]) -> Option<String> {
+    if !matches!(menu.kind, MenuKind::Buttons) {
+        return None;
+    }
+    let Some(b) = menu.items.get(i)?.button else {
+        return Some("no button, so it can't be picked".into());
+    };
+    let badge = crate::menu::button_badge(b);
+    if let Some(first) = menu.items[..i].iter().position(|item| item.button == Some(b)) {
+        return Some(format!("item {} also uses {badge}; only the first is picked", first + 1));
+    }
+    if openers.iter().any(|o| o.contains(&b)) {
+        return Some(format!("{badge} opens this menu, so pressing it can't pick this item"));
+    }
+    None
+}
+
 pub(super) fn info_has_problem(info: &[InfoOverlay]) -> bool {
     info.iter().enumerate().any(|(i, o)| o.name.trim().is_empty() || info[..i].iter().any(|other| other.name == o.name))
 }
@@ -432,6 +485,32 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn button_menu_items_nothing_can_pick_are_warned_about() {
+        let item = |button| MenuItem { label: "x".into(), action: ButtonAction::Disabled, button, weight: 1.0 };
+        let menu = |name: &str, items| Menu { name: name.into(), kind: MenuKind::Buttons, items, cancel: None, style: OverlayStyle::default() };
+        let quick = menu("Quick", vec![item(Some(Button::LeftBumper)), item(Some(Button::South)), item(Some(Button::South)), item(None)]);
+        let sub = menu("Sub", vec![item(Some(Button::RightBumper))]);
+        let mut profile = Profile::passthrough("p");
+        profile.set_button(Button::LeftBumper, ButtonAction::toggle(ButtonAction::OpenMenu("Quick".into())));
+        profile.combos.push(Combo { buttons: vec![Button::Select, Button::RightBumper], action: ButtonAction::OpenMenu("Quick".into()) });
+        let mut game = Game::new("g", vec![profile]);
+        game.menus = vec![quick.clone(), sub.clone()];
+        game.menus[0].items[1].action = ButtonAction::OpenMenu("Sub".into());
+
+        let openers = menu_openers(&game, "Quick");
+        assert_eq!(openers, [vec![Button::LeftBumper], vec![Button::Select, Button::RightBumper]]);
+        assert!(button_item_warning(&quick, 0, &openers).is_some_and(|w| w.contains("opens this menu")));
+        assert_eq!(button_item_warning(&quick, 1, &openers), None);
+        assert!(button_item_warning(&quick, 2, &openers).is_some_and(|w| w.contains("item 2")));
+        assert!(button_item_warning(&quick, 3, &openers).is_some_and(|w| w.contains("no button")));
+        // A submenu is held up by its parent's openers too.
+        assert!(button_item_warning(&sub, 0, &menu_openers(&game, "Sub")).is_some_and(|w| w.contains("RB opens")));
+        // Other kinds of menu have no item buttons to warn about.
+        let list = Menu { kind: MenuKind::List, ..quick };
+        assert_eq!(button_item_warning(&list, 3, &openers), None);
+    }
 
     #[test]
     fn problems_are_found_inside_nested_actions_and_flag_their_section() {

@@ -354,7 +354,7 @@ pub(super) const MENUS_HELP: &str = "On-screen menus you open with the \"Open me
     gesture, combo or trigger. A menu is up while that input is held and closes when you let go; wrap the \
     action in \"Toggle\" to keep it up until pressed again. Radial: aim a stick, let go to choose. \
     Directional: four slots on the D-pad or face buttons. List: move with the D-pad or Left Stick, A \
-    chooses. Button menu: a list where items also have their own button. Carousel: cycle with the chosen \
+    chooses. Button menu: each item has its own button, pressed to choose it. Carousel: cycle with the chosen \
     controls, A chooses. Grid: a list laid out in up to 6 columns and 6 rows, moved through in all four \
     directions. Items tap their action like a button press; an item can open another menu of the \
     same kind (not from radial menus), which closes along with it.";
@@ -1120,8 +1120,8 @@ impl App {
         ]
         .spacing(12)
         .align_y(Alignment::Center);
-        if let Some(problem) = &problem {
-            header = header.push(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR));
+        if let Some(note) = self.menu_card_note(menu, problem) {
+            header = header.push(note);
         }
         header = header.push(delete_item("Delete menu", Message::DeleteMenu(mi)));
         let mut col = column![header].spacing(12);
@@ -1129,6 +1129,17 @@ impl App {
             col = col.push(self.view_menu_editor(mi, menu, names, reachable));
         }
         container(col).padding(14).width(Length::Fill).style(style::card).into()
+    }
+
+    /// What a closed menu card says is wrong: a problem that stops saving, or else the first
+    /// button-menu item nothing can pick.
+    fn menu_card_note<'a>(&self, menu: &Menu, problem: Option<String>) -> Option<Element<'a, Message>> {
+        if let Some(problem) = problem {
+            return Some(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR).into());
+        }
+        let openers = menu_openers(self.game(), &menu.name);
+        let warning = (0..menu.items.len()).find_map(|i| button_item_warning(menu, i, &openers))?;
+        Some(text(format!("⚠ {warning}")).size(12).color(WARNING_COLOR).into())
     }
 
     #[expect(clippy::too_many_lines, reason = "predates the size lints")]
@@ -1164,6 +1175,7 @@ impl App {
             _ => None,
         };
         let quick = matches!(menu.kind, MenuKind::Buttons);
+        let openers = if quick { menu_openers(self.game(), &menu.name) } else { Vec::new() };
         // Items open only other menus of the same kind; radial menus open none.
         let radial = matches!(menu.kind, MenuKind::Radial { .. });
         // A radial menu's arcs are sized by weight, unless its items are boxes.
@@ -1201,13 +1213,7 @@ impl App {
                 ));
             }
             if quick {
-                let mut options = vec![QuickChoice(None)];
-                options.extend(Button::ALL.into_iter().map(|b| QuickChoice(Some(b))));
-                line = line.push(tooltip(
-                    dropdown(options, Some(QuickChoice(item.button)), move |c| Message::SetMenuItemButton(mi, i, c)).width(90),
-                    container(text("Quick-select button").size(13)).padding(8).style(style::tooltip),
-                    tooltip::Position::Top,
-                ));
+                line = line.push(item_button_picker(mi, i, item.button));
             }
             line = line.push(fill_x(action_editor(&item.action, Button::South, item_kinds, set_action(target), KeyField::root(target), &item_names)));
             if direction_slots.is_none() {
@@ -1219,10 +1225,7 @@ impl App {
                     .push(small("↓", (i < last).then_some(Message::MoveMenuItem(mi, i, false))))
                     .push(small("✕", Some(Message::RemoveMenuItem(mi, i))));
             }
-            let mut boxed = column![line].spacing(4);
-            if let Some(problem) = item_problem(menu, &item.action, reachable, names) {
-                boxed = boxed.push(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR));
-            }
+            let boxed = column![line].spacing(4).push(item_note(menu, i, reachable, names, &openers));
             boxes.push(container(boxed).padding(8).style(style::inset).into());
         }
         items = items.push(item_boxes(menu.kind, boxes));
@@ -1238,6 +1241,28 @@ impl App {
         column(rows).spacing(10).into()
     }
 
+}
+
+/// The picker for the button that chooses item `i` of button menu `mi`.
+fn item_button_picker<'a>(mi: usize, i: usize, button: Option<Button>) -> Element<'a, Message> {
+    let mut options = vec![QuickChoice(None)];
+    options.extend(Button::ALL.into_iter().map(|b| QuickChoice(Some(b))));
+    tooltip(
+        dropdown(options, Some(QuickChoice(button)), move |c| Message::SetMenuItemButton(mi, i, c)).width(90),
+        container(text("The button that chooses this item").size(13)).padding(8).style(style::tooltip),
+        tooltip::Position::Top,
+    )
+    .into()
+}
+
+/// What's wrong with item `i` of `menu`, under its row: a problem that stops saving, or a warning
+/// that nothing can pick it.
+fn item_note<'a>(menu: &Menu, i: usize, reachable: &[&Menu], names: &Names, openers: &[Vec<Button>]) -> Option<Element<'a, Message>> {
+    let note = |t: String, color| text(format!("⚠ {t}")).size(12).color(color).into();
+    match item_problem(menu, &menu.items[i].action, reachable, names) {
+        Some(problem) => Some(note(problem, ERROR_COLOR)),
+        None => button_item_warning(menu, i, openers).map(|w| note(w, WARNING_COLOR)),
+    }
 }
 
 #[cfg(test)]

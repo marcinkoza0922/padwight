@@ -125,6 +125,8 @@ const LABEL_WIDTH: f32 = 170.0;
 const SIDEBAR_WIDTH: f32 = 210.0;
 const ERROR_COLOR: Color = Color::from_rgb(0.9, 0.3, 0.3);
 const MUTED_COLOR: Color = Color::from_rgb(0.55, 0.55, 0.6);
+/// Something that saves but likely won't work as meant, such as a menu item nothing can pick.
+const WARNING_COLOR: Color = Color::from_rgb(0.85, 0.58, 0.1);
 
 /// A controller as the editor sees it: its model (`None` for a generic pad) and the family whose
 /// button glyphs it uses.

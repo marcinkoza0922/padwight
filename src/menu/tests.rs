@@ -196,17 +196,80 @@ fn grid_steps_cover_every_cell() {
 }
 
 #[test]
-fn button_menu_quick_select_takes_priority() {
+fn a_button_menu_has_no_cursor_and_each_item_has_its_own_button() {
     let mut items = numbers(3);
     items[0].button = Some(Button::LeftBumper);
+    items[1].button = Some(Button::DpadDown);
     items[2].button = Some(Button::South);
     let menus = [menu("Q", MenuKind::Buttons, items)];
     let mut s = MenuSession::open(&menus, "Q", Opener::default()).unwrap();
-    assert_eq!(s.view(&menus).unwrap().items[0].button.as_deref(), Some("LB"));
+    let view = s.view(&menus).unwrap();
+    assert_eq!(view.items[0].button.as_deref(), Some("LB"));
+    assert_eq!(view.selected, None, "nothing to move");
     assert_eq!(chose(press(&mut s, &menus, Button::LeftBumper)).as_deref(), Some("KEY_1"));
     let mut s = MenuSession::open(&menus, "Q", Opener::default()).unwrap();
-    press(&mut s, &menus, Button::DpadDown);
-    assert_eq!(chose(press(&mut s, &menus, Button::South)).as_deref(), Some("KEY_3"), "A is item 3's quick button");
+    assert_eq!(chose(press(&mut s, &menus, Button::DpadDown)).as_deref(), Some("KEY_2"), "the D-pad picks, not moves");
+    assert_eq!(chose(press(&mut s, &menus, Button::South)).as_deref(), Some("KEY_3"), "A is item 3's button");
+    assert_eq!(press(&mut s, &menus, Button::DpadUp), None, "a button no item has does nothing");
+    s.handle(&menus, InputEvent::Axis(Axis::LeftY, 0.9), Instant::now());
+    assert_eq!(s.view(&menus).unwrap().selected, None);
+}
+
+#[test]
+fn in_a_held_button_menu_an_items_button_beats_cancel() {
+    let mut items = numbers(2);
+    items[0].button = Some(Button::East);
+    let menus = [menu("Q", MenuKind::Buttons, items)];
+    let mut s = MenuSession::open(&menus, "Q", held_by(Button::LeftBumper)).unwrap();
+    assert_eq!(chose(press(&mut s, &menus, Button::East)).as_deref(), Some("KEY_1"));
+    // With nothing to let go of, B stays the way out.
+    let mut s = MenuSession::open(&menus, "Q", Opener::default()).unwrap();
+    assert_eq!(press(&mut s, &menus, Button::East), Some(MenuOutcome::Close));
+}
+
+#[test]
+fn a_two_column_list_switches_columns_with_left_and_right() {
+    let menus = [menu("Long", MenuKind::List, numbers(10)), menu("Short", MenuKind::List, numbers(3))];
+    let mut s = MenuSession::open(&menus, "Long", Opener::default()).unwrap();
+    press(&mut s, &menus, Button::DpadRight);
+    assert_eq!(s.view(&menus).unwrap().selected, Some(5), "the top of the right column");
+    s.handle(&menus, InputEvent::Axis(Axis::LeftX, -0.9), Instant::now());
+    assert_eq!(s.view(&menus).unwrap().selected, Some(0), "the stick goes back left");
+    assert!(s.view(&menus).unwrap().hint.contains("↑↓←→"));
+    // One column: left and right do nothing.
+    let mut s = MenuSession::open(&menus, "Short", Opener::default()).unwrap();
+    press(&mut s, &menus, Button::DpadRight);
+    assert_eq!(s.view(&menus).unwrap().selected, Some(0));
+}
+
+#[test]
+fn b_backs_out_of_a_held_submenu_and_cancels_a_held_radial() {
+    let menus = [
+        menu("Root", MenuKind::List, vec![item("More", ButtonAction::OpenMenu("Sub".into())), item("Two", key("KEY_2"))]),
+        menu("Sub", MenuKind::List, vec![item("Deep", key("KEY_D"))]),
+        menu("W", MenuKind::Radial { stick: Stick::Right, boxes: false }, numbers(4)),
+    ];
+    let mut s = MenuSession::open(&menus, "Root", held_by(Button::LeftBumper)).unwrap();
+    press(&mut s, &menus, Button::South);
+    assert_eq!(s.view(&menus).unwrap().title, "Sub");
+    assert!(s.view(&menus).unwrap().hint.contains("B back"));
+    assert_eq!(press(&mut s, &menus, Button::East), None);
+    assert_eq!(s.view(&menus).unwrap().title, "Root");
+    assert_eq!(press(&mut s, &menus, Button::East), Some(MenuOutcome::Close), "B at the top closes");
+
+    let mut s = MenuSession::open(&menus, "W", held_by(Button::LeftBumper)).unwrap();
+    s.handle(&menus, InputEvent::Axis(Axis::RightX, 0.9), Instant::now());
+    assert_eq!(press(&mut s, &menus, Button::East), Some(MenuOutcome::Close), "closes without choosing");
+}
+
+#[test]
+fn a_late_tick_steps_once() {
+    let menus = [menu("L", MenuKind::List, numbers(8))];
+    let mut s = MenuSession::open(&menus, "L", Opener::default()).unwrap();
+    let now = Instant::now();
+    s.handle(&menus, InputEvent::Button(Button::DpadDown, true), now);
+    assert!(s.tick(&menus, now + Duration::from_secs(2)));
+    assert_eq!(s.view(&menus).unwrap().selected, Some(2));
 }
 
 #[test]
@@ -238,7 +301,6 @@ fn held_menu_stays_up_for_picks_and_closes_with_its_submenu_on_release() {
     let mut s = MenuSession::open(&menus, "Root", held_by(Button::LeftBumper)).unwrap();
     let picked = press(&mut s, &menus, Button::DpadUp);
     assert!(matches!(picked, Some(MenuOutcome::Choose { close: false, .. })), "{picked:?}");
-    assert_eq!(press(&mut s, &menus, Button::East), None, "B doesn't close a held menu");
     press(&mut s, &menus, Button::DpadRight);
     assert_eq!(s.view(&menus).unwrap().title, "Sub");
     assert_eq!(chose(press(&mut s, &menus, Button::DpadUp)).as_deref(), Some("KEY_D"));
