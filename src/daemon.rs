@@ -286,6 +286,38 @@ struct SeenGamepad {
     paddles: bool,
 }
 
+/// What an engine asked the daemon to do after input or a timer.
+struct Requests {
+    overlay: Option<Layout>,
+    screenshot: bool,
+    recording: bool,
+    media: bool,
+    menu: Option<(String, Opener)>,
+}
+
+impl Requests {
+    fn take(engine: &mut Engine) -> Self {
+        Requests {
+            overlay: engine.take_overlay_toggle(),
+            screenshot: engine.take_screenshot(),
+            recording: engine.take_recording_toggle(),
+            media: engine.take_media_toggle(),
+            menu: engine.take_menu_request(),
+        }
+    }
+}
+
+/// Who drives the overlay, and what the on-screen layouts remember between uses.
+#[derive(Default)]
+struct Driving {
+    /// The controller driving the keyboard, numpad, media controls or offer: the one that
+    /// opened it, else the first to send it input. Menus keep their own (see
+    /// [`Daemon::drives_overlay`]).
+    owner: Option<u64>,
+    /// Where each on-screen layout's cursor was left, to pick up there next time.
+    cursors: HashMap<Layout, crate::keyboard::Cursor>,
+}
+
 /// What the overlay is showing.
 enum Active {
     Keyboard(OverlayController),
@@ -405,9 +437,8 @@ struct Daemon {
     scan_target: Option<ProfileRef>,
     /// What the on-screen overlay is showing; while set it gets all controller input.
     active: Option<Active>,
-    /// Where the overlay keyboard's cursor was, for the next time it opens.
-    /// Where each on-screen layout's cursor was left, to pick up there next time.
-    overlay_cursors: HashMap<Layout, crate::keyboard::Cursor>,
+    /// Who drives the overlay, and where the keyboard and numpad cursors were left.
+    driving: Driving,
     /// When a held ForceQuit started counting, and whether it has already fired.
     quit_hold: Option<(Instant, bool)>,
     /// The screen recorder's process, once running, and whether one is being started.
@@ -425,9 +456,6 @@ struct Daemon {
     last_frame: Option<OverlayFrame>,
     /// The Guide overlay's menu while the overlay is up.
     guide_menu: Option<GuideMenu>,
-    /// The controller driving the keyboard, numpad, media controls or offer: the first to send
-    /// it input. Menus keep their own (see [`Daemon::drives_overlay`]).
-    overlay_owner: Option<u64>,
     /// When shown info overlays with live values next refresh.
     info_refresh: Option<Instant>,
     /// When an info overlay that hides after a while next needs redrawing (fading or gone).
@@ -518,7 +546,7 @@ pub fn run(debug: bool) -> Result<()> {
         recent_windows: Vec::new(),
         scan_target: None,
         active: None,
-        overlay_cursors: HashMap::new(),
+        driving: Driving::default(),
         quit_hold: None,
         recording: None,
         recording_starting: false,
@@ -529,7 +557,6 @@ pub fn run(debug: bool) -> Result<()> {
         overlay_watchers: Vec::new(),
         last_frame: None,
         guide_menu: None,
-        overlay_owner: None,
         info_refresh: None,
         info_fade: None,
         info_timers: crate::info::Timers::default(),
@@ -763,11 +790,7 @@ impl Daemon {
         let now = Instant::now();
         self.tick_overlays(now);
         let Some(base) = self.config.active() else { return };
-        let mut toggle_overlay = None;
-        let mut screenshot = false;
-        let mut recording = false;
-        let mut media = None;
-        let mut menu_request = None;
+        let mut requests = Vec::new();
         let mut fired = Vec::new();
         let mut guide_keys = Vec::new();
         for (id, dev) in self.devices.iter_mut() {
@@ -785,34 +808,11 @@ impl Daemon {
                 dev.engine.resync(layered(&dev.layered, base), &mut out);
             }
             dev.dispatch(&mut self.kbm, out);
-            if let Some(layout) = dev.engine.take_overlay_toggle() {
-                toggle_overlay = Some((layout, *id));
-            }
-            screenshot |= dev.engine.take_screenshot();
-            recording |= dev.engine.take_recording_toggle();
-            if dev.engine.take_media_toggle() {
-                media = Some(*id);
-            }
-            if let Some(request) = dev.engine.take_menu_request() {
-                menu_request = Some((*id, request));
-            }
+            requests.push((*id, Requests::take(&mut dev.engine)));
             dev.draw_status();
         }
-        if let Some((layout, id)) = toggle_overlay {
-            self.toggle_overlay(layout, Some(id));
-        }
-        if screenshot {
-            self.take_screenshot();
-        }
-        if recording {
-            self.toggle_recording();
-        }
-        if let Some(id) = media {
-            self.toggle_media(Some(id));
-        }
-        self.update_force_quit();
-        if let Some((id, (name, opener))) = menu_request {
-            self.open_menu(id, &name, opener);
+        for (id, asked) in requests {
+            self.run_requests(id, asked);
         }
         for (id, keys) in guide_keys {
             self.guide_keys(id, &keys);
@@ -942,13 +942,13 @@ impl Daemon {
             Some(Active::Menu { .. } | Active::Media(_) | Active::Offer(_) | Active::Settings(..)) => return,
             None => {}
         }
-        self.overlay_owner = by;
+        self.driving.owner = by;
         if !self.ensure_overlay_process() {
             return;
         }
         self.release_mappings();
         log!("on-screen {} open", layout_name(layout));
-        let cursor = self.overlay_cursors.get(&layout).copied().unwrap_or(layout.home());
+        let cursor = self.driving.cursors.get(&layout).copied().unwrap_or(layout.home());
         let mut controller = OverlayController::new(layout, cursor);
         controller.set_guide_held(self.devices.values().any(|d| d.view.buttons().any(|b| b == crate::config::Button::Guide)));
         self.active = Some(Active::Keyboard(controller));
@@ -963,7 +963,7 @@ impl Daemon {
             Some(_) => return,
             None => {}
         }
-        self.overlay_owner = by;
+        self.driving.owner = by;
         if !self.ensure_overlay_process() {
             return;
         }
@@ -1125,11 +1125,11 @@ impl Daemon {
     }
 
     fn close_overlay(&mut self) {
-        self.overlay_owner = None;
+        self.driving.owner = None;
         let closing = self.active.as_ref().map(active_sound);
         match self.active.take() {
             Some(Active::Keyboard(mut k)) => {
-                self.overlay_cursors.insert(k.layout(), k.cursor());
+                self.driving.cursors.insert(k.layout(), k.cursor());
                 let actions = k.release_all();
                 self.apply_keyboard(actions);
                 log!("on-screen {} closed", layout_name(k.layout()));
@@ -1175,33 +1175,33 @@ impl Daemon {
             dev.engine.resync(layered(&dev.layered, base), &mut out);
         }
         dev.dispatch(&mut self.kbm, out);
-        let toggle_overlay = dev.engine.take_overlay_toggle();
-        let screenshot = dev.engine.take_screenshot();
-        let recording = dev.engine.take_recording_toggle();
-        let media = dev.engine.take_media_toggle();
-        let menu_request = dev.engine.take_menu_request();
+        let asked = Requests::take(&mut dev.engine);
         // Opening the keyboard closes a menu that is still up.
-        let menu_up = matches!(self.active, Some(Active::Menu { .. }));
-        if menu_up && toggle_overlay.is_some() {
+        if asked.overlay.is_some() && matches!(self.active, Some(Active::Menu { .. })) {
             self.close_overlay();
         }
-        if let Some(layout) = toggle_overlay {
-            self.toggle_overlay(layout, Some(device));
+        self.run_requests(device, asked);
+        self.check_info_changes();
+    }
+
+    /// Carries out what controller `id`'s engine asked for, opening anything on its behalf.
+    fn run_requests(&mut self, id: u64, asked: Requests) {
+        if let Some(layout) = asked.overlay {
+            self.toggle_overlay(layout, Some(id));
         }
-        if screenshot {
+        if asked.screenshot {
             self.take_screenshot();
         }
-        if recording {
+        if asked.recording {
             self.toggle_recording();
         }
-        if media {
-            self.toggle_media(Some(device));
+        if asked.media {
+            self.toggle_media(Some(id));
         }
         self.update_force_quit();
-        if let Some((name, opener)) = menu_request {
-            self.open_menu(device, &name, opener);
+        if let Some((name, opener)) = asked.menu {
+            self.open_menu(id, &name, opener);
         }
-        self.check_info_changes();
     }
 
     fn overlay_view(&self) -> Option<OverlayView> {
@@ -1904,7 +1904,7 @@ impl Daemon {
     fn overlay_driver(&self) -> Option<u64> {
         match &self.active {
             Some(Active::Menu { device, .. } | Active::Settings(_, device)) => Some(*device),
-            _ => self.overlay_owner,
+            _ => self.driving.owner,
         }
     }
 
@@ -1913,7 +1913,7 @@ impl Daemon {
     fn drives_overlay(&mut self, id: u64) -> bool {
         match &self.active {
             Some(Active::Menu { device, .. } | Active::Settings(_, device)) => *device == id,
-            Some(_) => *self.overlay_owner.get_or_insert(id) == id,
+            Some(_) => *self.driving.owner.get_or_insert(id) == id,
             None => false,
         }
     }
@@ -1939,31 +1939,12 @@ impl Daemon {
             let snapshot = dev.snapshot();
             self.watchers.retain(|w| w.send(Some(snapshot.clone())).is_ok());
         }
-        let toggle_overlay = dev.engine.take_overlay_toggle();
-        let screenshot = dev.engine.take_screenshot();
-        let recording = dev.engine.take_recording_toggle();
-        let media = dev.engine.take_media_toggle();
-        let menu_request = dev.engine.take_menu_request();
+        let asked = Requests::take(&mut dev.engine);
         let guide_keys = dev.engine.take_guide_nav();
         if dev.engine.take_touch_menu_changed() {
             self.broadcast_overlay();
         }
-        if let Some(layout) = toggle_overlay {
-            self.toggle_overlay(layout, Some(id));
-        }
-        if screenshot {
-            self.take_screenshot();
-        }
-        if recording {
-            self.toggle_recording();
-        }
-        if media {
-            self.toggle_media(Some(id));
-        }
-        self.update_force_quit();
-        if let Some((name, opener)) = menu_request {
-            self.open_menu(id, &name, opener);
-        }
+        self.run_requests(id, asked);
         if !guide_keys.is_empty() {
             self.guide_keys(id, &guide_keys);
         }
@@ -2173,7 +2154,7 @@ impl Daemon {
         self.release_mappings();
         self.offers.shown = found.iter().map(|&i| library[i].clone()).collect();
         self.offers.shown_pid = window.pid;
-        self.overlay_owner = Some(by);
+        self.driving.owner = Some(by);
         let session = OfferSession::new(&library, &found, have.as_deref(), Instant::now());
         self.active = Some(Active::Offer(session));
         self.broadcast_overlay();
