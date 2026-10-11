@@ -8,14 +8,22 @@ Use **Open menu…** as the action of any button, gesture, combo, trigger or sti
 
 ## Keeping one open
 
-Wrap **Open menu…** in **Toggle**. The menu then stays up until you press the input again. To keep a held menu up just this once, press the Right Stick (R3) while it's open: it stays when you let go, until you press its input again or its close button.
+To keep a held menu up, press the Right Stick (R3) while it's open: it stays when you let go, until you press its input again or its close button. A menu can't be put in a **Toggle**.
 
 ## Close button
 
-B closes a menu, or backs out of a submenu (Select, on a face-button directional menu). Each menu can have another close button, or none, on the **Menus** tab. Without one, a menu goes when you let go of its input (or press it again), or when you choose an item, and R3 can't keep it open.
+Lists, grids and carousels close with B. Radial, directional and button menus have no close button unless you give them one: they go when you let go of their input, or when you choose an item. Each menu can have another close button, or none, on the **Menus** tab. Without one, R3 can't keep it open.
+
+## Submenus
+
+An item can open another menu when both menus have the same close button. The new menu takes the place of the first, with the path to it shown above its title. The close button goes back one level; hold it to close every level at once. Radial menus can't open other menus.
 
 ## Choosing
 
-Move with the Left Stick or D-pad, and press A to choose. B goes back one level, or closes the menu at the top; on a radial menu it closes without choosing. In a **Button menu** each item has its own button instead: press it to choose the item. Button menus and directional menus are for quick actions: picking an item fires it and closes the menu at once. Other menus stay up while you hold their input, so you can pick several items.
+Move with the Left Stick or D-pad, and press A to choose. The close button goes back one level, or closes the menu at the top; on a radial menu it closes without choosing. In a **Button menu** each item has its own button instead: press it to choose the item. Button menus and directional menus are for quick actions: picking an item fires it and closes the menu at once. Other menus stay up while you hold their input, so you can pick several items.
+
+## Grids
+
+On a grid, the arrow buttons beside an item merge it with the cells to its right or below, making one bigger item that the first cell's action fills. The items in the cells it takes are kept, hidden, until you split it again. **Cursor starts on** picks the cell the cursor is on when the menu opens: (1, 1), the top left, unless you choose another. Changing the number of columns splits every item back.
 
 > **Tip:** a list with more than eight rows is shown in two columns. Left and right move between them, and in a list too long to show at once, LB and RB jump a page.

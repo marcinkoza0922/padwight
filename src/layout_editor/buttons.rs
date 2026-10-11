@@ -92,6 +92,8 @@ pub fn tuned(current: &ButtonAction, tuning: Tuning) -> ButtonAction {
 pub fn wrapped(current: &ButtonAction, wrap: Wrap) -> ButtonAction {
     match (wrap, current) {
         (Wrap::Toggle, ButtonAction::Toggle(t)) => *t.action.clone(),
+        // A menu is put away with its close button, never toggled.
+        (Wrap::Toggle, ButtonAction::OpenMenu(_)) => current.clone(),
         (Wrap::Toggle, _) => ButtonAction::Toggle(Toggled { action: Box::new(current.clone()), start_on: false }),
         (Wrap::Turbo, ButtonAction::Turbo { action, .. }) => *action.clone(),
         (Wrap::Turbo, _) => ButtonAction::Turbo { action: Box::new(current.clone()), rate: TURBO_RATE, every_ms: 0 },
@@ -223,6 +225,7 @@ pub fn action_row_keyword(row: ActionRow) -> Option<Keyword> {
 pub fn action_row_label(row: ActionRow, current: &ButtonAction) -> String {
     match row {
         ActionRow::Wrap(Wrap::Toggle) if matches!(current, ButtonAction::Toggle(_)) => "Stop toggling".into(),
+        ActionRow::Wrap(Wrap::Toggle) if matches!(current, ButtonAction::OpenMenu(_)) => "A menu can't be a toggle".into(),
         ActionRow::Wrap(Wrap::Toggle) => "Make it a toggle".into(),
         ActionRow::Wrap(Wrap::Turbo) if matches!(current, ButtonAction::Turbo { .. }) => "Stop turbo".into(),
         ActionRow::Wrap(Wrap::Turbo) => format!("Make it turbo ({TURBO_RATE:.0} a second)"),

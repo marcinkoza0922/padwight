@@ -349,9 +349,9 @@ impl SystemMenu {
                 title: "Unsaved changes".into(),
                 kind: crate::config::MenuKind::List,
                 items: vec![
-                    ItemView { label: "Save and close".into(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0 },
-                    ItemView { label: "Discard and close".into(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0 },
-                    ItemView { label: "Keep editing".into(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0 },
+                    ItemView { label: "Save and close".into(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE },
+                    ItemView { label: "Discard and close".into(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE },
+                    ItemView { label: "Keep editing".into(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE },
                 ],
                 selected: Some(self.cursor),
                 picks: 0,
@@ -445,8 +445,8 @@ pub fn main_page(style: OverlayStyle, cursor: usize) -> MenuView {
         title: "Menu".into(),
         kind: crate::config::MenuKind::List,
         items: vec![
-            ItemView { label: "Quick Settings".into(), button: None, submenu: true, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0 },
-            ItemView { label: "Edit Controls".into(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0 },
+            ItemView { label: "Quick Settings".into(), button: None, submenu: true, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE },
+            ItemView { label: "Edit Controls".into(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE },
         ],
         selected: Some(cursor),
         picks: 0,

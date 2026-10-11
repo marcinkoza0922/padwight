@@ -548,20 +548,24 @@ fn directional<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
     .into()
 }
 
-/// Items in rows of equal cells, read left to right; a short last row keeps to the left.
+/// Items in rows of equal cells, read left to right; a short last row keeps to the left. A
+/// merged item covers several cells, and the items under it aren't drawn.
 fn grid<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
-    let columns = m.kind.grid_columns().unwrap_or(1);
-    let (w, h) = (150.0 * s, 64.0 * s);
-    let mut rows = column![].spacing(8.0 * s);
-    for start in (0..m.items.len()).step_by(columns) {
-        let mut line = row![].spacing(8.0 * s);
-        for i in start..(start + columns).min(m.items.len()) {
-            let (label, lit, selected) = item_cell(m, i, c, 16.0 * s);
-            line = line.push(container(label).center_x(w).center_y(h).padding([0.0, 6.0 * s]).style(lit_cell_style(lit, selected, h)));
-        }
-        rows = rows.push(line);
+    let spans: Vec<_> = m.items.iter().map(|item| item.span).collect();
+    let layout = crate::menu::GridLayout::new(&spans, m.kind.grid_columns().unwrap_or(1));
+    let (w, h, gap) = (150.0 * s, 64.0 * s, 8.0 * s);
+    // How far `n` cells reach, with the gaps between them.
+    let reach = |n: usize, size: f32| n as f32 * size + n.saturating_sub(1) as f32 * gap;
+    let mut cells = iced::widget::Stack::new().width(reach(layout.columns, w)).height(reach(layout.rows, h));
+    for i in 0..m.items.len() {
+        let Some(at) = layout.cells(i) else { continue };
+        let (label, lit, selected) = item_cell(m, i, c, 16.0 * s);
+        let (cw, ch) = (reach(at.columns, w), reach(at.rows, h));
+        let cell = container(label).center_x(cw).center_y(ch).padding([0.0, 6.0 * s]).style(lit_cell_style(lit, selected, h));
+        let (x, y) = (at.column as f32 * (w + gap), at.row as f32 * (h + gap));
+        cells = cells.push(column![space().height(y), row![space().width(x), cell]]);
     }
-    rows.into()
+    cells.into()
 }
 
 /// A list: one column while it is short, two once it is longer. Two columns fill top to

@@ -342,30 +342,38 @@ pub struct Menu {
     pub name: String,
     pub kind: MenuKind,
     pub items: Vec<MenuItem>,
-    /// Button that backs out of the menu (one level for submenus). Defaults to East, or to
-    /// Select for a face-button directional menu, where East is one of the slots.
+    /// Button that backs out of the menu (one level for submenus). Defaults to the kind's own
+    /// (see [`Menu::default_cancel`]).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cancel: Option<Button>,
-    /// The menu has no close (or back) button at all: it goes when its opener is let go (or
-    /// pressed again), or when an item is chosen.
+    /// The menu has no close (or back) button at all: it goes when its opener is let go, or
+    /// when an item is chosen.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub no_cancel: bool,
+    /// The item a grid's cursor starts on (counting cells left to right, then down).
+    #[serde(default, skip_serializing_if = "is_first")]
+    pub start: usize,
     #[serde(default)]
     pub style: OverlayStyle,
+}
+
+fn is_first(n: &usize) -> bool {
+    *n == 0
 }
 
 impl Menu {
     /// The button that closes the menu (or backs out of a submenu), if it has one.
     pub fn cancel_button(&self) -> Option<Button> {
-        (!self.no_cancel).then(|| self.cancel.unwrap_or(self.default_cancel()))
+        if self.no_cancel { None } else { self.cancel.or(self.default_cancel()) }
     }
 
-    /// The close button a menu of this kind has unless another is chosen: East, or Select for a
-    /// face-button directional menu, where East is one of the slots.
-    pub fn default_cancel(&self) -> Button {
+    /// The close button a menu of this kind has unless another is chosen: East for a list,
+    /// grid or carousel, and none for a radial, directional or button menu, which go as they
+    /// pick or as their input is let go.
+    pub fn default_cancel(&self) -> Option<Button> {
         match self.kind {
-            MenuKind::Directional { cluster: Cluster::FaceButtons } => Button::Select,
-            _ => Button::East,
+            MenuKind::List | MenuKind::Grid { .. } | MenuKind::Carousel { .. } => Some(Button::East),
+            MenuKind::Radial { .. } | MenuKind::Directional { .. } | MenuKind::Buttons => None,
         }
     }
 }
@@ -380,6 +388,37 @@ pub struct MenuItem {
     /// Share of a radial menu's circle this item's arc takes, relative to the others.
     #[serde(default = "default_weight", skip_serializing_if = "is_default_weight")]
     pub weight: f32,
+    /// The cells a grid item covers, merged from its own and those right of and below it.
+    #[serde(default, skip_serializing_if = "Span::is_one")]
+    pub span: Span,
+}
+
+impl MenuItem {
+    /// An item doing `action`, with no quick-select button, an even share and one cell.
+    pub fn new(label: impl Into<String>, action: ButtonAction) -> Self {
+        MenuItem { label: label.into(), action, button: None, weight: 1.0, span: Span::ONE }
+    }
+}
+
+/// How many columns and rows of a grid's cells an item covers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Span {
+    pub columns: u8,
+    pub rows: u8,
+}
+
+impl Span {
+    pub const ONE: Span = Span { columns: 1, rows: 1 };
+
+    pub fn is_one(&self) -> bool {
+        *self == Span::ONE
+    }
+}
+
+impl Default for Span {
+    fn default() -> Self {
+        Span::ONE
+    }
 }
 
 pub fn default_weight() -> f32 {
@@ -2217,6 +2256,11 @@ impl Game {
         self.layers.retain(|l| built_in_layer(&l.name).is_none());
     }
 
+    /// Takes its menus out of any Toggle (see [`untoggle_menus`]).
+    pub fn untoggle_menus(&mut self) {
+        untoggle_menus(&mut self.profiles, &mut self.menus, &mut self.layers);
+    }
+
     /// Points every reference to the macro, menu or info overlay `old` (of `kind`) at `new`:
     /// in profiles, menu items and macro steps.
     pub fn rename_refs(&mut self, kind: ItemKind, old: &str, new: &str) {
@@ -2307,6 +2351,23 @@ impl ItemKind {
             _ => None,
         }
     }
+}
+
+/// Takes every menu opened through a Toggle out of it. A menu can't be toggled: one with a close
+/// button is put away with that, so a toggled one would leave the Toggle on with nothing open.
+pub fn untoggle_menus(profiles: &mut [Profile], menus: &mut [Menu], layers: &mut [Layer]) {
+    let mut untoggle = |a: &mut ButtonAction| {
+        a.walk_mut(&mut |a| {
+            if let ButtonAction::Toggle(Toggled { action, .. }) = a
+                && let ButtonAction::OpenMenu(_) = **action
+            {
+                *a = (**action).clone();
+            }
+        })
+    };
+    let actions = profiles.iter_mut().flat_map(Profile::actions_mut);
+    let items = menus.iter_mut().flat_map(|m| m.items.iter_mut().map(|item| &mut item.action));
+    actions.chain(items).chain(layers.iter_mut().flat_map(Layer::actions_mut)).for_each(&mut untoggle);
 }
 
 #[expect(clippy::too_many_arguments, reason = "predates the size lints")]
@@ -2551,6 +2612,7 @@ impl Config {
         store::load(store::root_of(path), &mut config)?;
         for game in config.games.iter_mut().chain(std::iter::once(&mut config.general)) {
             game.strip_built_in_layers();
+            game.untoggle_menus();
         }
         Ok(config)
     }
@@ -3148,38 +3210,57 @@ key_threshold = 0.2
     }
 
     #[test]
+    fn menus_come_out_of_toggles_and_grid_spans_roundtrip() {
+        let open = ButtonAction::OpenMenu("M".into());
+        let mut game = Game::new("g", vec![Profile::passthrough("p")]);
+        game.profiles[0].set_button(Button::North, ButtonAction::toggle(open.clone()));
+        game.profiles[0].set_button(Button::West, ButtonAction::toggle(ButtonAction::Keys(vec!["KEY_A".into()])));
+        let mut item = MenuItem::new("x", ButtonAction::Multi(vec![ButtonAction::toggle(open.clone())]));
+        item.span = Span { columns: 2, rows: 3 };
+        game.menus.push(Menu { name: "M".into(), kind: MenuKind::Grid { columns: 3 }, items: vec![item], cancel: None, no_cancel: false, start: 4, style: OverlayStyle::default() });
+        let back: Game = toml::from_str(&toml::to_string_pretty(&game).unwrap()).unwrap();
+        assert_eq!(back, game);
+        game.untoggle_menus();
+        assert_eq!(game.profiles[0].buttons[&Button::North], open);
+        assert!(matches!(game.profiles[0].buttons[&Button::West], ButtonAction::Toggle(_)), "other toggles stay");
+        assert_eq!(game.menus[0].items[0].action, ButtonAction::Multi(vec![open]));
+    }
+
+    #[test]
     fn menus_roundtrip_and_pick_a_sensible_cancel_button() {
-        let item = |label: &str, action| MenuItem { label: label.into(), action, button: None, weight: 1.0 };
+        let item = |label: &str, action| MenuItem::new(label, action);
         let mut config = Config::default();
         config.general.menus = vec![
             Menu {
                 name: "Weapons".into(),
                     kind: MenuKind::Radial { stick: Stick::Right, boxes: false },
                 items: (1..=4).map(|n| item(&format!("Slot {n}"), ButtonAction::Keys(vec![format!("KEY_{n}")]))).collect(),
-                cancel: None, no_cancel: false,
+                cancel: None, no_cancel: false, start: 0,
                 style: OverlayStyle::default(),
             },
             Menu {
                 name: "Pause".into(),
                     kind: MenuKind::Buttons,
                 items: vec![MenuItem { button: Some(Button::LeftBumper), ..item("Map", ButtonAction::Keys(vec!["KEY_M".into()])) }],
-                cancel: Some(Button::Start), no_cancel: false,
+                cancel: Some(Button::Start), no_cancel: false, start: 0,
                 style: OverlayStyle { position: ScreenPosition::TopRight, scale: 1.5, ..OverlayStyle::default() },
             },
             Menu {
                 name: "Faces".into(),
                     kind: MenuKind::Directional { cluster: Cluster::FaceButtons },
                 items: vec![item("More", ButtonAction::OpenMenu("Pause".into()))],
-                cancel: None, no_cancel: false,
+                cancel: None, no_cancel: false, start: 0,
                 style: OverlayStyle::default(),
             },
             ];
         config.general.profiles[0].set_button(Button::Select, ButtonAction::OpenMenu("Pause".into()));
         let back: Config = toml::from_str(&toml::to_string_pretty(&config).unwrap()).unwrap();
         assert_eq!(config, back);
-        assert_eq!(config.general.menus[0].cancel_button(), Some(Button::East));
+        assert_eq!(config.general.menus[0].cancel_button(), None, "a radial menu goes as it's let go");
         assert_eq!(config.general.menus[1].cancel_button(), Some(Button::Start));
-        assert_eq!(config.general.menus[2].cancel_button(), Some(Button::Select), "East is a slot in a face-button directional menu");
+        assert_eq!(config.general.menus[2].cancel_button(), None, "nor does a directional one");
+        let list = Menu { kind: MenuKind::List, ..config.general.menus[0].clone() };
+        assert_eq!(list.cancel_button(), Some(Button::East), "a list closes with B");
         let none = Menu { no_cancel: true, ..config.general.menus[1].clone() };
         assert_eq!(none.cancel_button(), None, "a chosen button doesn't count once there's none");
     }
@@ -3387,8 +3468,8 @@ key_threshold = 0.2
         game.menus.push(Menu {
             name: "M".into(),
             kind: MenuKind::List,
-            items: vec![MenuItem { label: "x".into(), action: ButtonAction::Macro { name: "Old".into(), repeat: false }, button: None, weight: 1.0 }],
-            cancel: None, no_cancel: false,
+            items: vec![MenuItem::new("x", ButtonAction::Macro { name: "Old".into(), repeat: false })],
+            cancel: None, no_cancel: false, start: 0,
             style: OverlayStyle::default(),
         });
         game.rename_refs(ItemKind::Macro, "Old", "New");

@@ -171,6 +171,7 @@ pub fn parse(text: &str) -> Result<Pack> {
             p.requires.push(feature);
         }
     }
+    crate::config::untoggle_menus(&mut pack.profiles, &mut pack.menus, &mut pack.layers);
     check(&pack)?;
     Ok(pack)
 }
@@ -683,8 +684,8 @@ mod tests {
         Menu {
             name: name.into(),
             kind: MenuKind::List,
-            items: items.into_iter().map(|action| MenuItem { label: "x".into(), action, button: None, weight: 1.0 }).collect(),
-            cancel: None, no_cancel: false,
+            items: items.into_iter().map(|action| MenuItem::new("x", action)).collect(),
+            cancel: None, no_cancel: false, start: 0,
             style: OverlayStyle::default(),
         }
     }

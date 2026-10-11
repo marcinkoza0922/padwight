@@ -3,7 +3,7 @@
 //! active profile only, so it is the pack of the game being played (the daemon makes one first
 //! when there isn't one).
 
-mod buttons;
+pub(crate) mod buttons;
 mod macros;
 mod menus;
 mod values;

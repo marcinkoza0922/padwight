@@ -67,8 +67,6 @@ pub struct Opener {
     pub buttons: Vec<Button>,
     /// Released when this trigger drops below the menu's release point.
     pub trigger: Option<Trigger>,
-    /// Opened through a Toggle: the menu stays until the opener is pressed again.
-    pub toggled: bool,
 }
 
 impl Source {
@@ -206,8 +204,6 @@ pub struct Engine {
     force_quit_holds: u32,
     /// Set when an OpenMenu action fires; the daemon takes it.
     menu_request: Option<(String, Opener)>,
-    /// Set while a Toggle turns its inner action on.
-    toggling: bool,
     /// Info overlays shown by held (or toggled) ShowInfo actions, with how many hold each.
     info_holds: HashMap<String, u32>,
     /// Log overlays shown by held (or toggled) ShowLog actions, likewise.
@@ -952,7 +948,7 @@ impl Engine {
         }
         ButtonAction::OpenMenu(name) => {
             if pressed {
-                self.menu_request = Some((name.clone(), Opener { toggled: self.toggling, ..src.opener() }));
+                self.menu_request = Some((name.clone(), src.opener()));
             }
         }
         ButtonAction::Layer(name) => self.hold_layer(name, pressed),
@@ -1029,10 +1025,7 @@ impl Engine {
     /// Turns a Toggle (at `slot` of `src`'s action) on, pressing its inner action.
     fn toggle_on(&mut self, src: &Source, inner: &ButtonAction, slot: usize, out: &mut Vec<OutEvent>) {
         self.toggled.insert((src.clone(), slot), inner.clone());
-        // A menu opened from here stays up until toggled off.
-        let was = std::mem::replace(&mut self.toggling, true);
         self.emit(src, inner, true, slot + 1, out);
-        self.toggling = was;
     }
 
     /// Switches on every Toggle set to start on, in the profile's mappings and the game's menu
@@ -2630,10 +2623,6 @@ mod tests {
         assert_eq!(e.take_menu_request(), None);
         axis(&mut e, &p, Axis::LeftTrigger, 1.0);
         assert_eq!(e.take_menu_request().map(|(n, o)| (n, o.trigger)), Some(("Wheel".into(), Some(Trigger::Left))));
-        // Through a Toggle, the menu is marked to stay up until pressed again.
-        p.set_button(Button::North, toggle(ButtonAction::OpenMenu("Pause".into())));
-        run(&mut e, &p, InputEvent::Button(Button::North, true));
-        assert_eq!(e.take_menu_request().map(|(_, o)| o.toggled), Some(true));
 
         let mut out = Vec::new();
         let toggle_c = toggle(key("KEY_C"));
@@ -2662,8 +2651,8 @@ mod tests {
         let menu = Menu {
             name: "M".into(),
             kind: crate::config::MenuKind::List,
-            items: vec![crate::config::MenuItem { label: "x".into(), action: starting(ButtonAction::Keys(vec!["KEY_M".into()])), button: None, weight: 1.0 }],
-            cancel: None, no_cancel: false,
+            items: vec![crate::config::MenuItem::new("x", starting(ButtonAction::Keys(vec!["KEY_M".into()])))],
+            cancel: None, no_cancel: false, start: 0,
             style: Default::default(),
         };
         let mut e = Engine::default();

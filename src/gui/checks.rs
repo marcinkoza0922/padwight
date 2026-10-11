@@ -16,10 +16,12 @@ pub(super) fn item_problem(menu: &Menu, action: &ButtonAction, menus: &[&Menu], 
             {
                 if matches!(menu.kind, MenuKind::Radial { .. }) {
                     problem = Some("radial menus can't open other menus".to_string());
+                } else if menu.cancel_button().is_none() {
+                    problem = Some("give this menu a close button to open other menus from it".to_string());
                 } else if let Some(child) = menus.iter().find(|m| &m.name == name)
-                    && child.kind.tag() != menu.kind.tag()
+                    && child.cancel_button() != menu.cancel_button()
                 {
-                    problem = Some(format!("“{name}” isn't a {} menu", menu.kind.tag().short().to_lowercase()));
+                    problem = Some(format!("“{name}” needs the same close button as this menu"));
                 }
             }
         });
@@ -182,6 +184,9 @@ pub(super) fn action_problem(action: &ButtonAction, names: &Names) -> Option<Str
                         "turbo of macro “{name}” presses every {every_ms} ms, but the macro takes {macro_ms} ms to play: raise the turbo's gap to at least {macro_ms} ms"
                     ));
                 }
+            }
+            ButtonAction::Toggle(t) if matches!(*t.action, ButtonAction::OpenMenu(_)) => {
+                problem = Some("a menu can't be toggled: its close button puts it away".into());
             }
             ButtonAction::OpenMenu(name) if !names.menus.contains(name) => {
                 problem = Some(format!("missing menu “{name}”"));
@@ -488,12 +493,12 @@ mod tests {
 
     #[test]
     fn button_menu_items_nothing_can_pick_are_warned_about() {
-        let item = |button| MenuItem { label: "x".into(), action: ButtonAction::Disabled, button, weight: 1.0 };
-        let menu = |name: &str, items| Menu { name: name.into(), kind: MenuKind::Buttons, items, cancel: None, no_cancel: false, style: OverlayStyle::default() };
+        let item = |button| MenuItem { button, ..MenuItem::new("x", ButtonAction::Disabled) };
+        let menu = |name: &str, items| Menu { name: name.into(), kind: MenuKind::Buttons, items, cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() };
         let quick = menu("Quick", vec![item(Some(Button::LeftBumper)), item(Some(Button::South)), item(Some(Button::South)), item(None)]);
         let sub = menu("Sub", vec![item(Some(Button::RightBumper))]);
         let mut profile = Profile::passthrough("p");
-        profile.set_button(Button::LeftBumper, ButtonAction::toggle(ButtonAction::OpenMenu("Quick".into())));
+        profile.set_button(Button::LeftBumper, ButtonAction::OpenMenu("Quick".into()));
         profile.combos.push(Combo { buttons: vec![Button::Select, Button::RightBumper], action: ButtonAction::OpenMenu("Quick".into()) });
         let mut game = Game::new("g", vec![profile]);
         game.menus = vec![quick.clone(), sub.clone()];
@@ -523,6 +528,8 @@ mod tests {
         let missing = ButtonAction::Macro { name: "Gone".into(), repeat: false };
         assert_eq!(action_problem(&missing, &names).as_deref(), Some("missing macro \u{201c}Gone\u{201d}"));
         assert_eq!(action_problem(&ButtonAction::Macro { name: "Known".into(), repeat: false }, &names), None);
+        let toggled_menu = ButtonAction::toggle(ButtonAction::OpenMenu("M".into()));
+        assert!(action_problem(&toggled_menu, &Names { menus: vec!["M".into()], ..Names::default() }).is_some_and(|p| p.contains("can't be toggled")));
         // A turbo's gap must cover its macro's length; a longer macro is caught here.
         let turbo = |every_ms| ButtonAction::Turbo {
             action: Box::new(ButtonAction::Macro { name: "Long".into(), repeat: false }),

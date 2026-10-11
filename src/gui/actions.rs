@@ -114,6 +114,22 @@ pub(super) const MENU_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::Multiple,
 ];
 
+/// What an item of a menu without a close button can do: anything but open another menu, which
+/// it would have no way back from.
+pub(super) const NO_SUBMENU_ITEM_KINDS: &[ActionKind] = &[
+    ActionKind::Disabled,
+    ActionKind::Gamepad,
+    ActionKind::Keys,
+    ActionKind::Mouse,
+    ActionKind::Wheel,
+    ActionKind::Overlay,
+    ActionKind::Numpad,
+    ActionKind::Screenshot,
+    ActionKind::Toggle,
+    ActionKind::Macro,
+    ActionKind::Multiple,
+];
+
 /// What a macro step can press: plain outputs only.
 pub(super) const MACRO_STEP_KINDS: &[ActionKind] =
     &[ActionKind::Keys, ActionKind::Mouse, ActionKind::Wheel, ActionKind::Gamepad];

@@ -48,6 +48,9 @@ mod guide_tab;
 mod gyro;
 mod gyro_graph;
 mod items;
+mod menu_grid;
+#[cfg(test)]
+mod menu_suite;
 mod keys;
 mod layers;
 mod logs;
@@ -75,6 +78,7 @@ use checks::*;
 use device_box::*;
 use games::*;
 use items::*;
+use menu_grid::*;
 use keys::*;
 use layers::IndicatorChoice;
 use packs::{BrowseSource, Dialog, PackField};
@@ -512,6 +516,10 @@ enum Message {
     /// A menu's close button: its kind's own, another, or none.
     SetMenuCancel(usize, items::CloseChoice),
     SetMenuItemWeight(usize, usize, f32),
+    /// A grid item's merged cells.
+    SetMenuItemSpan(usize, usize, crate::config::Span),
+    /// The cell a grid's cursor starts on.
+    SetMenuStart(usize, usize),
     OpenKeyPicker(KeyField, Vec<String>, bool),
     PickerKey(&'static str),
     PickerClear,
@@ -1332,7 +1340,7 @@ mod tests {
     #[test]
     fn every_page_tab_and_dialog_builds() {
         let mut app = with_game();
-        app.config.general.menus.push(Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![], cancel: None, no_cancel: false, style: OverlayStyle::default() });
+        app.config.general.menus.push(Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![], cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() });
         app.config.games[0].info.push(InfoOverlay { name: "Controls".into(), always: true, on_start: None, linger: None, title: None, current_input: Default::default(), style: OverlayStyle::info(), rows: vec![vec!["{south}".into()]] });
         app.config.games[0].macros.push(Macro { name: "Dodge".into(), steps: vec![MacroStep::Wait(5)] });
         app.config.games[0].layers.push(crate::config::Layer::new("Hotkeys"));

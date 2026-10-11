@@ -27,20 +27,21 @@ impl fmt::Display for QuickChoice {
     }
 }
 
-/// A menu's close button in its picker: the kind's own, another, or none at all.
+/// A menu's close button in its picker: the kind's own (which may be none), another, or none.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum CloseChoice {
-    Default(Button),
+    Default(Option<Button>),
     Button(Button),
     None,
 }
 
 impl CloseChoice {
-    fn of(menu: &Menu) -> Self {
+    pub(super) fn of(menu: &Menu) -> Self {
+        let default = menu.default_cancel();
         match (menu.no_cancel, menu.cancel) {
-            (true, _) => CloseChoice::None,
+            (true, _) if default.is_some() => CloseChoice::None,
             (false, Some(b)) => CloseChoice::Button(b),
-            (false, None) => CloseChoice::Default(menu.default_cancel()),
+            _ => CloseChoice::Default(default),
         }
     }
 }
@@ -48,26 +49,37 @@ impl CloseChoice {
 impl fmt::Display for CloseChoice {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CloseChoice::Default(b) => write!(f, "{} (the default)", crate::menu::button_badge(*b)),
+            CloseChoice::Default(Some(b)) => write!(f, "{} (the default)", crate::menu::button_badge(*b)),
+            CloseChoice::Default(None) => f.write_str("None (the default)"),
             CloseChoice::Button(b) => f.write_str(crate::menu::button_badge(*b)),
             CloseChoice::None => f.write_str("None"),
         }
     }
 }
 
+/// What a menu's close button can be set to: its kind's default, none (when the default isn't
+/// none already), or any other button.
+pub(super) fn close_choices(menu: &Menu) -> Vec<CloseChoice> {
+    let default = menu.default_cancel();
+    let mut options = vec![CloseChoice::Default(default)];
+    if default.is_some() {
+        options.push(CloseChoice::None);
+    }
+    // Not Guide, which closes any menu anyway.
+    options.extend(Button::ALL.into_iter().filter(|&b| b != Button::Guide && Some(b) != default).map(CloseChoice::Button));
+    options
+}
+
 /// The picker for the button that closes menu `mi` (and backs out of its submenus), or none.
 fn close_picker<'a>(mi: usize, menu: &Menu) -> Element<'a, Message> {
-    let default = menu.default_cancel();
-    let mut options = vec![CloseChoice::Default(default), CloseChoice::None];
-    // Not Guide, which closes any menu anyway.
-    options.extend(Button::ALL.into_iter().filter(|&b| b != Button::Guide && b != default).map(CloseChoice::Button));
     row![
-        dropdown(options, Some(CloseChoice::of(menu)), move |c| Message::SetMenuCancel(mi, c)).width(160),
+        dropdown(close_choices(menu), Some(CloseChoice::of(menu)), move |c| Message::SetMenuCancel(mi, c)).width(160),
         help(
-            "Backs out of a submenu, and closes the menu at the top. With none, the menu goes when its \
-             input is let go (or pressed again), or when an item is chosen, and R3 can't keep it open. A menu \
-             nothing holds up (opened from the command line or a zone) then closes only by choosing, or \
-             after 30 seconds."
+            "Backs out of a submenu (held, it closes the whole menu), and closes the menu at the top. \
+             A menu item can open another menu only when both have the same close button. With none, the \
+             menu goes when its input is let go, or when an item is chosen, and R3 can't keep it open. A \
+             menu nothing holds up (opened from the command line or a zone) then closes only by choosing, \
+             or after 30 seconds."
                 .into(),
         ),
     ]
@@ -107,7 +119,7 @@ pub(super) fn fit_items(menu: &mut Menu) {
         MenuKind::Directional { .. } => {
             menu.items.truncate(4);
             while menu.items.len() < 4 {
-                menu.items.push(MenuItem { label: String::new(), action: ButtonAction::Disabled, button: None, weight: 1.0 });
+                menu.items.push(MenuItem::new(String::new(), ButtonAction::Disabled));
             }
         }
         MenuKind::Grid { columns } => {
@@ -400,13 +412,14 @@ pub(super) fn unreleased_holds(m: &Macro) -> usize {
 }
 
 pub(super) const MENUS_HELP: &str = "On-screen menus you open with the \"Open menu…\" action from any button, \
-    gesture, combo or trigger. A menu is up while that input is held and closes when you let go; wrap the \
-    action in \"Toggle\" to keep it up until pressed again. Radial: aim a stick, let go to choose. \
+    gesture, combo or trigger. A menu is up while that input is held and closes when you let go, or with its \
+    close button; press R3 to keep a held one up. Radial: aim a stick, let go to choose. \
     Directional: four slots on the D-pad or face buttons; pressing one fires it and closes the menu. List: move with the D-pad or Left Stick, A \
     chooses. Button menu: each item has its own button; pressing it fires the item and closes the menu. Carousel: cycle with the chosen \
     controls, A chooses. Grid: a list laid out in up to 6 columns and 6 rows, moved through in all four \
-    directions. Items tap their action like a button press; an item can open another menu of the \
-    same kind (not from radial menus), which closes along with it.";
+    directions; merge a cell with the ones beside or below it to make a bigger item. Items tap their \
+    action like a button press. An item can open another menu with the same close button (not from radial \
+    menus), which takes its place; the close button goes back, and held, closes them all.";
 
 impl App {
     #[expect(clippy::too_many_lines, clippy::cognitive_complexity, reason = "predates the size lints")]
@@ -597,10 +610,10 @@ impl App {
             Message::NewMenu(kind) => {
                 let name = self.new_item_name(ItemKind::Menu, "Menu");
                 let kind = MenuKind::default_for(kind);
-                let mut menu = Menu { name, kind, items: Vec::new(), cancel: None, no_cancel: false, style: OverlayStyle::default() };
+                let mut menu = Menu { name, kind, items: Vec::new(), cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() };
                 fit_items(&mut menu);
                 if menu.items.is_empty() {
-                    menu.items.push(MenuItem { label: "Item 1".into(), action: ButtonAction::Keys(Vec::new()), button: None, weight: 1.0 });
+                    menu.items.push(MenuItem::new("Item 1", ButtonAction::Keys(Vec::new())));
                 }
                 // New menus go first, right under the button that made them, already open.
                 self.menus_mut().insert(0, menu);
@@ -632,10 +645,16 @@ impl App {
             }
             Message::SetMenuKind(i, kind) => {
                 if let Some(m) = self.menus_mut().get_mut(i) {
+                    // Merged cells and the start cell are laid out for the grid's columns.
+                    if m.kind != kind {
+                        m.items.iter_mut().for_each(|item| item.span = crate::config::Span::ONE);
+                        m.start = 0;
+                    }
                     m.kind = kind;
                     fit_items(m);
                 }
             }
+            Message::SetMenuItemSpan(..) | Message::SetMenuStart(..) => self.update_grid(&message),
             Message::SetMenuStyle(i, style) => {
                 if let Some(m) = self.menus_mut().get_mut(i) {
                     m.style = style;
@@ -646,7 +665,7 @@ impl App {
                     && item_limit(m.kind).is_none_or(|limit| m.items.len() < limit)
                 {
                     let label = format!("Item {}", m.items.len() + 1);
-                    m.items.push(MenuItem { label, action: ButtonAction::Keys(Vec::new()), button: None, weight: 1.0 });
+                    m.items.push(MenuItem::new(label, ButtonAction::Keys(Vec::new())));
                 }
             }
             Message::RemoveMenuItem(i, item) => {
@@ -1210,6 +1229,7 @@ impl App {
 
         rows.push(labeled("Kind", menu_kind_row(mi, menu)));
         rows.push(labeled("Close button", close_picker(mi, menu)));
+        rows.extend(grid_start_picker(mi, menu).map(|p| labeled("Cursor starts on", p)));
 
         // Appearance, with a live preview.
         let appearance_open = self.open_appearance.contains(&Some(mi));
@@ -1237,24 +1257,19 @@ impl App {
         };
         let quick = matches!(menu.kind, MenuKind::Buttons);
         let openers = if quick { menu_openers(self.game(), &menu.name) } else { Vec::new() };
-        // Items open only other menus of the same kind; radial menus open none.
-        let radial = matches!(menu.kind, MenuKind::Radial { .. });
         // A radial menu's arcs are sized by weight, unless its items are boxes.
         let weighted = matches!(menu.kind, MenuKind::Radial { boxes: false, .. });
-        let item_kinds = if radial { RADIAL_ITEM_KINDS } else { MENU_ITEM_KINDS };
-        let item_names = Names {
-            macros: names.macros.clone(),
-            menus: reachable
-                .iter()
-                .filter(|m| m.name != menu.name && m.kind.tag() == menu.kind.tag())
-                .map(|m| m.name.clone())
-                .collect(),
-            ..names.clone()
-        };
+        let (item_kinds, item_names) = item_choices(menu, names, reachable);
+        let grid = crate::menu::GridLayout::of(menu);
         let last = menu.items.len().saturating_sub(1);
         let mut items = column![text("Items").size(16)].spacing(8);
         let mut boxes: Vec<Element<'a, Message>> = Vec::new();
         for (i, item) in menu.items.iter().enumerate() {
+            // An item another is merged over has nothing to set until that one is split.
+            if let Some(owner) = grid.as_ref().and_then(|g| g.covered_by(i)) {
+                boxes.push(covered_cell(i, owner));
+                continue;
+            }
             let target = Target::MenuItem(mi, i);
             let name: String = match direction_slots {
                 Some(slots) => format!("{}  {}", crate::menu::button_badge(slots[i]), ["up", "right", "down", "left"][i]),
@@ -1277,6 +1292,9 @@ impl App {
                 line = line.push(item_button_picker(mi, i, item.button));
             }
             line = line.push(fill_x(action_editor(&item.action, Button::South, item_kinds, set_action(target), KeyField::root(target), &item_names)));
+            if let Some(grid) = &grid {
+                line = line.push(merge_buttons(mi, i, item.span, grid));
+            }
             if direction_slots.is_none() {
                 let small = |label: &'static str, msg: Option<Message>| {
                     button(text(label).size(13)).style(style::secondary).on_press_maybe(msg)
@@ -1294,7 +1312,7 @@ impl App {
             items = items.push(add_menu_item_row(mi, menu));
         } else {
             items = items.push(
-                text("Give a direction \"Open menu…\" to open another directional menu.").size(12).color(MUTED_COLOR),
+                text("Give a direction \"Open menu…\" to open another menu with the same close button.").size(12).color(MUTED_COLOR),
             );
         }
         rows.push(items.into());
@@ -1302,6 +1320,18 @@ impl App {
         column(rows).spacing(10).into()
     }
 
+}
+
+/// What `menu`'s items can do, and the menus they can open: only others with the same close
+/// button, and none from a radial menu.
+pub(super) fn item_choices(menu: &Menu, names: &Names, reachable: &[&Menu]) -> (&'static [ActionKind], Names) {
+    let kinds = match (menu.kind, menu.cancel_button()) {
+        (MenuKind::Radial { .. }, _) => RADIAL_ITEM_KINDS,
+        (_, None) => NO_SUBMENU_ITEM_KINDS,
+        (_, Some(_)) => MENU_ITEM_KINDS,
+    };
+    let menus = reachable.iter().filter(|m| m.name != menu.name && crate::menu::can_open(menu, m)).map(|m| m.name.clone()).collect();
+    (kinds, Names { menus, ..names.clone() })
 }
 
 /// The picker for the button that chooses item `i` of button menu `mi`.
@@ -1341,7 +1371,7 @@ mod tests {
         let _ = app.update(Message::SetMenuCancel(0, CloseChoice::None));
         assert_eq!(app.menus()[0].cancel_button(), None);
         assert_eq!(CloseChoice::of(&app.menus()[0]), CloseChoice::None);
-        let _ = app.update(Message::SetMenuCancel(0, CloseChoice::Default(Button::East)));
+        let _ = app.update(Message::SetMenuCancel(0, CloseChoice::Default(Some(Button::East))));
         assert_eq!((app.menus()[0].cancel, app.menus()[0].no_cancel), (None, false));
     }
 
@@ -1456,12 +1486,13 @@ mod tests {
         let _ = app.update(Message::RenameMenu(0, "Wheel".into()));
         assert_eq!(app.config.general.menus[1].items[1].action, ButtonAction::OpenMenu("Wheel".into()));
         assert_eq!(app.config.general.profiles[0].button(Button::Select), &ButtonAction::OpenMenu("Wheel".into()));
-        assert_eq!(app.validate(), None);
-        // Submenus must be the same kind as the menu opening them.
-        let _ = app.update(Message::SetMenuKind(0, MenuKind::List));
+        // Submenus need the same close button as the menu opening them, and it needs one.
         let err = app.validate().unwrap();
-        assert!(err.contains("isn't a directional menu"), "{err}");
-        let _ = app.update(Message::SetMenuKind(0, MenuKind::Directional { cluster: Cluster::DPad }));
+        assert!(err.contains("give this menu a close button"), "{err}");
+        let _ = app.update(Message::SetMenuCancel(1, CloseChoice::Button(Button::Select)));
+        let err = app.validate().unwrap();
+        assert!(err.contains("needs the same close button"), "{err}");
+        let _ = app.update(Message::SetMenuCancel(0, CloseChoice::Button(Button::Select)));
         assert_eq!(app.validate(), None);
 
         // Deleting the first menu shifts the open cards along with the menus.
