@@ -155,8 +155,7 @@ impl crate::motion::Tracked for OverlayView {
         match self {
             OverlayView::Keyboard(k) => key_index(k.layout, keyboard::key_at(k.layout, k.cursor).code),
             OverlayView::Menu(m) => m.selected.map(|i| i as u32),
-            OverlayView::Offer(o) => (!o.choices.is_empty()).then_some(o.selected as u32),
-            OverlayView::Media(_) => None,
+            OverlayView::Offer(_) | OverlayView::Media(_) => None,
         }
     }
 

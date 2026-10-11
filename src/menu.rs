@@ -65,6 +65,13 @@ pub struct ItemView {
     pub weight: f32,
 }
 
+impl ItemView {
+    /// A row with just a label to fill in: no button, glyphs, icon or tint.
+    pub fn plain() -> Self {
+        ItemView { label: String::new(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0 }
+    }
+}
+
 /// What kind of row an item is. The overlay tints each kind differently, so a row that adds to
 /// something or removes it stands out from the things it acts on.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]

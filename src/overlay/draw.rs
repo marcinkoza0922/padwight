@@ -437,7 +437,7 @@ pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, glyphs: crate::info::Gl
     framed(contents.into(), c, 18.0 * s, fit)
 }
 
-/// The offer to add a library game: the question and its answers, or the packs to pick from.
+/// The offer to add a library game: the question and its answers. (Its lists are menus.)
 pub fn offer_panel<'a, M: 'a>(o: &OfferView, font: Font, glyphs: crate::info::Glyphs, fit: &Fit, anim: &Anim) -> Element<'a, M> {
     let c = colors(&o.style, font).with_glyphs(glyphs).faded(anim.opacity());
     let s = o.style.scale.clamp(0.5, 2.0);
@@ -446,18 +446,8 @@ pub fn offer_panel<'a, M: 'a>(o: &OfferView, font: Font, glyphs: crate::info::Gl
             .padding([8.0 * s, 16.0 * s])
             .style(lit_cell_style(lit, selected, 36.0 * s))
     };
-    let body: Element<'a, M> = if o.choices.is_empty() {
-        let answers = o.answers.iter().map(|(button, what)| cell(format!("{button}  {what}"), c, false).into());
-        row(answers).spacing(10.0 * s).into()
-    } else {
-        let items = o.choices.iter().enumerate().map(|(i, name)| {
-            let selected = i == o.selected;
-            let lit = anim.lit(selected, anim.timing.from == Some(i as u32));
-            let tinted = Colors { item: blend(c.item, c.selected, lit), item_text: blend(c.item_text, c.selected_text, lit), ..c };
-            cell(name.clone(), tinted, selected).width(Length::Fill).into()
-        });
-        column(items).spacing(6.0 * s).width(360.0 * s).into()
-    };
+    let answers = o.answers.iter().map(|(button, what)| cell(format!("{button}  {what}"), c, false).into());
+    let body: Element<'a, M> = row(answers).spacing(10.0 * s).into();
     let contents = column![
         text(o.title.clone()).font(c.font).size(20.0 * s).color(c.background_text),
         text(o.detail.clone()).font(c.font).size(14.0 * s).color(c.muted).width(520.0 * s).align_x(Alignment::Center),

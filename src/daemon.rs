@@ -1233,7 +1233,7 @@ impl Daemon {
                 view.style = self.config.active_media_style().clone();
                 Some(OverlayView::Media(view))
             }
-            Some(Active::Offer(o)) => Some(OverlayView::Offer(o.view())),
+            Some(Active::Offer(o)) => Some(o.view(self.config.active_menu_style())),
             Some(Active::Settings(m, _)) => Some(OverlayView::Menu(m.view(&self.config))),
             None => match &self.guide_menu {
                 Some(menu) => {

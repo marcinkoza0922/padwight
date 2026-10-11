@@ -131,7 +131,7 @@ Tick an item when it's done and merged.
   Guide closes the keyboard, numpad and media (`src/daemon.rs:2218`) but not menus, the Guide +
   Start menu or the offer. Suggestion: Guide closes *any* overlay, and B means "back" everywhere,
   with the keyboard keeping hold-B so a mistap can't lose what you typed.
-- [ ] 21. **The offer ignores the user's styles.** It's always drawn with
+- [x] 21. **The offer ignores the user's styles.** It's always drawn with
   `OverlayStyle::default()`, centered (`src/offer.rs:132`), and `overlay_view` doesn't override it
   as it does for the keyboard, numpad and media. Use the menu style, or add an offer style, so
   scale, colors and fonts apply.
@@ -142,7 +142,7 @@ Tick an item when it's done and merged.
 - [x] 23. **Badges and glyphs are mixed in Edit Controls.** Button rows draw the pad's glyph,
   stick and trigger rows draw text chips ("LS", "LT"), and the radial hub writes "LS"/"RS" as
   text. `info::trigger_glyph` exists, and a stick glyph would match.
-- [ ] 24. **Menu-like overlays only partly share code.** The Guide menu, in-game menu, offer and
+- [x] 24. **Menu-like overlays only partly share code.** The Guide menu, in-game menu, offer and
   media each have their own cursor, hints and close handling. The Guide menu's state lives in the
   daemon (`GuideMenu`), its presses come from the engine (`take_guide_nav`), and its view comes
   from `guide_menu.rs`. The offer has a cursor list drawn with its own `offer_panel` instead of
