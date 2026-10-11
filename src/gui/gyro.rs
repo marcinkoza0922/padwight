@@ -213,12 +213,7 @@ fn curve_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(
     let curve = cfg.curve;
     let preset = curve.preset(1.0);
     let picker = curve_preset_picker(preset, move |p: CurvePreset| {
-        // Custom starts from the curve in use, made different enough to be its own.
-        let picked = p.speed_curve(1.0).unwrap_or(if preset == CurvePreset::Linear {
-            SpeedCurve { power: 1.5, ..CurvePreset::Gentle.speed_curve(1.0).unwrap_or_default() }
-        } else {
-            SpeedCurve { power: curve.power + 0.25, ..curve }
-        });
+        let picked = p.speed_curve(1.0).unwrap_or_else(|| curve.custom_from(1.0));
         with(&|c| c.curve = picked)
     });
     let rows = rows.push(labeled("    Acceleration", picker));

@@ -8,7 +8,10 @@
 use iced::widget::{Column, column, row};
 
 use super::*;
-use crate::config::{CurvePreset, FlickVertical, MouseResponse};
+use crate::config::FlickVertical;
+
+mod mouse;
+use mouse::{mouse_advanced, mouse_rows};
 
 /// A stick's mode in a few words.
 pub(super) fn stick_summary(cfg: &StickConfig) -> String {
@@ -94,7 +97,8 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
         StickAction::Flick { .. } => rows = flick_rows(rows, cfg, with),
         StickAction::Gamepad { .. } | StickAction::Disabled => {}
     }
-    if matches!(cfg.action, StickAction::Mouse { .. } | StickAction::Scroll { .. }) {
+    // A mouse stick's curve is part of its response, with the preset.
+    if matches!(cfg.action, StickAction::Scroll { .. }) {
         rows = rows.push(stick_row("Curve", slider_editor(1.0..=3.0, cfg.curve, 0.1, "(1 = linear)", set(|c, v| c.curve = v))));
     }
     if !matches!(cfg.action, StickAction::Disabled) {
@@ -348,47 +352,4 @@ fn flick_advanced<'a>(rows: Column<'a, Message>, cfg: &StickConfig, open: bool, 
         advanced = advanced.push(boxed_row("Vertical speed", slider_editor(100.0..=4000.0, vertical_speed, 50.0, "px/s", move |v| flick_with!(with, a.clone(), vertical_speed, v))));
     }
     rows.push(advanced_fold("Advanced flick", HOLDS, s, Some(advanced)))
-}
-
-/// A mouse stick's response preset, speed and acceleration.
-fn mouse_rows<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a StickConfig, with: impl Fn(StickAction) -> Message + Copy + 'a) -> Column<'a, Message> {
-    let StickAction::Mouse { speed, response, invert_y } = cfg.action else {
-        return rows;
-    };
-    // A preset sets the curve too, which is the stick's, not the action's.
-    let pick = move |p: CurvePreset| {
-        let mut c = cfg.clone();
-        if let Some((curve, response)) = p.stick_response(response) {
-            (c.curve, c.action) = (curve, StickAction::Mouse { speed, response, invert_y });
-        }
-        Message::SetStick(s, c)
-    };
-    rows.push(stick_row("Response preset", curve_preset_picker(CurvePreset::of_stick(cfg.curve, &response), pick)))
-        .push(stick_row("Speed", slider_editor(100.0..=4000.0, speed, 50.0, "px/s", move |v| with(StickAction::Mouse { speed: v, response, invert_y }))))
-        .push(stick_row(
-            "Acceleration",
-            slider_editor(0.0..=100.0, response.accel * 100.0, 5.0, "%", move |v| {
-                with(StickAction::Mouse { speed, response: MouseResponse { accel: v / 100.0, ..response }, invert_y })
-            }),
-        ))
-}
-
-/// A mouse stick's "Advanced response" fold: the fine-tuning of its response.
-fn mouse_advanced<'a>(rows: Column<'a, Message>, cfg: &StickConfig, open: bool, s: Stick, with: impl Fn(StickAction) -> Message + Copy + 'a) -> Column<'a, Message> {
-    let StickAction::Mouse { speed, response, invert_y } = cfg.action else {
-        return rows;
-    };
-    const HOLDS: &str = "Ramp time, outer boost, vertical speed, smoothing";
-    if !open {
-        return rows.push(advanced_fold("Advanced response", HOLDS, s, None));
-    }
-    let set = move |r: MouseResponse| with(StickAction::Mouse { speed, response: r, invert_y });
-    rows.push(advanced_fold("Advanced response", HOLDS, s, Some(column![
-        boxed_row("Ramp time", slider_editor(100.0..=2000.0, response.accel_ramp_ms as f32, 50.0, "ms", move |v| {
-            set(MouseResponse { accel_ramp_ms: v as u32, ..response })
-        })),
-        boxed_row("Outer boost", slider_editor(0.0..=1.0, response.outer_boost, 0.05, "", move |v| set(MouseResponse { outer_boost: v, ..response }))),
-        boxed_row("Vertical speed", slider_editor(0.25..=2.0, response.y_scale, 0.05, "× horizontal", move |v| set(MouseResponse { y_scale: v, ..response }))),
-        boxed_row("Smoothing", slider_editor(0.0..=200.0, response.smoothing_ms as f32, 5.0, "ms", move |v| set(MouseResponse { smoothing_ms: v as u32, ..response }))),
-    ])))
 }

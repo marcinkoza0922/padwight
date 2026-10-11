@@ -48,6 +48,16 @@ impl SpeedCurve {
     pub fn preset(&self, scale: f32) -> CurvePreset {
         CurvePreset::NAMED.into_iter().find(|p| p.speed_curve(scale).is_some_and(|c| close(&c, self))).unwrap_or(CurvePreset::Custom)
     }
+
+    /// Where Custom starts: this curve with its shape changed, so it matches no preset. From a
+    /// flat curve, which has nothing to change, it starts from Gentle.
+    pub fn custom_from(&self, scale: f32) -> SpeedCurve {
+        if self.is_flat() {
+            SpeedCurve { power: 1.5, ..CurvePreset::Gentle.speed_curve(scale).unwrap_or_default() }
+        } else {
+            SpeedCurve { power: self.power + 0.25, ..*self }
+        }
+    }
 }
 
 /// Equal to within slider rounding.
@@ -190,5 +200,18 @@ mod tests {
         }
         let tweaked = SpeedCurve { fast_gain: 1.7, ..CurvePreset::Gentle.speed_curve(1.0).unwrap() };
         assert_eq!(tweaked.preset(1.0), CurvePreset::Custom);
+    }
+
+    #[test]
+    fn custom_starts_from_a_curve_of_its_own() {
+        for scale in [1.0, 0.025] {
+            for p in CurvePreset::NAMED {
+                let from = p.speed_curve(scale).unwrap();
+                assert_eq!(from.custom_from(scale).preset(scale), CurvePreset::Custom, "from {p}");
+            }
+        }
+        // From a preset, the rest of its curve is kept.
+        let wide = CurvePreset::Wide.speed_curve(1.0).unwrap();
+        assert_eq!(wide.custom_from(1.0).fast_speed, wide.fast_speed);
     }
 }

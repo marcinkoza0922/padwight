@@ -29,7 +29,7 @@ In Mouse mode, sensitivity is pixels per degree turned. Tick **Real-world sensit
 | Precision | much slower for small movements, for sniping |
 | Turn boost | unchanged when aiming, faster only for big quick turns |
 
-Any preset except Linear shows its settings to fine-tune: the sensitivity when slow and when fast, the speeds where each starts, and the shape of the blend. A mouse stick's **Response preset** offers the same names on the Sticks & triggers tab.
+Any preset except Linear shows its settings to fine-tune: the sensitivity when slow and when fast, the speeds where each starts, and the shape of the blend. A mouse stick's **Response** offers the same names on the Sticks & triggers tab.
 
 The **Visualizers** under the settings draw the curve with your current turning speed on it, where the aim has been moving, and in the stick modes, the virtual stick.
 
