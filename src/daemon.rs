@@ -2173,9 +2173,11 @@ impl Daemon {
         true
     }
 
-    /// Applies a Quick Settings or Edit Controls change to the running mappings. It reaches the
+    /// Applies a Quick Settings or Edit Controls change to the running mappings, and to the
+    /// macros, menus and layers the game has (which Edit Controls can change too). It reaches the
     /// config file only when the menu's Save is chosen.
     fn apply_settings_change(&mut self) {
+        self.refresh_scope();
         self.resync_all();
     }
 

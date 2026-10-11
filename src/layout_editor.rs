@@ -5,6 +5,7 @@
 
 mod buttons;
 mod macros;
+mod menus;
 mod values;
 mod views;
 mod zones;
@@ -32,6 +33,8 @@ enum Top {
     Combos,
     Layers,
     Macros,
+    Menus,
+    Infos,
 }
 
 fn top_rows(inputs: &[Button]) -> Vec<Top> {
@@ -47,6 +50,8 @@ fn top_rows(inputs: &[Button]) -> Vec<Top> {
             Top::Combos,
             Top::Layers,
             Top::Macros,
+            Top::Menus,
+            Top::Infos,
         ])
         .collect()
 }
@@ -78,6 +83,13 @@ enum Page {
     Stick(Stick),
     Trigger(Trigger),
     Gyro,
+    /// The game's menus, one menu, and one of its items.
+    Menus,
+    Menu(usize),
+    MenuItem(usize, usize),
+    /// The game's info overlays, and one of them.
+    Infos,
+    Info(usize),
 }
 
 /// What the editor asks of the menu after a step.
@@ -167,6 +179,7 @@ impl LayoutEditor {
             Page::Zones(a) => zones::zones_rows(config, a).len(),
             Page::Zone(..) => ZONE_ROWS,
             Page::Gyro => values::GYRO_ROWS,
+            Page::Menus | Page::Menu(_) | Page::MenuItem(..) | Page::Infos | Page::Info(_) => menus::page(self.page, config).0.len(),
         }
     }
 
@@ -218,24 +231,14 @@ impl LayoutEditor {
                 EditStep::Changed
             }
             Page::Macro(i) => self.choose_macro_row(i, config),
-            Page::Stick(stick) if self.cursor == values::STICK_ROWS => {
-                self.push(Page::Zones(Analog::Stick(stick)));
-                EditStep::Stay
-            }
-            Page::Stick(stick) => values::stick_choose(stick, self.cursor, config),
-            Page::Trigger(trigger) if self.cursor == values::TRIGGER_ROWS => {
-                self.push(Page::Zones(Analog::Trigger(trigger)));
-                EditStep::Stay
-            }
-            Page::Trigger(trigger) => values::trigger_choose(trigger, self.cursor, config),
+            Page::Stick(_) | Page::Trigger(_) => self.choose_analog_row(config),
             Page::Zones(a) => self.choose_zones(a, config),
             Page::Zone(a, i) => self.choose_zone(a, i, config),
             Page::Gyro => values::gyro_choose(self.cursor, config),
+            Page::Menus | Page::Menu(_) | Page::MenuItem(..) | Page::Infos | Page::Info(_) => self.choose_on_menu_pages(config),
         }
     }
 
-    /// Changes the highlighted number by one step (`dir` is -1 or 1). Pages without numbers do
-    /// nothing.
     /// Deleting takes a second press, so a stray A doesn't lose a combo, zone or macro: true
     /// for the first press on a delete row, which only arms it.
     fn first_delete_press(&mut self, config: &Config) -> bool {
@@ -260,10 +263,12 @@ impl LayoutEditor {
             Page::Macro(i) => macros::is_delete_row(config, i, self.cursor),
             Page::Combo(_) => self.cursor == self.inputs().len() + 1,
             Page::Zone(..) => self.cursor == ZONE_DELETE,
-            _ => false,
+            _ => self.on_menu_delete_row(config),
         }
     }
 
+    /// Changes the highlighted number (or kind, or position) by one step (`dir` is -1 or 1).
+    /// Pages without one do nothing.
     pub fn adjust(&mut self, dir: i32, config: &mut Config) -> EditStep {
         self.armed = false;
         match self.page {
@@ -271,6 +276,8 @@ impl LayoutEditor {
             Page::Trigger(trigger) => values::trigger_adjust(trigger, self.cursor, dir, config),
             Page::Gyro => values::gyro_adjust(self.cursor, dir, config),
             Page::Zone(a, i) => zones::adjust_zone(config, a, i, self.cursor, dir),
+            Page::Menu(m) => self.adjust_menu(m, dir, config),
+            Page::Info(i) => self.adjust_info(i, dir, config),
             _ => EditStep::Stay,
         }
     }
@@ -313,6 +320,8 @@ impl LayoutEditor {
             Top::Combos => Page::Combos,
             Top::Layers => Page::Layers,
             Top::Macros => Page::Macros,
+            Top::Menus => Page::Menus,
+            Top::Infos => Page::Infos,
         };
         self.push(page);
         EditStep::Stay
@@ -357,6 +366,18 @@ impl LayoutEditor {
                 EditStep::Changed
             }
         }
+    }
+
+    /// A stick's or trigger's row: a value, or its zones on the last row.
+    fn choose_analog_row(&mut self, config: &mut Config) -> EditStep {
+        match self.page {
+            Page::Stick(stick) if self.cursor == values::STICK_ROWS => self.push(Page::Zones(Analog::Stick(stick))),
+            Page::Trigger(trigger) if self.cursor == values::TRIGGER_ROWS => self.push(Page::Zones(Analog::Trigger(trigger))),
+            Page::Stick(stick) => return values::stick_choose(stick, self.cursor, config),
+            Page::Trigger(trigger) => return values::trigger_choose(trigger, self.cursor, config),
+            _ => {}
+        }
+        EditStep::Stay
     }
 
     fn choose_combo_row(&mut self, config: &mut Config) -> EditStep {
@@ -535,6 +556,7 @@ impl LayoutEditor {
             Page::Trigger(trigger) => with_zones_row(values::trigger_page(trigger, profile), config, Analog::Trigger(trigger)),
             Page::Zones(a) => (zones::zones_rows(config, a), "{south} open or add · {east} back"),
             Page::Zone(a, i) => zones::zone_page(config, a, i),
+            Page::Menus | Page::Menu(_) | Page::MenuItem(..) | Page::Infos | Page::Info(_) => menus::page(self.page, config),
             Page::Gyro => values::gyro_page(profile),
         };
         let crumbs = parents.iter().cloned().chain(self.history.iter().map(|&(page, _)| page_title(page, config))).collect();
@@ -582,6 +604,7 @@ fn current_action(config: &Config, slot: Slot) -> ButtonAction {
         Slot::Combo(i) => profile.combos.get(i).map_or(ButtonAction::Disabled, |c| c.action.clone()),
         Slot::Layer(i, b) => layers(config).get(i).and_then(|l| l.buttons.get(&b)).cloned().unwrap_or(ButtonAction::Disabled),
         Slot::Zone(a, i) => zones::zone_action(config, a, i),
+        Slot::MenuItem(m, i) => menus::item_action(config, m, i),
     }
 }
 
@@ -607,6 +630,11 @@ fn page_title(page: Page, config: &Config) -> String {
         Page::Gyro => "Gyro".into(),
         Page::Zones(a) => format!("{} zones", analog_name(a)),
         Page::Zone(_, i) => format!("Zone {}", i + 1),
+        Page::Menus => "Menus".into(),
+        Page::Menu(m) => menus::menu_name(config, m).unwrap_or("Menu").into(),
+        Page::MenuItem(m, i) => format!("{} · item {}", menus::menu_name(config, m).unwrap_or("Menu"), i + 1),
+        Page::Infos => "Info overlays".into(),
+        Page::Info(i) => config.active_game().info.get(i).map_or_else(|| "Info overlay".into(), |o| o.name.clone()),
     }
 }
 
@@ -646,6 +674,10 @@ fn toggle_key(config: &mut Config, slot: Slot, code: &str) {
 }
 
 fn set_slot(config: &mut Config, slot: Slot, action: Option<ButtonAction>) {
+    if let Slot::MenuItem(m, i) = slot {
+        menus::set_item_action(config, m, i, action.unwrap_or(ButtonAction::Disabled));
+        return;
+    }
     if let Slot::Zone(a, i) = slot {
         zones::set_zone_action(config, a, i, action.unwrap_or(ButtonAction::Disabled));
         return;

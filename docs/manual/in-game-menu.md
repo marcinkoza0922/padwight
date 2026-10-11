@@ -14,7 +14,12 @@ Left and right change a number by about 10%, or by half with RB held, and keep c
 
 ## Edit Controls
 
-Opens the full editor for the game in front of you: its buttons, sticks, gyro, combos, layers and macros. Changes apply straight away, but they're only written to the config file when you save.
+Opens the full editor for the game in front of you: its buttons (and back paddles, on a controller that has them), sticks, gyro, combos, layers, macros, menus and info overlays. Changes apply straight away, but they're only written to the config file when you save.
+
+- **Menus**: add a menu, add items and pick each one's action (an item is named after its action), set an item's own button in a button menu, move items up and down, change the menu's kind with left and right, and remove items or the menu. Naming a menu, and a menu that a button opens, are left to the settings window.
+- **Info overlays**: choose whether each one is always on screen, and move it round the screen with left and right.
+
+Deleting a combo, zone, macro, menu item or menu asks you to press A a second time.
 
 If you close the menu with unsaved changes, you can **Save and close**, **Discard and close**, or **Keep editing**.
 

@@ -15,6 +15,8 @@ pub enum Slot {
     Layer(usize, Button),
     /// A stick's or trigger's zone, by its index.
     Zone(Analog, usize),
+    /// An item of one of the game's menus: the menu's index, then the item's.
+    MenuItem(usize, usize),
 }
 
 /// One row of an action page.
@@ -193,9 +195,13 @@ pub fn action_rows(slot: Slot) -> Vec<ActionRow> {
     }
     rows.extend((0..CHOICES.len()).map(ActionRow::Choice));
     rows.push(ActionRow::Keys);
-    rows.extend(Picker::ALL.map(ActionRow::Pick));
+    // A menu item is a tap: it can't hold a layer, and a turbo would stop at once.
+    let item = matches!(slot, Slot::MenuItem(..));
+    rows.extend(Picker::ALL.into_iter().filter(|p| !item || *p != Picker::Layer).map(ActionRow::Pick));
     rows.push(ActionRow::Wrap(Wrap::Toggle));
-    rows.push(ActionRow::Wrap(Wrap::Turbo));
+    if !item {
+        rows.push(ActionRow::Wrap(Wrap::Turbo));
+    }
     if matches!(slot, Slot::Gesture(..) | Slot::Layer(..)) {
         rows.push(ActionRow::NotSet);
     }
@@ -254,6 +260,7 @@ pub fn action_title(slot: Slot, layer: Option<&str>) -> String {
         Slot::Zone(_, i) => format!("Zone {}", i + 1),
         Slot::Gesture(b, kind) => format!("{} {}", b.short_name(), gesture_name(kind).to_lowercase()),
         Slot::Combo(i) => format!("Combo {}", i + 1),
+        Slot::MenuItem(_, i) => format!("{} · item {}", layer.unwrap_or("Menu"), i + 1),
     }
 }
 
@@ -288,7 +295,7 @@ pub fn set_slot(profile: &mut Profile, slot: Slot, action: Option<ButtonAction>)
         }
         // A layer's buttons live on the layer, and a zone's action on its stick or trigger; the
         // editor sets those itself.
-        Slot::Layer(..) | Slot::Zone(..) => {}
+        Slot::Layer(..) | Slot::Zone(..) | Slot::MenuItem(..) => {}
         Slot::Combo(i) => {
             if let Some(combo) = profile.combos.get_mut(i) {
                 combo.action = action.unwrap_or(ButtonAction::Disabled);

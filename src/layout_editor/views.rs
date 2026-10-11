@@ -37,6 +37,7 @@ pub(super) fn layer_page(config: &Config, i: usize, inputs: &[Button]) -> (Vec<I
 pub(super) fn layer_name(config: &Config, slot: Slot) -> Option<&str> {
     match slot {
         Slot::Layer(i, _) => layers(config).get(i).map(|l| l.name.as_str()),
+        Slot::MenuItem(m, _) => config.active_game().menus.get(m).map(|menu| menu.name.as_str()),
         _ => None,
     }
 }
@@ -61,6 +62,8 @@ pub(super) fn top_item(row: Top, config: &Config) -> ItemView {
         Top::Combos => item(format!("Combos ({})", profile.map_or(0, |p| p.combos.len()))),
         Top::Layers => item("Layers".into()),
         Top::Macros => item(format!("Macros ({macro_count})")),
+        Top::Menus => item(format!("Menus ({})", config.active_game().menus.len())),
+        Top::Infos => item(format!("Info overlays ({})", config.active_game().info.len())),
     }
 }
 

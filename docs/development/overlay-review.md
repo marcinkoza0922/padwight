@@ -209,7 +209,7 @@ Tick an item when it's done and merged.
 
 ## New features
 
-- [ ] 40. **Edit menus and info overlays in game.** Edit Controls covers buttons, sticks,
+- [x] 40. **Edit menus and info overlays in game.** Edit Controls covers buttons, sticks,
   triggers, gyro, combos, layers and macros, but not menus (add, rename or reorder items) or
   info overlays. Being able to add the item you just realized you need without alt-tabbing fits
   the in-game editor's goal.
