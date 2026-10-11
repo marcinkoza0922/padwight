@@ -54,6 +54,7 @@ mod logs;
 mod manual;
 mod overlays;
 mod deadzone_graph;
+mod device_box;
 mod pieces;
 mod packs;
 mod profile;
@@ -71,6 +72,7 @@ mod widgets;
 
 use actions::*;
 use checks::*;
+use device_box::*;
 use games::*;
 use items::*;
 use keys::*;
@@ -321,8 +323,10 @@ enum Target {
     MacroStep(usize, usize),
     /// Item `.1` of menu `.0` (in the shown list).
     MenuItem(usize, usize),
-    /// The advanced response settings of a mouse stick.
-    StickResponse(Stick),
+    /// A stick's "Advanced" fold.
+    StickAdvanced(Stick),
+    /// The gyro's "Advanced" fold.
+    GyroAdvanced,
     /// Sector `.1` of a stick's button ring.
     RingSector(Stick, usize),
     /// The touchpad's click or a swipe.
