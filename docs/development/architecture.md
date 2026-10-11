@@ -108,6 +108,9 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | `daemon/inject.rs` | The daemon's end: controllers no hardware backs (`DebugAttach`, `DebugInput`, `DebugOutput`, `DebugDetach`), with their output recorded. Only a daemon started with `--debug` accepts them. |
 | `debug/server.rs` | The session socket (`padwight-debug.sock`, or `$PADWIGHT_DEBUG_SOCKET`) and its client. |
 | `debug/window.rs` | The iced window: clickable virtual controller plus every model's drawing. |
+| `debug/glyphs.rs` | Every glyph the overlays draw (each family's buttons, both face layouts, every key, the mouse buttons, the icons) as info sheets, shown in the debug window's Glyphs section. |
+| `debug/overlay_shot.rs`, `debug/scenes.rs` | `padwight debug overlay`: draws made-up overlay frames (one per kind of overlay and menu), the glyph sheets, a saved frame, or a running daemon's live overlay to PNG with no display. |
+| `snapshot.rs` | Draws any iced element offscreen with the CPU renderer (tiny-skia) into an image; what the overlay snapshots and their tests use. |
 | `pad_svg/hit.rs` | Which part of a model's drawing a point falls on, for clicking. |
 | `pad_widget.rs` | The drawing as an iced widget, shared with the settings window. |
 | `touchpad_widget.rs` | The touchpad as a picture (each side's job, a menu's zones, the fingers), shared by the Touchpad tab and the debug window, where it can be dragged on. |
@@ -116,13 +119,15 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 
 `tests/debug_session.rs` uses all of this. Its session tests (commands, scripts, expectations, every model's drawing, sockets) need only the binary and run with the rest. Its daemon tests start a `--debug` daemon of their own and drive it through an attached session; they need `/dev/uinput`, and two of them read the virtual keyboard from `/dev/input`, so they're opt-in: `cargo test --test debug_session -- --ignored`, or `scripts/kernel-test-docker.sh debug_`.
 
+**Looking at the overlay without a display.** `padwight debug overlay all glyphs` writes a PNG of every scene and of the glyph sheets to `screenshots/overlay/` (untracked), drawn by the overlay's own layer code (`overlay/ui.rs`, settled, no motion) on a virtual screen (`--size`, default 1920x1080). `padwight debug overlay list` names the scenes. `--json` prints a scene's frame, which can be edited and drawn again by passing the `.json` file. `live` draws what a running daemon's overlay shows, so with a `--debug` daemon and an attached session, `padwight debug press ...` followed by `padwight debug overlay live` captures a real menu or keyboard. None of it needs Wayland, a compositor or a GPU.
+
 Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000 press south`, `padwight debug expect pressed south` (non-zero exit on failure), `padwight debug quit`. `padwight debug help` lists every command.
 
 ### Overlays and display
 
 | Path | Responsibility |
 |---|---|
-| `overlay.rs` (and `overlay/draw/`) | The overlay process: keyboard, numpad, menus, info and log panels. `OverlayController` owns the state inside the daemon. `draw/look.rs` resolves a style's decorations into container styles; `draw/glyphs.rs` draws button glyphs and icons (or text, under the performance settings). |
+| `overlay.rs` (and `overlay/ui.rs`, `overlay/draw/`) | The overlay process: keyboard, numpad, menus, info and log panels. `OverlayController` owns the state inside the daemon; `ui.rs` is the layer-shell window, and `snapshot` draws a frame offscreen as that window would. `draw/look.rs` resolves a style's decorations into container styles; `draw/glyphs.rs` draws button glyphs and icons (or text, under the performance settings). |
 | `info.rs` | Info overlays: `{token}` expansion into button glyphs and live values, and the generated bindings sheet for layers. |
 | `font.rs` | Bundled fonts (`assets/fonts`) and installed families by name. |
 | `style.rs` | Shared widget styles for the GUI. |

@@ -7,7 +7,11 @@ edition = "2024"
 anyhow = "1.0.104"
 dirs = "7.0.0"
 evdev = "0.13"
-iced = { version = "0.14", features = ["svg", "tokio", "markdown"] }
+iced = { version = "0.14", features = ["svg", "tokio", "markdown", "advanced"] }
+# Offscreen drawing for overlay snapshots (snapshot.rs). Both are already in the lock file
+# through iced, so the vendored Flatpak sources don't change.
+iced_runtime = "0.14"
+png = "0.17"
 iced_layershell = "0.19"
 libc = "0.2.190"
 # File chooser for importing and exporting packs, through the desktop portal.
