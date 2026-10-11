@@ -39,7 +39,7 @@ JoyShockMapper:
 | Ring actions | Each sector holds a `ButtonAction`, through the same path as zones, so toggle, turbo, macros, menus and layers all work. |
 | Flick output | Spread over a short time (default 100 ms) rather than sent as one jump, which games often drop. |
 | Flick calibration | A single `full_turn_px` setting: how many mouse pixels make a 360° turn in the game. |
-| Acceleration UI | One 0–100% slider; ramp time and boost behind an "Advanced" fold. |
+| Acceleration UI | A Response preset picker, as for gyro and touchpad. Any preset but Linear shows the curve, acceleration (0–100%), ramp time and outer boost under it; Custom starts from the response in use. Vertical speed and smoothing sit behind an "Advanced" fold. |
 | Packs | No export warning: these need nothing beyond a plain XInput pad. |
 | Flick sticks | At most one stick per profile (and per layer) is a flick stick; Save & apply refuses two. Revisit only with a compelling case. |
 | Flick vertical | Optional, under Advanced, from the first version (see Flick stick). |

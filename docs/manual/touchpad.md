@@ -6,7 +6,7 @@ DualShock 4 and DualSense controllers have a touchpad, which you can also press 
 
 Pick one of these for **Fingers**:
 
-- **Mouse pointer**: works like a laptop trackpad. **Speed** is how far the pointer moves when your finger crosses the whole pad, and **Acceleration** offers the same presets as gyro (see [Gyro](gyro.md)). There are three extras:
+- **Mouse pointer**: works like a laptop trackpad. **Speed** is how far the pointer moves when your finger crosses the whole pad, and **Acceleration** offers the same presets as gyro (see [Gyro](gyro.md)); any preset except Linear shows the sensitivity for slow and fast fingers and the shape of the blend to fine-tune. There are three extras:
   - **Tap to click**: a quick tap runs the click action, so you don't have to press the pad down.
   - **Two fingers scroll**: move two fingers together to scroll.
   - **Keep gliding after a flick**: flick and lift your finger, and the pointer keeps sliding and slows to a stop, like a trackball. Touching the pad stops it.

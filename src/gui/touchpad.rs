@@ -193,7 +193,7 @@ fn mouse_rows<'a>(rows: Column<'a, Message>, (speed, curve, tap, scroll, inertia
     let mouse = move |speed: f32, curve: SpeedCurve, tap: bool, scroll: bool, inertia: bool| set(TouchpadMotion::Mouse { speed, curve, tap, scroll, inertia });
     let preset = curve.preset(CURVE_SCALE);
     let picker = curve_preset_picker(preset, move |p: CurvePreset| {
-        let picked = p.speed_curve(CURVE_SCALE).unwrap_or(SpeedCurve { power: curve.power + 0.25, ..CurvePreset::Gentle.speed_curve(CURVE_SCALE).unwrap_or_default() });
+        let picked = p.speed_curve(CURVE_SCALE).unwrap_or_else(|| curve.custom_from(CURVE_SCALE));
         mouse(speed, picked, tap, scroll, inertia)
     });
     let mut rows = rows
@@ -202,7 +202,10 @@ fn mouse_rows<'a>(rows: Column<'a, Message>, (speed, curve, tap, scroll, inertia
     if !curve.is_flat() {
         rows = rows
             .push(value_slider("      Slow fingers", 0.1..=3.0, curve.slow_gain, 0.05, "×", move |v| mouse(speed, SpeedCurve { slow_gain: v, ..curve }, tap, scroll, inertia)))
-            .push(value_slider("      Fast fingers", 0.1..=4.0, curve.fast_gain, 0.05, "×", move |v| mouse(speed, SpeedCurve { fast_gain: v, ..curve }, tap, scroll, inertia)));
+            .push(value_slider("      Fast fingers", 0.1..=4.0, curve.fast_gain, 0.05, "×", move |v| mouse(speed, SpeedCurve { fast_gain: v, ..curve }, tap, scroll, inertia)))
+            .push(value_slider("      Shape", 0.25..=4.0, curve.power, 0.05, "(1 = straight, more = slow for longer)", move |v| {
+                mouse(speed, SpeedCurve { power: v, ..curve }, tap, scroll, inertia)
+            }));
     }
     let checks = column![
         checkbox(tap).label("Tap to click (runs the click below)").on_toggle(move |v| mouse(speed, curve, v, scroll, inertia)),
