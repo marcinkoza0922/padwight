@@ -372,7 +372,7 @@ impl App {
 
         let mut list = column![
             row![
-                dropdown(Template::NEW, None::<Template>, Message::AddEmptyGame).placeholder("Empty setup from a template…").width(300),
+                dropdown(Template::NEW, None::<Template>, Message::AddEmptyGame).placeholder("Empty setup from a template…").style(style::action_dropdown).width(300),
                 button(text("Import a file…")).style(style::secondary).on_press(Message::ImportFile),
             ]
             .spacing(8),
@@ -519,10 +519,14 @@ impl App {
             labeled(label, field(placeholder, value).on_input(move |v| Message::SetPackField(field_kind, v)).width(width).into())
         };
         // The description is a paragraph or two, so it gets a box that wraps rather than a line.
+        // It grows with the text up to ten whole lines (16 px text, 1.3 line height, 5 px
+        // padding), so no line is ever cut through the middle.
         let description = iced::widget::text_editor(&self.export_description)
             .placeholder("What the setup does and how it plays")
             .on_action(Message::EditPackDescription)
-            .height(Length::Fixed(110.0));
+            .height(Length::Shrink)
+            .min_height(5.0 * 20.8 + 10.0)
+            .max_height(10.0 * 20.8 + 10.0);
         col = col
             .push(input("Version", "1.0", &info.version, PackField::Version, 120.0))
             .push(input("Author", "Your name", &info.author, PackField::Author, 260.0))
@@ -579,11 +583,11 @@ impl App {
         let list = |label: &str, names: Vec<&String>| -> Option<Element<'a, Message>> {
             (!names.is_empty()).then(|| {
                 let names: Vec<&str> = names.iter().map(|n| n.as_str()).collect();
-                text(format!("{label}: {}", names.join(", "))).size(13).into()
+                text(format!("{label}: {}", names.join(", "))).size(14).into()
             })
         };
-        let rules: Vec<String> = g.rules.iter().map(|r| format!("{} {}", r.kind, r.value)).collect();
-        let mut col = column![text(format!("Delete {name}?")).size(22), text("This removes:")].spacing(8);
+        let rules: Vec<String> = g.rules.iter().map(|r| format!("{} “{}”", r.kind, r.value)).collect();
+        let mut col = column![text(format!("Delete {name}?")).size(22), text("This removes:").size(14)].spacing(8);
         col = col.extend(
             [
                 list("Profiles", g.profiles.iter().map(|p| &p.name).collect()),
@@ -626,7 +630,7 @@ impl App {
         );
         let mut col = column![
             text(format!("Copy a {} from another setup", kind.noun())).size(22),
-            dropdown(sources, from.cloned(), Message::BrowseFrom).placeholder("Pick a setup…").width(320),
+            dropdown(sources, from.cloned(), Message::BrowseFrom).placeholder("Pick a setup…").style(style::action_dropdown).width(320),
         ]
         .spacing(12);
         if let Some(items) = from.and_then(|s| self.browse_items(s)) {
@@ -745,7 +749,7 @@ fn pack_summary<'a>(p: &pack::Pack, pad_has: impl Fn(pack::Feature) -> Option<bo
         col = col.push(text(h.description.clone()).size(14));
     }
     col = col.push(text(contents_line(p)).size(13));
-    let ids: Vec<String> = p.rules.iter().map(|r| format!("{} {}", r.kind, r.value)).collect();
+    let ids: Vec<String> = p.rules.iter().map(|r| format!("{} “{}”", r.kind, r.value)).collect();
     if !ids.is_empty() {
         col = col.push(text(format!("Switches on for: {}", ids.join(", "))).size(13).color(MUTED_COLOR));
     }
@@ -824,7 +828,7 @@ fn step_summary(step: &MacroStep) -> String {
 /// A dialog over a dimmed backdrop. Clicking the backdrop doesn't close it, so a choice in
 /// progress isn't lost by a stray click.
 fn modal(body: Element<'_, Message>) -> Element<'_, Message> {
-    let dialog = container(scrollable(body)).padding(20).max_height(820.0).style(style::inset);
+    let dialog = container(scrollable(body)).padding(20).max_height(820.0).style(style::dialog);
     opaque(
         container(center(opaque(dialog)))
             .width(Length::Fill)

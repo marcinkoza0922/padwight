@@ -215,7 +215,7 @@ impl App {
         if self.config.games.is_empty() {
             col = col.push(text("No game setups yet. Use + Add setup to add one.").size(13).color(MUTED_COLOR));
         } else {
-            col = col.push(field("Search setups", &self.game_search).on_input(Message::SetGameSearch).size(14));
+            col = col.push(field("Search setups…", &self.game_search).on_input(Message::SetGameSearch).size(14));
         }
         let search = self.game_search.trim().to_lowercase();
         let mut games: Vec<&Game> = self.config.games.iter().filter(|g| g.name.to_lowercase().contains(&search)).collect();
@@ -226,7 +226,15 @@ impl App {
             let label = if g.name.is_empty() { "(unnamed)".to_string() } else { g.name.clone() };
             col = col.push(entry(label, Page::Game(key), note));
         }
-        col = col.push(button(text("+ Add setup").size(14)).width(Length::Fill).style(style::secondary).on_press(Message::OpenAddGame));
+        // A sidebar entry in the accent color rather than a filled button, which would look like
+        // the search field above it.
+        col = col.push(
+            button(text("+ Add setup").color(style_accent()))
+                .width(Length::Fill)
+                .padding([6, 10])
+                .style(style::nav(false))
+                .on_press(Message::OpenAddGame),
+        );
         container(scrollable(col.padding(12)).height(Length::Fill)).width(SIDEBAR_WIDTH).into()
     }
 
@@ -294,7 +302,7 @@ impl App {
         }
         section(
             "Overlay sounds",
-            Some("A faint sound as the cursor moves in an overlay, another when something is picked, and a softer one as it pops in and out. A setup's own sounds start as a copy of the ones on App settings. Any overlay can be turned off.".into()),
+            Some("A faint sound as the cursor moves in an overlay, another when something is picked, and a softer one as it pops in and out. A setup's own sounds start as a copy of the ones on App settings. Any overlay can be turned off. Info and log overlays have nothing to pick, so they make no sound.".into()),
             rows,
         )
     }
@@ -365,11 +373,11 @@ impl App {
             };
             let mut line = row![
                 checkbox(r.enabled).on_toggle(move |on| Message::SetRuleEnabled(i, on)),
-                text("When").size(14),
+                text("When"),
                 dropdown(RuleKind::ALL, Some(r.kind), move |k| Message::SetRuleKind(i, k)).width(150),
-                text("is").size(14),
+                text("is"),
                 field(placeholder, &r.value).on_input(move |v| Message::SetRuleValue(i, v)).width(200),
-                text("use").size(14),
+                text("use"),
                 dropdown(names.clone(), Some(r.profile.clone()), move |p| Message::SetRuleProfile(i, p)).width(160),
                 button(text("✕").size(13)).style(style::secondary).on_press(Message::RemoveRule(i)),
             ]
@@ -452,33 +460,39 @@ impl App {
         if !game.pack.description.is_empty() {
             pack_rows.push(text(game.pack.description.clone()).size(13).into());
         }
-        pack_rows.push(
-            row![
-                button(text("Export…")).on_press(Message::OpenExport),
-                space::horizontal(),
-                button(text("Delete setup")).style(button::danger).on_press(Message::AskDeleteGame),
-            ]
-            .spacing(8)
-            .into(),
-        );
+        pack_rows.push(button(text("Export…")).on_press(Message::OpenExport).into());
 
+        // The cards follow App settings' order, so a card is found in the same place on both.
         column![
             section(
                 "Setup",
-                None,
-                vec![labeled("Name", field("Setup name", &game.name).on_input(Message::RenameGame).width(260).into())],
+                Some("The setup's name, as the sidebar shows it. Deleting the setup removes its profiles, items and rules once you Save & apply.".into()),
+                vec![
+                    row![
+                        labeled("Name", field("Setup name", &game.name).on_input(Message::RenameGame).width(260).into()),
+                        space::horizontal(),
+                        button(text("Delete setup")).style(style::danger).on_press(Message::AskDeleteGame),
+                    ]
+                    .align_y(Alignment::Center)
+                    .into(),
+                ],
             ),
             section(
                 "Auto-switch rules",
                 Some("A rule switches to its profile when a matching window has focus, or a matching program is running. Untick a rule to turn it off.".into()),
                 vec![rules.into()],
             ),
-            self.view_game_overlays(),
             self.view_game_nintendo_layout(),
             self.view_game_controllers(),
-            self.view_game_sounds(),
+            self.view_game_font(),
             self.view_game_motion(),
-            section("Pack", None, pack_rows),
+            self.view_game_sounds(),
+            self.view_game_overlays(),
+            section(
+                "Pack",
+                Some("A pack is a setup saved as a .padpack file, to share or to keep. Export saves this setup as one.".into()),
+                pack_rows,
+            ),
         ]
         .spacing(16)
         .into()
@@ -489,7 +503,7 @@ impl App {
         let appearance_open = self.open_appearance.contains(&None);
         let mut rows: Vec<Element<'_, Message>> = vec![
             row![
-                button(text(if keyboard_open { "Close it" } else { "Open it now" }).size(14))
+                button(text(if keyboard_open { "Close it" } else { "Open it now" }).size(13))
                     .style(style::secondary)
                     .on_press(Message::ToggleOverlay),
                 disclosure("Appearance", appearance_open, Message::ToggleAppearance(None)),
@@ -565,7 +579,7 @@ impl App {
         let numpad_open = self.status.as_ref().is_some_and(|s| s.numpad_visible);
         let mut rows: Vec<Element<'_, Message>> = vec![
             row![
-                button(text(if numpad_open { "Close it" } else { "Open it now" }).size(14))
+                button(text(if numpad_open { "Close it" } else { "Open it now" }).size(13))
                     .style(style::secondary)
                     .on_press(Message::ToggleNumpad),
                 disclosure("Appearance", self.numpad_appearance, Message::ToggleNumpadAppearance),

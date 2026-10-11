@@ -11,6 +11,27 @@ fn slider_value(value: f32, step: f32, unit: &str) -> String {
     if unit.is_empty() || unit.starts_with(['°', '%']) { format!("{number}{unit}") } else { format!("{number} {unit}") }
 }
 
+/// A share of something (0..1) as a percentage, then what it's a share of: "25% of the way
+/// out", "12%".
+fn fraction_value(value: f32, unit: &str) -> String {
+    let percent = format!("{:.0}%", value * 100.0);
+    if unit.is_empty() { percent } else { format!("{percent} {unit}") }
+}
+
+/// A slider over a share (0..1), shown as a percentage: the way every share in the window reads.
+pub(super) fn fraction_editor<'a>(
+    range: std::ops::RangeInclusive<f32>,
+    value: f32,
+    step: f32,
+    unit: &'a str,
+    on_change: impl Fn(f32) -> Message + 'a,
+) -> Element<'a, Message> {
+    row![slider(range, value, on_change).step(step).width(300), text(fraction_value(value, unit)).size(13)]
+        .spacing(10)
+        .align_y(Alignment::Center)
+        .into()
+}
+
 #[expect(clippy::too_many_arguments, reason = "predates the size lints")]
 pub(super) fn value_slider<'a>(
     label: &'a str,
@@ -49,5 +70,11 @@ mod tests {
         assert_eq!(slider_value(0.5, 0.1, "°/s"), "0.50°/s");
         assert_eq!(slider_value(8.0, 1.0, ""), "8");
         assert_eq!(slider_value(50.0, 5.0, "%"), "50%");
+    }
+
+    #[test]
+    fn shares_read_as_percentages() {
+        assert_eq!(super::fraction_value(0.25, "of the way out"), "25% of the way out");
+        assert_eq!(super::fraction_value(0.12, ""), "12%");
     }
 }

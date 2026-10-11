@@ -89,14 +89,14 @@ right = "KEY_D"
 "button:West" = { text = "Reload · hold: change ammo" }
 "button:North" = { text = "Inventory" }
 "button:LeftBumper" = { text = "Hold: belt" }
-"gesture:button:LeftBumper:double_tap" = { text = "holster" }
+"gesture:button:LeftBumper:double_tap" = { text = "Holster" }
 "button:RightBumper" = { text = "Hold: augmentations" }
 "button:LeftStick" = { text = "Click: crouch (toggle)" }
 "button:RightStick" = { text = "Click: laser sight" }
 "button:DpadDown" = { text = "Drop / throw" }
 "button:Select" = { text = "Goals" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:double_tap" = { text = "quick save" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
 "gesture:button:Start:long_press" = { text = "Quick load" }
 
 [[profiles.guide.merged]]
@@ -226,14 +226,14 @@ right = "KEY_D"
 "button:West" = { text = "Reload · hold: change ammo" }
 "button:North" = { text = "Inventory" }
 "button:LeftBumper" = { text = "Hold: belt" }
-"gesture:button:LeftBumper:double_tap" = { text = "holster" }
+"gesture:button:LeftBumper:double_tap" = { text = "Holster" }
 "button:RightBumper" = { text = "Hold: augmentations" }
 "button:LeftStick" = { text = "Click: crouch (toggle)" }
 "button:RightStick" = { text = "Click: laser sight" }
 "button:DpadDown" = { text = "Drop / throw" }
 "button:Select" = { text = "Goals" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:double_tap" = { text = "quick save" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
 "gesture:button:Start:long_press" = { text = "Quick load" }
 
 [[profiles.guide.merged]]
@@ -367,14 +367,14 @@ right = "KEY_D"
 "button:West" = { text = "Reload · hold: change ammo" }
 "button:North" = { text = "Inventory" }
 "button:LeftBumper" = { text = "Hold: belt" }
-"gesture:button:LeftBumper:double_tap" = { text = "holster" }
+"gesture:button:LeftBumper:double_tap" = { text = "Holster" }
 "button:RightBumper" = { text = "Hold: augmentations" }
 "button:LeftStick" = { text = "Click: crouch (toggle)" }
 "button:RightStick" = { text = "Click: laser sight" }
 "button:DpadDown" = { text = "Drop / throw" }
 "button:Select" = { text = "Goals" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:double_tap" = { text = "quick save" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
 "gesture:button:Start:long_press" = { text = "Quick load" }
 
 [[profiles.guide.merged]]

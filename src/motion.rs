@@ -36,12 +36,12 @@ impl OverlayKind {
     pub fn label(self) -> &'static str {
         match self {
             OverlayKind::Keyboard => "On-screen keyboard",
-            OverlayKind::Numpad => "Numpad",
+            OverlayKind::Numpad => "On-screen numpad",
             OverlayKind::Menu => "Menus",
             OverlayKind::Media => "Media controls",
             OverlayKind::Offer => "Library offers",
             OverlayKind::Info => "Info overlays",
-            OverlayKind::Log => "Input logs",
+            OverlayKind::Log => "Log overlays",
         }
     }
 }

@@ -86,7 +86,7 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
     if !matches!(cfg.action, StickAction::Disabled) {
         rows = rows.push(box_row(
             "Deadzone",
-            row![slider_editor(0.0..=0.5, cfg.deadzone, 0.01, "", set(|c, v| c.deadzone = v)), help(deadzone_graph::explain(cfg.deadzone))]
+            row![fraction_editor(0.0..=0.5, cfg.deadzone, 0.01, "", set(|c, v| c.deadzone = v)), help(deadzone_graph::explain(cfg.deadzone))]
                 .spacing(10)
                 .align_y(Alignment::Center)
                 .into(),
@@ -109,7 +109,7 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
         rows = rows.push(rule::horizontal(1));
     }
     // The stick's direction buttons and zones work in every mode, so they come last, apart.
-    rows.push(box_row("Directions press at", slider_editor(0.05..=0.95, cfg.key_threshold, 0.05, "", set(|c, v| c.key_threshold = v))))
+    rows.push(box_row("Directions press at", fraction_editor(0.05..=0.95, cfg.key_threshold, 0.05, "of the way out", set(|c, v| c.key_threshold = v))))
         .push(box_row("Zones", zone_list(Analog::Stick(s), &cfg.zones, ui.names)))
         .into()
 }
@@ -163,7 +163,9 @@ fn visualizers<'a>(cfg: &StickConfig, live: Option<(f32, f32)>, probe: f32) -> O
     if let StickAction::Mouse { speed, response, .. } = cfg.action {
         pics.extend(response_graph::figures(response_graph::Shown { speed, curve: cfg.curve, response, deadzone: cfg.deadzone, probe, live }));
     }
-    Some(visualizer_panel(pics, None, None))
+    let why = "Push the stick to see it live: where it is on the ring, its path, and how much output each push gives. \
+               The live parts follow the active profile's saved settings.";
+    Some(visualizer_panel(pics, Some(why), None))
 }
 
 /// A button ring's settings: its sectors and where they start.
@@ -179,8 +181,8 @@ fn ring_settings<'a>(rows: Column<'a, Message>, cfg: &'a StickConfig, with: impl
     };
     rows.push(box_row("Sectors", dropdown([4_u8, 8, 12], Some(sectors), move |n| set(n, start_angle, inner_radius, hysteresis)).width(170).into()))
         .push(box_row("First sector at", slider_editor(0.0..=345.0, start_angle, 15.0, "° from up", move |v| set(sectors, v, inner_radius, hysteresis))))
-        .push(box_row("Starts at", slider_editor(0.05..=0.95, inner_radius, 0.05, "of the way out", move |v| set(sectors, start_angle, v, hysteresis))))
-        .push(box_row("Stickiness", slider_editor(0.0..=0.4, hysteresis, 0.05, "of a sector", move |v| set(sectors, start_angle, inner_radius, v))))
+        .push(box_row("Starts at", fraction_editor(0.05..=0.95, inner_radius, 0.05, "of the way out", move |v| set(sectors, start_angle, v, hysteresis))))
+        .push(box_row("Stickiness", fraction_editor(0.0..=0.4, hysteresis, 0.05, "of a sector", move |v| set(sectors, start_angle, inner_radius, v))))
 }
 
 /// A button ring's action for each sector, with presets that fill them all.
@@ -261,7 +263,7 @@ fn flick_rows<'a>(rows: Column<'a, Message>, cfg: &StickConfig, with: impl Fn(St
             .align_y(Alignment::Center)
             .into(),
         ))
-        .push(box_row("Flick at", slider_editor(0.5..=1.0, flick_threshold, 0.05, "of the way out", move |v| flick_with!(with, b.clone(), flick_threshold, v))))
+        .push(box_row("Flick at", fraction_editor(0.5..=1.0, flick_threshold, 0.05, "of the way out", move |v| flick_with!(with, b.clone(), flick_threshold, v))))
 }
 
 /// A flick stick's "Advanced flick" fold.

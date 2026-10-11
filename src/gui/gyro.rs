@@ -165,12 +165,12 @@ fn mode_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(&
             .push(box_row("Full tilt at", slider_editor(60.0..=720.0, full_rate, 10.0, "°/s turning", move |v| with(&|c| c.mode = GyroMode::Stick { stick, full_rate: v, anti_deadzone }))))
             .push(box_row(
                 "Anti-deadzone",
-                with_help(slider_editor(0.0..=0.4, anti_deadzone, 0.01, "of a full push", move |v| with(&|c| c.mode = GyroMode::Stick { stick, full_rate, anti_deadzone: v })), ANTI_DEADZONE),
+                with_help(fraction_editor(0.0..=0.4, anti_deadzone, 0.01, "of a full push", move |v| with(&|c| c.mode = GyroMode::Stick { stick, full_rate, anti_deadzone: v })), ANTI_DEADZONE),
             )),
         GyroMode::Position { stick, max_angle, anti_deadzone, lock_at_edge } => {
             let set = move |max_angle: f32, anti_deadzone: f32, lock_at_edge: bool| with(&|c| c.mode = GyroMode::Position { stick, max_angle, anti_deadzone, lock_at_edge });
             rows.push(box_row("Full push at", slider_editor(5.0..=90.0, max_angle, 1.0, "° turned", move |v| set(v, anti_deadzone, lock_at_edge))))
-                .push(box_row("Anti-deadzone", with_help(slider_editor(0.0..=0.4, anti_deadzone, 0.01, "of a full push", move |v| set(max_angle, v, lock_at_edge)), ANTI_DEADZONE)))
+                .push(box_row("Anti-deadzone", with_help(fraction_editor(0.0..=0.4, anti_deadzone, 0.01, "of a full push", move |v| set(max_angle, v, lock_at_edge)), ANTI_DEADZONE)))
                 .push(box_row(
                     "",
                     with_help(
@@ -316,11 +316,12 @@ pub(super) fn gyro_sections<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Mess
     // Without a gyro controller this is a status worth seeing, not just help.
     if !ui.any_gyro {
         rows.push(
-            text("None of your managed controllers have a gyro (PlayStation and Switch controllers do). These settings take effect once one is connected.")
-                .size(13)
-                .color(MUTED_COLOR)
-                .into(),
+            note("None of your managed controllers have a gyro (PlayStation and Switch controllers do). These settings take effect once one is connected.").into(),
         );
+    }
+    // What the profile can't be played without sits with the feature, as the back paddles' does.
+    if ui.layer.is_none() {
+        rows.extend(super::requirement_rows(p, Feature::Gyro));
     }
     let open = ui.expanded.contains(&Target::GyroAdvanced);
     rows.push(device_box(layer_part(ui, LayerPart::Gyro, "Gyro".into(), summary, || vec![gyro_editor(&p.gyro, flick_turn, open, Some(pictures(&p.gyro, ui)))])));

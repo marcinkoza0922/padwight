@@ -45,7 +45,7 @@ pub(super) fn view_new_info_card<'a>() -> Element<'a, Message> {
 pub(super) fn view_new_menu_card<'a>() -> Element<'a, Message> {
     let mut kinds = row![text("Add a menu:")].spacing(8).align_y(Alignment::Center);
     for kind in MenuKindTag::ALL {
-        kinds = kinds.push(button(text(kind.short()).size(14)).style(style::secondary).on_press(Message::NewMenu(kind)));
+        kinds = kinds.push(button(text(kind.short())).style(style::secondary).on_press(Message::NewMenu(kind)));
     }
     items_header(ItemKind::Menu, kinds.into(), "A menu lists actions to pick from on screen.", MENUS_HELP.into())
 }
@@ -1179,7 +1179,15 @@ impl App {
             ..names.clone()
         };
         let last = menu.items.len().saturating_sub(1);
-        let mut items = column![text("Items").size(16)].spacing(8);
+        let mut items = column![
+            row![
+                text("Items").size(16),
+                help("Each item has a label, then what picking it does. A radial menu's items also have a size: how wide an arc each takes, against an equal share. A button menu's items have the button that picks them.".into()),
+            ]
+            .spacing(8)
+            .align_y(Alignment::Center)
+        ]
+        .spacing(8);
         let mut boxes: Vec<Element<'a, Message>> = Vec::new();
         for (i, item) in menu.items.iter().enumerate() {
             let target = Target::MenuItem(mi, i);
@@ -1194,8 +1202,15 @@ impl App {
             .spacing(8)
             .align_y(Alignment::Start);
             if weighted {
+                // The arc's size, with its value beside it so the slider says what it is.
+                let size = row![
+                    slider(0.25..=4.0, item.weight, move |w| Message::SetMenuItemWeight(mi, i, w)).step(0.25_f32).width(90),
+                    text(format!("Size {:.2}×", item.weight)).size(13),
+                ]
+                .spacing(6)
+                .align_y(Alignment::Center);
                 line = line.push(tooltip(
-                    slider(0.25..=4.0, item.weight, move |w| Message::SetMenuItemWeight(mi, i, w)).step(0.25_f32).width(110),
+                    container(size).padding(iced::Padding::ZERO.top(6)),
                     container(text(format!("Arc size: {:.2}× an equal share", item.weight)).size(13)).padding(8).style(style::tooltip),
                     tooltip::Position::Top,
                 ));
