@@ -457,6 +457,23 @@ The overlays are `keyboard` (the on-screen keyboard), `numpad`, `menu` (every me
 
 `volume` is 0–1, `pitch` is 0.5–2 (an octave either way) and `length` is 0.5–2 (half as long, or twice as long). All three are relative to the kind's own sound. A longer cue is the same sound played slower, not a longer tail.
 
+Five effects change a cue after it's made, and all of them are off (0) unless set:
+
+| Key | Range | Does |
+|---|---|---|
+| `bass` | -12 to 12 | Turns the lows down or up, in dB. |
+| `treble` | -12 to 12 | Turns the highs down or up, in dB. |
+| `drive` | 0–1 | Pushes the cue into soft clipping: thicker and grittier, and it carries better on small speakers. |
+| `echo` | 0–1 | Echoes after the cue, louder and more of them as it grows. Each is a little darker than the last. |
+| `reverb` | 0–1 | A room the cue rings in, more of it and bigger as it grows. |
+
+Echo and reverb add a tail after the cue, up to about two seconds each at 1, so keep them low on a step that repeats as a direction is held.
+
+```toml
+[sounds.menu]
+pick = { kind = "chime", volume = 0.3, echo = 0.3, reverb = 0.2, bass = -3 }
+```
+
 ## Overlay motion
 
 `[motion]` sets how each kind of overlay moves: as it opens and closes, as the cursor moves and as something is picked. Each key is one of `off`, `subtle`, `playful`, `stagger`, `grim` or `brutal`, and every key is optional (a missing one is `subtle`).

@@ -355,19 +355,19 @@ enum Filter {
 
 /// A state-variable filter (the zero-delay form), which stays stable as its frequency moves.
 #[derive(Default)]
-struct Svf {
+pub(super) struct Svf {
     ic1: f32,
     ic2: f32,
 }
 
-struct SvfOut {
-    low: f32,
-    band: f32,
-    high: f32,
+pub(super) struct SvfOut {
+    pub(super) low: f32,
+    pub(super) band: f32,
+    pub(super) high: f32,
 }
 
 impl Svf {
-    fn run(&mut self, v0: f32, f: f32, q: f32) -> SvfOut {
+    pub(super) fn run(&mut self, v0: f32, f: f32, q: f32) -> SvfOut {
         let g = (PI * f.min(0.45 * RATE as f32) / RATE as f32).tan();
         let k = 1.0 / q;
         let a1 = 1.0 / (1.0 + g * (g + k));

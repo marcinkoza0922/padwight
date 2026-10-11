@@ -7,7 +7,7 @@ use anyhow::{Context, Result, bail};
 
 use crate::sound::{Feedback, SoundKind, SoundOverlay, SoundSet, SoundSpec, Sounds};
 
-pub const USAGE: &str = "  sound [what]... [volume=v] [pitch=p] [length=l]
+pub const USAGE: &str = "  sound [what]... [volume=v] [pitch=p] [length=l] [bass=db] [treble=db] [drive=d] [echo=e] [reverb=r]
                                  play every kind of cue in turn, or each kind or overlay named:
                                  an overlay's default cues play as a visit to it does (open, a
                                  few steps, a pick, close); the settings change the kinds only
@@ -44,7 +44,12 @@ pub fn run(args: &[&str]) -> Result<()> {
                     "volume" => spec.volume = value,
                     "pitch" => spec.pitch = value,
                     "length" => spec.length = value,
-                    _ => bail!("unknown setting {key} (volume, pitch or length)"),
+                    "bass" => spec.bass = value,
+                    "treble" => spec.treble = value,
+                    "drive" => spec.drive = value,
+                    "echo" => spec.echo = value,
+                    "reverb" => spec.reverb = value,
+                    _ => bail!("unknown setting {key} (volume, pitch, length, bass, treble, drive, echo or reverb)"),
                 }
             }
             None => whats.push(parse(arg)?),
