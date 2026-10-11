@@ -23,5 +23,7 @@ mod gui;
 mod latency;
 mod overlay;
 mod resources;
+mod sound;
 mod startup;
+mod styles;
 mod support;

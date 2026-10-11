@@ -58,7 +58,7 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | Path | Responsibility |
 |---|---|
 | `main.rs` | Command-line dispatch. |
-| `config.rs` (and `config/`) | The config types: buttons, actions, profiles, games, rules, layers, menus, overlays, gyro, and the load/save/migration code. `config/summary.rs` writes short descriptions for the UI and logs. `config/touchpad.rs`, `config/log.rs` hold the touchpad and log-overlay settings. |
+| `config.rs` (and `config/`) | The config types: buttons, actions, profiles, games, rules, layers, menus, overlays, gyro, and the load/save/migration code. `config/summary.rs` writes short descriptions for the UI and logs. `config/touchpad.rs`, `config/log.rs` hold the touchpad and log-overlay settings. `config/style.rs` is how an overlay looks (`OverlayStyle` and its decorations); `config/performance.rs` the App settings' Performance card. |
 | `ipc.rs` | The `Request` and `Response` enums and the socket client/server helpers. |
 | `daemon.rs` (and `daemon/`) | The service: device discovery and grabbing, the main loop, routing, and output dispatch. `daemon/logs.rs` records the input log; `daemon/touchpad.rs` runs touchpad readers. |
 | `monitor.rs` | The one-line live status shown when the daemon runs in a terminal. |
@@ -121,7 +121,7 @@ Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000
 
 | Path | Responsibility |
 |---|---|
-| `overlay.rs` (and `overlay/draw/`) | The overlay process: keyboard, numpad, menus, info and log panels. `OverlayController` owns the state inside the daemon. |
+| `overlay.rs` (and `overlay/draw/`) | The overlay process: keyboard, numpad, menus, info and log panels. `OverlayController` owns the state inside the daemon. `draw/look.rs` resolves a style's decorations into container styles; `draw/glyphs.rs` draws button glyphs and icons (or text, under the performance settings). |
 | `info.rs` | Info overlays: `{token}` expansion into button glyphs and live values, and the generated bindings sheet for layers. |
 | `font.rs` | Bundled fonts (`assets/fonts`) and installed families by name. |
 | `style.rs` | Shared widget styles for the GUI. |
@@ -149,7 +149,7 @@ Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000
 | `gui/games.rs` | Sidebar, a game's page and Details, Settings, controller list. |
 | `gui/packs.rs` | Library picker, import preview, export, delete, copy-from-another-game. |
 | `gui/checks.rs` | What "Save & apply" checks before writing: names, references, and rules. |
-| `gui/widgets.rs`, `gui/tracking.rs`, `gui/overlays.rs`, `gui/ring_preview.rs`, `gui/logs.rs` | Shared widgets and smaller tabs. |
+| `gui/widgets.rs`, `gui/style_editor.rs`, `gui/tracking.rs`, `gui/overlays.rs`, `gui/ring_preview.rs`, `gui/logs.rs` | Shared widgets and smaller tabs. |
 | `gui/tab_icons.rs` | The glyph before each editor tab; Profiles and Buttons take the controller in use's family colors. |
 | `pad_svg.rs`, `pad_svg/layout.rs`, `pad_svg/models.rs`, `pad_svg/parts.rs`, `pad_svg/labels.rs` | The live controller picture. `models.rs` holds each model's outline (mirrored, so both halves match), its shell color, and where its sticks, D-pad, buttons and marks sit, traced from the pictures in `references/controller images`; `layout.rs` defines what a model can have; `parts.rs` draws the shell, shoulders, sticks, D-pad and buttons; `labels.rs` places the mapping labels and their leader lines. |
 
@@ -181,6 +181,7 @@ Library packs are read at build time (`build.rs`) and checked by `cargo test` (`
 | `cargo clippy --all-targets` | Lints. The crate sets extra lints in `Cargo.toml` (`too_many_lines`, `cognitive_complexity`, and others). |
 | `cargo test` | All unit tests, including every library pack check (`library.rs`, `pack.rs`). |
 | `cargo nextest run` | The same tests under nextest. `.config/nextest.toml` has a quiet `agent` profile. |
+| `scripts/profile.sh` | The profiling suite (`tests/profile/`): input latency, CPU and memory, start-up. Two parts need the host instead of the container: `profile_overlay_styles` (a Wayland session with layer-shell; what overlay looks, motion and the two renderers cost) and `profile_sound` (an audio device; what an open output stream costs). Run them with `cargo test --release --test profile -- --ignored --test-threads=1 --nocapture <name>`. |
 | `cargo test -- --ignored rumble` | The end-to-end rumble check. It needs `/dev/uinput`, so it is opt-in. |
 | `python3 scripts/check-project.py` | Checks that the docs match the code: CLI commands, the pack format number, links and anchors, `flatpak/cargo-sources.json` against `Cargo.lock`, and bundled font licenses. CI runs it. |
 | `scripts/kernel-test-docker.sh` | Runs the kernel-level tests in a Docker container, so the account needs no `input` group membership: `nothing_stays` (uinput), `daemon_` (the daemon-exit tests, which also need `/dev/uhid`) `socket_fallback` (run as root, since it makes a second user). `hotplug_` covers unplug and replug with a simulated controller. The KWin unit test (`focus::kwin`) needs the desktop session bus, so it runs on the host, not in the container. |

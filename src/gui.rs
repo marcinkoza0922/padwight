@@ -60,6 +60,7 @@ mod ring_preview;
 mod settings;
 mod sliders;
 mod sticks;
+mod style_editor;
 mod tab_icons;
 mod tracking;
 mod triggers;
@@ -77,6 +78,7 @@ use profile::*;
 use settings::*;
 use sliders::*;
 use sticks::*;
+use style_editor::*;
 use tracking::*;
 use triggers::*;
 use widgets::*;
@@ -337,7 +339,8 @@ fn unique_name(base: &str, taken: impl Fn(&str) -> bool) -> String {
 enum Message {
     Poll,
     LiveInput(Option<InputSnapshot>),
-    LiveFeed(Option<Feeds>),
+    /// Boxed: a feed's log views are far larger than any other message.
+    LiveFeed(Option<Box<Feeds>>),
     StatusLoaded(Result<Status, String>),
     ConfigLoaded(Box<Config>, Option<String>),
     SetEnabled(bool),
@@ -473,6 +476,8 @@ enum Message {
     /// The font of all overlays (`None`: the system's), or the shown game's own.
     SetOverlayFont(Option<String>),
     SetColorblindTones(bool),
+    /// What every overlay goes without, from the App settings' performance card.
+    SetPerformance(crate::config::Performance),
     /// A kind of overlay's motion, in the global set.
     SetMotion(OverlayKind, MotionStyle),
     /// A kind of overlay's motion in the shown game's own set, which starts as the global one.
@@ -904,7 +909,7 @@ impl App {
                 self.live = snapshot;
                 self.settle_pad(Instant::now());
             }
-            Message::LiveFeed(feeds) => self.feeds = feeds,
+            Message::LiveFeed(feeds) => self.feeds = feeds.map(|f| *f),
             Message::StatusLoaded(Ok(status)) => {
                 // Mirror daemon-owned fields so both copies stay comparable.
                 let active = ProfileRef { game: status.active_game.clone(), profile: status.active_profile.clone() };
@@ -1204,7 +1209,7 @@ fn watch_input() -> impl iced::futures::Stream<Item = Message> {
 
 /// Streams the latest presses and what they did, like [`watch_input`].
 fn watch_feed() -> impl iced::futures::Stream<Item = Message> {
-    watch(Request::WatchFeed, Message::LiveFeed)
+    watch(Request::WatchFeed, |feeds: Option<Feeds>| Message::LiveFeed(feeds.map(Box::new)))
 }
 
 /// Streams the values a watch request sends, each wrapped by `wrap`; `None` when the daemon
