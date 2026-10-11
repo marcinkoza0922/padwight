@@ -32,7 +32,6 @@ use crate::{
     focus::{self, FocusEvent},
     input::{self, InputEvent, MotionFrame, MotionNormalizer, MotionSample, Normalizer},
     ipc::{self, DeviceInfo, Feeds, FocusBackend, InputSnapshot, Request, Response, Status, WindowInfo},
-    inputlog::Thresholds,
     keyboard::Layout,
     monitor::{self, InputView, OutputView, log},
     output::{OutEvent, VIRTUAL_PREFIX, VirtualKbm, VirtualPad},
@@ -217,10 +216,9 @@ impl Managed {
     /// is also recorded, and without a pad it goes no further.
     fn dispatch(&mut self, kbm: &mut VirtualKbm, out: Vec<OutEvent>) {
         let now = Instant::now();
+        // What the game is sent, gamepad and keyboard and mouse alike, for the Overview's feed.
         for ev in &out {
-            if let OutEvent::PadButton(b, pressed) = ev {
-                self.exports.event(InputEvent::Button(*b, *pressed), Thresholds::default(), now);
-            }
+            self.exports.output(ev, now);
         }
         if let Some(recorded) = &mut self.recorded {
             inject::record(recorded, &out);

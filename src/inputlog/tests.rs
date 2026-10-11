@@ -245,3 +245,25 @@ fn a_long_sequence_keeps_its_newest_inputs() {
     let s = InputLogSettings { tracking, ..InputLogSettings::default() };
     assert_eq!(log_view(log.entries(), &s, &OverlayStyle::log(), Glyphs { family: PadFamily::Xbox, nintendo_layout: false }, ms(t0, 300)).lines[0].cells.len(), 2);
 }
+
+#[test]
+fn keyboard_and_mouse_output_is_logged_with_key_and_mouse_glyphs() {
+    use crate::{config::MouseButton, output::OutEvent};
+    let mut log = InputLog::default();
+    let t0 = Instant::now();
+    let at = |ms| t0 + std::time::Duration::from_millis(ms);
+    assert!(log.output(&OutEvent::Key(evdev::KeyCode::KEY_W, true), t0));
+    log.output(&OutEvent::MouseButton(MouseButton::Left, true), at(10));
+    log.output(&OutEvent::Key(evdev::KeyCode::KEY_W, false), at(200));
+    log.output(&OutEvent::MouseButton(MouseButton::Left, false), at(210));
+    log.output(&OutEvent::Wheel { vertical: 120, horizontal: 0 }, at(300));
+    assert!(!log.output(&OutEvent::Wheel { vertical: 120, horizontal: 0 }, at(320)), "a turning wheel is one entry");
+    assert!(!log.output(&OutEvent::MouseMove(5, 5), at(330)));
+    assert_eq!(
+        inputs(&log),
+        [Input::Key("KEY_W".into()), Input::Mouse(MouseButton::Left), Input::Wheel(crate::config::WheelDirection::Up)]
+    );
+    assert!(log.entries().iter().all(|e| e.released.is_some()), "all let go");
+    let glyph = super::view::input_glyph(&Input::Key("KEY_W".into()), crate::info::PadFamily::Xbox, false);
+    assert_eq!(glyph, [crate::info::key_glyph("KEY_W")]);
+}
