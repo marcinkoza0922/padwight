@@ -29,7 +29,7 @@ An item can open another menu of the same kind. Radial menus can't open other me
 
 While a menu is open, the controller drives it. Anything the mappings were holding is released.
 
-Menus opened from the command line (`padwight menu <name>`) or from an analog zone can't be held. They stay open until an item is chosen or B is pressed (Select, for face-button menus).
+Menus opened from the command line (`padwight menu <name>`) or from an analog zone can't be held. They stay open until an item is chosen or the close button is pressed: B by default (Select, for face-button menus), another button chosen on the Menus tab, or none. Without a close button they also close after 30 seconds without input, and R3 can't pin a held one.
 
 ## Long menus and colours
 

@@ -346,16 +346,27 @@ pub struct Menu {
     /// Select for a face-button directional menu, where East is one of the slots.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cancel: Option<Button>,
+    /// The menu has no close (or back) button at all: it goes when its opener is let go (or
+    /// pressed again), or when an item is chosen.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub no_cancel: bool,
     #[serde(default)]
     pub style: OverlayStyle,
 }
 
 impl Menu {
-    pub fn cancel_button(&self) -> Button {
-        self.cancel.unwrap_or(match self.kind {
+    /// The button that closes the menu (or backs out of a submenu), if it has one.
+    pub fn cancel_button(&self) -> Option<Button> {
+        (!self.no_cancel).then(|| self.cancel.unwrap_or(self.default_cancel()))
+    }
+
+    /// The close button a menu of this kind has unless another is chosen: East, or Select for a
+    /// face-button directional menu, where East is one of the slots.
+    pub fn default_cancel(&self) -> Button {
+        match self.kind {
             MenuKind::Directional { cluster: Cluster::FaceButtons } => Button::Select,
             _ => Button::East,
-        })
+        }
     }
 }
 
@@ -3145,30 +3156,32 @@ key_threshold = 0.2
                 name: "Weapons".into(),
                     kind: MenuKind::Radial { stick: Stick::Right, boxes: false },
                 items: (1..=4).map(|n| item(&format!("Slot {n}"), ButtonAction::Keys(vec![format!("KEY_{n}")]))).collect(),
-                cancel: None,
+                cancel: None, no_cancel: false,
                 style: OverlayStyle::default(),
             },
             Menu {
                 name: "Pause".into(),
                     kind: MenuKind::Buttons,
                 items: vec![MenuItem { button: Some(Button::LeftBumper), ..item("Map", ButtonAction::Keys(vec!["KEY_M".into()])) }],
-                cancel: Some(Button::Start),
+                cancel: Some(Button::Start), no_cancel: false,
                 style: OverlayStyle { position: ScreenPosition::TopRight, scale: 1.5, ..OverlayStyle::default() },
             },
             Menu {
                 name: "Faces".into(),
                     kind: MenuKind::Directional { cluster: Cluster::FaceButtons },
                 items: vec![item("More", ButtonAction::OpenMenu("Pause".into()))],
-                cancel: None,
+                cancel: None, no_cancel: false,
                 style: OverlayStyle::default(),
             },
             ];
         config.general.profiles[0].set_button(Button::Select, ButtonAction::OpenMenu("Pause".into()));
         let back: Config = toml::from_str(&toml::to_string_pretty(&config).unwrap()).unwrap();
         assert_eq!(config, back);
-        assert_eq!(config.general.menus[0].cancel_button(), Button::East);
-        assert_eq!(config.general.menus[1].cancel_button(), Button::Start);
-        assert_eq!(config.general.menus[2].cancel_button(), Button::Select, "East is a slot in a face-button directional menu");
+        assert_eq!(config.general.menus[0].cancel_button(), Some(Button::East));
+        assert_eq!(config.general.menus[1].cancel_button(), Some(Button::Start));
+        assert_eq!(config.general.menus[2].cancel_button(), Some(Button::Select), "East is a slot in a face-button directional menu");
+        let none = Menu { no_cancel: true, ..config.general.menus[1].clone() };
+        assert_eq!(none.cancel_button(), None, "a chosen button doesn't count once there's none");
     }
 
     #[test]
@@ -3375,7 +3388,7 @@ key_threshold = 0.2
             name: "M".into(),
             kind: MenuKind::List,
             items: vec![MenuItem { label: "x".into(), action: ButtonAction::Macro { name: "Old".into(), repeat: false }, button: None, weight: 1.0 }],
-            cancel: None,
+            cancel: None, no_cancel: false,
             style: OverlayStyle::default(),
         });
         game.rename_refs(ItemKind::Macro, "Old", "New");

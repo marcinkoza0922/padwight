@@ -40,7 +40,7 @@ fn item(label: &str, action: ButtonAction) -> MenuItem {
 }
 
 fn menu(name: &str, kind: MenuKind, items: Vec<MenuItem>) -> Menu {
-    Menu { name: name.into(), kind, items, cancel: None, style: OverlayStyle::default() }
+    Menu { name: name.into(), kind, items, cancel: None, no_cancel: false, style: OverlayStyle::default() }
 }
 
 fn numbers(n: usize) -> Vec<MenuItem> {
@@ -454,4 +454,22 @@ fn a_menu_nothing_holds_up_closes_when_left_alone() {
     assert!(unwatched.next_deadline().is_some());
     let held = MenuSession::open(&menus, "L", held_by(Button::LeftBumper)).unwrap();
     assert!(!held.expired(now + IDLE_CLOSE * 10), "a held menu stays while it's held");
+}
+
+#[test]
+fn a_menu_can_have_another_close_button_or_none_and_then_no_pin() {
+    let start = Menu { cancel: Some(Button::Start), ..menu("S", MenuKind::List, numbers(2)) };
+    let none = Menu { no_cancel: true, ..menu("N", MenuKind::List, numbers(2)) };
+    let menus = [start, none];
+    let mut s = MenuSession::open(&menus, "S", held_by(Button::LeftBumper)).unwrap();
+    assert!(s.view(&menus).unwrap().hint.contains("{start} to close"));
+    assert_eq!(press(&mut s, &menus, Button::East), None, "B isn't the close button here");
+    assert_eq!(press(&mut s, &menus, Button::Start), Some(MenuOutcome::Close));
+
+    let mut s = MenuSession::open(&menus, "N", held_by(Button::LeftBumper)).unwrap();
+    let hint = s.view(&menus).unwrap().hint;
+    assert!(hint.ends_with("let go to close") && !hint.contains("pin"), "{hint}");
+    assert_eq!(press(&mut s, &menus, Button::East), None);
+    press(&mut s, &menus, Button::RightStick);
+    assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), Instant::now()), Some(MenuOutcome::Close), "R3 didn't pin it");
 }

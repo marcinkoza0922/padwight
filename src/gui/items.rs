@@ -27,6 +27,55 @@ impl fmt::Display for QuickChoice {
     }
 }
 
+/// A menu's close button in its picker: the kind's own, another, or none at all.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum CloseChoice {
+    Default(Button),
+    Button(Button),
+    None,
+}
+
+impl CloseChoice {
+    fn of(menu: &Menu) -> Self {
+        match (menu.no_cancel, menu.cancel) {
+            (true, _) => CloseChoice::None,
+            (false, Some(b)) => CloseChoice::Button(b),
+            (false, None) => CloseChoice::Default(menu.default_cancel()),
+        }
+    }
+}
+
+impl fmt::Display for CloseChoice {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CloseChoice::Default(b) => write!(f, "{} (the default)", crate::menu::button_badge(*b)),
+            CloseChoice::Button(b) => f.write_str(crate::menu::button_badge(*b)),
+            CloseChoice::None => f.write_str("None"),
+        }
+    }
+}
+
+/// The picker for the button that closes menu `mi` (and backs out of its submenus), or none.
+fn close_picker<'a>(mi: usize, menu: &Menu) -> Element<'a, Message> {
+    let default = menu.default_cancel();
+    let mut options = vec![CloseChoice::Default(default), CloseChoice::None];
+    // Not Guide, which closes any menu anyway.
+    options.extend(Button::ALL.into_iter().filter(|&b| b != Button::Guide && b != default).map(CloseChoice::Button));
+    row![
+        dropdown(options, Some(CloseChoice::of(menu)), move |c| Message::SetMenuCancel(mi, c)).width(160),
+        help(
+            "Backs out of a submenu, and closes the menu at the top. With none, the menu goes when its \
+             input is let go (or pressed again), or when an item is chosen, and R3 can't keep it open. A menu \
+             nothing holds up (opened from the command line or a zone) then closes only by choosing, or \
+             after 30 seconds."
+                .into(),
+        ),
+    ]
+    .spacing(8)
+    .align_y(Alignment::Center)
+    .into()
+}
+
 /// The info overlays tab's header: adds an info overlay.
 pub(super) fn view_new_info_card<'a>() -> Element<'a, Message> {
     items_header(
@@ -548,7 +597,7 @@ impl App {
             Message::NewMenu(kind) => {
                 let name = self.new_item_name(ItemKind::Menu, "Menu");
                 let kind = MenuKind::default_for(kind);
-                let mut menu = Menu { name, kind, items: Vec::new(), cancel: None, style: OverlayStyle::default() };
+                let mut menu = Menu { name, kind, items: Vec::new(), cancel: None, no_cancel: false, style: OverlayStyle::default() };
                 fit_items(&mut menu);
                 if menu.items.is_empty() {
                     menu.items.push(MenuItem { label: "Item 1".into(), action: ButtonAction::Keys(Vec::new()), button: None, weight: 1.0 });
@@ -618,6 +667,15 @@ impl App {
             Message::SetMenuItemLabel(i, item, label) => {
                 if let Some(it) = self.menus_mut().get_mut(i).and_then(|m| m.items.get_mut(item)) {
                     it.label = label;
+                }
+            }
+            Message::SetMenuCancel(i, choice) => {
+                if let Some(menu) = self.menus_mut().get_mut(i) {
+                    (menu.cancel, menu.no_cancel) = match choice {
+                        CloseChoice::Default(_) => (None, false),
+                        CloseChoice::Button(b) => (Some(b), false),
+                        CloseChoice::None => (None, true),
+                    };
                 }
             }
             Message::SetMenuItemButton(i, item, choice) => {
@@ -1151,6 +1209,7 @@ impl App {
         )];
 
         rows.push(labeled("Kind", menu_kind_row(mi, menu)));
+        rows.push(labeled("Close button", close_picker(mi, menu)));
 
         // Appearance, with a live preview.
         let appearance_open = self.open_appearance.contains(&Some(mi));
@@ -1272,6 +1331,19 @@ fn item_note<'a>(menu: &Menu, i: usize, reachable: &[&Menu], names: &Names, open
 mod tests {
     use super::*;
     use crate::gui::tests::*;
+
+    #[test]
+    fn a_menu_close_button_can_be_another_or_none() {
+        let mut app = app();
+        let _ = app.update(Message::NewMenu(MenuKindTag::List));
+        let _ = app.update(Message::SetMenuCancel(0, CloseChoice::Button(Button::Start)));
+        assert_eq!(app.menus()[0].cancel_button(), Some(Button::Start));
+        let _ = app.update(Message::SetMenuCancel(0, CloseChoice::None));
+        assert_eq!(app.menus()[0].cancel_button(), None);
+        assert_eq!(CloseChoice::of(&app.menus()[0]), CloseChoice::None);
+        let _ = app.update(Message::SetMenuCancel(0, CloseChoice::Default(Button::East)));
+        assert_eq!((app.menus()[0].cancel, app.menus()[0].no_cancel), (None, false));
+    }
 
     #[test]
     fn macro_editing_steps_and_renames_follow_mappings() {

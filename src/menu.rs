@@ -299,23 +299,7 @@ impl MenuSession {
         let menu = menus.get(frame.menu)?;
         let items = item_views(menu);
         let radial = matches!(menu.kind, MenuKind::Radial { .. });
-        // How the menu goes away (and, for a radial menu, chooses). The cancel button backs out
-        // of a submenu, and closes the menu at the top (a radial menu without choosing).
-        let cancel = crate::info::button_hint(menu.cancel_button());
-        let deep = self.stack.len() > 1;
-        let opener = self.opener_label();
-        // A quick-action menu closes as it picks, so there's nothing to pin it for.
-        let pin = if fires_at_once(menu) { "" } else { " · {r3} pin" };
-        let close = match (self.mode, radial) {
-            (Mode::Held, true) => format!("let go to choose · {cancel} cancel{pin}"),
-            (Mode::Held, false) if deep => format!("{cancel} back · let go to close{pin}"),
-            (Mode::Held, false) => format!("let go or {cancel} to close{pin}"),
-            (Mode::Toggled, true) => format!("{opener} again to choose · {cancel} cancel"),
-            (Mode::Toggled, false) if deep => format!("{cancel} back · {opener} again to close"),
-            (Mode::Toggled, false) => format!("{opener} again or {cancel} to close"),
-            (Mode::Unwatched, true) => format!("{{south}} choose · {cancel} close"),
-            (Mode::Unwatched, false) => format!("{cancel} {}", if deep { "back" } else { "close" }),
-        };
+        let close = self.close_hint(menu, radial);
         let hint = match menu.kind {
             MenuKind::Radial { stick: Stick::Left, .. } => format!("Aim {{ls}} · {close}"),
             MenuKind::Radial { stick: Stick::Right, .. } => format!("Aim {{rs}} · {close}"),
@@ -339,6 +323,40 @@ impl MenuSession {
             touch: false,
             aim: self.live_aim(menu),
         })
+    }
+
+    /// How the menu goes away (and, for a radial menu, chooses), for its hint. The close button,
+    /// when it has one, backs out of a submenu and closes the menu at the top (a radial menu
+    /// without choosing).
+    fn close_hint(&self, menu: &Menu, radial: bool) -> String {
+        let deep = self.stack.len() > 1;
+        let opener = self.opener_label();
+        let Some(cancel) = menu.cancel_button().map(crate::info::button_hint) else {
+            return match (self.mode, radial) {
+                (Mode::Held, true) => "let go to choose".into(),
+                (Mode::Held, false) => "let go to close".into(),
+                (Mode::Toggled, true) => format!("{opener} again to choose"),
+                (Mode::Toggled, false) => format!("{opener} again to close"),
+                (Mode::Unwatched, _) => "{south} choose".into(),
+            };
+        };
+        let pin = if self.can_pin(menu) { " · {r3} pin" } else { "" };
+        match (self.mode, radial) {
+            (Mode::Held, true) => format!("let go to choose · {cancel} cancel{pin}"),
+            (Mode::Held, false) if deep => format!("{cancel} back · let go to close{pin}"),
+            (Mode::Held, false) => format!("let go or {cancel} to close{pin}"),
+            (Mode::Toggled, true) => format!("{opener} again to choose · {cancel} cancel"),
+            (Mode::Toggled, false) if deep => format!("{cancel} back · {opener} again to close"),
+            (Mode::Toggled, false) => format!("{opener} again or {cancel} to close"),
+            (Mode::Unwatched, true) => format!("{{south}} choose · {cancel} close"),
+            (Mode::Unwatched, false) => format!("{cancel} {}", if deep { "back" } else { "close" }),
+        }
+    }
+
+    /// Whether R3 can pin the menu: a held one, not one that closes as it picks, and only with a
+    /// close button to put it away again.
+    fn can_pin(&self, menu: &Menu) -> bool {
+        self.mode == Mode::Held && !fires_at_once(menu) && menu.cancel_button().is_some() && !uses(menu, PIN, self.mode)
     }
 
     /// The item the cursor is on in the menu on top, if it has one.
@@ -410,7 +428,7 @@ impl MenuSession {
     fn button_pressed(&mut self, menus: &[Menu], menu: &Menu, b: Button, now: Instant) -> Option<MenuOutcome> {
         // R3 pins a held menu: it stays up once let go, as a toggled one does, until the opener
         // is pressed again or B closes it.
-        if b == PIN && self.mode == Mode::Held && !fires_at_once(menu) && !uses(menu, b, self.mode) {
+        if b == PIN && self.can_pin(menu) {
             self.mode = Mode::Toggled;
             self.armed = !self.opener_down;
             return None;
@@ -418,7 +436,7 @@ impl MenuSession {
         // The cancel button backs out of a submenu, or closes the menu at the top. A menu that
         // can't be let go of always needs it; one that can be lets the menu use it first (a
         // button menu's item, a face-button slot).
-        if b == menu.cancel_button() && (self.mode == Mode::Unwatched || !uses(menu, b, self.mode)) {
+        if Some(b) == menu.cancel_button() && (self.mode == Mode::Unwatched || !uses(menu, b, self.mode)) {
             return self.back();
         }
         match menu.kind {

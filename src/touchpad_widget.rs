@@ -243,8 +243,8 @@ mod tests {
     fn every_mode_draws_and_fingers_light_up_their_item() {
         let items = ["A", "B"].map(|l| MenuItem { label: l.into(), action: ButtonAction::Disabled, button: None, weight: 1.0 }).to_vec();
         let menus = [
-            Menu { name: "Grid".into(), kind: MenuKind::Grid { columns: 2 }, items: items.clone(), cancel: None, style: OverlayStyle::default() },
-            Menu { name: "Ring".into(), kind: MenuKind::Radial { stick: Stick::Right, boxes: false }, items, cancel: None, style: OverlayStyle::default() },
+            Menu { name: "Grid".into(), kind: MenuKind::Grid { columns: 2 }, items: items.clone(), cancel: None, no_cancel: false, style: OverlayStyle::default() },
+            Menu { name: "Ring".into(), kind: MenuKind::Radial { stick: Stick::Right, boxes: false }, items, cancel: None, no_cancel: false, style: OverlayStyle::default() },
         ];
         let modes = [
             TouchpadMotion::Off,

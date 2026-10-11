@@ -179,7 +179,7 @@ fn an_absolute_joystick_centers_on_the_middle_and_ignores_its_deadzone() {
 
 fn grid_menu() -> Menu {
     let items = ["A", "B", "C", "D"].map(|k| MenuItem { label: k.into(), action: key(&format!("KEY_{k}")), button: None, weight: 1.0 }).to_vec();
-    Menu { name: "Grid".into(), kind: MenuKind::Grid { columns: 2 }, items, cancel: None, style: OverlayStyle::default() }
+    Menu { name: "Grid".into(), kind: MenuKind::Grid { columns: 2 }, items, cancel: None, no_cancel: false, style: OverlayStyle::default() }
 }
 
 fn menu_pad(choose: TouchChoose) -> TouchpadConfig {

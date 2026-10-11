@@ -509,6 +509,8 @@ enum Message {
     MoveMenuItem(usize, usize, bool),
     SetMenuItemLabel(usize, usize, String),
     SetMenuItemButton(usize, usize, QuickChoice),
+    /// A menu's close button: its kind's own, another, or none.
+    SetMenuCancel(usize, items::CloseChoice),
     SetMenuItemWeight(usize, usize, f32),
     OpenKeyPicker(KeyField, Vec<String>, bool),
     PickerKey(&'static str),
@@ -1330,7 +1332,7 @@ mod tests {
     #[test]
     fn every_page_tab_and_dialog_builds() {
         let mut app = with_game();
-        app.config.general.menus.push(Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![], cancel: None, style: OverlayStyle::default() });
+        app.config.general.menus.push(Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![], cancel: None, no_cancel: false, style: OverlayStyle::default() });
         app.config.games[0].info.push(InfoOverlay { name: "Controls".into(), always: true, on_start: None, linger: None, title: None, current_input: Default::default(), style: OverlayStyle::info(), rows: vec![vec!["{south}".into()]] });
         app.config.games[0].macros.push(Macro { name: "Dodge".into(), steps: vec![MacroStep::Wait(5)] });
         app.config.games[0].layers.push(crate::config::Layer::new("Hotkeys"));

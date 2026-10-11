@@ -8,7 +8,11 @@ Use **Open menu…** as the action of any button, gesture, combo, trigger or sti
 
 ## Keeping one open
 
-Wrap **Open menu…** in **Toggle**. The menu then stays up until you press the input again. To keep a held menu up just this once, press the Right Stick (R3) while it's open: it stays when you let go, until you press its input again or B.
+Wrap **Open menu…** in **Toggle**. The menu then stays up until you press the input again. To keep a held menu up just this once, press the Right Stick (R3) while it's open: it stays when you let go, until you press its input again or its close button.
+
+## Close button
+
+B closes a menu, or backs out of a submenu (Select, on a face-button directional menu). Each menu can have another close button, or none, on the **Menus** tab. Without one, a menu goes when you let go of its input (or press it again), or when you choose an item, and R3 can't keep it open.
 
 ## Choosing
 

@@ -966,13 +966,13 @@ mod tests {
             name: "Wheel".into(),
             kind: MenuKind::List,
             items: ["Heal", "Taunt"].map(|n| MenuItem { label: n.into(), action: ButtonAction::Macro { name: n.into(), repeat: false }, button: None, weight: 1.0 }).into(),
-            cancel: None,
+            cancel: None, no_cancel: false,
             style: OverlayStyle::default(),
         });
         app.config.games.push(quake);
         // Doom has its own "Taunt", which the copy can use, but no "Heal".
         app.config.games[0].macros.push(Macro { name: "Taunt".into(), steps: vec![MacroStep::Wait(9)] });
-        app.config.games[0].menus.push(Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![], cancel: None, style: OverlayStyle::default() });
+        app.config.games[0].menus.push(Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![], cancel: None, no_cancel: false, style: OverlayStyle::default() });
         let _ = app.update(Message::SelectGameTab(GameTab::Menus));
         let _ = app.update(Message::OpenBrowse(ItemKind::Menu));
         let _ = app.update(Message::BrowseFrom(BrowseSource::Game(Some("Quake".into()))));
