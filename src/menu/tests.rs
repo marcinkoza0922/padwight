@@ -1,4 +1,7 @@
+use std::time::Duration;
+
 use super::*;
+use crate::nav::REPEAT_DELAY;
 use crate::config::{Cluster, GRID_MAX, MenuItem};
 
 #[test]

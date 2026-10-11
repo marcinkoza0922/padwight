@@ -2,7 +2,7 @@
 //! values of the active profile) comes first, and Edit Controls last. The daemon routes
 //! controller input here while it is open, and the overlay draws its [`MenuView`].
 
-use std::collections::HashSet;
+use std::{collections::HashSet, time::Instant};
 
 use crate::{
     layout_editor::{EditStep, LayoutEditor},
@@ -11,9 +11,6 @@ use crate::{
     menu::{ItemView, MenuView, Tone},
 };
 
-/// Stick deflection that moves the cursor or changes a value, and the point it lets go below.
-const STICK_STEP: f32 = 0.6;
-const STICK_RELEASE: f32 = 0.45;
 /// One Quick Settings step multiplies or divides a value by this.
 const STEP: f32 = 1.1;
 /// Stick speed in pixels per second, and gyro sensitivity in pixels per degree.
@@ -86,9 +83,10 @@ enum Step {
 pub struct SystemMenu {
     screen: Screen,
     cursor: usize,
-    /// Stick pushes already counted, so holding a stick moves one step, not a run of them.
-    latch_x: bool,
-    latch_y: bool,
+    /// Where the left stick is, read as a D-pad, and the direction repeating while held.
+    stick: (f32, f32),
+    stick_dir: crate::nav::StickDir,
+    repeat: crate::nav::Repeat,
     /// Opened from the Guide overlay: leaving the page goes back to it.
     from_guide: bool,
     /// The config as it was when the menu opened: what Discard goes back to, and what counts as
@@ -106,7 +104,16 @@ impl SystemMenu {
 
     /// A menu over a config that is currently saved as `saved`.
     pub fn new(saved: &Config) -> Self {
-        SystemMenu { screen: Screen::Main, cursor: 0, latch_x: false, latch_y: false, from_guide: false, saved: Box::new(saved.clone()), paddles: false }
+        SystemMenu {
+            screen: Screen::Main,
+            cursor: 0,
+            stick: (0.0, 0.0),
+            stick_dir: crate::nav::StickDir::default(),
+            repeat: crate::nav::Repeat::default(),
+            from_guide: false,
+            saved: Box::new(saved.clone()),
+            paddles: false,
+        }
     }
 
     /// This menu, for a controller with back paddles (or without). Call before [`Self::on_page`].
@@ -126,42 +133,57 @@ impl SystemMenu {
         self
     }
 
-    /// Handles one controller event. `None` when nothing needs the daemon.
-    pub fn handle(&mut self, ev: InputEvent, config: &mut Config) -> Option<Outcome> {
+    /// Handles one controller event. `None` when nothing needs the daemon. A direction held on
+    /// the D-pad or the left stick repeats through [`Self::tick`].
+    pub fn handle(&mut self, ev: InputEvent, now: Instant, config: &mut Config) -> Option<Outcome> {
         let step = match ev {
-            InputEvent::Button(b, true) => match b {
-                Button::DpadUp => Step::Up,
-                Button::DpadDown => Step::Down,
-                Button::DpadLeft => Step::Left,
-                Button::DpadRight => Step::Right,
-                Button::South => Step::Pick,
-                Button::East => Step::Back,
-                _ => return None,
-            },
-            InputEvent::Axis(Axis::LeftY, v) => Self::stick_step(&mut self.latch_y, v, Step::Down, Step::Up)?,
-            InputEvent::Axis(Axis::LeftX, v) => Self::stick_step(&mut self.latch_x, v, Step::Right, Step::Left)?,
+            InputEvent::Button(b, pressed) if crate::nav::dpad_dir(b).is_some() => {
+                let dir = crate::nav::dpad_dir(b)?;
+                if !pressed {
+                    self.repeat.release(dir);
+                    return None;
+                }
+                self.repeat.start(dir, now);
+                dir_step(dir)
+            }
+            InputEvent::Button(Button::South, true) => Step::Pick,
+            InputEvent::Button(Button::East, true) => Step::Back,
+            InputEvent::Axis(axis @ (Axis::LeftX | Axis::LeftY), v) => {
+                if axis == Axis::LeftX { self.stick.0 = v } else { self.stick.1 = v }
+                match self.stick_dir.update(self.stick)? {
+                    Some(dir) => {
+                        self.repeat.start(dir, now);
+                        dir_step(dir)
+                    }
+                    None => {
+                        self.repeat.stop();
+                        return None;
+                    }
+                }
+            }
             _ => return None,
         };
+        self.step(step, config)
+    }
+
+    /// Repeats a held direction once it's due.
+    pub fn tick(&mut self, now: Instant, config: &mut Config) -> Option<Outcome> {
+        let dir = self.repeat.due(now)?;
+        self.step(dir_step(dir), config)
+    }
+
+    /// When [`Self::tick`] next has a repeat to make.
+    pub fn next_deadline(&self) -> Option<Instant> {
+        self.repeat.deadline()
+    }
+
+    fn step(&mut self, step: Step, config: &mut Config) -> Option<Outcome> {
         match self.screen {
             Screen::Main => self.main_step(step, config),
             Screen::Confirm(..) => self.confirm_step(step),
             Screen::Quick => self.quick_step(step, config),
             Screen::Editor(_) => self.editor_step(step, config),
         }
-    }
-
-    /// The step a stick push makes, once per push. `positive` is the step for a push past the
-    /// stick's positive side.
-    fn stick_step(latch: &mut bool, v: f32, positive: Step, negative: Step) -> Option<Step> {
-        if v.abs() < STICK_RELEASE {
-            *latch = false;
-            return None;
-        }
-        if *latch || v.abs() < STICK_STEP {
-            return None;
-        }
-        *latch = true;
-        Some(if v > 0.0 { positive } else { negative })
     }
 
     fn main_step(&mut self, step: Step, config: &Config) -> Option<Outcome> {
@@ -361,6 +383,16 @@ pub fn chord(held: &HashSet<Button>, events: &[InputEvent]) -> bool {
     false
 }
 
+/// The step a direction makes.
+fn dir_step((x, y): crate::nav::Dir) -> Step {
+    match (x, y) {
+        (_, -1) => Step::Up,
+        (_, 1) => Step::Down,
+        (-1, _) => Step::Left,
+        _ => Step::Right,
+    }
+}
+
 /// The next index `step` moves to in a list of `len`, wrapping at both ends.
 fn wrap(cursor: usize, step: Step, len: usize) -> usize {
     if len == 0 {
@@ -527,6 +559,12 @@ mod tests {
         InputEvent::Button(b, true)
     }
 
+    impl SystemMenu {
+        fn handle_now(&mut self, ev: InputEvent, config: &mut Config) -> Option<Outcome> {
+            self.handle(ev, Instant::now(), config)
+        }
+    }
+
     /// A config whose active profile has a mouse-moving left stick.
     fn mouse_config() -> Config {
         let mut config = Config::default();
@@ -566,24 +604,24 @@ mod tests {
     fn b_on_a_page_opened_from_the_guide_goes_back_to_the_guide() {
         let mut config = mouse_config();
         let mut quick = SystemMenu::new(&config).on_page(Page::Quick);
-        assert_eq!(quick.handle(press(Button::East), &mut config), Some(Outcome::ReturnToGuide));
+        assert_eq!(quick.handle_now(press(Button::East), &mut config), Some(Outcome::ReturnToGuide));
         let mut editor = SystemMenu::new(&config).on_page(Page::EditControls);
-        assert_eq!(editor.handle(press(Button::East), &mut config), Some(Outcome::ReturnToGuide));
+        assert_eq!(editor.handle_now(press(Button::East), &mut config), Some(Outcome::ReturnToGuide));
     }
 
     #[test]
     fn main_menu_opens_quick_settings_first_and_edit_controls_last() {
         let mut config = mouse_config();
         let mut menu = SystemMenu::new(&config);
-        assert_eq!(menu.handle(press(Button::South), &mut config), None);
+        assert_eq!(menu.handle_now(press(Button::South), &mut config), None);
         assert_eq!(menu.screen, Screen::Quick);
-        assert_eq!(menu.handle(press(Button::East), &mut config), None);
+        assert_eq!(menu.handle_now(press(Button::East), &mut config), None);
         assert_eq!(menu.screen, Screen::Main);
-        assert_eq!(menu.handle(press(Button::DpadDown), &mut config), None);
-        assert_eq!(menu.handle(press(Button::South), &mut config), Some(Outcome::EditControls));
+        assert_eq!(menu.handle_now(press(Button::DpadDown), &mut config), None);
+        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::EditControls));
         // B leaves the editor for the main page, and B again closes the menu.
-        assert_eq!(menu.handle(press(Button::East), &mut config), None);
-        assert_eq!(menu.handle(press(Button::East), &mut config), Some(Outcome::Close));
+        assert_eq!(menu.handle_now(press(Button::East), &mut config), None);
+        assert_eq!(menu.handle_now(press(Button::East), &mut config), Some(Outcome::Close));
     }
 
     #[test]
@@ -617,21 +655,21 @@ mod tests {
         let saved = config.clone();
         let mut menu = SystemMenu::new(&saved);
         // Change the stick speed: now the config differs from what was saved.
-        menu.handle(press(Button::South), &mut config);
-        menu.handle(press(Button::DpadRight), &mut config);
-        menu.handle(press(Button::East), &mut config);
+        menu.handle_now(press(Button::South), &mut config);
+        menu.handle_now(press(Button::DpadRight), &mut config);
+        menu.handle_now(press(Button::East), &mut config);
         assert_eq!(menu.screen, Screen::Main);
-        assert_eq!(menu.handle(press(Button::East), &mut config), None);
+        assert_eq!(menu.handle_now(press(Button::East), &mut config), None);
         assert!(matches!(menu.screen, Screen::Confirm(..)));
         // Keep editing goes back to the main page.
-        menu.handle(press(Button::DpadDown), &mut config);
-        menu.handle(press(Button::DpadDown), &mut config);
-        assert_eq!(menu.handle(press(Button::South), &mut config), None);
+        menu.handle_now(press(Button::DpadDown), &mut config);
+        menu.handle_now(press(Button::DpadDown), &mut config);
+        assert_eq!(menu.handle_now(press(Button::South), &mut config), None);
         assert_eq!(menu.screen, Screen::Main);
         // Closing again asks again; discard hands back what was saved.
-        menu.handle(press(Button::East), &mut config);
-        menu.handle(press(Button::DpadDown), &mut config);
-        assert_eq!(menu.handle(press(Button::South), &mut config), Some(Outcome::Discard(Box::new(saved.clone()))));
+        menu.handle_now(press(Button::East), &mut config);
+        menu.handle_now(press(Button::DpadDown), &mut config);
+        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Discard(Box::new(saved.clone()))));
     }
 
     #[test]
@@ -640,12 +678,12 @@ mod tests {
         let saved = config.clone();
         let mut menu = SystemMenu::new(&saved).on_page(Page::Quick);
         assert_eq!(menu.view(&config).crumbs, ["Guide"], "opened from the Guide overlay");
-        menu.handle(press(Button::DpadDown), &mut config);
-        menu.handle(press(Button::South), &mut config);
-        assert_eq!(menu.handle(press(Button::East), &mut config), None, "unsaved, so it asks");
+        menu.handle_now(press(Button::DpadDown), &mut config);
+        menu.handle_now(press(Button::South), &mut config);
+        assert_eq!(menu.handle_now(press(Button::East), &mut config), None, "unsaved, so it asks");
         assert!(matches!(menu.screen, Screen::Confirm(..)));
         assert_eq!(menu.view(&config).crumbs, ["Guide"]);
-        menu.handle(press(Button::East), &mut config);
+        menu.handle_now(press(Button::East), &mut config);
         assert_eq!(menu.screen, Screen::Quick, "B keeps editing on Quick Settings");
         assert_eq!(menu.cursor, 1, "on the row it was on");
     }
@@ -660,7 +698,7 @@ mod tests {
         config.general.profiles.push(other);
         let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
         menu.cursor = quick_rows(&config).len() - 1;
-        let Some(Outcome::Switch(target)) = menu.handle(press(Button::South), &mut config) else { panic!("no switch") };
+        let Some(Outcome::Switch(target)) = menu.handle_now(press(Button::South), &mut config) else { panic!("no switch") };
         config.active = target;
         menu.profile_switched(&config);
         assert_eq!(quick_rows(&config)[menu.cursor], Row::Profile, "fewer rows now, still on Profile");
@@ -670,25 +708,39 @@ mod tests {
     fn stick_speed_steps_up_and_down() {
         let mut config = mouse_config();
         let mut menu = SystemMenu::new(&config);
-        menu.handle(press(Button::South), &mut config);
-        assert_eq!(menu.handle(press(Button::DpadRight), &mut config), Some(Outcome::Changed));
+        menu.handle_now(press(Button::South), &mut config);
+        assert_eq!(menu.handle_now(press(Button::DpadRight), &mut config), Some(Outcome::Changed));
         assert!((speed(&config) - 1100.0).abs() < 0.01);
-        assert_eq!(menu.handle(press(Button::DpadLeft), &mut config), Some(Outcome::Changed));
+        assert_eq!(menu.handle_now(press(Button::DpadLeft), &mut config), Some(Outcome::Changed));
         assert!((speed(&config) - 1000.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn holding_right_keeps_raising_the_speed() {
+        let mut config = mouse_config();
+        let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
+        let t0 = Instant::now();
+        assert_eq!(menu.handle(press(Button::DpadRight), t0, &mut config), Some(Outcome::Changed));
+        assert_eq!(menu.tick(t0, &mut config), None, "not before the delay");
+        let delay = crate::nav::REPEAT_DELAY;
+        assert_eq!(menu.tick(t0 + delay, &mut config), Some(Outcome::Changed));
+        assert!((speed(&config) - 1210.0).abs() < 0.1, "{}", speed(&config));
+        menu.handle(InputEvent::Button(Button::DpadRight, false), t0 + delay, &mut config);
+        assert_eq!(menu.next_deadline(), None);
     }
 
     #[test]
     fn invert_y_flips_every_flag_at_once() {
         let mut config = mouse_config();
         let mut menu = SystemMenu::new(&config);
-        menu.handle(press(Button::South), &mut config);
-        menu.handle(press(Button::DpadDown), &mut config);
-        assert_eq!(menu.handle(press(Button::South), &mut config), Some(Outcome::Changed));
+        menu.handle_now(press(Button::South), &mut config);
+        menu.handle_now(press(Button::DpadDown), &mut config);
+        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Changed));
         let profile = config.active().unwrap();
         assert!(inverted_y(profile));
         assert!(matches!(profile.left_stick.action, StickAction::Mouse { invert_y: true, .. }));
         assert!(profile.gyro.invert_y);
-        menu.handle(press(Button::South), &mut config);
+        menu.handle_now(press(Button::South), &mut config);
         assert!(!inverted_y(config.active().unwrap()));
     }
 
@@ -696,12 +748,12 @@ mod tests {
     fn stick_push_steps_once_until_let_go() {
         let mut config = mouse_config();
         let mut menu = SystemMenu::new(&config);
-        menu.handle(InputEvent::Axis(Axis::LeftY, 0.9), &mut config);
+        menu.handle_now(InputEvent::Axis(Axis::LeftY, 0.9), &mut config);
         assert_eq!(menu.cursor, 1);
-        menu.handle(InputEvent::Axis(Axis::LeftY, 1.0), &mut config);
+        menu.handle_now(InputEvent::Axis(Axis::LeftY, 1.0), &mut config);
         assert_eq!(menu.cursor, 1);
-        menu.handle(InputEvent::Axis(Axis::LeftY, 0.0), &mut config);
-        menu.handle(InputEvent::Axis(Axis::LeftY, -0.9), &mut config);
+        menu.handle_now(InputEvent::Axis(Axis::LeftY, 0.0), &mut config);
+        menu.handle_now(InputEvent::Axis(Axis::LeftY, -0.9), &mut config);
         assert_eq!(menu.cursor, 0);
     }
 }

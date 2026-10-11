@@ -91,6 +91,9 @@ pub struct OfferSession {
     stage: Stage,
     selected: usize,
     last_input: Instant,
+    /// The left stick, read as a D-pad, and the direction repeating while held.
+    stick_dir: crate::nav::StickDir,
+    repeat: crate::nav::Repeat,
 }
 
 impl OfferSession {
@@ -120,7 +123,14 @@ impl OfferSession {
                 }
             })
             .collect();
-        OfferSession { packs, stage: Stage::Ask, selected: 0, last_input: now }
+        OfferSession {
+            packs,
+            stage: Stage::Ask,
+            selected: 0,
+            last_input: now,
+            stick_dir: crate::nav::StickDir::default(),
+            repeat: crate::nav::Repeat::default(),
+        }
     }
 
     /// The IDs of the packs on offer.
@@ -164,8 +174,34 @@ impl OfferSession {
     }
 
     pub fn handle(&mut self, ev: InputEvent, now: Instant) -> Option<OfferOutcome> {
-        let InputEvent::Button(b, true) = ev else { return None };
         self.last_input = now;
+        // Up and down move through a list, from the D-pad or the left stick, repeating while held.
+        let dir = match ev {
+            InputEvent::Button(b, pressed) if crate::nav::dpad_dir(b).is_some() => {
+                let dir = crate::nav::dpad_dir(b)?;
+                if !pressed {
+                    self.repeat.release(dir);
+                    return None;
+                }
+                Some(dir)
+            }
+            InputEvent::Axis(crate::input::Axis::LeftY, v) => match self.stick_dir.update((0.0, v))? {
+                Some(dir) => Some(dir),
+                None => {
+                    self.repeat.stop();
+                    return None;
+                }
+            },
+            _ => None,
+        };
+        if let Some(dir) = dir {
+            if self.stage != Stage::Ask && dir.1 != 0 {
+                self.repeat.start(dir, now);
+                self.move_cursor(dir.1);
+            }
+            return None;
+        }
+        let InputEvent::Button(b, true) = ev else { return None };
         if self.stage != Stage::Ask {
             return self.handle_pick(b);
         }
@@ -195,14 +231,24 @@ impl OfferSession {
         Some(OfferOutcome::Add(i, only))
     }
 
-    fn handle_pick(&mut self, b: Button) -> Option<OfferOutcome> {
+    /// Moves the highlight `dy` rows through the list on show, wrapping.
+    fn move_cursor(&mut self, dy: i32) {
         let len = match self.stage {
             Stage::Profile(i) => self.packs[i].profiles.len(),
             _ => self.packs.len(),
         };
+        self.selected = (self.selected as i32 + dy).rem_euclid(len.max(1) as i32) as usize;
+    }
+
+    /// Repeats a held direction once it's due. Returns whether the highlight moved.
+    pub fn tick(&mut self, now: Instant) -> bool {
+        let Some(dir) = self.repeat.due(now) else { return false };
+        self.move_cursor(dir.1);
+        true
+    }
+
+    fn handle_pick(&mut self, b: Button) -> Option<OfferOutcome> {
         match (b, self.stage) {
-            (Button::DpadUp, _) => self.selected = self.selected.checked_sub(1).unwrap_or(len - 1),
-            (Button::DpadDown, _) => self.selected = (self.selected + 1) % len,
             (Button::South, Stage::Profile(i)) => return Some(OfferOutcome::Add(i, Some(self.packs[i].profiles[self.selected].0))),
             (Button::South, _) => return self.chosen_pack(self.selected),
             (Button::East, Stage::Profile(_)) if self.packs.len() > 1 => {
@@ -220,7 +266,8 @@ impl OfferSession {
     }
 
     pub fn next_deadline(&self) -> Option<Instant> {
-        Some(self.last_input + IDLE_CLOSE)
+        let idle = self.last_input + IDLE_CLOSE;
+        Some(self.repeat.deadline().map_or(idle, |r| r.min(idle)))
     }
 }
 
@@ -321,6 +368,20 @@ mod tests {
         assert!(candidates(&Config::default(), &[gyro_only.clone()], &window("doom.exe"), Some(&[])).is_empty());
         assert_eq!(candidates(&Config::default(), &[gyro_only.clone()], &window("doom.exe"), Some(&[Feature::Gyro])), [0]);
         assert_eq!(candidates(&Config::default(), &[gyro_only], &window("doom.exe"), None), [0]);
+    }
+
+    #[test]
+    fn the_stick_moves_through_the_list_and_holding_repeats() {
+        let library = vec![entry("A", "a.exe"), entry("B", "a.exe"), entry("C", "a.exe")];
+        let t0 = Instant::now();
+        let mut s = OfferSession::new(&library, &[0, 1, 2], None, t0);
+        press(&mut s, Button::South);
+        s.handle(InputEvent::Axis(crate::input::Axis::LeftY, 0.9), t0);
+        assert_eq!(s.view().selected, 1);
+        assert!(s.tick(t0 + crate::nav::REPEAT_DELAY));
+        assert_eq!(s.view().selected, 2);
+        s.handle(InputEvent::Axis(crate::input::Axis::LeftY, 0.0), t0);
+        assert!(!s.tick(t0 + crate::nav::REPEAT_DELAY * 4));
     }
 
     #[test]

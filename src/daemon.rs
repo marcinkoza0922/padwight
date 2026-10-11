@@ -732,7 +732,8 @@ impl Daemon {
             Some(Active::Menu { session, .. }) => session.next_deadline(),
             Some(Active::Media(m)) => m.next_deadline(),
             Some(Active::Offer(o)) => o.next_deadline(),
-            Some(Active::Settings(..)) | None => None,
+            Some(Active::Settings(m, _)) => m.next_deadline(),
+            None => None,
         };
         self.devices
             .values()
@@ -774,6 +775,18 @@ impl Daemon {
                 }
             }
             Some(Active::Offer(o)) if o.expired(now) => return self.answer_offer(OfferOutcome::No),
+            Some(Active::Offer(o)) if o.next_deadline().is_some_and(|d| d <= now) => {
+                if o.tick(now) {
+                    repeated_step = Some(sound::SoundOverlay::Offer);
+                    changed = true;
+                }
+            }
+            Some(Active::Settings(m, _)) if m.next_deadline().is_some_and(|d| d <= now) => {
+                if !self.settings_step(|menu, config| menu.tick(now, config)) {
+                    self.broadcast_overlay();
+                }
+                return;
+            }
             _ => {}
         }
         if let Some(overlay) = repeated_step {
@@ -2015,6 +2028,13 @@ impl Daemon {
 
     /// Runs one event on the Guide + Start menu. `true` when the menu closed.
     fn settings_input(&mut self, ev: InputEvent) -> bool {
+        let now = Instant::now();
+        self.settings_step(|menu, config| menu.handle(ev, now, config))
+    }
+
+    /// Runs one step of the Guide + Start menu (an event, or a held direction's repeat) and does
+    /// what it asks. `true` when the menu closed.
+    fn settings_step(&mut self, step: impl FnOnce(&mut SystemMenu, &mut Config) -> Option<SystemOutcome>) -> bool {
         // Outside any game, General is what a change would land in: keep a copy so the change
         // can move into a new pack instead.
         let general = self.config.active_ref().game.is_none().then(|| self.config.general.clone());
@@ -2025,7 +2045,7 @@ impl Daemon {
         let (outcome, moved) = match &mut self.active {
             Some(Active::Settings(menu, _)) => {
                 let before = menu.cursor();
-                let outcome = menu.handle(ev, &mut self.config);
+                let outcome = step(menu, &mut self.config);
                 (outcome, menu.cursor() != before)
             }
             _ => (None, false),

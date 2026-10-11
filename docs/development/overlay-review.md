@@ -111,7 +111,7 @@ Tick an item when it's done and merged.
   `button_glyph` already exist: build hints from segments (glyph + word) so they match the pad.
   Quick-select badges (`ItemView.button`, light-grey text chips) should be glyphs too, like
   `ItemView.buttons`.
-- [ ] 19. **Five repeat timings and four copies of stick-as-D-pad.** Keyboard 350/90 ms, action
+- [x] 19. **Five repeat timings and four copies of stick-as-D-pad.** Keyboard 350/90 ms, action
   menus 350/110, media 400/120, Guide menu 400/125. The in-game menu and the offer don't repeat
   at all, so changing a stick speed from 1000 to 3000 takes about twelve separate presses. Stick
   hysteresis (0.6/0.45) is written out again in `overlay.rs`, `menu.rs`, `system_menu.rs` and the

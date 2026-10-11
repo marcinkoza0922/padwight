@@ -37,8 +37,8 @@ const WHEEL_REPEAT_DELAY: f32 = 0.35;
 /// ...at this many notches per second.
 const WHEEL_REPEAT_RATE: f32 = 10.0;
 /// Holding a Guide menu direction repeats it: after this delay, then at this interval.
-const GUIDE_REPEAT_DELAY: Duration = Duration::from_millis(400);
-const GUIDE_REPEAT_RATE: Duration = Duration::from_millis(125);
+const GUIDE_REPEAT_DELAY: Duration = crate::nav::REPEAT_DELAY;
+const GUIDE_REPEAT_RATE: Duration = crate::nav::REPEAT_EVERY;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Source {

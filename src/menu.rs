@@ -3,7 +3,7 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    time::{Duration, Instant},
+    time::Instant,
 };
 
 use serde::{Deserialize, Serialize};
@@ -14,15 +14,12 @@ use crate::{
     input::{Axis, InputEvent},
 };
 
-/// Stick deflection that aims a radial menu or steps a list.
-const STICK_PRESS: f32 = 0.6;
-const STICK_RELEASE: f32 = 0.45;
+/// Stick deflection that aims a radial menu.
+const STICK_PRESS: f32 = crate::nav::STICK_PRESS;
 /// A trigger opener counts as let go below this.
 const TRIGGER_RELEASE: f32 = 0.3;
 /// Trigger pull that steps a trigger-driven carousel.
 const TRIGGER_PRESS: f32 = 0.6;
-const REPEAT_DELAY: Duration = Duration::from_millis(350);
-const REPEAT_EVERY: Duration = Duration::from_millis(110);
 
 /// What the overlay draws for an open menu.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -121,10 +118,10 @@ pub struct MenuSession {
     armed: bool,
     axes: HashMap<Axis, f32>,
     held: HashSet<Button>,
-    /// Direction (x, y) stepping through a list, grid or carousel, and when it repeats.
-    stepping: Option<(Step, Instant)>,
+    /// The direction stepping through a list, grid or carousel, repeating while held.
+    stepping: crate::nav::Repeat,
     /// Which step direction the stick currently holds.
-    stick_step: Option<Step>,
+    stick_step: crate::nav::StickDir,
     /// Which carousel trigger is currently pulled past the step point.
     trigger_step: Option<Trigger>,
     /// How many items have been chosen so far, shown to the overlay so it can animate the pick.
@@ -190,8 +187,8 @@ impl MenuSession {
             armed: false,
             axes: HashMap::new(),
             held: HashSet::new(),
-            stepping: None,
-            stick_step: None,
+            stepping: crate::nav::Repeat::default(),
+            stick_step: crate::nav::StickDir::default(),
             trigger_step: None,
             picks: 0,
         };
@@ -269,7 +266,7 @@ impl MenuSession {
             MenuKind::List | MenuKind::Carousel { .. } | MenuKind::Grid { .. } => Some(0),
         };
         self.stack.push(Frame { menu, cursor });
-        self.stepping = None;
+        self.stepping.stop();
     }
 
     fn top<'m>(&self, menus: &'m [Menu]) -> Option<&'m Menu> {
@@ -339,8 +336,8 @@ impl MenuSession {
             InputEvent::Button(b, true) => fresh_press = self.held.insert(b),
             InputEvent::Button(b, false) => {
                 self.held.remove(&b);
-                if self.stepping.is_some() && matches!(b, Button::DpadUp | Button::DpadDown | Button::DpadLeft | Button::DpadRight) {
-                    self.stepping = None;
+                if let Some(dir) = crate::nav::dpad_dir(b) {
+                    self.stepping.release(dir);
                 }
             }
             InputEvent::Axis(axis, value) => {
@@ -466,7 +463,7 @@ impl MenuSession {
                             self.start_stepping(menu, (if t == Trigger::Left { -1 } else { 1 }, 0), now);
                         } else if value < TRIGGER_RELEASE && self.trigger_step == Some(t) {
                             self.trigger_step = None;
-                            self.stepping = None;
+                            self.stepping.stop();
                         }
                     }
                     _ => {}
@@ -479,22 +476,11 @@ impl MenuSession {
 
     /// A stick used like a D-pad: up/down for lists, left/right for carousels, all four for
     /// grids (whichever way it leans most).
-    fn stick_step(&mut self, menu: &Menu, (x, y): (f32, f32), now: Instant) {
-        let threshold = if self.stick_step.is_some() { STICK_RELEASE } else { STICK_PRESS };
-        let dir = if x.abs().max(y.abs()) < threshold {
-            None
-        } else if x.abs() > y.abs() {
-            Some((x.signum() as i32, 0))
-        } else {
-            Some((0, y.signum() as i32))
-        };
-        if dir == self.stick_step {
-            return;
-        }
-        self.stick_step = dir;
-        match dir {
-            Some(d) => self.start_stepping(menu, d, now),
-            None => self.stepping = None,
+    fn stick_step(&mut self, menu: &Menu, pos: (f32, f32), now: Instant) {
+        match self.stick_step.update(pos) {
+            Some(Some(d)) => self.start_stepping(menu, d, now),
+            Some(None) => self.stepping.stop(),
+            None => {}
         }
     }
 
@@ -520,7 +506,7 @@ impl MenuSession {
 
     fn start_stepping(&mut self, menu: &Menu, dir: Step, now: Instant) {
         self.step(menu, dir);
-        self.stepping = Some((dir, now + REPEAT_DELAY));
+        self.stepping.start(dir, now);
     }
 
     fn step(&mut self, menu: &Menu, (dx, dy): Step) {
@@ -567,26 +553,20 @@ impl MenuSession {
     /// Cancel: back out of a submenu, or close.
     fn back(&mut self) -> Option<MenuOutcome> {
         self.stack.pop();
-        self.stepping = None;
+        self.stepping.stop();
         if self.stack.is_empty() { Some(MenuOutcome::Close) } else { None }
     }
 
     /// List/carousel repeat while a direction is held. Returns whether the view changed.
     pub fn tick(&mut self, menus: &[Menu], now: Instant) -> bool {
-        let Some((dir, mut next)) = self.stepping else { return false };
         let Some(menu) = self.top(menus).cloned() else { return false };
-        if now < next {
-            return false;
-        }
-        // One step per tick, so a late tick doesn't jump several rows at once.
+        let Some(dir) = self.stepping.due(now) else { return false };
         self.step(&menu, dir);
-        next = now + REPEAT_EVERY;
-        self.stepping = Some((dir, next));
         true
     }
 
     pub fn next_deadline(&self) -> Option<Instant> {
-        self.stepping.map(|(_, t)| t)
+        self.stepping.deadline()
     }
 }
 

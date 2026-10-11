@@ -22,16 +22,9 @@ use crate::{
 
 /// Holding East this long closes the overlay.
 pub const HOLD_TO_CLOSE: Duration = Duration::from_millis(700);
-/// Holding a direction moves once, then repeats after this delay...
-const REPEAT_DELAY: Duration = Duration::from_millis(350);
-/// ...this often.
-const REPEAT_EVERY: Duration = Duration::from_millis(90);
 /// Left trigger pull that holds Shift on the keyboard, and where it lets go.
 const SHIFT_PRESS: f32 = 0.5;
 const SHIFT_RELEASE: f32 = 0.3;
-/// Stick deflection that counts as a direction, and where it lets go.
-const STICK_PRESS: f32 = 0.6;
-const STICK_RELEASE: f32 = 0.45;
 
 const MODIFIERS: [&str; 8] = [
     "KEY_LEFTSHIFT",
@@ -175,9 +168,9 @@ pub struct OverlayController {
     pressed: Option<KeyCode>,
     dpad: HashSet<Button>,
     stick: (f32, f32),
-    stick_dir: Option<(i32, i32)>,
-    /// Direction being held and when it next repeats.
-    repeat: Option<((i32, i32), Instant)>,
+    stick_dir: crate::nav::StickDir,
+    /// The direction being held, repeating.
+    repeat: crate::nav::Repeat,
     east_since: Option<Instant>,
     /// Guide is down: Guide + X closes the keyboard (Guide + Y the numpad), as it opened it.
     guide_held: bool,
@@ -202,8 +195,8 @@ impl OverlayController {
             pressed: None,
             dpad: HashSet::new(),
             stick: (0.0, 0.0),
-            stick_dir: None,
-            repeat: None,
+            stick_dir: crate::nav::StickDir::default(),
+            repeat: crate::nav::Repeat::default(),
             east_since: None,
             guide_held: false,
             trigger_shift: false,
@@ -276,18 +269,11 @@ impl OverlayController {
     }
 
     fn button(&mut self, b: Button, pressed: bool, now: Instant) -> Vec<OverlayAction> {
-        let dir = match b {
-            Button::DpadUp => Some((0, -1)),
-            Button::DpadDown => Some((0, 1)),
-            Button::DpadLeft => Some((-1, 0)),
-            Button::DpadRight => Some((1, 0)),
-            _ => None,
-        };
-        if let Some(dir) = dir {
+        if let Some(dir) = crate::nav::dpad_dir(b) {
             if pressed && self.dpad.insert(b) {
                 self.start_moving(dir, now);
-            } else if !pressed && self.dpad.remove(&b) && self.repeat.is_some_and(|(d, _)| d == dir) {
-                self.repeat = None;
+            } else if !pressed && self.dpad.remove(&b) {
+                self.repeat.release(dir);
             }
             return Vec::new();
         }
@@ -317,28 +303,16 @@ impl OverlayController {
 
     /// The stick acts like a D-pad: its strongest direction past the threshold.
     fn stick_moved(&mut self, now: Instant) {
-        let (x, y) = self.stick;
-        let threshold = if self.stick_dir.is_some() { STICK_RELEASE } else { STICK_PRESS };
-        let dir = if x.abs().max(y.abs()) < threshold {
-            None
-        } else if x.abs() > y.abs() {
-            Some((x.signum() as i32, 0))
-        } else {
-            Some((0, y.signum() as i32))
-        };
-        if dir == self.stick_dir {
-            return;
-        }
-        self.stick_dir = dir;
-        match dir {
-            Some(d) => self.start_moving(d, now),
-            None => self.repeat = None,
+        match self.stick_dir.update(self.stick) {
+            Some(Some(d)) => self.start_moving(d, now),
+            Some(None) => self.repeat.stop(),
+            None => {}
         }
     }
 
     fn start_moving(&mut self, dir: (i32, i32), now: Instant) {
         self.cursor = keyboard::step(self.layout, self.cursor, dir.0, dir.1);
-        self.repeat = Some((dir, now + REPEAT_DELAY));
+        self.repeat.start(dir, now);
     }
 
     fn press_selected(&mut self) -> Vec<OverlayAction> {
@@ -391,12 +365,8 @@ impl OverlayController {
             self.east_since = None;
             return (vec![OverlayAction::Close], true);
         }
-        // One step per tick, so a late tick doesn't jump several keys at once.
-        if let Some((dir, next)) = self.repeat
-            && now >= next
-        {
+        if let Some(dir) = self.repeat.due(now) {
             self.cursor = keyboard::step(self.layout, self.cursor, dir.0, dir.1);
-            self.repeat = Some((dir, now + REPEAT_EVERY));
             changed = true;
         }
         (Vec::new(), changed)
@@ -405,7 +375,7 @@ impl OverlayController {
     /// When `tick` next has work (key repeat or the close countdown).
     pub fn next_deadline(&self) -> Option<Instant> {
         let close = self.east_since.map(|t| t + HOLD_TO_CLOSE);
-        let repeat = self.repeat.map(|(_, t)| t);
+        let repeat = self.repeat.deadline();
         // While East is held the closing bar animates, so keep ticking.
         let animate = self.east_since.map(|_| Instant::now() + Duration::from_millis(30));
         [close, repeat, animate].into_iter().flatten().min()
@@ -418,10 +388,10 @@ impl OverlayController {
         if std::mem::take(&mut self.trigger_shift) {
             out.push(OverlayAction::Key(KeyCode::KEY_LEFTSHIFT, false));
         }
-        self.repeat = None;
+        self.repeat.stop();
         self.east_since = None;
         self.dpad.clear();
-        self.stick_dir = None;
+        self.stick_dir.clear();
         out
     }
 }
@@ -776,11 +746,12 @@ mod tests {
         let t0 = Instant::now();
         c.handle(InputEvent::Button(Button::DpadRight, true), t0);
         assert_eq!(at(&c), "KEY_W");
-        assert!(!c.tick(ms(t0, 300)).1, "no repeat before the delay");
-        c.tick(ms(t0, 350));
+        let (delay, every) = (crate::nav::REPEAT_DELAY, crate::nav::REPEAT_EVERY);
+        assert!(!c.tick(t0 + delay / 2).1, "no repeat before the delay");
+        c.tick(t0 + delay);
         assert_eq!(at(&c), "KEY_E");
-        c.tick(ms(t0, 350 + 90));
-        c.tick(ms(t0, 350 + 90 * 2));
+        c.tick(t0 + delay + every);
+        c.tick(t0 + delay + every * 2);
         assert_eq!(at(&c), "KEY_T");
         c.handle(InputEvent::Button(Button::DpadRight, false), ms(t0, 600));
         c.tick(ms(t0, 2000));

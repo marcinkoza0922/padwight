@@ -30,8 +30,8 @@ const POLL: Duration = Duration::from_millis(500);
 /// The overlay closes by itself after this long without input, so it can't hold the
 /// controller forever.
 const IDLE_CLOSE: Duration = Duration::from_secs(10);
-const REPEAT_DELAY: Duration = Duration::from_millis(400);
-const REPEAT_EVERY: Duration = Duration::from_millis(120);
+const REPEAT_DELAY: Duration = crate::nav::REPEAT_DELAY;
+const REPEAT_EVERY: Duration = crate::nav::REPEAT_EVERY;
 const VOLUME_STEP: f64 = 0.05;
 const SEEK_STEP_US: i64 = 10_000_000;
 
