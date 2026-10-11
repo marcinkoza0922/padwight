@@ -408,8 +408,15 @@ pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, glyphs: crate::info::Gl
             let progress = if m.length_ms > 0 { (m.position_ms as f32 / m.length_ms as f32).clamp(0.0, 1.0) } else { 0.0 };
             let times = format!("{} / {}", media::clock(m.position_ms), if m.length_ms > 0 { media::clock(m.length_ms) } else { "--:--".into() });
             let mut meta = row![text(times).font(c.font).size(14.0 * s).color(c.muted)].spacing(16.0 * s);
+            // The system's sound, which the D-pad changes, then the player's own volume.
+            match (m.system_volume, m.muted) {
+                (Some(_), true) => meta = meta.push(text("Sound muted").font(c.font).size(14.0 * s).color(c.muted)),
+                (Some(v), false) => meta = meta.push(text(format!("Sound {:.0}%", v * 100.0)).font(c.font).size(14.0 * s).color(c.muted)),
+                (None, _) => {}
+            }
             if let Some(v) = m.volume {
-                meta = meta.push(text(format!("Volume {:.0}%", v * 100.0)).font(c.font).size(14.0 * s).color(c.muted));
+                let what = if m.system_volume.is_some() { "Player" } else { "Volume" };
+                meta = meta.push(text(format!("{what} {:.0}%", v * 100.0)).font(c.font).size(14.0 * s).color(c.muted));
             }
             if m.players > 1 {
                 meta = meta.push(text(format!("{} players", m.players)).font(c.font).size(14.0 * s).color(c.muted));
