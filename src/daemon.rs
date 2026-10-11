@@ -311,7 +311,8 @@ fn keyboard_sound(layout: Layout) -> sound::SoundOverlay {
 fn active_sound(active: &Active) -> sound::SoundOverlay {
     match active {
         Active::Keyboard(k) => keyboard_sound(k.layout()),
-        Active::Menu { .. } | Active::Settings(..) => sound::SoundOverlay::Menu,
+        Active::Menu { .. } => sound::SoundOverlay::Menu,
+        Active::Settings(..) => sound::SoundOverlay::Guide,
         Active::Media(_) => sound::SoundOverlay::Media,
         Active::Offer(_) => sound::SoundOverlay::Offer,
     }
@@ -364,6 +365,8 @@ struct Offers {
 struct GuideMenu {
     cursor: usize,
     steam: bool,
+    /// Set once an item is chosen: its pick is what's heard, not the menu closing behind it.
+    chosen: bool,
 }
 
 struct Daemon {
@@ -1434,11 +1437,15 @@ impl Daemon {
     /// Makes the Guide menu when the Guide overlay goes up, and drops it when the overlay comes down.
     fn sync_guide_menu(&mut self) {
         let open = self.devices.values().any(|d| d.engine.guide_overlay_open());
-        match (open, self.guide_menu.is_some()) {
-            (true, false) => {
-                self.guide_menu = Some(GuideMenu { cursor: 0, steam: crate::guide_menu::steam_running() });
+        match (open, self.guide_menu.as_ref().map(|menu| menu.chosen)) {
+            (true, None) => {
+                self.guide_menu = Some(GuideMenu { cursor: 0, steam: crate::guide_menu::steam_running(), chosen: false });
+                self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Open));
             }
-            (false, true) => self.guide_menu = None,
+            (false, Some(chosen)) => {
+                self.guide_menu = None;
+                self.overlay_sound(sound::SoundOverlay::Guide, (!chosen).then_some(sound::Feedback::Close));
+            }
             _ => {}
         }
     }
@@ -1455,10 +1462,15 @@ impl Daemon {
                 Button::DpadDown | Button::LeftStickDown => menu.cursor = (menu.cursor + 1) % len,
                 Button::South => {
                     let item = crate::guide_menu::items(menu.steam)[menu.cursor];
+                    menu.chosen = true;
+                    self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Pick));
                     self.guide_choose(device, item);
                 }
                 Button::East => self.guide_close(device),
                 _ => {}
+            }
+            if matches!(key, Button::DpadUp | Button::LeftStickUp | Button::DpadDown | Button::LeftStickDown) {
+                self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Step));
             }
         }
         // The cursor is part of the drawn frame, so the overlay has to be sent again to move it.
