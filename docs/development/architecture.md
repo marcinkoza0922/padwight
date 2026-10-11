@@ -38,7 +38,7 @@ Everything the daemon knows about the desktop comes from focus trackers (see bel
 
  gui.rs ◄──── IPC: $XDG_RUNTIME_DIR/padwight.sock (ipc.rs, one JSON line per request)
    │
-   └──── ~/.config/padwight/  (config.toml, setups/, general/, shared/; daemon is the only writer while it runs)
+   └──── ~/.config/padwight/  (config.toml, setups/, general/; daemon is the only writer while it runs)
 ```
 
 1. **Input.** `input.rs` reads each physical pad's evdev node and turns raw events into normalized buttons (following the Linux gamepad spec), sticks in −1..1, and triggers in 0..1. Touchpads have their own node (`input/touchpad.rs`) and reach the engine like buttons.
@@ -156,11 +156,11 @@ Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000
 
 ## Configuration and state
 
-- **Files.** `~/.config/padwight/config.toml` (`Config::path()`) holds the app-wide settings. `src/config/store.rs` reads and writes the rest: `general/` (the built-in **General** setup), `setups/NNN-name/` (one per game), and `shared/`. Each setup folder has `setup.toml` (name, rules, looks) and a subfolder per kind of item (`profiles/`, `layers/`, `macros/`, `menus/`, `info/`, `logs/`), with one numbered file per item. Each save rewrites the tree through a staging folder.
+- **Files.** `~/.config/padwight/config.toml` (`Config::path()`) holds the app-wide settings. `src/config/store.rs` reads and writes the rest: `general/` (the built-in **General** setup) and `setups/NNN-name/` (one per game). A `shared/` folder from older versions is folded into the setups that use it on load and removed on the next save. Each setup folder has `setup.toml` (name, rules, looks) and a subfolder per kind of item (`profiles/`, `layers/`, `macros/`, `menus/`, `info/`, `logs/`), with one numbered file per item. Each save rewrites the tree through a staging folder.
 - **Single writer.** While the daemon runs, it is the only process that writes the file. The GUI sends `SetConfig` over IPC, and the daemon saves. After a hand edit, `padwight reload` tells the daemon to re-read it.
 - **Unsaved edits.** The GUI keeps edits in memory until **Save & apply**. Revert drops them.
 - **No migration.** Older single-file configs aren't read; the format can change freely. `Config::ensure_guide_layer` still adds the Guide layer to games that lack one.
-- **Names.** Items are unique by kind within a game. Game items can't reuse a Shared item's name. See [specs.md](specs.md).
+- **Names.** Items are unique by kind within a game. See [specs.md](specs.md).
 
 ## Packs
 
@@ -169,7 +169,7 @@ A pack is a game in a file: TOML in the same shapes as the config, extension `.p
 - `FORMAT` is the version this build writes. Newer formats are refused with a message; older formats are upgraded on load. Bump it only for breaking shape changes, and document what changed in the comment above it.
 - `parse` is strict (`deny_unknown_fields` on the top level). A malformed pack fails with the line and error, never half-imports.
 - `check` rejects dangling references (macros, menus, info overlays, layers, profiles named by rules).
-- `export` copies in the Shared items a game uses, and keeps the pack ID on re-export.
+- `export` lists references to missing items, and keeps the pack ID on re-export.
 - `plan` and `apply` do an import: they report name clashes and rule clashes, and `apply` writes the chosen result into the config.
 
 Library packs are read at build time (`build.rs`) and checked by `cargo test` (`library.rs`). Adding a file to `packs/` is enough for it to appear in the picker; the tests say what it must satisfy.

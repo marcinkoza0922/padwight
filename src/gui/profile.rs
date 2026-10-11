@@ -978,7 +978,7 @@ impl App {
             in_use: self.shown_pad().family,
             swap: self.swap_for(p),
             layer,
-            menus: self.config.scope_of(Some(self.game())).menus,
+            menus: self.config.scope_of(self.game()).menus,
             live_touch: self.shown_input().map(|l| (l.touches.clone(), l.touch_click)),
             touchpad_height: if self.shown_pad().model == Some(PadModel::DualShock4) { crate::input::DUALSHOCK4_HEIGHT } else { crate::input::DUALSENSE_HEIGHT },
         };

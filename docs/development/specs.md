@@ -10,7 +10,7 @@ Status: implemented (2026-10-06), except where the open questions below say othe
 3. **Ship a library of pre-baked games** for PC titles without proper controller support,
    authored by the maintainer in the app itself.
 
-The config is a folder: `config.toml` for the app settings, and a folder per setup (`setups/`, plus `general/` and `shared/`) holding `setup.toml` and one file per item. Nothing is converted from older single-file configs.
+The config is a folder: `config.toml` for the app settings, and a folder per setup (`setups/`, plus `general/`) holding `setup.toml` and one file per item. Nothing is converted from older single-file configs. A `shared/` folder left by older versions is folded in on load: each setup gets its own copy of the shared items it uses, the unused ones go to General, and the next save removes the folder.
 
 ## Decisions at a glance
 
@@ -19,8 +19,8 @@ The config is a folder: `config.toml` for the app settings, and a folder per set
 | Main concept | A **game** is a container: name, rules, profiles, macros, menus, info overlays. |
 | Game vs pack | The same thing. Exporting a game makes a pack; importing a pack makes a game. |
 | Non-game profiles | Live in **General**, a built-in game without rules (Desktop, Gamepad passthrough). |
-| Reuse across games | A global **Shared** section for items every profile can use; otherwise copy between games. |
-| Name uniqueness | Per game. Game items also can't reuse a Shared item's name. |
+| Reuse across games | Copy between games. There are no items shared by every game. |
+| Name uniqueness | Per game. |
 | Scope inside a game | The whole game: every profile in a game can use all its macros, menus and info overlays. Nothing is scoped per profile. |
 | Navigation | Sidebar: Overview, Settings, General, the games (with search), "+ Add game". |
 | Game page | Sub-tabs: Profiles · Macros · Menus · Info overlays · Details. |
@@ -43,7 +43,6 @@ The config is a folder: `config.toml` for the app settings, and a folder per set
 Config
 ├── app-wide settings (enabled, devices, keyboard/numpad style, fallback glyphs, auto-switch on/off)
 ├── general: Game        built in, can't be deleted or exported, has no rules
-├── shared               macros, menus, info overlays usable by every profile in every game
 └── games: [Game]
 
 Game
@@ -59,12 +58,10 @@ Game
 ```
 
 **Name resolution.** A reference (`Macro`, `OpenMenu`, `ShowInfo`, a menu's submenu) from a
-game's profile or item looks first in that game, then in Shared. Shared items can only reference other Shared items.
+game's profile or item looks in that game only.
 
 **Names.** Unique per kind within a game, so "Dodge" can exist in Elden Ring and Sekiro.
-A game item may not use a Shared item's name, and a Shared item may not take a name any game's
-item uses: the rename is refused, and new items get a free name ("Macro 2"). That keeps one
-meaning per name, with no overriding.
+A rename to a taken name is refused, and new items get a free name ("Macro 2").
 
 **Scope inside a game.** Macros, menus and info overlays belong to the game as a whole: every
 profile in the game can use them, and nothing is scoped per profile. An info overlay set to
@@ -85,7 +82,7 @@ A left **sidebar**:
 1. **Overview**: live devices and status (today's Overview tab).
 2. **Settings**: keyboard and numpad overlay style, fallback glyphs, auto-switch on/off and
    default profile, ignored devices.
-3. **General**: pinned. Its page has the same sub-tabs as a game, plus the **Shared** items.
+3. **General**: pinned. Its page has the same sub-tabs as a game.
    It has no Details actions such as export or delete.
 4. **Games**: alphabetical, with a search field above. Games with an available library
    update show a badge.
@@ -100,8 +97,6 @@ Sub-tabs:
 - **Macros**, **Menus**, **Info overlays**: all of the game's macros, menus or info overlays.
   An info overlay's editor has an "Always show while this game is active" checkbox.
 - On those three:
-  - A collapsed **Shared** section at the bottom lists the Shared items the game can also use,
-    read-only, with a link to edit them under General.
   - **"Browse other games…"** opens a read-only view of other games' items (including
     library games not yet added) with previews. **"Copy here"** makes an independent copy in
     this game, renamed if the name is taken.
@@ -120,14 +115,10 @@ A pack is a game written to a file.
 ### What a pack contains
 
 - The game's name, rules, profiles, macros, menus and info overlays.
-- **Shared items the game references**, followed transitively through button actions,
-  gestures, combos, nested actions (`Multi`, `Toggle`, `Turbo`), menu items and submenus.
-  They're written into the pack as game items, so the pack works on its own. Shared items
-  that nothing references aren't included.
 - Pack metadata (below).
 
 **Never exported** (they belong to the user or device, not the game): app-wide settings,
-`gyro_calibration`, General, and unreferenced Shared items.
+`gyro_calibration` and General.
 
 Dangling references (e.g. a button set to a macro that no longer exists) are listed as a warning
 in the export dialog. The export goes ahead; the reference stays as it is.
@@ -184,7 +175,7 @@ and previews and the library show them from there.
 
 From the game's **Details → Export…**:
 
-1. **Review contents**: the game's items, the Shared items pulled in, and any dangling
+1. **Review contents**: the game's items and any dangling
    references.
 2. **Controller check** (below): non-blocking warnings.
 3. **Metadata**: pre-filled from the game's export metadata, with the version field
@@ -246,8 +237,6 @@ The **preview** shows:
 - Controller warnings.
 - **Game name clash**: a game with this name already exists, from a different pack or none.
   **Rename** (default, e.g. `Elden Ring (2)`) or **Replace**.
-- **Shared name clashes**: a pack item named like one of the user's Shared items. The
-  imported item is renamed (`Dodge (2)`) and its references are rewritten to match.
 - **Rule clashes**: an imported rule with the same kind and value as a rule in another game.
   By default the imported rule takes over and the other game's rule is disabled, since the
   user is importing a setup for that game. They can keep their own rule instead.

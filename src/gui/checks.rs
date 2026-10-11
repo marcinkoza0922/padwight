@@ -53,8 +53,6 @@ pub(super) struct Names {
     pub(super) logs: Vec<String>,
     pub(super) always_logs: Vec<String>,
     pub(super) layers: Vec<String>,
-    /// False for shared items, which can't use layers (they're always a game's own).
-    pub(super) layers_allowed: bool,
     /// How long each macro takes to play, in milliseconds, by name.
     pub(super) macro_ms: std::collections::HashMap<String, u64>,
     /// Inside a turbo, where a macro plays once per press and never loops.
@@ -62,7 +60,7 @@ pub(super) struct Names {
 }
 
 impl Names {
-    pub(super) fn of(scope: &ScopeRef, layers_allowed: bool) -> Self {
+    pub(super) fn of(scope: &ScopeRef) -> Self {
         let list = |kind| scope.names(kind).into_iter().map(str::to_string).collect();
         let infos = |always: bool| scope.info.iter().filter(|o| o.always == always).map(|o| o.name.clone()).collect();
         let logs = |always: bool| scope.logs.iter().filter(|o| o.always == always).map(|o| o.name.clone()).collect();
@@ -75,19 +73,13 @@ impl Names {
             logs: logs(false),
             always_logs: logs(true),
             layers: list(ItemKind::Layer),
-            layers_allowed,
             in_turbo: false,
         }
     }
 
-    /// What a game's profiles and items can use: its own items, then shared ones.
+    /// What a game's profiles and items can use: its own items.
     pub(super) fn for_game(config: &Config, game: &Game) -> Self {
-        Names::of(&config.scope_of(Some(game)), true)
-    }
-
-    /// What shared items can use: only other shared items.
-    pub(super) fn shared(config: &Config) -> Self {
-        Names::of(&config.scope_of(None), false)
+        Names::of(&config.scope_of(game))
     }
 
     pub(super) fn list(&self, kind: ItemKind) -> &[String] {
@@ -153,9 +145,6 @@ pub(super) fn action_problem(action: &ButtonAction, names: &Names) -> Option<Str
             ButtonAction::ShowLog(name) if !names.logs.contains(name) => {
                 problem = Some(format!("missing log overlay “{name}”"));
             }
-            ButtonAction::Layer(_) if !names.layers_allowed => {
-                problem = Some("shared items can't use layers".into());
-            }
             ButtonAction::Layer(name) if !names.layers.contains(name) => {
                 problem = Some(format!("missing layer “{name}”"));
             }
@@ -198,27 +187,20 @@ pub(super) fn macros_have_problem(macros: &[Macro], names: &Names) -> bool {
     })
 }
 
-/// The menus a game's items can open: its own, then shared ones (only shared ones for
-/// `None`, the shared items themselves).
-pub(super) fn reachable_menus<'a>(config: &'a Config, game: Option<&'a Game>) -> Vec<&'a Menu> {
+/// The menus a game's items can open.
+pub(super) fn reachable_menus<'a>(config: &'a Config, game: &'a Game) -> Vec<&'a Menu> {
     config.scope_of(game).menus
 }
 
 /// The first thing saving would reject in a list of macros, menus and info overlays.
-/// `names` is what they may refer to; `shared` holds the shared items' names, which a game's
-/// items may not reuse.
-#[expect(clippy::too_many_arguments, reason = "predates the size lints")]
-pub(super) fn items_problem(macros: &[Macro], menus: &[Menu], info: &[InfoOverlay], names: &Names, reachable: &[&Menu], shared: Option<&Names>) -> Option<String> {
-    let clash = |kind: ItemKind, name: &str| shared.is_some_and(|s| s.list(kind).iter().any(|n| n == name));
+/// `names` is what they may refer to.
+pub(super) fn items_problem(macros: &[Macro], menus: &[Menu], info: &[InfoOverlay], names: &Names, reachable: &[&Menu]) -> Option<String> {
     for (i, m) in macros.iter().enumerate() {
         if m.name.trim().is_empty() {
             return Some("A macro needs a name.".into());
         }
         if macros[..i].iter().any(|o| o.name == m.name) {
             return Some(format!("Two macros are named “{}”.", m.name));
-        }
-        if clash(ItemKind::Macro, &m.name) {
-            return Some(format!("Macro “{}” has the same name as a shared macro.", m.name));
         }
         let keys = m.steps.iter().filter_map(MacroStep::action).flat_map(|a| a.key_names());
         if let Some(bad) = keys.into_iter().find(|k| KeyCode::from_str(k).is_err()) {
@@ -242,9 +224,6 @@ pub(super) fn items_problem(macros: &[Macro], menus: &[Menu], info: &[InfoOverla
         if menus[..i].iter().any(|o| o.name == m.name) {
             return Some(format!("Two menus are named “{}”.", m.name));
         }
-        if clash(ItemKind::Menu, &m.name) {
-            return Some(format!("Menu “{}” has the same name as a shared menu.", m.name));
-        }
         if let Some(problem) = m.items.iter().find_map(|item| item_problem(m, &item.action, reachable, names)) {
             return Some(format!("Menu “{}”: {problem}", m.name));
         }
@@ -256,26 +235,18 @@ pub(super) fn items_problem(macros: &[Macro], menus: &[Menu], info: &[InfoOverla
         if info[..i].iter().any(|other| other.name == o.name) {
             return Some(format!("Two info overlays are named “{}”.", o.name));
         }
-        if clash(ItemKind::Info, &o.name) {
-            return Some(format!("Info overlay “{}” has the same name as a shared one.", o.name));
-        }
     }
     None
 }
 
-/// The first thing saving would reject in a list of log overlays: empty or repeated names,
-/// or (for a game's) a shared one's name.
-pub(super) fn logs_problem(logs: &[LogOverlay], shared: Option<&Names>) -> Option<String> {
-    let clash = |name: &str| shared.is_some_and(|s| s.logs.iter().chain(&s.always_logs).any(|n| n == name));
+/// The first thing saving would reject in a list of log overlays: empty or repeated names.
+pub(super) fn logs_problem(logs: &[LogOverlay]) -> Option<String> {
     for (i, o) in logs.iter().enumerate() {
         if o.name.trim().is_empty() {
             return Some("A log overlay needs a name.".into());
         }
         if logs[..i].iter().any(|other| other.name == o.name) {
             return Some(format!("Two log overlays are named “{}”.", o.name));
-        }
-        if clash(&o.name) {
-            return Some(format!("Log overlay “{}” has the same name as a shared one.", o.name));
         }
     }
     None
@@ -332,11 +303,11 @@ pub(super) fn game_problem(config: &Config, g: &Game) -> Option<String> {
         return Some("needs at least one profile.".into());
     }
     let names = Names::for_game(config, g);
-    let reachable = reachable_menus(config, Some(g));
-    if let Some(problem) = items_problem(&g.macros, &g.menus, &g.info, &names, &reachable, Some(&Names::shared(config))) {
+    let reachable = reachable_menus(config, g);
+    if let Some(problem) = items_problem(&g.macros, &g.menus, &g.info, &names, &reachable) {
         return Some(problem);
     }
-    if let Some(problem) = logs_problem(&g.logs, Some(&Names::shared(config))) {
+    if let Some(problem) = logs_problem(&g.logs) {
         return Some(problem);
     }
     for (i, p) in g.profiles.iter().enumerate() {
@@ -436,14 +407,6 @@ pub(super) fn rules_problem(g: &Game) -> Option<String> {
 impl App {
     pub(super) fn validate(&self) -> Option<String> {
         let config = &self.config;
-        let shared = Names::shared(config);
-        let reachable = reachable_menus(config, None);
-        if let Some(problem) = items_problem(&config.shared.macros, &config.shared.menus, &config.shared.info, &shared, &reachable, None) {
-            return Some(format!("Shared: {problem}"));
-        }
-        if let Some(problem) = logs_problem(&config.shared.logs, None) {
-            return Some(format!("Shared: {problem}"));
-        }
         for (i, g) in config.games.iter().enumerate() {
             if g.name.trim().is_empty() {
                 return Some("A setup needs a name.".into());
@@ -472,7 +435,7 @@ mod tests {
 
     #[test]
     fn problems_are_found_inside_nested_actions_and_flag_their_section() {
-        let names = Names { macros: vec!["Known".to_string()], layers: vec!["Guide".to_string()], layers_allowed: true, ..Names::default() };
+        let names = Names { macros: vec!["Known".to_string()], layers: vec!["Guide".to_string()], ..Names::default() };
         let nested = ButtonAction::Multi(vec![
             ButtonAction::Mouse(MouseButton::Left),
             ButtonAction::toggle(ButtonAction::Keys(vec!["KEY_NOPE".into()])),

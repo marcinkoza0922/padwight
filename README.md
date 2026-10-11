@@ -13,7 +13,7 @@ Here's how it's put together:
 
 - **daemon**: grabs physical gamepads (evdev) so nothing else sees them, runs the active profile, and emits through virtual uinput devices (an Xbox 360-style pad plus a keyboard and a mouse).
 - **gui**: edits profiles and talks to the daemon over `$XDG_RUNTIME_DIR/padwight.sock`.
-- **config**: `~/.config/padwight/`. `config.toml` holds the app settings. Each setup is a folder under `setups/` (General is `general/`, shared items are `shared/`), with a `setup.toml` and one file per profile, layer, macro, menu, overlay and log. To move a setup to another machine, copy its folder. The daemon is the only writer while it runs, so after editing by hand, run `padwight reload`.
+- **config**: `~/.config/padwight/`. `config.toml` holds the app settings. Each setup is a folder under `setups/` (General is `general/`), with a `setup.toml` and one file per profile, layer, macro, menu, overlay and log. To move a setup to another machine, copy its folder. The daemon is the only writer while it runs, so after editing by hand, run `padwight reload`.
 
 ## Documentation
 
@@ -31,17 +31,17 @@ For developers, in [docs/development/](docs/development/):
 
 ## Setups
 
-Everything is organized into setups: one controller setup per game. Each game keeps its own bindings and switches to them when you start it. A setup holds its own profiles, macros, menus, info overlays, and the auto-switch rules that activate it. All of its profiles can use all of its items. **General** is a built-in setup with no rules, for the desktop and a plain gamepad. Its Macros, Menus and Info overlays tabs also hold the **shared** items, which every profile of every setup can use. Names only need to be unique within a setup, and a setup's items can't reuse a shared item's name.
+Everything is organized into setups: one controller setup per game. Each game keeps its own bindings and switches to them when you start it. A setup holds its own profiles, macros, menus, info overlays, and the auto-switch rules that activate it. All of its profiles can use all of its items. **General** is a built-in setup with no rules, for the desktop and a plain gamepad. Names only need to be unique within a setup. To reuse items from another setup, use **Copy from another setup…** on its Macros, Menus, Info overlays or Layers tab.
 
 The sidebar lists General and your setups (with a search). Each setup's page has five sub-tabs: **Profiles**, **Macros**, **Menus**, **Info overlays** and **Details** (name, rules, export, delete). On the Macros, Menus and Info overlays tabs, "Copy from another setup…" previews another setup's items (or one from the library) and copies the ones you want in, so you can adapt them.
 
 ## Packs and the library
 
-Found a setup worth sharing? Export it as a **pack**: **Details → Export…** writes a `.padpack` file (TOML) and copies in any shared items it uses. The export dialog warns you about references to missing items.
+Found a setup worth sharing? Export it as a **pack**: **Details → Export…** writes a `.padpack` file (TOML). The export dialog warns you about references to missing items.
 
 Whether a pack needs more than a plain XInput pad (gyro, back paddles, or a touchpad) is something you declare on each **profile**, not on the pack. On the profile's Gyro tab, tick *Can't be played without gyro* when it depends on gyro (a flick stick setup that turns up and down with gyro, say). Leave it unticked when gyro only adds to a scheme that works without it. The back paddles section of the Buttons tab and the Touchpad tab have the same box. It's your word, nothing is detected, and the export dialog just lists what you've declared. Players whose controller lacks a feature only see the profiles that don't need it, and Guide skips the others. Re-exporting your own setup keeps its pack ID. Exporting someone else's makes a fork with its own ID that credits the original.
 
-**+ Add setup** opens the picker. It offers the built-in library first (setups for games you have installed in Steam, Heroic or Lutris, or that are running), an empty setup from a template, or **Import a file…**. Importing shows a preview before anything changes: what's inside, what your controller lacks, whether a setup with the same name already exists (add under a new name, or replace yours), any shared items it renames to avoid clashes, and other setups' rules for the same window (the imported game takes over unless you keep yours). Nothing changes until you choose Save & apply.
+**+ Add setup** opens the picker. It offers the built-in library first (setups for games you have installed in Steam, Heroic or Lutris, or that are running), an empty setup from a template, or **Import a file…**. Importing shows a preview before anything changes: what's inside, what your controller lacks, whether a setup with the same name already exists (add under a new name, or replace yours), and other setups' rules for the same window (the imported game takes over unless you keep yours). Nothing changes until you choose Save & apply.
 
 Imported setups are ordinary, editable setups that remember their pack. When a newer version of the same pack turns up, or an app update ships a newer library version (marked "update" in the sidebar), you're offered the update, along with a list of what you've changed since. A pack made by a newer app version is refused, with a request to update the app.
 
@@ -136,7 +136,7 @@ A layer changes some of your mappings while it's on, then changes them back when
 - **Several at once**: layers stack, and the newest one wins where they disagree.
 - **Switching over**: an input that's held down when a layer comes on or goes off keeps doing what it started until released. Sticks, triggers and gyro switch modes right away. Held layers end when the profile changes or an on-screen menu or keyboard opens. Toggled ones stay on within the game.
 - **Showing it**: each layer can show its name on screen while it's on (with its own position, size and colors), or show one of the setup's info overlays (e.g. a cheat sheet), or nothing at all for quick ones like "hold Y to lean". The live controller drawing labels inputs with the layers that are on, as they act.
-- **Editing**: the Layers tab uses the profile editor, shown over one of the setup's profiles. Inputs the layer doesn't set read "Same as Gameplay: …" with an **Override** button. Overridden ones get **Back to base** to undo. Layers use their profile's timings. "Copy from another setup…" copies a layer along with the macros, menus and info overlays it uses, which is handy for sequels. Shared items can't use layers.
+- **Editing**: the Layers tab uses the profile editor, shown over one of the setup's profiles. Inputs the layer doesn't set read "Same as Gameplay: …" with an **Override** button. Overridden ones get **Back to base** to undo. Layers use their profile's timings. "Copy from another setup…" copies a layer along with the macros, menus and info overlays it uses, which is handy for sequels.
 
 ## Macros
 
@@ -265,7 +265,7 @@ Problems that would block saving (unknown keys, missing macros, incomplete combo
 
 `padwight status | enable | disable | profile <name> | next-profile | reload | overlay-toggle | numpad-toggle | menu <name> | daemon`
 
-`profile <name>` looks in the active setup first, then General, then the first setup with a profile of that name. `menu <name>` opens one of the active setup's menus, or a shared one.
+`profile <name>` looks in the active setup first, then General, then the first setup with a profile of that name. `menu <name>` opens one of the active setup's menus.
 
 When `padwight daemon` runs in a terminal, it keeps a live status line showing each controller's input and what's being output.
 

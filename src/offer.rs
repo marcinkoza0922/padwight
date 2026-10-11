@@ -235,7 +235,7 @@ mod tests {
     fn entry(name: &str, exe: &str) -> Entry {
         let mut game = Game::new(name, vec![Profile::passthrough("P")]);
         game.rules = vec![Rule::new(RuleKind::Executable, exe, "P")];
-        let pack = pack::export(&game, &Default::default(), &pack::draft(&game, false)).pack;
+        let pack = pack::export(&game, &pack::draft(&game, false)).pack;
         Entry { file: "x.padpack", pack }
     }
 

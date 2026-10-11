@@ -169,11 +169,6 @@ struct App {
     manual: Vec<iced::widget::markdown::Content>,
     /// Light or dark, from the system; the app's theme follows it.
     theme_mode: iced::theme::Mode,
-    /// On General's Macros, Menus, Info and Log overlays tabs: show the shared items (usable by
-    /// every game) instead of General's own.
-    shared_view: bool,
-    /// The read-only list of shared items under a game's own is open.
-    shared_open: bool,
     /// Filters the sidebar's game list.
     game_search: String,
     message: Option<(String, bool)>,
@@ -364,8 +359,6 @@ enum Message {
     /// A link in the manual; relative links name another chapter's file.
     ManualLink(String),
     SystemMode(iced::theme::Mode),
-    SetSharedView(bool),
-    ToggleSharedSection,
     RenameGame(String),
     EditProfile(String),
     RenameProfile(String),
@@ -600,8 +593,6 @@ impl App {
             game_tab: GameTab::Profiles,
             manual_chapter: 0,
             manual: manual::load(), theme_mode: iced::theme::Mode::default(),
-            shared_view: false,
-            shared_open: false,
             game_search: String::new(),
             message: None,
             live: None,
@@ -753,39 +744,33 @@ impl App {
         }
     }
 
-    /// The Macros, Menus, Info and Log overlays tabs show shared items (on General's page).
-    fn on_shared(&self) -> bool {
-        let item_tab = matches!(self.game_tab, GameTab::Macros | GameTab::Menus | GameTab::Info | GameTab::Logs);
-        self.shared_view && item_tab && self.page == Page::Game(None)
-    }
-
     fn macros(&self) -> &Vec<Macro> {
-        if self.on_shared() { &self.config.shared.macros } else { &self.game().macros }
+        &self.game().macros
     }
 
     fn macros_mut(&mut self) -> &mut Vec<Macro> {
-        if self.on_shared() { &mut self.config.shared.macros } else { &mut self.game_mut().macros }
+        &mut self.game_mut().macros
     }
 
     fn menus(&self) -> &Vec<Menu> {
-        if self.on_shared() { &self.config.shared.menus } else { &self.game().menus }
+        &self.game().menus
     }
 
     fn menus_mut(&mut self) -> &mut Vec<Menu> {
-        if self.on_shared() { &mut self.config.shared.menus } else { &mut self.game_mut().menus }
+        &mut self.game_mut().menus
     }
 
     fn infos(&self) -> &Vec<InfoOverlay> {
-        if self.on_shared() { &self.config.shared.info } else { &self.game().info }
+        &self.game().info
     }
 
     fn infos_mut(&mut self) -> &mut Vec<InfoOverlay> {
-        if self.on_shared() { &mut self.config.shared.info } else { &mut self.game_mut().info }
+        &mut self.game_mut().info
     }
 
     /// What the shown profile and items can refer to.
     fn names(&self) -> Names {
-        if self.on_shared() { Names::shared(&self.config) } else { Names::for_game(&self.config, self.game()) }
+        Names::for_game(&self.config, self.game())
     }
 
     /// The profile the editor shows: the edited profile, or on the Layers tab, the layer over
@@ -828,9 +813,6 @@ impl App {
     /// Shows a game's page, editing its active profile if it has it.
     fn show_game(&mut self, key: Option<String>) {
         let has_active = self.config.active_ref().game == key;
-        if key.is_some() {
-            self.shared_view = false;
-        }
         self.page = Page::Game(key);
         self.editing = if has_active {
             let active = self.config.active_ref();
@@ -1340,7 +1322,7 @@ mod tests {
     #[test]
     fn every_page_tab_and_dialog_builds() {
         let mut app = with_game();
-        app.config.shared.menus.push(Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![], cancel: None, style: OverlayStyle::default() });
+        app.config.general.menus.push(Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![], cancel: None, style: OverlayStyle::default() });
         app.config.games[0].info.push(InfoOverlay { name: "Controls".into(), always: true, on_start: None, linger: None, title: None, current_input: Default::default(), style: OverlayStyle::info(), rows: vec![vec!["{south}".into()]] });
         app.config.games[0].macros.push(Macro { name: "Dodge".into(), steps: vec![MacroStep::Wait(5)] });
         app.config.games[0].layers.push(crate::config::Layer::new("Hotkeys"));
@@ -1353,14 +1335,11 @@ mod tests {
                 let _ = app.update(Message::ToggleMacro(0));
                 let _ = app.update(Message::ToggleMenu(0));
                 let _ = app.update(Message::ToggleInfo(0));
-                let _ = app.update(Message::ToggleSharedSection);
                 let _ = app.view();
             }
         }
-        let _ = app.update(Message::SetSharedView(true));
-        let _ = app.view();
         let _ = app.update(Message::SelectPage(Page::Game(Some("Doom".into()))));
-        let text = pack::export(app.game(), &app.config.shared, &pack::draft(app.game(), false)).pack.to_toml().unwrap();
+        let text = pack::export(app.game(), &pack::draft(app.game(), false)).pack.to_toml().unwrap();
         let dialogs = [
             Message::OpenAddGame,
             Message::Installed(launchers::Installed::default()),

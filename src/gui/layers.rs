@@ -436,17 +436,6 @@ mod tests {
         let _ = app.update(Message::SetAction(Target::MenuItem(0, 0), ButtonAction::toggle(ButtonAction::Layer("Hotkeys".into()))));
         assert_eq!(app.validate(), None);
 
-        // Shared items can't use layers at all.
-        app.config.shared.menus.push(Menu {
-            name: "Everywhere".into(),
-            kind: MenuKind::List,
-            items: vec![MenuItem { label: "x".into(), action: ButtonAction::toggle(ButtonAction::Layer("Hotkeys".into())), button: None, weight: 1.0 }],
-            cancel: None,
-            style: OverlayStyle::default(),
-        });
-        assert!(app.validate().unwrap().contains("shared items can't use layers"), "{:?}", app.validate());
-        app.config.shared.menus.clear();
-
         // Deleting it leaves the mappings flagged.
         let _ = app.update(Message::SelectGameTab(GameTab::Layers));
         let _ = app.update(Message::DeleteLayer);

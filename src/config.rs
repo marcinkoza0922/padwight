@@ -335,8 +335,8 @@ impl ButtonAction {
     }
 }
 
-/// An on-screen action menu, usable by every profile of its game (or, when shared, of every
-/// game) and opened with `ButtonAction::OpenMenu`.
+/// An on-screen action menu, usable by every profile of its game and opened with
+/// `ButtonAction::OpenMenu`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Menu {
     pub name: String,
@@ -598,8 +598,7 @@ impl fmt::Display for CarouselControls {
     }
 }
 
-/// A named sequence of inputs, usable by every profile of its game (or, when shared, of
-/// every game).
+/// A named sequence of inputs, usable by every profile of its game.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Macro {
     pub name: String,
@@ -1183,7 +1182,7 @@ pub enum Indicator {
     /// A small label with the layer's name.
     #[default]
     Name,
-    /// One of the game's (or the shared) info overlays.
+    /// One of the game's info overlays.
     Info(String),
     /// A cheat sheet built from the layer's own bindings, with button glyphs.
     Bindings,
@@ -2216,8 +2215,11 @@ impl Game {
     /// The names of its items of one kind.
     pub fn names(&self, kind: ItemKind) -> Vec<&str> {
         match kind {
+            ItemKind::Macro => self.macros.iter().map(|m| m.name.as_str()).collect(),
+            ItemKind::Menu => self.menus.iter().map(|m| m.name.as_str()).collect(),
+            ItemKind::Info => self.info.iter().map(|o| o.name.as_str()).collect(),
+            ItemKind::Log => self.logs.iter().map(|o| o.name.as_str()).collect(),
             ItemKind::Layer => self.layers.iter().map(|l| l.name.as_str()).collect(),
-            _ => item_names(&self.macros, &self.menus, &self.info, &self.logs, kind),
         }
     }
 
@@ -2240,41 +2242,6 @@ impl Game {
     }
 }
 
-/// Macros, menus and info overlays every profile of every game can use.
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
-pub struct Shared {
-    #[serde(default)]
-    pub macros: Vec<Macro>,
-    #[serde(default)]
-    pub menus: Vec<Menu>,
-    #[serde(default, rename = "info_overlays")]
-    pub info: Vec<InfoOverlay>,
-    #[serde(default, rename = "log_overlays", skip_serializing_if = "Vec::is_empty")]
-    pub logs: Vec<LogOverlay>,
-}
-
-impl Shared {
-    /// Like [`Game::rename_refs`], within the shared items.
-    pub fn rename_refs(&mut self, kind: ItemKind, old: &str, new: &str) {
-        rename_in(&mut [], &mut self.menus, &mut self.macros, &mut [], kind, old, new);
-    }
-
-    pub fn names(&self, kind: ItemKind) -> Vec<&str> {
-        item_names(&self.macros, &self.menus, &self.info, &self.logs, kind)
-    }
-}
-
-fn item_names<'a>(macros: &'a [Macro], menus: &'a [Menu], info: &'a [InfoOverlay], logs: &'a [LogOverlay], kind: ItemKind) -> Vec<&'a str> {
-    match kind {
-        ItemKind::Macro => macros.iter().map(|m| m.name.as_str()).collect(),
-        ItemKind::Menu => menus.iter().map(|m| m.name.as_str()).collect(),
-        ItemKind::Info => info.iter().map(|o| o.name.as_str()).collect(),
-        ItemKind::Log => logs.iter().map(|o| o.name.as_str()).collect(),
-        // Layers are always a game's own, never shared.
-        ItemKind::Layer => Vec::new(),
-    }
-}
-
 /// `base` if it's free, else `base (2)`, `base (3)`, …: how an item or game is renamed when
 /// its name is taken.
 pub fn free_name(base: &str, taken: impl Fn(&str) -> bool) -> String {
@@ -2284,7 +2251,7 @@ pub fn free_name(base: &str, taken: impl Fn(&str) -> bool) -> String {
     (2..).map(|i| format!("{base} ({i})")).find(|n| !taken(n)).unwrap()
 }
 
-/// The kinds of named item a profile refers to. Layers are never shared.
+/// The kinds of named item a profile refers to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ItemKind {
     Macro,
@@ -2381,20 +2348,20 @@ fn rename_in(
     }
 }
 
-/// What the active profile can use: its game's items first, then shared ones.
+/// What the active profile can use: its game's items.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Scope {
     pub macros: Vec<Macro>,
     pub menus: Vec<Menu>,
     pub info: Vec<InfoOverlay>,
     pub logs: Vec<LogOverlay>,
-    /// The game's own (layers are never shared).
+    /// The game's own, then the built-in ones.
     pub layers: Vec<Layer>,
     /// The active game's overlay sounds.
     pub sounds: SoundSet,
 }
 
-/// Like [`Scope`], borrowed: what a game's profiles (or the shared items) can refer to.
+/// Like [`Scope`], borrowed: what a game's profiles and items can refer to.
 #[derive(Debug, Clone, Default)]
 pub struct ScopeRef<'a> {
     pub macros: Vec<&'a Macro>,
@@ -2487,8 +2454,6 @@ pub struct Config {
     /// Profiles that aren't for a particular game (desktop, plain gamepad). Read from its folder.
     #[serde(default = "default_general")]
     pub general: Game,
-    #[serde(default)]
-    pub shared: Shared,
     #[serde(default, rename = "setups", alias = "games")]
     pub games: Vec<Game>,
     /// IDs of library packs the user asked never to be offered again (see `offer`).
@@ -2522,7 +2487,6 @@ impl Default for Config {
             nintendo_layout: false,
             overlay_font: None,
             general: Game::new("General", vec![Profile::passthrough("Gamepad"), Profile::desktop("Desktop")]),
-            shared: Shared::default(),
             games: Vec::new(),
             declined_packs: Vec::new(),
         }
@@ -2727,10 +2691,9 @@ impl Config {
         Some(ProfileRef { profile: next.name.clone(), ..at })
     }
 
-    /// The items the active profile can use: its game's first, then shared ones it doesn't
-    /// shadow.
+    /// The items the active profile can use: its game's.
     pub fn scope(&self) -> Scope {
-        let s = self.scope_of(Some(self.active_game()));
+        let s = self.scope_of(self.active_game());
         Scope {
             macros: s.macros.into_iter().cloned().collect(),
             menus: s.menus.into_iter().cloned().collect(),
@@ -2741,24 +2704,14 @@ impl Config {
         }
     }
 
-    /// What a game's profiles and items can use: its own items, then the shared ones it
-    /// doesn't shadow. For `None`, what shared items can use: only each other.
-    pub fn scope_of<'a>(&'a self, game: Option<&'a Game>) -> ScopeRef<'a> {
-        fn merge<'a, T>(own: &'a [T], shared: &'a [T], name: impl Fn(&T) -> &str) -> Vec<&'a T> {
-            let mut all: Vec<&T> = own.iter().collect();
-            all.extend(shared.iter().filter(|s| !own.iter().any(|o| name(o) == name(s))));
-            all
-        }
-        let (macros, menus, info, logs) = match game {
-            Some(g) => (g.macros.as_slice(), g.menus.as_slice(), g.info.as_slice(), g.logs.as_slice()),
-            None => (&[][..], &[][..], &[][..], &[][..]),
-        };
+    /// What a game's profiles and items can use: its own items, and the built-in layers.
+    pub fn scope_of<'a>(&'a self, game: &'a Game) -> ScopeRef<'a> {
         ScopeRef {
-            macros: merge(macros, &self.shared.macros, |m| &m.name),
-            menus: merge(menus, &self.shared.menus, |m| &m.name),
-            info: merge(info, &self.shared.info, |o| &o.name),
-            logs: merge(logs, &self.shared.logs, |o| &o.name),
-            layers: game.map(|g| g.layers.iter().chain(built_in_layers()).collect()).unwrap_or_default(),
+            macros: game.macros.iter().collect(),
+            menus: game.menus.iter().collect(),
+            info: game.info.iter().collect(),
+            logs: game.logs.iter().collect(),
+            layers: game.layers.iter().chain(built_in_layers()).collect(),
         }
     }
 
@@ -2825,7 +2778,7 @@ mod tests {
         let mut config = Config::default();
         config.games.push(game);
         config.games[0].layers.clear();
-        let scope = config.scope_of(config.games.first());
+        let scope = config.scope_of(&config.games[0]);
         let names: Vec<&str> = scope.layers.iter().map(|l| l.name.as_str()).collect();
         assert!(names.contains(&GUIDE_LAYER) && names.contains(&MOUSE_LAYER), "{names:?}");
         let guide = scope.layers.iter().find(|l| l.name == GUIDE_LAYER).unwrap();
@@ -3106,7 +3059,7 @@ key_threshold = 0.2
     fn macros_roundtrip_and_walk_finds_nested_mappings() {
         let mut config = Config::default();
         let key = |k: &str| ButtonAction::Keys(vec![k.into()]);
-        config.shared.macros.push(Macro {
+        config.general.macros.push(Macro {
             name: "Combo".into(),
             steps: vec![
                 MacroStep::Tap { action: key("KEY_A"), hold_ms: 40 },
@@ -3130,7 +3083,7 @@ key_threshold = 0.2
             });
         }
         assert_eq!(names, ["Combo"]);
-        assert_eq!(config.shared.macros[0].steps.iter().map(MacroStep::duration_ms).sum::<u64>(), 160);
+        assert_eq!(config.general.macros[0].steps.iter().map(MacroStep::duration_ms).sum::<u64>(), 160);
     }
 
     #[test]
@@ -3142,7 +3095,7 @@ key_threshold = 0.2
             buttons: vec![Button::LeftBumper, Button::RightStickRight],
             action: ButtonAction::Keys(vec!["KEY_F".into()]),
         });
-        config.shared.macros.push(Macro {
+        config.general.macros.push(Macro {
             name: "Jump".into(),
             steps: vec![MacroStep::Stick { stick: Stick::Left, x: 0.0, y: -1.0 }, MacroStep::Wait(17)],
         });
@@ -3165,8 +3118,8 @@ key_threshold = 0.2
     #[test]
     fn menus_roundtrip_and_pick_a_sensible_cancel_button() {
         let item = |label: &str, action| MenuItem { label: label.into(), action, button: None, weight: 1.0 };
-        let shared = Shared {
-            menus: vec![
+        let mut config = Config::default();
+        config.general.menus = vec![
             Menu {
                 name: "Weapons".into(),
                     kind: MenuKind::Radial { stick: Stick::Right, boxes: false },
@@ -3188,16 +3141,13 @@ key_threshold = 0.2
                 cancel: None,
                 style: OverlayStyle::default(),
             },
-            ],
-            ..Shared::default()
-        };
-        let mut config = Config { shared, ..Config::default() };
+            ];
         config.general.profiles[0].set_button(Button::Select, ButtonAction::OpenMenu("Pause".into()));
         let back: Config = toml::from_str(&toml::to_string_pretty(&config).unwrap()).unwrap();
         assert_eq!(config, back);
-        assert_eq!(config.shared.menus[0].cancel_button(), Button::East);
-        assert_eq!(config.shared.menus[1].cancel_button(), Button::Start);
-        assert_eq!(config.shared.menus[2].cancel_button(), Button::Select, "East is a slot in a face-button directional menu");
+        assert_eq!(config.general.menus[0].cancel_button(), Button::East);
+        assert_eq!(config.general.menus[1].cancel_button(), Button::Start);
+        assert_eq!(config.general.menus[2].cancel_button(), Button::Select, "East is a slot in a face-button directional menu");
     }
 
     #[test]
@@ -3336,16 +3286,16 @@ key_threshold = 0.2
     }
 
     #[test]
-    fn scope_puts_the_games_items_before_shared_ones() {
+    fn scope_holds_only_the_active_games_items() {
         let mut config = Config::default();
         let m = |name: &str, steps: usize| Macro { name: name.into(), steps: vec![MacroStep::Wait(1); steps] };
-        config.shared.macros = vec![m("Dodge", 1), m("Screenshot", 1)];
+        config.general.macros = vec![m("Dodge", 1), m("Screenshot", 1)];
         let mut game = Game::new("Doom", vec![Profile::pc_action("Play")]);
         game.macros = vec![m("Dodge", 2)];
         config.games.push(game);
-        assert_eq!(config.scope().macros, [m("Dodge", 1), m("Screenshot", 1)], "General sees shared ones");
+        assert_eq!(config.scope().macros, [m("Dodge", 1), m("Screenshot", 1)]);
         config.active = ProfileRef::new(Some("Doom"), "Play");
-        assert_eq!(config.scope().macros, [m("Dodge", 2), m("Screenshot", 1)]);
+        assert_eq!(config.scope().macros, [m("Dodge", 2)], "General's items aren't usable in other setups");
     }
 
     #[test]

@@ -1,8 +1,7 @@
 //! The config folder on disk. `config.toml` holds the app settings. Every setup is a folder of its
 //! own: `setup.toml` has its name, rules and looks, and each profile, layer, macro, menu, info
 //! overlay and log overlay is a file in a subfolder for its kind. General sits beside the setups in
-//! the same shape, and so do the shared items, so a folder (or one subfolder of it) can be copied to
-//! another machine as it is.
+//! the same shape, so a folder (or one subfolder of it) can be copied to another machine as it is.
 //!
 //! Files are numbered so they load in the order they were saved in. Each save rewrites the whole
 //! tree, so renamed or removed items leave nothing behind.
@@ -17,15 +16,17 @@ use std::{
 use anyhow::{Context, Result};
 use serde::{Serialize, de::DeserializeOwned};
 
-use super::{Config, Game, InfoOverlay, Layer, LogOverlay, Macro, Menu, Profile, Shared};
+use super::{Config, Game, InfoOverlay, ItemKind, Layer, LogOverlay, Macro, Menu, Profile, free_name};
 
 /// The file in a setup's folder that holds its name, rules and looks.
 const SETUP_FILE: &str = "setup.toml";
 const SETUPS: &str = "setups";
 const GENERAL: &str = "general";
+/// Where older versions kept items every setup could use. Read once, folded into the setups (see
+/// [`fold_in_shared`]) and removed by the next save.
 const SHARED: &str = "shared";
 /// The keys of `config.toml` that live in the folders instead.
-const APP_KEYS: [&str; 3] = ["general", "setups", "shared"];
+const APP_KEYS: [&str; 2] = ["general", "setups"];
 /// The keys of a setup that live in its subfolders instead.
 const SETUP_KEYS: [&str; 6] = ["profiles", "macros", "menus", "info_overlays", "log_overlays", "layers"];
 
@@ -51,23 +52,66 @@ pub fn root_of(path: &Path) -> &Path {
     path.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new("."))
 }
 
-/// Fills in the setups and shared items of `config` from the folder at `root`. A missing General
-/// folder gives the default General.
+/// Fills in the setups of `config` from the folder at `root`. A missing General folder gives the
+/// default General.
 pub fn load(root: &Path, config: &mut Config) -> Result<()> {
     let general = root.join(GENERAL);
     config.general = if general.join(SETUP_FILE).exists() { read_setup(&general)? } else { Config::default().general };
     config.games = setup_dirs(&root.join(SETUPS))?.iter().map(|dir| read_setup(dir)).collect::<Result<_>>()?;
     let shared = root.join(SHARED);
-    config.shared = Shared {
-        macros: read_items(&shared.join("macros"))?,
-        menus: read_items(&shared.join("menus"))?,
-        info: read_items(&shared.join("info"))?,
-        logs: read_items(&shared.join("logs"))?,
-    };
+    if shared.exists() {
+        let mut items = Game::new("Shared", Vec::new());
+        items.macros = read_items(&shared.join("macros"))?;
+        items.menus = read_items(&shared.join("menus"))?;
+        items.info = read_items(&shared.join("info"))?;
+        items.logs = read_items(&shared.join("logs"))?;
+        fold_in_shared(config, &items);
+    }
     Ok(())
 }
 
-/// Writes every setup and shared item under `root`, replacing what is there. The new tree is built
+/// Gives every setup its own copy of the old shared items it uses (followed through menus and
+/// macros), where it has none of that name. Those no setup uses go to General, renamed if General
+/// has one of that name.
+fn fold_in_shared(config: &mut Config, shared: &Game) {
+    let mut used = Vec::new();
+    for game in std::iter::once(&mut config.general).chain(&mut config.games) {
+        loop {
+            let missing: Vec<(ItemKind, String)> = crate::pack::game_references(game)
+                .into_iter()
+                .filter(|(kind, name)| !game.names(*kind).contains(&name.as_str()) && shared.names(*kind).contains(&name.as_str()))
+                .collect();
+            if missing.is_empty() {
+                break;
+            }
+            for (kind, name) in missing {
+                copy_item(game, shared, kind, &name, &name);
+                used.push((kind, name));
+            }
+        }
+    }
+    for kind in [ItemKind::Macro, ItemKind::Menu, ItemKind::Info, ItemKind::Log] {
+        for name in shared.names(kind) {
+            if !used.iter().any(|(k, n)| *k == kind && n == name) {
+                let new = free_name(name, |n| config.general.names(kind).contains(&n));
+                copy_item(&mut config.general, shared, kind, name, &new);
+            }
+        }
+    }
+}
+
+/// Copies the `kind` item `name` of `from` into `to`, as `new`.
+fn copy_item(to: &mut Game, from: &Game, kind: ItemKind, name: &str, new: &str) {
+    match kind {
+        ItemKind::Macro => to.macros.extend(from.macros.iter().find(|m| m.name == name).map(|m| Macro { name: new.into(), ..m.clone() })),
+        ItemKind::Menu => to.menus.extend(from.menus.iter().find(|m| m.name == name).map(|m| Menu { name: new.into(), ..m.clone() })),
+        ItemKind::Info => to.info.extend(from.info.iter().find(|o| o.name == name).map(|o| InfoOverlay { name: new.into(), ..o.clone() })),
+        ItemKind::Log => to.logs.extend(from.logs.iter().find(|o| o.name == name).map(|o| LogOverlay { name: new.into(), ..o.clone() })),
+        ItemKind::Layer => {}
+    }
+}
+
+/// Writes every setup under `root`, replacing what is there. The new tree is built
 /// beside the old one and then swapped in, so a save that fails part way leaves the old setups.
 pub fn save(root: &Path, config: &Config) -> Result<()> {
     let staging = root.join(".saving");
@@ -79,12 +123,7 @@ pub fn save(root: &Path, config: &Config) -> Result<()> {
     for (i, game) in config.games.iter().enumerate() {
         write_setup(&staging.join(SETUPS).join(numbered(i, &game.name)), game)?;
     }
-    let shared = staging.join(SHARED);
-    write_items(&shared.join("macros"), &config.shared.macros)?;
-    write_items(&shared.join("menus"), &config.shared.menus)?;
-    write_items(&shared.join("info"), &config.shared.info)?;
-    write_items(&shared.join("logs"), &config.shared.logs)?;
-    for part in [GENERAL, SETUPS, SHARED] {
+    for part in [GENERAL, SETUPS] {
         let target = root.join(part);
         if target.exists() {
             fs::remove_dir_all(&target).with_context(|| format!("replacing {}", target.display()))?;
@@ -92,6 +131,11 @@ pub fn save(root: &Path, config: &Config) -> Result<()> {
         fs::rename(staging.join(part), &target).with_context(|| format!("writing {}", target.display()))?;
     }
     fs::remove_dir_all(&staging)?;
+    // Folded into the setups when it was loaded.
+    let shared = root.join(SHARED);
+    if shared.exists() {
+        fs::remove_dir_all(&shared).with_context(|| format!("removing {}", shared.display()))?;
+    }
     Ok(())
 }
 
@@ -223,14 +267,13 @@ mod tests {
 
         // App settings stay in one file, with no setups in it.
         let app = fs::read_to_string(&path).unwrap();
-        assert!(!app.contains("[general") && !app.contains("[[setups") && !app.contains("[shared"));
+        assert!(!app.contains("[general") && !app.contains("[[setups"));
         // Each setup is a folder: setup.toml, then a subfolder per kind of item, numbered.
         assert!(dir.join("general/setup.toml").is_file());
         assert!(dir.join("general/profiles/001-Gamepad.toml").is_file());
         assert!(dir.join("setups/001-Doom/setup.toml").is_file());
         assert!(dir.join("setups/001-Doom/profiles/002-Desktop.toml").is_file());
         assert!(dir.join("setups/002-Hades/profiles/001-Gamepad.toml").is_file());
-        assert!(dir.join("shared/macros").is_dir());
 
         let loaded = Config::load_from(&path).unwrap();
         assert_eq!(loaded, config);
@@ -258,6 +301,38 @@ mod tests {
         Config::default().save_to(&path).unwrap();
         fs::remove_dir_all(dir.join("general")).unwrap();
         assert_eq!(Config::load_from(&path).unwrap().general, Config::default().general);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn old_shared_items_go_to_the_setups_that_use_them() {
+        use crate::config::{Button, ButtonAction, MacroStep, MenuItem, MenuKind, OverlayStyle};
+        let dir = scratch("shared");
+        let path = dir.join("config.toml");
+        let mut config = Config::default();
+        let mut doom = Game::new("Doom", vec![Profile::passthrough("Gamepad")]);
+        doom.profiles[0].set_button(Button::Select, ButtonAction::OpenMenu("Wheel".into()));
+        config.games.push(doom);
+        config.games.push(Game::new("Hades", vec![Profile::passthrough("Gamepad")]));
+        config.general.macros.push(Macro { name: "Spare".into(), steps: vec![] });
+        config.save_to(&path).unwrap();
+        // What an older version saved: a menu that plays a macro, and two unused macros.
+        let heal = ButtonAction::Macro { name: "Heal".into(), repeat: false };
+        let item = MenuItem { label: "Heal".into(), action: heal, button: None, weight: 1.0 };
+        let wheel = Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![item], cancel: None, style: OverlayStyle::default() };
+        let mac = |name: &str| Macro { name: name.into(), steps: vec![MacroStep::Wait(1)] };
+        write_items(&dir.join("shared/menus"), &[wheel]).unwrap();
+        write_items(&dir.join("shared/macros"), &[mac("Heal"), mac("Spare"), mac("Other")]).unwrap();
+
+        let loaded = Config::load_from(&path).unwrap();
+        let names = |g: &Game, kind| g.names(kind).iter().map(ToString::to_string).collect::<Vec<_>>();
+        assert_eq!(names(&loaded.games[0], ItemKind::Menu), ["Wheel"]);
+        assert_eq!(names(&loaded.games[0], ItemKind::Macro), ["Heal"], "followed through the menu");
+        assert!(names(&loaded.games[1], ItemKind::Macro).is_empty(), "Hades uses none");
+        assert_eq!(names(&loaded.general, ItemKind::Macro), ["Spare", "Spare (2)", "Other"], "unused ones go to General");
+        loaded.save_to(&path).unwrap();
+        assert!(!dir.join("shared").exists());
+        assert_eq!(Config::load_from(&path).unwrap(), loaded);
         let _ = fs::remove_dir_all(&dir);
     }
 

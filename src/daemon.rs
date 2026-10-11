@@ -368,7 +368,7 @@ struct GuideMenu {
 
 struct Daemon {
     config: Config,
-    /// What the active profile can use (its game's items, then shared ones).
+    /// What the active profile can use: its game's items.
     scope: Scope,
     sounds: sound::Sounds,
     kbm: VirtualKbm,

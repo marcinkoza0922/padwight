@@ -38,11 +38,11 @@ fn view_new_log_card<'a>() -> Element<'a, Message> {
 
 impl App {
     pub(super) fn logs(&self) -> &Vec<LogOverlay> {
-        if self.on_shared() { &self.config.shared.logs } else { &self.game().logs }
+        &self.game().logs
     }
 
     pub(super) fn logs_mut(&mut self) -> &mut Vec<LogOverlay> {
-        if self.on_shared() { &mut self.config.shared.logs } else { &mut self.game_mut().logs }
+        &mut self.game_mut().logs
     }
 
     /// The names of the shown log overlays, for name checks.
@@ -51,7 +51,7 @@ impl App {
     }
 
     pub(super) fn logs_have_problem(&self) -> bool {
-        logs_problem(self.logs(), None).is_some()
+        logs_problem(self.logs()).is_some()
     }
 
     pub(super) fn view_logs(&self) -> Element<'_, Message> {
@@ -136,7 +136,7 @@ impl App {
             "Shown",
             column![
                 checkbox(o.always)
-                    .label(if self.on_shared() { "Always, in every setup" } else { "Always, while this setup is active" })
+                    .label("Always, while this setup is active")
                     .on_toggle(move |a| e(&|o| o.always = a)),
                 text(if o.always {
                     "Stays on screen whenever the setup is active, so actions can't show it."

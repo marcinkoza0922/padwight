@@ -20,6 +20,6 @@ To make a rule quickly, focus the game and use **Recently focused windows** on t
 
 > **Tip:** automatic switching needs a desktop that reports which window has focus: KDE Plasma, GNOME, Hyprland, Sway, or a wlroots compositor such as labwc. See [Troubleshooting](troubleshooting.md).
 
-## Shared items
+## Reusing items
 
-The **Macros**, **Menus** and **Info overlays** tabs on General also hold shared items. Every profile of every setup can use them. Names only need to be unique within one setup.
+Each setup's macros, menus, info overlays and layers are its own, and names only need to be unique within one setup. To reuse one from another setup, click **Copy from another setup…** on its tab. The copy brings along anything the item uses.
