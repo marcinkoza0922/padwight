@@ -145,6 +145,7 @@ impl InputView {
             left_trigger: a(Axis::LeftTrigger),
             right_trigger: a(Axis::RightTrigger),
             gyro: self.gyro,
+            gyro_out: None,
         }
     }
 

@@ -21,8 +21,9 @@ use crate::config::{
 /// in-game menu looks; 10, menu sounds, radial arcs and corner rounding; 11, how each overlay moves;
 /// 12, the sounds of each overlay (replacing the menu sounds); 13, back paddles (their button
 /// names and the `back_paddles` feature); 14, overlay decorations (outlines, shadows, gradients,
-/// glows and text colors).
-pub const FORMAT: u32 = 14;
+/// glows and text colors); 15, gyro acceleration curves, axes, player and world space, the
+/// position mode, smoothing and pausing, and the touchpad's curve.
+pub const FORMAT: u32 = 15;
 pub const EXTENSION: &str = "padpack";
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

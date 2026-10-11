@@ -368,11 +368,8 @@ fn label(row: Row, config: &Config) -> String {
             format!("{name} stick speed: {:.0} px/s", speed.unwrap_or_default())
         }
         Row::GyroSensitivity => {
-            let sensitivity = profile.and_then(|p| match p.gyro.mode {
-                GyroMode::Mouse { sensitivity } => Some(sensitivity),
-                _ => None,
-            });
-            format!("Gyro sensitivity: {:.1} px/°", sensitivity.unwrap_or_default())
+            let sensitivity = profile.and_then(|p| p.gyro.sensitivity_label());
+            format!("Gyro sensitivity: {}", sensitivity.unwrap_or_default())
         }
         Row::InvertY => {
             let on = profile.is_some_and(inverted_y);

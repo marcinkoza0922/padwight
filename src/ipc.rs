@@ -247,6 +247,21 @@ pub struct InputSnapshot {
     /// Degrees/second pitch, yaw, roll, for controllers with a gyro.
     #[serde(default)]
     pub gyro: Option<[f32; 3]>,
+    /// What the gyro is doing under the active profile, while it is live.
+    #[serde(default)]
+    pub gyro_out: Option<GyroOut>,
+}
+
+/// The gyro's live output, for the settings page's pictures.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct GyroOut {
+    /// Turning speed (degrees/second) the acceleration curve reads.
+    pub speed: f32,
+    /// The turning sent on (degrees/second, positive = right/down), after the curve and the
+    /// axes' sensitivity, before the mode's own sensitivity.
+    pub aim: (f32, f32),
+    /// The virtual-pad stick deflection gyro sends, in the stick modes.
+    pub stick: Option<(f32, f32)>,
 }
 
 /// A runtime directory the host can see too, for files that the desktop or another instance

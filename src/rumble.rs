@@ -51,6 +51,30 @@ pub fn test(path: PathBuf) {
     });
 }
 
+/// Plays a short tick on the controller at `path` in the background, as gyro is switched on
+/// (one firm tick) or off (two light ones).
+pub fn tick(path: PathBuf, on: bool) {
+    thread::spawn(move || {
+        if let Err(e) = play_tick(&path, on) {
+            log!("rumble tick on {} failed: {e}", path.display());
+        }
+    });
+}
+
+const TICK: Duration = Duration::from_millis(40);
+
+fn play_tick(path: &PathBuf, on: bool) -> io::Result<()> {
+    let mut dev = Device::open(path)?;
+    let (strong, weak, times) = if on { (0x8000, 0, 1) } else { (0, 0x9000, 2) };
+    let data = FFEffectData { replay: FFReplay { length: TICK.as_millis() as u16, delay: 0 }, ..rumble(strong, weak) };
+    let mut effect = dev.upload_ff_effect(data)?;
+    for _ in 0..times {
+        effect.play(1)?;
+        thread::sleep(TICK * 2);
+    }
+    Ok(())
+}
+
 const PULSE: Duration = Duration::from_millis(300);
 const PAUSE: Duration = Duration::from_millis(150);
 

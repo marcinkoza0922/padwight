@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::{ButtonAction, MouseButton};
+use super::{ButtonAction, MouseButton, SpeedCurve};
 
 /// Default pointer speed: pixels the pointer moves when a finger crosses the whole pad.
 pub const DEFAULT_TOUCHPAD_SPEED: f32 = 1200.0;
@@ -13,8 +13,13 @@ pub enum TouchpadMotion {
     /// Finger movement does nothing. The pad is still taken from the desktop while the
     /// controller is managed, so the pointer doesn't move either.
     Off,
-    /// Finger movement moves the mouse pointer. `speed` is the pixels across the whole pad.
-    Mouse { speed: f32 },
+    /// Finger movement moves the mouse pointer. `speed` is the pixels across the whole pad;
+    /// `curve` scales it by how fast the finger moves, in pad widths/second.
+    Mouse {
+        speed: f32,
+        #[serde(default, skip_serializing_if = "SpeedCurve::is_flat")]
+        curve: SpeedCurve,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -29,7 +34,7 @@ impl Default for TouchpadConfig {
     /// Works as a laptop trackpad does, so the pad keeps serving the desktop pointer.
     fn default() -> Self {
         TouchpadConfig {
-            motion: TouchpadMotion::Mouse { speed: DEFAULT_TOUCHPAD_SPEED },
+            motion: TouchpadMotion::Mouse { speed: DEFAULT_TOUCHPAD_SPEED, curve: SpeedCurve::default() },
             click: ButtonAction::Mouse(MouseButton::Left),
         }
     }
@@ -68,7 +73,8 @@ mod tests {
         let off: TouchpadConfig = toml::from_str("motion = \"off\"").unwrap();
         assert_eq!(off.motion, TouchpadMotion::Off);
         let mouse: TouchpadConfig = toml::from_str("[motion.mouse]\nspeed = 800.0").unwrap();
-        assert_eq!(mouse.motion, TouchpadMotion::Mouse { speed: 800.0 });
+        assert_eq!(mouse.motion, TouchpadMotion::Mouse { speed: 800.0, curve: SpeedCurve::default() });
         assert_eq!(mouse.click, TouchpadConfig::default().click, "a missing click keeps the default");
+        assert!(!toml::to_string(&mouse).unwrap().contains("curve"));
     }
 }

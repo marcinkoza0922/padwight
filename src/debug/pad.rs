@@ -176,6 +176,7 @@ impl VirtualPad {
             left_trigger: self.left_trigger,
             right_trigger: self.right_trigger,
             gyro: self.gyro,
+            gyro_out: None,
         }
     }
 }

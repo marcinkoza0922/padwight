@@ -8,7 +8,7 @@
 use iced::widget::{Column, column, row};
 
 use super::*;
-use crate::config::{FlickVertical, MouseResponse};
+use crate::config::{CurvePreset, FlickVertical, MouseResponse};
 
 /// A stick's mode in a few words.
 pub(super) fn stick_summary(cfg: &StickConfig) -> String {
@@ -85,7 +85,7 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
 
     let mut rows = column![header(s, cfg, with)].spacing(8);
     match &cfg.action {
-        StickAction::Mouse { .. } => rows = mouse_rows(rows, cfg, with),
+        StickAction::Mouse { .. } => rows = mouse_rows(rows, s, cfg, with),
         StickAction::Scroll { speed, invert_y } => {
             let invert_y = *invert_y;
             rows = rows.push(stick_row("Speed", slider_editor(1.0..=60.0, *speed, 1.0, "notches/s", move |v| with(StickAction::Scroll { speed: v, invert_y }))));
@@ -350,12 +350,21 @@ fn flick_advanced<'a>(rows: Column<'a, Message>, cfg: &StickConfig, open: bool, 
     rows.push(advanced_fold("Advanced flick", HOLDS, s, Some(advanced)))
 }
 
-/// A mouse stick's speed and acceleration.
-fn mouse_rows<'a>(rows: Column<'a, Message>, cfg: &StickConfig, with: impl Fn(StickAction) -> Message + Copy + 'a) -> Column<'a, Message> {
+/// A mouse stick's response preset, speed and acceleration.
+fn mouse_rows<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a StickConfig, with: impl Fn(StickAction) -> Message + Copy + 'a) -> Column<'a, Message> {
     let StickAction::Mouse { speed, response, invert_y } = cfg.action else {
         return rows;
     };
-    rows.push(stick_row("Speed", slider_editor(100.0..=4000.0, speed, 50.0, "px/s", move |v| with(StickAction::Mouse { speed: v, response, invert_y }))))
+    // A preset sets the curve too, which is the stick's, not the action's.
+    let pick = move |p: CurvePreset| {
+        let mut c = cfg.clone();
+        if let Some((curve, response)) = p.stick_response(response) {
+            (c.curve, c.action) = (curve, StickAction::Mouse { speed, response, invert_y });
+        }
+        Message::SetStick(s, c)
+    };
+    rows.push(stick_row("Response preset", curve_preset_picker(CurvePreset::of_stick(cfg.curve, &response), pick)))
+        .push(stick_row("Speed", slider_editor(100.0..=4000.0, speed, 50.0, "px/s", move |v| with(StickAction::Mouse { speed: v, response, invert_y }))))
         .push(stick_row(
             "Acceleration",
             slider_editor(0.0..=100.0, response.accel * 100.0, 5.0, "%", move |v| {
