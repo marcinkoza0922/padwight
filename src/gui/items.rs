@@ -995,6 +995,7 @@ impl App {
         rows.push(labeled("", disclosure("Appearance", appearance_open, Message::ToggleInfoAppearance(i))));
         if appearance_open {
             rows.push(style_editor(&o.style, Rc::new(move |s| Message::SetInfoStyle(i, s))));
+            rows.extend(self.spot_note(o.style.position, false));
         }
         let sample = InfoOverlay { style: preview_style(&o.style), ..o.clone() };
         let view = crate::info::resolve(&sample, &crate::info::Live::sample(self.config.info_glyphs).with_layout(self.nintendo_layout()));
@@ -1156,6 +1157,7 @@ impl App {
         rows.push(labeled("", disclosure("Appearance", appearance_open, Message::ToggleAppearance(Some(mi)))));
         if appearance_open {
             rows.push(style_editor(&menu.style, Rc::new(move |s| Message::SetMenuStyle(mi, s))));
+            rows.extend(self.spot_note(menu.style.position, true));
         }
         // The preview sits under the Appearance editor while that's open, to show each change,
         // and after the items otherwise, so a big menu doesn't push them out of sight.

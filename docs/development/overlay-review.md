@@ -201,7 +201,7 @@ Tick an item when it's done and merged.
 - [x] 38. **Unwatched menus never time out.** A menu opened from the command line or an analog
   zone stays up (holding the controller) until B. Media and the offer close themselves when idle;
   menus could do the same.
-- [ ] 39. **Overlays can cover each other.** Info and log overlays at the same spot stack up, but
+- [x] 39. **Overlays can cover each other.** Info and log overlays at the same spot stack up, but
   the keyboard or a menu is drawn on top of whatever shares its position, and toasts go at the
   top regardless. Panels at the same spot could stack instead of overlapping, or at least the
   editor's preview could warn.

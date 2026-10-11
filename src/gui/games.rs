@@ -511,6 +511,7 @@ impl App {
         if appearance_open {
             let style = &self.config.keyboard_style;
             rows.push(style_editor(style, Rc::new(Message::SetKeyboardStyle)));
+            rows.extend(self.spot_note(style.position, true));
             let board = if self.config.full_keyboard { crate::keyboard::Board::Full } else { crate::keyboard::Board::Basic };
             let sample = crate::overlay::KeyboardView {
                 board,
@@ -541,6 +542,7 @@ impl App {
         if self.media_appearance {
             let style = &self.config.media_style;
             rows.push(style_editor(style, Rc::new(Message::SetMediaStyle)));
+            rows.extend(self.spot_note(style.position, true));
             let sample = crate::media::MediaView::sample(preview_style(style));
             rows.push(preview(crate::overlay::draw::media_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         }
@@ -560,6 +562,7 @@ impl App {
         if self.menu_appearance {
             let style = &self.config.menu_style;
             rows.push(style_editor(style, Rc::new(Message::SetInGameMenuStyle)));
+            rows.extend(self.spot_note(style.position, true));
             let sample = crate::system_menu::main_page(preview_style(style), 0);
             rows.push(preview(crate::overlay::draw::menu_panel(&sample, self.preview_font(), self.menu_look(), &crate::overlay::fit::Fit::contents())));
         }
@@ -590,6 +593,7 @@ impl App {
         if self.numpad_appearance {
             let style = &self.config.numpad_style;
             rows.push(style_editor(style, Rc::new(Message::SetNumpadStyle)));
+            rows.extend(self.spot_note(style.position, true));
             let sample = crate::overlay::KeyboardView {
                 board: crate::keyboard::Board::Numpad,
                 style: preview_style(style),
