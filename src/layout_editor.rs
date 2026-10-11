@@ -512,6 +512,7 @@ impl LayoutEditor {
             hint: hint.into(),
             style,
             touch: false,
+            aim: None,
         }
     }
 }

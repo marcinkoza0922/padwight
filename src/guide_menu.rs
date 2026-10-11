@@ -76,6 +76,7 @@ pub fn view(steam: bool, cursor: usize, profile: &str, style: OverlayStyle) -> M
         hint: "{south} choose · {east} close".into(),
         style,
         touch: false,
+        aim: None,
     }
 }
 

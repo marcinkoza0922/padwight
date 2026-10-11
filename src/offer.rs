@@ -151,6 +151,7 @@ impl OfferSession {
                 hint: "{up} {down} choose · {south} add · {east} back".into(),
                 style: style.clone(),
                 touch: false,
+                aim: None,
             })
         };
         match self.stage {

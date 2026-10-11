@@ -755,6 +755,7 @@ mod ui {
                 hint: String::new(),
                 style: Default::default(),
                 touch: false,
+                aim: None,
             };
             OverlayFrame {
                 active: Some(OverlayView::Menu(view)),

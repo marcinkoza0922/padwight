@@ -16,6 +16,8 @@ use crate::{
 
 /// Stick deflection that aims a radial menu.
 const STICK_PRESS: f32 = crate::nav::STICK_PRESS;
+/// Stick deflection from which a radial menu shows where the stick points.
+const AIM_SHOWN: f32 = 0.3;
 /// A trigger opener counts as let go below this.
 const TRIGGER_RELEASE: f32 = 0.3;
 /// Trigger pull that steps a trigger-driven carousel.
@@ -42,6 +44,10 @@ pub struct MenuView {
     /// a fixed strip rather than turning under the finger.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub touch: bool,
+    /// Where a radial menu's stick points, in degrees clockwise from up (rounded to a few), or
+    /// `None` while it rests in the middle.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aim: Option<f32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -320,6 +326,7 @@ impl MenuSession {
             hint,
             style: menu.style.clone(),
             touch: false,
+            aim: self.live_aim(menu),
         })
     }
 
@@ -496,6 +503,15 @@ impl MenuSession {
             Some(None) => self.stepping.stop(),
             None => {}
         }
+    }
+
+    /// Where a radial menu's stick points right now, for the overlay to show, in steps of a few
+    /// degrees so small wobbles don't redraw it.
+    fn live_aim(&self, menu: &Menu) -> Option<f32> {
+        let MenuKind::Radial { stick, .. } = menu.kind else { return None };
+        let (ax, ay) = stick_axes(stick);
+        let (x, y) = (self.axis(ax), self.axis(ay));
+        (x.hypot(y) >= AIM_SHOWN).then(|| (x.atan2(-y).to_degrees().rem_euclid(360.0) / 3.0).round() * 3.0)
     }
 
     /// Points a radial menu's selection where the stick is aimed (first item at the top,

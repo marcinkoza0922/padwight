@@ -372,3 +372,18 @@ fn missing_or_empty_menus_do_not_open() {
     assert!(MenuSession::open(&menus, "Empty", Opener::default()).is_none());
     assert!(MenuSession::open(&menus, "Nope", Opener::default()).is_none());
 }
+
+#[test]
+fn a_radial_menu_shows_where_its_stick_points() {
+    let menus = [menu("W", MenuKind::Radial { stick: Stick::Right, boxes: false }, numbers(4)), menu("L", MenuKind::List, numbers(2))];
+    let mut s = MenuSession::open(&menus, "W", held_by(Button::LeftBumper)).unwrap();
+    let now = Instant::now();
+    assert_eq!(s.view(&menus).unwrap().aim, None, "resting in the middle");
+    s.handle(&menus, InputEvent::Axis(Axis::RightX, 0.5), now);
+    assert_eq!(s.view(&menus).unwrap().aim, Some(90.0), "right, before it's far enough to choose");
+    s.handle(&menus, InputEvent::Axis(Axis::RightY, 0.5), now);
+    assert_eq!(s.view(&menus).unwrap().aim, Some(135.0));
+    let mut l = MenuSession::open(&menus, "L", held_by(Button::LeftBumper)).unwrap();
+    l.handle(&menus, InputEvent::Axis(Axis::RightX, 0.9), now);
+    assert_eq!(l.view(&menus).unwrap().aim, None, "only radial menus have an aim");
+}

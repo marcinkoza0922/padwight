@@ -351,6 +351,7 @@ impl SystemMenu {
                 hint: "{south} choose · {east} keep editing".into(),
                 style,
                 touch: false,
+                aim: None,
             },
             Screen::Quick => MenuView {
                 title: "Quick Settings".into(),
@@ -362,6 +363,7 @@ impl SystemMenu {
                 hint: "{left} {right} or {south} change · {east} back".into(),
                 style,
                 touch: false,
+                aim: None,
             },
         }
     }
@@ -557,6 +559,7 @@ pub fn main_page(style: OverlayStyle, cursor: usize) -> MenuView {
         hint: "{south} choose · {east} close".into(),
         style,
         touch: false,
+        aim: None,
     }
 }
 
