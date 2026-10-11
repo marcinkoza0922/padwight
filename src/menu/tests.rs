@@ -141,7 +141,7 @@ fn list_moves_with_dpad_and_stick_and_wraps() {
     assert!(s.tick(&menus, now + REPEAT_DELAY));
     assert_eq!(s.view(&menus).unwrap().selected, Some(1));
     s.handle(&menus, InputEvent::Axis(Axis::LeftY, 0.0), now);
-    assert_eq!(s.next_deadline(), None);
+    assert_eq!(s.next_deadline(), Some(now + IDLE_CLOSE), "no more repeats, only the idle close");
     assert_eq!(chose(press(&mut s, &menus, Button::South)).as_deref(), Some("KEY_2"));
     let mut s = MenuSession::open(&menus, "Pause", Opener::default()).unwrap();
     assert_eq!(press(&mut s, &menus, Button::East), Some(MenuOutcome::Close));
@@ -178,7 +178,7 @@ fn grid_moves_in_four_directions_and_wraps_within_rows_and_columns() {
     assert_eq!(at(&s), Some(5));
     s.handle(&menus, InputEvent::Axis(Axis::LeftY, 0.0), now);
     s.handle(&menus, InputEvent::Axis(Axis::LeftX, 0.0), now);
-    assert_eq!(s.next_deadline(), None);
+    assert_eq!(s.next_deadline(), Some(now + IDLE_CLOSE), "no more repeats, only the idle close");
     assert_eq!(chose(press(&mut s, &menus, Button::South)).as_deref(), Some("KEY_6"));
     assert!(s.view(&menus).unwrap().hint.contains("{dpad}"));
 }
@@ -386,4 +386,16 @@ fn a_radial_menu_shows_where_its_stick_points() {
     let mut l = MenuSession::open(&menus, "L", held_by(Button::LeftBumper)).unwrap();
     l.handle(&menus, InputEvent::Axis(Axis::RightX, 0.9), now);
     assert_eq!(l.view(&menus).unwrap().aim, None, "only radial menus have an aim");
+}
+
+#[test]
+fn a_menu_nothing_holds_up_closes_when_left_alone() {
+    let menus = [menu("L", MenuKind::List, numbers(2))];
+    let now = Instant::now();
+    let unwatched = MenuSession::open(&menus, "L", Opener::default()).unwrap();
+    assert!(!unwatched.expired(now));
+    assert!(unwatched.expired(now + IDLE_CLOSE + Duration::from_secs(1)));
+    assert!(unwatched.next_deadline().is_some());
+    let held = MenuSession::open(&menus, "L", held_by(Button::LeftBumper)).unwrap();
+    assert!(!held.expired(now + IDLE_CLOSE * 10), "a held menu stays while it's held");
 }

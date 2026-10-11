@@ -195,10 +195,10 @@ Tick an item when it's done and merged.
 - [x] 36. **Quick Settings number rows step by only 10%.** Repeat (see 19), plus bigger steps
   with a bumper held, would make big changes practical. Showing the saved value next to the
   current one ("1200 px/s, was 1000") would also help.
-- [ ] 37. **Deleting in Edit Controls is a single A press.** "Delete combo" and the macro delete
+- [x] 37. **Deleting in Edit Controls is a single A press.** "Delete combo" and the macro delete
   row act at once. Discard on exit can undo it, but only by throwing away every other change too.
   Ask for a second press ("Press A again to delete").
-- [ ] 38. **Unwatched menus never time out.** A menu opened from the command line or an analog
+- [x] 38. **Unwatched menus never time out.** A menu opened from the command line or an analog
   zone stays up (holding the controller) until B. Media and the offer close themselves when idle;
   menus could do the same.
 - [ ] 39. **Overlays can cover each other.** Info and log overlays at the same spot stack up, but

@@ -3,7 +3,7 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 use serde::{Deserialize, Serialize};
@@ -16,6 +16,9 @@ use crate::{
 
 /// Stick deflection that aims a radial menu.
 const STICK_PRESS: f32 = crate::nav::STICK_PRESS;
+/// A menu nothing holds up (see [`Mode::Unwatched`]) closes after this long without input, so
+/// it can't keep the controller forever.
+const IDLE_CLOSE: Duration = Duration::from_secs(30);
 /// Stick deflection from which a radial menu shows where the stick points.
 const AIM_SHOWN: f32 = 0.3;
 /// A trigger opener counts as let go below this.
@@ -139,6 +142,8 @@ pub struct MenuSession {
     trigger_step: Option<Trigger>,
     /// How many items have been chosen so far, shown to the overlay so it can animate the pick.
     picks: u32,
+    /// The last input, for closing an unwatched menu left alone.
+    last_input: Instant,
 }
 
 fn find(menus: &[Menu], name: &str) -> Option<usize> {
@@ -204,6 +209,7 @@ impl MenuSession {
             stick_step: crate::nav::StickDir::default(),
             trigger_step: None,
             picks: 0,
+            last_input: Instant::now(),
         };
         // Until `prime` says otherwise, the opener is taken to be held (it just fired).
         for b in session.opener.buttons.clone() {
@@ -345,6 +351,7 @@ impl MenuSession {
     }
 
     fn act(&mut self, menus: &[Menu], ev: InputEvent, now: Instant) -> Option<MenuOutcome> {
+        self.last_input = now;
         let menu = self.top(menus)?.clone();
         let mut fresh_press = false;
         match ev {
@@ -596,7 +603,13 @@ impl MenuSession {
     }
 
     pub fn next_deadline(&self) -> Option<Instant> {
-        self.stepping.deadline()
+        let idle = (self.mode == Mode::Unwatched).then_some(self.last_input + IDLE_CLOSE);
+        self.stepping.deadline().into_iter().chain(idle).min()
+    }
+
+    /// Whether an unwatched menu has been left alone long enough to close.
+    pub fn expired(&self, now: Instant) -> bool {
+        self.mode == Mode::Unwatched && now >= self.last_input + IDLE_CLOSE
     }
 }
 

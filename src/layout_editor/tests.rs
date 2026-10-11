@@ -99,9 +99,12 @@ fn a_combo_is_added_given_buttons_and_an_action_and_then_deleted() {
     editor.cursor = shot;
     editor.choose(&mut config);
     assert_eq!(config.active().unwrap().combos[0].action, ButtonAction::Screenshot);
-    // Delete.
+    // Delete, which takes a second press.
     editor.page = Page::Combo(0);
     editor.cursor = inputs.len() + 1;
+    assert_eq!(editor.choose(&mut config), EditStep::Stay);
+    assert_eq!(combos(&config).len(), 1, "one press only asks");
+    assert!(editor.view(&config, &[]).items[editor.cursor].label.contains("again to delete"));
     editor.choose(&mut config);
     assert!(combos(&config).is_empty());
 }

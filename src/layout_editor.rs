@@ -105,6 +105,8 @@ pub struct LayoutEditor {
     history: Vec<(Page, usize)>,
     /// The controller has back paddles, so they can be set too.
     paddles: bool,
+    /// A delete row was chosen once: choosing it again deletes. Any move disarms it.
+    armed: bool,
 }
 
 impl Default for LayoutEditor {
@@ -115,7 +117,7 @@ impl Default for LayoutEditor {
 
 impl LayoutEditor {
     pub fn new() -> Self {
-        LayoutEditor { page: Page::Top, cursor: 0, history: Vec::new(), paddles: false }
+        LayoutEditor { page: Page::Top, cursor: 0, history: Vec::new(), paddles: false, armed: false }
     }
 
     /// This editor, for a controller with back paddles (or without).
@@ -133,6 +135,7 @@ impl LayoutEditor {
     /// Moves the cursor on the current page: (x, y), y positive down. Pages in two columns move
     /// between them with x.
     pub fn move_cursor(&mut self, step: (i32, i32), config: &Config) {
+        self.armed = false;
         self.cursor = crate::menu::list_step(self.cursor, self.rows(config), step);
     }
 
@@ -169,6 +172,9 @@ impl LayoutEditor {
 
     /// Chooses the highlighted row.
     pub fn choose(&mut self, config: &mut Config) -> EditStep {
+        if self.first_delete_press(config) {
+            return EditStep::Stay;
+        }
         match self.page {
             Page::Top => self.open_top_row(),
             Page::Action(slot) => self.choose_action(slot, config),
@@ -230,7 +236,36 @@ impl LayoutEditor {
 
     /// Changes the highlighted number by one step (`dir` is -1 or 1). Pages without numbers do
     /// nothing.
+    /// Deleting takes a second press, so a stray A doesn't lose a combo, zone or macro: true
+    /// for the first press on a delete row, which only arms it.
+    fn first_delete_press(&mut self, config: &Config) -> bool {
+        let armed = std::mem::take(&mut self.armed);
+        self.armed = !armed && self.on_delete_row(config);
+        self.armed
+    }
+
+    /// The page's rows, with an armed delete row asking for its second press.
+    fn armed_rows(&self, mut items: Vec<ItemView>) -> Vec<ItemView> {
+        if self.armed
+            && let Some(row) = items.get_mut(self.cursor)
+        {
+            row.label = "Press {south} again to delete".into();
+        }
+        items
+    }
+
+    /// Whether the cursor is on a row that deletes something.
+    fn on_delete_row(&self, config: &Config) -> bool {
+        match self.page {
+            Page::Macro(i) => macros::is_delete_row(config, i, self.cursor),
+            Page::Combo(_) => self.cursor == self.inputs().len() + 1,
+            Page::Zone(..) => self.cursor == ZONE_DELETE,
+            _ => false,
+        }
+    }
+
     pub fn adjust(&mut self, dir: i32, config: &mut Config) -> EditStep {
+        self.armed = false;
         match self.page {
             Page::Stick(stick) => values::stick_adjust(stick, self.cursor, dir, config),
             Page::Trigger(trigger) => values::trigger_adjust(trigger, self.cursor, dir, config),
@@ -242,6 +277,7 @@ impl LayoutEditor {
 
     /// Goes back one page. From the top page it leaves the editor.
     pub fn back(&mut self) -> EditStep {
+        self.armed = false;
         if self.page == Page::Top || !self.pop() {
             self.page = Page::Top;
             self.cursor = 0;
@@ -505,7 +541,7 @@ impl LayoutEditor {
         MenuView {
             title: page_title(self.page, config),
             kind: MenuKind::List,
-            items,
+            items: self.armed_rows(items),
             selected: Some(self.cursor),
             picks: 0,
             crumbs,

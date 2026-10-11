@@ -765,6 +765,7 @@ impl Daemon {
                 (keyboard_actions, changed) = k.tick(now);
                 repeated_step = (k.cursor() != before).then_some(overlay);
             }
+            Some(Active::Menu { session, .. }) if session.expired(now) => return self.close_overlay(),
             Some(Active::Menu { session, .. }) if session.next_deadline().is_some_and(|d| d <= now) => {
                 let before = session.cursor();
                 changed = session.tick(&self.scope.menus, now);
