@@ -33,6 +33,7 @@ mod record;
 mod rumble;
 mod style;
 mod layout_editor;
+mod snapshot;
 mod sound;
 mod system_menu;
 mod touchpad_widget;

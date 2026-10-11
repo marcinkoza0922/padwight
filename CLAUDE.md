@@ -7,6 +7,8 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
 - Check: `cargo check --all-targets --message-format=short 2>&1 | head -40`
 - Lint: `cargo clippy --all-targets --message-format=short`
 - Test: `RUST_BACKTRACE=0 cargo nextest run --profile agent --hide-progress-bar --cargo-quiet [filter]`
+- Overlay screenshots, no display needed: `cargo run -q -- debug overlay all glyphs` (PNGs in
+  `screenshots/overlay/`; `debug overlay list` names the scenes, `live` captures a running daemon's overlay)
 - Long files: `scripts/long-files.sh` (lists files over 400 lines; split them when you work in them)
 
 Filter tests to the module you touched (e.g. `engine::`) unless the change is broad.

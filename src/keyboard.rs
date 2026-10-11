@@ -197,7 +197,7 @@ pub fn label(code: &str) -> String {
 }
 
 /// Every key the layouts draw, spacers left out.
-fn drawn_keys() -> impl Iterator<Item = &'static Key> {
+pub fn drawn_keys() -> impl Iterator<Item = &'static Key> {
     MAIN.iter().chain(NAV.iter()).chain(NUMPAD.iter()).chain(PAD.iter()).flat_map(|r| r.iter()).chain(MEDIA).filter(|k| !k.code.is_empty())
 }
 
