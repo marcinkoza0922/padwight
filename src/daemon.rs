@@ -458,6 +458,8 @@ struct Daemon {
     last_frame: Option<OverlayFrame>,
     /// The Guide overlay's menu while the overlay is up.
     guide_menu: Option<GuideMenu>,
+    /// Menu items picked lately, which the Guide menu offers again (newest last).
+    recent_picks: Vec<crate::guide_menu::Recent>,
     /// When shown info overlays with live values next refresh.
     info_refresh: Option<Instant>,
     /// When an info overlay that hides after a while next needs redrawing (fading or gone).
@@ -516,6 +518,62 @@ fn log_path() -> PathBuf {
     dirs::state_dir().unwrap_or_else(std::env::temp_dir).join("padwight").join("daemon.log")
 }
 
+impl Daemon {
+    fn new(config: Config, kbm: VirtualKbm, injection: inject::Injection, tx: Sender<Msg>) -> Self {
+        Daemon {
+            scope: config.scope(),
+            sounds: sound::Sounds::start(),
+            config,
+            kbm,
+            devices: HashMap::new(),
+            next_id: 0,
+            injection,
+            identity_override: None,
+            skipped: HashSet::new(),
+            gamepads: HashMap::new(),
+            motion_nodes: HashMap::new(),
+            touch_nodes: HashMap::new(),
+            motion_denied: HashMap::new(),
+            watchers: Vec::new(),
+            feed_watchers: Vec::new(),
+            activity: activity::Activity::default(),
+            last_active: None,
+            last_draw: Instant::now(),
+            focus_backend: FocusBackend::ProcessScan,
+            focused: None,
+            recent_windows: Vec::new(),
+            scan_target: None,
+            active: None,
+            driving: Driving::default(),
+            quit_hold: None,
+            recording: None,
+            recording_starting: false,
+            offers: Offers::default(),
+            pads: PadWatch::default(),
+            recording_target: None,
+            layer_started: HashMap::new(),
+            overlay_watchers: Vec::new(),
+            last_frame: None,
+            guide_menu: None,
+            recent_picks: Vec::new(),
+            info_refresh: None,
+            info_fade: None,
+            info_timers: crate::info::Timers::default(),
+            toast: None,
+            log_timers: crate::info::Timers::default(),
+            log_redraw: None,
+            shows_input: false,
+            launches: HashMap::new(),
+            sampler: crate::info::Sampler::default(),
+            overlay_started: None,
+            overlay_process: None,
+            settings_process: None,
+            tray: None,
+            tx,
+        }
+    }
+}
+
 /// Runs the service. With `debug`, controllers can also be injected over IPC (`padwight debug`).
 pub fn run(debug: bool) -> Result<()> {
     let config = Config::load()?;
@@ -524,56 +582,7 @@ pub fn run(debug: bool) -> Result<()> {
     serve_ipc(tx.clone())?;
 
     let kbm = VirtualKbm::new().context("creating virtual keyboard/mouse (do you have write access to /dev/uinput?)")?;
-    let mut daemon = Daemon {
-        scope: config.scope(),
-        sounds: sound::Sounds::start(),
-        config,
-        kbm,
-        devices: HashMap::new(),
-        next_id: 0,
-        injection: inject::Injection::new(debug)?,
-        identity_override: None,
-        skipped: HashSet::new(),
-        gamepads: HashMap::new(),
-        motion_nodes: HashMap::new(),
-        touch_nodes: HashMap::new(),
-        motion_denied: HashMap::new(),
-        watchers: Vec::new(),
-        feed_watchers: Vec::new(),
-        activity: activity::Activity::default(),
-        last_active: None,
-        last_draw: Instant::now(),
-        focus_backend: FocusBackend::ProcessScan,
-        focused: None,
-        recent_windows: Vec::new(),
-        scan_target: None,
-        active: None,
-        driving: Driving::default(),
-        quit_hold: None,
-        recording: None,
-        recording_starting: false,
-        offers: Offers::default(),
-        pads: PadWatch::default(),
-        recording_target: None,
-        layer_started: HashMap::new(),
-        overlay_watchers: Vec::new(),
-        last_frame: None,
-        guide_menu: None,
-        info_refresh: None,
-        info_fade: None,
-        info_timers: crate::info::Timers::default(),
-        toast: None,
-        log_timers: crate::info::Timers::default(),
-        log_redraw: None,
-        shows_input: false,
-        launches: HashMap::new(),
-        sampler: crate::info::Sampler::default(),
-        overlay_started: None,
-        overlay_process: None,
-        settings_process: None,
-        tray: None,
-        tx,
-    };
+    let mut daemon = Daemon::new(config, kbm, inject::Injection::new(debug)?, tx);
     log!("padwight daemon started, socket at {}", ipc::socket_path().display());
     daemon.start_services();
     daemon.scan();
@@ -1254,7 +1263,7 @@ impl Daemon {
                 Some(menu) => {
                     let profile = self.config.active().map(|p| p.name.as_str()).unwrap_or_default();
                     let style = self.config.active_menu_style().clone();
-                    Some(OverlayView::Menu(crate::guide_menu::view(menu.steam, menu.cursor, profile, style)))
+                    Some(OverlayView::Menu(crate::guide_menu::view(menu.steam, menu.cursor, profile, style, &self.recent_picks)))
                 }
                 None => self.touch_menu_view(),
             },
@@ -1492,7 +1501,7 @@ impl Daemon {
         use crate::config::Button;
         for &key in keys {
             let Some(menu) = self.guide_menu.as_mut() else { return };
-            let len = crate::guide_menu::items(menu.steam).len();
+            let len = crate::guide_menu::items(menu.steam, self.recent_picks.len()).len();
             match key {
                 Button::DpadUp | Button::LeftStickUp => menu.cursor = (menu.cursor + len - 1) % len,
                 Button::DpadDown | Button::LeftStickDown => menu.cursor = (menu.cursor + 1) % len,
@@ -1503,7 +1512,7 @@ impl Daemon {
                     menu.page = (menu.page + 1).min(pages - 1);
                 }
                 Button::South => {
-                    let item = crate::guide_menu::items(menu.steam)[menu.cursor];
+                    let item = crate::guide_menu::items(menu.steam, self.recent_picks.len())[menu.cursor];
                     self.guide_choose(device, item);
                 }
                 Button::East => self.guide_close(device),
@@ -1512,6 +1521,13 @@ impl Daemon {
         }
         // The cursor is part of the drawn frame, so the overlay has to be sent again to move it.
         self.broadcast_overlay();
+    }
+
+    /// Keeps a menu item just picked among the recent ones the Guide menu offers again.
+    fn remember_pick(&mut self, menu: &str, item: usize, action: &crate::config::ButtonAction) {
+        let label = self.scope.menus.iter().find(|m| m.name == menu).and_then(|m| m.items.get(item)).map_or_else(|| action.summary(), |i| i.label.clone());
+        let pick = crate::guide_menu::Recent { menu: menu.to_string(), item, label, action: action.clone() };
+        crate::guide_menu::remember(&mut self.recent_picks, pick);
     }
 
     /// Runs a Guide menu item. The overlay goes away first, except for Quick Settings and Edit Controls, which open the Guide + Start menu on their page.
@@ -1541,6 +1557,12 @@ impl Daemon {
                         }
                     }
                     _ => self.send_steam_overlay(device),
+                }
+            }
+            Item::Recent(i) => {
+                self.guide_close(device);
+                if let Some(pick) = self.recent_picks.get(i).cloned() {
+                    self.run_menu_item(device, &pick.menu, pick.item, &pick.action);
                 }
             }
             Item::MouseMode => {
@@ -2317,6 +2339,35 @@ impl Daemon {
         true
     }
 
+    /// Runs one event on the open menu, and the item it chooses. `true` when the menu is no
+    /// longer up.
+    fn menu_input(&mut self, id: u64, ev: InputEvent, now: Instant) -> bool {
+        let Some(Active::Menu { session, device }) = &mut self.active else { return true };
+        let device = *device;
+        let before = session.cursor();
+        let outcome = session.handle(&self.scope.menus, ev, now);
+        let picked = matches!(outcome, Some(MenuOutcome::Choose { .. }));
+        let moved = outcome.is_none() && session.cursor() != before;
+        self.overlay_sound(sound::SoundOverlay::Menu, sound::Feedback::of(picked, moved));
+        match outcome {
+            Some(MenuOutcome::Choose { menu, item, action, close }) => {
+                self.log_menu_choice(id, ev, &action);
+                self.remember_pick(&menu, item, &action);
+                if close {
+                    self.close_overlay();
+                }
+                // Otherwise the menu stays up for more picks, unless the item put it away.
+                self.run_menu_item(device, &menu, item, &action);
+                !matches!(self.active, Some(Active::Menu { .. }))
+            }
+            Some(MenuOutcome::Close) => {
+                self.close_overlay();
+                true
+            }
+            None => false,
+        }
+    }
+
     /// While the overlay shows something, controller input drives it instead of the mappings.
     /// (Every way out redraws, so the input log's view of it shows too.)
     fn overlay_input(&mut self, id: u64, events: Vec<InputEvent>) {
@@ -2340,29 +2391,9 @@ impl Daemon {
             }
             match &mut self.active {
                 Some(Active::Keyboard(_)) => self.keyboard_input(id, ev, now),
-                Some(Active::Menu { session, device }) => {
-                    let device = *device;
-                    let before = session.cursor();
-                    let outcome = session.handle(&self.scope.menus, ev, now);
-                    let picked = matches!(outcome, Some(MenuOutcome::Choose { .. }));
-                    let moved = outcome.is_none() && session.cursor() != before;
-                    self.overlay_sound(sound::SoundOverlay::Menu, sound::Feedback::of(picked, moved));
-                    match outcome {
-                        Some(MenuOutcome::Choose { menu, item, action, close }) => {
-                            self.log_menu_choice(id, ev, &action);
-                            if close {
-                                self.close_overlay();
-                                self.run_menu_item(device, &menu, item, &action);
-                                return;
-                            }
-                            // The menu stays up for more picks.
-                            self.run_menu_item(device, &menu, item, &action);
-                            if !matches!(self.active, Some(Active::Menu { .. })) {
-                                return;
-                            }
-                        }
-                        Some(MenuOutcome::Close) => return self.close_overlay(),
-                        None => {}
+                Some(Active::Menu { .. }) => {
+                    if self.menu_input(id, ev, now) {
+                        return;
                     }
                 }
                 Some(Active::Settings(..)) => {
