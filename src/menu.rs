@@ -304,10 +304,12 @@ impl MenuSession {
         let cancel = crate::info::button_hint(menu.cancel_button());
         let deep = self.stack.len() > 1;
         let opener = self.opener_label();
+        // A quick-action menu closes as it picks, so there's nothing to pin it for.
+        let pin = if fires_at_once(menu) { "" } else { " · {r3} pin" };
         let close = match (self.mode, radial) {
-            (Mode::Held, true) => format!("let go to choose · {cancel} cancel · {{r3}} pin"),
-            (Mode::Held, false) if deep => format!("{cancel} back · let go to close · {{r3}} pin"),
-            (Mode::Held, false) => format!("let go or {cancel} to close · {{r3}} pin"),
+            (Mode::Held, true) => format!("let go to choose · {cancel} cancel{pin}"),
+            (Mode::Held, false) if deep => format!("{cancel} back · let go to close{pin}"),
+            (Mode::Held, false) => format!("let go or {cancel} to close{pin}"),
             (Mode::Toggled, true) => format!("{opener} again to choose · {cancel} cancel"),
             (Mode::Toggled, false) if deep => format!("{cancel} back · {opener} again to close"),
             (Mode::Toggled, false) => format!("{opener} again or {cancel} to close"),
@@ -408,7 +410,7 @@ impl MenuSession {
     fn button_pressed(&mut self, menus: &[Menu], menu: &Menu, b: Button, now: Instant) -> Option<MenuOutcome> {
         // R3 pins a held menu: it stays up once let go, as a toggled one does, until the opener
         // is pressed again or B closes it.
-        if b == PIN && self.mode == Mode::Held && !uses(menu, b, self.mode) {
+        if b == PIN && self.mode == Mode::Held && !fires_at_once(menu) && !uses(menu, b, self.mode) {
             self.mode = Mode::Toggled;
             self.armed = !self.opener_down;
             return None;
@@ -586,8 +588,9 @@ impl MenuSession {
         self.choose(menus, i)
     }
 
-    /// Chooses item `i`: opens its submenu, or hands back its action to run. A held or
-    /// toggled menu stays up after an action, so several can be picked in one go.
+    /// Chooses item `i`: opens its submenu, or hands back its action to run. A directional or
+    /// button menu is for quick actions, so it closes as it picks; any other held or toggled
+    /// menu stays up after an action, so several can be picked in one go.
     fn choose(&mut self, menus: &[Menu], i: usize) -> Option<MenuOutcome> {
         let menu = self.top(menus)?;
         let item = menu.items.get(i)?;
@@ -602,7 +605,7 @@ impl MenuSession {
                 menu: menu.name.clone(),
                 item: i,
                 action: action.clone(),
-                close: self.mode == Mode::Unwatched,
+                close: self.mode == Mode::Unwatched || fires_at_once(menu),
             }),
         }
     }
@@ -651,6 +654,12 @@ fn carousel_step(controls: CarouselControls, b: Button) -> Option<Step> {
         (CarouselControls::Bumpers, Button::RightBumper) | (CarouselControls::DPad, Button::DpadRight) => Some((1, 0)),
         _ => None,
     }
+}
+
+/// Whether picking an item also closes the menu: a directional or button menu, made for firing
+/// one quick action.
+fn fires_at_once(menu: &Menu) -> bool {
+    matches!(menu.kind, MenuKind::Directional { .. } | MenuKind::Buttons)
 }
 
 /// Whether the bumpers jump a page: in a list too long to show at once.

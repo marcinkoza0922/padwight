@@ -325,22 +325,47 @@ fn carousel_controls() {
 #[test]
 fn held_menu_stays_up_for_picks_and_closes_with_its_submenu_on_release() {
     let menus = [
+        menu("Root", MenuKind::List, vec![item("Up", key("KEY_U")), item("More", ButtonAction::OpenMenu("Sub".into()))]),
+        menu("Sub", MenuKind::List, vec![item("Deep", key("KEY_D"))]),
+    ];
+    let mut s = MenuSession::open(&menus, "Root", held_by(Button::LeftBumper)).unwrap();
+    let picked = press(&mut s, &menus, Button::South);
+    assert!(matches!(picked, Some(MenuOutcome::Choose { close: false, .. })), "{picked:?}");
+    press(&mut s, &menus, Button::DpadDown);
+    press(&mut s, &menus, Button::South);
+    assert_eq!(s.view(&menus).unwrap().title, "Sub");
+    assert_eq!(chose(press(&mut s, &menus, Button::South)).as_deref(), Some("KEY_D"));
+    assert_eq!(s.view(&menus).unwrap().title, "Sub", "still up after a pick");
+    // Letting go closes the submenu and its parent together.
+    assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), Instant::now()), Some(MenuOutcome::Close));
+}
+
+#[test]
+fn directional_and_button_menus_fire_and_close_at_once() {
+    let mut quick = numbers(2);
+    quick[1].button = Some(Button::North);
+    let menus = [
         menu(
-            "Root",
+            "Dir",
             MenuKind::Directional { cluster: Cluster::DPad },
             vec![item("Up", key("KEY_U")), item("More", ButtonAction::OpenMenu("Sub".into()))],
         ),
         menu("Sub", MenuKind::Directional { cluster: Cluster::DPad }, vec![item("Deep", key("KEY_D"))]),
+        menu("Quick", MenuKind::Buttons, quick),
     ];
-    let mut s = MenuSession::open(&menus, "Root", held_by(Button::LeftBumper)).unwrap();
-    let picked = press(&mut s, &menus, Button::DpadUp);
-    assert!(matches!(picked, Some(MenuOutcome::Choose { close: false, .. })), "{picked:?}");
-    press(&mut s, &menus, Button::DpadRight);
-    assert_eq!(s.view(&menus).unwrap().title, "Sub");
-    assert_eq!(chose(press(&mut s, &menus, Button::DpadUp)).as_deref(), Some("KEY_D"));
-    assert_eq!(s.view(&menus).unwrap().title, "Sub", "still up after a pick");
-    // Letting go closes the submenu and its parent together.
-    assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), Instant::now()), Some(MenuOutcome::Close));
+    for opener in [held_by(Button::LeftBumper), Opener { buttons: vec![Button::LeftBumper], toggled: true, ..Opener::default() }] {
+        let mut s = MenuSession::open(&menus, "Dir", opener.clone()).unwrap();
+        let picked = press(&mut s, &menus, Button::DpadUp);
+        assert!(matches!(picked, Some(MenuOutcome::Choose { close: true, .. })), "{picked:?}");
+        // A slot that opens a submenu still opens it; picking there closes everything.
+        let mut s = MenuSession::open(&menus, "Dir", opener.clone()).unwrap();
+        assert_eq!(press(&mut s, &menus, Button::DpadRight), None);
+        assert_eq!(s.view(&menus).unwrap().title, "Sub");
+        assert!(matches!(press(&mut s, &menus, Button::DpadUp), Some(MenuOutcome::Choose { close: true, .. })));
+        let mut s = MenuSession::open(&menus, "Quick", opener).unwrap();
+        assert!(!s.view(&menus).unwrap().hint.contains("pin"), "nothing to pin a quick menu for");
+        assert!(matches!(press(&mut s, &menus, Button::North), Some(MenuOutcome::Choose { item: 1, close: true, .. })));
+    }
 }
 
 #[test]

@@ -353,8 +353,8 @@ pub(super) fn unreleased_holds(m: &Macro) -> usize {
 pub(super) const MENUS_HELP: &str = "On-screen menus you open with the \"Open menu…\" action from any button, \
     gesture, combo or trigger. A menu is up while that input is held and closes when you let go; wrap the \
     action in \"Toggle\" to keep it up until pressed again. Radial: aim a stick, let go to choose. \
-    Directional: four slots on the D-pad or face buttons. List: move with the D-pad or Left Stick, A \
-    chooses. Button menu: each item has its own button, pressed to choose it. Carousel: cycle with the chosen \
+    Directional: four slots on the D-pad or face buttons; pressing one fires it and closes the menu. List: move with the D-pad or Left Stick, A \
+    chooses. Button menu: each item has its own button; pressing it fires the item and closes the menu. Carousel: cycle with the chosen \
     controls, A chooses. Grid: a list laid out in up to 6 columns and 6 rows, moved through in all four \
     directions. Items tap their action like a button press; an item can open another menu of the \
     same kind (not from radial menus), which closes along with it.";

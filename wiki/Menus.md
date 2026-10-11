@@ -17,9 +17,9 @@ A quick tap can't hold a menu up. A menu opened by a tap, such as on a double ta
 ## Menu kinds
 
 - **Radial**: aim a stick at an item. Whatever is aimed at when you let go is chosen. The items are arcs of a circle, evenly sized unless you change an item's arc size; **Use boxes** puts them in boxes at equal angles instead.
-- **Directional**: four slots, on the D-pad or the face buttons.
+- **Directional**: four slots, on the D-pad or the face buttons. Pressing a slot fires its action and closes the menu, for quick actions.
 - **List**: move with the D-pad or left stick. A chooses.
-- **Button menu**: each item has its own button; press it to choose the item. There is no cursor to move. The Menus tab warns about an item with no button, a button two items share, or a button that is part of what opens the menu.
+- **Button menu**: each item has its own button; pressing it fires the item and closes the menu, for quick actions. There is no cursor to move. The Menus tab warns about an item with no button, a button two items share, or a button that is part of what opens the menu.
 - **Carousel**: cycle with the bumpers, triggers, D-pad or a stick. A chooses.
 - **Grid**: up to 6 columns and 6 rows. Move in all four directions with the D-pad or left stick. A chooses.
 
