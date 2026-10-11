@@ -4,7 +4,7 @@
 
 use iced::{
     Background, Border, Color, Shadow, Theme, Vector,
-    widget::{button, container, overlay::menu, pick_list, text_input},
+    widget::{button, checkbox, container, overlay::menu, pick_list, text_input, toggler},
 };
 
 /// Section cards: a step above the page, with a subtle edge.
@@ -29,15 +29,10 @@ pub fn inset(theme: &Theme) -> container::Style {
     }
 }
 
-/// The outputs of a "Several at once" action: a faint accent tint, so the list reads as one group
-/// apart from the surrounding card. Translucent, so it works over either theme's surfaces.
+/// The outputs of a "Several at once" action, and the action a Toggle or Turbo wraps: a block
+/// inside an inset box, drawn as every such block is (see `panel`).
 pub fn output_list(theme: &Theme) -> container::Style {
-    let p = theme.extended_palette();
-    container::Style {
-        background: Some(Color { a: 0.07, ..p.primary.base.color }.into()),
-        border: Border { width: 1.0, radius: 6.0.into(), color: Color { a: 0.3, ..p.primary.base.color } },
-        ..container::Style::default()
-    }
+    panel(theme)
 }
 
 /// A sub-section inside an inset box (an "Advanced" fold, a stick's pictures): the card's color,
@@ -65,6 +60,20 @@ pub fn fold_header(theme: &Theme, status: button::Status) -> button::Style {
         text_color,
         border: Border { radius: 5.0.into(), ..Border::default() },
         ..button::Style::default()
+    }
+}
+
+/// Dialogs: raised over the dimmed page with an edge and a shadow. In dark mode the surface is a
+/// step lighter than the cards, since a shadow doesn't show on a dark page.
+pub fn dialog(theme: &Theme) -> container::Style {
+    let p = theme.extended_palette();
+    let surface = if p.is_dark { p.background.weak } else { p.background.base };
+    container::Style {
+        background: Some(surface.color.into()),
+        text_color: Some(surface.text),
+        border: Border { width: 1.0, radius: 10.0.into(), color: p.background.stronger.color },
+        shadow: popup_shadow(),
+        ..container::Style::default()
     }
 }
 
@@ -201,14 +210,15 @@ fn disabled(theme: &Theme) -> button::Style {
     }
 }
 
-/// A quiet "Delete …" for deleting a whole item: muted until hovered, then red.
+/// A quiet "Delete …" for deleting a whole item: a button's edge with muted text, so it reads as
+/// a button without shouting, and red once hovered.
 pub fn quiet_danger(theme: &Theme, status: button::Status) -> button::Style {
     let p = theme.extended_palette();
-    let text_color = match status {
-        button::Status::Hovered | button::Status::Pressed => p.danger.base.color,
-        _ => muted(p.background.base.text),
+    let (text_color, edge) = match status {
+        button::Status::Hovered | button::Status::Pressed => (p.danger.base.color, p.danger.base.color),
+        _ => (muted(p.background.base.text), p.background.strong.color),
     };
-    button::Style { text_color, ..button::Style::default() }
+    button::Style { text_color, border: Border { width: 1.0, radius: 5.0.into(), color: edge }, ..button::Style::default() }
 }
 
 /// Field surface shared by dropdowns and text inputs: lighter than both page and cards.
@@ -234,6 +244,13 @@ pub fn dropdown(theme: &Theme, status: pick_list::Status) -> pick_list::Style {
         background,
         border,
     }
+}
+
+/// A dropdown that runs an action ("+ From template…") rather than holding a value: its
+/// placeholder is its label, so it's drawn in the text color instead of the faint placeholder
+/// gray, which would make it look disabled.
+pub fn action_dropdown(theme: &Theme, status: pick_list::Status) -> pick_list::Style {
+    pick_list::Style { placeholder_color: theme.extended_palette().background.weak.text, ..dropdown(theme, status) }
 }
 
 /// Open dropdown menus: a raised surface with an accent edge and a shadow.
@@ -270,4 +287,31 @@ fn muted(text: Color) -> Color {
 
 fn popup_shadow() -> Shadow {
     Shadow { color: Color { a: 0.45, ..Color::BLACK }, offset: Vector::new(0.0, 4.0), blur_radius: 14.0 }
+}
+
+/// Switches: iced's, with an edge on the track and, in dark mode, a light knob while off. Off,
+/// iced's dark knob on a dark track all but disappears on a dark card.
+pub fn switch(theme: &Theme, status: toggler::Status) -> toggler::Style {
+    let p = theme.extended_palette();
+    let base = toggler::default(theme, status);
+    let on = matches!(status, toggler::Status::Active { is_toggled: true } | toggler::Status::Hovered { is_toggled: true } | toggler::Status::Disabled { is_toggled: true });
+    if on {
+        return base;
+    }
+    let edge = Color { a: 0.45, ..p.background.base.text };
+    let foreground = if p.is_dark { Color { a: 0.75, ..p.background.base.text }.into() } else { base.foreground };
+    toggler::Style { background_border_width: 1.0, background_border_color: edge, foreground, ..base }
+}
+
+/// Checkboxes: iced's, with an unticked box's edge drawn from the text color so it shows on
+/// cards in either theme.
+pub fn tickbox(theme: &Theme, status: checkbox::Status) -> checkbox::Style {
+    let p = theme.extended_palette();
+    let base = checkbox::primary(theme, status);
+    match status {
+        checkbox::Status::Active { is_checked: false } | checkbox::Status::Hovered { is_checked: false } => {
+            checkbox::Style { border: Border { color: Color { a: 0.5, ..p.background.base.text }, ..base.border }, ..base }
+        }
+        _ => base,
+    }
 }

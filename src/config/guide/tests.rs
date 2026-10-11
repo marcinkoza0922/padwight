@@ -52,7 +52,7 @@ fn the_default_label_is_the_default_text_without_tokens() {
     let rows = editable_rows(&p);
     let label = |b| rows.iter().find(|r| r.inputs == [btn(b)]).unwrap().default_label.clone();
     assert_eq!(label(Button::East), "A");
-    assert_eq!(label(Button::West), "Press “'”");
+    assert_eq!(label(Button::West), "Press Apostrophe");
 }
 
 #[test]

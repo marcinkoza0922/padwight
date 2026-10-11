@@ -4,7 +4,7 @@
 //! only the layer's own combos). After each message, whatever changed there is written back
 //! into the layer as an override (see [`App::write_back`]).
 
-use iced::widget::{checkbox, column, row};
+use iced::widget::{column, row};
 
 use super::*;
 use crate::config::{Indicator, Layer};

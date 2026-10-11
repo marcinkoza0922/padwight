@@ -10,7 +10,7 @@ A profile is one complete set of mappings inside a setup, for example one for a 
 
 - **Automatically:** a rule in the setup picks its profile when the game's window has focus.
 - **By hand:** choose a profile in the top bar's *Active profile* list, or press Guide + Start and pick one in Quick Settings.
-- **When no setup matches:** the *When no setup matches, use* setting on the App settings page picks the profile.
+- **When no setup matches:** the *No setup matches* setting under Per-setup profiles on the App settings page picks the profile.
 
 ## Rules
 

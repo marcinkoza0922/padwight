@@ -129,7 +129,7 @@ noise_threshold = 1.0
 "button:LeftStick" = { text = "Click: crouch (toggle)" }
 "button:DpadUp" = { text = "Best weapon" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:double_tap" = { text = "quick save" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
 "button:Select" = { text = "Pause" }
 "gesture:button:Start:long_press" = { text = "Quick load" }
 "button:DpadDown" = { text = "Painkillers" }
@@ -254,7 +254,7 @@ button = "DpadDown"
 "button:LeftStick" = { text = "Click: crouch (toggle)" }
 "button:DpadUp" = { text = "Best weapon" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:double_tap" = { text = "quick save" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
 "button:Select" = { text = "Pause" }
 "gesture:button:Start:long_press" = { text = "Quick load" }
 "button:DpadDown" = { text = "Painkillers" }
@@ -384,7 +384,7 @@ button = "DpadDown"
 "button:LeftStick" = { text = "Click: crouch (toggle)" }
 "button:DpadUp" = { text = "Best weapon" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:double_tap" = { text = "quick save" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
 "button:Select" = { text = "Pause" }
 "gesture:button:Start:long_press" = { text = "Quick load" }
 "button:DpadDown" = { text = "Painkillers" }

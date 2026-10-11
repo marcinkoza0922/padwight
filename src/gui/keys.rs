@@ -78,7 +78,7 @@ pub(super) fn view_picker(picker: &KeyPicker) -> Element<'_, Message> {
         .spacing(12),
     )
     .padding(20)
-    .style(style::inset);
+    .style(style::dialog);
 
     let backdrop = container(center(opaque(dialog)))
         .width(Length::Fill)

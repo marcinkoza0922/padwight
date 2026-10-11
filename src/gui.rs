@@ -15,8 +15,8 @@ use evdev::KeyCode;
 use iced::{
     Alignment, Color, Element, Length, Subscription, Task,
     widget::{
-        button, center, checkbox, column, container, mouse_area, opaque, pick_list, row, rule,
-        rich_text, scrollable, slider, space, span, stack, svg, text, text_input, toggler, tooltip,
+        button, center, column, container, mouse_area, opaque, pick_list, row, rule,
+        rich_text, scrollable, slider, space, span, stack, svg, text, text_input, tooltip,
     },
 };
 
@@ -1088,7 +1088,10 @@ impl App {
         }
         .spacing(16)
         .padding(20);
-        let main = column![scrollable(content).id("main").height(Length::Fill), self.view_footer()].width(Length::Fill);
+        // Nothing is edited on the Manual, so its footer shows only while there's something to save
+        // from another page, or a message.
+        let footer = self.page != Page::Manual || self.config != self.saved || self.message.is_some();
+        let main = column![scrollable(content).id("main").height(Length::Fill)].push(footer.then(|| self.view_footer())).width(Length::Fill);
         // Always a stack with the page first, popups or not: iced keeps widget state (such as
         // the page's scroll position) by place in the tree, so the shape must not change when
         // a popup opens or closes.

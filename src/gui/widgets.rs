@@ -82,6 +82,16 @@ pub(super) fn set_field<'a, T: 'a>(on_change: OnStyle<'a>, style: &OverlayStyle,
     }
 }
 
+/// A switch in the app's style, which stays visible while off in dark mode.
+pub(super) fn toggler<'a>(on: bool) -> iced::widget::Toggler<'a, Message> {
+    iced::widget::toggler(on).style(style::switch)
+}
+
+/// A checkbox in the app's style, whose empty box shows on cards in either theme.
+pub(super) fn checkbox<'a>(on: bool) -> iced::widget::Checkbox<'a, Message> {
+    iced::widget::checkbox(on).style(style::tickbox)
+}
+
 /// A dropdown in the app's style: stands out from cards, with a raised menu.
 pub(super) fn dropdown<'a, T, L, V>(options: L, selected: Option<V>, on_select: impl Fn(T) -> Message + 'a) -> iced::widget::PickList<'a, T, L, V, Message>
 where
@@ -151,14 +161,14 @@ pub(super) fn section<'a>(title: &'a str, help_text: Option<String>, rows: Vec<E
 
 /// The card at the top of an items tab (layers, macros, menus, info and log overlays): the add
 /// buttons, a line on what the items are, the copy link and the tab's help. Every tab has this
-/// layout, so the controls sit in the same places.
+/// layout, so the controls sit in the same places. The blurb takes the free width and wraps
+/// there, so the copy button keeps to one line however many add buttons there are.
 pub(super) fn items_header<'a>(kind: ItemKind, add: Element<'a, Message>, blurb: &'static str, explain: String) -> Element<'a, Message> {
     container(
         row![
             add,
-            text(blurb).size(13).color(MUTED_COLOR),
-            space::horizontal(),
-            button(text("Copy from another setup…").size(13)).style(button::text).on_press(Message::OpenBrowse(kind)),
+            text(blurb).size(13).color(MUTED_COLOR).width(Length::Fill),
+            button(text("Copy from another setup…")).style(style::secondary).on_press(Message::OpenBrowse(kind)),
             help(explain),
         ]
         .spacing(12)

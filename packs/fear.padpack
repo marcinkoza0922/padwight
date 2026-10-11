@@ -147,7 +147,7 @@ noise_threshold = 1.0
 "button:DpadDown" = { text = "Med kit" }
 "button:Select" = { text = "Status · hold: mission" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:double_tap" = { text = "quick save" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
 "gesture:button:Start:long_press" = { text = "Quick load" }
 
 [[profiles.guide.merged]]
@@ -276,7 +276,7 @@ sensitivity = 15.0
 "button:DpadDown" = { text = "Med kit" }
 "button:Select" = { text = "Status · hold: mission" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:double_tap" = { text = "quick save" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
 "gesture:button:Start:long_press" = { text = "Quick load" }
 
 [[profiles.guide.merged]]
@@ -410,7 +410,7 @@ sensitivity = 22.0
 "button:DpadDown" = { text = "Med kit" }
 "button:Select" = { text = "Status · hold: mission" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:double_tap" = { text = "quick save" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
 "gesture:button:Start:long_press" = { text = "Quick load" }
 
 [[profiles.guide.merged]]

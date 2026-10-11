@@ -284,7 +284,7 @@ impl SoundOverlay {
     pub fn label(self) -> &'static str {
         match self {
             SoundOverlay::Keyboard => "On-screen keyboard",
-            SoundOverlay::Numpad => "Numpad",
+            SoundOverlay::Numpad => "On-screen numpad",
             SoundOverlay::Menu => "Menus",
             SoundOverlay::Guide => "Guide menus",
             SoundOverlay::Media => "Media controls",

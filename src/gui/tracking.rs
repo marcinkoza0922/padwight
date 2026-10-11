@@ -1,7 +1,7 @@
 //! What an input display follows, shared by log overlays and info overlays' `{current_input}`
 //! cells: which controller, which inputs, how many per sequence, and the pause that ends one.
 
-use iced::widget::{checkbox, column, row, slider};
+use iced::widget::{column, row, slider};
 
 use super::*;
 use crate::config::{INPUT_GROUPS, InputTracking};

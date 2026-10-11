@@ -9,7 +9,7 @@ The pad (or each half of a split pad) has a box laid out like a stick's, with it
 - **Off**: fingers do nothing. The click still works.
 - **Mouse pointer**: works like a laptop trackpad. **Speed** is how far the pointer moves when your finger crosses the whole pad, and **Response** offers the same presets as gyro (see [Gyro](gyro.md)); any preset except Linear shows the sensitivity for slow and fast fingers and the shape of the blend to fine-tune. There are three extras:
   - **Tap to click**: a quick tap runs the click action, so you don't have to press the pad down.
-  - **Two fingers scroll**: move two fingers together to scroll.
+  - **Two-finger scroll**: move two fingers together to scroll.
   - **Keep gliding after a flick**: flick and lift your finger, and the pointer keeps sliding and slows to a stop, like a trackball. Touching the pad stops it.
 - **Gamepad stick**: your finger pushes a stick of the virtual controller (picked beside the mode), on top of the real stick. With **Center where the finger lands**, the stick's center is wherever you put your finger, and moving **Full push at** away from there is a full push. Without it, the middle of the pad is center and its edges are a full push. **Deadzone** ignores small pushes.
 - **Menu zones**: the pad is divided into the items of one of your menus (see [On-screen menus](menus.md)). While a finger is on the pad, the menu shows on screen with the item under your finger picked. The game keeps getting your input while the menu shows.

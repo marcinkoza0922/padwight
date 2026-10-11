@@ -146,14 +146,14 @@ impl CurvePreset {
     /// What the preset is for, in a few words.
     pub fn about(self) -> &'static str {
         match self {
-            CurvePreset::Linear => "the same sensitivity at every speed",
-            CurvePreset::Gentle => "a little slower when slow, a little faster when fast",
-            CurvePreset::Aggressive => "slow for aiming, quickly much faster for turning",
-            CurvePreset::Wide => "speeds up gradually over a wide range",
-            CurvePreset::ExtraWide => "speeds up very gradually, from still to fast turns",
-            CurvePreset::Precision => "much slower for small movements, for sniping",
-            CurvePreset::TurnBoost => "unchanged when aiming, faster only for big quick turns",
-            CurvePreset::Custom => "your own settings",
+            CurvePreset::Linear => "The same sensitivity at every speed.",
+            CurvePreset::Gentle => "A little slower when slow, a little faster when fast.",
+            CurvePreset::Aggressive => "Slow for aiming, quickly much faster for turning.",
+            CurvePreset::Wide => "Speeds up gradually over a wide range.",
+            CurvePreset::ExtraWide => "Speeds up very gradually, from still to fast turns.",
+            CurvePreset::Precision => "Much slower for small movements, for sniping.",
+            CurvePreset::TurnBoost => "Unchanged when aiming, faster only for big quick turns.",
+            CurvePreset::Custom => "Your own settings.",
         }
     }
 }

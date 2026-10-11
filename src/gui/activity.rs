@@ -1,5 +1,5 @@
 //! The Overview's "What's happening": the latest presses of the controller in use with what each
-//! did, beside the buttons padwight exported for them, and the profile switches the daemon made,
+//! did, beside the buttons Padwight sent to the game for them, and the profile switches the daemon made,
 //! each with the reason for it.
 
 use iced::widget::{column, row};
@@ -59,21 +59,21 @@ impl App {
                 text("What's happening").size(20),
                 help(
                     "The latest presses on the controller in use, one line per burst, as the controller labels them, \
-                     with what each did when it's mapped to something else. Beside them, the buttons padwight \
-                     exported for those presses, labeled as the game's controller would be. Below, each profile \
-                     switch and the rule or action that made it."
+                     with what each did when it's mapped to something else. Beside them, the buttons Padwight \
+                     sent to the game for those presses, labeled as the game's controller would be, and each \
+                     profile switch with the rule or action that made it."
                         .into(),
                 ),
             ]
             .spacing(8)
             .align_y(Alignment::Center),
+            // Three feeds side by side, so none sits alone under the others.
             row![
                 column![text("Pressed on the controller").size(14), presses].spacing(6).width(Length::Fill),
-                column![text("Exported by Padwight").size(14), exports].spacing(6).width(Length::Fill),
+                column![text("Sent to the game").size(14), exports].spacing(6).width(Length::Fill),
+                column![text("Profile switches").size(14), list].spacing(6).width(Length::Fill),
             ]
             .spacing(16),
-            text("Profile switches").size(14),
-            list,
         ]
         .spacing(10)
         .into()
