@@ -275,6 +275,10 @@ impl Default for Feel {
 const STAGGER_ITEMS: f32 = 12.0;
 /// Seconds since something happened, when it never did.
 const NEVER: f32 = f32::INFINITY;
+/// An overlay closed this soon after a pick closed because of it...
+const PICK_WINDOW: f32 = 0.05;
+/// ...so it stays this long first, the item it picked lit, before its close plays.
+pub const PICK_HOLD: f32 = 0.12;
 
 /// How far along `curve` an event `elapsed` seconds ago is, when it takes `secs`.
 fn progress(elapsed: f32, secs: f32, curve: Curve) -> f32 {
@@ -295,6 +299,22 @@ pub struct Timing {
     /// Where the cursor was before its last move.
     pub from: Option<u32>,
     pub picked: f32,
+}
+
+impl Timing {
+    /// How long a closing overlay holds still before its close plays: a moment when the close
+    /// came with a pick, so the item picked is seen, and none otherwise.
+    pub fn pick_hold(&self) -> f32 {
+        match self.closed {
+            Some(closed) if (0.0..=PICK_WINDOW).contains(&(self.picked - closed)) => PICK_HOLD,
+            _ => 0.0,
+        }
+    }
+
+    /// Seconds since the close started playing, once it has (after any hold).
+    fn closing(&self) -> Option<f32> {
+        self.closed.map(|closed| (closed - self.pick_hold()).max(0.0))
+    }
 }
 
 impl Default for Timing {
@@ -319,7 +339,7 @@ impl Anim {
     /// How visible the whole overlay is, 0 to 1: fading in as it opens, and out as it closes.
     pub fn opacity(&self) -> f32 {
         let open = progress(self.timing.opened, self.feel.open, self.feel.curve).clamp(0.0, 1.0);
-        let closing = self.timing.closed.map_or(1.0, |s| 1.0 - progress(s, self.feel.close, self.feel.curve).clamp(0.0, 1.0));
+        let closing = self.timing.closing().map_or(1.0, |s| 1.0 - progress(s, self.feel.close, self.feel.curve).clamp(0.0, 1.0));
         open * closing
     }
 
@@ -327,7 +347,7 @@ impl Anim {
     pub fn offset(&self) -> (f32, f32) {
         let open = progress(self.timing.opened, self.feel.open, self.feel.curve);
         let mut y = (1.0 - open) * self.feel.slide;
-        if let Some(s) = self.timing.closed {
+        if let Some(s) = self.timing.closing() {
             y += progress(s, self.feel.close, self.feel.curve) * self.feel.slide;
         }
         let p = self.pick_progress();
@@ -339,6 +359,10 @@ impl Anim {
     /// in, and the one it came from glides out.
     pub fn lit(&self, selected: bool, from: bool) -> f32 {
         let glided = progress(self.timing.moved, self.feel.glide, self.feel.curve);
+        // An item just picked (the cursor jumped to it as it was) is lit at once.
+        if selected && self.timing.picked <= self.timing.moved {
+            return glided.max(1.0);
+        }
         if selected {
             glided
         } else if from {
@@ -511,7 +535,8 @@ impl<T: Tracked> Presence<T> {
     /// Drops the things that have finished closing.
     pub fn prune(&mut self, now: Instant, motion: &MotionSet) {
         self.entries.retain(|e| {
-            e.closed.is_none_or(|closed| now.saturating_duration_since(closed).as_secs_f32() < motion.feel(e.value.kind()).close)
+            let timing = e.timing(now);
+            timing.closed.is_none_or(|closed| closed < motion.feel(e.value.kind()).close + timing.pick_hold())
         });
     }
 

@@ -2360,6 +2360,8 @@ impl Daemon {
                 self.log_menu_choice(id, ev, &action);
                 self.remember_pick(&menu, item, &action);
                 if close {
+                    // The picked item, lit, is the last the overlay draws of the menu.
+                    self.broadcast_overlay();
                     self.close_overlay();
                 }
                 // Otherwise the menu stays up for more picks, unless the item put it away.

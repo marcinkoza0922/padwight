@@ -619,12 +619,14 @@ impl MenuSession {
                 self.push(menus, sub);
                 None
             }
-            action => Some(MenuOutcome::Choose {
-                menu: menu.name.clone(),
-                item: i,
-                action: action.clone(),
-                close: self.mode == Mode::Unwatched || fires_at_once(menu),
-            }),
+            action => {
+                let close = self.mode == Mode::Unwatched || fires_at_once(menu);
+                // A menu that closes as it picks shows the item it picked as it goes.
+                if close && let Some(frame) = self.stack.last_mut() {
+                    frame.cursor = Some(i);
+                }
+                Some(MenuOutcome::Choose { menu: menu.name.clone(), item: i, action: action.clone(), close })
+            }
         }
     }
 

@@ -807,6 +807,22 @@ mod ui {
         }
 
         #[test]
+        fn a_menu_closed_by_a_pick_holds_its_pick_a_moment_even_with_motion_off() {
+            let mut state = Overlay::new();
+            let _ = update(&mut state, Message::State(menu_frame(MotionStyle::Off)));
+            let mut picked = menu_frame(MotionStyle::Off);
+            if let Some(OverlayView::Menu(m)) = &mut picked.active {
+                m.picks = 1;
+            }
+            let _ = update(&mut state, Message::State(picked));
+            let _ = update(&mut state, Message::State(OverlayFrame { motion: menu_frame(MotionStyle::Off).motion, ..Default::default() }));
+            assert!(state.shown(), "held so the pick is seen");
+            let later = Instant::now() + Duration::from_secs_f32(crate::motion::PICK_HOLD + 0.05);
+            state.prune(later);
+            assert!(!state.shown(), "then gone");
+        }
+
+        #[test]
         fn with_motion_off_a_closed_menu_goes_at_once() {
             let mut state = Overlay::new();
             let _ = update(&mut state, Message::State(menu_frame(MotionStyle::Off)));

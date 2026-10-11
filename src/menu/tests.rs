@@ -214,8 +214,9 @@ fn a_button_menu_has_no_cursor_and_each_item_has_its_own_button() {
     assert_eq!(chose(press(&mut s, &menus, Button::DpadDown)).as_deref(), Some("KEY_2"), "the D-pad picks, not moves");
     assert_eq!(chose(press(&mut s, &menus, Button::South)).as_deref(), Some("KEY_3"), "A is item 3's button");
     assert_eq!(press(&mut s, &menus, Button::DpadUp), None, "a button no item has does nothing");
+    let mut s = MenuSession::open(&menus, "Q", Opener::default()).unwrap();
     s.handle(&menus, InputEvent::Axis(Axis::LeftY, 0.9), Instant::now());
-    assert_eq!(s.view(&menus).unwrap().selected, None);
+    assert_eq!(s.view(&menus).unwrap().selected, None, "the stick moves nothing either");
 }
 
 #[test]
@@ -472,4 +473,16 @@ fn a_menu_can_have_another_close_button_or_none_and_then_no_pin() {
     assert_eq!(press(&mut s, &menus, Button::East), None);
     press(&mut s, &menus, Button::RightStick);
     assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), Instant::now()), Some(MenuOutcome::Close), "R3 didn't pin it");
+}
+
+#[test]
+fn a_menu_that_closes_as_it_picks_shows_the_item_it_picked() {
+    let mut items = numbers(2);
+    items[1].button = Some(Button::North);
+    let menus = [menu("Quick", MenuKind::Buttons, items)];
+    let mut s = MenuSession::open(&menus, "Quick", held_by(Button::LeftBumper)).unwrap();
+    assert_eq!(s.view(&menus).unwrap().selected, None);
+    press(&mut s, &menus, Button::North);
+    let view = s.view(&menus).unwrap();
+    assert_eq!((view.selected, view.picks), (Some(1), 1), "lit and counted, for the overlay to show");
 }
