@@ -19,6 +19,7 @@ pub(super) fn segment_element<'a, M: 'a>(seg: &Segment, c: Colors, s: f32, opaci
         Segment::Dpad(lit) => dpad_glyph(*lit, c, s),
         Segment::StickClick { right } => stick_click_glyph(*right, c, s),
         Segment::Icon(icon) => icon_glyph(icon, c, s),
+        Segment::Bar(done) => iced::widget::progress_bar(0.0..=1.0, *done).length(160.0 * s).girth(6.0 * s).into(),
     }
 }
 

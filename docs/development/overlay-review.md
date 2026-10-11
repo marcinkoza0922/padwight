@@ -188,11 +188,11 @@ Tick an item when it's done and merged.
 - [x] 34. **The Guide overlay's Mappings can't be scrolled.** A long Mappings panel is cut off by
   its max height, and there's no input to scroll it while the Guide menu is up. The right stick
   or the bumpers could page through it.
-- [ ] 35. **Show progress for the force-quit hold.** "Keep holding to force quit…" is a plain
+- [x] 35. **Show progress for the force-quit hold.** "Keep holding to force quit…" is a plain
   toast that lingers 2.5 s after you let go. A countdown bar (like the keyboard's hold-B bar),
   removed as soon as you let go, would make it clear how long to hold and that letting go
   cancelled it.
-- [ ] 36. **Quick Settings number rows step by only 10%.** Repeat (see 19), plus bigger steps
+- [x] 36. **Quick Settings number rows step by only 10%.** Repeat (see 19), plus bigger steps
   with a bumper held, would make big changes practical. Showing the saved value next to the
   current one ("1200 px/s, was 1000") would also help.
 - [ ] 37. **Deleting in Edit Controls is a single A press.** "Delete combo" and the macro delete

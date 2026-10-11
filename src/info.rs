@@ -446,6 +446,8 @@ pub enum Segment {
     StickClick { right: bool },
     /// A drawn icon: the form factor, the controller's kind, or a gauge.
     Icon(Icon),
+    /// A bar filled from 0 to 1, such as how long is left to hold a button.
+    Bar(f32),
 }
 
 /// What an icon shows.
@@ -599,22 +601,41 @@ pub const TOAST_TIME: Duration = Duration::from_millis(2500);
 pub struct Toast {
     lines: Vec<String>,
     end: Instant,
+    /// A bar under the lines that fills from `.0` over `.1`: how long a hold has left to go.
+    progress: Option<(Instant, Duration)>,
 }
+
+/// How often a toast's bar redraws while it fills.
+const BAR_FRAME: Duration = Duration::from_millis(50);
 
 impl Toast {
     pub fn new(lines: Vec<String>, now: Instant) -> Self {
-        Toast { lines, end: now + TOAST_TIME }
+        Toast { lines, end: now + TOAST_TIME, progress: None }
+    }
+
+    /// A toast with a bar that fills over `length`, for a button held that long; it stays until
+    /// replaced or dropped.
+    pub fn filling(lines: Vec<String>, now: Instant, length: Duration) -> Self {
+        Toast { lines, end: now + length + TOAST_TIME, progress: Some((now, length)) }
     }
 
     /// What to draw now, or `None` once it's gone.
     pub fn view(&self, now: Instant) -> Option<InfoView> {
         let opacity = fade(now, self.end)?;
-        let rows = self.lines.iter().map(|l| vec![vec![Segment::Text(l.clone())]]).collect();
+        let mut rows: Vec<Vec<Vec<Segment>>> = self.lines.iter().map(|l| vec![vec![Segment::Text(l.clone())]]).collect();
+        if let Some((start, length)) = self.progress {
+            let done = now.saturating_duration_since(start).as_secs_f32() / length.as_secs_f32().max(f32::EPSILON);
+            rows.push(vec![vec![Segment::Bar(done.min(1.0))]]);
+        }
         Some(InfoView { name: "toast".into(), style: OverlayStyle::toast(), title: None, rows, opacity })
     }
 
     pub fn next_redraw(&self, now: Instant, frame: Duration) -> Instant {
-        redraw_at(self.end, now, frame)
+        let fading = redraw_at(self.end, now, frame);
+        match self.progress {
+            Some((start, length)) if now < start + length => fading.min(now + BAR_FRAME),
+            _ => fading,
+        }
     }
 }
 
@@ -1184,6 +1205,16 @@ mod tests {
     }
 
     #[test]
+    fn a_filling_toast_draws_its_bar_and_redraws_while_it_fills() {
+        let t0 = Instant::now();
+        let toast = Toast::filling(vec!["Keep holding".into()], t0, Duration::from_secs(2));
+        let bar = |at| toast.view(at).unwrap().rows.last().unwrap()[0][0].clone();
+        assert_eq!(bar(t0), Segment::Bar(0.0));
+        assert_eq!(bar(t0 + Duration::from_secs(1)), Segment::Bar(0.5));
+        assert!(toast.next_redraw(t0, Duration::from_millis(33)) <= t0 + BAR_FRAME);
+    }
+
+    #[test]
     fn the_guide_layer_sheet_lists_what_it_binds() {
         let sheet = layer_sheet(&Layer::guide());
         let cells: Vec<&String> = sheet.rows.iter().flatten().collect();
@@ -1237,8 +1268,7 @@ mod tests {
                 Segment::Glyph { label, .. } => Some(label.as_str()),
                 Segment::Dpad(_) => Some("dpad"),
                 Segment::StickClick { .. } => Some("stick"),
-                Segment::Icon(_) => None,
-                Segment::Text(_) => None,
+                Segment::Icon(_) | Segment::Text(_) | Segment::Bar(_) => None,
             })
             .collect();
         assert_eq!(labels, ["dpad", "dpad", "dpad", "B"]);

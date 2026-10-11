@@ -863,11 +863,18 @@ impl Daemon {
         let held = self.devices.values().any(|d| d.engine.force_quit_held());
         let now = Instant::now();
         match (held, self.quit_hold) {
+            // Let go before it fired: the countdown goes at once.
+            (false, Some((_, false))) => {
+                self.quit_hold = None;
+                self.toast = None;
+                self.broadcast_overlay();
+            }
             (false, _) => self.quit_hold = None,
             (true, None) => {
                 self.quit_hold = Some((now, false));
                 let game = self.focused_target().map_or(String::new(), |(game, _)| format!(" {game}"));
-                self.say(vec![format!("Keep holding to force quit{game}…")]);
+                self.toast = Some(crate::info::Toast::filling(vec![format!("Keep holding to force quit{game}…")], now, FORCE_QUIT_HOLD));
+                self.broadcast_overlay();
             }
             (true, Some((since, false))) if now.duration_since(since) >= FORCE_QUIT_HOLD => {
                 self.quit_hold = Some((since, true));

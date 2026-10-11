@@ -13,6 +13,8 @@ use crate::{
 
 /// One Quick Settings step multiplies or divides a value by this.
 const STEP: f32 = 1.1;
+/// With RB held, a step is this big instead.
+const BIG_STEP: f32 = 1.5;
 /// Stick speed in pixels per second, and gyro sensitivity in pixels per degree.
 const SPEED_RANGE: (f32, f32) = (10.0, 10_000.0);
 const SENSITIVITY_RANGE: (f32, f32) = (0.1, 1_000.0);
@@ -94,6 +96,8 @@ pub struct SystemMenu {
     saved: Box<Config>,
     /// The controller driving the menu has back paddles, which Edit Controls then lists.
     paddles: bool,
+    /// RB is held: Quick Settings' numbers change in bigger steps.
+    big_steps: bool,
 }
 
 impl SystemMenu {
@@ -113,6 +117,7 @@ impl SystemMenu {
             from_guide: false,
             saved: Box::new(saved.clone()),
             paddles: false,
+            big_steps: false,
         }
     }
 
@@ -148,6 +153,10 @@ impl SystemMenu {
             }
             InputEvent::Button(Button::South, true) => Step::Pick,
             InputEvent::Button(Button::East, true) => Step::Back,
+            InputEvent::Button(Button::RightBumper, held) => {
+                self.big_steps = held;
+                return None;
+            }
             InputEvent::Axis(axis @ (Axis::LeftX | Axis::LeftY), v) => {
                 if axis == Axis::LeftX { self.stick.0 = v } else { self.stick.1 = v }
                 match self.stick_dir.update(self.stick)? {
@@ -302,7 +311,7 @@ impl SystemMenu {
                     Step::Left => -1,
                     _ => 1,
                 };
-                adjust(row, dir, config)
+                adjust(row, dir, if self.big_steps { BIG_STEP } else { STEP }, config)
             }
         }
     }
@@ -356,11 +365,11 @@ impl SystemMenu {
             Screen::Quick => MenuView {
                 title: "Quick Settings".into(),
                 kind: crate::config::MenuKind::List,
-                items: quick_rows(config).into_iter().map(|row| ItemView { label: label(row, config), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0 }).collect(),
+                items: quick_rows(config).into_iter().map(|row| ItemView { label: label(row, config, &self.saved), ..ItemView::plain() }).collect(),
                 selected: Some(self.cursor),
                 picks: 0,
                 crumbs: vec![self.parent()],
-                hint: "{left} {right} or {south} change · {east} back".into(),
+                hint: "{left} {right} or {south} change · hold {rb} for big steps · {east} back".into(),
                 style,
                 touch: false,
                 aim: None,
@@ -437,20 +446,28 @@ fn quick_rows(config: &Config) -> Vec<Row> {
     rows
 }
 
-fn label(row: Row, config: &Config) -> String {
+/// A row's label in `config`. A number changed since the menu opened says what it was in
+/// `saved`, so it's easy to get back to.
+fn label(row: Row, config: &Config, saved: &Config) -> String {
     let profile = config.active();
+    let was = |now: String, then: Option<String>| match then {
+        Some(then) if then != now => format!("{now} (was {then})"),
+        _ => now,
+    };
     match row {
         Row::StickSpeed(stick) => {
             let name = if stick == Stick::Left { "Left" } else { "Right" };
-            let speed = profile.and_then(|p| match &stick_config(p, stick).action {
-                StickAction::Mouse { speed, .. } => Some(*speed),
-                _ => None,
-            });
-            format!("{name} stick speed: {:.0} px/s", speed.unwrap_or_default())
+            let speed = |c: &Config| {
+                c.active().and_then(|p| match &stick_config(p, stick).action {
+                    StickAction::Mouse { speed, .. } => Some(format!("{speed:.0} px/s")),
+                    _ => None,
+                })
+            };
+            format!("{name} stick speed: {}", was(speed(config).unwrap_or_default(), speed(saved)))
         }
         Row::GyroSensitivity => {
-            let sensitivity = profile.and_then(|p| p.gyro.sensitivity_label());
-            format!("Gyro sensitivity: {}", sensitivity.unwrap_or_default())
+            let sensitivity = |c: &Config| c.active().and_then(|p| p.gyro.sensitivity_label());
+            format!("Gyro sensitivity: {}", was(sensitivity(config).unwrap_or_default(), sensitivity(saved)))
         }
         Row::InvertY => {
             let on = profile.is_some_and(inverted_y);
@@ -490,7 +507,7 @@ fn y_flags(profile: &mut Profile) -> Vec<&mut bool> {
 
 /// Changes a row's value in the config by one step (`dir` is -1 or 1), or moves to the next
 /// profile.
-fn adjust(row: Row, dir: i32, config: &mut Config) -> Option<Outcome> {
+fn adjust(row: Row, dir: i32, step: f32, config: &mut Config) -> Option<Outcome> {
     if let Row::Profile = row {
         return next_profile(dir, config).map(Outcome::Switch);
     }
@@ -506,11 +523,11 @@ fn adjust(row: Row, dir: i32, config: &mut Config) -> Option<Outcome> {
         Row::StickSpeed(stick) => {
             let cfg = if stick == Stick::Left { &mut profile.left_stick } else { &mut profile.right_stick };
             let StickAction::Mouse { speed, .. } = &mut cfg.action else { return None };
-            *speed = scale(*speed, dir, SPEED_RANGE);
+            *speed = scale(*speed, dir, step, SPEED_RANGE);
         }
         Row::GyroSensitivity => {
             let GyroMode::Mouse { sensitivity } = &mut profile.gyro.mode else { return None };
-            *sensitivity = scale(*sensitivity, dir, SENSITIVITY_RANGE);
+            *sensitivity = scale(*sensitivity, dir, step, SENSITIVITY_RANGE);
         }
         Row::InvertY => {
             let flags = y_flags(profile);
@@ -524,8 +541,8 @@ fn adjust(row: Row, dir: i32, config: &mut Config) -> Option<Outcome> {
     Some(Outcome::Changed)
 }
 
-fn scale(value: f32, dir: i32, (low, high): (f32, f32)) -> f32 {
-    let factor = if dir < 0 { 1.0 / STEP } else { STEP };
+fn scale(value: f32, dir: i32, step: f32, (low, high): (f32, f32)) -> f32 {
+    let factor = if dir < 0 { 1.0 / step } else { step };
     (value * factor).clamp(low, high)
 }
 
@@ -653,12 +670,12 @@ mod tests {
         let mut config = mouse_config();
         assert!(!config.active_nintendo_layout());
         // Picking the row turns it on for the game the menu is over, and leaves Settings alone.
-        assert_eq!(adjust(Row::NintendoLayout, 1, &mut config), Some(Outcome::Changed));
+        assert_eq!(adjust(Row::NintendoLayout, 1, STEP, &mut config), Some(Outcome::Changed));
         assert!(config.active_nintendo_layout());
         assert_eq!(config.general.nintendo_layout, Some(true));
         assert!(!config.nintendo_layout);
-        assert_eq!(label(Row::NintendoLayout, &config), "Nintendo button layout: on");
-        assert_eq!(adjust(Row::NintendoLayout, 1, &mut config), Some(Outcome::Changed));
+        assert_eq!(label(Row::NintendoLayout, &config, &config), "Nintendo button layout: on");
+        assert_eq!(adjust(Row::NintendoLayout, 1, STEP, &mut config), Some(Outcome::Changed));
         assert_eq!(config.general.nintendo_layout, Some(false));
     }
 
@@ -751,6 +768,20 @@ mod tests {
         assert!((speed(&config) - 1210.0).abs() < 0.1, "{}", speed(&config));
         menu.handle(InputEvent::Button(Button::DpadRight, false), t0 + delay, &mut config);
         assert_eq!(menu.next_deadline(), None);
+    }
+
+    #[test]
+    fn rb_makes_big_steps_and_a_changed_number_says_what_it_was() {
+        let mut config = mouse_config();
+        let saved = config.clone();
+        let mut menu = SystemMenu::new(&saved).on_page(Page::Quick);
+        menu.handle_now(press(Button::RightBumper), &mut config);
+        menu.handle_now(press(Button::DpadRight), &mut config);
+        assert!((speed(&config) - 1500.0).abs() < 0.1, "{}", speed(&config));
+        assert_eq!(menu.view(&config).items[0].label, "Left stick speed: 1500 px/s (was 1000 px/s)");
+        menu.handle_now(InputEvent::Button(Button::RightBumper, false), &mut config);
+        menu.handle_now(press(Button::DpadRight), &mut config);
+        assert!((speed(&config) - 1650.0).abs() < 0.1);
     }
 
     #[test]
