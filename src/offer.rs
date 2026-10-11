@@ -61,7 +61,7 @@ pub enum OfferOutcome {
     /// Add the candidate at this position, with this one of its profiles in use for the
     /// window (`None`: the pack's own rules stand).
     Add(usize, Option<usize>),
-    /// Not now; ask again next time the game is started.
+    /// Not now: asked again once the game has been started again (a tap of Guide in it).
     No,
     /// Never ask about these packs again.
     Never,
@@ -151,14 +151,14 @@ impl OfferSession {
             [p, ..] => (format!("Add controller profiles for {}?", p.name), format!("{} sets of profiles fit this game", self.packs.len())),
             [] => (String::new(), String::new()),
         };
-        let answers = [("A", "Yes"), ("B", "No"), ("X", "No, don't ask again")];
+        let answers = [("A", "Yes"), ("B", "Not now"), ("X", "Never")];
         OfferView {
             title,
             detail,
             choices: Vec::new(),
             selected: 0,
             answers: answers.iter().map(|(b, t)| ((*b).into(), (*t).into())).collect(),
-            hint: "To be asked again, tap Guide in a game Padwight doesn't know yet".into(),
+            hint: "Not now asks again the next time this game starts and you tap Guide in it".into(),
             style,
         }
     }

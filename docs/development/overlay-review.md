@@ -55,37 +55,37 @@ Tick an item when it's done and merged.
   Quick Settings change outside a game moves the edited *profile* into a new pack
   (`pack_from_general`, `src/daemon.rs:2083`) and puts General back as it was. The Nintendo
   layout is set on the *game*, so General's copy is undone and the new pack never gets it.
-- [ ] 9. **The offer's text doesn't match what "No" does.** `OfferOutcome::No` says "ask again
+- [x] 9. **The offer's text doesn't match what "No" does.** `OfferOutcome::No` says "ask again
   next time the game is started" (`src/offer.rs:64`). The hint says "To be asked again, tap Guide
   in a game Padwight doesn't know yet" (`src/offer.rs:161`). In fact "No" adds the packs to
   `offers.declined` for the rest of the daemon's life (`src/daemon.rs:2129`), so neither is true
   until a restart. Leaving the offer alone for 30 s counts as "No" too (`src/daemon.rs:743`). Pick
   one behavior. For example, clear `declined` for a game when its process restarts, and say that
   in the hint.
-- [ ] 10. **Carousels with an even number of items aren't centered.** `offset in
+- [x] 10. **Carousels with an even number of items aren't centered.** `offset in
   -(shown/2)..=(shown-1-shown/2)` (`src/overlay/draw.rs:584`) gives -1..=0 for 2 items and
   -2..=1 for 4, so the selected item sits right of center. With 2 items, "previous" and "next"
   are the same item but only one side is shown. Pad the short side with an empty slot so the
   selected item is always in the middle.
-- [ ] 11. **Carousels on the touchpad don't match what's drawn.** `item_at` maps the pad left to
+- [x] 11. **Carousels on the touchpad don't match what's drawn.** `item_at` maps the pad left to
   right across all items (`src/menu/touch.rs:57`), but the overlay draws a ring that rotates to
   keep the selected item centered. As a finger slides, the items move under it. Either draw
   touchpad carousels as a fixed strip, or map the finger's movement relative to where it landed.
-- [ ] 12. **Unlatching Shift lets go of it while LT still holds it.** Picking a latched Shift on
+- [x] 12. **Unlatching Shift lets go of it while LT still holds it.** Picking a latched Shift on
   the keyboard again sends `Key(LEFTSHIFT, false)` unconditionally (`src/overlay.rs:350`), even
   while the trigger holds Shift (`trigger_shift`). Releasing the trigger later sends nothing. Skip
   the release while `trigger_shift` is on, as `release_latched` already does.
-- [ ] 13. **Key repeat catches up in bursts after a stall.** The keyboard and menus repeat with
+- [x] 13. **Key repeat catches up in bursts after a stall.** The keyboard and menus repeat with
   `while now >= next { step; next += EVERY }` (`src/overlay.rs:393`, `src/menu.rs:569`). If the
   daemon's tick is late (load, suspend, a slow D-Bus call), the cursor jumps several keys or rows
   at once. Step once and set `next = now + EVERY`, as media and the Guide menu already do.
-- [ ] 14. **A second controller can close or drive another controller's menu** (*verify*).
+- [x] 14. **A second controller can close or drive another controller's menu** (*verify*).
   `overlay_input` sends every device's events to the active overlay, and `MenuSession` keeps one
   `held` set. If pad 2 presses and releases the button pad 1 is holding to keep its menu up, that
   menu closes (or chooses, for a radial). Items still run on the opener's device, so if that pad
   disconnects, picks quietly do nothing. Route overlay input from the opening device only (the
   Settings menu already stores it), or keep held state per device.
-- [ ] 15. **The left stick may move the game while it scrolls the Guide menu** (*verify*).
+- [x] 15. **The left stick may move the game while it scrolls the Guide menu** (*verify*).
   `guide_nav` takes the left stick's *direction buttons* for the menu, but nothing stops the
   stick's analog output, so a stick mapped to the gamepad's stick probably still reaches the game.
 - [ ] 16. **Edit Controls lists Guide, but Guide can't be remapped.** `top_rows` uses

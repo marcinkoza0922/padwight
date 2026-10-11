@@ -344,14 +344,16 @@ impl OverlayController {
     fn press_selected(&mut self) -> Vec<OverlayAction> {
         let name = keyboard::key_at(self.layout, self.cursor).code;
         let Some(k) = code(name) else { return Vec::new() };
-        // Modifiers latch (held down) until the next key, like sticky keys.
+        // Modifiers latch (held down) until the next key, like sticky keys. Shift held by the
+        // trigger is already down, and stays down when its latch comes off.
         if MODIFIERS.contains(&name) {
+            let held = self.trigger_shift && k == KeyCode::KEY_LEFTSHIFT;
             if let Some(i) = self.latched.iter().position(|l| *l == k) {
                 self.latched.remove(i);
-                return vec![OverlayAction::Key(k, false)];
+                return if held { Vec::new() } else { vec![OverlayAction::Key(k, false)] };
             }
             self.latched.push(k);
-            return vec![OverlayAction::Key(k, true)];
+            return if held { Vec::new() } else { vec![OverlayAction::Key(k, true)] };
         }
         if self.pressed.is_some() {
             return Vec::new();
@@ -389,13 +391,13 @@ impl OverlayController {
             self.east_since = None;
             return (vec![OverlayAction::Close], true);
         }
-        if let Some((dir, mut next)) = self.repeat {
-            while now >= next {
-                self.cursor = keyboard::step(self.layout, self.cursor, dir.0, dir.1);
-                next += REPEAT_EVERY;
-                changed = true;
-            }
-            self.repeat = Some((dir, next));
+        // One step per tick, so a late tick doesn't jump several keys at once.
+        if let Some((dir, next)) = self.repeat
+            && now >= next
+        {
+            self.cursor = keyboard::step(self.layout, self.cursor, dir.0, dir.1);
+            self.repeat = Some((dir, now + REPEAT_EVERY));
+            changed = true;
         }
         (Vec::new(), changed)
     }
@@ -710,6 +712,7 @@ mod ui {
                 crumbs: Vec::new(),
                 hint: String::new(),
                 style: Default::default(),
+                touch: false,
             };
             OverlayFrame {
                 active: Some(OverlayView::Menu(view)),
@@ -776,6 +779,7 @@ mod tests {
         assert!(!c.tick(ms(t0, 300)).1, "no repeat before the delay");
         c.tick(ms(t0, 350));
         assert_eq!(at(&c), "KEY_E");
+        c.tick(ms(t0, 350 + 90));
         c.tick(ms(t0, 350 + 90 * 2));
         assert_eq!(at(&c), "KEY_T");
         c.handle(InputEvent::Button(Button::DpadRight, false), ms(t0, 600));
@@ -838,6 +842,26 @@ mod tests {
         // Not on the numpad.
         let mut n = OverlayController::new(Layout::Numpad, Layout::Numpad.home());
         assert!(n.handle(InputEvent::Axis(Axis::LeftTrigger, 1.0), t0).is_empty());
+    }
+
+    #[test]
+    fn a_latched_shift_coming_off_leaves_the_triggers_shift_down() {
+        let mut c = OverlayController::new(Layout::Keyboard, keyboard::find(Layout::Keyboard, "KEY_LEFTSHIFT").unwrap());
+        let t0 = Instant::now();
+        let shift = KeyCode::KEY_LEFTSHIFT;
+        assert_eq!(c.handle(InputEvent::Axis(Axis::LeftTrigger, 1.0), t0), vec![OverlayAction::Key(shift, true)]);
+        assert!(c.handle(InputEvent::Button(Button::South, true), t0).is_empty(), "already down");
+        assert!(c.handle(InputEvent::Button(Button::South, true), t0).is_empty(), "unlatching keeps it down");
+        assert_eq!(c.handle(InputEvent::Axis(Axis::LeftTrigger, 0.0), t0), vec![OverlayAction::Key(shift, false)]);
+    }
+
+    #[test]
+    fn a_late_tick_moves_one_key() {
+        let mut c = start();
+        let t0 = Instant::now();
+        c.handle(InputEvent::Button(Button::DpadRight, true), t0);
+        c.tick(ms(t0, 2000));
+        assert_eq!(at(&c), "KEY_E");
     }
 
     #[test]

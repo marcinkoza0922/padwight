@@ -41,6 +41,10 @@ pub struct MenuView {
     pub hint: String,
     #[serde(default)]
     pub style: OverlayStyle,
+    /// Laid out on a touchpad: the items stay where the pad has them, so a carousel is drawn as
+    /// a fixed strip rather than turning under the finger.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub touch: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -310,6 +314,7 @@ impl MenuSession {
             crumbs: self.stack[..self.stack.len() - 1].iter().filter_map(|f| menus.get(f.menu)).map(|m| m.name.clone()).collect(),
             hint,
             style: menu.style.clone(),
+            touch: false,
         })
     }
 

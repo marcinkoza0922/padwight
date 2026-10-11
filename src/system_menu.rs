@@ -311,6 +311,7 @@ impl SystemMenu {
                 crumbs: vec![self.parent()],
                 hint: "A choose · B keep editing".into(),
                 style,
+                touch: false,
             },
             Screen::Quick => MenuView {
                 title: "Quick Settings".into(),
@@ -321,6 +322,7 @@ impl SystemMenu {
                 crumbs: vec![self.parent()],
                 hint: "◀ ▶ change · A toggle or next · B back".into(),
                 style,
+                touch: false,
             },
         }
     }
@@ -505,6 +507,7 @@ pub fn main_page(style: OverlayStyle, cursor: usize) -> MenuView {
         crumbs: Vec::new(),
         hint: "A choose · B close".into(),
         style,
+        touch: false,
     }
 }
 

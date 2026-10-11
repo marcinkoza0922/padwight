@@ -579,11 +579,22 @@ fn carousel<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
     let selected = m.selected.unwrap_or(0);
     let arrow = |t: &'static str| text(t).font(c.font).size(22.0 * s).color(c.muted);
     let mut line = row![arrow("◀")].spacing(12.0 * s).align_y(Alignment::Center);
-    // The selected item in the middle, with up to two neighbors on each side.
+    // The selected item in the middle, with up to two neighbors on each side. An even count
+    // leaves the right side one short, so a blank keeps the selected item centered.
     let shown = n.min(5) as i32;
-    for offset in -(shown / 2)..=(shown - 1 - shown / 2) {
-        let i = (selected as i32 + offset).rem_euclid(n as i32) as usize;
-        let big = offset == 0;
+    let (before, after) = (shown / 2, shown - 1 - shown / 2);
+    // On a touchpad the items stay put, all of them in order, the way the pad lays them out.
+    let slots: Vec<Option<usize>> = if m.touch {
+        (0..n).map(Some).collect()
+    } else {
+        (-before..=before).map(|offset| (offset <= after).then(|| (selected as i32 + offset).rem_euclid(n as i32) as usize)).collect()
+    };
+    for slot in slots {
+        let Some(i) = slot else {
+            line = line.push(space().width(120.0 * s).height(60.0 * s));
+            continue;
+        };
+        let big = if m.touch { m.selected == Some(i) } else { i == selected };
         let item = &m.items[i];
         let lit = c.lit_item(m, i);
         let height = if big { 80.0 } else { 60.0 } * s;

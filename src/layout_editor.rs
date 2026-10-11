@@ -496,6 +496,7 @@ impl LayoutEditor {
             crumbs,
             hint: hint.into(),
             style,
+            touch: false,
         }
     }
 }

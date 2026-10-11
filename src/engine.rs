@@ -1679,6 +1679,20 @@ mod tests {
     }
 
     #[test]
+    fn the_left_stick_moves_the_guide_menu_not_the_game() {
+        let (base, on) = guide_setup();
+        let mut e = Engine::default();
+        let t0 = Instant::now();
+        assert!(!axis(&mut e, &base, Axis::LeftY, 0.5).is_empty(), "the game gets the stick normally");
+        axis(&mut e, &base, Axis::LeftY, 0.0);
+        press(&mut e, &base, Button::Guide, true, t0);
+        press(&mut e, &base, Button::Guide, false, ms(t0, 80));
+        let out = axis(&mut e, &on, Axis::LeftY, 0.9);
+        assert!(!out.iter().any(|o| matches!(o, OutEvent::PadAxis(_, v) if *v != 0.0)), "only recentered: {out:?}");
+        assert_eq!(e.take_guide_nav(), [Button::LeftStickDown]);
+    }
+
+    #[test]
     fn a_layer_can_swallow_the_buttons_it_does_not_set() {
         let (base, on) = guide_setup();
         assert_eq!(on.button(Button::South), &ButtonAction::Disabled);

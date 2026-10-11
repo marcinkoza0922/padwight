@@ -75,6 +75,7 @@ pub fn view(steam: bool, cursor: usize, profile: &str, style: OverlayStyle) -> M
         crumbs: Vec::new(),
         hint: "A choose · B close".into(),
         style,
+        touch: false,
     }
 }
 
