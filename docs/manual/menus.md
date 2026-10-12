@@ -4,15 +4,15 @@ A menu is a list or ring of choices that appears on screen. Choosing an item pre
 
 ## Opening one
 
-Use **Open menu…** as the action of any button, gesture, combo, trigger or stick direction. The menu stays up while you hold that input, and closes when you let go.
+Use **Open menu…** as the action of any button, gesture, combo, trigger or stick direction. The menu stays up while you hold that input, and closes when you let go. Lists with a close button are the exception (see below).
 
 ## Keeping one open
 
-To keep a held menu up, press the Right Stick (R3) while it's open: it stays when you let go, until you press its input again or its close button. A menu can't be put in a **Toggle**. A menu item can switch [modes](modes.md), but it can't hold a layer.
+A **list** that has a close button stays up when you let go of its input, so a quick tap opens it too. It closes when you press its input again, or with its close button. Other menus go when you let go. A menu can't be put in a **Toggle**. A menu item can switch [modes](modes.md), but it can't hold a layer.
 
 ## Close button
 
-Lists, grids and carousels close with B. Radial, directional and button menus have no close button unless you give them one: they go when you let go of their input, or when you choose an item. Each menu can have another close button, or none, on the **Menus** tab. Without one, R3 can't keep it open.
+Lists, grids and carousels close with B. Radial, directional and button menus have no close button unless you give them one: they go when you let go of their input, or when you choose an item. Each menu can have another close button, or none, on the **Menus** tab. A list without one closes when you let go, like any other menu.
 
 ## Submenus
 
@@ -20,7 +20,7 @@ An item can open another menu when both menus have the same close button. The ne
 
 ## Choosing
 
-Move with the Left Stick or D-pad, and press A to choose. The close button goes back one level, or closes the menu at the top; on a radial menu it closes without choosing. In a **Button menu** each item has its own button instead: press it to choose the item. Button menus and directional menus are for quick actions: picking an item fires it and closes the menu at once. Other menus stay up while you hold their input, so you can pick several items.
+Move with the Left Stick or D-pad, and press A to choose. The close button goes back one level, or closes the menu at the top; on a radial menu it closes without choosing. In a **Button menu** each item has its own button instead: press it to choose the item. Choosing an item fires it and closes the menu, whatever its kind. Opening a submenu doesn't count as choosing.
 
 ## Menu combos
 

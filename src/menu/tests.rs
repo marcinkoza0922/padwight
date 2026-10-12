@@ -273,16 +273,32 @@ fn the_bumpers_jump_a_page_through_a_long_list() {
 }
 
 #[test]
-fn r3_pins_a_held_menu_until_the_opener_is_pressed_again() {
+fn a_list_with_a_close_button_stays_up_until_the_opener_is_pressed_again() {
     let menus = [menu("L", MenuKind::List, numbers(3))];
     let mut s = MenuSession::open(&menus, "L", held_by(Button::LeftBumper)).unwrap();
     let now = Instant::now();
-    assert!(s.view(&menus).unwrap().hint.contains("{r3} pin"));
-    press(&mut s, &menus, Button::RightStick);
+    assert!(s.view(&menus).unwrap().hint.contains("{lb} again"), "says so while still held");
     assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), now), None, "stays up when let go");
-    assert!(s.view(&menus).unwrap().hint.contains("{lb} again"));
     assert_eq!(chose(press(&mut s, &menus, Button::South)).as_deref(), Some("KEY_1"), "picks still work");
+    let mut s = MenuSession::open(&menus, "L", held_by(Button::LeftBumper)).unwrap();
+    assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), now), None);
     assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, true), now), Some(MenuOutcome::Close));
+}
+
+#[test]
+fn other_held_menus_close_when_let_go_and_r3_no_longer_keeps_them() {
+    let grid = menu("G", MenuKind::Grid { columns: 2 }, numbers(4));
+    let wheel = Menu { cancel: Some(Button::East), ..menu("W", MenuKind::Radial { stick: Stick::Right, boxes: false }, numbers(4)) };
+    let menus = [grid, wheel];
+    let now = Instant::now();
+    let mut s = MenuSession::open(&menus, "G", held_by(Button::LeftBumper)).unwrap();
+    assert!(!s.view(&menus).unwrap().hint.contains("{r3}"));
+    press(&mut s, &menus, Button::RightStick);
+    assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), now), Some(MenuOutcome::Close));
+    let mut s = MenuSession::open(&menus, "W", held_by(Button::LeftBumper)).unwrap();
+    press(&mut s, &menus, Button::RightStick);
+    s.handle(&menus, InputEvent::Axis(Axis::RightX, 0.9), now);
+    assert_eq!(chose(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), now)).as_deref(), Some("KEY_2"), "a wheel chooses as it's let go");
 }
 
 #[test]
@@ -312,21 +328,26 @@ fn carousel_controls() {
 }
 
 #[test]
-fn held_menu_stays_up_for_picks_and_closes_with_its_submenu_on_release() {
+fn a_pick_closes_the_menu_but_opening_a_submenu_does_not() {
     let menus = [
         menu("Root", MenuKind::List, vec![item("Up", key("KEY_U")), item("More", ButtonAction::OpenMenu("Sub".into()))]),
         menu("Sub", MenuKind::List, vec![item("Deep", key("KEY_D"))]),
     ];
     let mut s = MenuSession::open(&menus, "Root", held_by(Button::LeftBumper)).unwrap();
     let picked = press(&mut s, &menus, Button::South);
-    assert!(matches!(picked, Some(MenuOutcome::Choose { close: false, .. })), "{picked:?}");
+    assert!(matches!(picked, Some(MenuOutcome::Choose { .. })), "a pick, which closes it: {picked:?}");
+    let mut s = MenuSession::open(&menus, "Root", held_by(Button::LeftBumper)).unwrap();
+    press(&mut s, &menus, Button::DpadDown);
+    assert_eq!(press(&mut s, &menus, Button::South), None, "a submenu isn't a pick");
+    assert_eq!(s.view(&menus).unwrap().title, "Sub");
+    // A list with a close button stays up when let go; the next press closes the submenu and
+    // its parent together.
+    assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), Instant::now()), None);
+    assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, true), Instant::now()), Some(MenuOutcome::Close));
+    let mut s = MenuSession::open(&menus, "Root", held_by(Button::LeftBumper)).unwrap();
     press(&mut s, &menus, Button::DpadDown);
     press(&mut s, &menus, Button::South);
-    assert_eq!(s.view(&menus).unwrap().title, "Sub");
-    assert_eq!(chose(press(&mut s, &menus, Button::South)).as_deref(), Some("KEY_D"));
-    assert_eq!(s.view(&menus).unwrap().title, "Sub", "still up after a pick");
-    // Letting go closes the submenu and its parent together.
-    assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), Instant::now()), Some(MenuOutcome::Close));
+    assert_eq!(chose(press(&mut s, &menus, Button::South)).as_deref(), Some("KEY_D"), "a pick in a submenu closes it all");
 }
 
 #[test]
@@ -348,15 +369,15 @@ fn directional_and_button_menus_fire_and_close_at_once() {
     for opener in [held_by(Button::LeftBumper), Opener::default()] {
         let mut s = MenuSession::open(&menus, "Dir", opener.clone()).unwrap();
         let picked = press(&mut s, &menus, Button::DpadUp);
-        assert!(matches!(picked, Some(MenuOutcome::Choose { close: true, .. })), "{picked:?}");
+        assert!(matches!(picked, Some(MenuOutcome::Choose { .. })), "{picked:?}");
         // A slot that opens a submenu still opens it; picking there closes everything.
         let mut s = MenuSession::open(&menus, "Dir", opener.clone()).unwrap();
         assert_eq!(press(&mut s, &menus, Button::DpadRight), None);
         assert_eq!(s.view(&menus).unwrap().title, "Sub");
-        assert!(matches!(press(&mut s, &menus, Button::DpadUp), Some(MenuOutcome::Choose { close: true, .. })));
+        assert!(matches!(press(&mut s, &menus, Button::DpadUp), Some(MenuOutcome::Choose { .. })));
         let mut s = MenuSession::open(&menus, "Quick", opener).unwrap();
         assert!(!s.view(&menus).unwrap().hint.contains("pin"), "nothing to pin a quick menu for");
-        assert!(matches!(press(&mut s, &menus, Button::North), Some(MenuOutcome::Choose { item: 1, close: true, .. })));
+        assert!(matches!(press(&mut s, &menus, Button::North), Some(MenuOutcome::Choose { item: 1, .. })));
     }
 }
 
@@ -413,18 +434,6 @@ fn the_close_button_backs_out_of_a_submenu_or_held_closes_it() {
 }
 
 #[test]
-fn a_pinned_menu_closes_on_the_next_press() {
-    let menus = [Menu { cancel: Some(Button::East), ..menu("W", MenuKind::Radial { stick: Stick::Right, boxes: false }, numbers(4)) }];
-    let mut s = MenuSession::open(&menus, "W", held_by(Button::LeftBumper)).unwrap();
-    let now = Instant::now();
-    press(&mut s, &menus, Button::RightStick);
-    assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), now), None, "stays up when let go");
-    s.handle(&menus, InputEvent::Axis(Axis::RightX, 0.9), now);
-    assert!(s.view(&menus).unwrap().hint.contains("{lb} again"));
-    assert_eq!(chose(s.handle(&menus, InputEvent::Button(Button::LeftBumper, true), now)).as_deref(), Some("KEY_2"));
-}
-
-#[test]
 fn a_grid_starts_on_its_start_cell_or_the_item_merged_over_it() {
     let mut items = numbers(6);
     items[1].span = Span { columns: 2, rows: 1 };
@@ -440,10 +449,13 @@ fn a_grid_starts_on_its_start_cell_or_the_item_merged_over_it() {
 }
 
 #[test]
-fn openers_already_let_go_open_nothing() {
-    let menus = [menu("L", MenuKind::List, numbers(2))];
-    let mut s = MenuSession::open(&menus, "L", held_by(Button::LeftBumper)).unwrap();
+fn openers_already_let_go_open_nothing_but_a_list_that_stays_up() {
+    let menus = [menu("L", MenuKind::List, numbers(2)), menu("G", MenuKind::Grid { columns: 2 }, numbers(2))];
+    let mut s = MenuSession::open(&menus, "G", held_by(Button::LeftBumper)).unwrap();
     assert!(!s.prime(&menus, [], []), "a tap can't hold a menu up");
+    let mut s = MenuSession::open(&menus, "L", held_by(Button::LeftBumper)).unwrap();
+    assert!(s.prime(&menus, [], []), "a list with a close button opens on a tap");
+    assert_eq!(press(&mut s, &menus, Button::LeftBumper), Some(MenuOutcome::Close), "and the next tap closes it");
     // With nothing to hold (the command line), B closes it.
     let mut s = MenuSession::open(&menus, "L", Opener::default()).unwrap();
     assert!(s.prime(&menus, [], []));
@@ -453,7 +465,7 @@ fn openers_already_let_go_open_nothing() {
 
 #[test]
 fn stick_direction_openers_hold_the_menu() {
-    let menus = [menu("L", MenuKind::List, numbers(2))];
+    let menus = [menu("L", MenuKind::Grid { columns: 2 }, numbers(2))];
     let mut s = MenuSession::open(&menus, "L", held_by(Button::LeftStickUp)).unwrap();
     assert!(s.prime(&menus, [], [(Axis::LeftY, -0.9)]));
     let now = Instant::now();
@@ -496,7 +508,7 @@ fn a_menu_nothing_holds_up_closes_when_left_alone() {
 }
 
 #[test]
-fn a_menu_can_have_another_close_button_or_none_and_then_no_pin() {
+fn a_menu_can_have_another_close_button_or_none_and_then_closes_when_let_go() {
     let start = Menu { cancel: Some(Button::Start), ..menu("S", MenuKind::List, numbers(2)) };
     let none = Menu { no_cancel: true, ..menu("N", MenuKind::List, numbers(2)) };
     let menus = [start, none];
@@ -507,10 +519,9 @@ fn a_menu_can_have_another_close_button_or_none_and_then_no_pin() {
 
     let mut s = MenuSession::open(&menus, "N", held_by(Button::LeftBumper)).unwrap();
     let hint = s.view(&menus).unwrap().hint;
-    assert!(hint.ends_with("let go to close") && !hint.contains("pin"), "{hint}");
+    assert!(hint.ends_with("let go to close"), "{hint}");
     assert_eq!(press(&mut s, &menus, Button::East), None);
-    press(&mut s, &menus, Button::RightStick);
-    assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), Instant::now()), Some(MenuOutcome::Close), "R3 didn't pin it");
+    assert_eq!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), Instant::now()), Some(MenuOutcome::Close));
 }
 
 #[test]

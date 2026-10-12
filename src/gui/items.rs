@@ -76,8 +76,9 @@ fn close_picker<'a>(mi: usize, menu: &Menu) -> Element<'a, Message> {
         dropdown(close_choices(menu), Some(CloseChoice::of(menu)), move |c| Message::SetMenuCancel(mi, c)).width(160),
         help(
             "Backs out of a submenu (held, it closes the whole menu), and closes the menu at the top. \
-             A menu item can open another menu only when both have the same close button. With none, the \
-             menu goes when its input is let go, or when an item is chosen, and R3 can't keep it open. A \
+             A menu item can open another menu only when both have the same close button. A list with one \
+             stays up when its input is let go, until the input is pressed again. With none, the menu goes \
+             when its input is let go, or when an item is chosen. A \
              menu nothing holds up (opened from the command line or a zone) then closes only by choosing, \
              or after 30 seconds."
                 .into(),
@@ -413,12 +414,12 @@ pub(super) fn unreleased_holds(m: &Macro) -> usize {
 
 pub(super) const MENUS_HELP: &str = "On-screen menus you open with the \"Open menu…\" action from any button, \
     gesture, combo or trigger. A menu is up while that input is held and closes when you let go, or with its \
-    close button; press R3 to keep a held one up. Radial: aim a stick, let go to choose. \
-    Directional: four slots on the D-pad or face buttons; pressing one fires it and closes the menu. List: move with the D-pad or Left Stick, A \
-    chooses. Button menu: each item has its own button; pressing it fires the item and closes the menu. Carousel: cycle with the chosen \
+    close button. A list with a close button stays up until its input is pressed again. Radial: aim a stick, let go to choose. \
+    Directional: four slots on the D-pad or face buttons; pressing one fires it. List: move with the D-pad or Left Stick, A \
+    chooses. Button menu: each item has its own button; pressing it fires the item. Carousel: cycle with the chosen \
     controls, A chooses. Grid: a list laid out in up to 6 columns and 6 rows, moved through in all four \
     directions; merge a cell with the ones beside or below it to make a bigger item. Items tap their \
-    action like a button press. An item can open another menu with the same close button (not from radial \
+    action like a button press, and choosing one closes the menu. An item can open another menu with the same close button (not from radial \
     menus), which takes its place; the close button goes back, and held, closes them all. Under an input that \
     opens a directional or button menu, \"+ Add menu combos\" adds a combo per item (the input plus the item's button).";
 

@@ -76,13 +76,13 @@ fn directional_and_button_menus_put_themselves_away_as_they_pick() {
     for opener in [held_by(Button::LeftBumper), Opener::default()] {
         let mut pad = Pad::open_with(&menus, "Pad", opener.clone());
         assert_eq!(pad.press(Button::East), None, "B is no close button here");
-        assert!(matches!(pad.press(Button::DpadDown), Some(MenuOutcome::Choose { item: 2, close: true, .. })));
+        assert!(matches!(pad.press(Button::DpadDown), Some(MenuOutcome::Choose { item: 2, .. })));
         // B is a slot of the face buttons now that it isn't kept back for closing.
         let mut pad = Pad::open_with(&menus, "Faces", opener.clone());
-        assert!(matches!(pad.press(Button::East), Some(MenuOutcome::Choose { item: 1, close: true, .. })));
+        assert!(matches!(pad.press(Button::East), Some(MenuOutcome::Choose { item: 1, .. })));
         // And it can choose a button menu's item.
         let mut pad = Pad::open_with(&menus, "Quick", opener);
-        assert!(matches!(pad.press(Button::East), Some(MenuOutcome::Choose { item: 0, close: true, .. })));
+        assert!(matches!(pad.press(Button::East), Some(MenuOutcome::Choose { item: 0, .. })));
     }
 }
 

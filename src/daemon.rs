@@ -2428,15 +2428,12 @@ impl Daemon {
         let moved = outcome.is_none() && session.cursor() != before;
         self.overlay_sound(sound::SoundOverlay::Menu, sound::Feedback::of(picked, moved));
         match outcome {
-            Some(MenuOutcome::Choose { menu, item, action, close }) => {
+            Some(MenuOutcome::Choose { menu, item, action }) => {
                 self.log_menu_choice(id, ev, &action);
                 self.remember_pick(&menu, item, &action);
-                if close {
-                    // The picked item, lit, is the last the overlay draws of the menu.
-                    self.broadcast_overlay();
-                    self.close_overlay();
-                }
-                // Otherwise the menu stays up for more picks, unless the item put it away.
+                // The picked item, lit, is the last the overlay draws of the menu.
+                self.broadcast_overlay();
+                self.close_overlay();
                 self.run_menu_item(device, &menu, item, &action);
                 !matches!(self.active, Some(Active::Menu { .. }))
             }

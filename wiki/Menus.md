@@ -6,20 +6,20 @@ A menu is an on-screen list of choices. A game's **Menus** tab holds them, and s
 
 Use **Open menu…** on any button, gesture, combo, trigger or stick direction. The menu is on screen only while that input is held. Letting go closes it.
 
-To keep a held menu up, press R3 while it's open. It then stays until the input is pressed again or its close button is pressed. A menu can't be put in a Toggle.
+A list that has a close button is the exception: it stays up when the input is let go, until the input is pressed again or its close button is pressed. A menu can't be put in a Toggle.
 
-Choosing an item taps its action, as if the button had been pressed. Items can be keys, [macros](Macros), toggles, [mode switches](Modes) or the keyboard. An item can't hold a [layer](Layers). The menu stays up, so you can make several picks.
+Choosing an item taps its action, as if the button had been pressed. Items can be keys, [macros](Macros), toggles, [mode switches](Modes) or the keyboard. An item can't hold a [layer](Layers). Choosing an item closes the menu; opening a submenu doesn't.
 
-A quick tap can't hold a menu up, so a menu opened by a tap (such as a double tap that isn't the button's last gesture) doesn't show.
+A quick tap can't hold a menu up, so a menu opened by a tap (such as a double tap that isn't the button's last gesture) doesn't show, unless it's a list with a close button.
 
 ![The Belt menu on the Menus tab: a radial preview with ten slots and the items list below](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/menus-belt.png)
 
 ## Menu kinds
 
 - **Radial**: aim a stick at an item. Whatever is aimed at when you let go is chosen. The items are arcs of a circle, evenly sized unless you change an item's arc size; **Use boxes** puts them in boxes at equal angles instead.
-- **Directional**: four slots, on the D-pad or the face buttons. Pressing a slot fires its action and closes the menu, for quick actions.
+- **Directional**: four slots, on the D-pad or the face buttons. Pressing a slot fires its action.
 - **List**: move with the D-pad or left stick. A chooses.
-- **Button menu**: each item has its own button; pressing it fires the item and closes the menu, for quick actions. There is no cursor to move. The Menus tab warns about an item with no button, a button two items share, or a button that is part of what opens the menu.
+- **Button menu**: each item has its own button; pressing it fires the item. There is no cursor to move. The Menus tab warns about an item with no button, a button two items share, or a button that is part of what opens the menu.
 - **Carousel**: cycle with the bumpers, triggers, D-pad or a stick. A chooses.
 - **Grid**: up to 6 columns and 6 rows. Move in all four directions with the D-pad or left stick. A chooses. An item can be merged with the cells to its right or below to make a bigger item; the items it covers are hidden until it is split. **Cursor starts on** sets the cell the cursor starts on, (1, 1) by default.
 
@@ -29,7 +29,7 @@ An item can open another menu when both have the same close button. Radial menus
 
 While a menu is open, the controller drives it. Anything the mappings were holding is released.
 
-Menus opened from the command line (`padwight menu <name>`) or from an analog zone can't be held. They stay open until an item is chosen or the close button is pressed: B by default for lists, grids and carousels, none by default for radial, directional and button menus, or another button chosen on the Menus tab. Without a close button they also close after 30 seconds without input, and R3 can't pin a held one.
+Menus opened from the command line (`padwight menu <name>`) or from an analog zone can't be held. They stay open until an item is chosen or the close button is pressed: B by default for lists, grids and carousels, none by default for radial, directional and button menus, or another button chosen on the Menus tab. Without a close button they also close after 30 seconds without input.
 
 ## Long menus and colours
 
