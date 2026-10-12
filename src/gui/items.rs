@@ -18,6 +18,19 @@ impl fmt::Display for TokenChoice {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) struct QuickChoice(pub(super) Option<Button>);
 
+/// A menu item's icon in a picker: a built-in or the user's icon by name, or none.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(super) struct IconChoice(pub(super) Option<String>);
+
+impl fmt::Display for IconChoice {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self.0 {
+            Some(name) => f.write_str(name),
+            None => f.write_str("No icon"),
+        }
+    }
+}
+
 impl fmt::Display for QuickChoice {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.0 {
@@ -721,6 +734,11 @@ impl App {
                     it.button = choice.0;
                 }
             }
+            Message::SetMenuItemIcon(i, item, icon) => {
+                if let Some(it) = self.menus_mut().get_mut(i).and_then(|m| m.items.get_mut(item)) {
+                    it.icon = icon;
+                }
+            }
             Message::SetMenuItemWeight(i, item, weight) => {
                 if let Some(it) = self.menus_mut().get_mut(i).and_then(|m| m.items.get_mut(item)) {
                     it.weight = weight;
@@ -1327,6 +1345,7 @@ impl App {
             if quick {
                 line = line.push(item_button_picker(mi, i, item.button));
             }
+            line = line.push(item_icon_picker(mi, i, item.icon.clone()));
             line = line.push(fill_x(action_editor(&item.action, Button::South, item_kinds, set_action(target), KeyField::root(target), &item_names)));
             if let Some(grid) = &grid {
                 line = line.push(merge_buttons(mi, i, item.span, grid));
@@ -1371,6 +1390,17 @@ pub(super) fn item_choices(menu: &Menu, names: &Names, reachable: &[&Menu]) -> (
 }
 
 /// The picker for the button that chooses item `i` of button menu `mi`.
+/// The icon drawn in front of an item's label: one of the icons built in or in the icons folder.
+fn item_icon_picker<'a>(mi: usize, i: usize, icon: Option<String>) -> Element<'a, Message> {
+    let options: Vec<IconChoice> = std::iter::once(IconChoice(None)).chain(crate::icons::names().into_iter().map(|n| IconChoice(Some(n)))).collect();
+    tooltip(
+        dropdown(options, Some(IconChoice(icon)), move |c| Message::SetMenuItemIcon(mi, i, c.0)).width(120),
+        container(text("The icon drawn in front of the label. Your own go in the icons folder.").size(13)).padding(8).style(style::tooltip),
+        tooltip::Position::Top,
+    )
+    .into()
+}
+
 fn item_button_picker<'a>(mi: usize, i: usize, button: Option<Button>) -> Element<'a, Message> {
     let mut options = vec![QuickChoice(None)];
     // Not Guide: it closes any menu.

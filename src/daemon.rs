@@ -2271,18 +2271,19 @@ impl Daemon {
         }
     }
 
-    /// Plays the active game's cue for an input in `overlay`, if it has one.
+    /// Plays the active game's cue for an input in `overlay`, if it has one, and the buzz for it
+    /// on the controller driving the overlay. A pick buzzes the default way unless the setup
+    /// gives it a buzz of its own.
     fn overlay_sound(&self, overlay: sound::SoundOverlay, feedback: Option<sound::Feedback>) {
         if let Some(spec) = feedback.and_then(|f| self.scope.sounds.cue(overlay, f)) {
             self.sounds.play(&spec);
         }
-        // A pick can be felt too, on the controller driving the overlay.
-        if feedback == Some(sound::Feedback::Pick)
-            && self.config.pick_rumble
-            && let Some(dev) = self.overlay_driver().and_then(|id| self.devices.get(&id))
-            && dev.ff.is_some()
-        {
-            rumble::pick(dev.path.clone());
+        let Some(dev) = self.overlay_driver().and_then(|id| self.devices.get(&id)).filter(|dev| dev.ff.is_some()) else { return };
+        match feedback.and_then(|f| self.scope.rumble.cue(overlay, f)) {
+            Some(cue) => rumble::cue(dev.path.clone(), cue),
+            // A pick can be felt too, on the controller driving the overlay.
+            None if feedback == Some(sound::Feedback::Pick) && self.config.pick_rumble => rumble::pick(dev.path.clone()),
+            None => {}
         }
     }
 

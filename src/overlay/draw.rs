@@ -4,7 +4,11 @@
 mod glyphs;
 mod log_panel;
 mod look;
+mod keyboard;
+mod menus;
+mod ornament;
 mod radial;
+mod typeset;
 
 use std::f32::consts::TAU;
 
@@ -13,7 +17,11 @@ pub use log_panel::log_panel;
 
 use glyphs::{segment_element, state_icon};
 use look::{Look, lit_cell_style, panel_style};
+pub use keyboard::keyboard_panel;
+pub use menus::menu_panel;
+use menus::item_cell;
 use radial::radial;
+use typeset::Type;
 
 use iced::{
     Alignment, Border, Color, Element, Length, Padding,
@@ -26,7 +34,7 @@ use super::{KeyboardView, fit::Fit};
 use crate::{
     config::{MenuKind, OverlayStyle, Paint, ScreenPosition},
     info::{InfoView, Segment},
-    keyboard, media,
+    media,
     media::MediaView,
     menu::MenuView,
     motion::Anim,
@@ -35,18 +43,7 @@ use crate::{
 
 const UNIT: f32 = 46.0;
 const GAP: f32 = 4.0;
-/// The keyboard's and numpad's padding inside their box, at scale 1.
-const KEYBOARD_PADDING: f32 = 16.0;
 
-/// The width of a keyboard's body at scale 1: the legend's or the keys', whichever is wider.
-fn keyboard_body_width(board: crate::keyboard::Board) -> f32 {
-    if board == crate::keyboard::Board::Numpad {
-        // Numpad keys are fewer, so bigger; its body has a floor of 230 at any scale.
-        (board.units_wide() * (UNIT * 1.5 + GAP)).max(230.0)
-    } else {
-        board.units_wide() * (UNIT + GAP)
-    }
-}
 /// Distance from the screen edge for edge and corner positions.
 const EDGE_MARGIN: f32 = 40.0;
 
@@ -86,6 +83,11 @@ pub struct Colors {
     /// 0 square .. 1 round, from the style's corners setting.
     corners: f32,
     look: Look,
+    /// The typography: case, letter spacing and size.
+    typ: Type,
+    /// How much of the panel is shown, 0 to 1: its fade in and out, applied to pictures and
+    /// ornaments as it is to colors.
+    fade: f32,
 }
 
 fn paint(p: &Paint, fallback: [u8; 3]) -> Color {
@@ -130,6 +132,7 @@ impl Colors {
             selected: f(self.selected),
             selected_text: f(self.selected_text),
             look: self.look.faded(f),
+            fade: self.fade * opacity.clamp(0.0, 1.0),
             ..self
         }
     }
@@ -147,7 +150,7 @@ impl Colors {
 fn rich_text<'a, M: 'a>(t: &str, c: Colors, size: f32, color: Color) -> Element<'a, M> {
     let glyphs = crate::info::Glyphs { family: c.family, nintendo_layout: c.nintendo_layout };
     let segments = crate::info::glyph_text(t, glyphs);
-    let plain = |t: &str| -> Element<'a, M> { text(t.to_string()).font(c.font).size(size).color(color).into() };
+    let plain = |t: &str| -> Element<'a, M> { typeset::line(c.typ, c.font, t, size, color) };
     match segments.as_slice() {
         [] => plain(""),
         [Segment::Text(t)] => plain(t),
@@ -168,10 +171,13 @@ fn colors(style: &OverlayStyle, font: Font) -> Colors {
     let background = paint(&style.background, [0x16, 0x18, 0x1c]);
     let item = paint(&style.items, [0x30, 0x34, 0x3c]);
     let selected = paint(&style.selected, [0x2f, 0x5d, 0xb0]);
-    let background_text = style.text.as_deref().and_then(crate::config::parse_hex).map_or_else(|| text_on(background), |[r, g, b]| Color::from_rgb8(r, g, b));
+    let scale = style.scale.clamp(0.5, 2.0);
+    // A typography color is every text's color; otherwise each text takes the one that suits it.
+    let picked = style.typography.color.as_deref().and_then(crate::config::parse_hex).map(|[r, g, b]| Color::from_rgb8(r, g, b));
+    let background_text = picked.or_else(|| style.text.as_deref().and_then(crate::config::parse_hex).map(|[r, g, b]| Color::from_rgb8(r, g, b))).unwrap_or_else(|| text_on(background));
     Colors {
         anim: Anim::still(),
-        font,
+        font: typeset::font_for(font, &style.typography),
         family: crate::info::PadFamily::default(),
         nintendo_layout: false,
         colorblind: false,
@@ -179,11 +185,13 @@ fn colors(style: &OverlayStyle, font: Font) -> Colors {
         background_text,
         muted: Color { a: 0.75, ..background_text },
         item,
-        item_text: text_on(item),
+        item_text: picked.unwrap_or_else(|| text_on(item)),
         selected,
-        selected_text: text_on(selected),
+        selected_text: picked.unwrap_or_else(|| text_on(selected)),
         corners: style.corners,
-        look: Look::of(style, style.scale.clamp(0.5, 2.0), background_text),
+        look: Look::of(style, scale, background_text),
+        typ: Type::of(&style.typography, scale),
+        fade: 1.0,
     }
 }
 
@@ -219,12 +227,34 @@ fn sides(margin: f32, shift: f32, slot: usize) -> (f32, f32) {
 
 /// A panel's box: its colors and padding, at the size `fit` gives. The contents scroll, so a
 /// box held to its max length scrolls rather than spilling, and the box clips anything wider.
-fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, padding: impl Into<Padding>, fit: &Fit) -> Element<'a, M> {
+/// The style's picture sits behind the contents and its ornaments over them, all the panel's
+/// size: the contents are the stack's base layer, which sets that size.
+fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, style: &OverlayStyle, padding: impl Into<Padding>, fit: &Fit) -> Element<'a, M> {
     let height = if fit.height.is_some() { Length::Fill } else { Length::Shrink };
     let contents = scrollable(body).width(Length::Shrink).height(height);
-    let mut boxed = container(contents)
-        .padding(padding)
-        .align_x(Horizontal::Center)
+    let mut layers = iced::widget::Stack::new().push(container(contents).padding(padding).align_x(Horizontal::Center));
+    if !style.lite.plain {
+        let s = style.scale.clamp(0.5, 2.0);
+        if let Some(picture) = &style.background_image {
+            layers = layers.push_under(ornament::picture(picture, c.fade));
+        }
+        let ornaments = &style.ornament;
+        if let Some(lines) = &ornaments.scanlines {
+            let drift = lines.drift && !style.lite.calm;
+            layers = layers.push(ornament::scanlines(lines, s, c.anim.clock, drift, c.fade));
+        }
+        if let Some(vignette) = &ornaments.vignette {
+            for edge in ornament::vignette(vignette, c.fade) {
+                layers = layers.push(edge);
+            }
+        }
+        if let Some(frame) = &ornaments.frame {
+            for mark in ornament::frame(frame, s, c.fade) {
+                layers = layers.push(mark);
+            }
+        }
+    }
+    let mut boxed = container(layers)
         .clip(true)
         .max_width(fit.max_width)
         .max_height(fit.max_height)
@@ -276,7 +306,7 @@ pub fn info_panel<'a, M: 'a>(v: &InfoView, font: Font, fit: &Fit, anim: &Anim) -
         Some(title) => column![info_cell(title, c, s, opacity), grid].spacing(8.0 * s).into(),
         None => grid.into(),
     };
-    framed(body, c, [12.0 * s, 16.0 * s], fit)
+    framed(body, c, &v.style, [12.0 * s, 16.0 * s], fit)
 }
 
 /// A cell's segments in a row that wraps them onto the next line when they're too wide.
@@ -286,120 +316,6 @@ fn info_cell<'a, M: 'a>(segments: &[Segment], c: Colors, s: f32, opacity: f32) -
         line = line.push(segment_element(seg, c, s, opacity));
     }
     line.wrap().vertical_spacing(2.0 * s).into()
-}
-
-#[expect(clippy::too_many_lines, reason = "predates the size lints")]
-pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::info::Glyphs, fit: &Fit, anim: &Anim) -> Element<'a, M> {
-    let c = colors(&v.style, font).with_glyphs(glyphs).faded(anim.opacity());
-    let numpad = v.board == crate::keyboard::Board::Numpad;
-    // A set width fits the keys (and their text) to it; otherwise the style's scale applies.
-    let s = match fit.width {
-        Some(w) => w / (keyboard_body_width(v.board) + 2.0 * KEYBOARD_PADDING),
-        None => v.style.scale.clamp(0.5, 2.0),
-    };
-    // Numpad keys are fewer, so bigger.
-    let unit = if numpad { UNIT * 1.5 } else { UNIT } * s;
-    let gap = GAP * s;
-    let cursor_code = keyboard::key_at(v.board, v.cursor).code;
-    let shifted = v.latched.iter().any(|l| l == "KEY_LEFTSHIFT" || l == "KEY_RIGHTSHIFT");
-    let label_size = if numpad { 22.0 } else { 14.0 };
-    let mut rows = column![].spacing(gap);
-    // Keys are numbered in reading order, as the motion tracking numbers them.
-    let mut slot = 0u32;
-    for keys in v.board.rows().iter() {
-        let mut line = row![].spacing(gap);
-        for key in keys.iter() {
-            let here = slot;
-            slot += 1;
-            let width = key.width * (unit + gap) - gap;
-            if key.code.is_empty() {
-                line = line.push(space().width(width).height(unit));
-                continue;
-            }
-            let cursor = key.code == cursor_code;
-            let pressed = v.pressed.as_deref() == Some(key.code);
-            let selected = cursor || pressed;
-            // Caps Lock lights up like a latched key while it's on.
-            let latched = v.latched.iter().any(|l| l == key.code) || (v.caps && key.code == "KEY_CAPSLOCK");
-            // The cursor's key lights up and the one it left goes dark, sliding between them.
-            let lit = if pressed { 1.0 } else { anim.lit(cursor, anim.timing.from == Some(here)) };
-            let round = c.corners * unit / 2.0;
-            let (bg, fg, border, glow) = if latched && !selected {
-                let green = Color::from_rgb8(0x2e, 0x7d, 0x46);
-                (green, Color::WHITE, Border { width: 1.0, radius: round.into(), color: Color::from_rgb8(0x3f, 0xb9, 0x50) }, iced::Shadow::default())
-            } else {
-                let flash = if pressed { anim.flash() * 0.5 } else { 0.0 };
-                (
-                    blend(blend(c.item, c.selected, lit), Color::WHITE, flash),
-                    blend(c.item_text, c.selected_text, lit),
-                    look::item_outline(&c, selected, lit, round),
-                    look::item_glow(&c, lit),
-                )
-            };
-            let cap = container(text(keyboard::cap_label(key, v.board, shifted, v.caps)).font(c.font).size(if selected { label_size + 2.0 } else { label_size } * s).color(fg))
-                .center_x(width)
-                .center_y(unit)
-                .style(move |_| container::Style { background: Some(bg.into()), border, shadow: glow, ..container::Style::default() });
-            line = line.push(cap);
-        }
-        rows = rows.push(line);
-    }
-    let hint = |t: &'static str| rich_text::<M>(t, c, 14.0 * s, c.background_text);
-    let (legend, width): (Element<'a, M>, f32) = if numpad {
-        let legend = row(super::NUMPAD_LEGEND.iter().map(|t| hint(t))).spacing(14.0 * s).wrap().vertical_spacing(4.0 * s).align_x(Horizontal::Center);
-        (legend.into(), (v.board.units_wide() * (unit + gap)).max(230.0 * s))
-    } else {
-        let legend = row(super::KEYBOARD_LEGEND.iter().map(|t| hint(t)))
-        .spacing(18.0 * s)
-        .align_y(Alignment::Center)
-        .wrap()
-        .vertical_spacing(4.0 * s)
-        .align_x(Horizontal::Center);
-        (legend.into(), v.board.units_wide() * (unit + gap))
-    };
-    let mut body = column![].spacing(12.0 * s).width(width).align_x(Alignment::Center);
-    // What's been typed, above the keys, for when the game's own text box is hidden behind them.
-    if !v.typed.is_empty() {
-        body = body.push(text(format!("{}▏", v.typed)).font(c.font).size(18.0 * s).color(c.background_text));
-    }
-    body = body.push(rows).push(legend);
-    if v.closing > 0.0 {
-        body = body.push(progress_bar(0.0..=1.0, v.closing).girth(4.0 * s));
-    }
-    framed(body.into(), c, KEYBOARD_PADDING * s, fit)
-}
-
-/// An item's glyphs (the same as the info overlays'), its label, and a ▸ for submenus. A
-/// text badge (a stick's LS, say) is drawn as a small tag.
-fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, size: f32, fg: Color) -> Element<'a, M> {
-    let font = c.font;
-    // Glyphs, badges and icons fade in and out with the label.
-    let fade = fg.a;
-    let mut line = row![].spacing(size * 0.5).align_y(Alignment::Center);
-    // The glyphs are sized from the label, which is 17 units when the scale is 1.
-    for b in &item.buttons {
-        line = line.push(segment_element(&crate::info::button_glyph(*b, c.family, c.nintendo_layout), c, size / 17.0, fade));
-    }
-    if let Some(b) = item.button.as_deref().filter(|b| !b.is_empty()) {
-        line = line.push(
-            container(text(b.to_string()).font(font).size(size - 2.0).color(Color::BLACK.scale_alpha(fade)))
-                .padding([1.0, size * 0.4])
-                .style(move |_| container::Style {
-                    background: Some(Color::from_rgb(0.85, 0.87, 0.9).scale_alpha(fade).into()),
-                    border: Border { radius: 5.0.into(), ..Border::default() },
-                    ..container::Style::default()
-                }),
-        );
-    }
-    if let Some(k) = item.keyword {
-        let icon = iced::widget::svg::Handle::from_memory(crate::keyword_icon::svg(k).into_bytes());
-        line = line.push(iced::widget::svg(icon).width(size).height(size).opacity(fade));
-    }
-    line = line.push(rich_text(label, c, size, fg));
-    if item.submenu {
-        line = line.push(text("▸").font(font).size(size).color(fg.scale_alpha(0.7)));
-    }
-    line.into()
 }
 
 /// The media controls: what is playing, how far along, and the volume.
@@ -450,7 +366,7 @@ pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, glyphs: crate::info::Gl
         .spacing(12.0 * s)
         .width(width)
         .align_x(Alignment::Center);
-    framed(contents.into(), c, 18.0 * s, fit)
+    framed(contents.into(), c, &m.style, 18.0 * s, fit)
 }
 
 /// The offer to add a library game: the question and its answers. (Its lists are menus.)
@@ -472,165 +388,5 @@ pub fn offer_panel<'a, M: 'a>(o: &OfferView, font: Font, glyphs: crate::info::Gl
     ]
     .spacing(14.0 * s)
     .align_x(Alignment::Center);
-    framed(contents.into(), c, 22.0 * s, fit)
-}
-
-pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit) -> Element<'a, M> {
-    let c = Colors {
-        anim: look.anim,
-        family: look.family,
-        nintendo_layout: look.nintendo_layout,
-        colorblind: look.colorblind,
-        ..colors(&m.style, font)
-    };
-    let solid = c;
-    let c = c.faded(look.anim.opacity());
-    let s = m.style.scale.clamp(0.5, 2.0);
-    let body: Element<'a, M> = match m.kind {
-        MenuKind::Radial { .. } => radial(m, solid, s),
-        MenuKind::Directional { .. } => directional(m, c, s),
-        MenuKind::List | MenuKind::Buttons => list(m, c, s),
-        MenuKind::Carousel { .. } => carousel(m, c, s),
-        MenuKind::Grid { .. } => grid(m, c, s),
-    };
-    // Where this page is in the menus, above its title: "Menu › Edit Controls › A button".
-    let title = text(m.title.clone()).font(c.font).size(20.0 * s).color(c.background_text);
-    let heading: Element<'a, M> = if m.crumbs.is_empty() {
-        title.into()
-    } else {
-        let crumbs = text(m.crumbs.join(" › ")).font(c.font).size(13.0 * s).color(c.muted);
-        column![crumbs, title].spacing(4.0 * s).align_x(Alignment::Center).into()
-    };
-    let contents = column![
-        heading,
-        body,
-        rich_text(&m.hint, c, 13.0 * s, c.muted),
-    ]
-    .spacing(14.0 * s)
-    .align_x(Alignment::Center);
-    framed(contents.into(), c, 22.0 * s, fit)
-}
-
-/// An item's label, its colors (highlighted, and faded in under Stagger) and whether the
-/// cursor is on it.
-fn item_cell<'a, M: 'a>(m: &MenuView, i: usize, c: Colors, size: f32) -> (Element<'a, M>, Colors, bool) {
-    let item = &m.items[i];
-    let selected = m.selected == Some(i);
-    let lit = toned(c, item.tone).lit_item(m, i);
-    (item_text(lit, item, &toned_label(c, item), size, lit.item_text), lit, selected)
-}
-
-/// An item's label, with a + or − in front of adding and removing rows in color-blind mode.
-fn toned_label(c: Colors, item: &crate::menu::ItemView) -> String {
-    match (c.colorblind, item.tone) {
-        (true, crate::menu::Tone::Add) => format!("+ {}", item.label),
-        (true, crate::menu::Tone::Remove) => format!("− {}", item.label),
-        _ => item.label.clone(),
-    }
-}
-
-fn directional<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
-    let (w, h) = (190.0 * s, 52.0 * s);
-    // The slot picked last stays lit, and flashes as it's picked.
-    let slot = |i: usize| -> Element<'a, M> {
-        match m.items.get(i).filter(|item| !item.label.is_empty()) {
-            Some(_) => {
-                let (label, lit, selected) = item_cell(m, i, c, 16.0 * s);
-                container(label).center_x(w).center_y(h).style(lit_cell_style(lit, selected, h)).into()
-            }
-            None => space().width(w).height(h).into(),
-        }
-    };
-    column![
-        slot(0),
-        row![slot(3), space().width(40.0 * s), slot(1)].align_y(Alignment::Center),
-        slot(2),
-    ]
-    .spacing(10.0 * s)
-    .align_x(Alignment::Center)
-    .into()
-}
-
-/// Items in rows of equal cells, read left to right; a short last row keeps to the left. A
-/// merged item covers several cells, and the items under it aren't drawn.
-fn grid<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
-    let spans: Vec<_> = m.items.iter().map(|item| item.span).collect();
-    let layout = crate::menu::GridLayout::new(&spans, m.kind.grid_columns().unwrap_or(1));
-    let (w, h, gap) = (150.0 * s, 64.0 * s, 8.0 * s);
-    // How far `n` cells reach, with the gaps between them.
-    let reach = |n: usize, size: f32| n as f32 * size + n.saturating_sub(1) as f32 * gap;
-    let mut cells = iced::widget::Stack::new().width(reach(layout.columns, w)).height(reach(layout.rows, h));
-    for i in 0..m.items.len() {
-        let Some(at) = layout.cells(i) else { continue };
-        let (label, lit, selected) = item_cell(m, i, c, 16.0 * s);
-        let (cw, ch) = (reach(at.columns, w), reach(at.rows, h));
-        let cell = container(label).center_x(cw).center_y(ch).padding([0.0, 6.0 * s]).style(lit_cell_style(lit, selected, h));
-        let (x, y) = (at.column as f32 * (w + gap), at.row as f32 * (h + gap));
-        cells = cells.push(column![space().height(y), row![space().width(x), cell]]);
-    }
-    cells.into()
-}
-
-/// A list: one column while it is short, two once it is longer. Two columns fill top to
-/// bottom, the left one first, and scroll together with the cursor.
-fn list<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
-    let len = m.items.len();
-    let cursor = m.selected.unwrap_or(0);
-    let cell = |i: usize| -> Element<'a, M> {
-        let (content, lit, selected) = item_cell(m, i, c, 17.0 * s);
-        container(content).padding([10.0 * s, 14.0 * s]).width(Length::Fill).style(lit_cell_style(lit, selected, 40.0 * s)).into()
-    };
-    let marker = |t: &'static str| text(t).font(c.font).size(13.0 * s).color(c.muted);
-    let start = crate::menu::list_start(cursor, len);
-    let half = if crate::menu::list_columns(len) == 2 { len.div_ceil(2) } else { len };
-    let shown = |from: usize, to: usize| (from..to.min(from + crate::menu::VISIBLE_ROWS)).map(&cell).collect::<Vec<Element<'a, M>>>();
-    let column_of = |items: Vec<Element<'a, M>>, width: f32| items.into_iter().fold(column![].spacing(6.0 * s).width(width * s), iced::widget::Column::push);
-    let left = column_of(shown(start, half), 300.0);
-    let grid: Element<'a, M> = if half < len {
-        row![left, column_of(shown(half + start, len), 300.0)].spacing(14.0 * s).into()
-    } else {
-        left.into()
-    };
-    let mut body = column![].spacing(6.0 * s);
-    if start > 0 {
-        body = body.push(marker("▲"));
-    }
-    body = body.push(grid);
-    if start + crate::menu::VISIBLE_ROWS < half {
-        body = body.push(marker("▼"));
-    }
-    body.into()
-}
-
-fn carousel<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
-    let n = m.items.len();
-    let selected = m.selected.unwrap_or(0);
-    let arrow = |t: &'static str| text(t).font(c.font).size(22.0 * s).color(c.muted);
-    let mut line = row![arrow("◀")].spacing(12.0 * s).align_y(Alignment::Center);
-    // The selected item in the middle, with up to two neighbors on each side. An even count
-    // leaves the right side one short, so a blank keeps the selected item centered.
-    let shown = n.min(5) as i32;
-    let (before, after) = (shown / 2, shown - 1 - shown / 2);
-    // On a touchpad the items stay put, all of them in order, the way the pad lays them out.
-    let slots: Vec<Option<usize>> = if m.touch {
-        (0..n).map(Some).collect()
-    } else {
-        (-before..=before).map(|offset| (offset <= after).then(|| (selected as i32 + offset).rem_euclid(n as i32) as usize)).collect()
-    };
-    for slot in slots {
-        let Some(i) = slot else {
-            line = line.push(space().width(120.0 * s).height(60.0 * s));
-            continue;
-        };
-        let big = if m.touch { m.selected == Some(i) } else { i == selected };
-        let height = if big { 80.0 } else { 60.0 } * s;
-        let (label, lit, _) = item_cell(m, i, c, if big { 19.0 } else { 14.0 } * s);
-        line = line.push(
-            container(label)
-                .center_x(if big { 170.0 } else { 120.0 } * s)
-                .center_y(height)
-                .style(lit_cell_style(lit, big, height)),
-        );
-    }
-    line.push(arrow("▶")).into()
+    framed(contents.into(), c, &o.style, 22.0 * s, fit)
 }

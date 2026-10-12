@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::{ScreenPosition, is_zero};
+use super::{BackgroundImage, Ornament, ScreenPosition, Typography, is_zero};
 
 /// A color (`#rrggbb`) with an opacity (0..1).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -75,6 +75,9 @@ pub struct Shade {
     pub x: f32,
     #[serde(default, skip_serializing_if = "is_zero")]
     pub y: f32,
+    /// A glow that breathes: its strength swells and fades while the overlay is up.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub pulse: bool,
 }
 
 impl Shade {
@@ -89,12 +92,12 @@ impl Shade {
 
     /// The shadow panels have when their style doesn't set one: soft, dark and a little low.
     pub fn panel() -> Self {
-        Shade { color: black(), opacity: 0.35, blur: 18.0, x: 0.0, y: 6.0 }
+        Shade { color: black(), opacity: 0.35, blur: 18.0, x: 0.0, y: 6.0, pulse: false }
     }
 
     /// A glow in `color`, the same all round.
     pub fn glow(color: &str) -> Self {
-        Shade { color: color.into(), opacity: 0.8, blur: default_blur(), x: 0.0, y: 0.0 }
+        Shade { color: color.into(), opacity: 0.8, blur: default_blur(), x: 0.0, y: 0.0, pulse: false }
     }
 }
 
@@ -108,6 +111,9 @@ pub struct Gradient {
     pub opacity: f32,
     #[serde(default = "default_angle")]
     pub angle: f32,
+    /// The direction turns slowly while the overlay is up, so the panel seems to shimmer.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub drift: bool,
 }
 
 impl Gradient {
@@ -118,7 +124,7 @@ impl Gradient {
 
 impl Default for Gradient {
     fn default() -> Self {
-        Gradient { color: black(), opacity: opaque(), angle: default_angle() }
+        Gradient { color: black(), opacity: opaque(), angle: default_angle(), drift: false }
     }
 }
 
@@ -138,15 +144,15 @@ fn default_angle() -> f32 {
     180.0
 }
 
-fn white() -> String {
+pub(super) fn white() -> String {
     "#ffffff".into()
 }
 
-fn black() -> String {
+pub(super) fn black() -> String {
     "#000000".into()
 }
 
-fn opaque() -> f32 {
+pub(super) fn opaque() -> f32 {
     1.0
 }
 
@@ -155,8 +161,12 @@ fn opaque() -> f32 {
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Lite {
-    /// No decorations: no shadows, gradients, glows or outlines, whatever the style says.
+    /// No decorations: no shadows, gradients, glows, outlines or ornaments, whatever the style
+    /// says.
     pub plain: bool,
+    /// Nothing loops: glows don't pulse, gradients and scanlines don't drift. Set by the
+    /// performance card's No looping animations, or by its No motion.
+    pub calm: bool,
 }
 
 impl Lite {
@@ -221,6 +231,15 @@ pub struct OverlayStyle {
     /// white or near-black, whichever reads on the background. Items keep their own.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
+    /// How the text is set: its case, spacing, size, weight, slant and color.
+    #[serde(default, rename = "type", skip_serializing_if = "Typography::is_default")]
+    pub typography: Typography,
+    /// Lines, frames, scanlines and vignettes over and around the panel.
+    #[serde(default, skip_serializing_if = "Ornament::is_default")]
+    pub ornament: Ornament,
+    /// A picture behind the panel's contents. Unset, the panel is one color.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub background_image: Option<BackgroundImage>,
     /// Set by the overlay process from the frame; never read from or written to a file.
     #[serde(skip)]
     pub lite: Lite,
@@ -280,12 +299,24 @@ impl Default for OverlayStyle {
             item_border: None,
             glow: None,
             text: None,
+            typography: Typography::default(),
+            ornament: Ornament::default(),
+            background_image: None,
             lite: Lite::default(),
         }
     }
 }
 
 impl OverlayStyle {
+    /// Whether something in the style loops while the overlay is up: a glow that pulses, or a
+    /// gradient or scanlines that drift. The overlay keeps redrawing for these unless the
+    /// performance settings say nothing loops.
+    pub fn loops(&self) -> bool {
+        self.glow.as_ref().is_some_and(|g| g.pulse)
+            || self.gradient.as_ref().is_some_and(|g| g.drift)
+            || self.ornament.scanlines.as_ref().is_some_and(|s| s.drift)
+    }
+
     /// The on-screen keyboard's default: along the bottom of the screen.
     pub fn keyboard() -> Self {
         OverlayStyle { position: ScreenPosition::BottomCenter, ..OverlayStyle::default() }
@@ -357,6 +388,7 @@ pub(super) fn default_menu_style() -> OverlayStyle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::{Case, FrameKind, ImageFit, Scanlines};
 
     #[test]
     fn decorations_are_optional_and_fill_in_what_is_left_out() {
@@ -366,9 +398,39 @@ mod tests {
         assert_eq!((glow.blur, glow.x, glow.opacity), (30.0, 0.0, 0.5));
         assert!(style.shadow.is_none() && style.gradient.is_none());
         let plain = toml::to_string(&OverlayStyle::default()).unwrap();
-        for key in ["border", "shadow", "gradient", "item_border", "glow", "text", "lite"] {
+        for key in ["border", "shadow", "gradient", "item_border", "glow", "text", "lite", "type", "ornament", "background_image"] {
             assert!(!plain.contains(key), "{key} in {plain}");
         }
+    }
+
+    #[test]
+    fn typography_ornaments_and_pictures_are_optional_and_round_trip() {
+        let style: OverlayStyle = toml::from_str(
+            "[type]\ncase = \"upper\"\nletter_spacing = 2\nbold = true\n\n[ornament.frame]\nkind = \"chamfer\"\n\n[background_image]\nfile = \"crest.png\"\n",
+        )
+        .unwrap();
+        assert_eq!((style.typography.case, style.typography.letter_spacing, style.typography.size), (Case::Upper, 2.0, 1.0));
+        assert!(style.typography.bold && !style.typography.italic);
+        assert_eq!(style.ornament.frame.as_ref().map(|f| (f.kind, f.size)), Some((FrameKind::Chamfer, 14.0)));
+        assert_eq!(style.background_image.as_ref().map(|b| (b.file.as_str(), b.fit)), Some(("crest.png", ImageFit::Cover)));
+        let plain = toml::to_string(&OverlayStyle::default()).unwrap();
+        assert!(!plain.contains("type") && !plain.contains("ornament") && !plain.contains("background_image"));
+        let back: OverlayStyle = toml::from_str(&toml::to_string(&style).unwrap()).unwrap();
+        assert_eq!(back, style);
+    }
+
+    #[test]
+    fn looping_effects_are_flagged_so_the_overlay_keeps_redrawing() {
+        assert!(!OverlayStyle::default().loops());
+        let pulsing = OverlayStyle { glow: Some(Shade { pulse: true, ..Shade::glow("#ffcc40") }), ..OverlayStyle::default() };
+        assert!(pulsing.loops());
+        let drifting = OverlayStyle { gradient: Some(Gradient { drift: true, ..Gradient::default() }), ..OverlayStyle::default() };
+        assert!(drifting.loops());
+        let scanned = OverlayStyle {
+            ornament: Ornament { scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.2, color: black(), drift: true }), ..Ornament::default() },
+            ..OverlayStyle::default()
+        };
+        assert!(scanned.loops());
     }
 
     #[test]

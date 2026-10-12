@@ -42,7 +42,7 @@ impl Overlay {
     /// Whether something is still moving at `now`, so the screen needs redrawing.
     pub(super) fn busy(&self, now: Instant) -> bool {
         let motion = &self.frame.motion;
-        self.panels.busy(now, motion) || self.info.busy(now, motion) || self.logs.busy(now, motion)
+        self.frame.loops() || self.panels.busy(now, motion) || self.info.busy(now, motion) || self.logs.busy(now, motion)
     }
 
     /// Drops what has finished closing.

@@ -325,11 +325,19 @@ impl Default for Timing {
     }
 }
 
+/// Seconds from the overlay process's start to `now`: the clock looping effects run on.
+pub fn clock(now: Instant) -> f32 {
+    static START: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
+    now.saturating_duration_since(*START.get_or_init(Instant::now)).as_secs_f32()
+}
+
 /// An overlay's feel and timing, as the overlay process draws it.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Anim {
     pub feel: Feel,
     pub timing: Timing,
+    /// Seconds since the overlay process started, for effects that loop (see [`clock`]).
+    pub clock: f32,
 }
 
 impl Anim {
@@ -552,7 +560,7 @@ impl<T: Tracked> Presence<T> {
     /// What to draw now, each with its animation, oldest first so newer things draw on top.
     pub fn shown<'a>(&'a self, now: Instant, motion: &MotionSet) -> impl Iterator<Item = (&'a T, Anim)> + 'a {
         let motion = *motion;
-        self.entries.iter().map(move |e| (&e.value, Anim { feel: motion.feel(e.value.kind()), timing: e.timing(now) }))
+        self.entries.iter().map(move |e| (&e.value, Anim { feel: motion.feel(e.value.kind()), timing: e.timing(now), clock: clock(now) }))
     }
 
     /// Whether anything is still moving, so the screen needs redrawing.
@@ -699,7 +707,7 @@ mod tests {
     #[test]
     fn a_pick_that_closes_blinks_its_item_through_the_hold() {
         let feel = MotionStyle::Subtle.feel();
-        let at = |picked: f32| Anim { feel, timing: Timing { opened: 1.0, closed: Some(picked - 0.01), moved: picked, picked, from: None } };
+        let at = |picked: f32| Anim { feel, timing: Timing { opened: 1.0, closed: Some(picked - 0.01), moved: picked, picked, from: None }, clock: 0.0 };
         let peak = PICK_HOLD / (2.0 * PICK_BLINKS);
         assert!(at(peak).flash() > 0.75, "bright at each blink's peak");
         assert!(at(2.0 * peak).flash() < 0.05, "back to just lit between blinks");
@@ -748,41 +756,41 @@ mod tests {
     #[test]
     fn open_and_close_fade_the_opacity() {
         let feel = MotionStyle::Subtle.feel();
-        let anim = Anim { feel, timing: Timing { opened: 0.0, ..Timing::default() } };
+        let anim = Anim { feel, timing: Timing { opened: 0.0, ..Timing::default() }, clock: 0.0 };
         assert!(anim.opacity() < 0.01, "starts invisible");
-        let open = Anim { feel, timing: Timing { opened: 1.0, ..Timing::default() } };
+        let open = Anim { feel, timing: Timing { opened: 1.0, ..Timing::default() }, clock: 0.0 };
         assert!((open.opacity() - 1.0).abs() < 1e-6);
-        let closing = Anim { feel, timing: Timing { opened: 1.0, closed: Some(feel.close), ..Timing::default() } };
+        let closing = Anim { feel, timing: Timing { opened: 1.0, closed: Some(feel.close), ..Timing::default() }, clock: 0.0 };
         assert!(closing.opacity() < 0.01, "gone once closed");
     }
 
     #[test]
     fn brutal_highlight_jumps_and_grim_rises_into_place() {
-        let jump = Anim { feel: MotionStyle::Brutal.feel(), timing: Timing { moved: 0.0, ..Timing::default() } };
+        let jump = Anim { feel: MotionStyle::Brutal.feel(), timing: Timing { moved: 0.0, ..Timing::default() }, clock: 0.0 };
         assert!((jump.lit(true, false) - 1.0).abs() < 1e-6, "no glide: lit at once");
-        let rising = Anim { feel: MotionStyle::Grim.feel(), timing: Timing { opened: 0.0, ..Timing::default() } };
+        let rising = Anim { feel: MotionStyle::Grim.feel(), timing: Timing { opened: 0.0, ..Timing::default() }, clock: 0.0 };
         let (_, y) = rising.offset();
         assert!(y > 20.0, "starts well below its place");
-        let settled = Anim { feel: MotionStyle::Grim.feel(), timing: Timing { opened: 10.0, ..Timing::default() } };
+        let settled = Anim { feel: MotionStyle::Grim.feel(), timing: Timing { opened: 10.0, ..Timing::default() }, clock: 0.0 };
         assert_eq!(settled.offset(), (0.0, 0.0));
     }
 
     #[test]
     fn playful_drops_in_from_above() {
-        let drop = Anim { feel: MotionStyle::Playful.feel(), timing: Timing { opened: 0.0, ..Timing::default() } };
+        let drop = Anim { feel: MotionStyle::Playful.feel(), timing: Timing { opened: 0.0, ..Timing::default() }, clock: 0.0 };
         assert!(drop.offset().1 < 0.0, "starts above its place");
     }
 
     #[test]
     fn stagger_fades_items_one_after_another() {
-        let anim = Anim { feel: MotionStyle::Stagger.feel(), timing: Timing { opened: 0.1, ..Timing::default() } };
+        let anim = Anim { feel: MotionStyle::Stagger.feel(), timing: Timing { opened: 0.1, ..Timing::default() }, clock: 0.0 };
         assert!(anim.item_fade(0) > anim.item_fade(3));
         assert_eq!(Anim::still().item_fade(5), 1.0);
     }
 
     #[test]
     fn off_draws_as_it_ends_up() {
-        let anim = Anim { feel: MotionStyle::Off.feel(), timing: Timing { opened: 0.0, moved: 0.0, ..Timing::default() } };
+        let anim = Anim { feel: MotionStyle::Off.feel(), timing: Timing { opened: 0.0, moved: 0.0, ..Timing::default() }, clock: 0.0 };
         assert_eq!(anim.opacity(), 1.0);
         assert_eq!(anim.offset(), (0.0, 0.0));
         assert_eq!(anim.lit(true, false), 1.0);

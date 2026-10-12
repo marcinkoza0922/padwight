@@ -73,6 +73,7 @@ mod sounds;
 mod sliders;
 mod sticks;
 mod style_editor;
+mod style_extras;
 mod tab_icons;
 mod touchpad;
 mod tour;
@@ -565,6 +566,8 @@ enum Message {
     /// Whether a menu stays up after a pick.
     SetMenuKeepOpen(usize, bool),
     SetMenuItemWeight(usize, usize, f32),
+    /// A menu item's icon, by name (`None` for none).
+    SetMenuItemIcon(usize, usize, Option<String>),
     /// A grid item's merged cells.
     SetMenuItemSpan(usize, usize, crate::config::Span),
     /// The cell a grid's cursor starts on.

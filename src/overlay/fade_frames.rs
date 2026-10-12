@@ -45,7 +45,7 @@ fn scenes() -> Vec<(&'static str, MenuView)> {
 /// fade is linear.
 fn panel<'a>(m: &MenuView, opacity: f32) -> Element<'a, ()> {
     let feel = MotionStyle::Subtle.feel();
-    let anim = Anim { feel, timing: Timing { opened: opacity * feel.open, moved: 10.0, ..Timing::default() } };
+    let anim = Anim { feel, timing: Timing { opened: opacity * feel.open, moved: 10.0, ..Timing::default() }, clock: 0.0 };
     let look = draw::MenuLook { colorblind: false, family: crate::info::PadFamily::Xbox, nintendo_layout: false, anim };
     let fit = Fit::of(&m.style, Size::new(1024.0, 768.0));
     container(draw::menu_panel(m, crate::font::resolve(None), look, &fit)).center(iced::Length::Fill).into()

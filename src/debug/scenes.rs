@@ -7,7 +7,10 @@ use std::time::Instant;
 use anyhow::{Result, bail};
 
 use crate::{
-    config::{Button, ButtonAction, CarouselControls, Span, Cluster, InfoOverlay, InputLogSettings, Menu, MenuItem, MenuKind, OverlayStyle, Stick},
+    config::{
+        Button, ButtonAction, CarouselControls, Case, Cluster, Frame, FrameKind, Gradient, InfoOverlay, InputLogSettings, Menu, MenuItem, MenuKind, Ornament,
+        OverlayStyle, Paint, Scanlines, Shade, Span, Stick, Stroke, Typography, Vignette,
+    },
     engine::Opener,
     info::{self, Glyphs, Live, PadFamily},
     inputlog,
@@ -19,7 +22,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 22] = [
+pub const SCENES: [(&str, &str); 23] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -31,6 +34,7 @@ pub const SCENES: [(&str, &str); 22] = [
     ("menu-directional", "a D-pad directional menu"),
     ("menu-face", "a face-button directional menu"),
     ("menu-carousel", "a carousel menu"),
+    ("menu-styled", "a list menu with icons, forced capitals, ornaments and a drifting gradient"),
     ("in-game-menu", "the Guide + Start menu"),
     ("media", "the media controls"),
     ("offer", "the offer to add a library game"),
@@ -59,6 +63,7 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "menu-directional" => active(menu(MenuKind::Directional { cluster: Cluster::DPad })),
         "menu-face" => active(menu(MenuKind::Directional { cluster: Cluster::FaceButtons })),
         "menu-carousel" => active(menu(MenuKind::Carousel { controls: CarouselControls::Bumpers })),
+        "menu-styled" => active(menu_in(MenuKind::List, ornate(), true)),
         "in-game-menu" => active(OverlayView::Menu(crate::system_menu::main_page(OverlayStyle::default(), 0))),
         "media" => active(OverlayView::Media(MediaView::sample(OverlayStyle::media()))),
         "offer" => active(OverlayView::Offer(offer())),
@@ -88,18 +93,24 @@ fn keyboard_view(board: Board) -> KeyboardView {
 /// A menu of this kind, open with the cursor on its second item: keys, a toggle, a submenu, a
 /// mouse click and an overlay.
 fn menu(kind: MenuKind) -> OverlayView {
-    let item = |label: &str, action: ButtonAction, button: Option<Button>| MenuItem { label: label.into(), action, button, weight: 1.0, span: Span::ONE };
+    menu_in(kind, OverlayStyle::default(), false)
+}
+
+/// The sample menu drawn in `style`, with an icon on each item when `icons` is set.
+fn menu_in(kind: MenuKind, style: OverlayStyle, icons: bool) -> OverlayView {
+    let icon = |name: &str| icons.then(|| name.to_string());
+    let item = |label: &str, action: ButtonAction, button: Option<Button>, icon: Option<String>| MenuItem { label: label.into(), action, button, weight: 1.0, span: Span::ONE, icon };
     let keys = |k: &str| ButtonAction::Keys(vec![k.into()]);
     let items = vec![
-        item("Quick save", keys("KEY_F5"), Some(Button::South)),
-        item("Crouch", ButtonAction::toggle(keys("KEY_LEFTCTRL")), Some(Button::East)),
-        item("Weapons", ButtonAction::OpenMenu("Weapons".into()), Some(Button::West)),
-        item("Fire", ButtonAction::Mouse(crate::config::MouseButton::Left), Some(Button::North)),
-        item("Keyboard", ButtonAction::ToggleOverlay, Some(Button::LeftBumper)),
+        item("Quick save", keys("KEY_F5"), Some(Button::South), icon("potion")),
+        item("Crouch", ButtonAction::toggle(keys("KEY_LEFTCTRL")), Some(Button::East), icon("car")),
+        item("Weapons", ButtonAction::OpenMenu("Weapons".into()), Some(Button::West), icon("sword")),
+        item("Fire", ButtonAction::Mouse(crate::config::MouseButton::Left), Some(Button::North), icon("pistol")),
+        item("Keyboard", ButtonAction::ToggleOverlay, Some(Button::LeftBumper), icon("map")),
     ];
     let menus = vec![
-        Menu { name: "Actions".into(), kind, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() },
-        Menu { name: "Weapons".into(), kind: MenuKind::List, items: vec![item("Pistol", keys("KEY_1"), None)], cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() },
+        Menu { name: "Actions".into(), kind, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style },
+        Menu { name: "Weapons".into(), kind: MenuKind::List, items: vec![item("Pistol", keys("KEY_1"), None, None)], cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() },
     ];
     let opener = Opener { buttons: vec![Button::LeftBumper], ..Opener::default() };
     let session = MenuSession::open(&menus, "Actions", opener).expect("the sample menu has items");
@@ -107,6 +118,25 @@ fn menu(kind: MenuKind) -> OverlayView {
     // Moving there by input would differ by kind; the drawing only reads the selection.
     view.selected = Some(1);
     OverlayView::Menu(view)
+}
+
+/// A menu style with most of what the typography and ornaments can do switched on.
+fn ornate() -> OverlayStyle {
+    let gold = "#c8a040";
+    OverlayStyle {
+        background: Paint::new("#16181c", 0.92),
+        border: Some(Stroke { width: 2.0, color: gold.into(), opacity: 1.0 }),
+        gradient: Some(Gradient { color: "#3a1010".into(), opacity: 1.0, angle: 180.0, drift: true }),
+        glow: Some(Shade { pulse: true, ..Shade::glow("#ffcc40") }),
+        typography: Typography { case: Case::Upper, letter_spacing: 2.0, bold: true, ..Typography::default() },
+        ornament: Ornament {
+            dividers: Some(Stroke { width: 1.0, color: gold.into(), opacity: 0.6 }),
+            frame: Some(Frame { kind: FrameKind::Brackets, size: 16.0, width: 2.0, color: gold.into(), opacity: 1.0 }),
+            scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.35, color: "#000000".into(), drift: true }),
+            vignette: Some(Vignette { color: "#000000".into(), opacity: 0.6, reach: 25.0 }),
+        },
+        ..OverlayStyle::default()
+    }
 }
 
 /// The Guide overlay over a profile with a Driving mode and a Hotkeys layer, its Mappings

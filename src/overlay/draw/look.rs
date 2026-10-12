@@ -16,11 +16,14 @@ pub(super) struct Look {
     /// The panel's outline, or `None` for none.
     border: Option<(f32, Color)>,
     shadow: Option<Shadow>,
-    /// The second color of the background, and its angle in radians.
-    gradient: Option<(Color, f32)>,
+    /// The second color of the background, its angle in radians, and whether that turns while
+    /// the overlay is up.
+    gradient: Option<(Color, f32, bool)>,
     /// Every item's outline width and color; unset, the faint default.
     item_border: Option<(f32, Color)>,
     glow: Option<Shadow>,
+    /// Whether the glow breathes: its strength swells and fades while the overlay is up.
+    glow_pulse: bool,
     /// Drawn without decorations, the default ones included.
     plain: bool,
 }
@@ -31,18 +34,20 @@ impl Look {
     pub(super) fn of(style: &OverlayStyle, s: f32, text: Color) -> Look {
         let plain = style.lite.plain;
         if plain {
-            return Look { border: None, shadow: None, gradient: None, item_border: None, glow: None, plain };
+            return Look { border: None, shadow: None, gradient: None, item_border: None, glow: None, glow_pulse: false, plain };
         }
         let border = match &style.border {
             Some(stroke) => outline(stroke, s),
             None => Some((1.0, Color { a: 0.15, ..text })),
         };
         let shadow = shade(style.shadow.as_ref().unwrap_or(&Shade::panel()), s);
-        let gradient = style.gradient.as_ref().map(|g| (super::paint(&g.paint(), [0, 0, 0]), g.angle.to_radians()));
+        // Looping effects stop when the performance settings say nothing loops.
+        let gradient = style.gradient.as_ref().map(|g| (super::paint(&g.paint(), [0, 0, 0]), g.angle.to_radians(), g.drift && !style.lite.calm));
         // A width of 0 is no outline at all, the selected item's included.
         let item_border = style.item_border.as_ref().map(|stroke| outline(stroke, s).unwrap_or((0.0, Color::TRANSPARENT)));
         let glow = style.glow.as_ref().and_then(|g| shade(g, s));
-        Look { border, shadow, gradient, item_border, glow, plain }
+        let glow_pulse = style.glow.as_ref().is_some_and(|g| g.pulse) && !style.lite.calm;
+        Look { border, shadow, gradient, item_border, glow, glow_pulse, plain }
     }
 
     /// Every color at `opacity` times its own, as `Colors::faded` does for the rest.
@@ -51,7 +56,7 @@ impl Look {
         Look {
             border: self.border.map(|(w, c)| (w, f(c))),
             shadow: self.shadow.map(shadow),
-            gradient: self.gradient.map(|(c, angle)| (f(c), angle)),
+            gradient: self.gradient.map(|(c, angle, drift)| (f(c), angle, drift)),
             item_border: self.item_border.map(|(w, c)| (w, f(c))),
             glow: self.glow.map(shadow),
             ..self
@@ -81,7 +86,11 @@ pub(super) fn panel_style(c: Colors) -> impl Fn(&iced::Theme) -> container::Styl
     move |_| {
         let look = c.look;
         let background = match look.gradient {
-            Some((to, angle)) => Background::Gradient(gradient::Linear::new(angle).add_stop(0.0, c.background).add_stop(1.0, to).into()),
+            Some((to, angle, drift)) => {
+                // A drifting gradient sways a little either side of its angle, slowly.
+                let angle = if drift { angle + (c.anim.clock * 0.35).sin() * 0.5 } else { angle };
+                Background::Gradient(gradient::Linear::new(angle).add_stop(0.0, c.background).add_stop(1.0, to).into())
+            }
             None => c.background.into(),
         };
         let (width, color) = look.border.unwrap_or((0.0, Color::TRANSPARENT));
@@ -111,7 +120,11 @@ pub(super) fn item_outline(c: &Colors, selected: bool, lit: f32, radius: f32) ->
 /// The selected item's glow, at `lit` of its strength.
 pub(super) fn item_glow(c: &Colors, lit: f32) -> Shadow {
     match c.look.glow {
-        Some(glow) if lit > 0.0 => Shadow { color: Color { a: glow.color.a * lit.min(1.0), ..glow.color }, ..glow },
+        Some(glow) if lit > 0.0 => {
+            // A pulsing glow breathes between 60% and 100% of its strength, every 2.5 seconds.
+            let breath = if c.look.glow_pulse { 0.8 + 0.2 * (c.anim.clock * std::f32::consts::TAU / 2.5).sin() } else { 1.0 };
+            Shadow { color: Color { a: glow.color.a * lit.min(1.0) * breath, ..glow.color }, ..glow }
+        }
         _ => Shadow::default(),
     }
 }

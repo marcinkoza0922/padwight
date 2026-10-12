@@ -14,12 +14,22 @@ pub struct Bundled {
     pub bytes: &'static [u8],
 }
 
-pub const BUNDLED: [Bundled; 5] = [
+pub const BUNDLED: [Bundled; 15] = [
     Bundled { name: "Inter", bytes: include_bytes!("../assets/fonts/Inter-Regular.ttf") },
     Bundled { name: "Cantarell", bytes: include_bytes!("../assets/fonts/Cantarell-VF.otf") },
     Bundled { name: "Comfortaa", bytes: include_bytes!("../assets/fonts/Comfortaa-Regular.otf") },
     Bundled { name: "Source Code Pro", bytes: include_bytes!("../assets/fonts/SourceCodePro-Regular.otf") },
     Bundled { name: "Rajdhani", bytes: include_bytes!("../assets/fonts/Rajdhani-Medium.ttf") },
+    Bundled { name: "Press Start 2P", bytes: include_bytes!("../assets/fonts/PressStart2P-Regular.ttf") },
+    Bundled { name: "VT323", bytes: include_bytes!("../assets/fonts/VT323-Regular.ttf") },
+    Bundled { name: "Silkscreen", bytes: include_bytes!("../assets/fonts/Silkscreen-Regular.ttf") },
+    Bundled { name: "Monoton", bytes: include_bytes!("../assets/fonts/Monoton-Regular.ttf") },
+    Bundled { name: "Creepster", bytes: include_bytes!("../assets/fonts/Creepster-Regular.ttf") },
+    Bundled { name: "Nosifer", bytes: include_bytes!("../assets/fonts/Nosifer-Regular.ttf") },
+    Bundled { name: "Eater", bytes: include_bytes!("../assets/fonts/Eater-Regular.ttf") },
+    Bundled { name: "UnifrakturMaguntia", bytes: include_bytes!("../assets/fonts/UnifrakturMaguntia-Book.ttf") },
+    Bundled { name: "Cinzel", bytes: include_bytes!("../assets/fonts/Cinzel-VF.ttf") },
+    Bundled { name: "Bangers", bytes: include_bytes!("../assets/fonts/Bangers-Regular.ttf") },
 ];
 
 /// Names offered in the font dropdowns.

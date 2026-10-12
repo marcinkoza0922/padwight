@@ -6,6 +6,7 @@ use std::ops::RangeInclusive;
 use iced::widget::{column, row};
 
 use super::*;
+use super::style_extras::{ornament_rows, typography_rows};
 use crate::config::{Gradient, Shade, Stroke};
 
 pub(super) type OnStyle<'a> = Rc<dyn Fn(OverlayStyle) -> Message + 'a>;
@@ -60,6 +61,8 @@ pub(super) fn style_editor<'a>(style: &OverlayStyle, on_change: OnStyle<'a>) -> 
         labeled("    Items", paint_row(&style.items, true, &set(|s, p| s.items = p))),
         labeled("    Selected item", paint_row(&style.selected, true, &set(|s, p| s.selected = p))),
         decorations(style, &on_change),
+        typography_rows(style, &on_change),
+        ornament_rows(style, &on_change),
     ]
     .spacing(8)
     .into()
@@ -89,11 +92,11 @@ fn position_grid<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'
 
 /// Where an optional decoration lives in a style, what it's called, and what it starts as when
 /// it's ticked.
-struct Slot<T> {
-    label: &'static str,
-    get: fn(&OverlayStyle) -> Option<&T>,
-    put: fn(&mut OverlayStyle, Option<T>),
-    start: fn(&OverlayStyle) -> T,
+pub(super) struct Slot<T> {
+    pub(super) label: &'static str,
+    pub(super) get: fn(&OverlayStyle) -> Option<&T>,
+    pub(super) put: fn(&mut OverlayStyle, Option<T>),
+    pub(super) start: fn(&OverlayStyle) -> T,
 }
 
 /// The decorations, each off until ticked: the panel's outline, shadow and gradient, the items'
@@ -115,9 +118,9 @@ fn decorations<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a,
         text("    Decorations").size(14).color(MUTED_COLOR),
         optional(&border, |stroke, set| stroke_rows(stroke, 0.0..=8.0, &set), style, on_change),
         optional(&shadow, |shade, set| shade_rows(shade, &set), style, on_change),
-        optional(&gradient, gradient_rows, style, on_change),
+        optional(&gradient, |g, set| gradient_rows(g, &set), style, on_change),
         optional(&item_border, |stroke, set| stroke_rows(stroke, 0.0..=6.0, &set), style, on_change),
-        optional(&glow, |shade, set| shade_rows(shade, &set), style, on_change),
+        optional(&glow, |shade, set| glow_rows(shade, &set), style, on_change),
         optional(
             &text_color,
             |hex, set| vec![labeled("        Color", paint_row(&Paint::new(hex, 1.0), false, &(Rc::new(move |p: Paint| set(p.color)) as Rc<dyn Fn(Paint) -> Message + 'a>)))],
@@ -131,7 +134,7 @@ fn decorations<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a,
 
 /// A checkbox for an optional decoration, and while it's ticked, the rows `editor` makes from it
 /// and a message for a changed one.
-fn optional<'a, T: Clone + 'a>(
+pub(super) fn optional<'a, T: Clone + 'a>(
     slot: &Slot<T>,
     editor: impl Fn(&T, Rc<dyn Fn(T) -> Message + 'a>) -> Vec<Element<'a, Message>>,
     style: &OverlayStyle,
@@ -150,24 +153,39 @@ fn optional<'a, T: Clone + 'a>(
     rows.into()
 }
 
+/// A glow's rows, with a box to make it breathe.
+fn glow_rows<'a>(glow: &Shade, set: &Rc<dyn Fn(Shade) -> Message + 'a>) -> Vec<Element<'a, Message>> {
+    let pulse = {
+        let (g, set) = (glow.clone(), set.clone());
+        checkbox(glow.pulse).label("Pulse").on_toggle(move |on| set(Shade { pulse: on, ..g.clone() }))
+    };
+    let mut rows = shade_rows(glow, set);
+    rows.push(labeled("", pulse.into()));
+    rows
+}
+
 /// A gradient's second color and its direction.
-fn gradient_rows<'a>(gradient: &Gradient, set: Rc<dyn Fn(Gradient) -> Message + 'a>) -> Vec<Element<'a, Message>> {
+fn gradient_rows<'a>(gradient: &Gradient, set: &Rc<dyn Fn(Gradient) -> Message + 'a>) -> Vec<Element<'a, Message>> {
     let paint: Rc<dyn Fn(Paint) -> Message + 'a> = {
         let (g, set) = (gradient.clone(), set.clone());
         Rc::new(move |p: Paint| set(Gradient { color: p.color, opacity: p.opacity, ..g.clone() }))
     };
     let angle = {
-        let g = gradient.clone();
+        let (g, set) = (gradient.clone(), set.clone());
         move |v: f32| set(Gradient { angle: v, ..g.clone() })
     };
     vec![
         labeled("        Fades to", paint_row(&gradient.paint(), true, &paint)),
         labeled("        Direction", stepped_slider(0.0..=345.0, gradient.angle, direction_name(gradient.angle).into(), angle)),
+        labeled("", {
+            let (g, set) = (gradient.clone(), set.clone());
+            checkbox(gradient.drift).label("Drift, slowly swaying").on_toggle(move |on| set(Gradient { drift: on, ..g.clone() })).into()
+        }),
     ]
 }
 
 /// A stroke's width and color.
-fn stroke_rows<'a>(stroke: &Stroke, widths: RangeInclusive<f32>, set: &Rc<dyn Fn(Stroke) -> Message + 'a>) -> Vec<Element<'a, Message>> {
+pub(super) fn stroke_rows<'a>(stroke: &Stroke, widths: RangeInclusive<f32>, set: &Rc<dyn Fn(Stroke) -> Message + 'a>) -> Vec<Element<'a, Message>> {
     let paint = {
         let (s, set) = (stroke.clone(), set.clone());
         Rc::new(move |p: Paint| {
@@ -263,7 +281,7 @@ pub(super) fn paint_row<'a>(paint: &Paint, opacity: bool, on_paint: &Rc<dyn Fn(P
 }
 
 /// A slider in steps of 5 with its value written beside it.
-fn stepped_slider<'a>(range: RangeInclusive<f32>, value: f32, shown: String, on_change: impl Fn(f32) -> Message + 'a) -> Element<'a, Message> {
+pub(super) fn stepped_slider<'a>(range: RangeInclusive<f32>, value: f32, shown: String, on_change: impl Fn(f32) -> Message + 'a) -> Element<'a, Message> {
     row![slider(range, value, on_change).step(5.0_f32).width(220), text(shown).size(13)].spacing(10).align_y(Alignment::Center).into()
 }
 

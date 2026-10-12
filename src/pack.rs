@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::{motion::MotionSet, pad_identity::ControllerSupport};
 use crate::sound::SoundSet;
 use crate::config::{
+    RumbleSet,
     Button, ButtonAction, Combo, Config, Game, Gestures, GyroMode, Indicator, InfoOverlay, ItemKind, Layer, LogOverlay, Macro, Mode,
     Menu, MacroStep, Origin, OverlayStyle, PackInfo, PackRef, Profile, Rule, free_name,
 };
@@ -24,8 +25,10 @@ use crate::config::{
 /// glows and text colors); 15, gyro acceleration curves, axes, player and world space, the
 /// position mode, smoothing and pausing, and the touchpad's curve; 16, the touchpad's joystick,
 /// menu and swipe modes, tapping, scrolling and gliding, the split pad, and layers' touchpads;
-/// 17, modes (which replace toggled layers: older packs' toggled layers are read as modes).
-pub const FORMAT: u32 = 17;
+/// 17, modes (which replace toggled layers: older packs' toggled layers are read as modes);
+/// 18, menu item icons, text typography, ornaments, background pictures, looping effects and
+/// rumble cues.
+pub const FORMAT: u32 = 18;
 pub const EXTENSION: &str = "padpack";
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -67,6 +70,9 @@ pub struct Pack {
     /// The overlay sounds, if the author set them.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sounds: Option<SoundSet>,
+    /// The controller's buzzes for each overlay, if the author set them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rumble: Option<RumbleSet>,
     /// How each overlay moves, if the author set it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub motion: Option<MotionSet>,
@@ -146,6 +152,7 @@ impl Pack {
             overlay_font: self.overlay_font.clone(),
             nintendo_layout: self.nintendo_layout,
             sounds: self.sounds,
+            rumble: self.rumble,
             motion: self.motion,
             controllers: self.controllers,
         }
@@ -420,6 +427,7 @@ pub fn export(game: &Game, info: &PackInfo) -> Export {
         overlay_font: pack_game.overlay_font,
         nintendo_layout: pack_game.nintendo_layout,
         sounds: pack_game.sounds,
+        rumble: pack_game.rumble,
         motion: pack_game.motion,
         controllers: pack_game.controllers,
     };
@@ -679,6 +687,7 @@ fn keep_looks(mut game: Game, old: &Game) -> Game {
     game.overlay_font = game.overlay_font.or_else(|| old.overlay_font.clone());
     game.nintendo_layout = game.nintendo_layout.or(old.nintendo_layout);
     game.sounds = game.sounds.or(old.sounds);
+    game.rumble = game.rumble.or(old.rumble);
     game.motion = game.motion.or(old.motion);
     game.controllers = game.controllers.or(old.controllers);
     game

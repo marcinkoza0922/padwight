@@ -77,7 +77,7 @@ pub(super) fn top_item(row: Top, config: &Config) -> ItemView {
 }
 
 pub(super) fn item(label: String) -> ItemView {
-    ItemView { label, button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE }
+    ItemView { label, button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE, icon: None }
 }
 
 /// A row for a button: its glyph in front of the label.

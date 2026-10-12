@@ -63,6 +63,18 @@ pub enum OverlayView {
     Offer(crate::offer::OfferView),
 }
 
+impl OverlayView {
+    /// The style the view is drawn with.
+    pub fn style(&self) -> &crate::config::OverlayStyle {
+        match self {
+            OverlayView::Keyboard(k) => &k.style,
+            OverlayView::Menu(m) => &m.style,
+            OverlayView::Media(m) => &m.style,
+            OverlayView::Offer(o) => &o.style,
+        }
+    }
+}
+
 /// Everything the overlay window shows at once: info overlays, plus the keyboard or a menu.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct OverlayFrame {
@@ -110,6 +122,13 @@ impl OverlayFrame {
         use crate::motion::Tracked;
         let scene = |frame: &OverlayFrame| frame.active.as_ref().map(|view| (view.key(), view.pick()));
         scene(self) == scene(older)
+    }
+
+    /// Whether something in the frame loops (see `OverlayStyle::loops`) and the performance
+    /// settings let it, so the screen keeps redrawing while it shows.
+    pub fn loops(&self) -> bool {
+        let styles = self.info.iter().map(|v| &v.style).chain(self.logs.iter().map(|v| &v.style)).chain(self.active.as_ref().map(OverlayView::style));
+        styles.into_iter().any(|style| !style.lite.calm && style.loops())
     }
 
     /// Hands the frame's performance settings to every style in it, where the drawing reads them.
