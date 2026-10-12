@@ -227,11 +227,8 @@ pub struct OverlayStyle {
     /// A glow (or shadow) around the selected item. Unset, none.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub glow: Option<Shade>,
-    /// The color (`#rrggbb`) of the panel's own text: titles, hints and info overlays. Unset,
-    /// white or near-black, whichever reads on the background. Items keep their own.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub text: Option<String>,
-    /// How the text is set: its case, spacing, size, weight, slant and color.
+    /// How the text is set: its case, spacing and size. Weight, slant and color are set inside
+    /// the text itself (`{b}`, `{i}`, `{color:…}`).
     #[serde(default, rename = "type", skip_serializing_if = "Typography::is_default")]
     pub typography: Typography,
     /// Lines, frames, scanlines and vignettes over and around the panel.
@@ -298,7 +295,6 @@ impl Default for OverlayStyle {
             gradient: None,
             item_border: None,
             glow: None,
-            text: None,
             typography: Typography::default(),
             ornament: Ornament::default(),
             background_image: None,
@@ -398,7 +394,7 @@ mod tests {
         assert_eq!((glow.blur, glow.x, glow.opacity), (30.0, 0.0, 0.5));
         assert!(style.shadow.is_none() && style.gradient.is_none());
         let plain = toml::to_string(&OverlayStyle::default()).unwrap();
-        for key in ["border", "shadow", "gradient", "item_border", "glow", "text", "lite", "type", "ornament", "background_image"] {
+        for key in ["border", "shadow", "gradient", "item_border", "glow", "lite", "type", "ornament", "background_image"] {
             assert!(!plain.contains(key), "{key} in {plain}");
         }
     }
@@ -406,11 +402,10 @@ mod tests {
     #[test]
     fn typography_ornaments_and_pictures_are_optional_and_round_trip() {
         let style: OverlayStyle = toml::from_str(
-            "[type]\ncase = \"upper\"\nletter_spacing = 2\nbold = true\n\n[ornament.frame]\nkind = \"chamfer\"\n\n[background_image]\nfile = \"crest.png\"\n",
+            "[type]\ncase = \"upper\"\nletter_spacing = 2\n\n[ornament.frame]\nkind = \"chamfer\"\n\n[background_image]\nfile = \"crest.png\"\n",
         )
         .unwrap();
         assert_eq!((style.typography.case, style.typography.letter_spacing, style.typography.size), (Case::Upper, 2.0, 1.0));
-        assert!(style.typography.bold && !style.typography.italic);
         assert_eq!(style.ornament.frame.as_ref().map(|f| (f.kind, f.size)), Some((FrameKind::Chamfer, 14.0)));
         assert_eq!(style.background_image.as_ref().map(|b| (b.file.as_str(), b.fit)), Some(("crest.png", ImageFit::Cover)));
         let plain = toml::to_string(&OverlayStyle::default()).unwrap();
@@ -441,7 +436,6 @@ mod tests {
             gradient: Some(Gradient { angle: 90.0, ..Gradient::default() }),
             item_border: Some(Stroke { width: 0.0, ..Stroke::default() }),
             glow: Some(Shade::glow("#2f5db0")),
-            text: Some("#e0c080".into()),
             ..OverlayStyle::default()
         };
         let back: OverlayStyle = toml::from_str(&toml::to_string(&style).unwrap()).unwrap();

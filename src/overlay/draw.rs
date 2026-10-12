@@ -5,6 +5,7 @@ mod glyphs;
 mod log_panel;
 mod look;
 mod keyboard;
+mod marked;
 mod menus;
 mod ornament;
 mod radial;
@@ -145,25 +146,20 @@ impl Colors {
     }
 }
 
-/// Text whose controller tokens (`{south}`, `{lt}`…) are drawn as the pad's glyphs, sized for
-/// text of `size`. Plain text stays one text widget.
+/// Text whose tokens (`{south}`, `{lt}`, `{icon:bow}`…) are drawn as glyphs and icons, and whose
+/// formatting tags (`{b}`, `{u}`, `{color:red}`…) are applied, sized for text of `size`. Plain
+/// text stays one text widget.
 fn rich_text<'a, M: 'a>(t: &str, c: Colors, size: f32, color: Color) -> Element<'a, M> {
     let glyphs = crate::info::Glyphs { family: c.family, nintendo_layout: c.nintendo_layout };
     let segments = crate::info::glyph_text(t, glyphs);
-    let plain = |t: &str| -> Element<'a, M> { typeset::line(c.typ, c.font, t, size, color) };
     match segments.as_slice() {
-        [] => plain(""),
-        [Segment::Text(t)] => plain(t),
-        _ => {
-            let mut line = row![].spacing(size * 0.3).align_y(Alignment::Center);
-            for seg in &segments {
-                line = line.push(match seg {
-                    Segment::Text(t) => plain(t.trim()),
-                    glyph => segment_element(glyph, c, size / 17.0, c.anim.opacity()),
-                });
-            }
-            line.into()
-        }
+        [] => typeset::line(c.typ, c.font, "", size, color),
+        [Segment::Text(t)] => typeset::line(c.typ, c.font, t, size, color),
+        _ => marked::line(
+            &segments,
+            c,
+            marked::Setting { size, color, scale: size / 17.0, gap: size * 0.3, opacity: c.anim.opacity(), typed: true, trim: true },
+        ),
     }
 }
 
@@ -172,12 +168,11 @@ fn colors(style: &OverlayStyle, font: Font) -> Colors {
     let item = paint(&style.items, [0x30, 0x34, 0x3c]);
     let selected = paint(&style.selected, [0x2f, 0x5d, 0xb0]);
     let scale = style.scale.clamp(0.5, 2.0);
-    // A typography color is every text's color; otherwise each text takes the one that suits it.
-    let picked = style.typography.color.as_deref().and_then(crate::config::parse_hex).map(|[r, g, b]| Color::from_rgb8(r, g, b));
-    let background_text = picked.or_else(|| style.text.as_deref().and_then(crate::config::parse_hex).map(|[r, g, b]| Color::from_rgb8(r, g, b))).unwrap_or_else(|| text_on(background));
+    // Each text takes the color that reads on what it sits on.
+    let background_text = text_on(background);
     Colors {
         anim: Anim::still(),
-        font: typeset::font_for(font, &style.typography),
+        font,
         family: crate::info::PadFamily::default(),
         nintendo_layout: false,
         colorblind: false,
@@ -185,9 +180,9 @@ fn colors(style: &OverlayStyle, font: Font) -> Colors {
         background_text,
         muted: Color { a: 0.75, ..background_text },
         item,
-        item_text: picked.unwrap_or_else(|| text_on(item)),
+        item_text: text_on(item),
         selected,
-        selected_text: picked.unwrap_or_else(|| text_on(selected)),
+        selected_text: text_on(selected),
         corners: style.corners,
         look: Look::of(style, scale, background_text),
         typ: Type::of(&style.typography, scale),
@@ -309,13 +304,28 @@ pub fn info_panel<'a, M: 'a>(v: &InfoView, font: Font, fit: &Fit, anim: &Anim) -
     framed(body, c, &v.style, [12.0 * s, 16.0 * s], fit)
 }
 
+/// `segments` as an info overlay's cell draws them, on a chip of the default panel's color, for
+/// the settings window's previews.
+pub fn chip<'a, M: 'a>(segments: &[Segment], font: Font) -> Element<'a, M> {
+    let c = colors(&OverlayStyle::default(), font);
+    let background = Color { a: 1.0, ..c.background };
+    container(info_cell(segments, c, 0.85, 1.0))
+        .padding([3.0, 8.0])
+        .style(move |_: &iced::Theme| container::Style {
+            background: Some(background.into()),
+            border: Border { radius: 6.0.into(), ..Border::default() },
+            ..container::Style::default()
+        })
+        .into()
+}
+
 /// A cell's segments in a row that wraps them onto the next line when they're too wide.
 fn info_cell<'a, M: 'a>(segments: &[Segment], c: Colors, s: f32, opacity: f32) -> Element<'a, M> {
-    let mut line = row![].spacing(2.0 * s).align_y(Alignment::Center);
-    for seg in segments {
-        line = line.push(segment_element(seg, c, s, opacity));
-    }
-    line.wrap().vertical_spacing(2.0 * s).into()
+    marked::line(
+        segments,
+        c,
+        marked::Setting { size: 16.0 * s, color: c.background_text, scale: s, gap: 2.0 * s, opacity, typed: false, trim: false },
+    )
 }
 
 /// The media controls: what is playing, how far along, and the volume.

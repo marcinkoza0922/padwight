@@ -11,7 +11,7 @@ use crate::sound::SoundSet;
 use crate::config::{
     RumbleSet,
     Button, ButtonAction, Combo, Config, Game, Gestures, GyroMode, Indicator, InfoOverlay, ItemKind, Layer, LogOverlay, Macro, Mode,
-    Menu, MacroStep, Origin, OverlayStyle, PackInfo, PackRef, Profile, Rule, free_name,
+    Menu, MacroStep, Origin, OverlayStyle, PackAssets, PackInfo, PackRef, Profile, Rule, free_name,
 };
 
 /// The pack format this app writes, and the newest it reads. 2 added layers; 3, toggles
@@ -27,8 +27,9 @@ use crate::config::{
 /// menu and swipe modes, tapping, scrolling and gliding, the split pad, and layers' touchpads;
 /// 17, modes (which replace toggled layers: older packs' toggled layers are read as modes);
 /// 18, menu item icons, text typography, ornaments, background pictures, looping effects and
-/// rumble cues.
-pub const FORMAT: u32 = 18;
+/// rumble cues; 19, `{icon:…}` tokens and inline text formatting in place of menu item icons,
+/// the `{gyro:…}` and `{trackpad}` tokens, and icons and sounds carried in the pack (`[assets]`).
+pub const FORMAT: u32 = 19;
 pub const EXTENSION: &str = "padpack";
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -76,6 +77,9 @@ pub struct Pack {
     /// How each overlay moves, if the author set it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub motion: Option<MotionSet>,
+    /// The icons and sounds the pack carries.
+    #[serde(default, skip_serializing_if = "PackAssets::is_empty")]
+    pub assets: PackAssets,
     /// Other controllers the game supports, if the author ticked any (see `Game::controllers`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub controllers: Option<ControllerSupport>,
@@ -154,6 +158,7 @@ impl Pack {
             sounds: self.sounds,
             rumble: self.rumble,
             motion: self.motion,
+            assets: self.assets.clone(),
             controllers: self.controllers,
         }
     }
@@ -199,6 +204,9 @@ fn check(pack: &Pack) -> Result<()> {
     }
     if pack.profiles.is_empty() {
         bail!("the pack has no profiles");
+    }
+    if let Err(e) = pack.assets.check() {
+        bail!("{e}");
     }
     let game = pack.to_game();
     for kind in ItemKind::ALL {
@@ -429,6 +437,7 @@ pub fn export(game: &Game, info: &PackInfo) -> Export {
         sounds: pack_game.sounds,
         rumble: pack_game.rumble,
         motion: pack_game.motion,
+        assets: pack_game.assets,
         controllers: pack_game.controllers,
     };
     Export { pack, dangling, features }
@@ -690,6 +699,13 @@ fn keep_looks(mut game: Game, old: &Game) -> Game {
     game.rumble = game.rumble.or(old.rumble);
     game.motion = game.motion.or(old.motion);
     game.controllers = game.controllers.or(old.controllers);
+    // What the player added to the game stays, unless the pack carries one of the same name.
+    for (name, svg) in &old.assets.icons {
+        game.assets.icons.entry(name.clone()).or_insert_with(|| svg.clone());
+    }
+    for (name, wav) in &old.assets.sounds {
+        game.assets.sounds.entry(name.clone()).or_insert_with(|| wav.clone());
+    }
     game
 }
 
@@ -1032,5 +1048,46 @@ mod tests {
         config.active = ProfileRef::new(Some(&name), "Play");
         assert_eq!(config.active_ref(), ProfileRef::new(Some("Quake"), "Play"));
         assert!(config.scope().menus.iter().any(|m| m.name == "Wheel"));
+    }
+
+    #[test]
+    fn icons_and_sounds_travel_in_packs_and_bad_ones_are_refused() {
+        let mut config = setup();
+        config.games[0].assets.add_icon("bow-2", "<svg viewBox='0 0 8 8'><path d='M0 0h8v8z' fill='currentColor'/></svg>").unwrap();
+        let wav: Vec<u8> = {
+            let data: Vec<u8> = [0i16, 8000, -8000, 0].iter().flat_map(|s| s.to_le_bytes()).collect();
+            let mut out = b"RIFF".to_vec();
+            out.extend((36 + data.len() as u32).to_le_bytes());
+            out.extend(b"WAVEfmt ");
+            out.extend(16u32.to_le_bytes());
+            out.extend([1, 0, 1, 0]);
+            out.extend(44_100u32.to_le_bytes());
+            out.extend(88_200u32.to_le_bytes());
+            out.extend([2, 0, 16, 0]);
+            out.extend(b"data");
+            out.extend((data.len() as u32).to_le_bytes());
+            out.extend(data);
+            out
+        };
+        config.games[0].assets.add_sound("zap", &wav).unwrap();
+        let text = export(&config.games[0], &draft(&config.games[0], false)).pack.to_toml().unwrap();
+        let game = parse(&text).unwrap().to_game();
+        assert_eq!(game.assets, config.games[0].assets);
+        let plain = export(&setup().games[0], &draft(&setup().games[0], false)).pack.to_toml().unwrap();
+        assert!(!plain.contains("assets"), "a game with none leaves them out");
+        let bad = text.replace("<svg viewBox", "<script></script><svg viewBox");
+        assert!(parse(&bad).is_err(), "an icon with a script in it is refused");
+    }
+
+    #[test]
+    fn an_update_keeps_the_icons_the_player_added() {
+        let mut old = setup().games[0].clone();
+        old.assets.add_icon("mine", "<svg></svg>").unwrap();
+        old.assets.add_icon("shared", "<svg>old</svg>").unwrap();
+        let mut new = setup().games[0].clone();
+        new.assets.add_icon("shared", "<svg>new</svg>").unwrap();
+        let kept = keep_looks(new, &old);
+        assert!(kept.assets.icons.contains_key("mine"));
+        assert_eq!(kept.assets.icons["shared"], "<svg>new</svg>");
     }
 }

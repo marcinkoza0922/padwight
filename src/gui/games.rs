@@ -534,6 +534,7 @@ impl App {
             self.view_game_motion(),
             self.view_game_sounds(),
             self.view_game_overlays(),
+            self.view_pack_files(),
             section(
                 "Pack",
                 Some("A pack is a setup saved as a .padpack file, to share or to keep. Export saves this setup as one.".into()),

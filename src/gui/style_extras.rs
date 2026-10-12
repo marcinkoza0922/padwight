@@ -7,7 +7,7 @@ use super::{style_editor::{OnStyle, Slot, optional, paint_row, stepped_slider, s
 use crate::config::{BackgroundImage, Case, Frame, FrameKind, ImageFit, Scanlines, Stroke, Typography, Vignette};
 use iced::widget::{button, checkbox, column, row};
 
-/// How the text is set: its case, letter spacing, size, weight, slant and color.
+/// How the text is set: its case, letter spacing and size.
 pub(super) fn typography_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a, Message> {
     let t = style.typography.clone();
     let set = set_field(on_change.clone(), style, |s: &mut OverlayStyle, t: Typography| s.typography = t);
@@ -24,27 +24,12 @@ pub(super) fn typography_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>)
         let (t, set) = (t.clone(), set.clone());
         stepped_slider(50.0..=200.0, t.size * 100.0, format!("{:.0}%", t.size * 100.0), move |v| set(Typography { size: (v / 5.0).round() * 0.05, ..t.clone() }))
     };
-    let bold = {
-        let (t, set) = (t.clone(), set.clone());
-        checkbox(t.bold).label("Bold").on_toggle(move |on| set(Typography { bold: on, ..t.clone() }))
-    };
-    let italic = {
-        let (t, set) = (t.clone(), set.clone());
-        checkbox(t.italic).label("Italic").on_toggle(move |on| set(Typography { italic: on, ..t.clone() }))
-    };
-    let color = optional(
-        &Slot { label: "Color for all text", get: |s| s.typography.color.as_ref(), put: |s, v| s.typography.color = v, start: |_| "#ffffff".to_string() },
-        |hex, set| vec![labeled("        Color", paint_row(&Paint::new(hex, 1.0), false, &(Rc::new(move |p: Paint| set(p.color)) as Rc<dyn Fn(Paint) -> Message + 'a>)))],
-        style,
-        on_change,
-    );
     column![
         text("    Type").size(14).color(MUTED_COLOR),
         labeled("        Case", row![case("As typed", Case::None), case("CAPITALS", Case::Upper), case("lower", Case::Lower)].spacing(4).into()),
         labeled("        Spacing", spacing),
         labeled("        Size", size),
-        labeled("        Style", row![bold, italic].spacing(16).into()),
-        color,
+        text("        Bold, italic, underline and color go inside the text: {b}…{/b}, {i}…{/i}, {u}…{/u}, {color:red}…{/color}.").size(12).color(MUTED_COLOR),
     ]
     .spacing(8)
     .into()

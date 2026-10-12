@@ -22,6 +22,7 @@ mod store;
 mod style;
 mod summary;
 mod typography;
+mod assets;
 pub use summary::{Keyword, Piece};
 mod touchpad;
 mod window_game;
@@ -37,6 +38,7 @@ pub use shortcuts::{Group, GuideOpener, MenuKeys, OPEN_GUIDE, PanelPress, Shortc
 pub use ornament::*;
 pub use style::*;
 pub use typography::*;
+pub use assets::*;
 use style::{default_keyboard_style, default_media_style, default_menu_style, default_numpad_style};
 pub use touchpad::*;
 
@@ -409,16 +411,12 @@ pub struct MenuItem {
     /// The cells a grid item covers, merged from its own and those right of and below it.
     #[serde(default, skip_serializing_if = "Span::is_one")]
     pub span: Span,
-    /// The picture drawn in front of the label: a built-in icon (`sword`, `bow`…) or an SVG in
-    /// the icons folder, by its name. See `icons`.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub icon: Option<String>,
 }
 
 impl MenuItem {
     /// An item doing `action`, with no quick-select button, an even share, one cell and no icon.
     pub fn new(label: impl Into<String>, action: ButtonAction) -> Self {
-        MenuItem { label: label.into(), action, button: None, weight: 1.0, span: Span::ONE, icon: None }
+        MenuItem { label: label.into(), action, button: None, weight: 1.0, span: Span::ONE }
     }
 }
 
@@ -2238,6 +2236,9 @@ pub struct Game {
     /// applies when unset.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub motion: Option<MotionSet>,
+    /// The icons and sounds this game carries, usable only while it is active.
+    #[serde(default, skip_serializing_if = "PackAssets::is_empty")]
+    pub assets: PackAssets,
     /// Other controllers this game supports. When one of them is connected, the virtual pad
     /// presents itself as it (see [`crate::pad_identity`]); `None` is an Xbox 360 pad.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -2268,6 +2269,7 @@ impl Game {
             sounds: None,
             rumble: None,
             motion: None,
+            assets: PackAssets::default(),
             controllers: None,
         }
     }

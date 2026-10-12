@@ -34,21 +34,11 @@ fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, si
         let icon = iced::widget::svg::Handle::from_memory(crate::keyword_icon::svg(k).into_bytes());
         line = line.push(iced::widget::svg(icon).width(size).height(size).opacity(fade));
     }
-    if let Some(name) = item.icon.as_deref()
-        && let Some(picture) = crate::icons::svg(name, rgb_of(fg))
-    {
-        line = line.push(iced::widget::svg(iced::widget::svg::Handle::from_memory(picture.into_bytes())).width(size * 1.2).height(size * 1.2).opacity(fade));
-    }
     line = line.push(rich_text(label, c, size, fg));
     if item.submenu {
         line = line.push(text("▸").font(font).size(size).color(fg.scale_alpha(0.7)));
     }
     line.into()
-}
-
-/// A color as RGB bytes, for SVG markup.
-fn rgb_of(c: Color) -> [u8; 3] {
-    [c.r, c.g, c.b].map(|v| (v * 255.0).round().clamp(0.0, 255.0) as u8)
 }
 
 pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit) -> Element<'a, M> {

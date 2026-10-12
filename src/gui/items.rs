@@ -4,32 +4,9 @@ use iced::widget::{column, row};
 
 use super::*;
 
-/// A token in an info cell's "Insert…" list.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) struct TokenChoice(pub(super) &'static str, pub(super) &'static str);
-
-impl fmt::Display for TokenChoice {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{{{}}}  {}", self.0, self.1)
-    }
-}
-
 /// A menu item's quick-select button in a picker; `None` means none.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) struct QuickChoice(pub(super) Option<Button>);
-
-/// A menu item's icon in a picker: a built-in or the user's icon by name, or none.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(super) struct IconChoice(pub(super) Option<String>);
-
-impl fmt::Display for IconChoice {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self.0 {
-            Some(name) => f.write_str(name),
-            None => f.write_str("No icon"),
-        }
-    }
-}
 
 impl fmt::Display for QuickChoice {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -563,14 +540,6 @@ impl App {
                     *cell = value;
                 }
             }
-            Message::InsertInfoToken(i, r, c, token) => {
-                if let Some(cell) = self.infos_mut().get_mut(i).and_then(|o| o.rows.get_mut(r)).and_then(|row| row.get_mut(c)) {
-                    if !cell.is_empty() && !cell.ends_with(' ') {
-                        cell.push(' ');
-                    }
-                    cell.push_str(&format!("{{{}}}", token.0));
-                }
-            }
             Message::RemoveInfoCell(i, r, c) => {
                 if let Some(row) = self.infos_mut().get_mut(i).and_then(|o| o.rows.get_mut(r))
                     && c < row.len()
@@ -732,11 +701,6 @@ impl App {
             Message::SetMenuItemButton(i, item, choice) => {
                 if let Some(it) = self.menus_mut().get_mut(i).and_then(|m| m.items.get_mut(item)) {
                     it.button = choice.0;
-                }
-            }
-            Message::SetMenuItemIcon(i, item, icon) => {
-                if let Some(it) = self.menus_mut().get_mut(i).and_then(|m| m.items.get_mut(item)) {
-                    it.icon = icon;
                 }
             }
             Message::SetMenuItemWeight(i, item, weight) => {
@@ -1054,10 +1018,13 @@ impl App {
             labeled("Name", field("Info overlay name", &o.name).on_input(move |n| Message::RenameInfo(i, n)).width(240).into()),
             labeled(
                 "Heading",
-                field("Optional, e.g. This game's controls", o.title.as_deref().unwrap_or(""))
-                    .on_input(move |t| Message::SetInfoTitle(i, t))
-                    .width(320)
-                    .into(),
+                row![
+                    field("Optional, e.g. This game's controls", o.title.as_deref().unwrap_or("")).on_input(move |t| Message::SetInfoTitle(i, t)).width(320),
+                    insert_button(TokenTarget::InfoTitle(i)),
+                ]
+                .spacing(6)
+                .align_y(Alignment::Center)
+                .into(),
             ),
             labeled(
                 "Shown",
@@ -1118,7 +1085,6 @@ impl App {
 
         // The grid: rows of cells, which line up in columns on screen.
         let small = |label: &'static str, msg: Option<Message>| button(text(label).size(13)).style(style::secondary).on_press_maybe(msg);
-        let tokens: Vec<TokenChoice> = crate::info::TOKENS.iter().map(|(t, d)| TokenChoice(t, d)).collect();
         let mut grid = column![
             row![
                 text("Cells").size(16),
@@ -1142,10 +1108,7 @@ impl App {
                     container(
                         row![
                             field("Text or {token}", cell).on_input(move |v| Message::SetInfoCell(i, r, c, v)).width(170),
-                            dropdown(tokens.clone(), None::<TokenChoice>, move |t| Message::InsertInfoToken(i, r, c, t))
-                                .placeholder("Insert…")
-                                .menu_height(320)
-                                .width(110),
+                            insert_button(TokenTarget::InfoCell(i, r, c)),
                             small("✕", Some(Message::RemoveInfoCell(i, r, c))),
                         ]
                         .spacing(4)
@@ -1325,6 +1288,7 @@ impl App {
             let mut line = row![
                 container(text(name)).width(70).padding(iced::Padding::ZERO.top(6)),
                 field("Label", &item.label).on_input(move |l| Message::SetMenuItemLabel(mi, i, l)).width(150),
+                container(insert_button(TokenTarget::MenuLabel(mi, i))),
             ]
             .spacing(8)
             .align_y(Alignment::Start);
@@ -1345,7 +1309,6 @@ impl App {
             if quick {
                 line = line.push(item_button_picker(mi, i, item.button));
             }
-            line = line.push(item_icon_picker(mi, i, item.icon.clone()));
             line = line.push(fill_x(action_editor(&item.action, Button::South, item_kinds, set_action(target), KeyField::root(target), &item_names)));
             if let Some(grid) = &grid {
                 line = line.push(merge_buttons(mi, i, item.span, grid));
@@ -1390,17 +1353,6 @@ pub(super) fn item_choices(menu: &Menu, names: &Names, reachable: &[&Menu]) -> (
 }
 
 /// The picker for the button that chooses item `i` of button menu `mi`.
-/// The icon drawn in front of an item's label: one of the icons built in or in the icons folder.
-fn item_icon_picker<'a>(mi: usize, i: usize, icon: Option<String>) -> Element<'a, Message> {
-    let options: Vec<IconChoice> = std::iter::once(IconChoice(None)).chain(crate::icons::names().into_iter().map(|n| IconChoice(Some(n)))).collect();
-    tooltip(
-        dropdown(options, Some(IconChoice(icon)), move |c| Message::SetMenuItemIcon(mi, i, c.0)).width(120),
-        container(text("The icon drawn in front of the label. Your own go in the icons folder.").size(13)).padding(8).style(style::tooltip),
-        tooltip::Position::Top,
-    )
-    .into()
-}
-
 fn item_button_picker<'a>(mi: usize, i: usize, button: Option<Button>) -> Element<'a, Message> {
     let mut options = vec![QuickChoice(None)];
     // Not Guide: it closes any menu.
@@ -1640,7 +1592,9 @@ mod tests {
         assert!(!app.config.general.info[0].always, "off by default, so actions can show it");
         let _ = app.update(Message::AddInfoRow(0));
         let _ = app.update(Message::SetInfoCell(0, 2, 0, "Time".into()));
-        let _ = app.update(Message::InsertInfoToken(0, 2, 0, TokenChoice("time", "")));
+        let _ = app.update(Message::OpenTokenPicker(TokenTarget::InfoCell(0, 2, 0)));
+        let _ = app.update(Message::PickToken("{time}".into()));
+        let _ = app.update(Message::CloseTokenPicker);
         let _ = app.update(Message::AddInfoCell(0, 2));
         assert_eq!(app.config.general.info[0].rows[2], ["Time {time}", ""]);
         let _ = app.update(Message::MoveInfoRow(0, 2, true));

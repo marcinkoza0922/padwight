@@ -4,8 +4,7 @@
 
 use iced::{
     Alignment, Color, Element, Font,
-    font::{Style as Slant, Weight},
-    widget::{row, space, text},
+    widget::{row, rich_text, space, span, text},
 };
 
 use crate::config::{Case, Typography};
@@ -24,6 +23,11 @@ pub struct Type {
 }
 
 impl Type {
+    /// Text as written, at its own size, with no spacing.
+    pub const PLAIN: Type = Type { case: Case::None, spacing: 0.0, size: 1.0 };
+}
+
+impl Type {
     pub fn of(typography: &Typography, scale: f32) -> Type {
         Type {
             case: typography.case,
@@ -38,34 +42,48 @@ impl Type {
     }
 }
 
-/// `base` with the bold and italic faces the typography asks for. A family without those faces
-/// keeps its regular ones.
-pub fn font_for(base: Font, typography: &Typography) -> Font {
-    Font {
-        weight: if typography.bold { Weight::Bold } else { base.weight },
-        style: if typography.italic { Slant::Italic } else { base.style },
-        ..base
-    }
-}
-
 /// `t` in the typography's case, at `size` (as the typography scales it), in `color`, with its
 /// letter spacing. A line of text that wraps keeps wrapping.
 pub fn line<'a, M: 'a>(ty: Type, font: Font, t: &str, size: f32, color: Color) -> Element<'a, M> {
+    underlined(ty, t, Face { font, size, color, underline: false })
+}
+
+/// How a run of text looks: its font, size and color, and whether it is underlined.
+#[derive(Clone, Copy)]
+pub struct Face {
+    pub font: Font,
+    pub size: f32,
+    pub color: Color,
+    pub underline: bool,
+}
+
+/// One run of text in `face`.
+fn run<'a, M: 'a>(face: Face, t: String) -> Element<'a, M> {
+    let Face { font, size, color, underline } = face;
+    if underline {
+        rich_text([span::<(), Font>(t).font(font).size(size).color(color).underline(true)]).into()
+    } else {
+        text(t).font(font).size(size).color(color).into()
+    }
+}
+
+/// Like [`line`], with the text in `face`.
+pub fn underlined<'a, M: 'a>(ty: Type, t: &str, face: Face) -> Element<'a, M> {
     let t = ty.case.apply(t);
-    let size = ty.size(size);
+    let face = Face { size: ty.size(face.size), ..face };
     if ty.spacing <= 0.0 {
-        return text(t).font(font).size(size).color(color).into();
+        return run(face, t);
     }
     let mut parts: Vec<Element<'a, M>> = Vec::new();
     for (i, word) in t.split(' ').enumerate() {
         if i > 0 {
             // A real space, then the letter spacing after it, as after any letter.
-            parts.push(text(" ").font(font).size(size).color(color).into());
+            parts.push(run(face, " ".into()));
             parts.push(space().width(ty.spacing).into());
         }
         let mut letters = row![].spacing(ty.spacing).align_y(Alignment::Center);
         for ch in word.chars() {
-            letters = letters.push(text(ch.to_string()).font(font).size(size).color(color));
+            letters = letters.push(run(face, ch.to_string()));
         }
         parts.push(letters.into());
     }
@@ -90,14 +108,5 @@ mod tests {
         assert_eq!(ty.size(10.0), 20.0);
         let negative = Type::of(&Typography { letter_spacing: -4.0, size: 0.1, ..Typography::default() }, 1.0);
         assert_eq!((negative.spacing, negative.size(10.0)), (0.0, 5.0));
-    }
-
-    #[test]
-    fn bold_and_italic_pick_the_faces_asked_for() {
-        let base = Font::with_name("Cinzel");
-        let typo = Typography { bold: true, italic: true, ..Typography::default() };
-        let styled = font_for(base, &typo);
-        assert_eq!((styled.weight, styled.style), (Weight::Bold, Slant::Italic));
-        assert_eq!(font_for(base, &Typography::default()), base);
     }
 }
