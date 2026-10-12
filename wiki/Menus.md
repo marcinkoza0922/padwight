@@ -8,7 +8,7 @@ Use **Open menu…** on any button, gesture, combo, trigger or stick direction. 
 
 A list that has a close button is the exception: it stays up when the input is let go, until the input is pressed again or its close button is pressed. A menu can't be put in a Toggle.
 
-Choosing an item taps its action, as if the button had been pressed. Items can be keys, [macros](Macros), toggles, [mode switches](Modes) or the keyboard. An item can't hold a [layer](Layers). Choosing an item closes the menu; opening a submenu doesn't.
+Choosing an item taps its action, as if the button had been pressed. Items can be keys, [macros](Macros), toggles, [mode switches](Modes) or the keyboard. An item can't hold a [layer](Layers). Choosing an item closes the menu; opening a submenu doesn't. **Stay open for more picks**, on the menu's card, keeps it up after each pick instead (not for radial menus, which choose as they're let go).
 
 A quick tap can't hold a menu up, so a menu opened by a tap (such as a double tap that isn't the button's last gesture) doesn't show, unless it's a list with a close button.
 

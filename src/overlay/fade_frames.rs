@@ -16,7 +16,7 @@ use crate::{
 
 fn menu(name: &str, kind: MenuKind, labels: &[&str]) -> Menu {
     let items = labels.iter().enumerate().map(|(i, l)| MenuItem::new(*l, ButtonAction::Keys(vec![format!("KEY_{}", i + 1)]))).collect();
-    Menu { name: name.into(), kind, items, cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() }
+    Menu { name: name.into(), kind, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() }
 }
 
 fn scenes() -> Vec<(&'static str, MenuView)> {

@@ -271,6 +271,7 @@ requires = ["gyro", "back_paddles", "touchpad"]
 [[menus]]
 name = "Belt"
 cancel = "East"               # optional: button that backs out (default East)
+keep_open = true              # optional: stay up after a pick (default false: a pick closes it)
 
 [menus.kind.radial]
 stick = "Right"

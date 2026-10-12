@@ -186,7 +186,7 @@ impl LayoutEditor {
         let Some(game) = active_game_mut(config) else { return EditStep::Stay };
         let taken = |n: &str| game.menus.iter().any(|m| m.name == n);
         let name = (1..).map(|n| format!("Menu {n}")).find(|n| !taken(n)).unwrap_or_default();
-        game.menus.push(Menu { name, kind: MenuKind::List, items: Vec::new(), cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() });
+        game.menus.push(Menu { name, kind: MenuKind::List, items: Vec::new(), cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() });
         let new = game.menus.len() - 1;
         self.push(Page::Menu(new));
         EditStep::Changed
@@ -322,7 +322,7 @@ mod tests {
     #[test]
     fn kinds_cycle_and_skip_what_the_menu_cant_be() {
         let item = MenuItem::new("x", ButtonAction::Disabled);
-        let mut menu = Menu { name: "M".into(), kind: MenuKind::Radial { stick: crate::config::Stick::Right, boxes: false }, items: vec![item; 5], cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() };
+        let mut menu = Menu { name: "M".into(), kind: MenuKind::Radial { stick: crate::config::Stick::Right, boxes: false }, items: vec![item; 5], cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() };
         assert_eq!(next_kind(&menu, 1).tag(), MenuKindTag::List, "five items don't fit four directions");
         menu.items.truncate(4);
         assert_eq!(next_kind(&menu, 1).tag(), MenuKindTag::Directional);

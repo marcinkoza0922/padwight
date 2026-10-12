@@ -354,6 +354,10 @@ pub struct Menu {
     /// when an item is chosen.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub no_cancel: bool,
+    /// Choosing an item leaves the menu up for more picks, instead of closing it. Off unless
+    /// asked for; a radial menu chooses as it's let go, so it closes anyway.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub keep_open: bool,
     /// The item a grid's cursor starts on (counting cells left to right, then down).
     #[serde(default, skip_serializing_if = "is_first")]
     pub start: usize,
@@ -3268,7 +3272,7 @@ key_threshold = 0.2
         game.profiles[0].set_button(Button::West, ButtonAction::toggle(ButtonAction::Keys(vec!["KEY_A".into()])));
         let mut item = MenuItem::new("x", ButtonAction::Multi(vec![ButtonAction::toggle(open.clone())]));
         item.span = Span { columns: 2, rows: 3 };
-        game.menus.push(Menu { name: "M".into(), kind: MenuKind::Grid { columns: 3 }, items: vec![item], cancel: None, no_cancel: false, start: 4, style: OverlayStyle::default() });
+        game.menus.push(Menu { name: "M".into(), kind: MenuKind::Grid { columns: 3 }, items: vec![item], cancel: None, no_cancel: false, keep_open: false, start: 4, style: OverlayStyle::default() });
         let back: Game = toml::from_str(&toml::to_string_pretty(&game).unwrap()).unwrap();
         assert_eq!(back, game);
         game.untoggle_menus();
@@ -3286,21 +3290,21 @@ key_threshold = 0.2
                 name: "Weapons".into(),
                     kind: MenuKind::Radial { stick: Stick::Right, boxes: false },
                 items: (1..=4).map(|n| item(&format!("Slot {n}"), ButtonAction::Keys(vec![format!("KEY_{n}")]))).collect(),
-                cancel: None, no_cancel: false, start: 0,
+                cancel: None, no_cancel: false, keep_open: false, start: 0,
                 style: OverlayStyle::default(),
             },
             Menu {
                 name: "Pause".into(),
                     kind: MenuKind::Buttons,
                 items: vec![MenuItem { button: Some(Button::LeftBumper), ..item("Map", ButtonAction::Keys(vec!["KEY_M".into()])) }],
-                cancel: Some(Button::Start), no_cancel: false, start: 0,
+                cancel: Some(Button::Start), no_cancel: false, keep_open: false, start: 0,
                 style: OverlayStyle { position: ScreenPosition::TopRight, scale: 1.5, ..OverlayStyle::default() },
             },
             Menu {
                 name: "Faces".into(),
                     kind: MenuKind::Directional { cluster: Cluster::FaceButtons },
                 items: vec![item("More", ButtonAction::OpenMenu("Pause".into()))],
-                cancel: None, no_cancel: false, start: 0,
+                cancel: None, no_cancel: false, keep_open: false, start: 0,
                 style: OverlayStyle::default(),
             },
             ];
@@ -3520,7 +3524,7 @@ key_threshold = 0.2
             name: "M".into(),
             kind: MenuKind::List,
             items: vec![MenuItem::new("x", ButtonAction::Macro { name: "Old".into(), repeat: false })],
-            cancel: None, no_cancel: false, start: 0,
+            cancel: None, no_cancel: false, keep_open: false, start: 0,
             style: OverlayStyle::default(),
         });
         game.rename_refs(ItemKind::Macro, "Old", "New");

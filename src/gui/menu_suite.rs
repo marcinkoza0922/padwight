@@ -9,7 +9,7 @@ use crate::menu::GridLayout;
 
 fn menu(name: &str, kind: MenuKind, cancel: Option<Button>) -> Menu {
     let items = (1..=4).map(|i| crate::config::MenuItem::new(i.to_string(), ButtonAction::Keys(vec![format!("KEY_{i}")]))).collect();
-    Menu { name: name.into(), kind, items, cancel, no_cancel: false, start: 0, style: OverlayStyle::default() }
+    Menu { name: name.into(), kind, items, cancel, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() }
 }
 
 #[test]

@@ -321,7 +321,7 @@ mod tests {
         // What an older version saved: a menu that plays a macro, and two unused macros.
         let heal = ButtonAction::Macro { name: "Heal".into(), repeat: false };
         let item = MenuItem::new("Heal", heal);
-        let wheel = Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![item], cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() };
+        let wheel = Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![item], cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() };
         let mac = |name: &str| Macro { name: name.into(), steps: vec![MacroStep::Wait(1)] };
         write_items(&dir.join("shared/menus"), &[wheel]).unwrap();
         write_items(&dir.join("shared/macros"), &[mac("Heal"), mac("Spare"), mac("Other")]).unwrap();

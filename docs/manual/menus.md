@@ -20,7 +20,7 @@ An item can open another menu when both menus have the same close button. The ne
 
 ## Choosing
 
-Move with the Left Stick or D-pad, and press A to choose. The close button goes back one level, or closes the menu at the top; on a radial menu it closes without choosing. In a **Button menu** each item has its own button instead: press it to choose the item. Choosing an item fires it and closes the menu, whatever its kind. Opening a submenu doesn't count as choosing.
+Move with the Left Stick or D-pad, and press A to choose. The close button goes back one level, or closes the menu at the top; on a radial menu it closes without choosing. In a **Button menu** each item has its own button instead: press it to choose the item. Choosing an item fires it and closes the menu, whatever its kind. Opening a submenu doesn't count as choosing. To pick several items in one go, tick **Stay open for more picks** on the menu's card: the menu then stays up after each pick, until its input is let go (or pressed again, for a list with a close button) or its close button closes it. Radial menus choose as you let go, so they always close.
 
 ## Menu combos
 

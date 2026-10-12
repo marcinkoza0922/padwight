@@ -517,7 +517,7 @@ mod tests {
     #[test]
     fn button_menu_items_nothing_can_pick_are_warned_about() {
         let item = |button| MenuItem { button, ..MenuItem::new("x", ButtonAction::Disabled) };
-        let menu = |name: &str, items| Menu { name: name.into(), kind: MenuKind::Buttons, items, cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() };
+        let menu = |name: &str, items| Menu { name: name.into(), kind: MenuKind::Buttons, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() };
         let quick = menu("Quick", vec![item(Some(Button::LeftBumper)), item(Some(Button::South)), item(Some(Button::South)), item(None)]);
         let sub = menu("Sub", vec![item(Some(Button::RightBumper))]);
         let mut profile = Profile::passthrough("p");

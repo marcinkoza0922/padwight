@@ -195,7 +195,7 @@ The "On-screen numpad" action (or `padwight numpad-toggle`) opens a smaller pad 
 
 ## Menus
 
-A setup's Menus tab holds on-screen **action menus**. Open one from any button, gesture, combo, trigger or stick direction with the "Open menu…" action (or `padwight menu <name>`). A menu stays on screen only while its input is held, and letting go closes it, except a list with a close button, which stays up until you press the input again or its close button. Choosing an item taps its action like a button press, so items can be keys, macros, toggles or the keyboard, and closes the menu.
+A setup's Menus tab holds on-screen **action menus**. Open one from any button, gesture, combo, trigger or stick direction with the "Open menu…" action (or `padwight menu <name>`). A menu stays on screen only while its input is held, and letting go closes it, except a list with a close button, which stays up until you press the input again or its close button. Choosing an item taps its action like a button press, so items can be keys, macros, toggles or the keyboard, and closes the menu, unless the menu is set to stay open for more picks.
 
 Pick the style that suits the job:
 

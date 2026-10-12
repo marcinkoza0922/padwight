@@ -39,7 +39,7 @@ fn item(label: &str, action: ButtonAction) -> MenuItem {
 }
 
 fn menu(name: &str, kind: MenuKind, items: Vec<MenuItem>) -> Menu {
-    Menu { name: name.into(), kind, items, cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() }
+    Menu { name: name.into(), kind, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() }
 }
 
 fn numbers(n: usize) -> Vec<MenuItem> {
@@ -328,6 +328,24 @@ fn carousel_controls() {
 }
 
 #[test]
+fn a_menu_set_to_stay_open_stays_up_after_a_pick() {
+    let stays = |kind| Menu { keep_open: true, ..menu("M", kind, numbers(4)) };
+    let now = Instant::now();
+    for kind in [MenuKind::List, MenuKind::Grid { columns: 2 }, MenuKind::Directional { cluster: Cluster::DPad }] {
+        let menus = [stays(kind)];
+        let mut s = MenuSession::open(&menus, "M", held_by(Button::LeftBumper)).unwrap();
+        let pick = if matches!(kind, MenuKind::Directional { .. }) { Button::DpadUp } else { Button::South };
+        assert!(matches!(press(&mut s, &menus, pick), Some(MenuOutcome::Choose { item: 0, close: false, .. })), "{kind:?}");
+        assert!(matches!(press(&mut s, &menus, pick), Some(MenuOutcome::Choose { close: false, .. })), "{kind:?}: and again");
+    }
+    // A radial menu chooses as it's let go, which closes it whatever the setting.
+    let menus = [stays(MenuKind::Radial { stick: Stick::Right, boxes: false })];
+    let mut s = MenuSession::open(&menus, "M", held_by(Button::LeftBumper)).unwrap();
+    s.handle(&menus, InputEvent::Axis(Axis::RightX, 0.9), now);
+    assert!(matches!(s.handle(&menus, InputEvent::Button(Button::LeftBumper, false), now), Some(MenuOutcome::Choose { close: true, .. })));
+}
+
+#[test]
 fn a_pick_closes_the_menu_but_opening_a_submenu_does_not() {
     let menus = [
         menu("Root", MenuKind::List, vec![item("Up", key("KEY_U")), item("More", ButtonAction::OpenMenu("Sub".into()))]),
@@ -335,7 +353,7 @@ fn a_pick_closes_the_menu_but_opening_a_submenu_does_not() {
     ];
     let mut s = MenuSession::open(&menus, "Root", held_by(Button::LeftBumper)).unwrap();
     let picked = press(&mut s, &menus, Button::South);
-    assert!(matches!(picked, Some(MenuOutcome::Choose { .. })), "a pick, which closes it: {picked:?}");
+    assert!(matches!(picked, Some(MenuOutcome::Choose { close: true, .. })), "a pick, which closes it: {picked:?}");
     let mut s = MenuSession::open(&menus, "Root", held_by(Button::LeftBumper)).unwrap();
     press(&mut s, &menus, Button::DpadDown);
     assert_eq!(press(&mut s, &menus, Button::South), None, "a submenu isn't a pick");

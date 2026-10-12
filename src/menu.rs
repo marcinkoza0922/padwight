@@ -100,8 +100,9 @@ pub enum Tone {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MenuOutcome {
-    /// Run this item's action; the menu goes away with all its submenus.
-    Choose { menu: String, item: usize, action: ButtonAction },
+    /// Run this item's action; `close` says whether the menu goes away too (with all its
+    /// submenus), as it does unless it's set to stay open.
+    Choose { menu: String, item: usize, action: ButtonAction, close: bool },
     Close,
 }
 
@@ -434,7 +435,7 @@ impl MenuSession {
             && let Some(item) = menu.items.get(i)
             && !matches!(item.action, ButtonAction::Disabled | ButtonAction::OpenMenu(_))
         {
-            return MenuOutcome::Choose { menu: menu.name.clone(), item: i, action: item.action.clone() };
+            return MenuOutcome::Choose { menu: menu.name.clone(), item: i, action: item.action.clone(), close: true };
         }
         MenuOutcome::Close
     }
@@ -619,7 +620,7 @@ impl MenuSession {
     }
 
     /// Chooses item `i`: opens its submenu in its place, or hands back its action to run, which
-    /// closes the menu.
+    /// closes the menu unless it's set to stay open.
     fn choose(&mut self, menus: &[Menu], i: usize) -> Option<MenuOutcome> {
         let menu = self.top(menus)?;
         let item = menu.items.get(i)?;
@@ -631,11 +632,11 @@ impl MenuSession {
                 None
             }
             action => {
-                // The menu shows the item it picked as it goes.
+                // The menu shows the item it picked, as it goes or as it stays.
                 if let Some(frame) = self.stack.last_mut() {
                     frame.cursor = Some(i);
                 }
-                Some(MenuOutcome::Choose { menu: menu.name.clone(), item: i, action: action.clone() })
+                Some(MenuOutcome::Choose { menu: menu.name.clone(), item: i, action: action.clone(), close: !menu.keep_open })
             }
         }
     }
