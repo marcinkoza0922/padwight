@@ -74,6 +74,8 @@ fn an_imported_pack_with_toggled_menus_comes_in_untoggled() {
 fn a_menu_button_holds_its_menu_up_like_any_other_once_untoggled() {
     let mut game = toggled_everywhere();
     game.untoggle_menus();
+    // A grid, as a list with a close button stays up once let go.
+    game.menus[0].kind = MenuKind::Grid { columns: 2 };
     let profile = &game.profiles[0];
     let mut engine = Engine::default();
     let mut out = Vec::new();

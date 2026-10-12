@@ -160,23 +160,26 @@ fn a_link_to_a_menu_with_another_close_button_does_nothing() {
 }
 
 #[test]
-fn picks_in_a_submenu_run_and_letting_go_of_the_opener_closes_everything() {
+fn picks_in_a_submenu_run_and_the_opener_closes_everything() {
     let menus = three_deep();
     let mut pad = Pad::open(&menus, "Top");
     pad.press(Button::South);
     pad.press(Button::South);
     pad.press(Button::DpadDown);
-    assert_eq!(chose(pad.press(Button::South)).as_deref(), Some("KEY_2"));
-    assert_eq!(pad.title(), "Bottom", "a held menu stays up for more picks");
-    assert_eq!(pad.up(Button::LeftBumper), Some(MenuOutcome::Close));
+    assert_eq!(chose(pad.press(Button::South)).as_deref(), Some("KEY_2"), "a pick, which closes every level");
+    let mut pad = Pad::open(&menus, "Top");
+    pad.press(Button::South);
+    pad.press(Button::South);
+    assert_eq!(pad.title(), "Bottom");
+    assert_eq!(pad.up(Button::LeftBumper), None, "a list with a close button stays up when let go");
+    assert_eq!(pad.down(Button::LeftBumper), Some(MenuOutcome::Close));
 }
 
 #[test]
-fn a_pinned_menu_goes_back_and_closes_from_a_submenu_the_same_way() {
+fn a_list_left_up_goes_back_and_closes_from_a_submenu_the_same_way() {
     let menus = three_deep();
     let mut pad = Pad::open(&menus, "Top");
-    pad.press(Button::RightStick);
-    assert_eq!(pad.up(Button::LeftBumper), None, "pinned");
+    assert_eq!(pad.up(Button::LeftBumper), None, "stays up");
     pad.press(Button::South);
     pad.press(Button::East);
     assert_eq!(pad.title(), "Top");

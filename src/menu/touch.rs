@@ -148,7 +148,7 @@ mod tests {
 
     fn menu(kind: MenuKind, n: usize) -> Menu {
         let items = (0..n).map(|i| MenuItem::new(i.to_string(), ButtonAction::Disabled)).collect();
-        Menu { name: "M".into(), kind, items, cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() }
+        Menu { name: "M".into(), kind, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() }
     }
 
     #[test]

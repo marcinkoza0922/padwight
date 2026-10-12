@@ -19,8 +19,6 @@ const STICK_PRESS: f32 = crate::nav::STICK_PRESS;
 /// A menu nothing holds up (see [`Mode::Unwatched`]) closes after this long without input, so
 /// it can't keep the controller forever.
 const IDLE_CLOSE: Duration = Duration::from_secs(30);
-/// The button that pins a held menu open.
-const PIN: Button = Button::RightStick;
 /// Holding the close button in a submenu this long closes the whole menu, rather than going back.
 const HOLD_TO_CLOSE: Duration = crate::overlay::HOLD_TO_CLOSE;
 /// Stick deflection from which a radial menu shows where the stick points.
@@ -102,7 +100,8 @@ pub enum Tone {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MenuOutcome {
-    /// Run this item's action; `close` says whether the menu goes away too.
+    /// Run this item's action; `close` says whether the menu goes away too (with all its
+    /// submenus), as it does unless it's set to stay open.
     Choose { menu: String, item: usize, action: ButtonAction, close: bool },
     Close,
 }
@@ -112,8 +111,9 @@ pub enum MenuOutcome {
 enum Mode {
     /// Up while the opener is held; letting go closes it (a radial menu chooses first).
     Held,
-    /// Pinned with R3: up until the opener is pressed again.
-    Pinned,
+    /// A list with a close button, once its opener is let go: up until the opener is pressed
+    /// again or the close button closes it.
+    Latched,
     /// Opened by something that can't be held (the command line, an analog zone): up until
     /// an item is chosen or the menu's back button closes it.
     Unwatched,
@@ -137,7 +137,7 @@ pub struct MenuSession {
     mode: Mode,
     /// Whether the opener was down after the last event.
     opener_down: bool,
-    /// A pinned menu closes on the opener's next press, once it has been let go.
+    /// A latched menu closes on the opener's next press, once it has been let go.
     armed: bool,
     /// When the close button went down in a submenu: let go, it goes back; held, it closes.
     closing: Option<Instant>,
@@ -245,7 +245,11 @@ impl MenuSession {
         self.axes = axes.into_iter().collect();
         self.opener_down = self.opener_is_down();
         if self.mode == Mode::Held && !self.opener_down {
-            return false;
+            // A quick tap opens a list that stays up; anything else it can't hold up.
+            if !self.top(menus).is_some_and(stays_open) {
+                return false;
+            }
+            self.latch();
         }
         if let Some(menu) = self.top(menus).cloned()
             && let MenuKind::Radial { stick, .. } = menu.kind
@@ -336,31 +340,32 @@ impl MenuSession {
         let deep = self.stack.len() > 1;
         let opener = self.opener_label();
         let Some(cancel) = menu.cancel_button().map(crate::info::button_hint) else {
-            // Nothing can pin a menu without a close button, so it's only ever held or unwatched.
+            // Only a menu with a close button latches, so this one is only ever held or unwatched.
             return match (self.mode, radial) {
-                (Mode::Held | Mode::Pinned, true) => "let go to choose".into(),
-                (Mode::Held | Mode::Pinned, false) => "let go to close".into(),
+                (Mode::Held | Mode::Latched, true) => "let go to choose".into(),
+                (Mode::Held | Mode::Latched, false) => "let go to close".into(),
                 (Mode::Unwatched, _) => "{south} choose".into(),
             };
         };
-        let pin = if self.can_pin(menu) { " · {r3} pin" } else { "" };
-        match (self.mode, radial) {
-            (Mode::Held, true) => format!("let go to choose · {cancel} cancel{pin}"),
-            (Mode::Held, false) if deep => format!("{cancel} back (hold to close) · let go to close{pin}"),
-            (Mode::Held, false) => format!("let go or {cancel} to close{pin}"),
-            (Mode::Pinned, true) => format!("{opener} again to choose · {cancel} cancel"),
-            (Mode::Pinned, false) if deep => format!("{cancel} back (hold to close) · {opener} again to close"),
-            (Mode::Pinned, false) => format!("{opener} again or {cancel} to close"),
+        // A list that latches says so while it's still held, as letting go won't close it.
+        let mode = if self.mode == Mode::Held && stays_open(menu) { Mode::Latched } else { self.mode };
+        match (mode, radial) {
+            (Mode::Held, true) => format!("let go to choose · {cancel} cancel"),
+            (Mode::Held, false) if deep => format!("{cancel} back (hold to close) · let go to close"),
+            (Mode::Held, false) => format!("let go or {cancel} to close"),
+            (Mode::Latched, true) => format!("{opener} again to choose · {cancel} cancel"),
+            (Mode::Latched, false) if deep => format!("{cancel} back (hold to close) · {opener} again to close"),
+            (Mode::Latched, false) => format!("{opener} again or {cancel} to close"),
             (Mode::Unwatched, true) => format!("{{south}} choose · {cancel} close"),
             (Mode::Unwatched, false) if deep => format!("{cancel} back (hold to close)"),
             (Mode::Unwatched, false) => format!("{cancel} close"),
         }
     }
 
-    /// Whether R3 can pin the menu: a held one, not one that closes as it picks, and only with a
-    /// close button to put it away again.
-    fn can_pin(&self, menu: &Menu) -> bool {
-        self.mode == Mode::Held && !fires_at_once(menu) && menu.cancel_button().is_some() && !uses(menu, PIN, self.mode)
+    /// Keeps the menu up after the opener is let go, until it's pressed again.
+    fn latch(&mut self) {
+        self.mode = Mode::Latched;
+        self.armed = true;
     }
 
     /// The item the cursor is on in the menu on top, if it has one.
@@ -398,9 +403,10 @@ impl MenuSession {
         let down = self.opener_is_down();
         let was_down = std::mem::replace(&mut self.opener_down, down);
         match self.mode {
+            Mode::Held if was_down && !down && stays_open(&menu) => self.latch(),
             Mode::Held if was_down && !down => return Some(self.finish(&menu)),
-            Mode::Pinned if !down => self.armed = true,
-            Mode::Pinned if self.armed && !was_down => return Some(self.finish(&menu)),
+            Mode::Latched if !down => self.armed = true,
+            Mode::Latched if self.armed && !was_down => return Some(self.finish(&menu)),
             _ => {}
         }
 
@@ -420,7 +426,7 @@ impl MenuSession {
         }
     }
 
-    /// The opener was let go (or pressed again, for a pinned menu): a radial menu chooses
+    /// The opener was let go (or pressed again, for a latched menu): a radial menu chooses
     /// what it's aimed at, and the menu closes with all its submenus.
     fn finish(&mut self, menu: &Menu) -> MenuOutcome {
         let aimed = self.stack.last().and_then(|f| f.cursor);
@@ -435,13 +441,6 @@ impl MenuSession {
     }
 
     fn button_pressed(&mut self, menus: &[Menu], menu: &Menu, b: Button, now: Instant) -> Option<MenuOutcome> {
-        // R3 pins a held menu: it stays up once let go, until the opener is pressed again or its
-        // close button closes it.
-        if b == PIN && self.can_pin(menu) {
-            self.mode = Mode::Pinned;
-            self.armed = !self.opener_down;
-            return None;
-        }
         // The cancel button backs out of a submenu, or closes the menu at the top. A menu that
         // can't be let go of always needs it; one that can be lets the menu use it first (a
         // button menu's item, a face-button slot).
@@ -620,9 +619,8 @@ impl MenuSession {
         self.choose(menus, i)
     }
 
-    /// Chooses item `i`: opens its submenu in its place, or hands back its action to run. A
-    /// directional or button menu is for quick actions, so it closes as it picks; any other held
-    /// or pinned menu stays up after an action, so several can be picked in one go.
+    /// Chooses item `i`: opens its submenu in its place, or hands back its action to run, which
+    /// closes the menu unless it's set to stay open.
     fn choose(&mut self, menus: &[Menu], i: usize) -> Option<MenuOutcome> {
         let menu = self.top(menus)?;
         let item = menu.items.get(i)?;
@@ -634,12 +632,11 @@ impl MenuSession {
                 None
             }
             action => {
-                let close = self.mode == Mode::Unwatched || fires_at_once(menu);
-                // A menu that closes as it picks shows the item it picked as it goes.
-                if close && let Some(frame) = self.stack.last_mut() {
+                // The menu shows the item it picked, as it goes or as it stays.
+                if let Some(frame) = self.stack.last_mut() {
                     frame.cursor = Some(i);
                 }
-                Some(MenuOutcome::Choose { menu: menu.name.clone(), item: i, action: action.clone(), close })
+                Some(MenuOutcome::Choose { menu: menu.name.clone(), item: i, action: action.clone(), close: !menu.keep_open })
             }
         }
     }
@@ -693,10 +690,10 @@ fn carousel_step(controls: CarouselControls, b: Button) -> Option<Step> {
     }
 }
 
-/// Whether picking an item also closes the menu: a directional or button menu, made for firing
-/// one quick action.
-fn fires_at_once(menu: &Menu) -> bool {
-    matches!(menu.kind, MenuKind::Directional { .. } | MenuKind::Buttons)
+/// Whether a list stays up once its opener is let go: it does when it has a close button to put
+/// it away.
+fn stays_open(menu: &Menu) -> bool {
+    menu.kind == MenuKind::List && menu.cancel_button().is_some()
 }
 
 /// Whether the bumpers jump a page: in a list too long to show at once.

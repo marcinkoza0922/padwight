@@ -2689,7 +2689,7 @@ mod tests {
             name: "M".into(),
             kind: crate::config::MenuKind::List,
             items: vec![crate::config::MenuItem::new("x", starting(ButtonAction::Keys(vec!["KEY_M".into()])))],
-            cancel: None, no_cancel: false, start: 0,
+            cancel: None, no_cancel: false, keep_open: false, start: 0,
             style: Default::default(),
         };
         let mut e = Engine::default();

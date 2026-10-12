@@ -24,7 +24,7 @@ pub(super) fn open_menu(name: &str) -> ButtonAction {
 }
 
 pub(super) fn menu(name: &str, kind: MenuKind, items: Vec<MenuItem>) -> Menu {
-    Menu { name: name.into(), kind, items, cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() }
+    Menu { name: name.into(), kind, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() }
 }
 
 /// Items "1" to "n", typing KEY_1 to KEY_n.

@@ -2436,7 +2436,7 @@ impl Daemon {
                     self.broadcast_overlay();
                     self.close_overlay();
                 }
-                // Otherwise the menu stays up for more picks, unless the item put it away.
+                // A menu set to stay open stays up for more picks, unless the item put it away.
                 self.run_menu_item(device, &menu, item, &action);
                 !matches!(self.active, Some(Active::Menu { .. }))
             }

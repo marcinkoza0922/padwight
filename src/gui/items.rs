@@ -70,14 +70,27 @@ pub(super) fn close_choices(menu: &Menu) -> Vec<CloseChoice> {
     options
 }
 
+/// Whether menu `mi` stays up after a pick. Not for a radial menu, which chooses as it's let go.
+fn keep_open_toggle<'a>(mi: usize, menu: &Menu) -> Option<Element<'a, Message>> {
+    if matches!(menu.kind, MenuKind::Radial { .. }) {
+        return None;
+    }
+    let toggle = checkbox(menu.keep_open).label("Stay open for more picks").on_toggle(move |on| Message::SetMenuKeepOpen(mi, on));
+    let note = "Choosing an item closes the menu. With this on, it stays up instead, so several items can be picked in \
+                one go; it then closes as its input is let go (or pressed again, for a list with a close button), or with \
+                its close button.";
+    Some(row![toggle, help(note.into())].spacing(8).align_y(Alignment::Center).into())
+}
+
 /// The picker for the button that closes menu `mi` (and backs out of its submenus), or none.
 fn close_picker<'a>(mi: usize, menu: &Menu) -> Element<'a, Message> {
     row![
         dropdown(close_choices(menu), Some(CloseChoice::of(menu)), move |c| Message::SetMenuCancel(mi, c)).width(160),
         help(
             "Backs out of a submenu (held, it closes the whole menu), and closes the menu at the top. \
-             A menu item can open another menu only when both have the same close button. With none, the \
-             menu goes when its input is let go, or when an item is chosen, and R3 can't keep it open. A \
+             A menu item can open another menu only when both have the same close button. A list with one \
+             stays up when its input is let go, until the input is pressed again. With none, the menu goes \
+             when its input is let go, or when an item is chosen. A \
              menu nothing holds up (opened from the command line or a zone) then closes only by choosing, \
              or after 30 seconds."
                 .into(),
@@ -413,12 +426,12 @@ pub(super) fn unreleased_holds(m: &Macro) -> usize {
 
 pub(super) const MENUS_HELP: &str = "On-screen menus you open with the \"Open menu…\" action from any button, \
     gesture, combo or trigger. A menu is up while that input is held and closes when you let go, or with its \
-    close button; press R3 to keep a held one up. Radial: aim a stick, let go to choose. \
-    Directional: four slots on the D-pad or face buttons; pressing one fires it and closes the menu. List: move with the D-pad or Left Stick, A \
-    chooses. Button menu: each item has its own button; pressing it fires the item and closes the menu. Carousel: cycle with the chosen \
+    close button. A list with a close button stays up until its input is pressed again. Radial: aim a stick, let go to choose. \
+    Directional: four slots on the D-pad or face buttons; pressing one fires it. List: move with the D-pad or Left Stick, A \
+    chooses. Button menu: each item has its own button; pressing it fires the item. Carousel: cycle with the chosen \
     controls, A chooses. Grid: a list laid out in up to 6 columns and 6 rows, moved through in all four \
     directions; merge a cell with the ones beside or below it to make a bigger item. Items tap their \
-    action like a button press. An item can open another menu with the same close button (not from radial \
+    action like a button press, and choosing one closes the menu unless it's set to stay open. An item can open another menu with the same close button (not from radial \
     menus), which takes its place; the close button goes back, and held, closes them all. Under an input that \
     opens a directional or button menu, \"+ Add menu combos\" adds a combo per item (the input plus the item's button).";
 
@@ -611,7 +624,7 @@ impl App {
             Message::NewMenu(kind) => {
                 let name = self.new_item_name(ItemKind::Menu, "Menu");
                 let kind = MenuKind::default_for(kind);
-                let mut menu = Menu { name, kind, items: Vec::new(), cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() };
+                let mut menu = Menu { name, kind, items: Vec::new(), cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() };
                 fit_items(&mut menu);
                 if menu.items.is_empty() {
                     menu.items.push(MenuItem::new("Item 1", ButtonAction::Keys(Vec::new())));
@@ -696,6 +709,11 @@ impl App {
                         CloseChoice::Button(b) => (Some(b), false),
                         CloseChoice::None => (None, true),
                     };
+                }
+            }
+            Message::SetMenuKeepOpen(i, on) => {
+                if let Some(menu) = self.menus_mut().get_mut(i) {
+                    menu.keep_open = on;
                 }
             }
             Message::SetMenuItemButton(i, item, choice) => {
@@ -1231,6 +1249,7 @@ impl App {
 
         rows.push(labeled("Kind", menu_kind_row(mi, menu)));
         rows.push(labeled("Close button", close_picker(mi, menu)));
+        rows.extend(keep_open_toggle(mi, menu).map(|t| labeled("After a pick", t)));
         rows.extend(grid_start_picker(mi, menu).map(|p| labeled("Cursor starts on", p)));
 
         // Appearance, with a live preview.
@@ -1390,6 +1409,15 @@ mod tests {
         assert_eq!(CloseChoice::of(&app.menus()[0]), CloseChoice::None);
         let _ = app.update(Message::SetMenuCancel(0, CloseChoice::Default(Some(Button::East))));
         assert_eq!((app.menus()[0].cancel, app.menus()[0].no_cancel), (None, false));
+    }
+
+    #[test]
+    fn staying_open_after_a_pick_is_off_until_ticked() {
+        let mut app = app();
+        let _ = app.update(Message::NewMenu(MenuKindTag::Grid));
+        assert!(!app.menus()[0].keep_open, "never the default");
+        let _ = app.update(Message::SetMenuKeepOpen(0, true));
+        assert!(app.menus()[0].keep_open);
     }
 
     #[test]

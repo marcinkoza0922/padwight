@@ -698,7 +698,7 @@ mod tests {
             name: name.into(),
             kind: MenuKind::List,
             items: items.into_iter().map(|action| MenuItem::new("x", action)).collect(),
-            cancel: None, no_cancel: false, start: 0,
+            cancel: None, no_cancel: false, keep_open: false, start: 0,
             style: OverlayStyle::default(),
         }
     }

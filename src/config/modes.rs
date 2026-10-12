@@ -114,7 +114,7 @@ mod tests {
         game.profiles[0].set_button(Button::West, toggled_layer("Lean"));
         game.profiles[0].set_button(Button::LeftBumper, ButtonAction::Layer("Lean".into()));
         let item = MenuItem::new("Drive", ButtonAction::Multi(vec![toggled_layer("Driving")]));
-        game.menus.push(Menu { name: "M".into(), kind: MenuKind::List, items: vec![item], cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() });
+        game.menus.push(Menu { name: "M".into(), kind: MenuKind::List, items: vec![item], cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() });
         let mut driving = Layer::new("Driving");
         driving.buttons.insert(Button::South, toggled_layer("Driving"));
         game.layers = vec![driving, Layer::new("Lean"), Layer::new("Other")];

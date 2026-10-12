@@ -91,8 +91,8 @@ fn menu(kind: MenuKind) -> OverlayView {
         item("Keyboard", ButtonAction::ToggleOverlay, Some(Button::LeftBumper)),
     ];
     let menus = vec![
-        Menu { name: "Actions".into(), kind, items, cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() },
-        Menu { name: "Weapons".into(), kind: MenuKind::List, items: vec![item("Pistol", keys("KEY_1"), None)], cancel: None, no_cancel: false, start: 0, style: OverlayStyle::default() },
+        Menu { name: "Actions".into(), kind, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() },
+        Menu { name: "Weapons".into(), kind: MenuKind::List, items: vec![item("Pistol", keys("KEY_1"), None)], cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() },
     ];
     let opener = Opener { buttons: vec![Button::LeftBumper], ..Opener::default() };
     let session = MenuSession::open(&menus, "Actions", opener).expect("the sample menu has items");
