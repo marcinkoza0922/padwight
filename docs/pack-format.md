@@ -647,7 +647,7 @@ The overlays are `keyboard`, `numpad`, `menu` (every menu layout), `guide` (the 
 
 ## Overlay motion
 
-`[motion]` sets how each kind of overlay moves: as it opens and closes, as the cursor moves and as something is picked. Each key is one of `off`, `subtle`, `playful`, `stagger`, `grim` or `brutal`, and every key is optional (a missing one is `subtle`).
+`[motion]` sets how each kind of overlay moves: as it opens and closes, as the cursor moves and as something is picked. Each key is one of `off`, `subtle`, `playful`, `stagger`, `swift`, `dreamy`, `retro`, `grim` or `brutal` (`swift`, `dreamy` and `retro` need format 19), and every key is optional (a missing one is `subtle`).
 
 ```toml
 [motion]
@@ -664,8 +664,11 @@ log = "grim"
 |---|---|
 | `off` | Nothing moves. |
 | `subtle` | A quick fade, and the highlight glides from item to item. |
-| `playful` | Panels drop in with a bounce, and the highlight overshoots its item. |
-| `stagger` | Items fade in one after another. |
+| `playful` | Panels spring in and bounce into place, and the item the cursor lands on boings. |
+| `stagger` | Items cascade in one after another, sliding into place. |
+| `swift` | Panels whoosh in from the side and on out the other, items trailing. |
+| `dreamy` | Panels drift down and settle softly, and picks glow gently. |
+| `retro` | Chunky steps like an old console: panels grow in blocks and picks blink. |
 | `grim` | Slow fades that rise into place, and a dim, heavy pulse on a pick. |
 | `brutal` | Snaps in and out, the highlight jumps, and a pick jolts and flashes. |
 

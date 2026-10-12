@@ -9,6 +9,7 @@ mod marked;
 mod menus;
 mod ornament;
 mod radial;
+mod transform;
 mod typeset;
 
 use std::f32::consts::TAU;
@@ -22,6 +23,7 @@ pub use keyboard::keyboard_panel;
 pub use menus::menu_panel;
 use menus::item_cell;
 use radial::radial;
+use transform::transform;
 use typeset::Type;
 
 use iced::{
@@ -121,6 +123,11 @@ impl Colors {
         }
     }
 
+    /// Item `i`'s cell, swelling as the cursor lands on it and sliding in as it comes in.
+    pub fn moving<'a, M: 'a>(&self, m: &MenuView, i: usize, cell: impl Into<Element<'a, M>>) -> Element<'a, M> {
+        transform(cell, self.anim.item_scale(m.selected == Some(i)), iced::Vector::new(self.anim.item_shift(i), 0.0))
+    }
+
     /// Every color at `opacity` times its own, for fading out.
     fn faded(self, opacity: f32) -> Colors {
         let f = |c: Color| Color { a: c.a * opacity.clamp(0.0, 1.0), ..c };
@@ -200,7 +207,7 @@ pub fn place<'a, M: 'a>(panel: Element<'a, M>, style: &OverlayStyle, fit: &Fit, 
     let (x, y) = anim.offset();
     let (left, right) = sides(margin, x + fit.x, col);
     let (top, bottom) = sides(margin, y + fit.y, row);
-    container(panel)
+    container(transform(panel, anim.scale(), iced::Vector::ZERO))
         .width(Length::Fill)
         .height(Length::Fill)
         .align_x(horizontal)

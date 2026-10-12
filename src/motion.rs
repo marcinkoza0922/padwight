@@ -4,9 +4,15 @@
 //! the next, and what a pick looks like. The overlay process samples it with [`Anim`] while it
 //! draws, and keeps the timing of what is on screen with [`Presence`].
 
-use std::{fmt, time::Instant};
+mod presence;
+mod style;
+
+use std::{f32::consts::PI, time::Instant};
 
 use serde::{Deserialize, Deserializer, Serialize};
+
+pub use presence::{Presence, Tracked};
+pub use style::MotionStyle;
 
 /// The overlays a motion style can be set for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -43,92 +49,6 @@ impl OverlayKind {
             OverlayKind::Info => "Info overlays",
             OverlayKind::Log => "Log overlays",
         }
-    }
-}
-
-/// How an overlay moves. Subtle is the default.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum MotionStyle {
-    /// Nothing moves.
-    Off,
-    /// A quick fade, and the highlight gliding from item to item.
-    #[default]
-    Subtle,
-    /// Panels drop in with an overshoot, and the highlight bounces past its place. Cheerful games.
-    Playful,
-    /// Items fade in one after another, and the highlight glides between them.
-    Stagger,
-    /// Slow fades that rise into place, and a dim, heavy pulse on a pick. Dark fantasy.
-    Grim,
-    /// Snaps in and out, the highlight jumps, and a pick jolts and flashes. Shooters and fights.
-    Brutal,
-}
-
-impl MotionStyle {
-    pub const ALL: [MotionStyle; 6] = [
-        MotionStyle::Off,
-        MotionStyle::Subtle,
-        MotionStyle::Playful,
-        MotionStyle::Stagger,
-        MotionStyle::Grim,
-        MotionStyle::Brutal,
-    ];
-
-    /// What the settings say about this style.
-    pub fn describe(self) -> &'static str {
-        match self {
-            MotionStyle::Off => "Nothing moves.",
-            MotionStyle::Subtle => "A quick fade, and the highlight glides from item to item.",
-            MotionStyle::Playful => "Panels drop in with a bounce, and the highlight overshoots its item. Suits cheerful games.",
-            MotionStyle::Stagger => "Items fade in one after another, and the highlight glides between them.",
-            MotionStyle::Grim => "Slow fades that rise into place, and a dim, heavy pulse on a pick. Suits dark fantasy.",
-            MotionStyle::Brutal => "Snaps in and out, the highlight jumps, and a pick jolts and flashes. Suits shooters and fights.",
-        }
-    }
-
-    /// The timing and shape of this style.
-    pub fn feel(self) -> Feel {
-        let none = Feel::OFF;
-        match self {
-            MotionStyle::Off => none,
-            MotionStyle::Subtle => Feel { open: 0.18, close: 0.12, glide: 0.12, pick: 0.18, flash: 0.4, ..none },
-            MotionStyle::Playful => Feel {
-                open: 0.32,
-                close: 0.2,
-                glide: 0.25,
-                pick: 0.35,
-                slide: -18.0,
-                flash: 0.5,
-                curve: Curve::Back,
-                ..none
-            },
-            MotionStyle::Stagger => Feel { open: 0.06, close: 0.12, glide: 0.12, pick: 0.18, item: 0.22, stagger: 0.045, flash: 0.4, ..none },
-            MotionStyle::Grim => Feel {
-                open: 0.6,
-                close: 0.5,
-                glide: 0.32,
-                pick: 0.7,
-                slide: 26.0,
-                flash: 0.35,
-                curve: Curve::InOut,
-                ..none
-            },
-            MotionStyle::Brutal => Feel { open: 0.07, close: 0.06, glide: 0.0, pick: 0.16, flash: 1.0, jolt: 8.0, curve: Curve::Linear, ..none },
-        }
-    }
-}
-
-impl fmt::Display for MotionStyle {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(match self {
-            MotionStyle::Off => "Off",
-            MotionStyle::Subtle => "Subtle",
-            MotionStyle::Playful => "Playful",
-            MotionStyle::Stagger => "Stagger",
-            MotionStyle::Grim => "Grim",
-            MotionStyle::Brutal => "Brutal",
-        })
     }
 }
 
@@ -207,10 +127,14 @@ pub enum Curve {
     Linear,
     /// Starts fast and slows into place.
     Out,
+    /// Starts slow and speeds away.
+    In,
     /// Slow at both ends.
     InOut,
     /// Overshoots its end a little before settling.
     Back,
+    /// Shoots past its end and bounces back and forth, less each time, into place.
+    Spring,
 }
 
 impl Curve {
@@ -218,11 +142,25 @@ impl Curve {
         match self {
             Curve::Linear => t,
             Curve::Out => 1.0 - (1.0 - t).powi(3),
+            Curve::In => t * t,
             Curve::InOut => t * t * (3.0 - 2.0 * t),
             Curve::Back => {
                 let x = t - 1.0;
                 1.0 + 2.701_58 * x * x * x + 1.701_58 * x * x
             }
+            Curve::Spring => {
+                // A damped wave, less what is left of it at the end so it lands exactly on 1.
+                let wave = |t: f32| (-5.0 * t).exp() * (3.0 * PI * t).cos();
+                1.0 - wave(t) + t * wave(1.0)
+            }
+        }
+    }
+
+    /// This curve without its overshoot, for what can't go past its end (a color, say).
+    fn calm(self) -> Curve {
+        match self {
+            Curve::Back | Curve::Spring => Curve::Out,
+            curve => curve,
         }
     }
 }
@@ -236,17 +174,33 @@ pub struct Feel {
     /// How long the highlight takes to glide to the next item, and a pick to settle.
     pub glide: f32,
     pub pick: f32,
-    /// How long each item takes to fade in, and how far apart those fades start (Stagger).
+    /// How long each item takes to come in, and how far apart those starts are.
     pub item: f32,
     pub stagger: f32,
+    /// Pixels each item starts left (negative) or right of its place as it comes in.
+    pub shift: f32,
     /// Pixels a panel starts below its place (positive) or above it (negative) on opening, and
-    /// sinks by as it closes.
+    /// moves on by, the other way, as it closes.
     pub slide: f32,
+    /// Pixels a panel starts left (negative) or right of its place on opening; it closes on
+    /// past its place the way it came in.
+    pub sweep: f32,
+    /// How much smaller a panel starts, as a share of its size (negative: bigger), and half of
+    /// which it shrinks by as it closes.
+    pub zoom: f32,
+    /// How much the item the cursor lands on swells before it settles, as a share of its
+    /// size, and a picked item squashes; and how long that takes.
+    pub pop: f32,
+    pub bounce: f32,
     /// How strongly a pick flashes the item it lands on, 0 to 1.
     pub flash: f32,
     /// Pixels a pick jolts the panel sideways.
     pub jolt: f32,
+    /// Moves in this many still steps rather than smoothly, when more than 1.
+    pub steps: u32,
+    /// The curve things come in on, and the one a panel closes on.
     pub curve: Curve,
+    pub exit: Curve,
 }
 
 impl Feel {
@@ -258,11 +212,39 @@ impl Feel {
         pick: 0.0,
         item: 0.0,
         stagger: 0.0,
+        shift: 0.0,
         slide: 0.0,
+        sweep: 0.0,
+        zoom: 0.0,
+        pop: 0.0,
+        bounce: 0.0,
         flash: 0.0,
         jolt: 0.0,
+        steps: 0,
         curve: Curve::Linear,
+        exit: Curve::Linear,
     };
+
+    /// How far along `curve` an event `elapsed` seconds ago is, when it takes `secs`: in steps
+    /// when the style moves in steps.
+    fn ease(&self, elapsed: f32, secs: f32, curve: Curve) -> f32 {
+        if secs <= 0.0 {
+            return 1.0;
+        }
+        let t = (elapsed / secs).clamp(0.0, 1.0);
+        let t = if self.steps > 1 {
+            let n = self.steps as f32;
+            ((t * n).floor() / (n - 1.0)).min(1.0)
+        } else {
+            t
+        };
+        curve.apply(t)
+    }
+
+    /// The longest anything in this style keeps moving after it starts, in seconds.
+    fn longest(&self) -> f32 {
+        [self.open, self.item + self.stagger * STAGGER_ITEMS, self.glide, self.pick, self.bounce].into_iter().fold(0.0, f32::max)
+    }
 }
 
 impl Default for Feel {
@@ -271,7 +253,7 @@ impl Default for Feel {
     }
 }
 
-/// Stagger staggers at most this many items; later ones wait no longer than this.
+/// Staggered items wait at most this many starts; later ones come in with the last.
 const STAGGER_ITEMS: f32 = 12.0;
 /// Seconds since something happened, when it never did.
 const NEVER: f32 = f32::INFINITY;
@@ -282,12 +264,10 @@ pub const PICK_HOLD: f32 = 0.3;
 /// How many times the picked item blinks while it holds.
 const PICK_BLINKS: f32 = 2.0;
 
-/// How far along `curve` an event `elapsed` seconds ago is, when it takes `secs`.
-fn progress(elapsed: f32, secs: f32, curve: Curve) -> f32 {
-    if secs <= 0.0 {
-        return 1.0;
-    }
-    curve.apply((elapsed / secs).clamp(0.0, 1.0))
+/// A boing over `p` from 0 to 1: up to about 0.7, back through 0 to about -0.25, and settling
+/// at 0.
+fn boing(p: f32) -> f32 {
+    if p >= 1.0 { 0.0 } else { (3.0 * PI * p).sin() * (1.0 - p) * (1.0 - p) }
 }
 
 /// When each thing happened to an overlay, in seconds ago.
@@ -346,40 +326,72 @@ impl Anim {
         Anim::default()
     }
 
+    /// How far into its opening the overlay is, 0 to 1 (past 1 as a spring overshoots).
+    fn opening(&self) -> f32 {
+        self.feel.ease(self.timing.opened, self.feel.open, self.feel.curve)
+    }
+
+    /// How far into its close the overlay is, 0 to 1, once the close plays.
+    fn closing(&self) -> Option<f32> {
+        self.timing.closing().map(|s| self.feel.ease(s, self.feel.close, self.feel.exit))
+    }
+
     /// How visible the whole overlay is, 0 to 1: fading in as it opens, and out as it closes.
     pub fn opacity(&self) -> f32 {
-        let open = progress(self.timing.opened, self.feel.open, self.feel.curve).clamp(0.0, 1.0);
-        let closing = self.timing.closing().map_or(1.0, |s| 1.0 - progress(s, self.feel.close, self.feel.curve).clamp(0.0, 1.0));
-        open * closing
+        let open = self.feel.ease(self.timing.opened, self.feel.open, self.feel.curve.calm());
+        let closing = self.closing().map_or(1.0, |c| 1.0 - c.clamp(0.0, 1.0));
+        open.clamp(0.0, 1.0) * closing
     }
 
     /// Where the overlay is pushed off its place, in pixels (x right, y down).
     pub fn offset(&self) -> (f32, f32) {
-        let open = progress(self.timing.opened, self.feel.open, self.feel.curve);
-        let mut y = (1.0 - open) * self.feel.slide;
-        if let Some(s) = self.timing.closing() {
-            y += progress(s, self.feel.close, self.feel.curve) * self.feel.slide;
+        let left = 1.0 - self.opening();
+        let (mut x, mut y) = (left * self.feel.sweep, left * self.feel.slide);
+        if let Some(c) = self.closing() {
+            x -= c * self.feel.sweep;
+            y += c * self.feel.slide;
         }
         let p = self.pick_progress();
-        let x = if p < 1.0 { self.feel.jolt * (1.0 - p) * (p * std::f32::consts::TAU * 1.5).sin() } else { 0.0 };
+        if p < 1.0 {
+            x += self.feel.jolt * (1.0 - p) * (p * PI * 3.0).sin();
+        }
         (x, y)
     }
 
-    /// How lit an item is, 0 to 1 (it can overshoot under Playful): the cursor's item glides
-    /// in, and the one it came from glides out.
+    /// How big the overlay is drawn against its size: growing in as it opens (springing past
+    /// its size under Playful), and shrinking a little as it closes.
+    pub fn scale(&self) -> f32 {
+        let zoom = self.feel.zoom;
+        let closing = self.closing().unwrap_or(0.0);
+        1.0 - zoom * (1.0 - self.opening()) - zoom * 0.5 * closing
+    }
+
+    /// How lit an item is, 0 to 1: the cursor's item glides in, and the one it came from glides
+    /// out.
     pub fn lit(&self, selected: bool, from: bool) -> f32 {
-        let glided = progress(self.timing.moved, self.feel.glide, self.feel.curve);
+        let glided = self.feel.ease(self.timing.moved, self.feel.glide, self.feel.curve.calm());
         // An item just picked (the cursor jumped to it as it was) is lit at once.
         if selected && self.timing.picked <= self.timing.moved {
-            return glided.max(1.0);
+            return 1.0;
         }
         if selected {
             glided
         } else if from {
-            1.0 - glided.clamp(0.0, 1.0)
+            1.0 - glided
         } else {
             0.0
         }
+    }
+
+    /// How big an item is drawn against its size: the cursor's item swells as the cursor lands
+    /// on it and squashes as it is picked, then bounces back.
+    pub fn item_scale(&self, selected: bool) -> f32 {
+        if !selected || self.feel.pop == 0.0 {
+            return 1.0;
+        }
+        let landed = boing(self.feel.ease(self.timing.moved, self.feel.bounce, Curve::Linear));
+        let pressed = boing(self.feel.ease(self.timing.picked, self.feel.bounce, Curve::Linear));
+        1.0 + self.feel.pop * (landed - pressed)
     }
 
     /// How much a pick still flashes the item it landed on, 0 to 1.
@@ -388,219 +400,51 @@ impl Anim {
         // style's flash allows (not at all with motion off), so it's seen before the close.
         let hold = self.timing.pick_hold();
         if self.timing.picked < hold {
-            let wave = (self.timing.picked / hold * PICK_BLINKS * std::f32::consts::PI).sin();
+            let wave = (self.timing.picked / hold * PICK_BLINKS * PI).sin();
             return (2.0 * self.feel.flash).min(1.0) * wave * wave;
         }
         let remaining = 1.0 - self.pick_progress();
         self.feel.flash * remaining * remaining
     }
 
-    /// How visible item `index` is, 0 to 1: all at once, or one after another under Stagger.
-    pub fn item_fade(&self, index: usize) -> f32 {
+    /// How far into coming in item `index` is, 0 to 1: all at once, or one after another when
+    /// the style staggers its items.
+    fn item_in(&self, index: usize, curve: Curve) -> f32 {
         if self.feel.stagger <= 0.0 {
             return 1.0;
         }
-        let since = self.timing.opened - index as f32 * self.feel.stagger;
-        progress(since, self.feel.item, Curve::Out).clamp(0.0, 1.0)
+        let since = self.timing.opened - (index as f32).min(STAGGER_ITEMS) * self.feel.stagger;
+        self.feel.ease(since, self.feel.item, curve)
+    }
+
+    /// How visible item `index` is, 0 to 1.
+    pub fn item_fade(&self, index: usize) -> f32 {
+        self.item_in(index, Curve::Out).clamp(0.0, 1.0)
+    }
+
+    /// Pixels item `index` is still off its place, sideways, as it comes in.
+    pub fn item_shift(&self, index: usize) -> f32 {
+        if self.feel.shift == 0.0 {
+            return 0.0;
+        }
+        (1.0 - self.item_in(index, Curve::Back)) * self.feel.shift
     }
 
     /// Whether this still changes from one frame to the next, so the screen needs redrawing.
     pub fn is_busy(&self) -> bool {
         let (t, f) = (&self.timing, &self.feel);
         // A closed overlay is kept until its close has played, then dropped.
-        t.closed.is_some()
-            || t.opened < f.open.max(f.item + f.stagger * STAGGER_ITEMS)
-            || t.moved < f.glide
-            || t.picked < f.pick
+        t.closed.is_some() || t.opened < f.longest() || t.moved < f.glide.max(f.bounce) || t.picked < f.pick.max(f.bounce)
     }
 
     fn pick_progress(&self) -> f32 {
-        progress(self.timing.picked, self.feel.pick, Curve::Out).clamp(0.0, 1.0)
-    }
-}
-
-/// Something an overlay shows, so its timing can be kept from one frame to the next.
-pub trait Tracked: Clone {
-    /// Tells the things of one kind apart: a thing that keeps its key keeps its timing.
-    fn key(&self) -> String;
-    /// Which motion style it moves with.
-    fn kind(&self) -> OverlayKind;
-    /// Where the cursor is, if it has one: when that changes the highlight glides from the old place.
-    fn cursor(&self) -> Option<u32> {
-        None
-    }
-    /// Changes when something is picked in it.
-    fn pick(&self) -> Option<u32> {
-        None
-    }
-}
-
-/// One thing on screen, or one that has just gone and is still fading out.
-#[derive(Debug, Clone)]
-pub struct Entry<T> {
-    key: String,
-    pub value: T,
-    opened: Instant,
-    closed: Option<Instant>,
-    moved: Instant,
-    from: Option<u32>,
-    cursor: Option<u32>,
-    picked: Option<Instant>,
-    pick: Option<u32>,
-}
-
-impl<T: Tracked> Entry<T> {
-    fn new(now: Instant, key: String, value: T) -> Self {
-        Entry {
-            key,
-            cursor: value.cursor(),
-            pick: value.pick(),
-            value,
-            opened: now,
-            closed: None,
-            moved: now,
-            from: None,
-            picked: None,
-        }
-    }
-
-    fn refresh(&mut self, now: Instant, value: T) {
-        let cursor = value.cursor();
-        if cursor != self.cursor {
-            self.from = self.cursor;
-            self.moved = now;
-            self.cursor = cursor;
-        }
-        let pick = value.pick();
-        if pick != self.pick {
-            if pick.is_some() {
-                self.picked = Some(now);
-            }
-            self.pick = pick;
-        }
-        self.value = value;
-    }
-
-    fn timing(&self, now: Instant) -> Timing {
-        let since = |t: Instant| now.saturating_duration_since(t).as_secs_f32();
-        Timing {
-            opened: since(self.opened),
-            closed: self.closed.map(since),
-            moved: since(self.moved),
-            from: self.from,
-            picked: self.picked.map_or(NEVER, since),
-        }
-    }
-}
-
-/// What is on screen, with when each thing opened, moved and was picked. A thing that goes is
-/// kept, shown fading out, until its kind's close has played.
-#[derive(Debug, Clone)]
-pub struct Presence<T> {
-    entries: Vec<Entry<T>>,
-    /// Whether only one thing is shown at a time (the panels): a new one then replaces the old at
-    /// once, rather than the two fading over each other.
-    single: bool,
-}
-
-impl<T> Default for Presence<T> {
-    fn default() -> Self {
-        Presence { entries: Vec::new(), single: false }
-    }
-}
-
-impl<T: Tracked> Presence<T> {
-    /// For things where one at a time is shown.
-    pub fn single() -> Self {
-        Presence { entries: Vec::new(), single: true }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.entries.is_empty()
-    }
-
-    /// Takes in what is shown now: new things open, things no longer shown start to close, and
-    /// the rest take their new values.
-    pub fn update(&mut self, now: Instant, shown: Vec<T>) {
-        let mut matched = vec![false; self.entries.len()];
-        let mut opened = false;
-        for value in shown {
-            let key = value.key();
-            let found = (0..self.entries.len()).find(|&i| !matched[i] && self.entries[i].closed.is_none() && self.entries[i].key == key);
-            match found {
-                Some(i) => {
-                    matched[i] = true;
-                    self.entries[i].refresh(now, value);
-                }
-                None => {
-                    matched.push(true);
-                    opened = true;
-                    self.entries.push(Entry::new(now, key, value));
-                }
-            }
-        }
-        for (entry, matched) in self.entries.iter_mut().zip(matched) {
-            if !matched && entry.closed.is_none() {
-                entry.closed = Some(now);
-            }
-        }
-        if self.single && opened {
-            self.entries.retain(|e| e.closed != Some(now));
-        }
-    }
-
-    /// Drops the things that have finished closing.
-    pub fn prune(&mut self, now: Instant, motion: &MotionSet) {
-        self.entries.retain(|e| {
-            let timing = e.timing(now);
-            timing.closed.is_none_or(|closed| closed < motion.feel(e.value.kind()).close + timing.pick_hold())
-        });
-    }
-
-    /// What to draw now, each with its animation, oldest first so newer things draw on top.
-    pub fn shown<'a>(&'a self, now: Instant, motion: &MotionSet) -> impl Iterator<Item = (&'a T, Anim)> + 'a {
-        let motion = *motion;
-        self.entries.iter().map(move |e| (&e.value, Anim { feel: motion.feel(e.value.kind()), timing: e.timing(now), clock: clock(now) }))
-    }
-
-    /// Whether anything is still moving, so the screen needs redrawing.
-    pub fn busy(&self, now: Instant, motion: &MotionSet) -> bool {
-        self.shown(now, motion).any(|(_, anim)| anim.is_busy())
+        self.feel.ease(self.timing.picked, self.feel.pick, Curve::Out).clamp(0.0, 1.0)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
-
     use super::*;
-
-    /// A stand-in for an overlay: a name, a kind, a cursor and a pick count.
-    #[derive(Debug, Clone, PartialEq)]
-    struct Thing {
-        name: &'static str,
-        cursor: Option<u32>,
-        picks: u32,
-    }
-
-    impl Tracked for Thing {
-        fn key(&self) -> String {
-            self.name.into()
-        }
-        fn kind(&self) -> OverlayKind {
-            OverlayKind::Menu
-        }
-        fn cursor(&self) -> Option<u32> {
-            self.cursor
-        }
-        fn pick(&self) -> Option<u32> {
-            (self.picks > 0).then_some(self.picks)
-        }
-    }
-
-    fn thing(name: &'static str, cursor: Option<u32>) -> Thing {
-        Thing { name, cursor, picks: 0 }
-    }
 
     fn only(motion: MotionStyle) -> MotionSet {
         MotionSet { menu: motion, ..MotionSet::default() }
@@ -638,73 +482,6 @@ mod tests {
     }
 
     #[test]
-    fn off_has_no_motion_so_nothing_is_kept_after_closing() {
-        let t0 = Instant::now();
-        let motion = only(MotionStyle::Off);
-        let mut shown = Presence::default();
-        shown.update(t0, vec![thing("a", Some(0))]);
-        shown.update(t0, Vec::new());
-        shown.prune(t0, &motion);
-        assert!(shown.is_empty());
-    }
-
-    #[test]
-    fn a_closed_thing_is_kept_until_its_close_has_played() {
-        let t0 = Instant::now();
-        let motion = only(MotionStyle::Subtle);
-        let mut shown = Presence::default();
-        shown.update(t0, vec![thing("a", Some(0))]);
-        shown.update(t0 + Duration::from_millis(500), Vec::new());
-        shown.prune(t0 + Duration::from_millis(600), &motion);
-        assert!(!shown.is_empty(), "still fading out 100ms after going");
-        assert!(shown.busy(t0 + Duration::from_millis(600), &motion));
-        shown.prune(t0 + Duration::from_millis(700), &motion);
-        assert!(shown.is_empty());
-    }
-
-    #[test]
-    fn a_thing_that_stays_keeps_when_it_opened() {
-        let t0 = Instant::now();
-        let mut shown = Presence::default();
-        shown.update(t0, vec![thing("belt", Some(0))]);
-        let later = t0 + Duration::from_secs(1);
-        shown.update(later, vec![thing("belt", Some(0))]);
-        let motion = only(MotionStyle::Subtle);
-        let (_, anim) = shown.shown(later, &motion).next().unwrap();
-        assert!((anim.timing.opened - 1.0).abs() < 1e-3, "{:?}", anim.timing);
-    }
-
-    #[test]
-    fn moving_the_cursor_glides_from_the_item_it_left() {
-        let t0 = Instant::now();
-        let mut shown = Presence::default();
-        shown.update(t0, vec![thing("belt", Some(2))]);
-        let t1 = t0 + Duration::from_millis(500);
-        shown.update(t1, vec![thing("belt", Some(3))]);
-        let motion = only(MotionStyle::Subtle);
-        let (_, anim) = shown.shown(t1, &motion).next().unwrap();
-        assert_eq!(anim.timing.from, Some(2));
-        assert!(anim.timing.moved.abs() < 1e-3);
-        let t2 = t1 + Duration::from_millis(50);
-        shown.update(t2, vec![thing("belt", Some(3))]);
-        let (_, still) = shown.shown(t2, &motion).next().unwrap();
-        assert!((still.timing.moved - 0.05).abs() < 1e-3, "no move, no new glide");
-    }
-
-    #[test]
-    fn a_pick_is_seen_when_the_pick_count_changes() {
-        let t0 = Instant::now();
-        let mut shown = Presence::default();
-        shown.update(t0, vec![thing("belt", Some(0))]);
-        let t1 = t0 + Duration::from_millis(300);
-        shown.update(t1, vec![Thing { picks: 1, ..thing("belt", Some(0)) }]);
-        let motion = only(MotionStyle::Brutal);
-        let (_, anim) = shown.shown(t1, &motion).next().unwrap();
-        assert!(anim.timing.picked.abs() < 1e-3);
-        assert!(anim.flash() > 0.9, "a fresh pick flashes at full strength");
-    }
-
-    #[test]
     fn a_pick_that_closes_blinks_its_item_through_the_hold() {
         let feel = MotionStyle::Subtle.feel();
         let at = |picked: f32| Anim { feel, timing: Timing { opened: 1.0, closed: Some(picked - 0.01), moved: picked, picked, from: None }, clock: 0.0 };
@@ -716,41 +493,6 @@ mod tests {
         assert_eq!(at(peak).lit(true, false), 1.0);
         let off = Anim { feel: MotionStyle::Off.feel(), ..at(peak) };
         assert_eq!(off.flash(), 0.0, "with motion off it holds lit without blinking");
-    }
-
-    #[test]
-    fn a_new_thing_under_the_same_key_after_closing_opens_again() {
-        let t0 = Instant::now();
-        let mut shown = Presence::default();
-        shown.update(t0, vec![thing("belt", Some(0))]);
-        shown.update(t0, Vec::new());
-        let t1 = t0 + Duration::from_secs(5);
-        shown.update(t1, vec![thing("belt", Some(0))]);
-        let motion = only(MotionStyle::Subtle);
-        assert_eq!(shown.shown(t1, &motion).count(), 2, "the old one fades beside the new one");
-    }
-
-    #[test]
-    fn a_single_presence_replaces_its_thing_at_once() {
-        let t0 = Instant::now();
-        let mut panel = Presence::single();
-        panel.update(t0, vec![thing("belt", Some(0))]);
-        panel.update(t0, vec![thing("weapons", Some(0))]);
-        assert_eq!(panel.shown(t0, &only(MotionStyle::Grim)).count(), 1, "the old menu is cut, not faded over");
-        let mut infos = Presence::default();
-        infos.update(t0, vec![thing("a", None)]);
-        infos.update(t0, vec![thing("b", None)]);
-        assert_eq!(infos.shown(t0, &only(MotionStyle::Grim)).count(), 2, "independent overlays still fade out");
-    }
-
-    #[test]
-    fn repeated_frames_do_not_pile_up_entries() {
-        let t0 = Instant::now();
-        let mut shown = Presence::default();
-        for _ in 0..5 {
-            shown.update(t0, vec![thing("a", None), thing("a", None)]);
-        }
-        assert_eq!(shown.shown(t0, &MotionSet::default()).count(), 2);
     }
 
     #[test]
@@ -796,5 +538,62 @@ mod tests {
         assert_eq!(anim.lit(true, false), 1.0);
         assert_eq!(anim.lit(false, true), 0.0);
         assert!(!anim.is_busy());
+    }
+
+    fn opened(style: MotionStyle, secs: f32) -> Anim {
+        Anim { feel: style.feel(), timing: Timing { opened: secs, ..Timing::default() }, clock: 0.0 }
+    }
+
+    #[test]
+    fn playful_springs_past_its_place_and_settles() {
+        let samples: Vec<Anim> = (0..50).map(|i| opened(MotionStyle::Playful, i as f32 * 0.01)).collect();
+        assert!(samples.iter().any(|a| a.scale() > 1.02), "grows past its size");
+        assert!(samples.iter().any(|a| a.offset().1 > 2.0), "drops past its place");
+        let settled = opened(MotionStyle::Playful, 5.0);
+        assert_eq!((settled.scale(), settled.offset()), (1.0, (0.0, 0.0)));
+    }
+
+    #[test]
+    fn the_cursor_landing_swells_its_item_and_a_pick_squashes_it() {
+        let feel = MotionStyle::Playful.feel();
+        let landed = Anim { feel, timing: Timing { opened: 5.0, moved: 0.04, ..Timing::default() }, clock: 0.0 };
+        assert!(landed.item_scale(true) > 1.05);
+        assert_eq!(landed.item_scale(false), 1.0, "only the cursor's item");
+        let picked = Anim { feel, timing: Timing { opened: 5.0, moved: 5.0, picked: 0.06, ..Timing::default() }, clock: 0.0 };
+        assert!(picked.item_scale(true) < 0.95);
+        assert_eq!(Anim { timing: Timing { picked: 5.0, ..picked.timing }, ..picked }.item_scale(true), 1.0, "settled");
+    }
+
+    #[test]
+    fn retro_moves_in_steps() {
+        let open = MotionStyle::Retro.feel().open;
+        let scales: Vec<f32> = (0..=40).map(|i| opened(MotionStyle::Retro, i as f32 * open / 40.0).scale()).collect();
+        let mut distinct = scales.clone();
+        distinct.dedup();
+        assert_eq!(distinct.len(), 4, "{scales:?}");
+    }
+
+    #[test]
+    fn swift_comes_in_from_one_side_and_leaves_by_the_other() {
+        assert!(opened(MotionStyle::Swift, 0.0).offset().0 < -30.0);
+        let feel = MotionStyle::Swift.feel();
+        let leaving = Anim { feel, timing: Timing { opened: 5.0, closed: Some(feel.close * 0.9), ..Timing::default() }, clock: 0.0 };
+        assert!(leaving.offset().0 > 30.0);
+    }
+
+    #[test]
+    fn stagger_slides_later_items_in_after_earlier_ones() {
+        let anim = opened(MotionStyle::Stagger, 0.12);
+        assert!(anim.item_shift(3) < anim.item_shift(0), "item 3 is further off its place");
+        assert_eq!(opened(MotionStyle::Stagger, 5.0).item_shift(3), 0.0);
+        assert_eq!(opened(MotionStyle::Subtle, 0.0).item_shift(3), 0.0, "subtle doesn't slide items");
+    }
+
+    #[test]
+    fn every_style_settles_within_a_second() {
+        for style in MotionStyle::ALL {
+            let anim = Anim { feel: style.feel(), timing: Timing { opened: 1.0, moved: 1.0, picked: 1.0, ..Timing::default() }, clock: 0.0 };
+            assert!(!anim.is_busy(), "{style} still moving after a second");
+        }
     }
 }

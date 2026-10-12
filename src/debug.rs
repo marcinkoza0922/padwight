@@ -11,6 +11,7 @@ use anyhow::{Context, Result, bail};
 
 mod bridge;
 mod glyphs;
+mod motion_shot;
 mod overlay_shot;
 mod pad;
 mod protocol;
@@ -59,7 +60,7 @@ Without a session:
 ";
 
 fn usage() -> String {
-    format!("{USAGE}{}{}{}\nWith a session:\n{}", sound::USAGE, overlay_shot::USAGE, crate::gui::shoot::USAGE, protocol::COMMANDS)
+    format!("{USAGE}{}{}{}{}\nWith a session:\n{}", sound::USAGE, overlay_shot::USAGE, motion_shot::USAGE, crate::gui::shoot::USAGE, protocol::COMMANDS)
 }
 
 #[expect(clippy::print_stdout, reason = "CLI output")]
@@ -79,6 +80,7 @@ pub fn run(args: &[&str]) -> Result<()> {
         ["svg", name] => println!("{}", rest_svg(parse_model(name)?)),
         ["sound", rest @ ..] => sound::run(rest)?,
         ["overlay", rest @ ..] => overlay_shot::run(rest)?,
+        ["motion", rest @ ..] => motion_shot::run(rest)?,
         ["gui", rest @ ..] => crate::gui::shoot::run(rest)?,
         ["detach-all"] => ipc::request(&ipc::Request::DebugDetach("all".into())).map(drop)?,
         [] => start(&[])?,
