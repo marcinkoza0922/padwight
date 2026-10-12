@@ -122,6 +122,23 @@ impl App {
     }
 
     pub(super) fn view_settings(&self) -> Element<'_, Message> {
+        use shortcuts_tab::SettingsTab;
+        let warned = !self.config.shortcuts.all_warnings().is_empty() || !self.opener_conflicts().is_empty();
+        let mut tabs = row![].spacing(2);
+        for tab in [SettingsTab::General, SettingsTab::Shortcuts] {
+            let label = if tab == SettingsTab::Shortcuts && warned { format!("{tab}  ⚠") } else { tab.to_string() };
+            tabs = tabs.push(
+                button(text(label).size(15)).style(style::segment(self.shortcuts_ui.tab == tab)).padding([6, 16]).on_press(Message::SelectSettingsTab(tab)),
+            );
+        }
+        let content = match self.shortcuts_ui.tab {
+            SettingsTab::General => self.view_general_settings(),
+            SettingsTab::Shortcuts => self.view_shortcuts(),
+        };
+        column![container(tabs).padding(3).style(style::segments), content].spacing(16).into()
+    }
+
+    fn view_general_settings(&self) -> Element<'_, Message> {
         let glyphs = section(
             "Info overlays",
             None,

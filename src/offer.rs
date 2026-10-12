@@ -157,7 +157,7 @@ impl OfferSession {
                 selected: Some(self.selected),
                 picks: 0,
                 crumbs: vec!["Add controller profiles".into()],
-                hint: "{up} {down} choose · {south} add · {east} back".into(),
+                hint: "{up} {down} choose · {confirm} add · {back} back".into(),
                 style: style.clone(),
                 touch: false,
                 aim: None,
@@ -176,7 +176,7 @@ impl OfferSession {
             [p, ..] => (format!("Add controller profiles for {}?", p.name), format!("{} sets of profiles fit this game", self.packs.len())),
             [] => (String::new(), String::new()),
         };
-        let answers = [("{south}", "Yes"), ("{east}", "Not now"), ("{west}", "Never")];
+        let answers = [("{confirm}", "Yes"), ("{back}", "Not now"), ("{west}", "Never")];
         OverlayView::Offer(OfferView {
             title,
             detail,

@@ -1,8 +1,8 @@
-//! The menu Guide + Start opens over the game. It isn't in any profile: Quick Settings (a few
+//! The menu the Quick Settings shortcut (Guide + Start unless moved) opens over the game. It isn't in any profile: Quick Settings (a few
 //! values of the active profile) comes first, and Edit Controls last. The daemon routes
 //! controller input here while it is open, and the overlay draws its [`MenuView`].
 
-use std::{collections::HashSet, time::Instant};
+use std::time::Instant;
 
 mod quick;
 use quick::Row;
@@ -372,7 +372,7 @@ impl SystemMenu {
         OfferView {
             title: "Save your changes?".into(),
             detail: "You changed settings that aren't saved yet.".into(),
-            answers: [("{south}", "Save"), ("{west}", "Discard"), ("{east}", "Keep editing")]
+            answers: [("{confirm}", "Save"), ("{west}", "Discard"), ("{back}", "Keep editing")]
                 .iter()
                 .map(|(b, t)| ((*b).into(), (*t).into()))
                 .collect(),
@@ -394,7 +394,7 @@ impl SystemMenu {
                     .into_iter()
                     .map(|row| {
                         let label = match row {
-                            Row::Remapping if self.remapping_armed => "Press {south} again to turn remapping off".into(),
+                            Row::Remapping if self.remapping_armed => "Press {confirm} again to turn remapping off".into(),
                             row => quick::label(row, config, &self.saved),
                         };
                         ItemView { tone: if row == Row::Remapping { Tone::Remove } else { Tone::Normal }, label, ..ItemView::plain() }
@@ -403,7 +403,7 @@ impl SystemMenu {
                 selected: Some(cursor),
                 picks: 0,
                 crumbs: vec![self.parent()],
-                hint: "{left} {right} or {south} change · hold {rb} for big steps · {east} back".into(),
+                hint: "{left} {right} or {confirm} change · hold {rb} for big steps · {back} back".into(),
                 style,
                 touch: false,
                 aim: None,
@@ -411,32 +411,6 @@ impl SystemMenu {
             },
         }
     }
-}
-
-/// True when these events press Guide and Start together: one of them goes down while the other
-/// is already held. `held` is what was down before the events.
-pub fn chord(held: &HashSet<Button>, events: &[InputEvent]) -> bool {
-    let mut held = held.clone();
-    for ev in events {
-        let InputEvent::Button(b, down) = *ev else { continue };
-        if down {
-            let other = match b {
-                Button::Start => Button::Guide,
-                Button::Guide => Button::Start,
-                _ => {
-                    held.insert(b);
-                    continue;
-                }
-            };
-            if held.contains(&other) {
-                return true;
-            }
-            held.insert(b);
-        } else {
-            held.remove(&b);
-        }
-    }
-    false
 }
 
 /// The step a direction makes.
@@ -478,7 +452,7 @@ pub fn main_page(style: OverlayStyle, cursor: usize) -> MenuView {
         selected: Some(cursor),
         picks: 0,
         crumbs: Vec::new(),
-        hint: "{south} choose · {east} close".into(),
+        hint: "{confirm} choose · {back} close".into(),
         style,
         touch: false,
         aim: None,
@@ -514,18 +488,6 @@ mod tests {
             StickAction::Mouse { speed, .. } => speed,
             _ => panic!("left stick is not a mouse"),
         }
-    }
-
-    #[test]
-    fn chord_needs_both_buttons_together() {
-        let none = HashSet::new();
-        assert!(chord(&none, &[press(Button::Guide), press(Button::Start)]));
-        assert!(chord(&HashSet::from([Button::Guide]), &[press(Button::Start)]));
-        assert!(chord(&HashSet::from([Button::Start]), &[press(Button::Guide)]));
-        assert!(!chord(&none, &[press(Button::Start)]));
-        // Guide let go before Start goes down is not a chord.
-        assert!(!chord(&none, &[press(Button::Guide), InputEvent::Button(Button::Guide, false), press(Button::Start)]));
-        assert!(!chord(&HashSet::from([Button::Guide]), &[press(Button::South)]));
     }
 
     #[test]

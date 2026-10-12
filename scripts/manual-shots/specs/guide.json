@@ -101,5 +101,62 @@
   "out": "docs/images/manual/in-game-menu.png",
   "autocrop": 30,
   "scale": 1.0
+ },
+ {
+  "src": "screenshots/manual/shortcuts-tab.png",
+  "out": "docs/images/manual/shortcuts-tab.png",
+  "crop": [
+   225,
+   70,
+   1060,
+   800
+  ],
+  "marks": [
+   {
+    "box": [
+     323,
+     88,
+     195,
+     36
+    ],
+    "n": 1
+   },
+   {
+    "box": [
+     245,
+     335,
+     1000,
+     115
+    ],
+    "n": 2
+   },
+   {
+    "box": [
+     445,
+     649,
+     392,
+     38
+    ],
+    "n": 3
+   },
+   {
+    "box": [
+     245,
+     687,
+     420,
+     24
+    ],
+    "n": 4
+   },
+   {
+    "box": [
+     845,
+     652,
+     58,
+     32
+    ],
+    "n": 5
+   }
+  ]
  }
 ]

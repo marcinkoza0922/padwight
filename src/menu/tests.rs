@@ -244,7 +244,7 @@ fn b_backs_out_of_a_held_submenu_and_cancels_a_held_radial() {
     let mut s = MenuSession::open(&menus, "Root", held_by(Button::LeftBumper)).unwrap();
     press(&mut s, &menus, Button::South);
     assert_eq!(s.view(&menus).unwrap().title, "Sub");
-    assert!(s.view(&menus).unwrap().hint.contains("{east} back"));
+    assert!(s.view(&menus).unwrap().hint.contains("{back} back"));
     assert_eq!(press(&mut s, &menus, Button::East), None);
     assert_eq!(s.view(&menus).unwrap().title, "Root");
     assert_eq!(press(&mut s, &menus, Button::East), Some(MenuOutcome::Close), "B at the top closes");
@@ -434,7 +434,7 @@ fn the_close_button_backs_out_of_a_submenu_or_held_closes_it() {
     let now = Instant::now();
     let mut s = MenuSession::open(&menus, "Top", held_by(Button::LeftBumper)).unwrap();
     press(&mut s, &menus, Button::South);
-    assert!(s.view(&menus).unwrap().hint.contains("{east} back (hold to close)"));
+    assert!(s.view(&menus).unwrap().hint.contains("{back} back (hold to close)"));
     assert_eq!(s.handle(&menus, InputEvent::Button(Button::East, true), now), None);
     assert_eq!(s.view(&menus).unwrap().title, "Sub", "nothing yet while it's down");
     assert_eq!(s.next_deadline(), Some(now + HOLD_TO_CLOSE));
@@ -477,7 +477,7 @@ fn openers_already_let_go_open_nothing_but_a_list_that_stays_up() {
     // With nothing to hold (the command line), B closes it.
     let mut s = MenuSession::open(&menus, "L", Opener::default()).unwrap();
     assert!(s.prime(&menus, [], []));
-    assert!(s.view(&menus).unwrap().hint.contains("{east} close"));
+    assert!(s.view(&menus).unwrap().hint.contains("{back} close"));
     assert_eq!(press(&mut s, &menus, Button::East), Some(MenuOutcome::Close));
 }
 

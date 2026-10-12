@@ -372,7 +372,7 @@ scale = 0.9
 ```
 
 - Each row is a list of cells, and cells line up in columns. A cell is text with `{tokens}`.
-- Button glyphs: `{south} {east} {west} {north} {lb} {rb} {lt} {rt} {select} {start} {guide} {ls} {rs} {l3} {r3} {dpad} {up} {down} {left} {right}`. They are drawn for the controller in use.
+- Button glyphs: `{south} {east} {west} {north} {lb} {rb} {lt} {rt} {select} {start} {guide} {ls} {rs} {l3} {r3} {dpad} {up} {down} {left} {right}`. They are drawn for the controller in use. `{confirm}` and `{back}` are the buttons that choose and go back in menus, A and B unless the player moved them. `{guide}` is whatever opens the Guide overlay on the player's machine: the Guide button, or the input they moved that to.
 - Output glyphs: `{pad:south}` (any button name from the list above, after `pad:`) is drawn for the controller the pad presents itself as, `{keyboard:a}` is a key by its name without `KEY_` in lower case (`{keyboard:leftshift}`, `{keyboard:f1}`), and `{mouse:leftclick}` is `rightclick`, `middleclick`, `backclick` or `forwardclick`. A key or mouse token that names nothing stays as text.
 - Live values: `{time} {time12} {date} {profile} {layer} {mode} {app} {title} {pid} {cpu} {ram} {gpu} {wifi} {system_battery} {controller_battery}`, plus `{current_input}` (with the `current_input` settings).
 - An overlay is shown by a `show_info` action, or always when `always = true`.

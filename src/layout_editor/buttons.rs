@@ -104,7 +104,7 @@ pub fn wrapped(current: &ButtonAction, wrap: Wrap) -> ButtonAction {
 /// The actions offered, after the pad and gesture rows.
 type Choice = (&'static str, fn() -> ButtonAction);
 
-const CHOICES: [Choice; 16] = [
+const CHOICES: [Choice; 17] = [
     ("Disabled", || ButtonAction::Disabled),
     ("On-screen keyboard", || ButtonAction::ToggleOverlay),
     ("Screenshot", || ButtonAction::Screenshot),
@@ -120,6 +120,7 @@ const CHOICES: [Choice; 16] = [
     ("Numpad", || ButtonAction::ToggleNumpad),
     ("Start / stop recording", || ButtonAction::ToggleRecording),
     ("Media controls", || ButtonAction::ToggleMedia),
+    ("Quick Settings", || ButtonAction::QuickSettings),
     ("Force quit (hold)", || ButtonAction::ForceQuit),
 ];
 

@@ -146,6 +146,7 @@ impl ButtonAction {
             ButtonAction::Screenshot => vec![text("Screenshot")],
             ButtonAction::ToggleRecording => vec![text("Start / stop recording")],
             ButtonAction::ToggleMedia => vec![text("Media controls")],
+            ButtonAction::QuickSettings => vec![text("Quick Settings")],
             ButtonAction::ForceQuit => vec![text("Force quit focused window (hold)")],
             ButtonAction::OpenMenu(name) => vec![keyword(Keyword::Menu), text(&format!(" “{name}”"))],
             ButtonAction::ShowInfo(name) => vec![keyword(Keyword::Info), text(&format!(" “{name}”"))],

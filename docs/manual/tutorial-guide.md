@@ -15,6 +15,8 @@ Tap Guide in a game. The overlay opens when you let go, and a second tap closes 
 
 **Shortcuts:** hold Guide and press X for the on-screen keyboard, Y for the numpad, LB for media controls, RB for a screenshot, L3 to start or stop a recording, or hold Select for two seconds to force-quit the focused window. With the overlay open you can press the shortcut alone. Hold Guide and press the Right Stick for **mouse mode**, where the controller drives the pointer; press Guide to leave it.
 
+No Guide button on your controller, or a shortcut in the way? Open **App settings › Controller shortcuts** to move what opens the overlay (to Start + Select, say) and any of these shortcuts. See [moving the shortcuts](guide-button.md).
+
 ## 2. Write the notes and the mapping guide
 
 Both belong to a profile. Open its **Guide** tab.
@@ -29,7 +31,22 @@ Both belong to a profile. Open its **Guide** tab.
 
 Press **Save & apply**, then tap Guide in the game to see it.
 
-## 3. Change controls while you play
+## 3. Move the shortcuts
+
+Every shortcut above can be moved, which helps a controller with no Guide button. Open **App settings** and pick the **Controller shortcuts** tab. What you set here applies to every setup.
+
+![The Controller shortcuts tab with the opener set to a combo and clashes marked](../images/manual/shortcuts-tab.png "The Controller shortcuts tab. Here the opener is Select + Start.")
+
+1. The tab shows a ⚠ (1) while something needs a look.
+2. **Open the Guide overlay** (2) is Guide unless you move it. Pick **Button**, **Double tap**, **Triple tap**, **Long press** or **Combo**, then choose the button, or press **Listen** and press it on the controller. A combo takes up to four buttons (**+ Button**). Setting it to **Off** is allowed, with a warning, because then nothing opens the overlay. If a profile of one of your setups already uses that input, the row lists it, and a ⚠ shows beside that setup in the sidebar.
+3. Each shortcut of the Guide mode and each key of mouse mode has the same choices (3). Choose **Off** to switch one off, with no warning.
+4. A ⚠ line (4) says which other shortcut shares the input. Both still save, but only one can work.
+5. **Reset** (5) puts a shortcut back where it started.
+6. At the bottom, **Menu buttons** moves the buttons that choose and go back in menus and panels, for example to swap A and B.
+
+The Guide button itself stays reserved: nothing else can be put on it.
+
+## 4. Change controls while you play
 
 Hold Guide and press Start (or choose it from the Guide menu) to open the in-game menu over the game.
 

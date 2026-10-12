@@ -151,3 +151,69 @@ Holding Guide shows what it does, and games add to it.
 
 - Whether gpu-screen-recorder needs a portal prompt on each start under the user's compositor;
   if so, recording may need a fixed capture target.
+
+## Movable shortcuts
+
+Added 2026-10-12. App settings has a **Controller shortcuts** tab (`src/gui/shortcuts_tab.rs`) for
+`Config::shortcuts` (`src/config/shortcuts.rs`). These are app-wide and never per setup or game.
+
+- **Inputs.** A `ShortcutInput` is a list of buttons and an optional gesture: one button, one
+  button with a double tap, triple tap or long press, or a combo of several. No buttons is "off".
+  Only what the player moved is stored (`[shortcuts]` in `config.toml`, keyed by `Shortcut`);
+  anything else is at its default, and moving one back to its default removes it.
+- **Built-in modes.** `Layer::guide_with` and `Layer::mouse_with` build the two modes from the
+  shortcuts, binding each as a layer button, gesture or combo. The mouse mode entry (R3) is now a
+  `Mode("Mouse mode")` binding in the Guide mode, not a hard-coded button in the engine, so it can
+  move or go off like the rest. Sticks and triggers in mouse mode are fixed. The daemon and the GUI
+  look the mode up through `Config::mode_for`.
+- **The opener** (`Shortcut::OpenGuide`, Guide by default) is the engine's `GuideOpener`, set with
+  `Engine::set_opener`. A plain button works as Guide did (held: Guide mode, tapped: toggle). A
+  gesture or combo is injected by the daemon into the profile it hands the engine
+  (`Shortcuts::inject`, in `Device::refresh_layers`), as an action on the internal mode name
+  `OPEN_GUIDE`, so the profile's own gesture and combo timing applies. The engine reads that as
+  "toggle the overlay, or leave mouse mode", and doesn't count the opener's buttons as presses that
+  close the overlay. Guide itself is swallowed whenever it isn't the opener, and is never allowed
+  on another shortcut (`Shortcuts::sanitized`, run at load, and the tab).
+- **Warnings** (`config/shortcuts/conflicts.rs`) are soft: nothing is refused. Two shortcuts of one
+  mode clash when they share an input (`ShortcutInput::overlaps`: same input, or a combo that
+  contains the other's buttons). The opener clashes with every shortcut, since it's what holds the
+  Guide mode and ends mouse mode. An unset opener is a warning on the tab. A profile conflicts with
+  the opener (`Shortcuts::conflict`) when it already uses the input; the tab lists those and the
+  sidebar marks the setup with a ⚠. Switched-off mode shortcuts never warn.
+- **Quick Settings** is a `Shortcut` too (Start by default, in the Guide mode), bound to the new
+  `ButtonAction::QuickSettings`. The engine raises `take_settings_request` and closes the overlay;
+  the daemon opens the Guide + Start menu (`open_system_menu`). The old order-independent
+  Guide + Start chord check (`system_menu::chord`) is gone, so Start held before Guide no longer
+  opens it.
+- **Closing panels.** The panels the daemon runs itself (keyboard, numpad, media, menus, the offer)
+  watch the opener with `opener_watch::Watch`, one per controller, fed every event in
+  `Daemon::input`: a button on press, a combo when its last button goes down, a double or triple
+  tap, a long press on release (timings from the active profile). A fire closes the panel
+  (`guide_closes_overlay`) and is what counts as the opener "tap" for the library offer. The
+  keyboard, numpad and media panels also close on the held opener plus their own shortcut's button
+  (`set_guide`, `MediaSession::with_chord`), taken from the shortcuts rather than fixed to X, Y and
+  LB.
+- **`{guide}`** says the opener (`info::OpenerLabel`, set per process with `info::set_opener` and
+  applied in `info::parse`). The daemon sets it from the config and sends it in `OverlayFrame` for
+  the overlay process; the settings window sets it as the config is edited. `{pad:guide}` stays the
+  button.
+- **Not tested on hardware.** The engine and conflict logic have unit tests, and the tab renders
+  offscreen (`padwight debug gui ... settings shortcuts shortcuts-demo`). The Listen button and
+  gesture and combo openers haven't been tried with a real controller.
+
+## Menu confirm and back
+
+`Shortcut::MenuConfirm` and `MenuBack` (`Group::Menu`) set `MenuKeys` (`config::shortcuts`). They
+are one button each, from `MenuKeys::CHOICES` (buttons the panels use for nothing else, so a swap
+displaces nothing); `sanitized` drops anything else and the tab only offers those. The chosen
+button and A (or B) trade places (`MenuKeys::logical`), so the panels keep reading A and B.
+
+- The daemon translates events once, in `overlay_input`, for every panel except user menus, and the
+  engine does it for the Guide overlay's menu (`other_button_pressed`, which queues the logical
+  button for `guide_keys`).
+- User menus translate inside `MenuSession` (`with_menu_keys`, `set_keys`): lists, grids,
+  carousels and radial menus only, and the back button only where the menu's close button is the
+  default (`menu.cancel` unset). Directional and button menus read the face buttons themselves.
+- Hints say `{confirm}` and `{back}`, which `info::parse` resolves to the buttons (like `{guide}`,
+  through a per-process setting carried in `OverlayFrame::menu_keys`). `{south}` and `{east}` stay
+  the buttons, for info overlays.

@@ -17,7 +17,7 @@
 - **Gyro**: motion sensors in some controllers, used to aim or steer by turning or tilting. See [Gyro](gyro.md).
 - **Flick stick**: a stick that turns the camera in a direction at once, for quick turns.
 - **Deadzone**: how far a stick must move before it counts. It stops a stick that rests slightly off-center from drifting.
-- **Guide**: the middle button (PlayStation, Xbox or Home). By default it's a modifier, so a plain press doesn't reach Steam. See [The Guide button](guide-button.md).
+- **Guide**: the middle button (PlayStation, Xbox or Home). By default it's a modifier, so a plain press doesn't reach Steam. The overlay it opens, the Guide shortcuts and mouse mode's keys can be moved to other inputs. See [The Guide button](guide-button.md).
 - **Daemon**: the background part of Padwight that does the remapping. It keeps running when the window is closed.
 - **Auto-switch rule**: a rule that picks a setup's profile when a matching window has focus.
 - **Pack**: a `.padpack` file that holds a setup's profiles and items, for sharing.

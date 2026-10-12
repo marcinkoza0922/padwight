@@ -69,7 +69,7 @@ pub fn view(steam: bool, cursor: usize, profile: &str, style: OverlayStyle) -> M
         selected: Some(cursor),
         picks: 0,
         crumbs: Vec::new(),
-        hint: "{south} choose · {east} close".into(),
+        hint: "{confirm} choose · {back} close".into(),
         style,
         touch: false,
         aim: None,

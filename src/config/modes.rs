@@ -49,11 +49,6 @@ impl Game {
     pub fn mode_named(&self, name: &str) -> Option<&Mode> {
         self.modes.iter().find(|m| m.name == name)
     }
-
-    /// Its mode called `name`, or the built-in one (see [`built_in_mode`]).
-    pub fn mode_or_built_in(&self, name: &str) -> Option<&Mode> {
-        self.mode_named(name).or_else(|| built_in_mode(name))
-    }
 }
 
 /// Makes every Toggle of a layer a switch to a mode of that name, and makes the layer a mode. A
@@ -141,6 +136,6 @@ mod tests {
         assert_eq!(game.profiles[0].buttons[&Button::North], ButtonAction::Mode(MOUSE_MODE.into()));
         assert_eq!(game.profiles[0].buttons[&Button::Guide], ButtonAction::guide_hold());
         assert!(game.modes.is_empty(), "nothing to move: they're built in");
-        assert!(game.mode_or_built_in(MOUSE_MODE).is_some() && game.mode_named(MOUSE_MODE).is_none());
+        assert!(built_in_mode(MOUSE_MODE).is_some() && game.mode_named(MOUSE_MODE).is_none());
     }
 }

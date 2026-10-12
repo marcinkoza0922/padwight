@@ -21,7 +21,7 @@ pub(super) fn combo_page(config: &Config, i: usize, inputs: &[Button]) -> (Vec<I
     let action = combo.map_or("Disabled".into(), |c| c.action.summary());
     rows.push(item(format!("Action: {action}")));
     rows.push(remove_item("Delete combo".into()));
-    (rows, "{south} toggle or change · {east} back")
+    (rows, "{confirm} toggle or change · {back} back")
 }
 pub(super) fn layer_page(config: &Config, shift: Shift, i: usize, inputs: &[Button]) -> (Vec<ItemView>, &'static str) {
     let layer = layers(config, shift).get(i);
@@ -32,7 +32,7 @@ pub(super) fn layer_page(config: &Config, shift: Shift, i: usize, inputs: &[Butt
             button_item(b, bound)
         })
         .collect();
-    (rows, "{south} change · {east} back")
+    (rows, "{confirm} change · {back} back")
 }
 pub(super) fn layer_name(config: &Config, slot: Slot) -> Option<&str> {
     match slot {
@@ -50,7 +50,7 @@ pub(super) fn layers(config: &Config, shift: Shift) -> &[Layer] {
 pub(super) fn layers_page(config: &Config, shift: Shift) -> (Vec<ItemView>, &'static str) {
     let mut rows: Vec<ItemView> = layers(config, shift).iter().map(|l| item(format!("{} ({} bound)", l.name, l.buttons.len()))).collect();
     rows.push(add_item(format!("Add {}", shift.title().to_lowercase())));
-    (rows, "{south} open · {east} back")
+    (rows, "{confirm} open · {back} back")
 }
 pub(super) fn combos(config: &Config) -> &[Combo] {
     config.active().map_or(&[], |p: &Profile| p.combos.as_slice())

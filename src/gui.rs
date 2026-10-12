@@ -46,6 +46,7 @@ mod checks;
 mod games;
 mod goto;
 mod guide_tab;
+mod shortcuts_tab;
 mod gyro;
 mod gyro_graph;
 mod items;
@@ -212,6 +213,8 @@ struct App {
     stick_probe: f32,
     /// Where the gyro's aim has been lately, for the Gyro tab's live picture.
     gyro_trail: gyro_graph::Trail,
+    /// The App settings tabs' state.
+    shortcuts_ui: shortcuts_tab::Ui,
     /// Waiting for a controller button press to jump to its row.
     finding: bool,
     found: Option<Button>,
@@ -397,6 +400,11 @@ enum Message {
     GoToItem(ItemKind, String),
     Tour(TourMove),
     SetSettingsSearch(String),
+    SelectSettingsTab(shortcuts_tab::SettingsTab),
+    SetShortcut(crate::config::Shortcut, Option<crate::config::ShortcutInput>),
+    ResetShortcut(crate::config::Shortcut),
+    ResetAllShortcuts,
+    ListenShortcut(Option<(crate::config::Shortcut, usize)>),
     SetManualSearch(String),
     SetButtonSearch(String),
     /// A link in the manual; relative links name another chapter's file.
@@ -654,7 +662,7 @@ impl App {
             settings_query: String::new(),
             manual_query: String::new(),
             button_query: String::new(),
-            manual: manual::load(), theme_mode: iced::theme::Mode::default(),
+            manual: manual::load(), theme_mode: iced::theme::Mode::default(), shortcuts_ui: shortcuts_tab::Ui::default(),
             game_search: String::new(),
             message: None,
             live: None,
@@ -874,6 +882,7 @@ impl App {
         self.expanded.clear();
         self.found = None;
         self.finding = false;
+        self.shortcuts_ui.listening = None;
     }
 
     /// Shows a game's page, editing its active profile if it has it.
@@ -913,6 +922,8 @@ impl App {
             self.record_edit(kind, snapshot);
         }
         if edits {
+            crate::info::set_opener(crate::info::OpenerLabel::of(&self.config.shortcuts));
+            crate::info::set_menu_keys(self.config.shortcuts.menu_keys());
             self.refresh_layer_view();
             self.edited = if self.page == Page::Game(None) { Vec::new() } else { pack::edited_items(self.game()) };
         }
@@ -963,6 +974,13 @@ impl App {
                 });
             }
             Message::LiveInput(snapshot) => {
+                if self.shortcuts_ui.listening.is_some()
+                    && let Some(b) = snapshot.as_ref().and_then(|s| newly_pressed(self.live.as_ref(), s))
+                    && self.heard_shortcut_button(b)
+                {
+                    self.live = snapshot;
+                    return Task::none();
+                }
                 if self.finding
                     && let Some(b) = snapshot.as_ref().and_then(|s| newly_pressed(self.live.as_ref(), s))
                 {

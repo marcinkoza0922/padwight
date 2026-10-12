@@ -28,9 +28,12 @@ held, a slower mouse while aiming).
 
 ## Built-in modes
 
-`Guide` and `Mouse mode` (`config::built_in_modes`) were built-in layers. They're never stored,
-can't be edited or removed, and the Modes tab lists them read-only. Every game's scope has them
-after its own modes.
+`Guide` and `Mouse mode` (`Config::built_in_modes`) were built-in layers. They're never stored,
+can't be edited per game or removed, and the Modes tab lists them read-only. Every game's scope
+has them after its own modes. Their buttons come from the app-wide `Config::shortcuts`
+(`Layer::guide_with`, `Layer::mouse_with`; see [guide.md](guide.md#movable-shortcuts)), so use
+`Config::mode_for` / `Config::built_in_modes` rather than the static `built_in_mode(s)`, which
+have the defaults only.
 
 - The engine's `mode()` is the mode on now: Guide while Guide is held or its overlay is up, else
   mouse mode while it's on, else the mode switched to (`chosen_mode()`). A built-in mode stands in
@@ -39,7 +42,8 @@ after its own modes.
 - While a built-in mode is on, `layers()` is empty: held layers stay counted, and apply again
   after.
 - `Mode("Mouse mode")` switches mouse mode on and off, so any button or menu item can enter it.
-  Switching to any other mode ends it. `Mode("Guide")` does nothing; the Guide button owns it,
+  Switching to any other mode ends it. The Guide mode's own mouse-mode entry is such a switch
+  (it sits on R3 by default, and closes the overlay). `Mode("Guide")` does nothing; the Guide button owns it,
   and the GUI's mode pickers leave it out. Profiles' Guide buttons say `Mode("Guide")`, which
   the engine ignores.
 - The Guide overlay's Mappings leave them out: Left and Right turn only through the game's own
