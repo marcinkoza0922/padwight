@@ -3176,6 +3176,19 @@ key_threshold = 0.2
     }
 
     #[test]
+    fn a_setup_s_guide_sounds_reach_the_scope_the_daemon_plays_from() {
+        let mut config = Config::default();
+        let mut set = SoundSet::default();
+        let mut guide = set.get(crate::sound::SoundOverlay::Guide);
+        guide.step.kind = crate::sound::SoundKind::Typewriter;
+        set.set(crate::sound::SoundOverlay::Guide, guide);
+        config.general.sounds = Some(set);
+        let back: Config = toml::from_str(&toml::to_string_pretty(&config).unwrap()).unwrap();
+        let cue = back.scope().sounds.cue(crate::sound::SoundOverlay::Guide, crate::sound::Feedback::Step);
+        assert_eq!(cue.map(|s| s.kind), Some(crate::sound::SoundKind::Typewriter));
+    }
+
+    #[test]
     fn the_guide_layer_leaves_profiles_alone() {
         assert_eq!(Layer::guide().buttons.get(&Button::DpadUp), None);
     }
