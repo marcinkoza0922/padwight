@@ -11,7 +11,9 @@ use std::{
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
+#[cfg(target_os = "linux")]
 pub mod input;
+#[cfg(target_os = "linux")]
 pub mod uhid;
 
 pub const TIMEOUT: Duration = Duration::from_secs(10);
@@ -85,6 +87,7 @@ pub fn default_config() -> String {
 
 /// Names of the gamepads the daemon would take, other than the test's own and the daemon's virtual
 /// devices. Found with the same rule the daemon uses.
+#[cfg(target_os = "linux")]
 fn real_gamepads() -> Vec<String> {
     let Ok(entries) = fs::read_dir("/dev/input") else { return Vec::new() };
     let mut names: Vec<String> = entries
@@ -105,6 +108,12 @@ fn real_gamepads() -> Vec<String> {
     names.sort();
     names.dedup();
     names
+}
+
+/// Other platforms have no evdev gamepads for the daemon to take.
+#[cfg(not(target_os = "linux"))]
+fn real_gamepads() -> Vec<String> {
+    Vec::new()
 }
 
 /// The config for a test that holds South (a key) and East (a mouse button): the default one, with

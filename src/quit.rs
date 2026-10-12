@@ -1,8 +1,17 @@
 //! Force-quitting the focused game: ends its process and everything it started.
 
-use std::{collections::HashMap, fs, thread, time::Duration};
+use std::{collections::HashMap, time::Duration};
+#[cfg(target_os = "linux")]
+use std::{fs, thread};
 
-/// How long a game gets to exit after SIGTERM before it is killed.
+#[cfg(windows)]
+mod windows;
+#[cfg(windows)]
+pub use windows::{force_quit, is_running};
+#[cfg(all(windows, test))]
+use windows::{alive, parents};
+
+/// How long a game gets to exit after it is asked to before it is killed.
 const GRACE: Duration = Duration::from_secs(3);
 
 /// Programs that must never be force quit: the desktop itself, so a stray hold with no
@@ -11,6 +20,10 @@ const PROTECTED: &[&str] = &[
     "plasmashell", "kwin_wayland", "kwin_wayland_wrapper", "kwin_x11", "krunner", "xorg", "xwayland", "gnome-shell",
     "mutter", "sway", "hyprland", "weston", "labwc", "river", "niri", "cosmic-comp", "wayfire", "systemd", "sddm",
     "gdm", "lightdm", "login", "pipewire", "wireplumber", "padwight",
+    // Windows: the shell, the session, and us.
+    "explorer.exe", "dwm.exe", "winlogon.exe", "csrss.exe", "lsass.exe", "services.exe", "svchost.exe", "sihost.exe",
+    "shellexperiencehost.exe", "startmenuexperiencehost.exe", "searchhost.exe", "textinputhost.exe", "lockapp.exe",
+    "applicationframehost.exe", "padwight.exe",
 ];
 
 /// Whether a window of this executable is off limits to force quit.
@@ -37,6 +50,7 @@ fn tree(pid: u32, parents: &HashMap<u32, u32>) -> Vec<u32> {
 }
 
 /// Every process's parent, from /proc.
+#[cfg(target_os = "linux")]
 fn parents() -> HashMap<u32, u32> {
     let Ok(entries) = fs::read_dir("/proc") else { return HashMap::new() };
     entries
@@ -53,6 +67,7 @@ fn parents() -> HashMap<u32, u32> {
         .collect()
 }
 
+#[cfg(target_os = "linux")]
 fn signal(pids: &[u32], sig: libc::c_int) {
     for pid in pids {
         // SAFETY: `kill` only sends a signal.
@@ -61,11 +76,13 @@ fn signal(pids: &[u32], sig: libc::c_int) {
 }
 
 /// Whether the process `pid` is still running (a zombie, waiting to be reaped, is not).
+#[cfg(target_os = "linux")]
 pub fn is_running(pid: u32) -> bool {
     let Ok(stat) = fs::read_to_string(format!("/proc/{pid}/stat")) else { return false };
     stat.rfind(')').and_then(|i| stat[i + 1..].split_whitespace().next()).is_some_and(|state| state != "Z" && state != "X")
 }
 
+#[cfg(target_os = "linux")]
 fn alive(pid: u32) -> bool {
     // SAFETY: signal 0 only checks that the process exists.
     unsafe { libc::kill(pid as libc::pid_t, 0) == 0 }
@@ -74,6 +91,7 @@ fn alive(pid: u32) -> bool {
 /// Asks the game's process and its descendants to exit, and kills what is still there after a
 /// few seconds. Returns at once; the kill follows on a thread. Does nothing for pid 0, 1 or
 /// this program.
+#[cfg(target_os = "linux")]
 pub fn force_quit(pid: u32) {
     if pid <= 1 || pid == std::process::id() {
         return;
@@ -101,6 +119,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_os = "linux")]
     fn force_quit_ends_a_process_and_its_children() {
         // A shell that starts a child and waits for it.
         let mut shell = std::process::Command::new("sh").args(["-c", "sleep 60 & wait"]).spawn().unwrap();
@@ -119,6 +138,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_os = "linux")]
     fn running_processes_are_told_from_gone_ones() {
         assert!(is_running(std::process::id()));
         let mut child = std::process::Command::new("true").spawn().unwrap();

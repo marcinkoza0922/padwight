@@ -1,15 +1,22 @@
-//! Screenshots: picks the screenshot tool for the desktop and saves to
-//! `~/Pictures/Screenshots/<game>/`. Also the file naming recordings share.
+//! Screenshots: picks the screenshot tool for the desktop (on Windows, grabs the screen itself)
+//! and saves to `~/Pictures/Screenshots/<game>/`. Also the file naming recordings share.
 
-use std::{
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::path::{Path, PathBuf};
+#[cfg(target_os = "linux")]
+use std::process::Command;
 
-use anyhow::{Context, Result, bail};
+#[cfg(target_os = "linux")]
+use anyhow::bail;
+use anyhow::{Context, Result};
+
+#[cfg(windows)]
+mod windows;
+#[cfg(windows)]
+pub use windows::{screenshot, timestamp};
 
 /// A command-line screenshot tool.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg(target_os = "linux")]
 enum Tool {
     /// KDE's. Also works on other desktops, through the screenshot portal.
     Spectacle,
@@ -18,6 +25,7 @@ enum Tool {
     GnomeScreenshot,
 }
 
+#[cfg(target_os = "linux")]
 impl Tool {
     fn program(self) -> &'static str {
         match self {
@@ -40,6 +48,7 @@ impl Tool {
 
 /// The tool to use on `desktop` (`XDG_CURRENT_DESKTOP`), given which programs are installed:
 /// the desktop's own first, then any other.
+#[cfg(target_os = "linux")]
 fn pick_tool(desktop: &str, installed: impl Fn(&str) -> bool) -> Option<Tool> {
     let desktop = desktop.to_ascii_lowercase();
     let preferred = if desktop.contains("kde") {
@@ -54,8 +63,10 @@ fn pick_tool(desktop: &str, installed: impl Fn(&str) -> bool) -> Option<Tool> {
         .find(|t| installed(t.program()))
 }
 
+/// Whether `program` is installed where the shell would find it (as `program.exe` on Windows).
 pub fn on_path(program: &str) -> bool {
-    std::env::var_os("PATH").is_some_and(|paths| std::env::split_paths(&paths).any(|dir| dir.join(program).is_file()))
+    let file = format!("{program}{}", std::env::consts::EXE_SUFFIX);
+    std::env::var_os("PATH").is_some_and(|paths| std::env::split_paths(&paths).any(|dir| dir.join(&file).is_file()))
 }
 
 /// Where captures go instead of the user's Pictures and Videos, when set (debug mode).
@@ -89,6 +100,7 @@ pub fn media_path(base: &Path, kind: &str, game: &str, stamp: &str, ext: &str) -
 }
 
 /// The local time as `2026-10-07_19-58-03`.
+#[cfg(target_os = "linux")]
 pub fn timestamp() -> String {
     // SAFETY: `localtime_r` and `strftime` only write into the buffers passed to them.
     unsafe {
@@ -103,6 +115,7 @@ pub fn timestamp() -> String {
 
 /// Saves a screenshot for `game` and returns where it went. Waits for the tool, so run it off
 /// the daemon's main thread.
+#[cfg(target_os = "linux")]
 pub fn screenshot(game: &str) -> Result<PathBuf> {
     let desktop = std::env::var("XDG_CURRENT_DESKTOP").unwrap_or_default();
     let tool = pick_tool(&desktop, on_path).context("no screenshot tool found (install spectacle, grim or gnome-screenshot)")?;
@@ -121,6 +134,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(target_os = "linux")]
     fn the_desktops_own_tool_comes_first() {
         let all = |_: &str| true;
         assert_eq!(pick_tool("KDE", all), Some(Tool::Spectacle));
@@ -149,6 +163,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_os = "linux")]
     fn spectacle_runs_in_the_background() {
         let args = Tool::Spectacle.args(Path::new("/x.png"));
         assert_eq!(args.last().unwrap(), "/x.png");

@@ -15,6 +15,8 @@ Here's how it's put together:
 - **gui**: edits profiles and talks to the daemon over `$XDG_RUNTIME_DIR/padwight.sock`.
 - **config**: `~/.config/padwight/`. `config.toml` holds the app settings. Each setup is a folder under `setups/` (General is `general/`), with a `setup.toml` and one file per profile, mode, layer, macro, menu, overlay and log. To move a setup to another machine, copy its folder. The daemon is the only writer while it runs, so after editing by hand, run `padwight reload`.
 
+That is Linux. On Windows the same pieces read controllers through XInput and send through ViGEmBus and `SendInput`; see [Windows](#windows).
+
 ## Documentation
 
 For users:
@@ -101,6 +103,29 @@ To run the daemon at login, copy `dist/padwight-flatpak.service` to `~/.config/s
 - Sway's IPC socket isn't shared into the sandbox, so on Sway and labwc (and other wlroots compositors) focus falls back to matching running processes. Hyprland's socket is shared, so focus works there. On all wlroots compositors, including Hyprland, the compositor hides its layer-shell protocol from sandboxed apps, so the on-screen keyboard and overlays don't show in a Flatpak. Run the app natively there for those.
 - Screenshot and recording actions run host programs (grim, gpu-screen-recorder, …), which the sandbox doesn't include, so they may not work.
 - `--device=all` is needed so the sandbox can reach `/dev/uinput`. That lets the app read and send input on the machine, just like the native daemon.
+
+### Windows
+
+padwight also runs on Windows 10 (version 1803 or later) and Windows 11. Build it with Rust's MSVC toolchain (Visual Studio's C++ build tools), then open the settings window, which starts the daemon if it isn't running:
+
+```powershell
+cargo install --path .
+padwight
+```
+
+For a virtual controller, install the [ViGEmBus](https://github.com/nefarius/ViGEmBus/releases) driver. Without it, keyboard and mouse mappings still work, and the daemon's log says the pad output is dropped. To start the daemon at login, put a shortcut to `padwight daemon` in the Startup folder (`shell:startup` in the Run box).
+
+What differs from Linux:
+
+- **Controllers** are read through XInput, so Windows sees up to four Xbox controllers, or controllers something else presents as one (Steam Input, DS4Windows). XInput has no gyro, touchpad or back paddles, so profiles that need them aren't used. The virtual pad is always an Xbox 360 controller.
+- **Nothing is grabbed.** Windows can't keep a controller to one program, so a game that reads every controller sees both yours and padwight's. [HidHide](https://github.com/nefarius/HidHide) hides yours: add it to HidHide's hidden devices, and `padwight.exe` to the applications that may still see it.
+- **Keys** go out through `SendInput` as hardware scancodes, which games reading raw input or DirectInput see as a real keyboard. Windows doesn't let a program send input to one running as administrator, so run padwight as administrator for games that are.
+- **Guide** opens the Xbox Game Bar by default. Turn that off in Settings › Gaming › Xbox Game Bar if a profile uses Guide.
+- **Focus tracking** follows the foreground window. Rules match the executable (`eldenring.exe`) and window class, and Steam games get their App ID from the library folder they're installed in.
+- **Overlays** are a click-through window that never takes focus. They show over windowed and borderless games; a game in exclusive fullscreen draws over them.
+- **Screenshots** are taken by padwight itself. **Recording** needs `ffmpeg` on `PATH`; Game Bar's Win+Alt+R records too.
+- **Media controls** drive whichever player shows in Windows' media flyout, and the volume is the default output's.
+- **Files**: settings are in `%APPDATA%\padwight\`, the daemon's log and control socket in `%LOCALAPPDATA%\padwight\`. As on Linux, `XDG_CONFIG_HOME` and `XDG_RUNTIME_DIR` move them, which is how the tests run a daemon of their own.
 
 ## Profiles
 

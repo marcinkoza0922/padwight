@@ -4,6 +4,8 @@
 //! refused. Runs as root, since the other user is made with `setpriv`:
 //! `cargo test --test socket_fallback -- --ignored`, or `scripts/kernel-test-docker.sh socket_fallback`.
 
+#![cfg(target_os = "linux")]
+
 mod common;
 
 use std::{

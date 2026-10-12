@@ -12,7 +12,10 @@ use evdev::Device;
 
 use crate::{input::TouchNormalizer, monitor::log};
 
-use super::{Daemon, Msg, PairedNode, read_input};
+use super::{
+    Daemon, Msg,
+    devices::{PairedNode, read_input},
+};
 
 impl Daemon {
     /// Pairs managed controllers with their touchpads, and grabs and starts reading them.
@@ -23,7 +26,7 @@ impl Daemon {
             .filter(|(_, d)| d.touchpad.is_none())
             .filter_map(|(id, d)| {
                 let taken = |n: &PairedNode| self.devices.values().any(|o| o.touchpad.as_ref() == Some(&n.path));
-                let node = self.touch_nodes.values().find(|n| !taken(n) && n.belongs_to(d))?;
+                let node = self.nodes.touch.values().find(|n| !taken(n) && n.belongs_to(d))?;
                 Some((*id, node.path.clone(), node.name.clone()))
             })
             .collect();

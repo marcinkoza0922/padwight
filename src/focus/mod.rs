@@ -1,17 +1,30 @@
 //! Which game is active: a tracker for the running desktop reports the focused window, windows
-//! and processes are identified from /proc (see [`identify`]), and per-game rules pick the
-//! profile. Desktops without a tracker fall back to matching running processes.
+//! and processes are identified from /proc or, on Windows, their executables (see [`identify`]),
+//! and per-game rules pick the profile. Desktops without a tracker fall back to matching running
+//! processes.
 
+#[cfg(target_os = "linux")]
 mod dbus;
+#[cfg(target_os = "linux")]
 mod gnome;
+#[cfg(target_os = "linux")]
 mod hyprland;
+#[cfg(target_os = "linux")]
 mod identify;
+#[cfg(target_os = "linux")]
 mod kwin;
+#[cfg(target_os = "linux")]
 mod sway;
+#[cfg(target_os = "linux")]
 mod wlroots;
+#[cfg(windows)]
+mod windows;
 
-use std::{sync::Arc, thread, time::Duration};
+use std::sync::Arc;
+#[cfg(target_os = "linux")]
+use std::{thread, time::Duration};
 
+#[cfg(target_os = "linux")]
 use zbus::blocking::Connection;
 
 use crate::{
@@ -19,10 +32,14 @@ use crate::{
     ipc::{FocusBackend, WindowInfo},
     monitor::log,
 };
-pub use identify::{base_name, identify, is_own_window, running_processes};
+#[cfg(target_os = "linux")]
+pub use identify::{identify, is_own_window, running_processes};
+#[cfg(windows)]
+pub use windows::{identify, is_own_window, running_processes, spawn};
 
 /// How often we check that the desktop's tracker is still there (a compositor restart, a late
 /// login, an extension switched on).
+#[cfg(target_os = "linux")]
 const WATCHDOG: Duration = Duration::from_secs(10);
 
 /// Events the focus tracker sends to the daemon.
@@ -64,6 +81,7 @@ impl Reporter {
 
 /// Starts focus tracking: reports which tracker is working through `Backend`, and keeps
 /// retrying so it recovers when the desktop's shell appears or restarts.
+#[cfg(target_os = "linux")]
 pub fn spawn(notify: impl Fn(FocusEvent) + Send + Sync + 'static) {
     let notify: Notify = Arc::new(notify);
     thread::spawn(move || {
@@ -89,6 +107,7 @@ pub fn spawn(notify: impl Fn(FocusEvent) + Send + Sync + 'static) {
 
 /// One round of tracking. Sway and Hyprland push events, so this returns only when that
 /// connection ends; the rest are checked once.
+#[cfg(target_os = "linux")]
 fn track(reporter: &mut Reporter, conn: Option<&Connection>) {
     let notify = reporter.notify.clone();
     if let Ok(sway) = sway::connect() {
@@ -115,6 +134,7 @@ fn track(reporter: &mut Reporter, conn: Option<&Connection>) {
 
 /// The tracker for a desktop reached over D-Bus: KWin, or GNOME Shell with our extension. `None`
 /// when the desktop isn't one of those.
+#[cfg(target_os = "linux")]
 fn shell_backend(conn: &Connection) -> Option<FocusBackend> {
     if kwin::ensure_script(conn).is_ok() {
         Some(FocusBackend::Kwin)
@@ -123,6 +143,11 @@ fn shell_backend(conn: &Connection) -> Option<FocusBackend> {
     } else {
         None
     }
+}
+
+/// Last component of a Unix or Windows path.
+pub fn base_name(path: &str) -> String {
+    path.rsplit(['/', '\\']).next().unwrap_or(path).to_string()
 }
 
 fn rule_matches(kind: RuleKind, value: &str, info: &WindowInfo) -> bool {

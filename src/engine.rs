@@ -7,7 +7,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use evdev::KeyCode;
+use crate::keycode::KeyCode;
 
 use crate::{
     config::{
