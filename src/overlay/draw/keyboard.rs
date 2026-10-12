@@ -74,7 +74,7 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::in
                 .center_x(width)
                 .center_y(unit)
                 .style(move |_| container::Style { background: Some(bg.into()), border, shadow: glow, ..container::Style::default() });
-            line = line.push(cap);
+            line = line.push(transform(cap, anim.item_scale(cursor), iced::Vector::ZERO));
         }
         rows = rows.push(line);
     }

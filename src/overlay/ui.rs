@@ -54,10 +54,14 @@ impl Overlay {
     }
 
     /// Takes the daemon's latest frame: what opens starts its way in, what closes its way out.
-    pub(super) fn receive(&mut self, mut frame: OverlayFrame) {
+    pub(super) fn receive(&mut self, frame: OverlayFrame) {
+        self.receive_at(frame, Instant::now());
+    }
+
+    /// Takes a frame as though it came at `now`.
+    fn receive_at(&mut self, mut frame: OverlayFrame, now: Instant) {
         timing_log(&format!("recv {} {}", unix_ns(), frame_summary(&frame)));
         frame.apply_lite();
-        let now = Instant::now();
         self.panels.update(now, frame.active.iter().cloned().collect());
         self.info.update(now, frame.info.clone());
         self.logs.update(now, frame.logs.clone());
@@ -141,6 +145,25 @@ pub fn snapshot(mut frame: OverlayFrame, display: Size, scale: f32, background: 
     let settled = Instant::now() + Duration::from_secs(10);
     let screen = stack(layers::<()>(&state, display, settled)).width(Length::Fill).height(Length::Fill);
     crate::snapshot::render(screen.into(), display, scale, background)
+}
+
+/// Draws a run of frames as the overlay window shows it, with no window: each frame in `script`
+/// arrives that many seconds into the run, and a picture is drawn at each time in `at`.
+pub fn film(script: &[(f32, OverlayFrame)], at: &[f32], display: Size, scale: f32, background: Color) -> anyhow::Result<Vec<crate::snapshot::Image>> {
+    let start = Instant::now();
+    let when = |secs: f32| start + Duration::from_secs_f32(secs.max(0.0));
+    let mut state = Overlay::new();
+    let mut next = script.iter().peekable();
+    let mut pictures = Vec::with_capacity(at.len());
+    for &t in at {
+        while let Some((arrives, frame)) = next.next_if(|(arrives, _)| *arrives <= t) {
+            state.receive_at(frame.clone(), when(*arrives));
+        }
+        state.prune(when(t));
+        let screen = stack(layers::<()>(&state, display, when(t))).width(Length::Fill).height(Length::Fill);
+        pictures.push(crate::snapshot::render(screen.into(), display, scale, background)?);
+    }
+    Ok(pictures)
 }
 
 #[cfg(test)]

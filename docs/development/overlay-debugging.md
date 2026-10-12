@@ -7,6 +7,8 @@ controller. They answer two kinds of question:
   [harness](#the-harness) and the [timing log](#the-timing-log).
 - **Looks:** what does a menu look like part way through a fade? Use the
   [fade frames](#fade-frames).
+- **Motion:** how does a motion style open, move, pick and close? Use the
+  [motion runs](#motion-runs).
 
 - **Stills:** how does a screen look, start to finish? Use the
   [screenshot and preview tools](#screenshots-and-previews).
@@ -169,6 +171,64 @@ Two kinds of fault show up, and the two backgrounds tell them apart:
 
 The check doesn't fail the build. It's for comparing before and after a change: render the
 frames on both versions, then run the check on each folder.
+
+## Motion runs
+
+`padwight debug motion` plays a scripted run of an overlay in one or more motion styles and
+draws every moment of it in-process, with the overlay's own layer code (`overlay::film` in
+`src/overlay/ui.rs`) and the CPU renderer. No display, compositor, daemon or controller is
+involved, and the clock is made up, so every run draws the same frames.
+
+```sh
+cargo run -q -- debug motion playful              # one style
+cargo run -q -- debug motion all                  # every style but off
+cargo run -q -- debug motion swift dreamy --scene keyboard
+```
+
+The run is the same for every style:
+
+| Time (s) | What happens |
+|---|---|
+| 0 | The overlay opens, the cursor on the first item (on the keyboard, H). |
+| 0.55 | The cursor moves to the second item. |
+| 0.7 | It moves to the third, before the last glide has finished. |
+| 1.15 | A pick that leaves the overlay open. |
+| 1.6 | The cursor moves to the fourth item. |
+| 2.0 | A pick that closes a menu: it holds the picked item for 0.3 s, then plays its close. The keyboard just lets the key go and closes. |
+
+The run ends 0.15 s after the close has played. For each style it writes two files to
+`screenshots/motion/`, named `<scene>-<style>`:
+
+- **`<scene>-<style>.png`:** an animated PNG of the whole run, looping. Open it in a browser
+  (most image viewers show only its first frame).
+- **`<scene>-<style>-strip.png`:** frames side by side, six to a row, left to right and top to
+  bottom, for looking at one moment against the next. By default it covers the whole run,
+  every 40 ms.
+
+Every picture is cropped to the area anything was drawn in during the run, so a panel that
+slides or grows stays in frame and every frame lines up.
+
+| Option | What it does |
+|---|---|
+| `--scene <name>` | What to play: a menu scene from `padwight debug overlay list` (default `menu-list`), `keyboard` or `numpad`. |
+| `--from <s>`, `--until <s>` | The part of the run the strip covers, in seconds. For example `--until 0.6` for the opening, or `--from 1.98 --until 2.62` for the pick and close. |
+| `--every <ms>` | Time between the strip's frames (default 40). |
+| `--fps <n>` | The animated PNG's frame rate (default 50). Lower it to draw faster. |
+| `--size <w>x<h>` | The virtual screen (default 960x540). |
+| `--out <dir>` | Where the files go (default `screenshots/motion`). |
+| `--trace` | Prints the numbers the drawing reads instead of drawing anything. |
+
+`--trace` prints one line every 20 ms: the overlay's `opacity`, its offset `x` and `y` in
+pixels, its `scale`, how `lit` the cursor's item is, that item's own scale (`item`), the pick's
+`flash`, the first item's fade (`fade0`), and how far the first and fourth items are still off
+their places (`shift0`, `shift3`). Once the overlay has finished closing, the line says
+`(gone)`. The trace is quick, so check numbers there first (a spring's overshoot, when a style
+settles) and draw only to see how it looks.
+
+Drawing is slow, about 0.2 s a frame. A whole run at the default 50 fps takes about half a
+minute per style, so pick the styles you need, lower `--fps`, or run several styles as separate
+commands at once. The radial menu's items are one SVG picture, so it shows the panel's motion
+but not the items' own (their pop and slide).
 
 ## Screenshots and previews
 

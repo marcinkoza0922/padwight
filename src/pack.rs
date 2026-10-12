@@ -28,7 +28,8 @@ use crate::config::{
 /// 17, modes (which replace toggled layers: older packs' toggled layers are read as modes);
 /// 18, menu item icons, text typography, ornaments, background pictures, looping effects and
 /// rumble cues; 19, `{icon:…}` tokens and inline text formatting in place of menu item icons,
-/// the `{gyro:…}` and `{trackpad}` tokens, and icons and sounds carried in the pack (`[assets]`).
+/// the `{gyro:…}` and `{trackpad}` tokens, icons and sounds carried in the pack (`[assets]`), and the
+/// `swift`, `dreamy` and `retro` motion styles.
 pub const FORMAT: u32 = 19;
 pub const EXTENSION: &str = "padpack";
 

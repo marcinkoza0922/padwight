@@ -585,7 +585,7 @@ mod ui;
 #[cfg(windows)]
 mod windows;
 
-pub use ui::snapshot;
+pub use ui::{film, snapshot};
 
 /// Drawing for overlays, generic over the message type so the settings GUI can show the
 /// same thing as a live preview.
