@@ -6,6 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use super::base_name;
 use crate::ipc::WindowInfo;
 
 /// Builds a [`WindowInfo`] for a window owned by `pid`, reading its process from /proc.
@@ -54,10 +55,6 @@ fn exe_name(cmdline: &[u8], exe_path: Option<&Path>) -> String {
         .unwrap_or_default()
 }
 
-/// Last component of a Unix or Windows path.
-pub fn base_name(path: &str) -> String {
-    path.rsplit(['/', '\\']).next().unwrap_or(path).to_string()
-}
 
 /// Steam sets these for games it launches (and Proton for Windows games).
 fn steam_app_id(environ: &[u8]) -> Option<String> {

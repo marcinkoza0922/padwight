@@ -2629,8 +2629,12 @@ impl Default for Config {
 }
 
 impl Config {
+    /// `config.toml` in the user's config folder: `~/.config/padwight/` on Linux, and
+    /// `%APPDATA%\padwight\` on Windows, where `XDG_CONFIG_HOME` can name another, as on Linux.
     pub fn path() -> PathBuf {
-        dirs::config_dir()
+        let windows_override = if cfg!(windows) { std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from) } else { None };
+        windows_override
+            .or_else(dirs::config_dir)
             .unwrap_or_else(|| PathBuf::from("."))
             .join("padwight")
             .join("config.toml")
@@ -3119,7 +3123,7 @@ key_threshold = 0.2
                 keys.extend(cfg.zones.iter().flat_map(|z| z.action.key_names()));
             }
             for k in keys {
-                assert!(evdev::KeyCode::from_str(k).is_ok(), "{}: bad key {k}", p.name);
+                assert!(crate::keycode::KeyCode::from_str(k).is_ok(), "{}: bad key {k}", p.name);
             }
             // Guide always opens the Guide layer, which holds the system shortcuts.
             assert_eq!(p.button(Button::Guide), &ButtonAction::guide_hold(), "{}", p.name);
@@ -3541,6 +3545,7 @@ key_threshold = 0.2
     }
 
     #[test]
+    #[cfg(target_os = "linux")]
     fn a_saved_config_is_readable_only_by_its_owner() {
         use std::os::unix::fs::PermissionsExt;
         let mode = |path: &Path| std::fs::metadata(path).unwrap().permissions().mode() & 0o777;

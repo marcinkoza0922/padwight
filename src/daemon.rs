@@ -3,17 +3,9 @@
 use crate::sound;
 use std::{
     collections::{HashMap, HashSet},
-    io::{BufRead, BufReader, ErrorKind, Write},
+    io::{BufRead, BufReader, Write},
     process::Stdio,
-    os::unix::process::CommandExt,
-    os::{
-        fd::AsRawFd,
-        unix::{
-            fs::MetadataExt,
-            net::{UnixListener, UnixStream},
-        },
-    },
-    path::{Path, PathBuf},
+    path::PathBuf,
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -23,18 +15,17 @@ use std::{
     time::{Duration, Instant},
 };
 
-use anyhow::{Context, Result, bail};
-use evdev::Device;
+use anyhow::{Context, Result};
 
 use crate::{
     config::{Config, Feature, Game, Profile, ProfileRef, Refit, Scope},
     engine::{Engine, Opener},
     focus::{self, FocusEvent},
-    input::{self, InputEvent, MotionFrame, MotionNormalizer, MotionSample, Normalizer},
+    input::{InputEvent, MotionFrame, MotionSample},
     ipc::{self, DeviceInfo, Feeds, FocusBackend, InputSnapshot, Request, Response, Status, WindowInfo},
     keyboard::Layout,
     monitor::{self, InputView, OutputView, log},
-    output::{OutEvent, VIRTUAL_PREFIX, VirtualKbm, VirtualPad},
+    output::{OutEvent, VirtualKbm, VirtualPad},
     pad_identity::{ControllerSupport, PadIdentity},
     media::{MediaOutcome, MediaSession, MediaState},
     offer::{OfferOutcome, OfferSession},
@@ -46,17 +37,29 @@ use crate::{
 };
 
 mod activity;
+/// The controllers themselves: evdev nodes on Linux, XInput slots on Windows.
+#[cfg_attr(target_os = "linux", path = "daemon/evdev.rs")]
+#[cfg_attr(windows, path = "daemon/xinput.rs")]
+mod devices;
 mod inject;
 mod logs;
+/// The process around the service: signals, the control socket, running in the background.
+#[cfg_attr(target_os = "linux", path = "daemon/unix.rs")]
+#[cfg_attr(windows, path = "daemon/windows.rs")]
+mod os;
+#[cfg(target_os = "linux")]
 mod pads;
 
 /// Why a profile changed when someone picked it.
 const BY_HAND: &str = "Chosen by hand (GUI or command line)";
-#[cfg(test)]
+#[cfg(all(test, target_os = "linux"))]
 mod kernel_tests;
+#[cfg(target_os = "linux")]
 mod touchpad;
 
-use pads::{FfSpec, virtual_pad_for};
+use devices::{FfSpec, NodeKey, virtual_pad_for};
+pub(crate) use os::{bind_socket_at, prepare_private_dir};
+use ipc::{UnixListener, UnixStream};
 
 const TICK: Duration = Duration::from_millis(4);
 /// How often a fading info overlay is redrawn.
@@ -64,7 +67,6 @@ const FADE_FRAME: Duration = Duration::from_millis(33);
 /// How often info overlays with live values (time, CPU, …) update.
 const INFO_REFRESH: Duration = Duration::from_secs(1);
 const SCAN_INTERVAL: Duration = Duration::from_secs(2);
-const POLL_TIMEOUT_MS: i32 = 200;
 /// Minimum gap between snapshots streamed to one watcher (~60 fps).
 const WATCH_INTERVAL: Duration = Duration::from_millis(16);
 /// Status line redraw rate while only continuous output (mouse/scroll) is changing.
@@ -88,8 +90,11 @@ enum Msg {
     Watch(Sender<Option<InputSnapshot>>),
     WatchFeed(Sender<Option<Feeds>>),
     Focus(FocusEvent),
+    #[cfg_attr(not(target_os = "linux"), expect(dead_code, reason = "only evdev has motion-sensor and touchpad nodes"))]
     Motion { id: u64, sample: MotionSample },
+    #[cfg_attr(not(target_os = "linux"), expect(dead_code, reason = "only evdev has motion-sensor and touchpad nodes"))]
     MotionGone { id: u64 },
+    #[cfg_attr(not(target_os = "linux"), expect(dead_code, reason = "only evdev has motion-sensor and touchpad nodes"))]
     TouchpadGone { id: u64 },
     WatchOverlay(Sender<OverlayFrame>),
     /// Something to say in a toast, from a background task (e.g. a screenshot finishing).
@@ -127,12 +132,13 @@ struct Managed {
     out_view: OutputView,
     /// For pairing with the controller's motion-sensor device.
     parent: Option<PathBuf>,
+    #[cfg(target_os = "linux")]
     uniq: Option<String>,
     /// Motion-sensor device feeding this controller's gyro, once found.
     motion: Option<PathBuf>,
     /// Touchpad node of this controller, once found (and taken from the desktop).
     touchpad: Option<PathBuf>,
-    /// Has back paddles (see [`input::has_paddles`]).
+    /// Has back paddles (see `input::has_paddles`).
     paddles: bool,
     motion_frame: MotionFrame,
     /// Drift per raw sensor axis (the controller's own frame), subtracted before remapping.
@@ -163,32 +169,6 @@ struct Calibration {
     started: Instant,
     sum: [f64; 3],
     samples: u32,
-}
-
-/// A controller's extra input device (motion sensors, touchpad), waiting to be paired with its
-/// gamepad.
-struct PairedNode {
-    path: PathBuf,
-    name: String,
-    parent: Option<PathBuf>,
-    uniq: Option<String>,
-}
-
-impl PairedNode {
-    /// Same physical controller: same parent HID device or same unique ID (e.g. Bluetooth
-    /// MAC). Only when the parent can't be compared does the driver's naming ("<pad> Motion
-    /// Sensors", "<pad> IMU") count, since two identical controllers share a name.
-    fn belongs_to(&self, pad: &Managed) -> bool {
-        self.matches(&pad.name, &pad.parent, &pad.uniq)
-    }
-
-    fn matches(&self, name: &str, parent: &Option<PathBuf>, uniq: &Option<String>) -> bool {
-        let same_parent = self.parent.is_some() && &self.parent == parent;
-        let same_uniq = self.uniq.as_deref().is_some_and(|u| !u.is_empty()) && &self.uniq == uniq;
-        let comparable = self.parent.is_some() && parent.is_some();
-        let named_after = !comparable && self.name.len() > name.len() && self.name.starts_with(name);
-        same_parent || same_uniq || named_after
-    }
 }
 
 impl Managed {
@@ -370,9 +350,6 @@ fn media_feedback(ev: InputEvent) -> Option<sound::Feedback> {
     }
 }
 
-/// A device node identity; the inode changes when a node is recreated for a new device.
-type NodeKey = (PathBuf, u64);
-
 /// What the daemon has noticed about the controllers coming and going.
 #[derive(Default)]
 struct PadWatch {
@@ -424,15 +401,10 @@ struct Daemon {
     injection: inject::Injection,
     /// The identity a debug session forced on the virtual pads (see [`Request::DebugIdentify`]).
     identity_override: Option<PadIdentity>,
-    /// Nodes already checked that we never manage (not a gamepad, or a virtual device).
-    skipped: HashSet<NodeKey>,
     /// Gamepads we have seen, managed or not, for status reporting.
     gamepads: HashMap<NodeKey, SeenGamepad>,
-    motion_nodes: HashMap<NodeKey, PairedNode>,
-    /// Controller touchpads, waiting to be paired with their gamepad.
-    touch_nodes: HashMap<NodeKey, PairedNode>,
-    /// Controller motion sensors we lack permission to open (names), for the GUI to explain.
-    motion_denied: HashMap<NodeKey, String>,
+    /// The other input nodes the scans found (see `scan_devices`).
+    nodes: devices::Nodes,
     /// Clients streaming live input (the GUI's controller view).
     watchers: Vec<Sender<Option<InputSnapshot>>>,
     /// Clients streaming the latest presses and what they did (the GUI's "what's happening").
@@ -511,21 +483,14 @@ pub fn ensure_running() -> Result<()> {
     let stderr = std::fs::File::create(&log).with_context(|| format!("creating {}", log.display()))?;
     let mut command = std::process::Command::new(std::env::current_exe()?);
     command.arg("daemon").stdin(Stdio::null()).stdout(Stdio::null()).stderr(stderr);
-    // SAFETY: only calls `setsid`, which is async-signal-safe. A new session keeps the daemon
-    // alive when the terminal that started the window goes away.
-    unsafe {
-        command.pre_exec(|| {
-            libc::setsid();
-            Ok(())
-        });
-    }
+    os::detach(&mut command);
     // The child is not waited for: it outlives this process by design.
     command.spawn().context("starting the daemon")?;
     Ok(())
 }
 
 fn log_path() -> PathBuf {
-    dirs::state_dir().unwrap_or_else(std::env::temp_dir).join("padwight").join("daemon.log")
+    dirs::state_dir().or_else(dirs::data_local_dir).unwrap_or_else(std::env::temp_dir).join("padwight").join("daemon.log")
 }
 
 impl Daemon {
@@ -539,11 +504,8 @@ impl Daemon {
             next_id: 0,
             injection,
             identity_override: None,
-            skipped: HashSet::new(),
             gamepads: HashMap::new(),
-            motion_nodes: HashMap::new(),
-            touch_nodes: HashMap::new(),
-            motion_denied: HashMap::new(),
+            nodes: devices::Nodes::default(),
             watchers: Vec::new(),
             feed_watchers: Vec::new(),
             activity: activity::Activity::default(),
@@ -588,7 +550,7 @@ impl Daemon {
 pub fn run(debug: bool) -> Result<()> {
     let config = Config::load()?;
     let (tx, rx) = mpsc::channel();
-    stop_on_signals(tx.clone())?;
+    os::stop_on_signals(tx.clone())?;
     serve_ipc(tx.clone())?;
 
     let kbm = VirtualKbm::new().context("creating virtual keyboard/mouse (do you have write access to /dev/uinput?)")?;
@@ -607,95 +569,9 @@ fn serve_ipc(tx: Sender<Msg>) -> Result<()> {
     Ok(())
 }
 
-/// The write end of the pipe that SIGTERM and SIGINT wake the daemon through; -1 until set up.
-static WAKE: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1);
-
-/// Makes SIGTERM and SIGINT send `Msg::Stop`, so the daemon can release what it holds before it
-/// exits. The handler only writes a byte to a pipe, the one thing a signal handler can do safely;
-/// a thread reads the byte and passes the message on, so the loop wakes straight away.
-fn stop_on_signals(tx: Sender<Msg>) -> Result<()> {
-    let mut fds = [0 as libc::c_int; 2];
-    // SAFETY: pipe2 writes two descriptors into the array it is given.
-    if unsafe { libc::pipe2(fds.as_mut_ptr(), libc::O_CLOEXEC) } != 0 {
-        bail!("creating the signal pipe: {}", std::io::Error::last_os_error());
-    }
-    let (read_fd, write_fd) = (fds[0], fds[1]);
-    WAKE.store(write_fd, std::sync::atomic::Ordering::Relaxed);
-    for signal in [libc::SIGTERM, libc::SIGINT] {
-        // SAFETY: a zeroed sigaction is a valid starting point; the fields set below are the ones used.
-        let mut action: libc::sigaction = unsafe { std::mem::zeroed() };
-        action.sa_sigaction = on_stop_signal as *const () as libc::sighandler_t;
-        action.sa_flags = libc::SA_RESTART;
-        // SAFETY: the handler stays valid for the life of the process.
-        if unsafe { libc::sigemptyset(&mut action.sa_mask) } != 0 || unsafe { libc::sigaction(signal, &action, std::ptr::null_mut()) } != 0 {
-            bail!("installing the handler for signal {signal}: {}", std::io::Error::last_os_error());
-        }
-    }
-    thread::spawn(move || {
-        let mut byte = [0u8; 1];
-        loop {
-            // SAFETY: reads at most one byte into a local buffer, from the pipe read end we own.
-            let n = unsafe { libc::read(read_fd, byte.as_mut_ptr().cast(), 1) };
-            if n == 1 {
-                if tx.send(Msg::Stop).is_err() {
-                    return;
-                }
-            } else if std::io::Error::last_os_error().raw_os_error() != Some(libc::EINTR) {
-                return;
-            }
-        }
-    });
-    Ok(())
-}
-
-/// Signal handler: writes one byte to the wake pipe. Only async-signal-safe calls are made.
-extern "C" fn on_stop_signal(_signal: libc::c_int) {
-    let fd = WAKE.load(std::sync::atomic::Ordering::Relaxed);
-    if fd >= 0 {
-        let byte = 1u8;
-        // SAFETY: write is async-signal-safe. Its result is ignored: a full pipe already wakes the reader.
-        unsafe { libc::write(fd, (&byte as *const u8).cast(), 1) };
-    }
-}
-
-/// Binds the control socket so that only this user can connect: its directory must belong to
-/// this user and be private, and the socket itself is `0600`. Anyone who can send a request can
-/// drive the daemon, so this matters most for the `/tmp` fallback, which other users can see.
+/// Binds the control socket so that only this user can connect (see `os::bind_socket_at`).
 fn bind_socket() -> Result<UnixListener> {
-    bind_socket_at(&ipc::socket_path())
-}
-
-pub(crate) fn bind_socket_at(path: &std::path::Path) -> Result<UnixListener> {
-    use std::os::unix::fs::PermissionsExt;
-    if let Some(dir) = path.parent() {
-        prepare_private_dir(dir)?;
-    }
-    if path.exists() {
-        if UnixStream::connect(path).is_ok() {
-            bail!("another instance is already running ({})", path.display());
-        }
-        std::fs::remove_file(path)?;
-    }
-    let listener = UnixListener::bind(path).with_context(|| format!("binding {}", path.display()))?;
-    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))
-        .with_context(|| format!("restricting {}", path.display()))?;
-    Ok(listener)
-}
-
-/// Creates `dir` (and any missing parents) as a directory only this user can use. An existing
-/// directory must be owned by this user, or the daemon refuses to put its socket there.
-pub(crate) fn prepare_private_dir(dir: &std::path::Path) -> Result<()> {
-    use std::os::unix::fs::{DirBuilderExt, MetadataExt, PermissionsExt};
-    std::fs::DirBuilder::new().recursive(true).mode(0o700).create(dir)?;
-    let meta = std::fs::symlink_metadata(dir)?;
-    // SAFETY: getuid cannot fail.
-    if meta.uid() != unsafe { libc::getuid() } || !meta.is_dir() {
-        bail!("{} is not a directory owned by this user", dir.display());
-    }
-    if meta.mode() & 0o077 != 0 {
-        std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700))?;
-    }
-    Ok(())
+    os::bind_socket_at(&ipc::socket_path())
 }
 
 impl Daemon {
@@ -1119,6 +995,7 @@ impl Daemon {
             log!("output error at shutdown: {e:#}");
         }
         log!("released what was held; exiting");
+        drop(self.tray.take());
         std::process::exit(0);
     }
 
@@ -1131,7 +1008,7 @@ impl Daemon {
         // Not tied to the daemon's life: a signal would skip the window's unsaved-changes check.
         // The window notices the daemon has gone and closes itself the same way, however it was
         // opened.
-        match std::process::Command::new(std::env::current_exe().unwrap_or_default()).spawn() {
+        match os::windowless(&mut std::process::Command::new(std::env::current_exe().unwrap_or_default())).spawn() {
             Ok(child) => self.settings_process = Some(child),
             Err(e) => log!("cannot open the settings window: {e}"),
         }
@@ -1147,7 +1024,7 @@ impl Daemon {
         if self.overlay_process.is_some() {
             return true;
         }
-        match std::env::current_exe().and_then(|exe| std::process::Command::new(exe).arg("overlay").spawn()) {
+        match std::env::current_exe().and_then(|exe| os::windowless(std::process::Command::new(exe).arg("overlay")).spawn()) {
             Ok(child) => {
                 self.overlay_process = Some(child);
                 self.overlay_started = Some(Instant::now());
@@ -1830,30 +1707,6 @@ impl Daemon {
         if self.last_active == Some(id) && !self.watchers.is_empty() {
             let snapshot = dev.snapshot();
             self.watchers.retain(|w| w.send(Some(snapshot.clone())).is_ok());
-        }
-    }
-
-    /// Pairs managed controllers with their motion-sensor devices and starts reading them.
-    fn attach_motion(&mut self) {
-        let pairs: Vec<(u64, PathBuf, String)> = self
-            .devices
-            .iter()
-            .filter(|(_, d)| d.motion.is_none())
-            .filter_map(|(id, d)| {
-                let taken = |n: &PairedNode| self.devices.values().any(|o| o.motion.as_ref() == Some(&n.path));
-                let node = self.motion_nodes.values().find(|n| !taken(n) && n.belongs_to(d))?;
-                Some((*id, node.path.clone(), node.name.clone()))
-            })
-            .collect();
-        for (id, path, motion_name) in pairs {
-            let Ok(motion_dev) = Device::open(&path) else { continue };
-            let Some(dev) = self.devices.get_mut(&id) else { continue };
-            log!("gyro: using {motion_name} for {}", dev.name);
-            dev.motion_frame = MotionFrame::of(&path);
-            dev.motion = Some(path);
-            dev.gyro_bias = self.config.gyro_calibration.get(&dev.name).copied().unwrap_or_default();
-            let (stop, tx) = (dev.stop.clone(), self.tx.clone());
-            thread::spawn(move || read_motion(id, motion_dev, &stop, &tx));
         }
     }
 
@@ -2774,103 +2627,21 @@ impl Daemon {
             focus_backend: self.focus_backend,
             focused: self.focused.clone(),
             recent_windows: self.recent_windows.clone(),
-            motion_access_denied: self.motion_denied.values().cloned().collect(),
+            motion_access_denied: self.nodes.denied_sensors(),
             overlay_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Keyboard),
             numpad_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Numpad),
             switches: self.activity.switches(Instant::now()),
         }
     }
 
-    /// Notes a controller's motion sensor we may not open, so the GUI can say how to fix it.
-    fn note_denied_sensor(&mut self, key: NodeKey, path: &Path) {
-        if !self.motion_denied.contains_key(&key)
-            && let Some(name) = input::inaccessible_motion_sensor(path)
-        {
-            log!("gyro: no permission to read {name}; install dist/70-padwight-motion.rules");
-            self.motion_denied.insert(key, name);
-        }
-    }
-
-    /// Keeps a controller's motion-sensor or touchpad node to pair with its gamepad later.
-    /// False for any other node.
-    fn remember_sibling(&mut self, key: NodeKey, path: &Path, dev: &Device, name: &str) -> bool {
-        if is_uinput(path) {
-            return false;
-        }
-        let node = || PairedNode {
-            path: path.to_path_buf(),
-            name: name.to_string(),
-            parent: hid_parent(path),
-            uniq: dev.unique_name().map(str::to_string),
-        };
-        if input::is_touchpad(dev) {
-            self.touch_nodes.insert(key, node());
-        } else if input::is_motion_sensor(dev) {
-            self.motion_nodes.insert(key, node());
-        } else {
-            return false;
-        }
-        true
-    }
-
-    /// Looks for new gamepads in /dev/input and grabs the ones we should manage.
+    /// Looks for new controllers and takes the ones we should manage, then catches up on the rest
+    /// of what the scan watches.
     fn scan(&mut self) {
-        let Ok(entries) = std::fs::read_dir("/dev/input") else { return };
-        let mut present = HashSet::new();
         let known: HashSet<u64> = self.devices.keys().copied().collect();
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if !path.file_name().is_some_and(|n| n.to_string_lossy().starts_with("event")) {
-                continue;
-            }
-            let Ok(meta) = entry.metadata() else { continue };
-            let key = (path.clone(), meta.ino());
-            present.insert(key.clone());
-
-            if self.skipped.contains(&key)
-                || self.motion_nodes.contains_key(&key)
-                || self.touch_nodes.contains_key(&key)
-                || self.devices.values().any(|d| d.path == path)
-            {
-                continue;
-            }
-            if let Some(pad) = self.gamepads.get(&key)
-                && (!self.config.enabled || self.config.ignored_devices.contains(&pad.name))
-            {
-                continue;
-            }
-            // Permission errors are not cached: udev may grant access a moment later.
-            let Ok(dev) = Device::open(&path) else {
-                self.note_denied_sensor(key, &path);
-                continue;
-            };
-            self.motion_denied.remove(&key);
-            let name = dev.name().unwrap_or("Unknown").to_string();
-            if self.remember_sibling(key.clone(), &path, &dev, &name) {
-                continue;
-            }
-            if name.starts_with(VIRTUAL_PREFIX) || is_uinput(&path) || !input::is_gamepad(&dev) {
-                self.skipped.insert(key);
-                continue;
-            }
-            let analog_triggers = input::has_analog_triggers(&dev);
-            let rumble = rumble::supports_rumble(&dev);
-            let paddles = input::has_paddles(&dev);
-            self.gamepads.insert(key, SeenGamepad { name: name.clone(), analog_triggers, rumble, paddles });
-            if self.config.enabled && !self.config.ignored_devices.contains(&name) {
-                self.manage(path, name, dev);
-            }
-        }
-        self.skipped.retain(|k| present.contains(k));
-        self.motion_nodes.retain(|k, _| present.contains(k));
-        self.touch_nodes.retain(|k, _| present.contains(k));
-        self.motion_denied.retain(|k, _| present.contains(k));
+        self.scan_devices();
         self.check_overlay_process();
         self.check_recorded_game();
-        self.attach_motion();
-        self.attach_touchpad();
         self.scan_processes();
-        self.gamepads.retain(|k, _| present.contains(k));
         self.announce_new_controllers(&known);
         self.settle_features();
     }
@@ -2950,6 +2721,7 @@ impl Daemon {
             view: InputView::default(),
             out_view: OutputView::default(),
             parent: None,
+            #[cfg(target_os = "linux")]
             uniq: None,
             motion: None,
             touchpad: None,
@@ -2972,142 +2744,6 @@ impl Daemon {
             managed.dispatch(&mut self.kbm, out);
         }
         self.devices.insert(id, managed);
-    }
-
-    fn manage(&mut self, path: PathBuf, name: String, mut dev: Device) {
-        let parent = hid_parent(&path);
-        let family = crate::info::PadFamily::detect(dev.input_id().vendor(), &name);
-        let model = crate::info::PadModel::detect(dev.input_id().vendor(), dev.input_id().product(), &name);
-        let uniq = dev.unique_name().map(str::to_string);
-        let paddles = input::has_paddles(&dev);
-        if let Err(e) = dev.grab() {
-            log!("cannot grab {name} ({}): {e}", path.display());
-            return;
-        }
-        let ff = FfSpec::of(&dev);
-        let identity = PadIdentity::resolve(self.identity_override, model, self.active_support());
-        let Some(pad) = virtual_pad_for(ff.as_ref(), identity) else { return };
-        log!("managing {name} ({})", path.display());
-        let id = self.next_id;
-        self.next_id += 1;
-        let stop = Arc::new(AtomicBool::new(false));
-        {
-            let stop = stop.clone();
-            let tx = self.tx.clone();
-            let xbox_labels = input::uses_xbox_labels(&path);
-            thread::spawn(move || read_device(id, dev, xbox_labels, &stop, &tx));
-        }
-        let rumble_stop = Arc::new(AtomicBool::new(false));
-        if ff.is_some() {
-            rumble::spawn(pad.shared(), path.clone(), rumble_stop.clone());
-        }
-        let mut managed = self.new_managed(path, name, Some(pad), stop);
-        managed.ff = ff;
-        managed.rumble_stop = rumble_stop;
-        managed.family = family;
-        managed.model = model;
-        managed.parent = parent;
-        managed.uniq = uniq;
-        managed.paddles = paddles;
-        self.add_managed(id, managed);
-    }
-}
-
-/// Devices created through uinput (Steam Input, other remappers, us) live under
-/// /sys/devices/virtual/input. BLE pads via uhid are under /virtual/misc and are kept.
-fn is_uinput(dev_path: &Path) -> bool {
-    let Some(node) = dev_path.file_name() else { return false };
-    let sys = Path::new("/sys/class/input").join(node).join("device");
-    std::fs::canonicalize(sys)
-        .map(|p| p.to_string_lossy().contains("/devices/virtual/input/"))
-        .unwrap_or(false)
-}
-
-/// The HID device an input node belongs to; a controller's gamepad and motion-sensor nodes
-/// share it.
-fn hid_parent(dev_path: &Path) -> Option<PathBuf> {
-    let node = dev_path.file_name()?;
-    std::fs::canonicalize(Path::new("/sys/class/input").join(node).join("device/device")).ok()
-}
-
-fn read_motion(id: u64, mut dev: Device, stop: &AtomicBool, tx: &Sender<Msg>) {
-    let mut norm = MotionNormalizer::new(&dev);
-    if dev.set_nonblocking(true).is_err() {
-        let _ = tx.send(Msg::MotionGone { id });
-        return;
-    }
-    let mut pfd = libc::pollfd { fd: dev.as_raw_fd(), events: libc::POLLIN, revents: 0 };
-    while !stop.load(Ordering::Relaxed) {
-        // SAFETY: pfd points to a single valid pollfd for the duration of the call.
-        let n = unsafe { libc::poll(&mut pfd, 1, POLL_TIMEOUT_MS) };
-        if n < 0 && std::io::Error::last_os_error().kind() != ErrorKind::Interrupted {
-            break;
-        }
-        if n <= 0 {
-            continue;
-        }
-        if pfd.revents & (libc::POLLERR | libc::POLLHUP | libc::POLLNVAL) != 0 {
-            break;
-        }
-        let samples: Vec<MotionSample> = match dev.fetch_events() {
-            Ok(evs) => evs.filter_map(|ev| norm.translate(ev)).collect(),
-            Err(e) if e.kind() == ErrorKind::WouldBlock => continue,
-            Err(_) => break,
-        };
-        for sample in samples {
-            if tx.send(Msg::Motion { id, sample }).is_err() {
-                return;
-            }
-        }
-    }
-    let _ = tx.send(Msg::MotionGone { id });
-}
-
-fn read_device(id: u64, mut dev: Device, xbox_labels: bool, stop: &AtomicBool, tx: &Sender<Msg>) {
-    let mut norm = Normalizer::new(&dev, xbox_labels);
-    read_input(id, &mut dev, stop, tx, |ev, out| norm.translate(ev, out));
-    // Dropping `dev` closes the fd, which also releases the grab.
-    let _ = tx.send(Msg::Gone { id });
-}
-
-/// Reads raw events from `dev` until `stop` is set or the device goes away. `translate` turns
-/// each event into inputs, which go to the controller `id` one batch at a time.
-fn read_input(
-    id: u64,
-    dev: &mut Device,
-    stop: &AtomicBool,
-    tx: &Sender<Msg>,
-    mut translate: impl FnMut(evdev::InputEvent, &mut Vec<InputEvent>),
-) {
-    if let Err(e) = dev.set_nonblocking(true) {
-        log!("set_nonblocking: {e}");
-        return;
-    }
-    let mut pfd = libc::pollfd { fd: dev.as_raw_fd(), events: libc::POLLIN, revents: 0 };
-    let mut events = Vec::new();
-    while !stop.load(Ordering::Relaxed) {
-        // SAFETY: pfd points to a single valid pollfd for the duration of the call.
-        let n = unsafe { libc::poll(&mut pfd, 1, POLL_TIMEOUT_MS) };
-        if n < 0 {
-            if std::io::Error::last_os_error().kind() == ErrorKind::Interrupted {
-                continue;
-            }
-            break;
-        }
-        if n == 0 {
-            continue;
-        }
-        if pfd.revents & (libc::POLLERR | libc::POLLHUP | libc::POLLNVAL) != 0 {
-            break;
-        }
-        match dev.fetch_events() {
-            Ok(evs) => evs.for_each(|ev| translate(ev, &mut events)),
-            Err(e) if e.kind() == ErrorKind::WouldBlock => {}
-            Err(_) => break,
-        }
-        if !events.is_empty() && tx.send(Msg::Input { id, events: std::mem::take(&mut events) }).is_err() {
-            return;
-        }
     }
 }
 
@@ -3240,57 +2876,5 @@ fn describe(w: &WindowInfo) -> String {
         Some(id) => format!("{} (Steam {id})", w.exe),
         None if w.exe.is_empty() => w.class.clone(),
         None => w.exe.clone(),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn node(name: &str, parent: Option<&str>, uniq: Option<&str>) -> PairedNode {
-        PairedNode {
-            path: PathBuf::from("/dev/input/event99"),
-            name: name.into(),
-            parent: parent.map(PathBuf::from),
-            uniq: uniq.map(Into::into),
-        }
-    }
-
-    #[test]
-    fn motion_sensors_pair_with_their_own_controller() {
-        let hid = Some(PathBuf::from("/sys/devices/x/0005:054C:0CE6.0001"));
-        let mac = Some("a0:5a:5c:00:00:01".to_string());
-        let pad = "Sony Interactive Entertainment DualSense Wireless Controller";
-
-        // Same HID parent (USB or Bluetooth), or same MAC.
-        assert!(node("x", Some("/sys/devices/x/0005:054C:0CE6.0001"), None).matches(pad, &hid, &None));
-        assert!(node("x", None, Some("a0:5a:5c:00:00:01")).matches(pad, &None, &mac));
-        // Driver naming: "<pad> Motion Sensors" (hid-playstation), "<pad> IMU" (hid-nintendo).
-        assert!(node(&format!("{pad} Motion Sensors"), None, None).matches(pad, &None, &None));
-        assert!(node("Nintendo Switch Pro Controller IMU", None, None).matches("Nintendo Switch Pro Controller", &None, &None));
-
-        // A second identical controller's sensors don't match by parent or MAC, even though
-        // the name would.
-        let other = node(&format!("{pad} Motion Sensors"), Some("/sys/devices/x/0005:054C:0CE6.0002"), Some("a0:5a:5c:00:00:02"));
-        assert!(!other.matches(pad, &hid, &mac));
-        // Empty unique IDs (common over USB) never count as a match.
-        assert!(!node("x", None, Some("")).matches(pad, &None, &Some(String::new())));
-    }
-
-    #[test]
-    fn the_control_socket_is_private_to_this_user() {
-        use std::os::unix::fs::PermissionsExt;
-        let dir = std::env::temp_dir().join(format!("padwight-test-{}", std::process::id())).join("run");
-        let path = dir.join("padwight.sock");
-        let _ = std::fs::remove_dir_all(dir.parent().unwrap());
-
-        let listener = bind_socket_at(&path).unwrap();
-        let dir_mode = std::fs::metadata(&dir).unwrap().permissions().mode() & 0o777;
-        let sock_mode = std::fs::metadata(&path).unwrap().permissions().mode() & 0o777;
-        assert_eq!((dir_mode, sock_mode), (0o700, 0o600));
-        assert!(bind_socket_at(&path).is_err(), "a running daemon's socket is not taken over");
-
-        drop(listener);
-        let _ = std::fs::remove_dir_all(dir.parent().unwrap());
     }
 }

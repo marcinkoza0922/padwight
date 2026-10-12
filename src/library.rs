@@ -81,7 +81,7 @@ pub fn problems(pack: &Pack) -> Vec<String> {
         keys.extend(s.action.ring_actions().iter().flat_map(|a| a.key_names()));
     }
     for k in keys {
-        if <evdev::KeyCode as std::str::FromStr>::from_str(k).is_err() {
+        if <crate::keycode::KeyCode as std::str::FromStr>::from_str(k).is_err() {
             problems.push(format!("presses unknown key {k:?}"));
         }
     }

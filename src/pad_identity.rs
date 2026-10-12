@@ -68,6 +68,7 @@ impl PadIdentity {
 
     /// The USB vendor, product and version IDs. Games and Steam pick a controller's mapping by
     /// these, so they're the real ones.
+    #[cfg(any(target_os = "linux", test))]
     pub fn usb_id(self) -> (u16, u16, u16) {
         match self {
             Self::Xbox360 => (0x045e, 0x028e, 0x0110),
@@ -78,6 +79,7 @@ impl PadIdentity {
     }
 
     /// The device's name after the "Padwight Virtual" prefix.
+    #[cfg(target_os = "linux")]
     pub fn name(self) -> &'static str {
         match self {
             Self::Xbox360 => "Pad",
@@ -89,6 +91,7 @@ impl PadIdentity {
 
     /// Whether the face buttons use the xpad driver's labels, where the kernel's north button is
     /// the west one. The other kinds follow the gamepad spec's positions.
+    #[cfg(any(target_os = "linux", test))]
     pub fn xpad_labels(self) -> bool {
         self == Self::Xbox360
     }

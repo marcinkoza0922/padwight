@@ -1,66 +1,19 @@
-//! Key labels in the user's keyboard layout: what each key types, read from XKB, so the on-screen
-//! keyboard shows "z" on the key a German layout types z with, and "!" over "1" with Shift on.
+//! What each key types in the user's XKB layout, for the on-screen keyboard's labels.
 //!
 //! The layout is the first one the desktop is set to use (KDE, GNOME, Sway, Hyprland, the X11 or
 //! console settings), else the one the locale suggests, else US. `PADWIGHT_KEYBOARD_LAYOUT`
 //! (`de`, `fr(azerty)`) overrides it.
 
-use std::{collections::HashMap, str::FromStr, sync::OnceLock};
+use std::{collections::HashMap, str::FromStr};
 
 use xkbcommon::xkb;
 
-use super::{Board, Key};
+use super::{Board, labels::Typed};
 
-/// What a key types, unshifted and shifted.
-#[derive(Debug, Clone, PartialEq)]
-struct Typed {
-    plain: String,
-    shifted: String,
-}
-
-static LABELS: OnceLock<HashMap<&'static str, Typed>> = OnceLock::new();
-
-/// The label on `key`'s cap: what it types in the user's layout (shifted with `shift`, and letters
-/// in capitals with `caps`), or its name for a key that types no character. The numpad keeps its
-/// own labels, since it always types digits.
-pub fn cap_label(key: &Key, board: Board, shift: bool, caps: bool) -> String {
-    if board == Board::Numpad {
-        return key.label.to_string();
-    }
-    match labels().get(key.code) {
-        Some(typed) => pick(typed, shift, caps).to_string(),
-        None => key.label.to_string(),
-    }
-}
-
-/// What `code` types in the user's layout, with `shift` and `caps`; `None` for a key that types
-/// no character.
-pub fn typed(code: &str, shift: bool, caps: bool) -> Option<String> {
-    labels().get(code).map(|t| pick(t, shift, caps).to_string())
-}
-
-/// Whether `code` needs Shift to type `text` in the user's layout (AZERTY's digits do); `None`
-/// when it doesn't type it either way, or the layout is unknown.
-pub fn needs_shift(code: &str, text: &str) -> Option<bool> {
-    let typed = labels().get(code)?;
-    if typed.plain == text {
-        Some(false)
-    } else {
-        (typed.shifted == text).then_some(true)
-    }
-}
-
-/// The label a key shows: Caps Lock swaps a letter's case, as Shift does.
-fn pick(typed: &Typed, shift: bool, caps: bool) -> &str {
-    let letter = typed.plain.chars().all(char::is_alphabetic) && typed.plain != typed.shifted;
-    if shift != (caps && letter) { &typed.shifted } else { &typed.plain }
-}
-
-fn labels() -> &'static HashMap<&'static str, Typed> {
-    LABELS.get_or_init(|| {
-        let (layout, variant) = detect();
-        compile(&layout, &variant).or_else(|| compile("us", "")).unwrap_or_default()
-    })
+/// What every key types in the user's layout, or in US if XKB doesn't know theirs.
+pub(super) fn labels() -> HashMap<&'static str, Typed> {
+    let (layout, variant) = detect();
+    compile(&layout, &variant).or_else(|| compile("us", "")).unwrap_or_default()
 }
 
 /// What every key of the keyboards types in `layout` (and `variant`), or `None` if XKB doesn't
@@ -70,7 +23,7 @@ fn compile(layout: &str, variant: &str) -> Option<HashMap<&'static str, Typed>> 
     let keymap = xkb::Keymap::new_from_names(&context, "", "", layout, variant, None, xkb::KEYMAP_COMPILE_NO_FLAGS)?;
     let mut typed = HashMap::new();
     for key in [Board::Basic, Board::Full].into_iter().flat_map(Board::keys) {
-        let Ok(code) = evdev::KeyCode::from_str(key.code) else { continue };
+        let Ok(code) = crate::keycode::KeyCode::from_str(key.code) else { continue };
         // XKB numbers keys 8 above the kernel.
         let keycode = xkb::Keycode::new(u32::from(code.code()) + 8);
         let at = |level| keymap.key_get_syms_by_level(keycode, 0, level).first().and_then(|&sym| printable(sym));
@@ -226,10 +179,6 @@ fn layout_for_locale(locale: &str) -> Option<String> {
 mod tests {
     use super::*;
 
-    fn key(code: &'static str) -> &'static Key {
-        Board::Basic.keys().find(|k| k.code == code).unwrap()
-    }
-
     #[test]
     fn a_layout_labels_the_keys_with_what_they_type() {
         // Needs XKB's data, which any desktop with a keyboard has.
@@ -243,25 +192,6 @@ mod tests {
         if let Some(fr) = compile("fr", "") {
             assert_eq!(fr["KEY_1"].shifted, "1", "AZERTY types digits with Shift");
         }
-    }
-
-    #[test]
-    fn shift_and_caps_lock_pick_the_case() {
-        let letter = Typed { plain: "q".into(), shifted: "Q".into() };
-        let digit = Typed { plain: "1".into(), shifted: "!".into() };
-        assert_eq!(pick(&letter, false, false), "q");
-        assert_eq!(pick(&letter, true, false), "Q");
-        assert_eq!(pick(&letter, false, true), "Q");
-        assert_eq!(pick(&letter, true, true), "q", "Shift with Caps Lock types small letters");
-        assert_eq!(pick(&digit, false, true), "1", "Caps Lock leaves digits alone");
-        assert_eq!(pick(&digit, true, false), "!");
-    }
-
-    #[test]
-    fn named_keys_and_the_numpad_keep_their_labels() {
-        assert_eq!(cap_label(key("KEY_ENTER"), Board::Basic, false, false), "Enter");
-        let numpad_one = Board::Numpad.keys().find(|k| k.code == "KEY_1").unwrap();
-        assert_eq!(cap_label(numpad_one, Board::Numpad, true, false), "1");
     }
 
     #[test]

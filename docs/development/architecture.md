@@ -23,7 +23,7 @@ Everything the daemon knows about the desktop comes from focus trackers (see bel
         │                                                  ▲
         ▼                                                  │
   input.rs ── normalized InputEvent ──► daemon.rs ── OutEvent ──► output.rs
-  (+ input/touchpad.rs)                  │    ▲                (Xbox 360-style pad,
+  (+ input/linux/touchpad.rs)            │    ▲                (Xbox 360-style pad,
                                          │    │                 keyboard, mouse)
                        ┌─────────────────┤    │
                        ▼                 ▼    │
@@ -41,7 +41,7 @@ Everything the daemon knows about the desktop comes from focus trackers (see bel
    └──── ~/.config/padwight/  (config.toml, setups/, general/; daemon is the only writer while it runs)
 ```
 
-1. **Input.** `input.rs` reads each physical pad's evdev node and turns raw events into normalized buttons (following the Linux gamepad spec), sticks in −1..1, and triggers in 0..1. Touchpads have their own node (`input/touchpad.rs`) and reach the engine like buttons.
+1. **Input.** `input/linux.rs` reads each physical pad's evdev node and turns raw events into normalized buttons (following the Linux gamepad spec), sticks in −1..1, and triggers in 0..1. Touchpads have their own node (`input/linux/touchpad.rs`) and reach the engine like buttons.
 2. **Daemon.** `daemon.rs` grabs the physical devices so nothing else sees them, keeps one `engine` state per controller, and decides who gets each event: an open menu (`menu.rs`), the on-screen keyboard or numpad (`overlay.rs`), a library-game offer (`offer.rs`), or the mapping engine.
 3. **Engine.** `engine.rs` turns normalized input into output for the active profile: buttons, gestures (double/triple tap, long press), combos, toggles, turbo, macros, layers, and zones. `engine/stick.rs` handles the sticks' continuous output (mouse, scroll, rings), `engine/flick.rs` the flick stick, and `engine/touchpad.rs` the touchpad.
 4. **Output.** `output.rs` writes to virtual uinput devices: a pad (an Xbox 360-style one, or another controller a game supports, see `pad_identity.rs`), a keyboard and a mouse. Each physical controller's pad is rebuilt when the active game changes its identity. `rumble.rs` mirrors force-feedback uploads from games back to the physical pad.
@@ -60,14 +60,14 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | `main.rs` | Command-line dispatch. |
 | `config.rs` (and `config/`) | The config types: buttons, actions, profiles, games, rules, layers, menus, overlays, gyro, and the load/save/migration code. `config/summary.rs` writes short descriptions for the UI and logs. `config/touchpad.rs`, `config/log.rs` hold the touchpad and log-overlay settings. `config/modes.rs` holds modes (stored like layers) and the conversion of toggled layers into them. `config/style.rs` is how an overlay looks (`OverlayStyle` and its decorations); `config/performance.rs` the App settings' Performance card. |
 | `ipc.rs` | The `Request` and `Response` enums and the socket client/server helpers. |
-| `daemon.rs` (and `daemon/`) | The service: device discovery and grabbing, the main loop, routing, and output dispatch. `daemon/logs.rs` records the input log; `daemon/touchpad.rs` runs touchpad readers. |
+| `daemon.rs` (and `daemon/`) | The service: device discovery and grabbing, the main loop, routing, and output dispatch. `daemon/evdev.rs` finds and reads the controllers; `daemon/logs.rs` records the input log; `daemon/touchpad.rs` runs touchpad readers. |
 | `monitor.rs` | The one-line live status shown when the daemon runs in a terminal. |
 
 ### Input and mapping
 
 | Path | Responsibility |
 |---|---|
-| `input.rs`, `input/touchpad.rs` | evdev → normalized input. Handles xpad's swapped X/Y labels. Touchpads report each finger by its contact slot, at 0..1 across the pad. |
+| `input.rs`, `input/linux.rs`, `input/linux/touchpad.rs` | evdev → normalized input (`input.rs` has the normalized types). Handles xpad's swapped X/Y labels. Touchpads report each finger by its contact slot, at 0..1 across the pad. |
 | `engine.rs` | Per-device mapping state for the active profile. One of the largest files; its tests are in the same file. |
 | `engine/stick.rs` | Sticks: gamepad feeds, zones, mouse and scroll output, rings. |
 | `engine/flick.rs` | Flick stick. |
@@ -77,11 +77,11 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | `system_menu.rs` | The Guide + Start menu over the game: Quick Settings and Edit Controls. See [in-game-editor.md](in-game-editor.md). |
 | `layout_editor.rs` | The Edit Controls page of that menu: button actions of the active profile. |
 | `rumble.rs` | Forwards rumble from the virtual pad to the physical one. |
-| `output.rs` | The uinput devices. The pad can present itself as another controller (`pad_identity.rs`). |
+| `output.rs`, `output/uinput.rs` | The uinput devices. The pad can present itself as another controller (`pad_identity.rs`). |
 | `pad_identity.rs` | Which controller the pad presents itself as: Xbox 360 unless the game ticks the physical controller's kind on its Details tab. USB IDs, name and button labels per identity. |
 | `quit.rs` | ForceQuit: ends the focused game's process tree, never the desktop. |
 | `capture.rs`, `record.rs` | Screenshot and screen recording, using whichever tool the desktop has. |
-| `media.rs` | MPRIS media controls on a worker thread, so a stuck player can't stall the daemon. |
+| `media.rs`, `media/mpris.rs` | MPRIS media controls on a worker thread, so a stuck player can't stall the daemon. |
 | `keyboard.rs` | The on-screen key picker used in the GUI. |
 
 ### Focus
@@ -127,7 +127,7 @@ Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000
 
 | Path | Responsibility |
 |---|---|
-| `overlay.rs` (and `overlay/ui.rs`, `overlay/draw/`) | The overlay process: keyboard, numpad, menus, info and log panels. `OverlayController` owns the state inside the daemon; `ui.rs` is the layer-shell window, and `snapshot` draws a frame offscreen as that window would. `draw/look.rs` resolves a style's decorations into container styles; `draw/glyphs.rs` draws button glyphs and icons (or text, under the performance settings). |
+| `overlay.rs` (and `overlay/ui.rs`, `overlay/draw/`) | The overlay process: keyboard, numpad, menus, info and log panels. `OverlayController` owns the state inside the daemon; `ui.rs` holds what is on screen and draws its layers, `layershell.rs` is the layer-shell window, and `snapshot` draws a frame offscreen as that window would. `draw/look.rs` resolves a style's decorations into container styles; `draw/glyphs.rs` draws button glyphs and icons (or text, under the performance settings). |
 | `info.rs` | Info overlays: `{token}` expansion into button glyphs and live values, and the generated bindings sheet for layers. |
 | `font.rs` | Bundled fonts (`assets/fonts`) and installed families by name. |
 | `style.rs` | Shared widget styles for the GUI. |
@@ -217,6 +217,30 @@ The daemon picks the profile from the focused window. The tracker is chosen by t
 6. **Fallback**: no tracker. Rules apply while a matching process runs.
 
 `identify.rs` resolves a window to an executable name, Steam App ID (from `SteamAppId`/`STEAM_COMPAT_APP_ID` or Proton's `steam_app_<id>` class) and window class. Wine/Proton games are matched by their `.exe`, not the Wine loader. GNOME has no layer-shell, so the overlays can't be shown there. Focus tracking works through the GNOME Shell extension in `gnome-extension/`.
+
+## Windows
+
+Everything above describes Linux. The same binary builds for Windows, where the engine, config, packs, menus, overlays' drawing and the GUI are shared, and each place that talks to the system has a Windows file beside the Linux one. The `mod` line picks the file (`#[cfg_attr(windows, path = "…")]`), or the module declares both under `#[cfg]`:
+
+| Linux | Windows | What it does there |
+|---|---|---|
+| `daemon/evdev.rs` | `daemon/xinput.rs` | The daemon's controllers (`scan_devices`): XInput's four slots, polled on a thread each, skipping the slots our own virtual pads take. |
+| `input/linux.rs` | `input/xinput.rs` | Raw input to `InputEvent`. The Guide button and USB IDs come from `xinput1_4.dll`'s unnamed exports. |
+| `output/uinput.rs` | `output/windows.rs` | The virtual pad through ViGEmBus (`vigem-client`; without the driver its output is dropped), the keyboard and mouse through `SendInput`, as scancodes. |
+| `rumble.rs` | `rumble/windows.rs` | ViGEmBus reports the game's rumble; `XInputSetState` plays it. |
+| `daemon/unix.rs` | `daemon/windows.rs` | Signals become the console's Ctrl+C and close events; the socket needs no permission bits in `%LOCALAPPDATA%`. |
+| `overlay/layershell.rs` | `overlay/windows.rs` | A layered window (`WS_EX_LAYERED`, `WS_EX_TRANSPARENT`, `WS_EX_NOACTIVATE`): `overlay/ui.rs`'s layers drawn by the CPU renderer (`snapshot.rs`) and handed over with `UpdateLayeredWindow`. |
+| `focus/*.rs` | `focus/windows.rs` | A WinEvent hook on foreground changes; processes by `QueryFullProcessImageNameW`; Steam App IDs from `steamapps\common\<folder>` and its manifest. |
+| `keyboard/xkb.rs` | `keyboard/windows.rs` | Key labels from the active layout (`ToUnicodeEx`). |
+| `tray.rs` | `tray/windows.rs` | `Shell_NotifyIconW` on a hidden window. |
+| `media/mpris.rs`, `media/mixer.rs` | `media/windows.rs`, `media/windows_mixer.rs` | The system media session (GSMTC) and the default output's endpoint volume. |
+| `capture.rs`, `record.rs` | `capture/windows.rs`, `record/windows.rs` | GDI screenshots; recording with `ffmpeg`. |
+| `quit.rs` | `quit/windows.rs` | `WM_CLOSE` to the game's windows, then `TerminateProcess`. |
+| `info.rs` | `info/windows.rs` | The clock, CPU, memory and battery from Win32. |
+
+Key codes stay Linux's everywhere (`keycode.rs`: evdev's `KeyCode` on Linux, the same table generated from it elsewhere), so configs and packs are the same files on both. `ipc.rs` uses AF_UNIX sockets on both, through `uds_windows` on Windows; `ipc::watch` reads the streaming requests on a thread, the same on both. The integration tests that need uinput, uhid or D-Bus are Linux only; `tests/debug_session.rs`'s session tests run on both. CI builds, lints and tests on both.
+
+To check Linux code from Windows, `cargo check --target x86_64-unknown-linux-gnu` works once `PKG_CONFIG` points at a stub that answers for `xkbcommon` (nothing is linked).
 
 ## Where to start reading
 

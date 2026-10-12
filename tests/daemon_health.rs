@@ -5,6 +5,8 @@
 //! Needs /dev/uinput and /dev/uhid, and read access to /dev/input, so it is opt-in:
 //! `cargo test --test daemon_health -- --ignored`, or `scripts/kernel-test-docker.sh idle_`.
 
+#![cfg(target_os = "linux")]
+
 mod common;
 
 use std::{

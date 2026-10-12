@@ -39,7 +39,7 @@ Those controllers' motion sensors need a permission rule of their own, which the
 
 ## The top bar says the daemon isn't running
 
-Start it with `systemctl --user start padwight`. You can still edit in the meantime. Your changes are kept, and they take effect once it starts.
+Start it with `systemctl --user start padwight`, or on Windows with `padwight daemon`. You can still edit in the meantime. Your changes are kept, and they take effect once it starts.
 
 ## I edited the config file by hand, and nothing changed
 
@@ -54,3 +54,15 @@ Only controllers with force feedback vibrate. Press **Test rumble** on the Overv
 Unplugging releases everything the controller was holding, and a message says which controller left. When the same controller comes back, the profile you were using returns, unless you've changed it since.
 
 If a replacement controller lacks something the profile needs, such as gyro, a profile that doesn't need it takes over, and a message says so.
+
+## On Windows
+
+**The game sees my controller twice.** Windows can't keep the controller to Padwight alone, so games see it next to Padwight's virtual one. HidHide hides it: add the controller to its hidden devices, and Padwight to the programs still allowed to see it.
+
+**Games don't see Padwight's controller.** The virtual controller needs the ViGEmBus driver. Keyboard and mouse mappings work without it.
+
+**Keys and the mouse don't reach a game.** Windows doesn't let a program send input to one that runs as administrator. Run Padwight as administrator too.
+
+**Guide opens the Xbox Game Bar.** Turn off the Game Bar's controller button in Windows' Settings, under Gaming, Xbox Game Bar.
+
+**My PlayStation or Switch controller doesn't show up.** On Windows, Padwight reads controllers through XInput, Windows' Xbox controller interface. Other controllers show up when something presents them as an Xbox controller, such as Steam Input or DS4Windows, without their gyro and touchpad.

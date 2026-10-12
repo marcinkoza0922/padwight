@@ -10,9 +10,13 @@ const UNIT: f32 = 30.0;
 const GAP: f32 = 3.0;
 
 mod boards;
-mod xkb;
+mod labels;
+/// What each key types in the user's layout: XKB's on Linux, the active layout's on Windows.
+#[cfg_attr(target_os = "linux", path = "keyboard/xkb.rs")]
+#[cfg_attr(windows, path = "keyboard/windows.rs")]
+mod layout;
 pub use boards::{Board, Cursor, find, key_at, step};
-pub use xkb::{cap_label, needs_shift, typed};
+pub use labels::{cap_label, needs_shift, typed};
 
 /// One key cap. An empty `code` is a blank spacer used for alignment.
 pub struct Key {
@@ -209,7 +213,7 @@ pub fn code_for_token(name: &str) -> Option<&'static str> {
 mod tests {
     use std::str::FromStr;
 
-    use evdev::KeyCode;
+    use crate::keycode::KeyCode;
 
     use super::*;
 

@@ -2,26 +2,26 @@
 //! scripts and expectations, and, against a daemon started with `--debug`, a controller that no
 //! hardware backs running through the daemon's mappings.
 //!
-//! The session tests need nothing but the binary and run with the rest. The daemon tests need
-//! /dev/uinput and read access to /dev/input, so they are opt-in like the other daemon tests:
-//! `cargo test --test debug_session -- --ignored`, or `scripts/kernel-test-docker.sh debug_`.
+//! The session tests need nothing but the binary and run with the rest, on Windows too. The daemon
+//! tests need /dev/uinput and read access to /dev/input, so they are Linux only and opt-in like
+//! the other daemon tests: `cargo test --test debug_session -- --ignored`, or
+//! `scripts/kernel-test-docker.sh debug_`.
 
 mod common;
 
 use std::{
     fs,
     io::Write,
-    os::unix::fs::PermissionsExt,
     path::PathBuf,
     process::{Child, Command, Stdio},
     thread,
-    time::Duration,
 };
+#[cfg(target_os = "linux")]
+use std::{os::unix::fs::PermissionsExt, time::Duration};
 
-use common::{
-    Daemon, hold_config, install_config, serial, spawn_daemon, spawn_daemon_with, temp_root, wait_for,
-    input::Reader,
-};
+use common::{temp_root, wait_for};
+#[cfg(target_os = "linux")]
+use common::{Daemon, hold_config, install_config, input::Reader, serial, spawn_daemon, spawn_daemon_with};
 use serde_json::Value;
 
 const BIN: &str = env!("CARGO_BIN_EXE_padwight");
@@ -299,6 +299,7 @@ fn quit_ends_the_session_and_removes_its_socket() {
     env.ok(&["quit"]);
     assert!(wait_for("the session to exit", || session.0.try_wait().unwrap()).success());
     assert!(!socket.exists());
+    #[cfg(target_os = "linux")]
     assert_eq!(fs::metadata(env.run()).unwrap().permissions().mode() & 0o077, 0, "the socket's folder is private");
 }
 
@@ -344,9 +345,10 @@ fn output_needs_attaching() {
     assert!(!env.debug(&["expect", "no-output"]).ok);
 }
 
-// What follows needs a daemon, and so /dev/uinput.
+// What follows needs a daemon, and so /dev/uinput: Linux only.
 
 /// A daemon started with `--debug`, running `config`, and ready for requests.
+#[cfg(target_os = "linux")]
 fn debug_daemon(env: &Env, config: &str) -> Daemon {
     let dir = env.root.join("config/padwight");
     fs::create_dir_all(&dir).unwrap();
@@ -356,18 +358,21 @@ fn debug_daemon(env: &Env, config: &str) -> Daemon {
     daemon
 }
 
+#[cfg(target_os = "linux")]
 fn status(env: &Env) -> String {
     let out = env.command(&["status"]).output().unwrap();
     String::from_utf8_lossy(&out.stdout).into_owned()
 }
 
 /// The config with the active profile's gyro turning the mouse.
+#[cfg(target_os = "linux")]
 fn gyro_mouse_config() -> String {
     let text = hold_config().replacen("[general.profiles.gyro]\nmode = \"off\"", "[general.profiles.gyro]\nmode = { mouse = { sensitivity = 2.0 } }", 1);
     assert!(text.contains("sensitivity = 2.0"), "the default config's gyro is off");
     text
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 #[ignore]
 fn debug_a_normal_daemon_refuses_injected_controllers() {
@@ -379,6 +384,7 @@ fn debug_a_normal_daemon_refuses_injected_controllers() {
     assert!(!reply.ok && reply.err.contains("--debug"), "{}", reply.err);
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 #[ignore]
 fn debug_identify_needs_a_debug_daemon() {
@@ -391,6 +397,7 @@ fn debug_identify_needs_a_debug_daemon() {
     assert!(!reply.ok && reply.err.contains("--debug"), "{}", reply.err);
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 #[ignore]
 fn debug_identify_is_accepted_and_clears_back_to_choosing() {
@@ -402,6 +409,7 @@ fn debug_identify_is_accepted_and_clears_back_to_choosing() {
     env.ok(&["identify", "auto"]);
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 #[ignore]
 fn debug_an_injected_controller_runs_through_the_active_profile() {
@@ -433,6 +441,7 @@ fn debug_an_injected_controller_runs_through_the_active_profile() {
     assert!(!status(&env).contains("Debug controller"), "{}", status(&env));
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 #[ignore]
 fn debug_output_stays_off_the_virtual_keyboard_without_live() {
@@ -449,6 +458,7 @@ fn debug_output_stays_off_the_virtual_keyboard_without_live() {
     env.ok(&["release", "south"]);
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 #[ignore]
 fn debug_sticks_and_triggers_reach_the_mappings() {
@@ -464,6 +474,7 @@ fn debug_sticks_and_triggers_reach_the_mappings() {
     env.ok(&["expect", "output", "pad-axis RightTrigger 0.50"]);
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 #[ignore]
 fn debug_changing_the_model_keeps_what_is_held() {
@@ -481,6 +492,7 @@ fn debug_changing_the_model_keeps_what_is_held() {
     env.ok(&["expect", "output", "key KEY_A up"]);
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 #[ignore]
 fn debug_gyro_turns_the_mouse() {
@@ -497,6 +509,7 @@ fn debug_gyro_turns_the_mouse() {
 
 /// The config with the active profile's touchpad split: a grid menu of A to D on the left half,
 /// and swipes on the right (right is D, the click R).
+#[cfg(target_os = "linux")]
 fn touchpad_config() -> String {
     let touchpad = "[general.profiles.touchpad]\nclick = \"disabled\"\n\
         [general.profiles.touchpad.motion.menu]\nmenu = \"Pad\"\n\
@@ -513,6 +526,7 @@ fn touchpad_config() -> String {
     text
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 #[ignore]
 fn debug_touchpad_menus_and_swipes_reach_the_mappings() {
@@ -540,6 +554,7 @@ fn debug_touchpad_menus_and_swipes_reach_the_mappings() {
     env.ok(&["lift"]);
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 #[ignore]
 fn debug_live_output_reaches_the_virtual_keyboard() {
@@ -560,6 +575,7 @@ fn debug_live_output_reaches_the_virtual_keyboard() {
     });
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 #[ignore]
 fn debug_detaching_a_controller_lets_go_of_what_it_held() {
@@ -586,6 +602,7 @@ fn debug_detaching_a_controller_lets_go_of_what_it_held() {
     assert!(!status(&env).contains("Debug controller"));
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 #[ignore]
 fn debug_captures_go_to_a_private_folder_in_the_temp_directory() {

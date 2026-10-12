@@ -252,9 +252,9 @@ fn keyboard_and_mouse_output_is_logged_with_key_and_mouse_glyphs() {
     let mut log = InputLog::default();
     let t0 = Instant::now();
     let at = |ms| t0 + std::time::Duration::from_millis(ms);
-    assert!(log.output(&OutEvent::Key(evdev::KeyCode::KEY_W, true), t0));
+    assert!(log.output(&OutEvent::Key(crate::keycode::KeyCode::KEY_W, true), t0));
     log.output(&OutEvent::MouseButton(MouseButton::Left, true), at(10));
-    log.output(&OutEvent::Key(evdev::KeyCode::KEY_W, false), at(200));
+    log.output(&OutEvent::Key(crate::keycode::KeyCode::KEY_W, false), at(200));
     log.output(&OutEvent::MouseButton(MouseButton::Left, false), at(210));
     log.output(&OutEvent::Wheel { vertical: 120, horizontal: 0 }, at(300));
     assert!(!log.output(&OutEvent::Wheel { vertical: 120, horizontal: 0 }, at(320)), "a turning wheel is one entry");

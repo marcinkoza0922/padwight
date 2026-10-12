@@ -14,6 +14,8 @@
 //! Build in release mode, so the figures are for the optimized daemon. A cold start has no config,
 //! so the daemon grabs every gamepad on the machine, real ones too, until it stops. Close games first.
 
+#![cfg(target_os = "linux")]
+
 #![expect(clippy::print_stderr, reason = "the figures are the suite's output")]
 
 #[path = "../common/mod.rs"]

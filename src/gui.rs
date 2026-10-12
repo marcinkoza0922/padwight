@@ -11,7 +11,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use evdev::KeyCode;
+use crate::keycode::KeyCode;
 use iced::{
     Alignment, Color, Element, Length, Subscription, Task,
     widget::{
@@ -1179,17 +1179,21 @@ impl App {
 
         if !running && self.page == Page::Overview {
             let code = |s: &'static str| -> text::Span<'static> { span(s).font(iced::Font::MONOSPACE) };
-            header = header.push(
-                rich_text![
-                    "The background service isn't running. Start it with ",
-                    code("systemctl --user start padwight"),
-                    " or ",
-                    code("padwight daemon"),
-                    ". You can still edit: your changes are saved and take effect once it starts.",
-                ]
-                .size(13)
-                .color(MUTED_COLOR),
-            );
+            #[cfg(target_os = "linux")]
+            let how = rich_text![
+                "The background service isn't running. Start it with ",
+                code("systemctl --user start padwight"),
+                " or ",
+                code("padwight daemon"),
+                ". You can still edit: your changes are saved and take effect once it starts.",
+            ];
+            #[cfg(windows)]
+            let how = rich_text![
+                "The background service isn't running. Start it with ",
+                code("padwight daemon"),
+                ". You can still edit: your changes are saved and take effect once it starts.",
+            ];
+            header = header.push(how.size(13).color(MUTED_COLOR));
         }
         header.into()
     }
@@ -1262,18 +1266,12 @@ fn watch<T: serde::de::DeserializeOwned + Send + 'static>(
     request: Request,
     wrap: fn(Option<T>) -> Message,
 ) -> impl iced::futures::Stream<Item = Message> {
-    use iced::futures::{SinkExt, channel::mpsc};
-    use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+    use iced::futures::{SinkExt, StreamExt, channel::mpsc};
 
     iced::stream::channel(16, async move |mut output: mpsc::Sender<Message>| {
-        let mut request = serde_json::to_string(&request).unwrap();
-        request.push('\n');
         loop {
-            if let Ok(mut stream) = tokio::net::UnixStream::connect(ipc::socket_path()).await
-                && stream.write_all(request.as_bytes()).await.is_ok()
-            {
-                let mut lines = BufReader::new(stream).lines();
-                while let Ok(Some(line)) = lines.next_line().await {
+            if let Ok(mut lines) = ipc::watch(&request) {
+                while let Some(line) = lines.next().await {
                     if let Ok(value) = serde_json::from_str::<Option<T>>(&line) {
                         let _ = output.send(wrap(value)).await;
                     }

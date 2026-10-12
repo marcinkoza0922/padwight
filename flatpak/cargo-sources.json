@@ -5267,6 +5267,19 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/vigem-client/vigem-client-0.1.4.crate",
+        "sha256": "b857e6f99efe1e1eb1e4dfb035de8ae7ec8ec56bd1928edcbd7c6e4427634d52",
+        "dest": "cargo/vendor/vigem-client-0.1.4"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"b857e6f99efe1e1eb1e4dfb035de8ae7ec8ec56bd1928edcbd7c6e4427634d52\", \"files\": {}}",
+        "dest": "cargo/vendor/vigem-client-0.1.4",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
         "url": "https://static.crates.io/crates/walkdir/walkdir-2.5.0.crate",
         "sha256": "29790946404f91d9c5d06f9874efddea1dc06c5efe94541a7d6863108e3a5e4b",
         "dest": "cargo/vendor/walkdir-2.5.0"
@@ -5670,6 +5683,32 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/winapi/winapi-0.3.9.crate",
+        "sha256": "5c839a674fcd7a98952e593242ea400abe93992746761e38641405d28b00f419",
+        "dest": "cargo/vendor/winapi-0.3.9"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"5c839a674fcd7a98952e593242ea400abe93992746761e38641405d28b00f419\", \"files\": {}}",
+        "dest": "cargo/vendor/winapi-0.3.9",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/winapi-i686-pc-windows-gnu/winapi-i686-pc-windows-gnu-0.4.0.crate",
+        "sha256": "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6",
+        "dest": "cargo/vendor/winapi-i686-pc-windows-gnu-0.4.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6\", \"files\": {}}",
+        "dest": "cargo/vendor/winapi-i686-pc-windows-gnu-0.4.0",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
         "url": "https://static.crates.io/crates/winapi-util/winapi-util-0.1.11.crate",
         "sha256": "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22",
         "dest": "cargo/vendor/winapi-util-0.1.11"
@@ -5678,6 +5717,19 @@
         "type": "inline",
         "contents": "{\"package\": \"c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22\", \"files\": {}}",
         "dest": "cargo/vendor/winapi-util-0.1.11",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/winapi-x86_64-pc-windows-gnu/winapi-x86_64-pc-windows-gnu-0.4.0.crate",
+        "sha256": "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f",
+        "dest": "cargo/vendor/winapi-x86_64-pc-windows-gnu-0.4.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f\", \"files\": {}}",
+        "dest": "cargo/vendor/winapi-x86_64-pc-windows-gnu-0.4.0",
         "dest-filename": ".cargo-checksum.json"
     },
     {

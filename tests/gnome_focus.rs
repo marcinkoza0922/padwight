@@ -6,6 +6,8 @@
 //! Needs `gjs` and a session bus, so it is opt-in:
 //! `dbus-run-session -- cargo nextest run --profile agent --hide-progress-bar --cargo-quiet --run-ignored ignored-only gnome_`.
 
+#![cfg(target_os = "linux")]
+
 mod common;
 
 use std::{

@@ -2,13 +2,19 @@
 
 use std::{
     io::{BufRead, BufReader, Write},
-    os::unix::net::UnixStream,
     path::PathBuf,
     time::Duration,
 };
 
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
+
+/// The control socket's ends: std's on Linux, and AF_UNIX through `uds_windows` on Windows, which
+/// has had it since Windows 10 1803.
+#[cfg(target_os = "linux")]
+pub use std::os::unix::net::{UnixListener, UnixStream};
+#[cfg(windows)]
+pub use uds_windows::{UnixListener, UnixStream};
 
 use crate::{
     config::{Button, Config, ProfileRef},
@@ -163,6 +169,8 @@ pub enum FocusBackend {
     Hyprland,
     /// The compositor's `wlr-foreign-toplevel-management` reports focus changes (labwc, Wayfire, river, and others).
     Wlroots,
+    /// A WinEvent hook reports foreground window changes (Windows).
+    Windows,
     /// No focus information: rules match against running processes instead.
     #[default]
     ProcessScan,
@@ -177,6 +185,7 @@ impl FocusBackend {
             Self::Sway => Some("Sway"),
             Self::Hyprland => Some("Hyprland"),
             Self::Wlroots => Some("wlroots"),
+            Self::Windows => Some("Windows"),
             Self::ProcessScan => None,
         }
     }
@@ -281,6 +290,7 @@ pub struct GyroOut {
 /// A runtime directory the host can see too, for files that the desktop or another instance
 /// must reach. In a Flatpak, `$XDG_RUNTIME_DIR` is private to each sandbox run, so the app's
 /// own directory under it is used instead: the host shares that one between runs.
+#[cfg(target_os = "linux")]
 pub fn shared_runtime_dir() -> Option<PathBuf> {
     match std::env::var_os("FLATPAK_ID") {
         Some(id) => dirs::runtime_dir().map(|dir| dir.join("app").join(id)),
@@ -288,13 +298,52 @@ pub fn shared_runtime_dir() -> Option<PathBuf> {
     }
 }
 
+/// Windows has no runtime directory, but `XDG_RUNTIME_DIR` can still name one, as on Linux, so
+/// tests and scripts can run a daemon of their own beside the user's.
+#[cfg(windows)]
+pub fn shared_runtime_dir() -> Option<PathBuf> {
+    std::env::var_os("XDG_RUNTIME_DIR").map(PathBuf::from)
+}
+
 pub fn socket_path() -> PathBuf {
     match shared_runtime_dir() {
         Some(dir) => dir.join("padwight.sock"),
-        // Without a runtime dir, a per-user directory in the shared temp dir (the daemon makes it
-        // private before binding; see `daemon::bind_socket`).
-        None => std::env::temp_dir().join(format!("padwight-{}", unsafe { libc::getuid() })).join("padwight.sock"),
+        None => fallback_socket_dir().join("padwight.sock"),
     }
+}
+
+/// Without a runtime dir, a per-user directory in the shared temp dir (the daemon makes it
+/// private before binding; see `daemon::bind_socket`).
+#[cfg(target_os = "linux")]
+fn fallback_socket_dir() -> PathBuf {
+    // SAFETY: getuid cannot fail.
+    std::env::temp_dir().join(format!("padwight-{}", unsafe { libc::getuid() }))
+}
+
+/// Windows has no runtime dir: the user's local app data, which only they can open.
+#[cfg(windows)]
+fn fallback_socket_dir() -> PathBuf {
+    dirs::data_local_dir().unwrap_or_else(std::env::temp_dir).join("padwight")
+}
+
+/// Sends one of the watch requests and returns the JSON lines the daemon streams back, until the
+/// connection ends. A thread reads them, so this works the same over every platform's socket.
+pub fn watch(req: &Request) -> Result<iced::futures::channel::mpsc::UnboundedReceiver<String>> {
+    let path = socket_path();
+    let stream = UnixStream::connect(&path).with_context(|| format!("daemon not reachable at {}", path.display()))?;
+    let mut line = serde_json::to_string(req)?;
+    line.push('\n');
+    (&stream).write_all(line.as_bytes())?;
+    let (tx, rx) = iced::futures::channel::mpsc::unbounded();
+    std::thread::spawn(move || {
+        for line in BufReader::new(stream).lines() {
+            // The receiver is gone once whoever watched has stopped.
+            if line.ok().is_none_or(|line| tx.unbounded_send(line).is_err()) {
+                return;
+            }
+        }
+    });
+    Ok(rx)
 }
 
 /// Blocking request to the daemon. Fine to call from a GUI via `spawn_blocking`.

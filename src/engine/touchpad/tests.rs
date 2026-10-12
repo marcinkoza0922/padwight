@@ -197,7 +197,7 @@ fn a_menu_shows_while_touched_and_the_click_holds_the_item_under_the_finger() {
     assert!(f.e.take_touch_menu_changed());
     f.touch(0, 0.1, 0.9);
     assert_eq!(f.e.touch_menu().and_then(|m| m.item), Some(2));
-    let c = evdev::KeyCode::KEY_C;
+    let c = crate::keycode::KeyCode::KEY_C;
     assert_eq!(f.click(true), [OutEvent::Key(c, true)]);
     // Sliding while clicked keeps the item that was pressed until the click lets go.
     f.touch(0, 0.9, 0.9);
@@ -212,7 +212,7 @@ fn a_lift_menu_chooses_on_lift_unless_the_click_already_did() {
     let mut f = Finger::on(&p);
     f.e.set_menus(&[grid_menu()]);
     f.touch(0, 0.1, 0.1);
-    let a = evdev::KeyCode::KEY_A;
+    let a = crate::keycode::KeyCode::KEY_A;
     assert_eq!(f.lift(0), [OutEvent::Key(a, true), OutEvent::Key(a, false)]);
     f.touch(0, 0.1, 0.1);
     f.click(true);
@@ -227,7 +227,7 @@ fn a_menu_without_its_overlay_still_picks_but_shows_nothing() {
     f.e.set_menus(&[grid_menu()]);
     f.touch(0, 0.9, 0.9);
     assert!(f.e.touch_menu().is_none());
-    assert_eq!(f.click(true), [OutEvent::Key(evdev::KeyCode::KEY_D, true)]);
+    assert_eq!(f.click(true), [OutEvent::Key(crate::keycode::KeyCode::KEY_D, true)]);
 }
 
 #[test]
@@ -236,11 +236,11 @@ fn a_quick_stroke_swipes_in_its_direction() {
     let p = profile(pad(swipe));
     let mut f = Finger::on(&p);
     f.stroke(0, (0.2, 0.5), (0.6, 0.55), 4);
-    let d = evdev::KeyCode::KEY_D;
+    let d = crate::keycode::KeyCode::KEY_D;
     assert_eq!(f.lift(0), [OutEvent::Key(d, true), OutEvent::Key(d, false)]);
     // Down the pad: 0.5 of its height is a quarter of its width.
     f.stroke(0, (0.5, 0.2), (0.5, 0.7), 4);
-    assert_eq!(f.lift(0), [OutEvent::Key(evdev::KeyCode::KEY_S, true), OutEvent::Key(evdev::KeyCode::KEY_S, false)]);
+    assert_eq!(f.lift(0), [OutEvent::Key(crate::keycode::KeyCode::KEY_S, true), OutEvent::Key(crate::keycode::KeyCode::KEY_S, false)]);
     // Too short, or too slow.
     f.stroke(0, (0.5, 0.5), (0.6, 0.5), 4);
     assert!(f.lift(0).is_empty());
@@ -263,7 +263,7 @@ fn a_split_pad_runs_each_half_on_its_own() {
     f.touch(1, 0.75, 0.5);
     assert_eq!(moved(&f.touch(1, 0.8, 0.5)), (50, 0), "the right half moves the pointer at the same time");
     f.lift(0);
-    assert_eq!(f.click(true), [OutEvent::Key(evdev::KeyCode::KEY_R, true)], "the click goes by the first finger down");
+    assert_eq!(f.click(true), [OutEvent::Key(crate::keycode::KeyCode::KEY_R, true)], "the click goes by the first finger down");
     f.click(false);
 }
 

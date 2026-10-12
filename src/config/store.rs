@@ -9,9 +9,11 @@
 use std::{
     fs,
     io::Write,
-    os::unix::fs::{OpenOptionsExt, PermissionsExt},
     path::{Path, PathBuf},
 };
+
+#[cfg(target_os = "linux")]
+use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 
 use anyhow::{Context, Result};
 use serde::{Serialize, de::DeserializeOwned};
@@ -144,13 +146,26 @@ pub fn app_settings(config: &Config) -> Result<String> {
     Ok(toml::to_string_pretty(&without(config, &APP_KEYS)?)?)
 }
 
-/// Writes `text` to `path`, readable only by its owner. The mode is set when the file is created,
-/// and set again in case an earlier run left one with a looser mode.
+/// Writes `text` to `path`, readable only by its owner.
 pub fn write_private(path: &Path, text: &str) -> Result<()> {
-    let mut file = fs::OpenOptions::new().write(true).create(true).truncate(true).mode(0o600).open(path)?;
-    file.set_permissions(fs::Permissions::from_mode(0o600))?;
-    file.write_all(text.as_bytes())?;
+    private_file(path)?.write_all(text.as_bytes())?;
     Ok(())
+}
+
+/// Creates (or empties) `path` for writing, readable only by its owner. The mode is set when the
+/// file is created, and set again in case an earlier run left one with a looser mode.
+#[cfg(target_os = "linux")]
+fn private_file(path: &Path) -> Result<fs::File> {
+    let file = fs::OpenOptions::new().write(true).create(true).truncate(true).mode(0o600).open(path)?;
+    file.set_permissions(fs::Permissions::from_mode(0o600))?;
+    Ok(file)
+}
+
+/// Creates (or empties) `path` for writing. The config folder is in the user's profile, which
+/// only they can read.
+#[cfg(windows)]
+fn private_file(path: &Path) -> Result<fs::File> {
+    Ok(fs::File::create(path)?)
 }
 
 /// A setup's folder: `setup.toml`, then one subfolder per kind of item.

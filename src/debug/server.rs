@@ -3,7 +3,6 @@
 
 use std::{
     io::{BufRead, BufReader, Write},
-    os::unix::net::UnixStream,
     path::{Path, PathBuf},
     sync::{
         Arc, Mutex, MutexGuard,
@@ -20,7 +19,12 @@ use super::{
     pad::VirtualPad,
     protocol::{DebugRequest, DebugResponse, Expectation},
 };
-use crate::{config::Button, info::Glyphs, ipc, pad_svg};
+use crate::{
+    config::Button,
+    info::Glyphs,
+    ipc::{self, UnixStream},
+    pad_svg,
+};
 
 /// Where the session listens. `PADWIGHT_DEBUG_SOCKET` overrides it, so tests can run sessions side by side.
 pub fn socket_path() -> PathBuf {

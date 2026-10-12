@@ -6,14 +6,23 @@ use std::{
     collections::{HashMap, HashSet},
     fs,
     path::Path,
-    sync::OnceLock,
     time::{Duration, Instant},
 };
+
+#[cfg(target_os = "linux")]
+use std::sync::OnceLock;
 
 use serde::{Deserialize, Serialize};
 
 mod guide;
 mod pad_model;
+#[cfg(windows)]
+mod windows;
+
+#[cfg(windows)]
+use windows::{battery, cpu_times, gpu_busy, local_time, memory, wifi_strength};
+#[cfg(windows)]
+pub use windows::form_factor;
 
 pub use guide::{DEFAULT_MODE, GuideView};
 pub use pad_model::PadModel;
@@ -967,6 +976,7 @@ fn reading_text(reading: &Icon) -> String {
 }
 
 /// Formats the local time with a `strftime` pattern.
+#[cfg(target_os = "linux")]
 fn local_time(pattern: &str) -> String {
     let Ok(pattern) = std::ffi::CString::new(pattern) else { return String::new() };
     // SAFETY: localtime_r and strftime write into the buffers given; tm is plain data.
@@ -1025,6 +1035,7 @@ impl Sampler {
 }
 
 /// Busy and total jiffies from the first line of /proc/stat.
+#[cfg(target_os = "linux")]
 fn cpu_times() -> Option<(u64, u64)> {
     let stat = fs::read_to_string("/proc/stat").ok()?;
     let fields: Vec<u64> = stat.lines().next()?.split_whitespace().skip(1).filter_map(|f| f.parse().ok()).collect();
@@ -1034,6 +1045,7 @@ fn cpu_times() -> Option<(u64, u64)> {
     Some((total - idle, total))
 }
 
+#[cfg(target_os = "linux")]
 fn memory() -> Option<(f32, f32)> {
     let info = fs::read_to_string("/proc/meminfo").ok()?;
     let field = |name: &str| -> Option<f32> {
@@ -1046,6 +1058,7 @@ fn memory() -> Option<(f32, f32)> {
     Some(((total - available) / gb, total / gb))
 }
 
+#[cfg(target_os = "linux")]
 fn gpu_busy() -> Option<f32> {
     let cards = fs::read_dir("/sys/class/drm").ok()?;
     cards
@@ -1057,6 +1070,7 @@ fn gpu_busy() -> Option<f32> {
 
 /// The charge of the first system battery (a laptop's or handheld's) under
 /// /sys/class/power_supply. Controllers' batteries are skipped: they are scoped "Device".
+#[cfg(target_os = "linux")]
 fn battery() -> Option<Charge> {
     let supplies = fs::read_dir("/sys/class/power_supply").ok()?;
     supplies.flatten().map(|e| e.path()).find_map(|dir| {
@@ -1094,11 +1108,13 @@ fn battery_charge(dir: &Path) -> Option<Charge> {
 }
 
 /// Signal of the first wireless interface, from /proc/net/wireless.
+#[cfg(target_os = "linux")]
 fn wifi_strength() -> Option<u8> {
     parse_wireless(&fs::read_to_string("/proc/net/wireless").ok()?)
 }
 
 /// Link quality (out of 70, as drivers report it) of the first interface listed.
+#[cfg(any(target_os = "linux", test))]
 fn parse_wireless(text: &str) -> Option<u8> {
     let (_, rest) = text.lines().skip(2).find_map(|line| line.split_once(':'))?;
     let link: f32 = rest.split_whitespace().nth(1)?.trim_end_matches('.').parse().ok()?;
@@ -1107,6 +1123,7 @@ fn parse_wireless(text: &str) -> Option<u8> {
 
 /// The form factor from DMI data: product and vendor name the handhelds whose chassis type
 /// doesn't say so; the chassis type (SMBIOS) says the rest.
+#[cfg(target_os = "linux")]
 pub fn form_factor() -> FormFactor {
     static FORM: OnceLock<FormFactor> = OnceLock::new();
     *FORM.get_or_init(|| {

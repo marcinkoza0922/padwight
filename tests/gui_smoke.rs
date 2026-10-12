@@ -9,6 +9,8 @@
 //! (which uses Xvfb in the container). It also needs `xwininfo` (x11-utils), to see the window. The daemon it starts uses uinput and uhid, so the first
 //! also needs those devices.
 
+#![cfg(target_os = "linux")]
+
 mod common;
 
 use std::{

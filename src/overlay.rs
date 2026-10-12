@@ -11,7 +11,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use evdev::KeyCode;
+use crate::keycode::KeyCode;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -512,11 +512,12 @@ impl OverlayController {
 
 /// Runs the overlay window: a layer-shell surface at the bottom of the screen drawing the
 /// state the daemon streams, and exiting when the daemon hides it.
+#[cfg(target_os = "linux")]
 pub fn run() -> anyhow::Result<()> {
     // iced_layershell unwraps when the compositor has no layer-shell (GNOME): report that
     // as an error instead of a panic and backtrace.
     std::panic::set_hook(Box::new(|_| {}));
-    std::panic::catch_unwind(ui::run).unwrap_or_else(|panic| {
+    std::panic::catch_unwind(layershell::run).unwrap_or_else(|panic| {
         let why = panic.downcast_ref::<String>().cloned().or_else(|| panic.downcast_ref::<&str>().map(ToString::to_string));
         anyhow::bail!(
             "the overlay window could not start (the compositor probably lacks wlr-layer-shell, as GNOME does): {}",
@@ -525,7 +526,18 @@ pub fn run() -> anyhow::Result<()> {
     })
 }
 
+/// Runs the overlay window: a click-through layered window over the screen drawing the state
+/// the daemon streams, and exiting when the daemon goes away.
+#[cfg(windows)]
+pub fn run() -> anyhow::Result<()> {
+    windows::run()
+}
+
+#[cfg(target_os = "linux")]
+mod layershell;
 mod ui;
+#[cfg(windows)]
+mod windows;
 
 pub use ui::snapshot;
 

@@ -51,8 +51,7 @@ impl Injection {
     /// to a private folder in the temp directory instead.
     pub(super) fn new(enabled: bool) -> Result<Self> {
         if enabled {
-            // SAFETY: getuid cannot fail.
-            let dir = std::env::temp_dir().join(format!("padwight-debug-{}", unsafe { libc::getuid() }));
+            let dir = super::os::user_temp_dir("padwight-debug");
             prepare_private_dir(&dir)?;
             log!("debug mode: screenshots and recordings go to {}", dir.display());
             crate::capture::redirect_to(dir);
@@ -90,7 +89,7 @@ impl Daemon {
 
     fn debug_attach(&mut self, model: Option<crate::info::PadModel>, live: bool) -> Response {
         let pad = if live {
-            match VirtualPad::new(None) {
+            match super::devices::live_pad() {
                 Ok(pad) => Some(pad),
                 Err(e) => return Response::Error(format!("cannot create the virtual pad: {e:#}")),
             }
@@ -196,7 +195,7 @@ mod tests {
     #[test]
     fn output_is_described_in_words() {
         let out = [
-            OutEvent::Key(evdev::KeyCode::KEY_A, true),
+            OutEvent::Key(crate::keycode::KeyCode::KEY_A, true),
             OutEvent::PadButton(Button::South, false),
             OutEvent::PadAxis(crate::input::Axis::LeftX, 0.5),
             OutEvent::MouseMove(3, -2),

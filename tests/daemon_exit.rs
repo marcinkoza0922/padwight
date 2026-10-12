@@ -7,6 +7,8 @@
 //! `cargo test --test daemon_exit -- --ignored`. The daemon grabs any gamepad it finds, so run it
 //! with no real controller attached.
 
+#![cfg(target_os = "linux")]
+
 mod common;
 
 use std::{

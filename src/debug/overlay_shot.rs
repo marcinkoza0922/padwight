@@ -4,7 +4,6 @@
 
 use std::{
     io::{BufRead, BufReader, Write},
-    os::unix::net::UnixStream,
     path::{Path, PathBuf},
     time::{Duration, Instant},
 };
@@ -14,7 +13,7 @@ use iced::{Color, Element, Size, widget::{column, container, row}};
 
 use super::{glyphs, scenes};
 use crate::{
-    ipc::{self, Request},
+    ipc::{self, Request, UnixStream},
     motion::Anim,
     overlay::{self, OverlayFrame, draw, fit::Fit},
 };
@@ -180,7 +179,7 @@ fn glyph_sheets(options: &Options) -> Result<crate::snapshot::Image> {
 
 #[cfg(test)]
 mod tests {
-    use std::os::unix::net::UnixListener;
+    use crate::ipc::UnixListener;
 
     use super::*;
 
