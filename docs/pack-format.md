@@ -382,6 +382,10 @@ The picture is drawn behind the panel's contents and over its background color. 
 
 Plain overlays turns the picture off too.
 
+### Looping effects
+
+Some effects keep moving while the overlay is up: a glow that pulses (`pulse = true` on `glow`), a gradient that sways (`drift = true` on `gradient`), and scanlines that roll (`drift = true` on `scanlines`). They cost a redraw every frame, so the player can turn them all off on the App settings page: Performance → **No looping animations**. Turning them off freezes each effect where it is, and the motion styles still play. Nothing moves in the overlay's own motion (Performance → No motion) stops them too.
+
 ### Text
 
 Any text an overlay draws (menu labels, hints, info overlay headings and cells) can hold `{tokens}` and formatting tags in braces. Tags work in pairs: put the opening tag before the text and its closing tag after it. A tag left open holds to the end of the text. Anything in braces that isn't a token or tag stays as written.
