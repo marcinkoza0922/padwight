@@ -512,6 +512,7 @@ pub(super) fn button_row<'a>(p: &'a Profile, b: Button, ui: &Ui) -> Vec<Element<
         "    Press",
         fill_x(action_editor(p.button(b), b, &ACTION_KINDS, set_action(target), KeyField::root(target), ui.names)),
     ));
+    rows.extend(menu_combos::offer(p, &[b], p.button(b), ui).map(|o| labeled("", o)));
 
     for (kind, action) in set_gestures {
         rows.push(rule::horizontal(1).into());
@@ -527,6 +528,9 @@ pub(super) fn button_row<'a>(p: &'a Profile, b: Button, ui: &Ui) -> Vec<Element<
             .align_y(Alignment::Start)
             .into(),
         ));
+        if kind == GestureKind::LongPress {
+            rows.extend(menu_combos::offer(p, &[b], action, ui).map(|o| labeled("", o)));
+        }
     }
     // Adding a gesture sits under the rows it extends, one click per kind.
     if !missing.is_empty() {
@@ -615,6 +619,9 @@ pub(super) fn combo_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message
             labeled("    Action", fill_x(action_editor(&combo.action, Button::South, &ACTION_KINDS, set_action(target), KeyField::root(target), ui.names))),
         ]
         .spacing(8);
+        if let Some(offer) = menu_combos::offer(p, &combo.buttons, &combo.action, ui) {
+            body = body.push(labeled("", offer));
+        }
         if let Some(problem) = problem {
             body = body.push(labeled("", text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR).into()));
         }
@@ -854,6 +861,15 @@ impl App {
                     });
                     let new = Target::Combo(p.combos.len() - 1);
                     self.expanded.insert(new);
+                }
+            }
+            Message::AddMenuCombos(combos) => {
+                if let Some(p) = self.profile_mut() {
+                    for c in combos {
+                        if !p.combos.iter().any(|e| crate::config::combo_key(&e.buttons) == crate::config::combo_key(&c.buttons)) {
+                            p.combos.push(c);
+                        }
+                    }
                 }
             }
             Message::RemoveCombo(i) => {
