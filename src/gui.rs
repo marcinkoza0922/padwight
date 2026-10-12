@@ -112,7 +112,7 @@ pub fn run() -> iced::Result {
         .subscription(App::subscription)
         .exit_on_close_request(false)
         .window(iced::window::Settings {
-            size: iced::Size::new(1100.0, 900.0),
+            size: iced::Size::new(1280.0, 960.0),
             icon: crate::icon::window(),
             ..Default::default()
         });
