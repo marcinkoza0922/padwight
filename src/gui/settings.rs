@@ -116,6 +116,7 @@ impl App {
                 switch(p.still, "No motion", "Overlays appear, move and close at once. Redraws only when something changes.", |p, v| p.still = v),
                 switch(p.plain, "Plain overlays", "No shadows, outlines, gradients or glows, the default ones included.", |p, v| p.plain = v),
                 switch(p.quiet, "No sounds", "No overlay sounds, and the audio device is never opened.", |p, v| p.quiet = v),
+                switch(p.no_loops, "No looping animations", "Glows stop pulsing, and gradients and scanlines stop drifting. Motion styles still play.", |p, v| p.no_loops = v),
                 all.into(),
             ],
         )

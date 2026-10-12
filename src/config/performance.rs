@@ -19,6 +19,10 @@ pub struct Performance {
     /// No overlay sounds, and the audio device is never opened.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub quiet: bool,
+    /// Looping animations stop (glows, drifting gradients and scanlines), though the motion
+    /// styles still play.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub no_loops: bool,
 }
 
 impl Performance {
@@ -28,12 +32,12 @@ impl Performance {
 
     /// Everything off: overlays at their barest.
     pub fn lightest() -> Self {
-        Performance { plain: true, still: true, quiet: true }
+        Performance { plain: true, still: true, quiet: true, no_loops: true }
     }
 
     /// What the overlay process is told to cut from what it draws.
     pub fn lite(&self) -> Lite {
-        Lite { plain: self.plain }
+        Lite { plain: self.plain, calm: self.no_loops || self.still }
     }
 
     /// `motion`, or no motion at all when it's turned off here.
@@ -60,9 +64,17 @@ mod tests {
     }
 
     #[test]
+    fn looping_animations_can_stop_alone() {
+        let p: Performance = toml::from_str("no_loops = true").unwrap();
+        assert_eq!(p.lite(), Lite { plain: false, calm: true });
+        assert_eq!(p.motion(MotionSet::default()), MotionSet::default());
+        assert_eq!(Performance::default().lite(), Lite::default());
+    }
+
+    #[test]
     fn the_lightest_cuts_everything() {
         let p = Performance::lightest();
-        assert_eq!(p.lite(), Lite { plain: true });
+        assert_eq!(p.lite(), Lite { plain: true, calm: true });
         assert_eq!(p.motion(MotionSet::default()), MotionSet::all(crate::motion::MotionStyle::Off));
         assert_eq!(p.sounds(SoundSet::default()), SoundSet::default().silenced());
         let back: Performance = toml::from_str(&toml::to_string(&p).unwrap()).unwrap();

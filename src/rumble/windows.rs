@@ -15,6 +15,7 @@ use std::{
 };
 
 use crate::{
+    config::rumble_cues::RumbleCue,
     input::xinput::{self, set_rumble},
     monitor::log,
     output::Target,
@@ -106,6 +107,14 @@ pub fn tick(path: PathBuf, on: bool) {
         vec![(0, 0x9000, TICK), (0, 0, TICK), (0, 0x9000, TICK)]
     };
     play(path, pattern);
+}
+
+/// Plays one of an overlay's buzzes (a rumble cue, see `config::RumbleCue`) on the controller
+/// at `path`, in the background. It follows the rumble strength. The weak motor carries the
+/// cue's strength, and the strong one half of it.
+pub fn cue(path: PathBuf, cue: RumbleCue) {
+    let weak = (cue.strength.clamp(0.0, 1.0) * f32::from(u16::MAX)) as u16;
+    play(path, vec![(at_strength(weak / 2), at_strength(weak), Duration::from_millis(u64::from(cue.length_ms)))]);
 }
 
 /// Plays a faint pulse as an overlay's item is picked. It follows the rumble strength.

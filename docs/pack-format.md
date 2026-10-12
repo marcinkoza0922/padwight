@@ -1,6 +1,6 @@
 # `.padpack` format reference
 
-A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 17**, the format the current app writes. For a walkthrough of building one, see [the Deus Ex tutorial](manual/tutorial-deus-ex.md). The shipped examples are in `packs/`.
+A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 18**, the format the current app writes. For a walkthrough of building one, see [the Deus Ex tutorial](manual/tutorial-deus-ex.md). The shipped examples are in `packs/`.
 
 The easiest way to write a pack is in the app, then **Details → Export…**. Read this page when you want to edit the file by hand, check a value, or understand what the export produced.
 
@@ -279,6 +279,7 @@ stick = "Right"
 [[menus.items]]
 label = "Belt 1"
 action = { keys = ["KEY_1"] }
+icon = "potion"               # optional: a picture in front of the label (see Icons)
 
 [menus.style]
 position = "center"           # a 3×3 grid: top_left … bottom_right
@@ -335,6 +336,74 @@ blur = 30
 ```
 
 `text = "#e8d8a8"` sets the color of the panel's own text (titles, hints, info overlay text) instead of white or near-black chosen to suit the background. Items keep their own. Radial menus drawn as arcs take the panel decorations but no item outline or glow. Decorations are format 14; older app versions can't read packs that use them. The player can turn them all off on the App settings page (Performance → Plain overlays).
+
+`pulse = true` on the `glow` makes it breathe, and `drift = true` on the `gradient` makes its direction sway slowly. Both are looping effects, see [Looping effects](#looping-effects).
+
+### Typography
+
+```toml
+[menus.style.type]
+case = "upper"                 # "none" (as written), "upper" or "lower"
+letter_spacing = 2             # pixels between letters at scale 1, 0 to 12
+size = 1.1                     # a factor on every text size, 0.5 to 2
+bold = true                    # the family's bold face, if it has one
+italic = false                 # the family's italic face, if it has one
+color = "#f0e6c8"              # every text's color; unset, each text picks its own
+```
+
+Titles, labels, hints and the offer's answers all follow the typography. Keyboard keys keep their own size. Bold and italic come from the font's own faces: a family with only a regular face (most of the bundled ones) draws the same either way. Letter spacing is laid out letter by letter, so long labels still wrap. `color` here is every text's color, and `text` (above) is the panel's own text alone.
+
+### Ornaments
+
+```toml
+[menus.style.ornament]
+dividers = { width = 1, color = "#c8a040", opacity = 0.6 }   # a line between a list's rows
+frame = { kind = "brackets", size = 16, width = 2, color = "#c8a040" }   # or kind = "chamfer"
+scanlines = { spacing = 4, opacity = 0.2, color = "#000000", drift = false }
+vignette = { color = "#000000", opacity = 0.6, reach = 25 }  # reach: percent of the panel
+```
+
+- `dividers` goes between the rows of list and button menus. Grid, directional, carousel and radial menus have no rows to divide.
+- `frame` marks each corner: `brackets` is an L along the edges, and `chamfer` a line across the corner. `size` is how far each mark reaches, at scale 1.
+- `scanlines` are thin lines `spacing` pixels apart across the whole panel. They sit over the contents, so keep `opacity` low. `drift` rolls them slowly down (see [Looping effects](#looping-effects)).
+- `vignette` darkens each edge, fading out `reach` percent of the panel's size in from it.
+
+Ornaments are decorations, so the player's Plain overlays setting turns them all off.
+
+### Background pictures
+
+```toml
+[menus.style.background_image]
+file = "crest.png"             # in the backgrounds folder, or a full path
+opacity = 0.6                  # 0 to 1
+fit = "cover"                  # "cover" (crops), "contain" (leaves bars) or "stretch"
+```
+
+The picture is drawn behind the panel's contents and over its background color. PNG, JPEG and SVG files work. A bare file name is looked up in the backgrounds folder, and a name with folders in it (`themes/crest.png`) is a path inside that folder. A full path is used as it is. A picture doesn't travel with the pack: whoever imports it needs the same file in the same place.
+
+Plain overlays turns the picture off too.
+
+### Icons
+
+A menu item's `icon` is drawn in front of its label, in the item's text color. Built-in icons:
+
+| Name | Picture | Name | Picture |
+|---|---|---|---|
+| `sword` | a sword | `shield` | a shield |
+| `bow` | a bow and arrow | `potion` | a flask |
+| `pistol` | a handgun | `key` | a key |
+| `rifle` | a rifle | `coin` | a coin |
+| `axe` | an axe | `gem` | a gem |
+| `car` | a car | `heart` | a heart |
+| `wheel` | a wheel | `skull` | a skull |
+| `pda` | a handheld device | `map` | a folded map |
+
+Your own icons go in the icons folder: `icons/` beside `config.toml` (`~/.config/padwight/icons/` on Linux, `%APPDATA%\padwight\icons\` on Windows). Put an SVG there, and its file name without `.svg` is its icon name, so `gauntlet.svg` is `icon = "gauntlet"`. Icons are drawn with the item's text color wherever the SVG says `currentColor`, and in their own colors elsewhere. Names may use letters, digits, `-` and `_`. The App settings and the item editor list every icon there is. Like backgrounds, your icons don't travel with the pack.
+
+### Looping effects
+
+Some effects keep moving while the overlay is up: a glow that pulses (`pulse = true` on `glow`), a gradient that sways (`drift = true` on `gradient`), and scanlines that roll (`drift = true` on `scanlines`). They cost a redraw every frame, so the player can turn them all off on the App settings page: Performance → **No looping animations**. Turning them off freezes each effect where it is, and the motion styles still play. Nothing moves in the overlay's own motion (Performance → No motion) stops them too.
+
 
 ## Macros
 
@@ -438,7 +507,7 @@ color = "#080c0d"
 opacity = 0.94
 ```
 
-`keyboard_style`, `numpad_style`, `media_style` and `menu_style` use the same shape as an overlay's `style`. `overlay_font` names a bundled font (`assets/fonts`) or an installed family.
+`keyboard_style`, `numpad_style`, `media_style` and `menu_style` use the same shape as an overlay's `style`. `overlay_font` names a bundled font or an installed family. The bundled fonts, all under the SIL Open Font License (see `assets/fonts`), are Inter, Cantarell, Comfortaa, Source Code Pro, Rajdhani, Press Start 2P, VT323, Silkscreen, Monoton, Creepster, Nosifer, Eater, UnifrakturMaguntia, Cinzel and Bangers.
 
 ## Overlay sounds
 
@@ -498,6 +567,21 @@ Echo and reverb add a tail after the cue, up to about two seconds each at 1, so 
 pick = { kind = "chime", volume = 0.3, echo = 0.3, reverb = 0.2, bass = -3 }
 ```
 
+## Overlay rumble
+
+A setup can make the controller buzz as an overlay responds, in the same places its sounds play. Each overlay has its own table, and every cue is optional:
+
+```toml
+[rumble.menu]
+step = { strength = 0.2, length_ms = 20 }    # as the cursor moves
+pick = { strength = 0.6, length_ms = 40 }    # as something is picked
+open = { strength = 0.1, length_ms = 30 }    # as the overlay comes up
+close = { strength = 0.1, length_ms = 30 }   # as it goes away
+mode = { strength = 0.3, length_ms = 60 }    # as a Guide mode is switched
+```
+
+The overlays are `keyboard`, `numpad`, `menu` (every menu layout), `guide` (the Guide menus), `media` and `offer`, as for [sounds](#overlay-sounds). `strength` is 0 to 1 and `length_ms` 10 to 500. With no cue set, an overlay is silent, so existing packs don't buzz. The buzz goes to the controller driving the overlay, and only if that controller can rumble. The App settings' rumble strength scales every cue. A pick cue replaces the App settings' faint pulse on picks for its overlay.
+
 ## Overlay motion
 
 `[motion]` sets how each kind of overlay moves: as it opens and closes, as the cursor moves and as something is picked. Each key is one of `off`, `subtle`, `playful`, `stagger`, `grim` or `brutal`, and every key is optional (a missing one is `subtle`).
@@ -526,7 +610,7 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
 
 ## Versioning
 
-- `format` is an integer. The app writes `17` and reads up to `17`. A pack with a newer `format` is refused with "update the app to import it". Older formats are upgraded when read.
+- `format` is an integer. The app writes `18` and reads up to `18`. A pack with a newer `format` is refused with "update the app to import it". Older formats are upgraded when read.
 - Format history:
   - 2 added layers.
   - 3 added toggles that start on.
@@ -544,6 +628,7 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
   - 15 added gyro acceleration curves, axes, player and world space, the position mode, smoothing and pausing, and the touchpad's curve.
   - 16 added the touchpad's joystick, menu and swipe modes, tapping, scrolling and gliding, the split pad, and layers' touchpads.
   - 17 added modes (`[[modes]]` and the `mode` action), and stopped layers from being toggled. When an older pack is read, each `toggle` of a layer becomes a `mode` switch, and a layer that was only ever toggled becomes a mode.
+  - 18 added menu item icons, the typography (`type`), ornaments, background pictures, looping effects (pulsing glows and drifting gradients and scanlines) and rumble cues (`[rumble.<overlay>]`).
 - Bump `format` only for a breaking change to the shape. Adding an optional key with a default doesn't need it.
 
 ## Checks

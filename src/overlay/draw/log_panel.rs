@@ -33,7 +33,7 @@ pub fn log_panel<'a, M: 'a>(v: &LogView, font: Font, fit: &Fit, anim: &Anim) -> 
         }
         lines = lines.push(cells.wrap().vertical_spacing(4.0 * s));
     }
-    framed(lines.into(), c, [10.0 * s, 14.0 * s], fit)
+    framed(lines.into(), c, &v.style, [10.0 * s, 14.0 * s], fit)
 }
 
 fn log_cell<'a, M: 'a>(cell: &LogCell, c: Colors, s: f32, v: &LogView, opacity: f32) -> Element<'a, M> {

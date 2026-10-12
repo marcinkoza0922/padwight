@@ -22,7 +22,7 @@ use evdev::{
     FFTrigger, UInputCode, uinput::VirtualDevice,
 };
 
-use crate::monitor::log;
+use crate::{config::rumble_cues::RumbleCue, monitor::log};
 
 const POLL_TIMEOUT_MS: i32 = 200;
 
@@ -84,6 +84,27 @@ pub fn tick(path: PathBuf, on: bool) {
 const TICK: Duration = Duration::from_millis(40);
 /// How long a pick's pulse lasts.
 const PICK: Duration = Duration::from_millis(25);
+
+/// Plays one of an overlay's buzzes (a rumble cue, see `config::RumbleCue`) on the controller
+/// at `path`, in the background. It follows the rumble strength. The weak motor carries the
+/// cue's strength, and the strong one half of it.
+pub fn cue(path: PathBuf, cue: RumbleCue) {
+    thread::spawn(move || {
+        let magnitude = (cue.strength.clamp(0.0, 1.0) * f32::from(u16::MAX)) as u16;
+        let length = Duration::from_millis(u64::from(cue.length_ms));
+        let data = FFEffectData { replay: FFReplay { length: cue.length_ms.min(u32::from(u16::MAX)) as u16, delay: 0 }, ..at_strength(rumble(magnitude / 2, magnitude)) };
+        let played = Device::open(&path).and_then(|mut dev| {
+            let mut effect = dev.upload_ff_effect(data)?;
+            effect.play(1)?;
+            // The effect is erased when it drops, which stops it, so wait out the buzz first.
+            thread::sleep(length);
+            Ok(())
+        });
+        if let Err(e) = played {
+            log!("rumble cue on {} failed: {e}", path.display());
+        }
+    });
+}
 
 /// Plays a faint pulse on the controller at `path` in the background, as an overlay's item is
 /// picked. It follows the rumble strength.

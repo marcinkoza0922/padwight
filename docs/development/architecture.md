@@ -58,7 +58,7 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | Path | Responsibility |
 |---|---|
 | `main.rs` | Command-line dispatch. |
-| `config.rs` (and `config/`) | The config types: buttons, actions, profiles, games, rules, layers, menus, overlays, gyro, and the load/save/migration code. `config/summary.rs` writes short descriptions for the UI and logs. `config/touchpad.rs`, `config/log.rs` hold the touchpad and log-overlay settings. `config/modes.rs` holds modes (stored like layers) and the conversion of toggled layers into them. `config/style.rs` is how an overlay looks (`OverlayStyle` and its decorations); `config/performance.rs` the App settings' Performance card. |
+| `config.rs` (and `config/`) | The config types: buttons, actions, profiles, games, rules, layers, menus, overlays, gyro, and the load/save/migration code. `config/summary.rs` writes short descriptions for the UI and logs. `config/touchpad.rs`, `config/log.rs` hold the touchpad and log-overlay settings. `config/modes.rs` holds modes (stored like layers) and the conversion of toggled layers into them. `config/style.rs` is how an overlay looks (`OverlayStyle`, its decorations, typography, ornaments and background picture); `config/performance.rs` the App settings' Performance card; `config/rumble_cues.rs` the rumble cues of each overlay. |
 | `ipc.rs` | The `Request` and `Response` enums and the socket client/server helpers. |
 | `daemon.rs` (and `daemon/`) | The service: device discovery and grabbing, the main loop, routing, and output dispatch. `daemon/evdev.rs` finds and reads the controllers; `daemon/logs.rs` records the input log; `daemon/touchpad.rs` runs touchpad readers. |
 | `monitor.rs` | The one-line live status shown when the daemon runs in a terminal. |
@@ -76,7 +76,9 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | `offer.rs` | The "add this game from the library?" panel when Guide is tapped over an unknown game. |
 | `system_menu.rs` | The Guide + Start menu over the game: Quick Settings and Edit Controls. See [in-game-editor.md](in-game-editor.md). |
 | `layout_editor.rs` | The Edit Controls page of that menu: button actions of the active profile. |
-| `rumble.rs` | Forwards rumble from the virtual pad to the physical one. |
+| `rumble.rs` | Forwards rumble from the virtual pad to the physical one, and plays the rumble cues of overlays (`cue`). |
+| `icons.rs` | Menu item icons: the built-in SVGs in `assets/icons` and the user's SVGs in the icons folder, by name. |
+| `assets.rs` | The user's folders beside `config.toml` (`icons/`, `backgrounds/`), and where a file named in a pack is. |
 | `output.rs`, `output/uinput.rs` | The uinput devices. The pad can present itself as another controller (`pad_identity.rs`). |
 | `pad_identity.rs` | Which controller the pad presents itself as: Xbox 360 unless the game ticks the physical controller's kind on its Details tab. USB IDs, name and button labels per identity. |
 | `quit.rs` | ForceQuit: ends the focused game's process tree, never the desktop. |
@@ -127,7 +129,7 @@ Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000
 
 | Path | Responsibility |
 |---|---|
-| `overlay.rs` (and `overlay/ui.rs`, `overlay/draw/`) | The overlay process: keyboard, numpad, menus, info and log panels. `OverlayController` owns the state inside the daemon; `ui.rs` holds what is on screen and draws its layers, `layershell.rs` is the layer-shell window, and `snapshot` draws a frame offscreen as that window would. `draw/look.rs` resolves a style's decorations into container styles; `draw/glyphs.rs` draws button glyphs and icons (or text, under the performance settings). |
+| `overlay.rs` (and `overlay/ui.rs`, `overlay/draw/`) | The overlay process: keyboard, numpad, menus, info and log panels. `OverlayController` owns the state inside the daemon; `ui.rs` holds what is on screen and draws its layers, `layershell.rs` is the layer-shell window, and `snapshot` draws a frame offscreen as that window would. `draw/look.rs` resolves a style's decorations into container styles; `draw/glyphs.rs` draws button glyphs and icons (or text, under the performance settings). `draw/typeset.rs` sets text in a style's typography (case, letter spacing, size, weight, slant). `draw/ornament.rs` draws the background picture, corner frames, scanlines, vignettes and the lines between items. A panel's contents are the base of a `Stack`, and its picture and ornaments are layered under and over it, so they're the panel's size. Looping effects keep the overlay redrawing (`OverlayFrame::loops`) and read `Anim::clock`. |
 | `info.rs` | Info overlays: `{token}` expansion into button glyphs and live values, and the generated bindings sheet for layers. |
 | `font.rs` | Bundled fonts (`assets/fonts`) and installed families by name. |
 | `style.rs` | Shared widget styles for the GUI. |
@@ -155,7 +157,7 @@ Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000
 | `gui/games.rs` | Sidebar, a game's page and Details, Settings, controller list. |
 | `gui/packs.rs` | Library picker, import preview, export, delete, copy-from-another-game. |
 | `gui/checks.rs` | What "Save & apply" checks before writing: names, references, and rules. |
-| `gui/widgets.rs`, `gui/style_editor.rs`, `gui/tracking.rs`, `gui/overlays.rs`, `gui/ring_preview.rs`, `gui/logs.rs` | Shared widgets and smaller tabs. |
+| `gui/widgets.rs`, `gui/style_editor.rs`, `gui/style_extras.rs`, `gui/tracking.rs`, `gui/overlays.rs`, `gui/ring_preview.rs`, `gui/logs.rs` | Shared widgets and smaller tabs. `style_extras.rs` holds the style editor's typography, ornament and background picture rows. |
 | `gui/tab_icons.rs` | The glyph before each editor tab; Profiles and Buttons take the controller in use's family colors. |
 | `pad_svg.rs`, `pad_svg/layout.rs`, `pad_svg/models.rs`, `pad_svg/parts.rs`, `pad_svg/labels.rs` | The live controller picture. `models.rs` holds each model's outline (mirrored, so both halves match), its shell color, and where its sticks, D-pad, buttons and marks sit, traced from the pictures in `references/controller images`; `layout.rs` defines what a model can have; `parts.rs` draws the shell, shoulders, sticks, D-pad and buttons; `labels.rs` places the mapping labels and their leader lines. |
 

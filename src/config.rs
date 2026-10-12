@@ -14,11 +14,14 @@ mod guide;
 mod gyro;
 mod log;
 pub mod modes;
+mod ornament;
 mod performance;
+pub mod rumble_cues;
 mod shortcuts;
 mod store;
 mod style;
 mod summary;
+mod typography;
 pub use summary::{Keyword, Piece};
 mod touchpad;
 mod window_game;
@@ -29,8 +32,11 @@ pub use gyro::*;
 pub use log::*;
 pub use modes::Mode;
 pub use performance::Performance;
+pub use rumble_cues::RumbleSet;
 pub use shortcuts::{Group, GuideOpener, MenuKeys, OPEN_GUIDE, PanelPress, Shortcut, ShortcutInput, Shortcuts};
+pub use ornament::*;
 pub use style::*;
+pub use typography::*;
 use style::{default_keyboard_style, default_media_style, default_menu_style, default_numpad_style};
 pub use touchpad::*;
 
@@ -403,12 +409,16 @@ pub struct MenuItem {
     /// The cells a grid item covers, merged from its own and those right of and below it.
     #[serde(default, skip_serializing_if = "Span::is_one")]
     pub span: Span,
+    /// The picture drawn in front of the label: a built-in icon (`sword`, `bow`…) or an SVG in
+    /// the icons folder, by its name. See `icons`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub icon: Option<String>,
 }
 
 impl MenuItem {
-    /// An item doing `action`, with no quick-select button, an even share and one cell.
+    /// An item doing `action`, with no quick-select button, an even share, one cell and no icon.
     pub fn new(label: impl Into<String>, action: ButtonAction) -> Self {
-        MenuItem { label: label.into(), action, button: None, weight: 1.0, span: Span::ONE }
+        MenuItem { label: label.into(), action, button: None, weight: 1.0, span: Span::ONE, icon: None }
     }
 }
 
@@ -2221,6 +2231,9 @@ pub struct Game {
     /// defaults when unset.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sounds: Option<SoundSet>,
+    /// The controller's buzzes for each overlay, while this game is active; silent when unset.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rumble: Option<RumbleSet>,
     /// How each overlay moves while this game is active; the global set (`Config::motion`)
     /// applies when unset.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -2253,6 +2266,7 @@ impl Game {
             overlay_font: None,
             nintendo_layout: None,
             sounds: None,
+            rumble: None,
             motion: None,
             controllers: None,
         }
@@ -2455,6 +2469,8 @@ pub struct Scope {
     pub modes: Vec<Mode>,
     /// The active game's overlay sounds.
     pub sounds: SoundSet,
+    /// The active game's rumble cues.
+    pub rumble: RumbleSet,
 }
 
 impl Scope {
@@ -2848,6 +2864,7 @@ impl Config {
             layers: s.layers.into_iter().cloned().collect(),
             modes: s.modes.into_iter().map(std::borrow::Cow::into_owned).collect(),
             sounds: self.performance.sounds(self.active_game().sounds.unwrap_or(self.sounds)),
+            rumble: self.active_game().rumble.unwrap_or_default(),
         }
     }
 

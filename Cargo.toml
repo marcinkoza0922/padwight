@@ -6,11 +6,13 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.104"
 dirs = "7.0.0"
-iced = { version = "0.14", features = ["svg", "tokio", "markdown", "advanced"] }
+iced = { version = "0.14", features = ["svg", "image-without-codecs", "tokio", "markdown", "advanced"] }
 # Offscreen drawing for overlay snapshots (snapshot.rs). Both are already in the lock file
 # through iced, so the vendored Flatpak sources don't change.
 iced_runtime = "0.14"
 png = "0.17"
+# Decodes the background pictures (PNG and JPEG only, so no AVIF or other codecs come along).
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 # Rasterizes the app icon for the tray and window (iced already pulls it in).
 resvg = "0.45"
 serde = { version = "1.0.229", features = ["derive"] }

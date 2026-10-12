@@ -80,12 +80,15 @@ pub struct ItemView {
     /// The cells of a grid it covers.
     #[serde(default, skip_serializing_if = "Span::is_one")]
     pub span: Span,
+    /// The icon drawn in front of the label (see `icons`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub icon: Option<String>,
 }
 
 impl ItemView {
     /// A row with just a label to fill in: no button, glyphs, icon or tint.
     pub fn plain() -> Self {
-        ItemView { label: String::new(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: Span::ONE }
+        ItemView { label: String::new(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: Span::ONE, icon: None }
     }
 }
 
@@ -772,6 +775,7 @@ fn item_views(menu: &Menu) -> Vec<ItemView> {
             tone: Tone::Normal,
             keyword: None,
             span: item.span,
+            icon: item.icon.clone(),
         })
         .collect()
 }
