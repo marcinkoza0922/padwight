@@ -41,18 +41,18 @@ const MODIFIERS: [&str; 8] = [
 pub const KEYBOARD_LEGEND: &[&str] = &[
     "{dpad} move",
     "{confirm} press",
-    "{west} backspace (hold to repeat)",
-    "{north} space",
-    "{start} enter",
-    "{lb} {rb} move the text cursor",
+    "{keyboard_backspace} backspace (hold to repeat)",
+    "{keyboard_space} space",
+    "{keyboard_enter} enter",
+    "{keyboard_left} {keyboard_right} move the text cursor",
     "hold {lt} shift",
     "Shift, Ctrl, Alt, AltGr and Super stay on for one key; press one again to let go",
-    "hold {back} or press {guide} to close",
+    "hold {keyboard_close} or press {guide} to close",
 ];
 
 /// The numpad's reminder of its controls.
 pub const NUMPAD_LEGEND: &[&str] =
-    &["{dpad} move", "{confirm} press", "{west} backspace (hold to repeat)", "{start} enter", "hold {back} or press {guide} to close"];
+    &["{dpad} move", "{confirm} press", "{backspace} backspace (hold to repeat)", "{enter} enter", "hold {numpad_close} or press {guide} to close"];
 
 /// What the overlay process draws.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -90,6 +90,9 @@ pub struct OverlayFrame {
     /// What `{confirm}` and `{back}` say: the buttons that confirm and go back.
     #[serde(default)]
     pub menu_keys: crate::config::MenuKeys,
+    /// Which buttons the media controls' and numpad's keys sit on, for their hints.
+    #[serde(default)]
+    pub panel_keys: crate::config::Shortcuts,
     /// How each kind of overlay moves as it opens, closes, and as the cursor and picks move.
     #[serde(default)]
     pub motion: crate::motion::MotionSet,

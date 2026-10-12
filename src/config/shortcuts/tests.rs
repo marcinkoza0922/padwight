@@ -152,11 +152,11 @@ fn the_menu_buttons_trade_places_with_a_and_b() {
 #[test]
 fn the_menu_buttons_stay_among_the_free_buttons_and_are_never_off() {
     let s = moved(&[
-        (Shortcut::MenuConfirm, Some(ShortcutInput::button(Button::West))),
+        (Shortcut::MenuConfirm, Some(ShortcutInput::button(Button::DpadUp))),
         (Shortcut::MenuBack, Some(ShortcutInput::gesture(Button::Select, GestureKind::DoubleTap))),
     ])
     .sanitized();
-    assert_eq!(s.menu_keys(), MenuKeys::default(), "West is the keyboard's backspace; a gesture isn't a button");
+    assert_eq!(s.menu_keys(), MenuKeys::default(), "the D-pad moves the menus; a gesture isn't a button");
     let mut s = moved(&[(Shortcut::MenuConfirm, Some(ShortcutInput::button(Button::Select)))]);
     assert_eq!(s.menu_keys().confirm, Button::Select);
     s.set(Shortcut::MenuConfirm, None);
@@ -171,4 +171,78 @@ fn the_menu_buttons_warn_when_they_share_or_meet_a_guide_shortcut() {
     assert!(s.warnings(Shortcut::MenuConfirm).iter().any(|w| w.contains("Force quit")), "Select is the force quit");
     let s = moved(&[(Shortcut::OpenGuide, Some(ShortcutInput::button(Button::Select)))]);
     assert!(Shortcuts::default().all_warnings().is_empty() && !s.warnings(Shortcut::OpenGuide).is_empty());
+}
+
+#[test]
+fn panel_keys_trade_places_within_their_panel() {
+    let s = moved(&[(Shortcut::MediaPlay, Some(ShortcutInput::button(Button::LeftBumper)))]);
+    assert_eq!(s.button(Shortcut::MediaPlay), Button::LeftBumper);
+    assert_eq!(s.button(Shortcut::MediaPrevious), Button::South, "the key it took moved to its old button");
+    assert_eq!(s.panel_press(Group::Media, Button::LeftBumper), PanelPress::Key(Button::South));
+    assert_eq!(s.panel_press(Group::Media, Button::South), PanelPress::Key(Button::LeftBumper));
+    assert_eq!(s.panel_press(Group::Media, Button::North), PanelPress::Key(Button::North), "untouched keys stay put");
+    assert_eq!(s.panel_press(Group::Media, Button::DpadUp), PanelPress::Other);
+}
+
+#[test]
+fn a_free_button_takes_the_key_and_the_old_one_does_nothing() {
+    let s = moved(&[(Shortcut::MediaMute, Some(ShortcutInput::button(Button::Select)))]);
+    assert_eq!(s.panel_press(Group::Media, Button::Select), PanelPress::Key(Button::West));
+    assert_eq!(s.panel_press(Group::Media, Button::West), PanelPress::Ignored);
+    assert_eq!(s.panel_press(Group::Numpad, Button::West), PanelPress::Key(Button::West), "numpad's backspace is its own");
+}
+
+#[test]
+fn the_numpad_and_the_media_controls_trade_among_their_own_keys() {
+    let s = moved(&[(Shortcut::NumpadBackspace, Some(ShortcutInput::button(Button::LeftBumper)))]);
+    assert_eq!(s.button(Shortcut::NumpadBackspace), Button::LeftBumper);
+    assert_eq!(s.button(Shortcut::NumpadEnter), Button::Start, "enter doesn't move");
+    assert_eq!(s.button(Shortcut::MediaPrevious), Button::LeftBumper, "media keeps its own buttons");
+    assert_eq!(s.button(Shortcut::MediaMute), Button::West);
+    assert_eq!(s.panel_press(Group::Numpad, Button::LeftBumper), PanelPress::Key(Button::West));
+    assert_eq!(s.panel_press(Group::Numpad, Button::West), PanelPress::Ignored);
+}
+
+#[test]
+fn a_panel_key_is_always_on_a_button_and_back_on_its_default_is_unmoved() {
+    let mut s = Shortcuts::default();
+    s.set(Shortcut::MediaNext, None);
+    assert_eq!(s, Shortcuts::default(), "off does nothing for a panel key");
+    s.set(Shortcut::MediaNext, Some(ShortcutInput::button(Button::LeftBumper)));
+    assert!(s.is_moved(Shortcut::MediaNext) && s.is_moved(Shortcut::MediaPrevious));
+    s.set(Shortcut::MediaNext, Some(ShortcutInput::button(Button::RightBumper)));
+    assert!(s.is_default(), "trading back to the defaults unmoves both");
+}
+
+#[test]
+fn panel_keys_keep_to_their_choices() {
+    let s = moved(&[
+        (Shortcut::MediaPlay, Some(ShortcutInput::button(Button::DpadUp))),
+        (Shortcut::MediaMute, Some(ShortcutInput::button(Button::Guide))),
+        (Shortcut::NumpadEnter, Some(ShortcutInput::gesture(Button::Select, GestureKind::DoubleTap))),
+    ])
+    .sanitized();
+    assert!(s.is_default(), "the D-pad, Guide and gestures aren't panel keys: {s:?}");
+}
+
+#[test]
+fn the_menu_buttons_take_any_button_but_the_dpad_and_guide() {
+    let s = moved(&[
+        (Shortcut::MenuConfirm, Some(ShortcutInput::button(Button::Start))),
+        (Shortcut::MenuBack, Some(ShortcutInput::button(Button::North))),
+    ]);
+    assert_eq!(s.menu_keys(), MenuKeys { confirm: Button::Start, back: Button::North });
+    for b in [Button::DpadUp, Button::Guide] {
+        assert_eq!(moved(&[(Shortcut::MenuBack, Some(ShortcutInput::button(b)))]).sanitized().menu_keys(), MenuKeys::default(), "{b:?}");
+    }
+}
+
+#[test]
+fn the_keyboard_keys_trade_among_themselves_and_leave_the_numpad_alone() {
+    let s = moved(&[(Shortcut::KeyboardSpace, Some(ShortcutInput::button(Button::LeftStick)))]);
+    assert_eq!(s.panel_press(Group::Keyboard, Button::LeftStick), PanelPress::Key(Button::North));
+    assert_eq!(s.panel_press(Group::Keyboard, Button::North), PanelPress::Ignored, "the space's old button is free");
+    assert_eq!(s.panel_press(Group::Numpad, Button::North), PanelPress::Other, "the numpad has no North key");
+    let s = moved(&[(Shortcut::KeyboardLeft, Some(ShortcutInput::button(Button::RightBumper)))]);
+    assert_eq!(s.button(Shortcut::KeyboardRight), Button::LeftBumper, "the cursor keys trade");
 }

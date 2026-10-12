@@ -924,6 +924,7 @@ impl App {
         if edits {
             crate::info::set_opener(crate::info::OpenerLabel::of(&self.config.shortcuts));
             crate::info::set_menu_keys(self.config.shortcuts.menu_keys());
+            crate::info::set_panel_keys(&self.config.shortcuts);
             self.refresh_layer_view();
             self.edited = if self.page == Page::Game(None) { Vec::new() } else { pack::edited_items(self.game()) };
         }

@@ -180,6 +180,17 @@ Added 2026-10-12. App settings has a **Controller shortcuts** tab (`src/gui/shor
   Guide mode and ends mouse mode. An unset opener is a warning on the tab. A profile conflicts with
   the opener (`Shortcuts::conflict`) when it already uses the input; the tab lists those and the
   sidebar marks the setup with a ⚠. Switched-off mode shortcuts never warn.
+- **Panel keys** (`config/shortcuts/panels.rs`) are the buttons the media controls (play or pause,
+  next, previous, player, mute), the on-screen numpad (backspace, enter, close) and the on-screen
+  keyboard (backspace, space, enter, text cursor left and right, close) use. Press stays the confirm
+  button. They're
+  single-button `Shortcut`s in their own groups, so each panel trades among its own keys, and
+  `Shortcuts::set` swaps a key with the one already holding the button. A button no key holds takes
+  the key, and the one it left does nothing in that panel. They can't sit on the D-pad, Guide or
+  East. The daemon routes a press through `Shortcuts::panel_press` before the menu buttons: a key's
+  button reaches the panel as the button its code expects, and a press that's nothing now is
+  dropped. The hints use `{play}`, `{next}`, `{previous}`, `{player}`, `{mute}`, `{backspace}` and
+  `{enter}`, and the keyboard's `{keyboard_*}` tokens, which resolve through `info::set_panel_keys` from `OverlayFrame::panel_keys`.
 - **Quick Settings** is a `Shortcut` too (Start by default, in the Guide mode), bound to the new
   `ButtonAction::QuickSettings`. The engine raises `take_settings_request` and closes the overlay;
   the daemon opens the Guide + Start menu (`open_system_menu`). The old order-independent
