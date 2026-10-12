@@ -77,8 +77,10 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | `system_menu.rs` | The Guide + Start menu over the game: Quick Settings and Edit Controls. See [in-game-editor.md](in-game-editor.md). |
 | `layout_editor.rs` | The Edit Controls page of that menu: button actions of the active profile. |
 | `rumble.rs` | Forwards rumble from the virtual pad to the physical one, and plays the rumble cues of overlays (`cue`). |
-| `icons.rs` | Menu item icons: the built-in SVGs in `assets/icons` and the user's SVGs in the icons folder, by name. |
-| `assets.rs` | The user's folders beside `config.toml` (`icons/`, `backgrounds/`), and where a file named in a pack is. |
+| `icons.rs` | `{icon:name}` icons: the built-in SVGs in `assets/icons`, and the active game's own (`set_pack_icons`, set by every process that draws text). |
+| `assets.rs` | The user's `backgrounds/` folder beside `config.toml`, and where a file named in a pack is. |
+| `config/assets.rs` | `PackAssets`: the icons (SVG) and sounds (base64 WAV) a game carries, which travel in its pack and work only in that game. |
+| `info/catalog.rs` | Every token and formatting tag, grouped for the token picker (`gui/tokens.rs`). |
 | `output.rs`, `output/uinput.rs` | The uinput devices. The pad can present itself as another controller (`pad_identity.rs`). |
 | `pad_identity.rs` | Which controller the pad presents itself as: Xbox 360 unless the game ticks the physical controller's kind on its Details tab. USB IDs, name and button labels per identity. |
 | `quit.rs` | ForceQuit: ends the focused game's process tree, never the desktop. |
@@ -112,6 +114,7 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | `debug/window.rs` | The iced window: clickable virtual controller plus every model's drawing. |
 | `debug/glyphs.rs` | Every glyph the overlays draw (each family's buttons, both face layouts, every key, the mouse buttons, the icons) as info sheets, shown in the debug window's Glyphs section. |
 | `debug/overlay_shot.rs`, `debug/scenes.rs` | `padwight debug overlay`: draws made-up overlay frames (one per kind of overlay and menu), the glyph sheets, a saved frame, or a running daemon's live overlay to PNG with no display. |
+| `debug/motion_shot.rs` | `padwight debug motion`: plays a scripted run (open, move, pick, close) of a scene in each motion style and writes an animated PNG, a strip of frames, or a trace of the motion values. |
 | `snapshot.rs` | Draws any iced element offscreen with the CPU renderer (tiny-skia) into an image; what the overlay snapshots and their tests use. |
 | `pad_svg/hit.rs` | Which part of a model's drawing a point falls on, for clicking. |
 | `pad_widget.rs` | The drawing as an iced widget, shared with the settings window. |
@@ -121,7 +124,7 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 
 `tests/debug_session.rs` uses all of this. Its session tests (commands, scripts, expectations, every model's drawing, sockets) need only the binary and run with the rest. Its daemon tests start a `--debug` daemon of their own and drive it through an attached session; they need `/dev/uinput`, and two of them read the virtual keyboard from `/dev/input`, so they're opt-in: `cargo test --test debug_session -- --ignored`, or `scripts/kernel-test-docker.sh debug_`.
 
-**Looking at the overlay without a display.** `padwight debug overlay all glyphs` writes a PNG of every scene and of the glyph sheets to `screenshots/overlay/` (untracked), drawn by the overlay's own layer code (`overlay/ui.rs`, settled, no motion) on a virtual screen (`--size`, default 1920x1080). `padwight debug overlay list` names the scenes. `--json` prints a scene's frame, which can be edited and drawn again by passing the `.json` file. `live` draws what a running daemon's overlay shows, so with a `--debug` daemon and an attached session, `padwight debug press ...` followed by `padwight debug overlay live` captures a real menu or keyboard. None of it needs Wayland, a compositor or a GPU.
+**Looking at the overlay without a display.** `padwight debug overlay all glyphs` writes a PNG of every scene and of the glyph sheets to `screenshots/overlay/` (untracked), drawn by the overlay's own layer code (`overlay/ui.rs`, settled, no motion) on a virtual screen (`--size`, default 1920x1080). `padwight debug overlay list` names the scenes. `--json` prints a scene's frame, which can be edited and drawn again by passing the `.json` file. `live` draws what a running daemon's overlay shows, so with a `--debug` daemon and an attached session, `padwight debug press ...` followed by `padwight debug overlay live` captures a real menu or keyboard. None of it needs Wayland, a compositor or a GPU. `padwight debug motion <style>|all` does the same for motion: it plays a run of a menu or the keyboard on a made-up clock and writes it to `screenshots/motion/` (see [Motion runs](overlay-debugging.md#motion-runs)).
 
 Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000 press south`, `padwight debug expect pressed south` (non-zero exit on failure), `padwight debug quit`. `padwight debug help` lists every command.
 

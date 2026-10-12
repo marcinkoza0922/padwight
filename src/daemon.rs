@@ -66,6 +66,8 @@ const TICK: Duration = Duration::from_millis(4);
 const FADE_FRAME: Duration = Duration::from_millis(33);
 /// How often info overlays with live values (time, CPU, …) update.
 const INFO_REFRESH: Duration = Duration::from_secs(1);
+/// How often an overlay showing the gyro or the touchpad refreshes: often enough to follow a hand.
+const FAST_INFO_REFRESH: Duration = Duration::from_millis(50);
 const SCAN_INTERVAL: Duration = Duration::from_secs(2);
 /// Minimum gap between snapshots streamed to one watcher (~60 fps).
 const WATCH_INTERVAL: Duration = Duration::from_millis(16);
@@ -403,6 +405,8 @@ struct Daemon {
     config: Config,
     /// What the active profile can use: its game's items.
     scope: Scope,
+    /// The fonts the active game carries, as files the overlay loads.
+    pack_fonts: std::collections::BTreeMap<String, PathBuf>,
     sounds: sound::Sounds,
     kbm: VirtualKbm,
     devices: HashMap<u64, Managed>,
@@ -505,7 +509,9 @@ impl Daemon {
     fn new(config: Config, kbm: VirtualKbm, injection: inject::Injection, tx: Sender<Msg>) -> Self {
         crate::info::set_opener(crate::info::OpenerLabel::of(&config.shortcuts));
         crate::info::set_menu_keys(config.shortcuts.menu_keys());
+        let pack_fonts = config.active_game().assets.activate_headless();
         Daemon {
+            pack_fonts,
             scope: config.scope(),
             sounds: sound::Sounds::start(),
             config,
@@ -1202,7 +1208,8 @@ impl Daemon {
         let shown = self.timed_info(now);
         // Live values (clock, CPU, …) refresh every second while shown.
         let live = shown.iter().any(|(o, _)| crate::info::is_live(o));
-        self.info_refresh = live.then(|| Instant::now() + INFO_REFRESH);
+        let fast = shown.iter().any(|(o, _)| crate::info::is_fast(o));
+        self.info_refresh = live.then(|| Instant::now() + if fast { FAST_INFO_REFRESH } else { INFO_REFRESH });
         if live && self.sampler.sampled_at.is_none() {
             self.sampler.sample();
         }
@@ -1241,6 +1248,8 @@ impl Daemon {
             opener: crate::info::OpenerLabel::of(&self.config.shortcuts),
             menu_keys: self.config.shortcuts.menu_keys(),
             panel_keys: self.config.shortcuts.clone(),
+            pack_icons: self.config.active_game().assets.icons.clone(),
+            pack_fonts: self.pack_fonts.clone(),
             family: values.family,
             nintendo_layout: values.nintendo_layout,
             motion: self.config.active_motion(),
@@ -1390,6 +1399,8 @@ impl Daemon {
             controller_battery: pad.and_then(|d| d.parent.as_deref()).and_then(crate::info::controller_battery),
             form: crate::info::form_factor(),
             inputs: crate::inputlog::Inputs::default(),
+            gyro: pad.and_then(|d| d.view.gyro()),
+            touchpad: pad.filter(|d| d.touchpad.is_some()).map(|d| d.view.touchpad()),
         }
     }
 
@@ -2574,6 +2585,7 @@ impl Daemon {
     /// Recomputes what the active profile can use, after a config or game change.
     fn refresh_scope(&mut self) {
         self.scope = self.config.scope();
+        self.pack_fonts = self.config.active_game().assets.activate_headless();
         rumble::set_strength(self.config.rumble_strength);
         for dev in self.devices.values_mut() {
             dev.engine.set_macros(&self.scope.macros);

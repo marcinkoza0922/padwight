@@ -100,7 +100,7 @@ pub(super) struct Slot<T> {
 }
 
 /// The decorations, each off until ticked: the panel's outline, shadow and gradient, the items'
-/// outline, the selected item's glow and the panel's text color.
+/// outline, the selected item's glow.
 fn decorations<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a, Message> {
     let border = Slot { label: "Panel outline", get: |s| s.border.as_ref(), put: |s, v| s.border = v, start: |_| Stroke::default() };
     let shadow = Slot { label: "Panel shadow", get: |s| s.shadow.as_ref(), put: |s, v| s.shadow = v, start: |_| Shade::panel() };
@@ -112,7 +112,6 @@ fn decorations<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a,
         start: |_| Stroke { width: 1.0, ..Stroke::default() },
     };
     let glow = Slot { label: "Glow on the selected item", get: |s| s.glow.as_ref(), put: |s, v| s.glow = v, start: |s| Shade::glow(&s.selected.color) };
-    let text_color = Slot { label: "Text color", get: |s| s.text.as_ref(), put: |s, v| s.text = v, start: |_| "#ffffff".to_string() };
     column![
         // Indented like the editor's labels above, so it reads as part of the editor.
         text("    Decorations").size(14).color(MUTED_COLOR),
@@ -121,12 +120,6 @@ fn decorations<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a,
         optional(&gradient, |g, set| gradient_rows(g, &set), style, on_change),
         optional(&item_border, |stroke, set| stroke_rows(stroke, 0.0..=6.0, &set), style, on_change),
         optional(&glow, |shade, set| glow_rows(shade, &set), style, on_change),
-        optional(
-            &text_color,
-            |hex, set| vec![labeled("        Color", paint_row(&Paint::new(hex, 1.0), false, &(Rc::new(move |p: Paint| set(p.color)) as Rc<dyn Fn(Paint) -> Message + 'a>)))],
-            style,
-            on_change,
-        ),
     ]
     .spacing(8)
     .into()

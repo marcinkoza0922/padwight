@@ -42,7 +42,9 @@ use crate::{
 
 mod actions;
 mod activity;
+mod chars;
 mod checks;
+mod font_menu;
 mod games;
 mod goto;
 mod guide_tab;
@@ -51,6 +53,7 @@ mod gyro;
 mod gyro_graph;
 mod items;
 mod menu_combos;
+mod motion_demo;
 mod menu_grid;
 #[cfg(test)]
 mod menu_suite;
@@ -61,6 +64,7 @@ mod manual;
 mod overlays;
 mod deadzone_graph;
 mod device_box;
+mod pack_files;
 mod pieces;
 mod packs;
 mod profile;
@@ -77,6 +81,7 @@ mod style_extras;
 mod tab_icons;
 mod touchpad;
 mod tour;
+mod tokens;
 mod tracking;
 mod triggers;
 mod widgets;
@@ -88,6 +93,10 @@ use sounds::overlay_sounds;
 use items::*;
 use menu_grid::*;
 use keys::*;
+use chars::{CharPicker, char_button};
+use font_menu::FontSlot;
+use motion_demo::MotionDemo;
+use tokens::{TokenPicker, TokenTarget, insert_button};
 use layers::IndicatorChoice;
 use packs::{BrowseSource, Dialog, PackField};
 use pieces::*;
@@ -200,6 +209,11 @@ struct App {
     /// The latest presses and what each did, streamed from the daemon.
     feeds: Option<Feeds>,
     picker: Option<KeyPicker>,
+    token_picker: Option<TokenPicker>,
+    char_picker: Option<CharPicker>,
+    /// The font dropdown that is open.
+    font_menu: Option<FontSlot>,
+    motion_demo: MotionDemo,
     dialog: Option<Dialog>,
     profile_tab: ProfileTab,
     /// The Guide tab's notes editor, loaded from the profile when the tab is opened.
@@ -489,7 +503,6 @@ enum Message {
     AddInfoCell(usize, usize),
     /// Cell `.2` of row `.1` of info overlay `.0`.
     SetInfoCell(usize, usize, usize, String),
-    InsertInfoToken(usize, usize, usize, TokenChoice),
     RemoveInfoCell(usize, usize, usize),
     SetInfoGlyphs(PadFamily),
     SetAppearance(Appearance),
@@ -567,12 +580,30 @@ enum Message {
     SetMenuKeepOpen(usize, bool),
     SetMenuItemWeight(usize, usize, f32),
     /// A menu item's icon, by name (`None` for none).
-    SetMenuItemIcon(usize, usize, Option<String>),
     /// A grid item's merged cells.
     SetMenuItemSpan(usize, usize, crate::config::Span),
     /// The cell a grid's cursor starts on.
     SetMenuStart(usize, usize),
     OpenKeyPicker(KeyField, Vec<String>, bool),
+    AddPackFile(pack_files::FileKind),
+    PackFilePicked(pack_files::FileKind, Option<Result<(String, Vec<u8>), String>>),
+    RemovePackIcon(String),
+    RemovePackSound(String),
+    RemovePackFont(String),
+    PlayPackSound(String),
+    OpenTokenPicker(TokenTarget),
+    CloseTokenPicker,
+    ToggleFontMenu(FontSlot),
+    MotionDemoStyle(crate::motion::MotionStyle),
+    MotionTick(std::time::Instant),
+    OpenCharPicker(TokenTarget),
+    CloseCharPicker,
+    CharGroup(usize),
+    CharSearch(String),
+    PickChar(String),
+    PickToken(String),
+    ToggleTokenFold(&'static str),
+    TokenSearch(String),
     PickerKey(&'static str),
     PickerClear,
     PickerClose { apply: bool },
@@ -671,7 +702,7 @@ impl App {
             live: None,
             pad_shown: None,
             feeds: None,
-            picker: None,
+            picker: None, token_picker: None, char_picker: None, font_menu: None, motion_demo: MotionDemo::new(),
             dialog: None,
             profile_tab: ProfileTab::Buttons,
             guide_notes: iced::widget::text_editor::Content::new(),
@@ -798,6 +829,7 @@ impl App {
             iced::event::listen_with(undo_shortcut),
             iced::window::close_requests().map(|_| Message::CloseRequested),
             iced::system::theme_changes().map(Message::SystemMode),
+            self.motion_demo_clock(),
         ])
     }
 
@@ -906,7 +938,7 @@ impl App {
 
     fn update(&mut self, message: Message) -> Task<Message> {
         // Polling and live input don't change the config, and arrive many times a second.
-        let edits = !matches!(message, Message::Poll | Message::LiveInput(_) | Message::LiveFeed(_) | Message::ProbeStick(_) | Message::StatusLoaded(_));
+        let edits = !matches!(message, Message::Poll | Message::MotionTick(_) | Message::LiveInput(_) | Message::LiveFeed(_) | Message::ProbeStick(_) | Message::StatusLoaded(_));
         let message = self.new_layer_for(message);
         // Loading the config and undoing aren't edits to take back.
         let undoable = edits && !matches!(message, Message::ConfigLoaded(..) | Message::Undo);
@@ -924,6 +956,8 @@ impl App {
         if let Some(snapshot) = snapshot {
             self.record_edit(kind, snapshot);
         }
+        // Previews draw with the icons and sounds of the game being looked at.
+        self.game().assets.activate();
         if edits {
             crate::info::set_opener(crate::info::OpenerLabel::of(&self.config.shortcuts));
             crate::info::set_menu_keys(self.config.shortcuts.menu_keys());
@@ -1186,10 +1220,14 @@ impl App {
         // the page's scroll position) by place in the tree, so the shape must not change when
         // a popup opens or closes.
         let base = row![self.view_sidebar(), rule::vertical(1), main];
-        let popup = match (&self.picker, &self.dialog) {
-            (Some(picker), _) => Some(view_picker(picker)),
-            (None, Some(dialog)) => Some(self.view_dialog(dialog)),
-            (None, None) => None,
+        let popup = if let Some(picker) = &self.picker {
+            Some(view_picker(picker))
+        } else if let Some(picker) = &self.token_picker {
+            Some(self.view_token_picker(picker))
+        } else if let Some(picker) = &self.char_picker {
+            Some(self.view_char_picker(picker))
+        } else {
+            self.dialog.as_ref().map(|dialog| self.view_dialog(dialog))
         };
         let mut layers = stack![base];
         if let Some(popup) = popup {

@@ -42,6 +42,31 @@ pub(super) fn overlay_sounds<'a>(
     block.into()
 }
 
+/// What a cue plays: one of the built-in sounds, or a sound file the setup's pack carries.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SoundChoice {
+    Kind(SoundKind),
+    File(crate::sound::SoundFile),
+}
+
+impl std::fmt::Display for SoundChoice {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SoundChoice::Kind(kind) => kind.fmt(f),
+            SoundChoice::File(file) => file.fmt(f),
+        }
+    }
+}
+
+/// The built-in sounds, then the pack's own.
+fn choices() -> Vec<SoundChoice> {
+    SoundKind::ALL.into_iter().map(SoundChoice::Kind).chain(crate::sound::pack_sound_names().into_iter().map(SoundChoice::File)).collect()
+}
+
+fn chosen(spec: &SoundSpec) -> SoundChoice {
+    spec.file.map_or(SoundChoice::Kind(spec.kind), SoundChoice::File)
+}
+
 /// How a knob shows its value.
 enum Unit {
     Percent,
@@ -72,7 +97,11 @@ fn cue_row<'a>(label: &'static str, spec: SoundSpec, editing: bool, toggle: Mess
     };
     let line = row![
         text(label).width(48),
-        dropdown(SoundKind::ALL, Some(spec.kind), move |kind| put(SoundSpec { kind, ..spec })).width(110),
+        dropdown(choices(), Some(chosen(&spec)), move |choice| put(match choice {
+            SoundChoice::Kind(kind) => SoundSpec { kind, file: None, ..spec },
+            SoundChoice::File(file) => SoundSpec { file: Some(file), ..spec },
+        }))
+        .width(110),
         button(text("Play")).style(style::secondary).on_press(Message::PreviewSound(spec)),
         space().width(8),
         disclosure("Edit sound", editing, toggle),

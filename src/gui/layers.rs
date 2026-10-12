@@ -70,12 +70,12 @@ impl App {
     }
 
     /// The mode or layer the shown tab edits.
-    fn edited(&self) -> Option<&Layer> {
+    pub(super) fn edited(&self) -> Option<&Layer> {
         let shift = self.shift()?;
         self.shifts(shift).get(self.shift_index(shift))
     }
 
-    fn edited_mut(&mut self) -> Option<&mut Layer> {
+    pub(super) fn edited_mut(&mut self) -> Option<&mut Layer> {
         let shift = self.shift()?;
         let i = self.shift_index(shift);
         self.shifts_mut(shift).get_mut(i)
@@ -342,10 +342,14 @@ impl App {
         if layer.indicator == Indicator::Bindings {
             settings.push(labeled(
                 "Heading",
-                field("Optional, e.g. Hold {guide} and press", layer.indicator_title.as_deref().unwrap_or(""))
-                    .on_input(Message::SetIndicatorTitle)
-                    .width(320)
-                    .into(),
+                row![
+                    field("Optional, e.g. Hold {guide} and press", layer.indicator_title.as_deref().unwrap_or("")).on_input(Message::SetIndicatorTitle).width(320),
+                    insert_button(TokenTarget::LayerHeading),
+                    char_button(TokenTarget::LayerHeading),
+                ]
+                .spacing(6)
+                .align_y(Alignment::Center)
+                .into(),
             ));
         }
         settings.push(labeled(

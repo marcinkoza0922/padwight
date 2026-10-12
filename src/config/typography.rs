@@ -1,10 +1,11 @@
-//! How an overlay's text is set: its case, letter spacing, size, weight, slant and color.
+//! How an overlay's text is set: its case, letter spacing and size. Weight, slant, underline,
+//! color and outlines are set inside the text itself, with formatting tags (see `info::Mark`).
 
 use serde::{Deserialize, Serialize};
 
 use super::is_zero;
 
-/// How an overlay's text is set: its case, spacing, size, weight, slant and color. The defaults
+/// How an overlay's text is set: its case, spacing and size. The defaults
 /// draw text as it always has.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -16,16 +17,6 @@ pub struct Typography {
     pub letter_spacing: f32,
     /// Text size as a factor of the default: 1 is the default, 0.5..2.
     pub size: f32,
-    /// Draws the family's bold face. A family with no bold face keeps its regular one.
-    #[serde(skip_serializing_if = "std::ops::Not::not")]
-    pub bold: bool,
-    /// Draws the family's italic face. A family with no italic face keeps its upright one.
-    #[serde(skip_serializing_if = "std::ops::Not::not")]
-    pub italic: bool,
-    /// The color (`#rrggbb`) of all the text: titles, hints and items. Unset, the colors chosen
-    /// to suit each part (see `text` for the panel alone).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub color: Option<String>,
 }
 
 /// Which letters are forced to capitals or lower case.
@@ -51,7 +42,7 @@ impl Case {
 
 impl Default for Typography {
     fn default() -> Self {
-        Typography { case: Case::None, letter_spacing: 0.0, size: 1.0, bold: false, italic: false, color: None }
+        Typography { case: Case::None, letter_spacing: 0.0, size: 1.0 }
     }
 }
 

@@ -184,7 +184,7 @@ impl App {
                     self.apply_keys(picker.field, picker.keys);
                 }
             }
-            other => return self.update_layers(other),
+            other => return self.update_pack_files(other),
         }
         Task::none()
     }

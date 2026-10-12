@@ -1,6 +1,6 @@
 # `.padpack` format reference
 
-A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 18**, the format the current app writes. For a walkthrough of building one, see [the Deus Ex tutorial](manual/tutorial-deus-ex.md). The shipped examples are in `packs/`.
+A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 19**, the format the current app writes. For a walkthrough of building one, see [the Deus Ex tutorial](manual/tutorial-deus-ex.md). The shipped examples are in `packs/`.
 
 The easiest way to write a pack is in the app, then **Details → Export…**. Read this page when you want to edit the file by hand, check a value, or understand what the export produced.
 
@@ -32,6 +32,9 @@ made_with = "Xbox controller"
 [media_style]                    # optional, media controls look
 [menu_style]                     # optional, in-game menu and Edit Controls look
 [motion]                         # optional, how each kind of overlay moves
+[assets.icons]                   # optional, SVG icons for {icon:name} (see Icons)
+[assets.sounds]                  # optional, WAV files for overlay cues (see Sounds a pack carries)
+[assets.fonts]                   # optional, TrueType/OpenType files for {font:…} (see Fonts a pack carries)
 ```
 
 Unknown top-level keys are an error, so a typo fails the import rather than being ignored. `log_overlays` is also accepted.
@@ -277,9 +280,8 @@ keep_open = true              # optional: stay up after a pick (default false: a
 stick = "Right"
 
 [[menus.items]]
-label = "Belt 1"
+label = "{icon:potion} Belt 1"   # a label may hold {tokens}: icons, glyphs and formatting (see Text)
 action = { keys = ["KEY_1"] }
-icon = "potion"               # optional: a picture in front of the label (see Icons)
 
 [menus.style]
 position = "center"           # a 3×3 grid: top_left … bottom_right
@@ -335,7 +337,7 @@ opacity = 0.9
 blur = 30
 ```
 
-`text = "#e8d8a8"` sets the color of the panel's own text (titles, hints, info overlay text) instead of white or near-black chosen to suit the background. Items keep their own. Radial menus drawn as arcs take the panel decorations but no item outline or glow. Decorations are format 14; older app versions can't read packs that use them. The player can turn them all off on the App settings page (Performance → Plain overlays).
+Text color is white or near-black, whichever reads on what the text sits on; to color some of the text, use `{color:…}` tags (see [Text](#text)). Radial menus drawn as arcs take the panel decorations but no item outline or glow. Decorations are format 14; older app versions can't read packs that use them. The player can turn them all off on the App settings page (Performance → Plain overlays).
 
 `pulse = true` on the `glow` makes it breathe, and `drift = true` on the `gradient` makes its direction sway slowly. Both are looping effects, see [Looping effects](#looping-effects).
 
@@ -346,12 +348,9 @@ blur = 30
 case = "upper"                 # "none" (as written), "upper" or "lower"
 letter_spacing = 2             # pixels between letters at scale 1, 0 to 12
 size = 1.1                     # a factor on every text size, 0.5 to 2
-bold = true                    # the family's bold face, if it has one
-italic = false                 # the family's italic face, if it has one
-color = "#f0e6c8"              # every text's color; unset, each text picks its own
 ```
 
-Titles, labels, hints and the offer's answers all follow the typography. Keyboard keys keep their own size. Bold and italic come from the font's own faces: a family with only a regular face (most of the bundled ones) draws the same either way. Letter spacing is laid out letter by letter, so long labels still wrap. `color` here is every text's color, and `text` (above) is the panel's own text alone.
+Titles, labels, hints and the offer's answers all follow the typography. Keyboard keys keep their own size. Letter spacing is laid out letter by letter, so long labels still wrap. Weight, slant, underline and color are not style settings: they go inside the text, as [formatting tags](#text). Older packs' `bold`, `italic`, `color` and `text` keys are ignored.
 
 ### Ornaments
 
@@ -383,9 +382,30 @@ The picture is drawn behind the panel's contents and over its background color. 
 
 Plain overlays turns the picture off too.
 
+### Looping effects
+
+Some effects keep moving while the overlay is up: a glow that pulses (`pulse = true` on `glow`), a gradient that sways (`drift = true` on `gradient`), and scanlines that roll (`drift = true` on `scanlines`). They cost a redraw every frame, so the player can turn them all off on the App settings page: Performance → **No looping animations**. Turning them off freezes each effect where it is, and the motion styles still play. Nothing moves in the overlay's own motion (Performance → No motion) stops them too.
+
+### Text
+
+Any text an overlay draws (menu labels, hints, info overlay headings and cells) can hold `{tokens}` and formatting tags in braces. Tags work in pairs: put the opening tag before the text and its closing tag after it. A tag left open holds to the end of the text. Anything in braces that isn't a token or tag stays as written.
+
+| Tag | Does |
+|---|---|
+| `{b}…{/b}` | bold (a font with no bold face draws it regular) |
+| `{i}…{/i}` | italic |
+| `{u}…{/u}` | underlined |
+| `{box}…{/box}` | a light outline around the text, in the text's color |
+| `{font:Cinzel}…{/font}` | another font: a bundled one, an installed family, or one the pack carries (see [Fonts a pack carries](#fonts-a-pack-carries)) |
+| `{color:red}…{/color}` | colored: `red`, `orange`, `yellow`, `green`, `cyan`, `blue`, `purple`, `pink`, `gray`, `white`, or a hex color, `{color:#ff8800}` |
+
+Tags nest, so `{b}{color:orange}Quick save{/color}{/b}` is bold and orange. Use them for legibility and emphasis: bold the action's name, color the dangerous ones, underline a shortcut letter, box a key to hold.
+
+The app's editors have an **Insert…** button beside every text that takes tokens. It opens the token picker: every token and tag in groups, each with a preview of what it shows, buttons drawn for Xbox, PlayStation and Nintendo controllers side by side, and every icon.
+
 ### Icons
 
-A menu item's `icon` is drawn in front of its label, in the item's text color. Built-in icons:
+`{icon:name}` draws an icon the height of the text, in the text's color. Use one in front of a menu item's label, or anywhere in an info overlay, so a glance says what an item does. Built-in icons, usable in any game:
 
 | Name | Picture | Name | Picture |
 |---|---|---|---|
@@ -398,12 +418,36 @@ A menu item's `icon` is drawn in front of its label, in the item's text color. B
 | `wheel` | a wheel | `skull` | a skull |
 | `pda` | a handheld device | `map` | a folded map |
 
-Your own icons go in the icons folder: `icons/` beside `config.toml` (`~/.config/padwight/icons/` on Linux, `%APPDATA%\padwight\icons\` on Windows). Put an SVG there, and its file name without `.svg` is its icon name, so `gauntlet.svg` is `icon = "gauntlet"`. Icons are drawn with the item's text color wherever the SVG says `currentColor`, and in their own colors elsewhere. Names may use letters, digits, `-` and `_`. The App settings and the item editor list every icon there is. Like backgrounds, your icons don't travel with the pack.
+A pack can carry its own icons, in `[assets.icons]`. Each is an SVG, by name, and works only in that pack's game. A pack's icon with a built-in's name replaces it in that game.
 
-### Looping effects
+```toml
+[assets.icons]
+flame = "<svg viewBox='0 0 24 24'><path d='M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-4 2-7 2 1 3 2 4-5z' fill='currentColor'/></svg>"
+```
 
-Some effects keep moving while the overlay is up: a glow that pulses (`pulse = true` on `glow`), a gradient that sways (`drift = true` on `gradient`), and scanlines that roll (`drift = true` on `scanlines`). They cost a redraw every frame, so the player can turn them all off on the App settings page: Performance → **No looping animations**. Turning them off freezes each effect where it is, and the motion styles still play. Nothing moves in the overlay's own motion (Performance → No motion) stops them too.
+Then `{icon:flame}` works in that game's menus and overlays. Wherever the SVG says `currentColor` it is drawn in the text's color, so it follows the style and the selection; anything else keeps its own color. Names use letters, digits, `-` and `_`; an SVG is at most 64 KB and may not hold scripts, links or embedded pictures (a pack with one is refused). An `{icon:…}` that names nothing shows as written, so a mistake is easy to see. In the app, **Details → Pack files → Add icon…** adds an SVG file to the setup, and it goes into the pack when exported.
 
+Draw icons on a square `viewBox` (24 by 24 works well), simple enough to read at text size. If none of the built-in icons fits an item, make one that does: a pack with its own, fitting icons reads better than one that stretches the built-in set.
+
+### Fonts a pack carries
+
+`{font:name}…{/font}` sets some of the text in another font. `name` is a bundled font (`{font:Cinzel}`, `{font:Press Start 2P}`), any font installed on the player's machine (`{font:Fira Sans}`; this falls back to the default where it isn't installed), or a font the pack carries. The same names work for `overlay_font`.
+
+A pack carries a font in `[assets.fonts]`: a TrueType or OpenType file (`.ttf` or `.otf`) as base64, at most 1 MB, under any name made of letters, digits, spaces, `-`, `_` and `.`. It works only in that pack's game, and takes precedence over a bundled font of the same name there.
+
+```toml
+[assets.fonts]
+Runic = "AAEAAAAQAQAABAAAR0RFRgBk…"
+
+[[menus.items]]
+label = "{font:Runic}Rune of Fire{/font} {icon:flame}"
+```
+
+Only carry a font whose license lets you share it (the bundled ones are under the SIL Open Font License; so are most Google Fonts). A font with no bold or italic face draws the same under `{b}` and `{i}`. In the app, **Details → Pack files → Add font…** adds one, and it then appears in the font dropdowns and the token picker.
+
+### Gyro and touchpad
+
+`{gyro:p}`, `{gyro:r}` and `{gyro:y}` show how fast the controller turns about each axis in degrees a second (pitch, roll and yaw, such as `+12°/s`), and `{trackpad}` shows where the touchpad is touched, 0 to 1 across and down from its top left corner, and "pressed" while it is clicked (`(0.42, 0.58) pressed`; `(–, –)` with no finger down). A controller without a gyro or touchpad shows `n/a`. Overlays holding these refresh about twenty times a second, rather than once a second like the clock.
 
 ## Macros
 
@@ -443,7 +487,8 @@ scale = 0.9
 - Each row is a list of cells, and cells line up in columns. A cell is text with `{tokens}`.
 - Button glyphs: `{south} {east} {west} {north} {lb} {rb} {lt} {rt} {select} {start} {guide} {ls} {rs} {l3} {r3} {dpad} {up} {down} {left} {right}`. They are drawn for the controller in use. `{confirm}` and `{back}` are the buttons that choose and go back in menus, A and B unless the player moved them. `{guide}` is whatever opens the Guide overlay on the player's machine: the Guide button, or the input they moved that to.
 - Output glyphs: `{pad:south}` (any button name from the list above, after `pad:`) is drawn for the controller the pad presents itself as, `{keyboard:a}` is a key by its name without `KEY_` in lower case (`{keyboard:leftshift}`, `{keyboard:f1}`), and `{mouse:leftclick}` is `rightclick`, `middleclick`, `backclick` or `forwardclick`. A key or mouse token that names nothing stays as text.
-- Live values: `{time} {time12} {date} {profile} {layer} {mode} {app} {title} {pid} {cpu} {ram} {gpu} {wifi} {system_battery} {controller_battery}`, plus `{current_input}` (with the `current_input` settings).
+- Live values: `{time} {time12} {date} {profile} {layer} {mode} {app} {title} {pid} {cpu} {ram} {gpu} {wifi} {system_battery} {controller_battery}`, plus `{current_input}` (with the `current_input` settings), and the gyro and touchpad tokens (see [Gyro and touchpad](#gyro-and-touchpad)).
+- Icons and formatting: `{icon:bow}`, `{b}`, `{i}`, `{u}`, `{box}` and `{color:…}`, see [Text](#text) and [Icons](#icons).
 - An overlay is shown by a `show_info` action, or always when `always = true`.
 
 ## Modes
@@ -522,6 +567,8 @@ open = { kind = "swish", volume = 0.04, pitch = 1.0, length = 1.0 }
 close = { kind = "swish", volume = 0.03, pitch = 1.0, length = 1.2 }
 ```
 
+A cue can play a sound the pack carries instead of one of these kinds: `step = { file = "clank", volume = 0.2 }` (see [Sounds a pack carries](#sounds-a-pack-carries)). The `kind` beside it is what plays when the pack isn't in use.
+
 The overlays are `keyboard` (the on-screen keyboard), `numpad`, `menu` (every menu layout), `guide` (the Guide overlay's menu and the Guide + Start menu), `media` (the media controls) and `offer` (library offers). Input logs and info overlays have no cursor, so they make no sounds, and their appearing and going make none either.
 
 | `kind` | Sounds like |
@@ -567,6 +614,22 @@ Echo and reverb add a tail after the cue, up to about two seconds each at 1, so 
 pick = { kind = "chime", volume = 0.3, echo = 0.3, reverb = 0.2, bass = -3 }
 ```
 
+
+### Sounds a pack carries
+
+A pack can carry its own sound files, in `[assets.sounds]`: WAV files (8, 16, 24 or 32 bit PCM, or 32 bit float; any sample rate; mono or stereo, which is mixed to mono), as base64, by name. They are short cues: at most 600 KB and 8 seconds each. A cue names one with `file`:
+
+```toml
+[assets.sounds]
+clank = "UklGRi4AAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQoAAAA…"
+
+[sounds.menu]
+pick = { file = "clank", volume = 0.3, pitch = 1.0 }
+```
+
+`volume`, `pitch` (which plays the file faster or slower) and the effects (`bass`, `treble`, `drive`, `echo`, `reverb`) apply to a file as they do to a built-in kind; `length` doesn't, a file being as long as it is. The sound plays only while the pack's game is in use. In the app, **Details → Pack files → Add sound…** adds a WAV file, and each cue's sound picker then lists it (marked ♪).
+
+If none of the built-in kinds suits the game (a clank for a medieval menu, a radio click for a military one), record or synthesize a short sound that does and carry it in the pack.
 ## Overlay rumble
 
 A setup can make the controller buzz as an overlay responds, in the same places its sounds play. Each overlay has its own table, and every cue is optional:
@@ -584,7 +647,7 @@ The overlays are `keyboard`, `numpad`, `menu` (every menu layout), `guide` (the 
 
 ## Overlay motion
 
-`[motion]` sets how each kind of overlay moves: as it opens and closes, as the cursor moves and as something is picked. Each key is one of `off`, `subtle`, `playful`, `stagger`, `grim` or `brutal`, and every key is optional (a missing one is `subtle`).
+`[motion]` sets how each kind of overlay moves: as it opens and closes, as the cursor moves and as something is picked. Each key is one of `off`, `subtle`, `playful`, `stagger`, `swift`, `dreamy`, `retro`, `grim` or `brutal` (`swift`, `dreamy` and `retro` need format 19), and every key is optional (a missing one is `subtle`).
 
 ```toml
 [motion]
@@ -601,8 +664,11 @@ log = "grim"
 |---|---|
 | `off` | Nothing moves. |
 | `subtle` | A quick fade, and the highlight glides from item to item. |
-| `playful` | Panels drop in with a bounce, and the highlight overshoots its item. |
-| `stagger` | Items fade in one after another. |
+| `playful` | Panels spring in and bounce into place, and the item the cursor lands on boings. |
+| `stagger` | Items cascade in one after another, sliding into place. |
+| `swift` | Panels whoosh in from the side and on out the other, items trailing. |
+| `dreamy` | Panels drift down and settle softly, and picks glow gently. |
+| `retro` | Chunky steps like an old console: panels grow in blocks and picks blink. |
 | `grim` | Slow fades that rise into place, and a dim, heavy pulse on a pick. |
 | `brutal` | Snaps in and out, the highlight jumps, and a pick jolts and flashes. |
 
@@ -629,6 +695,7 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
   - 16 added the touchpad's joystick, menu and swipe modes, tapping, scrolling and gliding, the split pad, and layers' touchpads.
   - 17 added modes (`[[modes]]` and the `mode` action), and stopped layers from being toggled. When an older pack is read, each `toggle` of a layer becomes a `mode` switch, and a layer that was only ever toggled becomes a mode.
   - 18 added menu item icons, the typography (`type`), ornaments, background pictures, looping effects (pulsing glows and drifting gradients and scanlines) and rumble cues (`[rumble.<overlay>]`).
+  - 19 replaced the menu item `icon` with the `{icon:name}` token, replaced the typography's bold, italic and color and the style's `text` color with inline formatting tags (`{b}`, `{i}`, `{u}`, `{box}`, `{color:…}`), added the `{gyro:…}` and `{trackpad}` tokens, added the `{font:…}` tag, and added the icons, sounds and fonts a pack carries (`[assets]`).
 - Bump `format` only for a breaking change to the shape. Adding an optional key with a default doesn't need it.
 
 ## Checks

@@ -2,11 +2,12 @@
 //! family named by its name.
 
 use std::{
-    collections::HashMap,
-    sync::{Mutex, OnceLock},
+    collections::{BTreeMap, HashMap, HashSet},
+    path::PathBuf,
+    sync::{Mutex, OnceLock, RwLock},
 };
 
-use iced::Font;
+use iced::{Font, advanced::graphics::text::font_system};
 
 /// A font shipped inside the binary (all under the SIL Open Font License; see `assets/fonts`).
 pub struct Bundled {
@@ -32,14 +33,119 @@ pub const BUNDLED: [Bundled; 15] = [
     Bundled { name: "Bangers", bytes: include_bytes!("../assets/fonts/Bangers-Regular.ttf") },
 ];
 
-/// Names offered in the font dropdowns.
+/// Names offered in the font dropdowns: the bundled fonts, then the ones the game in use carries.
 pub fn names() -> Vec<String> {
-    BUNDLED.iter().map(|b| b.name.to_string()).collect()
+    BUNDLED.iter().map(|b| b.name.to_string()).chain(pack_names()).collect()
+}
+
+/// The fonts of the game in use, by the name the pack gives them, and the family each is
+/// drawn as.
+static PACK: RwLock<BTreeMap<String, &'static str>> = RwLock::new(BTreeMap::new());
+
+/// What the game in use's font assets were last set from, so setting them again is free.
+static PACK_SOURCE: Mutex<Option<BTreeMap<String, String>>> = Mutex::new(None);
+
+/// The family of each font file loaded so far, by a hash of its bytes: loading one twice
+/// would only add the same faces again.
+static LOADED: Mutex<Option<HashMap<u64, &'static str>>> = Mutex::new(None);
+
+/// The most a font file may be, in bytes.
+pub const MAX_FONT_BYTES: usize = 1024 * 1024;
+
+/// A font name that can go in `{font:…}`: letters, digits, spaces and `- _ .`.
+pub fn valid_name(name: &str) -> bool {
+    !name.is_empty() && name.len() <= 64 && name.chars().all(|c| c.is_alphanumeric() || matches!(c, ' ' | '-' | '_' | '.'))
+}
+
+fn hash(bytes: &[u8]) -> u64 {
+    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+    for b in bytes {
+        h ^= u64::from(*b);
+        h = h.wrapping_mul(0x0100_0000_01b3);
+    }
+    h
+}
+
+/// Loads a font file into this process's fonts and returns the family it draws as. A file that
+/// holds no font is an error.
+pub fn load(bytes: &[u8]) -> Result<&'static str, String> {
+    if bytes.len() > MAX_FONT_BYTES {
+        return Err(format!("a font is at most {} KB", MAX_FONT_BYTES / 1024));
+    }
+    let key = hash(bytes);
+    let mut loaded = LOADED.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    let loaded = loaded.get_or_insert_with(HashMap::new);
+    if let Some(family) = loaded.get(&key) {
+        return Ok(family);
+    }
+    let mut system = font_system().write().unwrap_or_else(std::sync::PoisonError::into_inner);
+    let before: HashSet<_> = system.raw().db().faces().map(|f| f.id).collect();
+    system.load_font(bytes.to_vec().into());
+    let family = system.raw().db().faces().filter(|f| !before.contains(&f.id)).find_map(|f| f.families.first().map(|(name, _)| name.clone()));
+    let family = family.ok_or("not a font file (TrueType or OpenType)")?;
+    let family: &'static str = Box::leak(family.into_boxed_str());
+    loaded.insert(key, family);
+    Ok(family)
+}
+
+/// Makes these the fonts `{font:name}` and the font settings can name besides the others: the
+/// game in use's, as base64. A font that doesn't load is left out.
+pub fn set_pack_fonts(fonts: &BTreeMap<String, String>) {
+    let mut source = PACK_SOURCE.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    if source.as_ref() == Some(fonts) {
+        return;
+    }
+    let ready = fonts
+        .iter()
+        .filter_map(|(name, data)| Some((name.clone(), load(&crate::config::decode_base64(data)?).ok()?)))
+        .collect();
+    set_pack(ready);
+    *source = Some(fonts.clone());
+}
+
+fn set_pack(ready: BTreeMap<String, &'static str>) {
+    if let Ok(mut pack) = PACK.write() {
+        *pack = ready;
+    }
+}
+
+/// Writes the game's fonts as files in a folder the overlay can read, so frames carry their
+/// paths rather than the fonts. Empty if there is no such folder.
+pub fn share_pack_fonts(fonts: &BTreeMap<String, String>) -> BTreeMap<String, PathBuf> {
+    let Some(dir) = crate::ipc::shared_runtime_dir().map(|d| d.join("padwight-fonts")) else { return BTreeMap::new() };
+    if fonts.is_empty() || std::fs::create_dir_all(&dir).is_err() {
+        return BTreeMap::new();
+    }
+    fonts
+        .iter()
+        .filter_map(|(name, data)| {
+            let bytes = crate::config::decode_base64(data)?;
+            let path = dir.join(format!("{:016x}.font", hash(&bytes)));
+            if !path.exists() {
+                std::fs::write(&path, &bytes).ok()?;
+            }
+            Some((name.clone(), path))
+        })
+        .collect()
+}
+
+/// Like [`set_pack_fonts`], from the files [`share_pack_fonts`] wrote: for the overlay process.
+pub fn set_pack_font_files(files: &BTreeMap<String, PathBuf>) {
+    let ready = files.iter().filter_map(|(name, path)| Some((name.clone(), load(&std::fs::read(path).ok()?).ok()?))).collect();
+    set_pack(ready);
+}
+
+/// The names of the fonts the game in use carries, sorted.
+pub fn pack_names() -> Vec<String> {
+    PACK.read().map(|p| p.keys().cloned().collect()).unwrap_or_default()
 }
 
 /// The iced font for a setting; `None` is the system default.
 pub fn resolve(name: Option<&str>) -> Font {
     let Some(name) = name.map(str::trim).filter(|n| !n.is_empty()) else { return Font::DEFAULT };
+    if let Some(family) = PACK.read().ok().and_then(|p| p.get(name).copied()) {
+        return Font::with_name(family);
+    }
     if let Some(b) = BUNDLED.iter().find(|b| b.name == name) {
         return Font::with_name(b.name);
     }
@@ -60,5 +166,21 @@ mod tests {
         assert_eq!(resolve(Some("  ")), Font::DEFAULT);
         assert_eq!(resolve(Some("Inter")), Font::with_name("Inter"));
         assert_eq!(resolve(Some("Fira Sans")), resolve(Some("Fira Sans")));
+    }
+
+    #[test]
+    fn a_pack_s_font_is_loaded_named_and_resolved() {
+        let bangers = BUNDLED.iter().find(|b| b.name == "Bangers").unwrap().bytes;
+        let mut assets = crate::config::PackAssets::default();
+        assert!(assets.add_font("not a font", b"hello").is_err());
+        assert!(assets.add_font("../x", bangers).is_err());
+        assets.add_font("Marquee Face", bangers).unwrap();
+        assets.check().unwrap();
+        assert_eq!(resolve(Some("Marquee Face")), resolve(Some("Marquee Face")));
+        assert!(!pack_names().contains(&"Marquee Face".to_string()), "not in use until activated");
+        assets.activate();
+        assert!(names().contains(&"Marquee Face".to_string()));
+        assert_eq!(resolve(Some("Marquee Face")), Font::with_name("Bangers"), "drawn as the file's own family");
+        assert!(valid_name("Press Start 2P") && !valid_name("a/b") && !valid_name(""));
     }
 }

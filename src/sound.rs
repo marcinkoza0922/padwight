@@ -5,12 +5,14 @@
 mod effects;
 mod player;
 mod synth;
+mod wav;
 
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
 pub use player::Sounds;
+pub use wav::{SoundFile, decode_wav, pack_sound_names, set_pack_sounds};
 use synth::synthesize;
 
 /// Sample rate of every cue.
@@ -159,6 +161,10 @@ impl fmt::Display for SoundKind {
 pub struct SoundSpec {
     #[serde(default)]
     pub kind: SoundKind,
+    /// A sound file the game's pack carries, played in place of the kind's own sound (which
+    /// plays if the pack isn't in use).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file: Option<SoundFile>,
     /// 0..=1.
     #[serde(default = "default_volume")]
     pub volume: f32,
@@ -204,13 +210,17 @@ fn default_length() -> f32 {
 
 impl SoundSpec {
     pub fn new(kind: SoundKind, volume: f32, pitch: f32) -> Self {
-        SoundSpec { kind, volume, pitch, length: default_length(), bass: 0.0, treble: 0.0, drive: 0.0, echo: 0.0, reverb: 0.0 }
+        SoundSpec { kind, file: None, volume, pitch, length: default_length(), bass: 0.0, treble: 0.0, drive: 0.0, echo: 0.0, reverb: 0.0 }
     }
 
     /// How long the cue plays, with any echo and reverb after it.
     pub fn duration(&self) -> std::time::Duration {
         let tail = effects::tail(self) as f32 / RATE as f32;
-        std::time::Duration::from_secs_f32(self.kind.seconds() * self.length.clamp(0.5, 2.0) + tail)
+        let body = match self.file.and_then(wav::pack_samples) {
+            Some(file) => file.len() as f32 / RATE as f32 / self.pitch.clamp(0.5, 2.0),
+            None => self.kind.seconds() * self.length.clamp(0.5, 2.0),
+        };
+        std::time::Duration::from_secs_f32(body + tail)
     }
 
     /// The cue's samples, mono at [`RATE`], with volume applied.
@@ -218,7 +228,11 @@ impl SoundSpec {
         let pitch = self.pitch.clamp(0.5, 2.0);
         let length = self.length.clamp(0.5, 2.0);
         let volume = self.volume.clamp(0.0, 1.0);
-        let mut out = synthesize(self.kind, pitch, length);
+        let mut out = match self.file.and_then(wav::pack_samples) {
+            // A file is played faster or slower for its pitch; its length is its own.
+            Some(file) => wav::resample(&file, pitch),
+            None => synthesize(self.kind, pitch, length),
+        };
         effects::apply(&mut out, self);
         // The cue peaks at 1 before its effects. Echoes piling up, or boosted bass, can push it
         // past that, so it comes back down; a cut leaves it quieter, as a cut should.

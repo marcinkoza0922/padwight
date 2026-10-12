@@ -153,17 +153,30 @@ impl App {
             Message::SetFullKeyboard(full) => self.config.full_keyboard = full,
             Message::SetRumbleStrength(strength) => self.config.rumble_strength = strength,
             Message::SetPickRumble(on) => self.config.pick_rumble = on,
-            Message::SetOverlayFont(font) => self.config.overlay_font = font,
+            Message::SetOverlayFont(font) => {
+                self.config.overlay_font = font;
+                self.font_menu = None;
+            }
             Message::SetColorblindTones(on) => self.config.colorblind_tones = on,
             Message::SetPerformance(performance) => self.config.performance = performance,
-            Message::SetMotion(kind, style) => self.config.motion.set(kind, style),
+            Message::SetMotion(kind, style) => {
+                self.config.motion.set(kind, style);
+                self.motion_demo.show(style);
+            }
+            Message::MotionDemoStyle(style) => self.motion_demo.show(style),
+            Message::MotionTick(now) => self.motion_demo.tick(now),
             Message::SetGameMotion(kind, style) => {
                 let mut set = self.game().motion.unwrap_or(self.config.motion);
                 set.set(kind, style);
                 self.game_mut().motion = Some(set);
+                self.motion_demo.show(style);
             }
             Message::OwnGameMotion(on) => self.game_mut().motion = on.then_some(self.config.motion),
-            Message::SetGameOverlayFont(font) => self.game_mut().overlay_font = font,
+            Message::SetGameOverlayFont(font) => {
+                self.game_mut().overlay_font = font;
+                self.font_menu = None;
+            }
+            Message::ToggleFontMenu(slot) => self.font_menu = if self.font_menu == Some(slot) { None } else { Some(slot) },
             Message::SetGameOverlayStyle(layout, style) => self.set_game_overlay_style(layout, style),
             Message::SetGameMediaStyle(style) => self.game_mut().media_style = style,
             Message::SetGameMenuStyle(style) => self.game_mut().menu_style = style,
@@ -355,6 +368,7 @@ impl App {
         let mut rows = own_rows("motion", own.is_some(), Message::OwnGameMotion);
         if let Some(set) = own {
             rows.extend(motion_rows(set, Message::SetGameMotion));
+            rows.push(self.view_motion_demo());
         }
         section(
             "Overlay motion",
@@ -534,6 +548,7 @@ impl App {
             self.view_game_motion(),
             self.view_game_sounds(),
             self.view_game_overlays(),
+            self.view_pack_files(),
             section(
                 "Pack",
                 Some("A pack is a setup saved as a .padpack file, to share or to keep. Export saves this setup as one.".into()),

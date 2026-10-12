@@ -34,21 +34,11 @@ fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, si
         let icon = iced::widget::svg::Handle::from_memory(crate::keyword_icon::svg(k).into_bytes());
         line = line.push(iced::widget::svg(icon).width(size).height(size).opacity(fade));
     }
-    if let Some(name) = item.icon.as_deref()
-        && let Some(picture) = crate::icons::svg(name, rgb_of(fg))
-    {
-        line = line.push(iced::widget::svg(iced::widget::svg::Handle::from_memory(picture.into_bytes())).width(size * 1.2).height(size * 1.2).opacity(fade));
-    }
     line = line.push(rich_text(label, c, size, fg));
     if item.submenu {
         line = line.push(text("▸").font(font).size(size).color(fg.scale_alpha(0.7)));
     }
     line.into()
-}
-
-/// A color as RGB bytes, for SVG markup.
-fn rgb_of(c: Color) -> [u8; 3] {
-    [c.r, c.g, c.b].map(|v| (v * 255.0).round().clamp(0.0, 255.0) as u8)
 }
 
 pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit) -> Element<'a, M> {
@@ -87,7 +77,7 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
     framed(contents.into(), c, &m.style, 22.0 * s, fit)
 }
 
-/// An item's label, its colors (highlighted, and faded in under Stagger) and whether the
+/// An item's label, its colors (highlighted, and faded in when the style staggers its items) and whether the
 /// cursor is on it.
 pub(super) fn item_cell<'a, M: 'a>(m: &MenuView, i: usize, c: Colors, size: f32) -> (Element<'a, M>, Colors, bool) {
     let item = &m.items[i];
@@ -112,7 +102,7 @@ fn directional<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
         match m.items.get(i).filter(|item| !item.label.is_empty()) {
             Some(_) => {
                 let (label, lit, selected) = item_cell(m, i, c, 16.0 * s);
-                container(label).center_x(w).center_y(h).style(lit_cell_style(lit, selected, h)).into()
+                c.moving(m, i, container(label).center_x(w).center_y(h).style(lit_cell_style(lit, selected, h)))
             }
             None => space().width(w).height(h).into(),
         }
@@ -142,7 +132,7 @@ fn grid<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
         let (cw, ch) = (reach(at.columns, w), reach(at.rows, h));
         let cell = container(label).center_x(cw).center_y(ch).padding([0.0, 6.0 * s]).style(lit_cell_style(lit, selected, h));
         let (x, y) = (at.column as f32 * (w + gap), at.row as f32 * (h + gap));
-        cells = cells.push(column![space().height(y), row![space().width(x), cell]]);
+        cells = cells.push(column![space().height(y), row![space().width(x), c.moving(m, i, cell)]]);
     }
     cells.into()
 }
@@ -154,7 +144,7 @@ fn list<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
     let cursor = m.selected.unwrap_or(0);
     let cell = |i: usize| -> Element<'a, M> {
         let (content, lit, selected) = item_cell(m, i, c, 17.0 * s);
-        container(content).padding([10.0 * s, 14.0 * s]).width(Length::Fill).style(lit_cell_style(lit, selected, 40.0 * s)).into()
+        c.moving(m, i, container(content).padding([10.0 * s, 14.0 * s]).width(Length::Fill).style(lit_cell_style(lit, selected, 40.0 * s)))
     };
     let marker = |t: &'static str| text(t).font(c.font).size(13.0 * s).color(c.muted);
     let start = crate::menu::list_start(cursor, len);
@@ -212,12 +202,11 @@ fn carousel<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
         let big = if m.touch { m.selected == Some(i) } else { i == selected };
         let height = if big { 80.0 } else { 60.0 } * s;
         let (label, lit, _) = item_cell(m, i, c, if big { 19.0 } else { 14.0 } * s);
-        line = line.push(
-            container(label)
-                .center_x(if big { 170.0 } else { 120.0 } * s)
-                .center_y(height)
-                .style(lit_cell_style(lit, big, height)),
-        );
+        line = line.push(c.moving(
+            m,
+            i,
+            container(label).center_x(if big { 170.0 } else { 120.0 } * s).center_y(height).style(lit_cell_style(lit, big, height)),
+        ));
     }
     line.push(arrow("▶")).into()
 }

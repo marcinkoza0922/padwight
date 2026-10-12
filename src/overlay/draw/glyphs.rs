@@ -19,6 +19,10 @@ pub(super) fn segment_element<'a, M: 'a>(seg: &Segment, c: Colors, s: f32, opaci
         Segment::Dpad(lit) => dpad_glyph(*lit, c, s),
         Segment::StickClick { right } => stick_click_glyph(*right, c, s),
         Segment::Icon(icon) => icon_glyph(icon, c, s),
+        // Formatting tags and icons by name are laid out by `marked::line`; one that gets here
+        // on its own is drawn as nothing, or as the icon's own space.
+        Segment::Mark(_) => space().width(0).into(),
+        Segment::Picture(name) => text(format!("{{icon:{name}}}")).font(c.font).size(14.0 * s).color(c.muted).into(),
         Segment::Bar(done) => iced::widget::progress_bar(0.0..=1.0, *done).length(160.0 * s).girth(6.0 * s).into(),
     }
 }

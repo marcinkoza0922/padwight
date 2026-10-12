@@ -179,3 +179,32 @@ fn render_previews() {
         std::fs::write(dir.join(format!("{}.wav", kind.label().to_lowercase())), wav).unwrap();
     }
 }
+
+#[test]
+fn a_cue_can_play_a_pack_s_sound_file_and_falls_back_to_its_kind() {
+    let wav = crate::config::encode_base64(&{
+        let data: Vec<u8> = [0i16, 16000, -16000, 16000, 0].iter().flat_map(|s| s.to_le_bytes()).collect();
+        let mut out = b"RIFF".to_vec();
+        out.extend((36 + data.len() as u32).to_le_bytes());
+        out.extend(b"WAVEfmt ");
+        out.extend(16u32.to_le_bytes());
+        out.extend([1, 0, 1, 0]);
+        out.extend(RATE.to_le_bytes());
+        out.extend((RATE * 2).to_le_bytes());
+        out.extend([2, 0, 16, 0]);
+        out.extend(b"data");
+        out.extend((data.len() as u32).to_le_bytes());
+        out.extend(data);
+        out
+    });
+    let spec = SoundSpec { file: Some(SoundFile::new("clap-test")), ..SoundSpec::new(SoundKind::Pop, 1.0, 1.0) };
+    let synthesized = spec.samples().len();
+    assert_eq!(synthesized, (SoundKind::Pop.seconds() * RATE as f32) as usize, "no pack in use: the kind plays");
+    set_pack_sounds(&std::collections::BTreeMap::from([("clap-test".to_string(), wav)]));
+    assert_eq!(spec.samples().len(), 5);
+    let octave_up = SoundSpec { pitch: 2.0, ..spec };
+    assert_eq!(octave_up.samples().len(), 2);
+    let text = toml::to_string(&spec).unwrap();
+    assert!(text.contains("file = \"clap-test\""));
+    assert_eq!(toml::from_str::<SoundSpec>(&text).unwrap(), spec);
+}
