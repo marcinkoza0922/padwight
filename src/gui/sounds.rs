@@ -35,6 +35,9 @@ pub(super) fn overlay_sounds<'a>(
         block = block.push(cue("Pick", Feedback::Pick, current.pick, |s, pick| OverlaySounds { pick, ..s }));
         block = block.push(cue("Open", Feedback::Open, current.open, |s, open| OverlaySounds { open, ..s }));
         block = block.push(cue("Close", Feedback::Close, current.close, |s, close| OverlaySounds { close, ..s }));
+        if overlay == SoundOverlay::Guide {
+            block = block.push(cue("Mode", Feedback::Mode, current.mode, |s, mode| OverlaySounds { mode, ..s }));
+        }
     }
     block.into()
 }

@@ -2461,6 +2461,14 @@ pub struct Scope {
     pub sounds: SoundSet,
 }
 
+impl Scope {
+    /// The game's own modes, without the built-in ones that follow them.
+    pub fn game_modes(&self) -> &[Mode] {
+        let own = self.modes.iter().take_while(|m| built_in_mode(&m.name).is_none()).count();
+        &self.modes[..own]
+    }
+}
+
 /// Like [`Scope`], borrowed: what a game's profiles and items can refer to.
 #[derive(Debug, Clone, Default)]
 pub struct ScopeRef<'a> {
@@ -2921,6 +2929,8 @@ mod tests {
         let guide = scope.modes.iter().find(|l| l.name == GUIDE_MODE).unwrap();
         assert_eq!(**guide, Layer::guide());
         assert_eq!(config.games[0].mode_or_built_in(MOUSE_MODE), Some(&Layer::mouse()));
+        let owned = Scope { modes: scope.modes.iter().map(|m| (*m).clone()).collect(), ..Scope::default() };
+        assert_eq!(owned.game_modes().iter().map(|l| l.name.as_str()).collect::<Vec<_>>(), ["Driving"]);
     }
 
     #[test]

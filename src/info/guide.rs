@@ -12,9 +12,14 @@ pub const DEFAULT_MODE: &str = "Default";
 /// Rows of the Guide overlay's Mappings shown at once, layer sections included.
 const MAPPING_ROWS: usize = 14;
 
+/// Size of the Guide overlay's panels, relative to the default, so they read from across a room.
+const PANEL_SCALE: f32 = 1.4;
+
 /// What the Guide overlay's panels show: a profile in one of its game's modes, and which page.
 pub struct GuideView<'a> {
     pub profile: &'a Profile,
+    /// The game's own modes. The built-in ones are left out: Guide mode is what's on screen, and
+    /// Mouse mode is the same in every game.
     pub modes: &'a [Mode],
     /// The game's layers. Only these get a section; the built-in ones are left out.
     pub layers: &'a [Layer],
@@ -206,7 +211,7 @@ fn panel(name: &str, position: ScreenPosition, title: String, rows: Vec<Vec<Stri
         on_start: None,
         linger: None,
         current_input: Default::default(),
-        style: OverlayStyle { position, ..OverlayStyle::info() },
+        style: OverlayStyle { position, scale: PANEL_SCALE, ..OverlayStyle::info() },
         title: Some(title),
         rows,
     }

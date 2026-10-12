@@ -242,6 +242,8 @@ pub struct OverlaySounds {
     pub pick: SoundSpec,
     pub open: SoundSpec,
     pub close: SoundSpec,
+    /// A mode switched to (the Guide overlay's Left and Right).
+    pub mode: SoundSpec,
 }
 
 impl Default for OverlaySounds {
@@ -253,6 +255,7 @@ impl Default for OverlaySounds {
             // Quieter than a step, so an overlay coming or going is noticed without pulling focus.
             open: SoundSpec::new(SoundKind::Pop, 0.05, 1.3),
             close: SoundSpec::new(SoundKind::Pop, 0.04, 0.8),
+            mode: SoundSpec::new(SoundKind::Swish, 0.08, 1.0),
         }
     }
 }
@@ -267,6 +270,8 @@ impl OverlaySounds {
             pick: SoundSpec { length: 0.8, ..SoundSpec::new(SoundKind::Glass, 0.2, 0.8) },
             open: SoundSpec::new(SoundKind::Rise, 0.07, 1.0),
             close: SoundSpec::new(SoundKind::Fall, 0.06, 1.0),
+            // A mode switch is a change of state rather than a cursor step, so it's a breath, not a tick.
+            mode: SoundSpec { length: 0.8, ..SoundSpec::new(SoundKind::Swish, 0.08, 1.0) },
         }
     }
 }
@@ -373,6 +378,7 @@ impl SoundSet {
             Feedback::Pick => sounds.pick,
             Feedback::Open => sounds.open,
             Feedback::Close => sounds.close,
+            Feedback::Mode => sounds.mode,
         })
     }
 
@@ -389,13 +395,15 @@ impl SoundSet {
     }
 }
 
-/// What happened in an overlay: a pick, a step of the cursor, or it popping in or out.
+/// What happened in an overlay: a pick, a step of the cursor, it popping in or out, or a mode
+/// switched to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Feedback {
     Step,
     Pick,
     Open,
     Close,
+    Mode,
 }
 
 impl Feedback {

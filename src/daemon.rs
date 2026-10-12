@@ -1533,7 +1533,7 @@ impl Daemon {
         let menu = self.guide_menu.as_ref();
         Some(crate::info::GuideView {
             profile: self.config.active()?,
-            modes: &self.scope.modes,
+            modes: self.scope.game_modes(),
             layers: &self.scope.layers,
             shown: menu.map_or_else(|| self.guide_current_mode(), |m| m.mode),
             current: self.guide_current_mode(),
@@ -1546,7 +1546,7 @@ impl Daemon {
     fn guide_current_mode(&self) -> usize {
         let pad = self.devices.values().find(|d| d.engine.guide_overlay_open());
         let mode = pad.and_then(|d| d.engine.chosen_mode());
-        mode.and_then(|m| self.scope.modes.iter().position(|x| x.name == m)).map_or(0, |i| i + 1)
+        mode.and_then(|m| self.scope.game_modes().iter().position(|x| x.name == m)).map_or(0, |i| i + 1)
     }
 
     /// Moves the Guide menu's cursor, or chooses or closes, for the presses the engine took while
@@ -1568,12 +1568,12 @@ impl Daemon {
                     }
                 }
                 Button::DpadLeft | Button::LeftStickLeft | Button::DpadRight | Button::LeftStickRight => {
-                    let modes = self.scope.modes.len() + 1;
+                    let modes = self.scope.game_modes().len() + 1;
                     if modes > 1 {
                         let forward = matches!(key, Button::DpadRight | Button::LeftStickRight);
                         menu.mode = if forward { (menu.mode + 1) % modes } else { (menu.mode + modes - 1) % modes };
                         menu.page = 0;
-                        self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Step));
+                        self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Mode));
                     }
                 }
                 Button::South => {

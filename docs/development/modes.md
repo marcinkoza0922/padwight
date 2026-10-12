@@ -42,7 +42,9 @@ after its own modes.
   Switching to any other mode ends it. `Mode("Guide")` does nothing; the Guide button owns it,
   and the GUI's mode pickers leave it out. Profiles' Guide buttons say `Mode("Guide")`, which
   the engine ignores.
-- The Guide overlay's Mappings can turn to them with Left and Right, after the game's modes.
+- The Guide overlay's Mappings leave them out: Left and Right turn only through the game's own
+  modes (`Scope::game_modes`). Guide mode is what's on screen, and Mouse mode is the same
+  everywhere.
 
 ## Migration
 
