@@ -106,9 +106,9 @@ fn rows_join_their_glyphs_by_shape() {
     assert_eq!(RowShape::Merged.join(&parts), "A, B");
     assert_eq!(RowShape::Combo.join(&parts), "A + B");
     assert_eq!(RowShape::Input.join(&parts[..1]), "A");
-    assert_eq!(RowShape::Gesture(GestureKind::DoubleTap).join(&parts[..1]), "A ×2");
-    assert_eq!(RowShape::Gesture(GestureKind::TripleTap).join(&parts[..1]), "A ×3");
-    assert_eq!(RowShape::Gesture(GestureKind::LongPress).join(&parts[..1]), "A hold");
+    assert_eq!(RowShape::Gesture(GestureKind::DoubleTap).join(&parts[..1]), "A {gesture:double}");
+    assert_eq!(RowShape::Gesture(GestureKind::TripleTap).join(&parts[..1]), "A {gesture:triple}");
+    assert_eq!(RowShape::Gesture(GestureKind::LongPress).join(&parts[..1]), "A {gesture:hold}");
 }
 
 #[test]

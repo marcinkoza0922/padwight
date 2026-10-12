@@ -88,7 +88,7 @@ fn a_held_layer_gets_a_section_of_what_it_changes() {
     // The pad's own buttons fill the first page; the section follows them.
     let overlays = GuideView { page: 99, ..view(&p, &modes, &layers, 0) }.overlays();
     assert_eq!(overlays.len(), 2, "the mappings and one section");
-    assert_eq!(overlays[1].title.as_deref(), Some("Hotkeys layer · {lb}, {north} hold"));
+    assert_eq!(overlays[1].title.as_deref(), Some("Hotkeys layer · {lb}, {north} {gesture:hold}"));
     assert_eq!(overlays[1].rows, [row("{south}", "{keyboard:f1}")], "only what the layer sets");
     assert_eq!(overlays[1].style.position, ScreenPosition::CenterRight, "under the mappings");
 

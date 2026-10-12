@@ -31,7 +31,7 @@ pub use guide::{DEFAULT_MODE, GuideView};
 pub use opener::{OpenerLabel, set_menu_keys, set_opener, set_panel_keys};
 pub use pad_model::PadModel;
 
-use crate::config::{Button, CurrentInput, InfoOverlay, Layer, MouseButton, OverlayStyle, ScreenPosition, Stick, Trigger};
+use crate::config::{Button, CurrentInput, GestureKind, InfoOverlay, Layer, MouseButton, OverlayStyle, ScreenPosition, Stick, Trigger};
 
 /// The `{token}` that draws `b`'s glyph, for buttons the pad has.
 pub fn button_token(b: Button) -> Option<&'static str> {
@@ -289,6 +289,19 @@ pub enum Token {
     /// token itself sets: `{current_input_device_N}` for one controller, then optionally
     /// `:gap_ms:stay_ms`.
     CurrentInput { device: Option<u8>, gap_ms: Option<u64>, stay_ms: Option<u64> },
+    /// A gesture's badge: `{gesture:double}` (blue ×2), `{gesture:triple}` (red ×3) or
+    /// `{gesture:hold}` (a yellow box), as a row's mark says how it's done.
+    Gesture(GestureKind),
+}
+
+/// The gesture a `{gesture:…}` token names.
+fn gesture_kind(name: &str) -> Option<GestureKind> {
+    match name.to_lowercase().as_str() {
+        "double" => Some(GestureKind::DoubleTap),
+        "triple" => Some(GestureKind::TripleTap),
+        "hold" => Some(GestureKind::LongPress),
+        _ => None,
+    }
 }
 
 /// `{current_input…}`: `rest` is what follows the name, and `args` the `:`-separated timings.
@@ -331,6 +344,7 @@ fn token(inner: &str) -> Option<Token> {
                 _ => None,
             };
         }
+        ("gesture", [kind]) => return gesture_kind(kind).map(Token::Gesture),
         _ => {}
     }
     let gauge = match name.as_str() {
@@ -528,6 +542,12 @@ fn opaque() -> f32 {
 }
 
 /// How long an info overlay takes to fade out at the end of its time.
+/// The colors of the face buttons and of the gesture badges, which share them.
+const GREEN: [u8; 3] = [0x3c, 0xa0, 0x3c];
+const RED: [u8; 3] = [0xc8, 0x3c, 0x3c];
+const BLUE: [u8; 3] = [0x2f, 0x6c, 0xc8];
+const YELLOW: [u8; 3] = [0xc8, 0xa0, 0x1e];
+
 pub const FADE_OUT: std::time::Duration = std::time::Duration::from_millis(600);
 
 /// Info overlays shown for a while rather than steadily: at the game's start, or lingering
@@ -735,6 +755,15 @@ pub fn glyph(label: &str, fill: Option<[u8; 3]>, round: bool) -> Segment {
     Segment::Glyph { label: label.to_string(), fill, round }
 }
 
+/// A gesture's badge: a blue ×2 or a red ×3 in a circle, and "hold" in a yellow rounded box.
+pub fn gesture_glyph(kind: GestureKind) -> Segment {
+    match kind {
+        GestureKind::DoubleTap => glyph("×2", Some(BLUE), true),
+        GestureKind::TripleTap => glyph("×3", Some(RED), true),
+        GestureKind::LongPress => glyph("hold", Some(YELLOW), false),
+    }
+}
+
 /// A keyboard key as a keycap: its label, in a slate color that tells it from a controller's.
 pub fn key_glyph(code: &str) -> Segment {
     const KEY: [u8; 3] = [0x4a, 0x52, 0x5c];
@@ -749,7 +778,6 @@ pub fn mouse_glyph(m: MouseButton) -> Segment {
 
 /// The badge shown while the screen is being recorded: a red "● REC" in the top left.
 pub fn recording_view() -> InfoView {
-    const RED: [u8; 3] = [0xc8, 0x3c, 0x3c];
     InfoView {
         name: "recording".into(),
         style: OverlayStyle { position: ScreenPosition::TopLeft, ..OverlayStyle::indicator() },
@@ -790,6 +818,7 @@ pub fn glyph_text(text: &str, glyphs: Glyphs) -> Vec<Segment> {
             Err(Token::Key(code)) => key_glyph(code),
             Err(Token::Mouse(m)) => mouse_glyph(m),
             Err(Token::Trigger(t)) => trigger_glyph(t, family),
+            Err(Token::Gesture(kind)) => gesture_glyph(kind),
             Err(Token::Stick(Stick::Left)) => glyph("LS", None, true),
             Err(Token::Stick(Stick::Right)) => glyph("RS", None, true),
             Err(Token::Dpad) => glyph("✚", None, false),
@@ -815,10 +844,6 @@ pub fn button_hint(b: Button) -> String {
 pub fn button_glyph(b: Button, family: PadFamily, swapped: bool) -> Segment {
     use PadFamily::*;
     let b = if swapped { nintendo_face(b) } else { b };
-    const GREEN: [u8; 3] = [0x3c, 0xa0, 0x3c];
-    const RED: [u8; 3] = [0xc8, 0x3c, 0x3c];
-    const BLUE: [u8; 3] = [0x2f, 0x6c, 0xc8];
-    const YELLOW: [u8; 3] = [0xc8, 0xa0, 0x1e];
     const PS_BLUE: [u8; 3] = [0x5a, 0x8c, 0xdc];
     const PS_RED: [u8; 3] = [0xdc, 0x5a, 0x5a];
     const PS_PINK: [u8; 3] = [0xc8, 0x6e, 0xc8];
@@ -1017,6 +1042,7 @@ fn cell_segments(input: &CurrentInput, cell: &str, live: &Live) -> Vec<Segment> 
             Err(Token::Key(code)) => key_glyph(code),
             Err(Token::Mouse(m)) => mouse_glyph(m),
             Err(Token::Trigger(t)) => trigger_glyph(t, live.family),
+            Err(Token::Gesture(kind)) => gesture_glyph(kind),
             Err(Token::Stick(Stick::Left)) => glyph("LS", None, true),
             Err(Token::Stick(Stick::Right)) => glyph("RS", None, true),
             Err(Token::Dpad) => glyph("✚", None, false),

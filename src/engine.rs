@@ -1371,7 +1371,7 @@ impl Engine {
 
 /// Whether a button drives the Guide overlay's menu rather than closing the overlay: the D-pad
 /// and left stick move the highlight, A chooses and B closes, and the right stick turns the
-/// Mappings' pages.
+/// Mappings' pages (its sideways presses do nothing, but they don't close the overlay either).
 fn guide_nav(b: Button) -> bool {
     matches!(
         b,
@@ -1385,6 +1385,8 @@ fn guide_nav(b: Button) -> bool {
             | Button::LeftStickRight
             | Button::RightStickUp
             | Button::RightStickDown
+            | Button::RightStickLeft
+            | Button::RightStickRight
             | Button::South
             | Button::East
     )
@@ -1913,6 +1915,22 @@ mod tests {
         let out = axis(&mut e, &on, Axis::LeftY, 0.9);
         assert!(!out.iter().any(|o| matches!(o, OutEvent::PadAxis(_, v) if *v != 0.0)), "only recentered: {out:?}");
         assert_eq!(e.take_guide_nav(), [Button::LeftStickDown]);
+    }
+
+    #[test]
+    fn the_right_stick_sideways_does_not_close_the_guide() {
+        let (base, on) = guide_setup();
+        let mut e = Engine::default();
+        let t0 = Instant::now();
+        press(&mut e, &base, Button::Guide, true, t0);
+        press(&mut e, &base, Button::Guide, false, ms(t0, 80));
+        assert!(e.guide_overlay_open());
+        press(&mut e, &on, Button::RightStickLeft, true, ms(t0, 200));
+        press(&mut e, &on, Button::RightStickLeft, false, ms(t0, 240));
+        press(&mut e, &on, Button::RightStickRight, true, ms(t0, 300));
+        press(&mut e, &on, Button::RightStickRight, false, ms(t0, 340));
+        assert!(e.guide_overlay_open(), "the menu stays up");
+        assert_eq!(e.take_guide_nav(), [Button::RightStickLeft, Button::RightStickRight]);
     }
 
     #[test]

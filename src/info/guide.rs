@@ -104,7 +104,7 @@ impl GuideView<'_> {
     fn title(&self, page: usize, pages: usize) -> String {
         let mut title = "Mappings".to_string();
         if pages > 1 {
-            title.push_str(&format!(" {}/{pages} · {{rs}} more", page + 1));
+            title.push_str(&format!(" {}/{pages} · push {{rs}} up or down to scroll", page + 1));
         }
         if !self.modes.is_empty() {
             let name = self.mode().map_or(DEFAULT_MODE, |m| m.name.as_str());
