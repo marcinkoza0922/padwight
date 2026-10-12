@@ -42,24 +42,67 @@ fn title(source: &str) -> &str {
     source.lines().next().unwrap_or_default().trim_start_matches('#').trim()
 }
 
+/// The first line of `source` that has every word of `query`, trimmed of Markdown marks, for the
+/// chapter list to show under the title.
+fn snippet<'a>(source: &'a str, query: &str) -> Option<&'a str> {
+    source
+        .lines()
+        .skip(1)
+        .map(|l| l.trim().trim_start_matches(['#', '-', '*', '>', ' ']))
+        .filter(|l| !l.is_empty())
+        .filter_map(|l| Some((fuzzy(query, l)?, l)))
+        .min_by_key(|(score, _)| *score)
+        .map(|(_, l)| l)
+}
+
+/// The chapters that match `query`, best first, by index, each with the line that matched. Words may be spread
+/// over a chapter, so a chapter can match without any one line doing so.
+fn find(query: &str) -> Vec<(usize, Option<&'static str>)> {
+    let mut hits: Vec<(u32, usize, Option<&'static str>)> = CHAPTERS
+        .iter()
+        .enumerate()
+        .filter_map(|(i, (_, source))| Some((fuzzy(query, source)?, i, snippet(source, query))))
+        .collect();
+    // Best matches first; the chapters keep their order among equals.
+    hits.sort_by_key(|&(score, ..)| score);
+    hits.into_iter().map(|(_, i, line)| (i, line)).collect()
+}
+
 impl App {
-    /// The chapter list on the left, and the chosen chapter on the right.
+    /// The chapter list on the left, and the chosen chapter on the right. Searching narrows the list
+    /// to the chapters that fuzzily mention every word typed, the closest first.
     pub(super) fn view_manual(&self) -> Element<'_, Message> {
-        let chosen = self.manual_chapter.min(CHAPTERS.len() - 1);
-        let mut index = column![].spacing(4);
-        for (i, (_, source)) in CHAPTERS.iter().enumerate() {
+        let query = self.manual_query.as_str();
+        let hits = find(query);
+        let searching = !query.trim().is_empty();
+        // A chosen chapter that the search rules out gives way to the first one it keeps.
+        let mut chosen = self.manual_chapter.min(CHAPTERS.len() - 1);
+        if let Some(&(first, _)) = hits.first()
+            && !hits.iter().any(|(i, _)| *i == chosen)
+        {
+            chosen = first;
+        }
+        let mut index = column![search_field("Search the manual…", query, Message::SetManualSearch)].spacing(4);
+        for &(i, line) in &hits {
+            let mut label = column![text(title(CHAPTERS[i].1)).size(14)].spacing(2);
+            if searching && let Some(line) = line {
+                label = label.push(text(line).size(12).color(MUTED_COLOR));
+            }
             index = index.push(
-                button(text(title(source)).size(14))
-                    .width(Length::Fill)
-                    .padding([6, 10])
-                    .style(style::nav(i == chosen))
-                    .on_press(Message::SelectChapter(i)),
+                button(label).width(Length::Fill).padding([6, 10]).style(style::nav(i == chosen)).on_press(Message::SelectChapter(i)),
             );
         }
-        let settings = markdown::Settings::from(&self.theme());
-        let body = markdown::view(self.manual[chosen].items(), settings).map(Message::ManualLink);
+        if hits.is_empty() {
+            index = index.push(text("No chapter matches.").size(13).color(MUTED_COLOR));
+        }
+        let body: Element<'_, Message> = if hits.is_empty() {
+            space().into()
+        } else {
+            let settings = markdown::Settings::from(&self.theme());
+            markdown::view(self.manual[chosen].items(), settings).map(Message::ManualLink)
+        };
         row![
-            container(index).width(220),
+            container(index).width(260),
             rule::vertical(1),
             container(body).width(Length::Fill).padding([0, 8]),
         ]
@@ -82,6 +125,15 @@ mod tests {
         for content in load() {
             assert!(!content.items().is_empty());
         }
+    }
+
+    #[test]
+    fn search_narrows_the_chapters() {
+        assert_eq!(find("").len(), CHAPTERS.len());
+        assert!(find("zzzqqq").is_empty());
+        let hits = find("GYRO");
+        assert!(hits.iter().any(|(i, _)| CHAPTERS[*i].0 == "gyro.md"), "{hits:?}");
+        assert!(hits.len() < CHAPTERS.len());
     }
 
     #[test]

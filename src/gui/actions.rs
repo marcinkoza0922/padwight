@@ -446,6 +446,7 @@ pub(super) fn action_value<'a>(
             ]
             .spacing(12)
             .align_y(Alignment::Center);
+            let goto = goto_button(ItemKind::Macro, &name, !missing);
             // A macro in a turbo plays once per press, so there's nothing to loop.
             if !names.in_turbo {
                 line = line.push(
@@ -457,7 +458,7 @@ pub(super) fn action_value<'a>(
             if missing {
                 line = line.push(text("missing macro").size(12).color(ERROR_COLOR));
             }
-            line.into()
+            line.push(goto).into()
         }
         ButtonAction::Disabled | ButtonAction::Screenshot | ButtonAction::ToggleRecording => space().into(),
         ButtonAction::ToggleMedia => text("D-pad left and right seek, up and down change the volume, bumpers change track, A plays or pauses, B closes.").size(12).color(MUTED_COLOR).into(),
@@ -487,7 +488,7 @@ pub(super) fn action_value<'a>(
             } else if !names.infos.contains(name) {
                 line = line.push(text("missing info overlay").size(12).color(ERROR_COLOR));
             }
-            line.into()
+            line.push(goto_button(ItemKind::Info, name, names.infos.contains(name) || names.always_infos.contains(name))).into()
         }
         ButtonAction::ShowLog(_) if names.logs.is_empty() => {
             tab_link(
@@ -506,7 +507,7 @@ pub(super) fn action_value<'a>(
             } else if !names.logs.contains(name) {
                 line = line.push(text("missing log overlay").size(12).color(ERROR_COLOR));
             }
-            line.into()
+            line.push(goto_button(ItemKind::Log, name, names.logs.contains(name) || names.always_logs.contains(name))).into()
         }
         ButtonAction::OpenMenu(_) if names.menus.is_empty() => {
             tab_link("No menus to open.", "Create one on the Menus tab", GameTab::Menus, "")
@@ -520,7 +521,7 @@ pub(super) fn action_value<'a>(
             if !names.layers.contains(name) {
                 line = line.push(text("missing layer").size(12).color(ERROR_COLOR));
             }
-            line.into()
+            line.push(goto_button(ItemKind::Layer, name, names.layers.contains(name))).into()
         }
         ButtonAction::Mode(name) => {
             let mut options = switchable_modes(names);
@@ -531,7 +532,7 @@ pub(super) fn action_value<'a>(
             if !names.modes.contains(name) {
                 line = line.push(text("missing mode").size(12).color(ERROR_COLOR));
             }
-            line.into()
+            line.push(goto_button(ItemKind::Mode, name, names.modes.contains(name))).into()
         }
         ButtonAction::OpenMenu(name) => {
             let mut line = row![dropdown(names.menus.clone(), Some(name.clone()), move |n| on_change(ButtonAction::OpenMenu(n))).width(200)]
@@ -540,7 +541,7 @@ pub(super) fn action_value<'a>(
             if !names.menus.contains(name) {
                 line = line.push(text("missing menu").size(12).color(ERROR_COLOR));
             }
-            line.into()
+            line.push(goto_button(ItemKind::Menu, name, names.menus.contains(name))).into()
         }
     }
 }

@@ -51,6 +51,8 @@ pub(super) struct Ui<'a> {
     pub(super) live_touch: Option<(Vec<(f32, f32)>, bool)>,
     /// The touchpad's height in widths, for its picture.
     pub(super) touchpad_height: f32,
+    /// What the search box holds; the Buttons and Combos tabs list only rows that match.
+    pub(super) query: &'a str,
 }
 
 /// A layer being edited, over the profile it's compared with.
@@ -223,8 +225,12 @@ pub(super) fn drawing_labels(p: &Profile) -> Vec<(pad_svg::Spot, String)> {
 pub(super) fn view_profile<'a>(p: &'a Profile, ui: &Ui, tab: ProfileTab, guide: GuideView<'a>) -> Element<'a, Message> {
     let names = ui.names;
     let sections: Vec<Element<'a, Message>> = match tab {
-        ProfileTab::Buttons => vec![
-            section(
+        ProfileTab::Buttons => {
+            let (buttons, paddles) = (button_rows(p, ui), paddle_rows(p, ui));
+            let searching = !ui.query.trim().is_empty();
+            let mut sections = Vec::new();
+            if !searching || !buttons.is_empty() {
+                sections.push(section(
                 "Buttons",
                 Some(
                     "Click a button's name to edit it. Add a double tap, triple tap or long press \
@@ -237,18 +243,25 @@ pub(super) fn view_profile<'a>(p: &'a Profile, ui: &Ui, tab: ProfileTab, guide: 
                      Menu or Toggle marks the kind of action."
                         .into(),
                 ),
-                button_rows(p, ui),
-            ),
-            section(
+                buttons,
+            ));
+            }
+            if !searching || !paddles.is_empty() {
+                sections.push(section(
                 "Back paddles",
                 Some(
                     "The extra buttons on the back of some controllers (Xbox Elite, DualSense Edge, Steam Deck). \
                      Map them like any button."
                         .into(),
                 ),
-                paddle_rows(p, ui),
-            ),
-        ],
+                paddles,
+            ));
+            }
+            if sections.is_empty() {
+                sections.push(note("No button matches.").into());
+            }
+            sections
+        }
         ProfileTab::Sticks => {
             let mut sticks = Vec::new();
             for s in [Stick::Left, Stick::Right] {
@@ -299,7 +312,50 @@ pub(super) fn view_profile<'a>(p: &'a Profile, ui: &Ui, tab: ProfileTab, guide: 
         ProfileTab::Touchpad => touchpad::touchpad_sections(p, ui),
         ProfileTab::Gyro => gyro::gyro_sections(p, ui),
     };
+    let searching = !ui.query.trim().is_empty();
+    let sections = match tab_words(tab) {
+        words if searching && !words.is_empty() => {
+            let kept: Vec<_> = sections.into_iter().zip(words).filter(|(_, w)| matches_query(ui.query, w)).map(|(e, _)| e).collect();
+            if kept.is_empty() { vec![note("Nothing here matches.").into()] } else { kept }
+        }
+        _ => sections,
+    };
     column(sections).spacing(16).into()
+}
+
+/// What each section of a tab can be found by when searching: its title and the labels in it, one
+/// string per section in the order `view_profile` lists them. Empty for the tabs that search their
+/// rows instead.
+fn tab_words(tab: ProfileTab) -> &'static [&'static str] {
+    match tab {
+        ProfileTab::Buttons | ProfileTab::Combos => &[],
+        ProfileTab::Sticks => &[
+            "sticks left stick right stick mode mouse gamepad flick ring sectors first sector wasd arrows scroll dead zone deadzone dead angle curve response speed vertical smoothing turn size invert directions press at stickiness fill with test turn",
+            "triggers left trigger right trigger zones add zone walk modifier shift partial push range from",
+        ],
+        ProfileTab::Gyro => &[
+            "gyro motion aim mode off mouse stick steering flick sensitivity invert horizontal vertical axes turning response curve slow fast shape active always on only while held toggle rumble recenter pause pushing advanced jitter noise smoothing drift full tilt lock edge",
+        ],
+        ProfileTab::Touchpad => &[
+            "touchpad touch pad mouse stick menu swipe split left right half tap click two-finger scroll deadzone sensitivity response glide flick center finger speed",
+        ],
+        ProfileTab::Guide => &["guide overlay notes tips mapping guide rows add a row show button"],
+    }
+}
+
+/// Whether `tab` has something the search box finds.
+fn tab_has_match(p: &Profile, tab: ProfileTab, ui: &Ui) -> bool {
+    match tab {
+        ProfileTab::Buttons => Button::ALL.into_iter().chain(Button::PADDLES).any(|b| row_matches(p, b, ui)),
+        ProfileTab::Combos => p.combos.iter().any(|c| combo_matches(c, ui)),
+        _ => tab_words(tab).iter().any(|w| matches_query(ui.query, w)),
+    }
+}
+
+/// Whether a combo's buttons and action have every word the search box holds.
+fn combo_matches(combo: &crate::config::Combo, ui: &Ui) -> bool {
+    let name = combo.buttons.iter().map(|b| short_button(*b)).collect::<Vec<_>>().join(" + ");
+    matches_query(ui.query, &format!("{name} {}", summarize(&combo.action)))
 }
 
 /// The compared profile's combos, each of which a layer can switch off while it's on.
@@ -402,7 +458,7 @@ pub(super) fn requirement_rows(p: &Profile, f: Feature) -> Vec<Element<'_, Messa
 /// can override them like any button, so the box is left out there.
 pub(super) fn paddle_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message>> {
     let mut rows: Vec<Element<'a, Message>> = Vec::new();
-    if ui.layer.is_none() {
+    if ui.layer.is_none() && ui.query.trim().is_empty() {
         if !ui.any_paddles {
             rows.push(
                 note("None of your managed controllers have back paddles. These mappings take effect once one is connected.").into(),
@@ -410,15 +466,33 @@ pub(super) fn paddle_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Messag
         }
         rows.extend(requirement_rows(p, Feature::BackPaddles));
     }
-    for b in Button::PADDLES {
+    for b in Button::PADDLES.into_iter().filter(|b| row_matches(p, *b, ui)) {
         rows.extend(button_row(p, b, ui));
     }
     rows
 }
 
+/// Whether button `b`'s row has every word the search box holds: in its name, its action or a gesture's.
+fn row_matches(p: &Profile, b: Button, ui: &Ui) -> bool {
+    if ui.query.trim().is_empty() {
+        return true;
+    }
+    let base = ui.layer.map_or(p, |m| m.base);
+    let mut haystack = format!("{} {} {}", button_name(b, ui.in_use), short_button(b), summarize(p.button(b)));
+    for profile in [p, base] {
+        haystack.push(' ');
+        haystack.push_str(&summarize(profile.button(b)));
+        for (kind, action) in GestureKind::ALL.into_iter().filter_map(|k| profile.gestures.get(&b).and_then(|g| g.get(k)).map(|a| (k, a))) {
+            haystack.push_str(&format!(" {kind} {}", summarize(action)));
+        }
+    }
+    matches_query(ui.query, &haystack)
+}
+
 pub(super) fn button_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message>> {
     // Layers use their profile's timings.
-    let mut rows: Vec<Element<'a, Message>> = if ui.layer.is_some() {
+    let searching = !ui.query.trim().is_empty();
+    let mut rows: Vec<Element<'a, Message>> = if ui.layer.is_some() || searching {
         Vec::new()
     } else {
         vec![
@@ -427,7 +501,7 @@ pub(super) fn button_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Messag
         ]
     };
     // Guide is built in: the Guide tab says what it does, so it has no row here.
-    for b in Button::ALL.into_iter().filter(|b| *b != Button::Guide) {
+    for b in Button::ALL.into_iter().filter(|b| *b != Button::Guide && row_matches(p, *b, ui)) {
         rows.extend(button_row(p, b, ui));
     }
     rows
@@ -565,9 +639,10 @@ pub(super) fn button_row<'a>(p: &'a Profile, b: Button, ui: &Ui) -> Vec<Element<
 pub(super) fn combo_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message>> {
     let mut rows: Vec<Element<'a, Message>> = Vec::new();
     // The window only means something once there is a combo to press within it.
+    let searching = !ui.query.trim().is_empty();
     if p.combos.is_empty() {
         rows.push(text("This profile has no combos yet.").color(MUTED_COLOR).into());
-    } else if ui.layer.is_none() {
+    } else if ui.layer.is_none() && !searching {
         rows.push(value_slider("Combo window", 20.0..=300.0, p.combo_window_ms as f32, 5.0, "ms", Message::SetComboWindow));
     }
     for (i, combo) in p.combos.iter().enumerate() {
@@ -575,6 +650,9 @@ pub(super) fn combo_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message
         let open = ui.is_open(target);
         let name = combo.buttons.iter().map(|b| short_button(*b)).collect::<Vec<_>>().join(" + ");
         let name = if name.is_empty() { "(no buttons)".to_string() } else { name };
+        if !combo_matches(combo, ui) {
+            continue;
+        }
         let problem = if combo.buttons.len() < 2 {
             Some("needs at least two buttons".to_string())
         } else {
@@ -636,6 +714,9 @@ pub(super) fn combo_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message
         );
     }
     rows.push(button(text("+ Add combo").size(13)).style(style::secondary).on_press(Message::AddCombo).into());
+    if searching && rows.is_empty() {
+        rows.push(text("No combo matches.").color(MUTED_COLOR).into());
+    }
     rows
 }
 
@@ -948,23 +1029,6 @@ impl App {
         let live = (layer.is_none() && self.profile_ref().is_some_and(|at| at == self.saved.active)).then(|| self.with_active_layers(p));
         let mut col = column![self.view_live(Some(live.as_ref().unwrap_or(p)), true)].spacing(16);
 
-        let find: Element<'_, Message> = if self.finding {
-            row![
-                text("Press a button or push a stick on your controller…").color(style_accent()),
-                button(text("Cancel")).style(style::secondary).on_press(Message::CancelFind),
-            ]
-            .spacing(10)
-            .align_y(Alignment::Center)
-            .into()
-        } else {
-            row![
-                button(text("Find by pressing")).style(style::secondary).on_press_maybe(self.status.is_some().then_some(Message::StartFind)),
-                help("Press a button or push a stick on your controller to jump to its mapping.".into()),
-            ]
-            .spacing(8)
-            .align_y(Alignment::Center)
-            .into()
-        };
         let mut tabs = row![self.profile_segments(p, names), space::horizontal()]
             .spacing(6)
             .align_y(Alignment::Center);
@@ -979,7 +1043,7 @@ impl App {
                 .push(button(text("Expand all")).style(style::secondary).on_press(Message::ExpandAll(true)))
                 .push(button(text("Collapse all")).style(style::secondary).on_press(Message::ExpandAll(false)));
         }
-        col = col.push(row![find].align_y(Alignment::Center)).push(tabs);
+        col = col.push(self.find_and_search()).push(tabs);
 
         let ui = Ui {
             names,
@@ -1000,10 +1064,57 @@ impl App {
             layer,
             menus: self.config.scope_of(self.game()).menus,
             live_touch: self.shown_input().map(|l| (l.touches.clone(), l.touch_click)),
+            query: &self.button_query,
             touchpad_height: if self.shown_pad().model == Some(PadModel::DualShock4) { crate::input::DUALSHOCK4_HEIGHT } else { crate::input::DUALSENSE_HEIGHT },
         };
         let guide = GuideView { notes: &self.guide_notes, family: ui.family, swap: ui.swap };
+        if let Some(also) = self.also_in_tabs(p, &ui) {
+            col = col.push(also);
+        }
         col.push(view_profile(p, &ui, self.profile_tab, guide)).into()
+    }
+
+    /// "Find by pressing" and the search box, on one line.
+    fn find_and_search<'a>(&self) -> Element<'a, Message> {
+        let find: Element<'_, Message> = if self.finding {
+            row![
+                text("Press a button or push a stick on your controller…").color(style_accent()),
+                button(text("Cancel")).style(style::secondary).on_press(Message::CancelFind),
+            ]
+            .spacing(10)
+            .align_y(Alignment::Center)
+            .into()
+        } else {
+            row![
+                button(text("Find by pressing")).style(style::secondary).on_press_maybe(self.status.is_some().then_some(Message::StartFind)),
+                help("Press a button or push a stick on your controller to jump to its mapping.".into()),
+            ]
+            .spacing(8)
+            .align_y(Alignment::Center)
+            .into()
+        };
+        row![
+            find,
+            container(search_field("Search this profile…", &self.button_query, Message::SetButtonSearch)).max_width(420)
+        ]
+        .spacing(16)
+        .align_y(Alignment::Center)
+        .into()
+    }
+
+    /// While searching, the other tabs that have a match, as buttons to go there.
+    fn also_in_tabs<'a>(&self, p: &Profile, ui: &Ui) -> Option<Element<'a, Message>> {
+        if ui.query.trim().is_empty() {
+            return None;
+        }
+        let others: Vec<ProfileTab> = ProfileTab::ALL.into_iter().filter(|t| *t != self.profile_tab && tab_has_match(p, *t, ui)).collect();
+        let mut line = row![text(if others.is_empty() { "No other tab matches." } else { "Also found in" }).size(13).color(MUTED_COLOR)]
+            .spacing(6)
+            .align_y(Alignment::Center);
+        for t in others {
+            line = line.push(button(text(t.to_string()).size(13)).style(style::secondary).padding([3, 10]).on_press(Message::SelectProfileTab(t)));
+        }
+        Some(line.into())
     }
 
     /// Why the live gyro pictures don't show `p`'s gyro settings: the daemon runs the saved
@@ -1154,6 +1265,20 @@ mod tests {
     use crate::gui::tests::*;
 
     #[test]
+    fn search_keeps_only_matching_buttons() {
+        let app = app();
+        let names = app.names();
+        let mut ui = Ui { names: &names, expanded: &app.expanded, found: app.found, analog_triggers: true, any_gyro: false, any_paddles: false, any_touchpad: false, live_sticks: None, live_gyro: None, gyro_trail: &app.gyro_trail, gyro_note: None, stick_probe: 1.0, family: PadFamily::default(), in_use: PadFamily::default(), swap: Swap::Off, layer: None, menus: Vec::new(), live_touch: None, touchpad_height: 0.5, query: "" };
+        let p = app.profile().unwrap();
+        assert!(row_matches(p, Button::South, &ui));
+        ui.query = "  ";
+        assert!(row_matches(p, Button::South, &ui));
+        ui.query = "zzzqqq";
+        assert!(!row_matches(p, Button::South, &ui));
+        assert!(button_rows(p, &ui).is_empty());
+    }
+
+    #[test]
     fn trigger_depth_settings_hide_only_when_all_pads_are_digital() {
         let mut app = app();
         let status = |devices| Status { enabled: true, active_profile: "Gamepad".into(), devices, ..Default::default() };
@@ -1258,7 +1383,7 @@ mod tests {
         assert!(!app.finding, "one press ends find mode");
         assert_eq!((app.game_tab, app.profile_tab, app.found), (GameTab::Profiles, ProfileTab::Buttons, Some(Button::West)));
         let names = Names::default();
-        let ui = Ui { names: &names, expanded: &app.expanded, found: app.found, analog_triggers: true, any_gyro: false, any_paddles: false, any_touchpad: false, live_sticks: None, live_gyro: None, gyro_trail: &app.gyro_trail, gyro_note: None, stick_probe: 1.0, family: PadFamily::default(), in_use: PadFamily::default(), swap: Swap::Off, layer: None, menus: Vec::new(), live_touch: None, touchpad_height: 0.5 };
+        let ui = Ui { names: &names, expanded: &app.expanded, found: app.found, analog_triggers: true, any_gyro: false, any_paddles: false, any_touchpad: false, live_sticks: None, live_gyro: None, gyro_trail: &app.gyro_trail, gyro_note: None, stick_probe: 1.0, family: PadFamily::default(), in_use: PadFamily::default(), swap: Swap::Off, layer: None, menus: Vec::new(), live_touch: None, touchpad_height: 0.5, query: "" };
         assert!(ui.is_open(Target::Button(Button::West)));
         // Presses while not finding don't move the editor.
         let _ = app.update(Message::LiveInput(Some(snapshot(&[Button::West, Button::North], (0.0, 0.0)))));

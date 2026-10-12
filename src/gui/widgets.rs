@@ -147,6 +147,16 @@ pub(super) fn field<'a>(placeholder: &str, value: &str) -> iced::widget::TextInp
     text_input(placeholder, value).style(style::text_field).padding([6, 10])
 }
 
+/// A search box with a button to clear it. `on_change` gets the text as typed.
+pub(super) fn search_field<'a>(placeholder: &str, query: &str, on_change: fn(String) -> Message) -> Element<'a, Message> {
+    let clear: Element<'a, Message> = if query.is_empty() {
+        space().into()
+    } else {
+        button(text("✕").size(13)).style(style::secondary).on_press(on_change(String::new())).into()
+    };
+    row![field(placeholder, query).on_input(on_change).width(Length::Fill), clear].spacing(6).align_y(Alignment::Center).into()
+}
+
 pub(super) fn section<'a>(title: &'a str, help_text: Option<String>, rows: Vec<Element<'a, Message>>) -> Element<'a, Message> {
     let mut heading = row![text(title).size(18)].spacing(8).align_y(Alignment::Center);
     if let Some(h) = help_text {
