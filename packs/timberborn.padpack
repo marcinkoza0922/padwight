@@ -1,12 +1,13 @@
 format = 19
 macros = []
+overlay_font = "Comfortaa"
 
 [pack]
 id = "5da0f454-aeee-4621-a8d6-504ceec68400"
 name = "Timberborn"
-version = "1.0"
+version = "1.1"
 author = "Padwight"
-description = "Timberborn (Steam, run natively or through Proton) on an Xbox-style pad. Left stick moves the camera with WASD, the right stick moves the cursor, A and RT left-click, LT right-click, B is Escape. Q and E rotate the camera. Start pauses. Hold LB for a radial menu of Pause, rotation and Close. This is a starting point: check the bindings against the game's own keys."
+description = "Timberborn on an Xbox-style pad, for the game's default keys. The left stick moves the camera, the right stick the pointer; RT and A click, LT drops the tool. LB and RB step through the tools (hold: toolbar groups), X rotates (hold: the other way), R3 flips, L3 pauses, and holding Y with the d-pad sets the speed. The d-pad zooms and turns the camera (hold: layers and 90° turns). Select lists the settlement panels; Start is the menu."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -27,21 +28,42 @@ tap_window_ms = 250
 long_press_ms = 500
 
 [profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_R"]}
+North = {open_menu = "Speed"}
+LeftBumper = {multi = [{keys = ["KEY_LEFTSHIFT"]}, {wheel = "Up"}]}
+RightBumper = {multi = [{keys = ["KEY_LEFTSHIFT"]}, {wheel = "Down"}]}
+Select = {open_menu = "Settlement"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_SPACE"]}
+RightStick = {keys = ["KEY_F"]}
+DpadUp = {keys = ["KEY_PAGEDOWN"]}
+DpadDown = {keys = ["KEY_PAGEUP"]}
+DpadLeft = {keys = ["KEY_Q"]}
+DpadRight = {keys = ["KEY_E"]}
 
-[profiles.buttons.Guide]
-mode = "Guide"
+[profiles.gestures.West]
+long_press = {keys = ["KEY_LEFTSHIFT", "KEY_R"]}
 
-[profiles.buttons.South]
-mouse = "Left"
+[profiles.gestures.LeftBumper]
+long_press = {multi = [{keys = ["KEY_LEFTCTRL"]}, {wheel = "Up"}]}
 
-[profiles.buttons.East]
-keys = ["KEY_ESC"]
+[profiles.gestures.RightBumper]
+long_press = {multi = [{keys = ["KEY_LEFTCTRL"]}, {wheel = "Down"}]}
 
-[profiles.buttons.Start]
-keys = ["KEY_SPACE"]
+[profiles.gestures.DpadUp]
+long_press = {multi = [{keys = ["KEY_LEFTALT"]}, {wheel = "Up"}]}
 
-[profiles.buttons.LeftBumper]
-open_menu = "Tools"
+[profiles.gestures.DpadDown]
+long_press = {multi = [{keys = ["KEY_LEFTALT"]}, {wheel = "Down"}]}
+
+[profiles.gestures.DpadLeft]
+long_press = {keys = ["KEY_Z"]}
+
+[profiles.gestures.DpadRight]
+long_press = {keys = ["KEY_C"]}
 
 [profiles.left_stick]
 deadzone = 0.12
@@ -57,21 +79,19 @@ right = "KEY_D"
 [profiles.right_stick]
 deadzone = 0.15
 curve = 1.6
+key_threshold = 0.5
 
 [profiles.right_stick.action.mouse]
 speed = 1400.0
+accel = 0.3
 
 [profiles.left_trigger.action.button]
 threshold = 0.4
-
-[profiles.left_trigger.action.button.action]
-mouse = "Right"
+action = {mouse = "Right"}
 
 [profiles.right_trigger.action.button]
 threshold = 0.3
-
-[profiles.right_trigger.action.button.action]
-mouse = "Left"
+action = {mouse = "Left"}
 
 [profiles.gyro]
 mode = "off"
@@ -81,44 +101,70 @@ invert_y = false
 activation = "always"
 noise_threshold = 1.0
 
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer and the left stick {ls} the camera. {rt} or {south} clicks; {lt} right-clicks, which drops the tool in hand.
+{lb} and {rb} step through the tools of the open toolbar group. Hold them to move to the previous or next group.
+{west} rotates what you're placing; hold it to turn the other way. {r3} flips it where it can be flipped.
+Click {l3} to pause. Hold {north} and press the {dpad} for the speed: left is normal, up fast, right fastest, and down pauses.
+{up} and {down} zoom. Hold them to show a higher or lower layer of the map. {left} and {right} turn the camera; hold them to turn it 90°.
+{select} lists the settlement panels (F1 to F10), the wellbeing box and batch control.
+Naming a district or a beaver: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move the camera"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Left click"}
+"trigger:Left" = {text = "Right click (drop the tool)"}
+"button:South" = {text = "Left click"}
+"button:East" = {text = "Cancel / close"}
+"button:West" = {text = "{icon:rotate} Rotate"}
+"gesture:button:West:long_press" = {text = "{icon:rotate-left} Rotate the other way"}
+"button:North" = {text = "Hold + {dpad}: game speed"}
+"button:LeftBumper" = {text = "Previous tool"}
+"button:RightBumper" = {text = "Next tool"}
+"gesture:button:LeftBumper:long_press" = {text = "Previous toolbar group"}
+"gesture:button:RightBumper:long_press" = {text = "Next toolbar group"}
+"button:Select" = {text = "Settlement panels"}
+"button:Start" = {text = "Menu"}
+"button:LeftStick" = {text = "{icon:pause} Pause"}
+"button:RightStick" = {text = "{icon:flip} Flip"}
+"button:DpadUp" = {text = "Zoom in"}
+"button:DpadDown" = {text = "Zoom out"}
+"gesture:button:DpadUp:long_press" = {text = "Show a higher layer"}
+"gesture:button:DpadDown:long_press" = {text = "Show a lower layer"}
+"gesture:button:DpadLeft:long_press" = {text = "Turn 90° left"}
+"gesture:button:DpadRight:long_press" = {text = "Turn 90° right"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Turn the camera"
+
 [[menus]]
-name = "Tools"
+name = "Speed"
 
-[menus.kind.radial]
-stick = "Right"
-
-[[menus.items]]
-label = "Pause"
-weight = 1.5
-
-[menus.items.action]
-keys = ["KEY_SPACE"]
+[menus.kind.directional]
+cluster = "DPad"
 
 [[menus.items]]
-label = "Rotate left"
-weight = 1.0
-
-[menus.items.action]
-keys = ["KEY_Q"]
+label = "{icon:speed2} Fast"
+action = {keys = ["KEY_2"]}
 
 [[menus.items]]
-label = "Rotate right"
-weight = 1.0
-
-[menus.items.action]
-keys = ["KEY_E"]
+label = "{icon:speed3} Fastest"
+action = {keys = ["KEY_3"]}
 
 [[menus.items]]
-label = "Close"
-weight = 1.0
+label = "{icon:pause} {b}Pause{/b}"
+action = {keys = ["KEY_SPACE"]}
 
-[menus.items.action]
-keys = ["KEY_ESC"]
+[[menus.items]]
+label = "{icon:speed1} Normal"
+action = {keys = ["KEY_1"]}
 
 [menus.style]
+corners = 0.5
 position = "center"
 scale = 1.0
-corners = 0.5
 
 [menus.style.background]
 color = "#2a2116"
@@ -132,3 +178,330 @@ opacity = 0.95
 color = "#8fbf5a"
 opacity = 1.0
 
+[menus.style.border]
+width = 1
+color = "#b08a52"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#33281b"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#6a5434"
+
+[menus.style.glow]
+color = "#b8e07a"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#6a5434", opacity = 0.8}
+vignette = {color = "#000000", opacity = 0.3, reach = 20}
+
+[[menus]]
+name = "Settlement"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:beaver} Characters"
+action = {keys = ["KEY_F1"]}
+
+[[menus.items]]
+label = "{icon:home} Housing"
+action = {keys = ["KEY_F2"]}
+
+[[menus.items]]
+label = "{icon:workplace} Workplaces"
+action = {keys = ["KEY_F3"]}
+
+[[menus.items]]
+label = "{icon:storage} Storage"
+action = {keys = ["KEY_F4"]}
+
+[[menus.items]]
+label = "{icon:gear} Mechanical"
+action = {keys = ["KEY_F5"]}
+
+[[menus.items]]
+label = "{icon:star} Attractions"
+action = {keys = ["KEY_F6"]}
+
+[[menus.items]]
+label = "{icon:migration} Migration"
+action = {keys = ["KEY_F7"]}
+
+[[menus.items]]
+label = "{icon:distribution} Distribution"
+action = {keys = ["KEY_F8"]}
+
+[[menus.items]]
+label = "{icon:chart} Good statistics"
+action = {keys = ["KEY_F9"]}
+
+[[menus.items]]
+label = "{icon:population} Population statistics"
+action = {keys = ["KEY_F10"]}
+
+[[menus.items]]
+label = "{icon:wellbeing} {color:green}Wellbeing{/color}"
+action = {keys = ["KEY_O"]}
+
+[[menus.items]]
+label = "{icon:layers} Batch control"
+action = {keys = ["KEY_G"]}
+
+[[menus.items]]
+label = "{icon:water-toggle} Hide water"
+action = {keys = ["KEY_T"]}
+
+[menus.style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#2a2116"
+opacity = 0.92
+
+[menus.style.items]
+color = "#4a3a25"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#8fbf5a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b08a52"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#33281b"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#6a5434"
+
+[menus.style.glow]
+color = "#b8e07a"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#6a5434", opacity = 0.8}
+vignette = {color = "#000000", opacity = 0.3, reach = 20}
+
+[keyboard_style]
+corners = 0.5
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#2a2116"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#4a3a25"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#8fbf5a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#b08a52"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#33281b"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#6a5434"
+
+[numpad_style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#2a2116"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#4a3a25"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#8fbf5a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#b08a52"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#33281b"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#6a5434"
+
+[media_style]
+corners = 0.5
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#2a2116"
+opacity = 0.92
+
+[media_style.items]
+color = "#4a3a25"
+opacity = 0.95
+
+[media_style.selected]
+color = "#8fbf5a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#b08a52"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#33281b"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#6a5434"
+
+[media_style.type]
+letter_spacing = 0
+
+[menu_style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#2a2116"
+opacity = 0.92
+
+[menu_style.items]
+color = "#4a3a25"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#8fbf5a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#b08a52"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#33281b"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#6a5434"
+
+[menu_style.glow]
+color = "#b8e07a"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#6a5434", opacity = 0.8}
+vignette = {color = "#000000", opacity = 0.3, reach = 20}
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "knock", volume = 0.08, pitch = 1.1}
+pick = {kind = "marimba", volume = 0.16, pitch = 0.9}
+open = {kind = "pop", volume = 0.06, pitch = 0.9}
+close = {kind = "pop", volume = 0.048, pitch = 0.7200000000000001}
+
+[sounds.numpad]
+step = {kind = "knock", volume = 0.08, pitch = 1.1}
+pick = {kind = "marimba", volume = 0.16, pitch = 0.9}
+
+[sounds.keyboard]
+step = {kind = "knock", volume = 0.08, pitch = 1.1}
+pick = {kind = "keys", volume = 0.2}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.32, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}
+
+[assets.icons]
+beaver = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 16a7 6 0 0 1 14 0v2H5z'/><circle cx='9.5' cy='12' r='0.8'/><circle cx='14.5' cy='12' r='0.8'/><path d='M11 16h2v3h-2z'/><path d='M6 9l-1-3 3 1M18 9l1-3-3 1'/></svg>"
+chart = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 20V4M4 20h16'/><path d='M8 16v-4M12 16V8M16 16v-6'/></svg>"
+distribution = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='5' r='2'/><circle cx='5' cy='19' r='2'/><circle cx='19' cy='19' r='2'/><path d='M12 7v5M12 12l-6 5M12 12l6 5'/></svg>"
+flip = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3v18'/><path d='M9 7L3 17h6zM15 7l6 10h-6z'/></svg>"
+gear = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1'/><circle cx='12' cy='12' r='7'/></svg>"
+home = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 11l9-7 9 7'/><path d='M5 10v10h14V10'/><path d='M10 20v-6h4v6'/></svg>"
+layers = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l9 5-9 5-9-5z'/><path d='M3 13l9 5 9-5'/></svg>"
+migration = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12h14M13 8l4 4-4 4'/><path d='M21 5v14'/></svg>"
+pause = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M8 5v14M16 5v14'/></svg>"
+population = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='7' r='3'/><circle cx='5' cy='10' r='2'/><circle cx='19' cy='10' r='2'/><path d='M7 20a5 5 0 0 1 10 0M1.5 18a3.5 3.5 0 0 1 7 0M15.5 18a3.5 3.5 0 0 1 7 0'/></svg>"
+rotate = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 12a8 8 0 1 1-2.3-5.7'/><path d='M20 4v5h-5'/></svg>"
+rotate-left = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 12a8 8 0 1 0 2.3-5.7'/><path d='M4 4v5h5'/></svg>"
+speed1 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M7 6l8 6-8 6z'/></svg>"
+speed2 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 6l7 6-7 6zM12 6l7 6-7 6z'/></svg>"
+speed3 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M2 6l6 6-6 6zM9 6l6 6-6 6zM16 6l6 6-6 6z'/></svg>"
+star = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z'/></svg>"
+storage = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 9l9-5 9 5v12H3z'/><path d='M7 21v-8h10v8M7 17h10'/></svg>"
+water-toggle = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z'/><path d='M4 4l16 16'/></svg>"
+wellbeing = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c0 6-8 11-8 11z'/><path d='M8 12h2l1-2 2 4 1-2h2'/></svg>"
+workplace = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 21h18M5 21V9h6v12M13 21V5h6v16'/><path d='M7 12h2M7 16h2M15 9h2M15 13h2M15 17h2'/></svg>"

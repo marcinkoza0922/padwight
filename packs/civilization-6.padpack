@@ -1,0 +1,620 @@
+format = 19
+macros = []
+overlay_font = "Inter"
+
+[pack]
+id = "382fee5e-a2f6-4a2f-88c3-fefae1d29a12"
+name = "Civilization VI"
+version = "1.1"
+author = "Padwight"
+description = "Civilization VI (Steam, Linux or Windows build) on an Xbox-style pad. The right stick moves the pointer, the left stick pans the map, RT or A left-clicks, LT right-clicks to move units. X skips a unit, Y fortifies, RB goes to the next unit or ends the turn. Hold LB for unit orders. The d-pad zooms and cycles units (hold: cities). Select lists the advisors and screens. Start is the game menu; double tap it to quick save, hold it to quick load."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Civ6"
+profile = "Civilization VI"
+
+[[rules]]
+kind = "executable"
+value = "Civ6Sub"
+profile = "Civilization VI"
+
+[[rules]]
+kind = "executable"
+value = "CivilizationVI.exe"
+profile = "Civilization VI"
+
+[[rules]]
+kind = "executable"
+value = "CivilizationVI_DX12.exe"
+profile = "Civilization VI"
+
+[[rules]]
+kind = "steam_app_id"
+value = "289070"
+profile = "Civilization VI"
+
+[[profiles]]
+name = "Civilization VI"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_SPACE"] }
+North = { keys = ["KEY_F"] }
+LeftBumper = { open_menu = "Orders" }
+RightBumper = { keys = ["KEY_ENTER"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_BACKSLASH"] }
+RightStick = { open_menu = "Lenses" }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_COMMA"] }
+DpadRight = { keys = ["KEY_DOT"] }
+
+[profiles.gestures.DpadLeft.long_press]
+keys = ["KEY_LEFTBRACE"]
+
+[profiles.gestures.DpadRight.long_press]
+keys = ["KEY_RIGHTBRACE"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F5"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F6"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.keys]
+up = "KEY_UP"
+down = "KEY_DOWN"
+left = "KEY_LEFT"
+right = "KEY_RIGHT"
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
+{lt} gives a right click, which moves the selected unit to the tile under the pointer.
+{east} closes the open screen. {start} opens the game menu.
+Hold {lb} for the unit orders, picking with the right stick {rs}.
+{rb} goes to the next unit that needs orders, and ends the turn when none do.
+Double tap {start} to quick save and hold it to quick load. Click {r3} for the lens list. Civilization VI on PC has no controller support of its own, so the controller works through these keys.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (move to)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close screen" }
+"button:LeftBumper" = { text = "Hold: unit orders" }
+"button:Select" = { text = "Advisors, screens" }
+"button:Start" = { text = "Game menu" }
+"stick:Left" = { text = "Pan the map" }
+"button:West" = { text = "Skip the unit's turn" }
+"button:North" = { text = "Fortify" }
+"button:RightBumper" = { text = "Next action / end turn" }
+"button:LeftStick" = { text = "Go to the capital" }
+"button:RightStick" = { text = "Lenses" }
+"gesture:button:DpadLeft:long_press" = { text = "Previous city" }
+"gesture:button:DpadRight:long_press" = { text = "Next city" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
+"gesture:button:Start:long_press" = { text = "Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next unit"
+
+[[menus]]
+name = "Orders"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:settler} Found city"
+action = { keys = ["KEY_B"] }
+
+[[menus.items]]
+label = "{icon:move} Move to"
+action = { keys = ["KEY_M"] }
+
+[[menus.items]]
+label = "{icon:attack} Attack"
+action = { keys = ["KEY_A"] }
+
+[[menus.items]]
+label = "{icon:ranged} Ranged attack"
+action = { keys = ["KEY_R"] }
+
+[[menus.items]]
+label = "{icon:fortify} Fortify"
+action = { keys = ["KEY_F"] }
+
+[[menus.items]]
+label = "{icon:heart} {color:green}Fortify until healed{/color}"
+action = { keys = ["KEY_H"] }
+
+[[menus.items]]
+label = "{icon:sleep} Sleep"
+action = { keys = ["KEY_Z"] }
+
+[[menus.items]]
+label = "{icon:sentry} Alert"
+action = { keys = ["KEY_V"] }
+
+[[menus.items]]
+label = "{icon:compass} Explore"
+action = { keys = ["KEY_E"] }
+
+[[menus.items]]
+label = "{icon:trash} {color:red}Delete unit{/color}"
+action = { keys = ["KEY_DELETE"] }
+
+[menus.style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#132234"
+opacity = 0.92
+
+[menus.style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2f5675"
+
+[menus.style.glow]
+color = "#6fd0e0"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#c9a85a", opacity = 0.5}
+frame = {kind = "brackets", size = 14, width = 1, color = "#c9a85a"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:tech} Tech tree"
+action = { keys = ["KEY_T"] }
+
+[[menus.items]]
+label = "{icon:civics} Civics tree"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "{icon:palace} Government"
+action = { keys = ["KEY_F7"] }
+
+[[menus.items]]
+label = "{icon:religion} Religion"
+action = { keys = ["KEY_L"] }
+
+[[menus.items]]
+label = "{icon:great-person} Great people"
+action = { keys = ["KEY_O"] }
+
+[[menus.items]]
+label = "{icon:artwork} Great works"
+action = { keys = ["KEY_W"] }
+
+[[menus.items]]
+label = "{icon:trophy} World rankings"
+action = { keys = ["KEY_F1"] }
+
+[[menus.items]]
+label = "{icon:flag} City-states"
+action = { keys = ["KEY_F2"] }
+
+[[menus.items]]
+label = "{icon:spy} Espionage"
+action = { keys = ["KEY_F3"] }
+
+[[menus.items]]
+label = "{icon:trade} Trade routes"
+action = { keys = ["KEY_F4"] }
+
+[[menus.items]]
+label = "{icon:book} Civilopedia"
+action = { keys = ["KEY_F9"] }
+
+[menus.style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#132234"
+opacity = 0.92
+
+[menus.style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2f5675"
+
+[menus.style.glow]
+color = "#6fd0e0"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#c9a85a", opacity = 0.5}
+frame = {kind = "brackets", size = 14, width = 1, color = "#c9a85a"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+[[menus]]
+name = "Lenses"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:religion} Religion"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:globe} Continent"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:star} Appeal"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:settler} Settler"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:palace} Government"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:flag} Political"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:theater} Tourism"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:region} Empire"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "{icon:lens-resources} Resources"
+action = { keys = ["KEY_Q"] }
+
+[[menus.items]]
+label = "{icon:wheat} Yields"
+action = { keys = ["KEY_Y"] }
+
+[[menus.items]]
+label = "{icon:grid} Grid"
+action = { keys = ["KEY_G"] }
+
+[menus.style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#132234"
+opacity = 0.92
+
+[menus.style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2f5675"
+
+[menus.style.glow]
+color = "#6fd0e0"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#c9a85a", opacity = 0.5}
+frame = {kind = "brackets", size = 14, width = 1, color = "#c9a85a"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+[keyboard_style]
+corners = 0.3
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#132234"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#2f5675"
+
+[numpad_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#132234"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#2f5675"
+
+[media_style]
+corners = 0.3
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#132234"
+opacity = 0.92
+
+[media_style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[media_style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#2f5675"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#132234"
+opacity = 0.92
+
+[menu_style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#2f5675"
+
+[menu_style.glow]
+color = "#6fd0e0"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#c9a85a", opacity = 0.5}
+frame = {kind = "brackets", size = 14, width = 1, color = "#c9a85a"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "marimba", volume = 0.07, pitch = 1.3, length = 0.6}
+pick = {kind = "chime", volume = 0.14, pitch = 1.1}
+open = {kind = "swish", volume = 0.04, pitch = 0.8}
+close = {kind = "swish", volume = 0.03, pitch = 0.7}
+
+[sounds.numpad]
+step = {kind = "marimba", volume = 0.07, pitch = 1.3, length = 0.6}
+pick = {kind = "chime", volume = 0.14, pitch = 1.1}
+
+[sounds.keyboard]
+step = {kind = "marimba", volume = 0.07, pitch = 1.3, length = 0.6}
+pick = {kind = "typewriter", volume = 0.18}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.32, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}
+
+[assets.icons]
+artwork = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4h16v16H4z'/><path d='M4 16l5-5 4 4 3-3 4 4'/><circle cx='15' cy='8' r='1.5'/></svg>"
+attack = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M14.5 17.5L3 6V3h3l11.5 11.5'/><path d='M13 19l6-6M16 16l4 4M19 21l2-2'/></svg>"
+book = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z'/><path d='M4 21V5M8 7h7'/></svg>"
+civics = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l9 5H3z'/><path d='M5 8v9M9 8v9M15 8v9M19 8v9'/><path d='M3 20h18'/></svg>"
+compass = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M15.5 8.5l-2 5-5 2 2-5z'/></svg>"
+flag = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M5 21V4'/><path d='M5 4h12l-2 4 2 4H5'/></svg>"
+fortify = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/><path d='M8 12h8M12 8v8'/></svg>"
+globe = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M3 12h18'/><ellipse cx='12' cy='12' rx='4' ry='9'/></svg>"
+great-person = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l2 4 4 .5-3 3 .8 4.5L12 13l-3.8 2 .8-4.5-3-3L10 7z'/><path d='M6 21a6 6 0 0 1 12 0'/></svg>"
+grid = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4h16v16H4zM4 10h16M4 15h16M10 4v16M15 4v16'/></svg>"
+lens-resources = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l7 4v10l-7 4-7-4V7z'/><path d='M12 3v18M5 7l14 10M19 7L5 17'/></svg>"
+move = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2v20M2 12h20'/><path d='M9 5l3-3 3 3M9 19l3 3 3-3M5 9l-3 3 3 3M19 9l3 3-3 3'/></svg>"
+palace = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 21h18M5 21V10h14v11'/><path d='M3 10l9-7 9 7'/><path d='M9 21v-5h6v5M8 12v2M16 12v2'/></svg>"
+ranged = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M5 19C5 10 10 5 19 5'/><path d='M19 5l-14 14'/><path d='M15 4h5v5'/></svg>"
+region = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z'/><path d='M9 3v15M15 6v15'/></svg>"
+religion = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3v18M7 8h10'/></svg>"
+sentry = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z'/><circle cx='12' cy='12' r='3'/><path d='M12 2v2M12 20v2'/></svg>"
+settler = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 20l4-13h8l4 13z'/><path d='M12 7V3M9 3h6'/><path d='M8 20v-5h8v5'/></svg>"
+sleep = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 6h6l-6 7h6'/><path d='M13 12h5l-5 6h5'/></svg>"
+spy = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 10h18'/><path d='M6 10l2-6h8l2 6'/><circle cx='7.5' cy='16' r='3'/><circle cx='16.5' cy='16' r='3'/><path d='M10.5 16h3'/></svg>"
+star = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z'/></svg>"
+tech = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M9 18h6M10 21h4'/><path d='M12 3a6 6 0 0 0-4 10.5c1 1 1 2 1 3h6c0-1 0-2 1-3A6 6 0 0 0 12 3z'/></svg>"
+theater = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4h7v7a3.5 3.5 0 0 1-7 0z'/><path d='M13 9h7v7a3.5 3.5 0 0 1-7 0z'/><path d='M6 8h0M9 8h0M15 13h0M18 13h0' stroke-width='2.2'/></svg>"
+trade = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 8h13l-3-3M20 16H7l3 3'/></svg>"
+trash = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 7h16M9 7V4h6v3'/><path d='M6 7l1 13h10l1-13'/><path d='M10 11v6M14 11v6'/></svg>"
+trophy = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 4h10v5a5 5 0 0 1-10 0z'/><path d='M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4'/><path d='M12 14v4M8 21h8M9 18h6'/></svg>"
+wheat = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21V8'/><path d='M12 8c-3 0-4-3-4-5 3 0 4 3 4 5zM12 8c3 0 4-3 4-5-3 0-4 3-4 5zM12 13c-3 0-4-3-4-5 3 0 4 3 4 5zM12 13c3 0 4-3 4-5-3 0-4 3-4 5zM12 18c-3 0-4-3-4-5 3 0 4 3 4 5zM12 18c3 0 4-3 4-5-3 0-4 3-4 5z'/></svg>"

@@ -116,7 +116,7 @@ mod tests {
     #[test]
     fn shooters_offer_plain_gyro_and_flick_stick_profiles() {
         use crate::config::{GyroMode, StickAction};
-        for file in ["deus-ex", "fear", "max-payne", "max-payne-2"] {
+        for file in ["deus-ex", "fear", "max-payne", "max-payne-2", "thief-gold", "thief-2", "system-shock-2"] {
             let text = files::FILES.iter().find(|(f, _)| f.contains(file)).map(|(_, t)| t).unwrap();
             let pack = pack::parse(text).unwrap();
             let flick = |p: &Profile| [&p.left_stick, &p.right_stick].iter().any(|s| matches!(s.action, StickAction::Flick { .. }));

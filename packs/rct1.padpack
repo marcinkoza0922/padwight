@@ -1,12 +1,13 @@
 format = 19
 macros = []
+overlay_font = "Silkscreen"
 
 [pack]
 id = "3080b330-addd-4812-99c5-bd116fa913db"
 name = "RollerCoaster Tycoon"
-version = "1.0"
+version = "1.1"
 author = "Padwight"
-description = "RollerCoaster Tycoon (Deluxe, Windows build run through Heroic or Proton) on an Xbox-style pad. Left stick scrolls the map with the arrow keys, the right stick moves the cursor, A and RT left-click, LT right-click, B is Escape. Start pauses. Hold LB for a radial menu of Pause and Close window. This is a starting point: check the bindings against the game's own keys."
+description = "RollerCoaster Tycoon on an Xbox-style pad, for the game's default keys. The left stick scrolls the view, the right stick moves the pointer, RT and A click, LT right-clicks (hold it to drag the view). Hold LB for the build tools and RB for the view options; Select lists the park screens. Y rotates what you're placing, B closes windows (hold: all), X cancels building, the d-pad zooms and rotates the view, Start pauses."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -22,21 +23,22 @@ tap_window_ms = 250
 long_press_ms = 500
 
 [profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_BACKSPACE"]}
+West = {keys = ["KEY_ESC"]}
+North = {keys = ["KEY_Z"]}
+LeftBumper = {open_menu = "Build"}
+RightBumper = {open_menu = "View"}
+Select = {open_menu = "Park"}
+Start = {keys = ["KEY_PAUSE"]}
+DpadUp = {keys = ["KEY_PAGEDOWN"]}
+DpadDown = {keys = ["KEY_PAGEUP"]}
+DpadLeft = {keys = ["KEY_ENTER"]}
+DpadRight = {keys = ["KEY_ENTER"]}
 
-[profiles.buttons.Guide]
-mode = "Guide"
-
-[profiles.buttons.South]
-mouse = "Left"
-
-[profiles.buttons.East]
-keys = ["KEY_ESC"]
-
-[profiles.buttons.Start]
-keys = ["KEY_P"]
-
-[profiles.buttons.LeftBumper]
-open_menu = "Tools"
+[profiles.gestures.East]
+long_press = {keys = ["KEY_LEFTSHIFT", "KEY_BACKSPACE"]}
 
 [profiles.left_stick]
 deadzone = 0.12
@@ -52,21 +54,19 @@ right = "KEY_RIGHT"
 [profiles.right_stick]
 deadzone = 0.15
 curve = 1.6
+key_threshold = 0.5
 
 [profiles.right_stick.action.mouse]
 speed = 1400.0
+accel = 0.3
 
 [profiles.left_trigger.action.button]
 threshold = 0.4
-
-[profiles.left_trigger.action.button.action]
-mouse = "Right"
+action = {mouse = "Right"}
 
 [profiles.right_trigger.action.button]
 threshold = 0.3
-
-[profiles.right_trigger.action.button.action]
-mouse = "Left"
+action = {mouse = "Left"}
 
 [profiles.gyro]
 mode = "off"
@@ -76,30 +76,65 @@ invert_y = false
 activation = "always"
 noise_threshold = 1.0
 
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer. {rt} or {south} clicks, and {lt} right-clicks: it removes scenery and paths while building. Hold {lt} and move the pointer to drag the view.
+The left stick {ls} scrolls the view. {up} and {down} zoom, {left} and {right} rotate it.
+Hold {lb} for the build tools (land, water, scenery, paths, new rides) and {rb} for the view options, aiming with the right stick {rs}. The view menu stays open, so you can flip several.
+{select} lists the park screens: finances, research, rides, guests, staff, messages and the map.
+{north} rotates the object you're placing. {east} closes the top window, and holding {east} closes them all. {west} cancels building.
+Naming a ride or a guest: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Scroll the view"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Left click"}
+"trigger:Left" = {text = "Right click (hold and move: drag the view)"}
+"button:South" = {text = "Left click"}
+"button:East" = {text = "Close window"}
+"gesture:button:East:long_press" = {text = "Close all windows"}
+"button:West" = {text = "Cancel construction"}
+"button:North" = {text = "{icon:rotate} Rotate object"}
+"button:LeftBumper" = {text = "Hold: build"}
+"button:RightBumper" = {text = "Hold: view options"}
+"button:Select" = {text = "Park screens"}
+"button:Start" = {text = "{icon:pause} Pause"}
+"button:DpadUp" = {text = "Zoom in"}
+"button:DpadDown" = {text = "Zoom out"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate the view"
+
 [[menus]]
-name = "Tools"
+name = "Build"
 
 [menus.kind.radial]
 stick = "Right"
 
 [[menus.items]]
-label = "Pause"
-weight = 1.5
-
-[menus.items.action]
-keys = ["KEY_P"]
+label = "{icon:mountain} Land"
+action = {keys = ["KEY_F1"]}
 
 [[menus.items]]
-label = "Close window"
-weight = 1.0
+label = "{icon:drop} Water"
+action = {keys = ["KEY_F2"]}
 
-[menus.items.action]
-keys = ["KEY_ESC"]
+[[menus.items]]
+label = "{icon:tree} Scenery"
+action = {keys = ["KEY_F3"]}
+
+[[menus.items]]
+label = "{icon:path} Footpaths"
+action = {keys = ["KEY_F4"]}
+
+[[menus.items]]
+label = "{icon:coaster} {b}New ride{/b}"
+action = {keys = ["KEY_F5"]}
 
 [menus.style]
+corners = 0.6
 position = "center"
 scale = 1.0
-corners = 0.9
 
 [menus.style.background]
 color = "#1b2b1f"
@@ -113,3 +148,395 @@ opacity = 0.95
 color = "#f2c94c"
 opacity = 1.0
 
+[menus.style.border]
+width = 2
+color = "#f2c94c"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#22382a"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3f7a4e"
+
+[menus.style.glow]
+color = "#ffe27a"
+opacity = 0.6
+blur = 18
+pulse = true
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#3f7a4e", opacity = 0.8}
+
+[[menus]]
+name = "View"
+keep_open = true
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:underground} Underground view"
+action = {keys = ["KEY_1"]}
+
+[[menus.items]]
+label = "{icon:terrain} Remove base land"
+action = {keys = ["KEY_H"]}
+
+[[menus.items]]
+label = "{icon:see-through} See-through rides"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:see-through} See-through scenery"
+action = {keys = ["KEY_4"]}
+
+[[menus.items]]
+label = "{icon:supports} Invisible supports"
+action = {keys = ["KEY_5"]}
+
+[[menus.items]]
+label = "{icon:guests} Invisible guests"
+action = {keys = ["KEY_6"]}
+
+[[menus.items]]
+label = "{icon:height} Height marks: land"
+action = {keys = ["KEY_8"]}
+
+[[menus.items]]
+label = "{icon:height} Height marks: tracks"
+action = {keys = ["KEY_9"]}
+
+[[menus.items]]
+label = "{icon:height} Height marks: paths"
+action = {keys = ["KEY_0"]}
+
+[menus.style]
+corners = 0.6
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1b2b1f"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2f5b3a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#f2c94c"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#f2c94c"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#22382a"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3f7a4e"
+
+[menus.style.glow]
+color = "#ffe27a"
+opacity = 0.6
+blur = 18
+pulse = true
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#3f7a4e", opacity = 0.8}
+
+[[menus]]
+name = "Park"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:money-bag} Finances"
+action = {keys = ["KEY_F"]}
+
+[[menus.items]]
+label = "{icon:research} Research"
+action = {keys = ["KEY_D"]}
+
+[[menus.items]]
+label = "{icon:ticket} Rides and attractions"
+action = {keys = ["KEY_R"]}
+
+[[menus.items]]
+label = "{icon:gate} Park"
+action = {keys = ["KEY_P"]}
+
+[[menus.items]]
+label = "{icon:guests} Guests"
+action = {keys = ["KEY_G"]}
+
+[[menus.items]]
+label = "{icon:broom} Staff"
+action = {keys = ["KEY_S"]}
+
+[[menus.items]]
+label = "{icon:messages} Recent messages"
+action = {keys = ["KEY_M"]}
+
+[[menus.items]]
+label = "{icon:map} Map"
+action = {keys = ["KEY_TAB"]}
+
+[menus.style]
+corners = 0.6
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1b2b1f"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2f5b3a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#f2c94c"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#f2c94c"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#22382a"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3f7a4e"
+
+[menus.style.glow]
+color = "#ffe27a"
+opacity = 0.6
+blur = 18
+pulse = true
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#3f7a4e", opacity = 0.8}
+
+[keyboard_style]
+corners = 0.6
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1b2b1f"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#2f5b3a"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#f2c94c"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#f2c94c"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#22382a"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3f7a4e"
+
+[numpad_style]
+corners = 0.6
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1b2b1f"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#2f5b3a"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#f2c94c"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#f2c94c"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#22382a"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3f7a4e"
+
+[media_style]
+corners = 0.6
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1b2b1f"
+opacity = 0.92
+
+[media_style.items]
+color = "#2f5b3a"
+opacity = 0.95
+
+[media_style.selected]
+color = "#f2c94c"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#f2c94c"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#22382a"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3f7a4e"
+
+[media_style.type]
+letter_spacing = 0
+
+[menu_style]
+corners = 0.6
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1b2b1f"
+opacity = 0.92
+
+[menu_style.items]
+color = "#2f5b3a"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#f2c94c"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#f2c94c"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#22382a"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3f7a4e"
+
+[menu_style.glow]
+color = "#ffe27a"
+opacity = 0.6
+blur = 18
+pulse = true
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#3f7a4e", opacity = 0.8}
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 1.3}
+pick = {kind = "coin", volume = 0.12, pitch = 1.0}
+open = {kind = "pop", volume = 0.06, pitch = 1.2}
+close = {kind = "pop", volume = 0.05, pitch = 0.9}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 1.3}
+pick = {kind = "pop", volume = 0.16}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 1.3}
+pick = {kind = "keys", volume = 0.2}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.32, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}
+
+[assets.icons]
+broom = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M18 3l-7 9'/><path d='M11 12l-6 3-2 6 6-2 3-6z'/><path d='M5 15l4 4'/></svg>"
+coaster = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 20h20'/><path d='M3 20c2-12 7-12 9-6s3 6 5-2 4-8 4 8'/><path d='M6 20v-6M12 20v-6M18 20v-8'/></svg>"
+drop = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z'/></svg>"
+gate = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 21V7l8-4 8 4v14'/><path d='M8 21V10h8v11M12 10v11'/></svg>"
+guests = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='8' cy='7' r='3'/><circle cx='16' cy='7' r='3'/><path d='M2 20a6 6 0 0 1 12 0M10 20a6 6 0 0 1 12 0'/></svg>"
+height = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 3v18M4 5l2-2 2 2M4 19l2 2 2-2'/><path d='M11 7h9M11 12h6M11 17h9'/></svg>"
+messages = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4h16v12H8l-4 4z'/><path d='M8 8h8M8 12h5'/></svg>"
+money-bag = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M9 3h6l-2 4h-2z'/><path d='M11 7C6 9 4 13 4 16a5 5 0 0 0 5 5h6a5 5 0 0 0 5-5c0-3-2-7-7-9'/><path d='M12 11v7M14 12.5c-1-1-4-1-4 .5s4 1 4 2.5-3 1.5-4 .5'/></svg>"
+mountain = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 20l7-12 4 6 3-4 6 10z'/></svg>"
+path = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 21c0-6 10-6 10-12V3'/><path d='M3 21c0-8 10-8 10-14V3'/></svg>"
+pause = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 5v14M16 5v14'/></svg>"
+research = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M9 3h6M10 3v6L4 19a1.5 1.5 0 0 0 1.3 2h13.4A1.5 1.5 0 0 0 20 19L14 9V3'/><circle cx='10' cy='16' r='1'/><circle cx='14' cy='14' r='1'/></svg>"
+rotate = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M20 12a8 8 0 1 1-2.3-5.7'/><path d='M20 4v5h-5'/></svg>"
+see-through = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 18V8l8-5 8 5v10z' stroke-dasharray='2 2'/><circle cx='12' cy='13' r='3'/></svg>"
+supports = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 6h16'/><path d='M7 6v15M17 6v15'/><path d='M7 10l10 5M17 10L7 15'/></svg>"
+terrain = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 20l6-9 4 5 3-3 7 7z'/><path d='M15 6a2 2 0 1 0 0-.1'/></svg>"
+ticket = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z'/><path d='M14 7v10'/></svg>"
+tree = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l6 8h-3l4 6H5l4-6H6z'/><path d='M12 17v4'/></svg>"
+underground = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 10h18'/><path d='M3 14h18v7H3z' stroke-dasharray='2 2'/><path d='M7 10l3-6 4 4 2-2 3 4'/></svg>"

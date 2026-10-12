@@ -1,12 +1,13 @@
 format = 19
 macros = []
+overlay_font = "Inter"
 
 [pack]
 id = "eab999a4-c909-43e5-83d3-f1b292474d72"
 name = "Parkitect"
-version = "1.0"
+version = "1.1"
 author = "Padwight"
-description = "Parkitect on an Xbox-style pad (native Linux build, or the Windows build through Proton). Left stick moves the camera with WASD, the right stick moves the cursor, A and RT left-click, LT right-click, B is Escape. Q and E rotate the camera. Start pauses. Hold LB for a radial menu of Pause, rotation and Close. This is a starting point: check the bindings against the game's own keys."
+description = "Parkitect on an Xbox-style pad, for the game's default keys. The left stick moves the camera, the right stick the pointer; RT and A click, LT deletes. Hold LB for the build tools and RB with the d-pad for the game speed, Select for the view toggles. X rotates what you're placing (hold: pipette), hold Y to change height, hold L3 or R3 to snap. The d-pad zooms and turns the camera. Start is the menu; double tap it to quick save."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -27,21 +28,33 @@ tap_window_ms = 250
 long_press_ms = 500
 
 [profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_SPACE"]}
+North = {keys = ["KEY_LEFTSHIFT"]}
+LeftBumper = {open_menu = "Build"}
+RightBumper = {open_menu = "Speed"}
+Select = {open_menu = "View"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_LEFTALT"]}
+RightStick = {keys = ["KEY_LEFTCTRL"]}
+DpadUp = {keys = ["KEY_PAGEUP"]}
+DpadDown = {keys = ["KEY_PAGEDOWN"]}
+DpadLeft = {keys = ["KEY_Q"]}
+DpadRight = {keys = ["KEY_E"]}
 
-[profiles.buttons.Guide]
-mode = "Guide"
+[profiles.gestures.Start]
+double_tap = {keys = ["KEY_O"]}
 
-[profiles.buttons.South]
-mouse = "Left"
+[profiles.gestures.West]
+long_press = {keys = ["KEY_P"]}
 
-[profiles.buttons.East]
-keys = ["KEY_ESC"]
+[profiles.gestures.DpadUp]
+long_press = {keys = ["KEY_DOT"]}
 
-[profiles.buttons.Start]
-keys = ["KEY_SPACE"]
-
-[profiles.buttons.LeftBumper]
-open_menu = "Tools"
+[profiles.gestures.DpadDown]
+long_press = {keys = ["KEY_COMMA"]}
 
 [profiles.left_stick]
 deadzone = 0.12
@@ -57,21 +70,19 @@ right = "KEY_D"
 [profiles.right_stick]
 deadzone = 0.15
 curve = 1.6
+key_threshold = 0.5
 
 [profiles.right_stick.action.mouse]
 speed = 1400.0
+accel = 0.3
 
 [profiles.left_trigger.action.button]
 threshold = 0.4
-
-[profiles.left_trigger.action.button.action]
-mouse = "Right"
+action = {mouse = "Right"}
 
 [profiles.right_trigger.action.button]
 threshold = 0.3
-
-[profiles.right_trigger.action.button.action]
-mouse = "Left"
+action = {mouse = "Left"}
 
 [profiles.gyro]
 mode = "off"
@@ -81,44 +92,87 @@ invert_y = false
 activation = "always"
 noise_threshold = 1.0
 
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer and the left stick {ls} moves the camera. {rt} or {south} clicks, {lt} right-clicks to delete what's under the pointer.
+Hold {lb} for the build tools, aiming with the right stick {rs}. Hold {rb} and press the {dpad} for the game speed: left is normal, up fast, right fastest, and down pauses.
+{west} rotates what you're placing; hold it to pick up the look of an object already placed. Hold {north} and move the pointer to change height.
+Hold {l3} to snap to the grid and {r3} to snap to height while you place.
+{up} and {down} zoom, and holding them grows or shrinks the object. {left} and {right} turn the camera.
+{select} lists the map view, the X-ray toggles and the screenshot. Double tap {start} to quick save.
+Naming a ride or a park: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move the camera"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Left click"}
+"trigger:Left" = {text = "Right click (delete object)"}
+"button:South" = {text = "Left click"}
+"button:East" = {text = "Cancel / close"}
+"button:West" = {text = "{icon:rotate} Rotate object"}
+"gesture:button:West:long_press" = {text = "Pipette (pick up a placed object)"}
+"button:North" = {text = "Hold: change height"}
+"button:LeftBumper" = {text = "Hold: build"}
+"button:RightBumper" = {text = "Hold + {dpad}: game speed"}
+"button:Select" = {text = "View and screens"}
+"button:LeftStick" = {text = "Hold: snap to grid"}
+"button:RightStick" = {text = "Hold: snap to height"}
+"button:Start" = {text = "Menu"}
+"gesture:button:Start:double_tap" = {text = "{icon:save} Quick save"}
+"button:DpadUp" = {text = "Zoom in"}
+"button:DpadDown" = {text = "Zoom out"}
+"gesture:button:DpadUp:long_press" = {text = "Bigger object"}
+"gesture:button:DpadDown:long_press" = {text = "Smaller object"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate the camera"
+
 [[menus]]
-name = "Tools"
+name = "Build"
 
 [menus.kind.radial]
 stick = "Right"
 
 [[menus.items]]
-label = "Pause"
-weight = 1.5
-
-[menus.items.action]
-keys = ["KEY_SPACE"]
+label = "{icon:coaster} {b}Attractions{/b}"
+action = {keys = ["KEY_F1"]}
 
 [[menus.items]]
-label = "Rotate left"
-weight = 1.0
-
-[menus.items.action]
-keys = ["KEY_Q"]
+label = "{icon:bolt} Park utilities"
+action = {keys = ["KEY_F2"]}
 
 [[menus.items]]
-label = "Rotate right"
-weight = 1.0
-
-[menus.items.action]
-keys = ["KEY_E"]
+label = "{icon:shop} Shops"
+action = {keys = ["KEY_F3"]}
 
 [[menus.items]]
-label = "Close"
-weight = 1.0
+label = "{icon:tree} Deco"
+action = {keys = ["KEY_F4"]}
 
-[menus.items.action]
-keys = ["KEY_ESC"]
+[[menus.items]]
+label = "{icon:path} Paths"
+action = {keys = ["KEY_F5"]}
+
+[[menus.items]]
+label = "{icon:terrain} Terraform"
+action = {keys = ["KEY_F6"]}
+
+[[menus.items]]
+label = "{icon:artwork} Blueprints"
+action = {keys = ["KEY_F7"]}
+
+[[menus.items]]
+label = "{icon:palette} Brush"
+action = {keys = ["KEY_F8"]}
+
+[[menus.items]]
+label = "{icon:eraser} {color:orange}Bulldozer{/color}"
+action = {keys = ["KEY_F9"]}
 
 [menus.style]
+corners = 0.5
 position = "center"
 scale = 1.0
-corners = 0.6
 
 [menus.style.background]
 color = "#1c1f24"
@@ -132,3 +186,366 @@ opacity = 0.95
 color = "#e0a040"
 opacity = 1.0
 
+[menus.style.border]
+width = 1
+color = "#e0a040"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#23272e"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4c5866"
+
+[menus.style.glow]
+color = "#ffc060"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#4c5866", opacity = 0.8}
+
+[[menus]]
+name = "Speed"
+
+[menus.kind.directional]
+cluster = "DPad"
+
+[[menus.items]]
+label = "{icon:speed2} Fast"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:speed3} Fastest"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:pause} {b}Pause{/b}"
+action = {keys = ["KEY_0"]}
+
+[[menus.items]]
+label = "{icon:speed1} Normal"
+action = {keys = ["KEY_1"]}
+
+[menus.style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1c1f24"
+opacity = 0.92
+
+[menus.style.items]
+color = "#3a4450"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#e0a040"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#e0a040"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#23272e"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4c5866"
+
+[menus.style.glow]
+color = "#ffc060"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#4c5866", opacity = 0.8}
+
+[[menus]]
+name = "View"
+keep_open = true
+kind = "list"
+
+[[menus.items]]
+label = "{icon:map} Map view"
+action = {keys = ["KEY_M"]}
+
+[[menus.items]]
+label = "{icon:underground} Underground"
+action = {keys = ["KEY_C"]}
+
+[[menus.items]]
+label = "{icon:tree} Hide scenery"
+action = {keys = ["KEY_V"]}
+
+[[menus.items]]
+label = "{icon:path} Hide paths"
+action = {keys = ["KEY_B"]}
+
+[[menus.items]]
+label = "{icon:coaster} Hide attractions"
+action = {keys = ["KEY_N"]}
+
+[[menus.items]]
+label = "{icon:eye} Hide the interface"
+action = {keys = ["KEY_X"]}
+
+[[menus.items]]
+label = "{icon:camera} Screenshot"
+action = {keys = ["KEY_F11"]}
+
+[menus.style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1c1f24"
+opacity = 0.92
+
+[menus.style.items]
+color = "#3a4450"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#e0a040"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#e0a040"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#23272e"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4c5866"
+
+[menus.style.glow]
+color = "#ffc060"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#4c5866", opacity = 0.8}
+
+[keyboard_style]
+corners = 0.5
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1c1f24"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#3a4450"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#e0a040"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#e0a040"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#23272e"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4c5866"
+
+[numpad_style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1c1f24"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#3a4450"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#e0a040"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#e0a040"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#23272e"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4c5866"
+
+[media_style]
+corners = 0.5
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1c1f24"
+opacity = 0.92
+
+[media_style.items]
+color = "#3a4450"
+opacity = 0.95
+
+[media_style.selected]
+color = "#e0a040"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#e0a040"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#23272e"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4c5866"
+
+[media_style.type]
+letter_spacing = 0
+
+[menu_style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1c1f24"
+opacity = 0.92
+
+[menu_style.items]
+color = "#3a4450"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#e0a040"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#e0a040"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#23272e"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4c5866"
+
+[menu_style.glow]
+color = "#ffc060"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#4c5866", opacity = 0.8}
+
+[motion]
+keyboard = "stagger"
+numpad = "stagger"
+menu = "stagger"
+media = "stagger"
+offer = "stagger"
+info = "stagger"
+log = "stagger"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "marimba", volume = 0.14, pitch = 1.2}
+open = {kind = "pop", volume = 0.06, pitch = 1.1}
+close = {kind = "pop", volume = 0.048, pitch = 0.8800000000000001}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "marimba", volume = 0.14, pitch = 1.2}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "keys", volume = 0.2}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.32, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}
+
+[assets.icons]
+artwork = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4h16v16H4z'/><path d='M4 16l5-5 4 4 3-3 4 4'/><circle cx='15' cy='8' r='1.5'/></svg>"
+bolt = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M13 2L5 14h6l-1 8 8-12h-6z'/></svg>"
+camera = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8h4l2-3h6l2 3h4v11H3z'/><circle cx='12' cy='13' r='4'/></svg>"
+coaster = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 20h20'/><path d='M3 20c2-12 7-12 9-6s3 6 5-2 4-8 4 8'/><path d='M6 20v-6M12 20v-6M18 20v-8'/></svg>"
+eraser = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 20l-5-5L14 4l7 7-9 9z'/><path d='M8 20h13M6 12l7 7'/></svg>"
+eye = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z'/><circle cx='12' cy='12' r='3'/></svg>"
+palette = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3a9 9 0 0 0 0 18c1.5 0 2-1 2-2s-1-2 0-3h3a4 4 0 0 0 4-4c0-5-4-9-9-9z'/><circle cx='7.5' cy='12' r='1.2'/><circle cx='9' cy='8' r='1.2'/><circle cx='13.5' cy='7' r='1.2'/></svg>"
+path = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 21c0-6 10-6 10-12V3'/><path d='M3 21c0-8 10-8 10-14V3'/></svg>"
+pause = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 5v14M16 5v14'/></svg>"
+rotate = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M20 12a8 8 0 1 1-2.3-5.7'/><path d='M20 4v5h-5'/></svg>"
+save = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4h13l3 3v13H4z'/><path d='M8 4v5h7V4'/><path d='M7 20v-6h10v6'/></svg>"
+shop = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 9l1-5h14l1 5'/><path d='M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0'/><path d='M5 11v9h14v-9'/><path d='M10 20v-5h4v5'/></svg>"
+speed1 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 6l8 6-8 6z'/></svg>"
+speed2 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 6l7 6-7 6zM12 6l7 6-7 6z'/></svg>"
+speed3 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 6l6 6-6 6zM9 6l6 6-6 6zM16 6l6 6-6 6z'/></svg>"
+terrain = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 20l6-9 4 5 3-3 7 7z'/><path d='M15 6a2 2 0 1 0 0-.1'/></svg>"
+tree = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l6 8h-3l4 6H5l4-6H6z'/><path d='M12 17v4'/></svg>"
+underground = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 10h18'/><path d='M3 14h18v7H3z' stroke-dasharray='2 2'/><path d='M7 10l3-6 4 4 2-2 3 4'/></svg>"
