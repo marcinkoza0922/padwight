@@ -8,9 +8,9 @@ Tap Guide to open the overlay, and tap it again to close it. It opens when you l
 
 The overlay has three parts:
 
-- **Notes** on the left: what the game's author wants you to know, such as limits in the control scheme, or when to switch layers.
+- **Notes** on the left: what the game's author wants you to know, such as limits in the control scheme, or when to switch modes.
 - **The menu** in the middle: Quick Settings, Edit Controls, the on-screen keyboard and numpad, mouse mode, media controls, the next profile and, while Steam runs, the Steam overlay. Below them, the last three items you picked from your menus, marked "Again", to pick once more (press Up from the top to reach the newest).
-- **Mappings** on the right: what each button, trigger and stick does in the current profile. Its text can be changed, and rows can be hidden or merged by the author on the profile's **Guide** tab. A long list shows a page at a time: push the Right Stick up or down to turn the pages.
+- **Mappings** on the right: what each button, trigger and stick does in the current profile and [mode](modes.md). Its text can be changed, and rows can be hidden or merged by the author on the profile's **Guide** tab. Each [layer](layers.md) a button holds gets a section of its own below, with what the layer changes. When the setup has modes, press Left or Right (D-pad or Left Stick) to look at what the other modes do; the heading says which mode is shown, and "(not on)" when it isn't the one you're in. A long list shows a page at a time: push the Right Stick up or down to turn the pages.
 - **Shortcuts** in the bottom left corner: the Guide shortcuts listed below.
 
 Move the menu with the D-pad or the Left Stick (hold it to repeat), choose with A, and close it with B.
@@ -42,7 +42,7 @@ Hold Guide and press Right Stick (or press Right Stick with the overlay open) to
 - **D-pad Up**: holds Shift, so a click or key with it is shifted.
 - **X**: holds Ctrl. **Y**: holds Alt. **B**: Delete.
 
-Press Guide again to leave mouse mode. Your profile is still the one you chose. Other buttons do nothing in mouse mode.
+Press Guide again to leave mouse mode. Your profile and [mode](modes.md) are still the ones you chose. Other buttons do nothing in mouse mode, except those that switch modes. Mouse mode is one of the built-in modes, so a button set to **Switch mode…** "Mouse mode" turns it on too.
 
 ## Force quit
 

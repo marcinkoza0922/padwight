@@ -104,6 +104,9 @@ pub struct Status {
     /// Layers active right now (oldest first), on top of the active profile.
     #[serde(default)]
     pub active_layers: Vec<String>,
+    /// The mode switched to (under the layers); `None` is the default mode.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active_mode: Option<String>,
     pub devices: Vec<DeviceInfo>,
     #[serde(default)]
     pub focus_backend: FocusBackend,

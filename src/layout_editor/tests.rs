@@ -63,14 +63,14 @@ fn a_layer_button_is_bound_from_the_layers_page() {
     let mut config = Config::default();
     config.general.layers.push(crate::config::Layer::new("Mine"));
     let mut editor = LayoutEditor::new();
-    editor.cursor = top_index(Top::Layers);
+    editor.cursor = top_index(Top::Layers(Shift::Layer));
     editor.choose(&mut config);
     editor.cursor = 0; // the first layer
     editor.choose(&mut config);
-    assert_eq!(editor.page, Page::Layer(0));
+    assert_eq!(editor.page, Page::Layer(Shift::Layer, 0));
     editor.cursor = Button::ALL.iter().position(|&b| b == Button::South).unwrap();
     editor.choose(&mut config);
-    let shot = action_rows(Slot::Layer(0, Button::South)).iter().position(|r| matches!(r, ActionRow::Choice(2))).unwrap();
+    let shot = action_rows(Slot::Layer(Shift::Layer, 0, Button::South)).iter().position(|r| matches!(r, ActionRow::Choice(2))).unwrap();
     editor.cursor = shot;
     assert_eq!(editor.choose(&mut config), EditStep::Changed);
     assert_eq!(config.general.layers[0].buttons.get(&Button::South), Some(&ButtonAction::Screenshot));
@@ -226,7 +226,7 @@ fn a_layer_can_be_added_and_held_from_a_button() {
     let mut config = Config::default();
     let before = config.general.layers.len();
     let mut editor = LayoutEditor::new();
-    editor.cursor = top_index(Top::Layers);
+    editor.cursor = top_index(Top::Layers(Shift::Layer));
     editor.choose(&mut config);
     editor.cursor = before; // Add layer
     assert_eq!(editor.choose(&mut config), EditStep::Changed);
@@ -241,6 +241,36 @@ fn a_layer_can_be_added_and_held_from_a_button() {
     editor.cursor = config.general.layers.len() - 1;
     assert_eq!(editor.choose(&mut config), EditStep::Changed);
     assert_eq!(config.active().unwrap().button(Button::South), &ButtonAction::Layer(name));
+}
+
+#[test]
+fn a_mode_is_added_bound_and_switched_to_from_a_button() {
+    let mut config = Config::default();
+    let mut editor = LayoutEditor::new();
+    editor.cursor = top_index(Top::Layers(Shift::Mode));
+    editor.choose(&mut config);
+    editor.cursor = 0; // Add mode
+    assert_eq!(editor.choose(&mut config), EditStep::Changed);
+    assert_eq!(config.general.modes[0].name, "Mode 1");
+    assert_eq!(editor.page, Page::Layer(Shift::Mode, 0));
+    assert_eq!(page_title(editor.page, &config), "Mode 1");
+    // Its South button takes a screenshot; the profile's doesn't change.
+    editor.cursor = Button::ALL.iter().position(|&b| b == Button::South).unwrap();
+    editor.choose(&mut config);
+    editor.cursor = action_rows(Slot::Layer(Shift::Mode, 0, Button::South)).iter().position(|r| matches!(r, ActionRow::Choice(2))).unwrap();
+    assert_eq!(editor.choose(&mut config), EditStep::Changed);
+    assert_eq!(config.general.modes[0].buttons.get(&Button::South), Some(&ButtonAction::Screenshot));
+    assert!(config.general.layers.iter().all(|l| l.buttons.get(&Button::South) != Some(&ButtonAction::Screenshot)));
+    // North switches to it.
+    editor.page = Page::Top;
+    editor.history.clear();
+    editor.cursor = top_index(Top::Button(Button::North));
+    editor.choose(&mut config);
+    editor.cursor = action_rows(Slot::Button(Button::North)).iter().position(|r| *r == ActionRow::Pick(buttons::Picker::Mode)).unwrap();
+    editor.choose(&mut config);
+    editor.cursor = 0;
+    assert_eq!(editor.choose(&mut config), EditStep::Changed);
+    assert_eq!(config.active().unwrap().button(Button::North), &ButtonAction::Mode("Mode 1".into()));
 }
 
 #[test]

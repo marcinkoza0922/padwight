@@ -901,7 +901,7 @@ impl App {
     pub(super) fn jump_to(&mut self, b: Button) -> Task<Message> {
         self.finding = false;
         self.found = Some(b);
-        if self.game_tab != GameTab::Layers {
+        if !matches!(self.game_tab, GameTab::Layers | GameTab::Modes) {
             self.game_tab = GameTab::Profiles;
         }
         let (tab, position) = match Button::ALL.iter().position(|x| *x == b) {
@@ -1047,6 +1047,10 @@ impl App {
             (None, None) => NEEDS_DAEMON.into(),
         };
         let layers = self.status.as_ref().map(|s| s.active_layers.as_slice()).unwrap_or_default();
+        let caption = match self.status.as_ref().and_then(|s| s.active_mode.as_deref()) {
+            Some(mode) => format!("{caption} · Mode: {mode}"),
+            None => caption,
+        };
         let caption = if layers.is_empty() { caption } else { format!("{caption} · Layers: {}", layers.join(" + ")) };
         let folded = foldable && self.picture_hidden;
         let title: Element<'_, Message> = if foldable {

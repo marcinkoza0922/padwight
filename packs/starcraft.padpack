@@ -1,13 +1,13 @@
-format = 16
+format = 17
 macros = []
 overlay_font = "Rajdhani"
 
 [pack]
 id = "61b6cfbf-9932-4091-89e9-6cf0f6fa5a6e"
 name = "StarCraft"
-version = "1.1"
+version = "1.2"
 author = "Padwight"
-description = "StarCraft: Remastered (Battle.net) on an Xbox-style pad, for the default hotkeys. Left stick moves the cursor, RT left-clicks, LT right-clicks, right stick scrolls the map. Face buttons are Attack / Cancel / Stop / Hold, the d-pad is Move / Patrol / Basic and Advanced structures, RB is Shift (queue). Hold LB for control groups 1-8 (also hold RB in there to assign the group instead), R3 opens a radial menu of worker and unit commands. Start is the game menu, Select jumps to the last alert, Guide + X opens the on-screen keyboard (profile names, chat); hold Guide to see every control and the system shortcuts. Holding Select switches the Menus layer on and off (face buttons click and confirm, the d-pad presses the arrows, the right stick scrolls). The \"Gameplay + Gyro\" profile also moves the cursor by tilting the controller, as a fine pointer next to the left stick. Unit-specific keys (siege, cloak, burrow...) aren't mapped; add them to the radial menu if you want them."
+description = "StarCraft: Remastered (Battle.net) on an Xbox-style pad, for the default hotkeys. Left stick moves the cursor, RT left-clicks, LT right-clicks, right stick scrolls the map. Face buttons are Attack / Cancel / Stop / Hold, the d-pad is Move / Patrol / Basic and Advanced structures, RB is Shift (queue). Hold LB for control groups 1-8 (also hold RB in there to assign the group instead), R3 opens a radial menu of worker and unit commands. Start is the game menu, Select jumps to the last alert, Guide + X opens the on-screen keyboard (profile names, chat); hold Guide to see every control and the system shortcuts. Holding Select switches to the Menus mode and back (face buttons click and confirm, the d-pad presses the arrows, the right stick scrolls). The \"Gameplay + Gyro\" profile also moves the cursor by tilting the controller, as a fine pointer next to the left stick. Unit-specific keys (siege, cloak, burrow...) aren't mapped; add them to the radial menu if you want them."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -99,8 +99,8 @@ threshold = 0.3
 [profiles.right_trigger.action.button.action]
 mouse = "Left"
 
-[profiles.gestures.Select.long_press.toggle]
-layer = "Menus"
+[profiles.gestures.Select.long_press]
+mode = "Menus"
 
 [profiles.gestures.Guide.double_tap]
 gamepad = "Guide"
@@ -131,7 +131,7 @@ noise_threshold = 1.0
 "button:RightStick" = { text = "Worker / unit commands" }
 "button:Select" = { text = "Jump to last alert" }
 "button:Start" = { text = "Game menu" }
-"gesture:button:Select:long_press" = { text = "Menus layer on / off" }
+"gesture:button:Select:long_press" = { text = "Menus mode on / off" }
 [[profiles.guide.custom]]
 inputs = ["button:LeftBumper", "button:RightBumper"]
 text = "Assign group instead"
@@ -223,8 +223,8 @@ threshold = 0.3
 [profiles.right_trigger.action.button.action]
 mouse = "Left"
 
-[profiles.gestures.Select.long_press.toggle]
-layer = "Menus"
+[profiles.gestures.Select.long_press]
+mode = "Menus"
 
 [profiles.gestures.Guide.double_tap]
 gamepad = "Guide"
@@ -257,7 +257,7 @@ sensitivity = 20.0
 "button:RightStick" = { text = "Worker / unit commands" }
 "button:Select" = { text = "Jump to last alert" }
 "button:Start" = { text = "Game menu" }
-"gesture:button:Select:long_press" = { text = "Menus layer on / off" }
+"gesture:button:Select:long_press" = { text = "Menus mode on / off" }
 [[profiles.guide.custom]]
 inputs = ["button:LeftBumper", "button:RightBumper"]
 text = "Assign group instead"
@@ -439,65 +439,65 @@ keys = [
     "KEY_6",
 ]
 
-[[layers]]
+[[modes]]
 name = "Menus"
 indicator = "name"
 swallow_unbound = true
 
-[layers.indicator_style]
+[modes.indicator_style]
 position = "top_center"
 scale = 0.7
 
-[layers.indicator_style.background]
+[modes.indicator_style.background]
 color = "#0a171b"
 opacity = 0.7
 
-[layers.indicator_style.items]
+[modes.indicator_style.items]
 color = "#163238"
 opacity = 0.95
 
-[layers.indicator_style.selected]
+[modes.indicator_style.selected]
 color = "#3fc1b4"
 opacity = 1.0
 
-[layers.buttons]
+[modes.buttons]
 Select = "toggle_overlay"
 
-[layers.buttons.South]
+[modes.buttons.South]
 mouse = "Left"
 
-[layers.buttons.East]
+[modes.buttons.East]
 keys = ["KEY_ESC"]
 
-[layers.buttons.North]
+[modes.buttons.North]
 keys = ["KEY_ENTER"]
 
-[layers.buttons.West]
+[modes.buttons.West]
 mouse = "Right"
 
-[layers.buttons.Start]
+[modes.buttons.Start]
 keys = ["KEY_ESC"]
 
-[layers.buttons.DpadUp]
+[modes.buttons.DpadUp]
 keys = ["KEY_UP"]
 
-[layers.buttons.DpadDown]
+[modes.buttons.DpadDown]
 keys = ["KEY_DOWN"]
 
-[layers.buttons.DpadLeft]
+[modes.buttons.DpadLeft]
 keys = ["KEY_LEFT"]
 
-[layers.buttons.DpadRight]
+[modes.buttons.DpadRight]
 keys = ["KEY_RIGHT"]
 
-[layers.gestures.Select.long_press.toggle]
-layer = "Menus"
+[modes.gestures.Select.long_press]
+mode = "Menus"
 
-[layers.right_stick]
+[modes.right_stick]
 deadzone = 0.15
 curve = 1.0
 key_threshold = 0.5
 
-[layers.right_stick.action.scroll]
+[modes.right_stick.action.scroll]
 speed = 12.0
 

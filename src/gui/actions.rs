@@ -6,6 +6,8 @@ use super::*;
 
 /// The "+ New layer" choice in a layer picker; replaced by a new layer's name when chosen.
 pub(super) const NEW_LAYER: &str = "+ New layer";
+/// The "+ New mode" choice in a mode picker, likewise.
+pub(super) const NEW_MODE: &str = "+ New mode";
 
 /// One-line description of an action, for collapsed rows and the controller drawing.
 pub(super) fn summarize(action: &ButtonAction) -> String {
@@ -32,6 +34,7 @@ pub(super) enum ActionKind {
     Info,
     Log,
     Layer,
+    Mode,
     Multiple,
 }
 
@@ -54,7 +57,8 @@ impl fmt::Display for ActionKind {
             ActionKind::Menu => "Open menu…",
             ActionKind::Info => "Info overlay…",
             ActionKind::Log => "Log overlay…",
-            ActionKind::Layer => "Layer…",
+            ActionKind::Layer => "Hold layer…",
+            ActionKind::Mode => "Switch mode…",
             ActionKind::Turbo => "Turbo…",
             ActionKind::Multiple => "Several at once…",
         })
@@ -62,7 +66,7 @@ impl fmt::Display for ActionKind {
 }
 
 /// Every kind, for a top-level action.
-pub(super) const ACTION_KINDS: [ActionKind; 19] = [
+pub(super) const ACTION_KINDS: [ActionKind; 20] = [
     ActionKind::Disabled,
     ActionKind::Gamepad,
     ActionKind::Keys,
@@ -81,6 +85,7 @@ pub(super) const ACTION_KINDS: [ActionKind; 19] = [
     ActionKind::Info,
     ActionKind::Log,
     ActionKind::Layer,
+    ActionKind::Mode,
     ActionKind::Multiple,
 ];
 
@@ -95,6 +100,7 @@ pub(super) const RADIAL_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::Numpad,
     ActionKind::Toggle,
     ActionKind::Macro,
+    ActionKind::Mode,
     ActionKind::Multiple,
 ];
 
@@ -111,6 +117,8 @@ pub(super) const MENU_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::Toggle,
     ActionKind::Macro,
     ActionKind::Menu,
+    // A menu item is a tap: it can't hold a layer, but it can switch modes.
+    ActionKind::Mode,
     ActionKind::Multiple,
 ];
 
@@ -127,6 +135,7 @@ pub(super) const NO_SUBMENU_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::Screenshot,
     ActionKind::Toggle,
     ActionKind::Macro,
+    ActionKind::Mode,
     ActionKind::Multiple,
 ];
 
@@ -143,7 +152,8 @@ pub(super) const MULTI_ENTRY_KINDS: &[ActionKind] = &[
     ActionKind::Wheel,
 ];
 
-/// What a Toggle can hold down: basic outputs, a turbo (toggleable auto-fire) or several.
+/// What a Toggle can hold down: basic outputs, a turbo (toggleable auto-fire) or several. Not a
+/// layer: one that stays on is a mode.
 pub(super) const TOGGLE_INNER_KINDS: &[ActionKind] = &[
     ActionKind::Disabled,
     ActionKind::Gamepad,
@@ -156,8 +166,6 @@ pub(super) const TOGGLE_INNER_KINDS: &[ActionKind] = &[
     // Shown until toggled off.
     ActionKind::Info,
     ActionKind::Log,
-    // On until toggled off; how a menu item switches a layer.
-    ActionKind::Layer,
     ActionKind::Multiple,
 ];
 
@@ -224,6 +232,7 @@ pub(super) fn action_kind(action: &ButtonAction) -> ActionKind {
         ButtonAction::ShowInfo(_) => ActionKind::Info,
         ButtonAction::ShowLog(_) => ActionKind::Log,
         ButtonAction::Layer(_) => ActionKind::Layer,
+        ButtonAction::Mode(_) => ActionKind::Mode,
     }
 }
 
@@ -262,7 +271,14 @@ pub(super) fn new_action(k: ActionKind, default_button: Button, current: &Button
         ActionKind::Log => ButtonAction::ShowLog(names.logs.first().cloned().unwrap_or_default()),
         // With no layers yet, picking the kind makes one.
         ActionKind::Layer => ButtonAction::Layer(names.layers.first().cloned().unwrap_or_else(|| NEW_LAYER.into())),
+        ActionKind::Mode => ButtonAction::Mode(switchable_modes(names).first().cloned().unwrap_or_else(|| NEW_MODE.into())),
     }
+}
+
+/// The modes an action can switch to: the game's, and mouse mode. The Guide mode belongs to the
+/// Guide button.
+fn switchable_modes(names: &Names) -> Vec<String> {
+    names.modes.iter().filter(|m| *m != crate::config::GUIDE_MODE).cloned().collect()
 }
 
 /// A Turbo's settings: a rate for keys, buttons and the like, or the gap between presses for a
@@ -503,6 +519,17 @@ pub(super) fn action_value<'a>(
                 .align_y(Alignment::Center);
             if !names.layers.contains(name) {
                 line = line.push(text("missing layer").size(12).color(ERROR_COLOR));
+            }
+            line.into()
+        }
+        ButtonAction::Mode(name) => {
+            let mut options = switchable_modes(names);
+            options.push(NEW_MODE.to_string());
+            let mut line = row![dropdown(options, Some(name.clone()), move |n| on_change(ButtonAction::Mode(n))).width(200)]
+                .spacing(8)
+                .align_y(Alignment::Center);
+            if !names.modes.contains(name) {
+                line = line.push(text("missing mode").size(12).color(ERROR_COLOR));
             }
             line.into()
         }

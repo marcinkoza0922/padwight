@@ -28,7 +28,7 @@ const SHARED: &str = "shared";
 /// The keys of `config.toml` that live in the folders instead.
 const APP_KEYS: [&str; 2] = ["general", "setups"];
 /// The keys of a setup that live in its subfolders instead.
-const SETUP_KEYS: [&str; 6] = ["profiles", "macros", "menus", "info_overlays", "log_overlays", "layers"];
+const SETUP_KEYS: [&str; 7] = ["profiles", "macros", "menus", "info_overlays", "log_overlays", "layers", "modes"];
 
 /// An item that is saved as a file named after it.
 trait Named {
@@ -107,7 +107,7 @@ fn copy_item(to: &mut Game, from: &Game, kind: ItemKind, name: &str, new: &str) 
         ItemKind::Menu => to.menus.extend(from.menus.iter().find(|m| m.name == name).map(|m| Menu { name: new.into(), ..m.clone() })),
         ItemKind::Info => to.info.extend(from.info.iter().find(|o| o.name == name).map(|o| InfoOverlay { name: new.into(), ..o.clone() })),
         ItemKind::Log => to.logs.extend(from.logs.iter().find(|o| o.name == name).map(|o| LogOverlay { name: new.into(), ..o.clone() })),
-        ItemKind::Layer => {}
+        ItemKind::Layer | ItemKind::Mode => {}
     }
 }
 
@@ -159,6 +159,7 @@ fn write_setup(dir: &Path, game: &Game) -> Result<()> {
     write_private(&dir.join(SETUP_FILE), &toml::to_string_pretty(&without(game, &SETUP_KEYS)?)?)?;
     write_items(&dir.join("profiles"), &game.profiles)?;
     write_items(&dir.join("layers"), &game.layers)?;
+    write_items(&dir.join("modes"), &game.modes)?;
     write_items(&dir.join("macros"), &game.macros)?;
     write_items(&dir.join("menus"), &game.menus)?;
     write_items(&dir.join("info"), &game.info)?;
@@ -172,6 +173,7 @@ fn read_setup(dir: &Path) -> Result<Game> {
     let mut game: Game = toml::from_str(&text).with_context(|| format!("parsing {}", path.display()))?;
     game.profiles = read_items(&dir.join("profiles"))?;
     game.layers = read_items(&dir.join("layers"))?;
+    game.modes = read_items(&dir.join("modes"))?;
     game.macros = read_items(&dir.join("macros"))?;
     game.menus = read_items(&dir.join("menus"))?;
     game.info = read_items(&dir.join("info"))?;

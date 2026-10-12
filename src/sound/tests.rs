@@ -95,6 +95,8 @@ fn the_guide_menus_have_their_own_calm_sounds_even_in_an_older_set() {
     assert_ne!(set.guide, OverlaySounds::default());
     assert_eq!(set.cue(SoundOverlay::Guide, Feedback::Open).map(|s| s.kind), Some(SoundKind::Rise));
     assert_eq!(set.cue(SoundOverlay::Guide, Feedback::Close).map(|s| s.kind), Some(SoundKind::Fall));
+    assert_eq!(set.cue(SoundOverlay::Guide, Feedback::Mode).map(|s| s.kind), Some(SoundKind::Swish));
+    assert_ne!(set.cue(SoundOverlay::Guide, Feedback::Mode), set.cue(SoundOverlay::Guide, Feedback::Step));
 }
 
 #[test]

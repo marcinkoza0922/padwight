@@ -2,6 +2,11 @@
 
 Status: implemented (2026-10-06), except per-layer timings (see the open questions).
 
+**Superseded in part by [modes](modes.md) (2026-10-11):** layers can no longer be toggled, and
+menu items can't hold them. A scheme that stays on until switched back is a mode. The sections
+below that describe toggled layers are history; older configs and packs have their toggled
+layers converted to modes when loaded.
+
 ## Goal
 
 While an input is held, some of the controller's mappings change, then change back when it's

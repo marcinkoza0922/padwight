@@ -1,6 +1,6 @@
 # `.padpack` format reference
 
-A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 16**, the format the current app writes. For a walkthrough of building one, see [tutorial-deus-ex-pack.md](tutorial-deus-ex-pack.md). The shipped examples are in `packs/`.
+A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 17**, the format the current app writes. For a walkthrough of building one, see [tutorial-deus-ex-pack.md](tutorial-deus-ex-pack.md). The shipped examples are in `packs/`.
 
 The easiest way to write a pack is in the app, then **Details → Export…**. Read this page when you want to edit the file by hand, check a value, or understand what the export produced.
 
@@ -25,6 +25,7 @@ made_with = "Xbox controller"
 [[macros]]                       # optional
 [[menus]]                        # optional
 [[info_overlays]]                # optional
+[[modes]]                        # optional
 [[layers]]                       # optional
 [keyboard_style]                 # optional, on-screen keyboard look
 [numpad_style]                   # optional, on-screen numpad look
@@ -91,11 +92,12 @@ A button's value is an **action**. Each form is one TOML key:
 | `gamepad` | `gamepad = "Guide"` | Sends a gamepad button to the virtual pad, with any button name above. |
 | `"toggle_overlay"`, `"toggle_numpad"` | | Opens or closes the on-screen keyboard or numpad. |
 | `"screenshot"`, `"toggle_recording"`, `"toggle_media"`, `"force_quit"` | | The Guide-layer actions: screenshot, start or stop recording, media controls, force-quit the focused game. |
-| `multi` | `multi = [{ layer = "Guide" }, { show_info = "Controls" }]` | Several actions at once, pressed in order and released in reverse. |
+| `multi` | `multi = [{ layer = "Hotkeys" }, { show_info = "Controls" }]` | Several actions at once, pressed in order and released in reverse. |
 | `toggle` | `[profiles.buttons.LeftStick.toggle]` `keys = ["KEY_X"]` | First press holds the inner action, next press releases it. |
 | `turbo` | `turbo = { action = { keys = ["KEY_F"] }, rate = 10.0 }` | Repeats the inner action 2–30 times a second while held. |
 | `macro` | `macro = { name = "QCF", repeat = false }` | Plays a macro. `repeat = true` loops while held. |
-| `layer` | `layer = "Guide"` | Holds a layer on while the input is held. |
+| `layer` | `layer = "Hotkeys"` | Holds a layer on while the input is held. Can't be inside `toggle`, or in a menu item. |
+| `mode` | `mode = "Driving"` | Switches to a mode, or back to the default mode if that mode is on. `"Mouse mode"` names the built-in mouse mode. |
 | `show_info` | `show_info = "Controls"` | Shows an info overlay while held. |
 | `show_log` | `show_log = "Inputs"` | Shows a log overlay while held. |
 | `open_menu` | `open_menu = "Belt"` | Opens a menu while held. |
@@ -371,12 +373,33 @@ scale = 0.9
 - Each row is a list of cells, and cells line up in columns. A cell is text with `{tokens}`.
 - Button glyphs: `{south} {east} {west} {north} {lb} {rb} {lt} {rt} {select} {start} {guide} {ls} {rs} {l3} {r3} {dpad} {up} {down} {left} {right}`. They are drawn for the controller in use.
 - Output glyphs: `{pad:south}` (any button name from the list above, after `pad:`) is drawn for the controller the pad presents itself as, `{keyboard:a}` is a key by its name without `KEY_` in lower case (`{keyboard:leftshift}`, `{keyboard:f1}`), and `{mouse:leftclick}` is `rightclick`, `middleclick`, `backclick` or `forwardclick`. A key or mouse token that names nothing stays as text.
-- Live values: `{time} {time12} {date} {profile} {layer} {app} {title} {pid} {cpu} {ram} {gpu} {wifi} {system_battery} {controller_battery}`, plus `{current_input}` (with the `current_input` settings).
+- Live values: `{time} {time12} {date} {profile} {layer} {mode} {app} {title} {pid} {cpu} {ram} {gpu} {wifi} {system_battery} {controller_battery}`, plus `{current_input}` (with the `current_input` settings).
 - An overlay is shown by a `show_info` action, or always when `always = true`.
+
+## Modes
+
+A mode is a control scheme the player switches to and stays in, such as driving. Only one is on at a time; with none on, the profile itself is the default mode. A mode is written exactly like a layer (see below), under `[[modes]]`, and switched to with the `mode` action:
+
+```toml
+[profiles.buttons.North]
+mode = "Driving"
+
+[[modes]]
+name = "Driving"
+indicator = "name"
+
+[modes.buttons.North]            # Y again goes back to on foot
+mode = "Driving"
+
+[modes.right_trigger.action.button.action]
+keys = ["KEY_W"]
+```
+
+Layers apply on top of the mode that's on.
 
 ## Layers
 
-A layer changes some of the profile's mappings while it is held or toggled on. Everything it doesn't set falls through to the profile.
+A layer changes some of the profile's (and the mode's) mappings while it is held. Everything it doesn't set falls through to the mode and the profile. A layer can't be toggled: one that should stay on is a mode.
 
 ```toml
 [[layers]]
@@ -396,9 +419,9 @@ keys = ["KEY_TAB"]
 speed = 1600.0
 ```
 
-A layer can override `buttons`, `gestures`, `combos`, `disabled_combos`, `left_stick`, `right_stick`, `left_trigger`, `right_trigger`, `gyro` and `touchpad`. Each override replaces the profile's setting for that input only.
+A layer or mode can override `buttons`, `gestures`, `combos`, `disabled_combos`, `left_stick`, `right_stick`, `left_trigger`, `right_trigger`, `gyro` and `touchpad`. Each override replaces the profile's setting for that input only. With `swallow_unbound`, buttons it doesn't set do nothing, except those that hold a layer or switch modes.
 
-**Guide** is special. In a pack, every profile's `Guide` button must hold the layer named `Guide`, and the pack must contain that layer: the library check fails otherwise. Every game gets the system shortcuts while Guide is down, whether or not its pack carries them: the app fills in whatever a game's Guide layer leaves unset when it loads, imports or saves a setup. A pack's Guide layer must still carry all of them, so the pack file shows what Guide does, and the library check fails otherwise. The shortcuts: `+ X` keyboard, `+ Y` numpad, `+ LB` media controls, `+ RB` screenshot, `+ Left stick` recording, `+ B` force-quit, `+ RT` / `+ LT` clicks, `+ Right stick` mouse, `+ D-pad` Enter, Tab and Escape, and so on. Its bindings are listed in [the Guide design notes](development/guide.md).
+**Guide** and **Mouse mode** are built-in modes. Every game has them, fixed, so a pack never carries them (a stored copy is dropped when read). The Guide button is the app's own: whatever a profile maps it to is ignored, and the library packs write `mode = "Guide"` there. Older packs' `layer = "Guide"` (and toggles of `"Mouse mode"`) are read as the built-in modes. The Guide mode's shortcuts: `+ X` keyboard, `+ Y` numpad, `+ LB` media controls, `+ RB` screenshot, `+ Left stick` recording, `+ B` force-quit, `+ RT` / `+ LT` clicks, `+ Right stick` mouse, `+ D-pad` Enter, Tab and Escape, and so on. Its bindings are listed in [the Guide design notes](development/guide.md).
 
 ## Keyboard, numpad and font
 
@@ -502,7 +525,7 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
 
 ## Versioning
 
-- `format` is an integer. The app writes `16` and reads up to `16`. A pack with a newer `format` is refused with "update the app to import it". Older formats are upgraded when read.
+- `format` is an integer. The app writes `17` and reads up to `17`. A pack with a newer `format` is refused with "update the app to import it". Older formats are upgraded when read.
 - Format history:
   - 2 added layers.
   - 3 added toggles that start on.
@@ -519,8 +542,9 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
   - 14 added overlay decorations (outlines, shadows, gradients, glows and text colors).
   - 15 added gyro acceleration curves, axes, player and world space, the position mode, smoothing and pausing, and the touchpad's curve.
   - 16 added the touchpad's joystick, menu and swipe modes, tapping, scrolling and gliding, the split pad, and layers' touchpads.
+  - 17 added modes (`[[modes]]` and the `mode` action), and stopped layers from being toggled. When an older pack is read, each `toggle` of a layer becomes a `mode` switch, and a layer that was only ever toggled becomes a mode.
 - Bump `format` only for a breaking change to the shape. Adding an optional key with a default doesn't need it.
 
 ## Checks
 
-The repository's test suite parses every file in `packs/` and checks it: the format, unique IDs and names, no dangling references (macros, menus, info overlays, layers, profiles), that each rule points at an existing profile, and that a plain pad can play at least one profile. A pack you add to `packs/` is checked the same way, and it is embedded in the next build.
+The repository's test suite parses every file in `packs/` and checks it: the format, unique IDs and names, no dangling references (macros, menus, info overlays, modes, layers, profiles), that each rule points at an existing profile, and that a plain pad can play at least one profile. A pack you add to `packs/` is checked the same way, and it is embedded in the next build.

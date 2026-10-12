@@ -16,12 +16,12 @@ use crate::{
     system_menu::active_profile_mut,
 };
 
-use buttons::{ActionRow, Picker, Slot, action_row_keyword, action_row_label, action_title, choice_action, page_rows, tuned, wrapped};
+use buttons::{ActionRow, Picker, Shift, Slot, action_row_keyword, action_row_label, action_title, choice_action, page_rows, tuned, wrapped};
 use crate::config::Analog;
 use zones::{ZONE_ACTION, ZONE_DELETE, ZONE_FROM, ZONE_ROWS, ZONE_TO};
 use macros::{StepKind, add_macro, choose_macro_row, macro_page, macro_rows};
 use crate::config::Layer;
-use views::{add_item, button_item, combo_item, combo_page, combos, item, layer_name, layer_page, layers, top_item};
+use views::{add_item, button_item, combo_item, combo_page, combos, item, layer_name, layer_page, layers, layers_page, top_item};
 
 /// One row of the top page.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -31,7 +31,8 @@ enum Top {
     Trigger(Trigger),
     Gyro,
     Combos,
-    Layers,
+    /// The game's modes or layers.
+    Layers(Shift),
     Macros,
     Menus,
     Infos,
@@ -48,7 +49,8 @@ fn top_rows(inputs: &[Button]) -> Vec<Top> {
             Top::Trigger(Trigger::Right),
             Top::Gyro,
             Top::Combos,
-            Top::Layers,
+            Top::Layers(Shift::Mode),
+            Top::Layers(Shift::Layer),
             Top::Macros,
             Top::Menus,
             Top::Infos,
@@ -65,8 +67,9 @@ enum Page {
     Gestures(Button),
     Combos,
     Combo(usize),
-    Layers,
-    Layer(usize),
+    /// The game's modes or layers, and one of them.
+    Layers(Shift),
+    Layer(Shift, usize),
     /// The key picker, for the slot it was opened from.
     Keys(Slot),
     /// Picking the button a macro step presses, releases or taps.
@@ -173,12 +176,12 @@ impl LayoutEditor {
             Page::Gestures(_) => GestureKind::ALL.len(),
             Page::Combos => combos(config).len() + 1,
             Page::Combo(_) => self.inputs().len() + 2,
-            Page::Layers => layers(config).len() + 1,
+            Page::Layers(shift) => layers(config, shift).len() + 1,
             Page::Keys(_) => buttons::KEY_PICKS.len() + 1,
             Page::MacroPick(..) => Button::ALL.len(),
             Page::Pick(_, p) => picker_names(config, p).len(),
             Page::MacroStick(_) => macros::STICK_STEPS,
-            Page::Layer(_) => self.inputs().len(),
+            Page::Layer(..) => self.inputs().len(),
             Page::Macros => config.active_game().macros.len() + 1,
             Page::Macro(i) => macro_rows(config, i),
             Page::Stick(_) => values::STICK_ROWS + 1,
@@ -212,7 +215,7 @@ impl LayoutEditor {
             }
             Page::Combos => self.choose_combo_row(config),
             Page::Combo(i) => self.choose_combo_member(i, config),
-            Page::Layers => self.choose_layers_row(config),
+            Page::Layers(shift) => self.choose_layers_row(shift, config),
             Page::Pick(slot, p) => {
                 let Some(name) = picker_names(config, p).get(self.cursor).cloned() else { return EditStep::Stay };
                 set_slot(config, slot, Some(p.action(&name)));
@@ -220,8 +223,8 @@ impl LayoutEditor {
                 self.pop();
                 EditStep::Changed
             }
-            Page::Layer(i) => {
-                self.push(Page::Action(Slot::Layer(i, self.inputs()[self.cursor])));
+            Page::Layer(shift, i) => {
+                self.push(Page::Action(Slot::Layer(shift, i, self.inputs()[self.cursor])));
                 EditStep::Stay
             }
             Page::Macros => self.choose_macros_row(config),
@@ -325,7 +328,7 @@ impl LayoutEditor {
             Top::Trigger(t) => Page::Trigger(t),
             Top::Gyro => Page::Gyro,
             Top::Combos => Page::Combos,
-            Top::Layers => Page::Layers,
+            Top::Layers(shift) => Page::Layers(shift),
             Top::Macros => Page::Macros,
             Top::Menus => Page::Menus,
             Top::Infos => Page::Infos,
@@ -399,17 +402,18 @@ impl LayoutEditor {
         EditStep::Changed
     }
 
-    fn choose_layers_row(&mut self, config: &mut Config) -> EditStep {
-        if self.cursor < layers(config).len() {
-            self.push(Page::Layer(self.cursor));
+    /// Opens a mode or layer, or adds one ("Mode 1", "Layer 1", …) from the last row.
+    fn choose_layers_row(&mut self, shift: Shift, config: &mut Config) -> EditStep {
+        if self.cursor < layers(config, shift).len() {
+            self.push(Page::Layer(shift, self.cursor));
             return EditStep::Stay;
         }
         let Some(profile_game) = active_game_mut(config) else { return EditStep::Stay };
-        let taken = |n: &str| profile_game.layers.iter().any(|l| l.name == n);
-        let name = (1..).map(|n| format!("Layer {n}")).find(|n| !taken(n)).unwrap_or_default();
-        profile_game.layers.push(Layer::new(&name));
-        let new = profile_game.layers.len() - 1;
-        self.push(Page::Layer(new));
+        let list = shift.list_mut(profile_game);
+        let name = (1..).map(|n| format!("{} {n}", shift.title())).find(|n| !list.iter().any(|l| &l.name == n)).unwrap_or_default();
+        list.push(Layer::new(&name));
+        let new = list.len() - 1;
+        self.push(Page::Layer(shift, new));
         EditStep::Changed
     }
 
@@ -540,16 +544,12 @@ impl LayoutEditor {
                 (rows, "{south} open · {east} back")
             }
             Page::Combo(i) => combo_page(config, i, &self.inputs()),
-            Page::Layers => {
-                let mut rows: Vec<ItemView> = layers(config).iter().map(|l| item(format!("{} ({} bound)", l.name, l.buttons.len()))).collect();
-                rows.push(add_item("Add layer".into()));
-                (rows, "{south} open · {east} back")
-            }
+            Page::Layers(shift) => layers_page(config, shift),
             Page::Pick(_, p) => {
                 let rows = picker_names(config, p).into_iter().map(item).collect();
                 (rows, "{south} choose · {east} back")
             }
-            Page::Layer(i) => layer_page(config, i, &self.inputs()),
+            Page::Layer(shift, i) => layer_page(config, shift, i, &self.inputs()),
             Page::Keys(slot) => keys_page(config, slot),
             Page::MacroPick(..) => (Button::ALL.iter().map(|&b| button_item(b, String::new())).collect(), "{south} choose · {east} back"),
             Page::Macros => {
@@ -609,7 +609,7 @@ fn current_action(config: &Config, slot: Slot) -> ButtonAction {
         Slot::Button(b) => profile.button(b).clone(),
         Slot::Gesture(b, kind) => profile.gestures.get(&b).and_then(|g| g.get(kind)).cloned().unwrap_or(ButtonAction::Disabled),
         Slot::Combo(i) => profile.combos.get(i).map_or(ButtonAction::Disabled, |c| c.action.clone()),
-        Slot::Layer(i, b) => layers(config).get(i).and_then(|l| l.buttons.get(&b)).cloned().unwrap_or(ButtonAction::Disabled),
+        Slot::Layer(shift, i, b) => layers(config, shift).get(i).and_then(|l| l.buttons.get(&b)).cloned().unwrap_or(ButtonAction::Disabled),
         Slot::Zone(a, i) => zones::zone_action(config, a, i),
         Slot::MenuItem(m, i) => menus::item_action(config, m, i),
     }
@@ -628,8 +628,8 @@ fn page_title(page: Page, config: &Config) -> String {
         Page::Gestures(b) => format!("{} gestures", b.short_name()),
         Page::Combos => "Combos".into(),
         Page::Combo(i) => format!("Combo {}", i + 1),
-        Page::Layers => "Layers".into(),
-        Page::Layer(i) => layers(config).get(i).map_or_else(|| "Layer".into(), |l| l.name.clone()),
+        Page::Layers(shift) => format!("{}s", shift.title()),
+        Page::Layer(shift, i) => layers(config, shift).get(i).map_or_else(|| shift.title().into(), |l| l.name.clone()),
         Page::Macros => "Macros".into(),
         Page::Macro(i) => config.active_game().macros.get(i).map_or_else(|| "Macro".into(), |m| m.name.clone()),
         Page::Stick(stick) => format!("{} stick", values::side(stick == Stick::Left)),
@@ -649,6 +649,7 @@ fn page_title(page: Page, config: &Config) -> String {
 fn picker_names(config: &Config, p: Picker) -> Vec<String> {
     let game = config.active_game();
     match p {
+        Picker::Mode => game.modes.iter().map(|l| l.name.clone()).chain([crate::config::MOUSE_MODE.to_string()]).collect(),
         Picker::Layer => game.layers.iter().map(|l| l.name.clone()).collect(),
         Picker::Macro => game.macros.iter().map(|m| m.name.clone()).collect(),
         Picker::Menu => game.menus.iter().map(|m| m.name.clone()).collect(),
@@ -689,8 +690,8 @@ fn set_slot(config: &mut Config, slot: Slot, action: Option<ButtonAction>) {
         zones::set_zone_action(config, a, i, action.unwrap_or(ButtonAction::Disabled));
         return;
     }
-    if let Slot::Layer(i, b) = slot {
-        if let Some(layer) = active_game_mut(config).and_then(|g| g.layers.get_mut(i)) {
+    if let Slot::Layer(shift, i, b) = slot {
+        if let Some(layer) = active_game_mut(config).and_then(|g| shift.list_mut(g).get_mut(i)) {
             buttons::set_layer_slot(&mut layer.buttons, b, action);
         }
         return;

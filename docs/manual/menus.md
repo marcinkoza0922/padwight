@@ -8,7 +8,7 @@ Use **Open menu…** as the action of any button, gesture, combo, trigger or sti
 
 ## Keeping one open
 
-To keep a held menu up, press the Right Stick (R3) while it's open: it stays when you let go, until you press its input again or its close button. A menu can't be put in a **Toggle**.
+To keep a held menu up, press the Right Stick (R3) while it's open: it stays when you let go, until you press its input again or its close button. A menu can't be put in a **Toggle**. A menu item can switch [modes](modes.md), but it can't hold a layer.
 
 ## Close button
 

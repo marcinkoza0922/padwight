@@ -93,6 +93,7 @@ impl GameTab {
     pub(super) fn glyph(self, family: PadFamily) -> Element<'static, Message> {
         let text = match self {
             GameTab::Profiles => controller(family),
+            GameTab::Modes => keyword_icon::svg_in(Keyword::Mode, INK),
             GameTab::Layers => keyword_icon::svg_in(Keyword::Layer, INK),
             GameTab::Macros => keyword_icon::svg_in(Keyword::Macro, INK),
             GameTab::Menus => keyword_icon::svg_in(Keyword::Menu, INK),

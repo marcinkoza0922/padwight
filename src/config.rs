@@ -13,6 +13,7 @@ mod curve;
 mod guide;
 mod gyro;
 mod log;
+pub mod modes;
 mod performance;
 mod store;
 mod style;
@@ -25,6 +26,7 @@ pub use curve::*;
 pub use guide::*;
 pub use gyro::*;
 pub use log::*;
+pub use modes::Mode;
 pub use performance::Performance;
 pub use style::*;
 use style::{default_keyboard_style, default_media_style, default_menu_style, default_numpad_style};
@@ -279,9 +281,11 @@ pub enum ButtonAction {
     ShowLog(String),
     /// Shows the menu named here. As a menu item's action it opens a submenu.
     OpenMenu(String),
-    /// While held, the game's layer named here applies on top of the active profile (wrap in
-    /// Toggle to keep it on).
+    /// While held, the game's layer named here applies on top of the active profile and mode.
     Layer(String),
+    /// Switches to the game's mode named here, which replaces whichever mode was on. Pressed
+    /// while that mode is already on, it goes back to the default mode (no mode).
+    Mode(String),
 }
 
 /// A Toggle's inner action, and whether it switches on by itself when the game starts.
@@ -789,7 +793,7 @@ impl ButtonAction {
     /// What the Guide button's mapping says. The engine ignores it: Guide is built in (see the
     /// Guide overlay), so this only matters to older files.
     pub fn guide_hold() -> Self {
-        ButtonAction::Layer(GUIDE_LAYER.into())
+        ButtonAction::Mode(GUIDE_MODE.into())
     }
 
     pub fn key_names(&self) -> Vec<&String> {
@@ -1281,41 +1285,42 @@ pub struct Layer {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub touchpad: Option<TouchpadConfig>,
     /// While on, buttons the layer doesn't set do nothing (instead of keeping the profile's
-    /// action), except ones that hold a layer themselves.
+    /// action), except ones that hold a layer or switch modes themselves.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub swallow_unbound: bool,
 }
 
-/// The name of the layer Guide holds by default.
-pub const GUIDE_LAYER: &str = "Guide";
+/// The name of the built-in mode the Guide button turns on while it's held or its overlay is up.
+pub const GUIDE_MODE: &str = "Guide";
 
-/// The name of the built-in layer that mouse mode turns on (see the engine).
-pub const MOUSE_LAYER: &str = "Mouse mode";
+/// The name of the built-in mouse mode (see the engine).
+pub const MOUSE_MODE: &str = "Mouse mode";
 
 static GUIDE_BUILT_IN: LazyLock<Layer> = LazyLock::new(Layer::guide);
 static MOUSE_BUILT_IN: LazyLock<Layer> = LazyLock::new(Layer::mouse);
 
-/// The built-in layer called `name`, if there is one. These are fixed: every game has them, and
-/// they're never stored in a game, so they can't be edited or deleted.
-pub fn built_in_layer(name: &str) -> Option<&'static Layer> {
+/// The built-in mode called `name`, if there is one. These are fixed: every game has them, and
+/// they're never stored in a game, so they can't be edited or deleted. While one is on, it stands
+/// in for the game's mode, and held layers don't apply.
+pub fn built_in_mode(name: &str) -> Option<&'static Layer> {
     match name {
-        GUIDE_LAYER => Some(&GUIDE_BUILT_IN),
-        MOUSE_LAYER => Some(&MOUSE_BUILT_IN),
+        GUIDE_MODE => Some(&GUIDE_BUILT_IN),
+        MOUSE_MODE => Some(&MOUSE_BUILT_IN),
         _ => None,
     }
 }
 
-/// Every built-in layer.
-pub fn built_in_layers() -> [&'static Layer; 2] {
+/// Every built-in mode.
+pub fn built_in_modes() -> [&'static Layer; 2] {
     [&GUIDE_BUILT_IN, &MOUSE_BUILT_IN]
 }
 
 impl Layer {
-    /// The default Guide layer: the system shortcuts on the Guide chords, and everything else
+    /// The Guide mode: the system shortcuts on the Guide chords, and everything else
     /// swallowed. Mouse mode (see [`Layer::mouse`]) has the mouse and the D-pad keys.
     pub fn guide() -> Self {
         use ButtonAction::*;
-        let mut layer = Self::new(GUIDE_LAYER);
+        let mut layer = Self::new(GUIDE_MODE);
         layer.indicator = Indicator::Bindings;
         layer.indicator_style = OverlayStyle::sheet();
         layer.indicator_title = Some("Guide shortcuts".into());
@@ -1337,7 +1342,7 @@ impl Layer {
     pub fn mouse() -> Self {
         use ButtonAction::*;
         let key = |k: &str| Keys(vec![k.into()]);
-        let mut layer = Self::new(MOUSE_LAYER);
+        let mut layer = Self::new(MOUSE_MODE);
         layer.indicator = Indicator::Bindings;
         layer.indicator_style = OverlayStyle::sheet();
         layer.indicator_title = Some("Mouse mode: press {guide} to exit".into());
@@ -1395,8 +1400,15 @@ impl Layer {
     /// Puts this layer's overrides on top of `p`.
     pub fn apply(&self, p: &mut Profile) {
         if self.swallow_unbound {
+            // Buttons that hold a layer or switch modes stay, so there's always a way back.
+            let shifts = |a: &ButtonAction| {
+                let mut found = false;
+                a.walk(&mut |a| found |= matches!(a, ButtonAction::Layer(_) | ButtonAction::Mode(_)));
+                found
+            };
             for b in Button::ALL {
-                let holds = matches!(p.button(b), ButtonAction::Layer(_));
+                let gestures = p.gestures.get(&b).is_some_and(|g| GestureKind::ALL.into_iter().any(|k| g.get(k).is_some_and(shifts)));
+                let holds = shifts(p.button(b)) || gestures;
                 if !holds && !self.buttons.contains_key(&b) {
                     p.buttons.insert(b, ButtonAction::Disabled);
                     p.gestures.remove(&b);
@@ -2182,9 +2194,12 @@ pub struct Game {
     /// Shown by `ButtonAction::ShowLog`, or always while the game is active.
     #[serde(default, rename = "log_overlays", skip_serializing_if = "Vec::is_empty")]
     pub logs: Vec<LogOverlay>,
-    /// Held or toggled on with `ButtonAction::Layer`, over whichever profile is active.
+    /// Held with `ButtonAction::Layer`, over whichever profile and mode are active.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub layers: Vec<Layer>,
+    /// Switched to with `ButtonAction::Mode`, one at a time, over whichever profile is active.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub modes: Vec<Mode>,
     /// Looks of the on-screen keyboard and numpad while this game is active; the global ones
     /// (`Config::keyboard_style`, `Config::numpad_style`) apply when unset.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -2234,6 +2249,7 @@ impl Game {
             info: Vec::new(),
             logs: Vec::new(),
             layers: Vec::new(),
+            modes: Vec::new(),
             keyboard_style: None,
             numpad_style: None,
             media_style: None,
@@ -2250,21 +2266,26 @@ impl Game {
         self.profiles.iter().find(|p| p.name == name)
     }
 
-    /// Drops any built-in layer a file stored in the game. They're never stored: every game has
-    /// them, fixed (see [`built_in_layer`]).
-    pub fn strip_built_in_layers(&mut self) {
-        self.layers.retain(|l| built_in_layer(&l.name).is_none());
+    /// Drops any built-in mode a file stored in the game (older ones stored them as layers).
+    /// They're never stored: every game has them, fixed (see [`built_in_mode`]).
+    pub fn strip_built_in_modes(&mut self) {
+        self.layers.retain(|l| built_in_mode(&l.name).is_none());
+        self.modes.retain(|l| built_in_mode(&l.name).is_none());
     }
 
-    /// Takes its menus out of any Toggle (see [`untoggle_menus`]).
+    /// Takes its menus out of any Toggle (see [`untoggle_menus`]), and makes its toggled layers
+    /// modes (see [`modes::toggled_layers_to_modes`]).
     pub fn untoggle_menus(&mut self) {
         untoggle_menus(&mut self.profiles, &mut self.menus, &mut self.layers);
+        untoggle_menus(&mut [], &mut [], &mut self.modes);
+        modes::toggled_layers_to_modes(&mut self.profiles, &mut self.menus, &mut self.layers, &mut self.modes);
     }
 
     /// Points every reference to the macro, menu or info overlay `old` (of `kind`) at `new`:
     /// in profiles, menu items and macro steps.
     pub fn rename_refs(&mut self, kind: ItemKind, old: &str, new: &str) {
         rename_in(&mut self.profiles, &mut self.menus, &mut self.macros, &mut self.layers, kind, old, new);
+        rename_in(&mut [], &mut [], &mut [], &mut self.modes, kind, old, new);
     }
 
     /// The names of its items of one kind.
@@ -2275,6 +2296,7 @@ impl Game {
             ItemKind::Info => self.info.iter().map(|o| o.name.as_str()).collect(),
             ItemKind::Log => self.logs.iter().map(|o| o.name.as_str()).collect(),
             ItemKind::Layer => self.layers.iter().map(|l| l.name.as_str()).collect(),
+            ItemKind::Mode => self.modes.iter().map(|l| l.name.as_str()).collect(),
         }
     }
 
@@ -2288,12 +2310,13 @@ impl Game {
             ItemKind::Info => self.info.iter_mut().filter(|o| o.name == old).for_each(|o| o.name = new.clone()),
             ItemKind::Log => self.logs.iter_mut().filter(|o| o.name == old).for_each(|o| o.name = new.clone()),
             ItemKind::Layer => self.layers.iter_mut().filter(|l| l.name == old).for_each(|l| l.name = new.clone()),
+            ItemKind::Mode => self.modes.iter_mut().filter(|l| l.name == old).for_each(|l| l.name = new.clone()),
         }
     }
 
     /// Its layers named in `active` (oldest first), skipping names it has none of.
     pub fn layers_named<'a>(&'a self, active: &'a [String]) -> impl Iterator<Item = &'a Layer> {
-        active.iter().filter_map(|n| self.layers.iter().find(|l| &l.name == n).or_else(|| built_in_layer(n)))
+        active.iter().filter_map(|n| self.layers.iter().find(|l| &l.name == n))
     }
 }
 
@@ -2314,10 +2337,11 @@ pub enum ItemKind {
     Info,
     Log,
     Layer,
+    Mode,
 }
 
 impl ItemKind {
-    pub const ALL: [ItemKind; 5] = [ItemKind::Macro, ItemKind::Menu, ItemKind::Info, ItemKind::Log, ItemKind::Layer];
+    pub const ALL: [ItemKind; 6] = [ItemKind::Macro, ItemKind::Menu, ItemKind::Info, ItemKind::Log, ItemKind::Layer, ItemKind::Mode];
 
     pub fn noun(self) -> &'static str {
         match self {
@@ -2326,6 +2350,7 @@ impl ItemKind {
             ItemKind::Info => "info overlay",
             ItemKind::Log => "log overlay",
             ItemKind::Layer => "layer",
+            ItemKind::Mode => "mode",
         }
     }
 
@@ -2336,7 +2361,8 @@ impl ItemKind {
             | (ItemKind::Menu, ButtonAction::OpenMenu(name))
             | (ItemKind::Info, ButtonAction::ShowInfo(name))
             | (ItemKind::Log, ButtonAction::ShowLog(name))
-            | (ItemKind::Layer, ButtonAction::Layer(name)) => Some(name),
+            | (ItemKind::Layer, ButtonAction::Layer(name))
+            | (ItemKind::Mode, ButtonAction::Mode(name)) => Some(name),
             _ => None,
         }
     }
@@ -2347,7 +2373,8 @@ impl ItemKind {
             | (ItemKind::Menu, ButtonAction::OpenMenu(name))
             | (ItemKind::Info, ButtonAction::ShowInfo(name))
             | (ItemKind::Log, ButtonAction::ShowLog(name))
-            | (ItemKind::Layer, ButtonAction::Layer(name)) => Some(name),
+            | (ItemKind::Layer, ButtonAction::Layer(name))
+            | (ItemKind::Mode, ButtonAction::Mode(name)) => Some(name),
             _ => None,
         }
     }
@@ -2429,8 +2456,17 @@ pub struct Scope {
     pub logs: Vec<LogOverlay>,
     /// The game's own, then the built-in ones.
     pub layers: Vec<Layer>,
+    pub modes: Vec<Mode>,
     /// The active game's overlay sounds.
     pub sounds: SoundSet,
+}
+
+impl Scope {
+    /// The game's own modes, without the built-in ones that follow them.
+    pub fn game_modes(&self) -> &[Mode] {
+        let own = self.modes.iter().take_while(|m| built_in_mode(&m.name).is_none()).count();
+        &self.modes[..own]
+    }
 }
 
 /// Like [`Scope`], borrowed: what a game's profiles and items can refer to.
@@ -2441,6 +2477,7 @@ pub struct ScopeRef<'a> {
     pub info: Vec<&'a InfoOverlay>,
     pub logs: Vec<&'a LogOverlay>,
     pub layers: Vec<&'a Layer>,
+    pub modes: Vec<&'a Mode>,
 }
 
 impl ScopeRef<'_> {
@@ -2451,6 +2488,7 @@ impl ScopeRef<'_> {
             ItemKind::Info => self.info.iter().map(|o| o.name.as_str()).collect(),
             ItemKind::Log => self.logs.iter().map(|o| o.name.as_str()).collect(),
             ItemKind::Layer => self.layers.iter().map(|l| l.name.as_str()).collect(),
+            ItemKind::Mode => self.modes.iter().map(|l| l.name.as_str()).collect(),
         }
     }
 }
@@ -2611,8 +2649,16 @@ impl Config {
         let mut config: Config = toml::from_str(&text).with_context(|| format!("parsing {}", path.display()))?;
         store::load(store::root_of(path), &mut config)?;
         for game in config.games.iter_mut().chain(std::iter::once(&mut config.general)) {
-            game.strip_built_in_layers();
+            // A game left as imported stays so: the upgrade isn't an edit of the player's.
+            let unedited = game.origin.is_some() && crate::pack::edited_items(game).is_empty();
+            game.strip_built_in_modes();
             game.untoggle_menus();
+            if unedited {
+                let hashes = crate::pack::item_hashes(game);
+                if let Some(origin) = game.origin.as_mut() {
+                    origin.hashes = hashes;
+                }
+            }
         }
         Ok(config)
     }
@@ -2627,7 +2673,7 @@ impl Config {
         std::fs::create_dir_all(root)?;
         let mut config = self.clone();
         for game in config.games.iter_mut().chain(std::iter::once(&mut config.general)) {
-            game.strip_built_in_layers();
+            game.strip_built_in_modes();
         }
         store::save(root, &config)?;
         // Write-then-rename so the daemon never reads a half-written file.
@@ -2794,6 +2840,7 @@ impl Config {
             info: s.info.into_iter().cloned().collect(),
             logs: s.logs.into_iter().cloned().collect(),
             layers: s.layers.into_iter().cloned().collect(),
+            modes: s.modes.into_iter().cloned().collect(),
             sounds: self.performance.sounds(self.active_game().sounds.unwrap_or(self.sounds)),
         }
     }
@@ -2805,7 +2852,8 @@ impl Config {
             menus: game.menus.iter().collect(),
             info: game.info.iter().collect(),
             logs: game.logs.iter().collect(),
-            layers: game.layers.iter().chain(built_in_layers()).collect(),
+            layers: game.layers.iter().collect(),
+            modes: game.modes.iter().chain(built_in_modes()).collect(),
         }
     }
 
@@ -2860,26 +2908,29 @@ mod tests {
     }
 
     #[test]
-    fn built_in_layers_are_never_stored_but_every_game_has_them() {
-        // A stored copy of a built-in layer is dropped, and the user's own layers stay.
-        let mut own = Layer::new(GUIDE_LAYER);
+    fn built_in_modes_are_never_stored_but_every_game_has_them() {
+        // A stored copy of a built-in mode (as a layer, as older files have, or a mode) is
+        // dropped, and the user's own stay.
+        let mut own = Layer::new(GUIDE_MODE);
         own.buttons.insert(Button::East, ButtonAction::Keys(vec!["KEY_Q".into()]));
         let mut game = Game::new("Own", Vec::new());
         game.layers = vec![own, Layer::new("Mine")];
-        game.strip_built_in_layers();
+        game.modes = vec![Mode::new(MOUSE_MODE), Mode::new("Driving")];
+        game.strip_built_in_modes();
         assert_eq!(game.layers.iter().map(|l| l.name.as_str()).collect::<Vec<_>>(), ["Mine"]);
-        // Every game's scope has both, unchanged.
+        assert_eq!(game.modes.iter().map(|l| l.name.as_str()).collect::<Vec<_>>(), ["Driving"]);
+        // Every game's scope has both as modes, unchanged, after its own.
         let mut config = Config::default();
         config.games.push(game);
-        config.games[0].layers.clear();
         let scope = config.scope_of(&config.games[0]);
-        let names: Vec<&str> = scope.layers.iter().map(|l| l.name.as_str()).collect();
-        assert!(names.contains(&GUIDE_LAYER) && names.contains(&MOUSE_LAYER), "{names:?}");
-        let guide = scope.layers.iter().find(|l| l.name == GUIDE_LAYER).unwrap();
+        let names: Vec<&str> = scope.modes.iter().map(|l| l.name.as_str()).collect();
+        assert_eq!(names, ["Driving", GUIDE_MODE, MOUSE_MODE]);
+        assert!(scope.layers.iter().all(|l| built_in_mode(&l.name).is_none()), "they aren't layers");
+        let guide = scope.modes.iter().find(|l| l.name == GUIDE_MODE).unwrap();
         assert_eq!(**guide, Layer::guide());
-        // Naming them in a layered profile finds them too.
-        let active = [GUIDE_LAYER.to_string()];
-        assert_eq!(config.games[0].layers_named(&active).count(), 1);
+        assert_eq!(config.games[0].mode_or_built_in(MOUSE_MODE), Some(&Layer::mouse()));
+        let owned = Scope { modes: scope.modes.iter().map(|m| (*m).clone()).collect(), ..Scope::default() };
+        assert_eq!(owned.game_modes().iter().map(|l| l.name.as_str()).collect::<Vec<_>>(), ["Driving"]);
     }
 
     #[test]
@@ -3073,10 +3124,10 @@ key_threshold = 0.2
     }
 
     #[test]
-    fn default_config_has_the_guide_layer_and_roundtrips() {
+    fn default_config_has_the_guide_mode_and_roundtrips() {
         let config = Config::default();
-        assert!(config.general.layers.is_empty(), "built-in layers aren't stored");
-        assert!(config.scope().layers.iter().any(|l| l.name == GUIDE_LAYER));
+        assert!(config.general.modes.is_empty(), "built-in modes aren't stored");
+        assert!(config.scope().modes.iter().any(|l| l.name == GUIDE_MODE));
         let text = toml::to_string_pretty(&config).unwrap();
         assert_eq!(toml::from_str::<Config>(&text).unwrap(), config);
     }

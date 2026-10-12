@@ -8,7 +8,7 @@ Use **Open menu…** on any button, gesture, combo, trigger or stick direction. 
 
 To keep a held menu up, press R3 while it's open. It then stays until the input is pressed again or its close button is pressed. A menu can't be put in a Toggle.
 
-Choosing an item taps its action, as if the button had been pressed. Items can be keys, [macros](Macros), toggles or the keyboard. The menu stays up, so you can make several picks.
+Choosing an item taps its action, as if the button had been pressed. Items can be keys, [macros](Macros), toggles, [mode switches](Modes) or the keyboard. An item can't hold a [layer](Layers). The menu stays up, so you can make several picks.
 
 A quick tap can't hold a menu up, so a menu opened by a tap (such as a double tap that isn't the button's last gesture) doesn't show.
 
