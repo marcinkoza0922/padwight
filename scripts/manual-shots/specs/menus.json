@@ -1,0 +1,53 @@
+[
+ {
+  "src": "screenshots/manual/menus.png",
+  "out": "docs/images/manual/menus-tab.png",
+  "crop": [
+   225,
+   185,
+   1040,
+   560
+  ],
+  "marks": [
+   {
+    "box": [
+     346,
+     212,
+     511,
+     36
+    ],
+    "n": 1
+   },
+   {
+    "box": [
+     425,
+     378,
+     512,
+     36
+    ],
+    "n": 2
+   },
+   {
+    "box": [
+     245,
+     528,
+     1001,
+     104
+    ],
+    "n": 3
+   }
+  ]
+ },
+ {
+  "src": "screenshots/manual/ov/menu-radial.png",
+  "out": "docs/images/manual/menu-radial.png",
+  "autocrop": 30,
+  "scale": 1.0
+ },
+ {
+  "src": "screenshots/manual/ov/menu-list.png",
+  "out": "docs/images/manual/menu-list.png",
+  "autocrop": 30,
+  "scale": 1.0
+ }
+]

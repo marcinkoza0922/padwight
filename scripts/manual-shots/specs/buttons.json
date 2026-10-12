@@ -1,0 +1,41 @@
+[
+ {
+  "src": "screenshots/manual/buttons.png",
+  "out": "docs/images/manual/buttons-row.png",
+  "crop": [
+   225,
+   430,
+   1040,
+   235
+  ],
+  "marks": [
+   {
+    "box": [
+     240,
+     468,
+     548,
+     56
+    ],
+    "n": 1
+   },
+   {
+    "box": [
+     435,
+     573,
+     430,
+     36
+    ],
+    "n": 2
+   },
+   {
+    "box": [
+     435,
+     622,
+     298,
+     28
+    ],
+    "n": 3
+   }
+  ]
+ }
+]

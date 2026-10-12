@@ -1,6 +1,6 @@
 # Architecture
 
-This is for people working on the code. For what the app does, see the [README](../../README.md). The user-facing docs are the [pack format reference](../pack-format.md) and the [pack tutorial](../tutorial-deus-ex-pack.md).
+This is for people working on the code. For what the app does, see the [README](../../README.md). The user-facing docs are the [pack format reference](../pack-format.md) and the [pack tutorial](../manual/tutorial-deus-ex.md).
 
 ## Processes
 

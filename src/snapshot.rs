@@ -74,13 +74,18 @@ impl Image {
 /// Draws `element` on a `size` screen (logical pixels) over `background`, at `scale` physical
 /// pixels per logical one. Text is in the bundled fonts or the system's, as on screen.
 pub fn render<M>(element: Element<'_, M>, size: Size, scale: f32, background: Color) -> Result<Image> {
+    render_themed(element, size, scale, background, &Theme::Dark)
+}
+
+/// Like `render`, with the widgets styled for `theme`.
+pub fn render_themed<M>(element: Element<'_, M>, size: Size, scale: f32, background: Color, theme: &Theme) -> Result<Image> {
     load_fonts();
     let mut renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(Font::DEFAULT, Pixels(16.0), Some("tiny-skia")))
         .context("the offscreen renderer did not start")?;
     let mut ui = UserInterface::build(element, size, Cache::default(), &mut renderer);
     // A redraw request lets widgets that animate or measure on redraw settle first.
     let _ = ui.update(&[Event::Window(window::Event::RedrawRequested(Instant::now()))], mouse::Cursor::Unavailable, &mut renderer, &mut clipboard::Null, &mut Vec::new());
-    ui.draw(&mut renderer, &Theme::Dark, &renderer::Style { text_color: Color::WHITE }, mouse::Cursor::Unavailable);
+    ui.draw(&mut renderer, theme, &renderer::Style { text_color: theme.palette().text }, mouse::Cursor::Unavailable);
     let physical = Size::new((size.width * scale).round() as u32, (size.height * scale).round() as u32);
     let rgba = renderer.screenshot(physical, scale, background);
     Ok(Image { width: physical.width, height: physical.height, rgba })

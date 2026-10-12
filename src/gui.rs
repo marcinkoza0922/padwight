@@ -66,6 +66,7 @@ mod profile;
 mod response_graph;
 mod ring_preview;
 mod search;
+pub(crate) mod shoot;
 mod settings;
 mod sounds;
 mod sliders;
@@ -390,6 +391,8 @@ enum Message {
     SetGameSearch(String),
     SelectGameTab(GameTab),
     SelectChapter(usize),
+    /// Open the Manual at a tutorial, from the link on a panel (the tutorial's chapter file).
+    OpenTutorial(&'static str),
     /// Shows an item of the current setup on its tab (see `goto.rs`).
     GoToItem(ItemKind, String),
     Tour(TourMove),

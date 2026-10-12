@@ -1,16 +1,16 @@
 # Tutorial: making a pack, step by step (Deus Ex, Xbox-style pad)
 
-This walks through building `packs/deus-ex.padpack`, the pack that ships with the app. You'll build it in the settings window, one input at a time, then export it. The finished file is the reference: every mapping below is in it.
+This walks through building `packs/deus-ex.padpack`, the pack that ships with the app. You'll build it in the settings window, one input at a time, then export it. The finished file is the reference: every mapping below is in it. It uses most of what the other tutorials teach, one feature at a time: [buttons](tutorial-buttons.md), [sticks](tutorial-sticks.md), [menus](tutorial-menus.md), [gyro](tutorial-gyro.md), [the Guide button](tutorial-guide.md) and [sharing](tutorial-sharing.md). Read the one for a step if you want it explained from scratch.
 
-The pack targets a plain **XInput** pad (an Xbox-style controller) and the game's default keys. Deus Ex has no controller support of its own, so the whole scheme is built here. Its layout follows the [game setup guidelines](development/game-setup-guidelines.md); each step says which guideline a choice comes from.
+The pack targets a plain **XInput** pad (an Xbox-style controller) and the game's default keys. Deus Ex has no controller support of its own, so the whole scheme is built here. Its layout follows the [game setup guidelines](https://github.com/marcinkoza0922/padwight/blob/main/docs/development/game-setup-guidelines.md); each step says which guideline a choice comes from.
 
 **About the keys.** Every key below is from the game's own `System/DefUser.ini`, with the game command it runs.
 
-**About the screenshots.** They show the finished Deus Ex pack from the library, so each one is the end state of a step. Your own game will look emptier until you've built it. The window is shown without the daemon running, so the live controller drawing shows labels but no button presses.
+**About the screenshots.** They show the finished Deus Ex pack from the library, so each one is the end state of a step. Your own setup will look emptier until you've built it. Orange numbers mark the parts a step talks about. The live controller drawing shows labels but no button presses, since the pictures were taken without a controller connected.
 
 ## What you'll end up with
 
-One game, **Deus Ex**, with three profiles:
+One setup, **Deus Ex**, with three profiles:
 
 | Profile | For | Needs gyro? |
 |---|---|---|
@@ -18,31 +18,31 @@ One game, **Deus Ex**, with three profiles:
 | **Deus Ex + Gyro** | The same, plus gyro mouse aiming, paused while LT is held | No (gyro is an extra) |
 | **Deus Ex + Flick stick** | Right stick turns the camera in flicks; gyro aims up and down | Yes |
 
-The game also gets two radial menus (belt and augmentations) and a list of the game's screens. The Guide button needs no setup: it opens the Guide overlay in every game, and the pack's Mapping guide and notes describe the controls there.
+The setup also gets two radial menus (belt and augmentations) and a list of the game's screens. The Guide button needs no setup: it opens the Guide overlay in every game, and the pack's Mapping guide and notes describe the controls there.
 
 ## Before you start
 
-![The Overview page, with the Padwight settings window and the sidebar of games](images/overview.png)
+![The Overview page: the sidebar of setups, what's happening, and the controller list](../images/manual/deus-overview.png "The Overview page. Your controller is in the list, and the sidebar shows your setups.")
 
-1. Make sure the daemon is running (`padwight status` should list your controller). Open the settings window with `padwight`.
-2. Launch Deus Ex once. Padwight needs to see the game to fill in the rule values, and the game's **Details** tab lists the windows it has seen.
-3. If your controller is also visible to Steam, turn off Steam Input for it (see [Troubleshooting](https://github.com/marcinkoza0922/padwight/wiki/Troubleshooting)), or the game may see two pads.
+1. Make sure the daemon is running (`padwight status` should list your controller, as does the Overview page). Open the settings window with `padwight`.
+2. Launch Deus Ex once. Padwight needs to see the game to fill in the rule values, and the setup's **Details** tab lists the windows it has seen under **Recently focused windows**.
+3. If your controller is also visible to Steam, turn off Steam Input for it (see [Troubleshooting](troubleshooting.md)), or the game may see two pads.
 
-## Step 1: Create the game
+## Step 1: Create the setup
 
-1. In the sidebar, click **+ Add game**, then pick an empty game from the picker (**Empty game from a template…**). Pick the blank option, so you start with no preset mappings.
-2. Name it **Deus Ex**. The game's name becomes the pack's name when you export it.
+1. In the sidebar, click **+ Add setup**, then open **Empty setup from a template…** in the picker and choose **Gamepad passthrough**, so you start with no preset mappings.
+2. The new setup opens on its **Details** tab, named *New setup*. Name it **Deus Ex**. The setup's name becomes the pack's name when you export it.
 
-![The Add a game picker, with the Empty game from a template dropdown and the library's built-in games](images/add-game.png)
+![The Add a setup picker, with the Empty setup from a template dropdown and the library's built-in setups](../images/manual/first-setup-add.png "The picker. The dropdown (1) holds the blank template. The list (3) is the library, which is where the finished pack comes from in these screenshots.")
 
-*The picker. The dropdown at the top left holds the blank template. The list below it is the library, which is where the finished pack comes from in these screenshots.*
+The [first setup tutorial](tutorial-first-setup.md) covers the picker and the rules.
 
 ## Step 2: Set up the profile
 
-Open the game's **Profiles** tab.
+Open the setup's **Profiles** tab.
 
-1. Rename the profile to **Deus Ex**.
-2. Set the timing to the pack's values: **tap window 250 ms**, **long press 500 ms**. These are the defaults, and the pack writes them out explicitly.
+1. Rename the profile to **Deus Ex** in the **Name** box.
+2. Set the timing to the pack's values on the Buttons tab: **Tap window 250 ms**, **Long press after 500 ms**. These are the defaults, and the pack writes them out explicitly.
 
 *Why these timings:* the tap window is how long padwight waits after a tap to see whether a second tap follows. A button with a double-tap gesture holds its tap for that window, so a shorter window is snappier but makes double taps harder to land. The long press at 500 ms is long enough that a normal tap never counts as one.
 
@@ -50,9 +50,9 @@ Open the game's **Profiles** tab.
 
 ## Step 3: Face buttons and the D-pad
 
-![The Buttons sub-tab of the Deus Ex profile, with the controller drawing labeling each input](images/profile-buttons.png)
+![The controller drawing at the top of the Deus Ex profile, labeling each input with its action](../images/manual/deus-picture.png "The drawing labels each input with its action. A trailing + means the button also has a gesture.")
 
-*The drawing labels each input with its action.*
+![The Buttons tab of the Deus Ex profile: each button's row with a summary of its mapping](../images/manual/deus-buttons.png "The Buttons tab. A closed row shows a one-line summary.")
 
 On the profile's **Buttons** sub-tab, set each button. The keys are the game's defaults, from its `DefUser.ini`:
 
@@ -70,7 +70,7 @@ On the profile's **Buttons** sub-tab, set each button. The keys are the game's d
 
 Select gets a menu in Step 4. Guide is the app's own and needs nothing.
 
-**Why these** (from the [game setup guidelines](development/game-setup-guidelines.md)):
+**Why these** (from the [game setup guidelines](https://github.com/marcinkoza0922/padwight/blob/main/docs/development/game-setup-guidelines.md)):
 
 - **Use on A, Jump on B.** Deus Ex's Use is the right mouse button. Whatever is on the right mouse button normally goes on LT, but when it's Use, A or X is preferred. When a game has both Use and Jump, Use takes A and Jump takes B.
 - **Drop on Y.** It's a deliberate action that wants its own button, and Y is the face button left over.
@@ -78,15 +78,15 @@ Select gets a menu in Step 4. Guide is the app's own and needs nothing.
 
 ## Step 4: Menus
 
-![The Belt menu on the Menus tab: a radial preview with its slots and the items list below](images/menus-belt.png)
+![The Belt menu on the Menus tab: the add-a-menu buttons, the menu's kind and its items](../images/manual/menus-tab.png "The Belt menu, expanded. The list sets each slot's key, and a preview under it shows where each slot sits around the right stick.")
 
-*The Belt menu, expanded. The preview shows where each slot sits around the right stick, and the list under it sets each slot's key.*
+The [menus tutorial](tutorial-menus.md) goes through the kinds.
 
 1. **LB → Open menu "Belt"**, **RB → Open menu "Augmentations"**, **Select → Open menu "Screens"** (on the Buttons tab, pick "Open menu…").
-2. On the **Menus** tab, click **Add a menu** for each one:
-   - **Belt**: kind **Radial**, stick **Right**. Items `Belt 1` to `Belt 9` on keys `1` to `9`, `Nanokey ring` on `0`, and `Holster` on **Backspace**.
-   - **Augmentations**: kind **Radial**, stick **Right**. Ten items, `Aug 1 · F3` to `Aug 10 · F12`, on keys `F3` to `F12`.
-   - **Screens**: kind **List**. `Inventory` on **F1** and `Goals and notes` on **F2**.
+2. On the **Menus** tab, press a button next to **Add a menu:** for each one:
+   - **Belt**: **Radial**, aimed with the **Right Stick**. Items `Belt 1` to `Belt 9` on keys `1` to `9`, `Nanokey ring` on `0`, and `Holster` on **Backspace**.
+   - **Augmentations**: **Radial**, aimed with the **Right Stick**. Ten items, `Aug 1 · F3` to `Aug 10 · F12`, on keys `F3` to `F12`.
+   - **Screens**: **List**. `Inventory` on **F1** and `Goals and notes` on **F2**.
 
 **Why this design:**
 
@@ -97,25 +97,27 @@ Select gets a menu in Step 4. Guide is the app's own and needs nothing.
 
 ## Step 5: The sticks
 
-![The Sticks & triggers sub-tab, showing the left stick set to direction keys W, A, S and D](images/profile-sticks.png)
+![The Sticks & triggers tab, showing the left stick set to a button ring of eight sectors that hold W, A, S and D](../images/manual/sticks-ring.png "The left stick as a button ring. The zone and the right stick's settings sit below.")
 
-*The Sticks & triggers sub-tab. The left stick is set to direction keys; the zone and the right stick settings sit below.*
+The [sticks tutorial](tutorial-sticks.md) explains each control.
 
 ### Left stick: walking and running
 
 For the **left stick**:
 
-- Action: **Keys**. Up **W**, down **S**, left **A**, right **D**.
-- Deadzone **0.12**, response curve **1.0**, key threshold **0.25**.
-- Add a **zone** from **0.0 to 0.6** with action **Left Shift**.
+- Action: **Button ring** with **8** sectors. Press **WASD** next to *Fill with*: up is **W**, down **S**, left **A**, right **D**, and the diagonals press two keys at once.
+- **Deadzone** 12%, **Starts at** 25% of the way out, **Stickiness** 10% of a sector.
+- Add a **zone** from **0.00 to 0.60** with action **Keyboard** and **Left Shift**.
+
+![The left stick's zone, from 0.00 to 0.60 with Left Shift, and the right stick set to Mouse pointer](../images/manual/sticks-zones.png "The walk zone (1), and below it the right stick's mouse settings (3, 4).")
 
 The zone is the walk/run split. The game's Shift is `Walking`, so while the stick is in the first 60% of its travel Shift is held: a light push walks and a full push runs. Deus Ex has no sprint, so A has no long press.
 
-- **Key threshold 0.25.** Direction keys press once the stick passes this point, so movement starts early. The response curve only affects mouse and scroll output, so it does nothing for keys.
+- **Starts at 25%.** A sector's keys press once the stick passes this point, so movement starts early. The response curve only affects mouse and scroll output, so it does nothing for keys.
 
 ### Right stick: mouse look
 
-For the **right stick**: action **Mouse**, speed **2600** px/s, deadzone **0.12**, response curve **2.2**, acceleration **0.5** over **350 ms**, vertical speed **0.75**.
+For the **right stick**: **Mouse pointer**, **Speed** **2600** px/s, **Deadzone** 12%, and under **Response**, **Custom** with **Curve** **2.20**, **Acceleration** 50% with a **Ramp time** of **350 ms**. Open **Advanced** and set **Vertical speed** to **0.75**.
 
 This is shaped like a console shooter's look, as the guidelines ask:
 
@@ -128,27 +130,31 @@ On the game's own screens the right stick is the mouse cursor, so the inventory,
 
 ### Stick clicks
 
-- **Left stick click (L3)**: a **toggle** of keyboard **X** (`Duck`). Crouch is a hold in the game, and the toggle makes one click crouch and the next stand. To wrap a button's action in a toggle, pick **Toggle** on that button.
+- **Left stick click (L3)**: a **toggle** of keyboard **X** (`Duck`). Crouch is a hold in the game, and the toggle makes one click crouch and the next stand. To wrap a button's action in a toggle, pick **Toggle on / off…** on that button.
 - **Right stick click (R3)**: keyboard **`[`** (`ToggleScope`). Its long press, in Step 7, is the laser sight.
 
 **Why the scope is on R3:** zoom goes on R3 or D-pad Up when it isn't on the right mouse button. The game's scope is a toggle, so the button is a plain key and the game does the toggling. The laser sight is a related aiming aid, so it shares the button as a long press.
 
 ## Step 6: The triggers
 
-- **Right trigger (RT)**: a button, **threshold 0.30**, action **Mouse Left** (fire).
+- **Right trigger (RT)**: works as a button, with a **threshold** of 0.30, and the action **Mouse button** **Left** (fire).
 - **Left trigger (LT)**: **Disabled**.
 
 Deus Ex has no secondary fire, and its right mouse button is Use, which went on A. Rather than invent a job for LT, the plain profile leaves it free. The gyro profiles use it as the gyro clutch (Step 11).
 
 ## Step 7: Gestures (one button, several jobs)
 
+To add a gesture, open the button's row on the Buttons tab and press **+ Double tap**, **+ Triple tap** or **+ Long press** under its plain action. Then choose what the gesture does, the same way as for the plain press.
+
+![A button's row with its action and the add-a-gesture buttons](../images/manual/buttons-row.png "The gesture buttons (3) sit under a button's action.")
+
 | Button | Gesture | Action | Mapping guide text |
 |---|---|---|---|
 | **X** | Long press | Keyboard `'` (`SwitchAmmo`) | "Change ammo" |
 | **R3** | Long press | Keyboard `]` (`ToggleLaser`) | "Laser sight" |
 | **LB** | Double tap | Keyboard **Backspace** (`PutInHand`) | "Holster" |
-| **Start** | Double tap | Numpad **+** (`QuickSave`) | "Quick save" |
-| **Start** | Long press | Numpad **/** (`QuickLoad`) | "Quick load" |
+| **Start** | Double tap | Keyboard **Keypad Plus** (`QuickSave`) | "Quick save" |
+| **Start** | Long press | Keyboard **Keypad Slash** (`QuickLoad`) | "Quick load" |
 
 **Why these:**
 
@@ -160,16 +166,20 @@ Deus Ex has no secondary fire, and its right mouse button is Use, which went on 
 
 ## Step 8: The Guide button, the Mapping guide and the notes
 
-Nothing to set up for the Guide button itself. It works the same in every game: tap it for the Guide overlay, hold it with another button for a shortcut (keyboard on X, numpad on Y, and so on). See [The Guide button](https://github.com/marcinkoza0922/padwight/wiki/Guide-Button). The pack maps Guide to the built-in Guide mode, as every library pack does.
+Nothing to set up for the Guide button itself. It works the same in every game: tap it for the Guide overlay, hold it with another button for a shortcut (keyboard on X, numpad on Y, and so on). See [The Guide button](guide-button.md) and [the Guide tutorial](tutorial-guide.md). The pack maps Guide to the built-in Guide mode, as every library pack does.
 
-The pack describes its controls in the **Mapping guide**, on the profile's **Guide** tab, which is what the overlay's Mappings box shows. The Lean and belt-cycling rows each merge both D-pad sides.
+The pack describes its controls in the **Mapping guide**, on the profile's **Guide** tab, which is what the overlay's Mappings box shows. The Lean and belt-cycling rows each merge both D-pad sides, with **Share with**.
+
+![The Guide tab of the Deus Ex profile: the notes, and the Mapping guide's rows with their text](../images/manual/guide-tab.png "The notes (1) and the Mapping guide (2).")
 
 The same tab holds the **notes**, for what a player wouldn't guess from the layout:
 
-- Start (Escape) backs out of every in-game screen: the inventory, computers, keypads and robot recharging. Without the note, a player hunting for a "back" button on B would be stuck.
+- Start (Escape) backs out of every in-game screen: the inventory, goals, computers, keypads, robot recharging and repair bots. Without the note, a player hunting for a "back" button on B would be stuck.
 - On those screens the right stick is the cursor, RT a left click and A a right click.
+- Tap Select for the list of the inventory and goals screens; Select or B closes it.
 - Keypads take Guide + Y (numpad), computer logins Guide + X (keyboard).
-- The scope is a toggle, slot 0 is the nanokey ring, and the augmentation slots follow the order you installed them.
+- A light push of the left stick walks, a full push runs.
+- The scope is a toggle, slot 0 is the nanokey ring (double tap LB, or pick Holster on the belt, to put the item away), and the augmentation slots follow the order you installed them.
 
 ## Step 9: Look and sound
 
@@ -189,18 +199,16 @@ If something doesn't work, check the rule first (is the executable right?), then
 
 ## Step 11: The gyro profile: "Deus Ex + Gyro"
 
-![The Gyro tab of the base Deus Ex profile, set to Off, with the Can't be played without gyro checkbox unticked](images/profile-gyro.png)
-
-*The base profile's Gyro tab, with gyro off. The steps below set these controls on the copy.*
+![The Gyro tab of the Deus Ex + Gyro profile: the mode, the sensitivity and the clutch](../images/manual/gyro-panel.png "The Gyro tab of the finished Deus Ex + Gyro profile. The base profile's gyro is off; the steps below set these controls on the copy. See the gyro tutorial for each control.")
 
 Shooters always get gyro and flick stick profiles to try, and they're never the default: the rules start on the plain profile.
 
 1. On the **Profiles** tab, duplicate the **Deus Ex** profile, and rename the copy to **Deus Ex + Gyro**.
 2. On its **Gyro** tab:
-   - **Mode**: mouse, sensitivity **30.0** (pixels per degree turned).
-   - **Horizontal**: player space (turning left aims left however you hold the controller).
-   - **Activation**: **unless held**, with **LT** as the clutch.
-   - **Noise threshold**: 1.0 degree/second.
+   - **Gyro**: **Mouse (gyro aiming)**, **Sensitivity** **30** (pixels per degree turned).
+   - **Turning read as**: **Player space (any grip)** (turning left aims left however you hold the controller).
+   - **Active**: **Off while held (clutch)**, with the **Left Trigger** as the clutch.
+   - Under **Advanced**, **Ignore jitter below**: 1.0 °/s.
 3. Leave **Can't be played without gyro** unticked.
 
 **Why:** gyro adds fine aim on top of the right stick, so the profile still plays without it and doesn't declare it. The clutch turns gyro off while held, to reposition the controller, and LT is the input this scheme leaves free.
@@ -210,7 +218,9 @@ Shooters always get gyro and flick stick profiles to try, and they're never the 
 A flick stick turns the camera by flicking the right stick, instead of holding it over to aim. It only turns left and right, so looking up and down needs gyro, which is why this profile **requires** gyro.
 
 1. Duplicate the **Deus Ex + Gyro** profile, and rename the copy to **Deus Ex + Flick stick**.
-2. On its **Sticks & triggers** tab, set the **right stick** action to **Flick stick**: turn size **8000** px, flick threshold **0.9**, flick time **100 ms**, smoothing **0 ms**, forward deadzone **0°**, vertical off. Use **Test turn** to check that 8000 px turns the camera a full circle, and adjust.
+2. On its **Sticks & triggers** tab, set the **right stick** to **Flick stick**: **Turn size** **8000** px per 360°, **Flick at** 90% of the way out, **Deadzone** 10%. Under **Advanced flick**, set the flick time to **100 ms**, smoothing to **0 ms**, the dead angle to **0°** and looking up and down to off. Use **Test turn** to check that 8000 px turns the camera a full circle, and adjust.
+
+![The right stick set to Flick stick: turn size and Test turn, flick point and deadzone, and the Advanced flick fold](../images/manual/deus-flick.png "The flick stick's settings.")
 3. On its **Gyro** tab: sensitivity **22.0**, which is about one to one with that turn size. Keep the LT clutch.
 4. Tick **Can't be played without gyro**.
 
@@ -218,30 +228,32 @@ A flick stick turns the camera by flicking the right stick, instead of holding i
 
 ## Step 13: Describe the pack and export it
 
-![The Details tab: the game's name, the auto-switch rules for DeusEx.exe and Steam App ID 6910, and the on-screen keyboard settings](images/details-rules.png)
+![The Auto-switch rules card of the Details tab: DeusEx.exe and Steam App ID 6910, each using the Deus Ex profile](../images/manual/first-setup-rules.png "The auto-switch rules on the Details tab are what Padwight matched when you launched the game in \"Before you start\".")
 
-*The Details tab. The auto-switch rules are what Padwight matched when you launched the game in "Before you start".*
-
-1. Open the game's **Details** tab.
-2. Fill in:
+1. Open the setup's **Details** tab and check the rules, then press **Export…** in the **Pack** card.
+2. The **Export** window lists what's in the pack (here, 3 profiles, 3 menus), the profiles' declared requirements (the flick profile needs gyro, and the gyro profile is playable without it), and any dangling references (a button pointing at a missing macro or menu). Fix any warnings before saving. Then fill in:
+   - **Version**: `1.0` for a first release (the library pack is at `2.0`). Later, bump it. Versions compare number by number (`1.10` is newer than `1.9`), and a higher version gives installed copies the *update* mark.
    - **Author**: your name.
-   - **Version**: `1.0` for a first release (the library pack is at `2.0`). Later, bump it. Versions compare number by number (`1.10` is newer than `1.9`), and a higher version gives installed copies the Update badge.
-   - **Description**: what the pack does and how it's laid out. The pack's own description is: "The original Deus Ex (2000) on an Xbox-style pad, for the game's default keys. A uses, B jumps, RT fires…"
    - **Made with**: "Xbox controller".
-3. Click **Export…**. The dialog lists the rules, the profiles' declared requirements (the flick profile declares gyro), and any dangling references (a button pointing at a missing macro or menu). Fix any warnings before saving.
-4. Save as `deus-ex.padpack`.
-5. Click **Save & apply** to remember the export details in the game.
+   - **Description**: what the pack does and how it's laid out. The pack's own description is: "The original Deus Ex (2000) on an Xbox-style pad, for the game's default keys. A uses, B jumps, RT fires…"
+
+![The Export window with the pack's contents, version, author, made-with and description](../images/manual/sharing-export.png "The Export window (shown for the StarCraft setup).")
+
+3. Press **Save…** and save as `deus-ex.padpack`.
+4. Press **Save & apply** to remember the export details in the setup.
+
+The [sharing tutorial](tutorial-sharing.md) covers this window and importing.
 
 ### Test the export by importing it
 
-1. In the sidebar, click **+ Add game**, then **Import a file…**, and choose the file.
-2. The preview shows the contents, your controller's gaps (on a plain pad, the flick profile is not offered), and any clashes. Since you already have a Deus Ex game, the preview asks you to rename or replace. Use **Rename** to test, then delete the test copy.
+1. In the sidebar, click **+ Add setup**, then **Import a file…**, and choose the file.
+2. The preview shows the contents, your controller's gaps (on a plain pad, the flick profile is not offered), and any clashes. Since you already have a Deus Ex setup, the preview asks you to rename or replace. Use **Rename** to test, then delete the test copy.
 
 ## Step 14 (maintainers): add it to the library
 
 The library is the set of packs that ship with the app, in `packs/`.
 
-1. In a debug build, tick **Release it as the built-in …** on export, so the game keeps its library ID and installed copies get it as an update.
+1. In a debug build, tick **Release it as the built-in …** on export, so the setup keeps its library ID and installed copies get it as an update.
 2. Copy the file into `packs/`, and run `cargo test`. The tests check the format, IDs, names, references, that a rule points at an existing profile, and that at least one profile works on a plain pad.
 3. Rebuild. The build embeds every `.padpack` in `packs/` into the binary. Developers can find the details in the [architecture notes](https://github.com/marcinkoza0922/padwight/blob/main/docs/development/architecture.md).
 
@@ -267,8 +279,8 @@ The library is the set of packs that ship with the app, in `packs/`.
 ## Troubleshooting
 
 - **The rule doesn't switch to the profile.** Check the executable name (for Proton games, the Windows `.exe`, e.g. `DeusEx.exe`) and the Steam App ID. The **Details** tab's recently focused windows show what padwight saw.
-- **The game sees two controllers.** Turn off Steam Input for the pad, or set `SDL_JOYSTICK_HIDAPI=0` (see [Troubleshooting](https://github.com/marcinkoza0922/padwight/wiki/Troubleshooting)).
+- **The game sees two controllers.** Turn off Steam Input for the pad, or set `SDL_JOYSTICK_HIDAPI=0` (see [Troubleshooting](troubleshooting.md)).
 - **A button feels late.** It has a gesture, so it waits for the tap window. See the latency note in Step 7.
-- **Guide's shortcuts don't work.** Hold Guide and press the shortcut, or tap Guide to open the overlay and then press it. See [The Guide button](https://github.com/marcinkoza0922/padwight/wiki/Guide-Button).
+- **Guide's shortcuts don't work.** Hold Guide and press the shortcut, or tap Guide to open the overlay and then press it. See [The Guide button](guide-button.md).
 - **A row in the Mapping guide reads wrong.** Fix the text on the profile's **Guide** tab.
 - **The flick profile is missing.** It needs gyro, so with a plain pad it isn't offered. The import preview lists profiles it won't offer.

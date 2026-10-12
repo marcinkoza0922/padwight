@@ -1,0 +1,62 @@
+[
+ {
+  "src": "screenshots/manual/info.png",
+  "out": "docs/images/manual/info-tab.png",
+  "crop": [
+   225,
+   190,
+   1040,
+   780
+  ],
+  "marks": [
+   {
+    "box": [
+     245,
+     211,
+     162,
+     30
+    ],
+    "n": 1
+   },
+   {
+    "box": [
+     425,
+     420,
+     262,
+     24
+    ],
+    "n": 2
+   },
+   {
+    "box": [
+     245,
+     547,
+     1001,
+     144
+    ],
+    "n": 3
+   },
+   {
+    "box": [
+     245,
+     729,
+     1001,
+     200
+    ],
+    "n": 4
+   }
+  ]
+ },
+ {
+  "src": "screenshots/manual/ov/info.png",
+  "out": "docs/images/manual/info-overlay.png",
+  "autocrop": 30,
+  "scale": 1.0
+ },
+ {
+  "src": "screenshots/manual/ov/keyboard.png",
+  "out": "docs/images/manual/keyboard-overlay.png",
+  "autocrop": 30,
+  "scale": 0.8
+ }
+]

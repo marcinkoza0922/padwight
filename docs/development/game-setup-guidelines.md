@@ -14,7 +14,7 @@ Conventions for choosing where actions go when setting up a game's controller bi
 
 - **WASD movement** should generally be assigned to the **left stick**. Strategy games that use WASD or the arrow keys to pan the camera can also assign that to the left stick.
 - **Camera or cursor control** should almost always be assigned to the **right stick**. As a rule of thumb, if the mouse controls it, it goes on the right stick.
-- **Walk or slow movement** should be bound to the **left stick** as a zone covering the first **50 to 70 percent** of the stick's travel, so a light push walks and a full push runs. The right value depends on the controller and game. The Deus Ex pack uses 60 percent (see [tutorial-deus-ex-pack.md](../tutorial-deus-ex-pack.md)), which works well enough as a starting point.
+- **Walk or slow movement** should be bound to the **left stick** as a zone covering the first **50 to 70 percent** of the stick's travel, so a light push walks and a full push runs. The right value depends on the controller and game. The Deus Ex pack uses 60 percent (see [the Deus Ex tutorial](../manual/tutorial-deus-ex.md)), which works well enough as a starting point.
 - **Sprint** should be bound to a **long press of A** with a short long-press window.
 
 ## Actions
