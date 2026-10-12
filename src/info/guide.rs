@@ -14,6 +14,9 @@ const MAPPING_ROWS: usize = 14;
 
 /// Size of the Guide overlay's panels, relative to the default, so they read from across a room.
 const PANEL_SCALE: f32 = 1.4;
+/// The most of the display's width Notes may take (a percentage), so long lines wrap before they
+/// reach the menu in the middle.
+const NOTES_MAX_WIDTH: f32 = 30.0;
 
 /// What the Guide overlay's panels show: a profile in one of its game's modes, and which page.
 pub struct GuideView<'a> {
@@ -73,7 +76,9 @@ impl GuideView<'_> {
         let mut overlays = Vec::new();
         if !self.profile.guide.notes.trim().is_empty() {
             let rows = self.profile.guide.notes.lines().map(|line| vec![line.to_string()]).collect();
-            overlays.push(panel("guide notes", ScreenPosition::CenterLeft, "Notes".into(), rows));
+            let mut notes = panel("guide notes", ScreenPosition::CenterLeft, "Notes".into(), rows);
+            notes.style.max_width = NOTES_MAX_WIDTH;
+            overlays.push(notes);
         }
         let mapped = self.mapped();
         let rows: Vec<Vec<String>> = mapping_rows(&mapped).iter().map(cells).collect();

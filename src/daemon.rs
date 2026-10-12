@@ -444,8 +444,6 @@ struct Daemon {
     last_frame: Option<OverlayFrame>,
     /// The Guide overlay's menu while the overlay is up.
     guide_menu: Option<GuideMenu>,
-    /// Menu items picked lately, which the Guide menu offers again (newest last).
-    recent_picks: Vec<crate::guide_menu::Recent>,
     /// When shown info overlays with live values next refresh.
     info_refresh: Option<Instant>,
     /// When an info overlay that hides after a while next needs redrawing (fading or gone).
@@ -531,7 +529,6 @@ impl Daemon {
             overlay_watchers: Vec::new(),
             last_frame: None,
             guide_menu: None,
-            recent_picks: Vec::new(),
             info_refresh: None,
             info_fade: None,
             info_timers: crate::info::Timers::default(),
@@ -1154,7 +1151,7 @@ impl Daemon {
                 Some(menu) => {
                     let profile = self.config.active().map(|p| p.name.as_str()).unwrap_or_default();
                     let style = self.config.active_menu_style().clone();
-                    Some(OverlayView::Menu(crate::guide_menu::view(menu.steam, menu.cursor, profile, style, &self.recent_picks)))
+                    Some(OverlayView::Menu(crate::guide_menu::view(menu.steam, menu.cursor, profile, style)))
                 }
                 None => self.touch_menu_view(),
             },
@@ -1436,7 +1433,7 @@ impl Daemon {
         use crate::config::Button;
         for &key in keys {
             let Some(menu) = self.guide_menu.as_mut() else { return };
-            let len = crate::guide_menu::items(menu.steam, self.recent_picks.len()).len();
+            let len = crate::guide_menu::items(menu.steam).len();
             match key {
                 Button::DpadUp | Button::LeftStickUp => menu.cursor = (menu.cursor + len - 1) % len,
                 Button::DpadDown | Button::LeftStickDown => menu.cursor = (menu.cursor + 1) % len,
@@ -1458,7 +1455,7 @@ impl Daemon {
                     }
                 }
                 Button::South => {
-                    let item = crate::guide_menu::items(menu.steam, self.recent_picks.len())[menu.cursor];
+                    let item = crate::guide_menu::items(menu.steam)[menu.cursor];
                     menu.chosen = true;
                     self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Pick));
                     self.guide_choose(device, item);
@@ -1472,13 +1469,6 @@ impl Daemon {
         }
         // The cursor is part of the drawn frame, so the overlay has to be sent again to move it.
         self.broadcast_overlay();
-    }
-
-    /// Keeps a menu item just picked among the recent ones the Guide menu offers again.
-    fn remember_pick(&mut self, menu: &str, item: usize, action: &crate::config::ButtonAction) {
-        let label = self.scope.menus.iter().find(|m| m.name == menu).and_then(|m| m.items.get(item)).map_or_else(|| action.summary(), |i| i.label.clone());
-        let pick = crate::guide_menu::Recent { menu: menu.to_string(), item, label, action: action.clone() };
-        crate::guide_menu::remember(&mut self.recent_picks, pick);
     }
 
     /// Runs a Guide menu item. The overlay goes away first, except for Quick Settings and Edit Controls, which open the Guide + Start menu on their page.
@@ -1508,12 +1498,6 @@ impl Daemon {
                         }
                     }
                     _ => self.send_steam_overlay(device),
-                }
-            }
-            Item::Recent(i) => {
-                self.guide_close(device);
-                if let Some(pick) = self.recent_picks.get(i).cloned() {
-                    self.run_menu_item(device, &pick.menu, pick.item, &pick.action);
                 }
             }
             Item::MouseMode => {
@@ -2036,18 +2020,18 @@ impl Daemon {
                     self.apply_settings_change();
                 }
             }
-            Some(SystemOutcome::Save) => {
+            Some(SystemOutcome::Save { back }) => {
                 if let Err(e) = self.config.save() {
                     self.say(vec!["Couldn't save the changes".into(), format!("{e:#}")]);
                     return false;
                 }
-                self.close_overlay();
+                self.leave_settings(device, back);
                 return true;
             }
-            Some(SystemOutcome::Discard(saved)) => {
+            Some(SystemOutcome::Discard { saved, back }) => {
                 self.config = *saved;
                 self.refresh_scope();
-                self.close_overlay();
+                self.leave_settings(device, back);
                 return true;
             }
             Some(SystemOutcome::Switch(target)) => {
@@ -2067,6 +2051,16 @@ impl Daemon {
             None => {}
         }
         false
+    }
+
+    /// Closes the Guide + Start menu after its question about unsaved changes: back to the Guide
+    /// overlay when it was left with Back, else out.
+    fn leave_settings(&mut self, device: u64, back: bool) {
+        if back {
+            self.return_to_guide(device);
+        } else {
+            self.close_overlay();
+        }
     }
 
     /// Quick Settings' Turn remapping off: closes the menu and lets go of every controller. It
@@ -2317,7 +2311,6 @@ impl Daemon {
         match outcome {
             Some(MenuOutcome::Choose { menu, item, action, close }) => {
                 self.log_menu_choice(id, ev, &action);
-                self.remember_pick(&menu, item, &action);
                 if close {
                     // The picked item, lit, is the last the overlay draws of the menu.
                     self.broadcast_overlay();

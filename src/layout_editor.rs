@@ -578,6 +578,7 @@ impl LayoutEditor {
             style,
             touch: false,
             aim: None,
+            prompt: None,
         }
     }
 }

@@ -102,7 +102,16 @@ pub(super) fn layers<'a, M: 'a>(state: &'a Overlay, display: Size, now: Instant)
                 };
                 menu_log(m, &anim);
                 let fit = Fit::of(&m.style, display);
-                draw::place(draw::menu_panel(m, font, look, &fit), &m.style, &fit, &anim)
+                let menu = draw::place(draw::menu_panel(m, font, look, &fit), &m.style, &fit, &anim);
+                // A question asked over the menu stands on top of it, in the middle of the screen.
+                match &m.prompt {
+                    Some(o) => {
+                        let fit = Fit::of(&o.style, display);
+                        let prompt = draw::place(draw::offer_panel(o, font, glyphs, &fit, &Anim::still()), &o.style, &fit, &Anim::still());
+                        stack![menu, prompt].into()
+                    }
+                    None => menu,
+                }
             }
             OverlayView::Media(m) => {
                 let fit = Fit::of(&m.style, display);
@@ -146,6 +155,7 @@ mod motion_tests {
             style: Default::default(),
             touch: false,
             aim: None,
+            prompt: None,
         };
         OverlayFrame {
             active: Some(OverlayView::Menu(view)),

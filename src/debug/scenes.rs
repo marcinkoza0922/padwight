@@ -19,7 +19,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 21] = [
+pub const SCENES: [(&str, &str); 22] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -39,6 +39,7 @@ pub const SCENES: [(&str, &str); 21] = [
     ("log", "an input log"),
     ("recording", "the recording badge"),
     ("busy", "an info overlay, an input log and a menu at once"),
+    ("unsaved", "the question about unsaved changes, over Quick Settings"),
     ("guide", "the Guide overlay: its menu, Notes, and Mappings with a held layer's section"),
     ("guide-mode", "the Guide overlay turned to a mode that isn't on"),
 ];
@@ -69,6 +70,7 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "log" => OverlayFrame { logs: vec![log_view()], ..OverlayFrame::default() },
         "recording" => OverlayFrame { info: vec![info::recording_view()], ..OverlayFrame::default() },
         "busy" => OverlayFrame { info: vec![info_view()], logs: vec![log_view()], ..active(menu(MenuKind::Buttons)) },
+        "unsaved" => active(unsaved()),
         "guide" => guide(0),
         "guide-mode" => guide(1),
         _ => bail!("no scene called {name} (see `padwight debug overlay list`)"),
@@ -121,7 +123,7 @@ fn guide(shown: usize) -> OverlayFrame {
     p.set_button(Button::West, keys("KEY_R"));
     p.set_button(Button::North, ButtonAction::Mode("Driving".into()));
     p.set_button(Button::LeftBumper, ButtonAction::Layer("Hotkeys".into()));
-    p.guide.notes = "Hold LB for the hotkeys.".into();
+    p.guide.notes = "Hold LB for the hotkeys.\nThe driving mode turns the face buttons into pedals, and the bumpers into the gears and the lights.".into();
     let mut driving = Mode::new("Driving");
     driving.buttons.insert(Button::South, keys("KEY_W"));
     driving.buttons.insert(Button::East, keys("KEY_S"));
@@ -133,8 +135,22 @@ fn guide(shown: usize) -> OverlayFrame {
     let view = info::GuideView { profile: &p, modes: &modes, layers: &layers, shown, current: 0, page: 0 };
     let live = Live::sample(PadFamily::Xbox);
     let info = view.overlays().iter().map(|o| info::resolve(o, &live)).collect();
-    let menu = crate::guide_menu::view(false, 0, "Gameplay", OverlayStyle::default(), &[]);
+    let menu = crate::guide_menu::view(false, 0, "Gameplay", OverlayStyle::default());
     OverlayFrame { info, ..OverlayFrame { active: Some(OverlayView::Menu(menu)), ..OverlayFrame::default() } }
+}
+
+/// Quick Settings left with a change not saved: the question stands over the page.
+fn unsaved() -> OverlayView {
+    use crate::{
+        config::Config,
+        input::InputEvent,
+        system_menu::{Page, SystemMenu},
+    };
+    let mut config = Config::default();
+    let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
+    config.general.nintendo_layout = Some(true);
+    menu.handle(InputEvent::Button(Button::East, true), std::time::Instant::now(), &mut config);
+    OverlayView::Menu(menu.view(&config))
 }
 
 fn offer() -> OfferView {
