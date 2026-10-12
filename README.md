@@ -13,7 +13,7 @@ Here's how it's put together:
 
 - **daemon**: grabs physical gamepads (evdev) so nothing else sees them, runs the active profile, and emits through virtual uinput devices (an Xbox 360-style pad plus a keyboard and a mouse).
 - **gui**: edits profiles and talks to the daemon over `$XDG_RUNTIME_DIR/padwight.sock`.
-- **config**: `~/.config/padwight/`. `config.toml` holds the app settings. Each setup is a folder under `setups/` (General is `general/`), with a `setup.toml` and one file per profile, layer, macro, menu, overlay and log. To move a setup to another machine, copy its folder. The daemon is the only writer while it runs, so after editing by hand, run `padwight reload`.
+- **config**: `~/.config/padwight/`. `config.toml` holds the app settings. Each setup is a folder under `setups/` (General is `general/`), with a `setup.toml` and one file per profile, mode, layer, macro, menu, overlay and log. To move a setup to another machine, copy its folder. The daemon is the only writer while it runs, so after editing by hand, run `padwight reload`.
 
 ## Documentation
 
@@ -26,13 +26,13 @@ For users:
 For developers, in [docs/development/](docs/development/):
 
 - [architecture.md](docs/development/architecture.md): how the processes, input pipeline, config and focus tracking fit together, with a module map and test commands.
-- [specs.md](docs/development/specs.md), [layers.md](docs/development/layers.md), [sticks.md](docs/development/sticks.md), [guide.md](docs/development/guide.md): design notes for individual features.
+- [specs.md](docs/development/specs.md), [modes.md](docs/development/modes.md), [layers.md](docs/development/layers.md), [sticks.md](docs/development/sticks.md), [guide.md](docs/development/guide.md): design notes for individual features.
 - [game-setup-guidelines.md](docs/development/game-setup-guidelines.md): where actions usually go when setting up a game's bindings (sticks, buttons, hotkeys, system buttons).
 - [overlay-debugging.md](docs/development/overlay-debugging.md): tools for checking the on-screen overlay's timing and fades without a monitor or controller: a headless harness, the overlay's timing log, and fade pictures.
 
 ## Setups
 
-Everything is organized into setups: one controller setup per game. Each game keeps its own bindings and switches to them when you start it. A setup holds its own profiles, macros, menus, info overlays, and the auto-switch rules that activate it. All of its profiles can use all of its items. **General** is a built-in setup with no rules, for the desktop and a plain gamepad. Names only need to be unique within a setup. To reuse items from another setup, use **Copy from another setup…** on its Macros, Menus, Info overlays or Layers tab.
+Everything is organized into setups: one controller setup per game. Each game keeps its own bindings and switches to them when you start it. A setup holds its own profiles, macros, menus, info overlays, and the auto-switch rules that activate it. All of its profiles can use all of its items. **General** is a built-in setup with no rules, for the desktop and a plain gamepad. Names only need to be unique within a setup. To reuse items from another setup, use **Copy from another setup…** on its Modes, Layers, Macros, Menus or Info overlays tab.
 
 The sidebar lists General and your setups (with a search). Each setup's page has five sub-tabs: **Profiles**, **Macros**, **Menus**, **Info overlays** and **Details** (name, rules, export, delete). On the Macros, Menus and Info overlays tabs, "Copy from another setup…" previews another setup's items (or one from the library) and copies the ones you want in, so you can adapt them.
 
@@ -129,13 +129,24 @@ Want a head start? These are under "New from template…" in the GUI:
 - **Strategy**: mouse pointer on the left stick, arrow-key camera on the right, A/B/X = left/right/middle click, RT = left click for drag-select, L3/R3 = zoom (wheel up/down), LB/RB = held Ctrl/Shift, D-pad = control groups 1–4.
 - **Retro / platformer**: arrows on the D-pad and left stick, A/B/X/Y = Z/X/C/V, for keyboard-only indie games and emulators.
 
+## Modes
+
+A mode is another control scheme inside a game that you switch to and stay in, such as driving, a minigame or the game's own menus. Only one mode is on at a time, so switching to one turns off the one that was on; with none on, you're in the profile's default mode. Modes belong to a setup (on its **Modes** tab), apply over whichever of its profiles is active, and override the same things a layer can.
+
+- **Switching**: map "Switch mode…" to any button, trigger, stick direction, zone, gesture, combo or menu item. It switches to that mode, or back to the default if that mode is already on. A carousel menu of modes suits games with several.
+- **Staying on**: the mode stays when a menu or keyboard opens and when the profile changes within the game, and goes back to the default when another game takes over. Buttons that switch modes keep working even in a mode that turns off its unset buttons, so there's always a way back.
+- **Built in**: every setup also has the **Guide** mode (while Guide is held or its overlay is up) and **Mouse mode**, which can't be changed or removed. While one is on it stands in for the setup's mode, held layers pause, and the mode you were in comes back after. "Switch mode…" can turn on Mouse mode.
+- **Seeing them**: the Guide overlay's Mappings show the mode you're in; Left and Right turn to the other modes. A mode can show its name on screen like a layer, and `{mode}` shows it in info overlays.
+
+Older setups and packs that toggled a layer are converted when loaded: the toggle becomes "Switch mode…", and a layer that was only ever toggled becomes a mode.
+
 ## Layers
 
-A layer changes some of your mappings while it's on, then changes them back when it's off. For example, hold LB and the face buttons type F1–F4 and the right stick scrolls. Layers belong to a setup (on its **Layers** tab) and apply over whichever of its profiles is active. Anything a layer doesn't set stays as it was in the profile. A layer can override buttons and stick directions, gestures, sticks, triggers (with their zones), gyro and the touchpad. It can also add combos, or switch the profile's combos off.
+A layer changes some of your mappings while you hold a button, then changes them back when you let go. For example, hold LB and the face buttons type F1–F4 and the right stick scrolls, or hold the aim button and the mouse slows down. Layers extend or fine-tune whichever mode is on; for a scheme that stays on, use a mode. Layers belong to a setup (on its **Layers** tab) and apply over whichever of its profiles and modes are on. Anything a layer doesn't set stays as it was. A layer can override buttons and stick directions, gestures, sticks, triggers (with their zones), gyro and the touchpad. It can also add combos, or switch the profile's combos off.
 
-- **Turning one on**: map "Layer…" to any button, trigger, stick direction, zone, gesture or combo. The layer is on while that input is held. Wrap it in **Toggle** and it stays on until you press again, which also lets a menu item switch it (menu items can only toggle layers). Layers can turn on further layers.
+- **Holding one**: map "Hold layer…" to any button, trigger, stick direction, zone, gesture or combo. The layer is on while that input is held. A layer can't be toggled, and menu items can't hold layers. Layers can hold further layers.
 - **Several at once**: layers stack, and the newest one wins where they disagree.
-- **Switching over**: an input that's held down when a layer comes on or goes off keeps doing what it started until released. Sticks, triggers and gyro switch modes right away. Held layers end when the profile changes or an on-screen menu or keyboard opens. Toggled ones stay on within the game.
+- **Switching over**: an input that's held down when a layer comes on or goes off keeps doing what it started until released. Sticks, triggers and gyro switch right away. Held layers end when the profile changes or an on-screen menu or keyboard opens.
 - **Showing it**: each layer can show its name on screen while it's on (with its own position, size and colors), or show one of the setup's info overlays (e.g. a cheat sheet), or nothing at all for quick ones like "hold Y to lean". The live controller drawing labels inputs with the layers that are on, as they act.
 - **Editing**: the Layers tab uses the profile editor, shown over one of the setup's profiles. Inputs the layer doesn't set read "Same as Gameplay: …" with an **Override** button. Overridden ones get **Back to base** to undo. Layers use their profile's timings. "Copy from another setup…" copies a layer along with the macros, menus and info overlays it uses, which is handy for sequels.
 
@@ -201,7 +212,7 @@ Each menu is a collapsible card on the Menus tab, with a live preview. "Add a me
 
 ## In-game menu
 
-Press Guide + Start together to open a menu over the game in front. **Quick Settings** changes a few handy values, such as stick and gyro sensitivity, Invert Y and the profile. **Edit Controls** changes that setup's buttons, sticks, triggers, gyro, combos, layers, macros and zones. Changes apply right away and are saved when you choose Save. With no game in front, Edit Controls is refused. Quick settings instead makes a setup for the window in front.
+Press Guide + Start together to open a menu over the game in front. **Quick Settings** changes a few handy values, such as stick and gyro sensitivity, Invert Y and the profile. **Edit Controls** changes that setup's buttons, sticks, triggers, gyro, combos, modes, layers, macros and zones. Changes apply right away and are saved when you choose Save. With no game in front, Edit Controls is refused. Quick settings instead makes a setup for the window in front.
 
 The wiki has the details: [the in-game menu](https://github.com/marcinkoza0922/padwight/wiki/In-Game-Menu) and [editing controls in game](https://github.com/marcinkoza0922/padwight/wiki/Editing-Controls-in-Game).
 
@@ -211,12 +222,12 @@ Info overlays put text on screen without taking over the controller, mostly to s
 
 - **Button glyphs**, drawn the way the controller in use labels them. `{south}` is A on Xbox, ✕ on PlayStation and B on Nintendo. Also `{east}` `{west}` `{north}` `{lb}` `{rb}` `{lt}` `{rt}` `{select}` `{start}` `{guide}` `{ls}` `{rs}` `{l3}` `{r3}` `{dpad}` `{up}` `{down}` `{left}` `{right}`. Controllers that can't be recognized get the "Fallback glyphs" kind chosen on the App settings page.
 - **Output glyphs**, for what a mapping outputs: `{pad:south}` is drawn for the controller the pad presents itself as (see the Details tab's *Controllers this setup supports*), `{keyboard:a}` or `{keyboard:leftshift}` for a key, and `{mouse:leftclick}` for a mouse button. The Mappings overlay uses these by default, so a key output is never mistaken for a button.
-- **Live values**, updated every second: `{time}` `{time12}` `{date}` `{profile}` `{layer}` (the layers on, e.g. "Hotkeys + Build"), `{app}` (the focused program's executable), `{title}`, `{pid}`, `{cpu}`, `{ram}`, `{gpu}` (AMD only), `{wifi}` (signal strength, with its icon), `{system_battery}` (a laptop's or handheld's charge), and `{controller_battery}` (the controller in use's charge, where it reports one; `~` when it's estimated from a coarse level).
+- **Live values**, updated every second: `{time}` `{time12}` `{date}` `{profile}` `{layer}` (the layers on, e.g. "Hotkeys + Build"), `{mode}` (the mode on, or "Default"), `{app}` (the focused program's executable), `{title}`, `{pid}`, `{cpu}`, `{ram}`, `{gpu}` (AMD only), `{wifi}` (signal strength, with its icon), `{system_battery}` (a laptop's or handheld's charge), and `{controller_battery}` (the controller in use's charge, where it reports one; `~` when it's estimated from a coarse level).
 - **Icons**: `{pc}` (a monitor, or a laptop or handheld shape) and `{controller}` (the controller in use, drawn for its kind), meant to sit beside a battery. Add `:icon` to `{system_battery}` or `{controller_battery}` for a gauge instead of the number, and use `{controller:name}` for the controller's name.
 
 An info overlay can appear in three ways: always while its setup is active, for a few seconds when the game starts (the first time it's focused after launching, e.g. a "config loaded" note), or while an input is held via the "Show info overlay…" action (wrap it in Toggle to keep it up). An always-shown overlay can't also be mapped to an action. For one that appears only sometimes, use an action, typically a Toggle. An overlay shown by an action can **linger** for a few seconds after it's let go or toggled off, and timed ones fade out at the end.
 
-For an overlay that should stay up until you dismiss it, map "Toggle → Show info overlay…" to a button and tick **On when the game starts**. It shows at launch and goes away when you press the button. Any Toggle can start on that way (a layer, a held key, …). Overlays at the same screen position stack.
+For an overlay that should stay up until you dismiss it, map "Toggle → Show info overlay…" to a button and tick **On when the game starts**. It shows at launch and goes away when you press the button. Any Toggle can start on that way (an overlay, a held key, …). Overlays at the same screen position stack.
 
 ## Gyro
 
@@ -257,6 +268,7 @@ GNOME can't show the on-screen keyboard, menus or overlays, because Mutter has n
 - **Overview**: a live controller drawing labeled with the active profile's mappings, *What's happening* (the latest presses as the controller labels them, the buttons padwight exported for them, and what each press did, plus each profile switch and the rule or action behind it), and the controller list (Manage, Test rumble, Calibrate gyro).
 - **Settings**: automatic switching and its default profile, the on-screen keyboard and numpad, fallback glyphs, and color-blind mode for menu colors.
 - **A setup's Profiles tab**: the profile you're editing, with its own labeled drawing and sub-tabs for Buttons, Sticks & triggers, Combos and Gyro. Mappings collapse to one-line summaries ("A ▸ Left click"). Click a name to edit it. **Find by pressing** jumps to whatever you press or push on the controller.
+- **A setup's Modes tab**: the setup's modes, edited like a profile (see Modes).
 - **A setup's Layers tab**: the setup's layers, edited like a profile (see Layers).
 - **A setup's Macros tab**: a step editor with exact millisecond fields.
 

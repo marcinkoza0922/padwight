@@ -238,9 +238,11 @@ struct App {
     edited: Vec<String>,
     /// The layer shown on the Layers tab, by index in the game's layers.
     layer: usize,
-    /// The profile a layer is shown over, by index in the game's profiles.
+    /// The mode shown on the Modes tab, by index in the game's modes.
+    mode: usize,
+    /// The profile a layer or mode is shown over, by index in the game's profiles.
     compare: usize,
-    /// What the layer editor edits: the compared profile with the layer on top (see
+    /// What the layer (or mode) editor edits: the compared profile with the layer on top (see
     /// `layers.rs`).
     layer_view: Option<Profile>,
     /// The layer name label's Appearance section is open.
@@ -270,6 +272,7 @@ enum Page {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum GameTab {
     Profiles,
+    Modes,
     Layers,
     Macros,
     Menus,
@@ -279,14 +282,23 @@ enum GameTab {
 }
 
 impl GameTab {
-    const ALL: [GameTab; 7] =
-        [GameTab::Profiles, GameTab::Layers, GameTab::Macros, GameTab::Menus, GameTab::Info, GameTab::Logs, GameTab::Details];
+    const ALL: [GameTab; 8] = [
+        GameTab::Profiles,
+        GameTab::Modes,
+        GameTab::Layers,
+        GameTab::Macros,
+        GameTab::Menus,
+        GameTab::Info,
+        GameTab::Logs,
+        GameTab::Details,
+    ];
 }
 
 impl fmt::Display for GameTab {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
             GameTab::Profiles => "Profiles",
+            GameTab::Modes => "Modes",
             GameTab::Layers => "Layers",
             GameTab::Macros => "Macros",
             GameTab::Menus => "Menus",
@@ -649,6 +661,7 @@ impl App {
             renames: Vec::new(),
             edited: Vec::new(),
             layer: 0,
+            mode: 0,
             compare: 0,
             layer_view: None,
             indicator_appearance: false,
@@ -844,6 +857,7 @@ impl App {
             0
         };
         self.layer = 0;
+        self.mode = 0;
         self.compare = self.editing;
         self.reset_page_state();
     }
@@ -1352,7 +1366,9 @@ mod tests {
         app.config.games[0].info.push(InfoOverlay { name: "Controls".into(), always: true, on_start: None, linger: None, title: None, current_input: Default::default(), style: OverlayStyle::info(), rows: vec![vec!["{south}".into()]] });
         app.config.games[0].macros.push(Macro { name: "Dodge".into(), steps: vec![MacroStep::Wait(5)] });
         app.config.games[0].layers.push(crate::config::Layer::new("Hotkeys"));
-        app.status = Some(Status { devices: vec![device("Pad", true, false)], active_layers: vec!["Hotkeys".into()], ..Default::default() });
+        app.config.games[0].modes.push(crate::config::Mode::new("Driving"));
+        let status = Status { active_layers: vec!["Hotkeys".into()], active_mode: Some("Driving".into()), ..Default::default() };
+        app.status = Some(Status { devices: vec![device("Pad", true, false)], ..status });
         let _ = app.view();
         for page in [Page::Overview, Page::Settings, Page::Manual, Page::Game(None), Page::Game(Some("Doom".into()))] {
             let _ = app.update(Message::SelectPage(page));

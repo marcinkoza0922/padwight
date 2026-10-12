@@ -33,17 +33,18 @@ Conventions for choosing where actions go when setting up a game's controller bi
 - If a game uses the number keys or function keys as hotkeys, assign them to a **radial menu** with every relevant hotkey as an item. Prefer putting the menu on one of the **shoulder buttons**.
 - If there is a **holster** or **put away** action, assign it to the same input that took the item out, with a **long press**. For example, if a shoulder button brings up a radial menu to take items out, a long press of that shoulder button holsters them.
 - Whatever is on the **right mouse button** should go on the **left trigger**. The exception is when the right mouse button is a *Use* action, in which case **A** or **X** is preferred.
-- **In-game menus** in PC games without controller support usually only work with the mouse. Some accept the arrow keys. Supporting arrow keys is often hard without a separate profile or layer, which can be unintuitive, but it may still be an acceptable option.
+- **In-game menus** in PC games without controller support usually only work with the mouse. Some accept the arrow keys. Supporting arrow keys is often hard without a separate profile or mode, which can be unintuitive, but it may still be an acceptable option.
 
-## Profiles and layers
+## Profiles, modes and layers
 
 - **Profiles should not intermingle with each other.** Each profile should be a complete, self-contained scheme.
-- If a game needs a different control scheme for different in-game contexts, use **layers** instead of profiles.
+- If a game needs a different control scheme for different in-game contexts (vehicles, minigames, the game's own menus), use **modes** instead of profiles. Only one mode is on at a time, so the player can't stack incompatible schemes and lose the way back.
+- Use **layers** only to extend or fine-tune the scheme they're held over: a Lean layer that makes the left stick lean while a button is held, or a slower mouse curve while the aim button is held. Layers can't be toggled; a layer that should stay on is a mode.
 
 ## Vehicles
 
-- Vehicles should work out of the box if the game supports them. If they don't, they probably need **separate toggled layers**, which the player switches on and off themselves.
-- If a game requires switching between several control schemes regularly, such as on foot and in vehicles, use **toggled layers** switched through a **carousel menu**.
+- Vehicles should work out of the box if the game supports them. If they don't, they probably need **separate modes**, which the player switches to and back from themselves.
+- If a game requires switching between several control schemes regularly, such as on foot and in vehicles, use **modes** switched through a **carousel menu**.
 
 ## System buttons
 

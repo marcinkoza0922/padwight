@@ -8,7 +8,7 @@ Every button in a profile has an action. Click the button's name to change it.
 - press a key, or a key combination such as Left Ctrl + C
 - press a mouse button, or turn the scroll wheel
 - do nothing, with *Disabled*
-- run a macro, open a menu, hold a layer, or show an overlay
+- run a macro, open a menu, switch [modes](modes.md), hold a [layer](layers.md), or show an overlay
 - do several of these at once
 
 ## Toggle and Turbo
@@ -37,4 +37,4 @@ A button can do something different on a double tap, a triple tap, or a long pre
 
 > **Tip:** because Padwight waits to see if another tap follows, a button with gestures responds a little later.
 
-See also [Sticks and triggers](sticks.md) for zones, and [Layers](layers.md) for changing many buttons at once.
+See also [Sticks and triggers](sticks.md) for zones, and [Modes](modes.md) and [Layers](layers.md) for changing many buttons at once.

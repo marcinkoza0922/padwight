@@ -249,6 +249,7 @@ impl App {
                 ItemKind::Info => copy.info.extend(items.info.iter().find(|o| &o.name == n).cloned()),
                 ItemKind::Log => copy.logs.extend(items.logs.iter().find(|o| &o.name == n).cloned()),
                 ItemKind::Layer => copy.layers.extend(items.layers.iter().find(|l| &l.name == n).cloned()),
+                ItemKind::Mode => copy.modes.extend(items.mode_named(n).cloned()),
             }
         }
         let mut renamed_root = root.to_string();
@@ -256,6 +257,7 @@ impl App {
             let taken = |x: &str| {
                 let here = match k {
                     ItemKind::Layer => self.game().layers.iter().any(|l| l.name == x),
+                    ItemKind::Mode => self.game().mode_named(x).is_some(),
                     _ => !self.item_name_free(*k, None, x),
                 };
                 here || (x != old && copy.names(*k).contains(&x))
@@ -279,11 +281,13 @@ impl App {
         copy.info.sort_by_key(|o| order(ItemKind::Info, &o.name));
         copy.logs.sort_by_key(|o| order(ItemKind::Log, &o.name));
         copy.layers.sort_by_key(|l| order(ItemKind::Layer, &l.name));
+        copy.modes.sort_by_key(|l| order(ItemKind::Mode, &l.name));
         self.macros_mut().splice(0..0, copy.macros);
         self.menus_mut().splice(0..0, copy.menus);
         self.infos_mut().splice(0..0, copy.info);
         self.logs_mut().splice(0..0, copy.logs);
         self.game_mut().layers.splice(0..0, copy.layers);
+        self.game_mut().modes.splice(0..0, copy.modes);
         self.open_macros = shift(&self.open_macros, macros);
         self.open_menus = shift(&self.open_menus, menus);
         self.open_appearance = self.open_appearance.iter().map(|a| a.map(|j| j + menus)).collect();
@@ -305,6 +309,7 @@ impl App {
                 self.open_logs.insert(0);
             }
             ItemKind::Layer => self.layer = 0,
+            ItemKind::Mode => self.mode = 0,
         }
         let extra: Vec<String> = needed[1..].iter().map(|(k, n)| format!("{} “{n}”", k.noun())).collect();
         let with = if extra.is_empty() { String::new() } else { format!(", with {}", extra.join(", ")) };
@@ -665,8 +670,8 @@ impl App {
                         let view = crate::inputlog::log_view(&sample.entries(None), s, &preview_style(&o.style), glyphs, now);
                         (o.name.clone(), format!("input · {} lines", s.lines), Some(preview(crate::overlay::draw::log_panel(&view, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still()))))
                     }
-                    ItemKind::Layer => {
-                        let l = &items.layers[i];
+                    ItemKind::Layer | ItemKind::Mode => {
+                        let l = if kind == ItemKind::Mode { &items.modes[i] } else { &items.layers[i] };
                         let lines = layer_lines(l);
                         let summary = format!("{} override{}", l.overrides(), if l.overrides() == 1 { "" } else { "s" });
                         (l.name.clone(), summary, Some(text(lines.join("\n")).size(13).into()))
@@ -779,7 +784,7 @@ fn contents_line(p: &pack::Pack) -> String {
     let count = |n: usize, what: &str| format!("{n}\u{a0}{}{}", what.replace(' ', "\u{a0}"), if n == 1 { "" } else { "s" });
     let profiles: Vec<&str> = p.profiles.iter().map(|x| x.name.as_str()).collect();
     let mut parts = vec![format!("{} ({})", count(p.profiles.len(), "profile"), profiles.join(", "))];
-    for (n, what) in [(p.layers.len(), "layer"), (p.macros.len(), "macro"), (p.menus.len(), "menu"), (p.info_overlays.len(), "info overlay")] {
+    for (n, what) in [(p.modes.len(), "mode"), (p.layers.len(), "layer"), (p.macros.len(), "macro"), (p.menus.len(), "menu"), (p.info_overlays.len(), "info overlay")] {
         if n > 0 {
             parts.push(count(n, what));
         }
@@ -788,7 +793,7 @@ fn contents_line(p: &pack::Pack) -> String {
 }
 
 /// What a layer changes, one line each: "A → F1", "Right Stick → scroll, 15 notches/s".
-fn layer_lines(l: &crate::config::Layer) -> Vec<String> {
+pub(super) fn layer_lines(l: &crate::config::Layer) -> Vec<String> {
     let mut lines: Vec<String> = l.buttons.iter().map(|(b, a)| format!("{} → {}", short_button(*b), summarize(a))).collect();
     lines.extend(l.gestures.keys().map(|b| format!("{} gestures", short_button(*b))));
     for (stick, cfg) in [(Stick::Left, &l.left_stick), (Stick::Right, &l.right_stick)] {

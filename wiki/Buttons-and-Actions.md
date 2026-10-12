@@ -6,7 +6,8 @@ Each button in a profile has an **action**. An action can be:
 - a key or key combo, such as `LEFTCTRL+C`,
 - a mouse button,
 - the scroll wheel (one notch per press, continuous while held),
-- a [macro](Macros), [menu](Menus), [layer](Layers) or info overlay,
+- a [macro](Macros), [menu](Menus) or info overlay,
+- **Switch mode…** ([modes](Modes)) or **Hold layer…** ([layers](Layers)),
 - **several of these at once** (Multi),
 - **Disabled**.
 

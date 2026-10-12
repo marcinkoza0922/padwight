@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::{motion::MotionSet, pad_identity::ControllerSupport};
 use crate::sound::SoundSet;
 use crate::config::{
-    Button, ButtonAction, Combo, Config, Game, Gestures, GyroMode, Indicator, InfoOverlay, ItemKind, Layer, LogOverlay, Macro,
+    Button, ButtonAction, Combo, Config, Game, Gestures, GyroMode, Indicator, InfoOverlay, ItemKind, Layer, LogOverlay, Macro, Mode,
     Menu, MacroStep, Origin, OverlayStyle, PackInfo, PackRef, Profile, Rule, free_name,
 };
 
@@ -23,8 +23,9 @@ use crate::config::{
 /// names and the `back_paddles` feature); 14, overlay decorations (outlines, shadows, gradients,
 /// glows and text colors); 15, gyro acceleration curves, axes, player and world space, the
 /// position mode, smoothing and pausing, and the touchpad's curve; 16, the touchpad's joystick,
-/// menu and swipe modes, tapping, scrolling and gliding, the split pad, and layers' touchpads.
-pub const FORMAT: u32 = 16;
+/// menu and swipe modes, tapping, scrolling and gliding, the split pad, and layers' touchpads;
+/// 17, modes (which replace toggled layers: older packs' toggled layers are read as modes).
+pub const FORMAT: u32 = 17;
 pub const EXTENSION: &str = "padpack";
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -45,6 +46,8 @@ pub struct Pack {
     pub log_overlays: Vec<LogOverlay>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub layers: Vec<Layer>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub modes: Vec<Mode>,
     /// How the on-screen keyboard and numpad look in this game, if the author set that.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub keyboard_style: Option<OverlayStyle>,
@@ -135,6 +138,7 @@ impl Pack {
             info: self.info_overlays.clone(),
             logs: self.log_overlays.clone(),
             layers: self.layers.clone(),
+            modes: self.modes.clone(),
             keyboard_style: self.keyboard_style.clone(),
             numpad_style: self.numpad_style.clone(),
             media_style: self.media_style.clone(),
@@ -172,6 +176,8 @@ pub fn parse(text: &str) -> Result<Pack> {
         }
     }
     crate::config::untoggle_menus(&mut pack.profiles, &mut pack.menus, &mut pack.layers);
+    crate::config::untoggle_menus(&mut [], &mut [], &mut pack.modes);
+    crate::config::modes::toggled_layers_to_modes(&mut pack.profiles, &mut pack.menus, &mut pack.layers, &mut pack.modes);
     check(&pack)?;
     Ok(pack)
 }
@@ -222,9 +228,9 @@ pub fn new_id() -> String {
     format!("{}-{}-{}-{}-{}", &hex[..8], &hex[8..12], &hex[12..16], &hex[16..20], &hex[20..])
 }
 
-/// Every (kind, name) reference in these profiles, menus, macros and layers, nested ones
-/// included, and the info overlays layers use as their indicator.
-fn references(profiles: &[Profile], menus: &[Menu], macros: &[Macro], layers: &[Layer]) -> BTreeSet<(ItemKind, String)> {
+/// Every (kind, name) reference in these profiles, menus, macros and layers (or modes), nested
+/// ones included, and the info overlays layers use as their indicator.
+fn references(profiles: &[Profile], menus: &[Menu], macros: &[Macro], layers: &[&Layer]) -> BTreeSet<(ItemKind, String)> {
     let mut refs = BTreeSet::new();
     let mut visit = |a: &ButtonAction| {
         a.walk(&mut |a| {
@@ -257,11 +263,12 @@ fn references(profiles: &[Profile], menus: &[Menu], macros: &[Macro], layers: &[
     refs
 }
 
-/// Every (kind, name) a game's own items refer to. Built-in layers always resolve, so they're left out.
+/// Every (kind, name) a game's own items refer to. Built-in modes always resolve, so they're left out.
 pub(crate) fn game_references(g: &Game) -> BTreeSet<(ItemKind, String)> {
-    references(&g.profiles, &g.menus, &g.macros, &g.layers)
+    let shifts: Vec<&Layer> = g.layers.iter().chain(&g.modes).collect();
+    references(&g.profiles, &g.menus, &g.macros, &shifts)
         .into_iter()
-        .filter(|(kind, name)| !(*kind == ItemKind::Layer && crate::config::built_in_layer(name).is_some()))
+        .filter(|(kind, name)| !(*kind == ItemKind::Mode && crate::config::built_in_mode(name).is_some()))
         .collect()
 }
 
@@ -279,7 +286,8 @@ pub fn dependencies(source: &Game, kind: ItemKind, name: &str, resolves: impl Fn
         let refs = match k {
             ItemKind::Macro => source.macros.iter().find(|m| m.name == n).map(|m| references(&[], &[], std::slice::from_ref(m), &[])),
             ItemKind::Menu => source.menus.iter().find(|m| m.name == n).map(|m| references(&[], std::slice::from_ref(m), &[], &[])),
-            ItemKind::Layer => source.layers.iter().find(|l| l.name == n).map(|l| references(&[], &[], &[], std::slice::from_ref(l))),
+            ItemKind::Layer => source.layers.iter().find(|l| l.name == n).map(|l| references(&[], &[], &[], &[l])),
+            ItemKind::Mode => source.mode_named(&n).map(|l| references(&[], &[], &[], &[l])),
             ItemKind::Info | ItemKind::Log => None,
         };
         for (rk, rn) in refs.unwrap_or_default() {
@@ -308,12 +316,13 @@ pub fn features(game: &Game) -> Vec<FeatureUse> {
             (required || used).then(|| FeatureUse { feature, place: format!("profile “{}”", p.name), required })
         })
     });
-    let layers = game.layers.iter().flat_map(|l| {
+    let shifts = game.layers.iter().map(|l| (l, "layer")).chain(game.modes.iter().map(|l| (l, "mode")));
+    let layers = shifts.flat_map(|(l, noun)| {
         let gyro = l.gyro.as_ref().is_some_and(|g| g.mode != GyroMode::Off);
         [(Feature::Gyro, gyro), (Feature::BackPaddles, uses_paddles(&l.buttons, &l.gestures, &l.combos)), (Feature::Touchpad, l.touchpad.is_some())]
             .into_iter()
             .filter(|(_, used)| *used)
-            .map(move |(feature, _)| FeatureUse { feature, place: format!("layer “{}”", l.name), required: false })
+            .map(move |(feature, _)| FeatureUse { feature, place: format!("{noun} “{}”", l.name), required: false })
     });
     profiles.chain(layers).collect()
 }
@@ -403,6 +412,7 @@ pub fn export(game: &Game, info: &PackInfo) -> Export {
         info_overlays: pack_game.info,
         log_overlays: pack_game.logs,
         layers: pack_game.layers,
+        modes: pack_game.modes,
         keyboard_style: pack_game.keyboard_style,
         numpad_style: pack_game.numpad_style,
         media_style: pack_game.media_style,
@@ -450,6 +460,9 @@ pub fn item_hashes(game: &Game) -> BTreeMap<String, String> {
     }
     for l in &game.layers {
         hashes.insert(format!("layer:{}", l.name), hash(l));
+    }
+    for l in &game.modes {
+        hashes.insert(format!("mode:{}", l.name), hash(l));
     }
     hashes
 }

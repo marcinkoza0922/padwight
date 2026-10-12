@@ -11,7 +11,7 @@ use evdev::KeyCode;
 
 use crate::{
     config::{
-        Analog, Button, ButtonAction, GUIDE_LAYER, GestureKind, MOUSE_LAYER, Macro, MacroStep, Menu, Profile, Stick, StickAction, SwipeDirection, Toggled, TouchSide,
+        Analog, Button, ButtonAction, GUIDE_MODE, GestureKind, MOUSE_MODE, Macro, MacroStep, Menu, Profile, Stick, StickAction, SwipeDirection, Toggled, TouchSide,
         Trigger, TriggerAction,
     },
     input::{Axis, InputEvent},
@@ -136,9 +136,11 @@ pub struct Engine {
     trigger_release: HashMap<Trigger, f32>,
     /// Bounds of each active zone, which it releases by (the zone list may have changed).
     zone_bounds: HashMap<(Analog, usize), (f32, f32)>,
-    /// Layers held or toggled on, oldest first, with how many inputs hold each.
+    /// Layers held, oldest first, with how many inputs hold each.
     layers: Vec<(String, u32)>,
-    /// Set when `layers` changes; the daemon takes it.
+    /// The mode switched to, under the layers; `None` is the default mode (the profile itself).
+    mode: Option<String>,
+    /// Set when `layers` or `mode` changes; the daemon takes it.
     layers_changed: bool,
     /// Set while the Guide button is held: whether another button went down during the hold,
     /// which makes it a chord rather than a tap that toggles the Guide overlay.
@@ -292,19 +294,50 @@ impl Engine {
         self.digital(&src, action, false, out);
     }
 
-    /// Active layers, oldest first. The Guide layer is last while the Guide overlay is up, and
-    /// the mouse-mode layer while mouse mode is on.
+    /// The layers that apply, oldest first: the held ones, unless a built-in mode is on.
     pub fn layers(&self) -> Vec<String> {
-        let mut names: Vec<String> = self.layers.iter().map(|(name, _)| name.clone()).collect();
-        for (on, name) in [(self.guide_open, GUIDE_LAYER), (self.mouse_mode, MOUSE_LAYER)] {
-            if on && !names.iter().any(|n| n == name) {
-                names.push(name.into());
-            }
+        if self.built_in_mode().is_some() {
+            return Vec::new();
         }
-        names
+        self.layers.iter().map(|(name, _)| name.clone()).collect()
     }
 
-    /// Whether the active layers changed since the last call.
+    /// The mode on now (`None` is the default mode): the Guide mode while Guide is held or its
+    /// overlay is up, else mouse mode while that's on, else the mode switched to.
+    pub fn mode(&self) -> Option<&str> {
+        self.built_in_mode().or(self.mode.as_deref())
+    }
+
+    /// The mode switched to, which comes back once a built-in mode ends.
+    pub fn chosen_mode(&self) -> Option<&str> {
+        self.mode.as_deref()
+    }
+
+    fn built_in_mode(&self) -> Option<&'static str> {
+        if self.guide_held.is_some() || self.guide_open {
+            Some(GUIDE_MODE)
+        } else if self.mouse_mode {
+            Some(MOUSE_MODE)
+        } else {
+            None
+        }
+    }
+
+    /// Switches to `name`, or back to the default mode if it's already on. Mouse mode is switched
+    /// on and off over the chosen mode; switching to any other mode ends it. The Guide mode
+    /// belongs to the Guide button, so switching to it does nothing.
+    fn switch_mode(&mut self, name: &str) {
+        match name {
+            GUIDE_MODE => {}
+            MOUSE_MODE => self.set_mouse_mode(!self.mouse_mode),
+            _ => {
+                self.mode = if self.mode.as_deref() == Some(name) && !self.mouse_mode { None } else { Some(name.to_string()) };
+                self.set_mouse_mode(false);
+            }
+        }
+    }
+
+    /// Whether the active layers or mode changed since the last call.
     pub fn take_layers_changed(&mut self) -> bool {
         std::mem::take(&mut self.layers_changed)
     }
@@ -491,7 +524,7 @@ impl Engine {
     }
 
     /// The Guide button is handled here, whatever the profile maps it to, so it works the same
-    /// in every game. A tap toggles the Guide overlay; holding it turns the Guide layer on, so
+    /// in every game. A tap toggles the Guide overlay; holding it turns the Guide mode on, so
     /// Guide + a button runs that button's Guide shortcut.
     fn guide_button(&mut self, pressed: bool) {
         match (pressed, self.guide_held) {
@@ -502,11 +535,11 @@ impl Engine {
             }
             (true, None) => {
                 self.guide_held = Some(false);
-                self.hold_layer(GUIDE_LAYER, true);
+                self.layers_changed = true;
             }
             (false, Some(chorded)) => {
                 self.guide_held = None;
-                self.hold_layer(GUIDE_LAYER, false);
+                self.layers_changed = true;
                 if !chorded {
                     self.set_guide_open(!self.guide_open);
                 }
@@ -952,6 +985,11 @@ impl Engine {
             }
         }
         ButtonAction::Layer(name) => self.hold_layer(name, pressed),
+        ButtonAction::Mode(name) => {
+            if pressed {
+                self.switch_mode(name);
+            }
+        }
             ButtonAction::Multi(actions) => {
                 // Child slots depend only on position, so reverse-order release matches.
                 let mut slots = Vec::with_capacity(actions.len());
@@ -1215,10 +1253,13 @@ impl Engine {
 
     /// Releases everything this engine holds down and centers the virtual pad. Used before a
     /// profile switch, when an on-screen overlay takes the controller, or when the device goes
-    /// away. With `keep_toggled_layers`, layers a Toggle switched on stay on (held ones end).
-    pub fn release_all(&mut self, keep_toggled_layers: bool, out: &mut Vec<OutEvent>) {
+    /// away. With `keep_mode`, the mode stays (held layers end either way).
+    pub fn release_all(&mut self, keep_mode: bool, out: &mut Vec<OutEvent>) {
+        if !keep_mode && self.mode.take().is_some() {
+            self.layers_changed = true;
+        }
         if self.guide_held.take().is_some() {
-            self.hold_layer(GUIDE_LAYER, false);
+            self.layers_changed = true;
         }
         if self.guide_open {
             self.set_guide_open(false);
@@ -1230,10 +1271,6 @@ impl Engine {
         // Toggled-on actions are released too (this also stops toggled turbos).
         let toggled: Vec<_> = self.toggled.drain().collect();
         for ((src, slot), inner) in toggled {
-            if keep_toggled_layers && matches!(inner, ButtonAction::Layer(_)) {
-                self.toggled.insert((src, slot), inner);
-                continue;
-            }
             self.emit(&src, &inner, false, slot + 1, out);
         }
         for id in self.macros_running.keys().cloned().collect::<Vec<_>>() {
@@ -1481,10 +1518,10 @@ mod tests {
         let mut out = press(&mut e, &base, Button::Guide, true, t0);
         out.extend(press(&mut e, &base, Button::Guide, false, ms(t0, 80)));
         assert!(out.is_empty(), "the Guide button sends nothing to the game or Steam");
-        assert_eq!(e.layers(), [GUIDE_LAYER], "a tap opens the overlay");
+        assert_eq!(e.mode(), Some(GUIDE_MODE), "a tap opens the overlay");
         press(&mut e, &base, Button::Guide, true, ms(t0, 2000));
         press(&mut e, &base, Button::Guide, false, ms(t0, 2050));
-        assert!(e.layers().is_empty(), "a second tap closes it");
+        assert_eq!(e.mode(), None, "a second tap closes it");
     }
 
     #[test]
@@ -1497,7 +1534,7 @@ mod tests {
         assert!(e.take_overlay_toggle().is_some(), "Guide + X opens the keyboard");
         press(&mut e, &on, Button::West, false, ms(t0, 100));
         press(&mut e, &on, Button::Guide, false, ms(t0, 150));
-        assert!(e.layers().is_empty(), "the chord doesn't open the overlay on release");
+        assert_eq!(e.mode(), None, "the chord doesn't open the overlay on release");
     }
 
     #[test]
@@ -1507,10 +1544,10 @@ mod tests {
         let t0 = Instant::now();
         press(&mut e, &base, Button::Guide, true, t0);
         press(&mut e, &base, Button::Guide, false, ms(t0, 80));
-        assert_eq!(e.layers(), [GUIDE_LAYER]);
+        assert_eq!(e.mode(), Some(GUIDE_MODE));
         press(&mut e, &on, Button::North, true, ms(t0, 500));
         assert_eq!(e.take_overlay_toggle(), Some(crate::keyboard::Layout::Numpad), "Y opens the numpad");
-        assert!(e.layers().is_empty(), "and closes the overlay");
+        assert_eq!(e.mode(), None, "and closes the overlay");
     }
 
     /// A profile with the mouse-mode layer on top of the passthrough one.
@@ -1530,7 +1567,7 @@ mod tests {
         out.extend(press(&mut e, &mouse, Button::RightStick, false, ms(t0, 100)));
         out.extend(press(&mut e, &base, Button::Guide, false, ms(t0, 150)));
         assert!(out.is_empty(), "the chord doesn't reach the game");
-        assert_eq!(e.layers(), [MOUSE_LAYER], "mouse mode stays on after the chord, with no overlay");
+        assert_eq!(e.mode(), Some(MOUSE_MODE), "mouse mode stays on after the chord, with no overlay");
     }
 
     #[test]
@@ -1541,7 +1578,7 @@ mod tests {
         press(&mut e, &base, Button::Guide, true, t0);
         press(&mut e, &base, Button::Guide, false, ms(t0, 80));
         press(&mut e, &on, Button::RightStick, true, ms(t0, 500));
-        assert_eq!(e.layers(), [MOUSE_LAYER]);
+        assert_eq!(e.mode(), Some(MOUSE_MODE));
     }
 
     #[test]
@@ -1555,7 +1592,7 @@ mod tests {
         press(&mut e, &mouse, Button::Guide, false, ms(t0, 70));
         press(&mut e, &mouse, Button::Guide, true, ms(t0, 500));
         press(&mut e, &mouse, Button::Guide, false, ms(t0, 580));
-        assert!(e.layers().is_empty());
+        assert_eq!(e.mode(), None);
     }
 
     #[test]
@@ -1603,7 +1640,7 @@ mod tests {
         press(&mut e, &base, Button::Guide, true, t0);
         press(&mut e, &base, Button::Guide, false, ms(t0, 80));
         e.release_all(false, &mut Vec::new());
-        assert!(e.layers().is_empty());
+        assert_eq!(e.mode(), None);
     }
 
     #[test]
@@ -1667,11 +1704,11 @@ mod tests {
         press(&mut e, &on, Button::DpadDown, true, ms(t0, 200));
         press(&mut e, &on, Button::LeftStickUp, true, ms(t0, 300));
         press(&mut e, &on, Button::South, true, ms(t0, 400));
-        assert_eq!(e.layers(), [GUIDE_LAYER], "the menu buttons don't close the overlay");
+        assert_eq!(e.mode(), Some(GUIDE_MODE), "the menu buttons don't close the overlay");
         assert_eq!(e.take_guide_nav(), [Button::DpadDown, Button::LeftStickUp, Button::South]);
         assert!(e.take_guide_nav().is_empty());
         press(&mut e, &on, Button::Start, true, ms(t0, 500));
-        assert!(e.layers().is_empty(), "any other button closes it");
+        assert_eq!(e.mode(), None, "any other button closes it");
     }
 
     #[test]
@@ -2682,13 +2719,18 @@ mod tests {
         base.with_layers([layer])
     }
 
+    /// Presses and lets go of `b`.
+    fn tap(e: &mut Engine, p: &Profile, b: Button) {
+        run(e, p, InputEvent::Button(b, true));
+        run(e, p, InputEvent::Button(b, false));
+    }
+
     #[test]
     fn layers_stack_and_count_their_holders() {
         let mut p = Profile::passthrough("p");
         p.set_button(Button::LeftBumper, ButtonAction::Layer("A".into()));
         p.set_button(Button::RightBumper, ButtonAction::Layer("B".into()));
         p.set_button(Button::West, ButtonAction::Layer("A".into()));
-        p.set_button(Button::North, ButtonAction::toggle(ButtonAction::Layer("A".into())));
         let mut e = Engine::default();
         run(&mut e, &p, InputEvent::Button(Button::LeftBumper, true));
         run(&mut e, &p, InputEvent::Button(Button::RightBumper, true));
@@ -2699,33 +2741,76 @@ mod tests {
         assert_eq!(e.layers(), ["A", "B"], "West still holds A");
         run(&mut e, &p, InputEvent::Button(Button::West, false));
         assert_eq!(e.layers(), ["B"]);
-        // A toggle keeps one on after release.
-        run(&mut e, &p, InputEvent::Button(Button::North, true));
-        run(&mut e, &p, InputEvent::Button(Button::North, false));
-        assert_eq!(e.layers(), ["B", "A"]);
-        run(&mut e, &p, InputEvent::Button(Button::North, true));
-        assert_eq!(e.layers(), ["B"]);
     }
 
     #[test]
-    fn toggled_layers_survive_menus_but_not_game_changes() {
+    fn one_mode_is_on_at_a_time_and_pressing_it_again_goes_back() {
         let mut p = Profile::passthrough("p");
-        p.set_button(Button::North, ButtonAction::toggle(ButtonAction::Layer("A".into())));
+        p.set_button(Button::North, ButtonAction::Mode("Driving".into()));
+        p.set_button(Button::West, ButtonAction::Mode("Flying".into()));
+        let mut e = Engine::default();
+        assert_eq!(e.mode(), None, "the default mode");
+        tap(&mut e, &p, Button::North);
+        assert_eq!(e.mode(), Some("Driving"));
+        assert!(e.take_layers_changed());
+        tap(&mut e, &p, Button::West);
+        assert_eq!(e.mode(), Some("Flying"), "switching replaces the mode that was on");
+        tap(&mut e, &p, Button::West);
+        assert_eq!(e.mode(), None, "the same mode again goes back to the default");
+        assert!(e.layers().is_empty(), "modes aren't layers");
+    }
+
+    #[test]
+    fn a_built_in_mode_stands_in_for_the_chosen_one_and_gives_it_back() {
+        let mut p = Profile::passthrough("p");
+        p.set_button(Button::North, ButtonAction::Mode("Driving".into()));
+        p.set_button(Button::West, ButtonAction::Mode(MOUSE_MODE.into()));
+        p.set_button(Button::LeftBumper, ButtonAction::Layer("Lean".into()));
+        let mut e = Engine::default();
+        tap(&mut e, &p, Button::North);
+        run(&mut e, &p, InputEvent::Button(Button::LeftBumper, true));
+        assert_eq!((e.mode(), e.layers()), (Some("Driving"), vec!["Lean".to_string()]));
+        // Holding Guide: the Guide mode, without the held layer, which comes back after.
+        run(&mut e, &p, InputEvent::Button(Button::Guide, true));
+        assert_eq!((e.mode(), e.layers()), (Some(GUIDE_MODE), Vec::new()));
+        assert_eq!(e.chosen_mode(), Some("Driving"));
+        run(&mut e, &p, InputEvent::Button(Button::Guide, false));
+        tap(&mut e, &p, Button::Guide);
+        assert_eq!((e.mode(), e.layers()), (Some("Driving"), vec!["Lean".to_string()]), "the overlay closed again");
+        run(&mut e, &p, InputEvent::Button(Button::LeftBumper, false));
+        // Switching to mouse mode stands in for Driving; Guide ends it, and Driving is back.
+        tap(&mut e, &p, Button::West);
+        assert_eq!(e.mode(), Some(MOUSE_MODE));
+        tap(&mut e, &p, Button::Guide);
+        assert_eq!(e.mode(), Some("Driving"));
+        // Switching to another mode ends mouse mode too: only one is on.
+        tap(&mut e, &p, Button::West);
+        let mut out = Vec::new();
+        e.tap_menu_item("M", 0, &ButtonAction::Mode("Flying".into()), &mut out);
+        assert_eq!(e.mode(), Some("Flying"));
+        // The Guide mode can't be switched to: it's the Guide button's.
+        e.tap_menu_item("M", 1, &ButtonAction::Mode(GUIDE_MODE.into()), &mut out);
+        assert_eq!(e.mode(), Some("Flying"));
+    }
+
+    #[test]
+    fn the_mode_survives_menus_but_not_game_changes() {
+        let mut p = Profile::passthrough("p");
+        p.set_button(Button::North, ButtonAction::Mode("A".into()));
         p.set_button(Button::LeftBumper, ButtonAction::Layer("B".into()));
         let mut e = Engine::default();
-        run(&mut e, &p, InputEvent::Button(Button::North, true));
-        run(&mut e, &p, InputEvent::Button(Button::North, false));
+        tap(&mut e, &p, Button::North);
         run(&mut e, &p, InputEvent::Button(Button::LeftBumper, true));
         let mut out = Vec::new();
         e.release_all(true, &mut out);
-        assert_eq!(e.layers(), ["A"], "held ones end, toggled ones stay");
-        // Still toggled: the next press turns it off.
-        run(&mut e, &p, InputEvent::Button(Button::North, true));
-        assert!(e.layers().is_empty());
-        run(&mut e, &p, InputEvent::Button(Button::North, false));
-        run(&mut e, &p, InputEvent::Button(Button::North, true));
+        assert!(e.layers().is_empty(), "held layers end");
+        assert_eq!(e.mode(), Some("A"), "the mode stays");
+        // A menu item switches modes like a button.
+        e.tap_menu_item("M", 0, &ButtonAction::Mode("A".into()), &mut out);
+        assert_eq!(e.mode(), None);
+        tap(&mut e, &p, Button::North);
         e.release_all(false, &mut out);
-        assert!(e.layers().is_empty());
+        assert_eq!(e.mode(), None);
     }
 
     #[test]

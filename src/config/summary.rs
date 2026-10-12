@@ -49,6 +49,7 @@ pub enum Keyword {
     Info,
     Log,
     Layer,
+    Mode,
 }
 
 impl Keyword {
@@ -61,6 +62,7 @@ impl Keyword {
             Keyword::Info => "Info",
             Keyword::Log => "Log",
             Keyword::Layer => "Layer",
+            Keyword::Mode => "Mode",
         }
     }
 }
@@ -182,6 +184,7 @@ impl ButtonAction {
             ButtonAction::Macro { name, repeat: true } => vec![keyword(Keyword::Macro), text(&format!(" “{name}” (repeat)"))],
             ButtonAction::Macro { name, .. } => vec![keyword(Keyword::Macro), text(&format!(" “{name}”"))],
             ButtonAction::Layer(name) => vec![keyword(Keyword::Layer), text(&format!(" “{name}”"))],
+            ButtonAction::Mode(name) => vec![keyword(Keyword::Mode), text(&format!(" “{name}”"))],
         }
     }
 }

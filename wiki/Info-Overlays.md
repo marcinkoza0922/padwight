@@ -20,7 +20,7 @@ Controllers that aren't recognized get the fallback glyph style chosen on the Se
 
 **Live values**, updated every second:
 
-`{time}` `{time12}` `{date}` `{profile}` `{layer}` (the layers that are on, such as "Hotkeys + Build") `{app}` (the focused program's executable) `{title}` `{pid}` `{cpu}` `{ram}` `{gpu}` (AMD only) `{wifi}` (signal strength, with its icon) `{system_battery}` (a laptop's or handheld's charge) `{controller_battery}` (the charge of the controller in use, where it reports one; `~` when estimated from a coarse level)
+`{time}` `{time12}` `{date}` `{profile}` `{layer}` (the layers that are on, such as "Hotkeys + Build") `{mode}` (the mode that's on, or "Default") `{app}` (the focused program's executable) `{title}` `{pid}` `{cpu}` `{ram}` `{gpu}` (AMD only) `{wifi}` (signal strength, with its icon) `{system_battery}` (a laptop's or handheld's charge) `{controller_battery}` (the charge of the controller in use, where it reports one; `~` when estimated from a coarse level)
 
 **Icons**:
 

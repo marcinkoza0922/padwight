@@ -4,7 +4,7 @@ A **controller setup** holds everything Padwight keeps for one game: its profile
 
 ## Profiles
 
-A profile is one complete set of mappings inside a setup, for example one for a whole game or one for a different way of playing it. Profiles don't mix with each other. If a game needs a different control scheme for a context inside play, such as driving, use a [layer](layers.md) instead. On the **Profiles** tab, **Duplicate** copies the profile you're on, and **New from template** starts from a ready-made one.
+A profile is one complete set of mappings inside a setup, for example one for a whole game or one for a different way of playing it. Profiles don't mix with each other. If a game needs a different control scheme for a context inside play, such as driving, use a [mode](modes.md) instead. On the **Profiles** tab, **Duplicate** copies the profile you're on, and **New from template** starts from a ready-made one.
 
 ## Switching profiles
 

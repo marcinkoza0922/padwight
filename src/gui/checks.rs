@@ -5,8 +5,8 @@ use super::*;
 /// What's wrong with a menu item's action: the usual checks, plus which menus it may open
 /// (see [`crate::menu::can_open`]).
 pub(super) fn item_problem(menu: &Menu, action: &ButtonAction, menus: &[&Menu], names: &Names) -> Option<String> {
-    if holds_layer(action) {
-        return Some("a menu item can only toggle a layer (wrap it in Toggle)".into());
+    if uses_layer(action) {
+        return Some("a menu item can't hold a layer: switch to a mode instead".into());
     }
     action_problem(action, names).or_else(|| {
         let mut problem = None;
@@ -108,6 +108,7 @@ pub(super) struct Names {
     pub(super) logs: Vec<String>,
     pub(super) always_logs: Vec<String>,
     pub(super) layers: Vec<String>,
+    pub(super) modes: Vec<String>,
     /// How long each macro takes to play, in milliseconds, by name.
     pub(super) macro_ms: std::collections::HashMap<String, u64>,
     /// Inside a turbo, where a macro plays once per press and never loops.
@@ -128,6 +129,7 @@ impl Names {
             logs: logs(false),
             always_logs: logs(true),
             layers: list(ItemKind::Layer),
+            modes: list(ItemKind::Mode),
             in_turbo: false,
         }
     }
@@ -144,17 +146,25 @@ impl Names {
             ItemKind::Info => &self.infos,
             ItemKind::Log => &self.logs,
             ItemKind::Layer => &self.layers,
+            ItemKind::Mode => &self.modes,
         }
     }
 }
 
-/// Whether `action` holds a layer outside any Toggle, which a tap (a menu item) can't do.
-pub(super) fn holds_layer(action: &ButtonAction) -> bool {
-    match action {
-        ButtonAction::Layer(_) => true,
-        ButtonAction::Multi(list) => list.iter().any(holds_layer),
-        ButtonAction::Turbo { action, .. } => holds_layer(action),
-        _ => false,
+/// Whether `action` holds a layer anywhere in it, which a tap (a menu item) can't do.
+pub(super) fn uses_layer(action: &ButtonAction) -> bool {
+    let mut layer = false;
+    action.walk(&mut |a| layer |= matches!(a, ButtonAction::Layer(_)));
+    layer
+}
+
+/// Why a Toggle can't hold `inner`, if it can't.
+fn toggle_problem(inner: &ButtonAction) -> Option<&'static str> {
+    match inner {
+        ButtonAction::OpenMenu(_) => Some("a menu can't be toggled: its close button puts it away"),
+        ButtonAction::Layer(_) => Some("a layer can't be toggled: to keep one on, make it a mode and switch to it"),
+        ButtonAction::Mode(_) => Some("a mode switch can't be toggled: pressing it again already switches back"),
+        _ => None,
     }
 }
 
@@ -185,9 +195,7 @@ pub(super) fn action_problem(action: &ButtonAction, names: &Names) -> Option<Str
                     ));
                 }
             }
-            ButtonAction::Toggle(t) if matches!(*t.action, ButtonAction::OpenMenu(_)) => {
-                problem = Some("a menu can't be toggled: its close button puts it away".into());
-            }
+            ButtonAction::Toggle(t) => problem = toggle_problem(&t.action).map(str::to_string),
             ButtonAction::OpenMenu(name) if !names.menus.contains(name) => {
                 problem = Some(format!("missing menu “{name}”"));
             }
@@ -205,6 +213,9 @@ pub(super) fn action_problem(action: &ButtonAction, names: &Names) -> Option<Str
             }
             ButtonAction::Layer(name) if !names.layers.contains(name) => {
                 problem = Some(format!("missing layer “{name}”"));
+            }
+            ButtonAction::Mode(name) if !names.modes.contains(name) => {
+                problem = Some(format!("missing mode “{name}”"));
             }
             _ => {}
         }
@@ -265,11 +276,11 @@ pub(super) fn items_problem(macros: &[Macro], menus: &[Menu], info: &[InfoOverla
             return Some(format!("Macro “{}”: unknown key “{}”", m.name, short_key(bad)));
         }
         if m.steps.iter().filter_map(MacroStep::action).any(|a| {
-            let mut layer = false;
-            a.walk(&mut |a| layer |= matches!(a, ButtonAction::Layer(_)));
-            layer
+            let mut shifts = false;
+            a.walk(&mut |a| shifts |= matches!(a, ButtonAction::Layer(_) | ButtonAction::Mode(_)));
+            shifts
         }) {
-            return Some(format!("Macro “{}”: macros can't hold layers.", m.name));
+            return Some(format!("Macro “{}”: macros can't hold layers or switch modes.", m.name));
         }
         if let Some(problem) = m.steps.iter().filter_map(MacroStep::action).find_map(|a| action_problem(a, names)) {
             return Some(format!("Macro “{}”: {problem}", m.name));
@@ -403,25 +414,37 @@ pub(super) fn game_problem(config: &Config, g: &Game) -> Option<String> {
             return Some(format!("Profile “{}”: unknown key “{}”", p.name, short_key(bad)));
         }
     }
-    layers_problem(g, &names).or_else(|| rules_problem(g))
+    modes_problem(g, &names).or_else(|| layers_problem(g, &names)).or_else(|| rules_problem(g))
 }
 
 /// The first thing saving would reject in a game's layers.
 pub(super) fn layers_problem(g: &Game, names: &Names) -> Option<String> {
+    shifts_problem(&g.layers, ItemKind::Layer, names)
+}
+
+/// The first thing saving would reject in a game's modes.
+pub(super) fn modes_problem(g: &Game, names: &Names) -> Option<String> {
+    shifts_problem(&g.modes, ItemKind::Mode, names)
+}
+
+/// The first thing saving would reject in a game's layers or modes (`kind` says which).
+fn shifts_problem(list: &[crate::config::Layer], kind: ItemKind, names: &Names) -> Option<String> {
     use crate::config::Indicator;
-    for (i, l) in g.layers.iter().enumerate() {
+    let noun = kind.noun();
+    for (i, l) in list.iter().enumerate() {
         if l.name.trim().is_empty() {
-            return Some("A layer needs a name.".into());
+            return Some(format!("A {noun} needs a name."));
         }
-        if g.layers[..i].iter().any(|o| o.name == l.name) {
-            return Some(format!("Two layers are named “{}”.", l.name));
+        if list[..i].iter().any(|o| o.name == l.name) {
+            return Some(format!("Two {noun}s are named “{}”.", l.name));
         }
-        let label = format!("Layer “{}”", l.name);
+        let mut label = format!("{noun} “{}”", l.name);
+        label[..1].make_ascii_uppercase();
         if let Indicator::Info(info) = &l.indicator
             && !names.infos.contains(info)
         {
             return Some(if names.always_infos.contains(info) {
-                format!("{label}: info overlay “{info}” is always shown, so it can't show that the layer is on.")
+                format!("{label}: info overlay “{info}” is always shown, so it can't show that the {noun} is on.")
             } else {
                 format!("{label}: missing info overlay “{info}” to show.")
             });
@@ -519,7 +542,7 @@ mod tests {
 
     #[test]
     fn problems_are_found_inside_nested_actions_and_flag_their_section() {
-        let names = Names { macros: vec!["Known".to_string()], layers: vec!["Guide".to_string()], ..Names::default() };
+        let names = Names { macros: vec!["Known".to_string()], modes: vec!["Guide".to_string()], ..Names::default() };
         let nested = ButtonAction::Multi(vec![
             ButtonAction::Mouse(MouseButton::Left),
             ButtonAction::toggle(ButtonAction::Keys(vec!["KEY_NOPE".into()])),

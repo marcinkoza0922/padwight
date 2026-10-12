@@ -137,16 +137,16 @@ mod tests {
         let pack = pack::parse(text).unwrap();
         let p = pack.profiles.iter().find(|p| p.name == "Gameplay + Gyro").unwrap();
         assert!(matches!(p.gyro.mode, GyroMode::Mouse { .. }) && p.usable_with(&[]));
-        assert!(pack.layers.iter().any(|l| l.name == "Menus"), "menus are a layer, not a profile");
+        assert!(pack.modes.iter().any(|l| l.name == "Menus"), "menus are a mode, not a profile");
         assert!(pack.profiles.iter().all(|p| !p.name.contains("Menus")));
-        // Guide stays for things that aren't about this game: a long press of Select toggles it.
-        let menus = ButtonAction::toggle(ButtonAction::Layer("Menus".into()));
+        // Guide stays for things that aren't about this game: a long press of Select switches to it.
+        let menus = ButtonAction::Mode("Menus".into());
         let long_press = |g: Option<&crate::config::Gestures>| g.and_then(|g| g.get(crate::config::GestureKind::LongPress)).cloned();
         for p in &pack.profiles {
             assert_eq!(long_press(p.gestures.get(&Button::Select)), Some(menus.clone()), "{}", p.name);
         }
-        let layer = pack.layers.iter().find(|l| l.name == "Menus").unwrap();
-        assert_eq!(long_press(layer.gestures.get(&Button::Select)), Some(menus), "and off again");
+        let mode = pack.modes.iter().find(|l| l.name == "Menus").unwrap();
+        assert_eq!(long_press(mode.gestures.get(&Button::Select)), Some(menus), "and back again");
     }
 
     #[test]

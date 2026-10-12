@@ -13,6 +13,7 @@
 - [Buttons and actions](Buttons-and-Actions)
 - [The Guide button](Guide-Button)
 - [Sticks and triggers](Sticks-and-Triggers)
+- [Modes](Modes)
 - [Layers](Layers)
 - [Macros](Macros)
 - [Menus](Menus)

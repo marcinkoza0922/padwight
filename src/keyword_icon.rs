@@ -11,6 +11,7 @@ pub fn color(k: Keyword) -> [u8; 3] {
         Keyword::Macro => [0x8e, 0x5b, 0xd6],
         Keyword::Menu => [0xd6, 0x45, 0x7a],
         Keyword::Layer => [0xb0, 0x85, 0x10],
+        Keyword::Mode => [0x5a, 0x8f, 0x1e],
         Keyword::Info => [0x3f, 0x7f, 0xd8],
         Keyword::Log => [0x4f, 0x95, 0xa0],
     }
@@ -44,6 +45,11 @@ pub fn svg_in(k: Keyword, [r, g, b]: [u8; 3]) -> String {
         Keyword::Layer => format!(
             "<path d='M12 3 21 8 12 13 3 8Z M3 12.5 12 17.5 21 12.5 M3 16.5 12 21.5 21 16.5' fill='none' stroke='{c}' stroke-width='2' stroke-linejoin='round'/>"
         ),
+        // Two arrows trading places: one scheme swapped for another.
+        Keyword::Mode => format!(
+            "<path d='M4 8H19 M15 4 19 8 15 12 M20 16H5 M9 12 5 16 9 20' fill='none' stroke='{c}' stroke-width='2' \
+             stroke-linecap='round' stroke-linejoin='round'/>"
+        ),
         // A switch, knob on.
         Keyword::Toggle => format!(
             "<rect x='2' y='7' width='20' height='10' rx='5' fill='none' stroke='{c}' stroke-width='2'/>\
@@ -64,7 +70,7 @@ mod tests {
 
     #[test]
     fn every_keyword_has_an_svg_in_its_color() {
-        for k in [Keyword::Toggle, Keyword::Turbo, Keyword::Macro, Keyword::Menu, Keyword::Layer, Keyword::Info, Keyword::Log] {
+        for k in [Keyword::Toggle, Keyword::Turbo, Keyword::Macro, Keyword::Menu, Keyword::Layer, Keyword::Mode, Keyword::Info, Keyword::Log] {
             let svg = svg(k);
             assert!(svg.starts_with("<svg") && svg.ends_with("</svg>"));
             let [r, g, b] = color(k);

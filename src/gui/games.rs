@@ -185,10 +185,13 @@ impl App {
         self.status.as_ref().is_some_and(|s| s.devices.iter().any(|d| d.paddles))
     }
 
-    /// `p` with the layers the daemon says are on right now (they belong to the active game).
+    /// `p` with the mode and layers the daemon says are on right now (they belong to the active
+    /// game).
     pub(super) fn with_active_layers(&self, p: &Profile) -> Profile {
         let layers = self.status.as_ref().map(|s| s.active_layers.as_slice()).unwrap_or_default();
-        p.with_layers(self.config.active_game().layers_named(layers))
+        let game = self.config.active_game();
+        let mode = self.status.as_ref().and_then(|s| s.active_mode.as_deref()).and_then(|m| game.mode_or_built_in(m));
+        p.with_layers(mode.into_iter().chain(game.layers_named(layers)))
     }
 
     /// Overview and Settings, then General and the games, with a search over the games.
@@ -267,6 +270,7 @@ impl App {
         let reachable = reachable_menus(&self.config, game);
         let issue = |tab: GameTab| match tab {
             GameTab::Profiles => profile_issue,
+            GameTab::Modes => modes_problem(game, &names).is_some(),
             GameTab::Layers => layers_problem(game, &names).is_some(),
             GameTab::Macros => macros_have_problem(self.macros(), &names),
             GameTab::Menus => menus_have_problem(self.menus(), &reachable, &names),
@@ -288,7 +292,8 @@ impl App {
         let tab = if general && self.game_tab == GameTab::Details { GameTab::Profiles } else { self.game_tab };
         let body = match tab {
             GameTab::Profiles => self.view_profile_tab(&names),
-            GameTab::Layers => self.view_layers(&names),
+            GameTab::Modes => self.view_layers(layers::Shift::Mode, &names),
+            GameTab::Layers => self.view_layers(layers::Shift::Layer, &names),
             GameTab::Macros => self.view_macros(&names),
             GameTab::Menus => self.view_menus(&names, &reachable),
             GameTab::Info => self.view_infos(),

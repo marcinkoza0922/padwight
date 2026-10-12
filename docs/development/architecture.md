@@ -58,7 +58,7 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | Path | Responsibility |
 |---|---|
 | `main.rs` | Command-line dispatch. |
-| `config.rs` (and `config/`) | The config types: buttons, actions, profiles, games, rules, layers, menus, overlays, gyro, and the load/save/migration code. `config/summary.rs` writes short descriptions for the UI and logs. `config/touchpad.rs`, `config/log.rs` hold the touchpad and log-overlay settings. `config/style.rs` is how an overlay looks (`OverlayStyle` and its decorations); `config/performance.rs` the App settings' Performance card. |
+| `config.rs` (and `config/`) | The config types: buttons, actions, profiles, games, rules, layers, menus, overlays, gyro, and the load/save/migration code. `config/summary.rs` writes short descriptions for the UI and logs. `config/touchpad.rs`, `config/log.rs` hold the touchpad and log-overlay settings. `config/modes.rs` holds modes (stored like layers) and the conversion of toggled layers into them. `config/style.rs` is how an overlay looks (`OverlayStyle` and its decorations); `config/performance.rs` the App settings' Performance card. |
 | `ipc.rs` | The `Request` and `Response` enums and the socket client/server helpers. |
 | `daemon.rs` (and `daemon/`) | The service: device discovery and grabbing, the main loop, routing, and output dispatch. `daemon/logs.rs` records the input log; `daemon/touchpad.rs` runs touchpad readers. |
 | `monitor.rs` | The one-line live status shown when the daemon runs in a terminal. |

@@ -138,9 +138,9 @@ struct Managed {
     /// Drift per raw sensor axis (the controller's own frame), subtracted before remapping.
     gyro_bias: [f32; 3],
     calibrating: Option<Calibration>,
-    /// The active profile with this controller's layers on top, while it has any, and which
-    /// layers those are.
-    layered: Option<(Vec<String>, Profile)>,
+    /// The active profile with this controller's mode and layers on top, while it has any, and
+    /// which those are.
+    layered: Option<(Shifts, Profile)>,
     /// What it pressed lately, for the input log.
     log: crate::inputlog::InputLog,
     /// The buttons padwight exported to the virtual pad lately, for the Overview's second feed.
@@ -150,9 +150,12 @@ struct Managed {
     number: u8,
 }
 
+/// A controller's mode (`None`: the default) and its held layers, oldest first.
+type Shifts = (Option<String>, Vec<String>);
+
 /// What a controller's mappings come from: the active profile, or that profile with the
-/// controller's layers on top.
-fn layered<'a>(cached: &'a Option<(Vec<String>, Profile)>, base: &'a Profile) -> &'a Profile {
+/// controller's mode and layers on top.
+fn layered<'a>(cached: &'a Option<(Shifts, Profile)>, base: &'a Profile) -> &'a Profile {
     cached.as_ref().map_or(base, |(_, p)| p)
 }
 
@@ -253,18 +256,22 @@ impl Managed {
         InputSnapshot { model: self.model, family: self.family, gyro_out: self.engine.gyro_out(), ..self.view.snapshot(&self.name) }
     }
 
-    /// Brings `layered` up to date with the engine's layers. True if they changed.
+    /// Brings `layered` up to date with the engine's mode and layers. True if they changed.
     fn refresh_layers(&mut self, config: &Config) -> bool {
-        let layers = self.engine.layers();
-        let current = self.layered.as_ref().map(|(names, _)| names.as_slice()).unwrap_or_default();
-        if layers == current {
+        let shifts: Shifts = (self.engine.mode().map(str::to_string), self.engine.layers());
+        let current = self.layered.as_ref().map(|(shifts, _)| shifts);
+        if current == Some(&shifts) || (current.is_none() && shifts.0.is_none() && shifts.1.is_empty()) {
             return false;
         }
-        self.layered = if layers.is_empty() {
+        self.layered = if shifts.0.is_none() && shifts.1.is_empty() {
             None
         } else {
             let game = config.active_game();
-            config.active().map(|base| (layers.clone(), base.with_layers(game.layers_named(&layers))))
+            let mode = shifts.0.as_deref().and_then(|m| game.mode_or_built_in(m));
+            config.active().map(|base| {
+                let profile = base.with_layers(mode.into_iter().chain(game.layers_named(&shifts.1)));
+                (shifts.clone(), profile)
+            })
         };
         true
     }
@@ -399,6 +406,8 @@ struct GuideMenu {
     steam: bool,
     /// The page of Mappings on show.
     page: usize,
+    /// The mode the Mappings show: 0 is the default, then the game's modes in order.
+    mode: usize,
     /// Set once an item is chosen: its pick is what's heard, not the menu closing behind it.
     chosen: bool,
 }
@@ -1152,7 +1161,7 @@ impl Daemon {
     }
 
     /// Lets go of everything the mappings hold; the controller now drives the overlay.
-    /// Toggled layers stay on, so a menu item that toggles one isn't undone by the menu.
+    /// The mode stays on, so a menu item that switches to one isn't undone by the menu.
     fn release_mappings(&mut self) {
         for dev in self.devices.values_mut() {
             let mut out = Vec::new();
@@ -1348,9 +1357,10 @@ impl Daemon {
     fn timed_info(&mut self, now: Instant) -> Vec<(crate::config::InfoOverlay, f32)> {
         let held: HashSet<String> = self.devices.values().flat_map(|d| d.engine.shown_info()).cloned().collect();
         self.info_timers.update(held, &self.scope.info, now);
-        self.layer_started.retain(|name, _| self.devices.values().any(|d| d.engine.layers().contains(name)));
-        for name in self.active_layers() {
-            self.layer_started.entry(name).or_insert(now);
+        let keys: Vec<String> = self.active_shifts().into_iter().map(|(key, _)| key).collect();
+        self.layer_started.retain(|key, _| keys.contains(key));
+        for key in keys {
+            self.layer_started.entry(key).or_insert(now);
         }
         self.info_fade = [self.info_timers.next_redraw(now, FADE_FRAME), self.layer_indicator_due(now)].into_iter().flatten().min();
         self.visible_info(now)
@@ -1380,22 +1390,21 @@ impl Daemon {
             .collect();
         // The Guide overlay's Notes and Mappings, while it's up.
         if self.devices.values().any(|d| d.engine.guide_overlay_open())
-            && let Some(profile) = self.config.active()
+            && let Some(view) = self.guide_view()
         {
-            let page = self.guide_menu.as_ref().map_or(0, |m| m.page);
-            shown.extend(crate::info::guide_overlays(profile, page).into_iter().map(|o| (o, true)));
+            shown.extend(view.overlays().into_iter().map(|o| (o, true)));
         }
-        // Each active layer's indicator: its name, or an info overlay of the game's.
-        for name in self.active_layers() {
-            let Some(layer) = self.scope.layers.iter().find(|l| l.name == name) else { continue };
-            if self.layer_indicator_due_at(layer).is_some_and(|due| due > now) {
+        // The mode's and each active layer's indicator: its name, or an info overlay of the game's.
+        for (key, layer) in self.active_shifts() {
+            if self.layer_indicator_due_at(&key, layer).is_some_and(|due| due > now) {
                 continue;
             }
+            let name = &layer.name;
             match &layer.indicator {
                 Indicator::Bindings => shown.push((crate::info::layer_sheet(layer), true)),
                 Indicator::Name => shown.push((
                     InfoOverlay {
-                        name: format!("layer {name}"),
+                        name: format!("layer {key}"),
                         always: true,
                         on_start: None,
                         linger: None, title: None,
@@ -1419,20 +1428,36 @@ impl Daemon {
         shown
     }
 
-    /// When `layer`'s indicator is due to appear, if it has been on and has a delay.
-    fn layer_indicator_due_at(&self, layer: &crate::config::Layer) -> Option<Instant> {
-        let started = self.layer_started.get(&layer.name)?;
+    /// When the indicator of `layer` (the mode or a layer, by its key in
+    /// [`Daemon::active_shifts`]) is due to appear, if it has been on and has a delay.
+    fn layer_indicator_due_at(&self, key: &str, layer: &crate::config::Layer) -> Option<Instant> {
+        let started = self.layer_started.get(key)?;
         (layer.indicator_delay_ms > 0).then(|| *started + Duration::from_millis(layer.indicator_delay_ms.into()))
     }
 
     /// The soonest moment a delayed layer indicator should appear, if one is waiting.
     fn layer_indicator_due(&self, now: Instant) -> Option<Instant> {
-        self.active_layers()
-            .iter()
-            .filter_map(|name| self.scope.layers.iter().find(|l| &l.name == name))
-            .filter_map(|l| self.layer_indicator_due_at(l))
+        self.active_shifts()
+            .into_iter()
+            .filter_map(|(key, l)| self.layer_indicator_due_at(&key, l))
             .filter(|due| *due > now)
             .min()
+    }
+
+    /// The active mode, then the active layers, that the active game has, each with a key that
+    /// tells a mode from a layer of the same name.
+    fn active_shifts(&self) -> Vec<(String, &crate::config::Layer)> {
+        let mode = self.active_mode().and_then(|n| self.scope.modes.iter().find(|m| m.name == n)).map(|m| (format!("mode {}", m.name), m));
+        let layers = self.active_layers().into_iter().filter_map(|n| self.scope.layers.iter().find(|l| l.name == n).map(|l| (n, l)));
+        mode.into_iter().chain(layers).collect()
+    }
+
+    /// The mode of the controller used last (or of the first, before any is used), if the
+    /// active game has it.
+    fn active_mode(&self) -> Option<String> {
+        let pad = self.last_active.and_then(|id| self.devices.get(&id)).or_else(|| self.devices.values().next());
+        let mode = pad?.engine.mode()?;
+        self.scope.modes.iter().any(|m| m.name == mode).then(|| mode.to_string())
     }
 
     /// Layers active on any controller (the last one used first), oldest first, that the
@@ -1460,6 +1485,7 @@ impl Daemon {
             pid: window.pid,
             controller: pad.map(|d| d.name.clone()).unwrap_or_default(),
             layers: self.active_layers(),
+            mode: self.active_mode(),
             family: pad.and_then(|d| d.family).unwrap_or(self.config.info_glyphs),
             pad_family: identity.family(),
             nintendo_layout: identity.applies_nintendo_layout(self.config.active_nintendo_layout()),
@@ -1489,7 +1515,8 @@ impl Daemon {
         let open = self.devices.values().any(|d| d.engine.guide_overlay_open());
         match (open, self.guide_menu.as_ref().map(|menu| menu.chosen)) {
             (true, None) => {
-                self.guide_menu = Some(GuideMenu { cursor: 0, steam: crate::guide_menu::steam_running(), page: 0, chosen: false });
+                let mode = self.guide_current_mode();
+                self.guide_menu = Some(GuideMenu { cursor: 0, steam: crate::guide_menu::steam_running(), page: 0, mode, chosen: false });
                 self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Open));
             }
             (false, Some(chosen)) => {
@@ -1498,6 +1525,28 @@ impl Daemon {
             }
             _ => {}
         }
+    }
+
+    /// What the Guide overlay's Mappings show: the active profile in the mode and page the Guide
+    /// menu is on.
+    fn guide_view(&self) -> Option<crate::info::GuideView<'_>> {
+        let menu = self.guide_menu.as_ref();
+        Some(crate::info::GuideView {
+            profile: self.config.active()?,
+            modes: &self.scope.modes,
+            layers: &self.scope.layers,
+            shown: menu.map_or_else(|| self.guide_current_mode(), |m| m.mode),
+            current: self.guide_current_mode(),
+            page: menu.map_or(0, |m| m.page),
+        })
+    }
+
+    /// The mode on for the controller that opened the Guide overlay, counted as the Mappings
+    /// count them (0 is the default).
+    fn guide_current_mode(&self) -> usize {
+        let pad = self.devices.values().find(|d| d.engine.guide_overlay_open());
+        let mode = pad.and_then(|d| d.engine.chosen_mode());
+        mode.and_then(|m| self.scope.modes.iter().position(|x| x.name == m)).map_or(0, |i| i + 1)
     }
 
     /// Moves the Guide menu's cursor, or chooses or closes, for the presses the engine took while
@@ -1510,11 +1559,22 @@ impl Daemon {
             match key {
                 Button::DpadUp | Button::LeftStickUp => menu.cursor = (menu.cursor + len - 1) % len,
                 Button::DpadDown | Button::LeftStickDown => menu.cursor = (menu.cursor + 1) % len,
-                // The right stick turns the Mappings' pages.
+                // The right stick turns the Mappings' pages, and left and right their modes.
                 Button::RightStickUp => menu.page = menu.page.saturating_sub(1),
                 Button::RightStickDown => {
-                    let pages = self.config.active().map_or(1, crate::info::guide_mapping_pages);
-                    menu.page = (menu.page + 1).min(pages - 1);
+                    let pages = self.guide_view().map_or(1, |v| v.pages());
+                    if let Some(menu) = self.guide_menu.as_mut() {
+                        menu.page = (menu.page + 1).min(pages - 1);
+                    }
+                }
+                Button::DpadLeft | Button::LeftStickLeft | Button::DpadRight | Button::LeftStickRight => {
+                    let modes = self.scope.modes.len() + 1;
+                    if modes > 1 {
+                        let forward = matches!(key, Button::DpadRight | Button::LeftStickRight);
+                        menu.mode = if forward { (menu.mode + 1) % modes } else { (menu.mode + modes - 1) % modes };
+                        menu.page = 0;
+                        self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Step));
+                    }
                 }
                 Button::South => {
                     let item = crate::guide_menu::items(menu.steam, self.recent_picks.len())[menu.cursor];
@@ -2547,7 +2607,7 @@ impl Daemon {
         if matches!(self.active, Some(Active::Menu { .. })) {
             self.close_overlay();
         }
-        // Toggled layers stay on; they apply again if the game still has them.
+        // The mode stays on; it applies again if the game still has it.
         self.release_all(true);
         self.config = new;
         self.refresh_scope();
@@ -2629,7 +2689,7 @@ impl Daemon {
         if game_changes && matches!(self.active, Some(Active::Menu { .. })) {
             self.close_overlay();
         }
-        // Layers belong to a game: toggled ones stay on within it.
+        // Modes belong to a game: the mode stays on within it.
         self.release_all(!game_changes);
         self.activity.switched(Instant::now(), &target, why);
         self.config.active = target;
@@ -2646,10 +2706,10 @@ impl Daemon {
     }
 
     /// Releases every output held by every device (before a profile change).
-    fn release_all(&mut self, keep_toggled_layers: bool) {
+    fn release_all(&mut self, keep_mode: bool) {
         for dev in self.devices.values_mut() {
             let mut out = Vec::new();
-            dev.engine.release_all(keep_toggled_layers, &mut out);
+            dev.engine.release_all(keep_mode, &mut out);
             dev.dispatch(&mut self.kbm, out);
         }
         // A touch menu that was up goes away with the fingers.
@@ -2709,6 +2769,7 @@ impl Daemon {
             active_profile: self.config.active().map(|p| p.name.clone()).unwrap_or_default(),
             active_game: self.config.active_ref().game,
             active_layers: self.active_layers(),
+            active_mode: self.active_mode(),
             devices,
             focus_backend: self.focus_backend,
             focused: self.focused.clone(),

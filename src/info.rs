@@ -12,8 +12,10 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
+mod guide;
 mod pad_model;
 
+pub use guide::{DEFAULT_MODE, GuideView};
 pub use pad_model::PadModel;
 
 use crate::config::{Button, CurrentInput, InfoOverlay, Layer, MouseButton, OverlayStyle, ScreenPosition, Stick, Trigger};
@@ -43,6 +45,27 @@ pub fn button_token(b: Button) -> Option<&'static str> {
 /// A cheat sheet of what `layer` changes: each input it sets, as a glyph and a short
 /// description, two pairs to a row. Buttons set to do nothing are left out.
 pub fn layer_sheet(layer: &Layer) -> InfoOverlay {
+    let mut entries = layer_entries(layer);
+    // The in-game menu isn't a binding of the Guide layer, but holding Guide is how you reach it.
+    if layer.name == crate::config::GUIDE_MODE {
+        entries.push(("{guide} + {start}".into(), "Edit controls".into()));
+    }
+    let rows = entries.chunks(2).map(|pair| pair.iter().flat_map(|(t, l)| [t.clone(), l.clone()]).collect()).collect();
+    InfoOverlay {
+        name: format!("layer {}", layer.name),
+        always: true,
+        on_start: None,
+        linger: None,
+        current_input: Default::default(),
+        style: layer.indicator_style.clone(),
+        title: layer.indicator_title.clone(),
+        rows,
+    }
+}
+
+/// What `layer` changes: each input it sets, as a glyph and a short description. Buttons set
+/// to do nothing are left out.
+fn layer_entries(layer: &Layer) -> Vec<(String, String)> {
     use crate::config::{ButtonAction, StickAction, TriggerAction};
     let mut entries: Vec<(String, String)> = Vec::new();
     for b in Button::ALL {
@@ -68,21 +91,7 @@ pub fn layer_sheet(layer: &Layer) -> InfoOverlay {
         };
         entries.push((format!("{{{token}}}"), label.into()));
     }
-    // The in-game menu isn't a binding of the Guide layer, but holding Guide is how you reach it.
-    if layer.name == crate::config::GUIDE_LAYER {
-        entries.push(("{guide} + {start}".into(), "Edit controls".into()));
-    }
-    let rows = entries.chunks(2).map(|pair| pair.iter().flat_map(|(t, l)| [t.clone(), l.clone()]).collect()).collect();
-    InfoOverlay {
-        name: format!("layer {}", layer.name),
-        always: true,
-        on_start: None,
-        linger: None,
-        current_input: Default::default(),
-        style: layer.indicator_style.clone(),
-        title: layer.indicator_title.clone(),
-        rows,
-    }
+    entries
 }
 
 /// The `{token}` that draws an input's glyph.
@@ -95,61 +104,6 @@ fn input_token(input: crate::config::GuideInput) -> Option<&'static str> {
         GuideInput::Stick(Stick::Left) => Some("ls"),
         GuideInput::Stick(Stick::Right) => Some("rs"),
     }
-}
-
-/// The Notes and Mappings overlays of the Guide overlay, for `profile`. Notes are left out when
-/// the author wrote none. Mappings are one row per line of [`crate::config::mapping_rows`]: the
-/// glyphs of its buttons, then its text.
-pub fn guide_overlays(profile: &crate::config::Profile, page: usize) -> Vec<InfoOverlay> {
-    let mut overlays = Vec::new();
-    if !profile.guide.notes.trim().is_empty() {
-        overlays.push(InfoOverlay {
-            name: "guide notes".into(),
-            always: true,
-            on_start: None,
-            linger: None,
-            current_input: Default::default(),
-            style: OverlayStyle { position: ScreenPosition::CenterLeft, ..OverlayStyle::info() },
-            title: Some("Notes".into()),
-            rows: profile.guide.notes.lines().map(|line| vec![line.to_string()]).collect(),
-        });
-    }
-    let rows: Vec<Vec<String>> = crate::config::mapping_rows(profile)
-        .into_iter()
-        .map(|row| {
-            let glyphs: Vec<String> = row.inputs.iter().filter_map(|i| input_token(*i)).map(|t| format!("{{{t}}}")).collect();
-            vec![row.shape.join(&glyphs), row.text]
-        })
-        .collect();
-    // A long list shows a page at a time; the right stick turns them.
-    let pages = mapping_pages(rows.len());
-    let page = page.min(pages - 1);
-    let title = if pages > 1 { format!("Mappings {}/{pages} · {{rs}} more", page + 1) } else { "Mappings".into() };
-    let rows = rows.into_iter().skip(page * MAPPING_ROWS).take(MAPPING_ROWS).collect();
-    overlays.push(InfoOverlay {
-        name: "guide mappings".into(),
-        always: true,
-        on_start: None,
-        linger: None,
-        current_input: Default::default(),
-        style: OverlayStyle { position: ScreenPosition::CenterRight, ..OverlayStyle::info() },
-        title: Some(title),
-        rows,
-    });
-    overlays
-}
-
-/// Rows of the Guide overlay's Mappings shown at once.
-const MAPPING_ROWS: usize = 14;
-
-/// How many pages a Mappings list of `rows` takes (at least one).
-pub fn mapping_pages(rows: usize) -> usize {
-    rows.div_ceil(MAPPING_ROWS).max(1)
-}
-
-/// How many pages `profile`'s Mappings take.
-pub fn guide_mapping_pages(profile: &crate::config::Profile) -> usize {
-    mapping_pages(crate::config::mapping_rows(profile).len())
 }
 
 /// Whose button names and symbols to show.
@@ -214,6 +168,7 @@ pub enum Stat {
     Gpu,
     Controller,
     Layer,
+    Mode,
 }
 
 /// A battery's level, shown as a percentage, or with `:icon` as a gauge.
@@ -286,6 +241,7 @@ pub const TOKENS: &[(&str, &str)] = &[
     ("date", "Date"),
     ("profile", "Active profile"),
     ("layer", "Active layers"),
+    ("mode", "Active mode"),
     ("app", "Focused program's executable"),
     ("title", "Focused window's title"),
     ("pid", "Focused program's process ID"),
@@ -424,6 +380,7 @@ fn plain_token(name: &str) -> Option<Token> {
         "date" => Token::Stat(Stat::Date),
         "profile" => Token::Stat(Stat::Profile),
         "layer" => Token::Stat(Stat::Layer),
+        "mode" => Token::Stat(Stat::Mode),
         "app" => Token::Stat(Stat::App),
         "title" => Token::Stat(Stat::Title),
         "pid" => Token::Stat(Stat::Pid),
@@ -874,6 +831,8 @@ pub struct Live {
     pub controller: String,
     /// Active layers, oldest first.
     pub layers: Vec<String>,
+    /// The mode switched to; `None` is the default mode.
+    pub mode: Option<String>,
     pub family: PadFamily,
     /// The family of the controller the daemon presents itself as, for `{pad:…}` tokens.
     pub pad_family: PadFamily,
@@ -897,6 +856,7 @@ impl Live {
             pid: 4242,
             controller: format!("{family} controller"),
             layers: vec!["Hotkeys".into()],
+            mode: Some("Driving".into()),
             family,
             pad_family: family,
             nintendo_layout: false,
@@ -935,6 +895,7 @@ fn stat(s: Stat, live: &Live) -> String {
         Stat::Gpu => live.system.gpu.map_or("n/a".into(), |g| format!("{g:.0}%")),
         Stat::Controller => or_dash(&live.controller),
         Stat::Layer => or_dash(&live.layers.join(" + ")),
+        Stat::Mode => live.mode.clone().unwrap_or_else(|| DEFAULT_MODE.into()),
     }
 }
 
@@ -1169,41 +1130,6 @@ fn detect_form(product: &str, vendor: &str, chassis: &str) -> FormFactor {
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn the_guide_overlays_show_notes_only_when_there_are_some() {
-        use crate::config::{ButtonAction, Profile};
-        let mut p = Profile::passthrough("p");
-        p.set_button(crate::config::Button::South, ButtonAction::Keys(vec!["KEY_E".into()]));
-        let overlays = super::guide_overlays(&p, 0);
-        assert_eq!(overlays.len(), 1, "no notes, so only the mappings");
-        assert_eq!(overlays[0].name, "guide mappings");
-        assert!(overlays[0].rows.iter().any(|r| r == &vec!["{south}".to_string(), "{keyboard:e}".to_string()]));
-        p.guide.notes = "Hold LB for the radial menu.\nEsc is Start.".into();
-        let overlays = super::guide_overlays(&p, 0);
-        assert_eq!(overlays[0].name, "guide notes");
-        assert_eq!(overlays[0].rows.len(), 2, "one row per line");
-    }
-
-    #[test]
-    fn a_long_mappings_list_shows_a_page_at_a_time() {
-        use crate::config::{Button, ButtonAction, Profile};
-        let mut p = Profile::passthrough("p");
-        let keys = ["KEY_A", "KEY_B", "KEY_C", "KEY_D", "KEY_E", "KEY_F", "KEY_G", "KEY_H", "KEY_I", "KEY_J", "KEY_K", "KEY_L", "KEY_M", "KEY_N", "KEY_O"];
-        for (b, key) in Button::ALL.into_iter().zip(keys) {
-            p.set_button(b, ButtonAction::Keys(vec![key.into()]));
-        }
-        for (i, key) in ["KEY_P", "KEY_Q", "KEY_R"].into_iter().enumerate() {
-            p.gestures.insert(Button::ALL[i], crate::config::Gestures { long_press: Some(ButtonAction::Keys(vec![key.into()])), ..Default::default() });
-        }
-        let pages = super::guide_mapping_pages(&p);
-        assert!(pages > 1, "{} rows", crate::config::mapping_rows(&p).len());
-        let first = &super::guide_overlays(&p, 0)[0];
-        assert_eq!(first.rows.len(), super::MAPPING_ROWS);
-        assert!(first.title.as_deref().is_some_and(|t| t.starts_with("Mappings 1/")));
-        let last = &super::guide_overlays(&p, 99)[0];
-        assert!(last.title.as_deref().is_some_and(|t| t.starts_with(&format!("Mappings {pages}/"))), "past the end shows the last page");
-    }
-
     #[test]
     fn a_filling_toast_draws_its_bar_and_redraws_while_it_fills() {
         let t0 = Instant::now();

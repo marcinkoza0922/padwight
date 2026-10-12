@@ -7,7 +7,7 @@ use crate::{
 };
 
 use super::{Top, values};
-use super::buttons::Slot;
+use super::buttons::{Shift, Slot};
 
 pub(super) fn combo_page(config: &Config, i: usize, inputs: &[Button]) -> (Vec<ItemView>, &'static str) {
     let combo = combos(config).get(i);
@@ -23,8 +23,8 @@ pub(super) fn combo_page(config: &Config, i: usize, inputs: &[Button]) -> (Vec<I
     rows.push(remove_item("Delete combo".into()));
     (rows, "{south} toggle or change · {east} back")
 }
-pub(super) fn layer_page(config: &Config, i: usize, inputs: &[Button]) -> (Vec<ItemView>, &'static str) {
-    let layer = layers(config).get(i);
+pub(super) fn layer_page(config: &Config, shift: Shift, i: usize, inputs: &[Button]) -> (Vec<ItemView>, &'static str) {
+    let layer = layers(config, shift).get(i);
     let rows = inputs
         .iter()
         .map(|&b| {
@@ -36,13 +36,21 @@ pub(super) fn layer_page(config: &Config, i: usize, inputs: &[Button]) -> (Vec<I
 }
 pub(super) fn layer_name(config: &Config, slot: Slot) -> Option<&str> {
     match slot {
-        Slot::Layer(i, _) => layers(config).get(i).map(|l| l.name.as_str()),
+        Slot::Layer(shift, i, _) => layers(config, shift).get(i).map(|l| l.name.as_str()),
         Slot::MenuItem(m, _) => config.active_game().menus.get(m).map(|menu| menu.name.as_str()),
         _ => None,
     }
 }
-pub(super) fn layers(config: &Config) -> &[Layer] {
-    config.active_game().layers.as_slice()
+/// The active game's modes or layers.
+pub(super) fn layers(config: &Config, shift: Shift) -> &[Layer] {
+    shift.list(config.active_game())
+}
+
+/// The page listing the active game's modes or layers, with a row to add one.
+pub(super) fn layers_page(config: &Config, shift: Shift) -> (Vec<ItemView>, &'static str) {
+    let mut rows: Vec<ItemView> = layers(config, shift).iter().map(|l| item(format!("{} ({} bound)", l.name, l.buttons.len()))).collect();
+    rows.push(add_item(format!("Add {}", shift.title().to_lowercase())));
+    (rows, "{south} open · {east} back")
 }
 pub(super) fn combos(config: &Config) -> &[Combo] {
     config.active().map_or(&[], |p: &Profile| p.combos.as_slice())
@@ -60,7 +68,8 @@ pub(super) fn top_item(row: Top, config: &Config) -> ItemView {
         Top::Trigger(t) => item(format!("{} {} trigger", if t == Trigger::Left { "{lt}" } else { "{rt}" }, values::side(t == Trigger::Left))),
         Top::Gyro => item("Gyro".into()),
         Top::Combos => item(format!("Combos ({})", profile.map_or(0, |p| p.combos.len()))),
-        Top::Layers => item("Layers".into()),
+        Top::Layers(Shift::Mode) => item(format!("Modes ({})", config.active_game().modes.len())),
+        Top::Layers(Shift::Layer) => item(format!("Layers ({})", config.active_game().layers.len())),
         Top::Macros => item(format!("Macros ({macro_count})")),
         Top::Menus => item(format!("Menus ({})", config.active_game().menus.len())),
         Top::Infos => item(format!("Info overlays ({})", config.active_game().info.len())),

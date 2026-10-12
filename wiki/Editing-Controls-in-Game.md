@@ -11,6 +11,7 @@ The editor is a set of pages. Each row is a button, a setting, or a way to add s
 - **Left trigger** and **Right trigger**.
 - **Gyro**.
 - **Combos**.
+- **Modes**.
 - **Layers**.
 - **Macros**.
 
@@ -23,8 +24,8 @@ Choosing a button opens its action list. The first two rows are the picker rows,
 - **Disabled**, **On-screen keyboard**, **Numpad**, **Screenshot**, **Start / stop recording**, **Media controls**, **Force quit (hold)**.
 - **Left**, **Right**, **Middle**, **Back** and **Forward click**, and **Wheel up**, **down**, **left**, **right**.
 - **Keys…** opens a picker of 26 common keys. Tick several to send them together, such as Ctrl and Esc. **Done** leaves the picker.
-- **Hold a layer…**, **Play a macro…**, **Open a menu…**, **Show an info overlay…** and **Show a log overlay…** each list what the game has, and pick one.
-- **Make it a toggle** or **Make it turbo (10 a second)** wraps the action. Once wrapped, the row reads **Stop toggling** or **Stop turbo**, and choosing it takes the wrapper off.
+- **Switch to a mode…**, **Hold a layer…**, **Play a macro…**, **Open a menu…**, **Show an info overlay…** and **Show a log overlay…** each list what the game has, and pick one.
+- **Make it a toggle** or **Make it turbo (10 a second)** wraps the action. A layer or a mode switch can't be made a toggle. Once wrapped, the row reads **Stop toggling** or **Stop turbo**, and choosing it takes the wrapper off.
 
 A wrapped action gets its own rows underneath: **Rate** for a turbo (5, 10, 15, 20 or 30 a second), and **Starts on** for a toggle.
 
@@ -69,6 +70,12 @@ A new zone covers the top half of the travel.
 - A combo's page ticks its buttons. A combo needs two or more.
 - **Action** sets what the combo does, with the same choices as a button.
 - **Delete combo** removes it.
+
+## Modes
+
+- **Add mode** makes a mode called **Mode 1**, **Mode 2** and so on. It does nothing until something switches to it: use **Switch to a mode…** on a button's or menu item's action list. That list also offers the built-in **Mouse mode**.
+- A mode's page sets each button's action while the mode is on. Choose **Not set** to leave a button as the profile has it.
+- The built-in Guide and Mouse modes aren't listed here: they can't be changed.
 
 ## Layers
 

@@ -11,8 +11,8 @@ pub enum Slot {
     Button(Button),
     Gesture(Button, GestureKind),
     Combo(usize),
-    /// A button of a game's layer.
-    Layer(usize, Button),
+    /// A button of a game's mode or layer.
+    Layer(Shift, usize, Button),
     /// A stick's or trigger's zone, by its index.
     Zone(Analog, usize),
     /// An item of one of the game's menus: the menu's index, then the item's.
@@ -92,8 +92,9 @@ pub fn tuned(current: &ButtonAction, tuning: Tuning) -> ButtonAction {
 pub fn wrapped(current: &ButtonAction, wrap: Wrap) -> ButtonAction {
     match (wrap, current) {
         (Wrap::Toggle, ButtonAction::Toggle(t)) => *t.action.clone(),
-        // A menu is put away with its close button, never toggled.
-        (Wrap::Toggle, ButtonAction::OpenMenu(_)) => current.clone(),
+        // A menu is put away with its close button, never toggled. A layer that stays on is a
+        // mode, and a mode switch already switches back when pressed again.
+        (Wrap::Toggle, ButtonAction::OpenMenu(_) | ButtonAction::Layer(_) | ButtonAction::Mode(_)) => current.clone(),
         (Wrap::Toggle, _) => ButtonAction::Toggle(Toggled { action: Box::new(current.clone()), start_on: false }),
         (Wrap::Turbo, ButtonAction::Turbo { action, .. }) => *action.clone(),
         (Wrap::Turbo, _) => ButtonAction::Turbo { action: Box::new(current.clone()), rate: TURBO_RATE, every_ms: 0 },
@@ -122,9 +123,42 @@ const CHOICES: [Choice; 16] = [
     ("Force quit (hold)", || ButtonAction::ForceQuit),
 ];
 
-/// What a picker lists from the game: its layers, macros, menus or info overlays.
+/// Which of a game's lists of overrides a page or slot is about.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Shift {
+    Mode,
+    Layer,
+}
+
+impl Shift {
+    /// "Mode" or "Layer".
+    pub fn title(self) -> &'static str {
+        match self {
+            Shift::Mode => "Mode",
+            Shift::Layer => "Layer",
+        }
+    }
+
+    /// The game's modes or layers.
+    pub fn list(self, game: &crate::config::Game) -> &[crate::config::Layer] {
+        match self {
+            Shift::Mode => &game.modes,
+            Shift::Layer => &game.layers,
+        }
+    }
+
+    pub fn list_mut(self, game: &mut crate::config::Game) -> &mut Vec<crate::config::Layer> {
+        match self {
+            Shift::Mode => &mut game.modes,
+            Shift::Layer => &mut game.layers,
+        }
+    }
+}
+
+/// What a picker lists from the game: its modes, layers, macros, menus or info overlays.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Picker {
+    Mode,
     Layer,
     Macro,
     Menu,
@@ -133,11 +167,12 @@ pub enum Picker {
 }
 
 impl Picker {
-    pub const ALL: [Picker; 5] = [Picker::Layer, Picker::Macro, Picker::Menu, Picker::Info, Picker::Log];
+    pub const ALL: [Picker; 6] = [Picker::Mode, Picker::Layer, Picker::Macro, Picker::Menu, Picker::Info, Picker::Log];
 
     /// The row that opens this picker.
     pub fn label(self) -> &'static str {
         match self {
+            Picker::Mode => "Switch to a mode…",
             Picker::Layer => "Hold a layer…",
             Picker::Macro => "Play a macro…",
             Picker::Menu => "Open a menu…",
@@ -149,6 +184,7 @@ impl Picker {
     /// What the picker's items are, for the page title.
     pub fn noun(self) -> &'static str {
         match self {
+            Picker::Mode => "mode",
             Picker::Layer => "layer",
             Picker::Macro => "macro",
             Picker::Menu => "menu",
@@ -160,6 +196,7 @@ impl Picker {
     /// The keyword the picked action starts with, drawn as the row's icon.
     pub fn keyword(self) -> Keyword {
         match self {
+            Picker::Mode => Keyword::Mode,
             Picker::Layer => Keyword::Layer,
             Picker::Macro => Keyword::Macro,
             Picker::Menu => Keyword::Menu,
@@ -171,6 +208,7 @@ impl Picker {
     /// The action that uses the item called `name`.
     pub fn action(self, name: &str) -> ButtonAction {
         match self {
+            Picker::Mode => ButtonAction::Mode(name.into()),
             Picker::Layer => ButtonAction::Layer(name.into()),
             Picker::Macro => ButtonAction::Macro { name: name.into(), repeat: false },
             Picker::Menu => ButtonAction::OpenMenu(name.into()),
@@ -197,7 +235,8 @@ pub fn action_rows(slot: Slot) -> Vec<ActionRow> {
     }
     rows.extend((0..CHOICES.len()).map(ActionRow::Choice));
     rows.push(ActionRow::Keys);
-    // A menu item is a tap: it can't hold a layer, and a turbo would stop at once.
+    // A menu item is a tap: it can't hold a layer (it can switch modes), and a turbo would stop
+    // at once.
     let item = matches!(slot, Slot::MenuItem(..));
     rows.extend(Picker::ALL.into_iter().filter(|p| !item || *p != Picker::Layer).map(ActionRow::Pick));
     rows.push(ActionRow::Wrap(Wrap::Toggle));
@@ -226,6 +265,8 @@ pub fn action_row_label(row: ActionRow, current: &ButtonAction) -> String {
     match row {
         ActionRow::Wrap(Wrap::Toggle) if matches!(current, ButtonAction::Toggle(_)) => "Stop toggling".into(),
         ActionRow::Wrap(Wrap::Toggle) if matches!(current, ButtonAction::OpenMenu(_)) => "A menu can't be a toggle".into(),
+        ActionRow::Wrap(Wrap::Toggle) if matches!(current, ButtonAction::Layer(_)) => "A layer can't be a toggle (use a mode)".into(),
+        ActionRow::Wrap(Wrap::Toggle) if matches!(current, ButtonAction::Mode(_)) => "A mode switches back by itself".into(),
         ActionRow::Wrap(Wrap::Toggle) => "Make it a toggle".into(),
         ActionRow::Wrap(Wrap::Turbo) if matches!(current, ButtonAction::Turbo { .. }) => "Stop turbo".into(),
         ActionRow::Wrap(Wrap::Turbo) => format!("Make it turbo ({TURBO_RATE:.0} a second)"),
@@ -255,11 +296,11 @@ pub fn choice_action(row: ActionRow) -> Option<Option<ButtonAction>> {
     }
 }
 
-/// The page title for a slot. `layer` is the name of the layer a layer's button belongs to.
+/// The page title for a slot. `layer` is the name of the mode or layer a button of one belongs to.
 pub fn action_title(slot: Slot, layer: Option<&str>) -> String {
     match slot {
         Slot::Button(b) => format!("{} button", b.short_name()),
-        Slot::Layer(_, b) => format!("{} · {} button", layer.unwrap_or("Layer"), b.short_name()),
+        Slot::Layer(shift, _, b) => format!("{} · {} button", layer.unwrap_or(shift.title()), b.short_name()),
         Slot::Zone(_, i) => format!("Zone {}", i + 1),
         Slot::Gesture(b, kind) => format!("{} {}", b.short_name(), gesture_name(kind).to_lowercase()),
         Slot::Combo(i) => format!("Combo {}", i + 1),
@@ -296,7 +337,7 @@ pub fn set_slot(profile: &mut Profile, slot: Slot, action: Option<ButtonAction>)
                 profile.gestures.remove(&b);
             }
         }
-        // A layer's buttons live on the layer, and a zone's action on its stick or trigger; the
+        // A mode's or layer's buttons live on it, and a zone's action on its stick or trigger; the
         // editor sets those itself.
         Slot::Layer(..) | Slot::Zone(..) | Slot::MenuItem(..) => {}
         Slot::Combo(i) => {
@@ -307,7 +348,7 @@ pub fn set_slot(profile: &mut Profile, slot: Slot, action: Option<ButtonAction>)
     }
 }
 
-/// Sets a layer's button. `None` removes it, so the layer doesn't bind that button.
+/// Sets a mode's or layer's button. `None` removes it, so it doesn't bind that button.
 pub fn set_layer_slot(bindings: &mut BTreeMap<Button, ButtonAction>, b: Button, action: Option<ButtonAction>) {
     match action {
         Some(action) => {
@@ -347,7 +388,7 @@ mod tests {
         assert_eq!(bindings.get(&Button::South), Some(&ButtonAction::Screenshot));
         set_layer_slot(&mut bindings, Button::South, None);
         assert!(bindings.is_empty());
-        assert!(action_rows(Slot::Layer(0, Button::South)).contains(&ActionRow::NotSet));
+        assert!(action_rows(Slot::Layer(Shift::Layer, 0, Button::South)).contains(&ActionRow::NotSet));
     }
 
     #[test]

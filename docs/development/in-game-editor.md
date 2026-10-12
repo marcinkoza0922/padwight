@@ -45,7 +45,7 @@ Sticks (done): Edit Controls lists Left stick and Right stick after the buttons.
 
 Triggers (done): Action (Disabled, Gamepad trigger, Button), and for a Button trigger, what it acts as (six pad buttons) and the press point. Gyro (done): Mode (Off or Mouse), mouse sensitivity, Invert X and Y, and the noise threshold. Stick and steering gyro modes are edited in the pack file. A stick or gyro mode the editor doesn't cycle through is left as it is, not reset.
 
-Layers (done): the Layers row lists the game's layers and "Add layer" makes one. A layer's page sets each button's action (or leaves it unbound). A button can hold a layer through "Hold a layer…" on its action page, which lists the game's layers. A new layer does nothing until a button holds it.
+Modes and layers (done): the Modes and Layers rows list the game's modes and layers (`Shift`), and "Add mode" / "Add layer" make one. The built-in modes aren't listed, since they can't be changed; "Switch to a mode…" offers Mouse mode after the game's own. A layer's page sets each button's action (or leaves it unbound). A button can hold a layer through "Hold a layer…" on its action page, which lists the game's layers, and switch modes through "Switch to a mode…" (also offered for menu items). Layers and mode switches can't be made toggles. A new layer does nothing until a button holds it.
 
 Macros (done): the Macros row lists the game's macros, and "Add macro" makes one. A macro's page adds a tap, press or release (each picks a button), a stick step (one of nine directions for either stick), a 100 ms wait, and removes the last step. A step row removes that step. "Delete macro" removes the macro unless a button, layer or menu of the game still uses it; the page says so when it does.
 

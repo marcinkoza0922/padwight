@@ -21,6 +21,7 @@ impl Config {
         game.info.clone_from(&self.general.info);
         game.logs.clone_from(&self.general.logs);
         game.layers.clone_from(&self.general.layers);
+        game.modes.clone_from(&self.general.modes);
         self.games.push(game);
         ProfileRef::new(Some(&name), &profile_name)
     }

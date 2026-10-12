@@ -738,6 +738,7 @@ impl App {
             ItemKind::Info => self.infos().iter().map(|o| &o.name).collect(),
             ItemKind::Log => self.log_names(),
             ItemKind::Layer => self.game().layers.iter().map(|l| &l.name).collect(),
+            ItemKind::Mode => self.game().modes.iter().map(|l| &l.name).collect(),
         };
         list.iter().enumerate().any(|(i, n)| Some(i) != index && *n == name).then(|| "name used twice".into())
     }
