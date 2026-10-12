@@ -44,6 +44,7 @@ mod actions;
 mod activity;
 mod checks;
 mod games;
+mod goto;
 mod guide_tab;
 mod gyro;
 mod gyro_graph;
@@ -64,6 +65,7 @@ mod packs;
 mod profile;
 mod response_graph;
 mod ring_preview;
+mod search;
 mod settings;
 mod sounds;
 mod sliders;
@@ -92,6 +94,8 @@ use sticks::*;
 use style_editor::*;
 use tracking::*;
 use triggers::*;
+use goto::goto_button;
+use search::*;
 use widgets::*;
 
 pub fn run() -> iced::Result {
@@ -173,6 +177,10 @@ struct App {
     game_tab: GameTab,
     /// The chapter open on the Manual page, by index in `manual::CHAPTERS`.
     manual_chapter: usize,
+    /// What the search boxes on the App settings, Manual and profile editor pages hold.
+    settings_query: String,
+    manual_query: String,
+    button_query: String,
     /// The manual's chapters, parsed for drawing (see `manual.rs`).
     manual: Vec<iced::widget::markdown::Content>,
     /// Light or dark, from the system; the app's theme follows it.
@@ -378,6 +386,11 @@ enum Message {
     SetGameSearch(String),
     SelectGameTab(GameTab),
     SelectChapter(usize),
+    /// Shows an item of the current setup on its tab (see `goto.rs`).
+    GoToItem(ItemKind, String),
+    SetSettingsSearch(String),
+    SetManualSearch(String),
+    SetButtonSearch(String),
     /// A link in the manual; relative links name another chapter's file.
     ManualLink(String),
     SystemMode(iced::theme::Mode),
@@ -630,6 +643,9 @@ impl App {
             editing: 0,
             game_tab: GameTab::Profiles,
             manual_chapter: 0,
+            settings_query: String::new(),
+            manual_query: String::new(),
+            button_query: String::new(),
             manual: manual::load(), theme_mode: iced::theme::Mode::default(),
             game_search: String::new(),
             message: None,

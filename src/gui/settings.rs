@@ -141,23 +141,30 @@ impl App {
                 .into(),
             )],
         );
-        column![
-            self.view_appearance(),
-            self.view_nintendo_layout(),
-            self.view_auto_switch(),
-            self.view_font_card(),
-            self.view_color_card(),
-            self.view_motion_card(),
-            self.view_default_sounds(),
-            self.view_performance(),
-            self.view_keyboard_card(),
-            self.view_numpad_card(),
-            self.view_media_card(),
-            self.view_in_game_menu_card(),
-            glyphs,
-        ]
-            .spacing(16)
-            .into()
+        let query = self.settings_query.as_str();
+        // Each card with the words it can be found by, besides the ones it shows.
+        let cards: Vec<(&str, Element<'_, Message>)> = vec![
+            ("appearance theme light dark auto desktop colors", self.view_appearance()),
+            ("button layout nintendo swap face buttons a b x y", self.view_nintendo_layout()),
+            ("per-setup profiles switch automatically window rules no setup matches default profile", self.view_auto_switch()),
+            ("overlay font typeface", self.view_font_card()),
+            ("menu colors color-blind colorblind tint blue orange red", self.view_color_card()),
+            ("motion animation overlay style", self.view_motion_card()),
+            ("overlay sounds audio cue volume", self.view_default_sounds()),
+            ("performance still plain quiet no motion no sounds shadows graphics", self.view_performance()),
+            ("on-screen keyboard full keyboard basic layout position", self.view_keyboard_card()),
+            ("on-screen numpad number pad digits position", self.view_numpad_card()),
+            ("media controls player panel music volume", self.view_media_card()),
+            ("in-game menu guide button", self.view_in_game_menu_card()),
+            ("info overlays fallback glyphs xbox playstation nintendo labels", glyphs),
+        ];
+        let shown: Vec<Element<'_, Message>> = cards.into_iter().filter(|(words, _)| matches_query(query, words)).map(|(_, card)| card).collect();
+        let body: Element<'_, Message> = if shown.is_empty() {
+            text("No settings match.").color(MUTED_COLOR).into()
+        } else {
+            column(shown).spacing(16).into()
+        };
+        column![search_field("Search settings…", query, Message::SetSettingsSearch), body].spacing(16).into()
     }
 
     /// How strongly every controller rumbles, as a share of what games ask for.

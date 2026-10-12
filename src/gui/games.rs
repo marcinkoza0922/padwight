@@ -64,7 +64,11 @@ impl App {
                 self.game_tab = tab;
                 self.found = None;
             }
+            Message::GoToItem(kind, name) => return self.go_to_item(kind, &name),
             Message::SelectChapter(chapter) => self.manual_chapter = chapter,
+            Message::SetSettingsSearch(query) => self.settings_query = query,
+            Message::SetManualSearch(query) => self.manual_query = query,
+            Message::SetButtonSearch(query) => self.button_query = query,
             Message::ManualLink(link) => {
                 if let Some(chapter) = manual::chapter_of(&link) {
                     self.manual_chapter = chapter;
