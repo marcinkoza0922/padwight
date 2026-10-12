@@ -1,0 +1,809 @@
+format = 18
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "df3b51f9-c2dc-4e7f-95f9-4dd0d0ae9873"
+name = "Thief II: The Metal Age"
+version = "1.0"
+author = "Padwight"
+description = "Thief II: The Metal Age (GOG, NewDark) on an Xbox-style pad, for the game's default keys. A uses and picks up, B jumps, RT attacks and draws the bow, LT blocks, X drops, Y leans forward, L3 toggles crouch, R3 zooms the mechanical eye. A full push of the left stick runs. Hold LB for items and RB for weapons and arrows; double tap to put them away. D-pad left and right lean, up and down cycle items. Select lists the map and objectives. Start is the menu; double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Thief2.exe"
+profile = "Thief II"
+
+[[rules]]
+kind = "steam_app_id"
+value = "211740"
+profile = "Thief II"
+
+[[profiles]]
+name = "Thief II"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { mouse = "Right" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_LEFTALT", "KEY_W"] }
+LeftBumper = { open_menu = "Items" }
+RightBumper = { open_menu = "Weapons" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { keys = ["KEY_X"] }
+DpadUp = { keys = ["KEY_LEFTSHIFT", "KEY_TAB"] }
+DpadDown = { keys = ["KEY_TAB"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+RightStick = { keys = ["KEY_RIGHTBRACE"] }
+
+[profiles.gestures.LeftBumper.double_tap]
+keys = ["KEY_BACKSPACE"]
+
+[profiles.gestures.RightBumper.double_tap]
+keys = ["KEY_GRAVE"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTALT", "KEY_S"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_LEFTALT", "KEY_L"]
+
+[profiles.gestures.RightStick.long_press]
+keys = ["KEY_P"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.keys]
+up = "KEY_W"
+down = "KEY_S"
+left = "KEY_A"
+right = "KEY_D"
+
+[[profiles.left_stick.zones]]
+min = 0.7
+max = 1.0
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 2.2
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 2600.0
+accel = 0.5
+accel_ramp_ms = 350
+y_scale = 0.75
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Middle" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''
+A light push of the left stick walks, a full push runs (Shift).
+Hold RT to draw the bow and let go to loose the arrow; a sword or blackjack swings when RT is pulled.
+A frobs the world: opens doors, picks up loot and uses the item in hand on what you're looking at.
+Hold LB for the items (potions, lockpicks, flash bombs) and RB for the weapons and arrows, aiming with the right stick. Double tap either to put the item or weapon away.
+Crouch is a toggle in the game: click L3 to crouch and again to stand.
+Start (Escape) is the menu. Double tap it to quick save and hold it to quick load.
+If the game also reacts to the controller itself, turn Joystick off in Options, Controls.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move (full push: run)" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Attack / draw the bow" }
+"trigger:Left" = { text = "Block" }
+"button:South" = { text = "Use / pick up" }
+"button:East" = { text = "Jump / mantle" }
+"button:West" = { text = "Drop item" }
+"button:North" = { text = "Lean forward" }
+"button:LeftBumper" = { text = "Hold: items" }
+"gesture:button:LeftBumper:double_tap" = { text = "Put item away" }
+"button:RightBumper" = { text = "Hold: weapons" }
+"gesture:button:RightBumper:double_tap" = { text = "Put weapon away" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:Select" = { text = "Map, objectives" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
+"gesture:button:Start:long_press" = { text = "Quick load" }
+"button:RightStick" = { text = "Zoom in (scope, eye)" }
+"gesture:button:RightStick:long_press" = { text = "Zoom all the way out" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next item"
+
+[[profiles]]
+name = "Thief II + Gyro"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { mouse = "Right" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_LEFTALT", "KEY_W"] }
+LeftBumper = { open_menu = "Items" }
+RightBumper = { open_menu = "Weapons" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { keys = ["KEY_X"] }
+DpadUp = { keys = ["KEY_LEFTSHIFT", "KEY_TAB"] }
+DpadDown = { keys = ["KEY_TAB"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+RightStick = { keys = ["KEY_RIGHTBRACE"] }
+
+[profiles.gestures.LeftBumper.double_tap]
+keys = ["KEY_BACKSPACE"]
+
+[profiles.gestures.RightBumper.double_tap]
+keys = ["KEY_GRAVE"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTALT", "KEY_S"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_LEFTALT", "KEY_L"]
+
+[profiles.gestures.RightStick.long_press]
+keys = ["KEY_P"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.keys]
+up = "KEY_W"
+down = "KEY_S"
+left = "KEY_A"
+right = "KEY_D"
+
+[[profiles.left_stick.zones]]
+min = 0.7
+max = 1.0
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 2.2
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 2600.0
+accel = 0.5
+accel_ramp_ms = 350
+y_scale = 0.75
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Middle" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+activation = "always"
+
+[profiles.gyro.mode.mouse]
+sensitivity = 30.0
+
+[profiles.guide]
+notes = '''
+A light push of the left stick walks, a full push runs (Shift).
+Hold RT to draw the bow and let go to loose the arrow; a sword or blackjack swings when RT is pulled.
+A frobs the world: opens doors, picks up loot and uses the item in hand on what you're looking at.
+Hold LB for the items (potions, lockpicks, flash bombs) and RB for the weapons and arrows, aiming with the right stick. Double tap either to put the item or weapon away.
+Crouch is a toggle in the game: click L3 to crouch and again to stand.
+Start (Escape) is the menu. Double tap it to quick save and hold it to quick load.
+If the game also reacts to the controller itself, turn Joystick off in Options, Controls.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move (full push: run)" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Attack / draw the bow" }
+"trigger:Left" = { text = "Block" }
+"button:South" = { text = "Use / pick up" }
+"button:East" = { text = "Jump / mantle" }
+"button:West" = { text = "Drop item" }
+"button:North" = { text = "Lean forward" }
+"button:LeftBumper" = { text = "Hold: items" }
+"gesture:button:LeftBumper:double_tap" = { text = "Put item away" }
+"button:RightBumper" = { text = "Hold: weapons" }
+"gesture:button:RightBumper:double_tap" = { text = "Put weapon away" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:Select" = { text = "Map, objectives" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
+"gesture:button:Start:long_press" = { text = "Quick load" }
+"button:RightStick" = { text = "Zoom in (scope, eye)" }
+"gesture:button:RightStick:long_press" = { text = "Zoom all the way out" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next item"
+
+[[profiles]]
+name = "Thief II + Flick stick"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+South = { mouse = "Right" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_LEFTALT", "KEY_W"] }
+LeftBumper = { open_menu = "Items" }
+RightBumper = { open_menu = "Weapons" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { keys = ["KEY_X"] }
+DpadUp = { keys = ["KEY_LEFTSHIFT", "KEY_TAB"] }
+DpadDown = { keys = ["KEY_TAB"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+RightStick = { keys = ["KEY_RIGHTBRACE"] }
+
+[profiles.gestures.LeftBumper.double_tap]
+keys = ["KEY_BACKSPACE"]
+
+[profiles.gestures.RightBumper.double_tap]
+keys = ["KEY_GRAVE"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTALT", "KEY_S"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_LEFTALT", "KEY_L"]
+
+[profiles.gestures.RightStick.long_press]
+keys = ["KEY_P"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.keys]
+up = "KEY_W"
+down = "KEY_S"
+left = "KEY_A"
+right = "KEY_D"
+
+[[profiles.left_stick.zones]]
+min = 0.7
+max = 1.0
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Middle" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+activation = "always"
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''
+A light push of the left stick walks, a full push runs (Shift).
+Hold RT to draw the bow and let go to loose the arrow; a sword or blackjack swings when RT is pulled.
+A frobs the world: opens doors, picks up loot and uses the item in hand on what you're looking at.
+Hold LB for the items (potions, lockpicks, flash bombs) and RB for the weapons and arrows, aiming with the right stick. Double tap either to put the item or weapon away.
+Crouch is a toggle in the game: click L3 to crouch and again to stand.
+Start (Escape) is the menu. Double tap it to quick save and hold it to quick load.
+If the game also reacts to the controller itself, turn Joystick off in Options, Controls.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move (full push: run)" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Attack / draw the bow" }
+"trigger:Left" = { text = "Block" }
+"button:South" = { text = "Use / pick up" }
+"button:East" = { text = "Jump / mantle" }
+"button:West" = { text = "Drop item" }
+"button:North" = { text = "Lean forward" }
+"button:LeftBumper" = { text = "Hold: items" }
+"gesture:button:LeftBumper:double_tap" = { text = "Put item away" }
+"button:RightBumper" = { text = "Hold: weapons" }
+"gesture:button:RightBumper:double_tap" = { text = "Put weapon away" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:Select" = { text = "Map, objectives" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
+"gesture:button:Start:long_press" = { text = "Quick load" }
+"button:RightStick" = { text = "Zoom in (scope, eye)" }
+"gesture:button:RightStick:long_press" = { text = "Zoom all the way out" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next item"
+
+[[menus]]
+name = "Items"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Healing potion"
+action = { keys = ["KEY_F1"] }
+icon = "potion"
+
+[[menus.items]]
+label = "Breath potion"
+action = { keys = ["KEY_F2"] }
+
+[[menus.items]]
+label = "Invisibility"
+action = { keys = ["KEY_F3"] }
+
+[[menus.items]]
+label = "Slowfall"
+action = { keys = ["KEY_F4"] }
+
+[[menus.items]]
+label = "Speed potion"
+action = { keys = ["KEY_F5"] }
+
+[[menus.items]]
+label = "Small lockpick"
+action = { keys = ["KEY_F6"] }
+icon = "key"
+
+[[menus.items]]
+label = "Large lockpick"
+action = { keys = ["KEY_F7"] }
+icon = "key"
+
+[[menus.items]]
+label = "Flash bomb"
+action = { keys = ["KEY_F8"] }
+
+[[menus.items]]
+label = "Gas mine"
+action = { keys = ["KEY_F9"] }
+
+[[menus.items]]
+label = "Explosive mine"
+action = { keys = ["KEY_F10"] }
+
+[[menus.items]]
+label = "Scouting orb"
+action = { keys = ["KEY_F11"] }
+
+[[menus.items]]
+label = "Compass"
+action = { keys = ["KEY_F12"] }
+icon = "map"
+
+[[menus.items]]
+label = "Flare"
+action = { keys = ["KEY_F"] }
+
+[[menus.items]]
+label = "Put away"
+action = { keys = ["KEY_BACKSPACE"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+text = "#e6d6b0"
+
+[menus.style.background]
+color = "#0d0a07"
+opacity = 0.92
+
+[menus.style.items]
+color = "#241b12"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#a8823f"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#7a5f33"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#1a130c"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4a3a24"
+
+[menus.style.glow]
+color = "#d9a648"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+frame = { kind = "brackets", size = 14, width = 1, color = "#a8823f" }
+vignette = { color = "#000000", opacity = 0.5, reach = 25 }
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Sword"
+action = { keys = ["KEY_1"] }
+icon = "sword"
+
+[[menus.items]]
+label = "Blackjack"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "Broadhead"
+action = { keys = ["KEY_3"] }
+icon = "bow"
+
+[[menus.items]]
+label = "Water arrow"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "Fire arrow"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "Moss arrow"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "Gas arrow"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "Rope arrow"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "Noisemaker"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "Put away"
+action = { keys = ["KEY_GRAVE"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+text = "#e6d6b0"
+
+[menus.style.background]
+color = "#0d0a07"
+opacity = 0.92
+
+[menus.style.items]
+color = "#241b12"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#a8823f"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#7a5f33"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#1a130c"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4a3a24"
+
+[menus.style.glow]
+color = "#d9a648"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+frame = { kind = "brackets", size = 14, width = 1, color = "#a8823f" }
+vignette = { color = "#000000", opacity = 0.5, reach = 25 }
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "Map"
+action = { keys = ["KEY_M"] }
+icon = "map"
+
+[[menus.items]]
+label = "Objectives"
+action = { keys = ["KEY_O"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+text = "#e6d6b0"
+
+[menus.style.background]
+color = "#0d0a07"
+opacity = 0.92
+
+[menus.style.items]
+color = "#241b12"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#a8823f"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#7a5f33"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#1a130c"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4a3a24"
+
+[menus.style.glow]
+color = "#d9a648"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+frame = { kind = "brackets", size = 14, width = 1, color = "#a8823f" }
+vignette = { color = "#000000", opacity = 0.5, reach = 25 }
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+text = "#e6d6b0"
+
+[keyboard_style.background]
+color = "#0d0a07"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#241b12"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#a8823f"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#7a5f33"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#1a130c"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4a3a24"
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+text = "#e6d6b0"
+
+[numpad_style.background]
+color = "#0d0a07"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#241b12"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#a8823f"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#7a5f33"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#1a130c"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4a3a24"
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+text = "#e6d6b0"
+
+[media_style.background]
+color = "#0d0a07"
+opacity = 0.92
+
+[media_style.items]
+color = "#241b12"
+opacity = 0.95
+
+[media_style.selected]
+color = "#a8823f"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#7a5f33"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#1a130c"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4a3a24"
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+text = "#e6d6b0"
+
+[menu_style.background]
+color = "#0d0a07"
+opacity = 0.92
+
+[menu_style.items]
+color = "#241b12"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#a8823f"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#7a5f33"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#1a130c"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4a3a24"
+
+[menu_style.glow]
+color = "#d9a648"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+frame = { kind = "brackets", size = 14, width = 1, color = "#a8823f" }
+vignette = { color = "#000000", opacity = 0.5, reach = 25 }
+
+[sounds.menu]
+step = { kind = "knock", volume = 0.07, pitch = 0.9, length = 0.9 }
+pick = { kind = "clink", volume = 0.18, pitch = 0.8, length = 1.0, reverb = 0.2 }
+open = { kind = "swish", volume = 0.03, pitch = 0.7, length = 1.2 }
+close = { kind = "swish", volume = 0.025, pitch = 0.6, length = 1.2 }
+
+[sounds.numpad]
+step = { kind = "knock", volume = 0.07, pitch = 0.9, length = 0.9 }
+pick = { kind = "clink", volume = 0.18, pitch = 0.8, length = 1.0, reverb = 0.2 }
+
+[sounds.keyboard]
+step = { kind = "knock", volume = 0.07, pitch = 0.9, length = 0.9 }
+pick = { kind = "keys", volume = 0.25, pitch = 1.0, length = 1.0 }
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+info = "grim"

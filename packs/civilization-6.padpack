@@ -1,0 +1,577 @@
+format = 18
+macros = []
+overlay_font = "Inter"
+
+[pack]
+id = "382fee5e-a2f6-4a2f-88c3-fefae1d29a12"
+name = "Civilization VI"
+version = "1.0"
+author = "Padwight"
+description = "Civilization VI (Steam, Linux or Windows build) on an Xbox-style pad. The right stick moves the pointer, the left stick pans the map, RT or A left-clicks, LT right-clicks to move units. X skips a unit, Y fortifies, RB goes to the next unit or ends the turn. Hold LB for unit orders. The d-pad zooms and cycles units (hold: cities). Select lists the advisors and screens. Start is the game menu; double tap it to quick save, hold it to quick load."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Civ6"
+profile = "Civilization VI"
+
+[[rules]]
+kind = "executable"
+value = "Civ6Sub"
+profile = "Civilization VI"
+
+[[rules]]
+kind = "executable"
+value = "CivilizationVI.exe"
+profile = "Civilization VI"
+
+[[rules]]
+kind = "executable"
+value = "CivilizationVI_DX12.exe"
+profile = "Civilization VI"
+
+[[rules]]
+kind = "steam_app_id"
+value = "289070"
+profile = "Civilization VI"
+
+[[profiles]]
+name = "Civilization VI"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_SPACE"] }
+North = { keys = ["KEY_F"] }
+LeftBumper = { open_menu = "Orders" }
+RightBumper = { keys = ["KEY_ENTER"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_BACKSLASH"] }
+RightStick = { open_menu = "Lenses" }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_COMMA"] }
+DpadRight = { keys = ["KEY_DOT"] }
+
+[profiles.gestures.DpadLeft.long_press]
+keys = ["KEY_LEFTBRACE"]
+
+[profiles.gestures.DpadRight.long_press]
+keys = ["KEY_RIGHTBRACE"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F5"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F6"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.keys]
+up = "KEY_UP"
+down = "KEY_DOWN"
+left = "KEY_LEFT"
+right = "KEY_RIGHT"
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''
+The right stick moves the mouse pointer; RT or A is a left click and LT a right click. Hold Guide and press X for the on-screen keyboard when the game asks for a name.
+LT gives a right click, which moves the selected unit to the tile under the pointer.
+B closes the open screen. Start opens the game menu.
+Hold LB for the unit orders, picking with the right stick.
+RB goes to the next unit that needs orders, and ends the turn when none do.
+Double tap Start to quick save and hold it to quick load. Click R3 for the lens list. Civilization VI on PC has no controller support of its own, so the controller works through these keys.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (move to)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close screen" }
+"button:LeftBumper" = { text = "Hold: unit orders" }
+"button:Select" = { text = "Advisors, screens" }
+"button:Start" = { text = "Game menu" }
+"stick:Left" = { text = "Pan the map" }
+"button:West" = { text = "Skip the unit's turn" }
+"button:North" = { text = "Fortify" }
+"button:RightBumper" = { text = "Next action / end turn" }
+"button:LeftStick" = { text = "Go to the capital" }
+"button:RightStick" = { text = "Lenses" }
+"gesture:button:DpadLeft:long_press" = { text = "Previous city" }
+"gesture:button:DpadRight:long_press" = { text = "Next city" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
+"gesture:button:Start:long_press" = { text = "Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next unit"
+
+[[menus]]
+name = "Orders"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Found city"
+action = { keys = ["KEY_B"] }
+
+[[menus.items]]
+label = "Move to"
+action = { keys = ["KEY_M"] }
+
+[[menus.items]]
+label = "Attack"
+action = { keys = ["KEY_A"] }
+icon = "sword"
+
+[[menus.items]]
+label = "Ranged attack"
+action = { keys = ["KEY_R"] }
+icon = "bow"
+
+[[menus.items]]
+label = "Fortify"
+action = { keys = ["KEY_F"] }
+icon = "shield"
+
+[[menus.items]]
+label = "Fortify until healed"
+action = { keys = ["KEY_H"] }
+icon = "heart"
+
+[[menus.items]]
+label = "Sleep"
+action = { keys = ["KEY_Z"] }
+
+[[menus.items]]
+label = "Alert"
+action = { keys = ["KEY_V"] }
+
+[[menus.items]]
+label = "Explore"
+action = { keys = ["KEY_E"] }
+icon = "map"
+
+[[menus.items]]
+label = "Delete unit"
+action = { keys = ["KEY_DELETE"] }
+icon = "skull"
+
+[menus.style]
+corners = 0.2
+position = "center"
+scale = 1.0
+text = "#f5efdf"
+
+[menus.style.background]
+color = "#132234"
+opacity = 0.92
+
+[menus.style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2f5675"
+
+[menus.style.glow]
+color = "#6fd0e0"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = { width = 1, color = "#c9a85a", opacity = 0.5 }
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "Tech tree"
+action = { keys = ["KEY_T"] }
+
+[[menus.items]]
+label = "Civics tree"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "Government"
+action = { keys = ["KEY_F7"] }
+
+[[menus.items]]
+label = "Religion"
+action = { keys = ["KEY_L"] }
+
+[[menus.items]]
+label = "Great people"
+action = { keys = ["KEY_O"] }
+
+[[menus.items]]
+label = "Great works"
+action = { keys = ["KEY_W"] }
+
+[[menus.items]]
+label = "World rankings"
+action = { keys = ["KEY_F1"] }
+
+[[menus.items]]
+label = "City-states"
+action = { keys = ["KEY_F2"] }
+
+[[menus.items]]
+label = "Espionage"
+action = { keys = ["KEY_F3"] }
+
+[[menus.items]]
+label = "Trade routes"
+action = { keys = ["KEY_F4"] }
+icon = "coin"
+
+[[menus.items]]
+label = "Civilopedia"
+action = { keys = ["KEY_F9"] }
+
+[menus.style]
+corners = 0.2
+position = "center"
+scale = 1.0
+text = "#f5efdf"
+
+[menus.style.background]
+color = "#132234"
+opacity = 0.92
+
+[menus.style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2f5675"
+
+[menus.style.glow]
+color = "#6fd0e0"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = { width = 1, color = "#c9a85a", opacity = 0.5 }
+
+[[menus]]
+name = "Lenses"
+
+kind = "list"
+
+[[menus.items]]
+label = "Religion"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "Continent"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "Appeal"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "Settler"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "Government"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "Political"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "Tourism"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "Empire"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "Resources"
+action = { keys = ["KEY_Q"] }
+
+[[menus.items]]
+label = "Yields"
+action = { keys = ["KEY_Y"] }
+
+[[menus.items]]
+label = "Grid"
+action = { keys = ["KEY_G"] }
+
+[menus.style]
+corners = 0.2
+position = "center"
+scale = 1.0
+text = "#f5efdf"
+
+[menus.style.background]
+color = "#132234"
+opacity = 0.92
+
+[menus.style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2f5675"
+
+[menus.style.glow]
+color = "#6fd0e0"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = { width = 1, color = "#c9a85a", opacity = 0.5 }
+
+[keyboard_style]
+corners = 0.2
+position = "bottom_center"
+scale = 1.0
+text = "#f5efdf"
+
+[keyboard_style.background]
+color = "#132234"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#2f5675"
+
+[numpad_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+text = "#f5efdf"
+
+[numpad_style.background]
+color = "#132234"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#2f5675"
+
+[media_style]
+corners = 0.2
+position = "top_right"
+scale = 0.9
+text = "#f5efdf"
+
+[media_style.background]
+color = "#132234"
+opacity = 0.92
+
+[media_style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[media_style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#2f5675"
+
+[menu_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+text = "#f5efdf"
+
+[menu_style.background]
+color = "#132234"
+opacity = 0.92
+
+[menu_style.items]
+color = "#1e3a52"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#3fa3b6"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#c9a85a"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#182c42"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#2f5675"
+
+[menu_style.glow]
+color = "#6fd0e0"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+dividers = { width = 1, color = "#c9a85a", opacity = 0.5 }
+
+[sounds.menu]
+step = { kind = "tick", volume = 0.07, pitch = 0.9, length = 0.9 }
+pick = { kind = "marimba", volume = 0.22, pitch = 1.0, length = 1.0 }
+open = { kind = "swish", volume = 0.04, pitch = 0.9, length = 1.2 }
+close = { kind = "swish", volume = 0.03, pitch = 0.8, length = 1.2 }
+
+[sounds.numpad]
+step = { kind = "tick", volume = 0.07, pitch = 0.9, length = 0.9 }
+pick = { kind = "marimba", volume = 0.22, pitch = 1.0, length = 1.0 }
+
+[sounds.keyboard]
+step = { kind = "tick", volume = 0.07, pitch = 0.9, length = 0.9 }
+pick = { kind = "keys", volume = 0.25, pitch = 1.0, length = 1.0 }
+
+[motion]
+keyboard = "subtle"
+numpad = "subtle"
+menu = "subtle"
+media = "subtle"
+info = "subtle"

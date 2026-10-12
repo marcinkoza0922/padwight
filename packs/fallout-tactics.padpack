@@ -1,0 +1,475 @@
+format = 18
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "1bbbd1f1-26ed-4898-bf24-64025dd69651"
+name = "Fallout Tactics"
+version = "1.0"
+author = "Padwight"
+description = "Fallout Tactics: Brotherhood of Steel (GOG) on an Xbox-style pad. The right stick moves the pointer, the left stick scrolls the map, RT or A left-clicks and LT right-clicks to fire. Hold RB to run. X reloads (hold: weapon mode, double tap: targeted shot), Y is the inventory, B stops or ends a character's turn (hold: end turn). The d-pad sets the stance. R3 switches turn-based play (hold: pause). Hold LB for the squad and sentry modes. Select lists the Skilldex, character screen and Pip-Boy. Start is the menu; double tap it to quick save, hold it to quick load."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "BOS.exe"
+profile = "Fallout Tactics"
+
+[[rules]]
+kind = "executable"
+value = "BOS_HR.exe"
+profile = "Fallout Tactics"
+
+[[rules]]
+kind = "steam_app_id"
+value = "38420"
+profile = "Fallout Tactics"
+
+[[profiles]]
+name = "Fallout Tactics"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_BACKSPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_I"] }
+LeftBumper = { open_menu = "Squad" }
+RightBumper = { keys = ["KEY_LEFTSHIFT"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_LEFTCTRL"] }
+RightStick = { keys = ["KEY_ENTER"] }
+DpadUp = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_A"] }
+DpadDown = { keys = ["KEY_Z"] }
+DpadLeft = { keys = ["KEY_U"] }
+
+[profiles.gestures.East.long_press]
+keys = ["KEY_LEFTCTRL", "KEY_SPACE"]
+
+[profiles.gestures.West.long_press]
+keys = ["KEY_Y"]
+
+[profiles.gestures.West.double_tap]
+keys = ["KEY_T"]
+
+[profiles.gestures.LeftBumper.double_tap]
+keys = ["KEY_SPACE"]
+
+[profiles.gestures.RightStick.long_press]
+keys = ["KEY_PAUSE"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTALT", "KEY_S"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_LEFTALT", "KEY_L"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.keys]
+up = "KEY_UP"
+down = "KEY_DOWN"
+left = "KEY_LEFT"
+right = "KEY_RIGHT"
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''
+The right stick moves the mouse pointer; RT or A is a left click and LT a right click. Hold Guide and press X for the on-screen keyboard when the game asks for a name.
+Hold RB while clicking to run there. Hold L3 while clicking to force a move to the same level, or to get in and out of a vehicle.
+R3 switches between continuous and turn-based play; hold it to pause continuous play.
+In turn-based play, B ends the selected character's turn, holding B ends the whole turn, and double tapping LB goes to the next character.
+Hold LB for squad members, the whole squad and the sentry modes, picking with the right stick.
+The d-pad sets the stance: up stands, right crouches, down goes prone. Left swaps hands.
+Tap X to reload, hold it for the weapon mode, double tap it for a targeted shot.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the map" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (move, use, fire)" }
+"trigger:Left" = { text = "Right click (fire)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Stop / end this one's turn" }
+"gesture:button:East:long_press" = { text = "End turn" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Weapon mode" }
+"gesture:button:West:double_tap" = { text = "Targeted shot" }
+"button:North" = { text = "Inventory" }
+"button:LeftBumper" = { text = "Hold: squad, sentry modes" }
+"gesture:button:LeftBumper:double_tap" = { text = "Next character" }
+"button:RightBumper" = { text = "Hold: run (Shift)" }
+"button:LeftStick" = { text = "Hold: Ctrl (force move, vehicles)" }
+"button:RightStick" = { text = "Turn-based on / off" }
+"gesture:button:RightStick:long_press" = { text = "Pause" }
+"button:Select" = { text = "Skilldex, character, Pip-Boy" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
+"gesture:button:Start:long_press" = { text = "Quick load" }
+"button:DpadUp" = { text = "Stand" }
+"button:DpadRight" = { text = "Crouch" }
+"button:DpadDown" = { text = "Prone" }
+"button:DpadLeft" = { text = "Swap hands" }
+
+[[menus]]
+name = "Squad"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Squad 1 · F1"
+action = { keys = ["KEY_F1"] }
+
+[[menus.items]]
+label = "Squad 2 · F2"
+action = { keys = ["KEY_F2"] }
+
+[[menus.items]]
+label = "Squad 3 · F3"
+action = { keys = ["KEY_F3"] }
+
+[[menus.items]]
+label = "Squad 4 · F4"
+action = { keys = ["KEY_F4"] }
+
+[[menus.items]]
+label = "Squad 5 · F5"
+action = { keys = ["KEY_F5"] }
+
+[[menus.items]]
+label = "Squad 6 · F6"
+action = { keys = ["KEY_F6"] }
+
+[[menus.items]]
+label = "Whole squad"
+action = { keys = ["KEY_F12"] }
+
+[[menus.items]]
+label = "Sentry off"
+action = { keys = ["KEY_COMMA"] }
+
+[[menus.items]]
+label = "Sentry defensive"
+action = { keys = ["KEY_DOT"] }
+icon = "shield"
+
+[[menus.items]]
+label = "Sentry aggressive"
+action = { keys = ["KEY_SLASH"] }
+icon = "rifle"
+
+[[menus.items]]
+label = "Formation mode"
+action = { keys = ["KEY_F"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+text = "#e8d5b5"
+
+[menus.style.background]
+color = "#15110c"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2c241a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#b5652a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8a6b45"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#211a12"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4d3d2a"
+
+[menus.style.glow]
+color = "#e08a3a"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+frame = { kind = "chamfer", size = 12, width = 2, color = "#8a6b45" }
+dividers = { width = 1, color = "#4d3d2a", opacity = 0.8 }
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "Skilldex"
+action = { keys = ["KEY_S"] }
+
+[[menus.items]]
+label = "Character"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "Inventory"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "Pip-Boy"
+action = { keys = ["KEY_P"] }
+icon = "pda"
+
+[[menus.items]]
+label = "Pip-Boy map"
+action = { keys = ["KEY_M"] }
+icon = "map"
+
+[[menus.items]]
+label = "Options"
+action = { keys = ["KEY_O"] }
+
+[[menus.items]]
+label = "Help"
+action = { keys = ["KEY_H"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+text = "#e8d5b5"
+
+[menus.style.background]
+color = "#15110c"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2c241a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#b5652a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8a6b45"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#211a12"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4d3d2a"
+
+[menus.style.glow]
+color = "#e08a3a"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+frame = { kind = "chamfer", size = 12, width = 2, color = "#8a6b45" }
+dividers = { width = 1, color = "#4d3d2a", opacity = 0.8 }
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+text = "#e8d5b5"
+
+[keyboard_style.background]
+color = "#15110c"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#2c241a"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#b5652a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8a6b45"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#211a12"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4d3d2a"
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+text = "#e8d5b5"
+
+[numpad_style.background]
+color = "#15110c"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#2c241a"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#b5652a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8a6b45"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#211a12"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4d3d2a"
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+text = "#e8d5b5"
+
+[media_style.background]
+color = "#15110c"
+opacity = 0.92
+
+[media_style.items]
+color = "#2c241a"
+opacity = 0.95
+
+[media_style.selected]
+color = "#b5652a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8a6b45"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#211a12"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4d3d2a"
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+text = "#e8d5b5"
+
+[menu_style.background]
+color = "#15110c"
+opacity = 0.92
+
+[menu_style.items]
+color = "#2c241a"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#b5652a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8a6b45"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#211a12"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4d3d2a"
+
+[menu_style.glow]
+color = "#e08a3a"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+frame = { kind = "chamfer", size = 12, width = 2, color = "#8a6b45" }
+dividers = { width = 1, color = "#4d3d2a", opacity = 0.8 }
+
+[sounds.menu]
+step = { kind = "click", volume = 0.08, pitch = 0.8, length = 0.9 }
+pick = { kind = "clink", volume = 0.2, pitch = 0.7, length = 1.0, drive = 0.2 }
+open = { kind = "swish", volume = 0.04, pitch = 0.6, length = 1.0 }
+close = { kind = "swish", volume = 0.03, pitch = 0.5, length = 1.0 }
+
+[sounds.numpad]
+step = { kind = "click", volume = 0.08, pitch = 0.8, length = 0.9 }
+pick = { kind = "clink", volume = 0.2, pitch = 0.7, length = 1.0, drive = 0.2 }
+
+[sounds.keyboard]
+step = { kind = "click", volume = 0.08, pitch = 0.8, length = 0.9 }
+pick = { kind = "keys", volume = 0.25, pitch = 1.0, length = 1.0 }
+
+[motion]
+keyboard = "brutal"
+numpad = "brutal"
+menu = "brutal"
+media = "brutal"
+info = "brutal"

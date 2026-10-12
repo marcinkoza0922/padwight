@@ -1,0 +1,502 @@
+format = 18
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "3f3f9e31-c689-4af1-90e9-b0703eb07111"
+name = "Civilization III"
+version = "1.0"
+author = "Padwight"
+description = "Civilization III Complete (GOG, Conquests) on an Xbox-style pad. The right stick moves the pointer, the left stick moves the active unit in eight directions, RT or A left-clicks, LT right-clicks. X holds the unit, Y fortifies, L3 waits, RB ends the turn. Hold LB for unit orders. The d-pad cycles units (hold: cities), zooms and centers. Select lists the advisors. Start is the preferences; double tap it to save, hold it to load."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Civ3Conquests.exe"
+profile = "Civilization III"
+
+[[rules]]
+kind = "executable"
+value = "Civ3PTW.exe"
+profile = "Civilization III"
+
+[[rules]]
+kind = "executable"
+value = "Civilization3.exe"
+profile = "Civilization III"
+
+[[rules]]
+kind = "steam_app_id"
+value = "3910"
+profile = "Civilization III"
+
+[[profiles]]
+name = "Civilization III"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_SPACE"] }
+North = { keys = ["KEY_F"] }
+LeftBumper = { open_menu = "Orders" }
+RightBumper = { keys = ["KEY_ENTER"] }
+Select = { open_menu = "Advisors" }
+Start = { keys = ["KEY_LEFTCTRL", "KEY_P"] }
+LeftStick = { keys = ["KEY_W"] }
+RightStick = { keys = ["KEY_LEFTCTRL", "KEY_C"] }
+DpadUp = { keys = ["KEY_Z"] }
+DpadDown = { keys = ["KEY_C"] }
+DpadLeft = { keys = ["KEY_LEFTBRACE"] }
+DpadRight = { keys = ["KEY_RIGHTBRACE"] }
+
+[profiles.gestures.RightBumper.long_press]
+keys = ["KEY_LEFTSHIFT", "KEY_ENTER"]
+
+[profiles.gestures.DpadLeft.long_press]
+keys = ["KEY_COMMA"]
+
+[profiles.gestures.DpadRight.long_press]
+keys = ["KEY_DOT"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTCTRL", "KEY_S"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_LEFTCTRL", "KEY_L"]
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.5
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.6
+hysteresis = 0.15
+actions = [
+    { keys = ["KEY_KP8"] },
+    { keys = ["KEY_KP9"] },
+    { keys = ["KEY_KP6"] },
+    { keys = ["KEY_KP3"] },
+    { keys = ["KEY_KP2"] },
+    { keys = ["KEY_KP1"] },
+    { keys = ["KEY_KP4"] },
+    { keys = ["KEY_KP7"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''
+The right stick moves the mouse pointer; RT or A is a left click and LT a right click. Hold Guide and press X for the on-screen keyboard when the game asks for a name.
+The left stick moves the active unit one tile in each of eight directions, through the numeric keypad: push and let go for one step. Pan the map by moving the pointer to the edge of the screen, or click a tile to center on it.
+LT gives a right click, which opens the menu of the units on a tile.
+B (Escape) closes advisors and pop-ups. On the map it asks whether to quit, so answer No.
+Hold LB for the unit orders, picking with the right stick.
+RB ends the turn once every unit has moved; hold it to end the turn at once. Civilization III has no quick save: double tap Start to save, hold it to load.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (unit menu)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close screen" }
+"button:LeftBumper" = { text = "Hold: unit orders" }
+"button:Select" = { text = "Advisors, screens" }
+"button:Start" = { text = "Preferences" }
+"stick:Left" = { text = "Move the active unit (8 ways)" }
+"button:West" = { text = "Hold (skip this turn)" }
+"button:North" = { text = "Fortify" }
+"button:RightBumper" = { text = "End turn / next" }
+"gesture:button:RightBumper:long_press" = { text = "End turn now" }
+"button:LeftStick" = { text = "Wait" }
+"button:RightStick" = { text = "Civilopedia" }
+"button:DpadUp" = { text = "Zoom in / out" }
+"button:DpadDown" = { text = "Center on the unit" }
+"gesture:button:DpadLeft:long_press" = { text = "Previous city" }
+"gesture:button:DpadRight:long_press" = { text = "Next city" }
+"gesture:button:Start:double_tap" = { text = "Save" }
+"gesture:button:Start:long_press" = { text = "Load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next unit"
+
+[[menus]]
+name = "Orders"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Build city / bombard"
+action = { keys = ["KEY_B"] }
+
+[[menus.items]]
+label = "Road"
+action = { keys = ["KEY_R"] }
+
+[[menus.items]]
+label = "Mine"
+action = { keys = ["KEY_M"] }
+
+[[menus.items]]
+label = "Irrigate"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "Automate worker"
+action = { keys = ["KEY_A"] }
+
+[[menus.items]]
+label = "Explore"
+action = { keys = ["KEY_E"] }
+icon = "map"
+
+[[menus.items]]
+label = "Go to"
+action = { keys = ["KEY_G"] }
+
+[[menus.items]]
+label = "Pillage"
+action = { keys = ["KEY_P"] }
+icon = "axe"
+
+[[menus.items]]
+label = "Upgrade"
+action = { keys = ["KEY_U"] }
+
+[[menus.items]]
+label = "Load / unload"
+action = { keys = ["KEY_L"] }
+
+[[menus.items]]
+label = "Plant forest"
+action = { keys = ["KEY_N"] }
+
+[[menus.items]]
+label = "Disband"
+action = { keys = ["KEY_D"] }
+icon = "skull"
+
+[menus.style]
+corners = 0.2
+position = "center"
+scale = 1.0
+text = "#f3e7c9"
+
+[menus.style.background]
+color = "#1d2a3a"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2e4058"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c49a3a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c49a3a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#253548"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4a6080"
+
+[menus.style.glow]
+color = "#e0b850"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = { width = 1, color = "#c49a3a", opacity = 0.5 }
+
+[[menus]]
+name = "Advisors"
+
+kind = "list"
+
+[[menus.items]]
+label = "Domestic"
+action = { keys = ["KEY_F1"] }
+
+[[menus.items]]
+label = "Trade"
+action = { keys = ["KEY_F2"] }
+icon = "coin"
+
+[[menus.items]]
+label = "Military"
+action = { keys = ["KEY_F3"] }
+icon = "sword"
+
+[[menus.items]]
+label = "Foreign"
+action = { keys = ["KEY_F4"] }
+
+[[menus.items]]
+label = "Culture"
+action = { keys = ["KEY_F5"] }
+
+[[menus.items]]
+label = "Science"
+action = { keys = ["KEY_F6"] }
+
+[[menus.items]]
+label = "Wonders"
+action = { keys = ["KEY_F7"] }
+
+[[menus.items]]
+label = "Histograph"
+action = { keys = ["KEY_F8"] }
+
+[[menus.items]]
+label = "Palace"
+action = { keys = ["KEY_F9"] }
+
+[[menus.items]]
+label = "Spaceship"
+action = { keys = ["KEY_F10"] }
+
+[[menus.items]]
+label = "Demographics"
+action = { keys = ["KEY_F11"] }
+
+[[menus.items]]
+label = "Civilopedia"
+action = { keys = ["KEY_LEFTCTRL", "KEY_C"] }
+
+[menus.style]
+corners = 0.2
+position = "center"
+scale = 1.0
+text = "#f3e7c9"
+
+[menus.style.background]
+color = "#1d2a3a"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2e4058"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c49a3a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c49a3a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#253548"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4a6080"
+
+[menus.style.glow]
+color = "#e0b850"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = { width = 1, color = "#c49a3a", opacity = 0.5 }
+
+[keyboard_style]
+corners = 0.2
+position = "bottom_center"
+scale = 1.0
+text = "#f3e7c9"
+
+[keyboard_style.background]
+color = "#1d2a3a"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#2e4058"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c49a3a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#c49a3a"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#253548"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4a6080"
+
+[numpad_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+text = "#f3e7c9"
+
+[numpad_style.background]
+color = "#1d2a3a"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#2e4058"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c49a3a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#c49a3a"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#253548"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4a6080"
+
+[media_style]
+corners = 0.2
+position = "top_right"
+scale = 0.9
+text = "#f3e7c9"
+
+[media_style.background]
+color = "#1d2a3a"
+opacity = 0.92
+
+[media_style.items]
+color = "#2e4058"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c49a3a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#c49a3a"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#253548"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4a6080"
+
+[menu_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+text = "#f3e7c9"
+
+[menu_style.background]
+color = "#1d2a3a"
+opacity = 0.92
+
+[menu_style.items]
+color = "#2e4058"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c49a3a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#c49a3a"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#253548"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4a6080"
+
+[menu_style.glow]
+color = "#e0b850"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+dividers = { width = 1, color = "#c49a3a", opacity = 0.5 }
+
+[sounds.menu]
+step = { kind = "tick", volume = 0.07, pitch = 0.9, length = 0.9 }
+pick = { kind = "chime", volume = 0.18, pitch = 0.9, length = 1.0 }
+open = { kind = "swish", volume = 0.04, pitch = 0.9, length = 1.2 }
+close = { kind = "swish", volume = 0.03, pitch = 0.8, length = 1.2 }
+
+[sounds.numpad]
+step = { kind = "tick", volume = 0.07, pitch = 0.9, length = 0.9 }
+pick = { kind = "chime", volume = 0.18, pitch = 0.9, length = 1.0 }
+
+[sounds.keyboard]
+step = { kind = "tick", volume = 0.07, pitch = 0.9, length = 0.9 }
+pick = { kind = "keys", volume = 0.25, pitch = 1.0, length = 1.0 }
+
+[motion]
+keyboard = "subtle"
+numpad = "subtle"
+menu = "subtle"
+media = "subtle"
+info = "subtle"

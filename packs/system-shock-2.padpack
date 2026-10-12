@@ -1,0 +1,813 @@
+format = 18
+macros = []
+overlay_font = "VT323"
+
+[pack]
+id = "a5f15405-94d6-4dee-b789-3d2dd4e99ed3"
+name = "System Shock 2"
+version = "1.0"
+author = "Padwight"
+description = "System Shock 2 (GOG, NewDark) on an Xbox-style pad, for the keys GOG ships. A uses, B jumps, RT fires, X reloads (hold: cycle ammo), Y switches to use mode for the inventory and MFDs (hold: med patch), L3 toggles crouch, R3 switches the weapon setting. Hold LB for the quick slots and patches, RB for weapons and the psi amp. D-pad left and right lean, up and down cycle weapons. Select lists the map, logs and messages. Start is the menu; double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "SS2.exe"
+profile = "System Shock 2"
+
+[[rules]]
+kind = "steam_app_id"
+value = "238210"
+profile = "System Shock 2"
+
+[[profiles]]
+name = "System Shock 2"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { mouse = "Right" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Quick use" }
+RightBumper = { open_menu = "Weapons" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { keys = ["KEY_LEFTSHIFT"] }
+RightStick = { keys = ["KEY_O"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.West.long_press]
+keys = ["KEY_B"]
+
+[profiles.gestures.North.long_press]
+keys = ["KEY_H"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTALT", "KEY_S"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_LEFTALT", "KEY_L"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.keys]
+up = "KEY_W"
+down = "KEY_S"
+left = "KEY_A"
+right = "KEY_D"
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 2.2
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 2600.0
+accel = 0.5
+accel_ramp_ms = 350
+y_scale = 0.75
+
+[profiles.left_trigger]
+action = "disabled"
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''
+Y switches between shoot mode and use mode (the inventory and MFDs). In use mode the right stick moves the cursor, RT is a left click and A a right click.
+Keypads, hacking and the research and stats screens all work in use mode: press Y, then point and click.
+Hold LB for the F1 to F12 quick slots and the med and rad patches, aiming with the right stick. Put psi powers and items in the quick slots on the psi and inventory screens (Shift + F-key in the game).
+Hold RB for the weapons and the psi amp. R3 switches the weapon setting, such as the pistol's burst.
+Hold X to cycle ammo, and Y to use a med patch.
+Crouch is a toggle in the game: click L3 to crouch and again to stand.
+Start (Escape) is the menu. Double tap it to quick save and hold it to quick load.
+With gyro aiming, hold LT to pause the gyro while you reposition the controller.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look / cursor" }
+"trigger:Right" = { text = "Fire / swing (left click)" }
+"button:South" = { text = "Use / pick up (right click)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Cycle ammo" }
+"button:North" = { text = "Inventory, use mode" }
+"gesture:button:North:long_press" = { text = "Use a med patch" }
+"button:LeftBumper" = { text = "Hold: quick slots, patches" }
+"button:RightBumper" = { text = "Hold: weapons, psi amp" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Weapon setting" }
+"button:Select" = { text = "Map, logs, messages" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
+"gesture:button:Start:long_press" = { text = "Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Next / previous weapon"
+
+[[profiles]]
+name = "System Shock 2 + Gyro"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { mouse = "Right" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Quick use" }
+RightBumper = { open_menu = "Weapons" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { keys = ["KEY_LEFTSHIFT"] }
+RightStick = { keys = ["KEY_O"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.West.long_press]
+keys = ["KEY_B"]
+
+[profiles.gestures.North.long_press]
+keys = ["KEY_H"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTALT", "KEY_S"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_LEFTALT", "KEY_L"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.keys]
+up = "KEY_W"
+down = "KEY_S"
+left = "KEY_A"
+right = "KEY_D"
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 2.2
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 2600.0
+accel = 0.5
+accel_ramp_ms = 350
+y_scale = 0.75
+
+[profiles.left_trigger]
+action = "disabled"
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+activation = { unless_held = "left_trigger" }
+
+[profiles.gyro.mode.mouse]
+sensitivity = 30.0
+
+[profiles.guide]
+notes = '''
+Y switches between shoot mode and use mode (the inventory and MFDs). In use mode the right stick moves the cursor, RT is a left click and A a right click.
+Keypads, hacking and the research and stats screens all work in use mode: press Y, then point and click.
+Hold LB for the F1 to F12 quick slots and the med and rad patches, aiming with the right stick. Put psi powers and items in the quick slots on the psi and inventory screens (Shift + F-key in the game).
+Hold RB for the weapons and the psi amp. R3 switches the weapon setting, such as the pistol's burst.
+Hold X to cycle ammo, and Y to use a med patch.
+Crouch is a toggle in the game: click L3 to crouch and again to stand.
+Start (Escape) is the menu. Double tap it to quick save and hold it to quick load.
+With gyro aiming, hold LT to pause the gyro while you reposition the controller.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look / cursor" }
+"trigger:Right" = { text = "Fire / swing (left click)" }
+"button:South" = { text = "Use / pick up (right click)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Cycle ammo" }
+"button:North" = { text = "Inventory, use mode" }
+"gesture:button:North:long_press" = { text = "Use a med patch" }
+"button:LeftBumper" = { text = "Hold: quick slots, patches" }
+"button:RightBumper" = { text = "Hold: weapons, psi amp" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Weapon setting" }
+"button:Select" = { text = "Map, logs, messages" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
+"gesture:button:Start:long_press" = { text = "Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Next / previous weapon"
+
+[[profiles]]
+name = "System Shock 2 + Flick stick"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+South = { mouse = "Right" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Quick use" }
+RightBumper = { open_menu = "Weapons" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { keys = ["KEY_LEFTSHIFT"] }
+RightStick = { keys = ["KEY_O"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.West.long_press]
+keys = ["KEY_B"]
+
+[profiles.gestures.North.long_press]
+keys = ["KEY_H"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTALT", "KEY_S"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_LEFTALT", "KEY_L"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.keys]
+up = "KEY_W"
+down = "KEY_S"
+left = "KEY_A"
+right = "KEY_D"
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger]
+action = "disabled"
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+activation = { unless_held = "left_trigger" }
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''
+Y switches between shoot mode and use mode (the inventory and MFDs). In use mode the right stick moves the cursor, RT is a left click and A a right click.
+Keypads, hacking and the research and stats screens all work in use mode: press Y, then point and click.
+Hold LB for the F1 to F12 quick slots and the med and rad patches, aiming with the right stick. Put psi powers and items in the quick slots on the psi and inventory screens (Shift + F-key in the game).
+Hold RB for the weapons and the psi amp. R3 switches the weapon setting, such as the pistol's burst.
+Hold X to cycle ammo, and Y to use a med patch.
+Crouch is a toggle in the game: click L3 to crouch and again to stand.
+Start (Escape) is the menu. Double tap it to quick save and hold it to quick load.
+With gyro aiming, hold LT to pause the gyro while you reposition the controller.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look / cursor" }
+"trigger:Right" = { text = "Fire / swing (left click)" }
+"button:South" = { text = "Use / pick up (right click)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Cycle ammo" }
+"button:North" = { text = "Inventory, use mode" }
+"gesture:button:North:long_press" = { text = "Use a med patch" }
+"button:LeftBumper" = { text = "Hold: quick slots, patches" }
+"button:RightBumper" = { text = "Hold: weapons, psi amp" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Weapon setting" }
+"button:Select" = { text = "Map, logs, messages" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
+"gesture:button:Start:long_press" = { text = "Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Next / previous weapon"
+
+[[menus]]
+name = "Quick use"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Quick 1 · F1"
+action = { keys = ["KEY_F1"] }
+
+[[menus.items]]
+label = "Quick 2 · F2"
+action = { keys = ["KEY_F2"] }
+
+[[menus.items]]
+label = "Quick 3 · F3"
+action = { keys = ["KEY_F3"] }
+
+[[menus.items]]
+label = "Quick 4 · F4"
+action = { keys = ["KEY_F4"] }
+
+[[menus.items]]
+label = "Quick 5 · F5"
+action = { keys = ["KEY_F5"] }
+
+[[menus.items]]
+label = "Quick 6 · F6"
+action = { keys = ["KEY_F6"] }
+
+[[menus.items]]
+label = "Quick 7 · F7"
+action = { keys = ["KEY_F7"] }
+
+[[menus.items]]
+label = "Quick 8 · F8"
+action = { keys = ["KEY_F8"] }
+
+[[menus.items]]
+label = "Quick 9 · F9"
+action = { keys = ["KEY_F9"] }
+
+[[menus.items]]
+label = "Quick 10 · F10"
+action = { keys = ["KEY_F10"] }
+
+[[menus.items]]
+label = "Quick 11 · F11"
+action = { keys = ["KEY_F11"] }
+
+[[menus.items]]
+label = "Quick 12 · F12"
+action = { keys = ["KEY_F12"] }
+
+[[menus.items]]
+label = "Med patch"
+action = { keys = ["KEY_H"] }
+icon = "heart"
+
+[[menus.items]]
+label = "Rad patch"
+action = { keys = ["KEY_P"] }
+icon = "potion"
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+text = "#b8f0e0"
+
+[menus.style.background]
+color = "#04100f"
+opacity = 0.92
+
+[menus.style.items]
+color = "#0b2724"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2fb59a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#2fb59a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#071b1a"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#17514a"
+
+[menus.style.glow]
+color = "#4fffd0"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[menus.style.ornament]
+scanlines = { spacing = 3, opacity = 0.15, color = "#000000", drift = true }
+frame = { kind = "chamfer", size = 12, width = 1, color = "#2fb59a" }
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Wrench"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "Pistol"
+action = { keys = ["KEY_2"] }
+icon = "pistol"
+
+[[menus.items]]
+label = "Shotgun"
+action = { keys = ["KEY_3"] }
+icon = "rifle"
+
+[[menus.items]]
+label = "Assault rifle"
+action = { keys = ["KEY_4"] }
+icon = "rifle"
+
+[[menus.items]]
+label = "Laser pistol"
+action = { keys = ["KEY_5"] }
+icon = "pistol"
+
+[[menus.items]]
+label = "EMP rifle"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "Electro shock"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "Grenade launcher"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "Stasis field"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "Fusion cannon"
+action = { keys = ["KEY_0"] }
+
+[[menus.items]]
+label = "Crystal shard"
+action = { keys = ["KEY_MINUS"] }
+icon = "sword"
+
+[[menus.items]]
+label = "Viral proliferator"
+action = { keys = ["KEY_EQUAL"] }
+
+[[menus.items]]
+label = "Worm launcher"
+action = { keys = ["KEY_BACKSLASH"] }
+
+[[menus.items]]
+label = "Psi amp"
+action = { keys = ["KEY_GRAVE"] }
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+text = "#b8f0e0"
+
+[menus.style.background]
+color = "#04100f"
+opacity = 0.92
+
+[menus.style.items]
+color = "#0b2724"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2fb59a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#2fb59a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#071b1a"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#17514a"
+
+[menus.style.glow]
+color = "#4fffd0"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[menus.style.ornament]
+scanlines = { spacing = 3, opacity = 0.15, color = "#000000", drift = true }
+frame = { kind = "chamfer", size = 12, width = 1, color = "#2fb59a" }
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "Map"
+action = { keys = ["KEY_M"] }
+icon = "map"
+
+[[menus.items]]
+label = "Play unread log"
+action = { keys = ["KEY_U"] }
+icon = "pda"
+
+[[menus.items]]
+label = "Message history"
+action = { keys = ["KEY_L"] }
+
+[[menus.items]]
+label = "Drop nav marker"
+action = { keys = ["KEY_N"] }
+
+[[menus.items]]
+label = "Stop email or log"
+action = { keys = ["KEY_BACKSPACE"] }
+
+[[menus.items]]
+label = "Compass"
+action = { keys = ["KEY_LEFTALT", "KEY_C"] }
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+text = "#b8f0e0"
+
+[menus.style.background]
+color = "#04100f"
+opacity = 0.92
+
+[menus.style.items]
+color = "#0b2724"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2fb59a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#2fb59a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#071b1a"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#17514a"
+
+[menus.style.glow]
+color = "#4fffd0"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[menus.style.ornament]
+scanlines = { spacing = 3, opacity = 0.15, color = "#000000", drift = true }
+frame = { kind = "chamfer", size = 12, width = 1, color = "#2fb59a" }
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+text = "#b8f0e0"
+
+[keyboard_style.background]
+color = "#04100f"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#0b2724"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#2fb59a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#2fb59a"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#071b1a"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#17514a"
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+text = "#b8f0e0"
+
+[numpad_style.background]
+color = "#04100f"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#0b2724"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#2fb59a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#2fb59a"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#071b1a"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#17514a"
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+text = "#b8f0e0"
+
+[media_style.background]
+color = "#04100f"
+opacity = 0.92
+
+[media_style.items]
+color = "#0b2724"
+opacity = 0.95
+
+[media_style.selected]
+color = "#2fb59a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#2fb59a"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#071b1a"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#17514a"
+
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+text = "#b8f0e0"
+
+[menu_style.background]
+color = "#04100f"
+opacity = 0.92
+
+[menu_style.items]
+color = "#0b2724"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#2fb59a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#2fb59a"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#071b1a"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#17514a"
+
+[menu_style.glow]
+color = "#4fffd0"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style.ornament]
+scanlines = { spacing = 3, opacity = 0.15, color = "#000000", drift = true }
+frame = { kind = "chamfer", size = 12, width = 1, color = "#2fb59a" }
+
+[sounds.menu]
+step = { kind = "blip", volume = 0.06, pitch = 1.3, length = 0.6 }
+pick = { kind = "beep", volume = 0.2, pitch = 0.8, length = 0.9, echo = 0.2 }
+open = { kind = "rise", volume = 0.05, pitch = 1.0, length = 0.7 }
+close = { kind = "fall", volume = 0.04, pitch = 1.0, length = 0.7 }
+
+[sounds.numpad]
+step = { kind = "blip", volume = 0.06, pitch = 1.3, length = 0.6 }
+pick = { kind = "beep", volume = 0.2, pitch = 0.8, length = 0.9, echo = 0.2 }
+
+[sounds.keyboard]
+step = { kind = "blip", volume = 0.06, pitch = 1.3, length = 0.6 }
+pick = { kind = "keys", volume = 0.25, pitch = 1.0, length = 1.0 }
+
+[motion]
+keyboard = "brutal"
+numpad = "brutal"
+menu = "brutal"
+media = "brutal"
+info = "brutal"

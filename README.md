@@ -267,7 +267,7 @@ Controllers with motion sensors (DualShock 4, DualSense, Switch Pro, Joy-Cons) c
 
 Horizontal aim can come from yaw (turning), roll (tilting) or both, and either axis can be inverted. Gyro can be **always on**, **on only while holding** an input (e.g. LT to aim down sights), **off while holding** (a clutch for repositioning the controller), or **toggled**. A **recenter** input sets the current tilt as straight for steering. Slow movement below a jitter threshold is scaled down to hide drift. "Calibrate gyro" in the controller list measures the drift while the controller sits still.
 
-The PC action template turns on gyro mouse aiming while LT is held. StarCraft's Gameplay profile has a "+ Gyro" twin that moves the cursor by tilting, as an extra to the left stick. The library's shooters (Deus Ex, F.E.A.R., Max Payne 1 and 2) each ship three profiles: one without gyro, one with gyro as an extra, and a flick stick one that needs gyro. Their rules start on the plain one. If you pick another when the Guide offer appears, that one becomes the setup's.
+The PC action template turns on gyro mouse aiming while LT is held. StarCraft's Gameplay profile has a "+ Gyro" twin that moves the cursor by tilting, as an extra to the left stick. The library's shooters (Deus Ex, F.E.A.R., Max Payne 1 and 2, Thief Gold, Thief II and System Shock 2) each ship three profiles: one without gyro, one with gyro as an extra, and a flick stick one that needs gyro. Their rules start on the plain one. If you pick another when the Guide offer appears, that one becomes the setup's.
 
 ## Automatic profile switching
 

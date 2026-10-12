@@ -1,0 +1,456 @@
+format = 18
+macros = []
+overlay_font = "VT323"
+
+[pack]
+id = "614136ca-6512-4ea5-b39c-3ebe7125676b"
+name = "Fallout"
+version = "1.0"
+author = "Padwight"
+description = "Fallout (GOG, with the high resolution patch) on an Xbox-style pad. The right stick moves the pointer, the left stick scrolls the map, RT or A left-clicks and LT right-clicks to change the pointer. Y is the inventory, X swaps hands (hold: attack mode), B ends the turn (hold: end combat), RB starts combat, L3 toggles Sneak. Hold LB for the skills. Select lists the character screen, Pip-Boy, Skilldex and map. Start is the options and backs out of every screen; double tap it to quick save, hold it to quick load."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "falloutw.exe"
+profile = "Fallout"
+
+[[rules]]
+kind = "executable"
+value = "falloutwHR.exe"
+profile = "Fallout"
+
+[[rules]]
+kind = "steam_app_id"
+value = "38400"
+profile = "Fallout"
+
+[[profiles]]
+name = "Fallout"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_B"] }
+North = { keys = ["KEY_I"] }
+LeftBumper = { open_menu = "Skills" }
+RightBumper = { keys = ["KEY_A"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_1"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_HOME"] }
+DpadRight = { keys = ["KEY_TAB"] }
+
+[profiles.gestures.East.long_press]
+keys = ["KEY_ENTER"]
+
+[profiles.gestures.West.long_press]
+keys = ["KEY_N"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F6"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F7"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.keys]
+up = "KEY_UP"
+down = "KEY_DOWN"
+left = "KEY_LEFT"
+right = "KEY_RIGHT"
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''
+The right stick moves the mouse pointer; RT or A is a left click and LT a right click. Hold Guide and press X for the on-screen keyboard when the game asks for a name.
+LT cycles the pointer between moving, using and looking, as the right mouse button does.
+Start (Escape) closes the inventory, character screen, Pip-Boy and dialogue trade windows, and opens the options on the map.
+In combat, B ends your turn and holding B ends combat when no one is hostile. RB starts combat.
+Hold LB for the skills and the Skilldex, picking with the right stick, then click what to use the skill on. L3 toggles Sneak.
+The d-pad scrolls lists such as the inventory, when the high resolution patch is on.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the map" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (move, use, attack)" }
+"trigger:Left" = { text = "Right click (change pointer)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "End turn" }
+"gesture:button:East:long_press" = { text = "End combat / done" }
+"button:West" = { text = "Swap hands" }
+"gesture:button:West:long_press" = { text = "Change attack mode" }
+"button:North" = { text = "Inventory" }
+"button:LeftBumper" = { text = "Hold: skills" }
+"button:RightBumper" = { text = "Start combat" }
+"button:LeftStick" = { text = "Sneak" }
+"button:Select" = { text = "Character, Pip-Boy, map" }
+"button:Start" = { text = "Options / back out" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
+"gesture:button:Start:long_press" = { text = "Quick load" }
+"button:DpadLeft" = { text = "Center on you" }
+"button:DpadRight" = { text = "Automap" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Scroll lists"
+
+[[menus]]
+name = "Skills"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Sneak"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "Lockpick"
+action = { keys = ["KEY_2"] }
+icon = "key"
+
+[[menus.items]]
+label = "Steal"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "Traps"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "First aid"
+action = { keys = ["KEY_5"] }
+icon = "heart"
+
+[[menus.items]]
+label = "Doctor"
+action = { keys = ["KEY_6"] }
+icon = "potion"
+
+[[menus.items]]
+label = "Science"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "Repair"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "Skilldex"
+action = { keys = ["KEY_S"] }
+icon = "pda"
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+text = "#9dff9d"
+
+[menus.style.background]
+color = "#071407"
+opacity = 0.92
+
+[menus.style.items]
+color = "#0f2a10"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2fbf3a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#2fbf3a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#0b1f0c"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#1d5a22"
+
+[menus.style.glow]
+color = "#5cff6a"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[menus.style.ornament]
+scanlines = { spacing = 3, opacity = 0.2, color = "#000000", drift = true }
+vignette = { color = "#000000", opacity = 0.5, reach = 20 }
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "Character"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "Inventory"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "Pip-Boy"
+action = { keys = ["KEY_P"] }
+icon = "pda"
+
+[[menus.items]]
+label = "Skilldex"
+action = { keys = ["KEY_S"] }
+
+[[menus.items]]
+label = "Automap"
+action = { keys = ["KEY_TAB"] }
+icon = "map"
+
+[[menus.items]]
+label = "Pip-Boy clock"
+action = { keys = ["KEY_Z"] }
+
+[[menus.items]]
+label = "Options"
+action = { keys = ["KEY_O"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+text = "#9dff9d"
+
+[menus.style.background]
+color = "#071407"
+opacity = 0.92
+
+[menus.style.items]
+color = "#0f2a10"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2fbf3a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#2fbf3a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#0b1f0c"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#1d5a22"
+
+[menus.style.glow]
+color = "#5cff6a"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[menus.style.ornament]
+scanlines = { spacing = 3, opacity = 0.2, color = "#000000", drift = true }
+vignette = { color = "#000000", opacity = 0.5, reach = 20 }
+
+[keyboard_style]
+corners = 0.1
+position = "bottom_center"
+scale = 1.0
+text = "#9dff9d"
+
+[keyboard_style.background]
+color = "#071407"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#0f2a10"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#2fbf3a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#2fbf3a"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#0b1f0c"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#1d5a22"
+
+[numpad_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+text = "#9dff9d"
+
+[numpad_style.background]
+color = "#071407"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#0f2a10"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#2fbf3a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#2fbf3a"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#0b1f0c"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#1d5a22"
+
+[media_style]
+corners = 0.1
+position = "top_right"
+scale = 0.9
+text = "#9dff9d"
+
+[media_style.background]
+color = "#071407"
+opacity = 0.92
+
+[media_style.items]
+color = "#0f2a10"
+opacity = 0.95
+
+[media_style.selected]
+color = "#2fbf3a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#2fbf3a"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#0b1f0c"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#1d5a22"
+
+[menu_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+text = "#9dff9d"
+
+[menu_style.background]
+color = "#071407"
+opacity = 0.92
+
+[menu_style.items]
+color = "#0f2a10"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#2fbf3a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#2fbf3a"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#0b1f0c"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#1d5a22"
+
+[menu_style.glow]
+color = "#5cff6a"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style.ornament]
+scanlines = { spacing = 3, opacity = 0.2, color = "#000000", drift = true }
+vignette = { color = "#000000", opacity = 0.5, reach = 20 }
+
+[sounds.menu]
+step = { kind = "click", volume = 0.08, pitch = 0.9, length = 0.8 }
+pick = { kind = "thud", volume = 0.25, pitch = 0.9, length = 1.0, drive = 0.3 }
+open = { kind = "blip", volume = 0.05, pitch = 0.7, length = 1.0 }
+close = { kind = "blip", volume = 0.04, pitch = 0.6, length = 1.0 }
+
+[sounds.numpad]
+step = { kind = "click", volume = 0.08, pitch = 0.9, length = 0.8 }
+pick = { kind = "thud", volume = 0.25, pitch = 0.9, length = 1.0, drive = 0.3 }
+
+[sounds.keyboard]
+step = { kind = "click", volume = 0.08, pitch = 0.9, length = 0.8 }
+pick = { kind = "keys", volume = 0.25, pitch = 1.0, length = 1.0 }
+
+[motion]
+keyboard = "brutal"
+numpad = "brutal"
+menu = "brutal"
+media = "brutal"
+info = "brutal"

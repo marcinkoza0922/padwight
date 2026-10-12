@@ -1,0 +1,522 @@
+format = 18
+macros = []
+overlay_font = "Cantarell"
+
+[pack]
+id = "a02787b8-2177-48cc-9111-86617957ac2b"
+name = "SimCity 3000 Unlimited"
+version = "1.0"
+author = "Padwight"
+description = "SimCity 3000 Unlimited (GOG) on an Xbox-style pad. The right stick moves the pointer, the left stick scrolls the view, RT or A left-clicks, LT right-clicks. Hold LB for the zones and RB for roads, utilities and services. X bulldozes, B closes windows, hold Y and click to query. The d-pad zooms and rotates (hold left or right for the speed), L3 pauses, R3 centers. Select lists the budget, advisors and data windows. Start is the preferences; double tap it to save."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "SC3U.exe"
+profile = "SimCity 3000"
+
+[[profiles]]
+name = "SimCity 3000"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_B"] }
+North = { keys = ["KEY_LEFTCTRL"] }
+LeftBumper = { open_menu = "Zones" }
+RightBumper = { open_menu = "Build" }
+Select = { open_menu = "Windows" }
+Start = { keys = ["KEY_LEFTCTRL", "KEY_P"] }
+LeftStick = { keys = ["KEY_SLASH"] }
+RightStick = { keys = ["KEY_SPACE"] }
+DpadUp = { keys = ["KEY_KPPLUS"] }
+DpadDown = { keys = ["KEY_KPMINUS"] }
+DpadLeft = { keys = ["KEY_PAGEUP"] }
+DpadRight = { keys = ["KEY_PAGEDOWN"] }
+
+[profiles.gestures.DpadLeft.long_press]
+keys = ["KEY_COMMA"]
+
+[profiles.gestures.DpadRight.long_press]
+keys = ["KEY_DOT"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTCTRL", "KEY_S"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.keys]
+up = "KEY_UP"
+down = "KEY_DOWN"
+left = "KEY_LEFT"
+right = "KEY_RIGHT"
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''
+The right stick moves the mouse pointer; RT or A is a left click and LT a right click. Hold Guide and press X for the on-screen keyboard when the game asks for a name.
+Hold LB for the zones and RB for roads, utilities and services, picking with the right stick, then drag with RT to place.
+B closes the open window, or picks the centering tool when none is open.
+Hold Y and click to query a tile. Hold the d-pad left or right to slow down or speed up time, and click L3 to pause.
+Double tap Start to save the city.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the view" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (use the tool)" }
+"trigger:Left" = { text = "Right click" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close window / centering tool" }
+"button:West" = { text = "Bulldoze" }
+"button:North" = { text = "Hold and click: query" }
+"button:LeftBumper" = { text = "Hold: zones" }
+"button:RightBumper" = { text = "Hold: roads, utilities, services" }
+"button:LeftStick" = { text = "Pause" }
+"button:RightStick" = { text = "Center on the pointer" }
+"button:Select" = { text = "Budget, advisors, data" }
+"button:Start" = { text = "Preferences" }
+"gesture:button:Start:double_tap" = { text = "Save city" }
+"gesture:button:DpadLeft:long_press" = { text = "Slower" }
+"gesture:button:DpadRight:long_press" = { text = "Faster" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate"
+
+[[menus]]
+name = "Zones"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Light residential"
+action = { keys = ["KEY_Q"] }
+
+[[menus.items]]
+label = "Medium residential"
+action = { keys = ["KEY_W"] }
+
+[[menus.items]]
+label = "Dense residential"
+action = { keys = ["KEY_E"] }
+
+[[menus.items]]
+label = "Light commercial"
+action = { keys = ["KEY_A"] }
+icon = "coin"
+
+[[menus.items]]
+label = "Medium commercial"
+action = { keys = ["KEY_S"] }
+icon = "coin"
+
+[[menus.items]]
+label = "Dense commercial"
+action = { keys = ["KEY_D"] }
+icon = "coin"
+
+[[menus.items]]
+label = "Light industrial"
+action = { keys = ["KEY_Z"] }
+
+[[menus.items]]
+label = "Medium industrial"
+action = { keys = ["KEY_X"] }
+
+[[menus.items]]
+label = "Dense industrial"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "Landfill"
+action = { keys = ["KEY_Y"] }
+
+[[menus.items]]
+label = "Dezone"
+action = { keys = ["KEY_V"] }
+
+[menus.style]
+corners = 0.25
+position = "center"
+scale = 1.0
+text = "#f0f2e8"
+
+[menus.style.background]
+color = "#2a2f2a"
+opacity = 0.92
+
+[menus.style.items]
+color = "#3e463d"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#7fb24a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#9aa596"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#323832"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5a6458"
+
+[[menus]]
+name = "Build"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Road"
+action = { keys = ["KEY_R"] }
+icon = "car"
+
+[[menus.items]]
+label = "Highway"
+action = { keys = ["KEY_LEFTSHIFT", "KEY_R"] }
+
+[[menus.items]]
+label = "Bus stop"
+action = { keys = ["KEY_LEFTALT", "KEY_R"] }
+
+[[menus.items]]
+label = "Rail"
+action = { keys = ["KEY_T"] }
+
+[[menus.items]]
+label = "Train station"
+action = { keys = ["KEY_LEFTALT", "KEY_T"] }
+
+[[menus.items]]
+label = "Subway"
+action = { keys = ["KEY_LEFTSHIFT", "KEY_T"] }
+
+[[menus.items]]
+label = "Power lines"
+action = { keys = ["KEY_L"] }
+
+[[menus.items]]
+label = "Power plant"
+action = { keys = ["KEY_LEFTCTRL", "KEY_E"] }
+
+[[menus.items]]
+label = "Water pipes"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "Water structures"
+action = { keys = ["KEY_LEFTCTRL", "KEY_I"] }
+
+[[menus.items]]
+label = "Police"
+action = { keys = ["KEY_P"] }
+icon = "shield"
+
+[[menus.items]]
+label = "Fire station"
+action = { keys = ["KEY_F"] }
+
+[[menus.items]]
+label = "Hospital"
+action = { keys = ["KEY_H"] }
+icon = "heart"
+
+[[menus.items]]
+label = "School"
+action = { keys = ["KEY_K"] }
+
+[[menus.items]]
+label = "Park"
+action = { keys = ["KEY_J"] }
+
+[[menus.items]]
+label = "Trees"
+action = { keys = ["KEY_U"] }
+
+[menus.style]
+corners = 0.25
+position = "center"
+scale = 1.0
+text = "#f0f2e8"
+
+[menus.style.background]
+color = "#2a2f2a"
+opacity = 0.92
+
+[menus.style.items]
+color = "#3e463d"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#7fb24a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#9aa596"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#323832"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5a6458"
+
+[[menus]]
+name = "Windows"
+
+kind = "list"
+
+[[menus.items]]
+label = "Budget"
+action = { keys = ["KEY_LEFTCTRL", "KEY_B"] }
+icon = "coin"
+
+[[menus.items]]
+label = "Advisors"
+action = { keys = ["KEY_LEFTCTRL", "KEY_A"] }
+
+[[menus.items]]
+label = "Neighbors"
+action = { keys = ["KEY_LEFTCTRL", "KEY_W"] }
+
+[[menus.items]]
+label = "Ordinances"
+action = { keys = ["KEY_LEFTCTRL", "KEY_O"] }
+
+[[menus.items]]
+label = "Data views"
+action = { keys = ["KEY_LEFTCTRL", "KEY_M"] }
+icon = "map"
+
+[[menus.items]]
+label = "Rewards"
+action = { keys = ["KEY_LEFTCTRL", "KEY_R"] }
+
+[[menus.items]]
+label = "Landmarks"
+action = { keys = ["KEY_LEFTCTRL", "KEY_D"] }
+
+[[menus.items]]
+label = "Terrain grid"
+action = { keys = ["KEY_G"] }
+
+[menus.style]
+corners = 0.25
+position = "center"
+scale = 1.0
+text = "#f0f2e8"
+
+[menus.style.background]
+color = "#2a2f2a"
+opacity = 0.92
+
+[menus.style.items]
+color = "#3e463d"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#7fb24a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#9aa596"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#323832"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5a6458"
+
+[keyboard_style]
+corners = 0.25
+position = "bottom_center"
+scale = 1.0
+text = "#f0f2e8"
+
+[keyboard_style.background]
+color = "#2a2f2a"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#3e463d"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#7fb24a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#9aa596"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#323832"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5a6458"
+
+[numpad_style]
+corners = 0.25
+position = "center"
+scale = 1.0
+text = "#f0f2e8"
+
+[numpad_style.background]
+color = "#2a2f2a"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#3e463d"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#7fb24a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#9aa596"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#323832"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5a6458"
+
+[media_style]
+corners = 0.25
+position = "top_right"
+scale = 0.9
+text = "#f0f2e8"
+
+[media_style.background]
+color = "#2a2f2a"
+opacity = 0.92
+
+[media_style.items]
+color = "#3e463d"
+opacity = 0.95
+
+[media_style.selected]
+color = "#7fb24a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#9aa596"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#323832"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5a6458"
+
+[menu_style]
+corners = 0.25
+position = "center"
+scale = 1.0
+text = "#f0f2e8"
+
+[menu_style.background]
+color = "#2a2f2a"
+opacity = 0.92
+
+[menu_style.items]
+color = "#3e463d"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#7fb24a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#9aa596"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#323832"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5a6458"
+
+[sounds.menu]
+step = { kind = "tick", volume = 0.08, pitch = 1.0, length = 0.8 }
+pick = { kind = "chime", volume = 0.18, pitch = 1.0, length = 0.9 }
+open = { kind = "pop", volume = 0.05, pitch = 1.0, length = 1.0 }
+close = { kind = "pop", volume = 0.04, pitch = 0.8, length = 1.0 }
+
+[sounds.numpad]
+step = { kind = "tick", volume = 0.08, pitch = 1.0, length = 0.8 }
+pick = { kind = "chime", volume = 0.18, pitch = 1.0, length = 0.9 }
+
+[sounds.keyboard]
+step = { kind = "tick", volume = 0.08, pitch = 1.0, length = 0.8 }
+pick = { kind = "keys", volume = 0.25, pitch = 1.0, length = 1.0 }
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+info = "playful"

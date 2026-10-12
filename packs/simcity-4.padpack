@@ -1,0 +1,608 @@
+format = 18
+macros = []
+overlay_font = "Inter"
+
+[pack]
+id = "561bc3f4-116e-45c8-9622-be5b4c824e06"
+name = "SimCity 4"
+version = "1.0"
+author = "Padwight"
+description = "SimCity 4 Deluxe (GOG) on an Xbox-style pad. The right stick moves the pointer, the left stick scrolls the view, RT or A left-clicks, LT right-clicks. Hold LB for the zones and RB for transport and services. X demolishes, Y queries, B drops the tool. The d-pad zooms and rotates, L3 pauses, R3 centers. Select lists the modes and the speed; hold it for a Driving mode for U-Drive-It. Start is the options; double tap it to save quickly, hold it for a full save."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "SimCity 4.exe"
+profile = "SimCity 4"
+
+[[rules]]
+kind = "steam_app_id"
+value = "24780"
+profile = "SimCity 4"
+
+[[profiles]]
+name = "SimCity 4"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_B"] }
+North = { keys = ["KEY_SLASH"] }
+LeftBumper = { open_menu = "Zones" }
+RightBumper = { open_menu = "Build" }
+Select = { open_menu = "Modes and speed" }
+Start = { keys = ["KEY_F4"] }
+LeftStick = { keys = ["KEY_LEFTCTRL", "KEY_GRAVE"] }
+RightStick = { keys = ["KEY_SPACE"] }
+DpadUp = { keys = ["KEY_KPPLUS"] }
+DpadDown = { keys = ["KEY_KPMINUS"] }
+DpadLeft = { keys = ["KEY_PAGEUP"] }
+DpadRight = { keys = ["KEY_PAGEDOWN"] }
+
+[profiles.gestures.North.long_press]
+keys = ["KEY_LEFTALT", "KEY_SLASH"]
+
+[profiles.gestures.DpadLeft.long_press]
+keys = ["KEY_END"]
+
+[profiles.gestures.DpadRight.long_press]
+keys = ["KEY_HOME"]
+
+[profiles.gestures.Select.long_press]
+mode = "Driving"
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTCTRL", "KEY_LEFTALT", "KEY_S"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_LEFTCTRL", "KEY_S"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.keys]
+up = "KEY_UP"
+down = "KEY_DOWN"
+left = "KEY_LEFT"
+right = "KEY_RIGHT"
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''
+The right stick moves the mouse pointer; RT or A is a left click and LT a right click. Hold Guide and press X for the on-screen keyboard when the game asks for a name.
+Hold LB for the zones and RB for transport and services, picking with the right stick, then drag with RT to place. Power, water and other buildings are on the game's toolbar.
+B drops the current tool or closes the open panel. Hold the d-pad left or right to turn a building before placing it.
+Tap Select for God, Mayor and My Sim modes, the game speed and going back to the region.
+U-Drive-It missions: start one in the game, then hold Select for Driving mode. The left stick drives, RT and LT are the mouse buttons, A and X are the special actions, Y snaps to roads, and B leaves the vehicle and the mode.
+Double tap Start to save quickly without updating the region view; hold it for a full save.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the view" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (use the tool)" }
+"trigger:Left" = { text = "Right click" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close / drop the tool" }
+"button:West" = { text = "Demolish" }
+"button:North" = { text = "Query" }
+"gesture:button:North:long_press" = { text = "Route query" }
+"button:LeftBumper" = { text = "Hold: zones" }
+"button:RightBumper" = { text = "Hold: transport, services" }
+"button:LeftStick" = { text = "Pause" }
+"button:RightStick" = { text = "Center on the pointer" }
+"button:Select" = { text = "Modes, speed" }
+"gesture:button:Select:long_press" = { text = "Driving mode on / off" }
+"button:Start" = { text = "Options" }
+"gesture:button:Start:double_tap" = { text = "Fast save" }
+"gesture:button:Start:long_press" = { text = "Save with region update" }
+"gesture:button:DpadLeft:long_press" = { text = "Turn building left" }
+"gesture:button:DpadRight:long_press" = { text = "Turn building right" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate the camera"
+
+[[menus]]
+name = "Zones"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Low residential"
+action = { keys = ["KEY_Q"] }
+
+[[menus.items]]
+label = "Medium residential"
+action = { keys = ["KEY_W"] }
+
+[[menus.items]]
+label = "High residential"
+action = { keys = ["KEY_E"] }
+
+[[menus.items]]
+label = "Low commercial"
+action = { keys = ["KEY_A"] }
+icon = "coin"
+
+[[menus.items]]
+label = "Medium commercial"
+action = { keys = ["KEY_S"] }
+icon = "coin"
+
+[[menus.items]]
+label = "High commercial"
+action = { keys = ["KEY_D"] }
+icon = "coin"
+
+[[menus.items]]
+label = "Agriculture"
+action = { keys = ["KEY_Z"] }
+
+[[menus.items]]
+label = "Medium industry"
+action = { keys = ["KEY_X"] }
+
+[[menus.items]]
+label = "High industry"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "Dezone"
+action = { keys = ["KEY_V"] }
+
+[menus.style]
+corners = 0.4
+position = "center"
+scale = 1.0
+text = "#eef4fb"
+
+[menus.style.background]
+color = "#16263a"
+opacity = 0.92
+
+[menus.style.items]
+color = "#24405e"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#5fae3c"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#6d93bb"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#1d3350"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3a5d82"
+
+[menus.style.glow]
+color = "#8fd65e"
+opacity = 0.6
+blur = 18
+
+[[menus]]
+name = "Build"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Road"
+action = { keys = ["KEY_R"] }
+icon = "car"
+
+[[menus.items]]
+label = "Street"
+action = { keys = ["KEY_LEFTALT", "KEY_R"] }
+
+[[menus.items]]
+label = "Avenue"
+action = { keys = ["KEY_LEFTCTRL", "KEY_R"] }
+
+[[menus.items]]
+label = "Highway"
+action = { keys = ["KEY_LEFTSHIFT", "KEY_R"] }
+
+[[menus.items]]
+label = "Police"
+action = { keys = ["KEY_P"] }
+icon = "shield"
+
+[[menus.items]]
+label = "Large police"
+action = { keys = ["KEY_LEFTALT", "KEY_P"] }
+icon = "shield"
+
+[[menus.items]]
+label = "Fire station"
+action = { keys = ["KEY_F"] }
+
+[[menus.items]]
+label = "Large fire station"
+action = { keys = ["KEY_LEFTALT", "KEY_F"] }
+
+[[menus.items]]
+label = "Clinic"
+action = { keys = ["KEY_H"] }
+icon = "heart"
+
+[[menus.items]]
+label = "Hospital"
+action = { keys = ["KEY_LEFTALT", "KEY_H"] }
+icon = "heart"
+
+[[menus.items]]
+label = "Elementary school"
+action = { keys = ["KEY_K"] }
+
+[[menus.items]]
+label = "High school"
+action = { keys = ["KEY_LEFTALT", "KEY_K"] }
+
+[[menus.items]]
+label = "College"
+action = { keys = ["KEY_LEFTSHIFT", "KEY_K"] }
+
+[menus.style]
+corners = 0.4
+position = "center"
+scale = 1.0
+text = "#eef4fb"
+
+[menus.style.background]
+color = "#16263a"
+opacity = 0.92
+
+[menus.style.items]
+color = "#24405e"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#5fae3c"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#6d93bb"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#1d3350"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3a5d82"
+
+[menus.style.glow]
+color = "#8fd65e"
+opacity = 0.6
+blur = 18
+
+[[menus]]
+name = "Modes and speed"
+
+kind = "list"
+
+[[menus.items]]
+label = "God mode"
+action = { keys = ["KEY_F1"] }
+
+[[menus.items]]
+label = "Mayor mode"
+action = { keys = ["KEY_F2"] }
+
+[[menus.items]]
+label = "My Sim mode"
+action = { keys = ["KEY_F3"] }
+
+[[menus.items]]
+label = "Pause"
+action = { keys = ["KEY_LEFTCTRL", "KEY_GRAVE"] }
+
+[[menus.items]]
+label = "Turtle speed"
+action = { keys = ["KEY_LEFTCTRL", "KEY_1"] }
+
+[[menus.items]]
+label = "Rhino speed"
+action = { keys = ["KEY_LEFTCTRL", "KEY_2"] }
+
+[[menus.items]]
+label = "Cheetah speed"
+action = { keys = ["KEY_LEFTCTRL", "KEY_3"] }
+
+[[menus.items]]
+label = "Cycle day and night"
+action = { keys = ["KEY_F7"] }
+
+[[menus.items]]
+label = "Grid"
+action = { keys = ["KEY_G"] }
+
+[[menus.items]]
+label = "Exit to region"
+action = { keys = ["KEY_F8"] }
+icon = "map"
+
+[menus.style]
+corners = 0.4
+position = "center"
+scale = 1.0
+text = "#eef4fb"
+
+[menus.style.background]
+color = "#16263a"
+opacity = 0.92
+
+[menus.style.items]
+color = "#24405e"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#5fae3c"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#6d93bb"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#1d3350"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3a5d82"
+
+[menus.style.glow]
+color = "#8fd65e"
+opacity = 0.6
+blur = 18
+
+[[modes]]
+name = "Driving"
+indicator = "name"
+swallow_unbound = true
+
+[modes.indicator_style]
+position = "top_center"
+scale = 0.7
+text = "#eef4fb"
+
+[modes.indicator_style.background]
+color = "#16263a"
+opacity = 0.8
+
+[modes.indicator_style.items]
+color = "#24405e"
+opacity = 0.95
+
+[modes.indicator_style.selected]
+color = "#5fae3c"
+opacity = 1.0
+
+[modes.buttons]
+South = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_ENTER"] }
+North = { keys = ["KEY_LEFTSHIFT"] }
+East = { multi = [{ keys = ["KEY_ESC"] }, { mode = "Driving" }] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_HOME"] }
+DpadDown = { keys = ["KEY_END"] }
+DpadLeft = { keys = ["KEY_PAGEUP"] }
+DpadRight = { keys = ["KEY_PAGEDOWN"] }
+
+[modes.gestures.Select.long_press]
+mode = "Driving"
+
+[modes.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.3
+
+[modes.left_stick.action.keys]
+up = "KEY_UP"
+down = "KEY_DOWN"
+left = "KEY_LEFT"
+right = "KEY_RIGHT"
+
+[modes.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[modes.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[keyboard_style]
+corners = 0.4
+position = "bottom_center"
+scale = 1.0
+text = "#eef4fb"
+
+[keyboard_style.background]
+color = "#16263a"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#24405e"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#5fae3c"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#6d93bb"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#1d3350"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3a5d82"
+
+[numpad_style]
+corners = 0.4
+position = "center"
+scale = 1.0
+text = "#eef4fb"
+
+[numpad_style.background]
+color = "#16263a"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#24405e"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#5fae3c"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#6d93bb"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#1d3350"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3a5d82"
+
+[media_style]
+corners = 0.4
+position = "top_right"
+scale = 0.9
+text = "#eef4fb"
+
+[media_style.background]
+color = "#16263a"
+opacity = 0.92
+
+[media_style.items]
+color = "#24405e"
+opacity = 0.95
+
+[media_style.selected]
+color = "#5fae3c"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#6d93bb"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#1d3350"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3a5d82"
+
+[menu_style]
+corners = 0.4
+position = "center"
+scale = 1.0
+text = "#eef4fb"
+
+[menu_style.background]
+color = "#16263a"
+opacity = 0.92
+
+[menu_style.items]
+color = "#24405e"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#5fae3c"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#6d93bb"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#1d3350"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3a5d82"
+
+[menu_style.glow]
+color = "#8fd65e"
+opacity = 0.6
+blur = 18
+
+[sounds.menu]
+step = { kind = "tick", volume = 0.08, pitch = 1.1, length = 0.8 }
+pick = { kind = "marimba", volume = 0.25, pitch = 1.0, length = 1.0 }
+open = { kind = "pop", volume = 0.05, pitch = 1.1, length = 1.0 }
+close = { kind = "pop", volume = 0.04, pitch = 0.9, length = 1.0 }
+
+[sounds.numpad]
+step = { kind = "tick", volume = 0.08, pitch = 1.1, length = 0.8 }
+pick = { kind = "marimba", volume = 0.25, pitch = 1.0, length = 1.0 }
+
+[sounds.keyboard]
+step = { kind = "tick", volume = 0.08, pitch = 1.1, length = 0.8 }
+pick = { kind = "keys", volume = 0.25, pitch = 1.0, length = 1.0 }
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+info = "playful"
