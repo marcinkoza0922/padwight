@@ -5,9 +5,9 @@ overlay_font = "Rajdhani"
 [pack]
 id = "61b6cfbf-9932-4091-89e9-6cf0f6fa5a6e"
 name = "StarCraft"
-version = "1.2"
+version = "1.3"
 author = "Padwight"
-description = "StarCraft: Remastered (Battle.net) on an Xbox-style pad, for the default hotkeys. Left stick moves the cursor, RT left-clicks, LT right-clicks, right stick scrolls the map. Face buttons are Attack / Cancel / Stop / Hold, the d-pad is Move / Patrol / Basic and Advanced structures, RB is Shift (queue). Hold LB for control groups 1-8 (also hold RB in there to assign the group instead), R3 opens a radial menu of worker and unit commands. Start is the game menu, Select jumps to the last alert, Guide + X opens the on-screen keyboard (profile names, chat); hold Guide to see every control and the system shortcuts. Holding Select switches to the Menus mode and back (face buttons click and confirm, the d-pad presses the arrows, the right stick scrolls). The \"Gameplay + Gyro\" profile also moves the cursor by tilting the controller, as a fine pointer next to the left stick. Unit-specific keys (siege, cloak, burrow...) aren't mapped; add them to the radial menu if you want them."
+description = "StarCraft: Remastered (Battle.net) on an Xbox-style pad, for the default hotkeys. The right stick moves the cursor, RT left-clicks, LT right-clicks, the left stick scrolls the map. Face buttons are Attack / Cancel / Stop / Hold, the d-pad is Move / Patrol / Basic and Advanced structures, RB is Shift (queue). Hold LB for control groups 1-8 (also hold RB in there to assign the group instead), R3 opens a radial menu of worker and unit commands. Start is the game menu, Select jumps to the last alert, Guide + X opens the on-screen keyboard (profile names, chat); hold Guide to see every control and the system shortcuts. Holding Select switches to the Menus mode and back (face buttons click and confirm, the d-pad presses the arrows, the left stick scrolls). The \"Gameplay + Gyro\" profile also moves the cursor by tilting the controller, as a fine pointer next to the right stick. Unit-specific keys (siege, cloak, burrow...) aren't mapped; add them to the radial menu if you want them."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -21,6 +21,9 @@ combos = []
 combo_window_ms = 120
 tap_window_ms = 250
 long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
 
 [profiles.buttons.South]
 keys = ["KEY_A"]
@@ -68,24 +71,24 @@ keys = ["KEY_B"]
 keys = ["KEY_P"]
 
 [profiles.left_stick]
-deadzone = 0.1
-curve = 1.6
-key_threshold = 0.25
-
-[profiles.left_stick.action.mouse]
-speed = 1500.0
-accel = 0.25
-
-[profiles.right_stick]
 deadzone = 0.2
 curve = 1.0
 key_threshold = 0.45
 
-[profiles.right_stick.action.keys]
+[profiles.left_stick.action.keys]
 up = "KEY_UP"
 down = "KEY_DOWN"
 left = "KEY_LEFT"
 right = "KEY_RIGHT"
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
 
 [profiles.left_trigger.action.button]
 threshold = 0.4
@@ -102,9 +105,6 @@ mouse = "Left"
 [profiles.gestures.Select.long_press]
 mode = "Menus"
 
-[profiles.gestures.Guide.double_tap]
-gamepad = "Guide"
-
 [profiles.gyro]
 mode = "off"
 horizontal = "yaw"
@@ -112,9 +112,17 @@ invert_x = false
 invert_y = false
 activation = "always"
 noise_threshold = 1.0
+[profiles.guide]
+notes = '''The right stick {rs} moves the cursor: {rt} selects (left click), and {lt} moves or targets (right click). The left stick {ls} scrolls the map.
+Hold {lb} for the control groups: the face buttons and the {dpad} recall groups 1 to 8. Hold {rb} as well to assign the selection to the group instead.
+{rb} is Shift: hold it to queue orders or add to the selection. Click {l3} to select every unit of that type on screen (Ctrl + click).
+Click {r3} for the worker and unit commands, aimed with the right stick {rs}. Unit-specific keys (siege, cloak, burrow) aren't mapped: use the card in the game, or {guide} + {west} for the keyboard.
+{select} jumps to the last alert. Hold {select} for the Menus mode (the game's menus and lobbies), and hold it again to come back.
+{start} (F10) is the game menu.'''
+
 [profiles.guide.edits]
-"stick:Left" = { text = "Cursor" }
-"stick:Right" = { text = "Scroll map" }
+"stick:Left" = {text = "Scroll map"}
+"stick:Right" = {text = "Cursor"}
 "trigger:Right" = { text = "Left click (select)" }
 "trigger:Left" = { text = "Right click (move / target)" }
 "button:South" = { text = "Attack" }
@@ -129,7 +137,7 @@ noise_threshold = 1.0
 "button:LeftStick" = { text = "Click: ctrl-click (select same type)" }
 "button:LeftBumper" = { text = "Hold: control groups 1-8" }
 "button:RightStick" = { text = "Worker / unit commands" }
-"button:Select" = { text = "Jump to last alert" }
+"button:Select" = {text = "{icon:bell} Jump to last alert"}
 "button:Start" = { text = "Game menu" }
 "gesture:button:Select:long_press" = { text = "Menus mode on / off" }
 [[profiles.guide.custom]]
@@ -146,6 +154,9 @@ combo_window_ms = 120
 tap_window_ms = 250
 long_press_ms = 500
 
+[profiles.buttons]
+Guide = {mode = "Guide"}
+
 [profiles.buttons.South]
 keys = ["KEY_A"]
 
@@ -192,24 +203,24 @@ keys = ["KEY_B"]
 keys = ["KEY_P"]
 
 [profiles.left_stick]
-deadzone = 0.1
-curve = 1.6
-key_threshold = 0.25
-
-[profiles.left_stick.action.mouse]
-speed = 1500.0
-accel = 0.25
-
-[profiles.right_stick]
 deadzone = 0.2
 curve = 1.0
 key_threshold = 0.45
 
-[profiles.right_stick.action.keys]
+[profiles.left_stick.action.keys]
 up = "KEY_UP"
 down = "KEY_DOWN"
 left = "KEY_LEFT"
 right = "KEY_RIGHT"
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
 
 [profiles.left_trigger.action.button]
 threshold = 0.4
@@ -226,9 +237,6 @@ mouse = "Left"
 [profiles.gestures.Select.long_press]
 mode = "Menus"
 
-[profiles.gestures.Guide.double_tap]
-gamepad = "Guide"
-
 [profiles.gyro]
 activation = "always"
 horizontal = "yaw"
@@ -238,9 +246,17 @@ noise_threshold = 1.0
 
 [profiles.gyro.mode.mouse]
 sensitivity = 20.0
+[profiles.guide]
+notes = '''The right stick {rs} moves the cursor: {rt} selects (left click), and {lt} moves or targets (right click). The left stick {ls} scrolls the map.
+Hold {lb} for the control groups: the face buttons and the {dpad} recall groups 1 to 8. Hold {rb} as well to assign the selection to the group instead.
+{rb} is Shift: hold it to queue orders or add to the selection. Click {l3} to select every unit of that type on screen (Ctrl + click).
+Click {r3} for the worker and unit commands, aimed with the right stick {rs}. Unit-specific keys (siege, cloak, burrow) aren't mapped: use the card in the game, or {guide} + {west} for the keyboard.
+{select} jumps to the last alert. Hold {select} for the Menus mode (the game's menus and lobbies), and hold it again to come back.
+{start} (F10) is the game menu.'''
+
 [profiles.guide.edits]
-"stick:Left" = { text = "Cursor" }
-"stick:Right" = { text = "Scroll map" }
+"stick:Left" = {text = "Scroll map"}
+"stick:Right" = {text = "Cursor"}
 "trigger:Right" = { text = "Left click (select)" }
 "trigger:Left" = { text = "Right click (move / target)" }
 "button:South" = { text = "Attack" }
@@ -255,7 +271,7 @@ sensitivity = 20.0
 "button:LeftStick" = { text = "Click: ctrl-click (select same type)" }
 "button:LeftBumper" = { text = "Hold: control groups 1-8" }
 "button:RightStick" = { text = "Worker / unit commands" }
-"button:Select" = { text = "Jump to last alert" }
+"button:Select" = {text = "{icon:bell} Jump to last alert"}
 "button:Start" = { text = "Game menu" }
 "gesture:button:Select:long_press" = { text = "Menus mode on / off" }
 [[profiles.guide.custom]]
@@ -272,43 +288,43 @@ name = "Commands"
 stick = "Right"
 
 [[menus.items]]
-label = "Gather"
+label = "{icon:crystal} Gather"
 
 [menus.items.action]
 keys = ["KEY_G"]
 
 [[menus.items]]
-label = "Return cargo"
+label = "{icon:box} Return cargo"
 
 [menus.items.action]
 keys = ["KEY_C"]
 
 [[menus.items]]
-label = "Repair"
+label = "{icon:wrench} Repair"
 
 [menus.items.action]
 keys = ["KEY_R"]
 
 [[menus.items]]
-label = "Rally point"
+label = "{icon:rally} Rally point"
 
 [menus.items.action]
 keys = ["KEY_Y"]
 
 [[menus.items]]
-label = "Load"
+label = "{icon:load-in} Load"
 
 [menus.items.action]
 keys = ["KEY_L"]
 
 [[menus.items]]
-label = "Unload all"
+label = "{icon:unload} Unload all"
 
 [menus.items.action]
 keys = ["KEY_D"]
 
 [menus.style]
-corners = 0.5
+corners = 0.3
 position = "center"
 scale = 1.0
 
@@ -324,6 +340,32 @@ opacity = 0.95
 color = "#3fc1b4"
 opacity = 1.0
 
+[menus.style.border]
+width = 1
+color = "#3fc1b4"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#0f2329"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#24525a"
+
+[menus.style.glow]
+color = "#6ff0e0"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+case = "upper"
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#3fc1b4"}
+scanlines = {spacing = 3, opacity = 0.12, color = "#000000", drift = true}
 [[layers]]
 name = "Groups"
 indicator = "name"
@@ -493,11 +535,205 @@ keys = ["KEY_RIGHT"]
 [modes.gestures.Select.long_press]
 mode = "Menus"
 
-[modes.right_stick]
+[modes.left_stick]
 deadzone = 0.15
 curve = 1.0
 key_threshold = 0.5
 
-[modes.right_stick.action.scroll]
+[modes.left_stick.action.scroll]
 speed = 12.0
 
+[keyboard_style]
+corners = 0.3
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0a171b"
+opacity = 0.9
+
+[keyboard_style.items]
+color = "#163238"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#3fc1b4"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#3fc1b4"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#0f2329"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#24525a"
+
+[numpad_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0a171b"
+opacity = 0.9
+
+[numpad_style.items]
+color = "#163238"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#3fc1b4"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#3fc1b4"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#0f2329"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#24525a"
+
+[media_style]
+corners = 0.3
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0a171b"
+opacity = 0.9
+
+[media_style.items]
+color = "#163238"
+opacity = 0.95
+
+[media_style.selected]
+color = "#3fc1b4"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#3fc1b4"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#0f2329"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#24525a"
+
+[media_style.type]
+letter_spacing = 1
+case = "upper"
+
+[menu_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0a171b"
+opacity = 0.9
+
+[menu_style.items]
+color = "#163238"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#3fc1b4"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#3fc1b4"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#0f2329"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#24525a"
+
+[menu_style.glow]
+color = "#6ff0e0"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 1
+case = "upper"
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#3fc1b4"}
+scanlines = {spacing = 3, opacity = 0.12, color = "#000000", drift = true}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "blip", volume = 0.05, pitch = 1.5, length = 0.5}
+pick = {file = "radio", kind = "beep", volume = 0.15}
+open = {kind = "rise", volume = 0.04, pitch = 1.4, length = 0.5}
+close = {kind = "fall", volume = 0.03, pitch = 1.4, length = 0.5}
+
+[sounds.numpad]
+step = {kind = "blip", volume = 0.05, pitch = 1.5, length = 0.5}
+pick = {kind = "beep", volume = 0.15, pitch = 1.1}
+
+[sounds.keyboard]
+step = {kind = "blip", volume = 0.05, pitch = 1.5, length = 0.5}
+pick = {kind = "keys", volume = 0.22}
+
+[rumble.menu]
+step = {strength = 0.11, length_ms = 18}
+pick = {strength = 0.41, length_ms = 35}
+open = {strength = 0.09, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.27, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.27, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.27, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.27, length_ms = 60}
+
+[assets.icons]
+bell = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 16V11a6 6 0 0 1 12 0v5l2 2H4z'/><path d='M10 21h4'/></svg>"
+box = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 7l9-4 9 4v10l-9 4-9-4z'/><path d='M3 7l9 4 9-4M12 11v10'/></svg>"
+crystal = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2l5 6-5 14-5-14z'/><path d='M7 8h10'/></svg>"
+load-in = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4v16h16'/><path d='M20 4L9 15'/><path d='M9 9v6h6'/></svg>"
+rally = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M5 21V4'/><path d='M5 4l12 4-12 4'/><circle cx='17' cy='19' r='2'/></svg>"
+unload = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4v16h16'/><path d='M9 15L20 4'/><path d='M14 4h6v6'/></svg>"
+wrench = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M15 3a5 5 0 0 0-4.6 6.9L3 17.3 6.7 21l7.4-7.4A5 5 0 0 0 21 9l-3 3-3-3 3-3a5 5 0 0 0-3-3z'/></svg>"
+
+[assets.sounds]
+radio = "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"

@@ -13,6 +13,7 @@ mod bridge;
 mod glyphs;
 mod motion_shot;
 mod overlay_shot;
+mod pack_scenes;
 mod pad;
 mod protocol;
 mod server;

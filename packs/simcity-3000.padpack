@@ -1,11 +1,11 @@
-format = 18
+format = 19
 macros = []
 overlay_font = "Cantarell"
 
 [pack]
 id = "a02787b8-2177-48cc-9111-86617957ac2b"
 name = "SimCity 3000 Unlimited"
-version = "1.0"
+version = "1.1"
 author = "Padwight"
 description = "SimCity 3000 Unlimited (GOG) on an Xbox-style pad. The right stick moves the pointer, the left stick scrolls the view, RT or A left-clicks, LT right-clicks. Hold LB for the zones and RB for roads, utilities and services. X bulldozes, B closes windows, hold Y and click to query. The d-pad zooms and rotates (hold left or right for the speed), L3 pauses, R3 centers. Select lists the budget, advisors and data windows. Start is the preferences; double tap it to save."
 made_with = "Xbox controller"
@@ -77,12 +77,11 @@ threshold = 0.3
 action = { mouse = "Left" }
 
 [profiles.guide]
-notes = '''
-The right stick moves the mouse pointer; RT or A is a left click and LT a right click. Hold Guide and press X for the on-screen keyboard when the game asks for a name.
-Hold LB for the zones and RB for roads, utilities and services, picking with the right stick, then drag with RT to place.
-B closes the open window, or picks the centering tool when none is open.
-Hold Y and click to query a tile. Hold the d-pad left or right to slow down or speed up time, and click L3 to pause.
-Double tap Start to save the city.'''
+notes = '''The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
+Hold {lb} for the zones and {rb} for roads, utilities and services, picking with the right stick {rs}, then drag with {rt} to place.
+{east} closes the open window, or picks the centering tool when none is open.
+Hold {north} and click to query a tile. Hold the {dpad} left or right to slow down or speed up time, and click {l3} to pause.
+Double tap {start} to save the city.'''
 
 [profiles.guide.edits]
 "stick:Left" = { text = "Scroll the view" }
@@ -118,57 +117,53 @@ name = "Zones"
 stick = "Right"
 
 [[menus.items]]
-label = "Light residential"
+label = "{icon:home} Light {color:green}residential{/color}"
 action = { keys = ["KEY_Q"] }
 
 [[menus.items]]
-label = "Medium residential"
+label = "{icon:home} Medium {color:green}residential{/color}"
 action = { keys = ["KEY_W"] }
 
 [[menus.items]]
-label = "Dense residential"
+label = "{icon:home} Dense {color:green}residential{/color}"
 action = { keys = ["KEY_E"] }
 
 [[menus.items]]
-label = "Light commercial"
+label = "{icon:shop} Light {color:#5aa0ff}commercial{/color}"
 action = { keys = ["KEY_A"] }
-icon = "coin"
 
 [[menus.items]]
-label = "Medium commercial"
+label = "{icon:shop} Medium {color:#5aa0ff}commercial{/color}"
 action = { keys = ["KEY_S"] }
-icon = "coin"
 
 [[menus.items]]
-label = "Dense commercial"
+label = "{icon:shop} Dense {color:#5aa0ff}commercial{/color}"
 action = { keys = ["KEY_D"] }
-icon = "coin"
 
 [[menus.items]]
-label = "Light industrial"
+label = "{icon:factory} Light {color:yellow}industrial{/color}"
 action = { keys = ["KEY_Z"] }
 
 [[menus.items]]
-label = "Medium industrial"
+label = "{icon:factory} Medium {color:yellow}industrial{/color}"
 action = { keys = ["KEY_X"] }
 
 [[menus.items]]
-label = "Dense industrial"
+label = "{icon:factory} Dense {color:yellow}industrial{/color}"
 action = { keys = ["KEY_C"] }
 
 [[menus.items]]
-label = "Landfill"
+label = "{icon:trash} Landfill"
 action = { keys = ["KEY_Y"] }
 
 [[menus.items]]
-label = "Dezone"
+label = "{icon:eraser} {color:orange}Dezone{/color}"
 action = { keys = ["KEY_V"] }
 
 [menus.style]
 corners = 0.25
 position = "center"
 scale = 1.0
-text = "#f0f2e8"
 
 [menus.style.background]
 color = "#2a2f2a"
@@ -196,6 +191,16 @@ angle = 180
 width = 1
 color = "#5a6458"
 
+[menus.style.glow]
+color = "#a8e070"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#5a6458", opacity = 0.8}
 [[menus]]
 name = "Build"
 
@@ -203,77 +208,73 @@ name = "Build"
 stick = "Right"
 
 [[menus.items]]
-label = "Road"
+label = "{icon:road} Road"
 action = { keys = ["KEY_R"] }
-icon = "car"
 
 [[menus.items]]
-label = "Highway"
+label = "{icon:road} Highway"
 action = { keys = ["KEY_LEFTSHIFT", "KEY_R"] }
 
 [[menus.items]]
-label = "Bus stop"
+label = "{icon:bus} Bus stop"
 action = { keys = ["KEY_LEFTALT", "KEY_R"] }
 
 [[menus.items]]
-label = "Rail"
+label = "{icon:rail} Rail"
 action = { keys = ["KEY_T"] }
 
 [[menus.items]]
-label = "Train station"
+label = "{icon:train} Train station"
 action = { keys = ["KEY_LEFTALT", "KEY_T"] }
 
 [[menus.items]]
-label = "Subway"
+label = "{icon:subway} Subway"
 action = { keys = ["KEY_LEFTSHIFT", "KEY_T"] }
 
 [[menus.items]]
-label = "Power lines"
+label = "{icon:bolt} Power lines"
 action = { keys = ["KEY_L"] }
 
 [[menus.items]]
-label = "Power plant"
+label = "{icon:plant} Power plant"
 action = { keys = ["KEY_LEFTCTRL", "KEY_E"] }
 
 [[menus.items]]
-label = "Water pipes"
+label = "{icon:pipe} Water pipes"
 action = { keys = ["KEY_I"] }
 
 [[menus.items]]
-label = "Water structures"
+label = "{icon:drop} Water structures"
 action = { keys = ["KEY_LEFTCTRL", "KEY_I"] }
 
 [[menus.items]]
-label = "Police"
+label = "{icon:badge} Police"
 action = { keys = ["KEY_P"] }
-icon = "shield"
 
 [[menus.items]]
-label = "Fire station"
+label = "{icon:fire-truck} Fire station"
 action = { keys = ["KEY_F"] }
 
 [[menus.items]]
-label = "Hospital"
+label = "{icon:hospital} Hospital"
 action = { keys = ["KEY_H"] }
-icon = "heart"
 
 [[menus.items]]
-label = "School"
+label = "{icon:school} School"
 action = { keys = ["KEY_K"] }
 
 [[menus.items]]
-label = "Park"
+label = "{icon:tree} Park"
 action = { keys = ["KEY_J"] }
 
 [[menus.items]]
-label = "Trees"
+label = "{icon:forest} Trees"
 action = { keys = ["KEY_U"] }
 
 [menus.style]
 corners = 0.25
 position = "center"
 scale = 1.0
-text = "#f0f2e8"
 
 [menus.style.background]
 color = "#2a2f2a"
@@ -301,50 +302,57 @@ angle = 180
 width = 1
 color = "#5a6458"
 
+[menus.style.glow]
+color = "#a8e070"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#5a6458", opacity = 0.8}
 [[menus]]
 name = "Windows"
 
 kind = "list"
 
 [[menus.items]]
-label = "Budget"
+label = "{icon:money} Budget"
 action = { keys = ["KEY_LEFTCTRL", "KEY_B"] }
-icon = "coin"
 
 [[menus.items]]
-label = "Advisors"
+label = "{icon:advisor} Advisors"
 action = { keys = ["KEY_LEFTCTRL", "KEY_A"] }
 
 [[menus.items]]
-label = "Neighbors"
+label = "{icon:handshake} Neighbors"
 action = { keys = ["KEY_LEFTCTRL", "KEY_W"] }
 
 [[menus.items]]
-label = "Ordinances"
+label = "{icon:scroll} Ordinances"
 action = { keys = ["KEY_LEFTCTRL", "KEY_O"] }
 
 [[menus.items]]
-label = "Data views"
+label = "{icon:chart} Data views"
 action = { keys = ["KEY_LEFTCTRL", "KEY_M"] }
-icon = "map"
 
 [[menus.items]]
-label = "Rewards"
+label = "{icon:star} Rewards"
 action = { keys = ["KEY_LEFTCTRL", "KEY_R"] }
 
 [[menus.items]]
-label = "Landmarks"
+label = "{icon:monument} Landmarks"
 action = { keys = ["KEY_LEFTCTRL", "KEY_D"] }
 
 [[menus.items]]
-label = "Terrain grid"
+label = "{icon:grid} Terrain grid"
 action = { keys = ["KEY_G"] }
 
 [menus.style]
 corners = 0.25
 position = "center"
 scale = 1.0
-text = "#f0f2e8"
 
 [menus.style.background]
 color = "#2a2f2a"
@@ -372,11 +380,20 @@ angle = 180
 width = 1
 color = "#5a6458"
 
+[menus.style.glow]
+color = "#a8e070"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#5a6458", opacity = 0.8}
 [keyboard_style]
 corners = 0.25
 position = "bottom_center"
 scale = 1.0
-text = "#f0f2e8"
 
 [keyboard_style.background]
 color = "#2a2f2a"
@@ -408,7 +425,6 @@ color = "#5a6458"
 corners = 0.25
 position = "center"
 scale = 1.0
-text = "#f0f2e8"
 
 [numpad_style.background]
 color = "#2a2f2a"
@@ -440,7 +456,6 @@ color = "#5a6458"
 corners = 0.25
 position = "top_right"
 scale = 0.9
-text = "#f0f2e8"
 
 [media_style.background]
 color = "#2a2f2a"
@@ -468,11 +483,13 @@ angle = 180
 width = 1
 color = "#5a6458"
 
+[media_style.type]
+letter_spacing = 1
+
 [menu_style]
 corners = 0.25
 position = "center"
 scale = 1.0
-text = "#f0f2e8"
 
 [menu_style.background]
 color = "#2a2f2a"
@@ -500,23 +517,85 @@ angle = 180
 width = 1
 color = "#5a6458"
 
-[sounds.menu]
-step = { kind = "tick", volume = 0.08, pitch = 1.0, length = 0.8 }
-pick = { kind = "chime", volume = 0.18, pitch = 1.0, length = 0.9 }
-open = { kind = "pop", volume = 0.05, pitch = 1.0, length = 1.0 }
-close = { kind = "pop", volume = 0.04, pitch = 0.8, length = 1.0 }
+[menu_style.glow]
+color = "#a8e070"
+opacity = 0.6
+blur = 18
 
-[sounds.numpad]
-step = { kind = "tick", volume = 0.08, pitch = 1.0, length = 0.8 }
-pick = { kind = "chime", volume = 0.18, pitch = 1.0, length = 0.9 }
+[menu_style.type]
+letter_spacing = 1
 
-[sounds.keyboard]
-step = { kind = "tick", volume = 0.08, pitch = 1.0, length = 0.8 }
-pick = { kind = "keys", volume = 0.25, pitch = 1.0, length = 1.0 }
+[menu_style.ornament]
+dividers = {width = 1, color = "#5a6458", opacity = 0.8}
 
 [motion]
 keyboard = "playful"
 numpad = "playful"
 menu = "playful"
 media = "playful"
+offer = "playful"
 info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "pop", volume = 0.18, pitch = 1.1}
+open = {kind = "pop", volume = 0.06, pitch = 1.2}
+close = {kind = "pop", volume = 0.05, pitch = 0.9}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "pop", volume = 0.18, pitch = 1.1}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "keys", volume = 0.22}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.32, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}
+
+[assets.icons]
+advisor = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='7' r='4'/><path d='M5 21v-2a7 7 0 0 1 14 0v2'/><path d='M10 15l2 3 2-3'/></svg>"
+badge = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z'/><path d='M12 9l1 2 2 .3-1.5 1.5.4 2.2-1.9-1-1.9 1 .4-2.2L9 11.3l2-.3z'/></svg>"
+bolt = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M13 2L5 14h6l-1 8 8-12h-6z'/></svg>"
+bus = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M5 4h14v13H5z'/><path d='M5 11h14'/><path d='M7 17v3M17 17v3'/><circle cx='8.5' cy='14' r='0.6'/><circle cx='15.5' cy='14' r='0.6'/></svg>"
+chart = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 20V4M4 20h16'/><path d='M8 16v-4M12 16V8M16 16v-6'/></svg>"
+drop = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z'/></svg>"
+eraser = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 20l-5-5L14 4l7 7-9 9z'/><path d='M8 20h13M6 12l7 7'/></svg>"
+factory = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 20V10l5 3V10l5 3V10l5 3V4h3v16z'/></svg>"
+fire-truck = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 17V9h11v8M13 12h5l3 3v2'/><path d='M2 17h19'/><circle cx='6' cy='18' r='2'/><circle cx='17' cy='18' r='2'/><path d='M4 9l8-4'/></svg>"
+forest = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 3l4 6H9l3 5H2l3-5H3z'/><path d='M7 14v4'/><path d='M17 6l4 6h-2l3 5h-10l3-5h-2z'/><path d='M17 17v4'/></svg>"
+grid = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4h16v16H4zM4 10h16M4 15h16M10 4v16M15 4v16'/></svg>"
+handshake = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 11l4-4 4 2 3-2 3 1 6 4'/><path d='M2 11l7 7a1.5 1.5 0 0 0 2-2l-1-1M11 17a1.5 1.5 0 0 0 2-2M13 15a1.5 1.5 0 0 0 2-2l-3-3M22 11l-5 5'/></svg>"
+home = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 11l9-7 9 7'/><path d='M5 10v10h14V10'/><path d='M10 20v-6h4v6'/></svg>"
+hospital = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 21V5h16v16'/><path d='M12 8v6M9 11h6'/><path d='M10 21v-3h4v3'/></svg>"
+money = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 6h18v12H3z'/><circle cx='12' cy='12' r='3'/><path d='M6 9v6M18 9v6'/></svg>"
+monument = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M10 3h4l1 15H9z'/><path d='M6 21h12M7 18h10'/></svg>"
+pipe = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 9h8a4 4 0 0 1 4 4v8M3 15h5a1 1 0 0 1 1 1v5'/><path d='M3 7v10M13 21h4'/></svg>"
+plant = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 21h18'/><path d='M6 21V11l4 3V11l4 3V8h4v13'/><path d='M15 8V4h2v4'/></svg>"
+rail = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M9 3L6 21M15 3l3 18'/><path d='M8 6h8M7.4 10h9.2M6.8 14h10.4M6.2 18h11.6'/></svg>"
+road = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 3L4 21M16 3l4 18'/><path d='M12 4v3M12 10v4M12 17v3'/></svg>"
+school = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 9l10-5 10 5-10 5z'/><path d='M6 11v5c3 3 9 3 12 0v-5'/><path d='M22 9v6'/></svg>"
+scroll = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 4h11v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2h3'/><path d='M7 4a2 2 0 0 0-2 2v10'/><path d='M10 8h5M10 12h5'/></svg>"
+shop = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 9l1-5h14l1 5'/><path d='M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0'/><path d='M5 11v9h14v-9'/><path d='M10 20v-5h4v5'/></svg>"
+star = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z'/></svg>"
+subway = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 11a8 8 0 0 1 16 0v9H4z'/><path d='M8 20v-7h8v7'/><path d='M4 16h16'/></svg>"
+train = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 3h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z'/><path d='M6 10h12'/><path d='M8 21l2-3M16 21l-2-3'/><circle cx='9' cy='14' r='0.6'/><circle cx='15' cy='14' r='0.6'/></svg>"
+trash = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 7h16M9 7V4h6v3'/><path d='M6 7l1 13h10l1-13'/><path d='M10 11v6M14 11v6'/></svg>"
+tree = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l6 8h-3l4 6H5l4-6H6z'/><path d='M12 17v4'/></svg>"

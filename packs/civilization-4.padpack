@@ -1,11 +1,11 @@
-format = 18
+format = 19
 macros = []
 overlay_font = "Cinzel"
 
 [pack]
 id = "92586738-ac63-4a9c-b4aa-d143b64d5975"
 name = "Civilization IV"
-version = "1.0"
+version = "1.1"
 author = "Padwight"
 description = "Civilization IV: Beyond the Sword (Steam) on an Xbox-style pad. The right stick moves the pointer, the left stick pans the map, RT or A left-clicks, LT right-clicks to move units. X skips a unit, Y fortifies, RB goes to the next unit or ends the turn. Hold LB for unit orders. The d-pad zooms and cycles units (hold: cities). Select lists the advisors and screens. Start is the game menu; double tap it to quick save, hold it to quick load."
 made_with = "Xbox controller"
@@ -103,13 +103,12 @@ threshold = 0.3
 action = { mouse = "Left" }
 
 [profiles.guide]
-notes = '''
-The right stick moves the mouse pointer; RT or A is a left click and LT a right click. Hold Guide and press X for the on-screen keyboard when the game asks for a name.
-LT gives a right click, which moves the selected unit to the tile under the pointer.
-B closes the open screen. Start opens the game menu.
-Hold LB for the unit orders, picking with the right stick.
-RB goes to the next unit that needs orders, and ends the turn when none do.
-Double tap Start to quick save and hold it to quick load. R3 switches to the globe view.'''
+notes = '''The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
+{lt} gives a right click, which moves the selected unit to the tile under the pointer.
+{east} closes the open screen. {start} opens the game menu.
+Hold {lb} for the unit orders, picking with the right stick {rs}.
+{rb} goes to the next unit that needs orders, and ends the turn when none do.
+Double tap {start} to quick save and hold it to quick load. {r3} switches to the globe view.'''
 
 [profiles.guide.edits]
 "stick:Right" = { text = "Pointer" }
@@ -147,62 +146,57 @@ name = "Orders"
 stick = "Right"
 
 [[menus.items]]
-label = "Found city / bombard"
+label = "{icon:settler} Found city / bombard"
 action = { keys = ["KEY_B"] }
 
 [[menus.items]]
-label = "Fortify / sleep"
+label = "{icon:fortify} Fortify / sleep"
 action = { keys = ["KEY_F"] }
-icon = "shield"
 
 [[menus.items]]
-label = "Sentry"
+label = "{icon:sentry} Sentry"
 action = { keys = ["KEY_S"] }
 
 [[menus.items]]
-label = "Heal"
+label = "{icon:heart} {color:green}Heal{/color}"
 action = { keys = ["KEY_H"] }
-icon = "heart"
 
 [[menus.items]]
-label = "Road"
+label = "{icon:road} Road"
 action = { keys = ["KEY_R"] }
 
 [[menus.items]]
-label = "Farm"
+label = "{icon:farm} Farm"
 action = { keys = ["KEY_I"] }
 
 [[menus.items]]
-label = "Mine"
+label = "{icon:pick} Mine"
 action = { keys = ["KEY_M"] }
 
 [[menus.items]]
-label = "Cottage"
+label = "{icon:cottage} Cottage"
 action = { keys = ["KEY_T"] }
 
 [[menus.items]]
-label = "Automate worker"
+label = "{icon:automate} Automate worker"
 action = { keys = ["KEY_A"] }
 
 [[menus.items]]
-label = "Pillage"
+label = "{icon:pillage} {color:orange}Pillage{/color}"
 action = { keys = ["KEY_LEFTSHIFT", "KEY_P"] }
-icon = "axe"
 
 [[menus.items]]
-label = "Cancel orders"
+label = "{icon:cancel} Cancel orders"
 action = { keys = ["KEY_BACKSPACE"] }
 
 [[menus.items]]
-label = "Delete unit"
+label = "{icon:trash} {color:red}Delete unit{/color}"
 action = { keys = ["KEY_DELETE"] }
-icon = "skull"
 
 [menus.style]
 corners = 0.2
 position = "center"
 scale = 1.0
-text = "#f2ead2"
 
 [menus.style.background]
 color = "#0e1a2b"
@@ -239,68 +233,66 @@ blur = 18
 letter_spacing = 1
 
 [menus.style.ornament]
-dividers = { width = 1, color = "#b8913a", opacity = 0.5 }
-
+dividers = {width = 1, color = "#b8913a", opacity = 0.5}
+frame = {kind = "brackets", size = 14, width = 1, color = "#b8913a"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
 [[menus]]
 name = "Screens"
 
 kind = "list"
 
 [[menus.items]]
-label = "Domestic advisor"
+label = "{icon:home} Domestic advisor"
 action = { keys = ["KEY_F1"] }
 
 [[menus.items]]
-label = "Finance"
+label = "{icon:money} Finance"
 action = { keys = ["KEY_F2"] }
-icon = "coin"
 
 [[menus.items]]
-label = "Civics"
+label = "{icon:civics} Civics"
 action = { keys = ["KEY_F3"] }
 
 [[menus.items]]
-label = "Foreign"
+label = "{icon:handshake} Foreign"
 action = { keys = ["KEY_F4"] }
 
 [[menus.items]]
-label = "Military"
+label = "{icon:sword-cross} Military"
 action = { keys = ["KEY_F5"] }
-icon = "sword"
 
 [[menus.items]]
-label = "Technology"
+label = "{icon:tech} Technology"
 action = { keys = ["KEY_F6"] }
 
 [[menus.items]]
-label = "Religion"
+label = "{icon:religion} Religion"
 action = { keys = ["KEY_F7"] }
 
 [[menus.items]]
-label = "Corporations"
+label = "{icon:factory} Corporations"
 action = { keys = ["KEY_LEFTSHIFT", "KEY_F7"] }
 
 [[menus.items]]
-label = "Victory"
+label = "{icon:trophy} Victory"
 action = { keys = ["KEY_F8"] }
 
 [[menus.items]]
-label = "Info"
+label = "{icon:chart} Info"
 action = { keys = ["KEY_F9"] }
 
 [[menus.items]]
-label = "Espionage"
+label = "{icon:spy} Espionage"
 action = { keys = ["KEY_LEFTCTRL", "KEY_E"] }
 
 [[menus.items]]
-label = "Civilopedia"
+label = "{icon:book} Civilopedia"
 action = { keys = ["KEY_F12"] }
 
 [menus.style]
 corners = 0.2
 position = "center"
 scale = 1.0
-text = "#f2ead2"
 
 [menus.style.background]
 color = "#0e1a2b"
@@ -337,13 +329,13 @@ blur = 18
 letter_spacing = 1
 
 [menus.style.ornament]
-dividers = { width = 1, color = "#b8913a", opacity = 0.5 }
-
+dividers = {width = 1, color = "#b8913a", opacity = 0.5}
+frame = {kind = "brackets", size = 14, width = 1, color = "#b8913a"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
 [keyboard_style]
 corners = 0.2
 position = "bottom_center"
 scale = 1.0
-text = "#f2ead2"
 
 [keyboard_style.background]
 color = "#0e1a2b"
@@ -375,7 +367,6 @@ color = "#34507a"
 corners = 0.2
 position = "center"
 scale = 1.0
-text = "#f2ead2"
 
 [numpad_style.background]
 color = "#0e1a2b"
@@ -407,7 +398,6 @@ color = "#34507a"
 corners = 0.2
 position = "top_right"
 scale = 0.9
-text = "#f2ead2"
 
 [media_style.background]
 color = "#0e1a2b"
@@ -435,11 +425,13 @@ angle = 180
 width = 1
 color = "#34507a"
 
+[media_style.type]
+letter_spacing = 1
+
 [menu_style]
 corners = 0.2
 position = "center"
 scale = 1.0
-text = "#f2ead2"
 
 [menu_style.background]
 color = "#0e1a2b"
@@ -476,25 +468,73 @@ blur = 18
 letter_spacing = 1
 
 [menu_style.ornament]
-dividers = { width = 1, color = "#b8913a", opacity = 0.5 }
-
-[sounds.menu]
-step = { kind = "tick", volume = 0.07, pitch = 0.9, length = 0.9 }
-pick = { kind = "glass", volume = 0.18, pitch = 1.0, length = 1.0 }
-open = { kind = "swish", volume = 0.04, pitch = 0.9, length = 1.2 }
-close = { kind = "swish", volume = 0.03, pitch = 0.8, length = 1.2 }
-
-[sounds.numpad]
-step = { kind = "tick", volume = 0.07, pitch = 0.9, length = 0.9 }
-pick = { kind = "glass", volume = 0.18, pitch = 1.0, length = 1.0 }
-
-[sounds.keyboard]
-step = { kind = "tick", volume = 0.07, pitch = 0.9, length = 0.9 }
-pick = { kind = "keys", volume = 0.25, pitch = 1.0, length = 1.0 }
+dividers = {width = 1, color = "#b8913a", opacity = 0.5}
+frame = {kind = "brackets", size = 14, width = 1, color = "#b8913a"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
 
 [motion]
-keyboard = "subtle"
-numpad = "subtle"
-menu = "subtle"
-media = "subtle"
-info = "subtle"
+keyboard = "dreamy"
+numpad = "dreamy"
+menu = "dreamy"
+media = "dreamy"
+offer = "dreamy"
+info = "dreamy"
+log = "dreamy"
+
+[sounds.menu]
+step = {kind = "piano", volume = 0.05, pitch = 1.5, length = 0.5}
+pick = {kind = "chime", volume = 0.14, pitch = 0.9, reverb = 0.2}
+open = {kind = "swish", volume = 0.04, pitch = 0.8}
+close = {kind = "swish", volume = 0.03, pitch = 0.7}
+
+[sounds.numpad]
+step = {kind = "piano", volume = 0.05, pitch = 1.5, length = 0.5}
+pick = {kind = "chime", volume = 0.14, pitch = 0.9, reverb = 0.2}
+
+[sounds.keyboard]
+step = {kind = "piano", volume = 0.05, pitch = 1.5, length = 0.5}
+pick = {kind = "typewriter", volume = 0.18}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.32, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}
+
+[assets.icons]
+automate = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M12 2v3M12 19v3M2 12h3M19 12h3'/><path d='M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2'/></svg>"
+book = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z'/><path d='M4 21V5M8 7h7'/></svg>"
+cancel = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M6 18L18 6'/></svg>"
+chart = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 20V4M4 20h16'/><path d='M8 16v-4M12 16V8M16 16v-6'/></svg>"
+civics = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l9 5H3z'/><path d='M5 8v9M9 8v9M15 8v9M19 8v9'/><path d='M3 20h18'/></svg>"
+cottage = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12l9-8 9 8'/><path d='M5 11v9h14v-9'/><path d='M10 20v-5h4v5'/><path d='M16 7V4h2v5'/></svg>"
+factory = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 20V10l5 3V10l5 3V10l5 3V4h3v16z'/></svg>"
+farm = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 21l4-10h10l4 10z'/><path d='M7 11l-1 10M12 11v10M17 11l1 10'/><path d='M12 3v4M9 5h6'/></svg>"
+fortify = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/><path d='M8 12h8M12 8v8'/></svg>"
+handshake = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 11l4-4 4 2 3-2 3 1 6 4'/><path d='M2 11l7 7a1.5 1.5 0 0 0 2-2l-1-1M11 17a1.5 1.5 0 0 0 2-2M13 15a1.5 1.5 0 0 0 2-2l-3-3M22 11l-5 5'/></svg>"
+home = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 11l9-7 9 7'/><path d='M5 10v10h14V10'/><path d='M10 20v-6h4v6'/></svg>"
+money = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 6h18v12H3z'/><circle cx='12' cy='12' r='3'/><path d='M6 9v6M18 9v6'/></svg>"
+pick = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 21l11-11'/><path d='M6 6c4-3 9-3 13 1-3-1-6-1-9 1l2 2c2-3 2-6 1-9 4 4 4 9 1 13'/></svg>"
+pillage = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-4 2-7 2 1 3 2 4-5z'/><path d='M8 21l8-8'/></svg>"
+religion = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3v18M7 8h10'/></svg>"
+road = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 3L4 21M16 3l4 18'/><path d='M12 4v3M12 10v4M12 17v3'/></svg>"
+sentry = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z'/><circle cx='12' cy='12' r='3'/><path d='M12 2v2M12 20v2'/></svg>"
+settler = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 20l4-13h8l4 13z'/><path d='M12 7V3M9 3h6'/><path d='M8 20v-5h8v5'/></svg>"
+spy = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 10h18'/><path d='M6 10l2-6h8l2 6'/><circle cx='7.5' cy='16' r='3'/><circle cx='16.5' cy='16' r='3'/><path d='M10.5 16h3'/></svg>"
+sword-cross = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4l16 16M20 4L4 20'/><path d='M4 4h3M4 4v3M20 4h-3M20 4v3'/></svg>"
+tech = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M9 18h6M10 21h4'/><path d='M12 3a6 6 0 0 0-4 10.5c1 1 1 2 1 3h6c0-1 0-2 1-3A6 6 0 0 0 12 3z'/></svg>"
+trash = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 7h16M9 7V4h6v3'/><path d='M6 7l1 13h10l1-13'/><path d='M10 11v6M14 11v6'/></svg>"
+trophy = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 4h10v5a5 5 0 0 1-10 0z'/><path d='M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4'/><path d='M12 14v4M8 21h8M9 18h6'/></svg>"

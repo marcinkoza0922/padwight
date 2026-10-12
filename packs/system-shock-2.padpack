@@ -1,11 +1,11 @@
-format = 18
+format = 19
 macros = []
 overlay_font = "VT323"
 
 [pack]
 id = "a5f15405-94d6-4dee-b789-3d2dd4e99ed3"
 name = "System Shock 2"
-version = "1.0"
+version = "1.1"
 author = "Padwight"
 description = "System Shock 2 (GOG, NewDark) on an Xbox-style pad, for the keys GOG ships. A uses, B jumps, RT fires, X reloads (hold: cycle ammo), Y switches to use mode for the inventory and MFDs (hold: med patch), L3 toggles crouch, R3 switches the weapon setting. Hold LB for the quick slots and patches, RB for weapons and the psi amp. D-pad left and right lean, up and down cycle weapons. Select lists the map, logs and messages. Start is the menu; double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
 made_with = "Xbox controller"
@@ -86,15 +86,14 @@ threshold = 0.3
 action = { mouse = "Left" }
 
 [profiles.guide]
-notes = '''
-Y switches between shoot mode and use mode (the inventory and MFDs). In use mode the right stick moves the cursor, RT is a left click and A a right click.
-Keypads, hacking and the research and stats screens all work in use mode: press Y, then point and click.
-Hold LB for the F1 to F12 quick slots and the med and rad patches, aiming with the right stick. Put psi powers and items in the quick slots on the psi and inventory screens (Shift + F-key in the game).
-Hold RB for the weapons and the psi amp. R3 switches the weapon setting, such as the pistol's burst.
-Hold X to cycle ammo, and Y to use a med patch.
-Crouch is a toggle in the game: click L3 to crouch and again to stand.
-Start (Escape) is the menu. Double tap it to quick save and hold it to quick load.
-With gyro aiming, hold LT to pause the gyro while you reposition the controller.'''
+notes = '''{north} switches between shoot mode and use mode (the inventory and MFDs). In use mode the right stick {rs} moves the cursor, {rt} is a left click and {south} a right click.
+Keypads, hacking and the research and stats screens all work in use mode: press {north}, then point and click.
+Hold {lb} for the F1 to F12 quick slots and the med and rad patches, aiming with the right stick {rs}. Put psi powers and items in the quick slots on the psi and inventory screens (Shift + F-key in the game).
+Hold {rb} for the weapons and the psi amp. {r3} switches the weapon setting, such as the pistol's burst.
+Hold {west} to cycle ammo, and {north} to use a med patch.
+Crouch is a toggle in the game: click {l3} to crouch and again to stand.
+{start} (Escape) is the menu. Double tap it to quick save and hold it to quick load.
+With gyro aiming, hold {lt} to pause the gyro while you reposition the controller.'''
 
 [profiles.guide.edits]
 "stick:Left" = { text = "Move" }
@@ -199,15 +198,14 @@ activation = { unless_held = "left_trigger" }
 sensitivity = 30.0
 
 [profiles.guide]
-notes = '''
-Y switches between shoot mode and use mode (the inventory and MFDs). In use mode the right stick moves the cursor, RT is a left click and A a right click.
-Keypads, hacking and the research and stats screens all work in use mode: press Y, then point and click.
-Hold LB for the F1 to F12 quick slots and the med and rad patches, aiming with the right stick. Put psi powers and items in the quick slots on the psi and inventory screens (Shift + F-key in the game).
-Hold RB for the weapons and the psi amp. R3 switches the weapon setting, such as the pistol's burst.
-Hold X to cycle ammo, and Y to use a med patch.
-Crouch is a toggle in the game: click L3 to crouch and again to stand.
-Start (Escape) is the menu. Double tap it to quick save and hold it to quick load.
-With gyro aiming, hold LT to pause the gyro while you reposition the controller.'''
+notes = '''{north} switches between shoot mode and use mode (the inventory and MFDs). In use mode the right stick {rs} moves the cursor, {rt} is a left click and {south} a right click.
+Keypads, hacking and the research and stats screens all work in use mode: press {north}, then point and click.
+Hold {lb} for the F1 to F12 quick slots and the med and rad patches, aiming with the right stick {rs}. Put psi powers and items in the quick slots on the psi and inventory screens (Shift + F-key in the game).
+Hold {rb} for the weapons and the psi amp. {r3} switches the weapon setting, such as the pistol's burst.
+Hold {west} to cycle ammo, and {north} to use a med patch.
+Crouch is a toggle in the game: click {l3} to crouch and again to stand.
+{start} (Escape) is the menu. Double tap it to quick save and hold it to quick load.
+With gyro aiming, hold {lt} to pause the gyro while you reposition the controller.'''
 
 [profiles.guide.edits]
 "stick:Left" = { text = "Move" }
@@ -316,15 +314,14 @@ activation = { unless_held = "left_trigger" }
 sensitivity = 22.0
 
 [profiles.guide]
-notes = '''
-Y switches between shoot mode and use mode (the inventory and MFDs). In use mode the right stick moves the cursor, RT is a left click and A a right click.
-Keypads, hacking and the research and stats screens all work in use mode: press Y, then point and click.
-Hold LB for the F1 to F12 quick slots and the med and rad patches, aiming with the right stick. Put psi powers and items in the quick slots on the psi and inventory screens (Shift + F-key in the game).
-Hold RB for the weapons and the psi amp. R3 switches the weapon setting, such as the pistol's burst.
-Hold X to cycle ammo, and Y to use a med patch.
-Crouch is a toggle in the game: click L3 to crouch and again to stand.
-Start (Escape) is the menu. Double tap it to quick save and hold it to quick load.
-With gyro aiming, hold LT to pause the gyro while you reposition the controller.'''
+notes = '''{north} switches between shoot mode and use mode (the inventory and MFDs). In use mode the right stick {rs} moves the cursor, {rt} is a left click and {south} a right click.
+Keypads, hacking and the research and stats screens all work in use mode: press {north}, then point and click.
+Hold {lb} for the F1 to F12 quick slots and the med and rad patches, aiming with the right stick {rs}. Put psi powers and items in the quick slots on the psi and inventory screens (Shift + F-key in the game).
+Hold {rb} for the weapons and the psi amp. {r3} switches the weapon setting, such as the pistol's burst.
+Hold {west} to cycle ammo, and {north} to use a med patch.
+Crouch is a toggle in the game: click {l3} to crouch and again to stand.
+{start} (Escape) is the menu. Double tap it to quick save and hold it to quick load.
+With gyro aiming, hold {lt} to pause the gyro while you reposition the controller.'''
 
 [profiles.guide.edits]
 "stick:Left" = { text = "Move" }
@@ -360,68 +357,65 @@ name = "Quick use"
 stick = "Right"
 
 [[menus.items]]
-label = "Quick 1 · F1"
+label = "Slot 1 {color:#5f9a90}F1{/color}"
 action = { keys = ["KEY_F1"] }
 
 [[menus.items]]
-label = "Quick 2 · F2"
+label = "Slot 2 {color:#5f9a90}F2{/color}"
 action = { keys = ["KEY_F2"] }
 
 [[menus.items]]
-label = "Quick 3 · F3"
+label = "Slot 3 {color:#5f9a90}F3{/color}"
 action = { keys = ["KEY_F3"] }
 
 [[menus.items]]
-label = "Quick 4 · F4"
+label = "Slot 4 {color:#5f9a90}F4{/color}"
 action = { keys = ["KEY_F4"] }
 
 [[menus.items]]
-label = "Quick 5 · F5"
+label = "Slot 5 {color:#5f9a90}F5{/color}"
 action = { keys = ["KEY_F5"] }
 
 [[menus.items]]
-label = "Quick 6 · F6"
+label = "Slot 6 {color:#5f9a90}F6{/color}"
 action = { keys = ["KEY_F6"] }
 
 [[menus.items]]
-label = "Quick 7 · F7"
+label = "Slot 7 {color:#5f9a90}F7{/color}"
 action = { keys = ["KEY_F7"] }
 
 [[menus.items]]
-label = "Quick 8 · F8"
+label = "Slot 8 {color:#5f9a90}F8{/color}"
 action = { keys = ["KEY_F8"] }
 
 [[menus.items]]
-label = "Quick 9 · F9"
+label = "Slot 9 {color:#5f9a90}F9{/color}"
 action = { keys = ["KEY_F9"] }
 
 [[menus.items]]
-label = "Quick 10 · F10"
+label = "Slot 10 {color:#5f9a90}F10{/color}"
 action = { keys = ["KEY_F10"] }
 
 [[menus.items]]
-label = "Quick 11 · F11"
+label = "Slot 11 {color:#5f9a90}F11{/color}"
 action = { keys = ["KEY_F11"] }
 
 [[menus.items]]
-label = "Quick 12 · F12"
+label = "Slot 12 {color:#5f9a90}F12{/color}"
 action = { keys = ["KEY_F12"] }
 
 [[menus.items]]
-label = "Med patch"
+label = "{icon:syringe} {color:green}Med patch{/color}"
 action = { keys = ["KEY_H"] }
-icon = "heart"
 
 [[menus.items]]
-label = "Rad patch"
+label = "{icon:radiation} {color:yellow}Rad patch{/color}"
 action = { keys = ["KEY_P"] }
-icon = "potion"
 
 [menus.style]
 corners = 0.15
 position = "center"
 scale = 1.0
-text = "#b8f0e0"
 
 [menus.style.background]
 color = "#04100f"
@@ -453,15 +447,16 @@ color = "#17514a"
 color = "#4fffd0"
 opacity = 0.6
 blur = 18
+pulse = true
 
 [menus.style.type]
 case = "upper"
 letter_spacing = 1
 
 [menus.style.ornament]
-scanlines = { spacing = 3, opacity = 0.15, color = "#000000", drift = true }
-frame = { kind = "chamfer", size = 12, width = 1, color = "#2fb59a" }
-
+scanlines = {spacing = 3, opacity = 0.15, color = "#000000", drift = true}
+frame = {kind = "chamfer", size = 12, width = 1, color = "#2fb59a"}
+vignette = {color = "#000000", opacity = 0.45, reach = 20}
 [[menus]]
 name = "Weapons"
 
@@ -469,71 +464,65 @@ name = "Weapons"
 stick = "Right"
 
 [[menus.items]]
-label = "Wrench"
+label = "{icon:wrench} Wrench"
 action = { keys = ["KEY_1"] }
 
 [[menus.items]]
-label = "Pistol"
+label = "{icon:pistol} Pistol"
 action = { keys = ["KEY_2"] }
-icon = "pistol"
 
 [[menus.items]]
-label = "Shotgun"
+label = "{icon:rifle} Shotgun"
 action = { keys = ["KEY_3"] }
-icon = "rifle"
 
 [[menus.items]]
-label = "Assault rifle"
+label = "{icon:rifle} Assault rifle"
 action = { keys = ["KEY_4"] }
-icon = "rifle"
 
 [[menus.items]]
-label = "Laser pistol"
+label = "{icon:pistol} Laser pistol"
 action = { keys = ["KEY_5"] }
-icon = "pistol"
 
 [[menus.items]]
-label = "EMP rifle"
+label = "{icon:chip} EMP rifle"
 action = { keys = ["KEY_6"] }
 
 [[menus.items]]
-label = "Electro shock"
+label = "{icon:bolt} Electro shock"
 action = { keys = ["KEY_7"] }
 
 [[menus.items]]
-label = "Grenade launcher"
+label = "{icon:grenade} Grenades"
 action = { keys = ["KEY_8"] }
 
 [[menus.items]]
-label = "Stasis field"
+label = "{icon:hourglass} Stasis field"
 action = { keys = ["KEY_9"] }
 
 [[menus.items]]
-label = "Fusion cannon"
+label = "{icon:flame} Fusion cannon"
 action = { keys = ["KEY_0"] }
 
 [[menus.items]]
-label = "Crystal shard"
+label = "{icon:crystal} Crystal shard"
 action = { keys = ["KEY_MINUS"] }
-icon = "sword"
 
 [[menus.items]]
-label = "Viral proliferator"
+label = "{icon:cloud} Viral proliferator"
 action = { keys = ["KEY_EQUAL"] }
 
 [[menus.items]]
-label = "Worm launcher"
+label = "{icon:waves} Worm launcher"
 action = { keys = ["KEY_BACKSLASH"] }
 
 [[menus.items]]
-label = "Psi amp"
+label = "{icon:brain} {color:#b07cff}Psi amp{/color}"
 action = { keys = ["KEY_GRAVE"] }
 
 [menus.style]
 corners = 0.15
 position = "center"
 scale = 1.0
-text = "#b8f0e0"
 
 [menus.style.background]
 color = "#04100f"
@@ -565,51 +554,49 @@ color = "#17514a"
 color = "#4fffd0"
 opacity = 0.6
 blur = 18
+pulse = true
 
 [menus.style.type]
 case = "upper"
 letter_spacing = 1
 
 [menus.style.ornament]
-scanlines = { spacing = 3, opacity = 0.15, color = "#000000", drift = true }
-frame = { kind = "chamfer", size = 12, width = 1, color = "#2fb59a" }
-
+scanlines = {spacing = 3, opacity = 0.15, color = "#000000", drift = true}
+frame = {kind = "chamfer", size = 12, width = 1, color = "#2fb59a"}
+vignette = {color = "#000000", opacity = 0.45, reach = 20}
 [[menus]]
 name = "Screens"
 
 kind = "list"
 
 [[menus.items]]
-label = "Map"
+label = "{icon:map} Map"
 action = { keys = ["KEY_M"] }
-icon = "map"
 
 [[menus.items]]
-label = "Play unread log"
+label = "{icon:cassette} Play unread log"
 action = { keys = ["KEY_U"] }
-icon = "pda"
 
 [[menus.items]]
-label = "Message history"
+label = "{icon:messages} Message history"
 action = { keys = ["KEY_L"] }
 
 [[menus.items]]
-label = "Drop nav marker"
+label = "{icon:nav} Drop nav marker"
 action = { keys = ["KEY_N"] }
 
 [[menus.items]]
-label = "Stop email or log"
+label = "{icon:stop} {color:red}Stop{/color} email or log"
 action = { keys = ["KEY_BACKSPACE"] }
 
 [[menus.items]]
-label = "Compass"
+label = "{icon:compass} Compass"
 action = { keys = ["KEY_LEFTALT", "KEY_C"] }
 
 [menus.style]
 corners = 0.15
 position = "center"
 scale = 1.0
-text = "#b8f0e0"
 
 [menus.style.background]
 color = "#04100f"
@@ -641,20 +628,20 @@ color = "#17514a"
 color = "#4fffd0"
 opacity = 0.6
 blur = 18
+pulse = true
 
 [menus.style.type]
 case = "upper"
 letter_spacing = 1
 
 [menus.style.ornament]
-scanlines = { spacing = 3, opacity = 0.15, color = "#000000", drift = true }
-frame = { kind = "chamfer", size = 12, width = 1, color = "#2fb59a" }
-
+scanlines = {spacing = 3, opacity = 0.15, color = "#000000", drift = true}
+frame = {kind = "chamfer", size = 12, width = 1, color = "#2fb59a"}
+vignette = {color = "#000000", opacity = 0.45, reach = 20}
 [keyboard_style]
 corners = 0.15
 position = "bottom_center"
 scale = 1.0
-text = "#b8f0e0"
 
 [keyboard_style.background]
 color = "#04100f"
@@ -686,7 +673,6 @@ color = "#17514a"
 corners = 0.15
 position = "center"
 scale = 1.0
-text = "#b8f0e0"
 
 [numpad_style.background]
 color = "#04100f"
@@ -718,7 +704,6 @@ color = "#17514a"
 corners = 0.15
 position = "top_right"
 scale = 0.9
-text = "#b8f0e0"
 
 [media_style.background]
 color = "#04100f"
@@ -746,11 +731,14 @@ angle = 180
 width = 1
 color = "#17514a"
 
+[media_style.type]
+case = "upper"
+letter_spacing = 1
+
 [menu_style]
 corners = 0.15
 position = "center"
 scale = 1.0
-text = "#b8f0e0"
 
 [menu_style.background]
 color = "#04100f"
@@ -782,32 +770,80 @@ color = "#17514a"
 color = "#4fffd0"
 opacity = 0.6
 blur = 18
+pulse = true
 
 [menu_style.type]
 case = "upper"
 letter_spacing = 1
 
 [menu_style.ornament]
-scanlines = { spacing = 3, opacity = 0.15, color = "#000000", drift = true }
-frame = { kind = "chamfer", size = 12, width = 1, color = "#2fb59a" }
-
-[sounds.menu]
-step = { kind = "blip", volume = 0.06, pitch = 1.3, length = 0.6 }
-pick = { kind = "beep", volume = 0.2, pitch = 0.8, length = 0.9, echo = 0.2 }
-open = { kind = "rise", volume = 0.05, pitch = 1.0, length = 0.7 }
-close = { kind = "fall", volume = 0.04, pitch = 1.0, length = 0.7 }
-
-[sounds.numpad]
-step = { kind = "blip", volume = 0.06, pitch = 1.3, length = 0.6 }
-pick = { kind = "beep", volume = 0.2, pitch = 0.8, length = 0.9, echo = 0.2 }
-
-[sounds.keyboard]
-step = { kind = "blip", volume = 0.06, pitch = 1.3, length = 0.6 }
-pick = { kind = "keys", volume = 0.25, pitch = 1.0, length = 1.0 }
+scanlines = {spacing = 3, opacity = 0.15, color = "#000000", drift = true}
+frame = {kind = "chamfer", size = 12, width = 1, color = "#2fb59a"}
+vignette = {color = "#000000", opacity = 0.45, reach = 20}
 
 [motion]
-keyboard = "brutal"
-numpad = "brutal"
-menu = "brutal"
-media = "brutal"
-info = "brutal"
+keyboard = "retro"
+numpad = "retro"
+menu = "retro"
+media = "retro"
+offer = "retro"
+info = "retro"
+log = "retro"
+
+[sounds.menu]
+step = {kind = "blip", volume = 0.06, pitch = 1.3, length = 0.6}
+pick = {file = "glitch", kind = "beep", volume = 0.18}
+open = {kind = "rise", volume = 0.05, length = 0.7}
+close = {kind = "fall", volume = 0.04, length = 0.7}
+
+[sounds.numpad]
+step = {kind = "blip", volume = 0.06, pitch = 1.3, length = 0.6}
+pick = {kind = "beep", volume = 0.2, pitch = 0.8, length = 0.9, echo = 0.2}
+
+[sounds.keyboard]
+step = {kind = "blip", volume = 0.06, pitch = 1.3, length = 0.6}
+pick = {kind = "keys", volume = 0.25}
+
+[sounds.guide]
+pick = {file = "glitch", kind = "beep", volume = 0.15}
+
+[rumble.menu]
+step = {strength = 0.13, length_ms = 18}
+pick = {strength = 0.5, length_ms = 35}
+open = {strength = 0.11, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.09, length_ms = 14}
+pick = {strength = 0.33, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.09, length_ms = 14}
+pick = {strength = 0.33, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.33, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.33, length_ms = 60}
+
+[assets.icons]
+bolt = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M13 2L5 14h6l-1 8 8-12h-6z'/></svg>"
+brain = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 5a3 3 0 0 0-5.5-1.5A3 3 0 0 0 4 8a3 3 0 0 0 0 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1z'/><path d='M12 5a3 3 0 0 1 5.5-1.5A3 3 0 0 1 20 8a3 3 0 0 1 0 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1z'/><path d='M12 5v14'/></svg>"
+cassette = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 5h18v14H3z'/><circle cx='8.5' cy='11' r='2'/><circle cx='15.5' cy='11' r='2'/><path d='M8.5 9h7M7 19l2-4h6l2 4'/></svg>"
+chip = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 7h10v10H7z'/><path d='M10 10h4v4h-4z'/><path d='M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4'/></svg>"
+cloud = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z'/></svg>"
+compass = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M15.5 8.5l-2 5-5 2 2-5z'/></svg>"
+crystal = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2l5 6-5 14-5-14z'/><path d='M7 8h10'/></svg>"
+flame = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-4 2-7 2 1 3 2 4-5z'/></svg>"
+grenade = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='14' r='7'/><path d='M9 7V5h4v2'/><path d='M13 5c2-2 5-1 6 1'/><path d='M8 14h6M11 11v6'/></svg>"
+hourglass = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M6 3h12M6 21h12'/><path d='M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9'/></svg>"
+messages = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4h16v12H8l-4 4z'/><path d='M8 8h8M8 12h5'/></svg>"
+nav = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2l7 19-7-4-7 4z'/></svg>"
+radiation = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='1.5'/><path d='M12 9.5L9 4.3a8 8 0 0 0-5 8.7h6M14.5 12h6a8 8 0 0 0-5-8.7l-3 5.2M10.7 14.2l-3 5.2a8 8 0 0 0 8.6 0l-3-5.2'/></svg>"
+stop = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 3h8l5 5v8l-5 5H8l-5-5V8z'/></svg>"
+syringe = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M17 3l4 4M19 5l-9 9-4-4 9-9'/><path d='M8 12l-3 3v4h4l3-3'/><path d='M3 21l2-2'/></svg>"
+waves = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 9c2-2 4 2 6 0s4 2 6 0 4 2 6 0'/><path d='M4 15c2-2 4 2 6 0s4 2 6 0 4 2 6 0'/></svg>"
+wrench = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M15 3a5 5 0 0 0-4.6 6.9L3 17.3 6.7 21l7.4-7.4A5 5 0 0 0 21 9l-3 3-3-3 3-3a5 5 0 0 0-3-3z'/></svg>"
+
+[assets.sounds]
+glitch = "UklGRmAwAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YTwwAACZOZk5mTmZOZk5mTmZOZk5mTmZOZk5mTlnxmfGZ8ZnxmfGZ8ZnxmfGZ8ZnxmfGZ8aZOZk5mTmZOZk5mTmZOZk5mTmZOZk5mTlnxmfGZ8ZnxmfGZ8ZnxmfGZ8ZnxmfGZ8Znxpk5mTmZOZk5mTmZOZk5mTmZOZk5mTmZOWfGZ8ZnxmfGZ8ZnxmfGZ8ZnxmfGZ8Znxpk5mTmZOZk5mTmZOZk5mTmZOZk5mTmZOZk5Z8ZnxmfGZ8ZnxmfGZ8ZnxmfGZ8ZnxmfGmTmZOZk5mTmZOZk5mTmZOZk5mTmZOZk5Z8ZnxmfGZ8ZnxmfGZ8ZnxmfGZ8ZnxmfGZ8aZOZk5mTmZOZk5mTmZOZk5mTmZOZk5mTlnxmfGZ8ZnxmfGZ8ZnxmfGZ8ZnxmfGZ8Znxpk5mTmZOZk5mTmZOZk5mTmZOZk5mTmZOWfGZ8ZnxmfGZ8ZnxmfGZ8ZnxmfGZ8ZnxmfGmTmZOZk5mTmZOZk5mTmZOZk5mTmZOZk5Z8ZnxmfGZ8ZnxmfGZ8ZnxmfGZ8ZnxmfGZ8aZOZk5mTmZOZk5mTmZOZk5mTmZOZk5mTlnxmfGZ8ZnxmfGZ8ZnxmfGZ8ZnxmfGZ8Znxpk5mTmZOZk5mTmZOZk5mTn/L/8v/y//LwHQAdAB0AHQAdAB0AHQAdAB0AHQAdAB0AHQ/y//L/8v/y//L/8v/y//L/8v/y//L/8vAdAB0AHQAdAB0AHQAdAB0AHQAdAB0AHQAdD/L/8v/y//L/8v/y//L/8v/y//L/8v/y//LwHQAdAB0AHQAdAB0AHQAdAB0AHQAdAB0P8v/y//L/8v/y//L/8v/y//L/8v/y//L/8vAdAB0AHQAdAB0AHQAdAB0AHQAdAB0AHQAdD/L/8v/y//L/8v/y//L/8v/y//L/8v/y8B0AHQAdAB0AHQAdAB0AHQAdAB0AHQAdAB0P8v/y//L/8v/y//L/8v/y//L/8v/y//L/8vAdAB0AHQAdAB0AHQAdAB0AHQAdAB0AHQAdD/L/8v/y//L/8v/y//L/8v/y//L/8v/y8B0AHQAdAB0AHQAdAB0AHQAdAB0AHQAdAB0P8v/y//L/8v/y//L/8v/y//L/8v/y//L/8vAdAB0AHQAdAB0AHQAdAB0AHQAdAB0AHQAdD/L/8v/y//L/8v/y//L/8v/y//L/8v/y//LwHQAdAB0AHQAdAB0AHQAdAB0AHQAdAB0AHQ/y//L/8v/y//L/8v/y//L/8v/y//L/8vAdAB0AHQAdAB0AHQAdAB0AHQAdAB0AHQAdD/L/8v/y//L/8v/y//L/8v/y//L/8v/y//LwHQAdAB0AHQAdAB0AHQAdAB0AHQAdAB0AHQ/y//L/8v/y//L/8v/y//L/8v/y//L/8v/y8B0AHQAdAB0AHQAdAB0AHQAdAB0AHQAdAB0P8vAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACa2ZrZmtma2ZrZmtlmJmYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJmYmmtma2ZrZmtma2ZrZmtma2ZrZmtma2ZrZmtma2WYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJmYmZiaa2ZrZmtma2ZrZmtma2ZrZmtma2ZrZmtma2ZrZZiZmJmYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJprZmtma2ZrZmtma2ZrZmtma2ZrZmtma2ZrZmtlmJmYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJmYmmtma2ZrZmtma2ZrZmtma2ZrZmtma2ZrZmtma2WYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJmYmZiaa2ZrZmtma2ZrZmtma2ZrZmtma2ZrZmtma2ZrZZiZmJmYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJprZmtma2ZrZmtma2ZrZmtma2ZrZmtma2ZrZmtlmJmYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJmYmmtma2ZrZmtma2ZrZmtma2ZrZmtma2ZrZmtma2WYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJprZmtma2ZrZmtma2ZrZmtma2ZrZmtma2ZrZmtlmJmYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJmYmmtma2ZrZmtma2ZrZmtma2ZrZmtma2ZrZmtma2WYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJprZmtma2ZrZmtma2ZrZmtma2ZrZmtma2ZrZmtlmJmYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJmYmmtma2ZrZmtma2ZrZmtma2ZrZmtma2ZrZmtma2ZrZZiZmJmYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJprZmtma2ZrZmtma2ZrZmtma2ZrZmtma2ZrZmtma2WYmZiZmJmYmZiZmJmYmZiZmJmYmZiZmJmYmZiaa2ZrZmtma2ZrZmtma2ZrZNOM04zTjNOM04zTjzBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwcNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM048wczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHDTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM048wczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBw04zTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOPMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBw04zTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjzBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwcNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjzBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwcNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM048wczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHDTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM048wczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHDTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM048wczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHDTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM048wczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHDTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM048wczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHDTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM048wczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHDTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM048wczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwcNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjzBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwcNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjzBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBw04zTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOPMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBw04zTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM048wczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHDTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjzBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwcNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOPMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBw04zTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM048wczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwcNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjzBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBw04zTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM048wczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwcNOM04zTjNOM04zTjNOM04zTjNOM04zTjNOM04zTjzBzMHMwczBzMHMwczBzMHMwczBzMHMwczBzMHMwczBw04zTjAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADN7M3szezN7M3szezN7M3szezN7M3szezN7M3sMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzE83szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szewzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxPN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3sMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTzezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7DMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxPN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szewzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxPN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3sMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTzezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3sMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzE83szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7DMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzE83szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7DMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzE83szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7DMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzE83szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7DMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzE83szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3sMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTzezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3sMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxPN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szewzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzE83szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7DMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTzezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3sMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxPN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7DMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTzezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szewzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzE83szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3sMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxPN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7DMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTzezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7DMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTzezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szewzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTzezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szewzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTzezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7DMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTzezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7DMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxPN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3sMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzE83szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szewzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTMxMzEzMTzezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3szezN7M3sMxMzEzMTMxOZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCWf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJkJmQmZCZkJmQmZCZkJmQln9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9pkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQln9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2mQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCWf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/aZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJZ/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9pkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCWf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/aZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQln9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/aZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQln9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/aZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQln9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/aZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQln9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9pkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCWf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2mQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQln9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9pkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJZ/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9pkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJZ/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9pkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJZ/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9pkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQln9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/aZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJZ/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9pkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCWf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9pkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCWf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9pkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJZ/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2mQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQln9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9pkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJZ/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9pkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZ/Zn9mf2mQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJZ/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2mQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQln9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9mf2Z/Zn9pkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQmZCZkJmQln9mf2Z/Zn9mf2dfaD9pH2n/at9rv2yfbX9uX28/YB9w/3Hvcs9zr3SPdW92T3cveA9473nPeq97j3xvfU9+L38Pf+9wz45gfYB8oHvAeuB58HkQeDB3UHZwdZB0sHPQcvByEHEwcFB/cG6QbbBs0GvwaxBqMGlQaHBnkGawZcBk4GQAYyBiQGFgYIBgb6FPoi+jD6PvpM+lr6aPp2+oT6kvqg+q76vPrK+tj65/r1+gP7Efsf+y37O/tJ+1f7Zftz+4H7j/ud+6v7ufvH+9X74/vx+wEE8wPlA9cDyAO6A6wDngOQA4IDdANmA1gDSgM8Ay4DIAMSAwQD9gLoAtoCzAK+ArACogKUAoUCdwJpAlsCTQI/AjECIwIVAvn9B/4V/iP+Mf4//k3+W/5p/nf+hf6T/qH+r/6+/sz+2v7o/vb+BP8S/yD/Lv88/0r/WP9m/3T/gv+Q/57/rP+6/8j/1v/k//L/AAA="

@@ -1,11 +1,11 @@
-format = 18
+format = 19
 macros = []
 overlay_font = "Inter"
 
 [pack]
 id = "561bc3f4-116e-45c8-9622-be5b4c824e06"
 name = "SimCity 4"
-version = "1.0"
+version = "1.1"
 author = "Padwight"
 description = "SimCity 4 Deluxe (GOG) on an Xbox-style pad. The right stick moves the pointer, the left stick scrolls the view, RT or A left-clicks, LT right-clicks. Hold LB for the zones and RB for transport and services. X demolishes, Y queries, B drops the tool. The d-pad zooms and rotates, L3 pauses, R3 centers. Select lists the modes and the speed; hold it for a Driving mode for U-Drive-It. Start is the options; double tap it to save quickly, hold it for a full save."
 made_with = "Xbox controller"
@@ -91,13 +91,12 @@ threshold = 0.3
 action = { mouse = "Left" }
 
 [profiles.guide]
-notes = '''
-The right stick moves the mouse pointer; RT or A is a left click and LT a right click. Hold Guide and press X for the on-screen keyboard when the game asks for a name.
-Hold LB for the zones and RB for transport and services, picking with the right stick, then drag with RT to place. Power, water and other buildings are on the game's toolbar.
-B drops the current tool or closes the open panel. Hold the d-pad left or right to turn a building before placing it.
-Tap Select for God, Mayor and My Sim modes, the game speed and going back to the region.
-U-Drive-It missions: start one in the game, then hold Select for Driving mode. The left stick drives, RT and LT are the mouse buttons, A and X are the special actions, Y snaps to roads, and B leaves the vehicle and the mode.
-Double tap Start to save quickly without updating the region view; hold it for a full save.'''
+notes = '''The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
+Hold {lb} for the zones and {rb} for transport and services, picking with the right stick {rs}, then drag with {rt} to place. Power, water and other buildings are on the game's toolbar.
+{east} drops the current tool or closes the open panel. Hold the {dpad} left or right to turn a building before placing it.
+Tap {select} for God, Mayor and My Sim modes, the game speed and going back to the region.
+U-Drive-It missions: start one in the game, then hold {select} for Driving mode. The left stick drives, {rt} and {lt} are the mouse buttons, {south} and {west} are the special actions, {north} snaps to roads, and {east} leaves the vehicle and the mode.
+Double tap {start} to save quickly without updating the region view; hold it for a full save.'''
 
 [profiles.guide.edits]
 "stick:Left" = { text = "Scroll the view" }
@@ -136,53 +135,49 @@ name = "Zones"
 stick = "Right"
 
 [[menus.items]]
-label = "Low residential"
+label = "{icon:home} Low {color:green}residential{/color}"
 action = { keys = ["KEY_Q"] }
 
 [[menus.items]]
-label = "Medium residential"
+label = "{icon:home} Medium {color:green}residential{/color}"
 action = { keys = ["KEY_W"] }
 
 [[menus.items]]
-label = "High residential"
+label = "{icon:home} High {color:green}residential{/color}"
 action = { keys = ["KEY_E"] }
 
 [[menus.items]]
-label = "Low commercial"
+label = "{icon:shop} Low {color:#5aa0ff}commercial{/color}"
 action = { keys = ["KEY_A"] }
-icon = "coin"
 
 [[menus.items]]
-label = "Medium commercial"
+label = "{icon:shop} Medium {color:#5aa0ff}commercial{/color}"
 action = { keys = ["KEY_S"] }
-icon = "coin"
 
 [[menus.items]]
-label = "High commercial"
+label = "{icon:shop} High {color:#5aa0ff}commercial{/color}"
 action = { keys = ["KEY_D"] }
-icon = "coin"
 
 [[menus.items]]
-label = "Agriculture"
+label = "{icon:wheat} {color:yellow}Agriculture{/color}"
 action = { keys = ["KEY_Z"] }
 
 [[menus.items]]
-label = "Medium industry"
+label = "{icon:factory} Medium {color:yellow}industry{/color}"
 action = { keys = ["KEY_X"] }
 
 [[menus.items]]
-label = "High industry"
+label = "{icon:factory} High {color:yellow}industry{/color}"
 action = { keys = ["KEY_C"] }
 
 [[menus.items]]
-label = "Dezone"
+label = "{icon:eraser} {color:orange}Dezone{/color}"
 action = { keys = ["KEY_V"] }
 
 [menus.style]
 corners = 0.4
 position = "center"
 scale = 1.0
-text = "#eef4fb"
 
 [menus.style.background]
 color = "#16263a"
@@ -215,6 +210,11 @@ color = "#8fd65e"
 opacity = 0.6
 blur = 18
 
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#3a5d82", opacity = 0.8}
 [[menus]]
 name = "Build"
 
@@ -222,67 +222,61 @@ name = "Build"
 stick = "Right"
 
 [[menus.items]]
-label = "Road"
+label = "{icon:road} Road"
 action = { keys = ["KEY_R"] }
-icon = "car"
 
 [[menus.items]]
-label = "Street"
+label = "{icon:road} Street"
 action = { keys = ["KEY_LEFTALT", "KEY_R"] }
 
 [[menus.items]]
-label = "Avenue"
+label = "{icon:road} Avenue"
 action = { keys = ["KEY_LEFTCTRL", "KEY_R"] }
 
 [[menus.items]]
-label = "Highway"
+label = "{icon:road} Highway"
 action = { keys = ["KEY_LEFTSHIFT", "KEY_R"] }
 
 [[menus.items]]
-label = "Police"
+label = "{icon:badge} Police"
 action = { keys = ["KEY_P"] }
-icon = "shield"
 
 [[menus.items]]
-label = "Large police"
+label = "{icon:badge} Large police"
 action = { keys = ["KEY_LEFTALT", "KEY_P"] }
-icon = "shield"
 
 [[menus.items]]
-label = "Fire station"
+label = "{icon:fire-truck} Fire station"
 action = { keys = ["KEY_F"] }
 
 [[menus.items]]
-label = "Large fire station"
+label = "{icon:fire-truck} Large fire station"
 action = { keys = ["KEY_LEFTALT", "KEY_F"] }
 
 [[menus.items]]
-label = "Clinic"
+label = "{icon:cross} Clinic"
 action = { keys = ["KEY_H"] }
-icon = "heart"
 
 [[menus.items]]
-label = "Hospital"
+label = "{icon:hospital} Hospital"
 action = { keys = ["KEY_LEFTALT", "KEY_H"] }
-icon = "heart"
 
 [[menus.items]]
-label = "Elementary school"
+label = "{icon:school} Elementary school"
 action = { keys = ["KEY_K"] }
 
 [[menus.items]]
-label = "High school"
+label = "{icon:school} High school"
 action = { keys = ["KEY_LEFTALT", "KEY_K"] }
 
 [[menus.items]]
-label = "College"
+label = "{icon:school} College"
 action = { keys = ["KEY_LEFTSHIFT", "KEY_K"] }
 
 [menus.style]
 corners = 0.4
 position = "center"
 scale = 1.0
-text = "#eef4fb"
 
 [menus.style.background]
 color = "#16263a"
@@ -315,57 +309,60 @@ color = "#8fd65e"
 opacity = 0.6
 blur = 18
 
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#3a5d82", opacity = 0.8}
 [[menus]]
 name = "Modes and speed"
 
 kind = "list"
 
 [[menus.items]]
-label = "God mode"
+label = "{icon:god} God mode"
 action = { keys = ["KEY_F1"] }
 
 [[menus.items]]
-label = "Mayor mode"
+label = "{icon:mayor} Mayor mode"
 action = { keys = ["KEY_F2"] }
 
 [[menus.items]]
-label = "My Sim mode"
+label = "{icon:person} My Sim mode"
 action = { keys = ["KEY_F3"] }
 
 [[menus.items]]
-label = "Pause"
+label = "{icon:pause} Pause"
 action = { keys = ["KEY_LEFTCTRL", "KEY_GRAVE"] }
 
 [[menus.items]]
-label = "Turtle speed"
+label = "{icon:speed1} Turtle speed"
 action = { keys = ["KEY_LEFTCTRL", "KEY_1"] }
 
 [[menus.items]]
-label = "Rhino speed"
+label = "{icon:speed2} Rhino speed"
 action = { keys = ["KEY_LEFTCTRL", "KEY_2"] }
 
 [[menus.items]]
-label = "Cheetah speed"
+label = "{icon:speed3} Cheetah speed"
 action = { keys = ["KEY_LEFTCTRL", "KEY_3"] }
 
 [[menus.items]]
-label = "Cycle day and night"
+label = "{icon:moon} Cycle day and night"
 action = { keys = ["KEY_F7"] }
 
 [[menus.items]]
-label = "Grid"
+label = "{icon:grid} Grid"
 action = { keys = ["KEY_G"] }
 
 [[menus.items]]
-label = "Exit to region"
+label = "{icon:region} Exit to region"
 action = { keys = ["KEY_F8"] }
-icon = "map"
 
 [menus.style]
 corners = 0.4
 position = "center"
 scale = 1.0
-text = "#eef4fb"
 
 [menus.style.background]
 color = "#16263a"
@@ -398,6 +395,11 @@ color = "#8fd65e"
 opacity = 0.6
 blur = 18
 
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#3a5d82", opacity = 0.8}
 [[modes]]
 name = "Driving"
 indicator = "name"
@@ -457,7 +459,6 @@ action = { mouse = "Right" }
 corners = 0.4
 position = "bottom_center"
 scale = 1.0
-text = "#eef4fb"
 
 [keyboard_style.background]
 color = "#16263a"
@@ -489,7 +490,6 @@ color = "#3a5d82"
 corners = 0.4
 position = "center"
 scale = 1.0
-text = "#eef4fb"
 
 [numpad_style.background]
 color = "#16263a"
@@ -521,7 +521,6 @@ color = "#3a5d82"
 corners = 0.4
 position = "top_right"
 scale = 0.9
-text = "#eef4fb"
 
 [media_style.background]
 color = "#16263a"
@@ -549,11 +548,13 @@ angle = 180
 width = 1
 color = "#3a5d82"
 
+[media_style.type]
+letter_spacing = 1
+
 [menu_style]
 corners = 0.4
 position = "center"
 scale = 1.0
-text = "#eef4fb"
 
 [menu_style.background]
 color = "#16263a"
@@ -586,23 +587,73 @@ color = "#8fd65e"
 opacity = 0.6
 blur = 18
 
-[sounds.menu]
-step = { kind = "tick", volume = 0.08, pitch = 1.1, length = 0.8 }
-pick = { kind = "marimba", volume = 0.25, pitch = 1.0, length = 1.0 }
-open = { kind = "pop", volume = 0.05, pitch = 1.1, length = 1.0 }
-close = { kind = "pop", volume = 0.04, pitch = 0.9, length = 1.0 }
+[menu_style.type]
+letter_spacing = 1
 
-[sounds.numpad]
-step = { kind = "tick", volume = 0.08, pitch = 1.1, length = 0.8 }
-pick = { kind = "marimba", volume = 0.25, pitch = 1.0, length = 1.0 }
-
-[sounds.keyboard]
-step = { kind = "tick", volume = 0.08, pitch = 1.1, length = 0.8 }
-pick = { kind = "keys", volume = 0.25, pitch = 1.0, length = 1.0 }
+[menu_style.ornament]
+dividers = {width = 1, color = "#3a5d82", opacity = 0.8}
 
 [motion]
-keyboard = "playful"
-numpad = "playful"
-menu = "playful"
-media = "playful"
-info = "playful"
+keyboard = "stagger"
+numpad = "stagger"
+menu = "stagger"
+media = "stagger"
+offer = "stagger"
+info = "stagger"
+log = "stagger"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 1.4}
+pick = {kind = "chime", volume = 0.12, pitch = 1.2}
+open = {kind = "pop", volume = 0.06, pitch = 1.2}
+close = {kind = "pop", volume = 0.05, pitch = 0.9}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 1.4}
+pick = {kind = "chime", volume = 0.12, pitch = 1.2}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 1.4}
+pick = {kind = "keys", volume = 0.22}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.32, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}
+
+[assets.icons]
+badge = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z'/><path d='M12 9l1 2 2 .3-1.5 1.5.4 2.2-1.9-1-1.9 1 .4-2.2L9 11.3l2-.3z'/></svg>"
+cross = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M9 3h6v6h6v6h-6v6H9v-6H3V9h6z'/></svg>"
+eraser = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 20l-5-5L14 4l7 7-9 9z'/><path d='M8 20h13M6 12l7 7'/></svg>"
+factory = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 20V10l5 3V10l5 3V10l5 3V4h3v16z'/></svg>"
+fire-truck = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 17V9h11v8M13 12h5l3 3v2'/><path d='M2 17h19'/><circle cx='6' cy='18' r='2'/><circle cx='17' cy='18' r='2'/><path d='M4 9l8-4'/></svg>"
+god = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='4'/><path d='M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2'/></svg>"
+grid = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4h16v16H4zM4 10h16M4 15h16M10 4v16M15 4v16'/></svg>"
+home = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 11l9-7 9 7'/><path d='M5 10v10h14V10'/><path d='M10 20v-6h4v6'/></svg>"
+hospital = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 21V5h16v16'/><path d='M12 8v6M9 11h6'/><path d='M10 21v-3h4v3'/></svg>"
+mayor = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 21v-6h10v6'/><circle cx='12' cy='9' r='4'/><path d='M6 5h12l-1 2H7z'/></svg>"
+moon = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M20 14A8 8 0 1 1 10 4a6 6 0 0 0 10 10z'/></svg>"
+pause = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 5v14M16 5v14'/></svg>"
+person = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='7' r='4'/><path d='M4 21a8 8 0 0 1 16 0'/></svg>"
+region = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z'/><path d='M9 3v15M15 6v15'/></svg>"
+road = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 3L4 21M16 3l4 18'/><path d='M12 4v3M12 10v4M12 17v3'/></svg>"
+school = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 9l10-5 10 5-10 5z'/><path d='M6 11v5c3 3 9 3 12 0v-5'/><path d='M22 9v6'/></svg>"
+shop = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 9l1-5h14l1 5'/><path d='M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0'/><path d='M5 11v9h14v-9'/><path d='M10 20v-5h4v5'/></svg>"
+speed1 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 6l8 6-8 6z'/></svg>"
+speed2 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 6l7 6-7 6zM12 6l7 6-7 6z'/></svg>"
+speed3 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 6l6 6-6 6zM9 6l6 6-6 6zM16 6l6 6-6 6z'/></svg>"
+wheat = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21V8'/><path d='M12 8c-3 0-4-3-4-5 3 0 4 3 4 5zM12 8c3 0 4-3 4-5-3 0-4 3-4 5zM12 13c-3 0-4-3-4-5 3 0 4 3 4 5zM12 13c3 0 4-3 4-5-3 0-4 3-4 5zM12 18c-3 0-4-3-4-5 3 0 4 3 4 5zM12 18c3 0 4-3 4-5-3 0-4 3-4 5z'/></svg>"

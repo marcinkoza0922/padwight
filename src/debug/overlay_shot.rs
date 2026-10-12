@@ -24,7 +24,8 @@ Drawing the overlay without a display (no compositor or overlay window needed):
   overlay <what>... [options]     draw each to <out>/<name>.png and print the paths
      <what> is a scene, `all` (every scene), `glyphs` (every glyph the overlays draw),
      `live` (what a running daemon's overlay shows: the first frame with something
-     in it, within --wait), or a frame saved as JSON
+     in it, within --wait), a frame saved as JSON, or a .padpack (each of its menus,
+     its keyboard and numpad, and its info overlays, in its own styles and icons)
   options: --out <dir> (default screenshots/overlay)   --size <w>x<h> (default 1920x1080)
            --scale <n> (default 1)   --background <#rrggbb> (default #3c4650)
            --wait <ms> (default 3000, for live)   --json (print the frame instead of drawing)
@@ -59,16 +60,18 @@ pub fn run(args: &[&str]) -> Result<()> {
             println!("{}", path.display());
             continue;
         }
-        let (name, frame) = load(&target, options.wait)?;
-        if options.json {
-            println!("{}", serde_json::to_string_pretty(&frame)?);
-            continue;
+        let frames = if target.ends_with(".padpack") { super::pack_scenes::frames(Path::new(&target))? } else { vec![load(&target, options.wait)?] };
+        for (name, frame) in frames {
+            if options.json {
+                println!("{}", serde_json::to_string_pretty(&frame)?);
+                continue;
+            }
+            let [r, g, b] = options.background;
+            let image = overlay::snapshot(frame, options.size, options.scale, Color::from_rgb8(r, g, b))?;
+            let path = options.out.join(format!("{name}.png"));
+            image.save(&path)?;
+            println!("{}", path.display());
         }
-        let [r, g, b] = options.background;
-        let image = overlay::snapshot(frame, options.size, options.scale, Color::from_rgb8(r, g, b))?;
-        let path = options.out.join(format!("{name}.png"));
-        image.save(&path)?;
-        println!("{}", path.display());
     }
     Ok(())
 }
