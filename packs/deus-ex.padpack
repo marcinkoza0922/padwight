@@ -5,9 +5,9 @@ overlay_font = "Rajdhani"
 [pack]
 id = "744efa38-f5b0-4a49-bc95-126809ef6fc2"
 name = "Deus Ex"
-version = "1.1"
+version = "2.0"
 author = "Padwight"
-description = "The original Deus Ex (2000) on an Xbox-style pad, for the game's default keys. Belt slots and augmentations on radial menus (hold LB / RB, aim with the right stick), crouch toggle on L3, quick save and load on Start. Hold Guide to see every control and the system shortcuts (Guide + Y opens the numpad for keypads, Guide + X the keyboard)."
+description = "The original Deus Ex (2000) on an Xbox-style pad, for the game's default keys. A uses, B jumps, RT fires, X reloads (hold: change ammo), L3 toggles crouch, R3 toggles the scope (hold: laser sight). Hold LB for the belt and RB for augmentations, aiming with the right stick; double tap LB to holster. D-pad left and right lean, up and down cycle the belt. Select opens a list of the inventory and goals. Start is the menu and backs out of every screen; double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -28,46 +28,36 @@ tap_window_ms = 250
 long_press_ms = 500
 
 [profiles.buttons]
-DpadUp = "disabled"
+South = { mouse = "Right" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_SEMICOLON"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Belt" }
+RightBumper = { open_menu = "Augmentations" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_X"] } } }
+RightStick = { keys = ["KEY_LEFTBRACE"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
 
-[profiles.buttons.South]
-keys = ["KEY_SPACE"]
+[profiles.gestures.West.long_press]
+keys = ["KEY_APOSTROPHE"]
 
-[profiles.buttons.East]
-mouse = "Right"
-
-[profiles.buttons.North]
-keys = ["KEY_F1"]
-
-[profiles.buttons.West]
-keys = ["KEY_SEMICOLON"]
-
-[profiles.buttons.LeftBumper]
-open_menu = "Belt"
-
-[profiles.buttons.RightBumper]
-open_menu = "Augmentations"
-
-[profiles.buttons.Select]
-keys = ["KEY_F2"]
-
-[profiles.buttons.Start]
-keys = ["KEY_ESC"]
-
-[profiles.buttons.LeftStick.toggle]
-keys = ["KEY_X"]
-
-[profiles.buttons.RightStick]
+[profiles.gestures.RightStick.long_press]
 keys = ["KEY_RIGHTBRACE"]
 
-[profiles.buttons.DpadDown]
-keys = ["KEY_TAB"]
+[profiles.gestures.LeftBumper.double_tap]
+keys = ["KEY_BACKSPACE"]
 
-[profiles.buttons.DpadLeft]
-keys = ["KEY_Q"]
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_KPPLUS"]
 
-[profiles.buttons.DpadRight]
-keys = ["KEY_E"]
+[profiles.gestures.Start.long_press]
+keys = ["KEY_KPSLASH"]
 
 [profiles.left_stick]
 deadzone = 0.12
@@ -79,23 +69,59 @@ up = "KEY_W"
 down = "KEY_S"
 left = "KEY_A"
 right = "KEY_D"
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 2.2
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 2600.0
+accel = 0.5
+accel_ramp_ms = 350
+y_scale = 0.75
+
+[profiles.left_trigger]
+action = "disabled"
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+
+[profiles.guide]
+notes = '''
+Start (Escape) backs out of every in-game screen: the inventory, goals, computers, keypads, robot recharging and repair bots.
+On those screens the right stick moves the cursor, RT is a left click and A a right click.
+Tap Select for a list of the inventory and goals screens, and pick one with A. Select or B closes the list without picking.
+Keypads: hold Guide and press Y for the numpad. Computer logins: Guide + X opens the keyboard.
+A light push of the left stick walks, a full push runs.
+The scope is a toggle in the game: click R3 to look through it and again to lower it.
+Belt slot 0 is always the nanokey ring. Double tap LB, or pick Holster on the belt, to put the item in hand away.
+Augmentation hotkeys follow the order you installed them, so the slots on RB match the F-keys on the augmentation screen.'''
+
 [profiles.guide.edits]
-"stick:Left" = { text = "Move (half push: walk)" }
+"stick:Left" = { text = "Move (light push: walk)" }
 "stick:Right" = { text = "Look" }
 "trigger:Right" = { text = "Fire" }
-"trigger:Left" = { text = "Scope" }
-"button:South" = { text = "Jump" }
-"button:East" = { text = "Use" }
-"button:West" = { text = "Reload · hold: change ammo" }
-"button:North" = { text = "Inventory" }
+"button:South" = { text = "Use / pick up" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Change ammo" }
+"button:North" = { text = "Drop / throw" }
 "button:LeftBumper" = { text = "Hold: belt" }
 "gesture:button:LeftBumper:double_tap" = { text = "Holster" }
 "button:RightBumper" = { text = "Hold: augmentations" }
-"button:LeftStick" = { text = "Click: crouch (toggle)" }
-"button:RightStick" = { text = "Click: laser sight" }
-"button:DpadDown" = { text = "Drop / throw" }
-"button:Select" = { text = "Goals" }
-"button:Start" = { text = "Menu" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Scope (toggle)" }
+"gesture:button:RightStick:long_press" = { text = "Laser sight" }
+"button:Select" = { text = "Inventory, goals" }
+"button:Start" = { text = "Menu / back out" }
 "gesture:button:Start:double_tap" = { text = "Quick save" }
 "gesture:button:Start:long_press" = { text = "Quick load" }
 
@@ -103,59 +129,9 @@ right = "KEY_D"
 inputs = ["button:DpadLeft", "button:DpadRight"]
 text = "Lean"
 
-
-
-[[profiles.left_stick.zones]]
-min = 0.0
-max = 0.6
-
-[profiles.left_stick.zones.action]
-keys = ["KEY_LEFTSHIFT"]
-
-[profiles.right_stick]
-deadzone = 0.1
-curve = 1.8
-key_threshold = 0.5
-
-[profiles.right_stick.action.mouse]
-speed = 1600.0
-accel = 0.2
-
-[profiles.left_trigger.action.button]
-threshold = 0.4
-
-[profiles.left_trigger.action.button.action]
-keys = ["KEY_LEFTBRACE"]
-
-[profiles.right_trigger.action.button]
-threshold = 0.3
-
-[profiles.right_trigger.action.button.action]
-mouse = "Left"
-
-[profiles.gestures.West.long_press]
-keys = ["KEY_APOSTROPHE"]
-
-[profiles.gestures.LeftBumper.double_tap]
-keys = ["KEY_BACKSPACE"]
-
-[profiles.gestures.Start.double_tap]
-keys = ["KEY_KPPLUS"]
-
-[profiles.gestures.Start.long_press]
-keys = ["KEY_KPSLASH"]
-
-[profiles.gestures.Guide.double_tap]
-gamepad = "Guide"
-
-[profiles.gyro]
-mode = "off"
-horizontal = "yaw"
-invert_x = false
-invert_y = false
-activation = "always"
-noise_threshold = 1.0
-
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next belt item"
 
 [[profiles]]
 name = "Deus Ex + Gyro"
@@ -165,46 +141,36 @@ tap_window_ms = 250
 long_press_ms = 500
 
 [profiles.buttons]
-DpadUp = "disabled"
+South = { mouse = "Right" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_SEMICOLON"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Belt" }
+RightBumper = { open_menu = "Augmentations" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_X"] } } }
+RightStick = { keys = ["KEY_LEFTBRACE"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
 
-[profiles.buttons.South]
-keys = ["KEY_SPACE"]
+[profiles.gestures.West.long_press]
+keys = ["KEY_APOSTROPHE"]
 
-[profiles.buttons.East]
-mouse = "Right"
-
-[profiles.buttons.North]
-keys = ["KEY_F1"]
-
-[profiles.buttons.West]
-keys = ["KEY_SEMICOLON"]
-
-[profiles.buttons.LeftBumper]
-open_menu = "Belt"
-
-[profiles.buttons.RightBumper]
-open_menu = "Augmentations"
-
-[profiles.buttons.Select]
-keys = ["KEY_F2"]
-
-[profiles.buttons.Start]
-keys = ["KEY_ESC"]
-
-[profiles.buttons.LeftStick.toggle]
-keys = ["KEY_X"]
-
-[profiles.buttons.RightStick]
+[profiles.gestures.RightStick.long_press]
 keys = ["KEY_RIGHTBRACE"]
 
-[profiles.buttons.DpadDown]
-keys = ["KEY_TAB"]
+[profiles.gestures.LeftBumper.double_tap]
+keys = ["KEY_BACKSPACE"]
 
-[profiles.buttons.DpadLeft]
-keys = ["KEY_Q"]
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_KPPLUS"]
 
-[profiles.buttons.DpadRight]
-keys = ["KEY_E"]
+[profiles.gestures.Start.long_press]
+keys = ["KEY_KPSLASH"]
 
 [profiles.left_stick]
 deadzone = 0.12
@@ -216,23 +182,68 @@ up = "KEY_W"
 down = "KEY_S"
 left = "KEY_A"
 right = "KEY_D"
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 2.2
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 2600.0
+accel = 0.5
+accel_ramp_ms = 350
+y_scale = 0.75
+
+[profiles.left_trigger]
+action = "disabled"
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+activation = { unless_held = "left_trigger" }
+
+[profiles.gyro.mode.mouse]
+sensitivity = 30.0
+
+[profiles.guide]
+notes = '''
+Start (Escape) backs out of every in-game screen: the inventory, goals, computers, keypads, robot recharging and repair bots.
+On those screens the right stick moves the cursor, RT is a left click and A a right click.
+Tap Select for a list of the inventory and goals screens, and pick one with A. Select or B closes the list without picking.
+Keypads: hold Guide and press Y for the numpad. Computer logins: Guide + X opens the keyboard.
+A light push of the left stick walks, a full push runs.
+The scope is a toggle in the game: click R3 to look through it and again to lower it.
+Belt slot 0 is always the nanokey ring. Double tap LB, or pick Holster on the belt, to put the item in hand away.
+Augmentation hotkeys follow the order you installed them, so the slots on RB match the F-keys on the augmentation screen.'''
+
 [profiles.guide.edits]
-"stick:Left" = { text = "Move (half push: walk)" }
+"stick:Left" = { text = "Move (light push: walk)" }
 "stick:Right" = { text = "Look" }
 "trigger:Right" = { text = "Fire" }
-"trigger:Left" = { text = "Scope" }
-"button:South" = { text = "Jump" }
-"button:East" = { text = "Use" }
-"button:West" = { text = "Reload · hold: change ammo" }
-"button:North" = { text = "Inventory" }
+"button:South" = { text = "Use / pick up" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Change ammo" }
+"button:North" = { text = "Drop / throw" }
 "button:LeftBumper" = { text = "Hold: belt" }
 "gesture:button:LeftBumper:double_tap" = { text = "Holster" }
 "button:RightBumper" = { text = "Hold: augmentations" }
-"button:LeftStick" = { text = "Click: crouch (toggle)" }
-"button:RightStick" = { text = "Click: laser sight" }
-"button:DpadDown" = { text = "Drop / throw" }
-"button:Select" = { text = "Goals" }
-"button:Start" = { text = "Menu" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Scope (toggle)" }
+"gesture:button:RightStick:long_press" = { text = "Laser sight" }
+"button:Select" = { text = "Inventory, goals" }
+"button:Start" = { text = "Menu / back out" }
 "gesture:button:Start:double_tap" = { text = "Quick save" }
 "gesture:button:Start:long_press" = { text = "Quick load" }
 
@@ -240,62 +251,9 @@ right = "KEY_D"
 inputs = ["button:DpadLeft", "button:DpadRight"]
 text = "Lean"
 
-
-
-[[profiles.left_stick.zones]]
-min = 0.0
-max = 0.6
-
-[profiles.left_stick.zones.action]
-keys = ["KEY_LEFTSHIFT"]
-
-[profiles.right_stick]
-deadzone = 0.1
-curve = 1.8
-key_threshold = 0.5
-
-[profiles.right_stick.action.mouse]
-speed = 1600.0
-accel = 0.2
-
-[profiles.left_trigger.action.button]
-threshold = 0.4
-
-[profiles.left_trigger.action.button.action]
-keys = ["KEY_LEFTBRACE"]
-
-[profiles.right_trigger.action.button]
-threshold = 0.3
-
-[profiles.right_trigger.action.button.action]
-mouse = "Left"
-
-[profiles.gestures.West.long_press]
-keys = ["KEY_APOSTROPHE"]
-
-[profiles.gestures.LeftBumper.double_tap]
-keys = ["KEY_BACKSPACE"]
-
-[profiles.gestures.Start.double_tap]
-keys = ["KEY_KPPLUS"]
-
-[profiles.gestures.Start.long_press]
-keys = ["KEY_KPSLASH"]
-
-[profiles.gestures.Guide.double_tap]
-gamepad = "Guide"
-
-[profiles.gyro]
-horizontal = "yaw"
-invert_x = false
-invert_y = false
-noise_threshold = 1.0
-
-[profiles.gyro.mode.mouse]
-sensitivity = 15.0
-
-[profiles.gyro.activation.unless_held]
-button = "DpadUp"
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next belt item"
 
 [[profiles]]
 name = "Deus Ex + Flick stick"
@@ -306,46 +264,36 @@ long_press_ms = 500
 requires = ["gyro"]
 
 [profiles.buttons]
-DpadUp = "disabled"
+South = { mouse = "Right" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_SEMICOLON"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Belt" }
+RightBumper = { open_menu = "Augmentations" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_X"] } } }
+RightStick = { keys = ["KEY_LEFTBRACE"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
 
-[profiles.buttons.South]
-keys = ["KEY_SPACE"]
+[profiles.gestures.West.long_press]
+keys = ["KEY_APOSTROPHE"]
 
-[profiles.buttons.East]
-mouse = "Right"
-
-[profiles.buttons.North]
-keys = ["KEY_F1"]
-
-[profiles.buttons.West]
-keys = ["KEY_SEMICOLON"]
-
-[profiles.buttons.LeftBumper]
-open_menu = "Belt"
-
-[profiles.buttons.RightBumper]
-open_menu = "Augmentations"
-
-[profiles.buttons.Select]
-keys = ["KEY_F2"]
-
-[profiles.buttons.Start]
-keys = ["KEY_ESC"]
-
-[profiles.buttons.LeftStick.toggle]
-keys = ["KEY_X"]
-
-[profiles.buttons.RightStick]
+[profiles.gestures.RightStick.long_press]
 keys = ["KEY_RIGHTBRACE"]
 
-[profiles.buttons.DpadDown]
-keys = ["KEY_TAB"]
+[profiles.gestures.LeftBumper.double_tap]
+keys = ["KEY_BACKSPACE"]
 
-[profiles.buttons.DpadLeft]
-keys = ["KEY_Q"]
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_KPPLUS"]
 
-[profiles.buttons.DpadRight]
-keys = ["KEY_E"]
+[profiles.gestures.Start.long_press]
+keys = ["KEY_KPSLASH"]
 
 [profiles.left_stick]
 deadzone = 0.12
@@ -357,38 +305,11 @@ up = "KEY_W"
 down = "KEY_S"
 left = "KEY_A"
 right = "KEY_D"
-[profiles.guide.edits]
-"stick:Left" = { text = "Move (half push: walk)" }
-"stick:Right" = { text = "Look" }
-"trigger:Right" = { text = "Fire" }
-"trigger:Left" = { text = "Scope" }
-"button:South" = { text = "Jump" }
-"button:East" = { text = "Use" }
-"button:West" = { text = "Reload · hold: change ammo" }
-"button:North" = { text = "Inventory" }
-"button:LeftBumper" = { text = "Hold: belt" }
-"gesture:button:LeftBumper:double_tap" = { text = "Holster" }
-"button:RightBumper" = { text = "Hold: augmentations" }
-"button:LeftStick" = { text = "Click: crouch (toggle)" }
-"button:RightStick" = { text = "Click: laser sight" }
-"button:DpadDown" = { text = "Drop / throw" }
-"button:Select" = { text = "Goals" }
-"button:Start" = { text = "Menu" }
-"gesture:button:Start:double_tap" = { text = "Quick save" }
-"gesture:button:Start:long_press" = { text = "Quick load" }
-
-[[profiles.guide.merged]]
-inputs = ["button:DpadLeft", "button:DpadRight"]
-text = "Lean"
-
-
 
 [[profiles.left_stick.zones]]
 min = 0.0
 max = 0.6
-
-[profiles.left_stick.zones.action]
-keys = ["KEY_LEFTSHIFT"]
+action = { keys = ["KEY_LEFTSHIFT"] }
 
 [profiles.right_stick]
 deadzone = 0.1
@@ -404,44 +325,62 @@ forward_deadzone = 0.0
 vertical = "off"
 vertical_speed = 1200.0
 
-[profiles.left_trigger.action.button]
-threshold = 0.4
-
-[profiles.left_trigger.action.button.action]
-keys = ["KEY_LEFTBRACE"]
+[profiles.left_trigger]
+action = "disabled"
 
 [profiles.right_trigger.action.button]
 threshold = 0.3
-
-[profiles.right_trigger.action.button.action]
-mouse = "Left"
-
-[profiles.gestures.West.long_press]
-keys = ["KEY_APOSTROPHE"]
-
-[profiles.gestures.LeftBumper.double_tap]
-keys = ["KEY_BACKSPACE"]
-
-[profiles.gestures.Start.double_tap]
-keys = ["KEY_KPPLUS"]
-
-[profiles.gestures.Start.long_press]
-keys = ["KEY_KPSLASH"]
-
-[profiles.gestures.Guide.double_tap]
-gamepad = "Guide"
+action = { mouse = "Left" }
 
 [profiles.gyro]
-horizontal = "yaw"
+horizontal = "player_space"
 invert_x = false
 invert_y = false
 noise_threshold = 1.0
+activation = { unless_held = "left_trigger" }
 
 [profiles.gyro.mode.mouse]
 sensitivity = 22.0
 
-[profiles.gyro.activation.unless_held]
-button = "DpadUp"
+[profiles.guide]
+notes = '''
+Start (Escape) backs out of every in-game screen: the inventory, goals, computers, keypads, robot recharging and repair bots.
+On those screens the right stick moves the cursor, RT is a left click and A a right click.
+Tap Select for a list of the inventory and goals screens, and pick one with A. Select or B closes the list without picking.
+Keypads: hold Guide and press Y for the numpad. Computer logins: Guide + X opens the keyboard.
+A light push of the left stick walks, a full push runs.
+The scope is a toggle in the game: click R3 to look through it and again to lower it.
+Belt slot 0 is always the nanokey ring. Double tap LB, or pick Holster on the belt, to put the item in hand away.
+Augmentation hotkeys follow the order you installed them, so the slots on RB match the F-keys on the augmentation screen.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move (light push: walk)" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"button:South" = { text = "Use / pick up" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Change ammo" }
+"button:North" = { text = "Drop / throw" }
+"button:LeftBumper" = { text = "Hold: belt" }
+"gesture:button:LeftBumper:double_tap" = { text = "Holster" }
+"button:RightBumper" = { text = "Hold: augmentations" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Scope (toggle)" }
+"gesture:button:RightStick:long_press" = { text = "Laser sight" }
+"button:Select" = { text = "Inventory, goals" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "Quick save" }
+"gesture:button:Start:long_press" = { text = "Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next belt item"
+
 [[menus]]
 name = "Belt"
 
@@ -450,80 +389,80 @@ stick = "Right"
 
 [[menus.items]]
 label = "Belt 1"
-
-[menus.items.action]
-keys = ["KEY_1"]
+action = { keys = ["KEY_1"] }
 
 [[menus.items]]
 label = "Belt 2"
-
-[menus.items.action]
-keys = ["KEY_2"]
+action = { keys = ["KEY_2"] }
 
 [[menus.items]]
 label = "Belt 3"
-
-[menus.items.action]
-keys = ["KEY_3"]
+action = { keys = ["KEY_3"] }
 
 [[menus.items]]
 label = "Belt 4"
-
-[menus.items.action]
-keys = ["KEY_4"]
+action = { keys = ["KEY_4"] }
 
 [[menus.items]]
 label = "Belt 5"
-
-[menus.items.action]
-keys = ["KEY_5"]
+action = { keys = ["KEY_5"] }
 
 [[menus.items]]
 label = "Belt 6"
-
-[menus.items.action]
-keys = ["KEY_6"]
+action = { keys = ["KEY_6"] }
 
 [[menus.items]]
 label = "Belt 7"
-
-[menus.items.action]
-keys = ["KEY_7"]
+action = { keys = ["KEY_7"] }
 
 [[menus.items]]
 label = "Belt 8"
-
-[menus.items.action]
-keys = ["KEY_8"]
+action = { keys = ["KEY_8"] }
 
 [[menus.items]]
 label = "Belt 9"
-
-[menus.items.action]
-keys = ["KEY_9"]
+action = { keys = ["KEY_9"] }
 
 [[menus.items]]
-label = "Belt 0"
+label = "Nanokey ring"
+action = { keys = ["KEY_0"] }
 
-[menus.items.action]
-keys = ["KEY_0"]
+[[menus.items]]
+label = "Holster"
+action = { keys = ["KEY_BACKSPACE"] }
 
 [menus.style]
-corners = 0.1
+corners = 0.0
 position = "center"
 scale = 1.0
+text = "#d8e3ec"
 
 [menus.style.background]
-color = "#07142b"
-opacity = 0.92
+color = "#0a0f15"
+opacity = 0.9
 
 [menus.style.items]
-color = "#17375f"
+color = "#1a2532"
 opacity = 0.95
 
 [menus.style.selected]
-color = "#3d8bff"
+color = "#6c8fb3"
 opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8aa2b8"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#18232f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#41566b"
+
 
 [[menus]]
 name = "Augmentations"
@@ -532,78 +471,269 @@ name = "Augmentations"
 stick = "Right"
 
 [[menus.items]]
-label = "Aug F3"
-
-[menus.items.action]
-keys = ["KEY_F3"]
+label = "Aug 1 · F3"
+action = { keys = ["KEY_F3"] }
 
 [[menus.items]]
-label = "Aug F4"
-
-[menus.items.action]
-keys = ["KEY_F4"]
+label = "Aug 2 · F4"
+action = { keys = ["KEY_F4"] }
 
 [[menus.items]]
-label = "Aug F5"
-
-[menus.items.action]
-keys = ["KEY_F5"]
+label = "Aug 3 · F5"
+action = { keys = ["KEY_F5"] }
 
 [[menus.items]]
-label = "Aug F6"
-
-[menus.items.action]
-keys = ["KEY_F6"]
+label = "Aug 4 · F6"
+action = { keys = ["KEY_F6"] }
 
 [[menus.items]]
-label = "Aug F7"
-
-[menus.items.action]
-keys = ["KEY_F7"]
+label = "Aug 5 · F7"
+action = { keys = ["KEY_F7"] }
 
 [[menus.items]]
-label = "Aug F8"
-
-[menus.items.action]
-keys = ["KEY_F8"]
+label = "Aug 6 · F8"
+action = { keys = ["KEY_F8"] }
 
 [[menus.items]]
-label = "Aug F9"
-
-[menus.items.action]
-keys = ["KEY_F9"]
+label = "Aug 7 · F9"
+action = { keys = ["KEY_F9"] }
 
 [[menus.items]]
-label = "Aug F10"
-
-[menus.items.action]
-keys = ["KEY_F10"]
+label = "Aug 8 · F10"
+action = { keys = ["KEY_F10"] }
 
 [[menus.items]]
-label = "Aug F11"
-
-[menus.items.action]
-keys = ["KEY_F11"]
+label = "Aug 9 · F11"
+action = { keys = ["KEY_F11"] }
 
 [[menus.items]]
-label = "Aug F12"
-
-[menus.items.action]
-keys = ["KEY_F12"]
+label = "Aug 10 · F12"
+action = { keys = ["KEY_F12"] }
 
 [menus.style]
-corners = 0.1
+corners = 0.0
 position = "center"
 scale = 1.0
+text = "#d8e3ec"
 
 [menus.style.background]
-color = "#07142b"
-opacity = 0.92
+color = "#0a0f15"
+opacity = 0.9
 
 [menus.style.items]
-color = "#17375f"
+color = "#1a2532"
 opacity = 0.95
 
 [menus.style.selected]
-color = "#3d8bff"
+color = "#6c8fb3"
 opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8aa2b8"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#18232f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#41566b"
+
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "Inventory"
+action = { keys = ["KEY_F1"] }
+
+[[menus.items]]
+label = "Goals and notes"
+action = { keys = ["KEY_F2"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+text = "#d8e3ec"
+
+[menus.style.background]
+color = "#0a0f15"
+opacity = 0.9
+
+[menus.style.items]
+color = "#1a2532"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#6c8fb3"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8aa2b8"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#18232f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#41566b"
+
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+text = "#d8e3ec"
+
+[keyboard_style.background]
+color = "#0a0f15"
+opacity = 0.9
+
+[keyboard_style.items]
+color = "#1a2532"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#6c8fb3"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8aa2b8"
+opacity = 0.7
+
+[keyboard_style.gradient]
+color = "#18232f"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#41566b"
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+text = "#d8e3ec"
+
+[numpad_style.background]
+color = "#0a0f15"
+opacity = 0.9
+
+[numpad_style.items]
+color = "#1a2532"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#6c8fb3"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8aa2b8"
+opacity = 0.7
+
+[numpad_style.gradient]
+color = "#18232f"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#41566b"
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+text = "#d8e3ec"
+
+[media_style.background]
+color = "#0a0f15"
+opacity = 0.9
+
+[media_style.items]
+color = "#1a2532"
+opacity = 0.95
+
+[media_style.selected]
+color = "#6c8fb3"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8aa2b8"
+opacity = 0.7
+
+[media_style.gradient]
+color = "#18232f"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#41566b"
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+text = "#d8e3ec"
+
+[menu_style.background]
+color = "#0a0f15"
+opacity = 0.9
+
+[menu_style.items]
+color = "#1a2532"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#6c8fb3"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8aa2b8"
+opacity = 0.7
+
+[menu_style.gradient]
+color = "#18232f"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#41566b"
+
+[sounds.menu]
+step = { kind = "click", volume = 0.08, pitch = 1.2, length = 0.8 }
+pick = { kind = "beep", volume = 0.22, pitch = 0.9, length = 0.8 }
+open = { kind = "swish", volume = 0.04, pitch = 0.8, length = 0.8 }
+close = { kind = "swish", volume = 0.03, pitch = 0.7, length = 0.8 }
+
+[sounds.numpad]
+step = { kind = "click", volume = 0.08, pitch = 1.2, length = 0.8 }
+pick = { kind = "beep", volume = 0.2, pitch = 1.3, length = 0.6 }
+
+[sounds.keyboard]
+step = { kind = "click", volume = 0.08, pitch = 1.2, length = 0.8 }
+pick = { kind = "keys", volume = 0.25, pitch = 1.0, length = 1.0 }
+
+[motion]
+keyboard = "brutal"
+numpad = "brutal"
+menu = "brutal"
+media = "brutal"
+info = "brutal"
