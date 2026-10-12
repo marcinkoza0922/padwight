@@ -34,6 +34,7 @@ pub const SCENES: [(&str, &str); 21] = [
     ("in-game-menu", "the Guide + Start menu"),
     ("media", "the media controls"),
     ("offer", "the offer to add a library game"),
+    ("library-hint", "the toast saying Guide adds a library game"),
     ("info", "an info overlay with live values and glyphs"),
     ("log", "an input log"),
     ("recording", "the recording badge"),
@@ -61,6 +62,10 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "in-game-menu" => active(OverlayView::Menu(crate::system_menu::main_page(OverlayStyle::default(), 0))),
         "media" => active(OverlayView::Media(MediaView::sample(OverlayStyle::media()))),
         "offer" => active(OverlayView::Offer(offer())),
+        "library-hint" => {
+            let toast = crate::offer::hint("Deus Ex", std::time::Instant::now());
+            OverlayFrame { info: toast.view(std::time::Instant::now()).into_iter().collect(), ..OverlayFrame::default() }
+        }
         "info" => OverlayFrame { info: vec![info_view()], ..OverlayFrame::default() },
         "log" => OverlayFrame { logs: vec![log_view()], ..OverlayFrame::default() },
         "recording" => OverlayFrame { info: vec![info::recording_view()], ..OverlayFrame::default() },

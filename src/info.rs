@@ -576,7 +576,12 @@ const BAR_FRAME: Duration = Duration::from_millis(50);
 
 impl Toast {
     pub fn new(lines: Vec<String>, now: Instant) -> Self {
-        Toast { lines, end: now + TOAST_TIME, progress: None }
+        Self::lasting(lines, now, TOAST_TIME)
+    }
+
+    /// A toast that stays up for `length`, fade included, for something worth reading twice.
+    pub fn lasting(lines: Vec<String>, now: Instant, length: Duration) -> Self {
+        Toast { lines, end: now + length, progress: None }
     }
 
     /// A toast with a bar that fills over `length`, for a button held that long; it stays until
