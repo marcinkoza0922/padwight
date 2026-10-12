@@ -1021,6 +1021,7 @@ impl App {
                 row![
                     field("Optional, e.g. This game's controls", o.title.as_deref().unwrap_or("")).on_input(move |t| Message::SetInfoTitle(i, t)).width(320),
                     insert_button(TokenTarget::InfoTitle(i)),
+                    char_button(TokenTarget::InfoTitle(i)),
                 ]
                 .spacing(6)
                 .align_y(Alignment::Center)
@@ -1109,6 +1110,7 @@ impl App {
                         row![
                             field("Text or {token}", cell).on_input(move |v| Message::SetInfoCell(i, r, c, v)).width(170),
                             insert_button(TokenTarget::InfoCell(i, r, c)),
+                            char_button(TokenTarget::InfoCell(i, r, c)),
                             small("✕", Some(Message::RemoveInfoCell(i, r, c))),
                         ]
                         .spacing(4)
@@ -1288,7 +1290,7 @@ impl App {
             let mut line = row![
                 container(text(name)).width(70).padding(iced::Padding::ZERO.top(6)),
                 field("Label", &item.label).on_input(move |l| Message::SetMenuItemLabel(mi, i, l)).width(150),
-                container(insert_button(TokenTarget::MenuLabel(mi, i))),
+                container(row![insert_button(TokenTarget::MenuLabel(mi, i)), char_button(TokenTarget::MenuLabel(mi, i))].spacing(4)),
             ]
             .spacing(8)
             .align_y(Alignment::Start);

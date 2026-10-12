@@ -15,6 +15,8 @@ pub(super) enum TokenTarget {
     InfoCell(usize, usize, usize),
     InfoTitle(usize),
     MenuLabel(usize, usize),
+    /// The heading of the mode or layer being edited.
+    LayerHeading,
 }
 
 /// The open picker.
@@ -23,6 +25,15 @@ pub(super) struct TokenPicker {
     /// The folds that are open.
     open: HashSet<&'static str>,
     query: String,
+}
+
+/// `piece` after `text`: a token joined as `join_token` does, or any other text just as it is.
+fn append(text: &mut String, piece: &str, spaced: bool) {
+    if spaced {
+        join_token(text, piece);
+    } else {
+        text.push_str(piece);
+    }
 }
 
 /// `token` after `text`, with a space between unless the text ends in one or the token ends a tag.
@@ -64,41 +75,47 @@ impl App {
             }
             Message::PickToken(token) => {
                 if let Some(target) = self.token_picker.as_ref().map(|p| p.target.clone()) {
-                    self.insert_token(&target, &token);
+                    self.insert_text(&target, &token, true);
                 }
             }
-            other => return self.update_layers(other),
+            other => return self.update_chars(other),
         }
         Task::none()
     }
 
-    /// Puts `token` at the end of the text `target` names.
-    fn insert_token(&mut self, target: &TokenTarget, token: &str) {
+    /// Puts `piece` at the end of the text `target` names, spaced from it like a token if `spaced`.
+    pub(super) fn insert_text(&mut self, target: &TokenTarget, piece: &str, spaced: bool) {
         match *target {
             TokenTarget::InfoCell(i, r, c) => {
                 if let Some(cell) = self.infos_mut().get_mut(i).and_then(|o| o.rows.get_mut(r)).and_then(|row| row.get_mut(c)) {
-                    join_token(cell, token);
+                    append(cell, piece, spaced);
                 }
             }
             TokenTarget::InfoTitle(i) => {
                 if let Some(o) = self.infos_mut().get_mut(i) {
-                    join_token(o.title.get_or_insert_with(String::new), token);
+                    append(o.title.get_or_insert_with(String::new), piece, spaced);
                 }
             }
             TokenTarget::MenuLabel(m, i) => {
                 if let Some(item) = self.menus_mut().get_mut(m).and_then(|m| m.items.get_mut(i)) {
-                    join_token(&mut item.label, token);
+                    append(&mut item.label, piece, spaced);
+                }
+            }
+            TokenTarget::LayerHeading => {
+                if let Some(l) = self.edited_mut() {
+                    append(l.indicator_title.get_or_insert_with(String::new), piece, spaced);
                 }
             }
         }
     }
 
     /// The text `target` names, as it is now.
-    fn token_target_text(&self, target: &TokenTarget) -> String {
+    pub(super) fn token_target_text(&self, target: &TokenTarget) -> String {
         match *target {
             TokenTarget::InfoCell(i, r, c) => self.game().info.get(i).and_then(|o| o.rows.get(r)).and_then(|row| row.get(c)).cloned(),
             TokenTarget::InfoTitle(i) => self.game().info.get(i).and_then(|o| o.title.clone()),
             TokenTarget::MenuLabel(m, i) => self.game().menus.get(m).and_then(|m| m.items.get(i)).map(|item| item.label.clone()),
+            TokenTarget::LayerHeading => self.edited().and_then(|l| l.indicator_title.clone()),
         }
         .unwrap_or_default()
     }
