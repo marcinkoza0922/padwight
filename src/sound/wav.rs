@@ -167,6 +167,65 @@ pub fn resample(samples: &[f32], step: f32) -> Vec<f32> {
         .collect()
 }
 
+/// `samples` made `factor` times as long without changing their pitch (2 is twice as long): grains
+/// of the sound laid over one another, each taken from where it best continues the last (WSOLA),
+/// so a longer cue is the same sound slowed, not a lower one. The first grain keeps its attack.
+pub fn stretch(samples: &[f32], factor: f32) -> Vec<f32> {
+    let grain = (RATE as usize / 50).min(samples.len() / 2) & !1;
+    if (factor - 1.0).abs() < 1e-3 || grain < 16 {
+        return samples.to_vec();
+    }
+    let hop = grain / 2;
+    let out_len = (samples.len() as f32 * factor) as usize;
+    let search = hop / 2;
+    let window = |i: usize, first: bool| if first && i < hop { 1.0 } else { 0.5 - 0.5 * (std::f32::consts::TAU * i as f32 / grain as f32).cos() };
+    let mut out = vec![0.0_f32; out_len + grain];
+    let mut at = 0;
+    // Where the last grain's source continues, which the next grain should resemble.
+    let mut follow = hop;
+    for k in 0.. {
+        let out_at = k * hop;
+        if out_at >= out_len {
+            break;
+        }
+        let ideal = (out_at as f32 / factor) as usize;
+        let start = if k == 0 {
+            0
+        } else {
+            let lo = ideal.saturating_sub(search);
+            let hi = (ideal + search).min(samples.len().saturating_sub(grain));
+            (lo..=hi.max(lo))
+                .step_by(2)
+                .max_by(|a, b| similarity(samples, *a, follow, hop).total_cmp(&similarity(samples, *b, follow, hop)))
+                .unwrap_or(lo)
+        };
+        at = start.min(samples.len().saturating_sub(1));
+        for i in 0..grain {
+            if let Some(s) = samples.get(at + i) {
+                out[out_at + i] += s * window(i, k == 0);
+            }
+        }
+        follow = at + hop;
+    }
+    let _ = at;
+    out.truncate(out_len);
+    let fade = (RATE as usize / 200).min(out.len());
+    let len = out.len();
+    for (i, s) in out[len - fade..].iter_mut().enumerate() {
+        *s *= 1.0 - (i + 1) as f32 / fade as f32;
+    }
+    out
+}
+
+/// How alike `hop` samples from `a` are to the ones from `b`.
+fn similarity(samples: &[f32], a: usize, b: usize, hop: usize) -> f32 {
+    let (x, y) = (samples.get(a..a + hop), samples.get(b..b + hop));
+    match (x, y) {
+        (Some(x), Some(y)) => x.iter().zip(y).map(|(p, q)| p * q).sum(),
+        _ => f32::MIN,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -196,6 +255,19 @@ mod tests {
         assert!((same[1] - 0.5).abs() < 1e-3 && (same[2] + 0.5).abs() < 1e-3);
         // Half the rate plays at twice the length.
         assert_eq!(decode_wav(&wav(&[0; 100], RATE / 2)).unwrap().len(), 200);
+    }
+
+    #[test]
+    fn a_sound_stretches_without_changing_its_pitch() {
+        let tone: Vec<f32> = (0..8820).map(|i| (i as f32 * std::f32::consts::TAU * 440.0 / RATE as f32).sin()).collect();
+        let crossings = |v: &[f32]| v.windows(2).filter(|w| (w[0] < 0.0) != (w[1] < 0.0)).count() as f32 / v.len() as f32;
+        for factor in [0.5, 2.0] {
+            let out = stretch(&tone, factor);
+            assert!((out.len() as f32 / tone.len() as f32 - factor).abs() < 0.01);
+            assert!((crossings(&out) / crossings(&tone) - 1.0).abs() < 0.1, "{factor}");
+        }
+        assert_eq!(stretch(&tone, 1.0), tone);
+        assert_eq!(stretch(&[0.5; 4], 2.0).len(), 4, "too short to stretch");
     }
 
     #[test]

@@ -5,7 +5,7 @@ overlay_font = "Rajdhani"
 [pack]
 id = "1bbbd1f1-26ed-4898-bf24-64025dd69651"
 name = "Fallout Tactics"
-version = "1.1"
+version = "1.2"
 author = "Padwight"
 description = "Fallout Tactics: Brotherhood of Steel (GOG) on an Xbox-style pad. The right stick moves the pointer, the left stick scrolls the map, RT or A left-clicks and LT right-clicks to fire. Hold RB to run. X reloads (hold: weapon mode, double tap: targeted shot), Y is the inventory, B stops or ends a character's turn (hold: end turn). The d-pad sets the stance. R3 switches turn-based play (hold: pause). Hold LB for the squad and sentry modes. Select lists the Skilldex, character screen and Pip-Boy. Start is the menu; double tap it to quick save, hold it to quick load."
 made_with = "Xbox controller"
@@ -468,7 +468,7 @@ pick = {kind = "beep", volume = 0.15, pitch = 0.8}
 
 [sounds.keyboard]
 step = {kind = "click", volume = 0.08, pitch = 0.9}
-pick = {kind = "typewriter", volume = 0.2}
+pick = {kind = "typewriter", volume = 0.2, length = 0.6}
 
 [rumble.menu]
 step = {strength = 0.12, length_ms = 18}

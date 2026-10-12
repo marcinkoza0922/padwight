@@ -3,6 +3,7 @@
 //! be silenced. Playback runs on its own thread so a slow audio device never holds up input.
 
 mod effects;
+mod library;
 mod player;
 mod synth;
 mod wav;
@@ -20,7 +21,8 @@ const RATE: u32 = 44_100;
 /// Peak level of a cue before its volume is applied.
 const PEAK: f32 = 0.9;
 
-/// What a cue sounds like.
+/// What a cue sounds like. Most kinds are synthesized; the recorded ones (`Typewriter` and the last
+/// fifteen) play a bundled sample, resampled for pitch and stretched for length.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SoundKind {
@@ -47,8 +49,7 @@ pub enum SoundKind {
     Swish,
     /// A key going down on a mechanical keyboard: a sharp click with a little thock under it.
     Keys,
-    /// A typewriter keystroke: the key going down, the typebar's hard clack on the platen, and
-    /// the carriage ticking along.
+    /// A typewriter keystroke, recorded: the typebar's clack on the platen.
     Typewriter,
     /// A single piano key struck: a warm, bright note that dies away.
     Piano,
@@ -68,10 +69,40 @@ pub enum SoundKind {
     Fall,
     /// A retro pickup: two quick square notes, the second ringing.
     Coin,
+    /// A round, soft bong, like a muted gong.
+    Bong,
+    /// A tiny, crisp tap.
+    Select,
+    /// A soft switch flicked over.
+    Toggle,
+    /// A plucked string, short and bright.
+    Pluck,
+    /// A bright, friendly two-tone yes.
+    Confirm,
+    /// A low, short buzz of refusal.
+    Error,
+    /// A tiny electronic stutter.
+    Glitch,
+    /// A light hover, like a finger sliding over a button.
+    Rollover,
+    /// A chunky switch thrown.
+    Switch,
+    /// A metal latch clicking home.
+    Latch,
+    /// A page of a book turned.
+    Page,
+    /// A light knock on a wooden surface.
+    Wood,
+    /// A metal plate struck, ringing out.
+    Plate,
+    /// A tin can tapped: hollow and rattly.
+    Tin,
+    /// A heavy bell struck, with a long ring.
+    Bell,
 }
 
 impl SoundKind {
-    pub const ALL: [SoundKind; 21] = [
+    pub const ALL: [SoundKind; 36] = [
         SoundKind::Click,
         SoundKind::Tick,
         SoundKind::Pop,
@@ -93,6 +124,21 @@ impl SoundKind {
         SoundKind::Rise,
         SoundKind::Fall,
         SoundKind::Coin,
+        SoundKind::Bong,
+        SoundKind::Select,
+        SoundKind::Toggle,
+        SoundKind::Pluck,
+        SoundKind::Confirm,
+        SoundKind::Error,
+        SoundKind::Glitch,
+        SoundKind::Rollover,
+        SoundKind::Switch,
+        SoundKind::Latch,
+        SoundKind::Page,
+        SoundKind::Wood,
+        SoundKind::Plate,
+        SoundKind::Tin,
+        SoundKind::Bell,
     ];
 
     pub fn label(self) -> &'static str {
@@ -118,11 +164,34 @@ impl SoundKind {
             SoundKind::Rise => "Rise",
             SoundKind::Fall => "Fall",
             SoundKind::Coin => "Coin",
+            SoundKind::Bong => "Bong",
+            SoundKind::Select => "Select",
+            SoundKind::Toggle => "Toggle",
+            SoundKind::Pluck => "Pluck",
+            SoundKind::Confirm => "Confirm",
+            SoundKind::Error => "Error",
+            SoundKind::Glitch => "Glitch",
+            SoundKind::Rollover => "Rollover",
+            SoundKind::Switch => "Switch",
+            SoundKind::Latch => "Latch",
+            SoundKind::Page => "Page",
+            SoundKind::Wood => "Wood",
+            SoundKind::Plate => "Plate",
+            SoundKind::Tin => "Tin",
+            SoundKind::Bell => "Bell",
         }
+    }
+
+    /// Whether the kind is a bundled recording rather than synthesized.
+    pub fn is_recording(self) -> bool {
+        library::samples(self).is_some()
     }
 
     /// How long the cue lasts, in seconds, at normal length.
     fn seconds(self) -> f32 {
+        if let Some(recording) = library::samples(self) {
+            return recording.len() as f32 / RATE as f32;
+        }
         match self {
             SoundKind::Click => 0.03,
             SoundKind::Tick => 0.03,
@@ -135,7 +204,6 @@ impl SoundKind {
             SoundKind::Crunch => 0.16,
             SoundKind::Swish => 0.22,
             SoundKind::Keys => 0.07,
-            SoundKind::Typewriter => 0.16,
             SoundKind::Piano => 0.7,
             SoundKind::Beep => 0.12,
             SoundKind::Drop => 0.14,
@@ -144,6 +212,7 @@ impl SoundKind {
             SoundKind::Pulse => 0.16,
             SoundKind::Rise | SoundKind::Fall => 0.26,
             SoundKind::Coin => 0.35,
+            _ => unreachable!("recordings are timed by their samples"),
         }
     }
 }
@@ -216,9 +285,11 @@ impl SoundSpec {
     /// How long the cue plays, with any echo and reverb after it.
     pub fn duration(&self) -> std::time::Duration {
         let tail = effects::tail(self) as f32 / RATE as f32;
+        let length = self.length.clamp(0.5, 2.0);
         let body = match self.file.and_then(wav::pack_samples) {
-            Some(file) => file.len() as f32 / RATE as f32 / self.pitch.clamp(0.5, 2.0),
-            None => self.kind.seconds() * self.length.clamp(0.5, 2.0),
+            Some(file) => file.len() as f32 / RATE as f32 / self.pitch.clamp(0.5, 2.0) * length,
+            None if self.kind.is_recording() => self.kind.seconds() / self.pitch.clamp(0.5, 2.0) * length,
+            None => self.kind.seconds() * length,
         };
         std::time::Duration::from_secs_f32(body + tail)
     }
@@ -229,8 +300,8 @@ impl SoundSpec {
         let length = self.length.clamp(0.5, 2.0);
         let volume = self.volume.clamp(0.0, 1.0);
         let mut out = match self.file.and_then(wav::pack_samples) {
-            // A file is played faster or slower for its pitch; its length is its own.
-            Some(file) => wav::resample(&file, pitch),
+            // A file is played faster or slower for its pitch, then stretched to its length.
+            Some(file) => wav::stretch(&wav::resample(&file, pitch), length),
             None => synthesize(self.kind, pitch, length),
         };
         effects::apply(&mut out, self);

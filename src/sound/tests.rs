@@ -4,7 +4,8 @@ use super::*;
 fn every_kind_has_a_cue_of_its_length_within_range() {
     for kind in SoundKind::ALL {
         let samples = SoundSpec::new(kind, 1.0, 1.0).samples();
-        assert_eq!(samples.len(), (kind.seconds() * RATE as f32) as usize, "{kind:?}");
+        let expected = library::samples(kind).map_or_else(|| (kind.seconds() * RATE as f32) as usize, <[f32]>::len);
+        assert_eq!(samples.len(), expected, "{kind:?}");
         assert!(samples.iter().all(|s| s.abs() <= 1.0), "{kind:?}");
         assert!(samples.iter().any(|s| s.abs() > 0.5), "{kind:?} is silent");
     }
@@ -207,4 +208,13 @@ fn a_cue_can_play_a_pack_s_sound_file_and_falls_back_to_its_kind() {
     let text = toml::to_string(&spec).unwrap();
     assert!(text.contains("file = \"clap-test\""));
     assert_eq!(toml::from_str::<SoundSpec>(&text).unwrap(), spec);
+}
+
+#[test]
+fn length_stretches_a_recording_without_changing_its_pitch() {
+    let at = |length| SoundSpec { length, ..SoundSpec::new(SoundKind::Bell, 1.0, 1.0) }.samples().len() as f32;
+    assert!((at(2.0) / at(1.0) - 2.0).abs() < 0.01);
+    assert!((at(0.5) / at(1.0) - 0.5).abs() < 0.01);
+    let spec = SoundSpec { length: 2.0, ..SoundSpec::new(SoundKind::Bell, 1.0, 1.0) };
+    assert!((spec.duration().as_secs_f32() - spec.samples().len() as f32 / RATE as f32).abs() < 0.01);
 }

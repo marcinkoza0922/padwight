@@ -76,7 +76,7 @@ impl App {
     fn view_default_sounds(&self) -> Element<'_, Message> {
         let set = self.config.sounds;
         // Silencing everything is Performance's "No sounds", so this card has no button for it.
-        let rows: Vec<Element<'_, Message>> = SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, &self.open_sounds, &self.open_cue_edits, Message::SetSounds)).collect();
+        let rows: Vec<Element<'_, Message>> = SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, &self.open_sounds, &self.open_cue_edits, false)).collect();
         section(
             "Overlay sounds",
             Some("A faint sound as the cursor moves in an overlay, another when something is picked, and a softer one as it pops in and out. These apply to every setup that doesn't set its own on its Details tab. Any overlay can be turned off, and \"No sounds\" under Performance silences them all. Info and log overlays have nothing to pick, so they make no sound.".into()),

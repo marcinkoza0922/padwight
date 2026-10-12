@@ -78,7 +78,7 @@ impl App {
                     self.insert_text(&target, &token, true);
                 }
             }
-            other => return self.update_chars(other),
+            other => return self.update_sound_picker(other),
         }
         Task::none()
     }

@@ -73,6 +73,7 @@ mod ring_preview;
 mod search;
 pub(crate) mod shoot;
 mod settings;
+mod sound_picker;
 mod sounds;
 mod sliders;
 mod sticks;
@@ -96,6 +97,7 @@ use keys::*;
 use chars::{CharPicker, char_button};
 use font_menu::FontSlot;
 use motion_demo::MotionDemo;
+use sound_picker::{SoundPicker, SoundTarget};
 use tokens::{TokenPicker, TokenTarget, insert_button};
 use layers::IndicatorChoice;
 use packs::{BrowseSource, Dialog, PackField};
@@ -210,6 +212,7 @@ struct App {
     feeds: Option<Feeds>,
     picker: Option<KeyPicker>,
     token_picker: Option<TokenPicker>,
+    sound_picker: Option<SoundPicker>,
     char_picker: Option<CharPicker>,
     /// The font dropdown that is open.
     font_menu: Option<FontSlot>,
@@ -592,6 +595,10 @@ enum Message {
     RemovePackFont(String),
     PlayPackSound(String),
     OpenTokenPicker(TokenTarget),
+    OpenSoundPicker(SoundTarget),
+    CloseSoundPicker,
+    SoundSearch(String),
+    PickSound(sounds::SoundChoice),
     CloseTokenPicker,
     ToggleFontMenu(FontSlot),
     MotionDemoStyle(crate::motion::MotionStyle),
@@ -702,7 +709,7 @@ impl App {
             live: None,
             pad_shown: None,
             feeds: None,
-            picker: None, token_picker: None, char_picker: None, font_menu: None, motion_demo: MotionDemo::new(),
+            picker: None, token_picker: None, sound_picker: None, char_picker: None, font_menu: None, motion_demo: MotionDemo::new(),
             dialog: None,
             profile_tab: ProfileTab::Buttons,
             guide_notes: iced::widget::text_editor::Content::new(),
@@ -1224,6 +1231,8 @@ impl App {
             Some(view_picker(picker))
         } else if let Some(picker) = &self.token_picker {
             Some(self.view_token_picker(picker))
+        } else if let Some(picker) = &self.sound_picker {
+            Some(self.view_sound_picker(picker))
         } else if let Some(picker) = &self.char_picker {
             Some(self.view_char_picker(picker))
         } else {

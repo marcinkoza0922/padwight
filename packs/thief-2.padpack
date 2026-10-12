@@ -5,7 +5,7 @@ overlay_font = "Cinzel"
 [pack]
 id = "df3b51f9-c2dc-4e7f-95f9-4dd0d0ae9873"
 name = "Thief II: The Metal Age"
-version = "1.1"
+version = "1.2"
 author = "Padwight"
 description = "Thief II: The Metal Age (GOG, NewDark) on an Xbox-style pad, for the game's default keys. A uses and picks up, B jumps, RT attacks and draws the bow, LT blocks, X drops, Y leans forward, L3 toggles crouch, R3 zooms the mechanical eye. A full push of the left stick runs. Hold LB for items and RB for weapons and arrows; double tap to put them away. D-pad left and right lean, up and down cycle items. Select lists the map and objectives. Start is the menu; double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
 made_with = "Xbox controller"
@@ -796,7 +796,7 @@ pick = {kind = "knock", volume = 0.25, pitch = 0.8}
 
 [sounds.keyboard]
 step = {file = "lockpick", kind = "tick", volume = 0.1}
-pick = {kind = "typewriter", volume = 0.2, pitch = 0.9}
+pick = {kind = "typewriter", volume = 0.2, pitch = 0.9, length = 0.6}
 
 [rumble.menu]
 step = {strength = 0.11, length_ms = 18}

@@ -352,7 +352,7 @@ impl App {
         let global = self.config.sounds;
         let mut rows = own_rows("sounds", own.is_some(), move |on| if on { Message::SetGameSounds(global) } else { Message::ClearGameSounds });
         if let Some(set) = own {
-            rows.extend(SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, &self.open_sounds, &self.open_cue_edits, Message::SetGameSounds)));
+            rows.extend(SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, &self.open_sounds, &self.open_cue_edits, true)));
             rows.push(button(text("Turn every sound off").size(13)).style(style::secondary).on_press(Message::SetGameSounds(set.silenced())).into());
         }
         section(

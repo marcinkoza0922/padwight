@@ -5,7 +5,7 @@ overlay_font = "Source Code Pro"
 [pack]
 id = "7b1d3c52-4f0a-4c1e-9a64-2e8f5d0b9a11"
 name = "Max Payne"
-version = "1.2"
+version = "1.3"
 author = "Padwight"
 description = "Max Payne (2001) on an Xbox-style pad, for the game's default keys. RT shoots, LT is bullet time and RB shootdodges (with a direction). A uses (and zooms the sniper rifle), B jumps, X reloads and Y takes a painkiller. LB opens a radial menu of weapon groups (aim with the right stick), L3 toggles crouch. Start is the menu: double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
 made_with = "Xbox controller"
@@ -647,11 +647,11 @@ close = {kind = "swish", volume = 0.03, pitch = 0.6, length = 1.6}
 
 [sounds.numpad]
 step = {kind = "click", volume = 0.08, pitch = 0.9}
-pick = {kind = "typewriter", volume = 0.18}
+pick = {kind = "typewriter", volume = 0.18, length = 0.6}
 
 [sounds.keyboard]
 step = {kind = "click", volume = 0.08, pitch = 0.9}
-pick = {kind = "typewriter", volume = 0.2}
+pick = {kind = "typewriter", volume = 0.2, length = 0.6}
 
 [rumble.menu]
 step = {strength = 0.15, length_ms = 18}

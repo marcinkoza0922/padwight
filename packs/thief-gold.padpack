@@ -5,7 +5,7 @@ overlay_font = "Cinzel"
 [pack]
 id = "a0952773-970d-4a45-ac71-1c671b537646"
 name = "Thief Gold"
-version = "1.1"
+version = "1.2"
 author = "Padwight"
 description = "Thief Gold (GOG, NewDark) on an Xbox-style pad, for the keys GOG ships. A uses and picks up, B jumps, RT attacks and draws the bow, LT blocks, X drops, Y leans forward, L3 toggles crouch. A light push of the left stick creeps. Hold LB for items and RB for weapons and arrows; double tap to put them away. D-pad left and right lean, up and down cycle items. Select lists the map and objectives. Start is the menu; double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
 made_with = "Xbox controller"
@@ -762,7 +762,7 @@ pick = {kind = "knock", volume = 0.25, pitch = 0.8}
 
 [sounds.keyboard]
 step = {file = "lockpick", kind = "tick", volume = 0.1}
-pick = {kind = "typewriter", volume = 0.2, pitch = 0.9}
+pick = {kind = "typewriter", volume = 0.2, pitch = 0.9, length = 0.6}
 
 [rumble.menu]
 step = {strength = 0.11, length_ms = 18}

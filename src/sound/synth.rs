@@ -9,6 +9,12 @@ use super::{RATE, SoundKind};
 /// Synthesizes a cue at `pitch` and `length` (already clamped), normalized to a peak of 1
 /// before volume.
 pub(super) fn synthesize(kind: SoundKind, pitch: f32, length: f32) -> Vec<f32> {
+    if let Some(recording) = super::library::samples(kind) {
+        let mut out = super::wav::stretch(&super::wav::resample(recording, pitch), length);
+        let peak = out.iter().fold(0.0_f32, |p, s| p.max(s.abs())).max(1e-6);
+        out.iter_mut().for_each(|s| *s /= peak);
+        return out;
+    }
     let mut cue = Cue::new(kind.seconds() * length, pitch, length);
     match kind {
         SoundKind::Click => click(&mut cue),
@@ -22,7 +28,6 @@ pub(super) fn synthesize(kind: SoundKind, pitch: f32, length: f32) -> Vec<f32> {
         SoundKind::Crunch => crunch(&mut cue),
         SoundKind::Swish => swish(&mut cue),
         SoundKind::Keys => keys(&mut cue),
-        SoundKind::Typewriter => typewriter(&mut cue),
         SoundKind::Piano => piano(&mut cue),
         SoundKind::Beep => beep(&mut cue),
         SoundKind::Drop => water_drop(&mut cue),
@@ -32,6 +37,7 @@ pub(super) fn synthesize(kind: SoundKind, pitch: f32, length: f32) -> Vec<f32> {
         SoundKind::Rise => glide_by(&mut cue, 523.25, 783.99),
         SoundKind::Fall => glide_by(&mut cue, 783.99, 523.25),
         SoundKind::Coin => coin(&mut cue),
+        _ => unreachable!("recordings return above"),
     }
     cue.finish()
 }
@@ -111,24 +117,6 @@ fn keys(cue: &mut Cue) {
     cue.burst(Burst { at: bottom, decay: 90.0, ..Burst::new(Filter::Band(350.0, 2.5)) });
     cue.voice(Voice { gain: 0.5, decay: 75.0, ..Voice::ring(bottom, 280.0) });
     cue.burst(Burst { at: bottom, gain: 0.4, decay: 250.0, ..Burst::new(Filter::Band(1400.0, 2.0)) });
-}
-
-/// A typewriter keystroke has three parts: the key going down, the typebar slamming the platen
-/// (a hard, loud clack that rings the slug and the machine's metal box), and the escapement
-/// letting the carriage tick along a space.
-fn typewriter(cue: &mut Cue) {
-    cue.burst(Burst { gain: 0.3, decay: 90.0, ..Burst::new(Filter::Band(250.0, 2.0)) });
-    let strike = 0.018;
-    cue.burst(Burst { at: strike, decay: 550.0, ..Burst::new(Filter::Band(2200.0, 0.7)) });
-    cue.burst(Burst { at: strike, gain: 0.25, decay: 1100.0, ..Burst::new(Filter::High(4000.0)) });
-    cue.burst(Burst { at: strike, gain: 0.5, decay: 60.0, ..Burst::new(Filter::Band(600.0, 3.0)) });
-    for (f, gain, decay) in [(1650.0, 0.35, 75.0), (2900.0, 0.25, 95.0), (4300.0, 0.15, 130.0), (410.0, 0.45, 45.0), (760.0, 0.25, 60.0)] {
-        cue.voice(Voice { gain, decay, ..Voice::ring(strike, f) });
-    }
-    let escape = 0.055;
-    cue.burst(Burst { at: escape, gain: 0.25, decay: 500.0, ..Burst::new(Filter::Band(5500.0, 4.0)) });
-    cue.burst(Burst { at: escape, gain: 0.15, decay: 200.0, ..Burst::new(Filter::Band(1200.0, 2.0)) });
-    cue.voice(Voice { gain: 0.1, decay: 200.0, ..Voice::ring(escape, 3700.0) });
 }
 
 /// Two strings a hair apart, so the note beats warmly, with a piano's slightly stretched

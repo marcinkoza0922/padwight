@@ -584,7 +584,7 @@ The overlays are `keyboard` (the on-screen keyboard), `numpad`, `menu` (every me
 | `crunch` | A few crisp bursts of noise. |
 | `swish` | A breath of air that brightens as it passes. |
 | `keys` | A key going down on a mechanical keyboard. |
-| `typewriter` | A typewriter keystroke: the key going down, the typebar's hard clack on the platen, and the carriage ticking along. |
+| `typewriter` | A typewriter keystroke (a recording). |
 | `piano` | A piano key struck: a warm note that dies away. |
 | `beep` | A clean, flat electronic beep. |
 | `drop` | A drop falling into water: a round note that leaps up. |
@@ -594,8 +594,23 @@ The overlays are `keyboard` (the on-screen keyboard), `numpad`, `menu` (every me
 | `rise` | A soft tone gliding up. |
 | `fall` | A soft tone gliding down. |
 | `coin` | A retro pickup: two quick square notes. |
+| `bong` | A round, soft bong, like a muted gong (recording). |
+| `select` | A tiny, crisp tap (recording). |
+| `toggle` | A soft switch flicked over (recording). |
+| `pluck` | A plucked string, short and bright (recording). |
+| `confirm` | A bright, friendly two-tone yes (recording). |
+| `error` | A low, short buzz of refusal (recording). |
+| `glitch` | A tiny electronic stutter (recording). |
+| `rollover` | A light hover over a button (recording). |
+| `switch` | A chunky switch thrown (recording). |
+| `latch` | A metal latch clicking home (recording). |
+| `page` | A page of a book turned (recording). |
+| `wood` | A light knock on a wooden surface (recording). |
+| `plate` | A metal plate struck, ringing out (recording). |
+| `tin` | A tin can tapped (recording). |
+| `bell` | A heavy bell struck, with a long ring (recording). |
 
-`volume` is 0–1, `pitch` is 0.5–2 (an octave either way) and `length` is 0.5–2 (half as long, or twice as long). All three are relative to the kind's own sound. A longer cue is the same sound played slower, not a longer tail.
+`volume` is 0–1, `pitch` is 0.5–2 (an octave either way) and `length` is 0.5–2 (half as long, or twice as long). All three are relative to the kind's own sound. A longer cue is the same sound played slower, not a longer tail. The recordings (marked above) are CC0 samples: `pitch` plays them higher or lower, and `length` stretches or squeezes them without changing their pitch.
 
 Five effects change a cue after it's made, and all of them are off (0) unless set:
 

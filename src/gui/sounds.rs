@@ -3,6 +3,7 @@
 use iced::widget::{column, row};
 
 use super::*;
+use super::sound_picker::SoundTarget;
 use crate::sound::Feedback;
 
 /// One overlay's sounds: on or off, and (when on and opened) its step, pick, open and close cues.
@@ -11,8 +12,9 @@ pub(super) fn overlay_sounds<'a>(
     overlay: SoundOverlay,
     open_overlays: &HashSet<SoundOverlay>,
     open_edits: &HashSet<(SoundOverlay, Feedback)>,
-    change: fn(SoundSet) -> Message,
+    game: bool,
 ) -> Element<'a, Message> {
+    let change: fn(SoundSet) -> Message = if game { Message::SetGameSounds } else { Message::SetSounds };
     let open = open_overlays.contains(&overlay);
     let current = set.get(overlay);
     let put = move |sounds: OverlaySounds| {
@@ -29,7 +31,8 @@ pub(super) fn overlay_sounds<'a>(
     if current.enabled && open {
         let cue = |label, feedback, spec, set: fn(OverlaySounds, SoundSpec) -> OverlaySounds| {
             let editing = open_edits.contains(&(overlay, feedback));
-            cue_row(label, spec, editing, Message::ToggleSoundEdit(overlay, feedback), move |spec| put(set(current, spec)))
+            let target = SoundTarget { game, overlay, feedback };
+            cue_row(label, spec, editing, target, move |spec| put(set(current, spec)))
         };
         block = block.push(cue("Step", Feedback::Step, current.step, |s, step| OverlaySounds { step, ..s }));
         block = block.push(cue("Pick", Feedback::Pick, current.pick, |s, pick| OverlaySounds { pick, ..s }));
@@ -44,7 +47,7 @@ pub(super) fn overlay_sounds<'a>(
 
 /// What a cue plays: one of the built-in sounds, or a sound file the setup's pack carries.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum SoundChoice {
+pub(super) enum SoundChoice {
     Kind(SoundKind),
     File(crate::sound::SoundFile),
 }
@@ -58,12 +61,7 @@ impl std::fmt::Display for SoundChoice {
     }
 }
 
-/// The built-in sounds, then the pack's own.
-fn choices() -> Vec<SoundChoice> {
-    SoundKind::ALL.into_iter().map(SoundChoice::Kind).chain(crate::sound::pack_sound_names().into_iter().map(SoundChoice::File)).collect()
-}
-
-fn chosen(spec: &SoundSpec) -> SoundChoice {
+pub(super) fn chosen(spec: &SoundSpec) -> SoundChoice {
     spec.file.map_or(SoundChoice::Kind(spec.kind), SoundChoice::File)
 }
 
@@ -75,7 +73,7 @@ enum Unit {
 
 /// One cue: its label, kind and preview, and a fold that holds every way to shape it: volume,
 /// pitch and length, and under them bass, treble, drive, echo and reverb.
-fn cue_row<'a>(label: &'static str, spec: SoundSpec, editing: bool, toggle: Message, put: impl Fn(SoundSpec) -> Message + Copy + 'a) -> Element<'a, Message> {
+fn cue_row<'a>(label: &'static str, spec: SoundSpec, editing: bool, target: SoundTarget, put: impl Fn(SoundSpec) -> Message + Copy + 'a) -> Element<'a, Message> {
     let knob = |name: &'static str, value: f32, range: std::ops::RangeInclusive<f32>, unit: Unit, set: fn(&mut SoundSpec, f32)| {
         let (step, shown) = match unit {
             Unit::Percent => (5.0_f32, format!("{value:.0}%")),
@@ -97,14 +95,10 @@ fn cue_row<'a>(label: &'static str, spec: SoundSpec, editing: bool, toggle: Mess
     };
     let line = row![
         text(label).width(48),
-        dropdown(choices(), Some(chosen(&spec)), move |choice| put(match choice {
-            SoundChoice::Kind(kind) => SoundSpec { kind, file: None, ..spec },
-            SoundChoice::File(file) => SoundSpec { file: Some(file), ..spec },
-        }))
-        .width(110),
+        button(text(chosen(&spec).to_string()).size(14).width(Length::Fill)).style(style::secondary).width(120).on_press(Message::OpenSoundPicker(target)),
         button(text("Play")).style(style::secondary).on_press(Message::PreviewSound(spec)),
         space().width(8),
-        disclosure("Edit sound", editing, toggle),
+        disclosure("Edit sound", editing, Message::ToggleSoundEdit(target.overlay, target.feedback)),
     ]
     .spacing(8)
     .align_y(Alignment::Center);

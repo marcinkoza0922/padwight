@@ -5,7 +5,7 @@ overlay_font = "Cinzel"
 [pack]
 id = "3f3f9e31-c689-4af1-90e9-b0703eb07111"
 name = "Civilization III"
-version = "1.1"
+version = "1.2"
 author = "Padwight"
 description = "Civilization III Complete (GOG, Conquests) on an Xbox-style pad. The right stick moves the pointer, the left stick moves the active unit in eight directions, RT or A left-clicks, LT right-clicks. X holds the unit, Y fortifies, L3 waits, RB ends the turn. Hold LB for unit orders. The d-pad cycles units (hold: cities), zooms and centers. Select lists the advisors. Start is the preferences; double tap it to save, hold it to load."
 made_with = "Xbox controller"
@@ -496,7 +496,7 @@ pick = {kind = "chime", volume = 0.14, pitch = 0.8}
 
 [sounds.keyboard]
 step = {kind = "marimba", volume = 0.06, pitch = 1.2, length = 0.6}
-pick = {kind = "typewriter", volume = 0.18}
+pick = {kind = "typewriter", volume = 0.18, length = 0.6}
 
 [rumble.menu]
 step = {strength = 0.08, length_ms = 18}
