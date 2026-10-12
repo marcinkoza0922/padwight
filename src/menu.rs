@@ -136,6 +136,8 @@ struct Frame {
 /// One open menu (and any submenus opened from it, which close with it).
 pub struct MenuSession {
     stack: Vec<Frame>,
+    /// Which buttons confirm and go back (see [`MenuSession::set_keys`]).
+    keys: crate::config::MenuKeys,
     opener: Opener,
     mode: Mode,
     /// Whether the opener was down after the last event.
@@ -206,6 +208,7 @@ impl MenuSession {
         let mode = if watchable { Mode::Held } else { Mode::Unwatched };
         let mut session = MenuSession {
             stack: Vec::new(),
+            keys: crate::config::MenuKeys::default(),
             opener,
             mode,
             // Assumed held, as it just opened the menu; `prime` checks.
@@ -315,12 +318,12 @@ impl MenuSession {
             MenuKind::Radial { stick: Stick::Left, .. } => format!("Aim {{ls}} · {close}"),
             MenuKind::Radial { stick: Stick::Right, .. } => format!("Aim {{rs}} · {close}"),
             MenuKind::Directional { cluster } => format!("Press a {} direction · {close}", cluster.to_string().to_lowercase()),
-            MenuKind::List if pages(menu) => format!("{{dpad}} move · {{lb}} {{rb}} page · {{south}} choose · {close}"),
-            MenuKind::List if list_columns(menu.items.len()) == 2 => format!("{{dpad}} move · {{south}} choose · {close}"),
-            MenuKind::List => format!("{{up}} {{down}} move · {{south}} choose · {close}"),
+            MenuKind::List if pages(menu) => format!("{{dpad}} move · {{lb}} {{rb}} page · {{confirm}} choose · {close}"),
+            MenuKind::List if list_columns(menu.items.len()) == 2 => format!("{{dpad}} move · {{confirm}} choose · {close}"),
+            MenuKind::List => format!("{{up}} {{down}} move · {{confirm}} choose · {close}"),
             MenuKind::Buttons => format!("Press an item's button · {close}"),
-            MenuKind::Carousel { controls } => format!("{} to cycle · {{south}} choose · {close}", carousel_hint(controls)),
-            MenuKind::Grid { .. } => format!("{{dpad}} move · {{south}} choose · {close}"),
+            MenuKind::Carousel { controls } => format!("{} to cycle · {{confirm}} choose · {close}", carousel_hint(controls)),
+            MenuKind::Grid { .. } => format!("{{dpad}} move · {{confirm}} choose · {close}"),
         };
         Some(MenuView {
             title: menu.name.clone(),
@@ -343,12 +346,14 @@ impl MenuSession {
     fn close_hint(&self, menu: &Menu, radial: bool) -> String {
         let deep = self.stack.len() > 1;
         let opener = self.opener_label();
-        let Some(cancel) = menu.cancel_button().map(crate::info::button_hint) else {
+        // The default close button is whatever goes back, which may have been moved.
+        let hint = |b: Button| if menu.cancel.is_none() { "{back}".to_string() } else { crate::info::button_hint(b) };
+        let Some(cancel) = menu.cancel_button().map(hint) else {
             // Only a menu with a close button latches, so this one is only ever held or unwatched.
             return match (self.mode, radial) {
                 (Mode::Held | Mode::Latched, true) => "let go to choose".into(),
                 (Mode::Held | Mode::Latched, false) => "let go to close".into(),
-                (Mode::Unwatched, _) => "{south} choose".into(),
+                (Mode::Unwatched, _) => "{confirm} choose".into(),
             };
         };
         // A list that latches says so while it's still held, as letting go won't close it.
@@ -360,7 +365,7 @@ impl MenuSession {
             (Mode::Latched, true) => format!("{opener} again to choose · {cancel} cancel"),
             (Mode::Latched, false) if deep => format!("{cancel} back (hold to close) · {opener} again to close"),
             (Mode::Latched, false) => format!("{opener} again or {cancel} to close"),
-            (Mode::Unwatched, true) => format!("{{south}} choose · {cancel} close"),
+            (Mode::Unwatched, true) => format!("{{confirm}} choose · {cancel} close"),
             (Mode::Unwatched, false) if deep => format!("{cancel} back (hold to close)"),
             (Mode::Unwatched, false) => format!("{cancel} close"),
         }
@@ -386,9 +391,27 @@ impl MenuSession {
         outcome
     }
 
+    /// Tells the session which buttons confirm and go back.
+    pub fn set_keys(&mut self, keys: crate::config::MenuKeys) {
+        self.keys = keys;
+    }
+
+    /// `ev` with the confirm and back buttons taken for A and B, in the menus where those are
+    /// only that: lists, grids and carousels (and a radial menu's A). A menu with a close button of
+    /// its own keeps it, and the ones that read the face buttons themselves (directional and
+    /// button menus) are untouched.
+    fn with_menu_keys(&self, menu: &Menu, ev: InputEvent) -> InputEvent {
+        let InputEvent::Button(b, pressed) = ev else { return ev };
+        if matches!(menu.kind, MenuKind::Directional { .. } | MenuKind::Buttons) {
+            return ev;
+        }
+        InputEvent::Button(self.keys.logical(b, menu.cancel.is_none() && !menu.no_cancel), pressed)
+    }
+
     fn act(&mut self, menus: &[Menu], ev: InputEvent, now: Instant) -> Option<MenuOutcome> {
         self.last_input = now;
         let menu = self.top(menus)?.clone();
+        let ev = self.with_menu_keys(&menu, ev);
         let mut fresh_press = false;
         match ev {
             InputEvent::Button(b, true) => fresh_press = self.held.insert(b),

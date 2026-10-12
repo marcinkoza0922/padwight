@@ -15,6 +15,7 @@ mod gyro;
 mod log;
 pub mod modes;
 mod performance;
+mod shortcuts;
 mod store;
 mod style;
 mod summary;
@@ -28,6 +29,7 @@ pub use gyro::*;
 pub use log::*;
 pub use modes::Mode;
 pub use performance::Performance;
+pub use shortcuts::{Group, GuideOpener, MenuKeys, OPEN_GUIDE, Shortcut, ShortcutInput, Shortcuts};
 pub use style::*;
 use style::{default_keyboard_style, default_media_style, default_menu_style, default_numpad_style};
 pub use touchpad::*;
@@ -272,6 +274,8 @@ pub enum ButtonAction {
     /// Opens or closes the media controls at the top of the screen; while open, the controller
     /// drives whatever MPRIS player is running (Spotify, a browser, a local player).
     ToggleMedia,
+    /// Opens Quick Settings, the menu over the game that also leads to Edit Controls.
+    QuickSettings,
     /// While held for a couple of seconds, ends the focused window's process (a game or any
     /// other app, but never the desktop).
     ForceQuit,
@@ -1323,46 +1327,34 @@ impl Layer {
     /// The Guide mode: the system shortcuts on the Guide chords, and everything else
     /// swallowed. Mouse mode (see [`Layer::mouse`]) has the mouse and the D-pad keys.
     pub fn guide() -> Self {
-        use ButtonAction::*;
+        Self::guide_with(&Shortcuts::default())
+    }
+
+    /// The Guide mode without its shortcuts, which [`Layer::guide_with`] puts on.
+    fn guide_base() -> Self {
         let mut layer = Self::new(GUIDE_MODE);
         layer.indicator = Indicator::Bindings;
         layer.indicator_style = OverlayStyle::sheet();
         layer.indicator_title = Some("Guide shortcuts".into());
         layer.indicator_delay_ms = 100;
         layer.swallow_unbound = true;
-        layer.buttons = BTreeMap::from([
-            (Button::Select, ForceQuit),
-            (Button::LeftStick, ToggleRecording),
-            (Button::RightBumper, Screenshot),
-            (Button::LeftBumper, ToggleMedia),
-            (Button::West, ToggleOverlay),
-            (Button::North, ToggleNumpad),
-        ]);
         layer
     }
 
     /// Mouse mode: the controller acts as a mouse and a keyboard for clicking, typing and
     /// scrolling. Only the inputs set here do anything, so the game underneath gets nothing.
     pub fn mouse() -> Self {
+        Self::mouse_with(&Shortcuts::default())
+    }
+
+    /// Mouse mode without its keys, which [`Layer::mouse_with`] puts on.
+    fn mouse_base() -> Self {
         use ButtonAction::*;
-        let key = |k: &str| Keys(vec![k.into()]);
         let mut layer = Self::new(MOUSE_MODE);
         layer.indicator = Indicator::Bindings;
         layer.indicator_style = OverlayStyle::sheet();
         layer.indicator_title = Some("Mouse mode: press {guide} to exit".into());
         layer.swallow_unbound = true;
-        layer.buttons = BTreeMap::from([
-            (Button::DpadUp, key("KEY_LEFTSHIFT")),
-            (Button::DpadRight, key("KEY_ENTER")),
-            (Button::DpadDown, key("KEY_TAB")),
-            (Button::DpadLeft, key("KEY_ESC")),
-            (Button::West, key("KEY_LEFTCTRL")),
-            (Button::North, key("KEY_LEFTALT")),
-            (Button::East, key("KEY_DELETE")),
-            (Button::LeftStick, Mouse(MouseButton::Middle)),
-            (Button::LeftBumper, Mouse(MouseButton::Back)),
-            (Button::RightBumper, Mouse(MouseButton::Forward)),
-        ]);
         layer.left_trigger = Some(TriggerAction::Button { action: Mouse(MouseButton::Right), threshold: 0.3 }.into());
         layer.right_trigger = Some(TriggerAction::Button { action: Mouse(MouseButton::Left), threshold: 0.3 }.into());
         layer.left_stick = Some(StickConfig::new(StickAction::Scroll { speed: 15.0, invert_y: false }, 0.15, 2.0));
@@ -2481,7 +2473,7 @@ pub struct ScopeRef<'a> {
     pub info: Vec<&'a InfoOverlay>,
     pub logs: Vec<&'a LogOverlay>,
     pub layers: Vec<&'a Layer>,
-    pub modes: Vec<&'a Mode>,
+    pub modes: Vec<std::borrow::Cow<'a, Mode>>,
 }
 
 impl ScopeRef<'_> {
@@ -2553,6 +2545,10 @@ pub struct Config {
     /// is reassigned turns that off. Other pads only get swapped labels.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub nintendo_layout: bool,
+    /// Where the system shortcuts sit: the Guide overlay's opener, the Guide mode's shortcuts and
+    /// mouse mode's keys. They're the same in every setup.
+    #[serde(default, skip_serializing_if = "Shortcuts::is_default")]
+    pub shortcuts: Shortcuts,
     /// Draws the added and removed rows of menus in blue and orange, with a + or − in front, so
     /// they can be told apart without red and green.
     /// The file keeps the key's first spelling, so configs that set it still load.
@@ -2620,6 +2616,7 @@ impl Default for Config {
             menu_style: OverlayStyle::default(),
             info_glyphs: crate::info::PadFamily::default(),
             nintendo_layout: false,
+            shortcuts: Shortcuts::default(),
             overlay_font: None,
             general: Game::new("General", vec![Profile::passthrough("Gamepad"), Profile::desktop("Desktop")]),
             games: Vec::new(),
@@ -2656,6 +2653,7 @@ impl Config {
         let text = std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
         let mut config: Config = toml::from_str(&text).with_context(|| format!("parsing {}", path.display()))?;
         store::load(store::root_of(path), &mut config)?;
+        config.shortcuts = std::mem::take(&mut config.shortcuts).sanitized();
         for game in config.games.iter_mut().chain(std::iter::once(&mut config.general)) {
             // A game left as imported stays so: the upgrade isn't an edit of the player's.
             let unedited = game.origin.is_some() && crate::pack::edited_items(game).is_empty();
@@ -2848,8 +2846,26 @@ impl Config {
             info: s.info.into_iter().cloned().collect(),
             logs: s.logs.into_iter().cloned().collect(),
             layers: s.layers.into_iter().cloned().collect(),
-            modes: s.modes.into_iter().cloned().collect(),
+            modes: s.modes.into_iter().map(std::borrow::Cow::into_owned).collect(),
             sounds: self.performance.sounds(self.active_game().sounds.unwrap_or(self.sounds)),
+        }
+    }
+
+    /// The profiles of `game` that already use what opens the Guide overlay, with why.
+    pub fn shortcut_conflicts(&self, game: &Game) -> Vec<(String, String)> {
+        game.profiles.iter().filter_map(|p| self.shortcuts.conflict(p).map(|why| (p.name.clone(), why))).collect()
+    }
+
+    /// The built-in modes, with the shortcuts where the player put them.
+    pub fn built_in_modes(&self) -> [Layer; 2] {
+        [Layer::guide_with(&self.shortcuts), Layer::mouse_with(&self.shortcuts)]
+    }
+
+    /// `game`'s mode called `name`, or the built-in one built from the shortcuts.
+    pub fn mode_for<'a>(&self, game: &'a Game, name: &str) -> Option<std::borrow::Cow<'a, Mode>> {
+        match game.mode_named(name) {
+            Some(mode) => Some(std::borrow::Cow::Borrowed(mode)),
+            None => shortcuts::built_in_with(&self.shortcuts, name).map(std::borrow::Cow::Owned),
         }
     }
 
@@ -2861,7 +2877,7 @@ impl Config {
             info: game.info.iter().collect(),
             logs: game.logs.iter().collect(),
             layers: game.layers.iter().collect(),
-            modes: game.modes.iter().chain(built_in_modes()).collect(),
+            modes: game.modes.iter().map(std::borrow::Cow::Borrowed).chain(self.built_in_modes().map(std::borrow::Cow::Owned)).collect(),
         }
     }
 
@@ -2936,8 +2952,8 @@ mod tests {
         assert!(scope.layers.iter().all(|l| built_in_mode(&l.name).is_none()), "they aren't layers");
         let guide = scope.modes.iter().find(|l| l.name == GUIDE_MODE).unwrap();
         assert_eq!(**guide, Layer::guide());
-        assert_eq!(config.games[0].mode_or_built_in(MOUSE_MODE), Some(&Layer::mouse()));
-        let owned = Scope { modes: scope.modes.iter().map(|m| (*m).clone()).collect(), ..Scope::default() };
+        assert_eq!(config.mode_for(&config.games[0], MOUSE_MODE).as_deref(), Some(&Layer::mouse()));
+        let owned = Scope { modes: scope.modes.iter().map(|m| (**m).clone()).collect(), ..Scope::default() };
         assert_eq!(owned.game_modes().iter().map(|l| l.name.as_str()).collect::<Vec<_>>(), ["Driving"]);
     }
 

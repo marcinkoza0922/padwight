@@ -147,7 +147,7 @@ On top of that, you get some handy extras:
 - **Gestures**: double tap, triple tap and long press, per button. The final tap of a sequence fires on press and holds, so "double-tap and hold" works. A quick tap on a button with gestures fires once the gesture is decided. Holding past the tap window presses the button's own action right away and holds it until release, unless a long press is set.
 - **Zones**: extra actions that are held while a stick or trigger is within part of its travel. For example, Left Shift on a partial stick push gives you walk and run with WASD, and a half versus full trigger pull can do two different things. Zones are hidden for controllers whose triggers are simply on or off (e.g. Switch pads).
 
-General's defaults are **Gamepad** (1:1 passthrough) and **Desktop** (left stick moves the mouse, right stick scrolls, A/B click, LB+RB = Alt+Tab). Tapping Guide opens the Guide overlay. Profiles switch from Quick Settings (Guide + Start) or the app, never from the controller alone.
+General's defaults are **Gamepad** (1:1 passthrough) and **Desktop** (left stick moves the mouse, right stick scrolls, A/B click, LB+RB = Alt+Tab). Tapping Guide (or whatever you moved that to) opens the Guide overlay. Profiles switch from Quick Settings (Guide + Start) or the app, never from the controller alone.
 
 Want a head start? These are under "New from template…" in the GUI:
 
@@ -200,7 +200,7 @@ A game can work fine with a controller and still trip you up. Its launcher may n
 
 Hold Guide and press X, Y, LB, RB, L3 or Select for a shortcut (keyboard, numpad, media, screenshot, recording, force quit). Hold Guide and press right stick, or press right stick with the overlay open, for mouse mode: the controller moves the pointer, clicks, scrolls and sends Enter, Tab, Escape and modifier keys.
 
-The full list is in the manual's [Guide button](docs/manual/guide-button.md) page. The shortcuts are the same in every game. Each profile's **Guide** tab sets the overlay's notes and how its mapping list reads.
+The full list is in the manual's [Guide button](docs/manual/guide-button.md) page. The shortcuts are the same in every game, and can be moved on App settings' **Controller shortcuts** tab: what opens the overlay (Guide unless you move it, to Start + Select on a controller without a Guide button, say), each Guide shortcut and each of mouse mode's keys can sit on a button, a double tap, triple tap or long press, or a combo, or be switched off. These are app-wide and can't be set per game. The buttons that choose and go back in the menus and panels (A and B) can be moved there too. The tab warns when two share an input, when nothing opens the overlay, and (with a ⚠ in the setup list) when a profile already uses the input the overlay opens with. Guide itself can't be given to anything else. Each profile's **Guide** tab sets the overlay's notes and how its mapping list reads.
 
 ## On-screen overlay
 
@@ -240,7 +240,7 @@ Each menu is a collapsible card on the Menus tab, with a live preview. "Add a me
 
 ## In-game menu
 
-Press Guide + Start together to open a menu over the game in front. **Quick Settings** changes a few handy values, such as stick and gyro sensitivity, Invert Y and the profile. **Edit Controls** changes that setup's buttons, sticks, triggers, gyro, combos, modes, layers, macros and zones. Changes apply right away and are saved when you choose Save. With no game in front, Edit Controls is refused. Quick settings instead makes a setup for the window in front.
+Hold Guide and press Start (the Quick Settings shortcut, which can be moved on App settings like the other Guide shortcuts) to open a menu over the game in front. **Quick Settings** changes a few handy values, such as stick and gyro sensitivity, Invert Y and the profile. **Edit Controls** changes that setup's buttons, sticks, triggers, gyro, combos, modes, layers, macros and zones. Changes apply right away and are saved when you choose Save. With no game in front, Edit Controls is refused. Quick settings instead makes a setup for the window in front.
 
 The wiki has the details: [the in-game menu](https://github.com/marcinkoza0922/padwight/wiki/In-Game-Menu) and [editing controls in game](https://github.com/marcinkoza0922/padwight/wiki/Editing-Controls-in-Game).
 
@@ -248,7 +248,7 @@ The wiki has the details: [the in-game menu](https://github.com/marcinkoza0922/p
 
 Info overlays put text on screen without taking over the controller, mostly to show a game's controls. Each one is a grid of cells (rows of cells that line up in columns), with its own position, size and colors. Cells can hold tokens:
 
-- **Button glyphs**, drawn the way the controller in use labels them. `{south}` is A on Xbox, ✕ on PlayStation and B on Nintendo. Also `{east}` `{west}` `{north}` `{lb}` `{rb}` `{lt}` `{rt}` `{select}` `{start}` `{guide}` `{ls}` `{rs}` `{l3}` `{r3}` `{dpad}` `{up}` `{down}` `{left}` `{right}`. Controllers that can't be recognized get the "Fallback glyphs" kind chosen on the App settings page.
+- **Button glyphs**, drawn the way the controller in use labels them. `{south}` is A on Xbox, ✕ on PlayStation and B on Nintendo. Also `{east}` `{west}` `{north}` `{lb}` `{rb}` `{lt}` `{rt}` `{select}` `{start}` `{guide}` (whatever opens the Guide overlay, which is the Guide button unless you moved it) `{confirm}` and `{back}` (the buttons that choose and go back in menus, A and B unless moved) `{ls}` `{rs}` `{l3}` `{r3}` `{dpad}` `{up}` `{down}` `{left}` `{right}`. Controllers that can't be recognized get the "Fallback glyphs" kind chosen on the App settings page.
 - **Output glyphs**, for what a mapping outputs: `{pad:south}` is drawn for the controller the pad presents itself as (see the Details tab's *Controllers this setup supports*), `{keyboard:a}` or `{keyboard:leftshift}` for a key, and `{mouse:leftclick}` for a mouse button. The Mappings overlay uses these by default, so a key output is never mistaken for a button.
 - **Live values**, updated every second: `{time}` `{time12}` `{date}` `{profile}` `{layer}` (the layers on, e.g. "Hotkeys + Build"), `{mode}` (the mode on, or "Default"), `{app}` (the focused program's executable), `{title}`, `{pid}`, `{cpu}`, `{ram}`, `{gpu}` (AMD only), `{wifi}` (signal strength, with its icon), `{system_battery}` (a laptop's or handheld's charge), and `{controller_battery}` (the controller in use's charge, where it reports one; `~` when it's estimated from a coarse level).
 - **Icons**: `{pc}` (a monitor, or a laptop or handheld shape) and `{controller}` (the controller in use, drawn for its kind), meant to sit beside a battery. Add `:icon` to `{system_battery}` or `{controller_battery}` for a gauge instead of the number, and use `{controller:name}` for the controller's name.

@@ -18,7 +18,7 @@ use std::{
 use anyhow::{Context, Result};
 
 use crate::{
-    config::{Config, Feature, Game, Profile, ProfileRef, Refit, Scope},
+    config::{Config, Feature, Game, Profile, ProfileRef, Refit, Scope, Shortcut},
     engine::{Engine, Opener},
     focus::{self, FocusEvent},
     input::{InputEvent, MotionFrame, MotionSample},
@@ -30,7 +30,7 @@ use crate::{
     media::{MediaOutcome, MediaSession, MediaState},
     offer::{OfferOutcome, OfferSession},
     menu::{MenuOutcome, MenuSession},
-    system_menu::{self, Outcome as SystemOutcome, Page, SystemMenu},
+    system_menu::{Outcome as SystemOutcome, Page, SystemMenu},
     overlay::{OverlayAction, OverlayController, OverlayFrame, OverlayView},
     rumble,
     tray::{self, TrayIcon},
@@ -147,6 +147,8 @@ struct Managed {
     /// The active profile with this controller's mode and layers on top, while it has any, and
     /// which those are.
     layered: Option<(Shifts, Profile)>,
+    /// Notices the input that opens the Guide overlay while a panel has the controller.
+    opener_watch: crate::opener_watch::Watch,
     /// What it pressed lately, for the input log.
     log: crate::inputlog::InputLog,
     /// The buttons padwight exported to the virtual pad lately, for the Overview's second feed.
@@ -240,16 +242,18 @@ impl Managed {
     fn refresh_layers(&mut self, config: &Config) -> bool {
         let shifts: Shifts = (self.engine.mode().map(str::to_string), self.engine.layers());
         let current = self.layered.as_ref().map(|(shifts, _)| shifts);
-        if current == Some(&shifts) || (current.is_none() && shifts.0.is_none() && shifts.1.is_empty()) {
+        let plain = shifts.0.is_none() && shifts.1.is_empty() && !config.shortcuts.injects();
+        if current == Some(&shifts) || (current.is_none() && plain) {
             return false;
         }
-        self.layered = if shifts.0.is_none() && shifts.1.is_empty() {
+        self.layered = if plain {
             None
         } else {
             let game = config.active_game();
-            let mode = shifts.0.as_deref().and_then(|m| game.mode_or_built_in(m));
+            let mode = shifts.0.as_deref().and_then(|m| config.mode_for(game, m));
             config.active().map(|base| {
-                let profile = base.with_layers(mode.into_iter().chain(game.layers_named(&shifts.1)));
+                let mut profile = base.with_layers(mode.iter().map(|m| &**m).chain(game.layers_named(&shifts.1)));
+                config.shortcuts.inject(&mut profile);
                 (shifts.clone(), profile)
             })
         };
@@ -277,6 +281,7 @@ struct Requests {
     screenshot: bool,
     recording: bool,
     media: bool,
+    settings: bool,
     menu: Option<(String, Opener)>,
 }
 
@@ -287,6 +292,7 @@ impl Requests {
             screenshot: engine.take_screenshot(),
             recording: engine.take_recording_toggle(),
             media: engine.take_media_toggle(),
+            settings: engine.take_settings_request(),
             menu: engine.take_menu_request(),
         }
     }
@@ -497,6 +503,8 @@ fn log_path() -> PathBuf {
 
 impl Daemon {
     fn new(config: Config, kbm: VirtualKbm, injection: inject::Injection, tx: Sender<Msg>) -> Self {
+        crate::info::set_opener(crate::info::OpenerLabel::of(&config.shortcuts));
+        crate::info::set_menu_keys(config.shortcuts.menu_keys());
         Daemon {
             scope: config.scope(),
             sounds: sound::Sounds::start(),
@@ -873,7 +881,10 @@ impl Daemon {
         };
         let cursor = self.driving.cursors.get(&board).copied().unwrap_or(board.home());
         let mut controller = OverlayController::new(board, cursor);
-        controller.set_guide_held(self.devices.values().any(|d| d.view.buttons().any(|b| b == crate::config::Button::Guide)));
+        let guide = self.guide_chord_button();
+        let held = guide.is_some_and(|g| self.devices.values().any(|d| d.view.buttons().any(|b| b == g)));
+        let shortcut = if layout == Layout::Numpad { Shortcut::Numpad } else { Shortcut::Keyboard };
+        controller.set_guide(held, guide, self.shortcut_button(shortcut));
         self.active = Some(Active::Keyboard(controller));
         self.broadcast_overlay();
         self.overlay_sound(keyboard_sound(layout), Some(sound::Feedback::Open));
@@ -895,8 +906,10 @@ impl Daemon {
         let (commands, requests) = std::sync::mpsc::channel();
         let tx = self.tx.clone();
         thread::spawn(move || crate::media::worker(&requests, |state| tx.send(Msg::Media(state)).is_ok()));
-        let guide_held = self.devices.values().any(|d| d.view.buttons().any(|b| b == crate::config::Button::Guide));
-        self.active = Some(Active::Media(MediaSession::new(commands, guide_held, Instant::now())));
+        let guide = self.guide_chord_button();
+        let guide_held = guide.is_some_and(|g| self.devices.values().any(|d| d.view.buttons().any(|b| b == g)));
+        let session = MediaSession::new(commands, guide_held, Instant::now()).with_chord(guide, self.shortcut_button(Shortcut::Media));
+        self.active = Some(Active::Media(session));
         self.broadcast_overlay();
         self.overlay_sound(sound::SoundOverlay::Media, Some(sound::Feedback::Open));
     }
@@ -1123,6 +1136,9 @@ impl Daemon {
         if asked.media {
             self.toggle_media(Some(id));
         }
+        if asked.settings && self.active.is_none() {
+            self.open_system_menu(id, Page::Main);
+        }
         self.update_force_quit();
         if let Some((name, opener)) = asked.menu {
             self.open_menu(id, &name, opener);
@@ -1222,6 +1238,8 @@ impl Daemon {
             active: self.overlay_view(),
             font: self.config.active_font().map(str::to_string),
             colorblind: self.config.colorblind_tones,
+            opener: crate::info::OpenerLabel::of(&self.config.shortcuts),
+            menu_keys: self.config.shortcuts.menu_keys(),
             family: values.family,
             nintendo_layout: values.nintendo_layout,
             motion: self.config.active_motion(),
@@ -1889,10 +1907,10 @@ impl Daemon {
 
     fn input(&mut self, id: u64, events: Vec<InputEvent>) {
         let logged = self.log_input(id, &events, Instant::now());
-        let tapped = self.guide_tapped(&events);
-        self.chord_opens_menu(id, &events);
+        let fires: Vec<bool> = events.iter().map(|ev| self.opener_fired(id, ev)).collect();
+        let tapped = self.opener_tapped(&events, &fires);
         if self.drives_overlay(id) {
-            return self.overlay_input(id, events);
+            return self.overlay_input(id, events, &fires);
         }
         self.sync_face_swap(id);
         let Some(base) = self.config.active() else { return };
@@ -1926,16 +1944,48 @@ impl Daemon {
         }
     }
 
-    /// Whether these events end a Guide tap: Guide down and up in a moment, nothing pressed
-    /// in between (a held Guide with another button is a shortcut, not a tap).
-    fn guide_tapped(&mut self, events: &[InputEvent]) -> bool {
-        use crate::config::Button;
+    /// The button that is held to open the Guide overlay: Guide, or the one it was moved to. None
+    /// when a gesture or combo opens it, or nothing does.
+    fn guide_chord_button(&self) -> Option<crate::config::Button> {
+        use crate::config::{Button, GuideOpener};
+        match self.config.shortcuts.engine_opener() {
+            GuideOpener::Guide => Some(Button::Guide),
+            GuideOpener::Button(b) => Some(b),
+            GuideOpener::Triggered(_) => None,
+        }
+    }
+
+    /// The button a shortcut of the Guide mode sits on, if it's a plain button.
+    fn shortcut_button(&self, s: Shortcut) -> Option<crate::config::Button> {
+        self.config.shortcuts.input(s).filter(|i| i.buttons.len() == 1 && i.gesture.is_none()).map(|i| i.buttons[0])
+    }
+
+    /// Whether `ev` completes the input that opens the Guide overlay, on controller `id`.
+    fn opener_fired(&mut self, id: u64, ev: &InputEvent) -> bool {
+        let timing = self
+            .config
+            .active()
+            .map(|p| crate::opener_watch::Timing { tap: Duration::from_millis(p.tap_window_ms), long: Duration::from_millis(p.long_press_ms) })
+            .unwrap_or_default();
+        self.devices.get_mut(&id).is_some_and(|d| d.opener_watch.feed(ev, Instant::now(), timing))
+    }
+
+    /// Whether these events use the Guide opener the way a tap does, which offers a library game
+    /// over a game that has none. A button opener must go down and up in a moment with nothing
+    /// pressed in between (a held one with another button is a shortcut, not a tap); a gesture
+    /// or a combo counts when it completes.
+    fn opener_tapped(&mut self, events: &[InputEvent], fires: &[bool]) -> bool {
         let now = Instant::now();
+        let held_opener = self.guide_chord_button();
         let mut tapped = false;
-        for ev in events {
+        for (ev, fired) in events.iter().zip(fires) {
+            let Some(opener) = held_opener else {
+                tapped |= *fired;
+                continue;
+            };
             match *ev {
-                InputEvent::Button(Button::Guide, true) => self.offers.guide_tap = Some(now),
-                InputEvent::Button(Button::Guide, false) => {
+                InputEvent::Button(b, true) if b == opener => self.offers.guide_tap = Some(now),
+                InputEvent::Button(b, false) if b == opener => {
                     tapped |= self.offers.guide_tap.take().is_some_and(|t| now.duration_since(t) <= GUIDE_TAP);
                 }
                 InputEvent::Button(_, true) => self.offers.guide_tap = None,
@@ -1954,18 +2004,6 @@ impl Daemon {
             let touchpad = self.devices.values().any(|d| d.touchpad.is_some()).then_some(Feature::Touchpad);
             gyro.into_iter().chain(paddles).chain(touchpad).collect()
         })
-    }
-
-    /// Opens the Guide + Start menu when these events press Guide and Start together.
-    fn chord_opens_menu(&mut self, id: u64, events: &[InputEvent]) {
-        if self.active.is_some() {
-            return;
-        }
-        let Some(dev) = self.devices.get(&id) else { return };
-        let held: HashSet<crate::config::Button> = dev.view.buttons().collect();
-        if system_menu::chord(&held, events) {
-            self.open_system_menu(id, Page::Main);
-        }
     }
 
     /// Opens the Guide + Start menu over the game, on `page`, for the controller `device`. That
@@ -2304,6 +2342,7 @@ impl Daemon {
         let Some(Active::Menu { session, device }) = &mut self.active else { return true };
         let device = *device;
         let before = session.cursor();
+        session.set_keys(self.config.shortcuts.menu_keys());
         let outcome = session.handle(&self.scope.menus, ev, now);
         let picked = matches!(outcome, Some(MenuOutcome::Choose { .. }));
         let moved = outcome.is_none() && session.cursor() != before;
@@ -2330,7 +2369,7 @@ impl Daemon {
 
     /// While the overlay shows something, controller input drives it instead of the mappings.
     /// (Every way out redraws, so the input log's view of it shows too.)
-    fn overlay_input(&mut self, id: u64, events: Vec<InputEvent>) {
+    fn overlay_input(&mut self, id: u64, events: Vec<InputEvent>, fires: &[bool]) {
         let now = Instant::now();
         if let Some(dev) = self.devices.get_mut(&id) {
             for ev in &events {
@@ -2338,17 +2377,26 @@ impl Daemon {
             }
             dev.draw_status();
         }
-        for ev in events {
-            // Guide closes whatever is up, as well as its own close inputs: the offer as "not now",
-            // the in-game menu once any unsaved changes are answered. The tap it ends isn't a
-            // Guide tap, so it doesn't offer a library game on release.
-            if let InputEvent::Button(crate::config::Button::Guide, true) = ev {
+        for (ev, fired) in events.into_iter().zip(fires) {
+            // What opens the Guide overlay (Guide, unless moved) closes whatever is up, as well as
+            // its own close inputs: the offer as "not now", the in-game menu once any unsaved
+            // changes are answered. The tap it ends isn't a tap, so it doesn't offer a library
+            // game on release.
+            if *fired {
                 self.offers.guide_tap = None;
                 if self.guide_closes_overlay() {
                     return;
                 }
                 continue;
             }
+            // The panels hear A and B where the confirm and back buttons are. Menus do it
+            // themselves, since some read the face buttons as they are.
+            let ev = match ev {
+                InputEvent::Button(b, down) if !matches!(self.active, Some(Active::Menu { .. })) => {
+                    InputEvent::Button(self.config.shortcuts.menu_keys().logical(b, true), down)
+                }
+                other => other,
+            };
             match &mut self.active {
                 Some(Active::Keyboard(_)) => self.keyboard_input(id, ev, now),
                 Some(Active::Menu { .. }) => {
@@ -2514,7 +2562,12 @@ impl Daemon {
         for dev in self.devices.values_mut() {
             dev.engine.set_macros(&self.scope.macros);
             dev.engine.set_menus(&self.scope.menus);
+            dev.engine.set_opener(self.config.shortcuts.engine_opener());
+            dev.opener_watch.set(self.config.shortcuts.opener());
+            dev.engine.set_menu_keys(self.config.shortcuts.menu_keys());
         }
+        crate::info::set_opener(crate::info::OpenerLabel::of(&self.config.shortcuts));
+        crate::info::set_menu_keys(self.config.shortcuts.menu_keys());
         self.sync_identities();
     }
 
@@ -2734,6 +2787,10 @@ impl Daemon {
         let mut engine = Engine::default();
         engine.set_macros(&self.scope.macros);
         engine.set_menus(&self.scope.menus);
+        engine.set_opener(self.config.shortcuts.engine_opener());
+        engine.set_menu_keys(self.config.shortcuts.menu_keys());
+        let mut opener_watch = crate::opener_watch::Watch::default();
+        opener_watch.set(self.config.shortcuts.opener());
         Managed {
             path,
             name,
@@ -2757,6 +2814,7 @@ impl Daemon {
             gyro_bias: [0.0; 3],
             calibrating: None,
             layered: None,
+            opener_watch,
             log: crate::inputlog::InputLog::default(),
             exports: crate::inputlog::InputLog::default(),
             number: logs::free_number(self.devices.values().map(|d| d.number)),

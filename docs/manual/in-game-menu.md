@@ -1,6 +1,6 @@
 # Changing controls while you play
 
-Press Guide and Start together to open the in-game menu over the game you're playing. It's built into Padwight, so it works for every game. Move with the Left Stick or D-pad, press A to choose, and press B to go back or close it.
+Hold Guide and press Start to open the in-game menu over the game you're playing. (That's the Quick Settings shortcut of the Guide mode. It can be moved on **App settings › Controller shortcuts**, and Guide can be something else; see [The Guide button](guide-button.md).) It's built into Padwight, so it works for every game. Move with the Left Stick or D-pad, press A to choose, and press B to go back or close it.
 
 ## Quick Settings
 

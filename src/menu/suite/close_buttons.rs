@@ -47,7 +47,7 @@ fn b_closes_a_grid_list_or_carousel_straight_away() {
         let menus = [menu("M", kind, numbers(4))];
         for opener in [held_by(Button::LeftBumper), Opener::default()] {
             let mut pad = Pad::open_with(&menus, "M", opener);
-            assert!(pad.view().hint.contains("{east}"), "{kind:?}: {}", pad.view().hint);
+            assert!(pad.view().hint.contains("{back}"), "{kind:?}: {}", pad.view().hint);
             assert_eq!(pad.down(Button::East), Some(MenuOutcome::Close), "{kind:?}");
         }
     }
@@ -58,7 +58,7 @@ fn b_does_nothing_in_a_radial_menu_by_default() {
     let menus = [menu("W", radial(), numbers(4))];
     let mut pad = Pad::open(&menus, "W");
     assert_eq!(pad.press(Button::East), None);
-    assert!(!pad.view().hint.contains("{east}"), "{}", pad.view().hint);
+    assert!(!pad.view().hint.contains("{back}"), "{}", pad.view().hint);
     pad.session.handle(&menus, InputEvent::Axis(Axis::RightX, 0.9), pad.now);
     assert_eq!(chose(pad.up(Button::LeftBumper)).as_deref(), Some("KEY_2"), "letting go still chooses");
 }
@@ -94,4 +94,28 @@ fn a_menu_without_a_close_button_still_goes_when_its_opener_is_let_go() {
         assert!(pad.view().hint.contains("let go"), "{kind:?}: {}", pad.view().hint);
         assert!(pad.up(Button::LeftBumper).is_some(), "{kind:?}");
     }
+}
+
+#[test]
+fn moved_confirm_and_back_buttons_work_in_lists_and_not_in_face_button_menus() {
+    use crate::config::MenuKeys;
+    let keys = MenuKeys { confirm: Button::Select, back: Button::RightStick };
+    let menus = [menu("L", MenuKind::List, numbers(3)), menu("Faces", MenuKind::Directional { cluster: Cluster::FaceButtons }, numbers(4))];
+    let mut list = Pad::open_with(&menus, "L", Opener::default());
+    list.session.set_keys(keys);
+    let hint = list.view().hint;
+    assert!(hint.contains("{confirm}") && hint.contains("{back}"), "{hint}");
+    assert_eq!(chose(list.press(Button::South)), None, "A no longer chooses");
+    assert_eq!(chose(list.press(Button::Select)).as_deref(), Some("KEY_1"));
+    assert_eq!(list.press(Button::RightStick), Some(MenuOutcome::Close));
+    // A menu that names its own close button keeps it.
+    let own = [Menu { cancel: Some(Button::Start), ..menu("L", MenuKind::List, numbers(3)) }];
+    let mut list = Pad::open_with(&own, "L", Opener::default());
+    list.session.set_keys(keys);
+    assert_eq!(list.press(Button::RightStick), None);
+    assert_eq!(list.press(Button::Start), Some(MenuOutcome::Close));
+    // Face-button menus read the buttons as they are.
+    let mut faces = Pad::open_with(&menus, "Faces", Opener::default());
+    faces.session.set_keys(keys);
+    assert_eq!(chose(faces.press(Button::South)).as_deref(), Some("KEY_3"));
 }

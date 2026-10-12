@@ -185,7 +185,7 @@ fn guide_with_x_closes_the_keyboard_and_with_y_the_numpad() {
     assert_eq!(keyboard.handle(InputEvent::Button(Button::West, true), t0).len(), 2, "X alone is backspace");
 
     let mut numpad = OverlayController::new(Layout::Numpad, Layout::Numpad.home());
-    numpad.set_guide_held(true);
+    numpad.set_guide(true, Some(Button::Guide), Some(Button::North));
     assert!(!numpad.handle(InputEvent::Button(Button::West, true), t0).contains(&OverlayAction::Close), "X doesn't close the numpad");
     assert_eq!(numpad.handle(InputEvent::Button(Button::North, true), t0), vec![OverlayAction::Close]);
     numpad.handle(InputEvent::Button(Button::Guide, false), t0);

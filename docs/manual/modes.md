@@ -8,8 +8,8 @@ Only one mode is on at a time. Switching to a mode turns off the one that was on
 
 Every setup also has two modes of its own, which can't be changed or removed. They're listed on the **Modes** tab.
 
-- **Guide**: on while you hold Guide or its overlay is up, with the [Guide shortcuts](guide-button.md). It belongs to the Guide button, so nothing else switches to it.
-- **Mouse mode**: the controller drives the mouse pointer. Turn it on from the Guide overlay, with Guide + Right Stick, or with **Switch mode…** set to "Mouse mode" on any button. Press Guide (or that button again) to leave it.
+- **Guide**: on while you hold Guide or its overlay is up, with the [Guide shortcuts](guide-button.md), which you can move on App settings. It belongs to the Guide button (or whatever you moved that to), so nothing else switches to it.
+- **Mouse mode**: the controller drives the mouse pointer. Turn it on from the Guide overlay, with Guide + Right Stick, or with **Switch mode…** set to "Mouse mode" on any button. Press Guide (or whatever opens the overlay, or that button again) to leave it. Its keys can be moved on App settings; see [The Guide button](guide-button.md).
 
 While a built-in mode is on, it stands in for the setup's mode, and held layers don't apply. When it ends, the mode you were in comes back.
 

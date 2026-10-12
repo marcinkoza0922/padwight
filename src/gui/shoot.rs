@@ -18,6 +18,7 @@ Drawing the settings window without a display or a daemon (for the manual's scre
          tab <profiles|modes|layers|macros|menus|info|logs|details>
          sub <buttons|sticks|combos|gyro|touchpad|guide>      chapter <file.md>  open a manual chapter
          demo                    add a macro and an info overlay to the game shown
+         settings <general|shortcuts>   the App settings tab    shortcuts-demo  move the opener to Start + Select and Tab to Start
          size <w>x<h>            the size from here on
          picture <hide|show>     the live controller drawing
          open <button>           open that button's row (South, LeftBumper, ...)
@@ -95,6 +96,8 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
             app.saved = app.config.clone();
         }
         "demo" => demo(app),
+        "settings" => settings_tab(app, arg()?)?,
+        "shortcuts-demo" => shortcuts_demo(app),
         "page" => send(app, Message::SelectPage(page_named(arg()?)?)),
         "game" => {
             let name = arg()?;
@@ -144,6 +147,26 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
         other => bail!("unknown step {other:?}{USAGE}"),
     }
     Ok(())
+}
+
+/// The App settings page's tab named `word`.
+fn settings_tab(app: &mut App, word: &str) -> Result<()> {
+    let tab = match word {
+        "general" => shortcuts_tab::SettingsTab::General,
+        "shortcuts" => shortcuts_tab::SettingsTab::Shortcuts,
+        other => bail!("no settings tab {other:?}"),
+    };
+    send(app, Message::SelectSettingsTab(tab));
+    Ok(())
+}
+
+/// Moves a few shortcuts, so the tab has its warnings to show.
+fn shortcuts_demo(app: &mut App) {
+    use crate::config::{Shortcut, ShortcutInput};
+    let opener = ShortcutInput::combo(&[Button::Start, Button::Select]);
+    send(app, Message::SetShortcut(Shortcut::OpenGuide, Some(opener)));
+    send(app, Message::SetShortcut(Shortcut::Tab, Some(ShortcutInput::button(Button::Start))));
+    send(app, Message::SetShortcut(Shortcut::Screenshot, Some(ShortcutInput::gesture(Button::Select, GestureKind::DoubleTap))));
 }
 
 fn send(app: &mut App, message: Message) {

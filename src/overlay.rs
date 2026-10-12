@@ -40,19 +40,19 @@ const MODIFIERS: [&str; 8] = [
 /// The keyboard's reminder of its controls, with `{tokens}` drawn as the pad's glyphs.
 pub const KEYBOARD_LEGEND: &[&str] = &[
     "{dpad} move",
-    "{south} press",
+    "{confirm} press",
     "{west} backspace (hold to repeat)",
     "{north} space",
     "{start} enter",
     "{lb} {rb} move the text cursor",
     "hold {lt} shift",
     "Shift, Ctrl, Alt, AltGr and Super stay on for one key; press one again to let go",
-    "hold {east} or press {guide} to close",
+    "hold {back} or press {guide} to close",
 ];
 
 /// The numpad's reminder of its controls.
 pub const NUMPAD_LEGEND: &[&str] =
-    &["{dpad} move", "{south} press", "{west} backspace (hold to repeat)", "{start} enter", "hold {east} or press {guide} to close"];
+    &["{dpad} move", "{confirm} press", "{west} backspace (hold to repeat)", "{start} enter", "hold {back} or press {guide} to close"];
 
 /// What the overlay process draws.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -84,6 +84,12 @@ pub struct OverlayFrame {
     /// Whether menus draw their button glyphs in the Nintendo layout.
     #[serde(default)]
     pub nintendo_layout: bool,
+    /// What `{guide}` says: whatever opens the Guide overlay.
+    #[serde(default)]
+    pub opener: crate::info::OpenerLabel,
+    /// What `{confirm}` and `{back}` say: the buttons that confirm and go back.
+    #[serde(default)]
+    pub menu_keys: crate::config::MenuKeys,
     /// How each kind of overlay moves as it opens, closes, and as the cursor and picks move.
     #[serde(default)]
     pub motion: crate::motion::MotionSet,
@@ -205,8 +211,13 @@ pub struct OverlayController {
     /// The direction being held, repeating.
     repeat: crate::nav::Repeat,
     east_since: Option<Instant>,
-    /// Guide is down: Guide + X closes the keyboard (Guide + Y the numpad), as it opened it.
+    /// The opener is down: with it, the keyboard's own shortcut closes the keyboard (the numpad's
+    /// the numpad), as it opened it.
     guide_held: bool,
+    /// The button that is held to open (Guide unless moved; none when a gesture or combo does).
+    guide_button: Option<Button>,
+    /// The button of this layout's Guide shortcut, which closes it with the opener held.
+    close_button: Option<Button>,
     /// Shift held down by the left trigger.
     trigger_shift: bool,
     /// Caps Lock is on, counting the keyboard's own presses of it.
@@ -229,8 +240,10 @@ fn tap(name: &str) -> Vec<OverlayAction> {
 
 impl OverlayController {
     pub fn new(board: impl Into<Board>, cursor: Cursor) -> Self {
+        let board = board.into();
+        let close_button = Some(if board.layout() == Layout::Numpad { Button::North } else { Button::West });
         OverlayController {
-            board: board.into(),
+            board,
             cursor,
             latched: Vec::new(),
             pressed: None,
@@ -240,6 +253,8 @@ impl OverlayController {
             repeat: crate::nav::Repeat::default(),
             east_since: None,
             guide_held: false,
+            guide_button: Some(Button::Guide),
+            close_button,
             trigger_shift: false,
             caps: false,
             backspace: None,
@@ -277,9 +292,13 @@ impl OverlayController {
         }
     }
 
-    /// Tells the controller Guide is already down as it opens (the chord that opened it).
-    pub fn set_guide_held(&mut self, held: bool) {
+    /// Tells the controller which button is held to open the Guide overlay and which one closes
+    /// this layout with it (the shortcut it was opened by), and whether the opener is already down
+    /// as it opens (the chord that opened it).
+    pub fn set_guide(&mut self, held: bool, guide_button: Option<Button>, close_button: Option<Button>) {
         self.guide_held = held;
+        self.guide_button = guide_button;
+        self.close_button = close_button;
     }
 
     pub fn handle(&mut self, ev: InputEvent, now: Instant) -> Vec<OverlayAction> {
@@ -329,13 +348,12 @@ impl OverlayController {
             return Vec::new();
         }
         let keyboard = self.layout() == Layout::Keyboard;
-        let closes_with = if keyboard { Button::West } else { Button::North };
+        if Some(b) == self.guide_button {
+            self.guide_held = pressed;
+            return Vec::new();
+        }
         match (b, pressed) {
-            (Button::Guide, _) => {
-                self.guide_held = pressed;
-                Vec::new()
-            }
-            (b, true) if b == closes_with && self.guide_held => vec![OverlayAction::Close],
+            (b, true) if Some(b) == self.close_button && self.guide_held => vec![OverlayAction::Close],
             (Button::South, true) => self.press_selected(),
             (Button::South, false) => self.release_selected(),
             // Held, X keeps deleting at the cursor's repeat rate.

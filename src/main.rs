@@ -19,6 +19,7 @@ mod launchers;
 mod library;
 mod media;
 mod offer;
+mod opener_watch;
 mod menu;
 mod nav;
 mod monitor;

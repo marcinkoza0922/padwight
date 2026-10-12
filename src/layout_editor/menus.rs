@@ -68,11 +68,11 @@ fn menus_page(config: &Config) -> (Vec<ItemView>, &'static str) {
     let mut rows: Vec<ItemView> =
         menus(config).iter().map(|m| item(format!("{} · {} · {} items", m.name, m.kind.tag().short(), m.items.len()))).collect();
     rows.push(add_item("Add menu".into()));
-    (rows, "{south} open or add · {east} back")
+    (rows, "{confirm} open or add · {back} back")
 }
 
 fn menu_page(config: &Config, m: usize) -> (Vec<ItemView>, &'static str) {
-    let Some(menu) = menus(config).get(m) else { return (Vec::new(), "{east} back") };
+    let Some(menu) = menus(config).get(m) else { return (Vec::new(), "{back} back") };
     let mut rows: Vec<ItemView> = menu
         .items
         .iter()
@@ -81,12 +81,12 @@ fn menu_page(config: &Config, m: usize) -> (Vec<ItemView>, &'static str) {
     rows.push(add_item("Add item".into()));
     rows.push(item(format!("Kind: {}", menu.kind.tag().short())));
     rows.push(if menu_in_use(config, m) { item("Opened by a button: can't delete".into()) } else { remove_item("Delete menu".into()) });
-    (rows, "{south} open, add or change · {east} back")
+    (rows, "{confirm} open, add or change · {back} back")
 }
 
 fn item_page(config: &Config, m: usize, i: usize) -> (Vec<ItemView>, &'static str) {
-    let Some(menu) = menus(config).get(m) else { return (Vec::new(), "{east} back") };
-    let Some(it) = menu.items.get(i) else { return (Vec::new(), "{east} back") };
+    let Some(menu) = menus(config).get(m) else { return (Vec::new(), "{back} back") };
+    let Some(it) = menu.items.get(i) else { return (Vec::new(), "{back} back") };
     let rows = item_rows(menu)
         .into_iter()
         .map(|row| match row {
@@ -100,7 +100,7 @@ fn item_page(config: &Config, m: usize, i: usize) -> (Vec<ItemView>, &'static st
             ItemRow::Remove => remove_item("Remove item".into()),
         })
         .collect();
-    (rows, "{south} choose · {east} back")
+    (rows, "{confirm} choose · {back} back")
 }
 
 fn infos_page(config: &Config) -> (Vec<ItemView>, &'static str) {
@@ -110,13 +110,13 @@ fn infos_page(config: &Config) -> (Vec<ItemView>, &'static str) {
         .iter()
         .map(|o| item(format!("{} · {} · {}", o.name, if o.always { "always up" } else { "shown by an action" }, o.style.position)))
         .collect();
-    (rows, "{south} open · {east} back")
+    (rows, "{confirm} open · {back} back")
 }
 
 fn info_page(config: &Config, i: usize) -> (Vec<ItemView>, &'static str) {
-    let Some(o) = config.active_game().info.get(i) else { return (Vec::new(), "{east} back") };
+    let Some(o) = config.active_game().info.get(i) else { return (Vec::new(), "{back} back") };
     let rows = vec![item(format!("Always on screen: {}", if o.always { "yes" } else { "no" })), item(format!("Position: {}", o.style.position))];
-    (rows, "{south} change · {left} {right} move it · {east} back")
+    (rows, "{confirm} change · {left} {right} move it · {back} back")
 }
 
 fn info_mut(config: &mut Config, i: usize) -> Option<&mut InfoOverlay> {
@@ -158,7 +158,7 @@ pub(super) fn page(page: Page, config: &Config) -> (Vec<ItemView>, &'static str)
         Page::MenuItem(m, i) => item_page(config, m, i),
         Page::Infos => infos_page(config),
         Page::Info(i) => info_page(config, i),
-        _ => (Vec::new(), "{east} back"),
+        _ => (Vec::new(), "{back} back"),
     }
 }
 

@@ -11,7 +11,7 @@ use crate::keycode::KeyCode;
 
 use crate::{
     config::{
-        Analog, Button, ButtonAction, GUIDE_MODE, GestureKind, MOUSE_MODE, Macro, MacroStep, Menu, Profile, Stick, StickAction, SwipeDirection, Toggled, TouchSide,
+        Analog, Button, ButtonAction, GUIDE_MODE, GestureKind, MOUSE_MODE, GuideOpener, OPEN_GUIDE, Macro, MacroStep, Menu, Profile, Stick, StickAction, SwipeDirection, Toggled, TouchSide,
         Trigger, TriggerAction,
     },
     input::{Axis, InputEvent},
@@ -147,8 +147,12 @@ pub struct Engine {
     guide_held: Option<bool>,
     /// Whether the Guide overlay is up. Its layer stays on until the overlay closes.
     guide_open: bool,
-    /// Whether mouse mode is on. It stays on until Guide is pressed again.
+    /// Whether mouse mode is on. It stays on until the opener is used again.
     mouse_mode: bool,
+    /// What opens the Guide overlay (see [`GuideOpener`]).
+    opener: GuideOpener,
+    /// Which buttons confirm and go back in the Guide overlay's menu.
+    menu_keys: crate::config::MenuKeys,
     /// Buttons pressed while the Guide overlay is up that drive its menu (see [`guide_nav`]),
     /// in order; the daemon takes them.
     guide_nav: Vec<Button>,
@@ -198,6 +202,8 @@ pub struct Engine {
     overlay_toggled: Option<crate::keyboard::Layout>,
     /// Set when a Screenshot action fires; the daemon takes it.
     screenshot_requested: bool,
+    /// Set when a QuickSettings action fires; the daemon takes it.
+    settings_requested: bool,
     /// Set when a ToggleRecording action fires; the daemon takes it.
     recording_toggled: bool,
     /// Set when a ToggleMedia action fires; the daemon takes it.
@@ -329,7 +335,15 @@ impl Engine {
     fn switch_mode(&mut self, name: &str) {
         match name {
             GUIDE_MODE => {}
-            MOUSE_MODE => self.set_mouse_mode(!self.mouse_mode),
+            // The opener's gesture or combo: it opens and closes the overlay, and ends mouse mode.
+            OPEN_GUIDE if self.mouse_mode => self.set_mouse_mode(false),
+            OPEN_GUIDE => self.set_guide_open(!self.guide_open),
+            MOUSE_MODE => {
+                if self.guide_open {
+                    self.set_guide_open(false);
+                }
+                self.set_mouse_mode(!self.mouse_mode);
+            }
             _ => {
                 self.mode = if self.mode.as_deref() == Some(name) && !self.mouse_mode { None } else { Some(name.to_string()) };
                 self.set_mouse_mode(false);
@@ -378,6 +392,11 @@ impl Engine {
     }
 
     /// Whether a Screenshot action fired since the last call.
+    /// Whether a QuickSettings action fired since the last call.
+    pub fn take_settings_request(&mut self) -> bool {
+        std::mem::take(&mut self.settings_requested)
+    }
+
     pub fn take_screenshot(&mut self) -> bool {
         std::mem::take(&mut self.screenshot_requested)
     }
@@ -552,10 +571,15 @@ impl Engine {
     /// unless it drives the overlay's menu. The press itself still runs, under the Guide layer,
     /// if it's a Guide shortcut.
     fn other_button_pressed(&mut self, b: Button, now: Instant) {
+        if self.is_trigger_member(b) {
+            return;
+        }
         if let Some(chorded) = self.guide_held.as_mut() {
             *chorded = true;
         }
         if self.guide_open {
+            // The menu hears A and B where the confirm and back buttons are.
+            let b = self.menu_keys.logical(b, true);
             if guide_nav(b) {
                 self.guide_nav.push(b);
                 if matches!(b, Button::DpadUp | Button::DpadDown | Button::LeftStickUp | Button::LeftStickDown) {
@@ -613,9 +637,33 @@ impl Engine {
         self.layers_changed = true;
     }
 
-    /// Whether the Guide button (held, or with its overlay up) should turn on mouse mode.
-    fn enters_mouse_mode(&self) -> bool {
-        !self.mouse_mode && (self.guide_held.is_some() || self.guide_open)
+    /// Sets which buttons confirm and go back in the Guide overlay's menu.
+    pub fn set_menu_keys(&mut self, keys: crate::config::MenuKeys) {
+        self.menu_keys = keys;
+    }
+
+    /// Sets what opens the Guide overlay. Whatever the old opener had begun is dropped.
+    pub fn set_opener(&mut self, opener: GuideOpener) {
+        if self.opener != opener {
+            self.opener = opener;
+            self.guide_held = None;
+            self.layers_changed = true;
+        }
+    }
+
+    /// Whether `b` is the button that opens the overlay by being held or tapped.
+    fn is_held_opener(&self, b: Button) -> bool {
+        match &self.opener {
+            GuideOpener::Guide => b == Button::Guide,
+            GuideOpener::Button(held) => b == *held,
+            GuideOpener::Triggered(_) => false,
+        }
+    }
+
+    /// Whether `b` is part of a gesture or combo that opens the overlay, which then isn't a
+    /// press that closes it.
+    fn is_trigger_member(&self, b: Button) -> bool {
+        matches!(&self.opener, GuideOpener::Triggered(members) if members.contains(&b))
     }
 
     /// Handles the Guide button, mouse mode's entry, and the overlay's own presses. Returns true
@@ -624,17 +672,12 @@ impl Engine {
         if !pressed && self.guide_repeat.is_some_and(|(r, _)| r == b) {
             self.guide_repeat = None;
         }
-        if b == Button::Guide {
+        if self.is_held_opener(b) {
             self.guide_button(pressed);
             return true;
         }
-        if pressed && b == Button::RightStick && self.enters_mouse_mode() {
-            // Guide + right stick click (or the click with the overlay up) starts mouse mode.
-            if let Some(chorded) = self.guide_held.as_mut() {
-                *chorded = true;
-            }
-            self.set_guide_open(false);
-            self.set_mouse_mode(true);
+        // Guide is the Guide overlay's alone: moved off it, it does nothing and never reaches the game.
+        if b == Button::Guide {
             return true;
         }
         if pressed {
@@ -962,6 +1005,12 @@ impl Engine {
         ButtonAction::ToggleMedia => {
             if pressed {
                 self.media_toggled = true;
+            }
+        }
+        ButtonAction::QuickSettings => {
+            if pressed {
+                self.settings_requested = true;
+                self.close_guide_overlay();
             }
         }
         ButtonAction::ForceQuit => {
@@ -1560,10 +1609,11 @@ mod tests {
     #[test]
     fn guide_and_right_stick_click_start_mouse_mode() {
         let (base, mouse) = mouse_setup();
+        let (_, guide) = guide_setup();
         let mut e = Engine::default();
         let t0 = Instant::now();
         let mut out = press(&mut e, &base, Button::Guide, true, t0);
-        out.extend(press(&mut e, &base, Button::RightStick, true, ms(t0, 50)));
+        out.extend(press(&mut e, &guide, Button::RightStick, true, ms(t0, 50)));
         out.extend(press(&mut e, &mouse, Button::RightStick, false, ms(t0, 100)));
         out.extend(press(&mut e, &base, Button::Guide, false, ms(t0, 150)));
         assert!(out.is_empty(), "the chord doesn't reach the game");
@@ -1584,10 +1634,11 @@ mod tests {
     #[test]
     fn guide_leaves_mouse_mode_and_does_not_open_the_overlay() {
         let (base, mouse) = mouse_setup();
+        let (_, guide) = guide_setup();
         let mut e = Engine::default();
         let t0 = Instant::now();
         press(&mut e, &base, Button::Guide, true, t0);
-        press(&mut e, &base, Button::RightStick, true, ms(t0, 50));
+        press(&mut e, &guide, Button::RightStick, true, ms(t0, 50));
         press(&mut e, &mouse, Button::RightStick, false, ms(t0, 60));
         press(&mut e, &mouse, Button::Guide, false, ms(t0, 70));
         press(&mut e, &mouse, Button::Guide, true, ms(t0, 500));
@@ -1609,6 +1660,145 @@ mod tests {
         assert_eq!(press(&mut e, &mouse, Button::North, false, ms(t0, 50)), vec![OutEvent::Key(KeyCode::KEY_LEFTALT, false)]);
         assert_eq!(press(&mut e, &mouse, Button::East, true, ms(t0, 60)), vec![OutEvent::Key(KeyCode::KEY_DELETE, true)]);
         assert_eq!(press(&mut e, &mouse, Button::East, false, ms(t0, 70)), vec![OutEvent::Key(KeyCode::KEY_DELETE, false)]);
+    }
+
+    /// The profile the daemon hands the engine with `shortcuts` in force: the opener injected,
+    /// then the Guide mode (when `guide`) laid under it as the daemon's layering does.
+    fn with_shortcuts(shortcuts: &crate::config::Shortcuts, guide: bool) -> Profile {
+        let base = Profile::passthrough("p");
+        let mut p = if guide { layered(&base, &crate::config::Layer::guide_with(shortcuts)) } else { base };
+        shortcuts.inject(&mut p);
+        p
+    }
+
+    fn shortcuts_with(opener: crate::config::ShortcutInput) -> crate::config::Shortcuts {
+        let mut s = crate::config::Shortcuts::default();
+        s.set(crate::config::Shortcut::OpenGuide, Some(opener));
+        s
+    }
+
+    #[test]
+    fn a_moved_opener_button_works_like_guide_and_guide_does_nothing() {
+        let shortcuts = shortcuts_with(crate::config::ShortcutInput::button(Button::Select));
+        let (base, on) = (with_shortcuts(&shortcuts, false), with_shortcuts(&shortcuts, true));
+        let mut e = Engine::default();
+        e.set_opener(shortcuts.engine_opener());
+        let t0 = Instant::now();
+        assert!(press(&mut e, &base, Button::Guide, true, t0).is_empty(), "Guide is swallowed");
+        press(&mut e, &base, Button::Guide, false, ms(t0, 80));
+        assert_eq!(e.mode(), None, "and opens nothing");
+        let out = press(&mut e, &base, Button::Select, true, ms(t0, 200));
+        assert!(out.is_empty(), "the opener never reaches the game");
+        press(&mut e, &base, Button::Select, false, ms(t0, 280));
+        assert_eq!(e.mode(), Some(GUIDE_MODE), "a tap opens the overlay");
+        // Held, it makes the Guide shortcuts available like Guide does.
+        press(&mut e, &on, Button::Select, true, ms(t0, 600));
+        press(&mut e, &on, Button::Select, false, ms(t0, 680));
+        assert_eq!(e.mode(), None, "tapped again, it closes");
+    }
+
+    #[test]
+    fn a_combo_opener_opens_and_closes_the_overlay_and_leaves_mouse_mode() {
+        let shortcuts = shortcuts_with(crate::config::ShortcutInput::combo(&[Button::Start, Button::Select]));
+        let (base, on) = (with_shortcuts(&shortcuts, false), with_shortcuts(&shortcuts, true));
+        let mut e = Engine::default();
+        e.set_opener(shortcuts.engine_opener());
+        let t0 = Instant::now();
+        press(&mut e, &base, Button::Start, true, t0);
+        press(&mut e, &base, Button::Select, true, ms(t0, 10));
+        press(&mut e, &base, Button::Select, false, ms(t0, 100));
+        press(&mut e, &base, Button::Start, false, ms(t0, 110));
+        assert_eq!(e.mode(), Some(GUIDE_MODE), "the combo opens the overlay");
+        // The same combo with the overlay up puts it away, instead of its buttons closing it first.
+        press(&mut e, &on, Button::Start, true, ms(t0, 500));
+        press(&mut e, &on, Button::Select, true, ms(t0, 510));
+        assert_eq!(e.mode(), None);
+        press(&mut e, &on, Button::Select, false, ms(t0, 600));
+        press(&mut e, &on, Button::Start, false, ms(t0, 610));
+        // In mouse mode it leaves instead of opening.
+        e.enter_mouse_mode();
+        press(&mut e, &base, Button::Start, true, ms(t0, 900));
+        press(&mut e, &base, Button::Select, true, ms(t0, 910));
+        assert_eq!(e.mode(), None);
+    }
+
+    #[test]
+    fn a_gesture_opener_waits_for_its_gesture() {
+        let shortcuts = shortcuts_with(crate::config::ShortcutInput::gesture(Button::Select, GestureKind::DoubleTap));
+        let p = with_shortcuts(&shortcuts, false);
+        let mut e = Engine::default();
+        e.set_opener(shortcuts.engine_opener());
+        let t0 = Instant::now();
+        press(&mut e, &p, Button::Select, true, t0);
+        press(&mut e, &p, Button::Select, false, ms(t0, 40));
+        assert_eq!(e.mode(), None, "one tap is only a tap");
+        press(&mut e, &p, Button::Select, true, ms(t0, 100));
+        press(&mut e, &p, Button::Select, false, ms(t0, 140));
+        fire_timers(&mut e, &p, ms(t0, 600));
+        assert_eq!(e.mode(), Some(GUIDE_MODE), "two taps open it");
+    }
+
+    #[test]
+    fn with_the_opener_off_nothing_opens_the_overlay() {
+        let mut shortcuts = crate::config::Shortcuts::default();
+        shortcuts.set(crate::config::Shortcut::OpenGuide, None);
+        let p = with_shortcuts(&shortcuts, false);
+        let mut e = Engine::default();
+        e.set_opener(shortcuts.engine_opener());
+        let t0 = Instant::now();
+        press(&mut e, &p, Button::Guide, true, t0);
+        press(&mut e, &p, Button::Guide, false, ms(t0, 50));
+        assert_eq!(e.mode(), None);
+    }
+
+    #[test]
+    fn mouse_mode_is_entered_on_whatever_the_shortcut_is_moved_to() {
+        let mut shortcuts = crate::config::Shortcuts::default();
+        shortcuts.set(crate::config::Shortcut::MouseMode, Some(crate::config::ShortcutInput::button(Button::Start)));
+        let on = with_shortcuts(&shortcuts, true);
+        let mut e = Engine::default();
+        let t0 = Instant::now();
+        press(&mut e, &on, Button::Guide, true, t0);
+        press(&mut e, &on, Button::RightStick, true, ms(t0, 20));
+        assert_eq!(e.mode(), Some(GUIDE_MODE), "R3 no longer does it");
+        press(&mut e, &on, Button::Start, true, ms(t0, 40));
+        press(&mut e, &on, Button::Guide, false, ms(t0, 80));
+        assert_eq!(e.mode(), Some(MOUSE_MODE));
+    }
+
+    #[test]
+    fn quick_settings_is_a_guide_shortcut_that_closes_the_overlay() {
+        let (base, on) = guide_setup();
+        let mut e = Engine::default();
+        let t0 = Instant::now();
+        press(&mut e, &base, Button::Guide, true, t0);
+        press(&mut e, &base, Button::Guide, false, ms(t0, 80));
+        assert_eq!(e.mode(), Some(GUIDE_MODE));
+        let out = press(&mut e, &on, Button::Start, true, ms(t0, 400));
+        assert!(out.is_empty(), "Start doesn't reach the game");
+        assert!(e.take_settings_request());
+        assert_eq!(e.mode(), None, "the overlay is put away");
+        // Held Guide + Start, the old chord, asks the same.
+        press(&mut e, &on, Button::Start, false, ms(t0, 500));
+        press(&mut e, &base, Button::Guide, true, ms(t0, 1000));
+        press(&mut e, &on, Button::Start, true, ms(t0, 1050));
+        assert!(e.take_settings_request());
+    }
+
+    #[test]
+    fn the_guide_menu_hears_a_and_b_where_the_menu_buttons_are() {
+        let (base, on) = guide_setup();
+        let mut e = Engine::default();
+        e.set_menu_keys(crate::config::MenuKeys { confirm: Button::Select, back: Button::East });
+        let t0 = Instant::now();
+        press(&mut e, &base, Button::Guide, true, t0);
+        press(&mut e, &base, Button::Guide, false, ms(t0, 80));
+        press(&mut e, &on, Button::Select, true, ms(t0, 300));
+        assert_eq!(e.take_guide_nav(), [Button::South], "Select chooses");
+        assert_eq!(e.mode(), Some(GUIDE_MODE), "and doesn't close the overlay");
+        press(&mut e, &on, Button::South, true, ms(t0, 400));
+        assert!(e.take_guide_nav().is_empty(), "A is just another button now");
+        assert_eq!(e.mode(), None);
     }
 
     #[test]

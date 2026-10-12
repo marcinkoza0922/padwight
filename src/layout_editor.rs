@@ -262,7 +262,7 @@ impl LayoutEditor {
         if self.armed
             && let Some(row) = items.get_mut(self.cursor)
         {
-            row.label = "Press {south} again to delete".into();
+            row.label = "Press {confirm} again to delete".into();
         }
         items
     }
@@ -528,40 +528,40 @@ impl LayoutEditor {
         let style = config.active_menu_style().clone();
         let profile = config.active();
         let (items, hint) = match self.page {
-            Page::Top => (top_rows(&self.inputs()).into_iter().map(|row| top_item(row, config)).collect(), "{south} change · {east} back"),
+            Page::Top => (top_rows(&self.inputs()).into_iter().map(|row| top_item(row, config)).collect(), "{confirm} change · {back} back"),
             Page::Action(slot) => {
                 let current = current_action(config, slot);
-                (page_rows(slot, &current).into_iter().map(|row| ItemView { keyword: action_row_keyword(row), ..item(action_row_label(row, &current)) }).collect(), "{south} choose · {east} back")
+                (page_rows(slot, &current).into_iter().map(|row| ItemView { keyword: action_row_keyword(row), ..item(action_row_label(row, &current)) }).collect(), "{confirm} choose · {back} back")
             }
-            Page::Pad(_) => (Button::ALL.iter().map(|&p| button_item(p, String::new())).collect(), "{south} choose · {east} back"),
+            Page::Pad(_) => (Button::ALL.iter().map(|&p| button_item(p, String::new())).collect(), "{confirm} choose · {back} back"),
             Page::Gestures(b) => (
                 GestureKind::ALL.iter().map(|&k| button_item(b, buttons::gesture_row_label(profile, b, k))).collect(),
-                "{south} choose · {east} back",
+                "{confirm} choose · {back} back",
             ),
             Page::Combos => {
                 let mut rows: Vec<ItemView> = combos(config).iter().map(|c| combo_item(&c.buttons, &c.action)).collect();
                 rows.push(add_item("Add combo".into()));
-                (rows, "{south} open · {east} back")
+                (rows, "{confirm} open · {back} back")
             }
             Page::Combo(i) => combo_page(config, i, &self.inputs()),
             Page::Layers(shift) => layers_page(config, shift),
             Page::Pick(_, p) => {
                 let rows = picker_names(config, p).into_iter().map(item).collect();
-                (rows, "{south} choose · {east} back")
+                (rows, "{confirm} choose · {back} back")
             }
             Page::Layer(shift, i) => layer_page(config, shift, i, &self.inputs()),
             Page::Keys(slot) => keys_page(config, slot),
-            Page::MacroPick(..) => (Button::ALL.iter().map(|&b| button_item(b, String::new())).collect(), "{south} choose · {east} back"),
+            Page::MacroPick(..) => (Button::ALL.iter().map(|&b| button_item(b, String::new())).collect(), "{confirm} choose · {back} back"),
             Page::Macros => {
                 let mut rows: Vec<ItemView> = config.active_game().macros.iter().map(|m| item(format!("{} ({} steps)", m.name, m.steps.len()))).collect();
                 rows.push(add_item("Add macro".into()));
-                (rows, "{south} open · {east} back")
+                (rows, "{confirm} open · {back} back")
             }
             Page::Macro(i) => macro_page(config, i),
-            Page::MacroStick(_) => ((0..macros::STICK_STEPS).map(|r| item(macros::stick_row_label(r))).collect(), "{south} choose · {east} back"),
+            Page::MacroStick(_) => ((0..macros::STICK_STEPS).map(|r| item(macros::stick_row_label(r))).collect(), "{confirm} choose · {back} back"),
             Page::Stick(stick) => with_zones_row(values::stick_page(stick, profile), config, Analog::Stick(stick)),
             Page::Trigger(trigger) => with_zones_row(values::trigger_page(trigger, profile), config, Analog::Trigger(trigger)),
-            Page::Zones(a) => (zones::zones_rows(config, a), "{south} open or add · {east} back"),
+            Page::Zones(a) => (zones::zones_rows(config, a), "{confirm} open or add · {back} back"),
             Page::Zone(a, i) => zones::zone_page(config, a, i),
             Page::Menus | Page::Menu(_) | Page::MenuItem(..) | Page::Infos | Page::Info(_) => menus::page(self.page, config),
             Page::Gyro => values::gyro_page(profile),
@@ -594,7 +594,7 @@ fn keys_page(config: &Config, slot: Slot) -> (Vec<ItemView>, &'static str) {
         .map(|code| item(format!("[{}] {}", if pressed.iter().any(|k| k == code) { "x" } else { " " }, buttons::key_label(code))))
         .collect();
     rows.push(item("Done".into()));
-    (rows, "{south} toggle a key · {east} back")
+    (rows, "{confirm} toggle a key · {back} back")
 }
 
 /// A stick's or trigger's page with its zones row added after its own rows.

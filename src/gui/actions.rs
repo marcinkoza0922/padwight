@@ -26,6 +26,7 @@ pub(super) enum ActionKind {
     Screenshot,
     Recording,
     Media,
+    QuickSettings,
     ForceQuit,
     Toggle,
     Turbo,
@@ -51,6 +52,7 @@ impl fmt::Display for ActionKind {
             ActionKind::Screenshot => "Take screenshot",
             ActionKind::Recording => "Toggle recording",
             ActionKind::Media => "Media controls",
+            ActionKind::QuickSettings => "Quick Settings menu",
             ActionKind::ForceQuit => "Force quit (hold)",
             ActionKind::Toggle => "Toggle on / off…",
             ActionKind::Macro => "Macro…",
@@ -66,7 +68,7 @@ impl fmt::Display for ActionKind {
 }
 
 /// Every kind, for a top-level action.
-pub(super) const ACTION_KINDS: [ActionKind; 20] = [
+pub(super) const ACTION_KINDS: [ActionKind; 21] = [
     ActionKind::Disabled,
     ActionKind::Gamepad,
     ActionKind::Keys,
@@ -77,6 +79,7 @@ pub(super) const ACTION_KINDS: [ActionKind; 20] = [
     ActionKind::Screenshot,
     ActionKind::Recording,
     ActionKind::Media,
+    ActionKind::QuickSettings,
     ActionKind::ForceQuit,
     ActionKind::Toggle,
     ActionKind::Turbo,
@@ -223,6 +226,7 @@ pub(super) fn action_kind(action: &ButtonAction) -> ActionKind {
         ButtonAction::Screenshot => ActionKind::Screenshot,
         ButtonAction::ToggleRecording => ActionKind::Recording,
         ButtonAction::ToggleMedia => ActionKind::Media,
+        ButtonAction::QuickSettings => ActionKind::QuickSettings,
         ButtonAction::ForceQuit => ActionKind::ForceQuit,
         ButtonAction::Multi(_) => ActionKind::Multiple,
         ButtonAction::Toggle(_) => ActionKind::Toggle,
@@ -256,6 +260,7 @@ pub(super) fn new_action(k: ActionKind, default_button: Button, current: &Button
         ActionKind::Screenshot => ButtonAction::Screenshot,
         ActionKind::Recording => ButtonAction::ToggleRecording,
         ActionKind::Media => ButtonAction::ToggleMedia,
+        ActionKind::QuickSettings => ButtonAction::QuickSettings,
         ActionKind::ForceQuit => ButtonAction::ForceQuit,
         // Keep what was there as the first entry.
         ActionKind::Multiple => ButtonAction::Multi(wrappable.into_iter().collect()),
@@ -460,7 +465,7 @@ pub(super) fn action_value<'a>(
             }
             line.push(goto).into()
         }
-        ButtonAction::Disabled | ButtonAction::Screenshot | ButtonAction::ToggleRecording => space().into(),
+        ButtonAction::Disabled | ButtonAction::Screenshot | ButtonAction::ToggleRecording | ButtonAction::QuickSettings => space().into(),
         ButtonAction::ToggleMedia => text("D-pad left and right seek, up and down change the volume, bumpers change track, A plays or pauses, B closes.").size(12).color(MUTED_COLOR).into(),
         ButtonAction::ForceQuit => {
             text("Hold for 2 seconds to close the program in the focused window. The desktop is never closed.")

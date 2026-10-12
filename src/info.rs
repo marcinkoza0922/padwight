@@ -15,6 +15,7 @@ use std::sync::OnceLock;
 use serde::{Deserialize, Serialize};
 
 mod guide;
+mod opener;
 mod pad_model;
 #[cfg(windows)]
 mod windows;
@@ -25,6 +26,7 @@ use windows::{battery, cpu_times, gpu_busy, local_time, memory, wifi_strength};
 pub use windows::form_factor;
 
 pub use guide::{DEFAULT_MODE, GuideView};
+pub use opener::{OpenerLabel, set_menu_keys, set_opener};
 pub use pad_model::PadModel;
 
 use crate::config::{Button, CurrentInput, InfoOverlay, Layer, MouseButton, OverlayStyle, ScreenPosition, Stick, Trigger};
@@ -54,11 +56,7 @@ pub fn button_token(b: Button) -> Option<&'static str> {
 /// A cheat sheet of what `layer` changes: each input it sets, as a glyph and a short
 /// description, two pairs to a row. Buttons set to do nothing are left out.
 pub fn layer_sheet(layer: &Layer) -> InfoOverlay {
-    let mut entries = layer_entries(layer);
-    // The in-game menu isn't a binding of the Guide layer, but holding Guide is how you reach it.
-    if layer.name == crate::config::GUIDE_MODE {
-        entries.push(("{guide} + {start}".into(), "Edit controls".into()));
-    }
+    let entries = layer_entries(layer);
     let rows = entries.chunks(2).map(|pair| pair.iter().flat_map(|(t, l)| [t.clone(), l.clone()]).collect()).collect();
     InfoOverlay {
         name: format!("layer {}", layer.name),
@@ -315,6 +313,9 @@ fn token(inner: &str) -> Option<Token> {
     }
     if !args.is_empty() {
         return None;
+    }
+    if let Some(b) = opener::menu_key(&name) {
+        return Some(Token::Button(b));
     }
     plain_token(&name)
 }
@@ -641,7 +642,7 @@ pub fn parse(cell: &str) -> Vec<Result<String, Token>> {
     if !text.is_empty() {
         parts.push(Ok(text));
     }
-    parts
+    opener::opener().expand(parts)
 }
 
 /// What each `{current_input}` cell of an overlay follows: the overlay's input settings,
@@ -1174,7 +1175,7 @@ mod tests {
         pair("{north}", "On-screen numpad");
         pair("{rb}", "Screenshot");
         pair("{select}", "Force quit focused window (hold)");
-        pair("{guide} + {start}", "Edit controls");
+        pair("{start}", "Quick Settings");
         assert!(sheet.rows.iter().all(|r| r.len() % 2 == 0 && r.len() <= 4));
         assert!(!cells.iter().any(|c| c.as_str() == "{south}"), "swallowed buttons aren't listed");
         // Every cell parses into glyphs and text.
@@ -1444,5 +1445,34 @@ mod tests {
         s.sample();
         assert!(s.stats.ram.is_some_and(|(used, total)| used > 0.0 && total >= used));
         assert!(s.stats.cpu.is_none_or(|c| (0.0..=100.0).contains(&c)));
+    }
+
+    #[test]
+    fn guide_says_whatever_opens_the_overlay() {
+        use crate::config::{GestureKind, Shortcut, ShortcutInput, Shortcuts};
+        let say = |opener: Option<ShortcutInput>| {
+            let mut s = Shortcuts::default();
+            s.set(Shortcut::OpenGuide, opener);
+            set_opener(OpenerLabel::of(&s));
+            parse("press {guide} to close")
+        };
+        let part = |b| Err(Token::Button(b));
+        assert_eq!(say(Some(ShortcutInput::button(Button::Guide))), vec![Ok("press ".into()), part(Button::Guide), Ok(" to close".into())]);
+        assert_eq!(say(Some(ShortcutInput::button(Button::Select)))[1], part(Button::Select));
+        let combo = say(Some(ShortcutInput::combo(&[Button::Start, Button::Select])));
+        assert_eq!(combo[1..4], [part(Button::Select), Ok(" + ".into()), part(Button::Start)]);
+        let gesture = say(Some(ShortcutInput::gesture(Button::Select, GestureKind::LongPress)));
+        assert_eq!(gesture[1..3], [Ok("long press ".into()), part(Button::Select)]);
+        assert!(matches!(&say(None)[1], Ok(t) if t.contains("no Guide")));
+        // {pad:guide} is the pad's own button, whatever opens the overlay.
+        assert_eq!(parse("{pad:guide}"), vec![Err(Token::PadButton(Button::Guide))]);
+    }
+
+    #[test]
+    fn confirm_and_back_say_the_menu_buttons() {
+        assert_eq!(parse("{confirm}{back}"), vec![Err(Token::Button(Button::South)), Err(Token::Button(Button::East))]);
+        set_menu_keys(crate::config::MenuKeys { confirm: Button::Select, back: Button::LeftStick });
+        assert_eq!(parse("{confirm} {back}"), vec![Err(Token::Button(Button::Select)), Ok(" ".into()), Err(Token::Button(Button::LeftStick))]);
+        assert_eq!(parse("{south}"), vec![Err(Token::Button(Button::South))], "{{south}} stays the button");
     }
 }

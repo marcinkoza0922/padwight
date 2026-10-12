@@ -121,12 +121,12 @@ fn the_hint_says_what_the_close_button_does_at_each_level() {
     let menus = three_deep();
     let mut pad = Pad::open(&menus, "Top");
     let top = pad.view().hint;
-    assert!(top.contains("{east} to close") && !top.contains("back"), "{top}");
+    assert!(top.contains("{back} to close") && !top.contains("back (hold"), "{top}");
     pad.press(Button::South);
-    assert!(pad.view().hint.contains("{east} back (hold to close)"), "{}", pad.view().hint);
+    assert!(pad.view().hint.contains("{back} back (hold to close)"), "{}", pad.view().hint);
     let mut pad = Pad::open_with(&menus, "Top", Opener::default());
     pad.press(Button::South);
-    assert!(pad.view().hint.contains("{east} back (hold to close)"), "unwatched: {}", pad.view().hint);
+    assert!(pad.view().hint.contains("{back} back (hold to close)"), "unwatched: {}", pad.view().hint);
 }
 
 #[test]

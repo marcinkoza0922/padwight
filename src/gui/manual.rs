@@ -54,7 +54,7 @@ macro_rules! images {
 const IMAGES: &[(&str, &[u8])] = &images![
     "buttons-row", "deus-buttons", "deus-flick", "deus-overview", "deus-picture", "first-setup-add", "first-setup-rules", "guide-overlay", "guide-tab", "gyro-panel", "in-game-menu",
     "info-overlay", "info-tab", "keyboard-overlay", "layers-tab", "macros-tab", "menu-list", "menu-radial", "menus-tab",
-    "modes-tab", "sharing-export", "sticks-ring", "sticks-zones", "touchpad-panel",
+    "modes-tab", "sharing-export", "shortcuts-tab", "sticks-ring", "sticks-zones", "touchpad-panel",
 ];
 
 /// `IMAGES` ready to draw. The window draws SVG, not PNG, so each picture is wrapped in an SVG that holds it.

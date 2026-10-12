@@ -26,6 +26,7 @@ out=screenshots/manual
     tab info info 0 shot info \
     game StarCraft tab layers sub buttons shot layers \
     tab modes shot modes \
-    game StarCraft tab details dialog export shot export \
+    game StarCraft tab details dialog export shot export close \
+    page settings settings shortcuts shortcuts-demo shot shortcuts-tab \
     >/dev/null
 "$pw" debug overlay guide menu-radial info in-game-menu keyboard menu-list --out $out/ov >/dev/null

@@ -10,7 +10,7 @@ A player can change the controls of the game they are playing without leaving it
 
 | Topic | Decision |
 |---|---|
-| Entry | Guide + Start pressed together opens a hardcoded menu over the game. |
+| Entry | Hold Guide and press Start (the Quick Settings shortcut; movable, see [guide.md](guide.md#movable-shortcuts)) opens a hardcoded menu over the game. |
 | Menu items | "Quick Settings" first, "Edit Controls" last. |
 | Quick Settings | Stick speed (for sticks that move the mouse), gyro sensitivity (gyro in mouse mode), Invert Y (every Y inversion in the profile at once), and the profile when the game has more than one. |
 | Quick Settings target | The active profile of the active game. Edits are saved to the config and apply at once. |
@@ -24,7 +24,7 @@ A player can change the controls of the game they are playing without leaving it
 
 ## Phase 1 (done)
 
-- `src/system_menu.rs`: the menu state machine, the Quick Settings rows and value changes, and the Guide + Start chord check. Unit tests cover the chord, the menu order, stick-speed and Invert Y changes, and stick stepping.
+- `src/system_menu.rs`: the menu state machine, the Quick Settings rows and value changes. Unit tests cover the menu order, stick-speed and Invert Y changes, and stick stepping.
 - `src/daemon.rs`: `Active::Settings`. `chord_opens_menu` runs before input routing and opens the menu. `settings_input` applies the menu's outcome. The menu is drawn as a normal `MenuView`, so the overlay process does not change.
 - Pack creation: `Config::add_game_for_window` (`src/config/window_game.rs`) and `Daemon::pack_from_general`.
 

@@ -85,7 +85,7 @@ pub struct MediaView {
 }
 
 /// The controls, as the overlay reminds you.
-const HINT: &str = "{left} {right} seek · {up} {down} volume · {west} mute · {lb} {rb} track · {south} play / pause · {north} player · {east} close";
+const HINT: &str = "{left} {right} seek · {up} {down} volume · {west} mute · {lb} {rb} track · {confirm} play / pause · {north} player · {back} close";
 
 impl MediaView {
     /// A made-up track, drawn with `style`, for the settings previews.
@@ -126,6 +126,10 @@ pub struct MediaSession {
     commands: Sender<Command>,
     state: MediaState,
     guide_held: bool,
+    /// The button held to open the Guide overlay, and the one of the media shortcut that closes
+    /// the panel with it held.
+    guide_button: Option<Button>,
+    close_button: Option<Button>,
     last_input: Instant,
     /// A held button that repeats, and when it next fires.
     repeat: Option<(Button, Instant)>,
@@ -148,7 +152,22 @@ fn repeating(b: Button) -> Option<Command> {
 
 impl MediaSession {
     pub fn new(commands: Sender<Command>, guide_held: bool, now: Instant) -> Self {
-        MediaSession { commands, state: MediaState::default(), guide_held, last_input: now, repeat: None }
+        MediaSession {
+            commands,
+            state: MediaState::default(),
+            guide_held,
+            guide_button: Some(Button::Guide),
+            close_button: Some(Button::LeftBumper),
+            last_input: now,
+            repeat: None,
+        }
+    }
+
+    /// Which buttons make the chord that closes it (see the fields), when they aren't Guide + LB.
+    pub fn with_chord(mut self, guide_button: Option<Button>, close_button: Option<Button>) -> Self {
+        self.guide_button = guide_button;
+        self.close_button = close_button;
+        self
     }
 
     pub fn update(&mut self, state: MediaState) {
@@ -175,7 +194,7 @@ impl MediaSession {
 
     pub fn handle(&mut self, ev: InputEvent, now: Instant) -> Option<MediaOutcome> {
         let InputEvent::Button(b, pressed) = ev else { return None };
-        if b == Button::Guide {
+        if Some(b) == self.guide_button {
             self.guide_held = pressed;
             return None;
         }
@@ -187,8 +206,8 @@ impl MediaSession {
         }
         self.last_input = now;
         let command = match b {
-            // Guide + LB opened it, so Guide + LB again puts it away.
-            Button::LeftBumper if self.guide_held => return Some(MediaOutcome::Close),
+            // The opener and the media shortcut opened it, so both again put it away.
+            b if Some(b) == self.close_button && self.guide_held => return Some(MediaOutcome::Close),
             Button::East => return Some(MediaOutcome::Close),
             Button::South => Command::PlayPause,
             Button::RightBumper => Command::Next,

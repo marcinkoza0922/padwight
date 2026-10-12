@@ -72,6 +72,17 @@ impl App {
                 self.page = Page::Manual;
             }
             Message::SetSettingsSearch(query) => self.settings_query = query,
+            Message::SelectSettingsTab(tab) => {
+                self.shortcuts_ui.tab = tab;
+                self.shortcuts_ui.listening = None;
+            }
+            Message::SetShortcut(s, input) => {
+                self.shortcuts_ui.listening = None;
+                self.set_shortcut(s, input);
+            }
+            Message::ResetShortcut(s) => self.config.shortcuts.reset(s),
+            Message::ResetAllShortcuts => self.config.shortcuts = Default::default(),
+            Message::ListenShortcut(at) => self.shortcuts_ui.listening = at,
             Message::SetManualSearch(query) => self.manual_query = query,
             Message::SetButtonSearch(query) => self.button_query = query,
             Message::ManualLink(link) => {
@@ -199,13 +210,13 @@ impl App {
     pub(super) fn with_active_layers(&self, p: &Profile) -> Profile {
         let layers = self.status.as_ref().map(|s| s.active_layers.as_slice()).unwrap_or_default();
         let game = self.config.active_game();
-        let mode = self.status.as_ref().and_then(|s| s.active_mode.as_deref()).and_then(|m| game.mode_or_built_in(m));
-        p.with_layers(mode.into_iter().chain(game.layers_named(layers)))
+        let mode = self.status.as_ref().and_then(|s| s.active_mode.as_deref()).and_then(|m| self.config.mode_for(game, m));
+        p.with_layers(mode.iter().map(|m| &**m).chain(game.layers_named(layers)))
     }
 
     /// Overview and Settings, then General and the games, with a search over the games.
     pub(super) fn view_sidebar(&self) -> Element<'_, Message> {
-        let entry = |label: String, page: Page, note: Option<&'static str>| -> Element<'_, Message> {
+        let entry = |label: String, page: Page, note: Option<String>| -> Element<'_, Message> {
             let selected = self.page == page;
             let mut line = row![text(label).size(15).width(Length::Fill)].spacing(6).align_y(Alignment::Center);
             if let Some(note) = note {
@@ -220,6 +231,15 @@ impl App {
         };
         let active_game = self.config.active_ref().game;
         let playing = |key: &Option<String>| (&active_game == key && self.status.is_some()).then_some("●");
+        // A setup whose profile uses what opens the Guide overlay gets a warning, with what else it shows.
+        let warned = |game: &Game, note: Option<&str>| -> Option<String> {
+            let conflicts = !self.config.shortcut_conflicts(game).is_empty();
+            match (conflicts, note) {
+                (true, Some(note)) => Some(format!("⚠ {note}")),
+                (true, None) => Some("⚠".into()),
+                (false, note) => note.map(str::to_string),
+            }
+        };
         let updates: Vec<&str> = library::updates(&self.config, &self.library).into_iter().map(|(name, _)| name).collect();
 
         let mut col = column![
@@ -228,7 +248,7 @@ impl App {
             entry("Manual".into(), Page::Manual, None),
             rule::horizontal(1),
             text("Setups").size(13).color(MUTED_COLOR),
-            entry("General".into(), Page::Game(None), playing(&None)),
+            entry("General".into(), Page::Game(None), warned(&self.config.general, playing(&None))),
         ]
         .spacing(6);
         // General is always listed, so the search box and the empty note are about the games.
@@ -244,7 +264,7 @@ impl App {
             let key = Some(g.name.clone());
             let note = if updates.contains(&g.name.as_str()) { Some("update") } else { playing(&key) };
             let label = if g.name.is_empty() { "(unnamed)".to_string() } else { g.name.clone() };
-            col = col.push(entry(label, Page::Game(key), note));
+            col = col.push(entry(label, Page::Game(key), warned(g, note)));
         }
         // A sidebar entry in the accent color rather than a filled button, which would look like
         // the search field above it.
