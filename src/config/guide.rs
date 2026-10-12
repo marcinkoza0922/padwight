@@ -174,13 +174,14 @@ impl RowShape {
         }
     }
 
-    /// What follows the glyphs of a row: the mark of a gesture, which says how it's done.
+    /// What follows the glyphs of a row: the mark of a gesture, which says how it's done, as a
+    /// badge (`{gesture:…}`) that reads apart from the text of the row.
     pub fn mark(self) -> &'static str {
         match self {
             RowShape::Input | RowShape::Merged | RowShape::Combo => "",
-            RowShape::Gesture(GestureKind::DoubleTap) => " ×2",
-            RowShape::Gesture(GestureKind::TripleTap) => " ×3",
-            RowShape::Gesture(GestureKind::LongPress) => " hold",
+            RowShape::Gesture(GestureKind::DoubleTap) => " {gesture:double}",
+            RowShape::Gesture(GestureKind::TripleTap) => " {gesture:triple}",
+            RowShape::Gesture(GestureKind::LongPress) => " {gesture:hold}",
         }
     }
 

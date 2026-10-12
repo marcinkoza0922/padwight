@@ -10,7 +10,7 @@ use iced::{
 };
 
 use crate::{
-    config::{Button, MouseButton, OverlayStyle, Trigger},
+    config::{Button, GestureKind, MouseButton, OverlayStyle, Trigger},
     info::{self, Charge, FormFactor, Icon, InfoView, PadFamily, Segment},
     keyboard,
     motion::Anim,
@@ -83,7 +83,7 @@ impl GlyphPanel {
 /// keyboard, the mouse and the icons.
 pub fn sheets(nintendo_layout: bool) -> Vec<InfoView> {
     let mut sheets: Vec<InfoView> = PadFamily::ALL.iter().map(|&family| buttons(family, nintendo_layout)).collect();
-    sheets.extend([keys(), mouse(), icons()]);
+    sheets.extend([keys(), mouse(), gestures(), icons()]);
     sheets
 }
 
@@ -121,6 +121,14 @@ fn buttons(family: PadFamily, swapped: bool) -> InfoView {
     ];
     let layout = if swapped { ", Nintendo layout" } else { "" };
     sheet(&format!("{family}{layout}"), rows)
+}
+
+/// The gesture badges a row's mark draws: `{gesture:…}`.
+fn gestures() -> InfoView {
+    let rows = [("Double tap", GestureKind::DoubleTap), ("Triple tap", GestureKind::TripleTap), ("Long press", GestureKind::LongPress)]
+        .map(|(name, kind)| (name.to_string(), vec![info::gesture_glyph(kind)]))
+        .to_vec();
+    sheet("Gestures", rows)
 }
 
 /// Every key a keyboard layout draws, each once, as `{keyboard:…}` draws it.

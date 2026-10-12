@@ -7,7 +7,7 @@ id = "7b1d3c52-4f0a-4c1e-9a64-2e8f5d0b9a11"
 name = "Max Payne"
 version = "1.2"
 author = "Padwight"
-description = "Max Payne (2001) on an Xbox-style pad, for the game's default keys. RT shoots, LT is bullet time and RB shootdodges (with a direction). A uses, B jumps, X reloads and Y takes a painkiller. LB opens a radial menu of weapon groups (aim with the right stick), R3 is the sniper zoom, L3 toggles crouch. Start is the menu: double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
+description = "Max Payne (2001) on an Xbox-style pad, for the game's default keys. RT shoots, LT is bullet time and RB shootdodges (with a direction). A uses (and zooms the sniper rifle), B jumps, X reloads and Y takes a painkiller. LB opens a radial menu of weapon groups (aim with the right stick), L3 toggles crouch. Start is the menu: double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -58,9 +58,6 @@ keys = ["KEY_ESC"]
 
 [profiles.buttons.LeftStick.toggle]
 keys = ["KEY_C"]
-
-[profiles.buttons.RightStick]
-keys = ["KEY_Q"]
 
 [profiles.buttons.DpadLeft]
 wheel = "Up"
@@ -115,9 +112,8 @@ activation = "always"
 noise_threshold = 1.0
 [profiles.guide]
 notes = '''Hold {lt} for bullet time. Hold {rb} with a direction on the left stick {ls} to shootdodge.
-{north} takes a painkiller. {south} uses doors, switches and phones, and {east} jumps.
+{north} takes a painkiller. {south} uses doors, switches and phones, zooms the sniper rifle, and {east} jumps.
 Hold {lb} for the weapon groups, aiming with the right stick {rs}. The {dpad} left and right step through the weapons, and {up} picks the best one.
-Click {r3} for the sniper zoom.
 Crouch is a toggle: click {l3} to crouch and again to stand.
 {start} is the menu. Double tap it to quick save and hold it to quick load. {select} pauses without the menu.'''
 
@@ -127,13 +123,12 @@ Crouch is a toggle: click {l3} to crouch and again to stand.
 "trigger:Right" = {text = "Shoot"}
 "trigger:Left" = {text = "{icon:hourglass} Bullet time"}
 "button:RightBumper" = {text = "Shootdodge (with a direction)"}
-"button:South" = {text = "Use"}
+"button:South" = {text = "Use / sniper zoom"}
 "button:East" = {text = "Jump"}
 "button:West" = {text = "Reload"}
 "button:North" = {text = "{icon:pill} {color:green}Painkillers{/color}"}
 "button:LeftBumper" = {text = "Hold: weapon groups"}
 "button:LeftStick" = {text = "Crouch (toggle)"}
-"button:RightStick" = {text = "{icon:scope} Sniper zoom"}
 "button:Select" = {text = "Pause"}
 "button:Start" = {text = "Menu"}
 "gesture:button:Start:double_tap" = {text = "{icon:save} Quick save"}
@@ -185,9 +180,6 @@ keys = ["KEY_ESC"]
 
 [profiles.buttons.LeftStick.toggle]
 keys = ["KEY_C"]
-
-[profiles.buttons.RightStick]
-keys = ["KEY_Q"]
 
 [profiles.buttons.DpadLeft]
 wheel = "Up"
@@ -246,9 +238,8 @@ sensitivity = 15.0
 button = "DpadDown"
 [profiles.guide]
 notes = '''Hold {lt} for bullet time. Hold {rb} with a direction on the left stick {ls} to shootdodge.
-{north} takes a painkiller. {south} uses doors, switches and phones, and {east} jumps.
+{north} takes a painkiller. {south} uses doors, switches and phones, zooms the sniper rifle, and {east} jumps.
 Hold {lb} for the weapon groups, aiming with the right stick {rs}. The {dpad} left and right step through the weapons, and {up} picks the best one.
-Click {r3} for the sniper zoom.
 Crouch is a toggle: click {l3} to crouch and again to stand.
 {start} is the menu. Double tap it to quick save and hold it to quick load. {select} pauses without the menu.
 With gyro aiming, hold {down} to pause the gyro while you reposition the controller.'''
@@ -259,13 +250,12 @@ With gyro aiming, hold {down} to pause the gyro while you reposition the control
 "trigger:Right" = {text = "Shoot"}
 "trigger:Left" = {text = "{icon:hourglass} Bullet time"}
 "button:RightBumper" = {text = "Shootdodge (with a direction)"}
-"button:South" = {text = "Use"}
+"button:South" = {text = "Use / sniper zoom"}
 "button:East" = {text = "Jump"}
 "button:West" = {text = "Reload"}
 "button:North" = {text = "{icon:pill} {color:green}Painkillers{/color}"}
 "button:LeftBumper" = {text = "Hold: weapon groups"}
 "button:LeftStick" = {text = "Crouch (toggle)"}
-"button:RightStick" = {text = "{icon:scope} Sniper zoom"}
 "button:Select" = {text = "Pause"}
 "button:Start" = {text = "Menu"}
 "gesture:button:Start:double_tap" = {text = "{icon:save} Quick save"}
@@ -318,9 +308,6 @@ keys = ["KEY_ESC"]
 
 [profiles.buttons.LeftStick.toggle]
 keys = ["KEY_C"]
-
-[profiles.buttons.RightStick]
-keys = ["KEY_Q"]
 
 [profiles.buttons.DpadLeft]
 wheel = "Up"
@@ -384,9 +371,8 @@ sensitivity = 22.0
 button = "DpadDown"
 [profiles.guide]
 notes = '''Hold {lt} for bullet time. Hold {rb} with a direction on the left stick {ls} to shootdodge.
-{north} takes a painkiller. {south} uses doors, switches and phones, and {east} jumps.
+{north} takes a painkiller. {south} uses doors, switches and phones, zooms the sniper rifle, and {east} jumps.
 Hold {lb} for the weapon groups, aiming with the right stick {rs}. The {dpad} left and right step through the weapons, and {up} picks the best one.
-Click {r3} for the sniper zoom.
 Crouch is a toggle: click {l3} to crouch and again to stand.
 {start} is the menu. Double tap it to quick save and hold it to quick load. {select} pauses without the menu.
 With gyro aiming, hold {down} to pause the gyro while you reposition the controller.'''
@@ -397,13 +383,12 @@ With gyro aiming, hold {down} to pause the gyro while you reposition the control
 "trigger:Right" = {text = "Shoot"}
 "trigger:Left" = {text = "{icon:hourglass} Bullet time"}
 "button:RightBumper" = {text = "Shootdodge (with a direction)"}
-"button:South" = {text = "Use"}
+"button:South" = {text = "Use / sniper zoom"}
 "button:East" = {text = "Jump"}
 "button:West" = {text = "Reload"}
 "button:North" = {text = "{icon:pill} {color:green}Painkillers{/color}"}
 "button:LeftBumper" = {text = "Hold: weapon groups"}
 "button:LeftStick" = {text = "Crouch (toggle)"}
-"button:RightStick" = {text = "{icon:scope} Sniper zoom"}
 "button:Select" = {text = "Pause"}
 "button:Start" = {text = "Menu"}
 "gesture:button:Start:double_tap" = {text = "{icon:save} Quick save"}

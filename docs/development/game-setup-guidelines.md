@@ -10,6 +10,14 @@ Conventions for choosing where actions go when setting up a game's controller bi
   - **Mouse mode** for setup menus that only work with the mouse.
   - **Media controls**, so the player can listen to music or podcasts while playing, for example a roguelite card game.
 
+## Games with more than one version
+
+Classic PC games often come in more than one version: the original, a modern remaster or re-release, and sometimes a port. Often only one of them has controller support. Each version gets its own pack, and the two packs are handled differently:
+
+- **A version with native controller support is a gamepad passthrough.** Every button, stick and trigger goes to the game as it is, the way the [Against the Storm pack](../../packs/against-the-storm.padpack) does it (`{gamepad = "South"}` and so on for each input). The Guide overlay still sits on top, and the notes say to set the buttons in the game's own options. Don't add bindings, shortcuts, layers or modes: they would only fight the game's scheme.
+- **Keep the menus the same across versions.** Both packs should look and sound like the same game. Use the same overlay font, colors, keyboard and numpad styles, icons and sound cues in each, so a player who switches versions sees no change in the overlays.
+- **A version without controller support follows the rest of this guide.** Build its scheme as usual, with the same presentation as the other version.
+
 ## Movement and camera
 
 - **WASD movement** should generally be assigned to the **left stick**. Strategy games that use WASD or the arrow keys to pan the camera can also assign that to the left stick.

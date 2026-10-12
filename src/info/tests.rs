@@ -405,3 +405,19 @@ fn the_font_tag_names_a_valid_font_and_closes() {
         assert_eq!(parse(text), vec![Ok(text.to_string())], "{text} is not a tag");
     }
 }
+
+#[test]
+fn gesture_tokens_are_badges_in_their_colors() {
+    use crate::config::GestureKind;
+    assert_eq!(parse("{gesture:double}"), vec![Err(Token::Gesture(GestureKind::DoubleTap))]);
+    assert_eq!(parse("{gesture:triple}"), vec![Err(Token::Gesture(GestureKind::TripleTap))]);
+    assert_eq!(parse("{gesture:hold}"), vec![Err(Token::Gesture(GestureKind::LongPress))]);
+    assert_eq!(parse("{gesture:tap}"), vec![Ok("{gesture:tap}".to_string())], "unknown gestures stay as written");
+    let badge = |kind| match gesture_glyph(kind) {
+        Segment::Glyph { label, fill, round } => (label, fill, round),
+        other => panic!("not a glyph: {other:?}"),
+    };
+    assert_eq!(badge(GestureKind::DoubleTap), ("×2".to_string(), Some(BLUE), true), "a blue circle");
+    assert_eq!(badge(GestureKind::TripleTap), ("×3".to_string(), Some(RED), true), "a red circle");
+    assert_eq!(badge(GestureKind::LongPress), ("hold".to_string(), Some(YELLOW), false), "a yellow rounded box");
+}
