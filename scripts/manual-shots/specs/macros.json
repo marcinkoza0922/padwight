@@ -1,0 +1,41 @@
+[
+ {
+  "src": "screenshots/manual/macros.png",
+  "out": "docs/images/manual/macros-tab.png",
+  "crop": [
+   225,
+   190,
+   1040,
+   510
+  ],
+  "marks": [
+   {
+    "box": [
+     245,
+     211,
+     120,
+     30
+    ],
+    "n": 1
+   },
+   {
+    "box": [
+     245,
+     408,
+     1001,
+     86
+    ],
+    "n": 2
+   },
+   {
+    "box": [
+     245,
+     653,
+     662,
+     34
+    ],
+    "n": 3
+   }
+  ]
+ }
+]

@@ -381,12 +381,17 @@ impl App {
                 button(text("Import a file…")).style(style::secondary).on_press(Message::ImportFile),
             ]
             .spacing(8),
-            text(match &self.installed {
-                None => "Checking which games you have installed…",
-                Some(_) => "Built-in games (installed ones first):",
-            })
-            .size(13)
-            .color(MUTED_COLOR),
+            row![
+                text(match &self.installed {
+                    None => "Checking which games you have installed…",
+                    Some(_) => "Built-in games (installed ones first):",
+                })
+                .size(13)
+                .color(MUTED_COLOR),
+                space::horizontal(),
+                tutorial_link("tutorial-first-setup.md"),
+            ]
+            .align_y(Alignment::Center),
         ]
         .spacing(8);
         let mut entries = column![].spacing(4);

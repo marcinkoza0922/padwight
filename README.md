@@ -21,8 +21,8 @@ That is Linux. On Windows the same pieces read controllers through XInput and se
 
 For users:
 
-- **Manual**: a plain-language guide, shown on the Manual page of the settings window. Its source is [docs/manual/](docs/manual/), plain Markdown that is also built into the app, so the two can't drift apart.
-- [docs/tutorial-deus-ex-pack.md](docs/tutorial-deus-ex-pack.md): a step-by-step walkthrough of making a pack, using Deus Ex on an Xbox-style pad, with the reasons behind the less obvious mappings.
+- **Manual**: a plain-language guide, shown on the Manual page of the settings window. Its source is [docs/manual/](docs/manual/), plain Markdown that is also built into the app, so the two can't drift apart. It has a step-by-step tutorial with annotated screenshots for every major feature (the `tutorial-*.md` chapters).
+- [docs/manual/tutorial-deus-ex.md](docs/manual/tutorial-deus-ex.md): a tutorial that walks through making a pack, using Deus Ex on an Xbox-style pad, with the reasons behind the less obvious mappings.
 - [docs/pack-format.md](docs/pack-format.md): reference for the `.padpack` format (format 17).
 
 For developers, in [docs/development/](docs/development/):
@@ -31,6 +31,7 @@ For developers, in [docs/development/](docs/development/):
 - [specs.md](docs/development/specs.md), [modes.md](docs/development/modes.md), [layers.md](docs/development/layers.md), [sticks.md](docs/development/sticks.md), [guide.md](docs/development/guide.md): design notes for individual features.
 - [game-setup-guidelines.md](docs/development/game-setup-guidelines.md): where actions usually go when setting up a game's bindings (sticks, buttons, hotkeys, system buttons).
 - [overlay-debugging.md](docs/development/overlay-debugging.md): tools for checking the on-screen overlay's timing and fades without a monitor or controller: a headless harness, the overlay's timing log, and fade pictures.
+- [manual-screenshots.md](docs/development/manual-screenshots.md): how the manual's annotated screenshots are made, and made again when the window changes: `padwight debug gui` and `scripts/annotate.py`.
 
 ## Setups
 

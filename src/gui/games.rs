@@ -66,6 +66,11 @@ impl App {
             }
             Message::GoToItem(kind, name) => return self.go_to_item(kind, &name),
             Message::SelectChapter(chapter) => self.manual_chapter = chapter,
+            Message::OpenTutorial(file) => {
+                self.manual_chapter = manual::chapter_of(file).unwrap_or(self.manual_chapter);
+                self.manual_query.clear();
+                self.page = Page::Manual;
+            }
             Message::SetSettingsSearch(query) => self.settings_query = query,
             Message::SetManualSearch(query) => self.manual_query = query,
             Message::SetButtonSearch(query) => self.button_query = query,
@@ -411,7 +416,11 @@ impl App {
         if game.rules.is_empty() {
             rules = rules.push(text("No rules yet. This setup only starts when you pick it yourself.").size(13).color(MUTED_COLOR));
         }
-        rules = rules.push(button(text("+ Add rule").size(13)).style(style::secondary).on_press(Message::AddRule(None)));
+        rules = rules.push(
+            row![button(text("+ Add rule").size(13)).style(style::secondary).on_press(Message::AddRule(None)), tutorial_link("tutorial-first-setup.md")]
+                .spacing(8)
+                .align_y(Alignment::Center),
+        );
         // This app's own window is never a game.
         let recent: Vec<_> =
             self.status.iter().flat_map(|s| &s.recent_windows).filter(|w| w.exe != env!("CARGO_PKG_NAME")).collect();
@@ -477,7 +486,7 @@ impl App {
         if !game.pack.description.is_empty() {
             pack_rows.push(text(game.pack.description.clone()).size(13).into());
         }
-        pack_rows.push(button(text("Export…")).on_press(Message::OpenExport).into());
+        pack_rows.push(row![button(text("Export…")).on_press(Message::OpenExport), tutorial_link("tutorial-sharing.md")].spacing(8).align_y(Alignment::Center).into());
 
         // The cards follow App settings' order, so a card is found in the same place on both.
         column![

@@ -1,0 +1,101 @@
+[
+ {
+  "src": "screenshots/manual/overview.png",
+  "out": "docs/images/manual/deus-overview.png",
+  "crop": [
+   0,
+   0,
+   1280,
+   690
+  ],
+  "scale": 0.8,
+  "marks": [
+   {
+    "box": [
+     12,
+     150,
+     186,
+     190
+    ],
+    "n": 1
+   },
+   {
+    "box": [
+     231,
+     447,
+     1030,
+     95
+    ],
+    "n": 2
+   },
+   {
+    "box": [
+     231,
+     565,
+     1030,
+     110
+    ],
+    "n": 3
+   }
+  ]
+ },
+ {
+  "src": "screenshots/manual/buttons-picture.png",
+  "out": "docs/images/manual/deus-picture.png",
+  "crop": [
+   425,
+   320,
+   670,
+   320
+  ]
+ },
+ {
+  "src": "screenshots/manual/buttons-list.png",
+  "out": "docs/images/manual/deus-buttons.png",
+  "crop": [
+   225,
+   425,
+   1040,
+   720
+  ]
+ },
+ {
+  "src": "screenshots/manual/flick.png",
+  "out": "docs/images/manual/deus-flick.png",
+  "crop": [
+   225,
+   1990,
+   1040,
+   230
+  ],
+  "marks": [
+   {
+    "box": [
+     257,
+     2043,
+     730,
+     68
+    ],
+    "n": 1
+   },
+   {
+    "box": [
+     257,
+     2105,
+     730,
+     50
+    ],
+    "n": 2
+   },
+   {
+    "box": [
+     257,
+     2165,
+     976,
+     38
+    ],
+    "n": 3
+   }
+  ]
+ }
+]

@@ -178,8 +178,14 @@ pub(super) fn items_header<'a>(kind: ItemKind, add: Element<'a, Message>, blurb:
         row![
             add,
             text(blurb).size(13).color(MUTED_COLOR).width(Length::Fill),
-            button(text("Copy from another setup…")).style(style::secondary).on_press(Message::OpenBrowse(kind)),
-            help(explain),
+            // The link sits under the copy button, so it takes no width from the blurb.
+            column![
+                row![button(text("Copy from another setup…")).style(style::secondary).on_press(Message::OpenBrowse(kind)), help(explain)]
+                    .spacing(12)
+                    .align_y(Alignment::Center),
+                tutorial_link(item_tutorial(kind)),
+            ]
+            .align_x(Alignment::End),
         ]
         .spacing(12)
         .align_y(Alignment::Center),
@@ -210,6 +216,29 @@ pub(super) fn own_rows<'a>(what: &str, own: bool, on_toggle: impl Fn(bool) -> Me
 /// Deletes a whole item, from its card's header.
 pub(super) fn delete_item<'a>(label: &'static str, message: Message) -> Element<'a, Message> {
     button(text(label).size(13)).style(style::quiet_danger).on_press(message).into()
+}
+
+/// A small, quiet link to a tutorial in the Manual, for the corner of the panel it teaches. `file` is the
+/// tutorial's chapter file.
+pub(super) fn tutorial_link<'a>(file: &'static str) -> Element<'a, Message> {
+    tooltip(
+        button(text("Tutorial ↗").size(12).color(MUTED_COLOR)).style(button::text).padding([2, 4]).on_press(Message::OpenTutorial(file)),
+        container(text("Open the step-by-step tutorial in the Manual").size(12)).padding(6).style(style::tooltip),
+        tooltip::Position::Bottom,
+    )
+    .gap(4)
+    .into()
+}
+
+/// The tutorial for each kind of item.
+fn item_tutorial(kind: ItemKind) -> &'static str {
+    match kind {
+        ItemKind::Macro => "tutorial-macros.md",
+        ItemKind::Menu => "tutorial-menus.md",
+        ItemKind::Info | ItemKind::Log => "tutorial-overlays.md",
+        ItemKind::Layer => "tutorial-layers.md",
+        ItemKind::Mode => "tutorial-modes.md",
+    }
 }
 
 /// An ⓘ that explains a section on hover, instead of a paragraph of gray text.

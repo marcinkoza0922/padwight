@@ -1,0 +1,105 @@
+[
+ {
+  "src": "screenshots/manual/guide-tab.png",
+  "out": "docs/images/manual/guide-tab.png",
+  "crop": [
+   225,
+   425,
+   1040,
+   350
+  ],
+  "marks": [
+   {
+    "box": [
+     245,
+     470,
+     1001,
+     140
+    ],
+    "n": 1
+   },
+   {
+    "box": [
+     395,
+     688,
+     482,
+     34
+    ],
+    "n": 2
+   },
+   {
+    "box": [
+     886,
+     688,
+     70,
+     34
+    ],
+    "n": 3
+   },
+   {
+    "box": [
+     966,
+     688,
+     282,
+     34
+    ],
+    "n": 4
+   }
+  ]
+ },
+ {
+  "src": "screenshots/manual/ov/guide.png",
+  "out": "docs/images/manual/guide-overlay.png",
+  "crop": [
+   20,
+   290,
+   1880,
+   500
+  ],
+  "scale": 0.6,
+  "marks": [
+   {
+    "box": [
+     41,
+     438,
+     567,
+     205
+    ],
+    "n": 1
+   },
+   {
+    "box": [
+     790,
+     318,
+     344,
+     445
+    ],
+    "n": 2
+   },
+   {
+    "box": [
+     1397,
+     314,
+     485,
+     280
+    ],
+    "n": 3
+   },
+   {
+    "box": [
+     1397,
+     607,
+     245,
+     160
+    ],
+    "n": 4
+   }
+  ]
+ },
+ {
+  "src": "screenshots/manual/ov/in-game-menu.png",
+  "out": "docs/images/manual/in-game-menu.png",
+  "autocrop": 30,
+  "scale": 1.0
+ }
+]

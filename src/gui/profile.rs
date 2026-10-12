@@ -1038,6 +1038,14 @@ impl App {
             ProfileTab::Combos => self.profile().is_some_and(|p| !p.combos.is_empty()),
             ProfileTab::Sticks | ProfileTab::Gyro | ProfileTab::Touchpad | ProfileTab::Guide => false,
         };
+        let tutorial = match self.profile_tab {
+            ProfileTab::Buttons | ProfileTab::Combos => "tutorial-buttons.md",
+            ProfileTab::Sticks => "tutorial-sticks.md",
+            ProfileTab::Gyro => "tutorial-gyro.md",
+            ProfileTab::Touchpad => "tutorial-touchpad.md",
+            ProfileTab::Guide => "tutorial-guide.md",
+        };
+        tabs = tabs.push(tutorial_link(tutorial));
         if expandable {
             tabs = tabs
                 .push(button(text("Expand all")).style(style::secondary).on_press(Message::ExpandAll(true)))

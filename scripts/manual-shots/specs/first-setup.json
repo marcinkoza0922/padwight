@@ -1,0 +1,89 @@
+[
+ {
+  "src": "screenshots/manual/add-setup.png",
+  "out": "docs/images/manual/first-setup-add.png",
+  "crop": [
+   200,
+   430,
+   880,
+   640
+  ],
+  "marks": [
+   {
+    "box": [
+     230,
+     548,
+     300,
+     34
+    ],
+    "n": 1
+   },
+   {
+    "box": [
+     538,
+     548,
+     124,
+     34
+    ],
+    "n": 2
+   },
+   {
+    "box": [
+     230,
+     613,
+     455,
+     390
+    ],
+    "n": 3
+   },
+   {
+    "box": [
+     730,
+     822,
+     140,
+     32
+    ],
+    "n": 4
+   }
+  ]
+ },
+ {
+  "src": "screenshots/manual/details.png",
+  "out": "docs/images/manual/first-setup-rules.png",
+  "crop": [
+   220,
+   300,
+   1050,
+   170
+  ],
+  "marks": [
+   {
+    "box": [
+     243,
+     346,
+     458,
+     38
+    ],
+    "n": 1
+   },
+   {
+    "box": [
+     738,
+     346,
+     164,
+     38
+    ],
+    "n": 2
+   },
+   {
+    "box": [
+     243,
+     426,
+     86,
+     30
+    ],
+    "n": 3
+   }
+  ]
+ }
+]
