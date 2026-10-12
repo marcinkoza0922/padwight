@@ -1,7 +1,5 @@
 //! A game's own look for the on-screen keyboard and numpad, shown on its Details tab.
 
-use std::fmt;
-
 use iced::widget::column;
 
 use super::*;
@@ -10,48 +8,6 @@ use crate::{
     motion::{MotionSet, MotionStyle, OverlayKind},
     overlay::KeyboardView,
 };
-
-/// An entry in a font dropdown: nothing chosen (whatever applies instead), or a family.
-#[derive(Debug, Clone, PartialEq)]
-pub(super) enum FontChoice {
-    Unset(&'static str),
-    Named(String),
-}
-
-impl fmt::Display for FontChoice {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            FontChoice::Unset(label) => f.write_str(label),
-            FontChoice::Named(name) => f.write_str(name),
-        }
-    }
-}
-
-/// The dropdown's entries: the unset one, then the bundled fonts, then the current one if
-/// it is something else (set by a pack, say).
-fn font_choices(unset: &'static str, current: Option<&str>) -> Vec<FontChoice> {
-    let mut names = crate::font::names();
-    if let Some(c) = current.filter(|c| !names.iter().any(|n| n == c)) {
-        names.push(c.to_string());
-    }
-    std::iter::once(FontChoice::Unset(unset)).chain(names.into_iter().map(FontChoice::Named)).collect()
-}
-
-fn font_picker<'a>(
-    unset: &'static str,
-    current: Option<&'a str>,
-    on_pick: fn(Option<String>) -> Message,
-) -> Element<'a, Message> {
-    let selected = current.map_or(FontChoice::Unset(unset), |c| FontChoice::Named(c.to_string()));
-    dropdown(font_choices(unset, current), Some(selected), move |choice| {
-        on_pick(match choice {
-            FontChoice::Unset(_) => None,
-            FontChoice::Named(name) => Some(name),
-        })
-    })
-    .width(SETTING_WIDTH)
-    .into()
-}
 
 const FONT_HELP: &str = "One font for every overlay, menu and the on-screen keyboard and numpad. Pick one of the \
                          free fonts that come with the app. (A pack can also name any font installed on your system.)";
@@ -71,7 +27,7 @@ impl App {
         section(
             "Overlay font",
             Some(FONT_HELP.into()),
-            vec![labeled("Font", font_picker("System default", self.config.overlay_font.as_deref(), Message::SetOverlayFont))],
+            vec![labeled("Font", self.font_picker(FontSlot::Global, "System default", self.config.overlay_font.as_deref(), Message::SetOverlayFont))],
         )
     }
 
@@ -137,7 +93,11 @@ impl App {
         section(
             "Overlay motion",
             Some(format!("How overlays move as they open and close, as the cursor moves and as something is picked. Each kind of overlay has its own style, and a setup can set its own on its Details tab. {}", motion_guide())),
-            motion_rows(self.config.motion, Message::SetMotion),
+            {
+                let mut rows = motion_rows(self.config.motion, Message::SetMotion);
+                rows.push(self.view_motion_demo());
+                rows
+            },
         )
     }
 
@@ -148,7 +108,7 @@ impl App {
         let global = self.config.overlay_font.clone();
         let mut rows = own_rows("font", own.is_some(), move |on| Message::SetGameOverlayFont(on.then(|| global.clone().unwrap_or_default())));
         if let Some(own) = own {
-            let picker = font_picker("System default", Some(own).filter(|f| !f.is_empty()), |f| Message::SetGameOverlayFont(Some(f.unwrap_or_default())));
+            let picker = self.font_picker(FontSlot::Game, "System default", Some(own).filter(|f| !f.is_empty()), |f| Message::SetGameOverlayFont(Some(f.unwrap_or_default())));
             rows.push(labeled("Font", picker));
         }
         section("Overlay font", Some(FONT_HELP.into()), rows)
@@ -321,7 +281,6 @@ mod tests {
         let doom = app.config.games.iter().find(|g| g.name == "Doom").unwrap();
         assert_eq!(doom.overlay_font.as_deref(), Some("Comfortaa"));
         assert_eq!(app.config.overlay_font.as_deref(), Some("Inter"));
-        assert_eq!(font_choices("x", Some("Fira")).len(), crate::font::names().len() + 2);
     }
 
     #[test]
