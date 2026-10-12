@@ -105,6 +105,12 @@ pub struct OverlayFrame {
     /// Which buttons the media controls' and numpad's keys sit on, for their hints.
     #[serde(default)]
     pub panel_keys: crate::config::Shortcuts,
+    /// The icons the game in use carries, which `{icon:…}` can name besides the built-in ones.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub pack_icons: std::collections::BTreeMap<String, String>,
+    /// Where the fonts the game in use carries are, as files, by name (see `font::share_pack_fonts`).
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub pack_fonts: std::collections::BTreeMap<String, std::path::PathBuf>,
     /// How each kind of overlay moves as it opens, closes, and as the cursor and picks move.
     #[serde(default)]
     pub motion: crate::motion::MotionSet,

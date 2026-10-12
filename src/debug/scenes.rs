@@ -22,7 +22,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 23] = [
+pub const SCENES: [(&str, &str); 24] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -40,6 +40,7 @@ pub const SCENES: [(&str, &str); 23] = [
     ("offer", "the offer to add a library game"),
     ("library-hint", "the toast saying Guide adds a library game"),
     ("info", "an info overlay with live values and glyphs"),
+    ("info-formatted", "an info overlay with bold, italic, underline, color, fonts, boxes, icons (one carried by the pack), gyro and trackpad"),
     ("log", "an input log"),
     ("recording", "the recording badge"),
     ("busy", "an info overlay, an input log and a menu at once"),
@@ -72,6 +73,11 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
             OverlayFrame { info: toast.view(std::time::Instant::now()).into_iter().collect(), ..OverlayFrame::default() }
         }
         "info" => OverlayFrame { info: vec![info_view()], ..OverlayFrame::default() },
+        "info-formatted" => OverlayFrame {
+            info: vec![formatted_view()],
+            pack_icons: std::collections::BTreeMap::from([("flame".to_string(), FLAME.to_string())]),
+            ..OverlayFrame::default()
+        },
         "log" => OverlayFrame { logs: vec![log_view()], ..OverlayFrame::default() },
         "recording" => OverlayFrame { info: vec![info::recording_view()], ..OverlayFrame::default() },
         "busy" => OverlayFrame { info: vec![info_view()], logs: vec![log_view()], ..active(menu(MenuKind::Buttons)) },
@@ -96,10 +102,16 @@ fn menu(kind: MenuKind) -> OverlayView {
     menu_in(kind, OverlayStyle::default(), false)
 }
 
-/// The sample menu drawn in `style`, with an icon on each item when `icons` is set.
+/// The sample menu drawn in `style`, with an `{icon:…}` token in front of each label when `icons` is set.
 fn menu_in(kind: MenuKind, style: OverlayStyle, icons: bool) -> OverlayView {
     let icon = |name: &str| icons.then(|| name.to_string());
-    let item = |label: &str, action: ButtonAction, button: Option<Button>, icon: Option<String>| MenuItem { label: label.into(), action, button, weight: 1.0, span: Span::ONE, icon };
+    let item = |label: &str, action: ButtonAction, button: Option<Button>, icon: Option<String>| {
+        let label = match icon {
+            Some(name) => format!("{{icon:{name}}} {label}"),
+            None => label.to_string(),
+        };
+        MenuItem { label, action, button, weight: 1.0, span: Span::ONE }
+    };
     let keys = |k: &str| ButtonAction::Keys(vec![k.into()]);
     let items = vec![
         item("Quick save", keys("KEY_F5"), Some(Button::South), icon("potion")),
@@ -128,7 +140,7 @@ fn ornate() -> OverlayStyle {
         border: Some(Stroke { width: 2.0, color: gold.into(), opacity: 1.0 }),
         gradient: Some(Gradient { color: "#3a1010".into(), opacity: 1.0, angle: 180.0, drift: true }),
         glow: Some(Shade { pulse: true, ..Shade::glow("#ffcc40") }),
-        typography: Typography { case: Case::Upper, letter_spacing: 2.0, bold: true, ..Typography::default() },
+        typography: Typography { case: Case::Upper, letter_spacing: 2.0, ..Typography::default() },
         ornament: Ornament {
             dividers: Some(Stroke { width: 1.0, color: gold.into(), opacity: 0.6 }),
             frame: Some(Frame { kind: FrameKind::Brackets, size: 16.0, width: 2.0, color: gold.into(), opacity: 1.0 }),
@@ -210,6 +222,29 @@ fn info_view() -> crate::info::InfoView {
         "#,
     )
     .expect("the sample info overlay parses");
+    info::resolve(&overlay, &Live::sample(PadFamily::Xbox))
+}
+
+/// An icon a pack might carry: it draws in the text's color where it says `currentColor`.
+const FLAME: &str = "<svg viewBox='0 0 24 24'><path d='M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-4 2-7 2 1 3 2 4-5z' fill='currentColor'/></svg>";
+
+/// An info overlay using formatting tags, icons, and the gyro and touchpad tokens.
+fn formatted_view() -> crate::info::InfoView {
+    let overlay: InfoOverlay = toml::from_str(
+        r#"
+        name = "Formatted"
+        title = "{b}{color:orange}{icon:flame} Quick reference{/color}{/b}"
+        rows = [
+            ["{icon:sword} {b}Melee{/b}", "{south}"],
+            ["{icon:pistol} {i}Fire{/i}", "{rt}"],
+            ["{icon:potion} {u}Heal{/u}", "{box}{west}{/box}"],
+            ["{color:red}Danger{/color} {color:green}Safe{/color}", "{box}{b}Hold{/b}{/box}"],
+            ["{font:Cinzel}Fancy{/font} {font:Press Start 2P}Retro{/font}", "{font:Bangers}Bang!{/font}"],
+            ["Pitch {gyro:p}  Roll {gyro:r}  Yaw {gyro:y}", "{trackpad}"],
+        ]
+        "#,
+    )
+    .expect("the sample formatted overlay parses");
     info::resolve(&overlay, &Live::sample(PadFamily::Xbox))
 }
 

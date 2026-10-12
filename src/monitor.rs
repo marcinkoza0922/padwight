@@ -149,6 +149,16 @@ impl InputView {
         self.axes.iter().map(|(a, v)| (*a, *v))
     }
 
+    /// The turning rates in degrees per second (pitch, yaw, roll), once the gyro has reported.
+    pub fn gyro(&self) -> Option<[f32; 3]> {
+        self.gyro
+    }
+
+    /// The touchpad as it is now.
+    pub fn touchpad(&self) -> crate::info::Touchpad {
+        crate::info::Touchpad { touches: self.touches.values().copied().collect(), pressed: self.touch_click }
+    }
+
     pub fn set_gyro(&mut self, gyro: [f32; 3]) {
         self.gyro = Some(gyro);
     }

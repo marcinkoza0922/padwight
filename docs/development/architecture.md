@@ -77,8 +77,10 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | `system_menu.rs` | The Guide + Start menu over the game: Quick Settings and Edit Controls. See [in-game-editor.md](in-game-editor.md). |
 | `layout_editor.rs` | The Edit Controls page of that menu: button actions of the active profile. |
 | `rumble.rs` | Forwards rumble from the virtual pad to the physical one, and plays the rumble cues of overlays (`cue`). |
-| `icons.rs` | Menu item icons: the built-in SVGs in `assets/icons` and the user's SVGs in the icons folder, by name. |
-| `assets.rs` | The user's folders beside `config.toml` (`icons/`, `backgrounds/`), and where a file named in a pack is. |
+| `icons.rs` | `{icon:name}` icons: the built-in SVGs in `assets/icons`, and the active game's own (`set_pack_icons`, set by every process that draws text). |
+| `assets.rs` | The user's `backgrounds/` folder beside `config.toml`, and where a file named in a pack is. |
+| `config/assets.rs` | `PackAssets`: the icons (SVG) and sounds (base64 WAV) a game carries, which travel in its pack and work only in that game. |
+| `info/catalog.rs` | Every token and formatting tag, grouped for the token picker (`gui/tokens.rs`). |
 | `output.rs`, `output/uinput.rs` | The uinput devices. The pad can present itself as another controller (`pad_identity.rs`). |
 | `pad_identity.rs` | Which controller the pad presents itself as: Xbox 360 unless the game ticks the physical controller's kind on its Details tab. USB IDs, name and button labels per identity. |
 | `quit.rs` | ForceQuit: ends the focused game's process tree, never the desktop. |
