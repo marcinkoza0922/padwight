@@ -48,6 +48,7 @@ mod guide_tab;
 mod gyro;
 mod gyro_graph;
 mod items;
+mod menu_combos;
 mod menu_grid;
 #[cfg(test)]
 mod menu_suite;
@@ -416,6 +417,7 @@ enum Message {
     Guide(guide_tab::GuideMsg),
     SetRequires(Vec<Feature>),
     AddCombo,
+    AddMenuCombos(Vec<Combo>),
     RemoveCombo(usize),
     AddComboButton(usize, Button),
     RemoveComboButton(usize, Button),

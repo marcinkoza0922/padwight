@@ -22,6 +22,12 @@ An item can open another menu when both menus have the same close button. The ne
 
 Move with the Left Stick or D-pad, and press A to choose. The close button goes back one level, or closes the menu at the top; on a radial menu it closes without choosing. In a **Button menu** each item has its own button instead: press it to choose the item. Button menus and directional menus are for quick actions: picking an item fires it and closes the menu at once. Other menus stay up while you hold their input, so you can pick several items.
 
+## Menu combos
+
+When a button, a long press or a combo opens a directional or button menu, **+ Add menu combos** appears under its action. It adds a combo for each item: the opening input plus the item's button, doing what the item does. RB opens a D-pad menu, so RB + D-pad Up and RB + D-pad Down fire its Up and Down items without the menu showing. A combo that opens the menu gets longer (LB + RB + D-pad Up). Items set to Disabled, and button-menu items with no button, get none. Double and triple taps don't offer it.
+
+The new combos are ordinary combos on the Combos tab, not linked to the menu: edit or delete them there. The button is off while any of them already exists, which also stops you adding them twice.
+
 ## Grids
 
 On a grid, the arrow buttons beside an item merge it with the cells to its right or below, making one bigger item that the first cell's action fills. The items in the cells it takes are kept, hidden, until you split it again. **Cursor starts on** picks the cell the cursor is on when the menu opens: (1, 1), the top left, unless you choose another. Changing the number of columns splits every item back.

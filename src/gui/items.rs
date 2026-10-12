@@ -419,7 +419,8 @@ pub(super) const MENUS_HELP: &str = "On-screen menus you open with the \"Open me
     controls, A chooses. Grid: a list laid out in up to 6 columns and 6 rows, moved through in all four \
     directions; merge a cell with the ones beside or below it to make a bigger item. Items tap their \
     action like a button press. An item can open another menu with the same close button (not from radial \
-    menus), which takes its place; the close button goes back, and held, closes them all.";
+    menus), which takes its place; the close button goes back, and held, closes them all. Under an input that \
+    opens a directional or button menu, \"+ Add menu combos\" adds a combo per item (the input plus the item's button).";
 
 impl App {
     #[expect(clippy::too_many_lines, clippy::cognitive_complexity, reason = "predates the size lints")]
