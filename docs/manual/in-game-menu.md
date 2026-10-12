@@ -26,7 +26,7 @@ Opens the full editor for the game in front of you: its buttons (and back paddle
 
 Deleting a combo, zone, macro, menu item or menu asks you to press A a second time. LB and RB jump a page up or down a long list.
 
-If you close the menu with unsaved changes, you can **Save and close**, **Discard and close**, or **Keep editing**.
+If you leave with unsaved changes, a question appears over the page: **A** saves, **X** discards, and **B** keeps editing. After saving or discarding, B (back) takes you to the Guide overlay you came from, and Guide closes the menu.
 
 ## When no setup matches the window
 

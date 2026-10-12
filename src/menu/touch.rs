@@ -138,6 +138,7 @@ pub fn touch_view(menu: &Menu, selected: Option<usize>, choose: TouchChoose, pic
         style: menu.style.clone(),
         touch: true,
         aim: None,
+        prompt: None,
     }
 }
 

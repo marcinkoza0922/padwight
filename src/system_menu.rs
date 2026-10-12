@@ -12,6 +12,7 @@ use crate::{
     config::{Button, Config, OverlayStyle, Profile, ProfileRef},
     input::{Axis, InputEvent},
     menu::{ItemView, MenuView, Tone},
+    offer::OfferView,
 };
 
 /// What the menu asks the daemon to do after a choice.
@@ -25,10 +26,11 @@ pub enum Outcome {
     Switch(ProfileRef),
     /// Edit Controls was chosen: the daemon makes a pack for the game if there isn't one.
     EditControls,
-    /// Save the changes to the config file, then close.
-    Save,
-    /// Put the config back as it was when the menu opened, then close.
-    Discard(Box<Config>),
+    /// Save the changes to the config file, then close, or go `back` to the Guide overlay.
+    Save { back: bool },
+    /// Put the config back as it was when the menu opened, then close, or go `back` to the Guide
+    /// overlay.
+    Discard { saved: Box<Config>, back: bool },
     /// Back to the Guide overlay, which the menu was opened from.
     ReturnToGuide,
     /// Stop remapping altogether (Quick Settings' last row, chosen twice).
@@ -49,8 +51,17 @@ enum Screen {
     Quick,
     Editor(LayoutEditor),
     /// Closing with changes not saved: save, discard, or keep editing, which goes back to the
-    /// screen (and cursor) the menu was being left from.
-    Confirm(Box<Screen>, usize),
+    /// screen (and cursor) the menu was being left from. Drawn over that screen.
+    Confirm(Box<Screen>, usize, Exit),
+}
+
+/// How the menu was being left when it asked about unsaved changes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Exit {
+    /// Back (B): to the Guide overlay the menu was opened from, if it was.
+    Back,
+    /// Guide: out of the menu altogether.
+    Close,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -139,6 +150,7 @@ impl SystemMenu {
             }
             InputEvent::Button(Button::South, true) => Step::Pick,
             InputEvent::Button(Button::East, true) => Step::Back,
+            InputEvent::Button(Button::West, true) if matches!(self.screen, Screen::Confirm(..)) => return self.discard(),
             // On Quick Settings RB makes big steps; in Edit Controls the bumpers jump a page.
             InputEvent::Button(b @ (Button::LeftBumper | Button::RightBumper), held) => {
                 self.big_steps = held && b == Button::RightBumper;
@@ -204,19 +216,19 @@ impl SystemMenu {
                     Some(Outcome::EditControls)
                 }
             },
-            Step::Back => self.leave(config),
+            Step::Back => self.leave(config, Exit::Back),
             Step::Left | Step::Right => None,
         }
     }
 
-    /// Leaves the menu's top page: back to the Guide overlay, or closes. Unsaved changes ask first.
-    fn leave(&mut self, config: &Config) -> Option<Outcome> {
+    /// Leaves the menu's top page, `how`: back to the Guide overlay, or closes. Unsaved changes
+    /// ask first.
+    fn leave(&mut self, config: &Config, how: Exit) -> Option<Outcome> {
         if *self.saved == *config {
-            return Some(if self.from_guide { Outcome::ReturnToGuide } else { Outcome::Close });
+            return Some(if self.from_guide && how == Exit::Back { Outcome::ReturnToGuide } else { Outcome::Close });
         }
         let left = std::mem::replace(&mut self.screen, Screen::Main);
-        self.screen = Screen::Confirm(Box::new(left), self.cursor);
-        self.cursor = 0;
+        self.screen = Screen::Confirm(Box::new(left), self.cursor, how);
         None
     }
 
@@ -226,13 +238,13 @@ impl SystemMenu {
         match self.screen {
             Screen::Confirm(..) => None,
             _ if *self.saved == *config => Some(Outcome::Close),
-            _ => self.leave(config),
+            _ => self.leave(config, Exit::Close),
         }
     }
 
     /// Back from the unsaved-changes question to the screen it was asked on.
     fn keep_editing(&mut self) {
-        if let Screen::Confirm(left, cursor) = std::mem::replace(&mut self.screen, Screen::Main) {
+        if let Screen::Confirm(left, cursor, _) = std::mem::replace(&mut self.screen, Screen::Main) {
             self.screen = *left;
             self.cursor = cursor;
         }
@@ -256,25 +268,24 @@ impl SystemMenu {
         if self.from_guide { "Guide" } else { "Menu" }.into()
     }
 
+    /// Whether answering the unsaved-changes question goes back to the Guide overlay, not out.
+    fn answer_goes_back(&self) -> bool {
+        matches!(self.screen, Screen::Confirm(_, _, Exit::Back)) && self.from_guide
+    }
+
+    fn discard(&self) -> Option<Outcome> {
+        Some(Outcome::Discard { saved: self.saved.clone(), back: self.answer_goes_back() })
+    }
+
+    /// The unsaved-changes question: A saves, X discards, B keeps editing.
     fn confirm_step(&mut self, step: Step) -> Option<Outcome> {
         match step {
-            Step::Up | Step::Down => {
-                self.cursor = wrap(self.cursor, step, 3);
-                None
-            }
-            Step::Pick => match self.cursor {
-                0 => Some(Outcome::Save),
-                1 => Some(Outcome::Discard(self.saved.clone())),
-                _ => {
-                    self.keep_editing();
-                    None
-                }
-            },
+            Step::Pick => Some(Outcome::Save { back: self.answer_goes_back() }),
             Step::Back => {
                 self.keep_editing();
                 None
             }
-            Step::Left | Step::Right => None,
+            Step::Up | Step::Down | Step::Left | Step::Right => None,
         }
     }
 
@@ -298,7 +309,7 @@ impl SystemMenu {
                 None
             }
             Step::Left | Step::Right if rows.get(self.cursor) == Some(&Row::Remapping) => None,
-            Step::Back if self.from_guide => self.leave(config),
+            Step::Back if self.from_guide => self.leave(config, Exit::Back),
             Step::Back => {
                 self.screen = Screen::Main;
                 self.cursor = 0;
@@ -324,7 +335,7 @@ impl SystemMenu {
             Step::Back => {
                 if editor.back() == EditStep::Leave {
                     if self.from_guide {
-                        return self.leave(config);
+                        return self.leave(config, Exit::Back);
                     }
                     self.screen = Screen::Main;
                     self.cursor = 1;
@@ -339,28 +350,43 @@ impl SystemMenu {
         None
     }
 
-    /// What the overlay draws now.
+    /// What the overlay draws now. The unsaved-changes question is drawn over the screen it was
+    /// asked on.
     pub fn view(&self, config: &Config) -> MenuView {
-        let style = config.active_menu_style().clone();
         match &self.screen {
-            Screen::Main => main_page(style, self.cursor),
+            Screen::Confirm(left, cursor, how) => {
+                let mut view = self.screen_view(left, *cursor, config);
+                view.prompt = Some(Box::new(self.unsaved_prompt(*how, view.style.clone())));
+                view
+            }
+            screen => self.screen_view(screen, self.cursor, config),
+        }
+    }
+
+    /// The question asked when the menu is left with changes not saved, in the look of the offer
+    /// to add a game.
+    fn unsaved_prompt(&self, how: Exit, mut style: OverlayStyle) -> OfferView {
+        // Solid, so the page under it doesn't show through the words.
+        style.background.opacity = 1.0;
+        let then = if self.from_guide && how == Exit::Back { "back to the Guide" } else { "close the menu" };
+        OfferView {
+            title: "Save your changes?".into(),
+            detail: "You changed settings that aren't saved yet.".into(),
+            answers: [("{south}", "Save"), ("{west}", "Discard"), ("{east}", "Keep editing")]
+                .iter()
+                .map(|(b, t)| ((*b).into(), (*t).into()))
+                .collect(),
+            hint: format!("Save or Discard, then {then}"),
+            style,
+        }
+    }
+
+    fn screen_view(&self, screen: &Screen, cursor: usize, config: &Config) -> MenuView {
+        let style = config.active_menu_style().clone();
+        match screen {
+            Screen::Main => main_page(style, cursor),
             Screen::Editor(editor) => editor.view(config, &[self.parent()]),
-            Screen::Confirm(..) => MenuView {
-                title: "Unsaved changes".into(),
-                kind: crate::config::MenuKind::List,
-                items: vec![
-                    ItemView { label: "Save and close".into(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE },
-                    ItemView { label: "Discard and close".into(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE },
-                    ItemView { label: "Keep editing".into(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE },
-                ],
-                selected: Some(self.cursor),
-                picks: 0,
-                crumbs: vec![self.parent()],
-                hint: "{south} choose · {east} keep editing".into(),
-                style,
-                touch: false,
-                aim: None,
-            },
+            Screen::Confirm(left, cursor, _) => self.screen_view(left, *cursor, config),
             Screen::Quick => MenuView {
                 title: "Quick Settings".into(),
                 kind: crate::config::MenuKind::List,
@@ -374,13 +400,14 @@ impl SystemMenu {
                         ItemView { tone: if row == Row::Remapping { Tone::Remove } else { Tone::Normal }, label, ..ItemView::plain() }
                     })
                     .collect(),
-                selected: Some(self.cursor),
+                selected: Some(cursor),
                 picks: 0,
                 crumbs: vec![self.parent()],
                 hint: "{left} {right} or {south} change · hold {rb} for big steps · {east} back".into(),
                 style,
                 touch: false,
                 aim: None,
+                prompt: None,
             },
         }
     }
@@ -455,6 +482,7 @@ pub fn main_page(style: OverlayStyle, cursor: usize) -> MenuView {
         style,
         touch: false,
         aim: None,
+        prompt: None,
     }
 }
 
@@ -570,15 +598,49 @@ mod tests {
         assert_eq!(menu.screen, Screen::Main);
         assert_eq!(menu.handle_now(press(Button::East), &mut config), None);
         assert!(matches!(menu.screen, Screen::Confirm(..)));
-        // Keep editing goes back to the main page.
-        menu.handle_now(press(Button::DpadDown), &mut config);
-        menu.handle_now(press(Button::DpadDown), &mut config);
-        assert_eq!(menu.handle_now(press(Button::South), &mut config), None);
+        // B keeps editing, back on the main page.
+        assert_eq!(menu.handle_now(press(Button::East), &mut config), None);
         assert_eq!(menu.screen, Screen::Main);
-        // Closing again asks again; discard hands back what was saved.
+        // Closing again asks again: A saves and X discards, handing back what was saved.
         menu.handle_now(press(Button::East), &mut config);
-        menu.handle_now(press(Button::DpadDown), &mut config);
-        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Discard(Box::new(saved.clone()))));
+        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Save { back: false }));
+        assert_eq!(
+            menu.handle_now(press(Button::West), &mut config),
+            Some(Outcome::Discard { saved: Box::new(saved.clone()), back: false })
+        );
+    }
+
+    #[test]
+    fn the_question_is_drawn_over_the_page_it_was_asked_on() {
+        let mut config = mouse_config();
+        let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
+        let plain = menu.view(&config);
+        assert!(plain.prompt.is_none());
+        menu.handle_now(press(Button::DpadRight), &mut config);
+        menu.handle_now(press(Button::East), &mut config);
+        let asked = menu.view(&config);
+        assert_eq!((asked.title.as_str(), asked.crumbs.as_slice()), ("Quick Settings", &["Guide".to_string()][..]), "the page stays");
+        let prompt = asked.prompt.expect("the question is on top of it");
+        assert_eq!(prompt.answers.iter().map(|(_, t)| t.as_str()).collect::<Vec<_>>(), ["Save", "Discard", "Keep editing"]);
+    }
+
+    #[test]
+    fn answering_after_back_returns_to_the_guide_but_after_guide_it_closes() {
+        let mut config = mouse_config();
+        let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
+        menu.handle_now(press(Button::DpadRight), &mut config);
+        menu.handle_now(press(Button::East), &mut config);
+        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Save { back: true }));
+
+        let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
+        menu.handle_now(press(Button::DpadRight), &mut config);
+        assert_eq!(menu.guide_pressed(&config), None);
+        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Save { back: false }));
+
+        // Opened with Guide + Start, there is no Guide overlay to go back to.
+        let mut menu = SystemMenu::new(&Config::default());
+        menu.handle_now(press(Button::East), &mut config);
+        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Save { back: false }));
     }
 
     #[test]

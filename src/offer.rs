@@ -152,6 +152,7 @@ impl OfferSession {
                 style: style.clone(),
                 touch: false,
                 aim: None,
+                prompt: None,
             })
         };
         match self.stage {

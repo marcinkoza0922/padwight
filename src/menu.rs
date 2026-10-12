@@ -53,6 +53,9 @@ pub struct MenuView {
     /// `None` while it rests in the middle.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub aim: Option<f32>,
+    /// A question asked over the menu, drawn on top of it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prompt: Option<Box<crate::offer::OfferView>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -330,6 +333,7 @@ impl MenuSession {
             style: menu.style.clone(),
             touch: false,
             aim: self.live_aim(menu),
+            prompt: None,
         })
     }
 
