@@ -157,6 +157,7 @@ impl App {
             ("media controls player panel music volume", self.view_media_card()),
             ("in-game menu guide button", self.view_in_game_menu_card()),
             ("info overlays fallback glyphs xbox playstation nintendo labels", glyphs),
+            ("help tour guided welcome introduction getting started", self.view_help_card()),
         ];
         let shown: Vec<Element<'_, Message>> = cards.into_iter().filter(|(words, _)| matches_query(query, words)).map(|(_, card)| card).collect();
         let body: Element<'_, Message> = if shown.is_empty() {
