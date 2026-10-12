@@ -10,7 +10,7 @@ use std::sync::RwLock;
 use serde::{Deserialize, Serialize};
 
 use super::Token;
-use crate::config::{Button, GestureKind, MenuKeys, ShortcutInput, Shortcuts};
+use crate::config::{Button, GestureKind, MenuKeys, Shortcut, ShortcutInput, Shortcuts};
 
 /// The input that opens the Guide overlay, in a form that is `Copy` and travels in a frame. The
 /// default is the Guide button.
@@ -105,4 +105,38 @@ pub(super) fn menu_key(name: &str) -> Option<Button> {
         "back" => Some(keys.back),
         _ => None,
     }
+}
+
+static PANEL_KEYS: RwLock<Option<Shortcuts>> = RwLock::new(None);
+
+/// Sets which buttons the media controls' and numpad's keys sit on, for this process.
+pub fn set_panel_keys(shortcuts: &Shortcuts) {
+    if let Ok(mut now) = PANEL_KEYS.write() {
+        *now = Some(shortcuts.clone());
+    }
+}
+
+/// The button a `{play}`, `{next}`, `{previous}`, `{player}`, `{mute}`, `{media_close}`,
+/// `{backspace}`, `{enter}` or `{numpad_close}` token stands for.
+pub(super) fn panel_key(name: &str) -> Option<Button> {
+    let key = match name {
+        "play" => Shortcut::MediaPlay,
+        "next" => Shortcut::MediaNext,
+        "previous" => Shortcut::MediaPrevious,
+        "player" => Shortcut::MediaPlayer,
+        "mute" => Shortcut::MediaMute,
+        "backspace" => Shortcut::NumpadBackspace,
+        "enter" => Shortcut::NumpadEnter,
+        "media_close" => Shortcut::MediaClose,
+        "numpad_close" => Shortcut::NumpadClose,
+        "keyboard_backspace" => Shortcut::KeyboardBackspace,
+        "keyboard_space" => Shortcut::KeyboardSpace,
+        "keyboard_enter" => Shortcut::KeyboardEnter,
+        "keyboard_left" => Shortcut::KeyboardLeft,
+        "keyboard_right" => Shortcut::KeyboardRight,
+        "keyboard_close" => Shortcut::KeyboardClose,
+        _ => return None,
+    };
+    let fallback = key.default_input().buttons[0];
+    Some(PANEL_KEYS.read().ok().and_then(|keys| keys.as_ref().map(|s| s.button(key))).unwrap_or(fallback))
 }

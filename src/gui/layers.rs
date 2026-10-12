@@ -30,30 +30,6 @@ impl fmt::Display for IndicatorChoice {
     }
 }
 
-/// The modes every setup has, which can't be changed or removed, with what they do.
-fn built_in_modes<'a>() -> Element<'a, Message> {
-    let mut col = column![
-        row![
-            text("Built-in modes").size(15),
-            help(
-                "Every setup has these, and they can't be changed or removed. The Guide mode is on while Guide is held or its \
-                 overlay is up; mouse mode is turned on from the Guide overlay, Guide + R3, or \"Switch mode…\", and ended \
-                 with Guide. While one is on, it stands in for the setup's mode (which comes back after), and held layers \
-                 don't apply."
-                    .into(),
-            ),
-        ]
-        .spacing(8)
-        .align_y(Alignment::Center)
-    ]
-    .spacing(6);
-    for mode in crate::config::built_in_modes() {
-        let lines = super::packs::layer_lines(mode).join(" · ");
-        col = col.push(column![text(mode.name.clone()).size(13), text(lines).size(12).color(MUTED_COLOR)].spacing(2));
-    }
-    container(col).padding(14).width(Length::Fill).style(style::card).into()
-}
-
 impl App {
     /// Which of the Modes and Layers tabs is shown, if one is.
     pub(super) fn shift(&self) -> Option<Shift> {
@@ -331,9 +307,6 @@ impl App {
             items_header(shift.kind(), add.into(), words.blurb, words.explain.into())
         };
         let mut col = column![picker_row].spacing(16);
-        if shift == Shift::Mode {
-            col = col.push(built_in_modes());
-        }
         let Some(layer) = list.get(self.shift_index(shift)) else {
             return col.push(text(words.empty).color(MUTED_COLOR)).into();
         };

@@ -18,7 +18,7 @@ use std::{
 use anyhow::{Context, Result};
 
 use crate::{
-    config::{Config, Feature, Game, Profile, ProfileRef, Refit, Scope, Shortcut},
+    config::{Button, Config, Feature, Game, Group, PanelPress, Profile, ProfileRef, Refit, Scope, Shortcut},
     engine::{Engine, Opener},
     focus::{self, FocusEvent},
     input::{InputEvent, MotionFrame, MotionSample},
@@ -1240,6 +1240,7 @@ impl Daemon {
             colorblind: self.config.colorblind_tones,
             opener: crate::info::OpenerLabel::of(&self.config.shortcuts),
             menu_keys: self.config.shortcuts.menu_keys(),
+            panel_keys: self.config.shortcuts.clone(),
             family: values.family,
             nintendo_layout: values.nintendo_layout,
             motion: self.config.active_motion(),
@@ -2367,6 +2368,17 @@ impl Daemon {
         }
     }
 
+    /// What a press of `b` does in the media controls or the numpad, when either is up.
+    fn panel_press(&self, b: Button) -> PanelPress {
+        let group = match &self.active {
+            Some(Active::Media(_)) => Group::Media,
+            Some(Active::Keyboard(k)) if k.layout() == Layout::Numpad => Group::Numpad,
+            Some(Active::Keyboard(_)) => Group::Keyboard,
+            _ => return PanelPress::Other,
+        };
+        self.config.shortcuts.panel_press(group, b)
+    }
+
     /// While the overlay shows something, controller input drives it instead of the mappings.
     /// (Every way out redraws, so the input log's view of it shows too.)
     fn overlay_input(&mut self, id: u64, events: Vec<InputEvent>, fires: &[bool]) {
@@ -2392,9 +2404,12 @@ impl Daemon {
             // The panels hear A and B where the confirm and back buttons are. Menus do it
             // themselves, since some read the face buttons as they are.
             let ev = match ev {
-                InputEvent::Button(b, down) if !matches!(self.active, Some(Active::Menu { .. })) => {
-                    InputEvent::Button(self.config.shortcuts.menu_keys().logical(b, true), down)
-                }
+                InputEvent::Button(b, down) => match self.panel_press(b) {
+                    PanelPress::Key(key) => InputEvent::Button(key, down),
+                    PanelPress::Ignored => continue,
+                    PanelPress::Other if matches!(self.active, Some(Active::Menu { .. })) => InputEvent::Button(b, down),
+                    PanelPress::Other => InputEvent::Button(self.config.shortcuts.menu_keys().logical(b, true), down),
+                },
                 other => other,
             };
             match &mut self.active {

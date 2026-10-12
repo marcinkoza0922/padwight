@@ -63,6 +63,7 @@ impl Overlay {
         self.logs.update(now, frame.logs.clone());
         crate::info::set_opener(frame.opener);
         crate::info::set_menu_keys(frame.menu_keys);
+        crate::info::set_panel_keys(&frame.panel_keys);
         self.frame = frame;
         self.prune(now);
     }

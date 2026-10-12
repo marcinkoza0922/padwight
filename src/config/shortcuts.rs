@@ -153,6 +153,12 @@ pub enum Group {
     Mouse,
     /// The buttons that confirm and go back in the menus and panels.
     Menu,
+    /// The media controls' own buttons (see `panels`).
+    Media,
+    /// The on-screen numpad's own buttons.
+    Numpad,
+    /// The on-screen keyboard's own buttons.
+    Keyboard,
 }
 
 impl Group {
@@ -162,6 +168,9 @@ impl Group {
             Group::Guide => "Guide mode shortcuts",
             Group::Mouse => "Mouse mode keys",
             Group::Menu => "Menu buttons",
+            Group::Media => "Media controls buttons",
+            Group::Numpad => "On-screen numpad buttons",
+            Group::Keyboard => "On-screen keyboard buttons",
         }
     }
 }
@@ -194,10 +203,45 @@ pub enum Shortcut {
     MenuConfirm,
     /// Goes back or closes in menus and panels (B unless moved).
     MenuBack,
+    /// The media controls' play or pause, next and previous track, player and mute.
+    MediaPlay,
+    MediaNext,
+    MediaPrevious,
+    MediaPlayer,
+    MediaMute,
+    /// Closes the media controls (East unless moved).
+    MediaClose,
+    /// The numpad's backspace and enter, and what closes it (East unless moved).
+    NumpadBackspace,
+    NumpadEnter,
+    NumpadClose,
+    /// The on-screen keyboard's backspace, space, enter, text cursor left and right, and close
+    /// (see `panels`). Its press is the menu confirm button.
+    KeyboardBackspace,
+    KeyboardSpace,
+    KeyboardEnter,
+    KeyboardLeft,
+    KeyboardRight,
+    KeyboardClose,
 }
 
 impl Shortcut {
-    pub const ALL: [Shortcut; 21] = [
+    /// Where the shortcut must sit when it's a single button: the menu buttons and the panel keys.
+    /// `None` for the shortcuts that take any input.
+    pub fn choices(self) -> Option<&'static [Button]> {
+        match self.group() {
+            Group::Menu => Some(&MenuKeys::CHOICES),
+            Group::Media | Group::Numpad | Group::Keyboard => Some(&panels::CHOICES),
+            _ => None,
+        }
+    }
+
+    /// Whether a single button fits the shortcut (see [`Shortcut::choices`]).
+    fn takes(self, input: &ShortcutInput) -> bool {
+        self.choices().is_some_and(|c| input.gesture.is_none() && matches!(input.buttons.as_slice(), [b] if c.contains(b)))
+    }
+
+    pub const ALL: [Shortcut; 36] = [
         Shortcut::OpenGuide,
         Shortcut::Keyboard,
         Shortcut::Numpad,
@@ -219,6 +263,21 @@ impl Shortcut {
         Shortcut::Forward,
         Shortcut::MenuConfirm,
         Shortcut::MenuBack,
+        Shortcut::MediaPlay,
+        Shortcut::MediaNext,
+        Shortcut::MediaPrevious,
+        Shortcut::MediaPlayer,
+        Shortcut::MediaMute,
+        Shortcut::MediaClose,
+        Shortcut::NumpadBackspace,
+        Shortcut::NumpadEnter,
+        Shortcut::NumpadClose,
+        Shortcut::KeyboardBackspace,
+        Shortcut::KeyboardSpace,
+        Shortcut::KeyboardEnter,
+        Shortcut::KeyboardLeft,
+        Shortcut::KeyboardRight,
+        Shortcut::KeyboardClose,
     ];
 
     pub fn group(self) -> Group {
@@ -233,6 +292,16 @@ impl Shortcut {
             | Shortcut::ForceQuit
             | Shortcut::MouseMode => Group::Guide,
             Shortcut::MenuConfirm | Shortcut::MenuBack => Group::Menu,
+            Shortcut::MediaPlay | Shortcut::MediaNext | Shortcut::MediaPrevious | Shortcut::MediaPlayer | Shortcut::MediaMute | Shortcut::MediaClose => {
+                Group::Media
+            }
+            Shortcut::NumpadBackspace | Shortcut::NumpadEnter | Shortcut::NumpadClose => Group::Numpad,
+            Shortcut::KeyboardBackspace
+            | Shortcut::KeyboardSpace
+            | Shortcut::KeyboardEnter
+            | Shortcut::KeyboardLeft
+            | Shortcut::KeyboardRight
+            | Shortcut::KeyboardClose => Group::Keyboard,
             _ => Group::Mouse,
         }
     }
@@ -265,6 +334,21 @@ impl Shortcut {
             Shortcut::Forward => "Mouse forward",
             Shortcut::MenuConfirm => "Confirm",
             Shortcut::MenuBack => "Back / close",
+            Shortcut::MediaPlay => "Play or pause",
+            Shortcut::MediaNext => "Next track",
+            Shortcut::MediaPrevious => "Previous track",
+            Shortcut::MediaPlayer => "Switch player",
+            Shortcut::MediaMute => "Mute",
+            Shortcut::NumpadBackspace => "Numpad backspace",
+            Shortcut::MediaClose => "Close",
+            Shortcut::NumpadEnter => "Numpad enter",
+            Shortcut::NumpadClose => "Numpad close",
+            Shortcut::KeyboardBackspace => "Keyboard backspace",
+            Shortcut::KeyboardSpace => "Keyboard space",
+            Shortcut::KeyboardEnter => "Keyboard enter",
+            Shortcut::KeyboardLeft => "Text cursor left",
+            Shortcut::KeyboardRight => "Text cursor right",
+            Shortcut::KeyboardClose => "Keyboard close",
         }
     }
 
@@ -285,7 +369,18 @@ impl Shortcut {
             Shortcut::Tab => Button::DpadDown,
             Shortcut::Escape => Button::DpadLeft,
             Shortcut::Delete | Shortcut::MenuBack => Button::East,
-            Shortcut::MenuConfirm => Button::South,
+            Shortcut::MenuConfirm | Shortcut::MediaPlay => Button::South,
+            Shortcut::MediaNext => Button::RightBumper,
+            Shortcut::MediaPrevious => Button::LeftBumper,
+            Shortcut::MediaPlayer => Button::North,
+            Shortcut::MediaMute | Shortcut::NumpadBackspace => Button::West,
+            Shortcut::MediaClose | Shortcut::NumpadClose => Button::East,
+            Shortcut::NumpadEnter | Shortcut::KeyboardEnter => Button::Start,
+            Shortcut::KeyboardBackspace => Button::West,
+            Shortcut::KeyboardSpace => Button::North,
+            Shortcut::KeyboardLeft => Button::LeftBumper,
+            Shortcut::KeyboardRight => Button::RightBumper,
+            Shortcut::KeyboardClose => Button::East,
         })
     }
 
@@ -313,15 +408,31 @@ impl Shortcut {
             Shortcut::MiddleClick => Mouse(MouseButton::Middle),
             Shortcut::Back => Mouse(MouseButton::Back),
             Shortcut::Forward => Mouse(MouseButton::Forward),
-            Shortcut::MenuConfirm | Shortcut::MenuBack => return None,
+            Shortcut::MenuConfirm
+            | Shortcut::MenuBack
+            | Shortcut::MediaPlay
+            | Shortcut::MediaNext
+            | Shortcut::MediaPrevious
+            | Shortcut::MediaPlayer
+            | Shortcut::MediaMute
+            | Shortcut::MediaClose
+            | Shortcut::NumpadBackspace
+            | Shortcut::NumpadEnter
+            | Shortcut::NumpadClose
+            | Shortcut::KeyboardBackspace
+            | Shortcut::KeyboardSpace
+            | Shortcut::KeyboardEnter
+            | Shortcut::KeyboardLeft
+            | Shortcut::KeyboardRight
+            | Shortcut::KeyboardClose => return None,
         })
     }
 }
 
 /// The buttons that confirm and go back in the menus and panels, which are A and B unless
 /// moved. The one that's moved to takes the place of A (or B), and A (or B) takes its place, so
-/// each still does what the button it swapped with did. Only buttons the panels use for nothing
-/// else can be chosen ([`MenuKeys::CHOICES`]), so nothing else is displaced.
+/// each still does what the button it swapped with did. Any button the menus don't hardcode can be
+/// chosen ([`MenuKeys::CHOICES`]): the D-pad moves the menus and Guide opens the overlay.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MenuKeys {
     pub confirm: Button,
@@ -335,21 +446,23 @@ impl Default for MenuKeys {
 }
 
 impl MenuKeys {
-    /// What the confirm and back buttons can be moved to.
-    pub const CHOICES: [Button; 8] = [
+    /// What the confirm and back buttons can be moved to: every button but the D-pad and Guide.
+    pub const CHOICES: [Button; 14] = [
         Button::South,
         Button::East,
+        Button::North,
+        Button::West,
+        Button::LeftBumper,
+        Button::RightBumper,
         Button::Select,
+        Button::Start,
         Button::LeftStick,
         Button::RightStick,
         Button::LeftPaddle,
         Button::RightPaddle,
         Button::LeftPaddle2,
+        Button::RightPaddle2,
     ];
-
-    fn allowed(input: &ShortcutInput) -> bool {
-        input.gesture.is_none() && matches!(input.buttons.as_slice(), [b] if Self::CHOICES.contains(b))
-    }
 
     /// What the panels should make of a press of `b`: A where the confirm button is, B where the
     /// back button is (only when `back` says it's in use), and each of those two where the
@@ -402,9 +515,25 @@ impl Shortcuts {
     }
 
     /// Puts `s` on `input`, or switches it off with `None`. Back on its default, it's no longer
-    /// moved.
+    /// moved. A panel key is always on one of its choices: one another key of its panel has is
+    /// traded for the one it had (see `panels`), and anything else is ignored.
     pub fn set(&mut self, s: Shortcut, input: Option<ShortcutInput>) {
-        let input = input.unwrap_or_default();
+        let mut input = input.unwrap_or_default();
+        if s.is_panel_key() {
+            if !s.takes(&input) {
+                return;
+            }
+            let b = input.buttons[0];
+            input = ShortcutInput::button(b);
+            if let Some(other) = Shortcut::of(s.group()).find(|o| *o != s && self.button(*o) == b) {
+                let was = self.button(s);
+                self.put(other, ShortcutInput::button(was));
+            }
+        }
+        self.put(s, input);
+    }
+
+    fn put(&mut self, s: Shortcut, input: ShortcutInput) {
         // The menu buttons are always somewhere: off is the default.
         if input == s.default_input() || (s.group() == Group::Menu && input.is_off()) {
             self.moved.remove(&s);
@@ -418,20 +547,24 @@ impl Shortcuts {
     }
 
     /// Without what can't be: Guide belongs to the Guide overlay, so no other shortcut sits on it,
-    /// and the opener keeps it only as a plain button.
+    /// and the opener keeps it only as a plain button. The single-button ones keep to their choices.
     pub fn sanitized(mut self) -> Self {
         self.moved.retain(|s, input| match s {
             Shortcut::OpenGuide => !input.uses(Button::Guide) || *input == ShortcutInput::button(Button::Guide),
-            Shortcut::MenuConfirm | Shortcut::MenuBack => MenuKeys::allowed(input),
+            s if s.choices().is_some() => s.takes(input),
             _ => !input.uses(Button::Guide),
         });
         self
     }
 
+    /// The button a shortcut is on, where a single button is wanted: its default unless moved.
+    pub fn button(&self, s: Shortcut) -> Button {
+        self.input(s).and_then(|i| i.buttons.first().copied()).unwrap_or(s.default_input().buttons[0])
+    }
+
     /// The buttons that confirm and go back in menus and panels.
     pub fn menu_keys(&self) -> MenuKeys {
-        let button = |s: Shortcut| self.input(s).and_then(|i| i.buttons.first().copied()).unwrap_or(s.default_input().buttons[0]);
-        MenuKeys { confirm: button(Shortcut::MenuConfirm), back: button(Shortcut::MenuBack) }
+        MenuKeys { confirm: self.button(Shortcut::MenuConfirm), back: self.button(Shortcut::MenuBack) }
     }
 
     pub fn opener(&self) -> Option<ShortcutInput> {
@@ -515,5 +648,7 @@ pub fn built_in_with(shortcuts: &Shortcuts, name: &str) -> Option<Layer> {
 }
 
 mod conflicts;
+mod panels;
+pub use panels::PanelPress;
 #[cfg(test)]
 mod tests;

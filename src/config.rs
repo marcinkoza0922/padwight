@@ -29,7 +29,7 @@ pub use gyro::*;
 pub use log::*;
 pub use modes::Mode;
 pub use performance::Performance;
-pub use shortcuts::{Group, GuideOpener, MenuKeys, OPEN_GUIDE, Shortcut, ShortcutInput, Shortcuts};
+pub use shortcuts::{Group, GuideOpener, MenuKeys, OPEN_GUIDE, PanelPress, Shortcut, ShortcutInput, Shortcuts};
 pub use style::*;
 use style::{default_keyboard_style, default_media_style, default_menu_style, default_numpad_style};
 pub use touchpad::*;

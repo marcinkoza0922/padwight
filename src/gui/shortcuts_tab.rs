@@ -125,10 +125,9 @@ impl App {
     /// opener's plain button; anything else is ignored and listening goes on.
     pub(super) fn heard_shortcut_button(&mut self, b: Button) -> bool {
         let Some((s, at)) = self.shortcuts_ui.listening else { return false };
-        let allowed = if s.group() == Group::Menu {
-            crate::config::MenuKeys::CHOICES.contains(&b)
-        } else {
-            ShortcutInput::choices().contains(&b) || (s == Shortcut::OpenGuide && b == Button::Guide)
+        let allowed = match s.choices() {
+            Some(choices) => choices.contains(&b),
+            None => ShortcutInput::choices().contains(&b) || (s == Shortcut::OpenGuide && b == Button::Guide),
         };
         if !allowed {
             return false;
@@ -173,7 +172,7 @@ impl App {
             page = page.push(text(format!("⚠ {which} with another. They're marked below.")).size(13).color(WARNING_COLOR));
         }
         page = page.push(self.view_opener());
-        for group in [Group::Guide, Group::Mouse, Group::Menu] {
+        for group in [Group::Guide, Group::Mouse, Group::Media, Group::Numpad, Group::Keyboard, Group::Menu] {
             page = page.push(self.view_shortcut_group(group));
         }
         if !shortcuts.is_default() {
@@ -212,29 +211,47 @@ impl App {
                 "Press these with Guide held, or alone with the overlay open. Anything else does nothing there, so it \
                  never reaches the game. Fixed actions are also on the Buttons tab of any profile."
             }
+            Group::Media => {
+                "The buttons the media controls use for play or pause, the tracks, the player and mute. A button \
+                 another of these keys has trades places with the key's old one. A button none of them has takes \
+                 the key, and the one it left does nothing in the media controls. Back and the opener still close \
+                 them, and Close is what closes them as well as the opener. These keys take a press before the \
+                 menu buttons do, so a shared button does the key's job here."
+            }
+            Group::Keyboard => {
+                "The buttons the on-screen keyboard uses for backspace, space, enter, moving the text cursor and \
+                 closing, with the same trading as the media controls. Press is the confirm button, and Close (East \
+                 unless moved) closes it when held. The keyboard's cursor and shift don't move."
+            }
+            Group::Numpad => {
+                "The buttons the on-screen numpad uses for backspace and enter, with the same trading as the media \
+                 controls. Close (East unless moved) closes the numpad when held. The numpad's cursor and its press \
+                 don't move."
+            }
             Group::Menu => {
                 "The buttons that choose and go back in the Guide overlay's menu, the keyboard, numpad, media controls, \
                  the in-game menu, menus with a list, grid or carousel, and the library offer. The one you pick and \
-                 A (or B) trade places, so each still does what the other did. Only buttons those panels use for \
-                 nothing else are offered. A menu that sets its own close button keeps it, and menus that read the \
-                 face buttons themselves (directional and button menus) aren't changed."
+                 A (or B) trade places, so each still does what the other did. The D-pad and Guide aren't offered, \
+                 as the D-pad moves the menus. A menu that sets its own close button keeps it, and menus that read \
+                 the face buttons themselves (directional and button menus) aren't changed."
             }
             _ => {
                 "The keys mouse mode gives the buttons. The sticks and triggers (move, scroll, click) stay where they are. \
                  Other buttons do nothing in mouse mode."
             }
         };
-        let rows = Shortcut::of(group).map(|s| if group == Group::Menu { self.menu_row(s) } else { self.shortcut_row(s) }).collect();
+        let rows = Shortcut::of(group).map(|s| if s.choices().is_some() { self.button_row(s) } else { self.shortcut_row(s) }).collect();
         section(group.title(), Some(help_text.into()), rows)
     }
 
-    /// Confirm or back: always one button, from the few the panels leave free.
-    fn menu_row(&self, s: Shortcut) -> Element<'_, Message> {
-        let current = self.config.shortcuts.menu_keys();
-        let now = if s == Shortcut::MenuConfirm { current.confirm } else { current.back };
+    /// A single button from the few `s` can take (see [`Shortcut::choices`]): confirm or back, or a
+    /// panel key.
+    fn button_row(&self, s: Shortcut) -> Element<'_, Message> {
+        let now = self.config.shortcuts.button(s);
+        let choices = s.choices().unwrap_or_default().to_vec();
         let listening = self.shortcuts_ui.listening == Some((s, 0));
         let mut line = row![
-            dropdown(crate::config::MenuKeys::CHOICES.to_vec(), Some(now), move |b: Button| Message::SetShortcut(s, Some(ShortcutInput::button(b)))).width(190),
+            dropdown(choices, Some(now), move |b: Button| Message::SetShortcut(s, Some(ShortcutInput::button(b)))).width(190),
             button(text(if listening { "Press a button…" } else { "Listen" }).size(13))
                 .style(style::secondary)
                 .on_press(Message::ListenShortcut(if listening { None } else { Some((s, 0)) })),

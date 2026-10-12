@@ -26,7 +26,7 @@ use windows::{battery, cpu_times, gpu_busy, local_time, memory, wifi_strength};
 pub use windows::form_factor;
 
 pub use guide::{DEFAULT_MODE, GuideView};
-pub use opener::{OpenerLabel, set_menu_keys, set_opener};
+pub use opener::{OpenerLabel, set_menu_keys, set_opener, set_panel_keys};
 pub use pad_model::PadModel;
 
 use crate::config::{Button, CurrentInput, InfoOverlay, Layer, MouseButton, OverlayStyle, ScreenPosition, Stick, Trigger};
@@ -314,7 +314,7 @@ fn token(inner: &str) -> Option<Token> {
     if !args.is_empty() {
         return None;
     }
-    if let Some(b) = opener::menu_key(&name) {
+    if let Some(b) = opener::menu_key(&name).or_else(|| opener::panel_key(&name)) {
         return Some(Token::Button(b));
     }
     plain_token(&name)
@@ -1474,5 +1474,17 @@ mod tests {
         set_menu_keys(crate::config::MenuKeys { confirm: Button::Select, back: Button::LeftStick });
         assert_eq!(parse("{confirm} {back}"), vec![Err(Token::Button(Button::Select)), Ok(" ".into()), Err(Token::Button(Button::LeftStick))]);
         assert_eq!(parse("{south}"), vec![Err(Token::Button(Button::South))], "{{south}} stays the button");
+    }
+
+    #[test]
+    fn the_panel_keys_say_the_buttons_they_sit_on() {
+        use crate::config::{Shortcut, ShortcutInput, Shortcuts};
+        assert_eq!(parse("{play}{previous}{enter}"), vec![Err(Token::Button(Button::South)), Err(Token::Button(Button::LeftBumper)), Err(Token::Button(Button::Start))]);
+        let mut shortcuts = Shortcuts::default();
+        shortcuts.set(Shortcut::MediaPlay, Some(ShortcutInput::button(Button::Select)));
+        set_panel_keys(&shortcuts);
+        assert_eq!(parse("{play}"), vec![Err(Token::Button(Button::Select))]);
+        assert_eq!(parse("{next}"), vec![Err(Token::Button(Button::RightBumper))], "the key it traded with stays where it was");
+        set_panel_keys(&Shortcuts::default());
     }
 }
