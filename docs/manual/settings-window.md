@@ -10,4 +10,6 @@ The left side lists the pages and your setups. The rest of the window shows the 
 - **Top bar**: The *Remapping* switch turns all remapping on or off. It reads off, and can't be turned on, while the daemon isn't running. *Active profile* switches the profile in use right away.
 - **Bottom bar**: changes are kept until you press **Save & apply**, which saves them and starts using them. **Revert** throws them away.
 
+The first time the window opens, a short tour walks through it. To take it again, click **Take the tour** in the Help card on **App settings**.
+
 > **Tip:** if the top bar says the daemon isn't running, you can still edit. Your changes are saved, and they take effect once the daemon starts.

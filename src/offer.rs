@@ -41,6 +41,15 @@ pub fn candidates(config: &Config, library: &[Entry], window: &WindowInfo, have:
         .collect()
 }
 
+/// How long the hint that Guide adds a library setup stays up.
+const HINT_TIME: Duration = Duration::from_secs(7);
+
+/// The toast shown when the game `name`, which the library has a setup for, comes to the front:
+/// a tap of Guide opens the offer.
+pub fn hint(name: &str, now: Instant) -> crate::info::Toast {
+    crate::info::Toast::lasting(vec![format!("Padwight has controls for {name}"), "Tap Guide to set them up".into()], now, HINT_TIME)
+}
+
 /// What the overlay draws.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OfferView {

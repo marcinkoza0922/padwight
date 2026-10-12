@@ -73,6 +73,7 @@ mod sticks;
 mod style_editor;
 mod tab_icons;
 mod touchpad;
+mod tour;
 mod tracking;
 mod triggers;
 mod widgets;
@@ -95,6 +96,7 @@ use style_editor::*;
 use tracking::*;
 use triggers::*;
 use goto::goto_button;
+use tour::TourMove;
 use search::*;
 use widgets::*;
 
@@ -264,6 +266,8 @@ struct App {
     last_edit: Option<(Discriminant<Message>, Instant)>,
     /// Save & quit: close the window once the save goes through.
     quit_after_save: bool,
+    /// The guided tour's step on show (see `tour.rs`).
+    tour: Option<usize>,
 }
 
 /// What the sidebar shows on the right.
@@ -388,6 +392,7 @@ enum Message {
     SelectChapter(usize),
     /// Shows an item of the current setup on its tab (see `goto.rs`).
     GoToItem(ItemKind, String),
+    Tour(TourMove),
     SetSettingsSearch(String),
     SetManualSearch(String),
     SetButtonSearch(String),
@@ -689,8 +694,10 @@ impl App {
             undo: Vec::new(),
             last_edit: None,
             quit_after_save: false,
+            tour: None,
         };
-        (app, Task::batch([load_config(), Task::done(Message::Poll), iced::system::theme().map(Message::SystemMode)]))
+        let tour = if tour::first_run() { Task::done(Message::Tour(TourMove::Start)) } else { Task::none() };
+        (app, Task::batch([load_config(), Task::done(Message::Poll), iced::system::theme().map(Message::SystemMode), tour]))
     }
 
     /// The controller the daemon presents the editor's controller as, under the game on screen's support.
@@ -1030,6 +1037,7 @@ impl App {
                 self.settle_config();
                 self.message = None;
             }
+            Message::Tour(step) => return self.move_tour(step),
             Message::Undo
             | Message::ShowProblem
             | Message::CloseRequested
@@ -1161,6 +1169,9 @@ impl App {
         let mut layers = stack![base];
         if let Some(popup) = popup {
             layers = layers.push(popup);
+        }
+        if let Some(step) = self.tour {
+            layers = layers.push(self.view_tour(step));
         }
         layers.into()
     }

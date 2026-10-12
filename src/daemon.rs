@@ -374,7 +374,11 @@ struct Offers {
     /// Library packs answered "not now" to, with the game process they were declined for: they
     /// are offered again once the game has started again, as a new process.
     declined: HashMap<String, u32>,
+    /// Game windows (by process, class and executable) already told that Guide adds their
+    /// library setup, so switching back to one doesn't say it again.
+    hinted: HashSet<(u32, String, String)>,
 }
+
 
 /// The Guide overlay's menu while it's up: the cursor, and whether Steam was running when it
 /// opened (the Steam overlay row is listed only then).
@@ -1723,6 +1727,7 @@ impl Daemon {
         if self.info_refresh.is_some() {
             self.broadcast_overlay();
         }
+        self.hint_library_game(window);
 
         if !self.config.auto_switch.enabled {
             return;
@@ -2136,16 +2141,45 @@ impl Daemon {
         self.resync_all();
     }
 
+    /// The library, and the entries in it that a Guide tap over `window` would offer.
+    fn library_candidates(&self, window: &WindowInfo) -> (Vec<crate::library::Entry>, Vec<usize>) {
+        let library = crate::library::entries();
+        let have = self.pad_features();
+        let mut found = crate::offer::candidates(&self.config, &library, window, have.as_deref());
+        found.retain(|&i| self.offers.declined.get(&library[i].pack.pack.id) != Some(&window.pid));
+        (library, found)
+    }
+
+    /// Says, once per run of a game, that tapping Guide adds the library's setup for the game
+    /// that just came to the front.
+    fn hint_library_game(&mut self, window: &WindowInfo) {
+        // Without a controller there's no Guide to tap; the hint waits for the next focus.
+        if !self.config.enabled || self.devices.is_empty() {
+            return;
+        }
+        if !self.offers.hinted.insert((window.pid, window.class.clone(), window.exe.clone())) {
+            return;
+        }
+        let (library, found) = self.library_candidates(window);
+        let name = match found.as_slice() {
+            [] => return,
+            [one] => library[*one].pack.pack.name.clone(),
+            [first, ..] if window.title.trim().is_empty() => library[*first].pack.pack.name.clone(),
+            _ => window.title.trim().to_owned(),
+        };
+        log!("hinting that Guide adds the library setup for {}", describe(window));
+        self.toast = Some(crate::offer::hint(&name, Instant::now()));
+        self.broadcast_overlay();
+    }
+
     /// Asks whether to add the focused game's profiles, when the library has some for it.
     fn offer_library_game(&mut self, by: u64) {
         if self.active.is_some() || !self.config.enabled {
             return;
         }
         let Some(window) = self.focused.clone() else { return };
-        let library = crate::library::entries();
+        let (library, found) = self.library_candidates(&window);
         let have = self.pad_features();
-        let mut found = crate::offer::candidates(&self.config, &library, &window, have.as_deref());
-        found.retain(|&i| self.offers.declined.get(&library[i].pack.pack.id) != Some(&window.pid));
         if found.is_empty() || !self.ensure_overlay_process() {
             return;
         }
