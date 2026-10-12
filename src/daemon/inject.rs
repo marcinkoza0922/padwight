@@ -60,6 +60,13 @@ impl Injection {
     }
 }
 
+impl Injection {
+    /// Whether this is a `--debug` daemon.
+    pub(super) fn enabled(&self) -> bool {
+        self.enabled
+    }
+}
+
 impl Daemon {
     pub(super) fn debug_request(&mut self, req: Request) -> Response {
         if !self.injection.enabled {

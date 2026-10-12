@@ -12,6 +12,8 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
   and a `.padpack` path draws that pack's menus, keyboard, numpad and info overlays in its own look)
 - Motion styles, no display needed: `cargo run -q -- debug motion <style>|all` (animated PNG + frame strip in
   `screenshots/motion/`; `--from/--until/--every` pick the strip's span, `--scene keyboard`, `--trace` prints numbers)
+- Which overlay cue plays, no display or speakers needed: `scripts/sound-trace.sh [config.toml]` (a `--debug` daemon
+  logs each cue as a `sound:` line); `cargo run -q -- debug sound list|<kind>|<overlay>` plays cues to hear them
 - Long files: `scripts/long-files.sh` (lists files over 400 lines; split them when you work in them)
 
 Filter tests to the module you touched (e.g. `engine::`) unless the change is broad.

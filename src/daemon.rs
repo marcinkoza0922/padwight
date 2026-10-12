@@ -2029,7 +2029,7 @@ impl Daemon {
         let paddles = self.devices.get(&device).is_some_and(|d| d.paddles);
         self.active = Some(Active::Settings(SystemMenu::new(&self.config).with_paddles(paddles).on_page(page), device));
         self.broadcast_overlay();
-        self.overlay_sound(sound::SoundOverlay::Menu, Some(sound::Feedback::Open));
+        self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Open));
     }
 
     /// Runs one event on the Guide + Start menu. `true` when the menu closed.
@@ -2053,7 +2053,7 @@ impl Daemon {
             _ => (None, false, 0),
         };
         let picked = matches!(outcome, Some(SystemOutcome::Changed | SystemOutcome::EditControls | SystemOutcome::Switch(_)));
-        self.overlay_sound(sound::SoundOverlay::Menu, sound::Feedback::of(picked, moved && outcome.is_none()));
+        self.overlay_sound(sound::SoundOverlay::Guide, sound::Feedback::of(picked, moved && outcome.is_none()));
         match outcome {
             Some(SystemOutcome::Close) => {
                 self.close_overlay();
@@ -2286,7 +2286,18 @@ impl Daemon {
     /// on the controller driving the overlay. A pick buzzes the default way unless the setup
     /// gives it a buzz of its own.
     fn overlay_sound(&self, overlay: sound::SoundOverlay, feedback: Option<sound::Feedback>) {
-        if let Some(spec) = feedback.and_then(|f| self.scope.sounds.cue(overlay, f)) {
+        if let Some((f, spec)) = feedback.and_then(|f| Some((f, self.scope.sounds.cue(overlay, f)?))) {
+            if self.injection.enabled() {
+                log!(
+                    "sound: {} {f:?} -> {} volume={} pitch={} length={} file={:?}",
+                    overlay.key(),
+                    spec.kind.label().to_lowercase(),
+                    spec.volume,
+                    spec.pitch,
+                    spec.length,
+                    spec.file
+                );
+            }
             self.sounds.play(&spec);
         }
         let Some(dev) = self.overlay_driver().and_then(|id| self.devices.get(&id)).filter(|dev| dev.ff.is_some()) else { return };
