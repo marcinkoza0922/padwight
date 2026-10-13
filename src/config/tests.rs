@@ -283,3 +283,4 @@ fn the_guide_layer_leaves_profiles_alone() {
 mod actions;
 /// How profiles are picked, layered and saved.
 mod behaviour;
+mod refused;

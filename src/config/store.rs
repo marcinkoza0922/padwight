@@ -61,7 +61,8 @@ pub fn root_of(path: &Path) -> &Path {
 /// Fills in the setups of `config` from the folder at `root`. A missing General folder gives the
 /// default General. Files that don't load are left out and kept in `config.unreadable`: an item
 /// file on its own, a setup whose `setup.toml` doesn't load with its whole folder. General's
-/// `setup.toml` gives the default General's settings, with its items read as usual.
+/// `setup.toml` gives the default General's settings, with its items read as usual. A setup that
+/// couldn't be saved as it is (see [`super::problems`]) is left out and kept with its folder too.
 pub fn load(root: &Path, config: &mut Config) -> Result<()> {
     let mut reading = Reading { root, kept: Vec::new() };
     let general = saved(root, GENERAL);
@@ -71,8 +72,12 @@ pub fn load(root: &Path, config: &mut Config) -> Result<()> {
         Config::default().general
     };
     config.games = Vec::new();
+    let mut dirs = Vec::new();
     for dir in setup_dirs(&saved(root, SETUPS))? {
-        config.games.extend(reading.setup(&dir, false)?);
+        if let Some(game) = reading.setup(&dir, false)? {
+            config.games.push(game);
+            dirs.push(dir);
+        }
     }
     let shared = root.join(SHARED);
     if shared.exists() {
@@ -87,6 +92,9 @@ pub fn load(root: &Path, config: &mut Config) -> Result<()> {
     if config.general.profiles.is_empty() {
         config.general.profiles = Config::default().general.profiles;
     }
+    // Checked once upgraded and the old shared items are in, as they may be what a setup refers to.
+    config.upgrade_games();
+    reading.leave_out_invalid(config, &general, dirs)?;
     config.unreadable = reading.kept;
     Ok(())
 }
@@ -253,6 +261,34 @@ impl Reading<'_> {
         game.info = self.items(&dir.join("info"))?;
         game.logs = self.items(&dir.join("logs"))?;
         Ok(Some(game))
+    }
+
+    /// Leaves out the setups that couldn't be saved as they are, keeping their folders (`dirs`,
+    /// one per setup in `config`). General then gets the default's, and saving waits.
+    fn leave_out_invalid(&mut self, config: &mut Config, general: &Path, dirs: Vec<PathBuf>) -> Result<()> {
+        let kept = |dir: &Path, problem: String| anyhow::anyhow!("checking {}: {problem}", dir.display());
+        // A General whose `setup.toml` didn't load already holds up saving.
+        if !self.kept.iter().any(Unreadable::blocks_save)
+            && let Some(problem) = super::problems::game_problem(config, &config.general)
+        {
+            self.kept.push(Unreadable::setup(self.root, general, &kept(general, problem))?);
+            config.general = Config::default().general;
+        }
+        let games = std::mem::take(&mut config.games);
+        for (game, dir) in games.into_iter().zip(dirs) {
+            let problem = if game.name.trim().is_empty() {
+                Some("A setup needs a name.".into())
+            } else if config.games.iter().any(|g| g.name == game.name) {
+                Some(format!("Two setups are named “{}”.", game.name))
+            } else {
+                super::problems::game_problem(config, &game)
+            };
+            match problem {
+                Some(problem) => self.kept.push(Unreadable::setup(self.root, &dir, &kept(&dir, problem))?),
+                None => config.games.push(game),
+            }
+        }
+        Ok(())
     }
 
     /// The items saved in `dir`, in file name order, but for those kept as they don't load. A

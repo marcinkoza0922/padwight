@@ -39,10 +39,10 @@ impl Unreadable {
         Ok(Self { path: kept_at(root, dir), error: format!("{error:#}"), files })
     }
 
-    /// General's `setup.toml`: a save writes a new one, which would replace it, so saving waits
-    /// until it loads.
-    fn blocks_save(&self) -> bool {
-        self.path == Path::new(GENERAL).join(SETUP_FILE)
+    /// General's `setup.toml`, or General's whole folder: a save writes a new one, which would
+    /// replace it, so saving waits until it loads.
+    pub(super) fn blocks_save(&self) -> bool {
+        self.path == Path::new(GENERAL).join(SETUP_FILE) || self.path == Path::new(GENERAL)
     }
 }
 

@@ -29,6 +29,7 @@ mod window_game;
 mod menus;
 mod layers;
 mod templates;
+pub mod problems;
 pub use menus::*;
 pub use layers::*;
 
@@ -1892,9 +1893,18 @@ impl Config {
             let text = std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
             finite::from_toml(&text).with_context(|| format!("parsing {}", path.display()))?
         };
-        store::load(store::root_of(path), &mut config)?;
+        // Before the setups, which are checked against the built-in modes the shortcuts make.
         config.shortcuts = std::mem::take(&mut config.shortcuts).sanitized();
-        for game in config.games.iter_mut().chain(std::iter::once(&mut config.general)) {
+        store::load(store::root_of(path), &mut config)?;
+        if first {
+            config.save_to(path)?;
+        }
+        Ok(config)
+    }
+
+    /// Brings setups saved by an older version up to date, as they load.
+    fn upgrade_games(&mut self) {
+        for game in self.games.iter_mut().chain(std::iter::once(&mut self.general)) {
             // A game left as imported stays so: the upgrade isn't an edit of the player's.
             let unedited = game.origin.is_some() && crate::pack::edited_items(game).is_empty();
             game.strip_built_in_modes();
@@ -1908,10 +1918,6 @@ impl Config {
                 }
             }
         }
-        if first {
-            config.save_to(path)?;
-        }
-        Ok(config)
     }
 
     /// Says in the log which files loading left out (see `unreadable`).

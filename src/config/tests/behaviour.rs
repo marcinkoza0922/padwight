@@ -174,7 +174,7 @@ fn renames_follow_into_profiles_menus_and_macros() {
     assert_eq!(game.menus[0].items[0].action, ButtonAction::Macro { name: "New".into(), repeat: false });
 }
 
-fn scratch_dir(name: &str) -> PathBuf {
+pub(super) fn scratch_dir(name: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("padwight-{name}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
@@ -330,7 +330,7 @@ fn combos_listing_a_button_twice_are_tidied_when_loaded() {
     let dir = scratch_dir("repeated-combo");
     let path = dir.join("config.toml");
     let mut config = Config::default();
-    let doubled = Combo { buttons: vec![Button::South, Button::South], action: ButtonAction::Screenshot };
+    let doubled = Combo { buttons: vec![Button::South, Button::East, Button::South], action: ButtonAction::Screenshot };
     config.general.profiles[0].combos.push(doubled);
     let mut layer = Layer::new("L");
     layer.combos.push(Combo { buttons: vec![Button::Start, Button::Select, Button::Start], action: ButtonAction::Screenshot });
@@ -338,9 +338,10 @@ fn combos_listing_a_button_twice_are_tidied_when_loaded() {
     config.general.layers.push(layer);
     config.save_to(&path).unwrap();
     let loaded = Config::load_from(&path).unwrap();
-    assert_eq!(loaded.general.profiles[0].combos[0].buttons, [Button::South]);
+    assert_eq!(loaded.general.profiles[0].combos[0].buttons, [Button::South, Button::East]);
     assert_eq!(loaded.general.layers[0].combos[0].buttons, [Button::Start, Button::Select]);
     assert_eq!(loaded.general.layers[0].disabled_combos[0], [Button::East]);
+    assert!(loaded.unreadable.is_empty());
     let _ = std::fs::remove_dir_all(&dir);
 }
 

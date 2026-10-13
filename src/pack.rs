@@ -235,6 +235,10 @@ fn check(pack: &Pack) -> Result<()> {
     if let Some(r) = pack.rules.iter().find(|r| !profiles.contains(&r.profile)) {
         bail!("a rule points to missing profile {:?}", r.profile);
     }
+    // What couldn't be saved can't come in. Built-in modes are every game's, whatever the shortcuts.
+    if let Some(problem) = crate::config::problems::game_problem(&crate::config::Config::default(), &game) {
+        bail!("{problem}");
+    }
     Ok(())
 }
 

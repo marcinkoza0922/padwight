@@ -19,6 +19,10 @@ impl Daemon {
             Request::Status => Response::Status(self.status()),
             Request::GetConfig => Response::Config(Box::new(self.config.clone())),
             Request::SetConfig(new) => {
+                // What couldn't be loaded isn't taken over IPC either.
+                if let Some(problem) = new.problem() {
+                    return Response::Error(format!("not saved: {problem}"));
+                }
                 let mut new = *new;
                 new.enabled = self.config.enabled;
                 new.carry_active(&self.config.active);

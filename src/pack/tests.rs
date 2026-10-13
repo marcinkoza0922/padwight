@@ -24,7 +24,6 @@ fn setup() -> Config {
     let mut config = Config::default();
     let mut game = Game::new("Doom", vec![Profile::pc_action("Play")]);
     game.profiles[0].set_button(Button::Select, ButtonAction::OpenMenu("Wheel".into()));
-    game.profiles[0].set_button(Button::North, macro_ref("Gone"));
     game.macros = vec![mac("Dodge"), mac("Heal")];
     game.menus = vec![menu("Wheel", vec![macro_ref("Heal")])];
     game.rules = vec![Rule::new(RuleKind::Executable, "doom.exe", "Play")];
@@ -59,7 +58,8 @@ fn profiles_state_their_own_needs_and_old_packs_are_upgraded() {
 
 #[test]
 fn export_reports_problems() {
-    let config = setup();
+    let mut config = setup();
+    config.games[0].profiles[0].set_button(Button::North, macro_ref("Gone"));
     let game = &config.games[0];
     let info = draft(game, false);
     let out = export(game, &info);
@@ -193,7 +193,7 @@ fn layers_travel_in_packs_with_what_they_use() {
     config.games[0].info.push(InfoOverlay { name: "Cheat sheet".into(), always: false, on_start: None, linger: None, title: None, current_input: Default::default(), style: Default::default(), rows: vec![] });
 
     let out = export(&config.games[0], &draft(&config.games[0], false));
-    assert_eq!(out.dangling, ["macro \"Gone\""], "the indicator's info overlay is found");
+    assert!(out.dangling.is_empty(), "the indicator's info overlay is found: {:?}", out.dangling);
     assert_eq!(out.features, [FeatureUse { feature: Feature::Gyro, place: "layer “Deeper”".into(), required: false }]);
     let text = out.pack.to_toml().unwrap();
     assert!(text.contains(&format!("format = {FORMAT}")));
@@ -372,11 +372,11 @@ fn a_pack_can_t_bring_its_own_built_in_modes_or_repeat_a_combo_button() {
     let mut game = setup().games[0].clone();
     game.layers.push(Layer::new(MOUSE_MODE));
     game.modes = vec![Mode::new(GUIDE_MODE), Mode::new("Driving")];
-    game.profiles[0].combos.push(Combo { buttons: vec![Button::West, Button::West], action: ButtonAction::Screenshot });
+    game.profiles[0].combos.push(Combo { buttons: vec![Button::West, Button::South, Button::West], action: ButtonAction::Screenshot });
     let pack = parse(&export(&game, &draft(&game, false)).pack.to_toml().unwrap()).unwrap();
     assert!(pack.layers.is_empty());
     assert_eq!(pack.modes.iter().map(|m| m.name.as_str()).collect::<Vec<_>>(), ["Driving"]);
-    assert!(pack.profiles[0].combos.iter().any(|c| c.buttons == [Button::West]));
+    assert!(pack.profiles[0].combos.iter().any(|c| c.buttons == [Button::West, Button::South]));
 }
 
 #[test]

@@ -123,7 +123,7 @@ action = { keys = ["KEY_LEFTALT", "KEY_TAB"] }
 ```
 
 - Gesture kinds: `double_tap`, `triple_tap`, `long_press`.
-- A combo needs at least two buttons. Members wait `combo_window_ms` for the rest of the combo before acting alone. A member whose own action is `"disabled"` works as a modifier with no time limit.
+- A combo needs at least two buttons, and no two combos in a profile, layer or mode can have the same buttons: to do several things, give one combo a `multi` action. Members wait `combo_window_ms` for the rest of the combo before acting alone. A member whose own action is `"disabled"` works as a modifier with no time limit.
 
 Key names are evdev names (`KEY_A`, `KEY_LEFTSHIFT`, `KEY_KPPLUS`, `KEY_RIGHTBRACE`, `KEY_APOSTROPHE`, …). The keyboard overlay in the app lists them.
 
@@ -699,6 +699,7 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
 ## Versioning
 
 - `format` is an integer. The app writes `20` and reads up to `20`. A pack with a newer `format` is refused with "update the app to import it". Older formats are upgraded when read.
+- A pack is refused if its setup couldn't be saved in the app: a missing macro, menu or overlay that something refers to, two items or profiles of one name, two combos of the same buttons, an unknown key and the like. A setup folder in the config that breaks these rules is left out when the config loads, and kept on disk to be fixed.
 - Format history:
   - 2 added layers.
   - 3 added toggles that start on.
