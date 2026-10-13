@@ -547,8 +547,10 @@ impl Shortcuts {
     }
 
     /// Without what can't be: Guide belongs to the Guide overlay, so no other shortcut sits on it,
-    /// and the opener keeps it only as a plain button. The single-button ones keep to their choices.
+    /// and the opener keeps it only as a plain button. The single-button ones keep to their choices,
+    /// and no input lists a button twice (see [`ShortcutInput::tidied`]).
     pub fn sanitized(mut self) -> Self {
+        self.moved.values_mut().for_each(|input| *input = std::mem::take(input).tidied());
         self.moved.retain(|s, input| match s {
             Shortcut::OpenGuide => !input.uses(Button::Guide) || *input == ShortcutInput::button(Button::Guide),
             s if s.choices().is_some() => s.takes(input),

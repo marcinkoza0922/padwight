@@ -68,4 +68,27 @@ mod tests {
         assert_eq!(KeyCode::KEY_A.code(), 30);
         assert!(KeyCode::from_str("KEY_NOPE").is_err());
     }
+
+    /// The table other platforms use gives every name the number evdev gives it here, so a
+    /// config or pack sends the same keys on Windows as on Linux.
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn the_portable_table_matches_evdev() {
+        let table = include_str!("keycode/table.rs");
+        let mut checked = 0;
+        for line in table.lines().filter_map(|l| l.trim().strip_prefix("pub const ")) {
+            let Some((name, rest)) = line.split_once(": Self = Self(") else { continue };
+            let number = rest.trim_end_matches(");");
+            let number = match number.strip_prefix("0x") {
+                Some(hex) => u16::from_str_radix(hex, 16),
+                None => number.parse(),
+            };
+            let number = number.unwrap_or_else(|_| panic!("{name}: {rest}"));
+            assert_eq!(KeyCode::from_str(name).map(KeyCode::code), Ok(number), "{name}");
+            // And the name is one the table parses there.
+            assert!(table.contains(&format!("(\"{name}\", Self::{name})")), "{name} isn't in NAMES");
+            checked += 1;
+        }
+        assert!(checked > 500, "only {checked} names read from the table");
+    }
 }

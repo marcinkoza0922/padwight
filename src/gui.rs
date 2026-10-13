@@ -290,6 +290,9 @@ struct App {
     last_edit: Option<(Discriminant<Message>, Instant)>,
     /// Save & quit: close the window once the save goes through.
     quit_after_save: bool,
+    /// Why the config on disk couldn't be read. The page then shows the defaults, and saving them
+    /// would write over every setup, so saving waits until it reads.
+    unreadable: Option<String>,
     /// The guided tour's step on show (see `tour.rs`).
     tour: Option<usize>,
 }
@@ -752,7 +755,7 @@ impl App {
             problem_at: None,
             undo: Vec::new(),
             last_edit: None,
-            quit_after_save: false,
+            quit_after_save: false, unreadable: None,
             tour: None,
         };
         let tour = if tour::first_run() { Task::done(Message::Tour(TourMove::Start)) } else { Task::none() };
@@ -1067,9 +1070,10 @@ impl App {
                     let exists = key.as_deref().is_none_or(|k| self.config.games.iter().any(|g| g.name == k));
                     self.show_game(if exists { key } else { None });
                 }
-                if let Some(e) = err {
+                if let Some(e) = &err {
                     self.message = Some((format!("Couldn't load the config file: {e}"), true));
                 }
+                self.unreadable = err;
             }
             Message::SetEnabled(on) => return call_ok(Request::SetEnabled(on)),
             Message::ActivateProfile(at) => {
@@ -1081,6 +1085,11 @@ impl App {
             Message::Done(Ok(())) => return Task::done(Message::Poll),
             Message::Done(Err(e)) => self.message = Some((e, true)),
             Message::Save => {
+                if let Some(e) = &self.unreadable {
+                    self.message = Some((format!("Not saved: the config file couldn't be read ({e}). Fix or move it, then open Padwight again."), true));
+                    self.quit_after_save = false;
+                    return Task::none();
+                }
                 if let Some(err) = self.validate() {
                     self.message = Some((err, true));
                     self.problem_at = self.problem_place();
@@ -1542,6 +1551,20 @@ mod tests {
         assert!(matches!(app.dialog, Some(Dialog::ConfirmQuit)));
         let _ = app.update(Message::CloseDialog);
         assert!(app.dialog.is_none());
+    }
+
+    #[test]
+    fn a_config_that_failed_to_load_is_never_saved_over() {
+        let mut app = app();
+        let _ = app.update(Message::ConfigLoaded(Box::default(), Some("parsing setups/001-Doom/setup.toml".into())));
+        let _ = app.update(Message::SetAction(Target::Button(Button::South), ButtonAction::Keys(vec!["KEY_A".into()])));
+        let _ = app.update(Message::Save);
+        assert!(app.message.as_ref().is_some_and(|(m, err)| *err && m.starts_with("Not saved")), "{:?}", app.message);
+        // Once it reads, saving works again.
+        let _ = app.update(Message::ConfigLoaded(Box::default(), None));
+        app.message = None;
+        let _ = app.update(Message::Save);
+        assert!(!app.message.as_ref().is_some_and(|(m, _)| m.starts_with("Not saved")));
     }
 
     #[test]

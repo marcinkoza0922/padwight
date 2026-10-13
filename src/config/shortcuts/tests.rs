@@ -246,3 +246,10 @@ fn the_keyboard_keys_trade_among_themselves_and_leave_the_numpad_alone() {
     let s = moved(&[(Shortcut::KeyboardLeft, Some(ShortcutInput::button(Button::RightBumper)))]);
     assert_eq!(s.button(Shortcut::KeyboardRight), Button::LeftBumper, "the cursor keys trade");
 }
+
+#[test]
+fn an_input_listing_a_button_twice_is_tidied_when_loaded() {
+    let text = "[open_guide]\nbuttons = [\"Start\", \"Select\", \"Start\"]\n";
+    let shortcuts: Shortcuts = toml::from_str::<Shortcuts>(text).unwrap().sanitized();
+    assert_eq!(shortcuts.opener().unwrap().buttons, [Button::Start, Button::Select]);
+}
