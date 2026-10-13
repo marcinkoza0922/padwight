@@ -1,0 +1,271 @@
+format = 19
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "5081b502-b8b1-503c-ad10-5b1596ee6f00"
+name = "Slay the Spire 2"
+version = "1.0"
+author = "Padwight"
+description = "Slay the Spire 2 on an Xbox-style pad. The game has its own controller support through Steam Input, which knows PlayStation and Switch pads, so the controller passes through untouched and the game's own settings set the buttons. Padwight adds the Guide overlay on top, with the media controls and the on-screen keyboard, in the same look as Slay the Spire."
+made_with = "Xbox controller"
+
+[controllers]
+dualshock = true
+dualsense = true
+switch_pro = true
+
+[[rules]]
+kind = "steam_app_id"
+value = "2868840"
+profile = "Slay the Spire 2"
+
+[[rules]]
+kind = "executable"
+value = "SlayTheSpire2"
+profile = "Slay the Spire 2"
+
+[[profiles]]
+name = "Slay the Spire 2"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+activation = "always"
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''Slay the Spire 2 has its own controller support, so the controller goes to the game as it is. Set the buttons in the game's own settings, or Steam Input's controller settings.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard for a custom seed, and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[keyboard_style]
+corners = 0.25
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#161b22"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#263040"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c9a84a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#6a5a34"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#1f2630"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3a4458"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.25
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#161b22"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#263040"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c9a84a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#6a5a34"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#1f2630"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3a4458"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[media_style]
+corners = 0.25
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#161b22"
+opacity = 0.92
+
+[media_style.items]
+color = "#263040"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c9a84a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#6a5a34"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#1f2630"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3a4458"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.25
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#161b22"
+opacity = 0.92
+
+[menu_style.items]
+color = "#263040"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c9a84a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#6a5a34"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#1f2630"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3a4458"
+
+[menu_style.glow]
+color = "#e8c86a"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+vignette = {color = "#000000", opacity = 0.4, reach = 25}
+
+[motion]
+keyboard = "stagger"
+numpad = "stagger"
+menu = "stagger"
+media = "stagger"
+offer = "stagger"
+info = "stagger"
+log = "stagger"
+
+[sounds.menu]
+step = {kind = "card", volume = 0.08, pitch = 1.2}
+pick = {kind = "card", volume = 0.16, pitch = 0.85}
+
+[sounds.keyboard]
+step = {kind = "card", volume = 0.08, pitch = 1.2}
+pick = {kind = "card", volume = 0.12}
+
+[sounds.numpad]
+step = {kind = "card", volume = 0.08, pitch = 1.2}
+pick = {kind = "card", volume = 0.12}
+
+[sounds.media]
+pick = {kind = "card", volume = 0.16, pitch = 0.85}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

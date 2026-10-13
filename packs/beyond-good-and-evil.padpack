@@ -1,0 +1,297 @@
+format = 19
+macros = []
+overlay_font = "Comfortaa"
+
+[pack]
+id = "8f046051-a4be-59ee-9858-535666c2e545"
+name = "Beyond Good & Evil"
+version = "1.0"
+author = "Padwight"
+description = "Beyond Good & Evil (GOG, 2003) on an Xbox-style pad, modelled on the console release, for the game's default keys. A acts and attacks, X rolls and throws the gyrodisk, B uses the item the D-pad picks, Y calls your companion. Hold RT to run and LT to sneak. RB raises the camera for photos, with the D-pad zooming, and R3 puts it behind Jade. Select shows the objectives and map."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "BGE.exe"
+profile = "Beyond Good & Evil"
+
+[[rules]]
+kind = "steam_app_id"
+value = "15130"
+profile = "Beyond Good & Evil"
+
+[[profiles]]
+name = "Beyond Good & Evil"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+West = {mouse = "Right"}
+East = {keys = ["KEY_Q"]}
+North = {keys = ["KEY_E"]}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+RightStick = {keys = ["KEY_C"]}
+DpadLeft = {keys = ["KEY_2"]}
+DpadRight = {keys = ["KEY_3"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+Select = {keys = ["KEY_TAB"]}
+Start = {keys = ["KEY_ESC"]}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.keys]
+up = "KEY_W"
+down = "KEY_S"
+left = "KEY_A"
+right = "KEY_D"
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = {keys = ["KEY_LEFTCTRL"]}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {keys = ["KEY_SPACE"]}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+activation = "always"
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''Laid out like the console release: {south} acts and attacks (kick doors, talk, shoot, take a photo, lock on by holding it), {west} rolls and dives, throws the gyrodisk and makes the hovercraft jump.
+Hold {rt} to run or speed up a vehicle, and hold {lt} to sneak crouched.
+{east} uses the selected item; the {dpad} left and right pick it. {north} asks your companion for help, or switches to the inside view in the hovercraft.
+{rb} raises the camera for looking and photos; {up} and {down} zoom it. Click {r3} to put the camera behind Jade.
+{select} shows the objectives, mail, map and detectors. {start} is the menu. Save at the MDisk readers.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move / steer"}
+"stick:Right" = {text = "Camera"}
+"trigger:Right" = {text = "Run / accelerate (hold)"}
+"trigger:Left" = {text = "Sneak (hold)"}
+"button:South" = {text = "{b}Action{/b} / attack / shoot"}
+"button:West" = {text = "Roll / gyrodisk / jump"}
+"button:East" = {text = "Use item"}
+"button:North" = {text = "{icon:people} Companion / inside view"}
+"button:RightBumper" = {text = "{icon:camera} Look / photo"}
+"button:RightStick" = {text = "Camera behind Jade"}
+"button:Select" = {text = "{icon:map} Objectives, mail, map"}
+"button:Start" = {text = "Menu"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next item"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[keyboard_style]
+corners = 0.5
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0c1a1c"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#173033"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#3ec7b4"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#2a8a80"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#12282b"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#24504c"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0c1a1c"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#173033"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#3ec7b4"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#2a8a80"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#12282b"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#24504c"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[media_style]
+corners = 0.5
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0c1a1c"
+opacity = 0.92
+
+[media_style.items]
+color = "#173033"
+opacity = 0.95
+
+[media_style.selected]
+color = "#3ec7b4"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#2a8a80"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#12282b"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#24504c"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0c1a1c"
+opacity = 0.92
+
+[menu_style.items]
+color = "#173033"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#3ec7b4"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#2a8a80"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#12282b"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menu_style.item_border]
+width = 1
+color = "#24504c"
+
+[menu_style.glow]
+color = "#6af0dc"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "select", volume = 0.1}
+pick = {kind = "shutter", volume = 0.18}
+open = {kind = "rise", volume = 0.05}
+close = {kind = "fall", volume = 0.04}
+
+[sounds.keyboard]
+step = {kind = "select", volume = 0.08}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "select", volume = 0.08}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.media]
+pick = {kind = "shutter", volume = 0.16}
+
+[rumble.menu]
+step = {strength = 0.09, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}

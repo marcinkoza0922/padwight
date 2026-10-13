@@ -1,0 +1,294 @@
+format = 19
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "08d4687a-eaaf-5fe4-88bf-3b60b9aea738"
+name = "Prince of Persia: The Sands of Time"
+version = "1.0"
+author = "Padwight"
+description = "Prince of Persia: The Sands of Time (GOG, 2003) on an Xbox-style pad, laid out like the original Xbox release for the game's default keys. A jumps, X strikes with the sword and Y uses the dagger. RT runs on walls and blocks, LT rewinds (tap: slow time). A light push on the left stick walks. LB is the landscape view and R3 looks around in first person."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "PrinceOfPersia_gog.EXE"
+profile = "Prince of Persia: The Sands of Time"
+
+[[rules]]
+kind = "steam_app_id"
+value = "13600"
+profile = "Prince of Persia: The Sands of Time"
+
+[[profiles]]
+name = "Prince of Persia: The Sands of Time"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_SPACE"]}
+West = {mouse = "Left"}
+North = {keys = ["KEY_E"]}
+East = {keys = ["KEY_C"]}
+LeftBumper = {keys = ["KEY_Q"]}
+RightStick = {keys = ["KEY_F"]}
+Start = {keys = ["KEY_ESC"]}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.keys]
+up = "KEY_W"
+down = "KEY_S"
+left = "KEY_A"
+right = "KEY_D"
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = {keys = ["KEY_LEFTSHIFT"]}
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = {keys = ["KEY_R"]}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Right"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+activation = "always"
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''This is the original Xbox layout: {south} jumps, {west} strikes with the sword and {north} uses the dagger. Hold {rt} to run along walls, swing, push and pull, and to block in a fight.
+Hold {lt} to rewind time and let go when the Prince is safe. Tap {lt} to slow time; hold {lt} and {rt} together for the Mega-Freeze.
+A light push on the left stick {ls} walks, and so does holding {rb}.
+Click {r3} to look around in first person, and press {lb} for the wide landscape view. {start} is the menu; the game saves at the sand fountains.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move (light push: walk)"}
+"stick:Right" = {text = "Camera"}
+"trigger:Right" = {text = "Wall run, swing / block (hold)"}
+"trigger:Left" = {text = "{icon:hourglass} {b}Rewind{/b} (hold) / slow time"}
+"button:South" = {text = "Jump / roll"}
+"button:West" = {text = "{icon:sword} {b}Attack{/b}"}
+"button:North" = {text = "{icon:dagger} Dagger: take sand, freeze"}
+"button:East" = {text = "Cancel / let go"}
+"button:LeftBumper" = {text = "{icon:mountain} Landscape view"}
+"button:RightStick" = {text = "{icon:eye} Look (first person)"}
+"button:Start" = {text = "Menu"}
+"button:RightBumper" = {text = "Walk (hold)"}
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1a130a"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#3a2a16"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c8963c"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#a07a34"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#2b1d0d"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5a4022"
+
+[keyboard_style.type]
+letter_spacing = 2
+case = "upper"
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1a130a"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#3a2a16"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c8963c"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#a07a34"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#2b1d0d"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5a4022"
+
+[numpad_style.type]
+letter_spacing = 2
+case = "upper"
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1a130a"
+opacity = 0.92
+
+[media_style.items]
+color = "#3a2a16"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c8963c"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#a07a34"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#2b1d0d"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5a4022"
+
+[media_style.type]
+letter_spacing = 2
+case = "upper"
+
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1a130a"
+opacity = 0.92
+
+[menu_style.items]
+color = "#3a2a16"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c8963c"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#a07a34"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#2b1d0d"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5a4022"
+
+[menu_style.glow]
+color = "#f0c060"
+opacity = 0.6
+blur = 18
+pulse = true
+
+[menu_style.type]
+letter_spacing = 2
+case = "upper"
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 12, width = 1, color = "#c8963c"}
+vignette = {color = "#000000", opacity = 0.45, reach = 25}
+
+[motion]
+keyboard = "dreamy"
+numpad = "dreamy"
+menu = "dreamy"
+media = "dreamy"
+offer = "dreamy"
+info = "dreamy"
+log = "dreamy"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "shing", volume = 0.12}
+open = {kind = "sand", volume = 0.08}
+close = {kind = "sand", volume = 0.05, pitch = 0.8}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.06, pitch = 0.9}
+pick = {kind = "wood", volume = 0.16}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.06, pitch = 0.9}
+pick = {kind = "wood", volume = 0.16}
+
+[sounds.media]
+pick = {kind = "wood", volume = 0.16}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 18}
+pick = {strength = 0.35, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.24, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.24, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.24, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.24, length_ms = 60}

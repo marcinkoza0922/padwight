@@ -5,25 +5,11 @@
 
 use std::{collections::BTreeMap, sync::RwLock};
 
-/// The icons built into the app, by name.
-const BUILT_IN: [(&str, &str); 16] = [
-    ("axe", include_str!("../assets/icons/axe.svg")),
-    ("bow", include_str!("../assets/icons/bow.svg")),
-    ("car", include_str!("../assets/icons/car.svg")),
-    ("coin", include_str!("../assets/icons/coin.svg")),
-    ("gem", include_str!("../assets/icons/gem.svg")),
-    ("heart", include_str!("../assets/icons/heart.svg")),
-    ("key", include_str!("../assets/icons/key.svg")),
-    ("map", include_str!("../assets/icons/map.svg")),
-    ("pda", include_str!("../assets/icons/pda.svg")),
-    ("pistol", include_str!("../assets/icons/pistol.svg")),
-    ("potion", include_str!("../assets/icons/potion.svg")),
-    ("rifle", include_str!("../assets/icons/rifle.svg")),
-    ("shield", include_str!("../assets/icons/shield.svg")),
-    ("skull", include_str!("../assets/icons/skull.svg")),
-    ("sword", include_str!("../assets/icons/sword.svg")),
-    ("wheel", include_str!("../assets/icons/wheel.svg")),
-];
+/// The icons built into the app (`assets/icons`, embedded by `build.rs`), by name, sorted.
+mod built_in {
+    include!(concat!(env!("OUT_DIR"), "/icons.rs"));
+}
+use built_in::BUILT_IN;
 
 /// The icons of the game in use, by name.
 static PACK: RwLock<BTreeMap<String, String>> = RwLock::new(BTreeMap::new());
@@ -90,6 +76,16 @@ mod tests {
         let picture = svg("sword", [0x10, 0x20, 0x30]).unwrap();
         assert!(picture.contains("#102030") && !picture.contains("currentColor"));
         assert!(svg("no-such-icon", [0, 0, 0]).is_none());
+    }
+
+    #[test]
+    fn every_built_in_icon_is_clean_and_tinted() {
+        assert!(BUILT_IN.len() > 100, "build.rs embeds the whole assets/icons folder");
+        for (name, body) in BUILT_IN {
+            assert!(valid_name(name), "{name}");
+            check_svg(body).unwrap_or_else(|e| panic!("{name}: {e}"));
+            assert!(body.contains("currentColor"), "{name} takes the text's color");
+        }
     }
 
     #[test]
