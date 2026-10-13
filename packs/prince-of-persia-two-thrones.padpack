@@ -1,0 +1,290 @@
+format = 19
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "05a27d21-924d-5c56-9b4e-7d6400eb2476"
+name = "Prince of Persia: The Two Thrones"
+version = "1.0"
+author = "Padwight"
+description = "Prince of Persia: The Two Thrones (GOG, 2005) on an Xbox-style pad, laid out like the original Xbox release for the game's default keys. A jumps, X attacks, Y starts speed kills, uses the second weapon and grabs, B picks up and throws weapons. RT runs on walls and blocks, LT rewinds (tap: slow time). LB is the landscape view, R3 looks in first person and D-pad down puts the camera behind the Prince."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "pop3.exe"
+profile = "Prince of Persia: The Two Thrones"
+
+[[rules]]
+kind = "steam_app_id"
+value = "13530"
+profile = "Prince of Persia: The Two Thrones"
+
+[[profiles]]
+name = "Prince of Persia: The Two Thrones"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_SPACE"]}
+West = {mouse = "Left"}
+North = {keys = ["KEY_E"]}
+East = {keys = ["KEY_C"]}
+LeftBumper = {keys = ["KEY_Q"]}
+RightStick = {keys = ["KEY_F"]}
+Start = {keys = ["KEY_ESC"]}
+DpadDown = {keys = ["KEY_X"]}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.keys]
+up = "KEY_W"
+down = "KEY_S"
+left = "KEY_A"
+right = "KEY_D"
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = {keys = ["KEY_R"]}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Right"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+activation = "always"
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''This is the original Xbox layout: {south} jumps, {west} strikes with the sword and {north} uses the dagger. Hold {rt} to run along walls, swing, push and pull, and to block in a fight.
+Hold {lt} to rewind time and let go when the Prince is safe. Tap {lt} to slow time. While blocking with {rt}, press {lt} for the Breath of Fate and hold it for a few seconds for the Sand Storm.
+When the Prince waits unseen behind an enemy, press {north} to start a speed kill, then press {west} each time the dagger flashes. In the chariot races the left stick {ls} steers and {west} strikes boarders.
+Press {down} to put the camera behind the Prince.
+Click {r3} to look around in first person, and press {lb} for the wide landscape view. {start} is the menu; the game saves at the save fountains.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move"}
+"stick:Right" = {text = "Camera"}
+"trigger:Right" = {text = "Wall run, swing / block (hold)"}
+"trigger:Left" = {text = "{icon:hourglass} {b}Rewind{/b} (hold) / slow time"}
+"button:South" = {text = "Jump / roll"}
+"button:West" = {text = "{icon:sword} {b}Attack{/b}"}
+"button:North" = {text = "{icon:dagger} Speed kill / second weapon / grab"}
+"button:East" = {text = "Pick up, throw / climb down"}
+"button:LeftBumper" = {text = "{icon:mountain} Landscape view"}
+"button:RightStick" = {text = "{icon:eye} Look (first person)"}
+"button:Start" = {text = "Menu"}
+"button:DpadDown" = {text = "Camera behind the Prince"}
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0e0f18"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#262234"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#d07a2a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#7a5a3a"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#1b1422"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3e3448"
+
+[keyboard_style.type]
+letter_spacing = 2
+case = "upper"
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0e0f18"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#262234"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#d07a2a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#7a5a3a"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#1b1422"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3e3448"
+
+[numpad_style.type]
+letter_spacing = 2
+case = "upper"
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0e0f18"
+opacity = 0.92
+
+[media_style.items]
+color = "#262234"
+opacity = 0.95
+
+[media_style.selected]
+color = "#d07a2a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#7a5a3a"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#1b1422"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3e3448"
+
+[media_style.type]
+letter_spacing = 2
+case = "upper"
+
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0e0f18"
+opacity = 0.92
+
+[menu_style.items]
+color = "#262234"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#d07a2a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#7a5a3a"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#1b1422"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3e3448"
+
+[menu_style.glow]
+color = "#ff9a3a"
+opacity = 0.6
+blur = 18
+pulse = true
+
+[menu_style.type]
+letter_spacing = 2
+case = "upper"
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 12, width = 1, color = "#d07a2a"}
+vignette = {color = "#000000", opacity = 0.45, reach = 25}
+
+[motion]
+keyboard = "stagger"
+numpad = "stagger"
+menu = "stagger"
+media = "stagger"
+offer = "stagger"
+info = "stagger"
+log = "stagger"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "shing", volume = 0.12}
+open = {kind = "sand", volume = 0.08}
+close = {kind = "sand", volume = 0.05, pitch = 0.8}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.06, pitch = 0.9}
+pick = {kind = "wood", volume = 0.16}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.06, pitch = 0.9}
+pick = {kind = "wood", volume = 0.16}
+
+[sounds.media]
+pick = {kind = "wood", volume = 0.16}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 18}
+pick = {strength = 0.35, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.24, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.24, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.24, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.24, length_ms = 60}

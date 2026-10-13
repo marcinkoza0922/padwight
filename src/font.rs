@@ -15,7 +15,7 @@ pub struct Bundled {
     pub bytes: &'static [u8],
 }
 
-pub const BUNDLED: [Bundled; 15] = [
+pub const BUNDLED: [Bundled; 18] = [
     Bundled { name: "Inter", bytes: include_bytes!("../assets/fonts/Inter-Regular.ttf") },
     Bundled { name: "Cantarell", bytes: include_bytes!("../assets/fonts/Cantarell-VF.otf") },
     Bundled { name: "Comfortaa", bytes: include_bytes!("../assets/fonts/Comfortaa-Regular.otf") },
@@ -31,6 +31,9 @@ pub const BUNDLED: [Bundled; 15] = [
     Bundled { name: "UnifrakturMaguntia", bytes: include_bytes!("../assets/fonts/UnifrakturMaguntia-Book.ttf") },
     Bundled { name: "Cinzel", bytes: include_bytes!("../assets/fonts/Cinzel-VF.ttf") },
     Bundled { name: "Bangers", bytes: include_bytes!("../assets/fonts/Bangers-Regular.ttf") },
+    Bundled { name: "Kreon", bytes: include_bytes!("../assets/fonts/Kreon-Regular.ttf") },
+    Bundled { name: "Orbitron", bytes: include_bytes!("../assets/fonts/Orbitron-VF.ttf") },
+    Bundled { name: "Titillium Web", bytes: include_bytes!("../assets/fonts/TitilliumWeb-Regular.ttf") },
 ];
 
 /// Names offered in the font dropdowns: the bundled fonts, then the ones the game in use carries.
@@ -166,6 +169,13 @@ mod tests {
         assert_eq!(resolve(Some("  ")), Font::DEFAULT);
         assert_eq!(resolve(Some("Inter")), Font::with_name("Inter"));
         assert_eq!(resolve(Some("Fira Sans")), resolve(Some("Fira Sans")));
+    }
+
+    #[test]
+    fn every_bundled_font_draws_as_its_name() {
+        for font in &BUNDLED {
+            assert_eq!(load(font.bytes), Ok(font.name), "{}: use a file whose family is the name", font.name);
+        }
     }
 
     #[test]

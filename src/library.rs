@@ -113,6 +113,19 @@ mod tests {
         assert_eq!(entries().len(), files::FILES.len());
     }
 
+    /// The app's own packs add their icons, sounds and fonts to the built-in set (`assets/`) for
+    /// every game, rather than carrying them, so every icon they name must be built in.
+    #[test]
+    fn library_packs_use_only_built_in_assets() {
+        for (file, text) in files::FILES {
+            let pack = pack::parse(text).unwrap();
+            assert!(pack.assets.is_empty(), "{file}: move its icons, sounds and fonts into assets/");
+            for name in text.split("{icon:").skip(1).filter_map(|rest| rest.split_once('}').map(|(name, _)| name)) {
+                assert!(crate::icons::svg(name, [0, 0, 0]).is_some(), "{file}: no built-in icon {name:?}");
+            }
+        }
+    }
+
     #[test]
     fn shooters_offer_plain_gyro_and_flick_stick_profiles() {
         use crate::config::{GyroMode, StickAction};

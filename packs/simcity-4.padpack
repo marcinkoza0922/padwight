@@ -5,7 +5,7 @@ overlay_font = "Inter"
 [pack]
 id = "561bc3f4-116e-45c8-9622-be5b4c824e06"
 name = "SimCity 4"
-version = "1.1"
+version = "1.2"
 author = "Padwight"
 description = "SimCity 4 Deluxe (GOG) on an Xbox-style pad. The right stick moves the pointer, the left stick scrolls the view, RT or A left-clicks, LT right-clicks. Hold LB for the zones and RB for transport and services. X demolishes, Y queries, B drops the tool. The d-pad zooms and rotates, L3 pauses, R3 centers. Select lists the modes and the speed; hold it for a Driving mode for U-Drive-It. Start is the options; double tap it to save quickly, hold it for a full save."
 made_with = "Xbox controller"
@@ -110,13 +110,13 @@ Double tap {start} to save quickly without updating the region view; hold it for
 "gesture:button:North:long_press" = { text = "Route query" }
 "button:LeftBumper" = { text = "Hold: zones" }
 "button:RightBumper" = { text = "Hold: transport, services" }
-"button:LeftStick" = { text = "Pause" }
+"button:LeftStick" = { text = "{icon:pause} Pause" }
 "button:RightStick" = { text = "Center on the pointer" }
 "button:Select" = { text = "Modes, speed" }
 "gesture:button:Select:long_press" = { text = "Driving mode on / off" }
 "button:Start" = { text = "Options" }
-"gesture:button:Start:double_tap" = { text = "Fast save" }
-"gesture:button:Start:long_press" = { text = "Save with region update" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Fast save" }
+"gesture:button:Start:long_press" = { text = "{icon:save} Save with region update" }
 "gesture:button:DpadLeft:long_press" = { text = "Turn building left" }
 "gesture:button:DpadRight:long_press" = { text = "Turn building right" }
 
@@ -634,26 +634,3 @@ pick = {strength = 0.21, length_ms = 25}
 
 [rumble.guide]
 mode = {strength = 0.21, length_ms = 60}
-
-[assets.icons]
-badge = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z'/><path d='M12 9l1 2 2 .3-1.5 1.5.4 2.2-1.9-1-1.9 1 .4-2.2L9 11.3l2-.3z'/></svg>"
-cross = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M9 3h6v6h6v6h-6v6H9v-6H3V9h6z'/></svg>"
-eraser = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 20l-5-5L14 4l7 7-9 9z'/><path d='M8 20h13M6 12l7 7'/></svg>"
-factory = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 20V10l5 3V10l5 3V10l5 3V4h3v16z'/></svg>"
-fire-truck = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 17V9h11v8M13 12h5l3 3v2'/><path d='M2 17h19'/><circle cx='6' cy='18' r='2'/><circle cx='17' cy='18' r='2'/><path d='M4 9l8-4'/></svg>"
-god = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='4'/><path d='M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2'/></svg>"
-grid = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4h16v16H4zM4 10h16M4 15h16M10 4v16M15 4v16'/></svg>"
-home = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 11l9-7 9 7'/><path d='M5 10v10h14V10'/><path d='M10 20v-6h4v6'/></svg>"
-hospital = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 21V5h16v16'/><path d='M12 8v6M9 11h6'/><path d='M10 21v-3h4v3'/></svg>"
-mayor = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 21v-6h10v6'/><circle cx='12' cy='9' r='4'/><path d='M6 5h12l-1 2H7z'/></svg>"
-moon = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M20 14A8 8 0 1 1 10 4a6 6 0 0 0 10 10z'/></svg>"
-pause = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 5v14M16 5v14'/></svg>"
-person = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='7' r='4'/><path d='M4 21a8 8 0 0 1 16 0'/></svg>"
-region = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z'/><path d='M9 3v15M15 6v15'/></svg>"
-road = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 3L4 21M16 3l4 18'/><path d='M12 4v3M12 10v4M12 17v3'/></svg>"
-school = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 9l10-5 10 5-10 5z'/><path d='M6 11v5c3 3 9 3 12 0v-5'/><path d='M22 9v6'/></svg>"
-shop = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 9l1-5h14l1 5'/><path d='M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0'/><path d='M5 11v9h14v-9'/><path d='M10 20v-5h4v5'/></svg>"
-speed1 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 6l8 6-8 6z'/></svg>"
-speed2 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 6l7 6-7 6zM12 6l7 6-7 6z'/></svg>"
-speed3 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 6l6 6-6 6zM9 6l6 6-6 6zM16 6l6 6-6 6z'/></svg>"
-wheat = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21V8'/><path d='M12 8c-3 0-4-3-4-5 3 0 4 3 4 5zM12 8c3 0 4-3 4-5-3 0-4 3-4 5zM12 13c-3 0-4-3-4-5 3 0 4 3 4 5zM12 13c3 0 4-3 4-5-3 0-4 3-4 5zM12 18c-3 0-4-3-4-5 3 0 4 3 4 5zM12 18c3 0 4-3 4-5-3 0-4 3-4 5z'/></svg>"

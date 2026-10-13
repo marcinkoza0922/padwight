@@ -405,18 +405,9 @@ The app's editors have an **Insert…** button beside every text that takes toke
 
 ### Icons
 
-`{icon:name}` draws an icon the height of the text, in the text's color. Use one in front of a menu item's label, or anywhere in an info overlay, so a glance says what an item does. Built-in icons, usable in any game:
+`{icon:name}` draws an icon the height of the text, in the text's color. Use one in front of a menu item's label, or anywhere in an info overlay, so a glance says what an item does. The token picker shows every icon. The built-in ones, usable in any game, are the files in `assets/icons`:
 
-| Name | Picture | Name | Picture |
-|---|---|---|---|
-| `sword` | a sword | `shield` | a shield |
-| `bow` | a bow and arrow | `potion` | a flask |
-| `pistol` | a handgun | `key` | a key |
-| `rifle` | a rifle | `coin` | a stack of coins |
-| `axe` | an axe | `gem` | a gem |
-| `car` | a car | `heart` | a heart |
-| `wheel` | a steering wheel | `skull` | a skull |
-| `pda` | a handheld device | `map` | a folded map |
+`advisor`, `anchor`, `arrow`, `artwork`, `atom`, `attack`, `automate`, `axe`, `badge`, `bag`, `beaver`, `bell`, `bolt`, `book`, `bow`, `box`, `brain`, `broom`, `bus`, `camera`, `cancel`, `car`, `cassette`, `chart`, `chip`, `civics`, `clock`, `cloud`, `coaster`, `coin`, `compass`, `cottage`, `cross`, `crosshair`, `crystal`, `dagger`, `distribution`, `drop`, `drop-item`, `eraser`, `eye`, `factory`, `farm`, `fast`, `fire-truck`, `fist`, `flag`, `flame`, `flip`, `footprints`, `forbid`, `forest`, `fortify`, `gate`, `gear`, `gem`, `globe`, `god`, `great-person`, `grenade`, `grid`, `guests`, `hammer`, `hand`, `handshake`, `heart`, `height`, `holster`, `home`, `hospital`, `hourglass`, `key`, `layers`, `leaf`, `lens-resources`, `load`, `load-in`, `lockpick`, `map`, `mayor`, `medkit`, `messages`, `migration`, `money`, `money-bag`, `monument`, `moon`, `mountain`, `move`, `nav`, `palace`, `palette`, `path`, `pause`, `paw`, `pda`, `people`, `person`, `pick`, `pill`, `pillage`, `pipe`, `pistol`, `plant`, `population`, `potion`, `radiation`, `rail`, `rally`, `ranged`, `region`, `religion`, `research`, `rifle`, `road`, `rocket`, `rope`, `rotate`, `rotate-left`, `save`, `school`, `scope`, `scroll`, `search`, `see-through`, `sentry`, `settler`, `shield`, `shop`, `skull`, `sleep`, `sound`, `speed1`, `speed2`, `speed3`, `spy`, `star`, `stethoscope`, `stop`, `storage`, `subway`, `supports`, `sword`, `sword-cross`, `syringe`, `tech`, `temple`, `terrain`, `theater`, `ticket`, `trade`, `train`, `trap`, `trash`, `tree`, `trophy`, `underground`, `unload`, `upgrade`, `water-toggle`, `waves`, `wellbeing`, `wheat`, `wheel`, `workplace`, `wrench`.
 
 A pack can carry its own icons, in `[assets.icons]`. Each is an SVG, by name, and works only in that pack's game. A pack's icon with a built-in's name replaces it in that game.
 
@@ -552,7 +543,7 @@ color = "#080c0d"
 opacity = 0.94
 ```
 
-`keyboard_style`, `numpad_style`, `media_style` and `menu_style` use the same shape as an overlay's `style`. `overlay_font` names a bundled font or an installed family. The bundled fonts, all under the SIL Open Font License (see `assets/fonts`), are Inter, Cantarell, Comfortaa, Source Code Pro, Rajdhani, Press Start 2P, VT323, Silkscreen, Monoton, Creepster, Nosifer, Eater, UnifrakturMaguntia, Cinzel and Bangers.
+`keyboard_style`, `numpad_style`, `media_style` and `menu_style` use the same shape as an overlay's `style`. `overlay_font` names a bundled font or an installed family. The bundled fonts, all under the SIL Open Font License (see `assets/fonts`), are Inter, Cantarell, Comfortaa, Source Code Pro, Rajdhani, Press Start 2P, VT323, Silkscreen, Monoton, Creepster, Nosifer, Eater, UnifrakturMaguntia, Cinzel, Bangers, Kreon, Orbitron and Titillium Web.
 
 ## Overlay sounds
 
@@ -609,8 +600,23 @@ The overlays are `keyboard` (the on-screen keyboard), `numpad`, `menu` (every me
 | `plate` | A metal plate struck, ringing out (recording). |
 | `tin` | A tin can tapped (recording). |
 | `bell` | A heavy bell struck, with a long ring (recording). |
+| `geiger` | A Geiger counter's crackle: a few uneven ticks (sample). |
+| `nano` | Two quick electronic shimmers (sample). |
+| `radio` | A burst of radio static (sample). |
+| `heartbeat` | Two low, soft thumps (sample). |
+| `casing` | A spent brass casing bouncing on a hard floor (sample). |
+| `lockpick` | Two small, dry metal ticks: a lock's pin giving way (sample). |
+| `shing` | A blade drawn from its sheath: a bright metal ring (sample). |
+| `fault` | A harsh square-wave stutter, like a failing terminal (sample). |
+| `sand` | A soft hiss of grains pouring: an hourglass turned (sample). |
+| `boing` | A cartoon spring: a wobbling tone that bends up and settles (sample). |
+| `shutter` | A camera shutter: two crisp clicks (sample). |
+| `zap` | An electric zap: a buzzing tone diving down, with crackle (sample). |
+| `purr` | A cat's purr: a low, soft, pulsing rumble (sample). |
+| `clank` | A machine part landing on steel: a thump with a short metal ring (sample). |
+| `card` | A playing card flicked down on a table: a papery snap (sample). |
 
-`volume` is 0–1, `pitch` is 0.5–2 (an octave either way) and `length` is 0.5–2 (half as long, or twice as long). All three are relative to the kind's own sound. A longer cue is the same sound played slower, not a longer tail. The recordings (marked above) are CC0 samples: `pitch` plays them higher or lower, and `length` stretches or squeezes them without changing their pitch.
+`volume` is 0–1, `pitch` is 0.5–2 (an octave either way) and `length` is 0.5–2 (half as long, or twice as long). All three are relative to the kind's own sound. A longer cue is the same sound played slower, not a longer tail. The recordings and samples (marked above) are CC0 files that come with the app: `pitch` plays them higher or lower, and `length` stretches or squeezes them without changing their pitch.
 
 Five effects change a cue after it's made, and all of them are off (0) unless set:
 

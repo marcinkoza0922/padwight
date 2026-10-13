@@ -1,4 +1,4 @@
-//! Cues that are recordings rather than synthesis: short CC0 samples bundled in `assets/sounds`
+//! Cues that are samples rather than synthesis: short CC0 files bundled in `assets/sounds`
 //! (see the README there for where each came from), decoded once on first use.
 
 use std::sync::OnceLock;
@@ -29,6 +29,21 @@ fn bytes(kind: SoundKind) -> Option<&'static [u8]> {
         SoundKind::Plate => wav!("plate"),
         SoundKind::Tin => wav!("tin"),
         SoundKind::Bell => wav!("bell"),
+        SoundKind::Geiger => wav!("geiger"),
+        SoundKind::Nano => wav!("nano"),
+        SoundKind::Radio => wav!("radio"),
+        SoundKind::Heartbeat => wav!("heartbeat"),
+        SoundKind::Casing => wav!("casing"),
+        SoundKind::Lockpick => wav!("lockpick"),
+        SoundKind::Shing => wav!("shing"),
+        SoundKind::Fault => wav!("fault"),
+        SoundKind::Sand => wav!("sand"),
+        SoundKind::Boing => wav!("boing"),
+        SoundKind::Shutter => wav!("shutter"),
+        SoundKind::Zap => wav!("zap"),
+        SoundKind::Purr => wav!("purr"),
+        SoundKind::Clank => wav!("clank"),
+        SoundKind::Card => wav!("card"),
         _ => None,
     }
 }

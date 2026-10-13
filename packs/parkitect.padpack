@@ -5,7 +5,7 @@ overlay_font = "Inter"
 [pack]
 id = "eab999a4-c909-43e5-83d3-f1b292474d72"
 name = "Parkitect"
-version = "1.1"
+version = "1.2"
 author = "Padwight"
 description = "Parkitect on an Xbox-style pad, for the game's default keys. The left stick moves the camera, the right stick the pointer; RT and A click, LT deletes. Hold LB for the build tools and RB with the d-pad for the game speed, Select for the view toggles. X rotates what you're placing (hold: pipette), hold Y to change height, hold L3 or R3 to snap. The d-pad zooms and turns the camera. Start is the menu; double tap it to quick save."
 made_with = "Xbox controller"
@@ -529,23 +529,3 @@ pick = {strength = 0.21, length_ms = 25}
 
 [rumble.guide]
 mode = {strength = 0.21, length_ms = 60}
-
-[assets.icons]
-artwork = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4h16v16H4z'/><path d='M4 16l5-5 4 4 3-3 4 4'/><circle cx='15' cy='8' r='1.5'/></svg>"
-bolt = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M13 2L5 14h6l-1 8 8-12h-6z'/></svg>"
-camera = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8h4l2-3h6l2 3h4v11H3z'/><circle cx='12' cy='13' r='4'/></svg>"
-coaster = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 20h20'/><path d='M3 20c2-12 7-12 9-6s3 6 5-2 4-8 4 8'/><path d='M6 20v-6M12 20v-6M18 20v-8'/></svg>"
-eraser = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 20l-5-5L14 4l7 7-9 9z'/><path d='M8 20h13M6 12l7 7'/></svg>"
-eye = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z'/><circle cx='12' cy='12' r='3'/></svg>"
-palette = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3a9 9 0 0 0 0 18c1.5 0 2-1 2-2s-1-2 0-3h3a4 4 0 0 0 4-4c0-5-4-9-9-9z'/><circle cx='7.5' cy='12' r='1.2'/><circle cx='9' cy='8' r='1.2'/><circle cx='13.5' cy='7' r='1.2'/></svg>"
-path = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 21c0-6 10-6 10-12V3'/><path d='M3 21c0-8 10-8 10-14V3'/></svg>"
-pause = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 5v14M16 5v14'/></svg>"
-rotate = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M20 12a8 8 0 1 1-2.3-5.7'/><path d='M20 4v5h-5'/></svg>"
-save = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4h13l3 3v13H4z'/><path d='M8 4v5h7V4'/><path d='M7 20v-6h10v6'/></svg>"
-shop = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 9l1-5h14l1 5'/><path d='M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0'/><path d='M5 11v9h14v-9'/><path d='M10 20v-5h4v5'/></svg>"
-speed1 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M7 6l8 6-8 6z'/></svg>"
-speed2 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M4 6l7 6-7 6zM12 6l7 6-7 6z'/></svg>"
-speed3 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 6l6 6-6 6zM9 6l6 6-6 6zM16 6l6 6-6 6z'/></svg>"
-terrain = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 20l6-9 4 5 3-3 7 7z'/><path d='M15 6a2 2 0 1 0 0-.1'/></svg>"
-tree = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l6 8h-3l4 6H5l4-6H6z'/><path d='M12 17v4'/></svg>"
-underground = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 10h18'/><path d='M3 14h18v7H3z' stroke-dasharray='2 2'/><path d='M7 10l3-6 4 4 2-2 3 4'/></svg>"

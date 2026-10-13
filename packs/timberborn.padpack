@@ -5,7 +5,7 @@ overlay_font = "Comfortaa"
 [pack]
 id = "5da0f454-aeee-4621-a8d6-504ceec68400"
 name = "Timberborn"
-version = "1.1"
+version = "1.2"
 author = "Padwight"
 description = "Timberborn on an Xbox-style pad, for the game's default keys. The left stick moves the camera, the right stick the pointer; RT and A click, LT drops the tool. LB and RB step through the tools (hold: toolbar groups), X rotates (hold: the other way), R3 flips, L3 pauses, and holding Y with the d-pad sets the speed. The d-pad zooms and turns the camera (hold: layers and 90° turns). Select lists the settlement panels; Start is the menu."
 made_with = "Xbox controller"
@@ -483,25 +483,3 @@ pick = {strength = 0.21, length_ms = 25}
 
 [rumble.guide]
 mode = {strength = 0.21, length_ms = 60}
-
-[assets.icons]
-beaver = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 16a7 6 0 0 1 14 0v2H5z'/><circle cx='9.5' cy='12' r='0.8'/><circle cx='14.5' cy='12' r='0.8'/><path d='M11 16h2v3h-2z'/><path d='M6 9l-1-3 3 1M18 9l1-3-3 1'/></svg>"
-chart = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 20V4M4 20h16'/><path d='M8 16v-4M12 16V8M16 16v-6'/></svg>"
-distribution = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='5' r='2'/><circle cx='5' cy='19' r='2'/><circle cx='19' cy='19' r='2'/><path d='M12 7v5M12 12l-6 5M12 12l6 5'/></svg>"
-flip = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3v18'/><path d='M9 7L3 17h6zM15 7l6 10h-6z'/></svg>"
-gear = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1'/><circle cx='12' cy='12' r='7'/></svg>"
-home = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 11l9-7 9 7'/><path d='M5 10v10h14V10'/><path d='M10 20v-6h4v6'/></svg>"
-layers = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l9 5-9 5-9-5z'/><path d='M3 13l9 5 9-5'/></svg>"
-migration = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12h14M13 8l4 4-4 4'/><path d='M21 5v14'/></svg>"
-pause = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M8 5v14M16 5v14'/></svg>"
-population = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='7' r='3'/><circle cx='5' cy='10' r='2'/><circle cx='19' cy='10' r='2'/><path d='M7 20a5 5 0 0 1 10 0M1.5 18a3.5 3.5 0 0 1 7 0M15.5 18a3.5 3.5 0 0 1 7 0'/></svg>"
-rotate = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 12a8 8 0 1 1-2.3-5.7'/><path d='M20 4v5h-5'/></svg>"
-rotate-left = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 12a8 8 0 1 0 2.3-5.7'/><path d='M4 4v5h5'/></svg>"
-speed1 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M7 6l8 6-8 6z'/></svg>"
-speed2 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 6l7 6-7 6zM12 6l7 6-7 6z'/></svg>"
-speed3 = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M2 6l6 6-6 6zM9 6l6 6-6 6zM16 6l6 6-6 6z'/></svg>"
-star = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z'/></svg>"
-storage = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 9l9-5 9 5v12H3z'/><path d='M7 21v-8h10v8M7 17h10'/></svg>"
-water-toggle = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z'/><path d='M4 4l16 16'/></svg>"
-wellbeing = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c0 6-8 11-8 11z'/><path d='M8 12h2l1-2 2 4 1-2h2'/></svg>"
-workplace = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 21h18M5 21V9h6v12M13 21V5h6v16'/><path d='M7 12h2M7 16h2M15 9h2M15 13h2M15 17h2'/></svg>"

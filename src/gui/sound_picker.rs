@@ -100,7 +100,7 @@ impl App {
         let own: Vec<SoundChoice> = crate::sound::pack_sound_names().into_iter().map(SoundChoice::File).collect();
         let mut groups = column![].spacing(10);
         for g in [
-            group("Recordings", "Real sounds, free to use (CC0). Their length is their own.", recorded.into_iter().map(SoundChoice::Kind).collect()),
+            group("Samples", "Recorded or pre-made sounds, free to use (CC0). Their length is their own.", recorded.into_iter().map(SoundChoice::Kind).collect()),
             group("Synthesized", "Made in code: pitch and length reshape them.", synthesized.into_iter().map(SoundChoice::Kind).collect()),
             group("This game's sounds", "Carried by this game's pack: they work in this game only.", own),
         ]
