@@ -30,7 +30,7 @@ fn profile_sound() {
         })
         .collect();
     let Ok(sink) = rodio::DeviceSinkBuilder::open_default_sink() else {
-        report("sound", json!("skipped: no audio device opened"));
+        report("sound", json!({"skipped": "no audio device opened"}));
         return;
     };
     let open = cpu_over(WINDOW, || {});
