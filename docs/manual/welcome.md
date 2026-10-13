@@ -4,6 +4,8 @@ Padwight runs in the background and changes what your controller does. It can ma
 
 Each game you play can have its own setup. Padwight uses it whenever that game has focus.
 
+> **Not for Steam games.** Padwight and Steam Input don't work well together, and the settings that try to smooth this over only go so far. Padwight is meant for games outside Steam's controller handling: older games, GOG, Heroic or Lutris games, and the desktop. For a game you start from Steam, use Steam Input. See [Games Steam looks after](setups.md).
+
 ## You can
 
 - remap any button to another button, a key, or a mouse click
