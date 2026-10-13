@@ -85,7 +85,7 @@ These parts were only searched (for unwraps, indexing, clamps and slow work), no
 
 ### Tools not yet built
 
-- A replay of a recorded input stream through the daemon's scan and dispatch, and a container test that a uhid pad appearing while `steam_has_pads` is set isn't grabbed (R0-1).
+- A replay of a recorded input stream through the daemon's scan and dispatch.
 
 ## Pass 0: Steam hand-off and game detection
 
@@ -93,7 +93,7 @@ Reviewed commit `b6111fd` and the code it touches. Findings were checked against
 
 | ID | File | Finding | Status |
 |---|---|---|---|
-| R0-1 | `daemon/evdev.rs` | A controller plugged in, or woken from sleep, while Steam had the controllers was grabbed anyway. The check for a pad seen before asked whether Padwight takes pads, but the check for a new one only asked whether remapping was on. | **Fixed.** Every scan path, evdev and XInput, now asks `Daemon::should_manage` (`daemon/steam_handoff.rs`). No automated test: the scan needs `/dev/input`. Hardware check H-1. |
+| R0-1 | `daemon/evdev.rs` | A controller plugged in, or woken from sleep, while Steam had the controllers was grabbed anyway. The check for a pad seen before asked whether Padwight takes pads, but the check for a new one only asked whether remapping was on. | **Fixed.** Every scan path, evdev and XInput, now asks `Daemon::should_manage` (`daemon/steam_handoff.rs`). Test, added 2026-10-13: `daemon::kernel_tests::steam_keeps_a_pad_plugged_in_while_it_has_the_controllers` (container; a uhid pad plugged in while Steam has the controllers isn't grabbed, and is taken once they come back; fails on the old check). Hardware check H-1 for a real Bluetooth wake. |
 | R0-2 | `focus/identify.rs` | A sandboxed game's window can report its pid inside the sandbox (X11's `_NET_WM_PID`). That pid nearly always names an unrelated process here, and the code took it as it was, so the game wasn't recognised. | **Fixed.** When the process here doesn't look like the window (class against program name or Steam app), the processes with that pid in a namespace below are tried, and the one that looks like the window wins. `pick_pid` and `fits` have unit tests. `identifies_a_window_from_a_real_sandbox` runs a real pid namespace with `unshare`. With the old rule put back, it fails (the window resolved to pid 1, systemd). |
 | R0-3 | `steam_appinfo.rs` | Controller support was cached for the daemon's lifetime, including "not listed". So a game installed after the daemon started was never handed to Steam. Each new app also read the whole `appinfo.vdf`. | **Fixed.** The whole file is indexed once and indexed again only when its modification time changes. Test: `a_game_steam_learns_about_later_is_found`. Measured with `padwight debug steam`: 31 ms for a 10 MB cache of 1,838 apps, on the first Steam game focused after a change. |
 | R0-4 | `focus/identify.rs` | A Wine program started by its bare name (`gpp.exe`, `.\game.exe`) had no folder in its path, so rules naming a folder never matched it. | **Fixed.** A bare name is replaced by the matching `.exe` mapped into the Wine loader, which has the full path. Test: `wine_programs_started_by_bare_name_report_the_mapped_path`. |
@@ -349,7 +349,7 @@ Earlier tools that later passes will need are listed in `CLAUDE.md` (overlay and
 
 Tools later passes are likely to want, to be built when a finding needs them:
 
-- **Pass 1 (still worth having):** a way to replay a recorded input stream through the daemon's scan and dispatch without hardware. `daemon::kernel_tests` and `tests/hotplug.rs` cover parts of this in a container. Check that R0-1 has a container test there: a uhid pad that appears while `steam_has_pads` is set must not be grabbed.
+- **Pass 1 (still worth having):** a way to replay a recorded input stream through the daemon's scan and dispatch without hardware. `daemon::kernel_tests` and `tests/hotplug.rs` cover parts of this in a container. R0-1's container test is in `daemon::kernel_tests` (2026-10-13).
 - **Pass 4 (built, 2026-10-13):** `library::tests::a_config_with_every_library_game_saves_and_loads_unchanged` adds every library pack to one config, saves it as folders, loads it back unchanged, and checks a second save writes the same files. `tests/fixtures` holds no config folders, only the one-file default config the integration tests lay out.
 
 ## Hardware checks
