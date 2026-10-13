@@ -6,6 +6,7 @@ Conventions for choosing where actions go when setting up a game's controller bi
 
 - If the game is known to have **native XInput support**, even if it's imperfect, **don't change or add to its control scheme**. This program can't do better than a native scheme, so leave the bindings alone.
 - **Games released before 2006 don't count as native XInput**, even if the store page lists controller support. XInput came out in December 2005, so an older game has at best spotty DirectInput support, which is unreliable. Map the gamepad to the keyboard and mouse bindings, as for a game with no controller support. Treat a store page's controller badge as a hint only, and check the release date first.
+- **Check for native DualShock and Nintendo support too.** A game may support a DualShock 4, DualSense or Switch Pro Controller without XInput, or alongside it. Tick the matching kind under **Controllers this setup supports** on the Details tab, so the game sees that controller as itself and its own scheme holds for it. The same rules apply: explicit support counts, a store badge alone doesn't, and games released before 2006 don't count. The [first setup tutorial](../manual/tutorial-first-setup.md#3-check-for-native-controller-support) walks through the setting.
 - Enhancements are still welcome where the game leaves a gap:
   - **Onscreen keyboard** for text input, such as naming a character, where the developer didn't plan for a controller.
   - **Mouse mode** for setup menus that only work with the mouse.
