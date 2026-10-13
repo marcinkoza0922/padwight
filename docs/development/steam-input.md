@@ -105,13 +105,40 @@ Tested in the `sway` test VM (Arch, kernel 7.2.9) with the GameSir passed throug
   as above. When both drivers are installed, whichever loads first wins.
 - **xpadneo**: Bluetooth only. All its aliases are HID bus `0005`, so it never binds a USB pad and
   the usbfs route doesn't apply. Untested on hardware: it needs a Bluetooth Xbox pad.
-- **hid-nintendo** over Bluetooth: an 8BitDo Ultimate in Switch mode shows up as a Pro Controller
-  (`057e:2009`, bus `0005`). BlueZ creates it through uhid. There's no USB node to detach, and the
-  user can open its hidraw node, so Steam can read it directly too. This is the Bluetooth gap below.
+- **hid-nintendo** over Bluetooth: see [Bluetooth](#bluetooth-an-8bitdo-ultimate-in-switch-mode)
+  below.
 
 The usbfs route doesn't care which driver is bound: `DISCONNECT_CLAIM` unbinds whatever has the
 interface, and `CONNECT` lets the kernel pick a driver again. What changes per pad is the protocol
 Padwight then has to speak.
+
+### Bluetooth: an 8BitDo Ultimate in Switch mode
+
+The pad shows up as a Pro Controller (`057e:2009`, bus `0005`). BlueZ creates it through uhid and
+`hid-nintendo` drives it. **Steam reads it through `/dev/hidraw7`, not evdev** (seen in Steam's
+open files), so Padwight's grab doesn't stop it. Steam gets the pad's live, unremapped input in
+its own slot, next to Padwight's virtual pad.
+
+`scripts/bt-takeover.py` tried to take the pad from BlueZ the way the USB route takes it from the
+kernel, as a normal user: get BlueZ to let go, open the pad's HID channels (L2CAP PSM 17 control,
+19 interrupt) on a plain socket with `BT_SECURITY_MEDIUM` (the kernel already has the link key),
+and decode the `0xA1 0x3F` reports into a uinput pad.
+
+| Run | How BlueZ was made to let go | Result |
+|---|---|---|
+| 1 | `bluetoothctl disconnect`, connect 1 s later | Got in on the 4th try. Steam dropped `hidraw7` and opened the test pad; 115 reports arrived. Pressing Home made the pad connect to BlueZ again, alongside the script's channels. |
+| 2 | Same | "Host is down" for the whole 10 s retry window: the pad had powered off. |
+| 3 | `Device1.DisconnectProfile` for the HID UUID only | The link dropped anyway. When the pad came back it refused our channels ("Connection refused", then timeouts), and the link bounced up and down until the run ended. BlueZ then reconnected it normally. |
+
+Conclusions:
+
+- A Switch-style pad treats a disconnect from the host as "power off". Run 1 won a race in the
+  second or so before it shut down.
+- The pad reconnects by calling the host itself, and those calls go to BlueZ, which owns the HID
+  channels. A normal user can't take them over. Taking over a Bluetooth pad isn't reliable, so
+  Bluetooth pads stay outside the design below.
+- Not tried: other Bluetooth pads (Xbox over xpadneo, DualSense) may behave differently.
+  Running the pad off its 2.4 GHz USB dongle makes it a USB device, so the USB route would apply.
 
 ## Proposed design
 
@@ -137,9 +164,10 @@ Padwight then has to speak.
 
 ## Gaps and open questions
 
-- **Bluetooth pads.** No usbfs. Steam reads them through evdev and hidraw. Options to explore:
-  - taking the HID channels from BlueZ;
-  - leaving Bluetooth pads to the grab, with a warning that Steam games may read the wrong slot.
+- **Bluetooth pads.** No usbfs, and taking the HID channels from BlueZ failed (see above). Steam
+  reads them through hidraw, so a Steam game sees the raw pad as well as Padwight's virtual pad.
+  The likely fallback is the grab plus a warning that Steam games may ignore Padwight's remaps.
+  It's untested in a game which of the two pads the game follows, or whether it takes input from both.
 - **HID pads over USB** (DualShock 4, DualSense, Switch Pro). The detach should work the same way,
   but each needs its own protocol code. Gyro and touchpad would then reach Steam only if Padwight's
   virtual pad carries them. Steam reads Sony pads through hidraw, which a uinput pad doesn't have.
@@ -161,6 +189,9 @@ scripts/usb-takeover.py $n 0 0x82 120   # takes the pad for up to 2 minutes
 scripts/usb-reattach.py $n 0            # gives it back after a SIGKILL
 grep -a -E 'Local Device Found|type:|opened for index|XInput slot|closed' ~/.local/share/Steam/logs/controller.txt | tail
 ```
+
+For a Bluetooth pad: `scripts/bt-takeover.py MAC SECONDS [full|profile]`. If the pad ends up
+disconnected, press Home to reconnect it to BlueZ.
 
 For other drivers, pass the pad to a test VM (`vms/vm.sh`) through its QMP socket:
 `{"execute":"device_add","arguments":{"driver":"usb-host","vendorid":13623,"productid":4217,"id":"pad"}}`,
