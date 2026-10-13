@@ -8,7 +8,7 @@ use std::{
     collections::HashMap,
     io,
     os::fd::AsRawFd,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{
         Arc, Mutex, MutexGuard,
         atomic::{AtomicBool, AtomicU32, Ordering},
@@ -163,12 +163,28 @@ fn lock(pad: &Mutex<VirtualDevice>) -> MutexGuard<'_, VirtualDevice> {
     pad.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
+/// Logs a failure to pass rumble on to `physical`, once until it works again.
+fn report(failing: &mut bool, physical: &Path, what: &str, result: io::Result<()>) {
+    match result {
+        Ok(()) => *failing = false,
+        Err(e) if !*failing => {
+            *failing = true;
+            log!("rumble: {} didn't take {what}: {e}", physical.display());
+        }
+        Err(_) => {}
+    }
+}
+
 fn run(pad: &Mutex<VirtualDevice>, physical: &PathBuf, stop: &AtomicBool) -> io::Result<()> {
     let mut phys = Device::open(physical)?;
     let supports_gain = phys.supported_ff().is_some_and(|ff| ff.contains(FFEffectCode::FF_GAIN));
     // Virtual effect id -> the matching effect uploaded to the physical device.
     let mut effects: HashMap<i16, FFEffect> = HashMap::new();
     let mut pfd = libc::pollfd { fd: lock(pad).as_raw_fd(), events: libc::POLLIN, revents: 0 };
+    // A controller that stops taking rumble mustn't end this loop: the game's next upload would
+    // wait 30 s for an answer.
+    let mut failing = false;
+    let mut report = |what: &str, result: io::Result<()>| report(&mut failing, physical, what, result);
 
     while !stop.load(Ordering::Relaxed) {
         // SAFETY: pfd points to a single valid pollfd for the duration of the call.
@@ -210,13 +226,13 @@ fn run(pad: &Mutex<VirtualDevice>, physical: &PathBuf, stop: &AtomicBool) -> io:
                 }
                 EventSummary::ForceFeedback(_, FFEffectCode::FF_GAIN, value) => {
                     if supports_gain {
-                        phys.send_events(&[*FFEvent::new(FFEffectCode::FF_GAIN, value)])?;
+                        report("the gain", phys.send_events(&[*FFEvent::new(FFEffectCode::FF_GAIN, value)]));
                     }
                 }
                 // For play events the code is the effect id and the value a repeat count.
                 EventSummary::ForceFeedback(_, code, value) => {
                     if let Some(effect) = effects.get_mut(&(code.0 as i16)) {
-                        if value > 0 { effect.play(value)? } else { effect.stop()? }
+                        report("an effect", if value > 0 { effect.play(value) } else { effect.stop() });
                     }
                 }
                 _ => {}
@@ -270,6 +286,66 @@ mod tests {
             }
         }
         assert_eq!(seen, ["rumble 0xc000/0x0", "play", "rumble 0x0/0xffff", "play", "erase"]);
+    }
+
+    /// A controller that stops taking rumble (unplugged, or a Bluetooth drop) must not end the
+    /// forwarding: the game's next upload would then wait 30 s for an answer, freezing a game
+    /// that rumbles from its main thread. Needs /dev/uinput: `cargo test -- --ignored rumble`.
+    #[test]
+    #[ignore]
+    fn a_controller_that_stops_rumbling_doesnt_stall_the_game() {
+        let mut effects = AttributeSet::<FFEffectCode>::new();
+        effects.insert(FFEffectCode::FF_RUMBLE);
+        let make = || VirtualPad::new(Some(FfCaps { effects: &effects, max_effects: 4 })).unwrap();
+        let node = |pad: &VirtualPad| lock(&pad.shared()).enumerate_dev_nodes_blocking().unwrap().flatten().next().unwrap();
+        let (physical, pad) = (make(), make());
+        let (physical_path, pad_path) = (node(&physical), node(&pad));
+        thread::sleep(Duration::from_millis(500));
+        let stop = Arc::new(AtomicBool::new(false));
+        spawn(pad.shared(), physical_path, stop.clone());
+
+        // The stand-in controller answers uploads until it is unplugged.
+        let unplug = Arc::new(AtomicBool::new(false));
+        let served = {
+            let (dev, unplug) = (physical.shared(), unplug.clone());
+            thread::spawn(move || {
+                let mut pfd = libc::pollfd { fd: lock(&dev).as_raw_fd(), events: libc::POLLIN, revents: 0 };
+                while !unplug.load(Ordering::Relaxed) {
+                    // SAFETY: one valid pollfd for the duration of the call.
+                    if unsafe { libc::poll(&mut pfd, 1, 50) } <= 0 {
+                        continue;
+                    }
+                    let events: Vec<_> = lock(&dev).fetch_events().unwrap().collect();
+                    for ev in events {
+                        match ev.destructure() {
+                            EventSummary::UInput(ev, UInputCode::UI_FF_UPLOAD, _) => drop(lock(&dev).process_ff_upload(ev).unwrap()),
+                            EventSummary::UInput(ev, UInputCode::UI_FF_ERASE, _) => drop(lock(&dev).process_ff_erase(ev).unwrap()),
+                            _ => {}
+                        }
+                    }
+                }
+            })
+        };
+        let rumble = |strong| FFEffectData {
+            direction: 0,
+            trigger: FFTrigger::default(),
+            replay: FFReplay { length: 200, delay: 0 },
+            kind: FFEffectKind::Rumble { strong_magnitude: strong, weak_magnitude: 0 },
+        };
+        let mut game = Device::open(&pad_path).unwrap();
+        let mut first = game.upload_ff_effect(rumble(0xc000)).unwrap();
+
+        unplug.store(true, Ordering::Relaxed);
+        served.join().unwrap();
+        drop(physical);
+        thread::sleep(Duration::from_millis(200));
+        // Playing on the gone controller fails; the game's next upload must still be answered.
+        first.play(1).unwrap();
+        thread::sleep(Duration::from_millis(200));
+        let started = std::time::Instant::now();
+        let second = game.upload_ff_effect(rumble(0x4000));
+        stop.store(true, Ordering::Relaxed);
+        assert!(started.elapsed() < Duration::from_secs(5), "the upload waited {:?} ({second:?})", started.elapsed());
     }
 
     /// End-to-end through the kernel: a "game" rumbles our virtual pad and the request must

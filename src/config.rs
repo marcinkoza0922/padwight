@@ -2705,6 +2705,19 @@ impl Config {
             game.strip_built_in_modes();
         }
         store::save(root, &config)?;
+        self.save_settings_to(path)
+    }
+
+    /// Saves only `config.toml`: the app settings, such as the active profile, the remapping
+    /// switch and gyro calibrations. For changes that leave every setup as it was saved, so a
+    /// profile switch doesn't rewrite the whole config folder.
+    pub fn save_settings(&self) -> Result<()> {
+        self.save_settings_to(&Self::path())
+    }
+
+    /// [`Config::save_settings`] to `path`.
+    pub fn save_settings_to(&self, path: &Path) -> Result<()> {
+        std::fs::create_dir_all(store::root_of(path))?;
         // Write-then-rename so the daemon never reads a half-written file.
         let tmp = path.with_extension("toml.tmp");
         store::write_private(&tmp, &store::app_settings(self)?)?;

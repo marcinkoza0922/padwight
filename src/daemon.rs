@@ -37,12 +37,14 @@ use crate::{
 };
 
 mod activity;
+mod auto_switch;
 /// The controllers themselves: evdev nodes on Linux, XInput slots on Windows.
 #[cfg_attr(target_os = "linux", path = "daemon/evdev.rs")]
 #[cfg_attr(windows, path = "daemon/xinput.rs")]
 mod devices;
 mod inject;
 mod logs;
+mod requests;
 mod steam_handoff;
 /// The process around the service: signals, the control socket, running in the background.
 #[cfg_attr(target_os = "linux", path = "daemon/unix.rs")]
@@ -1709,7 +1711,7 @@ impl Daemon {
             let name = dev.name.clone();
             log!("gyro calibrated for {name}: bias {bias:.2?} deg/s");
             self.config.gyro_calibration.insert(name, bias);
-            if let Err(e) = self.config.save() {
+            if let Err(e) = self.config.save_settings() {
                 log!("saving config: {e:#}");
             }
             return;
@@ -1730,157 +1732,6 @@ impl Daemon {
         if self.last_active == Some(id) && !self.watchers.is_empty() {
             let snapshot = dev.snapshot();
             self.watchers.retain(|w| w.send(Some(snapshot.clone())).is_ok());
-        }
-    }
-
-    fn window_focused(&mut self, window: &WindowInfo) {
-        // Editing settings while a game runs must not flip the profile.
-        if focus::is_own_window(window) {
-            return;
-        }
-        let same = |w: &WindowInfo| w.class == window.class && w.exe == window.exe && w.steam_app_id == window.steam_app_id;
-        self.recent_windows.retain(|w| !same(w));
-        self.recent_windows.insert(0, window.clone());
-        self.recent_windows.truncate(RECENT_WINDOWS);
-        self.focused = Some(window.clone());
-        if self.info_refresh.is_some() {
-            self.broadcast_overlay();
-        }
-        if self.hand_to_steam(window) {
-            // Steam has the controllers, but the last game's profile no longer fits what's in front.
-            if self.config.auto_switch.enabled {
-                self.leave_game(&format!("{} is left to Steam Input", describe(window)));
-            }
-            return;
-        }
-        self.hint_library_game(window);
-
-        if !self.config.auto_switch.enabled {
-            return;
-        }
-        match focus::matching_rule(&self.config, window) {
-            Some((game, rule)) => {
-                let picked = ProfileRef::new(Some(game), &rule.profile);
-                let target = self.config.usable_profile(picked.clone(), self.pad_features().as_deref());
-                let why = format!("{} matches {}", describe(window), focus::rule_text(rule));
-                self.auto_switch_to(target.clone(), &with_fallback(why, &picked, &target), true);
-            }
-            None => self.leave_game(&format!("{} matches no rule", describe(window))),
-        }
-        if let Some((game, pid)) = focus::game_launch(&self.config, window) {
-            self.launched(&game, pid);
-        }
-    }
-
-    fn focus_event(&mut self, event: FocusEvent) {
-        match event {
-            FocusEvent::Backend(backend) => {
-                // Only a change of backend starts the process scan again. The first report can
-                // arrive after a scan that already switched for a running game, and clearing then
-                // would leave the daemon unable to notice that game exit.
-                if self.focus_backend != backend {
-                    self.focus_backend = backend;
-                    // Re-evaluate from scratch the next time processes are scanned.
-                    self.scan_target = None;
-                }
-            }
-            FocusEvent::Focused(window) => self.window_focused(&window),
-            FocusEvent::Unfocused => self.window_unfocused(),
-        }
-    }
-
-    /// Nothing has focus (the desktop, or an empty workspace), so no game's rules apply.
-    fn window_unfocused(&mut self) {
-        self.focused = None;
-        self.take_pads_back();
-        if self.config.auto_switch.enabled {
-            self.leave_game("no window has focus");
-        }
-    }
-
-    /// A rule matched `game` with process `pid`: if that's a process the game hasn't had,
-    /// the game has just started.
-    fn launched(&mut self, game: &str, pid: u32) {
-        if self.launches.get(game) == Some(&pid) {
-            return;
-        }
-        self.launches.insert(game.to_owned(), pid);
-        self.game_started(game);
-    }
-
-    /// The active game has just started: shows its "when the game starts" info overlays and
-    /// switches on toggles set to start on.
-    fn game_started(&mut self, game: &str) {
-        if self.config.active_ref().game.as_deref() != Some(game) {
-            return;
-        }
-        log!("{game} started");
-        self.toast_profile();
-        self.info_timers.game_started(&self.scope.info, Instant::now());
-        let Some(base) = self.config.active() else { return };
-        for dev in self.devices.values_mut() {
-            let mut out = Vec::new();
-            // A toggle starting "Next profile" would be odd; it isn't followed.
-            dev.engine.start_toggles(layered(&dev.layered, base), &self.scope.menus, &mut out);
-            if dev.refresh_layers(&self.config) {
-                dev.engine.resync(layered(&dev.layered, base), &mut out);
-            }
-            dev.dispatch(&mut self.kbm, out);
-        }
-        self.check_info_changes();
-        self.broadcast_overlay();
-    }
-
-    /// Process-scan fallback for desktops without focus tracking.
-    fn scan_processes(&mut self) {
-        let no_rules = focus::rules(&self.config).next().is_none();
-        if self.focus_backend != FocusBackend::ProcessScan || !self.config.auto_switch.enabled || no_rules {
-            return;
-        }
-        let processes = focus::running_processes();
-        let target = focus::profile_for_processes(&self.config, &processes);
-        if target != self.scan_target {
-            self.scan_target = target.clone();
-            match focus::matching_process(&self.config, &processes) {
-                Some((game, rule, process)) => {
-                    let picked = ProfileRef::new(Some(game), &rule.profile);
-                    let target = self.config.usable_profile(picked.clone(), self.pad_features().as_deref());
-                    let why = format!("{} is running, which matches {}", describe(process), focus::rule_text(rule));
-                    self.auto_switch_to(target.clone(), &with_fallback(why, &picked, &target), true);
-                }
-                None => self.leave_game("no game running"),
-            }
-        }
-        if let Some((game, pid)) = focus::game_launch_in(&self.config, &processes) {
-            self.launched(&game, pid);
-        }
-    }
-
-    /// Switches to a profile a rule (or the default) picked, with a toast if `toast`. `reason`
-    /// says why, for the log and the GUI.
-    fn auto_switch_to(&mut self, target: ProfileRef, reason: &str, toast: bool) {
-        if target == self.config.active_ref() {
-            return;
-        }
-        if self.config.profile(&target).is_none() {
-            log!("auto-switch points to missing profile {target}");
-            return;
-        }
-        log!("{reason} → profile {target}");
-        if toast {
-            self.switch_profile(target, reason);
-        } else {
-            self.set_profile(target, reason);
-        }
-    }
-
-    /// No game has focus: a profile of a game that rules pick gives way to the default one.
-    /// No toast, since alt-tabbing out of a game would show one every time.
-    fn leave_game(&mut self, reason: &str) {
-        let in_game = self.config.active_ref().game.is_some_and(|g| focus::has_rules(&self.config, &g));
-        if in_game && let Some(default) = self.config.auto_switch.default_profile.clone() {
-            let why = format!("{reason}, so the default profile takes over");
-            self.auto_switch_to(default, &why, false);
         }
     }
 
@@ -2476,137 +2327,6 @@ impl Daemon {
         self.broadcast_overlay();
     }
 
-    #[expect(clippy::too_many_lines, reason = "predates the size lints")]
-    fn request(&mut self, req: Request) -> Response {
-        match req {
-            Request::Status => Response::Status(self.status()),
-            Request::GetConfig => Response::Config(Box::new(self.config.clone())),
-            Request::SetConfig(new) => {
-                let mut new = *new;
-                new.enabled = self.config.enabled;
-                new.carry_active(&self.config.active);
-                self.replace_config(new)
-            }
-            Request::Reload => match Config::load() {
-                Ok(new) => self.replace_config(new),
-                Err(e) => Response::Error(format!("{e:#}")),
-            },
-            Request::SetEnabled(enabled) => {
-                self.config.enabled = enabled;
-                if !enabled {
-                    self.release_devices(|_| true);
-                }
-                self.save_and_rescan()
-            }
-            Request::SetProfile(name) => {
-                let Some(target) = self.config.find_profile(&name) else {
-                    return Response::Error(format!("no profile named {name:?}"));
-                };
-                self.switch_profile(target, BY_HAND);
-                Response::Ok
-            }
-            Request::Activate(target) => {
-                if self.config.profile(&target).is_none() {
-                    return Response::Error(format!("no profile {target}"));
-                }
-                self.switch_profile(target, BY_HAND);
-                Response::Ok
-            }
-            Request::NextProfile => {
-                if let Some(next) = self.config.next_profile(self.pad_features().as_deref()) {
-                    self.switch_profile(next, BY_HAND);
-                }
-                Response::Ok
-            }
-            // Handled by the connection thread, which registers through `Msg::Watch`.
-            Request::WatchInput | Request::WatchFeed => Response::Error("watch requests must be the only request".into()),
-            Request::ToggleOverlay => {
-                self.toggle_overlay(Layout::Keyboard, None);
-                Response::Ok
-            }
-            Request::ToggleNumpad => {
-                self.toggle_overlay(Layout::Numpad, None);
-                Response::Ok
-            }
-            Request::OpenMenu(name) => {
-                if !self.scope.menus.iter().any(|m| m.name == name) {
-                    return Response::Error(format!("no menu named {name:?}"));
-                }
-                let device = self.last_active.or_else(|| self.devices.keys().next().copied()).unwrap_or(u64::MAX);
-                self.open_menu(device, &name, Opener::default());
-                Response::Ok
-            }
-            Request::WatchOverlay => Response::Error("WatchOverlay must be the only request".into()),
-            Request::DebugAttach { .. }
-            | Request::DebugInput { .. }
-            | Request::DebugOutput { .. }
-            | Request::DebugDetach(_)
-            | Request::DebugIdentify(_) => {
-                self.debug_request(req)
-            }
-            Request::CalibrateGyro(path) => {
-                let dev = self.devices.values_mut().find(|d| d.path.as_os_str() == path.as_str());
-                match dev {
-                    Some(dev) if dev.motion.is_some() => {
-                        log!("calibrating gyro for {}: keep it still", dev.name);
-                        dev.calibrating = Some(Calibration { started: Instant::now(), sum: [0.0; 3], samples: 0 });
-                        Response::Ok
-                    }
-                    Some(_) => Response::Error(format!("{path} has no gyro")),
-                    None => Response::Error(format!("{path} is not being managed")),
-                }
-            }
-            Request::TestTurn(px) => {
-                crate::output::test_turn(px);
-                Response::Ok
-            }
-            Request::TestRumble(path) => {
-                let known = self
-                    .gamepads
-                    .iter()
-                    .find(|((p, _), _)| p.as_os_str() == path.as_str())
-                    .map(|(_, pad)| pad.rumble);
-                match known {
-                    Some(true) => {
-                        rumble::test(PathBuf::from(path));
-                        Response::Ok
-                    }
-                    Some(false) => Response::Error(format!("{path} does not support rumble")),
-                    None => Response::Error(format!("no controller at {path}")),
-                }
-            }
-        }
-    }
-
-    fn replace_config(&mut self, new: Config) -> Response {
-        if new.general.profiles.is_empty() {
-            return Response::Error("General must have at least one profile".into());
-        }
-        // An open menu refers to menus by position, which the new config may change.
-        if matches!(self.active, Some(Active::Menu { .. })) {
-            self.close_overlay();
-        }
-        // The mode stays on; it applies again if the game still has it.
-        self.release_all(true);
-        self.config = new;
-        self.refresh_scope();
-        let ignored = self.config.ignored_devices.clone();
-        let enabled = self.config.enabled;
-        self.release_devices(|d| !enabled || ignored.contains(&d.name));
-        self.resync_all();
-        self.broadcast_overlay();
-        self.recheck_steam_handoff();
-        self.save_and_rescan()
-    }
-
-    fn save_and_rescan(&mut self) -> Response {
-        self.scan();
-        match self.config.save() {
-            Ok(()) => Response::Ok,
-            Err(e) => Response::Error(format!("saving config: {e:#}")),
-        }
-    }
-
     /// Recomputes what the active profile can use, after a config or game change.
     fn refresh_scope(&mut self) {
         self.scope = self.config.scope();
@@ -2685,7 +2405,7 @@ impl Daemon {
         self.resync_all();
         // Other info overlays may belong to the new profile.
         self.broadcast_overlay();
-        if let Err(e) = self.config.save() {
+        if let Err(e) = self.config.save_settings() {
             log!("saving config: {e:#}");
         }
         true

@@ -31,7 +31,7 @@ Sizes are lines including tests, at the date above. Passes are ordered by the co
 | Pass | Area | Files | Lines | Status |
 |---|---|---|---|---|
 | 0 | Steam hand-off and game detection (commit `b6111fd`) | `daemon/steam_handoff.rs`, `focus/`, `steam_appinfo.rs`, `steam_hide.rs`, `library.rs` | ~2,600 | Done, 2026-10-12 |
-| 1 | Device ownership | `daemon.rs`, `daemon/`, `input/`, `output/`, `rumble/` | ~6,900 | To do |
+| 1 | Device ownership | `daemon.rs`, `daemon/`, `input/`, `output/`, `rumble/` | ~6,900 | Done, 2026-10-12 |
 | 2 | The engine | `engine.rs`, `engine/`, `motion/` | ~6,500 | To do |
 | 3 | Game detection and launchers (rest of) | `focus/` (backends), `launchers.rs`, `offer/`, `opener_watch.rs`, `library.rs` | ~2,700 | To do |
 | 4 | Config and packs | `config.rs`, `config/`, `pack.rs`, `keycode/` | ~10,600 (split: `config.rs` alone, then the rest) | To do |
@@ -61,6 +61,28 @@ Reviewed commit `b6111fd` and the code it touches. Findings were checked against
 
 The status reported by the daemon now includes `steam_has_pads`, so tools and the GUI can show who has the controllers.
 
+## Pass 1: Device ownership
+
+Read all of `daemon/`, `input/`, `output/` and `rumble.rs`, and in `daemon.rs` the event loop and every grab and release path: the scans, `device_gone`, `release_devices`, `release_all`, profile switches, identity rebuilds, shutdown, and the signal handlers on both platforms.
+
+| ID | File | Finding | Status |
+|---|---|---|---|
+| R1-1 | `rumble.rs` | A single failed rumble write to the controller (it was unplugged, or Bluetooth dropped for a moment) ended the forwarding thread. Nothing then answered the game's next rumble upload, so the game waited 30 s for the kernel to time it out. A game that rumbles from its main thread freezes for that long, each time it rumbles. | **Fixed.** Failed plays, stops and gain changes are logged once until rumble works again, and forwarding goes on. Kernel test `a_controller_that_stops_rumbling_doesnt_stall_the_game`, which unplugs a stand-in controller. On the old code it failed after waiting 30.4 s. It runs on a host with uinput access: `cargo test -- --ignored rumble`. |
+| R1-2 | `daemon.rs`, `config/store.rs` | Every profile switch, including each automatic switch on alt-tab, rewrote the whole config folder from the daemon's thread. The rewrite deleted `setups/` and then renamed the new copy into place, so a crash, kill or power cut between the two lost every setup. The next save then deleted the copy left in `.saving/`. | **Fixed, both halves.** Profile switches, the remapping switch and gyro calibration now write only `config.toml` (`Config::save_settings`). A full save sets the old folder aside as `.setups.old` (and `.general.old`) until the new one is in place, and loading reads the old one if a save stopped in between. Test: `a_save_cut_short_loses_nothing`, which fails on the old load. Side effect: an automatic switch while the in-game editor has unsaved changes no longer writes them to disk, so Discard really discards them. |
+| R1-3 | `daemon/evdev.rs`, `daemon/touchpad.rs` | Letting go of a controller stops its reader threads, but they hold the grab for up to 200 ms (their poll timeout). A scan in that window (taking the pads back from Steam right after giving them, or switching remapping off and on quickly) can't grab the pad and gets it on the next scan, 2 s later. If the pad's grab works but its touchpad's doesn't, the touchpad is marked as attached and never retried, so the desktop keeps it as a mouse until the pad reconnects. | **Open, low.** Needs two state changes within 200 ms. A fix would wait for the readers to close their devices, or retry a touchpad grab that failed with EBUSY. |
+| R1-4 | `daemon.rs` | 3,019 lines. | **Partly done.** Focus handling and auto-switching moved to `daemon/auto_switch.rs`, and the control-socket requests to `daemon/requests.rs`, with no change in behaviour. `daemon.rs` is now 2,739 lines. The overlay and menu handling is the next block to move (pass 6). |
+
+Checked and found sound:
+
+- Every scan path asks `should_manage` (after R0-1).
+- A failed grab, or a failed virtual pad, drops the device, which releases it.
+- Readers report `Gone` when a device errors, and the next scan takes it again.
+- `release_devices` and `device_gone` release the engine's outputs before dropping the virtual pad.
+- When a virtual device is destroyed, even by SIGKILL, the kernel releases its keys.
+- `set_profile` rebuilds virtual pads for a new identity before it resyncs.
+- `VirtualKbm` sends each key as it changes, so key order is kept. After a failed write it catches up in code order, which only matters if a write failed in the middle of a key combination.
+- SIGTERM, SIGINT and the console events on Windows all reach `shut_down`, which releases everything.
+
 ## Tools for checking findings
 
 Tools added in pass 0:
@@ -77,7 +99,7 @@ Earlier tools that later passes will need are listed in `CLAUDE.md` (overlay and
 
 Tools later passes are likely to want, to be built when a finding needs them:
 
-- **Pass 1:** a way to replay a recorded input stream through the daemon's scan and dispatch without hardware. `daemon::kernel_tests` and `tests/hotplug.rs` cover parts of this in a container. Check that R0-1 has a container test there: a uhid pad that appears while `steam_has_pads` is set must not be grabbed.
+- **Pass 1 (still worth having):** a way to replay a recorded input stream through the daemon's scan and dispatch without hardware. `daemon::kernel_tests` and `tests/hotplug.rs` cover parts of this in a container. Check that R0-1 has a container test there: a uhid pad that appears while `steam_has_pads` is set must not be grabbed.
 - **Pass 4:** a sweep that loads every config folder in `tests/fixtures` and every library pack, saves them and compares the result (A-5 and A-6 cover most of this).
 
 ## Hardware checks

@@ -57,9 +57,9 @@ pub fn root_of(path: &Path) -> &Path {
 /// Fills in the setups of `config` from the folder at `root`. A missing General folder gives the
 /// default General.
 pub fn load(root: &Path, config: &mut Config) -> Result<()> {
-    let general = root.join(GENERAL);
+    let general = saved(root, GENERAL);
     config.general = if general.join(SETUP_FILE).exists() { read_setup(&general)? } else { Config::default().general };
-    config.games = setup_dirs(&root.join(SETUPS))?.iter().map(|dir| read_setup(dir)).collect::<Result<_>>()?;
+    config.games = setup_dirs(&saved(root, SETUPS))?.iter().map(|dir| read_setup(dir)).collect::<Result<_>>()?;
     let shared = root.join(SHARED);
     if shared.exists() {
         let mut items = Game::new("Shared", Vec::new());
@@ -126,11 +126,19 @@ pub fn save(root: &Path, config: &Config) -> Result<()> {
         write_setup(&staging.join(SETUPS).join(numbered(i, &game.name)), game)?;
     }
     for part in [GENERAL, SETUPS] {
-        let target = root.join(part);
+        // The old folder is set aside, not deleted, until the new one is in place: at every
+        // moment one of them is whole, and `saved` reads whichever is there.
+        let (target, old) = (root.join(part), previous(root, part));
         if target.exists() {
-            fs::remove_dir_all(&target).with_context(|| format!("replacing {}", target.display()))?;
+            if old.exists() {
+                fs::remove_dir_all(&old).with_context(|| format!("removing {}", old.display()))?;
+            }
+            fs::rename(&target, &old).with_context(|| format!("replacing {}", target.display()))?;
         }
         fs::rename(staging.join(part), &target).with_context(|| format!("writing {}", target.display()))?;
+        if old.exists() {
+            fs::remove_dir_all(&old).with_context(|| format!("removing {}", old.display()))?;
+        }
     }
     fs::remove_dir_all(&staging)?;
     // Folded into the setups when it was loaded.
@@ -139,6 +147,18 @@ pub fn save(root: &Path, config: &Config) -> Result<()> {
         fs::remove_dir_all(&shared).with_context(|| format!("removing {}", shared.display()))?;
     }
     Ok(())
+}
+
+/// Where a save sets `part` (General or the setups) aside while it puts the new one in place.
+fn previous(root: &Path, part: &str) -> PathBuf {
+    root.join(format!(".{part}.old"))
+}
+
+/// The folder `part` was last saved in whole: itself, or, when a save stopped (or is) between
+/// setting the old one aside and putting the new one in place, the old one.
+fn saved(root: &Path, part: &str) -> PathBuf {
+    let (target, old) = (root.join(part), previous(root, part));
+    if !target.exists() && old.exists() { old } else { target }
 }
 
 /// `config.toml`: the app settings, without the setups, which have folders of their own.
@@ -271,6 +291,26 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("padwight-store-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         dir
+    }
+
+    #[test]
+    fn a_save_cut_short_loses_nothing() {
+        let dir = scratch("cut-short");
+        let path = dir.join("config.toml");
+        let mut config = Config::default();
+        config.games.push(Game::new("Doom", vec![Profile::passthrough("Gamepad")]));
+        config.save_to(&path).unwrap();
+        // A save stopped (a crash, a power cut) after setting the old folders aside, before the
+        // new ones were in place.
+        for part in [GENERAL, SETUPS] {
+            fs::rename(dir.join(part), previous(&dir, part)).unwrap();
+        }
+        assert_eq!(Config::load_from(&path).unwrap(), config, "the old folders are read");
+        config.games.push(Game::new("Hades", vec![Profile::passthrough("Gamepad")]));
+        config.save_to(&path).unwrap();
+        assert_eq!(Config::load_from(&path).unwrap(), config, "the next save carries on");
+        assert!(!previous(&dir, SETUPS).exists() && !dir.join(".saving").exists(), "nothing is left aside");
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]
