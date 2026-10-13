@@ -1,6 +1,6 @@
 # `.padpack` format reference
 
-A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 19**, the format the current app writes. For a walkthrough of building one, see [the Deus Ex tutorial](manual/tutorial-deus-ex.md). The shipped examples are in `packs/`.
+A pack is one game in one file: TOML, in the same shapes the app writes to `config.toml`. This page describes **format 20**, the format the current app writes. For a walkthrough of building one, see [the Deus Ex tutorial](manual/tutorial-deus-ex.md). The shipped examples are in `packs/`.
 
 The easiest way to write a pack is in the app, then **Details → Export…**. Read this page when you want to edit the file by hand, check a value, or understand what the export produced.
 
@@ -47,6 +47,7 @@ Unknown top-level keys are an error, so a typo fails the import rather than bein
 | `name` | The game name. |
 | `version` | Free text, compared as versions (`1.2` is newer than `1.1`). |
 | `author`, `description`, `made_with` | Shown in the import preview. `made_with` is informational, e.g. `"Xbox controller"`. |
+| `native_controller` | Optional, `false` by default. Set it for a game that plays well with a controller by itself: the pack is then not offered when Steam starts the game, because Steam Input looks after it. |
 | `based_on` | Only on forks: a table with `id`, `name`, `author`, `version` of the original. |
 
 ### Rules
@@ -697,7 +698,7 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
 
 ## Versioning
 
-- `format` is an integer. The app writes `18` and reads up to `18`. A pack with a newer `format` is refused with "update the app to import it". Older formats are upgraded when read.
+- `format` is an integer. The app writes `20` and reads up to `20`. A pack with a newer `format` is refused with "update the app to import it". Older formats are upgraded when read.
 - Format history:
   - 2 added layers.
   - 3 added toggles that start on.
@@ -717,6 +718,7 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
   - 17 added modes (`[[modes]]` and the `mode` action), and stopped layers from being toggled. When an older pack is read, each `toggle` of a layer becomes a `mode` switch, and a layer that was only ever toggled becomes a mode.
   - 18 added menu item icons, the typography (`type`), ornaments, background pictures, looping effects (pulsing glows and drifting gradients and scanlines) and rumble cues (`[rumble.<overlay>]`).
   - 19 replaced the menu item `icon` with the `{icon:name}` token, replaced the typography's bold, italic and color and the style's `text` color with inline formatting tags (`{b}`, `{i}`, `{u}`, `{box}`, `{color:…}`), added the `{gyro:…}` and `{trackpad}` tokens, added the `{font:…}` tag, and added the icons, sounds and fonts a pack carries (`[assets]`).
+  - 20 added `native_controller` to `[pack]`.
 - Bump `format` only for a breaking change to the shape. Adding an optional key with a default doesn't need it.
 
 ## Checks
