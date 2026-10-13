@@ -37,7 +37,7 @@ Sizes are lines including tests, at the date above. Passes are ordered by the co
 | 4 | Config and packs | `config.rs`, `config/`, `pack.rs`, `keycode/` | ~10,600 (split: `config.rs` alone, then the rest) | Done, 2026-10-13 |
 | 5 | IPC and process lifecycle | `ipc.rs`, `monitor.rs`, `main.rs`, `tray/`, `quit/`, `record/`, `capture/`, `media/` | ~2,900 | Done, 2026-10-13 |
 | 6 | Overlays and menus | `overlay/`, `menu/`, `info/`, `keyboard/`, `system_menu/`, `radial.rs`, `guide_menu.rs`, `nav.rs`, `layout_editor/` | ~14,300 (split in three) | Done, 2026-10-13 |
-| 7 | Sound, drawing and fonts | `sound/`, `pad_svg/`, `font.rs`, `style.rs`, `icons.rs`, the widgets | ~4,400 | To do |
+| 7 | Sound, drawing and fonts | `sound/`, `pad_svg/`, `font.rs`, `style.rs`, `icons.rs`, the widgets | ~4,400 | Done, 2026-10-13 |
 | 8 | The GUI | `gui.rs`, `gui/` | ~16,100 (split in three) | To do |
 | 9 | Debug tools and integration tests | `debug/`, `tests/` | ~3,200 + tests | To do |
 
@@ -213,6 +213,29 @@ Checked and found sound:
 - Edit Controls reads the config through `get` everywhere but the item page fixed above, so a stale position shows an empty page; fixed pages index tables within their row counts.
 - The overlay window exits when the daemon's stream ends, and the daemon closes whatever was up when the window exits (`check_overlay_process`).
 
+## Pass 7: Sound, drawing and fonts
+
+Read in full: `sound.rs` and `sound/` (`player.rs`, `wav.rs`, `effects.rs`, `synth.rs`, `library.rs`, `kind.rs`), `pad_svg.rs` and `pad_svg/` but for the drawing data in `models.rs` and `parts.rs` (searched for clamps and input values only), `font.rs`, `icons.rs`, `style.rs`, `icon.rs`, `keyword_icon.rs`, `pad_widget.rs`, `touchpad_widget.rs` and `gui/widgets.rs`, and where the daemon and the overlay call into them: the pack assets (`config/assets.rs`), the frame's fonts and icons (`daemon/overlay.rs`, `overlay/ui.rs`). The Windows build was checked with `cargo clippy --target x86_64-pc-windows-msvc --all-targets`.
+
+| ID | File | Finding | Status |
+|---|---|---|---|
+| R7-1 | `icons.rs` | A pack's icon was checked for `<image>`, scripts and `http` links, but the SVG renderer (usvg, under iced) also reads `<feImage href="…">` as a file from disk, whole. A shared pack could draw any picture at a known path, or name `/dev/zero` and run the settings window or the overlay out of memory. Checked with resvg: an icon with an `feImage` naming a local file passed `check_svg` and drew the file. | **Fixed.** Every `href` must name a part of the file itself (`#id`), so an icon can still `<use>` its own shapes. A pack with such an icon is refused on import, and a game file already holding one (imported before, or edited by hand) has the icon left out when its icons are put to use (`set_pack_icons`). Tests: `an_icon_can_t_read_a_file_from_disk`, `a_game_s_icon_that_fails_the_check_is_never_drawn`. |
+| R7-2 | `sound/player.rs` | The sound thread ended for good the first time the audio device didn't open (no output plugged in, the sound server restarting, Bluetooth headphones the only output and off), so overlay sounds stayed silent until the daemon or settings window restarted, and nothing said why. | **Fixed.** That cue is dropped and the next one tries again; the first failure is logged. Test: `a_device_that_won_t_open_drops_that_cue_and_the_next_tries_again`. Desktop check H-13. |
+| R7-3 | `font.rs`, `overlay/ui.rs` | Every frame names the pack's font files, and the overlay read and hashed each one (up to 1 MB) on every frame it took, which is every input event while an overlay is up, on its drawing thread. Only games whose pack carries fonts. | **Fixed.** The files are read again only when the frame names different ones. Test: `the_overlay_reads_a_pack_s_font_files_once_not_every_frame`. |
+| R7-4 | `font.rs` | The daemon shares a pack's fonts with the overlay as files in the runtime folder. Windows has none unless `XDG_RUNTIME_DIR` is set, so on Windows the overlays never drew a pack's own fonts. | **Fixed.** On Windows they go in the user's local app data. Needs Windows: H-14. |
+| R7-5 | `font.rs` | A shared font file was used as it was whenever it existed, so one cut short (the daemon ending while writing it) stayed broken until logout cleared the runtime folder. | **Fixed.** A file of the wrong length is written again. Test: `a_shared_font_file_cut_short_is_written_again`. |
+| R7-6 | `touchpad_widget.rs` | The Touchpad tab drew a radial menu of one item as an arc from a point back to itself, which SVG leaves out, so the side was blank and a finger on it lit nothing. (The overlay's ring already draws this case as a circle.) | **Fixed.** One item fills its side. Test: `a_ring_of_one_item_fills_its_side_and_lights_up`. `gui/ring_preview.rs` draws its wedges the same way and is left for pass 8, if a ring can have one sector. |
+| R7-7 | `sound/player.rs` | `Sounds::play` said cues queue up behind each other. Each plays on its own player, so they overlap. | **Fixed:** the comment now says so. Overlapping is what a fast-moving cursor wants. |
+| R7-8 | `daemon/overlay.rs` | Each frame carries the pack's icons as SVG text (up to 64 KB each), and the overlay compares them with the last ones. | **Open, minor.** Only games whose pack carries icons. Could be sent when they change, as fonts now are read. |
+
+Checked and found sound:
+
+- `decode_wav` reads chunk sizes from the file but slices within it, needs a format and data chunk, refuses a zero rate or channel count and anything over 8 seconds, and does the length check in seconds, so a file claiming a rate of 1 Hz can't make a huge buffer. Resampling stays inside the samples for every rate a file can claim (the rounding error is a few hundredths of a step at most), and an empty result plays as silence.
+- Every cue setting is clamped where it's used, and `nan` and `inf` can't reach them (R6-2). The echo and reverb tails stay finite for settings near 0.
+- Pack sounds and fonts are size-checked when a pack is loaded (`PackAssets::check`), and fonts again when loaded from a file.
+- The controller drawing writes no text into the SVG, so a mapping label can't break it; stick and trigger values are clamped before drawing. Label rows fit both columns with every input labeled, and the leader-line uncrossing is bounded.
+- Locks in `font.rs`, `icons.rs` and `sound/wav.rs` are never held across anything slow but a font load, and recover from poisoning.
+
 ## Tools for checking findings
 
 Tools added in pass 0:
@@ -250,3 +273,5 @@ These can't be checked without real controllers and Steam. When they pass, they 
 | H-10 | On Windows, force quit a game started from a launcher (Steam, Epic): the game and its helpers end, the launcher and Explorer don't. Take a screenshot in Prince of Persia: The Sands of Time: it is saved under `Prince of Persia - The Sands of Time`. | R5-3, R5-4, R5-6 |
 | H-11 | With a game that has a rule in front, open the in-game menu (Guide + Start) and change the rumble strength in Quick Settings. Bring another window or the desktop to the front with the mouse. The menu keeps showing the game's values, and the log shows no profile switch until the menu closes; then it switches. Open the menu again, change the rumble, switch profile on the Profile row, and Discard: `config.toml` still has the old rumble strength. | R6-5, R6-6 |
 | H-12 | Open the in-game menu, then save a change in the settings window. The in-game menu closes; opened again, it shows the settings window's values, and closing it asks nothing. | R6-4 |
+| H-13 | Turn off or unplug every audio output, open a menu overlay and move its cursor, then plug one back in and move it again. The daemon's log says once that there is no audio device; the cues sound again once the output is back, without a restart. | R7-2 |
+| H-14 | On Windows, with a game whose pack carries a font used by an info overlay, bring the game up. The overlay draws in the pack's font. | R7-4 |

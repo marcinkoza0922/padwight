@@ -133,6 +133,11 @@ impl PadPicture<'_> {
                             let _ = write!(s, r#"<rect x="{ax}" y="{ay}" width="{}" height="{}" fill="{fill}" fill-opacity="{opacity}" stroke="{EDGE}"/>"#, bx - ax, by - ay);
                         }
                         ItemShape::Hidden => {}
+                        // One item takes the whole circle, which an arc can't draw: the whole side.
+                        ItemShape::Slice(a, b) if b - a >= 359.9 => {
+                            slices = true;
+                            let _ = write!(s, r#"<rect x="{}" y="0" width="{}" height="{}" fill="{fill}" fill-opacity="{opacity}"/>"#, area.x, area.w, area.h);
+                        }
                         ItemShape::Slice(a, b) => {
                             slices = true;
                             let ((cx, cy), (sx, sy), (ex, ey)) = (area.polar(0.0, 0.0), area.polar(a, reach), area.polar(b, reach));
@@ -269,5 +274,23 @@ mod tests {
         let area = &picture.areas()[0];
         assert_eq!(picture.picked(area, menus[0]), [1]);
         assert!(picture.svg().contains(ACCENT));
+    }
+
+    #[test]
+    fn a_ring_of_one_item_fills_its_side_and_lights_up() {
+        use resvg::{tiny_skia, usvg};
+        let items = vec![MenuItem::new("A", ButtonAction::Disabled)];
+        let menu = Menu { name: "Ring".into(), kind: MenuKind::Radial { stick: Stick::Right, boxes: false }, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() };
+        let cfg = TouchpadConfig { motion: TouchpadMotion::Menu { menu: "Ring".into(), choose: TouchChoose::Click, overlay: true }, ..TouchpadConfig::default() };
+        let menus = [&menu];
+        let picture = PadPicture { settings: Some((&cfg, &menus)), touches: &[(0.1, 0.2)], click: false, height: 0.5, width: 300.0 };
+        let tree = usvg::Tree::from_str(&picture.svg(), &usvg::Options::default()).unwrap();
+        let mut pixmap = tiny_skia::Pixmap::new(300, 150).unwrap();
+        resvg::render(&tree, tiny_skia::Transform::identity(), &mut pixmap.as_mut());
+        // Away from the finger and the hub, the picked item's blue shows.
+        for (x, y) in [(270, 120), (150, 20), (60, 110)] {
+            let p = pixmap.pixel(x, y).unwrap();
+            assert!(p.blue() > p.red() + 50, "({x}, {y}) is {p:?}");
+        }
     }
 }

@@ -78,6 +78,7 @@ Each item has the expected result in the last column. Record the OS, compositor,
 | O-5 | Info overlays and the live controller drawing, with layers on. | Labels show the layer's mappings. They don't overlap or overflow. |
 | O-6 | Open the in-game menu over a game with a rule, change a setting, then bring another window to the front with the mouse. Switch profile on Quick Settings' Profile row and Discard (code review H-11). | The menu keeps editing the game; the profile follows the window only once the menu closes. After Discard, `config.toml` has the settings as they were. |
 | O-7 | With the in-game menu open, save a change in the settings window (code review H-12). | The in-game menu closes, and opened again shows the new values without asking about unsaved changes. |
+| O-8 | Turn off every audio output, move a menu overlay's cursor, then turn one back on and move it again (code review H-13). | The log says once that there is no audio device. The cues sound again without a restart. |
 
 ### 3.4 Games and packs
 
@@ -136,6 +137,7 @@ These need a person with the controller in hand. Record the values used, so a ch
 | I-11 | On Windows at 125% or 150% scaling, look at the tray icon, then switch profiles 50 times (code review H-8). | The icon looks right. Task Manager's GDI objects for Padwight stay flat. |
 | I-12 | On Windows, start a recording, then end the daemon from Task Manager (code review H-9). | ffmpeg stops, and the file plays. If not, R5-12 needs a fix. |
 | I-13 | On Windows, force quit a launcher-started game, and take a screenshot in a game whose name has a colon (code review H-10). | Only the game and its helpers end. The screenshot is saved, in a folder with ` - ` for the colon. |
+| I-14 | On Windows, show an info overlay set in a font the game's pack carries (code review H-14). | The overlay draws in the pack's font. |
 
 ## 4. Security review (for a human)
 
