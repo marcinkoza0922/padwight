@@ -76,6 +76,8 @@ Each item has the expected result in the last column. Record the OS, compositor,
 | O-3 | Hold and toggle layers, stack two layers, and change profiles while a layer is held. | Layer behaviour matches `docs/development/layers.md`. Held layers end on profile change. |
 | O-4 | Open a menu from a stick direction and a combo. Pick an item several times. | Items fire once each. The menu stays up while the input is held. |
 | O-5 | Info overlays and the live controller drawing, with layers on. | Labels show the layer's mappings. They don't overlap or overflow. |
+| O-6 | Open the in-game menu over a game with a rule, change a setting, then bring another window to the front with the mouse. Switch profile on Quick Settings' Profile row and Discard (code review H-11). | The menu keeps editing the game; the profile follows the window only once the menu closes. After Discard, `config.toml` has the settings as they were. |
+| O-7 | With the in-game menu open, save a change in the settings window (code review H-12). | The in-game menu closes, and opened again shows the new values without asking about unsaved changes. |
 
 ### 3.4 Games and packs
 

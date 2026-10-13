@@ -390,3 +390,11 @@ fn an_update_keeps_the_icons_the_player_added() {
     assert!(kept.assets.icons.contains_key("mine"));
     assert_eq!(kept.assets.icons["shared"], "<svg>new</svg>");
 }
+
+#[test]
+fn a_pack_with_a_number_that_isn_t_finite_is_refused() {
+    let mut config = setup();
+    config.games[0].menu_style = Some(OverlayStyle { scale: f32::NAN, ..OverlayStyle::default() });
+    let text = export(&config.games[0], &draft(&config.games[0], false)).pack.to_toml().unwrap();
+    assert!(parse(&text).unwrap_err().to_string().contains("menu_style.scale"));
+}

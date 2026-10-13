@@ -3,7 +3,7 @@
 
 use std::time::Instant;
 
-use super::{Daemon, RECENT_WINDOWS, describe, layered, with_fallback};
+use super::{Active, Daemon, RECENT_WINDOWS, describe, layered, with_fallback};
 use crate::{
     config::ProfileRef,
     focus::{self, FocusEvent},
@@ -24,6 +24,9 @@ impl Daemon {
         self.focused = Some(window.clone());
         if self.info_refresh.is_some() {
             self.broadcast_overlay();
+        }
+        if self.focus_waits() {
+            return;
         }
         if self.hand_to_steam(window) {
             // Steam has the controllers, but the last game's profile no longer fits what's in front.
@@ -71,9 +74,39 @@ impl Daemon {
     /// Nothing has focus (the desktop, or an empty workspace), so no game's rules apply.
     pub(super) fn window_unfocused(&mut self) {
         self.focused = None;
+        if self.focus_waits() {
+            return;
+        }
         self.take_pads_back();
         if self.config.auto_switch.enabled {
             self.leave_game("no window has focus");
+        }
+    }
+
+    fn in_game_menu_open(&self) -> bool {
+        matches!(self.active, Some(Active::Settings(..)))
+    }
+
+    /// Whether a focus change waits: the in-game menu edits the game that was in front when it
+    /// opened, so switching under it would change what it edits, and handing the game to Steam
+    /// would take the controller it is driven by. Notes that one waited, for
+    /// [`Daemon::catch_up_on_focus`].
+    fn focus_waits(&mut self) -> bool {
+        let open = self.in_game_menu_open();
+        self.focus_waited |= open;
+        open
+    }
+
+    /// Handles the window in front once the in-game menu has closed, if focus moved while it was
+    /// open. Only then: a profile chosen in the menu isn't undone by the rules.
+    pub(super) fn catch_up_on_focus(&mut self) {
+        if !self.focus_waited || self.in_game_menu_open() {
+            return;
+        }
+        self.focus_waited = false;
+        match self.focused.clone() {
+            Some(window) => self.window_focused(&window),
+            None => self.window_unfocused(),
         }
     }
 
@@ -114,6 +147,10 @@ impl Daemon {
     pub(super) fn scan_processes(&mut self) {
         let no_rules = focus::rules(&self.config).next().is_none();
         if self.focus_backend != FocusBackend::ProcessScan || !self.config.auto_switch.enabled || no_rules {
+            return;
+        }
+        // The scan after the in-game menu closes sees what changed while it was open.
+        if self.in_game_menu_open() {
             return;
         }
         let processes = focus::running_processes();

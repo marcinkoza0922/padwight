@@ -267,3 +267,9 @@ fn keyboard_and_mouse_output_is_logged_with_key_and_mouse_glyphs() {
     let glyph = super::view::input_glyph(&Input::Key("KEY_W".into()), crate::info::PadFamily::Xbox, false);
     assert_eq!(glyph, [crate::info::key_glyph("KEY_W")]);
 }
+
+#[test]
+fn a_fade_too_long_for_a_duration_keeps_lines_rather_than_crashing() {
+    let s = InputLogSettings { fade_after: f32::INFINITY, ..InputLogSettings::default() };
+    assert!(line_life(&s).is_some_and(|life| life > Duration::from_secs(3600)));
+}

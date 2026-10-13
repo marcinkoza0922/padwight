@@ -212,7 +212,7 @@ pub fn log_view(entries: &[Entry], s: &InputLogSettings, style: &OverlayStyle, g
 }
 
 fn fade_after(s: &InputLogSettings) -> Option<Duration> {
-    (s.fade_after > 0.0).then(|| Duration::from_secs_f32(s.fade_after))
+    (s.fade_after > 0.0).then(|| crate::info::seconds(s.fade_after))
 }
 
 /// When something shown from these entries next changes on its own: the time each

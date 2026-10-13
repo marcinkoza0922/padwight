@@ -205,7 +205,7 @@ fn write_setup(dir: &Path, game: &Game) -> Result<()> {
 fn read_setup(dir: &Path) -> Result<Game> {
     let path = dir.join(SETUP_FILE);
     let text = fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
-    let mut game: Game = toml::from_str(&text).with_context(|| format!("parsing {}", path.display()))?;
+    let mut game: Game = super::finite::from_toml(&text).with_context(|| format!("parsing {}", path.display()))?;
     game.profiles = read_items(&dir.join("profiles"))?;
     game.layers = read_items(&dir.join("layers"))?;
     game.modes = read_items(&dir.join("modes"))?;
@@ -247,7 +247,7 @@ fn read_items<T: DeserializeOwned>(dir: &Path) -> Result<Vec<T>> {
         .iter()
         .map(|path| {
             let text = fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
-            toml::from_str(&text).with_context(|| format!("parsing {}", path.display()))
+            super::finite::from_toml(&text).with_context(|| format!("parsing {}", path.display()))
         })
         .collect()
 }

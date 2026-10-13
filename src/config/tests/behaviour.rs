@@ -290,3 +290,30 @@ fn a_game_s_mode_named_like_a_built_in_one_never_replaces_it() {
     let config = Config::default();
     assert_eq!(config.mode_for(&game, GUIDE_MODE).as_deref(), Some(&Layer::guide()));
 }
+
+#[test]
+fn a_config_with_a_number_that_isn_t_finite_is_refused_naming_where() {
+    let dir = scratch_dir("not-finite");
+    let path = dir.join("config.toml");
+    let mut config = Config::default();
+    config.general.info.push(InfoOverlay {
+        name: "Sheet".into(),
+        always: false,
+        on_start: None,
+        linger: Some(f32::INFINITY),
+        title: None,
+        current_input: Default::default(),
+        style: OverlayStyle::info(),
+        rows: Vec::new(),
+    });
+    config.save_to(&path).unwrap();
+    let err = format!("{:#}", Config::load_from(&path).unwrap_err());
+    assert!(err.contains("linger") && err.contains("Sheet"), "{err}");
+
+    config.general.info.clear();
+    config.rumble_strength = f32::NAN;
+    config.save_to(&path).unwrap();
+    let err = format!("{:#}", Config::load_from(&path).unwrap_err());
+    assert!(err.contains("rumble_strength") && err.contains("config.toml"), "{err}");
+    let _ = std::fs::remove_dir_all(&dir);
+}

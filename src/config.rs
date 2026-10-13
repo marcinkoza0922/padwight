@@ -17,6 +17,7 @@ mod ornament;
 mod performance;
 pub mod rumble_cues;
 mod shortcuts;
+mod finite;
 mod store;
 mod style;
 mod summary;
@@ -32,6 +33,7 @@ pub use menus::*;
 pub use layers::*;
 
 pub use curve::*;
+pub use finite::check_finite;
 pub use guide::*;
 pub use gyro::*;
 pub use log::*;
@@ -1879,7 +1881,7 @@ impl Config {
             Config::default()
         } else {
             let text = std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
-            toml::from_str(&text).with_context(|| format!("parsing {}", path.display()))?
+            finite::from_toml(&text).with_context(|| format!("parsing {}", path.display()))?
         };
         store::load(store::root_of(path), &mut config)?;
         config.shortcuts = std::mem::take(&mut config.shortcuts).sanitized();

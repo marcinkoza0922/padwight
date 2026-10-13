@@ -2,12 +2,7 @@
 //! (drawn for the kind of controller in use) and live values such as the time or CPU load.
 //! The daemon resolves an [`InfoOverlay`] into an [`InfoView`] for the overlay window.
 
-use std::{
-    collections::{HashMap, HashSet},
-    fs,
-    path::Path,
-    time::{Duration, Instant},
-};
+use std::{fs, path::Path, time::Instant};
 
 #[cfg(target_os = "linux")]
 use std::sync::OnceLock;
@@ -18,6 +13,7 @@ mod catalog;
 mod guide;
 mod opener;
 mod pad_model;
+mod timers;
 #[cfg(windows)]
 mod windows;
 
@@ -30,6 +26,9 @@ pub use catalog::{Entry, Fold, folds};
 pub use guide::{DEFAULT_MODE, GuideView};
 pub use opener::{OpenerLabel, set_menu_keys, set_opener, set_panel_keys};
 pub use pad_model::PadModel;
+pub use timers::{Timers, Toast, fade, redraw_at, seconds};
+#[cfg(test)]
+pub use timers::FADE_OUT;
 
 use crate::config::{Button, CurrentInput, GestureKind, InfoOverlay, Layer, MouseButton, OverlayStyle, ScreenPosition, Stick, Trigger};
 
@@ -541,154 +540,12 @@ fn opaque() -> f32 {
     1.0
 }
 
-/// How long an info overlay takes to fade out at the end of its time.
 /// The colors of the face buttons and of the gesture badges, which share them.
 const GREEN: [u8; 3] = [0x3c, 0xa0, 0x3c];
 const RED: [u8; 3] = [0xc8, 0x3c, 0x3c];
 const BLUE: [u8; 3] = [0x2f, 0x6c, 0xc8];
 const YELLOW: [u8; 3] = [0xc8, 0xa0, 0x1e];
 
-pub const FADE_OUT: std::time::Duration = std::time::Duration::from_millis(600);
-
-/// Info overlays shown for a while rather than steadily: at the game's start, or lingering
-/// after the action holding them lets go.
-#[derive(Debug, Default)]
-pub struct Timers {
-    /// Shown for the game's start, and when each goes.
-    start: HashMap<String, Instant>,
-    /// Let go and lingering, and when each goes.
-    lingering: HashMap<String, Instant>,
-    /// What actions held up when last updated, to notice them let go.
-    held: HashSet<String>,
-}
-
-impl Timers {
-    /// The game started: its overlays set to show then do, for their time.
-    pub fn game_started(&mut self, overlays: &[InfoOverlay], now: Instant) {
-        self.start = overlays
-            .iter()
-            .filter_map(|o| o.on_start.map(|s| (o.name.clone(), now + Duration::from_secs_f32(s.max(0.0)))))
-            .collect();
-    }
-
-    /// Another game: nothing timed carries over.
-    pub fn clear(&mut self) {
-        self.start.clear();
-        self.lingering.clear();
-    }
-
-    /// Notes what actions hold up now. Overlays let go since last time stay their linger time.
-    pub fn update(&mut self, held: HashSet<String>, overlays: &[InfoOverlay], now: Instant) {
-        self.update_with(held, |name| overlays.iter().find(|o| o.name == name).and_then(|o| o.linger), now);
-    }
-
-    /// Like [`Timers::update`], for overlays whose lingering `linger` looks up by name.
-    pub fn update_with(&mut self, held: HashSet<String>, linger: impl Fn(&str) -> Option<f32>, now: Instant) {
-        for name in self.held.difference(&held) {
-            if let Some(s) = linger(name) {
-                self.lingering.insert(name.clone(), now + Duration::from_secs_f32(s.max(0.0)));
-            }
-        }
-        self.lingering.retain(|name, end| !held.contains(name) && *end > now);
-        self.start.retain(|_, end| *end > now);
-        self.held = held;
-    }
-
-    /// Held up by an action right now.
-    pub fn held(&self, name: &str) -> bool {
-        self.held.contains(name)
-    }
-
-    /// Shown for a while right now.
-    pub fn timed(&self, name: &str) -> bool {
-        self.start.contains_key(name) || self.lingering.contains_key(name)
-    }
-
-    /// How visible a timed overlay is (0 once its time is up).
-    pub fn opacity(&self, name: &str, now: Instant) -> f32 {
-        [self.start.get(name), self.lingering.get(name)]
-            .into_iter()
-            .flatten()
-            .filter_map(|end| fade(now, *end))
-            .fold(0.0, f32::max)
-    }
-
-    /// When the overlay next needs redrawing for a timed overlay: as one starts to fade, then
-    /// every frame while it does.
-    pub fn next_redraw(&self, now: Instant, frame: Duration) -> Option<Instant> {
-        self.start
-            .values()
-            .chain(self.lingering.values())
-            .map(|end| redraw_at(*end, now, frame))
-            .min()
-    }
-}
-
-/// When something due to go at `end` next needs redrawing: as it starts to fade, then every
-/// frame while it does.
-pub fn redraw_at(end: Instant, now: Instant, frame: Duration) -> Instant {
-    let fading = end.checked_sub(FADE_OUT).unwrap_or(now);
-    if now >= fading { now + frame } else { fading }
-}
-
-/// How long a toast stays up, including its fade.
-pub const TOAST_TIME: Duration = Duration::from_millis(2500);
-
-/// A short notice (such as the profile just switched to), drawn like an info overlay at the
-/// top of the screen and fading out after [`TOAST_TIME`].
-#[derive(Debug, Clone, PartialEq)]
-pub struct Toast {
-    lines: Vec<String>,
-    end: Instant,
-    /// A bar under the lines that fills from `.0` over `.1`: how long a hold has left to go.
-    progress: Option<(Instant, Duration)>,
-}
-
-/// How often a toast's bar redraws while it fills.
-const BAR_FRAME: Duration = Duration::from_millis(50);
-
-impl Toast {
-    pub fn new(lines: Vec<String>, now: Instant) -> Self {
-        Self::lasting(lines, now, TOAST_TIME)
-    }
-
-    /// A toast that stays up for `length`, fade included, for something worth reading twice.
-    pub fn lasting(lines: Vec<String>, now: Instant, length: Duration) -> Self {
-        Toast { lines, end: now + length, progress: None }
-    }
-
-    /// A toast with a bar that fills over `length`, for a button held that long; it stays until
-    /// replaced or dropped.
-    pub fn filling(lines: Vec<String>, now: Instant, length: Duration) -> Self {
-        Toast { lines, end: now + length + TOAST_TIME, progress: Some((now, length)) }
-    }
-
-    /// What to draw now, or `None` once it's gone.
-    pub fn view(&self, now: Instant) -> Option<InfoView> {
-        let opacity = fade(now, self.end)?;
-        let mut rows: Vec<Vec<Vec<Segment>>> = self.lines.iter().map(|l| vec![vec![Segment::Text(l.clone())]]).collect();
-        if let Some((start, length)) = self.progress {
-            let done = now.saturating_duration_since(start).as_secs_f32() / length.as_secs_f32().max(f32::EPSILON);
-            rows.push(vec![vec![Segment::Bar(done.min(1.0))]]);
-        }
-        Some(InfoView { name: "toast".into(), style: OverlayStyle::toast(), title: None, rows, opacity })
-    }
-
-    pub fn next_redraw(&self, now: Instant, frame: Duration) -> Instant {
-        let fading = redraw_at(self.end, now, frame);
-        match self.progress {
-            Some((start, length)) if now < start + length => fading.min(now + BAR_FRAME),
-            _ => fading,
-        }
-    }
-}
-
-/// How visible an overlay due to go at `end` is at `now`: 1 until its last moments, then
-/// fading to 0; `None` once it's gone.
-pub fn fade(now: std::time::Instant, end: std::time::Instant) -> Option<f32> {
-    let left = end.checked_duration_since(now).filter(|d| !d.is_zero())?;
-    Some((left.as_secs_f32() / FADE_OUT.as_secs_f32()).min(1.0))
-}
 
 /// Splits a cell into text and tokens. Unknown `{words}` stay as they are.
 pub fn parse(cell: &str) -> Vec<Result<String, Token>> {

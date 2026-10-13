@@ -123,8 +123,10 @@ impl Daemon {
         if new.general.profiles.is_empty() {
             return Response::Error("General must have at least one profile".into());
         }
-        // An open menu refers to menus by position, which the new config may change.
-        if matches!(self.active, Some(Active::Menu { .. })) {
+        // An open menu refers to menus by position, which the new config may change. The
+        // in-game menu edits the config it opened over: its Discard would put that back over
+        // the new one, and its question would ask about changes made elsewhere.
+        if matches!(self.active, Some(Active::Menu { .. } | Active::Settings(..))) {
             self.close_overlay();
         }
         // The mode stays on; it applies again if the game still has it.

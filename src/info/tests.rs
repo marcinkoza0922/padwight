@@ -1,14 +1,4 @@
 #[test]
-fn a_filling_toast_draws_its_bar_and_redraws_while_it_fills() {
-    let t0 = Instant::now();
-    let toast = Toast::filling(vec!["Keep holding".into()], t0, Duration::from_secs(2));
-    let bar = |at| toast.view(at).unwrap().rows.last().unwrap()[0][0].clone();
-    assert_eq!(bar(t0), Segment::Bar(0.0));
-    assert_eq!(bar(t0 + Duration::from_secs(1)), Segment::Bar(0.5));
-    assert!(toast.next_redraw(t0, Duration::from_millis(33)) <= t0 + BAR_FRAME);
-}
-
-#[test]
 fn the_guide_layer_sheet_lists_what_it_binds() {
     let sheet = layer_sheet(&Layer::guide());
     let cells: Vec<&String> = sheet.rows.iter().flatten().collect();
@@ -169,64 +159,6 @@ fn live_values_and_unknown_braces() {
     assert_eq!(resolve(&layer, &live).rows[0][0], vec![Segment::Text("Layer: Hotkeys + Build".into())]);
     live.layers.clear();
     assert_eq!(resolve(&layer, &live).rows[0][0], vec![Segment::Text("Layer: —".into())]);
-}
-
-#[test]
-fn overlays_fade_out_at_the_end_of_their_time() {
-    let now = std::time::Instant::now();
-    let s = std::time::Duration::from_secs_f32;
-    assert_eq!(fade(now, now + s(5.0)), Some(1.0));
-    let half = fade(now, now + FADE_OUT / 2).unwrap();
-    assert!((half - 0.5).abs() < 0.01, "{half}");
-    assert_eq!(fade(now, now), None);
-    assert_eq!(fade(now + s(1.0), now), None);
-}
-
-#[test]
-fn toasts_show_their_lines_then_fade_away() {
-    let now = Instant::now();
-    let toast = Toast::new(vec!["Doom".into(), "Play".into()], now);
-    let view = toast.view(now).unwrap();
-    assert_eq!(view.rows, [[[Segment::Text("Doom".into())]], [[Segment::Text("Play".into())]]]);
-    assert_eq!(view.opacity, 1.0);
-    assert_eq!(toast.next_redraw(now, Duration::from_millis(33)), now + TOAST_TIME - FADE_OUT);
-    assert!(toast.view(now + TOAST_TIME - FADE_OUT / 2).unwrap().opacity < 1.0);
-    assert_eq!(toast.view(now + TOAST_TIME), None);
-}
-
-#[test]
-fn timed_overlays_show_at_start_and_linger_after_release() {
-    let now = Instant::now();
-    let s = Duration::from_secs_f32;
-    let mut start = overlay(&[&["Loaded"]]);
-    start.name = "Loaded".into();
-    start.on_start = Some(3.0);
-    let mut sheet = overlay(&[&["{south} Jump"]]);
-    sheet.name = "Sheet".into();
-    sheet.linger = Some(2.0);
-    let overlays = [start, sheet];
-    let mut t = Timers::default();
-
-    t.game_started(&overlays, now);
-    assert!(t.timed("Loaded") && !t.timed("Sheet"));
-    assert_eq!(t.opacity("Loaded", now + s(1.0)), 1.0);
-    assert!(t.next_redraw(now, s(0.03)).is_some_and(|w| w > now + s(2.0)), "wakes as it starts to fade");
-
-    // Held, then let go: it lingers, fading at the end, and holding it again ends that.
-    t.update(HashSet::from(["Sheet".to_string()]), &overlays, now);
-    assert!(t.held("Sheet") && !t.timed("Sheet"));
-    t.update(HashSet::new(), &overlays, now + s(1.0));
-    assert!(t.timed("Sheet") && !t.held("Sheet"));
-    assert!(t.opacity("Sheet", now + s(3.0) - FADE_OUT / 2) < 0.6);
-    t.update(HashSet::from(["Sheet".to_string()]), &overlays, now + s(1.5));
-    assert!(!t.timed("Sheet"));
-
-    // Time's up for the start one.
-    t.update(HashSet::new(), &overlays, now + s(4.0));
-    assert!(!t.timed("Loaded"));
-    assert_eq!(t.opacity("Loaded", now + s(4.0)), 0.0);
-    t.clear();
-    assert!(!t.timed("Sheet"));
 }
 
 #[test]
@@ -421,3 +353,4 @@ fn gesture_tokens_are_badges_in_their_colors() {
     assert_eq!(badge(GestureKind::TripleTap), ("×3".to_string(), Some(RED), true), "a red circle");
     assert_eq!(badge(GestureKind::LongPress), ("hold".to_string(), Some(YELLOW), false), "a yellow rounded box");
 }
+
