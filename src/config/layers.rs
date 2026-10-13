@@ -187,6 +187,15 @@ pub fn combo_key(buttons: &[Button]) -> Vec<Button> {
     key
 }
 
+/// The first combo with the same buttons as one before it. Two combos can't share buttons: one
+/// combo does several things with "Several at once" ([`ButtonAction::Multi`]).
+pub fn duplicate_combo(combos: &[Combo]) -> Option<usize> {
+    (1..combos.len()).find(|&i| {
+        let key = combo_key(&combos[i].buttons);
+        combos[..i].iter().any(|c| combo_key(&c.buttons) == key)
+    })
+}
+
 impl Layer {
     pub fn new(name: &str) -> Self {
         Layer {

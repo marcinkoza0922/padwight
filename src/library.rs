@@ -90,6 +90,12 @@ pub fn problems(pack: &Pack) -> Vec<String> {
             problems.push(format!("presses unknown key {k:?}"));
         }
     }
+    let combos = game.profiles.iter().map(|p| (&p.name, &p.combos)).chain(game.layers.iter().chain(&game.modes).map(|l| (&l.name, &l.combos)));
+    for (name, combos) in combos {
+        if let Some(i) = crate::config::duplicate_combo(combos) {
+            problems.push(format!("{name} has two combos of {:?}", combos[i].buttons));
+        }
+    }
     // Players with a plain pad must get something.
     if !pack.profiles.iter().any(|p| p.usable_with(&[])) {
         problems.push("has no profile that works on a plain pad".into());

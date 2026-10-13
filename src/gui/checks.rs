@@ -242,10 +242,33 @@ pub(super) fn section_has_problem(p: &Profile, tab: ProfileTab, names: &Names) -
             let two_flicks = [Stick::Left, Stick::Right].into_iter().all(|s| matches!(p.stick(s).action, StickAction::Flick { .. }));
             zones || triggers || rings || two_flicks
         }
-        ProfileTab::Combos => p.combos.iter().any(|c| c.buttons.len() < 2 || bad(&c.action)),
+        ProfileTab::Combos => combos_problem(&p.combos).is_some() || p.combos.iter().any(|c| bad(&c.action)),
         ProfileTab::Touchpad => p.touchpad.actions().into_iter().any(bad) || super::touchpad::touchpad_problem(&p.touchpad, names).is_some(),
         ProfileTab::Gyro | ProfileTab::Guide => false,
     }
+}
+
+/// Why combo `i` can't be saved, apart from its action, as its row says it.
+pub(super) fn combo_problem(combos: &[Combo], i: usize) -> Option<String> {
+    let combo = combos.get(i)?;
+    if combo.buttons.len() < 2 {
+        return Some("needs at least two buttons".into());
+    }
+    let key = crate::config::combo_key(&combo.buttons);
+    combos[..i]
+        .iter()
+        .any(|c| crate::config::combo_key(&c.buttons) == key)
+        .then(|| "another combo has these buttons: give that one “Several at once…” instead".into())
+}
+
+/// The first thing saving would reject in a list of combos, apart from their actions.
+fn combos_problem(combos: &[Combo]) -> Option<String> {
+    if let Some(c) = combos.iter().find(|c| c.buttons.len() < 2) {
+        return Some(format!("a combo needs at least two buttons (has {}).", c.buttons.len()));
+    }
+    let i = crate::config::duplicate_combo(combos)?;
+    let buttons = combos[i].buttons.iter().map(|b| short_button(*b)).collect::<Vec<_>>().join(" + ");
+    Some(format!("two combos are {buttons}. Give one of them “Several at once…” to do both things."))
 }
 
 pub(super) fn macros_have_problem(macros: &[Macro], names: &Names) -> bool {
@@ -350,7 +373,8 @@ fn bad_target(p: &Profile, names: &Names) -> Option<Target> {
         all.extend(p.stick(s).action.ring_actions().iter().enumerate().map(|(i, a)| (Target::RingSector(s, i), a)));
     }
     all.extend(p.touchpad.slots().into_iter().filter_map(|slot| p.touchpad.slot(slot).map(|a| (Target::Touch(slot), a))));
-    all.into_iter().find(|(_, a)| action_problem(a, names).is_some()).map(|(t, _)| t)
+    let action = all.into_iter().find(|(_, a)| action_problem(a, names).is_some()).map(|(t, _)| t);
+    action.or_else(|| (0..p.combos.len()).find(|&i| combo_problem(&p.combos, i).is_some()).map(Target::Combo))
 }
 
 impl App {
@@ -391,8 +415,8 @@ pub(super) fn game_problem(config: &Config, g: &Game) -> Option<String> {
         }) {
             return Some(format!("Profile “{}”: {problem}.", p.name));
         }
-        if let Some(c) = p.combos.iter().find(|c| c.buttons.len() < 2) {
-            return Some(format!("Profile “{}”: a combo needs at least two buttons (has {}).", p.name, c.buttons.len()));
+        if let Some(problem) = combos_problem(&p.combos) {
+            return Some(format!("Profile “{}”: {problem}", p.name));
         }
         let analogs = [
             Analog::Stick(Stick::Left),
@@ -452,8 +476,8 @@ fn shifts_problem(list: &[crate::config::Layer], kind: ItemKind, names: &Names) 
         if let Some(problem) = l.actions().into_iter().find_map(|a| action_problem(a, names)) {
             return Some(format!("{label}: {problem}."));
         }
-        if let Some(c) = l.combos.iter().find(|c| c.buttons.len() < 2) {
-            return Some(format!("{label}: a combo needs at least two buttons (has {}).", c.buttons.len()));
+        if let Some(problem) = combos_problem(&l.combos) {
+            return Some(format!("{label}: {problem}"));
         }
         let zones = [&l.left_stick, &l.right_stick].into_iter().flatten().flat_map(|s| &s.zones);
         let zones = zones.chain([&l.left_trigger, &l.right_trigger].into_iter().flatten().flat_map(|t| &t.zones));
@@ -511,69 +535,4 @@ impl App {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn button_menu_items_nothing_can_pick_are_warned_about() {
-        let item = |button| MenuItem { button, ..MenuItem::new("x", ButtonAction::Disabled) };
-        let menu = |name: &str, items| Menu { name: name.into(), kind: MenuKind::Buttons, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() };
-        let quick = menu("Quick", vec![item(Some(Button::LeftBumper)), item(Some(Button::South)), item(Some(Button::South)), item(None)]);
-        let sub = menu("Sub", vec![item(Some(Button::RightBumper))]);
-        let mut profile = Profile::passthrough("p");
-        profile.set_button(Button::LeftBumper, ButtonAction::OpenMenu("Quick".into()));
-        profile.combos.push(Combo { buttons: vec![Button::Select, Button::RightBumper], action: ButtonAction::OpenMenu("Quick".into()) });
-        let mut game = Game::new("g", vec![profile]);
-        game.menus = vec![quick.clone(), sub.clone()];
-        game.menus[0].items[1].action = ButtonAction::OpenMenu("Sub".into());
-
-        let openers = menu_openers(&game, "Quick");
-        assert_eq!(openers, [vec![Button::LeftBumper], vec![Button::Select, Button::RightBumper]]);
-        assert!(button_item_warning(&quick, 0, &openers).is_some_and(|w| w.contains("opens this menu")));
-        assert_eq!(button_item_warning(&quick, 1, &openers), None);
-        assert!(button_item_warning(&quick, 2, &openers).is_some_and(|w| w.contains("item 2")));
-        assert!(button_item_warning(&quick, 3, &openers).is_some_and(|w| w.contains("no button")));
-        // A submenu is held up by its parent's openers too.
-        assert!(button_item_warning(&sub, 0, &menu_openers(&game, "Sub")).is_some_and(|w| w.contains("RB opens")));
-        // Other kinds of menu have no item buttons to warn about.
-        let list = Menu { kind: MenuKind::List, ..quick };
-        assert_eq!(button_item_warning(&list, 3, &openers), None);
-    }
-
-    #[test]
-    fn problems_are_found_inside_nested_actions_and_flag_their_section() {
-        let names = Names { macros: vec!["Known".to_string()], modes: vec!["Guide".to_string()], ..Names::default() };
-        let nested = ButtonAction::Multi(vec![
-            ButtonAction::Mouse(MouseButton::Left),
-            ButtonAction::toggle(ButtonAction::Keys(vec!["KEY_NOPE".into()])),
-        ]);
-        assert_eq!(action_problem(&nested, &names).as_deref(), Some("unknown key \u{201c}NOPE\u{201d}"));
-        let missing = ButtonAction::Macro { name: "Gone".into(), repeat: false };
-        assert_eq!(action_problem(&missing, &names).as_deref(), Some("missing macro \u{201c}Gone\u{201d}"));
-        assert_eq!(action_problem(&ButtonAction::Macro { name: "Known".into(), repeat: false }, &names), None);
-        let toggled_menu = ButtonAction::toggle(ButtonAction::OpenMenu("M".into()));
-        assert!(action_problem(&toggled_menu, &Names { menus: vec!["M".into()], ..Names::default() }).is_some_and(|p| p.contains("can't be toggled")));
-        // A turbo's gap must cover its macro's length; a longer macro is caught here.
-        let turbo = |every_ms| ButtonAction::Turbo {
-            action: Box::new(ButtonAction::Macro { name: "Long".into(), repeat: false }),
-            rate: 10.0,
-            every_ms,
-        };
-        let long = Names { macros: vec!["Long".into()], macro_ms: [("Long".to_string(), 300)].into(), ..Names::default() };
-        assert!(action_problem(&turbo(200), &long).is_some_and(|p| p.contains("raise the turbo's gap")));
-        assert_eq!(action_problem(&turbo(300), &long), None);
-
-        let mut p = Profile::passthrough("p");
-        assert!(ProfileTab::ALL.iter().all(|t| !section_has_problem(&p, *t, &names)));
-        p.set_button(Button::RightStickUp, missing.clone());
-        assert!(!section_has_problem(&p, ProfileTab::Sticks, &names), "stick directions have no actions to check");
-        assert!(!section_has_problem(&p, ProfileTab::Buttons, &names));
-        // A button ring's sector does, and flags the Sticks tab.
-        p.stick_mut(Stick::Right).action = StickAction::ring(8);
-        let StickAction::Ring { actions, .. } = &mut p.stick_mut(Stick::Right).action else { unreachable!() };
-        actions[0] = missing;
-        assert!(section_has_problem(&p, ProfileTab::Sticks, &names), "ring sectors live on the Sticks tab");
-        p.combos.push(Combo { buttons: vec![Button::South], action: ButtonAction::Disabled });
-        assert!(section_has_problem(&p, ProfileTab::Combos, &names));
-    }
-}
+mod tests;

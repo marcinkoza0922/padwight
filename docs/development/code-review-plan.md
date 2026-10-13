@@ -72,11 +72,11 @@ R0-10, R1-4, R2-7, R4-9 and R8-8 shrank the worst files, but these are still wel
 | `gui/items.rs` | 1,643 | |
 | `daemon.rs` | 1,519 | |
 | `gui.rs` | 1,429 | |
-| `gui/profile.rs` | 1,425 | |
+| `gui/profile.rs` | 1,272 | |
 | `engine.rs` | 1,186 | `emit`, which predates the size lints (R2-7) |
 | `gui/packs.rs` | 1,025 | |
 | `pack.rs` | 728 | |
-| `gui/actions.rs`, `gui/checks.rs` | 616, 579 | |
+| `gui/actions.rs`, `gui/checks.rs` | 616, 538 | |
 
 ### Not read in full
 
