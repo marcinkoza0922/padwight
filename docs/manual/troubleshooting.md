@@ -8,7 +8,7 @@ PlayStation and Switch controllers can also be read directly, so for those you m
 
 ## A Steam game doesn't react to the controller, or ignores its stick
 
-A game that Steam starts and lists with full controller support gets the controller through Steam Input: Padwight lets go of it while the game is in front (see [Controller setups](setups.md)). Leave Steam Input on for such games.
+Padwight isn't intended for Steam games, and the fixes here are best effort. A game that Steam starts and lists with full controller support gets the controller through Steam Input: Padwight lets go of it while the game is in front (see [Controller setups](setups.md)). Leave Steam Input on for such games.
 
 If you use a setup for one anyway (**Use this setup even when Steam lists the game with full controller support**), turn off Steam Input for the game: in Steam, open the game's **Properties › Controller** and pick **Disable Steam Input**. If the buttons then work but the stick doesn't, the game is reading the stick through Steam, which sends nothing while Steam Input is off. Turn on **Hide Padwight's controller from Steam** in **App settings › Steam**, then quit and restart Steam. Games started from Steam still see Padwight's controller; Steam's own menus and Big Picture don't.
 
