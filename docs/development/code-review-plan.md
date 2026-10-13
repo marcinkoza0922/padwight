@@ -32,7 +32,7 @@ Sizes are lines including tests, at the date above. Passes are ordered by the co
 |---|---|---|---|---|
 | 0 | Steam hand-off and game detection (commit `b6111fd`) | `daemon/steam_handoff.rs`, `focus/`, `steam_appinfo.rs`, `steam_hide.rs`, `library.rs` | ~2,600 | Done, 2026-10-12 |
 | 1 | Device ownership | `daemon.rs`, `daemon/`, `input/`, `output/`, `rumble/` | ~6,900 | Done, 2026-10-12 |
-| 2 | The engine | `engine.rs`, `engine/`, `motion/` | ~6,500 | To do |
+| 2 | The engine | `engine.rs`, `engine/`, `motion/` | ~6,500 | Done, 2026-10-13 |
 | 3 | Game detection and launchers (rest of) | `focus/` (backends), `launchers.rs`, `offer/`, `opener_watch.rs`, `library.rs` | ~2,700 | To do |
 | 4 | Config and packs | `config.rs`, `config/`, `pack.rs`, `keycode/` | ~10,600 (split: `config.rs` alone, then the rest) | To do |
 | 5 | IPC and process lifecycle | `ipc.rs`, `monitor.rs`, `main.rs`, `tray/`, `quit/`, `record/`, `capture/`, `media/` | ~2,900 | To do |
@@ -83,6 +83,30 @@ Checked and found sound:
 - `VirtualKbm` sends each key as it changes, so key order is kept. After a failed write it catches up in code order, which only matters if a write failed in the middle of a key combination.
 - SIGTERM, SIGINT and the console events on Windows all reach `shut_down`, which releases everything.
 
+## Pass 2: The engine
+
+Read all of `engine.rs` and `engine/` (buttons, combos, gestures, the Guide, actions, toggles, turbo, macros, triggers, zones, sticks, rings, flick, gyro, the touchpad) and `motion/`. Each fix has a test that failed before it.
+
+| ID | File | Finding | Status |
+|---|---|---|---|
+| R2-1 | `engine.rs` | A trigger mapped to a button, or a stick direction, let go 0.05 below where it pressed. At 0.05, the lowest the settings page offers, that's 0, the resting value, so the action never let go: a key or mouse button stayed held until something else released everything. A pack or config file with a threshold of 0 also pressed every such action at rest. | **Fixed.** `analog_pressed` decides both: nothing presses at rest, and everything lets go there. Tests: `a_trigger_pressing_at_the_lowest_setting_lets_go_at_rest`, `a_stick_direction_pressing_at_the_lowest_setting_lets_go_at_rest`, `nothing_presses_at_rest_whatever_the_threshold`. |
+| R2-2 | `engine.rs` | A macro that plays itself, directly or through another macro, recursed without end on the first press: the stack overflowed and the daemon aborted. A pack can contain such a macro. | **Fixed.** `set_macros` finds the macros that reach themselves (`looping_macros`), logs them, and makes them do nothing. A macro that plays another one still works. Test: `a_macro_that_plays_itself_is_refused_rather_than_crashing` (on the old code: `stack overflow`, SIGABRT). |
+| R2-3 | `engine/touchpad.rs` | The finger that counts on a side (it moves the pointer, steers the joystick, picks the menu item) was meant to be the first one down, but the code took the lowest contact slot. The pad gives a lifted finger's slot to the next finger down, so after lifting the first of two fingers and putting another down, the new finger took over. | **Fixed.** `primary` picks the finger down longest, and so does the click's side. Test: `the_finger_first_down_keeps_the_pointer_when_another_lands_in_a_lower_slot`. Hardware check H-5. |
+| R2-4 | `engine/touchpad.rs` | A layer that switched a touchpad side out of joystick mode while a finger was down left the virtual stick pushed until the finger lifted. Physical sticks recenter in that case. | **Fixed.** Every touchpad event first lets go of sticks whose side is no longer a joystick. Test: `a_joystick_side_switched_to_another_mode_lets_its_stick_go`. |
+| R2-5 | `engine.rs` | With the Nintendo face swap on, a face button that has gestures, held past the tap window, sent the button in its position rather than the letter on its label. The other paths swap. | **Fixed.** That path uses `plain_action` too. Test: `the_face_swap_holds_for_a_face_button_with_gestures`. |
+| R2-6 | `engine.rs` | A combo that lists the same button twice (`[A, A]`) fires on one press of that button. Only a hand-edited file or a pack can contain one. | **Open, low.** Belongs to pass 4, where loading can reject or deduplicate it. |
+| R2-7 | `engine.rs` | 3,095 lines, over half of them tests. | **Partly done.** Tests moved to `engine/tests.rs`, macros and turbo to `engine/macros.rs`, the Guide and mouse mode to `engine/guide.rs`. `engine.rs` is now 1,186 lines; `emit` (marked as predating the size lints) is the next thing to move. Two doc comments on the wrong functions were moved, and one in `config.rs`. |
+
+Checked and found sound:
+
+- `release_all` lets go of everything that can be held: held inputs, toggles, turbos, macros (and their sticks), layers, info and log holds, ForceQuit, pushed stick directions, touchpad clicks and sticks. `release_tests.rs` checks this with random input.
+- Release always uses the action recorded at press time (`held`), so a layer or profile change between press and release can't leave the old action held.
+- Held combo members and stick directions stay quiet after `release_all` until let go, instead of firing under the new profile.
+- Turbo can't spin: its rate is clamped, and a macro turbo waits at least 17 ms. Turbo and macros run on `tick`, which only runs while `needs_tick` says so.
+- A toggled gyro goes off when everything is released (profile switch, an overlay taking the controller). That matches toggled actions, which are let go then too.
+- Ring sectors, flick and zones ignore a stick at rest, so their thresholds can't hold anything at 0.
+- `motion/` only shapes drawing; its styles are fixed presets, so nothing in it comes from a file.
+
 ## Tools for checking findings
 
 Tools added in pass 0:
@@ -112,3 +136,4 @@ These can't be checked without real controllers and Steam. When they pass, they 
 | H-2 | With that game in front, tick "Use this setup even when Steam lists the game…" and save. Padwight takes the controllers and the game's profile becomes active straight away, without alt-tabbing. Untick it: Steam gets them back. | R0-5 |
 | H-3 | With "Hide Padwight's controller from Steam" on, turn Steam Input off for Slay the Spire 2 and start it. Run `padwight debug focus <the game's pid>`. If the `SDL_GAMECONTROLLER_IGNORE_DEVICES` line says it hides Padwight's IDs, the game can't see Padwight's controller, and the concern in R0-7 holds. | R0-7 |
 | H-4 | Start a game from Flatpak Heroic, on each desktop with focus tracking (KWin, GNOME, Sway, Hyprland). `debug focus` names the game's process, and its setup switches on. Where the desktop passes on the pid an X11 window gives itself, this exercises the sandbox lookup. | R0-2 |
+| H-5 | On a DualSense or Steam Deck touchpad in mouse mode with scrolling off, put two fingers down, lift the first, put a finger down again, and move each in turn. Only the finger that stayed down moves the pointer. | R2-3 |

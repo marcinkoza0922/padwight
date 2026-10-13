@@ -795,7 +795,6 @@ impl fmt::Display for WheelDirection {
 }
 
 impl ButtonAction {
-    /// Every key name used by this action, including inside `Multi`.
     /// Wheel directions this action scrolls in while held, including inside `Multi`. Toggle and
     /// Turbo are left out: they press their inner action on their own schedule.
     pub fn wheel_directions(&self) -> Vec<WheelDirection> {
@@ -812,6 +811,7 @@ impl ButtonAction {
         ButtonAction::Mode(GUIDE_MODE.into())
     }
 
+    /// Every key name used by this action, including inside `Multi`.
     pub fn key_names(&self) -> Vec<&String> {
         match self {
             ButtonAction::Keys(keys) => keys.iter().collect(),
