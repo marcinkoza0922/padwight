@@ -9,7 +9,7 @@ mod windows;
 #[cfg(windows)]
 pub use windows::{force_quit, is_running};
 #[cfg(all(windows, test))]
-use windows::{alive, parents};
+use windows::{is_running as alive, parents};
 
 /// How long a game gets to exit after it is asked to before it is killed.
 const GRACE: Duration = Duration::from_secs(3);
@@ -33,20 +33,38 @@ pub fn protected(exe: &str) -> bool {
 }
 
 /// `pid` and all its descendants (children first, so a launcher can't respawn them), given
-/// each process's parent.
-fn tree(pid: u32, parents: &HashMap<u32, u32>) -> Vec<u32> {
+/// each process's parent. `me` (this program, should a game have started it) and what it started
+/// are left out.
+fn tree(pid: u32, parents: &HashMap<u32, u32>, me: u32) -> Vec<u32> {
+    if pid == me {
+        return Vec::new();
+    }
     let mut found = vec![pid];
     let mut i = 0;
     while i < found.len() {
         let parent = found[i];
         let mut children: Vec<u32> = parents.iter().filter(|(_, p)| **p == parent).map(|(c, _)| *c).collect();
         children.sort_unstable();
-        children.retain(|c| !found.contains(c));
+        children.retain(|c| *c != me && !found.contains(c));
         found.extend(children);
         i += 1;
     }
     found.reverse();
     found
+}
+
+/// The parent links that hold, from `(pid, parent pid)` pairs and each process's start time.
+/// Windows keeps a process's parent ID after the parent exits and soon gives that ID to a new
+/// process, so a link only holds when the child started after its parent; one whose times
+/// can't be read is dropped too.
+#[cfg(any(windows, test))]
+fn started_after_parents(listed: &[(u32, u32)], started: impl Fn(u32) -> Option<u64>) -> HashMap<u32, u32> {
+    let started: HashMap<u32, u64> = listed.iter().filter_map(|&(pid, _)| Some((pid, started(pid)?))).collect();
+    listed
+        .iter()
+        .filter(|(pid, parent)| started.get(pid).zip(started.get(parent)).is_some_and(|(child, parent)| child >= parent))
+        .copied()
+        .collect()
 }
 
 /// Every process's parent, from /proc.
@@ -89,16 +107,16 @@ fn alive(pid: u32) -> bool {
 }
 
 /// Asks the game's process and its descendants to exit, and kills what is still there after a
-/// few seconds. Returns at once; the kill follows on a thread. Does nothing for pid 0, 1 or
-/// this program.
+/// few seconds. Returns at once: reading every process's parent and the kill follow on a
+/// thread. Does nothing for pid 0, 1 or this program.
 #[cfg(target_os = "linux")]
 pub fn force_quit(pid: u32) {
-    if pid <= 1 || pid == std::process::id() {
+    if pid <= 1 {
         return;
     }
-    let pids = tree(pid, &parents());
-    signal(&pids, libc::SIGTERM);
     thread::spawn(move || {
+        let pids = tree(pid, &parents(), std::process::id());
+        signal(&pids, libc::SIGTERM);
         thread::sleep(GRACE);
         let left: Vec<u32> = pids.into_iter().filter(|p| alive(*p)).collect();
         signal(&left, libc::SIGKILL);
@@ -113,9 +131,27 @@ mod tests {
     fn a_tree_lists_descendants_children_first() {
         // 10 → 11 → 13, 10 → 12; 20 is unrelated.
         let parents = HashMap::from([(11, 10), (12, 10), (13, 11), (20, 1)]);
-        assert_eq!(tree(10, &parents), [13, 12, 11, 10]);
-        assert_eq!(tree(20, &parents), [20]);
-        assert_eq!(tree(99, &parents), [99]);
+        assert_eq!(tree(10, &parents, 1), [13, 12, 11, 10]);
+        assert_eq!(tree(20, &parents, 1), [20]);
+        assert_eq!(tree(99, &parents, 1), [99]);
+    }
+
+    #[test]
+    fn a_tree_never_holds_this_program_or_what_it_started() {
+        // 10 → 11 (this program) → 13, 10 → 12.
+        let parents = HashMap::from([(11, 10), (12, 10), (13, 11)]);
+        assert_eq!(tree(10, &parents, 11), [12, 10]);
+        assert_eq!(tree(11, &parents, 11), [] as [u32; 0]);
+    }
+
+    #[test]
+    fn a_parent_id_left_by_an_exited_parent_is_no_link() {
+        // 50 started 30 and exited; its ID went to 50 again, a game started later than 30.
+        // 31 is the game's real child. 32's start time can't be read.
+        let listed = [(30, 50), (50, 4), (31, 50), (32, 50)];
+        let started = |pid| HashMap::from([(30, 100), (50, 200), (31, 300), (4, 1)]).get(&pid).copied();
+        let parents = started_after_parents(&listed, started);
+        assert_eq!(tree(50, &parents, 1), [31, 50]);
     }
 
     #[test]

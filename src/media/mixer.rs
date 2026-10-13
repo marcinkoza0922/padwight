@@ -31,7 +31,20 @@ pub fn change(delta: f64) -> bool {
     let percent = format!("{:.0}%", delta.abs() * 100.0);
     let sign = if delta < 0.0 { "-" } else { "+" };
     run("wpctl", &["set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", &format!("{percent}{sign}")]).is_some()
-        || (read().is_some_and(|l| delta < 0.0 || l.volume < 1.0) && run("pactl", &["set-sink-volume", "@DEFAULT_SINK@", &format!("{sign}{percent}")]).is_some())
+        || read().is_some_and(|level| match pactl_volume(level.volume, delta) {
+            Some(to) => run("pactl", &["set-sink-volume", "@DEFAULT_SINK@", &to]).is_some(),
+            // Already at full: done, as `wpctl` would be, rather than the player's volume rising.
+            None => true,
+        })
+}
+
+/// The volume to give `pactl` for `delta` from `volume`: set outright, since `pactl`'s own steps
+/// go past full. Raising stops at full (or wherever it was set above it); `None` when that
+/// leaves nothing to change.
+fn pactl_volume(volume: f32, delta: f64) -> Option<String> {
+    let volume = f64::from(volume);
+    let to = if delta > 0.0 { (volume + delta).min(volume.max(1.0)) } else { (volume + delta).max(0.0) };
+    ((to - volume).abs() > 1e-6).then(|| format!("{:.0}%", to * 100.0))
 }
 
 /// Mutes the default output, or unmutes it. False when there's no tool to do it with.
@@ -63,5 +76,16 @@ mod tests {
         assert_eq!(parse_wpctl("nothing"), None);
         let pactl = "Volume: front-left: 29491 /  45% / -20.81 dB,   front-right: 29491 /  45% / -20.81 dB\n";
         assert_eq!(parse_pactl(pactl, "Mute: yes\n"), Some(Level { volume: 0.45, muted: true }));
+    }
+
+    #[test]
+    fn pactl_raises_the_volume_no_further_than_full() {
+        assert_eq!(pactl_volume(0.45, 0.05).as_deref(), Some("50%"));
+        assert_eq!(pactl_volume(0.98, 0.05).as_deref(), Some("100%"), "not 103%");
+        assert_eq!(pactl_volume(1.0, 0.05), None, "nothing to do, and that's done");
+        assert_eq!(pactl_volume(1.2, 0.05), None, "a volume set above full is left there");
+        assert_eq!(pactl_volume(1.2, -0.05).as_deref(), Some("115%"));
+        assert_eq!(pactl_volume(0.02, -0.05).as_deref(), Some("0%"));
+        assert_eq!(pactl_volume(0.0, -0.05), None);
     }
 }

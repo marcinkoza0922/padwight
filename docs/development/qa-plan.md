@@ -131,6 +131,9 @@ These need a person with the controller in hand. Record the values used, so a ch
 | I-8 | Read the daemon logs (`src/daemon/logs.rs`) after a full session. | No errors or panics. Messages are clear to a user. Partly done: `common::assert_log_clean` fails on a panic or an output error, and runs at the end of the daemon-exit, hotplug and idle tests (container). It doesn't check other error lines, and the user-facing wording still needs a read. |
 | I-9 | On a machine without `XDG_RUNTIME_DIR`, start the daemon and check the socket: `stat` on its directory shows `0700`, and on the socket `0600`. Run `padwight status` from another user's shell and check it is refused. | Only this user can reach the daemon (F2). |
 | I-10 | Install files are valid: systemd units, udev rule, desktop entry, metainfo, Flatpak manifest | Done in CI. `scripts/check-install.sh` runs `systemd-analyze verify`, `udevadm verify`, `desktop-file-validate`, `appstreamcli validate` and checks the manifest's required keys. A missing validator is an error. Checked that a broken `command` in the manifest fails. |
+| I-11 | On Windows at 125% or 150% scaling, look at the tray icon, then switch profiles 50 times (code review H-8). | The icon looks right. Task Manager's GDI objects for Padwight stay flat. |
+| I-12 | On Windows, start a recording, then end the daemon from Task Manager (code review H-9). | ffmpeg stops, and the file plays. If not, R5-12 needs a fix. |
+| I-13 | On Windows, force quit a launcher-started game, and take a screenshot in a game whose name has a colon (code review H-10). | Only the game and its helpers end. The screenshot is saved, in a folder with ` - ` for the colon. |
 
 ## 4. Security review (for a human)
 

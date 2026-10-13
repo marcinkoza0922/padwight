@@ -3,7 +3,6 @@
 use crate::sound;
 use std::{
     collections::{HashMap, HashSet},
-    io::{BufRead, BufReader, Write},
     process::Stdio,
     path::PathBuf,
     sync::{
@@ -45,6 +44,7 @@ mod devices;
 mod inject;
 mod logs;
 mod requests;
+mod serve;
 mod steam_handoff;
 /// The process around the service: signals, the control socket, running in the background.
 #[cfg_attr(target_os = "linux", path = "daemon/unix.rs")]
@@ -73,8 +73,6 @@ const INFO_REFRESH: Duration = Duration::from_secs(1);
 /// How often an overlay showing the gyro or the touchpad refreshes: often enough to follow a hand.
 const FAST_INFO_REFRESH: Duration = Duration::from_millis(50);
 const SCAN_INTERVAL: Duration = Duration::from_secs(2);
-/// Minimum gap between snapshots streamed to one watcher (~60 fps).
-const WATCH_INTERVAL: Duration = Duration::from_millis(16);
 /// Status line redraw rate while only continuous output (mouse/scroll) is changing.
 const STATUS_REDRAW: Duration = Duration::from_millis(50);
 /// How long "Calibrate gyro" samples a still controller.
@@ -587,7 +585,7 @@ pub fn run(debug: bool) -> Result<()> {
 /// Binds the control socket and serves it on a thread.
 fn serve_ipc(tx: Sender<Msg>) -> Result<()> {
     let listener = bind_socket()?;
-    thread::spawn(move || ipc_server(&listener, &tx));
+    thread::spawn(move || serve::ipc_server(&listener, &tx));
     Ok(())
 }
 
@@ -2628,96 +2626,6 @@ fn dispatch(pad: &mut VirtualPad, view: &mut OutputView, kbm: &mut VirtualKbm, o
             log!("output error: {e:#}");
         }
     }
-}
-
-fn ipc_server(listener: &UnixListener, tx: &Sender<Msg>) {
-    for conn in listener.incoming() {
-        let Ok(conn) = conn else { continue };
-        let tx = tx.clone();
-        // One thread per client: input watchers hold their connection open.
-        thread::spawn(move || {
-            if let Err(e) = serve_client(&conn, &tx) {
-                log!("ipc: {e:#}");
-            }
-        });
-    }
-}
-
-fn serve_client(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
-    conn.set_read_timeout(Some(Duration::from_secs(2)))?;
-    let mut line = String::new();
-    BufReader::new(conn).read_line(&mut line)?;
-    let response = match serde_json::from_str::<Request>(&line) {
-        Ok(Request::WatchInput) => return watch_input(conn, tx),
-        Ok(Request::WatchOverlay) => return watch_overlay(conn, tx),
-        Ok(Request::WatchFeed) => return watch_feed(conn, tx),
-        Ok(req) => {
-            let (reply_tx, reply_rx) = mpsc::channel();
-            tx.send(Msg::Ipc { req, reply: reply_tx })?;
-            reply_rx.recv_timeout(Duration::from_secs(2))?
-        }
-        Err(e) => Response::Error(format!("bad request: {e}")),
-    };
-    let mut out = serde_json::to_string(&response)?;
-    out.push('\n');
-    conn.write_all(out.as_bytes())?;
-    Ok(())
-}
-
-/// Streams overlay state to the (resident) overlay window until it goes away. An empty frame
-/// means nothing is shown; the window idles and keeps listening.
-fn watch_overlay(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
-    let (view_tx, view_rx) = mpsc::channel::<OverlayFrame>();
-    tx.send(Msg::WatchOverlay(view_tx))?;
-    while let Ok(first) = view_rx.recv() {
-        // Frames that came while the last was written: those a newer one stands in for are
-        // skipped, so a burst doesn't pile up, but each opening, closing and pick is sent.
-        let pending: Vec<OverlayFrame> = std::iter::once(first).chain(view_rx.try_iter()).collect();
-        for (i, view) in pending.iter().enumerate() {
-            if pending.get(i + 1).is_some_and(|newer| newer.stands_in_for(view)) {
-                continue;
-            }
-            let mut line = serde_json::to_string(view)?;
-            line.push('\n');
-            if conn.write_all(line.as_bytes()).is_err() {
-                return Ok(());
-            }
-        }
-    }
-    Ok(())
-}
-
-/// Streams snapshots to a client until it disconnects. Bursts are coalesced to the latest
-/// snapshot, so a fast-polling pad never floods the GUI.
-fn watch_input(conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
-    let (snap_tx, snap_rx) = mpsc::channel();
-    tx.send(Msg::Watch(snap_tx))?;
-    stream_latest(conn, &snap_rx)
-}
-
-/// Streams the latest presses and what they did, like [`watch_input`].
-fn watch_feed(conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
-    let (feed_tx, feed_rx) = mpsc::channel();
-    tx.send(Msg::WatchFeed(feed_tx))?;
-    stream_latest(conn, &feed_rx)
-}
-
-/// Writes each value as a JSON line until the client goes away or the daemon drops the sender.
-fn stream_latest<T: serde::Serialize>(mut conn: &UnixStream, rx: &mpsc::Receiver<T>) -> Result<()> {
-    // Blocks until the next update; ends when the daemon drops this watcher.
-    while let Ok(mut snapshot) = rx.recv() {
-        while let Ok(newer) = rx.try_recv() {
-            snapshot = newer;
-        }
-        let mut line = serde_json::to_string(&snapshot)?;
-        line.push('\n');
-        if conn.write_all(line.as_bytes()).is_err() {
-            // Client went away; the daemon drops our sender on its next send.
-            return Ok(());
-        }
-        thread::sleep(WATCH_INTERVAL);
-    }
-    Ok(())
 }
 
 /// The reason for switching to `target`: `why`, plus what changed when the controller can't play

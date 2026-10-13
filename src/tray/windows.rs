@@ -178,15 +178,30 @@ fn add_icon(hwnd: HWND) {
     });
 }
 
-/// The app icon at the tray's size, with its transparency.
+/// The app icon at the tray's size, with its transparency. Made once per thread (the tray's), as
+/// every update hands it to the shell again.
 fn picture() -> HICON {
+    thread_local! {
+        static PICTURE: HICON = make_picture();
+    }
+    PICTURE.with(|picture| *picture)
+}
+
+fn make_picture() -> HICON {
     // SAFETY: GetSystemMetrics has no preconditions.
     let size = unsafe { GetSystemMetrics(SM_CXSMICON) }.max(16) as u32;
     let rgba = icon::rgba(size);
     let bgra: Vec<u8> = rgba.as_chunks::<4>().0.iter().flat_map(|px| [px[2], px[1], px[0], px[3]]).collect();
-    let mask = vec![0u8; (size * size / 8) as usize];
-    // SAFETY: the bits are a size x size picture at 32 bits per pixel, and a mask of 1 bit.
+    let mask = vec![0u8; mask_len(size)];
+    // SAFETY: the bits are a size x size picture at 32 bits per pixel, and a mask of 1 bit
+    // whose rows are padded as CreateIcon reads them.
     unsafe { CreateIcon(None, size as i32, size as i32, 1, 32, mask.as_ptr(), bgra.as_ptr()) }.unwrap_or_default()
+}
+
+/// Bytes in a 1-bit mask `size` pixels square: each row is padded to a whole number of 16-bit
+/// words, so at 125% scaling (20 pixels) a row takes 4 bytes, not 2.5.
+fn mask_len(size: u32) -> usize {
+    size.div_ceil(16) as usize * 2 * size as usize
 }
 
 /// Shows the menu at the pointer and returns the chosen command.
@@ -267,5 +282,18 @@ unsafe extern "system" fn window_proc(hwnd: HWND, msg: u32, wparam: WPARAM, lpar
         }
         // SAFETY: the default handling for everything else.
         _ => unsafe { DefWindowProcW(hwnd, msg, wparam, lparam) },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::mask_len;
+
+    #[test]
+    fn the_mask_covers_every_padded_row() {
+        assert_eq!(mask_len(16), 32);
+        assert_eq!(mask_len(20), 80);
+        assert_eq!(mask_len(24), 96);
+        assert_eq!(mask_len(32), 128);
     }
 }

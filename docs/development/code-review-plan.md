@@ -35,7 +35,7 @@ Sizes are lines including tests, at the date above. Passes are ordered by the co
 | 2 | The engine | `engine.rs`, `engine/`, `motion/` | ~6,500 | Done, 2026-10-13 |
 | 3 | Game detection and launchers (rest of) | `focus/` (backends), `launchers.rs`, `offer/`, `opener_watch.rs`, `library.rs` | ~2,700 | Done, 2026-10-13 |
 | 4 | Config and packs | `config.rs`, `config/`, `pack.rs`, `keycode/` | ~10,600 (split: `config.rs` alone, then the rest) | Done, 2026-10-13 |
-| 5 | IPC and process lifecycle | `ipc.rs`, `monitor.rs`, `main.rs`, `tray/`, `quit/`, `record/`, `capture/`, `media/` | ~2,900 | To do |
+| 5 | IPC and process lifecycle | `ipc.rs`, `monitor.rs`, `main.rs`, `tray/`, `quit/`, `record/`, `capture/`, `media/` | ~2,900 | Done, 2026-10-13 |
 | 6 | Overlays and menus | `overlay/`, `menu/`, `info/`, `keyboard/`, `system_menu/`, `radial.rs`, `guide_menu.rs`, `nav.rs`, `layout_editor/` | ~14,300 (split in three) | To do |
 | 7 | Sound, drawing and fonts | `sound/`, `pad_svg/`, `font.rs`, `style.rs`, `icons.rs`, the widgets | ~4,400 | To do |
 | 8 | The GUI | `gui.rs`, `gui/` | ~16,100 (split in three) | To do |
@@ -158,6 +158,35 @@ Checked and found sound:
 
 For later passes: a menu's `start` and a grid item's `span` come from files unchecked (pass 6 should check the overlays clamp them).
 
+## Pass 5: IPC and process lifecycle
+
+Read all of `ipc.rs`, `monitor.rs`, `main.rs`, `tray.rs` and `tray/windows.rs`, `quit.rs` and `quit/windows.rs`, `record.rs` and `record/windows.rs`, `capture.rs` and `capture/windows.rs`, `media.rs` and `media/`, and the daemon's side of them: the socket server, `daemon/requests.rs`, and the force-quit, screenshot and recording paths in `daemon.rs`. The Windows files were checked with `cargo clippy --target x86_64-pc-windows-msvc --all-targets`, which builds here; their tests compile but only run on Windows.
+
+| ID | File | Finding | Status |
+|---|---|---|---|
+| R5-1 | `tray/windows.rs` | The tray icon's 1-bit mask was `size * size / 8` bytes, but each of its rows is padded to whole 16-bit words. At 125%, 150% or 175% scaling (icons of 20, 24 or 28 pixels) `CreateIcon` read past the end of the buffer. | **Fixed.** `mask_len` pads the rows. Test: `the_mask_covers_every_padded_row` (runs on Windows). |
+| R5-2 | `tray/windows.rs` | Every tooltip update (each profile switch) made a new icon handle and never freed it. A long session of switching games used up GDI handles. | **Fixed.** The icon is made once on the tray's thread. Needs Windows: I-11. |
+| R5-3 | `quit/windows.rs` | Force quit ends the game and its descendants, found by parent ID. Windows keeps a process's parent ID after the parent exits and soon gives that ID to new processes, so if the game's ID had once belonged to another process's parent, that unrelated process (Explorer, say, whose parent `userinit.exe` exits at login) was asked to close and then terminated. | **Fixed.** A child counts only when it started after its parent (`started_after_parents`, by process start time); links whose times can't be read are dropped. Test: `a_parent_id_left_by_an_exited_parent_is_no_link`. |
+| R5-4 | `quit/windows.rs` | After the 3 second grace, processes were terminated by ID. Windows reuses IDs quickly, so one that had exited in the meantime could be a new, unrelated process by then. | **Fixed.** The processes are opened before they are asked to close and terminated through those handles, which keep their IDs from being reused. On Linux, `pid_max` is 4,194,304 under systemd, so an ID coming back within 3 seconds isn't a real risk; left as it is. |
+| R5-5 | `quit.rs`, `quit/windows.rs` | Reading every process's parent ran on the daemon thread, on each force quit. The tree could also include Padwight itself, when a game or launcher had started it. | **Fixed.** The walk runs on the force-quit thread, and the tree leaves out this process and what it started. Test: `a_tree_never_holds_this_program_or_what_it_started`. |
+| R5-6 | `capture.rs` | Captures go in a folder named after the game. On Windows a name with `:`, `?`, `*`, `"`, `<`, `>` or `\|`, a trailing dot, or a reserved name (`CON`, `COM1`…) can't be a folder, so every screenshot and recording of "Prince of Persia: The Sands of Time" and "Thief II: The Metal Age" (both library packs) failed. | **Fixed.** On Windows those characters become `_` (`: ` becomes ` - `) and reserved names get a `_`. Other platforms keep their names, so existing folders are still used. Test: `folder_names_are_ones_windows_accepts`. |
+| R5-7 | `capture.rs`, `record.rs` | Files are named by the second. A second screenshot in the same second, from a double press, was written over the first. | **Fixed.** `claim_media_path` adds `-2`, `-3`… when the file exists or another capture is being written to it. Test: `two_captures_in_one_second_get_a_file_each`. |
+| R5-8 | `daemon/serve.rs`, `ipc.rs` | When the event loop didn't answer a request within 2 seconds, the daemon closed the connection without a word, while the request stayed queued and was still carried out. The client, waiting 2 seconds too, showed "EOF while parsing a value" or a read timeout. | **Fixed.** The daemon answers with an error saying it was busy and the change may still be made, and the client waits 2 seconds longer than the daemon, so it hears that. A connection closed without a reply says so. Tests: `a_request_the_event_loop_doesn_t_answer_gets_an_error_not_silence`, `a_daemon_that_hangs_up_without_replying_is_reported_as_such`. |
+| R5-9 | `daemon/serve.rs` | Watch streams had no write timeout. A GUI that stopped reading (suspended with Ctrl+Z in a terminal, or hung) held a daemon thread forever, and the event loop kept queueing a snapshot for it on every input event, without bound. | **Fixed.** A watcher that takes nothing for 10 seconds is let go. The GUI connects again when it can, and the overlay is restarted when next needed. Tests: the first test above checks that the timeout is set; `a_watcher_that_stops_reading_is_let_go` checks that a timed-out write ends the stream. |
+| R5-10 | `media/mixer.rs` | Through `pactl` (PulseAudio without `wpctl`), D-pad up at full volume changed the player's volume instead, unlike `wpctl` and Windows, and a step from 98% went to 103%. | **Fixed.** The volume is set outright and capped at full; at full there is nothing to do. Test: `pactl_raises_the_volume_no_further_than_full`. |
+| R5-11 | `record/windows.rs` | A recorder that exited by itself left its stdin pipe in the list `stop` reads, for good. | **Fixed.** Ended recorders' pipes are dropped when the next one starts. |
+| R5-12 | `record/windows.rs` | Linux ends the recorder with the daemon (`PR_SET_PDEATHSIG`). Windows has nothing like it: if the daemon dies, ffmpeg's stdin closes, and ffmpeg may not take that as a reason to stop, so it would record until the disk is full. | **Open: needs Windows.** I-12. A job object would kill it, but then the MP4 isn't finished and won't play. |
+| R5-13 | `daemon.rs` (`focused_target`) | Without focus tracking, force quit and recording scan every process on the daemon thread, twice per force-quit hold. | **Open, minor.** Only on desktops without focus tracking, and only when the hold starts and when it fires. |
+
+Checked and found sound:
+
+- The daemon reads one request line per connection with a 2 second read timeout, on a thread of its own, so a client that connects and sends nothing can't stall it. Debug requests are refused unless the daemon runs with `--debug`. A request that doesn't parse gets an error reply.
+- `monitor`'s lock is only held while writing to stderr, with errors ignored, so it can't be poisoned.
+- The Linux recorder is ended with the daemon by `PR_SET_PDEATHSIG`, which fires when the spawning thread ends, not the process. The thread that starts the recorder waits on it for the whole recording, so this holds. `record::start` now says so.
+- The media worker runs on its own thread, so a player that doesn't answer over D-Bus holds up only the media overlay.
+- The tray (`ksni` on Linux, a window of its own on Windows) only sends commands to the event loop.
+- `capture::folder_name` already kept names from leaving the folder (`../`).
+
 ## Tools for checking findings
 
 Tools added in pass 0:
@@ -190,3 +219,6 @@ These can't be checked without real controllers and Steam. When they pass, they 
 | H-5 | On a DualSense or Steam Deck touchpad in mouse mode with scrolling off, put two fingers down, lift the first, put a finger down again, and move each in turn. Only the finger that stayed down moves the pointer. | R2-3 |
 | H-6 | On labwc or Wayfire, with a game that has a rule in front, restart the daemon. The game's profile comes on straight away, without touching any window. Then switch between two windows: the log shows no `no window has focus` in between. | R3-2, R3-3 |
 | H-7 | On GNOME, after logging out and in once to load the updated extension, with a game that has a rule in front, restart the daemon. The game's profile comes on straight away. | R3-4 |
+| H-8 | On Windows at 125% or 150% scaling, look at the tray icon, then switch profiles 50 times. Task Manager's GDI objects column for Padwight stays flat. | R5-1, R5-2 |
+| H-9 | On Windows, start a recording, then end the daemon from Task Manager. Check whether ffmpeg is still running and whether the file plays. | R5-12 |
+| H-10 | On Windows, force quit a game started from a launcher (Steam, Epic): the game and its helpers end, the launcher and Explorer don't. Take a screenshot in Prince of Persia: The Sands of Time: it is saved under `Prince of Persia - The Sands of Time`. | R5-3, R5-4, R5-6 |

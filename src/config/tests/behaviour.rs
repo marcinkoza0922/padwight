@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use crate::config::*;
 
@@ -185,7 +185,7 @@ fn scratch_dir(name: &str) -> PathBuf {
 #[cfg(target_os = "linux")]
 fn a_saved_config_is_readable_only_by_its_owner() {
     use std::os::unix::fs::PermissionsExt;
-    let mode = |path: &Path| std::fs::metadata(path).unwrap().permissions().mode() & 0o777;
+    let mode = |path: &std::path::Path| std::fs::metadata(path).unwrap().permissions().mode() & 0o777;
     let dir = scratch_dir("private-save");
     let path = dir.join("config.toml");
 
