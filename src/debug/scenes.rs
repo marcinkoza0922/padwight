@@ -75,7 +75,7 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "info" => OverlayFrame { info: vec![info_view()], ..OverlayFrame::default() },
         "info-formatted" => OverlayFrame {
             info: vec![formatted_view()],
-            pack_icons: std::collections::BTreeMap::from([("flame".to_string(), FLAME.to_string())]),
+            pack_icons: Some(std::collections::BTreeMap::from([("flame".to_string(), FLAME.to_string())])),
             ..OverlayFrame::default()
         },
         "log" => OverlayFrame { logs: vec![log_view()], ..OverlayFrame::default() },

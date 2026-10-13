@@ -67,14 +67,17 @@ fn serve_client(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
 fn watch_overlay(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
     let (view_tx, view_rx) = mpsc::channel::<OverlayFrame>();
     tx.send(Msg::WatchOverlay(view_tx))?;
+    let mut icons_sent = None;
     while let Ok(first) = view_rx.recv() {
         // Frames that came while the last was written: those a newer one stands in for are
         // skipped, so a burst doesn't pile up, but each opening, closing and pick is sent.
-        let pending: Vec<OverlayFrame> = std::iter::once(first).chain(view_rx.try_iter()).collect();
-        for (i, view) in pending.iter().enumerate() {
-            if pending.get(i + 1).is_some_and(|newer| newer.stands_in_for(view)) {
+        let mut pending: Vec<OverlayFrame> = std::iter::once(first).chain(view_rx.try_iter()).collect();
+        for i in 0..pending.len() {
+            if pending.get(i + 1).is_some_and(|newer| newer.stands_in_for(&pending[i])) {
                 continue;
             }
+            let view = &mut pending[i];
+            leave_out_icons_sent(view, &mut icons_sent);
             let mut line = serde_json::to_string(view)?;
             line.push('\n');
             if conn.write_all(line.as_bytes()).is_err() {
@@ -83,6 +86,19 @@ fn watch_overlay(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
         }
     }
     Ok(())
+}
+
+/// Leaves the pack's icons out of `frame` when they are the ones last sent on this stream
+/// (`sent`), which the overlay then keeps.
+fn leave_out_icons_sent(frame: &mut OverlayFrame, sent: &mut Option<std::collections::BTreeMap<String, String>>) {
+    if frame.pack_icons.is_none() {
+        return;
+    }
+    if frame.pack_icons == *sent {
+        frame.pack_icons = None;
+    } else {
+        sent.clone_from(&frame.pack_icons);
+    }
 }
 
 /// Streams snapshots to a client until it disconnects. Bursts are coalesced to the latest
@@ -144,6 +160,29 @@ mod tests {
         let text = reply(&mut client);
         assert!(text.contains("didn't answer in time"), "{text:?}");
         drop(held.join());
+    }
+
+    #[test]
+    fn the_overlay_is_sent_a_pack_s_icons_only_when_they_change() {
+        let (client, server) = UnixStream::pair().unwrap();
+        let (tx, rx) = mpsc::channel();
+        let streaming = thread::spawn(move || watch_overlay(&server, &tx).is_ok());
+        let Ok(Msg::WatchOverlay(frames)) = rx.recv() else { panic!("no watcher") };
+        let with = |icons: &[(&str, &str)]| OverlayFrame {
+            pack_icons: Some(icons.iter().map(|(n, svg)| ((*n).to_string(), (*svg).to_string())).collect()),
+            ..OverlayFrame::default()
+        };
+        let mut lines = BufReader::new(client).lines();
+        // One at a time: frames queued together would stand in for each other.
+        let mut got = Vec::new();
+        for frame in [with(&[("flame", "<svg/>")]), with(&[("flame", "<svg/>")]), with(&[]), with(&[])] {
+            frames.send(frame).unwrap();
+            let line = lines.next().unwrap().unwrap();
+            got.push(serde_json::from_str::<OverlayFrame>(&line).unwrap().pack_icons.map(|icons| icons.len()));
+        }
+        drop(frames);
+        assert!(streaming.join().unwrap());
+        assert_eq!(got, [Some(1), None, Some(0), None], "sent the first time and when they change, to none too");
     }
 
     #[test]

@@ -55,7 +55,6 @@ Everything the passes left unsolved, gathered here as of commit `72f0c59` (2026-
 
 | ID | Area | What's left | Weight |
 |---|---|---|---|
-| R7-8 | `daemon/overlay.rs` | Every frame carries the pack's icons as SVG text (up to 64 KB each) and the overlay compares them. Could be sent only when they change. | Minor |
 | R8-9 | `gui.rs`, `gui/items.rs`, `gui/profile.rs` | Open cards and rows are kept by position, so after Undo, Revert, removing a zone or adding an info or log overlay another card can be open. | Minor: folding only |
 | R9-11 | `debug/bridge.rs` | After a daemon restart an attached debug session's controller is gone and every change fails until the session restarts; a failed change is dropped, so the two can disagree. | Minor: debug tool |
 | R9-12 | `debug/pack_scenes.rs` | Two menus or info overlays whose names give the same file name are drawn to one file; the second overwrites the first. | Minor: debug tool |
@@ -285,7 +284,7 @@ Read in full: `sound.rs` and `sound/` (`player.rs`, `wav.rs`, `effects.rs`, `syn
 | R7-5 | `font.rs` | A shared font file was used as it was whenever it existed, so one cut short (the daemon ending while writing it) stayed broken until logout cleared the runtime folder. | **Fixed.** A file of the wrong length is written again. Test: `a_shared_font_file_cut_short_is_written_again`. |
 | R7-6 | `touchpad_widget.rs` | The Touchpad tab drew a radial menu of one item as an arc from a point back to itself, which SVG leaves out, so the side was blank and a finger on it lit nothing. (The overlay's ring already draws this case as a circle.) | **Fixed.** One item fills its side. Test: `a_ring_of_one_item_fills_its_side_and_lights_up`. `gui/ring_preview.rs` drew its wedges the same way: see R8-7. |
 | R7-7 | `sound/player.rs` | `Sounds::play` said cues queue up behind each other. Each plays on its own player, so they overlap. | **Fixed:** the comment now says so. Overlapping is what a fast-moving cursor wants. |
-| R7-8 | `daemon/overlay.rs` | Each frame carries the pack's icons as SVG text (up to 64 KB each), and the overlay compares them with the last ones. | **Open, minor.** Only games whose pack carries icons. Could be sent when they change, as fonts now are read. |
+| R7-8 | `daemon/overlay.rs` | Each frame carries the pack's icons as SVG text (up to 64 KB each), and the overlay compares them with the last ones. | **Fixed, 2026-10-13.** Each overlay stream sends them only when they differ from the last ones it sent (`leave_out_icons_sent`); a frame without them keeps the overlay's. A new connection gets them with its first frame, and `debug overlay live` carries them forward. Test: `the_overlay_is_sent_a_pack_s_icons_only_when_they_change`. |
 
 Checked and found sound:
 

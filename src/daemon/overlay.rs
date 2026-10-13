@@ -279,7 +279,7 @@ impl Daemon {
             opener: crate::info::OpenerLabel::of(&self.config.shortcuts),
             menu_keys: self.config.shortcuts.menu_keys(),
             panel_keys: self.config.shortcuts.clone(),
-            pack_icons: self.config.active_game().assets.icons.clone(),
+            pack_icons: Some(self.config.active_game().assets.icons.clone()),
             pack_fonts: self.pack_fonts.clone(),
             family: values.family,
             nintendo_layout: values.nintendo_layout,

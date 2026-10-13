@@ -22,7 +22,7 @@ pub fn frames(path: &Path) -> Result<Vec<(String, OverlayFrame)>> {
     crate::font::set_pack_fonts(&game.assets.fonts);
     let stem = path.file_stem().map_or("pack".into(), |s| s.to_string_lossy().into_owned());
     let slug = |name: &str| name.to_lowercase().split(|c: char| !c.is_alphanumeric()).filter(|w| !w.is_empty()).collect::<Vec<_>>().join("-");
-    let base = OverlayFrame { font: game.overlay_font.clone(), pack_icons: game.assets.icons.clone(), ..OverlayFrame::default() };
+    let base = OverlayFrame { font: game.overlay_font.clone(), pack_icons: Some(game.assets.icons.clone()), ..OverlayFrame::default() };
     let mut out = Vec::new();
     for menu in &game.menus {
         let opener = Opener { buttons: vec![crate::config::Button::LeftBumper], ..Opener::default() };
