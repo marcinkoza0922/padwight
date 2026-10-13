@@ -412,10 +412,10 @@ The app's editors have an **Insert…** button beside every text that takes toke
 | `sword` | a sword | `shield` | a shield |
 | `bow` | a bow and arrow | `potion` | a flask |
 | `pistol` | a handgun | `key` | a key |
-| `rifle` | a rifle | `coin` | a coin |
+| `rifle` | a rifle | `coin` | a stack of coins |
 | `axe` | an axe | `gem` | a gem |
 | `car` | a car | `heart` | a heart |
-| `wheel` | a wheel | `skull` | a skull |
+| `wheel` | a steering wheel | `skull` | a skull |
 | `pda` | a handheld device | `map` | a folded map |
 
 A pack can carry its own icons, in `[assets.icons]`. Each is an SVG, by name, and works only in that pack's game. A pack's icon with a built-in's name replaces it in that game.
