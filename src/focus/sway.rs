@@ -16,6 +16,7 @@ use super::{FocusEvent, Notify, Reported, report};
 const MAGIC: &[u8; 6] = b"i3-ipc";
 const SUBSCRIBE: u32 = 2;
 const GET_TREE: u32 = 4;
+const EVENT_WORKSPACE: u32 = 0x8000_0000;
 const EVENT_WINDOW: u32 = 0x8000_0003;
 
 pub struct Sway(UnixStream);
@@ -65,7 +66,7 @@ fn read_frame(stream: &mut UnixStream) -> Result<(u32, Vec<u8>)> {
 impl Sway {
     /// Reports the focused window now and on every change, until the connection ends.
     pub fn follow(mut self, notify: &Notify) -> Result<()> {
-        send(&mut self.0, SUBSCRIBE, br#"["window"]"#)?;
+        send(&mut self.0, SUBSCRIBE, br#"["window", "workspace"]"#)?;
         send(&mut self.0, GET_TREE, b"")?;
         loop {
             let (kind, payload) = read_frame(&mut self.0)?;
@@ -81,6 +82,9 @@ impl Sway {
                 },
                 // Closing the focused window moves focus without a focus event, so ask again.
                 EVENT_WINDOW if json["change"] == "close" => send(&mut self.0, GET_TREE, b"")?,
+                // Going to an empty workspace moves focus without a window event. (A workspace
+                // with windows sends one for the window it focuses.)
+                EVENT_WORKSPACE if json["change"] == "focus" && is_empty(&json["current"]) => notify(FocusEvent::Unfocused),
                 _ => {}
             }
         }
@@ -93,6 +97,11 @@ fn focused_window(node: &Value) -> Option<&Value> {
         return Some(node);
     }
     ["nodes", "floating_nodes"].iter().filter_map(|key| node[key].as_array()).flatten().find_map(focused_window)
+}
+
+/// Whether a workspace holds no windows.
+fn is_empty(workspace: &Value) -> bool {
+    ["nodes", "floating_nodes"].iter().all(|key| workspace[key].as_array().is_none_or(Vec::is_empty))
 }
 
 /// A window's class is its `app_id`, or the X11 class for Xwayland windows.
@@ -148,6 +157,34 @@ mod tests {
         let (mut a, mut b) = UnixStream::pair().unwrap();
         send(&mut a, GET_TREE, b"{}").unwrap();
         assert_eq!(read_frame(&mut b).unwrap(), (GET_TREE, b"{}".to_vec()));
+    }
+
+    #[test]
+    fn going_to_an_empty_workspace_reports_unfocused() {
+        use std::sync::{Arc, Mutex};
+
+        let (client, mut server) = UnixStream::pair().unwrap();
+        let frame = |kind: u32, json: &Value| {
+            let body = json.to_string();
+            let mut msg = [MAGIC.as_slice(), &u32::try_from(body.len()).unwrap().to_ne_bytes(), &kind.to_ne_bytes()].concat();
+            msg.extend_from_slice(body.as_bytes());
+            msg
+        };
+        let focus = serde_json::json!({"change": "focus", "container": {"pid": 5, "app_id": "foot", "name": "~"}});
+        server.write_all(&frame(EVENT_WINDOW, &focus)).unwrap();
+        let full = serde_json::json!({"change": "focus", "current": {"name": "1", "nodes": [{"pid": 5}], "floating_nodes": []}});
+        server.write_all(&frame(EVENT_WORKSPACE, &full)).unwrap();
+        let empty = serde_json::json!({"change": "focus", "current": {"name": "2", "nodes": [], "floating_nodes": []}});
+        server.write_all(&frame(EVENT_WORKSPACE, &empty)).unwrap();
+        server.shutdown(std::net::Shutdown::Write).unwrap();
+
+        let seen = Arc::new(Mutex::new(Vec::new()));
+        let sink = seen.clone();
+        let notify: Notify = Arc::new(move |ev| {
+            sink.lock().unwrap().push(matches!(ev, FocusEvent::Unfocused));
+        });
+        assert!(Sway(client).follow(&notify).is_err(), "ends when the socket closes");
+        assert_eq!(*seen.lock().unwrap(), [false, true], "the window, then nothing; a workspace with windows says nothing");
     }
 
     #[test]

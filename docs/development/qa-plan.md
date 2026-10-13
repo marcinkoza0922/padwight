@@ -63,6 +63,9 @@ Each item has the expected result in the last column. Record the OS, compositor,
 | D-3 | Use the Flatpak build on KWin, with the window matched by class and title only. | Auto-switching works. Note any window that is matched wrongly. |
 | D-4 | Games launched through Steam, Heroic, and Lutris, plus a plain binary. | The library finds them, and the rule matches the window. |
 | D-5 | Two games with rules for the same window. | The import preview shows the conflict. The imported game takes over only when the user chooses it. |
+| D-6 | On labwc or Wayfire, restart the daemon with a game that has a rule in front, then switch between two windows (code review H-6). | The game's profile comes on without touching a window. The log shows no `no window has focus` between the two windows. |
+| D-7 | On GNOME, log out and in once to load the updated extension, then restart the daemon with a game that has a rule in front (code review H-7). | The game's profile comes on straight away. |
+| D-8 | On Sway, from a game with a rule, go to an empty workspace and back. | The default profile on the empty workspace, the game's on return. |
 
 ### 3.3 Overlays, layers and menus
 

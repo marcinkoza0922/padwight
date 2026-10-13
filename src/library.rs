@@ -1,5 +1,7 @@
 //! The built-in game library: packs embedded from `packs/` at build time (see `build.rs`).
 
+use std::sync::LazyLock;
+
 use crate::{
     config::Config,
     pack::{self, Pack},
@@ -35,14 +37,17 @@ pub struct Entry {
 }
 
 /// Every library pack, by name. Packs that don't parse are left out (tests keep that from
-/// happening).
-pub fn entries() -> Vec<Entry> {
-    let mut all: Vec<Entry> = files::FILES
-        .iter()
-        .filter_map(|(file, text)| pack::parse(text).ok().map(|pack| Entry { file, pack }))
-        .collect();
-    all.sort_by_key(|e| e.pack.pack.name.to_lowercase());
-    all
+/// happening). Parsed once: that takes about 30 ms, and the daemon asks at each new window.
+pub fn entries() -> &'static [Entry] {
+    static ENTRIES: LazyLock<Vec<Entry>> = LazyLock::new(|| {
+        let mut all: Vec<Entry> = files::FILES
+            .iter()
+            .filter_map(|(file, text)| pack::parse(text).ok().map(|pack| Entry { file, pack }))
+            .collect();
+        all.sort_by_key(|e| e.pack.pack.name.to_lowercase());
+        all
+    });
+    &ENTRIES
 }
 
 /// Games added from the library that it now has a newer version of: (game name, index of
@@ -115,6 +120,12 @@ mod tests {
 
     /// The app's own packs add their icons, sounds and fonts to the built-in set (`assets/`) for
     /// every game, rather than carrying them, so every icon they name must be built in.
+    /// The daemon asks at each new window, on its own thread: the packs are parsed once.
+    #[test]
+    fn the_library_is_parsed_once() {
+        assert!(std::ptr::eq(entries(), entries()));
+    }
+
     #[test]
     fn library_packs_use_only_built_in_assets() {
         for (file, text) in files::FILES {

@@ -740,7 +740,7 @@ impl App {
             open_logs: HashSet::new(),
             open_log_appearance: HashSet::new(),
             open_input_groups: HashSet::new(),
-            library: library::entries(),
+            library: library::entries().to_vec(),
             installed: None,
             renames: Vec::new(),
             edited: Vec::new(),

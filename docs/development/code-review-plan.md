@@ -33,7 +33,7 @@ Sizes are lines including tests, at the date above. Passes are ordered by the co
 | 0 | Steam hand-off and game detection (commit `b6111fd`) | `daemon/steam_handoff.rs`, `focus/`, `steam_appinfo.rs`, `steam_hide.rs`, `library.rs` | ~2,600 | Done, 2026-10-12 |
 | 1 | Device ownership | `daemon.rs`, `daemon/`, `input/`, `output/`, `rumble/` | ~6,900 | Done, 2026-10-12 |
 | 2 | The engine | `engine.rs`, `engine/`, `motion/` | ~6,500 | Done, 2026-10-13 |
-| 3 | Game detection and launchers (rest of) | `focus/` (backends), `launchers.rs`, `offer/`, `opener_watch.rs`, `library.rs` | ~2,700 | To do |
+| 3 | Game detection and launchers (rest of) | `focus/` (backends), `launchers.rs`, `offer/`, `opener_watch.rs`, `library.rs` | ~2,700 | Done, 2026-10-13 |
 | 4 | Config and packs | `config.rs`, `config/`, `pack.rs`, `keycode/` | ~10,600 (split: `config.rs` alone, then the rest) | To do |
 | 5 | IPC and process lifecycle | `ipc.rs`, `monitor.rs`, `main.rs`, `tray/`, `quit/`, `record/`, `capture/`, `media/` | ~2,900 | To do |
 | 6 | Overlays and menus | `overlay/`, `menu/`, `info/`, `keyboard/`, `system_menu/`, `radial.rs`, `guide_menu.rs`, `nav.rs`, `layout_editor/` | ~14,300 (split in three) | To do |
@@ -107,6 +107,31 @@ Checked and found sound:
 - Ring sectors, flick and zones ignore a stick at rest, so their thresholds can't hold anything at 0.
 - `motion/` only shapes drawing; its styles are fixed presets, so nothing in it comes from a file.
 
+## Pass 3: Game detection and launchers (the rest)
+
+Read the focus backends (`focus/dbus.rs`, `kwin.rs`, `gnome.rs` and the GNOME extension, `sway.rs`, `hyprland.rs`, `wlroots.rs`, `windows.rs`), `launchers.rs`, `offer.rs`, `opener_watch.rs` and `library.rs`, and the daemon code that calls them (`daemon/auto_switch.rs`, the offer handling in `daemon.rs`). `focus/identify.rs` and the rule matching in `focus/mod.rs` were pass 0's.
+
+| ID | File | Finding | Status |
+|---|---|---|---|
+| R3-1 | `library.rs`, `daemon.rs` | The daemon parsed every library pack on its own thread each time a window of a new process came to the front, to decide whether to hint at a library setup: 33 ms in a release build (200 ms in debug), during which controller input waited. | **Fixed.** `library::entries` parses once and hands out the same list. Test: `the_library_is_parsed_once`. |
+| R3-2 | `focus/wlroots.rs` | On wlroots compositors (labwc, Wayfire, river), moving focus sends the old window's `done` before the new one's, and each was reported. So every focus change was "nothing in front" and then the new window: the game was left (and the controllers taken back from Steam) for a moment between two windows of the same game or two Steam games. | **Fixed.** The events read in one go are reported as where focus ended up. Test: `moving_focus_settles_on_the_new_window_without_unfocusing_in_between`. |
+| R3-3 | `focus/wlroots.rs` | The window in front when tracking started was learned during `connect`, but reported only after the next window event, since `follow` waited for new events first. A game already running when the daemon started kept the default profile until something changed. | **Fixed.** `follow` reports what it knows before waiting. No automated test: it needs a wlroots compositor. Desktop check H-6. |
+| R3-4 | GNOME extension | The extension reports only when focus changes. A daemon started or restarted after it (an update, a crash, a login where the extension loads first) didn't know the window in front until focus moved. KWin already had this handled by reloading its script. | **Fixed.** The extension watches for the daemon's bus name and reports when it appears (which also covers the first report). Checked with `gjs` that the callback fires when the name is taken. An installed extension keeps its old code until the next log in, as before. Desktop check H-7. |
+| R3-5 | `focus/sway.rs` | Going to an empty workspace sends Sway's `workspace` event but no `window` event, so the game behind stayed "in front": its profile stayed on, and Steam kept the controllers. | **Fixed.** The tracker also follows workspace events and reports nothing in front when the focused workspace is empty. Test: `going_to_an_empty_workspace_reports_unfocused`. |
+| R3-6 | `opener_watch.rs` | With a double or triple tap opening the Guide overlay, the panels counted the taps within one tap window of the first press, while the engine allows a tap window from each release to the next press. A double tap that opened the overlay could fail to close a panel; a triple tap of three 50 ms taps 200 ms apart never did. | **Fixed.** Taps are timed from the last release, as in the engine. Test: `taps_are_timed_from_the_last_release_as_in_the_engine`. |
+| R3-7 | `launchers.rs` | A pack rule naming a program's folder (`Prince of Persia - The Sands of Time/gpp.exe`, since pass 0) never counted as installed, so the library picker didn't put that game first. | **Fixed.** The scan keeps the paths of the programs it finds (`.exe` files, and files marked executable) and matches folder rules against them the way focus does. Test: `a_rule_naming_the_folder_finds_the_game_in_that_folder`. |
+| R3-8 | `offer.rs` | The offer closes itself after 30 s without input, so it can't hold the controller forever, but any event counted as input, including the small changes a stick or trigger resting off its middle sends all the time. | **Fixed.** Only buttons and steps of the stick keep it up. Test: `a_restless_stick_doesnt_keep_the_offer_up`. |
+| R3-9 | `focus/wlroots.rs` | Closed windows' handles were never destroyed, as the protocol asks, so each window ever opened stayed allocated in the daemon and the compositor. | **Fixed.** The handle is destroyed on `closed`. No automated test (needs a compositor). |
+
+Checked and found sound:
+
+- Every backend runs on the focus thread or zbus's, never the daemon's; a stalled compositor socket (Hyprland's command socket has no timeout) only delays focus reports.
+- Each Sway, Hyprland and wlroots tracker reports the window in front when it connects (wlroots after R3-3), and the watchdog reconnects within 10 s when the compositor restarts.
+- Compositor replies that don't parse are skipped or end that connection; nothing indexes them unchecked. A D-Bus caller can only send a class, title and pid, which `identify` reads like any other.
+- `opener_watch` is fed every event, whoever has the controller, so its held buttons don't go stale; a reconnected pad gets a new one.
+- The offer's indexes stay in range: the daemon opens it only with candidates, a pack with several usable profiles goes to the profile list, and the cursor wraps by the list on show.
+- `offers.hinted` grows by one entry per new window process. Not worth bounding.
+
 ## Tools for checking findings
 
 Tools added in pass 0:
@@ -137,3 +162,5 @@ These can't be checked without real controllers and Steam. When they pass, they 
 | H-3 | With "Hide Padwight's controller from Steam" on, turn Steam Input off for Slay the Spire 2 and start it. Run `padwight debug focus <the game's pid>`. If the `SDL_GAMECONTROLLER_IGNORE_DEVICES` line says it hides Padwight's IDs, the game can't see Padwight's controller, and the concern in R0-7 holds. | R0-7 |
 | H-4 | Start a game from Flatpak Heroic, on each desktop with focus tracking (KWin, GNOME, Sway, Hyprland). `debug focus` names the game's process, and its setup switches on. Where the desktop passes on the pid an X11 window gives itself, this exercises the sandbox lookup. | R0-2 |
 | H-5 | On a DualSense or Steam Deck touchpad in mouse mode with scrolling off, put two fingers down, lift the first, put a finger down again, and move each in turn. Only the finger that stayed down moves the pointer. | R2-3 |
+| H-6 | On labwc or Wayfire, with a game that has a rule in front, restart the daemon. The game's profile comes on straight away, without touching any window. Then switch between two windows: the log shows no `no window has focus` in between. | R3-2, R3-3 |
+| H-7 | On GNOME, after logging out and in once to load the updated extension, with a game that has a rule in front, restart the daemon. The game's profile comes on straight away. | R3-4 |

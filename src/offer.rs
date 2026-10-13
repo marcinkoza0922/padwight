@@ -193,7 +193,11 @@ impl OfferSession {
     }
 
     pub fn handle(&mut self, ev: InputEvent, now: Instant) -> Option<OfferOutcome> {
-        self.last_input = now;
+        // Only buttons and the stick's steps keep the offer up: a stick or trigger resting a
+        // little off its middle sends small changes all the time.
+        if matches!(ev, InputEvent::Button(..)) {
+            self.last_input = now;
+        }
         // Up and down move through a list, from the D-pad or the left stick, repeating while held.
         let dir = match ev {
             InputEvent::Button(b, pressed) if crate::nav::dpad_dir(b).is_some() => {
@@ -204,13 +208,17 @@ impl OfferSession {
                 }
                 Some(dir)
             }
-            InputEvent::Axis(crate::input::Axis::LeftY, v) => match self.stick_dir.update((0.0, v))? {
-                Some(dir) => Some(dir),
-                None => {
-                    self.repeat.stop();
-                    return None;
+            InputEvent::Axis(crate::input::Axis::LeftY, v) => {
+                let step = self.stick_dir.update((0.0, v))?;
+                self.last_input = now;
+                match step {
+                    Some(dir) => Some(dir),
+                    None => {
+                        self.repeat.stop();
+                        return None;
+                    }
                 }
-            },
+            }
             _ => None,
         };
         if let Some(dir) = dir {

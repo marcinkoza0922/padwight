@@ -2050,10 +2050,10 @@ impl Daemon {
     }
 
     /// The library, and the entries in it that a Guide tap over `window` would offer.
-    fn library_candidates(&self, window: &WindowInfo) -> (Vec<crate::library::Entry>, Vec<usize>) {
+    fn library_candidates(&self, window: &WindowInfo) -> (&'static [crate::library::Entry], Vec<usize>) {
         let library = crate::library::entries();
         let have = self.pad_features();
-        let mut found = crate::offer::candidates(&self.config, &library, window, have.as_deref());
+        let mut found = crate::offer::candidates(&self.config, library, window, have.as_deref());
         found.retain(|&i| self.offers.declined.get(&library[i].pack.pack.id) != Some(&window.pid));
         (library, found)
     }
@@ -2096,7 +2096,7 @@ impl Daemon {
         self.offers.shown = found.iter().map(|&i| library[i].clone()).collect();
         self.offers.shown_pid = window.pid;
         self.driving.owner = Some(by);
-        let session = OfferSession::new(&library, &found, have.as_deref(), Instant::now());
+        let session = OfferSession::new(library, &found, have.as_deref(), Instant::now());
         self.active = Some(Active::Offer(session));
         self.broadcast_overlay();
         self.overlay_sound(sound::SoundOverlay::Offer, Some(sound::Feedback::Open));

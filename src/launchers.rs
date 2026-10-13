@@ -23,6 +23,9 @@ pub struct Installed {
     pub steam: HashSet<String>,
     /// File names (lowercase) found in installed games' folders, e.g. `eldenring.exe`.
     pub files: HashSet<String>,
+    /// Full paths of the programs among them (`.exe` files, and on Linux files marked
+    /// executable), for rules that name a program's folder.
+    pub programs: Vec<String>,
     pub running: Vec<WindowInfo>,
 }
 
@@ -34,6 +37,9 @@ impl Installed {
             !value.is_empty()
                 && match r.kind {
                     RuleKind::SteamAppId => self.steam.contains(value),
+                    RuleKind::Executable if crate::focus::names_folder(value) => {
+                        self.programs.iter().any(|p| crate::focus::path_ends_with(p, value))
+                    }
                     RuleKind::Executable => self.files.contains(&value.to_lowercase()),
                     RuleKind::WindowClass => false,
                 }
@@ -89,14 +95,17 @@ pub fn scan() -> Installed {
         let Ok(entries) = fs::read_dir(lutris) else { continue };
         for entry in entries.flatten() {
             if let Ok(text) = fs::read_to_string(entry.path()) {
-                found.files.extend(parse_lutris(&text));
+                for exe in parse_lutris(&text) {
+                    found.files.insert(file_name(&exe));
+                    found.programs.push(exe);
+                }
             }
         }
     }
 
     for folder in folders {
         let mut budget = SEARCH_BUDGET;
-        collect_files(&folder, SEARCH_DEPTH, &mut budget, &mut found.files);
+        collect_files(&folder, SEARCH_DEPTH, &mut budget, &mut found);
     }
     found
 }
@@ -206,12 +215,12 @@ fn parse_heroic(text: &str) -> (Vec<PathBuf>, Vec<String>) {
     (dirs, exes)
 }
 
-/// The executable a Lutris game config (YAML) launches, by file name.
+/// The executable a Lutris game config (YAML) launches.
 fn parse_lutris(text: &str) -> Vec<String> {
     text.lines()
         .filter_map(|line| line.trim().strip_prefix("exe:"))
-        .map(|v| file_name(v.trim().trim_matches(['"', '\''])))
-        .filter(|n| !n.is_empty())
+        .map(|v| v.trim().trim_matches(['"', '\'']).to_string())
+        .filter(|path| !file_name(path).is_empty())
         .collect()
 }
 
@@ -220,7 +229,7 @@ fn file_name(path: &str) -> String {
     crate::focus::base_name(path).to_lowercase()
 }
 
-fn collect_files(dir: &Path, depth: usize, budget: &mut usize, out: &mut HashSet<String>) {
+fn collect_files(dir: &Path, depth: usize, budget: &mut usize, out: &mut Installed) {
     let Ok(entries) = fs::read_dir(dir) else { return };
     for entry in entries.flatten() {
         if *budget == 0 {
@@ -233,9 +242,27 @@ fn collect_files(dir: &Path, depth: usize, budget: &mut usize, out: &mut HashSet
                 collect_files(&entry.path(), depth - 1, budget, out);
             }
         } else if kind.is_file() {
-            out.insert(entry.file_name().to_string_lossy().to_lowercase());
+            let name = entry.file_name().to_string_lossy().to_lowercase();
+            if is_program(&name, &entry) {
+                out.programs.push(entry.path().to_string_lossy().into_owned());
+            }
+            out.files.insert(name);
         }
     }
+}
+
+/// Whether a file found in a game's folder is a program a rule could name.
+fn is_program(name: &str, entry: &fs::DirEntry) -> bool {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if entry.metadata().is_ok_and(|m| m.permissions().mode() & 0o111 != 0) {
+            return true;
+        }
+    }
+    #[cfg(not(unix))]
+    let _ = entry;
+    name.ends_with(".exe")
 }
 
 #[cfg(test)]
@@ -270,7 +297,7 @@ mod tests {
         assert_eq!(parse_heroic(gog).0, [PathBuf::from("/games/Witcher 3")]);
         assert_eq!(parse_heroic("not json"), (Vec::new(), Vec::new()));
         let lutris = "game:\n  exe: /home/me/Games/diablo/drive_c/Diablo II/Game.exe\n  prefix: /x\nsystem: {}\n";
-        assert_eq!(parse_lutris(lutris), ["game.exe"]);
+        assert_eq!(parse_lutris(lutris), ["/home/me/Games/diablo/drive_c/Diablo II/Game.exe"]);
     }
 
     #[test]
@@ -278,6 +305,7 @@ mod tests {
         let installed = Installed {
             steam: HashSet::from(["1245620".to_string()]),
             files: HashSet::from(["factorio".to_string()]),
+            programs: Vec::new(),
             running: vec![WindowInfo { exe: "Hades.exe".into(), ..WindowInfo::default() }],
         };
         let rule = |kind, value: &str| vec![Rule::new(kind, value, "P")];
@@ -288,18 +316,38 @@ mod tests {
         assert!(!installed.has(&[]));
     }
 
+    /// Games sharing a program name (both Prince of Persia packs run `gpp.exe`) name its folder
+    /// in their rules; installed is the one whose folder is there.
+    #[test]
+    fn a_rule_naming_the_folder_finds_the_game_in_that_folder() {
+        let dir = std::env::temp_dir().join(format!("launchers-folder-test-{}", std::process::id()));
+        let game = dir.join("common/Prince of Persia - The Sands of Time");
+        fs::create_dir_all(&game).unwrap();
+        fs::write(game.join("GPP.exe"), "").unwrap();
+        fs::write(game.join("readme.txt"), "").unwrap();
+        let (mut found, mut budget) = (Installed::default(), SEARCH_BUDGET);
+        collect_files(&dir, SEARCH_DEPTH, &mut budget, &mut found);
+        fs::remove_dir_all(dir).unwrap();
+        let rule = |value: &str| vec![Rule::new(RuleKind::Executable, value, "P")];
+        assert!(found.has(&rule("Prince of Persia - The Sands of Time/gpp.exe")));
+        assert!(found.has(&rule(r"prince of persia - the sands of time\GPP.EXE")), "either slash, any case");
+        assert!(!found.has(&rule("Prince of Persia - Warrior Within/gpp.exe")));
+        assert!(!found.has(&rule("Sands of Time/gpp.exe")), "whole folder names only");
+        assert!(!found.has(&rule("Prince of Persia - The Sands of Time/readme.txt")), "only programs");
+    }
+
     #[test]
     fn finds_files_in_install_folders_within_limits() {
         let dir = std::env::temp_dir().join(format!("launchers-test-{}", std::process::id()));
         fs::create_dir_all(dir.join("bin/x64")).unwrap();
         fs::write(dir.join("bin/x64/Game.EXE"), "").unwrap();
-        let mut files = HashSet::new();
+        let mut found = Installed::default();
         let mut budget = 100;
-        collect_files(&dir, 4, &mut budget, &mut files);
-        assert!(files.contains("game.exe"));
-        let mut shallow = HashSet::new();
+        collect_files(&dir, 4, &mut budget, &mut found);
+        assert!(found.files.contains("game.exe"));
+        let mut shallow = Installed::default();
         collect_files(&dir, 0, &mut 100, &mut shallow);
-        assert!(shallow.is_empty(), "only one level, which holds just a folder");
+        assert!(shallow.files.is_empty(), "only one level, which holds just a folder");
         fs::remove_dir_all(dir).unwrap();
     }
 }

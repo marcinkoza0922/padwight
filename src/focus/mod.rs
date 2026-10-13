@@ -170,7 +170,7 @@ pub(crate) fn names_folder(value: &str) -> bool {
 
 /// Whether `path` ends with the folders and file of `tail`, whole names only, ignoring case and
 /// whether either uses `/` or `\`.
-fn path_ends_with(path: &str, tail: &str) -> bool {
+pub(crate) fn path_ends_with(path: &str, tail: &str) -> bool {
     let norm = |s: &str| s.replace('\\', "/").to_ascii_lowercase();
     let (path, tail) = (norm(path), norm(tail));
     let tail = tail.trim_matches('/');

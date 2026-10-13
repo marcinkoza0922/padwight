@@ -145,3 +145,20 @@ fn b_goes_back_to_the_question() {
     assert_eq!(press(&mut back, Button::East), None, "B goes back to the question");
     assert!(choices(&back).0.is_empty());
 }
+
+#[test]
+fn a_restless_stick_doesnt_keep_the_offer_up() {
+    use crate::input::Axis;
+    let library = vec![entry("Doom", "doom.exe")];
+    let t0 = Instant::now();
+    let mut s = OfferSession::new(&library, &[0], None, t0);
+    for second in 0..40 {
+        let wobble = if second % 2 == 0 { 0.02 } else { -0.03 };
+        for axis in [Axis::LeftY, Axis::RightX, Axis::RightTrigger] {
+            s.handle(InputEvent::Axis(axis, wobble), t0 + Duration::from_secs(second));
+        }
+    }
+    assert!(s.expired(t0 + IDLE_CLOSE));
+    s.handle(InputEvent::Axis(Axis::LeftY, 0.9), t0 + IDLE_CLOSE);
+    assert!(!s.expired(t0 + IDLE_CLOSE + Duration::from_secs(1)), "a step of the stick counts as input");
+}
