@@ -31,8 +31,6 @@ pub fn serial() -> MutexGuard<'static, ()> {
 /// mouse button. [`install_config`] lays it out in the folders the daemon reads.
 const DEFAULT_CONFIG: &str = include_str!("../fixtures/default-config.toml");
 
-/// The default config with every real gamepad on this machine ignored, so a daemon started by a
-/// test never grabs the user's controller. The test's own controllers are not on the list.
 /// Writes `text` (a config in one file, with `general`, `setups` and `shared` inside it) into
 /// `config_dir` in the layout the daemon reads: `config.toml` for the app settings, and a folder
 /// per setup with its profiles, layers and other items as files.
@@ -80,6 +78,8 @@ fn write_items(dir: &Path, items: Option<&toml::Value>) {
     }
 }
 
+/// The default config with every real gamepad on this machine ignored, so a daemon started by a
+/// test never grabs the user's controller. The test's own controllers are not on the list.
 pub fn default_config() -> String {
     let ignored: Vec<String> = real_gamepads().iter().map(|name| format!("{name:?}")).collect();
     DEFAULT_CONFIG.replace("ignored_devices = []", &format!("ignored_devices = [{}]", ignored.join(", ")))

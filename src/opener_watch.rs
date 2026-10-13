@@ -34,7 +34,10 @@ pub struct Watch {
     held: HashSet<Button>,
     /// A combo that went off stays quiet until one of its buttons is let go.
     fired: bool,
-    taps: Vec<Instant>,
+    /// Taps so far, and when the last one was let go: as in the engine, each tap must start
+    /// within the tap window of the last one ending.
+    taps: u8,
+    up_at: Option<Instant>,
     down_since: Option<Instant>,
 }
 
@@ -44,7 +47,8 @@ impl Watch {
         if self.input != input {
             self.input = input;
             self.fired = false;
-            self.taps.clear();
+            self.taps = 0;
+            self.up_at = None;
             self.down_since = None;
         }
     }
@@ -81,7 +85,8 @@ impl Watch {
     fn gesture(&mut self, (button, kind): (Button, GestureKind), (b, down): (Button, bool), now: Instant, timing: Timing) -> bool {
         if b != button {
             if down {
-                self.taps.clear();
+                self.taps = 0;
+                self.up_at = None;
                 self.down_since = None;
             }
             return false;
@@ -93,16 +98,19 @@ impl Watch {
             }
             GestureKind::LongPress => self.down_since.take().is_some_and(|t| now.duration_since(t) >= timing.long),
             GestureKind::DoubleTap | GestureKind::TripleTap if down => {
-                self.taps.retain(|t| now.duration_since(*t) <= timing.tap);
-                self.taps.push(now);
+                let follows_on = self.up_at.take().is_some_and(|t| now.duration_since(t) <= timing.tap);
+                self.taps = if follows_on { self.taps + 1 } else { 1 };
                 let needed = if kind == GestureKind::DoubleTap { 2 } else { 3 };
-                let done = self.taps.len() >= needed;
+                let done = self.taps >= needed;
                 if done {
-                    self.taps.clear();
+                    self.taps = 0;
                 }
                 done
             }
-            _ => false,
+            GestureKind::DoubleTap | GestureKind::TripleTap => {
+                self.up_at = Some(now);
+                false
+            }
         }
     }
 }
@@ -147,16 +155,38 @@ mod tests {
         assert!(w.feed(&press(Button::Start, true), at(t0, 60), timing));
     }
 
+    /// Taps a button down at `down` and up 50 ms later; true when the press completed the input.
+    fn tap(w: &mut Watch, b: Button, t0: Instant, down: u64) -> bool {
+        let fired = w.feed(&press(b, true), at(t0, down), Timing::default());
+        w.feed(&press(b, false), at(t0, down + 50), Timing::default());
+        fired
+    }
+
     #[test]
     fn taps_must_come_quickly_and_alone() {
-        let (mut w, t0, timing) = (watching(ShortcutInput::gesture(Button::Select, GestureKind::DoubleTap)), Instant::now(), Timing::default());
-        assert!(!w.feed(&press(Button::Select, true), t0, timing));
-        assert!(w.feed(&press(Button::Select, true), at(t0, 150), timing));
-        assert!(!w.feed(&press(Button::Select, true), at(t0, 1000), timing));
-        assert!(!w.feed(&press(Button::Select, true), at(t0, 1400), timing), "too slow");
-        w.feed(&press(Button::Select, true), at(t0, 1500), timing);
-        w.feed(&press(Button::South, true), at(t0, 1510), timing);
-        assert!(!w.feed(&press(Button::Select, true), at(t0, 1520), timing), "another button between starts over");
+        let (mut w, t0) = (watching(ShortcutInput::gesture(Button::Select, GestureKind::DoubleTap)), Instant::now());
+        assert!(!tap(&mut w, Button::Select, t0, 0));
+        assert!(tap(&mut w, Button::Select, t0, 150));
+        assert!(!tap(&mut w, Button::Select, t0, 1000));
+        assert!(!tap(&mut w, Button::Select, t0, 1400), "too slow");
+        tap(&mut w, Button::Select, t0, 1500);
+        tap(&mut w, Button::South, t0, 1510);
+        assert!(!tap(&mut w, Button::Select, t0, 1600), "another button between starts over");
+    }
+
+    /// The engine opens the Guide overlay on taps that each start within the tap window of the
+    /// last one ending, however long the whole sequence takes; the overlay must close the same way.
+    #[test]
+    fn taps_are_timed_from_the_last_release_as_in_the_engine() {
+        let t0 = Instant::now();
+        let mut double = watching(ShortcutInput::gesture(Button::Select, GestureKind::DoubleTap));
+        // Down 0-50, then 200 ms up: 250 ms from the first press, within the window from the release.
+        assert!(!tap(&mut double, Button::Select, t0, 0));
+        assert!(tap(&mut double, Button::Select, t0, 260));
+        let mut triple = watching(ShortcutInput::gesture(Button::Select, GestureKind::TripleTap));
+        assert!(!tap(&mut triple, Button::Select, t0, 0));
+        assert!(!tap(&mut triple, Button::Select, t0, 200));
+        assert!(tap(&mut triple, Button::Select, t0, 400));
     }
 
     #[test]

@@ -5,8 +5,8 @@ use crate::ipc::WindowInfo;
 
 impl Config {
     /// Adds a setup for `window` holding `profile`, with a rule that picks it for the window.
-    /// The game takes General's macros, menus, layers and overlays, so the profile's references
-    /// still resolve. Returns the new profile.
+    /// The game takes General's macros, menus, layers, overlays and assets, so the profile's
+    /// references (and `{icon:…}` tokens and sound cues) still resolve. Returns the new profile.
     pub fn add_game_for_window(&mut self, window: &WindowInfo, profile: Profile) -> ProfileRef {
         let base = window_game_name(window);
         let name = (1..)
@@ -22,6 +22,7 @@ impl Config {
         game.logs.clone_from(&self.general.logs);
         game.layers.clone_from(&self.general.layers);
         game.modes.clone_from(&self.general.modes);
+        game.assets.clone_from(&self.general.assets);
         self.games.push(game);
         ProfileRef::new(Some(&name), &profile_name)
     }
@@ -48,6 +49,15 @@ mod tests {
         assert_eq!(second.game.as_deref(), Some("Eldenring 2"));
         let rule = &config.game(Some("Eldenring")).unwrap().rules[0];
         assert_eq!(rule.profile, profile.name);
+    }
+
+    #[test]
+    fn the_new_game_carries_general_s_icons_and_sounds() {
+        let mut config = Config::default();
+        config.general.assets.add_icon("bow", "<svg viewBox='0 0 8 8'></svg>").unwrap();
+        let profile = config.general.profiles[0].clone();
+        let at = config.add_game_for_window(&WindowInfo::default(), profile);
+        assert_eq!(config.game(at.game.as_deref()).unwrap().assets, config.general.assets);
     }
 
     #[test]

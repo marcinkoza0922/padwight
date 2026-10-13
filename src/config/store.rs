@@ -4,7 +4,8 @@
 //! the same shape, so a folder (or one subfolder of it) can be copied to another machine as it is.
 //!
 //! Files are numbered so they load in the order they were saved in. Each save rewrites the whole
-//! tree, so renamed or removed items leave nothing behind.
+//! tree, so renamed or removed items leave nothing behind, but a file that doesn't load is left
+//! out of the config and kept on disk (see [`unreadable`]).
 
 use std::{
     fs,
@@ -20,6 +21,9 @@ use serde::{Serialize, de::DeserializeOwned};
 
 use super::{Config, Game, InfoOverlay, ItemKind, Layer, LogOverlay, Macro, Menu, Profile, free_name};
 
+mod unreadable;
+pub use unreadable::Unreadable;
+
 /// The file in a setup's folder that holds its name, rules and looks.
 const SETUP_FILE: &str = "setup.toml";
 const SETUPS: &str = "setups";
@@ -28,7 +32,7 @@ const GENERAL: &str = "general";
 /// [`fold_in_shared`]) and removed by the next save.
 const SHARED: &str = "shared";
 /// The keys of `config.toml` that live in the folders instead.
-const APP_KEYS: [&str; 2] = ["general", "setups"];
+const APP_KEYS: [&str; 3] = ["general", "setups", "unreadable"];
 /// The keys of a setup that live in its subfolders instead.
 const SETUP_KEYS: [&str; 7] = ["profiles", "macros", "menus", "info_overlays", "log_overlays", "layers", "modes"];
 
@@ -55,20 +59,43 @@ pub fn root_of(path: &Path) -> &Path {
 }
 
 /// Fills in the setups of `config` from the folder at `root`. A missing General folder gives the
-/// default General.
+/// default General. Files that don't load are left out and kept in `config.unreadable`: an item
+/// file on its own, a setup whose `setup.toml` doesn't load with its whole folder. General's
+/// `setup.toml` gives the default General's settings, with its items read as usual. A setup that
+/// couldn't be saved as it is (see [`super::problems`]) is left out and kept with its folder too.
 pub fn load(root: &Path, config: &mut Config) -> Result<()> {
-    let general = root.join(GENERAL);
-    config.general = if general.join(SETUP_FILE).exists() { read_setup(&general)? } else { Config::default().general };
-    config.games = setup_dirs(&root.join(SETUPS))?.iter().map(|dir| read_setup(dir)).collect::<Result<_>>()?;
+    let mut reading = Reading { root, kept: Vec::new() };
+    let general = saved(root, GENERAL);
+    config.general = if general.join(SETUP_FILE).exists() {
+        reading.setup(&general, true)?.unwrap_or_else(|| Config::default().general)
+    } else {
+        Config::default().general
+    };
+    config.games = Vec::new();
+    let mut dirs = Vec::new();
+    for dir in setup_dirs(&saved(root, SETUPS))? {
+        if let Some(game) = reading.setup(&dir, false)? {
+            config.games.push(game);
+            dirs.push(dir);
+        }
+    }
     let shared = root.join(SHARED);
     if shared.exists() {
         let mut items = Game::new("Shared", Vec::new());
-        items.macros = read_items(&shared.join("macros"))?;
-        items.menus = read_items(&shared.join("menus"))?;
-        items.info = read_items(&shared.join("info"))?;
-        items.logs = read_items(&shared.join("logs"))?;
+        items.macros = reading.items(&shared.join("macros"))?;
+        items.menus = reading.items(&shared.join("menus"))?;
+        items.info = reading.items(&shared.join("info"))?;
+        items.logs = reading.items(&shared.join("logs"))?;
         fold_in_shared(config, &items);
     }
+    // General needs a profile, for the desktop; its own may all have been left out.
+    if config.general.profiles.is_empty() {
+        config.general.profiles = Config::default().general.profiles;
+    }
+    // Checked once upgraded and the old shared items are in, as they may be what a setup refers to.
+    config.upgrade_games();
+    reading.leave_out_invalid(config, &general, dirs)?;
+    config.unreadable = reading.kept;
     Ok(())
 }
 
@@ -116,6 +143,7 @@ fn copy_item(to: &mut Game, from: &Game, kind: ItemKind, name: &str, new: &str) 
 /// Writes every setup under `root`, replacing what is there. The new tree is built
 /// beside the old one and then swapped in, so a save that fails part way leaves the old setups.
 pub fn save(root: &Path, config: &Config) -> Result<()> {
+    unreadable::check_save(&config.unreadable)?;
     let staging = root.join(".saving");
     if staging.exists() {
         fs::remove_dir_all(&staging)?;
@@ -125,12 +153,21 @@ pub fn save(root: &Path, config: &Config) -> Result<()> {
     for (i, game) in config.games.iter().enumerate() {
         write_setup(&staging.join(SETUPS).join(numbered(i, &game.name)), game)?;
     }
+    unreadable::put_back(&staging, &config.unreadable)?;
     for part in [GENERAL, SETUPS] {
-        let target = root.join(part);
+        // The old folder is set aside, not deleted, until the new one is in place: at every
+        // moment one of them is whole, and `saved` reads whichever is there.
+        let (target, old) = (root.join(part), previous(root, part));
         if target.exists() {
-            fs::remove_dir_all(&target).with_context(|| format!("replacing {}", target.display()))?;
+            if old.exists() {
+                fs::remove_dir_all(&old).with_context(|| format!("removing {}", old.display()))?;
+            }
+            fs::rename(&target, &old).with_context(|| format!("replacing {}", target.display()))?;
         }
         fs::rename(staging.join(part), &target).with_context(|| format!("writing {}", target.display()))?;
+        if old.exists() {
+            fs::remove_dir_all(&old).with_context(|| format!("removing {}", old.display()))?;
+        }
     }
     fs::remove_dir_all(&staging)?;
     // Folded into the setups when it was loaded.
@@ -141,14 +178,26 @@ pub fn save(root: &Path, config: &Config) -> Result<()> {
     Ok(())
 }
 
+/// Where a save sets `part` (General or the setups) aside while it puts the new one in place.
+fn previous(root: &Path, part: &str) -> PathBuf {
+    root.join(format!(".{part}.old"))
+}
+
+/// The folder `part` was last saved in whole: itself, or, when a save stopped (or is) between
+/// setting the old one aside and putting the new one in place, the old one.
+fn saved(root: &Path, part: &str) -> PathBuf {
+    let (target, old) = (root.join(part), previous(root, part));
+    if !target.exists() && old.exists() { old } else { target }
+}
+
 /// `config.toml`: the app settings, without the setups, which have folders of their own.
 pub fn app_settings(config: &Config) -> Result<String> {
     Ok(toml::to_string_pretty(&without(config, &APP_KEYS)?)?)
 }
 
 /// Writes `text` to `path`, readable only by its owner.
-pub fn write_private(path: &Path, text: &str) -> Result<()> {
-    private_file(path)?.write_all(text.as_bytes())?;
+pub fn write_private(path: &Path, text: impl AsRef<[u8]>) -> Result<()> {
+    private_file(path)?.write_all(text.as_ref())?;
     Ok(())
 }
 
@@ -182,18 +231,83 @@ fn write_setup(dir: &Path, game: &Game) -> Result<()> {
     Ok(())
 }
 
-fn read_setup(dir: &Path) -> Result<Game> {
-    let path = dir.join(SETUP_FILE);
-    let text = fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
-    let mut game: Game = toml::from_str(&text).with_context(|| format!("parsing {}", path.display()))?;
-    game.profiles = read_items(&dir.join("profiles"))?;
-    game.layers = read_items(&dir.join("layers"))?;
-    game.modes = read_items(&dir.join("modes"))?;
-    game.macros = read_items(&dir.join("macros"))?;
-    game.menus = read_items(&dir.join("menus"))?;
-    game.info = read_items(&dir.join("info"))?;
-    game.logs = read_items(&dir.join("logs"))?;
-    Ok(game)
+/// A load of the config folder at `root`, keeping what doesn't load.
+struct Reading<'a> {
+    root: &'a Path,
+    kept: Vec<Unreadable>,
+}
+
+impl Reading<'_> {
+    /// The setup in `dir`, or none when its `setup.toml` doesn't load and the folder is kept.
+    /// General's (`general`) is kept as a file, and its items are read.
+    fn setup(&mut self, dir: &Path, general: bool) -> Result<Option<Game>> {
+        let path = dir.join(SETUP_FILE);
+        let mut game: Game = match read_toml(&path) {
+            Ok(game) => game,
+            Err(e) if general => {
+                self.kept.push(Unreadable::file(self.root, &path, &e)?);
+                Config::default().general
+            }
+            Err(e) => {
+                self.kept.push(Unreadable::setup(self.root, dir, &e)?);
+                return Ok(None);
+            }
+        };
+        game.profiles = self.items(&dir.join("profiles"))?;
+        game.layers = self.items(&dir.join("layers"))?;
+        game.modes = self.items(&dir.join("modes"))?;
+        game.macros = self.items(&dir.join("macros"))?;
+        game.menus = self.items(&dir.join("menus"))?;
+        game.info = self.items(&dir.join("info"))?;
+        game.logs = self.items(&dir.join("logs"))?;
+        Ok(Some(game))
+    }
+
+    /// Leaves out the setups that couldn't be saved as they are, keeping their folders (`dirs`,
+    /// one per setup in `config`). General then gets the default's, and saving waits.
+    fn leave_out_invalid(&mut self, config: &mut Config, general: &Path, dirs: Vec<PathBuf>) -> Result<()> {
+        let kept = |dir: &Path, problem: String| anyhow::anyhow!("checking {}: {problem}", dir.display());
+        // A General whose `setup.toml` didn't load already holds up saving.
+        if !self.kept.iter().any(Unreadable::blocks_save)
+            && let Some(problem) = super::problems::game_problem(config, &config.general)
+        {
+            self.kept.push(Unreadable::setup(self.root, general, &kept(general, problem))?);
+            config.general = Config::default().general;
+        }
+        let games = std::mem::take(&mut config.games);
+        for (game, dir) in games.into_iter().zip(dirs) {
+            let problem = if game.name.trim().is_empty() {
+                Some("A setup needs a name.".into())
+            } else if config.games.iter().any(|g| g.name == game.name) {
+                Some(format!("Two setups are named “{}”.", game.name))
+            } else {
+                super::problems::game_problem(config, &game)
+            };
+            match problem {
+                Some(problem) => self.kept.push(Unreadable::setup(self.root, &dir, &kept(&dir, problem))?),
+                None => config.games.push(game),
+            }
+        }
+        Ok(())
+    }
+
+    /// The items saved in `dir`, in file name order, but for those kept as they don't load. A
+    /// missing folder has none.
+    fn items<T: DeserializeOwned>(&mut self, dir: &Path) -> Result<Vec<T>> {
+        let mut items = Vec::new();
+        for path in item_files(dir)? {
+            match read_toml(&path) {
+                Ok(item) => items.push(item),
+                Err(e) => self.kept.push(Unreadable::file(self.root, &path, &e)?),
+            }
+        }
+        Ok(items)
+    }
+}
+
+fn read_toml<T: DeserializeOwned>(path: &Path) -> Result<T> {
+    let text = fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
+    super::finite::from_toml(&text).with_context(|| format!("parsing {}", path.display()))
 }
 
 /// The setup folders under `dir` (those with a `setup.toml`), in name order.
@@ -211,8 +325,8 @@ fn setup_dirs(dir: &Path) -> Result<Vec<PathBuf>> {
     Ok(dirs)
 }
 
-/// The items saved in `dir`, in file name order. A missing folder has none.
-fn read_items<T: DeserializeOwned>(dir: &Path) -> Result<Vec<T>> {
+/// The item files in `dir`, in name order. A missing folder has none.
+fn item_files(dir: &Path) -> Result<Vec<PathBuf>> {
     if !dir.exists() {
         return Ok(Vec::new());
     }
@@ -223,13 +337,7 @@ fn read_items<T: DeserializeOwned>(dir: &Path) -> Result<Vec<T>> {
         .filter(|path| path.extension().is_some_and(|ext| ext == "toml"))
         .collect();
     files.sort();
-    files
-        .iter()
-        .map(|path| {
-            let text = fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
-            toml::from_str(&text).with_context(|| format!("parsing {}", path.display()))
-        })
-        .collect()
+    Ok(files)
 }
 
 /// One file per item, named by its position and name, so the files sort in the list's order.
@@ -263,100 +371,4 @@ fn without<T: Serialize>(value: &T, keys: &[&str]) -> Result<toml::Table> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::config::Profile;
-
-    fn scratch(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("padwight-store-{name}-{}", std::process::id()));
-        let _ = fs::remove_dir_all(&dir);
-        dir
-    }
-
-    #[test]
-    fn a_config_is_saved_as_folders_and_loads_back_unchanged() {
-        let dir = scratch("roundtrip");
-        let path = dir.join("config.toml");
-        let mut config = Config::default();
-        config.games.push(Game::new("Doom", vec![Profile::passthrough("Gamepad"), Profile::desktop("Desktop")]));
-        config.games.push(Game::new("Hades", vec![Profile::passthrough("Gamepad")]));
-        config.save_to(&path).unwrap();
-
-        // App settings stay in one file, with no setups in it.
-        let app = fs::read_to_string(&path).unwrap();
-        assert!(!app.contains("[general") && !app.contains("[[setups"));
-        // Each setup is a folder: setup.toml, then a subfolder per kind of item, numbered.
-        assert!(dir.join("general/setup.toml").is_file());
-        assert!(dir.join("general/profiles/001-Gamepad.toml").is_file());
-        assert!(dir.join("setups/001-Doom/setup.toml").is_file());
-        assert!(dir.join("setups/001-Doom/profiles/002-Desktop.toml").is_file());
-        assert!(dir.join("setups/002-Hades/profiles/001-Gamepad.toml").is_file());
-
-        let loaded = Config::load_from(&path).unwrap();
-        assert_eq!(loaded, config);
-        let _ = fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn a_removed_setup_leaves_no_folder_behind() {
-        let dir = scratch("removed");
-        let path = dir.join("config.toml");
-        let mut config = Config::default();
-        config.games.push(Game::new("Doom", vec![Profile::passthrough("Gamepad")]));
-        config.save_to(&path).unwrap();
-        config.games.clear();
-        config.save_to(&path).unwrap();
-        assert!(!dir.join("setups/001-Doom").exists());
-        assert_eq!(Config::load_from(&path).unwrap().games.len(), 0);
-        let _ = fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn a_missing_general_folder_gives_the_default_general() {
-        let dir = scratch("missing-general");
-        let path = dir.join("config.toml");
-        Config::default().save_to(&path).unwrap();
-        fs::remove_dir_all(dir.join("general")).unwrap();
-        assert_eq!(Config::load_from(&path).unwrap().general, Config::default().general);
-        let _ = fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn old_shared_items_go_to_the_setups_that_use_them() {
-        use crate::config::{Button, ButtonAction, MacroStep, MenuItem, MenuKind, OverlayStyle};
-        let dir = scratch("shared");
-        let path = dir.join("config.toml");
-        let mut config = Config::default();
-        let mut doom = Game::new("Doom", vec![Profile::passthrough("Gamepad")]);
-        doom.profiles[0].set_button(Button::Select, ButtonAction::OpenMenu("Wheel".into()));
-        config.games.push(doom);
-        config.games.push(Game::new("Hades", vec![Profile::passthrough("Gamepad")]));
-        config.general.macros.push(Macro { name: "Spare".into(), steps: vec![] });
-        config.save_to(&path).unwrap();
-        // What an older version saved: a menu that plays a macro, and two unused macros.
-        let heal = ButtonAction::Macro { name: "Heal".into(), repeat: false };
-        let item = MenuItem::new("Heal", heal);
-        let wheel = Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![item], cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() };
-        let mac = |name: &str| Macro { name: name.into(), steps: vec![MacroStep::Wait(1)] };
-        write_items(&dir.join("shared/menus"), &[wheel]).unwrap();
-        write_items(&dir.join("shared/macros"), &[mac("Heal"), mac("Spare"), mac("Other")]).unwrap();
-
-        let loaded = Config::load_from(&path).unwrap();
-        let names = |g: &Game, kind| g.names(kind).iter().map(ToString::to_string).collect::<Vec<_>>();
-        assert_eq!(names(&loaded.games[0], ItemKind::Menu), ["Wheel"]);
-        assert_eq!(names(&loaded.games[0], ItemKind::Macro), ["Heal"], "followed through the menu");
-        assert!(names(&loaded.games[1], ItemKind::Macro).is_empty(), "Hades uses none");
-        assert_eq!(names(&loaded.general, ItemKind::Macro), ["Spare", "Spare (2)", "Other"], "unused ones go to General");
-        loaded.save_to(&path).unwrap();
-        assert!(!dir.join("shared").exists());
-        assert_eq!(Config::load_from(&path).unwrap(), loaded);
-        let _ = fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn names_with_slashes_make_safe_file_names() {
-        assert_eq!(slug("Dark Souls: Remastered/2"), "Dark Souls_ Remastered_2");
-        assert_eq!(slug("  "), "item");
-        assert_eq!(numbered(0, "Doom"), "001-Doom");
-    }
-}
+mod tests;

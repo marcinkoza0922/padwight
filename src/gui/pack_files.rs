@@ -16,12 +16,18 @@ pub(super) enum FileKind {
 impl App {
     pub(super) fn update_pack_files(&mut self, message: Message) -> Task<Message> {
         match message {
-            Message::AddPackFile(kind) => return Task::perform(pick_file(kind), move |picked| Message::PackFilePicked(kind, picked)),
-            Message::PackFilePicked(kind, picked) => match picked {
+            Message::AddPackFile(kind) => {
+                let game = self.game_key().map(str::to_string);
+                return Task::perform(pick_file(kind), move |picked| Message::PackFilePicked(game.clone(), kind, picked));
+            }
+            Message::PackFilePicked(game, kind, picked) => match picked {
                 None => {}
                 Some(Err(e)) => self.message = Some((format!("Can't add that file: {e}"), true)),
                 Some(Ok((name, bytes))) => {
-                    let assets = &mut self.game_mut().assets;
+                    let Some(assets) = self.config.game_mut(game.as_deref()).map(|g| &mut g.assets) else {
+                        self.message = Some((format!("Can't add “{name}”: its setup was renamed or deleted while the file was picked."), true));
+                        return Task::none();
+                    };
                     let added = match kind {
                         FileKind::Icon => String::from_utf8(bytes).map_err(|_| "not an SVG".to_string()).and_then(|svg| assets.add_icon(&name, &svg)),
                         FileKind::Sound => assets.add_sound(&name, &bytes),

@@ -23,16 +23,19 @@ pub fn find_node(name: &str) -> Option<PathBuf> {
     None
 }
 
-/// Like [`find_node`], but of several devices with the name, the newest: a test daemon's virtual
-/// devices are newer than those of a daemon already running on the machine.
-pub fn find_newest_node(name: &str) -> Option<PathBuf> {
-    let number = |path: &Path| path.file_name()?.to_str()?.strip_prefix("event")?.parse::<u32>().ok();
-    fs::read_dir("/dev/input")
-        .ok()?
-        .flatten()
-        .map(|entry| entry.path())
-        .filter(|path| number(path).is_some() && Device::open(path).is_ok_and(|dev| dev.name() == Some(name)))
-        .max_by_key(|path| number(path))
+/// Every device node called `name` there is now. Taken before a test starts its daemon, it tells
+/// that daemon's devices from those of a daemon already running on the machine (see [`Reader::open_new`]).
+pub fn nodes(name: &str) -> Vec<PathBuf> {
+    let Ok(entries) = fs::read_dir("/dev/input") else { return Vec::new() };
+    entries.flatten().map(|entry| entry.path()).filter(|path| Device::open(path).is_ok_and(|dev| dev.name() == Some(name))).collect()
+}
+
+/// Fails when a Padwight daemon already runs on this machine. It would grab the test's uhid
+/// controller before the test's daemon could, and type the test's keys into the desktop.
+pub fn assert_no_other_daemon() {
+    if let Some(path) = find_node("Padwight Virtual Keyboard") {
+        panic!("a Padwight daemon is already running here (its keyboard is {}): stop it first, with `systemctl --user stop padwight`", path.display());
+    }
 }
 
 /// True when another process holds the controller's grab.
@@ -60,9 +63,10 @@ impl Reader {
         Self::at(&wait_for(&format!("the virtual device {name:?}"), || find_node(name)))
     }
 
-    /// Opens the newest device of that name (see [`find_newest_node`]).
-    pub fn open_newest(name: &str) -> Self {
-        Self::at(&wait_for(&format!("the virtual device {name:?}"), || find_newest_node(name)))
+    /// Opens the device called `name` that is not one of `before` (from [`nodes`]): the one a
+    /// daemon started since made. Waits for it to appear.
+    pub fn open_new(name: &str, before: &[PathBuf]) -> Self {
+        Self::at(&wait_for(&format!("a new virtual device {name:?}"), || nodes(name).into_iter().find(|path| !before.contains(path))))
     }
 
     fn at(path: &Path) -> Self {

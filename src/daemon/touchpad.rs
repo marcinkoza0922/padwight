@@ -14,7 +14,7 @@ use crate::{input::TouchNormalizer, monitor::log};
 
 use super::{
     Daemon, Msg,
-    devices::{PairedNode, read_input},
+    devices::{Grab, PairedNode, read_input},
 };
 
 impl Daemon {
@@ -40,6 +40,7 @@ impl Daemon {
                 continue;
             }
             log!("touchpad: using {touch_name} for {}", dev.name);
+            dev.grabs.extend(Grab::of(&touch, &touch_name));
             let (stop, tx) = (dev.stop.clone(), self.tx.clone());
             thread::spawn(move || read_touchpad(id, touch, &stop, &tx));
         }

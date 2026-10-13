@@ -14,6 +14,9 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
   `screenshots/motion/`; `--from/--until/--every` pick the strip's span, `--scene keyboard`, `--trace` prints numbers)
 - Which overlay cue plays, no display or speakers needed: `scripts/sound-trace.sh [config.toml]` (a `--debug` daemon
   logs each cue as a `sound:` line); `cargo run -q -- debug sound list|<kind>|<overlay>` plays cues to hear them
+- Game detection and the Steam hand-off, no controller needed: `cargo run -q -- debug focus [pid [class]]|processes`,
+  `debug steam [app id]`; `scripts/sandbox-pid.sh` runs a program in its own pid namespace (see
+  `docs/development/code-review-plan.md`, which also tracks the review passes)
 - Long files: `scripts/long-files.sh` (lists files over 400 lines; split them when you work in them)
 
 Filter tests to the module you touched (e.g. `engine::`) unless the change is broad.

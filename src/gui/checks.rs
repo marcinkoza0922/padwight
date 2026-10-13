@@ -1,33 +1,8 @@
-//! What saving checks: names, references and the rules each game, profile and item must follow.
+//! Where saving's problems show in the window: which section has one, where the first one is,
+//! and the menu warnings saving doesn't refuse. The rules themselves are `config::problems`.
 
 use super::*;
-
-/// What's wrong with a menu item's action: the usual checks, plus which menus it may open
-/// (see [`crate::menu::can_open`]).
-pub(super) fn item_problem(menu: &Menu, action: &ButtonAction, menus: &[&Menu], names: &Names) -> Option<String> {
-    if uses_layer(action) {
-        return Some("a menu item can't hold a layer: switch to a mode instead".into());
-    }
-    action_problem(action, names).or_else(|| {
-        let mut problem = None;
-        action.walk(&mut |a| {
-            if let ButtonAction::OpenMenu(name) = a
-                && problem.is_none()
-            {
-                if matches!(menu.kind, MenuKind::Radial { .. }) {
-                    problem = Some("radial menus can't open other menus".to_string());
-                } else if menu.cancel_button().is_none() {
-                    problem = Some("give this menu a close button to open other menus from it".to_string());
-                } else if let Some(child) = menus.iter().find(|m| &m.name == name)
-                    && child.cancel_button() != menu.cancel_button()
-                {
-                    problem = Some(format!("“{name}” needs the same close button as this menu"));
-                }
-            }
-        });
-        problem
-    })
-}
+pub(super) use crate::config::problems::*;
 
 /// The buttons that open menu `name` in `game`, one list per binding: a button or its gesture
 /// opens it alone, a combo with all its buttons. A submenu is opened by whatever opens the menus
@@ -94,134 +69,6 @@ pub(super) fn menus_have_problem(menus: &[Menu], reachable: &[&Menu], names: &Na
     })
 }
 
-/// Macro, menu, info overlay and layer names, for the "Macro…"/"Open menu…"/"Show info
-/// overlay…"/"Layer…" pickers and for checking references.
-#[derive(Debug, Clone, Default)]
-pub(super) struct Names {
-    pub(super) macros: Vec<String>,
-    pub(super) menus: Vec<String>,
-    /// Info overlays an action can show: not those set to always show.
-    pub(super) infos: Vec<String>,
-    /// Info overlays always on screen, which actions can't show.
-    pub(super) always_infos: Vec<String>,
-    /// Log overlays an action can show, and those always on screen, likewise.
-    pub(super) logs: Vec<String>,
-    pub(super) always_logs: Vec<String>,
-    pub(super) layers: Vec<String>,
-    pub(super) modes: Vec<String>,
-    /// How long each macro takes to play, in milliseconds, by name.
-    pub(super) macro_ms: std::collections::HashMap<String, u64>,
-    /// Inside a turbo, where a macro plays once per press and never loops.
-    pub(super) in_turbo: bool,
-}
-
-impl Names {
-    pub(super) fn of(scope: &ScopeRef) -> Self {
-        let list = |kind| scope.names(kind).into_iter().map(str::to_string).collect();
-        let infos = |always: bool| scope.info.iter().filter(|o| o.always == always).map(|o| o.name.clone()).collect();
-        let logs = |always: bool| scope.logs.iter().filter(|o| o.always == always).map(|o| o.name.clone()).collect();
-        Names {
-            macro_ms: scope.macros.iter().map(|m| (m.name.clone(), m.duration_ms())).collect(),
-            macros: list(ItemKind::Macro),
-            menus: list(ItemKind::Menu),
-            infos: infos(false),
-            always_infos: infos(true),
-            logs: logs(false),
-            always_logs: logs(true),
-            layers: list(ItemKind::Layer),
-            modes: list(ItemKind::Mode),
-            in_turbo: false,
-        }
-    }
-
-    /// What a game's profiles and items can use: its own items.
-    pub(super) fn for_game(config: &Config, game: &Game) -> Self {
-        Names::of(&config.scope_of(game))
-    }
-
-    pub(super) fn list(&self, kind: ItemKind) -> &[String] {
-        match kind {
-            ItemKind::Macro => &self.macros,
-            ItemKind::Menu => &self.menus,
-            ItemKind::Info => &self.infos,
-            ItemKind::Log => &self.logs,
-            ItemKind::Layer => &self.layers,
-            ItemKind::Mode => &self.modes,
-        }
-    }
-}
-
-/// Whether `action` holds a layer anywhere in it, which a tap (a menu item) can't do.
-pub(super) fn uses_layer(action: &ButtonAction) -> bool {
-    let mut layer = false;
-    action.walk(&mut |a| layer |= matches!(a, ButtonAction::Layer(_)));
-    layer
-}
-
-/// Why a Toggle can't hold `inner`, if it can't.
-fn toggle_problem(inner: &ButtonAction) -> Option<&'static str> {
-    match inner {
-        ButtonAction::OpenMenu(_) => Some("a menu can't be toggled: its close button puts it away"),
-        ButtonAction::Layer(_) => Some("a layer can't be toggled: to keep one on, make it a mode and switch to it"),
-        ButtonAction::Mode(_) => Some("a mode switch can't be toggled: pressing it again already switches back"),
-        _ => None,
-    }
-}
-
-/// What's wrong with an action, if anything (the same things saving checks).
-pub(super) fn action_problem(action: &ButtonAction, names: &Names) -> Option<String> {
-    let mut problem = None;
-    action.walk(&mut |a| {
-        if problem.is_some() {
-            return;
-        }
-        match a {
-            ButtonAction::Keys(keys) => {
-                if let Some(bad) = keys.iter().find(|k| KeyCode::from_str(k).is_err()) {
-                    problem = Some(format!("unknown key “{}”", short_key(bad)));
-                }
-            }
-            ButtonAction::Macro { name, .. } if !names.macros.contains(name) => {
-                problem = Some(format!("missing macro “{name}”"));
-            }
-            // A macro that grew longer than the turbo's gap would overlap its own presses.
-            ButtonAction::Turbo { action, every_ms, .. } => {
-                if let ButtonAction::Macro { name, .. } = &**action
-                    && let Some(&macro_ms) = names.macro_ms.get(name)
-                    && macro_ms > *every_ms
-                {
-                    problem = Some(format!(
-                        "turbo of macro “{name}” presses every {every_ms} ms, but the macro takes {macro_ms} ms to play: raise the turbo's gap to at least {macro_ms} ms"
-                    ));
-                }
-            }
-            ButtonAction::Toggle(t) => problem = toggle_problem(&t.action).map(str::to_string),
-            ButtonAction::OpenMenu(name) if !names.menus.contains(name) => {
-                problem = Some(format!("missing menu “{name}”"));
-            }
-            ButtonAction::ShowInfo(name) if names.always_infos.contains(name) => {
-                problem = Some(format!("info overlay “{name}” is always shown, so an action can't show it"));
-            }
-            ButtonAction::ShowInfo(name) if !names.infos.contains(name) => {
-                problem = Some(format!("missing info overlay “{name}”"));
-            }
-            ButtonAction::ShowLog(name) if names.always_logs.contains(name) => {
-                problem = Some(format!("log overlay “{name}” is always shown, so an action can't show it"));
-            }
-            ButtonAction::ShowLog(name) if !names.logs.contains(name) => {
-                problem = Some(format!("missing log overlay “{name}”"));
-            }
-            ButtonAction::Layer(name) if !names.layers.contains(name) => {
-                problem = Some(format!("missing layer “{name}”"));
-            }
-            ButtonAction::Mode(name) if !names.modes.contains(name) => {
-                problem = Some(format!("missing mode “{name}”"));
-            }
-            _ => {}
-        }
-    });
-    problem
-}
 
 /// Whether a profile section contains anything saving would reject.
 pub(super) fn section_has_problem(p: &Profile, tab: ProfileTab, names: &Names) -> bool {
@@ -242,11 +89,12 @@ pub(super) fn section_has_problem(p: &Profile, tab: ProfileTab, names: &Names) -
             let two_flicks = [Stick::Left, Stick::Right].into_iter().all(|s| matches!(p.stick(s).action, StickAction::Flick { .. }));
             zones || triggers || rings || two_flicks
         }
-        ProfileTab::Combos => p.combos.iter().any(|c| c.buttons.len() < 2 || bad(&c.action)),
+        ProfileTab::Combos => combos_problem(&p.combos).is_some() || p.combos.iter().any(|c| bad(&c.action)),
         ProfileTab::Touchpad => p.touchpad.actions().into_iter().any(bad) || super::touchpad::touchpad_problem(&p.touchpad, names).is_some(),
         ProfileTab::Gyro | ProfileTab::Guide => false,
     }
 }
+
 
 pub(super) fn macros_have_problem(macros: &[Macro], names: &Names) -> bool {
     macros.iter().enumerate().any(|(i, m)| {
@@ -261,67 +109,7 @@ pub(super) fn reachable_menus<'a>(config: &'a Config, game: &'a Game) -> Vec<&'a
     config.scope_of(game).menus
 }
 
-/// The first thing saving would reject in a list of macros, menus and info overlays.
-/// `names` is what they may refer to.
-pub(super) fn items_problem(macros: &[Macro], menus: &[Menu], info: &[InfoOverlay], names: &Names, reachable: &[&Menu]) -> Option<String> {
-    for (i, m) in macros.iter().enumerate() {
-        if m.name.trim().is_empty() {
-            return Some("A macro needs a name.".into());
-        }
-        if macros[..i].iter().any(|o| o.name == m.name) {
-            return Some(format!("Two macros are named “{}”.", m.name));
-        }
-        let keys = m.steps.iter().filter_map(MacroStep::action).flat_map(|a| a.key_names());
-        if let Some(bad) = keys.into_iter().find(|k| KeyCode::from_str(k).is_err()) {
-            return Some(format!("Macro “{}”: unknown key “{}”", m.name, short_key(bad)));
-        }
-        if m.steps.iter().filter_map(MacroStep::action).any(|a| {
-            let mut shifts = false;
-            a.walk(&mut |a| shifts |= matches!(a, ButtonAction::Layer(_) | ButtonAction::Mode(_)));
-            shifts
-        }) {
-            return Some(format!("Macro “{}”: macros can't hold layers or switch modes.", m.name));
-        }
-        if let Some(problem) = m.steps.iter().filter_map(MacroStep::action).find_map(|a| action_problem(a, names)) {
-            return Some(format!("Macro “{}”: {problem}", m.name));
-        }
-    }
-    for (i, m) in menus.iter().enumerate() {
-        if m.name.trim().is_empty() {
-            return Some("A menu needs a name.".into());
-        }
-        if menus[..i].iter().any(|o| o.name == m.name) {
-            return Some(format!("Two menus are named “{}”.", m.name));
-        }
-        if let Some(problem) = m.items.iter().find_map(|item| item_problem(m, &item.action, reachable, names)) {
-            return Some(format!("Menu “{}”: {problem}", m.name));
-        }
-    }
-    for (i, o) in info.iter().enumerate() {
-        if o.name.trim().is_empty() {
-            return Some("An info overlay needs a name.".into());
-        }
-        if info[..i].iter().any(|other| other.name == o.name) {
-            return Some(format!("Two info overlays are named “{}”.", o.name));
-        }
-    }
-    None
-}
 
-/// The first thing saving would reject in a list of log overlays: empty or repeated names.
-pub(super) fn logs_problem(logs: &[LogOverlay]) -> Option<String> {
-    for (i, o) in logs.iter().enumerate() {
-        if o.name.trim().is_empty() {
-            return Some("A log overlay needs a name.".into());
-        }
-        if logs[..i].iter().any(|other| other.name == o.name) {
-            return Some(format!("Two log overlays are named “{}”.", o.name));
-        }
-    }
-    None
-}
-
-/// The first thing saving would reject in a game (or General).
 /// Where a saving problem is: a profile of a game, and the assignment in it.
 #[derive(Debug, Clone, PartialEq)]
 pub(super) struct Place {
@@ -350,7 +138,8 @@ fn bad_target(p: &Profile, names: &Names) -> Option<Target> {
         all.extend(p.stick(s).action.ring_actions().iter().enumerate().map(|(i, a)| (Target::RingSector(s, i), a)));
     }
     all.extend(p.touchpad.slots().into_iter().filter_map(|slot| p.touchpad.slot(slot).map(|a| (Target::Touch(slot), a))));
-    all.into_iter().find(|(_, a)| action_problem(a, names).is_some()).map(|(t, _)| t)
+    let action = all.into_iter().find(|(_, a)| action_problem(a, names).is_some()).map(|(t, _)| t);
+    action.or_else(|| (0..p.combos.len()).find(|&i| combo_problem(&p.combos, i).is_some()).map(Target::Combo))
 }
 
 impl App {
@@ -367,213 +156,12 @@ impl App {
     }
 }
 
-pub(super) fn game_problem(config: &Config, g: &Game) -> Option<String> {
-    if g.profiles.is_empty() {
-        return Some("needs at least one profile.".into());
-    }
-    let names = Names::for_game(config, g);
-    let reachable = reachable_menus(config, g);
-    if let Some(problem) = items_problem(&g.macros, &g.menus, &g.info, &names, &reachable) {
-        return Some(problem);
-    }
-    if let Some(problem) = logs_problem(&g.logs) {
-        return Some(problem);
-    }
-    for (i, p) in g.profiles.iter().enumerate() {
-        if p.name.trim().is_empty() {
-            return Some("A profile needs a name.".into());
-        }
-        if g.profiles[..i].iter().any(|o| o.name == p.name) {
-            return Some(format!("Two profiles are named “{}”.", p.name));
-        }
-        if let Some(problem) = p.actions().into_iter().find_map(|a| {
-            action_problem(a, &names).filter(|problem| !problem.starts_with("unknown key"))
-        }) {
-            return Some(format!("Profile “{}”: {problem}.", p.name));
-        }
-        if let Some(c) = p.combos.iter().find(|c| c.buttons.len() < 2) {
-            return Some(format!("Profile “{}”: a combo needs at least two buttons (has {}).", p.name, c.buttons.len()));
-        }
-        let analogs = [
-            Analog::Stick(Stick::Left),
-            Analog::Stick(Stick::Right),
-            Analog::Trigger(Trigger::Left),
-            Analog::Trigger(Trigger::Right),
-        ];
-        if analogs.into_iter().any(|a| p.zones(a).iter().any(|z| z.min >= z.max)) {
-            return Some(format!("Profile “{}”: a zone's range must start below where it ends.", p.name));
-        }
-        if [Stick::Left, Stick::Right].into_iter().all(|s| matches!(p.stick(s).action, StickAction::Flick { .. })) {
-            return Some(format!("Profile “{}”: only one stick can be a flick stick.", p.name));
-        }
-        let mut keys: Vec<&String> = p.actions().into_iter().flat_map(|a| a.key_names()).collect();
-        for s in [Stick::Left, Stick::Right] {
-            keys.extend(p.stick(s).action.ring_actions().iter().flat_map(|a| a.key_names()));
-        }
-        if let Some(bad) = keys.iter().find(|k| KeyCode::from_str(k).is_err()) {
-            return Some(format!("Profile “{}”: unknown key “{}”", p.name, short_key(bad)));
-        }
-    }
-    modes_problem(g, &names).or_else(|| layers_problem(g, &names)).or_else(|| rules_problem(g))
-}
-
-/// The first thing saving would reject in a game's layers.
-pub(super) fn layers_problem(g: &Game, names: &Names) -> Option<String> {
-    shifts_problem(&g.layers, ItemKind::Layer, names)
-}
-
-/// The first thing saving would reject in a game's modes.
-pub(super) fn modes_problem(g: &Game, names: &Names) -> Option<String> {
-    shifts_problem(&g.modes, ItemKind::Mode, names)
-}
-
-/// The first thing saving would reject in a game's layers or modes (`kind` says which).
-fn shifts_problem(list: &[crate::config::Layer], kind: ItemKind, names: &Names) -> Option<String> {
-    use crate::config::Indicator;
-    let noun = kind.noun();
-    for (i, l) in list.iter().enumerate() {
-        if l.name.trim().is_empty() {
-            return Some(format!("A {noun} needs a name."));
-        }
-        if list[..i].iter().any(|o| o.name == l.name) {
-            return Some(format!("Two {noun}s are named “{}”.", l.name));
-        }
-        let mut label = format!("{noun} “{}”", l.name);
-        label[..1].make_ascii_uppercase();
-        if let Indicator::Info(info) = &l.indicator
-            && !names.infos.contains(info)
-        {
-            return Some(if names.always_infos.contains(info) {
-                format!("{label}: info overlay “{info}” is always shown, so it can't show that the {noun} is on.")
-            } else {
-                format!("{label}: missing info overlay “{info}” to show.")
-            });
-        }
-        if let Some(problem) = l.actions().into_iter().find_map(|a| action_problem(a, names)) {
-            return Some(format!("{label}: {problem}."));
-        }
-        if let Some(c) = l.combos.iter().find(|c| c.buttons.len() < 2) {
-            return Some(format!("{label}: a combo needs at least two buttons (has {}).", c.buttons.len()));
-        }
-        let zones = [&l.left_stick, &l.right_stick].into_iter().flatten().flat_map(|s| &s.zones);
-        let zones = zones.chain([&l.left_trigger, &l.right_trigger].into_iter().flatten().flat_map(|t| &t.zones));
-        if zones.into_iter().any(|z| z.min >= z.max) {
-            return Some(format!("{label}: a zone's range must start below where it ends."));
-        }
-        if [&l.left_stick, &l.right_stick].into_iter().all(|s| s.as_ref().is_some_and(|s| matches!(s.action, StickAction::Flick { .. }))) {
-            return Some(format!("{label}: only one stick can be a flick stick."));
-        }
-        let stick_keys = [&l.left_stick, &l.right_stick]
-            .into_iter()
-            .flatten()
-            .flat_map(|s| s.action.ring_actions().iter().flat_map(|a| a.key_names()));
-        if let Some(bad) = stick_keys.into_iter().find(|k| KeyCode::from_str(k).is_err()) {
-            return Some(format!("{label}: unknown key “{}”", short_key(bad)));
-        }
-    }
-    None
-}
-
-/// What's wrong with a game's auto-switch rules, if anything.
-pub(super) fn rules_problem(g: &Game) -> Option<String> {
-    if let Some(r) = g.rules.iter().find(|r| r.value.trim().is_empty()) {
-        return Some(format!("A rule for profile “{}” has no {} to match.", r.profile, r.kind));
-    }
-    if let Some(r) = g.rules.iter().find(|r| g.profile(&r.profile).is_none()) {
-        return Some(format!("A rule points to a profile that doesn't exist: “{}”.", r.profile));
-    }
-    None
-}
 
 impl App {
     pub(super) fn validate(&self) -> Option<String> {
-        let config = &self.config;
-        for (i, g) in config.games.iter().enumerate() {
-            if g.name.trim().is_empty() {
-                return Some("A setup needs a name.".into());
-            }
-            if config.games[..i].iter().any(|o| o.name == g.name) {
-                return Some(format!("Two setups are named “{}”.", g.name));
-            }
-        }
-        for (key, g) in config.all_games() {
-            let label = key.unwrap_or("General");
-            if let Some(problem) = game_problem(config, g) {
-                return Some(format!("{label}: {problem}"));
-            }
-        }
-        if let Some(d) = config.auto_switch.default_profile.as_ref().filter(|d| config.profile(d).is_none()) {
-            return Some(format!("The setup's default profile {d} no longer exists."));
-        }
-        None
+        self.config.problem()
     }
-
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn button_menu_items_nothing_can_pick_are_warned_about() {
-        let item = |button| MenuItem { button, ..MenuItem::new("x", ButtonAction::Disabled) };
-        let menu = |name: &str, items| Menu { name: name.into(), kind: MenuKind::Buttons, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() };
-        let quick = menu("Quick", vec![item(Some(Button::LeftBumper)), item(Some(Button::South)), item(Some(Button::South)), item(None)]);
-        let sub = menu("Sub", vec![item(Some(Button::RightBumper))]);
-        let mut profile = Profile::passthrough("p");
-        profile.set_button(Button::LeftBumper, ButtonAction::OpenMenu("Quick".into()));
-        profile.combos.push(Combo { buttons: vec![Button::Select, Button::RightBumper], action: ButtonAction::OpenMenu("Quick".into()) });
-        let mut game = Game::new("g", vec![profile]);
-        game.menus = vec![quick.clone(), sub.clone()];
-        game.menus[0].items[1].action = ButtonAction::OpenMenu("Sub".into());
-
-        let openers = menu_openers(&game, "Quick");
-        assert_eq!(openers, [vec![Button::LeftBumper], vec![Button::Select, Button::RightBumper]]);
-        assert!(button_item_warning(&quick, 0, &openers).is_some_and(|w| w.contains("opens this menu")));
-        assert_eq!(button_item_warning(&quick, 1, &openers), None);
-        assert!(button_item_warning(&quick, 2, &openers).is_some_and(|w| w.contains("item 2")));
-        assert!(button_item_warning(&quick, 3, &openers).is_some_and(|w| w.contains("no button")));
-        // A submenu is held up by its parent's openers too.
-        assert!(button_item_warning(&sub, 0, &menu_openers(&game, "Sub")).is_some_and(|w| w.contains("RB opens")));
-        // Other kinds of menu have no item buttons to warn about.
-        let list = Menu { kind: MenuKind::List, ..quick };
-        assert_eq!(button_item_warning(&list, 3, &openers), None);
-    }
-
-    #[test]
-    fn problems_are_found_inside_nested_actions_and_flag_their_section() {
-        let names = Names { macros: vec!["Known".to_string()], modes: vec!["Guide".to_string()], ..Names::default() };
-        let nested = ButtonAction::Multi(vec![
-            ButtonAction::Mouse(MouseButton::Left),
-            ButtonAction::toggle(ButtonAction::Keys(vec!["KEY_NOPE".into()])),
-        ]);
-        assert_eq!(action_problem(&nested, &names).as_deref(), Some("unknown key \u{201c}NOPE\u{201d}"));
-        let missing = ButtonAction::Macro { name: "Gone".into(), repeat: false };
-        assert_eq!(action_problem(&missing, &names).as_deref(), Some("missing macro \u{201c}Gone\u{201d}"));
-        assert_eq!(action_problem(&ButtonAction::Macro { name: "Known".into(), repeat: false }, &names), None);
-        let toggled_menu = ButtonAction::toggle(ButtonAction::OpenMenu("M".into()));
-        assert!(action_problem(&toggled_menu, &Names { menus: vec!["M".into()], ..Names::default() }).is_some_and(|p| p.contains("can't be toggled")));
-        // A turbo's gap must cover its macro's length; a longer macro is caught here.
-        let turbo = |every_ms| ButtonAction::Turbo {
-            action: Box::new(ButtonAction::Macro { name: "Long".into(), repeat: false }),
-            rate: 10.0,
-            every_ms,
-        };
-        let long = Names { macros: vec!["Long".into()], macro_ms: [("Long".to_string(), 300)].into(), ..Names::default() };
-        assert!(action_problem(&turbo(200), &long).is_some_and(|p| p.contains("raise the turbo's gap")));
-        assert_eq!(action_problem(&turbo(300), &long), None);
-
-        let mut p = Profile::passthrough("p");
-        assert!(ProfileTab::ALL.iter().all(|t| !section_has_problem(&p, *t, &names)));
-        p.set_button(Button::RightStickUp, missing.clone());
-        assert!(!section_has_problem(&p, ProfileTab::Sticks, &names), "stick directions have no actions to check");
-        assert!(!section_has_problem(&p, ProfileTab::Buttons, &names));
-        // A button ring's sector does, and flags the Sticks tab.
-        p.stick_mut(Stick::Right).action = StickAction::ring(8);
-        let StickAction::Ring { actions, .. } = &mut p.stick_mut(Stick::Right).action else { unreachable!() };
-        actions[0] = missing;
-        assert!(section_has_problem(&p, ProfileTab::Sticks, &names), "ring sectors live on the Sticks tab");
-        p.combos.push(Combo { buttons: vec![Button::South], action: ButtonAction::Disabled });
-        assert!(section_has_problem(&p, ProfileTab::Combos, &names));
-    }
-}
+mod tests;

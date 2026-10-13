@@ -110,9 +110,15 @@ pub(super) struct TouchState {
 }
 
 impl TouchState {
-    /// The finger first down on `side`, which is the one that counts when one is enough.
+    /// The finger first down on `side`, which is the one that counts when one is enough. Not the
+    /// lowest slot: the pad reuses a lifted finger's slot for the next one down.
     fn primary(&self, side: TouchSide) -> Option<u8> {
-        self.fingers.iter().find(|(_, f)| f.side == side).map(|(n, _)| *n)
+        self.first(|f| f.side == side).map(|f| f.id)
+    }
+
+    /// The finger down longest of those that `pick` picks.
+    fn first(&self, pick: impl Fn(&Finger) -> bool) -> Option<&Finger> {
+        self.fingers.values().filter(|f| pick(f)).min_by_key(|f| (f.landed_at, f.id))
     }
 
     /// How far touch joysticks push the virtual stick `target`.
@@ -150,6 +156,7 @@ impl Engine {
     /// Handles one touchpad event.
     pub(super) fn touchpad(&mut self, profile: &Profile, ev: TouchpadEvent, now: Instant, out: &mut Vec<OutEvent>) {
         let cfg = &profile.touchpad;
+        self.release_stale_touch_sticks(cfg, out);
         match ev {
             TouchpadEvent::Click(pressed) => self.touch_click(cfg, pressed, out),
             TouchpadEvent::Touch { finger, x, y, height } => match self.touch.fingers.get(&finger).copied() {
@@ -166,6 +173,17 @@ impl Engine {
             TouchpadEvent::Lift { finger } => self.finger_lifted(cfg, finger, now, out),
         }
         self.refresh_touch_menu(cfg);
+    }
+
+    /// A side no longer in joystick mode (a layer changed it) lets go of its stick, as a
+    /// physical stick does.
+    fn release_stale_touch_sticks(&mut self, cfg: &TouchpadConfig, out: &mut Vec<OutEvent>) {
+        let stale: Vec<TouchSide> = self.touch.sticks.keys().filter(|&&side| !matches!(cfg.motion(side), TouchpadMotion::Joystick { .. })).copied().collect();
+        for side in stale {
+            if let Some((stick, _)) = self.touch.sticks.remove(&side) {
+                self.emit_pad_stick(stick, out);
+            }
+        }
     }
 
     /// The menu a finger on the pad shows right now, if any.
@@ -302,7 +320,7 @@ impl Engine {
             return;
         }
         self.touch.glide = None;
-        let side = self.touch.fingers.values().next().map_or(TouchSide::Left, |f| f.side);
+        let side = self.touch.first(|_| true).map_or(TouchSide::Left, |f| f.side);
         if let TouchpadMotion::Menu { menu, .. } = cfg.motion(side)
             && let Some(&i) = self.touch.picked.get(&side)
             && let Some(src) = self.choose_touch_item(menu, i, false, out)

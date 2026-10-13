@@ -3,7 +3,6 @@
 use crate::sound;
 use std::{
     collections::{HashMap, HashSet},
-    io::{BufRead, BufReader, Write},
     process::Stdio,
     path::PathBuf,
     sync::{
@@ -30,19 +29,28 @@ use crate::{
     media::{MediaOutcome, MediaSession, MediaState},
     offer::{OfferOutcome, OfferSession},
     menu::{MenuOutcome, MenuSession},
-    system_menu::{Outcome as SystemOutcome, Page, SystemMenu},
+    system_menu::{Hold, Outcome as SystemOutcome, Page, SystemMenu},
     overlay::{OverlayAction, OverlayController, OverlayFrame, OverlayView},
     rumble,
     tray::{self, TrayIcon},
 };
 
 mod activity;
+mod auto_switch;
+mod guide;
+mod in_game_menu;
+mod info_overlays;
+mod offers;
+mod overlay;
+mod overlay_input;
 /// The controllers themselves: evdev nodes on Linux, XInput slots on Windows.
 #[cfg_attr(target_os = "linux", path = "daemon/evdev.rs")]
 #[cfg_attr(windows, path = "daemon/xinput.rs")]
 mod devices;
 mod inject;
 mod logs;
+mod requests;
+mod serve;
 mod steam_handoff;
 /// The process around the service: signals, the control socket, running in the background.
 #[cfg_attr(target_os = "linux", path = "daemon/unix.rs")]
@@ -59,7 +67,8 @@ mod kernel_tests;
 mod touchpad;
 
 use devices::{FfSpec, NodeKey, virtual_pad_for};
-pub(crate) use os::{bind_socket_at, prepare_private_dir};
+pub(crate) use os::{bind_socket_at, prepare_private_dir, stop_on_signals};
+pub(crate) use steam_handoff::left_to_steam;
 use ipc::{UnixListener, UnixStream};
 
 const TICK: Duration = Duration::from_millis(4);
@@ -70,8 +79,6 @@ const INFO_REFRESH: Duration = Duration::from_secs(1);
 /// How often an overlay showing the gyro or the touchpad refreshes: often enough to follow a hand.
 const FAST_INFO_REFRESH: Duration = Duration::from_millis(50);
 const SCAN_INTERVAL: Duration = Duration::from_secs(2);
-/// Minimum gap between snapshots streamed to one watcher (~60 fps).
-const WATCH_INTERVAL: Duration = Duration::from_millis(16);
 /// Status line redraw rate while only continuous output (mouse/scroll) is changing.
 const STATUS_REDRAW: Duration = Duration::from_millis(50);
 /// How long "Calibrate gyro" samples a still controller.
@@ -111,6 +118,8 @@ enum Msg {
     Media(MediaState),
     /// A choice from the tray icon's menu.
     Tray(tray::Command),
+    /// Whether Steam runs, looked up as the Guide overlay opened.
+    SteamRunning(bool),
 }
 
 struct Managed {
@@ -141,6 +150,9 @@ struct Managed {
     motion: Option<PathBuf>,
     /// Touchpad node of this controller, once found (and taken from the desktop).
     touchpad: Option<PathBuf>,
+    /// The nodes it took from the desktop, let go of when it is dropped.
+    #[cfg(target_os = "linux")]
+    grabs: Vec<devices::Grab>,
     /// Has back paddles (see `input::has_paddles`).
     paddles: bool,
     motion_frame: MotionFrame,
@@ -390,7 +402,8 @@ struct Offers {
 
 
 /// The Guide overlay's menu while it's up: the cursor, and whether Steam was running when it
-/// opened (the Steam overlay row is listed only then).
+/// opened (the Steam overlay row is listed only then). That is learned off the daemon thread,
+/// so the row joins the menu a moment after it opens.
 struct GuideMenu {
     cursor: usize,
     steam: bool,
@@ -431,6 +444,8 @@ struct Daemon {
     last_draw: Instant,
     focus_backend: FocusBackend,
     focused: Option<WindowInfo>,
+    /// Focus moved while the in-game menu was open; it's handled once the menu closes.
+    focus_waited: bool,
     recent_windows: Vec<WindowInfo>,
     /// Last profile chosen by process scanning, so manual switches stick until it changes.
     scan_target: Option<ProfileRef>,
@@ -532,6 +547,7 @@ impl Daemon {
             last_draw: Instant::now(),
             focus_backend: FocusBackend::ProcessScan,
             focused: None,
+            focus_waited: false,
             recent_windows: Vec::new(),
             scan_target: None,
             active: None,
@@ -568,8 +584,10 @@ impl Daemon {
 /// Runs the service. With `debug`, controllers can also be injected over IPC (`padwight debug`).
 pub fn run(debug: bool) -> Result<()> {
     let config = Config::load()?;
+    config.log_unreadable();
     let (tx, rx) = mpsc::channel();
-    os::stop_on_signals(tx.clone())?;
+    let stop = tx.clone();
+    os::stop_on_signals(move || stop.send(Msg::Stop).is_ok())?;
     serve_ipc(tx.clone())?;
 
     let kbm = VirtualKbm::new().context("creating virtual keyboard/mouse (do you have write access to /dev/uinput?)")?;
@@ -584,7 +602,7 @@ pub fn run(debug: bool) -> Result<()> {
 /// Binds the control socket and serves it on a thread.
 fn serve_ipc(tx: Sender<Msg>) -> Result<()> {
     let listener = bind_socket()?;
-    thread::spawn(move || ipc_server(&listener, &tx));
+    thread::spawn(move || serve::ipc_server(&listener, &tx));
     Ok(())
 }
 
@@ -620,6 +638,7 @@ impl Daemon {
             }
 
             self.run_timers();
+            self.catch_up_on_focus();
             let now = Instant::now();
             if ticking {
                 let dt = now.duration_since(last_tick);
@@ -662,59 +681,6 @@ impl Daemon {
             .min()
     }
 
-    /// Redraws info overlays and advances the keyboard or menu that is up.
-    fn tick_overlays(&mut self, now: Instant) {
-        if self.info_refresh.is_some_and(|t| t <= now) {
-            self.sampler.sample();
-            self.broadcast_overlay();
-        } else if self.info_fade.is_some_and(|t| t <= now) || self.log_redraw.is_some_and(|t| t <= now) {
-            self.broadcast_overlay();
-        }
-        let (mut keyboard_actions, mut changed) = (Vec::new(), false);
-        // A held direction that repeats moves the cursor, and sounds like any other step.
-        let mut repeated_step = None;
-        match &mut self.active {
-            Some(Active::Keyboard(k)) if k.next_deadline().is_some_and(|d| d <= now) => {
-                let (overlay, before) = (keyboard_sound(k.layout()), k.cursor());
-                (keyboard_actions, changed) = k.tick(now);
-                repeated_step = (k.cursor() != before).then_some(overlay);
-            }
-            Some(Active::Menu { session, .. }) if session.expired(now) => return self.close_overlay(),
-            Some(Active::Menu { session, .. }) if session.next_deadline().is_some_and(|d| d <= now) => {
-                let before = session.cursor();
-                changed = session.tick(&self.scope.menus, now);
-                repeated_step = (session.cursor() != before).then_some(sound::SoundOverlay::Menu);
-            }
-            Some(Active::Media(m)) if m.next_deadline().is_some_and(|d| d <= now) => {
-                m.tick(now);
-                if m.expired(now) {
-                    return self.close_overlay();
-                }
-            }
-            Some(Active::Offer(o)) if o.expired(now) => return self.answer_offer(OfferOutcome::No),
-            Some(Active::Offer(o)) if o.next_deadline().is_some_and(|d| d <= now) => {
-                if o.tick(now) {
-                    repeated_step = Some(sound::SoundOverlay::Offer);
-                    changed = true;
-                }
-            }
-            Some(Active::Settings(m, _)) if m.next_deadline().is_some_and(|d| d <= now) => {
-                if !self.settings_step(|menu, config| menu.tick(now, config)) {
-                    self.broadcast_overlay();
-                }
-                return;
-            }
-            _ => {}
-        }
-        if let Some(overlay) = repeated_step {
-            self.overlay_sound(overlay, Some(sound::Feedback::Step));
-        }
-        self.apply_keyboard(keyboard_actions);
-        if changed {
-            self.broadcast_overlay();
-        }
-    }
-
     /// Fires combo members whose combo window has expired.
     fn run_timers(&mut self) {
         let now = Instant::now();
@@ -752,25 +718,6 @@ impl Daemon {
             self.log_changed();
         }
         self.check_info_changes();
-    }
-
-    /// What to force quit, by name, and its process: the focused window (a game with a rule
-    /// goes by the game's name), unless it is the desktop or this app. Without focus tracking,
-    /// only the active game's running process.
-    fn focused_target(&self) -> Option<(String, u32)> {
-        if self.focus_backend == FocusBackend::ProcessScan {
-            let active = &self.config.active_game().name;
-            return crate::focus::game_launch_in(&self.config, &crate::focus::running_processes()).filter(|(game, _)| game == active);
-        }
-        let window = self.focused.as_ref()?;
-        if let Some(game) = crate::focus::game_launch(&self.config, window) {
-            return Some(game);
-        }
-        if window.pid == 0 || crate::quit::protected(&window.exe) || crate::focus::is_own_window(window) {
-            return None;
-        }
-        let name = [&window.title, &window.exe, &window.class].into_iter().find(|n| !n.is_empty())?;
-        Some((name.clone(), window.pid))
     }
 
     /// Starts, cancels or completes the countdown of a ForceQuit action being held.
@@ -870,90 +817,6 @@ impl Daemon {
         });
     }
 
-    /// Opens or closes the on-screen keyboard or numpad (one replaces the other), for the
-    /// controller `by` (`None`: whichever sends it input first).
-    fn toggle_overlay(&mut self, layout: Layout, by: Option<u64>) {
-        match &self.active {
-            Some(Active::Keyboard(k)) if k.layout() == layout => return self.close_overlay(),
-            Some(Active::Keyboard(_)) => self.close_overlay(),
-            Some(Active::Menu { .. } | Active::Media(_) | Active::Offer(_) | Active::Settings(..)) => return,
-            None => {}
-        }
-        self.driving.owner = by;
-        if !self.ensure_overlay_process() {
-            return;
-        }
-        self.release_mappings();
-        log!("on-screen {} open", layout_name(layout));
-        let board = match layout {
-            Layout::Keyboard if self.config.full_keyboard => crate::keyboard::Board::Full,
-            _ => layout.into(),
-        };
-        let cursor = self.driving.cursors.get(&board).copied().unwrap_or(board.home());
-        let mut controller = OverlayController::new(board, cursor);
-        let guide = self.guide_chord_button();
-        let held = guide.is_some_and(|g| self.devices.values().any(|d| d.view.buttons().any(|b| b == g)));
-        let shortcut = if layout == Layout::Numpad { Shortcut::Numpad } else { Shortcut::Keyboard };
-        controller.set_guide(held, guide, self.shortcut_button(shortcut));
-        self.active = Some(Active::Keyboard(controller));
-        self.broadcast_overlay();
-        self.overlay_sound(keyboard_sound(layout), Some(sound::Feedback::Open));
-    }
-
-    /// Opens or closes the media controls, for the controller `by`.
-    fn toggle_media(&mut self, by: Option<u64>) {
-        match &self.active {
-            Some(Active::Media(_)) => return self.close_overlay(),
-            Some(_) => return,
-            None => {}
-        }
-        self.driving.owner = by;
-        if !self.ensure_overlay_process() {
-            return;
-        }
-        self.release_mappings();
-        log!("media controls open");
-        let (commands, requests) = std::sync::mpsc::channel();
-        let tx = self.tx.clone();
-        thread::spawn(move || crate::media::worker(&requests, |state| tx.send(Msg::Media(state)).is_ok()));
-        let guide = self.guide_chord_button();
-        let guide_held = guide.is_some_and(|g| self.devices.values().any(|d| d.view.buttons().any(|b| b == g)));
-        let session = MediaSession::new(commands, guide_held, Instant::now()).with_chord(guide, self.shortcut_button(Shortcut::Media));
-        self.active = Some(Active::Media(session));
-        self.broadcast_overlay();
-        self.overlay_sound(sound::SoundOverlay::Media, Some(sound::Feedback::Open));
-    }
-
-    fn update_media(&mut self, state: MediaState) {
-        if let Some(Active::Media(m)) = &mut self.active {
-            m.update(state);
-            self.broadcast_overlay();
-        }
-    }
-
-    fn open_menu(&mut self, device: u64, name: &str, opener: Opener) {
-        if self.active.is_some() {
-            return;
-        }
-        let Some(mut session) = MenuSession::open(&self.scope.menus, name, opener) else {
-            log!("no menu named {name:?}, or it has no items");
-            return;
-        };
-        if !self.ensure_overlay_process() {
-            return;
-        }
-        if let Some(dev) = self.devices.get(&device)
-            && !session.prime(&self.scope.menus, dev.view.buttons(), dev.view.axes())
-        {
-            log!("menu {name:?} not shown: its button was already let go (use a Toggle to open it with a tap)");
-            return;
-        }
-        self.release_mappings();
-        self.active = Some(Active::Menu { session, device });
-        self.broadcast_overlay();
-        self.overlay_sound(sound::SoundOverlay::Menu, Some(sound::Feedback::Open));
-    }
-
     /// Starts what runs beside the input loop: focus tracking, the overlay window (started now so
     /// menus appear instantly; it idles invisibly) and the tray icon.
     fn start_services(&mut self) {
@@ -1038,100 +901,6 @@ impl Daemon {
         }
     }
 
-    /// Makes sure the (normally resident) overlay window process is running.
-    fn ensure_overlay_process(&mut self) -> bool {
-        if let Some(child) = &mut self.overlay_process
-            && child.try_wait().ok().flatten().is_some()
-        {
-            self.overlay_process = None;
-        }
-        if self.overlay_process.is_some() {
-            return true;
-        }
-        match std::env::current_exe().and_then(|exe| os::windowless(std::process::Command::new(exe).arg("overlay")).spawn()) {
-            Ok(child) => {
-                self.overlay_process = Some(child);
-                self.overlay_started = Some(Instant::now());
-                true
-            }
-            Err(e) => {
-                log!("cannot start the overlay window: {e}");
-                false
-            }
-        }
-    }
-
-    /// Lets go of everything the mappings hold; the controller now drives the overlay.
-    /// The mode stays on, so a menu item that switches to one isn't undone by the menu.
-    fn release_mappings(&mut self) {
-        for dev in self.devices.values_mut() {
-            let mut out = Vec::new();
-            dev.engine.release_all(true, &mut out);
-            dev.refresh_layers(&self.config);
-            dev.dispatch(&mut self.kbm, out);
-        }
-    }
-
-    fn close_overlay(&mut self) {
-        self.driving.owner = None;
-        let closing = self.active.as_ref().map(active_sound);
-        match self.active.take() {
-            Some(Active::Keyboard(mut k)) => {
-                self.driving.cursors.insert(k.board(), k.cursor());
-                let actions = k.release_all();
-                self.apply_keyboard(actions);
-                log!("on-screen {} closed", layout_name(k.layout()));
-            }
-            Some(Active::Menu { .. }) => {}
-            Some(Active::Media(_)) => log!("media controls closed"),
-            Some(Active::Offer(_) | Active::Settings(..)) => {}
-            None => return,
-        }
-        // The overlay window goes back to idle (it stays running for next time).
-        self.broadcast_overlay();
-        for dev in self.devices.values_mut() {
-            let down = dev.view.buttons().collect();
-            dev.engine.forget_released(&down);
-        }
-        self.resync_all();
-        if let Some(overlay) = closing {
-            self.overlay_sound(overlay, Some(sound::Feedback::Close));
-        }
-    }
-
-    fn apply_keyboard(&mut self, actions: Vec<OverlayAction>) {
-        for action in actions {
-            match action {
-                OverlayAction::Key(k, pressed) => {
-                    if let Err(e) = self.kbm.key(k, pressed) {
-                        log!("output error: {e:#}");
-                    }
-                }
-                OverlayAction::Close => self.close_overlay(),
-            }
-        }
-    }
-
-    /// Runs a chosen menu item on the controller that opened the menu.
-    fn run_menu_item(&mut self, device: u64, menu: &str, item: usize, action: &crate::config::ButtonAction) {
-        let Some(dev) = self.devices.get_mut(&device) else { return };
-        let mut out = Vec::new();
-        dev.engine.tap_menu_item(menu, item, action, &mut out);
-        if dev.refresh_layers(&self.config)
-            && let Some(base) = self.config.active()
-        {
-            dev.engine.resync(layered(&dev.layered, base), &mut out);
-        }
-        dev.dispatch(&mut self.kbm, out);
-        let asked = Requests::take(&mut dev.engine);
-        // Opening the keyboard closes a menu that is still up.
-        if asked.overlay.is_some() && matches!(self.active, Some(Active::Menu { .. })) {
-            self.close_overlay();
-        }
-        self.run_requests(device, asked);
-        self.check_info_changes();
-    }
-
     /// Carries out what controller `id`'s engine asked for, opening anything on its behalf.
     fn run_requests(&mut self, id: u64, asked: Requests) {
         if let Some(layout) = asked.overlay {
@@ -1152,439 +921,6 @@ impl Daemon {
         self.update_force_quit();
         if let Some((name, opener)) = asked.menu {
             self.open_menu(id, &name, opener);
-        }
-    }
-
-    fn overlay_view(&self) -> Option<OverlayView> {
-        match &self.active {
-            Some(Active::Keyboard(k)) => {
-                let mut view = k.view(Instant::now());
-                view.style = match k.layout() {
-                    Layout::Keyboard => self.config.active_keyboard_style().clone(),
-                    Layout::Numpad => self.config.active_numpad_style().clone(),
-                };
-                Some(OverlayView::Keyboard(view))
-            }
-            Some(Active::Menu { session, .. }) => session.view(&self.scope.menus).map(OverlayView::Menu),
-            Some(Active::Media(m)) => {
-                let mut view = m.view();
-                view.style = self.config.active_media_style().clone();
-                Some(OverlayView::Media(view))
-            }
-            Some(Active::Offer(o)) => Some(o.view(self.config.active_menu_style())),
-            Some(Active::Settings(m, _)) => Some(OverlayView::Menu(m.view(&self.config))),
-            None => match &self.guide_menu {
-                Some(menu) => {
-                    let profile = self.config.active().map(|p| p.name.as_str()).unwrap_or_default();
-                    let style = self.config.active_menu_style().clone();
-                    Some(OverlayView::Menu(crate::guide_menu::view(menu.steam, menu.cursor, profile, style)))
-                }
-                None => self.touch_menu_view(),
-            },
-        }
-    }
-
-    /// The menu a finger on a controller's touchpad is showing, if any. It never takes the
-    /// controller: the game keeps getting input while it shows.
-    fn touch_menu_view(&self) -> Option<OverlayView> {
-        let shown = self.devices.values().find_map(|d| d.engine.touch_menu())?;
-        let menu = self.scope.menus.iter().find(|m| m.name == shown.menu)?;
-        Some(OverlayView::Menu(crate::menu::touch_view(menu, shown.item, shown.choose, shown.picks)))
-    }
-
-    fn broadcast_overlay(&mut self) {
-        let frame = self.overlay_frame();
-        if (!frame.info.is_empty() || !frame.logs.is_empty())
-            && self.overlay_process.is_none()
-            && self.overlay_started.is_none_or(|t| t.elapsed() > Duration::from_secs(10))
-        {
-            self.ensure_overlay_process();
-        }
-        if self.last_frame.as_ref() == Some(&frame) {
-            return;
-        }
-        self.overlay_watchers.retain(|w| w.send(frame.clone()).is_ok());
-        self.last_frame = Some(frame);
-    }
-
-    fn overlay_frame(&mut self) -> OverlayFrame {
-        let now = Instant::now();
-        let shown = self.timed_info(now);
-        // Live values (clock, CPU, …) refresh every second while shown.
-        let live = shown.iter().any(|(o, _)| crate::info::is_live(o));
-        let fast = shown.iter().any(|(o, _)| crate::info::is_fast(o));
-        self.info_refresh = live.then(|| Instant::now() + if fast { FAST_INFO_REFRESH } else { INFO_REFRESH });
-        if live && self.sampler.sampled_at.is_none() {
-            self.sampler.sample();
-        }
-        let mut values = self.live_values();
-        let with_input: Vec<&crate::config::InfoOverlay> =
-            shown.iter().map(|(o, _)| o).filter(|o| !crate::info::input_tokens(o).is_empty()).collect();
-        if !with_input.is_empty() {
-            values.inputs = self.inputs(now);
-        }
-        let token_redraw = self.token_redraw(&with_input, &values.inputs, now);
-        let (logs, logs_up) = self.log_frame(now, values.family, values.nintendo_layout);
-        self.shows_input = !with_input.is_empty() || logs_up;
-        self.log_redraw = self.log_redraw.into_iter().chain(token_redraw).min();
-        let mut info: Vec<_> = shown
-            .iter()
-            .map(|(o, opacity)| crate::info::InfoView { opacity: *opacity, ..crate::info::resolve(o, &values) })
-            .collect();
-        if self.recording.is_some() {
-            info.push(crate::info::recording_view());
-        }
-        let now = Instant::now();
-        let toast = self.toast.as_ref().and_then(|t| Some((t.view(now)?, t.next_redraw(now, FADE_FRAME))));
-        match toast {
-            Some((view, redraw)) => {
-                info.push(view);
-                self.info_fade = Some(self.info_fade.map_or(redraw, |t| t.min(redraw)));
-            }
-            None => self.toast = None,
-        }
-        OverlayFrame {
-            info,
-            logs,
-            active: self.overlay_view(),
-            font: self.config.active_font().map(str::to_string),
-            colorblind: self.config.colorblind_tones,
-            opener: crate::info::OpenerLabel::of(&self.config.shortcuts),
-            menu_keys: self.config.shortcuts.menu_keys(),
-            panel_keys: self.config.shortcuts.clone(),
-            pack_icons: self.config.active_game().assets.icons.clone(),
-            pack_fonts: self.pack_fonts.clone(),
-            family: values.family,
-            nintendo_layout: values.nintendo_layout,
-            motion: self.config.active_motion(),
-            lite: self.config.performance.lite(),
-        }
-    }
-
-    /// The info overlays to draw now and how visible each is: steady ones fully, and those
-    /// shown for a while (at the game's start, or lingering after being let go) fading out at
-    /// the end of it.
-    fn timed_info(&mut self, now: Instant) -> Vec<(crate::config::InfoOverlay, f32)> {
-        let held: HashSet<String> = self.devices.values().flat_map(|d| d.engine.shown_info()).cloned().collect();
-        self.info_timers.update(held, &self.scope.info, now);
-        let keys: Vec<String> = self.active_shifts().into_iter().map(|(key, _)| key).collect();
-        self.layer_started.retain(|key, _| keys.contains(key));
-        for key in keys {
-            self.layer_started.entry(key).or_insert(now);
-        }
-        self.info_fade = [self.info_timers.next_redraw(now, FADE_FRAME), self.layer_indicator_due(now)].into_iter().flatten().min();
-        self.visible_info(now)
-            .into_iter()
-            .map(|(o, steady)| {
-                let opacity = if steady { 1.0 } else { self.info_timers.opacity(&o.name, now) };
-                (o, opacity)
-            })
-            .filter(|(_, opacity)| *opacity > 0.0)
-            .collect()
-    }
-
-    /// Info overlays to show now, and whether each is up steadily: those of the active game set
-    /// to always show, any an action holds up, those shown for a while (at the game's start,
-    /// or lingering), and active layers' indicators.
-    fn visible_info(&self, now: Instant) -> Vec<(crate::config::InfoOverlay, bool)> {
-        use crate::config::{Indicator, InfoOverlay};
-        let mut shown: Vec<(InfoOverlay, bool)> = self
-            .scope
-            .info
-            .iter()
-            .filter_map(|o| {
-                let steady = o.always || self.info_timers.held(&o.name);
-                let timed = self.info_timers.timed(&o.name);
-                (steady || timed).then(|| (o.clone(), steady))
-            })
-            .collect();
-        // The Guide overlay's Notes and Mappings, while it's up.
-        if self.devices.values().any(|d| d.engine.guide_overlay_open())
-            && let Some(view) = self.guide_view()
-        {
-            shown.extend(view.overlays().into_iter().map(|o| (o, true)));
-        }
-        // The mode's and each active layer's indicator: its name, or an info overlay of the game's.
-        for (key, layer) in self.active_shifts() {
-            if self.layer_indicator_due_at(&key, layer).is_some_and(|due| due > now) {
-                continue;
-            }
-            let name = &layer.name;
-            match &layer.indicator {
-                Indicator::Bindings => shown.push((crate::info::layer_sheet(layer), true)),
-                Indicator::Name => shown.push((
-                    InfoOverlay {
-                        name: format!("layer {key}"),
-                        always: true,
-                        on_start: None,
-                        linger: None, title: None,
-                        current_input: Default::default(),
-                        style: layer.indicator_style.clone(),
-                        rows: vec![vec![name.clone()]],
-                    },
-                    true,
-                )),
-                Indicator::Info(info) => match shown.iter_mut().find(|(o, _)| &o.name == info) {
-                    Some((_, steady)) => *steady = true,
-                    None => {
-                        if let Some(o) = self.scope.info.iter().find(|o| &o.name == info) {
-                            shown.push((o.clone(), true));
-                        }
-                    }
-                },
-                Indicator::Off => {}
-            }
-        }
-        shown
-    }
-
-    /// When the indicator of `layer` (the mode or a layer, by its key in
-    /// [`Daemon::active_shifts`]) is due to appear, if it has been on and has a delay.
-    fn layer_indicator_due_at(&self, key: &str, layer: &crate::config::Layer) -> Option<Instant> {
-        let started = self.layer_started.get(key)?;
-        (layer.indicator_delay_ms > 0).then(|| *started + Duration::from_millis(layer.indicator_delay_ms.into()))
-    }
-
-    /// The soonest moment a delayed layer indicator should appear, if one is waiting.
-    fn layer_indicator_due(&self, now: Instant) -> Option<Instant> {
-        self.active_shifts()
-            .into_iter()
-            .filter_map(|(key, l)| self.layer_indicator_due_at(&key, l))
-            .filter(|due| *due > now)
-            .min()
-    }
-
-    /// The active mode, then the active layers, that the active game has, each with a key that
-    /// tells a mode from a layer of the same name.
-    fn active_shifts(&self) -> Vec<(String, &crate::config::Layer)> {
-        let mode = self.active_mode().and_then(|n| self.scope.modes.iter().find(|m| m.name == n)).map(|m| (format!("mode {}", m.name), m));
-        let layers = self.active_layers().into_iter().filter_map(|n| self.scope.layers.iter().find(|l| l.name == n).map(|l| (n, l)));
-        mode.into_iter().chain(layers).collect()
-    }
-
-    /// The mode of the controller used last (or of the first, before any is used), if the
-    /// active game has it.
-    fn active_mode(&self) -> Option<String> {
-        let pad = self.last_active.and_then(|id| self.devices.get(&id)).or_else(|| self.devices.values().next());
-        let mode = pad?.engine.mode()?;
-        self.scope.modes.iter().any(|m| m.name == mode).then(|| mode.to_string())
-    }
-
-    /// Layers active on any controller (the last one used first), oldest first, that the
-    /// active game has.
-    fn active_layers(&self) -> Vec<String> {
-        let last = self.last_active.and_then(|id| self.devices.get(&id));
-        let others = self.devices.iter().filter(|(id, _)| Some(**id) != self.last_active).map(|(_, d)| d);
-        let mut layers: Vec<String> = Vec::new();
-        for name in last.into_iter().chain(others).flat_map(|d| d.engine.layers()) {
-            if !layers.contains(&name) && self.scope.layers.iter().any(|l| l.name == name) {
-                layers.push(name);
-            }
-        }
-        layers
-    }
-
-    fn live_values(&self) -> crate::info::Live {
-        let window = self.focused.clone().unwrap_or_default();
-        let pad = self.last_active.and_then(|id| self.devices.get(&id)).or_else(|| self.devices.values().next());
-        let identity = PadIdentity::resolve(self.identity_override, pad.and_then(|d| d.model), self.active_support());
-        crate::info::Live {
-            profile: self.config.active().map(|p| p.name.clone()).unwrap_or_default(),
-            app: window.exe,
-            title: window.title,
-            pid: window.pid,
-            controller: pad.map(|d| d.name.clone()).unwrap_or_default(),
-            layers: self.active_layers(),
-            mode: self.active_mode(),
-            family: pad.and_then(|d| d.family).unwrap_or(self.config.info_glyphs),
-            pad_family: identity.family(),
-            nintendo_layout: identity.applies_nintendo_layout(self.config.active_nintendo_layout()),
-            system: self.sampler.stats.clone(),
-            controller_battery: pad.and_then(|d| d.parent.as_deref()).and_then(crate::info::controller_battery),
-            form: crate::info::form_factor(),
-            inputs: crate::inputlog::Inputs::default(),
-            gyro: pad.and_then(|d| d.view.gyro()),
-            touchpad: pad.filter(|d| d.touchpad.is_some()).map(|d| d.view.touchpad()),
-        }
-    }
-
-    /// Redraws info overlays if a ShowInfo action changed what is held up, or a layer (with its
-    /// indicator and `{layer}`) started or ended.
-    fn check_info_changes(&mut self) {
-        let mut changed = false;
-        for dev in self.devices.values_mut() {
-            changed |= dev.engine.take_info_changed();
-            changed |= dev.engine.take_layers_changed();
-        }
-        if changed {
-            self.sync_guide_menu();
-            self.broadcast_overlay();
-        }
-    }
-
-    /// Makes the Guide menu when the Guide overlay goes up, and drops it when the overlay comes down.
-    fn sync_guide_menu(&mut self) {
-        let open = self.devices.values().any(|d| d.engine.guide_overlay_open());
-        match (open, self.guide_menu.as_ref().map(|menu| menu.chosen)) {
-            (true, None) => {
-                let mode = self.guide_current_mode();
-                self.guide_menu = Some(GuideMenu { cursor: 0, steam: crate::guide_menu::steam_running(), page: 0, mode, chosen: false });
-                self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Open));
-            }
-            (false, Some(chosen)) => {
-                self.guide_menu = None;
-                self.overlay_sound(sound::SoundOverlay::Guide, (!chosen).then_some(sound::Feedback::Close));
-            }
-            _ => {}
-        }
-    }
-
-    /// What the Guide overlay's Mappings show: the active profile in the mode and page the Guide
-    /// menu is on.
-    fn guide_view(&self) -> Option<crate::info::GuideView<'_>> {
-        let menu = self.guide_menu.as_ref();
-        Some(crate::info::GuideView {
-            profile: self.config.active()?,
-            modes: self.scope.game_modes(),
-            layers: &self.scope.layers,
-            shown: menu.map_or_else(|| self.guide_current_mode(), |m| m.mode),
-            current: self.guide_current_mode(),
-            page: menu.map_or(0, |m| m.page),
-        })
-    }
-
-    /// The mode on for the controller that opened the Guide overlay, counted as the Mappings
-    /// count them (0 is the default).
-    fn guide_current_mode(&self) -> usize {
-        let pad = self.devices.values().find(|d| d.engine.guide_overlay_open());
-        let mode = pad.and_then(|d| d.engine.chosen_mode());
-        mode.and_then(|m| self.scope.game_modes().iter().position(|x| x.name == m)).map_or(0, |i| i + 1)
-    }
-
-    /// Moves the Guide menu's cursor, or chooses or closes, for the presses the engine took while
-    /// the overlay was up.
-    fn guide_keys(&mut self, device: u64, keys: &[crate::config::Button]) {
-        use crate::config::Button;
-        for &key in keys {
-            let Some(menu) = self.guide_menu.as_mut() else { return };
-            let len = crate::guide_menu::items(menu.steam).len();
-            match key {
-                Button::DpadUp | Button::LeftStickUp => menu.cursor = (menu.cursor + len - 1) % len,
-                Button::DpadDown | Button::LeftStickDown => menu.cursor = (menu.cursor + 1) % len,
-                // The right stick turns the Mappings' pages, and left and right their modes.
-                Button::RightStickUp => menu.page = menu.page.saturating_sub(1),
-                Button::RightStickDown => {
-                    let pages = self.guide_view().map_or(1, |v| v.pages());
-                    if let Some(menu) = self.guide_menu.as_mut() {
-                        menu.page = (menu.page + 1).min(pages - 1);
-                    }
-                }
-                Button::DpadLeft | Button::LeftStickLeft | Button::DpadRight | Button::LeftStickRight => {
-                    let modes = self.scope.game_modes().len() + 1;
-                    if modes > 1 {
-                        let forward = matches!(key, Button::DpadRight | Button::LeftStickRight);
-                        menu.mode = if forward { (menu.mode + 1) % modes } else { (menu.mode + modes - 1) % modes };
-                        menu.page = 0;
-                        self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Mode));
-                    }
-                }
-                Button::South => {
-                    let item = crate::guide_menu::items(menu.steam)[menu.cursor];
-                    menu.chosen = true;
-                    self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Pick));
-                    self.guide_choose(device, item);
-                }
-                Button::East => self.guide_close(device),
-                _ => {}
-            }
-            if matches!(key, Button::DpadUp | Button::LeftStickUp | Button::DpadDown | Button::LeftStickDown) {
-                self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Step));
-            }
-        }
-        // The cursor is part of the drawn frame, so the overlay has to be sent again to move it.
-        self.broadcast_overlay();
-    }
-
-    /// Runs a Guide menu item. The overlay goes away first, except for Quick Settings and Edit Controls, which open the Guide + Start menu on their page.
-    fn guide_choose(&mut self, device: u64, item: crate::guide_menu::Item) {
-        use crate::guide_menu::Item;
-        match item {
-            Item::QuickSettings => {
-                self.guide_close(device);
-                self.open_system_menu(device, Page::Quick);
-            }
-            Item::EditControls => {
-                self.guide_close(device);
-                self.open_system_menu(device, Page::EditControls);
-                if self.edit_controls() {
-                    self.apply_settings_change();
-                }
-            }
-            Item::Keyboard | Item::Numpad | Item::Media | Item::NextProfile | Item::Steam => {
-                self.guide_close(device);
-                match item {
-                    Item::Keyboard => self.toggle_overlay(Layout::Keyboard, Some(device)),
-                    Item::Numpad => self.toggle_overlay(Layout::Numpad, Some(device)),
-                    Item::Media => self.toggle_media(Some(device)),
-                    Item::NextProfile => {
-                        if let Some(next) = self.config.next_profile(self.pad_features().as_deref()) {
-                            self.switch_profile(next, BY_HAND);
-                        }
-                    }
-                    _ => self.send_steam_overlay(device),
-                }
-            }
-            Item::MouseMode => {
-                if let Some(dev) = self.devices.get_mut(&device) {
-                    dev.engine.enter_mouse_mode();
-                }
-                self.engine_changed(device);
-            }
-        }
-    }
-
-    /// Closes the Guide overlay on the controller that drives it.
-    fn guide_close(&mut self, device: u64) {
-        if let Some(dev) = self.devices.get_mut(&device) {
-            dev.engine.close_guide_overlay();
-        }
-        self.engine_changed(device);
-    }
-
-    /// Applies a layer change the engine made outside an event: the layered profile and the
-    /// analog state follow it, as they do after an event.
-    fn engine_changed(&mut self, device: u64) {
-        let Some(dev) = self.devices.get_mut(&device) else { return };
-        let mut out = Vec::new();
-        if dev.refresh_layers(&self.config)
-            && let Some(base) = self.config.active()
-        {
-            dev.engine.resync(layered(&dev.layered, base), &mut out);
-        }
-        dev.dispatch(&mut self.kbm, out);
-        self.check_info_changes();
-    }
-
-    /// Sends the real Guide button to the virtual pad, which opens Steam's overlay.
-    fn send_steam_overlay(&mut self, device: u64) {
-        let Some(dev) = self.devices.get_mut(&device) else { return };
-        let out = vec![
-            OutEvent::PadButton(crate::config::Button::Guide, true),
-            OutEvent::PadButton(crate::config::Button::Guide, false),
-        ];
-        dev.dispatch(&mut self.kbm, out);
-    }
-
-    /// If the overlay window died (crashed, or no compositor yet), leave overlay mode so the
-    /// controller isn't stuck driving something invisible. It restarts on next use.
-    fn check_overlay_process(&mut self) {
-        let exited = self.overlay_process.as_mut().is_some_and(|c| c.try_wait().ok().flatten().is_some());
-        if exited {
-            self.overlay_process = None;
-            if self.active.is_some() {
-                log!("overlay window went away");
-                self.close_overlay();
-            }
         }
     }
 
@@ -1621,6 +957,7 @@ impl Daemon {
             Msg::Focus(event) => self.focus_event(event),
             Msg::Toast(lines) => self.say(lines),
             Msg::Media(state) => self.update_media(state),
+            Msg::SteamRunning(running) => self.guide_menu_steam(running),
             Msg::RecordingStarted { pid } => {
                 (self.recording, self.recording_starting) = (Some(pid), false);
                 self.say(vec!["Recording started".into()]);
@@ -1678,9 +1015,10 @@ impl Daemon {
             dev.engine.release_all(false, &mut out);
             dev.dispatch(&mut self.kbm, out);
             // A menu is run by the controller that opened it, and with no controller
-            // left nothing could close an overlay.
+            // left nothing could close an overlay. The in-game menu waits for one instead.
             let orphaned = match &self.active {
                 Some(Active::Menu { device, .. }) => *device == id || self.devices.is_empty(),
+                Some(Active::Settings(..)) => false,
                 Some(_) => self.devices.is_empty(),
                 None => false,
             };
@@ -1708,7 +1046,7 @@ impl Daemon {
             let name = dev.name.clone();
             log!("gyro calibrated for {name}: bias {bias:.2?} deg/s");
             self.config.gyro_calibration.insert(name, bias);
-            if let Err(e) = self.config.save() {
+            if let Err(e) = self.config.save_settings() {
                 log!("saving config: {e:#}");
             }
             return;
@@ -1732,153 +1070,6 @@ impl Daemon {
         }
     }
 
-    fn window_focused(&mut self, window: &WindowInfo) {
-        // Editing settings while a game runs must not flip the profile.
-        if focus::is_own_window(window) {
-            return;
-        }
-        let same = |w: &WindowInfo| w.class == window.class && w.exe == window.exe && w.steam_app_id == window.steam_app_id;
-        self.recent_windows.retain(|w| !same(w));
-        self.recent_windows.insert(0, window.clone());
-        self.recent_windows.truncate(RECENT_WINDOWS);
-        self.focused = Some(window.clone());
-        if self.info_refresh.is_some() {
-            self.broadcast_overlay();
-        }
-        if self.hand_to_steam(window) {
-            return;
-        }
-        self.hint_library_game(window);
-
-        if !self.config.auto_switch.enabled {
-            return;
-        }
-        match focus::matching_rule(&self.config, window) {
-            Some((game, rule)) => {
-                let picked = ProfileRef::new(Some(game), &rule.profile);
-                let target = self.config.usable_profile(picked.clone(), self.pad_features().as_deref());
-                let why = format!("{} matches {}", describe(window), focus::rule_text(rule));
-                self.auto_switch_to(target.clone(), &with_fallback(why, &picked, &target), true);
-            }
-            None => self.leave_game(&format!("{} matches no rule", describe(window))),
-        }
-        if let Some((game, pid)) = focus::game_launch(&self.config, window) {
-            self.launched(&game, pid);
-        }
-    }
-
-    fn focus_event(&mut self, event: FocusEvent) {
-        match event {
-            FocusEvent::Backend(backend) => {
-                // Only a change of backend starts the process scan again. The first report can
-                // arrive after a scan that already switched for a running game, and clearing then
-                // would leave the daemon unable to notice that game exit.
-                if self.focus_backend != backend {
-                    self.focus_backend = backend;
-                    // Re-evaluate from scratch the next time processes are scanned.
-                    self.scan_target = None;
-                }
-            }
-            FocusEvent::Focused(window) => self.window_focused(&window),
-            FocusEvent::Unfocused => self.window_unfocused(),
-        }
-    }
-
-    /// Nothing has focus (the desktop, or an empty workspace), so no game's rules apply.
-    fn window_unfocused(&mut self) {
-        self.focused = None;
-        self.take_pads_back();
-        if self.config.auto_switch.enabled {
-            self.leave_game("no window has focus");
-        }
-    }
-
-    /// A rule matched `game` with process `pid`: if that's a process the game hasn't had,
-    /// the game has just started.
-    fn launched(&mut self, game: &str, pid: u32) {
-        if self.launches.get(game) == Some(&pid) {
-            return;
-        }
-        self.launches.insert(game.to_owned(), pid);
-        self.game_started(game);
-    }
-
-    /// The active game has just started: shows its "when the game starts" info overlays and
-    /// switches on toggles set to start on.
-    fn game_started(&mut self, game: &str) {
-        if self.config.active_ref().game.as_deref() != Some(game) {
-            return;
-        }
-        log!("{game} started");
-        self.toast_profile();
-        self.info_timers.game_started(&self.scope.info, Instant::now());
-        let Some(base) = self.config.active() else { return };
-        for dev in self.devices.values_mut() {
-            let mut out = Vec::new();
-            // A toggle starting "Next profile" would be odd; it isn't followed.
-            dev.engine.start_toggles(layered(&dev.layered, base), &self.scope.menus, &mut out);
-            if dev.refresh_layers(&self.config) {
-                dev.engine.resync(layered(&dev.layered, base), &mut out);
-            }
-            dev.dispatch(&mut self.kbm, out);
-        }
-        self.check_info_changes();
-        self.broadcast_overlay();
-    }
-
-    /// Process-scan fallback for desktops without focus tracking.
-    fn scan_processes(&mut self) {
-        let no_rules = focus::rules(&self.config).next().is_none();
-        if self.focus_backend != FocusBackend::ProcessScan || !self.config.auto_switch.enabled || no_rules {
-            return;
-        }
-        let processes = focus::running_processes();
-        let target = focus::profile_for_processes(&self.config, &processes);
-        if target != self.scan_target {
-            self.scan_target = target.clone();
-            match focus::matching_process(&self.config, &processes) {
-                Some((game, rule, process)) => {
-                    let picked = ProfileRef::new(Some(game), &rule.profile);
-                    let target = self.config.usable_profile(picked.clone(), self.pad_features().as_deref());
-                    let why = format!("{} is running, which matches {}", describe(process), focus::rule_text(rule));
-                    self.auto_switch_to(target.clone(), &with_fallback(why, &picked, &target), true);
-                }
-                None => self.leave_game("no game running"),
-            }
-        }
-        if let Some((game, pid)) = focus::game_launch_in(&self.config, &processes) {
-            self.launched(&game, pid);
-        }
-    }
-
-    /// Switches to a profile a rule (or the default) picked, with a toast if `toast`. `reason`
-    /// says why, for the log and the GUI.
-    fn auto_switch_to(&mut self, target: ProfileRef, reason: &str, toast: bool) {
-        if target == self.config.active_ref() {
-            return;
-        }
-        if self.config.profile(&target).is_none() {
-            log!("auto-switch points to missing profile {target}");
-            return;
-        }
-        log!("{reason} → profile {target}");
-        if toast {
-            self.switch_profile(target, reason);
-        } else {
-            self.set_profile(target, reason);
-        }
-    }
-
-    /// No game has focus: a profile of a game that rules pick gives way to the default one.
-    /// No toast, since alt-tabbing out of a game would show one every time.
-    fn leave_game(&mut self, reason: &str) {
-        let in_game = self.config.active_ref().game.is_some_and(|g| focus::has_rules(&self.config, &g));
-        if in_game && let Some(default) = self.config.auto_switch.default_profile.clone() {
-            let why = format!("{reason}, so the default profile takes over");
-            self.auto_switch_to(default, &why, false);
-        }
-    }
-
     /// Briefly says which controller profile is now active, and for which game, at the top
     /// of the screen.
     fn toast_profile(&mut self) {
@@ -1895,40 +1086,17 @@ impl Daemon {
         self.watchers.retain(|w| w.send(snapshot.cloned()).is_ok());
     }
 
-    /// Called when a device stops being managed; watchers fall back to "no controller".
-    fn forget_active(&mut self, id: u64) {
-        if self.last_active == Some(id) {
-            self.last_active = None;
-            self.broadcast(None);
-        }
-        // An overlay its controller left can't be driven any more.
-        if self.active.is_some() && self.overlay_driver() == Some(id) {
-            self.close_overlay();
-        }
-    }
-
-    /// The controller the overlay on screen belongs to, if it has one yet.
-    fn overlay_driver(&self) -> Option<u64> {
-        match &self.active {
-            Some(Active::Menu { device, .. } | Active::Settings(_, device)) => Some(*device),
-            _ => self.driving.owner,
-        }
-    }
-
-    /// Whether controller `id` drives the overlay on screen. The keyboard, numpad, media controls
-    /// and offer go to the first controller that sends them input; the others keep playing.
-    fn drives_overlay(&mut self, id: u64) -> bool {
-        match &self.active {
-            Some(Active::Menu { device, .. } | Active::Settings(_, device)) => *device == id,
-            Some(_) => *self.driving.owner.get_or_insert(id) == id,
-            None => false,
-        }
-    }
-
     fn input(&mut self, id: u64, events: Vec<InputEvent>) {
+        // A controller let go of has a reader still running for a moment.
+        if !self.devices.contains_key(&id) {
+            return;
+        }
         let logged = self.log_input(id, &events, Instant::now());
         let fires: Vec<bool> = events.iter().map(|ev| self.opener_fired(id, ev)).collect();
         let tapped = self.opener_tapped(&events, &fires);
+        if self.take_over_settings(id, &events) {
+            return;
+        }
         if self.drives_overlay(id) {
             return self.overlay_input(id, events, &fires);
         }
@@ -2026,581 +1194,6 @@ impl Daemon {
         })
     }
 
-    /// Opens the Guide + Start menu over the game, on `page`, for the controller `device`. That
-    /// controller drives it from now on.
-    fn open_system_menu(&mut self, device: u64, page: Page) {
-        if !self.ensure_overlay_process() {
-            return;
-        }
-        log!("opening the settings menu");
-        self.release_mappings();
-        let paddles = self.devices.get(&device).is_some_and(|d| d.paddles);
-        self.active = Some(Active::Settings(SystemMenu::new(&self.config).with_paddles(paddles).on_page(page), device));
-        self.broadcast_overlay();
-        self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Open));
-    }
-
-    /// Runs one event on the Guide + Start menu. `true` when the menu closed.
-    fn settings_input(&mut self, ev: InputEvent) -> bool {
-        let now = Instant::now();
-        self.settings_step(|menu, config| menu.handle(ev, now, config))
-    }
-
-    /// Runs one step of the Guide + Start menu (an event, or a held direction's repeat) and does
-    /// what it asks. `true` when the menu closed.
-    fn settings_step(&mut self, step: impl FnOnce(&mut SystemMenu, &mut Config) -> Option<SystemOutcome>) -> bool {
-        // Outside any game, General is what a change would land in: keep a copy so the change
-        // can move into a new pack instead.
-        let general = self.config.active_ref().game.is_none().then(|| self.config.general.clone());
-        let (outcome, moved, device) = match &mut self.active {
-            Some(Active::Settings(menu, device)) => {
-                let before = menu.cursor();
-                let outcome = step(menu, &mut self.config);
-                (outcome, menu.cursor() != before, *device)
-            }
-            _ => (None, false, 0),
-        };
-        let picked = matches!(outcome, Some(SystemOutcome::Changed | SystemOutcome::EditControls | SystemOutcome::Switch(_)));
-        self.overlay_sound(sound::SoundOverlay::Guide, sound::Feedback::of(picked, moved && outcome.is_none()));
-        match outcome {
-            Some(SystemOutcome::Close) => {
-                self.close_overlay();
-                return true;
-            }
-            Some(SystemOutcome::Changed) => {
-                if let Some(general) = general {
-                    self.pack_from_general(general);
-                }
-                self.apply_settings_change();
-            }
-            Some(SystemOutcome::EditControls) => {
-                if self.edit_controls() {
-                    self.apply_settings_change();
-                }
-            }
-            Some(SystemOutcome::Save { back }) => {
-                if let Err(e) = self.config.save() {
-                    self.say(vec!["Couldn't save the changes".into(), format!("{e:#}")]);
-                    return false;
-                }
-                self.leave_settings(device, back);
-                return true;
-            }
-            Some(SystemOutcome::Discard { saved, back }) => {
-                self.config = *saved;
-                self.refresh_scope();
-                self.leave_settings(device, back);
-                return true;
-            }
-            Some(SystemOutcome::Switch(target)) => {
-                self.switch_profile(target, "Chosen in the in-game menu");
-                if let Some(Active::Settings(menu, _)) = &mut self.active {
-                    menu.profile_switched(&self.config);
-                }
-            }
-            Some(SystemOutcome::ReturnToGuide) => {
-                self.return_to_guide(device);
-                return true;
-            }
-            Some(SystemOutcome::RemappingOff) => {
-                self.remapping_off();
-                return true;
-            }
-            None => {}
-        }
-        false
-    }
-
-    /// Closes the Guide + Start menu after its question about unsaved changes: back to the Guide
-    /// overlay when it was left with Back, else out.
-    fn leave_settings(&mut self, device: u64, back: bool) {
-        if back {
-            self.return_to_guide(device);
-        } else {
-            self.close_overlay();
-        }
-    }
-
-    /// Quick Settings' Turn remapping off: closes the menu and lets go of every controller. It
-    /// isn't saved, like the menu's other changes until Save, so a restart turns it back on.
-    fn remapping_off(&mut self) {
-        self.close_overlay();
-        self.config.enabled = false;
-        self.release_devices(|_| true);
-        self.say(vec!["Remapping is off".into(), "Turn it back on from the tray or the settings window".into()]);
-    }
-
-    /// Closes the Guide + Start menu and puts the Guide overlay it was opened from back up.
-    fn return_to_guide(&mut self, device: u64) {
-        self.close_overlay();
-        if let Some(dev) = self.devices.get_mut(&device) {
-            dev.engine.open_guide_overlay();
-        }
-        self.engine_changed(device);
-    }
-
-    /// Edit Controls was chosen. Outside a game it makes the window's pack first. `false` when
-    /// there is nothing to edit: the menu goes back to where it was opened from.
-    fn edit_controls(&mut self) -> bool {
-        // Outside any game there is no game to edit, and no window to name a pack after.
-        // Refuse, and go back to the menu's main page, or to the Guide overlay.
-        if self.config.active_ref().game.is_none() && self.focused.is_none() {
-            let back = match &mut self.active {
-                Some(Active::Settings(menu, device)) if menu.opened_from_guide() => Some(*device),
-                Some(Active::Settings(menu, _)) => {
-                    menu.back_to_main();
-                    None
-                }
-                _ => None,
-            };
-            if let Some(device) = back {
-                self.return_to_guide(device);
-            }
-            self.say(vec!["Edit Controls needs a setup".into(), "Focus a game window first".into()]);
-            return false;
-        }
-        if self.config.active_ref().game.is_none() {
-            let general = self.config.general.clone();
-            self.pack_from_general(general);
-        }
-        true
-    }
-
-    /// Moves what General's active profile is into a new pack for the window in front, and puts
-    /// General back as `general` was. The pack keeps the game-wide choices General had, the
-    /// Nintendo layout included, as they were edited. Returns false, changing nothing, without a
-    /// window: there is nothing to name the pack after, so the change stays in General.
-    fn pack_from_general(&mut self, general: Game) -> bool {
-        let Some(window) = self.focused.clone() else { return false };
-        let Some(edited) = self.config.active().cloned() else { return false };
-        let nintendo_layout = self.config.general.nintendo_layout;
-        self.config.general = general;
-        let at = self.config.add_game_for_window(&window, edited);
-        if let Some(game) = self.config.game_mut(at.game.as_deref()) {
-            game.nintendo_layout = nintendo_layout;
-        }
-        log!("made a pack for {} from General", describe(&window));
-        self.say(vec![format!("Made a pack: {}", at.game.as_deref().unwrap_or_default())]);
-        self.set_profile(at, &format!("Made a pack for {}", describe(&window)));
-        true
-    }
-
-    /// Applies a Quick Settings or Edit Controls change to the running mappings, and to the
-    /// macros, menus and layers the game has (which Edit Controls can change too). It reaches the
-    /// config file only when the menu's Save is chosen.
-    fn apply_settings_change(&mut self) {
-        self.refresh_scope();
-        self.resync_all();
-    }
-
-    /// The library, and the entries in it that a Guide tap over `window` would offer.
-    fn library_candidates(&self, window: &WindowInfo) -> (Vec<crate::library::Entry>, Vec<usize>) {
-        let library = crate::library::entries();
-        let have = self.pad_features();
-        let mut found = crate::offer::candidates(&self.config, &library, window, have.as_deref());
-        found.retain(|&i| self.offers.declined.get(&library[i].pack.pack.id) != Some(&window.pid));
-        (library, found)
-    }
-
-    /// Says, once per run of a game, that tapping Guide adds the library's setup for the game
-    /// that just came to the front.
-    fn hint_library_game(&mut self, window: &WindowInfo) {
-        // Without a controller there's no Guide to tap; the hint waits for the next focus.
-        if !self.config.enabled || self.devices.is_empty() {
-            return;
-        }
-        if !self.offers.hinted.insert((window.pid, window.class.clone(), window.exe.clone())) {
-            return;
-        }
-        let (library, found) = self.library_candidates(window);
-        let name = match found.as_slice() {
-            [] => return,
-            [one] => library[*one].pack.pack.name.clone(),
-            [first, ..] if window.title.trim().is_empty() => library[*first].pack.pack.name.clone(),
-            _ => window.title.trim().to_owned(),
-        };
-        log!("hinting that Guide adds the library setup for {}", describe(window));
-        self.toast = Some(crate::offer::hint(&name, Instant::now()));
-        self.broadcast_overlay();
-    }
-
-    /// Asks whether to add the focused game's profiles, when the library has some for it.
-    fn offer_library_game(&mut self, by: u64) {
-        if self.active.is_some() || !self.config.enabled {
-            return;
-        }
-        let Some(window) = self.focused.clone() else { return };
-        let (library, found) = self.library_candidates(&window);
-        let have = self.pad_features();
-        if found.is_empty() || !self.ensure_overlay_process() {
-            return;
-        }
-        log!("offering library profiles for {}", describe(&window));
-        self.release_mappings();
-        self.offers.shown = found.iter().map(|&i| library[i].clone()).collect();
-        self.offers.shown_pid = window.pid;
-        self.driving.owner = Some(by);
-        let session = OfferSession::new(&library, &found, have.as_deref(), Instant::now());
-        self.active = Some(Active::Offer(session));
-        self.broadcast_overlay();
-        self.overlay_sound(sound::SoundOverlay::Offer, Some(sound::Feedback::Open));
-    }
-
-    /// Acts on the answer to the offer: adds the chosen pack, or remembers the refusal.
-    fn answer_offer(&mut self, outcome: OfferOutcome) {
-        let Some(Active::Offer(session)) = &self.active else { return };
-        let ids: Vec<String> = session.ids().map(str::to_owned).collect();
-        let offered = std::mem::take(&mut self.offers.shown);
-        self.close_overlay();
-        match outcome {
-            OfferOutcome::No => {
-                let pid = self.offers.shown_pid;
-                self.offers.declined.extend(ids.into_iter().map(|id| (id, pid)));
-            }
-            OfferOutcome::Never => {
-                let mut config = self.config.clone();
-                config.declined_packs.extend(ids);
-                self.say(vec!["Won't ask again".into()]);
-                self.replace_config(config);
-            }
-            OfferOutcome::Add(i, profile) => {
-                let Some(entry) = offered.into_iter().nth(i) else { return };
-                let mut config = self.config.clone();
-                let profile = profile.and_then(|p| entry.pack.profiles.get(p)).map(|p| p.name.clone());
-                let plan = crate::pack::plan(&config, entry.pack, true);
-                let choices = crate::pack::Choices { replace: false, keep_mine: vec![true; plan.rule_clashes.len()] };
-                let name = crate::pack::apply(&mut config, &plan, &choices);
-                log!("added library setup {name}");
-                // The chosen profile is the one this window's rules pick.
-                if let (Some(profile), Some(window), Some(game)) =
-                    (profile, &self.focused, config.games.iter_mut().find(|g| g.name == name))
-                {
-                    for rule in game.rules.iter_mut().filter(|r| crate::focus::rule_matches_any(r, std::slice::from_ref(window))) {
-                        rule.profile.clone_from(&profile);
-                    }
-                }
-                if let Response::Error(e) = self.replace_config(config) {
-                    return self.say(vec!["Couldn't add the setup".into(), e]);
-                }
-                self.say(vec![format!("Added {name}")]);
-                if let Some(window) = self.focused.clone() {
-                    self.window_focused(&window);
-                }
-            }
-        }
-    }
-
-    /// Plays the active game's cue for an input in `overlay`, if it has one, and the buzz for it
-    /// on the controller driving the overlay. A pick buzzes the default way unless the setup
-    /// gives it a buzz of its own.
-    fn overlay_sound(&self, overlay: sound::SoundOverlay, feedback: Option<sound::Feedback>) {
-        if let Some((f, spec)) = feedback.and_then(|f| Some((f, self.scope.sounds.cue(overlay, f)?))) {
-            if self.injection.enabled() {
-                log!(
-                    "sound: {} {f:?} -> {} volume={} pitch={} length={} file={:?}",
-                    overlay.key(),
-                    spec.kind.label().to_lowercase(),
-                    spec.volume,
-                    spec.pitch,
-                    spec.length,
-                    spec.file
-                );
-            }
-            self.sounds.play(&spec);
-        }
-        let Some(dev) = self.overlay_driver().and_then(|id| self.devices.get(&id)).filter(|dev| dev.ff.is_some()) else { return };
-        match feedback.and_then(|f| self.scope.rumble.cue(overlay, f)) {
-            Some(cue) => rumble::cue(dev.path.clone(), cue),
-            // A pick can be felt too, on the controller driving the overlay.
-            None if feedback == Some(sound::Feedback::Pick) && self.config.pick_rumble => rumble::pick(dev.path.clone()),
-            None => {}
-        }
-    }
-
-    /// Feeds an input to the on-screen keyboard or numpad, and sounds its step or key press.
-    fn keyboard_input(&mut self, id: u64, ev: InputEvent, now: Instant) {
-        let Some(Active::Keyboard(k)) = &mut self.active else { return };
-        let (overlay, before) = (keyboard_sound(k.layout()), k.cursor());
-        let actions = k.handle(ev, now);
-        let picked = actions.iter().any(|a| matches!(a, OverlayAction::Key(_, true)));
-        let feedback = sound::Feedback::of(picked, k.cursor() != before);
-        self.overlay_sound(overlay, feedback);
-        self.log_keyboard(id, ev, &actions);
-        self.apply_keyboard(actions);
-    }
-
-    /// Feeds an input to the media controls, and sounds it. Returns whether they close.
-    fn media_input(&mut self, ev: InputEvent, now: Instant) -> bool {
-        let Some(Active::Media(m)) = &mut self.active else { return false };
-        let outcome = m.handle(ev, now);
-        if outcome.is_none() {
-            self.overlay_sound(sound::SoundOverlay::Media, media_feedback(ev));
-        }
-        outcome == Some(MediaOutcome::Close)
-    }
-
-    /// Feeds an input to the library offer, and sounds its step or pick.
-    fn offer_input(&mut self, ev: InputEvent, now: Instant) -> Option<OfferOutcome> {
-        let Some(Active::Offer(o)) = &mut self.active else { return None };
-        let before = o.position();
-        let outcome = o.handle(ev, now);
-        let picked = outcome.is_some() || o.position().0 != before.0;
-        let moved = !picked && o.position() != before;
-        let feedback = sound::Feedback::of(picked, moved);
-        self.overlay_sound(sound::SoundOverlay::Offer, feedback);
-        outcome
-    }
-
-    /// Guide was pressed over the overlay: closes it. `true` when it closed.
-    fn guide_closes_overlay(&mut self) -> bool {
-        match &mut self.active {
-            Some(Active::Offer(_)) => self.answer_offer(OfferOutcome::No),
-            Some(Active::Settings(menu, _)) => {
-                if menu.guide_pressed(&self.config) != Some(SystemOutcome::Close) {
-                    self.broadcast_overlay();
-                    return false;
-                }
-                self.close_overlay();
-            }
-            Some(_) => self.close_overlay(),
-            None => {}
-        }
-        true
-    }
-
-    /// Runs one event on the open menu, and the item it chooses. `true` when the menu is no
-    /// longer up.
-    fn menu_input(&mut self, id: u64, ev: InputEvent, now: Instant) -> bool {
-        let Some(Active::Menu { session, device }) = &mut self.active else { return true };
-        let device = *device;
-        let before = session.cursor();
-        session.set_keys(self.config.shortcuts.menu_keys());
-        let outcome = session.handle(&self.scope.menus, ev, now);
-        let picked = matches!(outcome, Some(MenuOutcome::Choose { .. }));
-        let moved = outcome.is_none() && session.cursor() != before;
-        self.overlay_sound(sound::SoundOverlay::Menu, sound::Feedback::of(picked, moved));
-        match outcome {
-            Some(MenuOutcome::Choose { menu, item, action, close }) => {
-                self.log_menu_choice(id, ev, &action);
-                if close {
-                    // The picked item, lit, is the last the overlay draws of the menu.
-                    self.broadcast_overlay();
-                    self.close_overlay();
-                }
-                // A menu set to stay open stays up for more picks, unless the item put it away.
-                self.run_menu_item(device, &menu, item, &action);
-                !matches!(self.active, Some(Active::Menu { .. }))
-            }
-            Some(MenuOutcome::Close) => {
-                self.close_overlay();
-                true
-            }
-            None => false,
-        }
-    }
-
-    /// What a press of `b` does in the media controls or the numpad, when either is up.
-    fn panel_press(&self, b: Button) -> PanelPress {
-        let group = match &self.active {
-            Some(Active::Media(_)) => Group::Media,
-            Some(Active::Keyboard(k)) if k.layout() == Layout::Numpad => Group::Numpad,
-            Some(Active::Keyboard(_)) => Group::Keyboard,
-            _ => return PanelPress::Other,
-        };
-        self.config.shortcuts.panel_press(group, b)
-    }
-
-    /// While the overlay shows something, controller input drives it instead of the mappings.
-    /// (Every way out redraws, so the input log's view of it shows too.)
-    fn overlay_input(&mut self, id: u64, events: Vec<InputEvent>, fires: &[bool]) {
-        let now = Instant::now();
-        if let Some(dev) = self.devices.get_mut(&id) {
-            for ev in &events {
-                dev.view.apply(ev);
-            }
-            dev.draw_status();
-        }
-        for (ev, fired) in events.into_iter().zip(fires) {
-            // What opens the Guide overlay (Guide, unless moved) closes whatever is up, as well as
-            // its own close inputs: the offer as "not now", the in-game menu once any unsaved
-            // changes are answered. The tap it ends isn't a tap, so it doesn't offer a library
-            // game on release.
-            if *fired {
-                self.offers.guide_tap = None;
-                if self.guide_closes_overlay() {
-                    return;
-                }
-                continue;
-            }
-            // The panels hear A and B where the confirm and back buttons are. Menus do it
-            // themselves, since some read the face buttons as they are.
-            let ev = match ev {
-                InputEvent::Button(b, down) => match self.panel_press(b) {
-                    PanelPress::Key(key) => InputEvent::Button(key, down),
-                    PanelPress::Ignored => continue,
-                    PanelPress::Other if matches!(self.active, Some(Active::Menu { .. })) => InputEvent::Button(b, down),
-                    PanelPress::Other => InputEvent::Button(self.config.shortcuts.menu_keys().logical(b, true), down),
-                },
-                other => other,
-            };
-            match &mut self.active {
-                Some(Active::Keyboard(_)) => self.keyboard_input(id, ev, now),
-                Some(Active::Menu { .. }) => {
-                    if self.menu_input(id, ev, now) {
-                        return;
-                    }
-                }
-                Some(Active::Settings(..)) => {
-                    if self.settings_input(ev) {
-                        return;
-                    }
-                }
-                Some(Active::Media(_)) => {
-                    if self.media_input(ev, now) {
-                        return self.close_overlay();
-                    }
-                }
-                Some(Active::Offer(_)) => {
-                    if let Some(outcome) = self.offer_input(ev, now) {
-                        return self.answer_offer(outcome);
-                    }
-                }
-                None => return,
-            }
-        }
-        self.broadcast_overlay();
-    }
-
-    #[expect(clippy::too_many_lines, reason = "predates the size lints")]
-    fn request(&mut self, req: Request) -> Response {
-        match req {
-            Request::Status => Response::Status(self.status()),
-            Request::GetConfig => Response::Config(Box::new(self.config.clone())),
-            Request::SetConfig(new) => {
-                let mut new = *new;
-                new.enabled = self.config.enabled;
-                new.carry_active(&self.config.active);
-                self.replace_config(new)
-            }
-            Request::Reload => match Config::load() {
-                Ok(new) => self.replace_config(new),
-                Err(e) => Response::Error(format!("{e:#}")),
-            },
-            Request::SetEnabled(enabled) => {
-                self.config.enabled = enabled;
-                if !enabled {
-                    self.release_devices(|_| true);
-                }
-                self.save_and_rescan()
-            }
-            Request::SetProfile(name) => {
-                let Some(target) = self.config.find_profile(&name) else {
-                    return Response::Error(format!("no profile named {name:?}"));
-                };
-                self.switch_profile(target, BY_HAND);
-                Response::Ok
-            }
-            Request::Activate(target) => {
-                if self.config.profile(&target).is_none() {
-                    return Response::Error(format!("no profile {target}"));
-                }
-                self.switch_profile(target, BY_HAND);
-                Response::Ok
-            }
-            Request::NextProfile => {
-                if let Some(next) = self.config.next_profile(self.pad_features().as_deref()) {
-                    self.switch_profile(next, BY_HAND);
-                }
-                Response::Ok
-            }
-            // Handled by the connection thread, which registers through `Msg::Watch`.
-            Request::WatchInput | Request::WatchFeed => Response::Error("watch requests must be the only request".into()),
-            Request::ToggleOverlay => {
-                self.toggle_overlay(Layout::Keyboard, None);
-                Response::Ok
-            }
-            Request::ToggleNumpad => {
-                self.toggle_overlay(Layout::Numpad, None);
-                Response::Ok
-            }
-            Request::OpenMenu(name) => {
-                if !self.scope.menus.iter().any(|m| m.name == name) {
-                    return Response::Error(format!("no menu named {name:?}"));
-                }
-                let device = self.last_active.or_else(|| self.devices.keys().next().copied()).unwrap_or(u64::MAX);
-                self.open_menu(device, &name, Opener::default());
-                Response::Ok
-            }
-            Request::WatchOverlay => Response::Error("WatchOverlay must be the only request".into()),
-            Request::DebugAttach { .. }
-            | Request::DebugInput { .. }
-            | Request::DebugOutput { .. }
-            | Request::DebugDetach(_)
-            | Request::DebugIdentify(_) => {
-                self.debug_request(req)
-            }
-            Request::CalibrateGyro(path) => {
-                let dev = self.devices.values_mut().find(|d| d.path.as_os_str() == path.as_str());
-                match dev {
-                    Some(dev) if dev.motion.is_some() => {
-                        log!("calibrating gyro for {}: keep it still", dev.name);
-                        dev.calibrating = Some(Calibration { started: Instant::now(), sum: [0.0; 3], samples: 0 });
-                        Response::Ok
-                    }
-                    Some(_) => Response::Error(format!("{path} has no gyro")),
-                    None => Response::Error(format!("{path} is not being managed")),
-                }
-            }
-            Request::TestTurn(px) => {
-                crate::output::test_turn(px);
-                Response::Ok
-            }
-            Request::TestRumble(path) => {
-                let known = self
-                    .gamepads
-                    .iter()
-                    .find(|((p, _), _)| p.as_os_str() == path.as_str())
-                    .map(|(_, pad)| pad.rumble);
-                match known {
-                    Some(true) => {
-                        rumble::test(PathBuf::from(path));
-                        Response::Ok
-                    }
-                    Some(false) => Response::Error(format!("{path} does not support rumble")),
-                    None => Response::Error(format!("no controller at {path}")),
-                }
-            }
-        }
-    }
-
-    fn replace_config(&mut self, new: Config) -> Response {
-        if new.general.profiles.is_empty() {
-            return Response::Error("General must have at least one profile".into());
-        }
-        // An open menu refers to menus by position, which the new config may change.
-        if matches!(self.active, Some(Active::Menu { .. })) {
-            self.close_overlay();
-        }
-        // The mode stays on; it applies again if the game still has it.
-        self.release_all(true);
-        self.config = new;
-        self.refresh_scope();
-        let ignored = self.config.ignored_devices.clone();
-        let enabled = self.config.enabled;
-        self.release_devices(|d| !enabled || ignored.contains(&d.name));
-        self.resync_all();
-        self.broadcast_overlay();
-        self.save_and_rescan()
-    }
-
-    fn save_and_rescan(&mut self) -> Response {
-        self.scan();
-        match self.config.save() {
-            Ok(()) => Response::Ok,
-            Err(e) => Response::Error(format!("saving config: {e:#}")),
-        }
-    }
-
     /// Recomputes what the active profile can use, after a config or game change.
     fn refresh_scope(&mut self) {
         self.scope = self.config.scope();
@@ -2679,7 +1272,12 @@ impl Daemon {
         self.resync_all();
         // Other info overlays may belong to the new profile.
         self.broadcast_overlay();
-        if let Err(e) = self.config.save() {
+        // The in-game menu saves nothing until its Save, which writes this too: written now, it
+        // would take the menu's unsaved settings (rumble, overlay size) with it, which Discard
+        // then couldn't take back.
+        if !matches!(self.active, Some(Active::Settings(..)))
+            && let Err(e) = self.config.save_settings()
+        {
             log!("saving config: {e:#}");
         }
         true
@@ -2710,8 +1308,8 @@ impl Daemon {
     }
 
     /// Stops managing (ungrabs) devices matching `pred`.
-    fn release_devices(&mut self, pred: impl Fn(&Managed) -> bool) {
-        let ids: Vec<u64> = self.devices.iter().filter(|(_, d)| pred(d)).map(|(id, _)| *id).collect();
+    fn release_devices(&mut self, pred: impl Fn(u64, &Managed) -> bool) {
+        let ids: Vec<u64> = self.devices.iter().filter(|(id, d)| pred(**id, d)).map(|(id, _)| *id).collect();
         for id in ids {
             let Some(mut dev) = self.devices.remove(&id) else { continue };
             dev.stop_threads();
@@ -2754,6 +1352,7 @@ impl Daemon {
             focus_backend: self.focus_backend,
             focused: self.focused.clone(),
             recent_windows: self.recent_windows.clone(),
+            steam_has_pads: self.steam_has_pads,
             motion_access_denied: self.nodes.denied_sensors(),
             overlay_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Keyboard),
             numpad_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Numpad),
@@ -2856,6 +1455,8 @@ impl Daemon {
             uniq: None,
             motion: None,
             touchpad: None,
+            #[cfg(target_os = "linux")]
+            grabs: Vec::new(),
             paddles: false,
             motion_frame: MotionFrame::default(),
             gyro_bias: [0.0; 3],
@@ -2901,96 +1502,6 @@ fn dispatch(pad: &mut VirtualPad, view: &mut OutputView, kbm: &mut VirtualKbm, o
             log!("output error: {e:#}");
         }
     }
-}
-
-fn ipc_server(listener: &UnixListener, tx: &Sender<Msg>) {
-    for conn in listener.incoming() {
-        let Ok(conn) = conn else { continue };
-        let tx = tx.clone();
-        // One thread per client: input watchers hold their connection open.
-        thread::spawn(move || {
-            if let Err(e) = serve_client(&conn, &tx) {
-                log!("ipc: {e:#}");
-            }
-        });
-    }
-}
-
-fn serve_client(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
-    conn.set_read_timeout(Some(Duration::from_secs(2)))?;
-    let mut line = String::new();
-    BufReader::new(conn).read_line(&mut line)?;
-    let response = match serde_json::from_str::<Request>(&line) {
-        Ok(Request::WatchInput) => return watch_input(conn, tx),
-        Ok(Request::WatchOverlay) => return watch_overlay(conn, tx),
-        Ok(Request::WatchFeed) => return watch_feed(conn, tx),
-        Ok(req) => {
-            let (reply_tx, reply_rx) = mpsc::channel();
-            tx.send(Msg::Ipc { req, reply: reply_tx })?;
-            reply_rx.recv_timeout(Duration::from_secs(2))?
-        }
-        Err(e) => Response::Error(format!("bad request: {e}")),
-    };
-    let mut out = serde_json::to_string(&response)?;
-    out.push('\n');
-    conn.write_all(out.as_bytes())?;
-    Ok(())
-}
-
-/// Streams overlay state to the (resident) overlay window until it goes away. An empty frame
-/// means nothing is shown; the window idles and keeps listening.
-fn watch_overlay(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
-    let (view_tx, view_rx) = mpsc::channel::<OverlayFrame>();
-    tx.send(Msg::WatchOverlay(view_tx))?;
-    while let Ok(first) = view_rx.recv() {
-        // Frames that came while the last was written: those a newer one stands in for are
-        // skipped, so a burst doesn't pile up, but each opening, closing and pick is sent.
-        let pending: Vec<OverlayFrame> = std::iter::once(first).chain(view_rx.try_iter()).collect();
-        for (i, view) in pending.iter().enumerate() {
-            if pending.get(i + 1).is_some_and(|newer| newer.stands_in_for(view)) {
-                continue;
-            }
-            let mut line = serde_json::to_string(view)?;
-            line.push('\n');
-            if conn.write_all(line.as_bytes()).is_err() {
-                return Ok(());
-            }
-        }
-    }
-    Ok(())
-}
-
-/// Streams snapshots to a client until it disconnects. Bursts are coalesced to the latest
-/// snapshot, so a fast-polling pad never floods the GUI.
-fn watch_input(conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
-    let (snap_tx, snap_rx) = mpsc::channel();
-    tx.send(Msg::Watch(snap_tx))?;
-    stream_latest(conn, &snap_rx)
-}
-
-/// Streams the latest presses and what they did, like [`watch_input`].
-fn watch_feed(conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
-    let (feed_tx, feed_rx) = mpsc::channel();
-    tx.send(Msg::WatchFeed(feed_tx))?;
-    stream_latest(conn, &feed_rx)
-}
-
-/// Writes each value as a JSON line until the client goes away or the daemon drops the sender.
-fn stream_latest<T: serde::Serialize>(mut conn: &UnixStream, rx: &mpsc::Receiver<T>) -> Result<()> {
-    // Blocks until the next update; ends when the daemon drops this watcher.
-    while let Ok(mut snapshot) = rx.recv() {
-        while let Ok(newer) = rx.try_recv() {
-            snapshot = newer;
-        }
-        let mut line = serde_json::to_string(&snapshot)?;
-        line.push('\n');
-        if conn.write_all(line.as_bytes()).is_err() {
-            // Client went away; the daemon drops our sender on its next send.
-            return Ok(());
-        }
-        thread::sleep(WATCH_INTERVAL);
-    }
-    Ok(())
 }
 
 /// The reason for switching to `target`: `why`, plus what changed when the controller can't play

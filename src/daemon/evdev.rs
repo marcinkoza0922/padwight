@@ -4,7 +4,10 @@
 use std::{
     collections::{HashMap, HashSet},
     io::ErrorKind,
-    os::{fd::AsRawFd, unix::fs::MetadataExt},
+    os::{
+        fd::{AsFd, AsRawFd, OwnedFd},
+        unix::fs::MetadataExt,
+    },
     path::{Path, PathBuf},
     sync::{
         Arc,
@@ -31,6 +34,35 @@ pub(super) type NodeKey = (PathBuf, u64);
 
 /// How long a reader waits for input before it checks whether to stop.
 const POLL_TIMEOUT_MS: i32 = 200;
+
+/// EVIOCGRAB, which takes a node from everyone else (1) or lets go of it (0).
+const EVIOCGRAB: libc::Ioctl = libc::_IOW::<libc::c_int>(b'E' as u32, 0x90);
+
+/// A second handle on a node we grabbed. Dropping it lets go of the grab at once. The reader
+/// thread's own handle closes only when it next checks whether to stop, up to
+/// [`POLL_TIMEOUT_MS`] later, and until then a scan couldn't take the node again.
+pub(super) struct Grab(OwnedFd);
+
+impl Grab {
+    /// Call after `dev.grab()` succeeded. `None` if no file descriptor was left to copy it to.
+    pub(super) fn of(dev: &Device, name: &str) -> Option<Self> {
+        match dev.as_fd().try_clone_to_owned() {
+            Ok(fd) => Some(Grab(fd)),
+            Err(e) => {
+                log!("{name} is let go of only when its reader stops: {e}");
+                None
+            }
+        }
+    }
+}
+
+impl Drop for Grab {
+    fn drop(&mut self) {
+        // The grab belongs to the open file, which this copy shares with the reader's handle.
+        // SAFETY: the fd is open for as long as `self`, and EVIOCGRAB takes an int by value.
+        unsafe { libc::ioctl(self.0.as_raw_fd(), EVIOCGRAB, 0 as libc::c_int) };
+    }
+}
 
 /// The input nodes a scan found that aren't gamepads of their own.
 #[derive(Default)]
@@ -138,7 +170,7 @@ impl Daemon {
                 continue;
             }
             if let Some(pad) = self.gamepads.get(&key)
-                && (!self.takes_pads() || self.config.ignored_devices.contains(&pad.name))
+                && !self.should_manage(&pad.name)
             {
                 continue;
             }
@@ -160,7 +192,8 @@ impl Daemon {
             let rumble = rumble::supports_rumble(&dev);
             let paddles = input::has_paddles(&dev);
             self.gamepads.insert(key, SeenGamepad { name: name.clone(), analog_triggers, rumble, paddles });
-            if self.config.enabled && !self.config.ignored_devices.contains(&name) {
+            // Steam may have the controllers: a pad that wakes or is plugged in then stays its.
+            if self.should_manage(&name) {
                 self.manage(path, name, dev);
             }
         }
@@ -207,6 +240,7 @@ impl Daemon {
             log!("cannot grab {name} ({}): {e}", path.display());
             return;
         }
+        let grab = Grab::of(&dev, &name);
         let ff = FfSpec::of(&dev);
         let identity = PadIdentity::resolve(self.identity_override, model, self.active_support());
         let Some(pad) = virtual_pad_for(ff.as_ref(), identity) else { return };
@@ -232,6 +266,7 @@ impl Daemon {
         managed.parent = parent;
         managed.uniq = uniq;
         managed.paddles = paddles;
+        managed.grabs.extend(grab);
         self.add_managed(id, managed);
     }
 }
@@ -335,36 +370,5 @@ pub(super) fn read_input(
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn node(name: &str, parent: Option<&str>, uniq: Option<&str>) -> PairedNode {
-        PairedNode {
-            path: PathBuf::from("/dev/input/event99"),
-            name: name.into(),
-            parent: parent.map(PathBuf::from),
-            uniq: uniq.map(Into::into),
-        }
-    }
-
-    #[test]
-    fn motion_sensors_pair_with_their_own_controller() {
-        let hid = Some(PathBuf::from("/sys/devices/x/0005:054C:0CE6.0001"));
-        let mac = Some("a0:5a:5c:00:00:01".to_string());
-        let pad = "Sony Interactive Entertainment DualSense Wireless Controller";
-
-        // Same HID parent (USB or Bluetooth), or same MAC.
-        assert!(node("x", Some("/sys/devices/x/0005:054C:0CE6.0001"), None).matches(pad, &hid, &None));
-        assert!(node("x", None, Some("a0:5a:5c:00:00:01")).matches(pad, &None, &mac));
-        // Driver naming: "<pad> Motion Sensors" (hid-playstation), "<pad> IMU" (hid-nintendo).
-        assert!(node(&format!("{pad} Motion Sensors"), None, None).matches(pad, &None, &None));
-        assert!(node("Nintendo Switch Pro Controller IMU", None, None).matches("Nintendo Switch Pro Controller", &None, &None));
-
-        // A second identical controller's sensors don't match by parent or MAC, even though
-        // the name would.
-        let other = node(&format!("{pad} Motion Sensors"), Some("/sys/devices/x/0005:054C:0CE6.0002"), Some("a0:5a:5c:00:00:02"));
-        assert!(!other.matches(pad, &hid, &mac));
-        // Empty unique IDs (common over USB) never count as a match.
-        assert!(!node("x", None, Some("")).matches(pad, &None, &Some(String::new())));
-    }
-}
+#[path = "evdev/tests.rs"]
+mod tests;

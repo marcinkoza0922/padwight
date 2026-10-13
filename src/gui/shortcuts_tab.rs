@@ -4,7 +4,7 @@
 use iced::widget::{column, row};
 
 use super::*;
-use crate::config::{Group, Shortcut, ShortcutInput};
+use crate::config::{Group, MouseModeExtras, Shortcut, ShortcutInput};
 
 /// The tabs of the App settings page.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -237,11 +237,29 @@ impl App {
             }
             _ => {
                 "The keys mouse mode gives the buttons. The sticks and triggers (move, scroll, click) stay where they are. \
-                 Other buttons do nothing in mouse mode."
+                 Other buttons do nothing in mouse mode, and neither do the gyro and touchpad unless you tick them below."
             }
         };
-        let rows = Shortcut::of(group).map(|s| if s.choices().is_some() { self.button_row(s) } else { self.shortcut_row(s) }).collect();
+        let mut rows: Vec<_> = Shortcut::of(group).map(|s| if s.choices().is_some() { self.button_row(s) } else { self.shortcut_row(s) }).collect();
+        if group == Group::Mouse {
+            rows.push(self.mouse_mode_extras());
+        }
         section(group.title(), Some(help_text.into()), rows)
+    }
+
+    /// Whether the gyro and touchpad move the pointer in mouse mode.
+    fn mouse_mode_extras(&self) -> Element<'_, Message> {
+        let extras = self.config.mouse_mode;
+        column![
+            checkbox(extras.gyro)
+                .label("Gyro moves the pointer, as the profile's gyro does (at a default speed if it aims a stick or is off)")
+                .on_toggle(move |gyro| Message::SetMouseModeExtras(MouseModeExtras { gyro, ..extras })),
+            checkbox(extras.touchpad)
+                .label("Touchpad moves the pointer, and pressing it clicks")
+                .on_toggle(move |touchpad| Message::SetMouseModeExtras(MouseModeExtras { touchpad, ..extras })),
+        ]
+        .spacing(8)
+        .into()
     }
 
     /// A single button from the few `s` can take (see [`Shortcut::choices`]): confirm or back, or a
@@ -330,63 +348,4 @@ impl App {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::gui::tests::*;
-
-    fn opener(app: &App) -> Option<ShortcutInput> {
-        app.config.shortcuts.opener()
-    }
-
-    #[test]
-    fn moving_the_opener_warns_the_setups_that_use_the_input() {
-        let mut app = with_game();
-        assert!(app.opener_conflicts().is_empty(), "Guide conflicts with nothing");
-        let _ = app.update(Message::SetShortcut(Shortcut::OpenGuide, Some(ShortcutInput::button(Button::Start))));
-        let conflicts = app.opener_conflicts();
-        assert!(conflicts.iter().any(|(setup, _)| setup == "Doom"), "{conflicts:?}");
-        assert!(conflicts.iter().any(|(setup, _)| setup == "General"));
-        // A gesture nothing uses is clear again.
-        let _ = app.update(Message::SetShortcut(Shortcut::OpenGuide, Some(ShortcutInput::gesture(Button::Start, GestureKind::LongPress))));
-        assert!(app.opener_conflicts().is_empty());
-        let _ = app.update(Message::ResetShortcut(Shortcut::OpenGuide));
-        assert!(app.config.shortcuts.is_default());
-    }
-
-    #[test]
-    fn leaving_the_opener_unset_is_allowed_with_a_warning() {
-        let mut app = with_game();
-        let _ = app.update(Message::SetShortcut(Shortcut::OpenGuide, None));
-        assert_eq!(opener(&app), None);
-        assert!(app.config.shortcuts.opener_off());
-        assert!(app.config.shortcuts.all_warnings().iter().any(|w| w.contains("Nothing opens")));
-        let _ = app.update(Message::SelectPage(Page::Settings));
-        let _ = app.update(Message::SelectSettingsTab(SettingsTab::Shortcuts));
-        let _ = app.view();
-    }
-
-    #[test]
-    fn listening_takes_the_next_press_and_keeps_guide_for_the_opener() {
-        let mut app = with_game();
-        let _ = app.update(Message::ListenShortcut(Some((Shortcut::Tab, 0))));
-        let _ = app.update(Message::LiveInput(Some(snapshot(&[Button::Guide], (0.0, 0.0)))));
-        assert!(app.shortcuts_ui.listening.is_some(), "Guide can't be given to a Tab key");
-        assert!(!app.config.shortcuts.is_moved(Shortcut::Tab));
-        let _ = app.update(Message::LiveInput(Some(snapshot(&[], (0.0, 0.0)))));
-        let _ = app.update(Message::LiveInput(Some(snapshot(&[Button::Start], (0.0, 0.0)))));
-        assert!(app.shortcuts_ui.listening.is_none());
-        assert_eq!(app.config.shortcuts.input(Shortcut::Tab), Some(ShortcutInput::button(Button::Start)));
-    }
-
-    #[test]
-    fn changing_the_kind_keeps_the_buttons_that_fit() {
-        let combo = ShortcutInput::combo(&[Button::Start, Button::Select]);
-        assert_eq!(InputKind::DoubleTap.apply(Some(&combo), Button::South), Some(ShortcutInput::gesture(Button::Select, GestureKind::DoubleTap)));
-        let button = ShortcutInput::button(Button::East);
-        let as_combo = InputKind::Combo.apply(Some(&button), Button::South).unwrap();
-        assert!(as_combo.is_combo() && as_combo.uses(Button::East));
-        assert_eq!(InputKind::Off.apply(Some(&button), Button::South), None);
-        assert_eq!(InputKind::Button.apply(None, Button::South), Some(ShortcutInput::button(Button::South)));
-        assert_eq!(InputKind::of(Some(&combo)), InputKind::Combo);
-    }
-}
+mod tests;

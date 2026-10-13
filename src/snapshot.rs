@@ -4,7 +4,7 @@
 
 use std::{path::Path, time::Instant};
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use iced::{
     Color, Element, Event, Font, Pixels, Size, Theme,
     advanced::{
@@ -16,6 +16,9 @@ use iced::{
     window,
 };
 use iced_runtime::user_interface::{Cache, UserInterface};
+
+/// The most pixels an image is drawn on a side.
+const MAX_SIDE: u32 = 16_384;
 
 /// A drawn image: `width` × `height` pixels, four bytes each (RGBA).
 pub struct Image {
@@ -79,6 +82,11 @@ pub fn render<M>(element: Element<'_, M>, size: Size, scale: f32, background: Co
 
 /// Like `render`, with the widgets styled for `theme`.
 pub fn render_themed<M>(element: Element<'_, M>, size: Size, scale: f32, background: Color, theme: &Theme) -> Result<Image> {
+    // The renderer panics on an empty image, and a huge one runs out of memory.
+    let physical = Size::new((size.width * scale).round() as u32, (size.height * scale).round() as u32);
+    if scale.is_nan() || scale <= 0.0 || !(1..=MAX_SIDE).contains(&physical.width) || !(1..=MAX_SIDE).contains(&physical.height) {
+        bail!("cannot draw a {} × {} image at scale {scale}: each side must be 1 to {MAX_SIDE} pixels", size.width, size.height);
+    }
     load_fonts();
     let mut renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(Font::DEFAULT, Pixels(16.0), Some("tiny-skia")))
         .context("the offscreen renderer did not start")?;
@@ -86,7 +94,6 @@ pub fn render_themed<M>(element: Element<'_, M>, size: Size, scale: f32, backgro
     // A redraw request lets widgets that animate or measure on redraw settle first.
     let _ = ui.update(&[Event::Window(window::Event::RedrawRequested(Instant::now()))], mouse::Cursor::Unavailable, &mut renderer, &mut clipboard::Null, &mut Vec::new());
     ui.draw(&mut renderer, theme, &renderer::Style { text_color: theme.palette().text }, mouse::Cursor::Unavailable);
-    let physical = Size::new((size.width * scale).round() as u32, (size.height * scale).round() as u32);
     let rgba = renderer.screenshot(physical, scale, background);
     Ok(Image { width: physical.width, height: physical.height, rgba })
 }
@@ -113,5 +120,13 @@ mod tests {
         assert_eq!((image.width, image.height), (200, 100));
         assert!(image.drawn([0x20, 0x20, 0x20]) > 50, "the text left marks");
         assert_eq!(image.pixel(199, 99), [0x20, 0x20, 0x20, 0xff], "the corner is background");
+    }
+
+    #[test]
+    fn an_empty_or_huge_image_is_refused_not_a_panic() {
+        let panel = || -> Element<'_, ()> { text("Hello").into() };
+        for (size, scale) in [((0.0, 0.0), 1.0), ((200.0, 100.0), 0.0), ((200.0, 100.0), f32::NAN), ((-5.0, 10.0), 1.0), ((200.0, 100.0), 1000.0)] {
+            assert!(render(panel(), Size::new(size.0, size.1), scale, Color::BLACK).is_err(), "{size:?} at {scale}");
+        }
     }
 }

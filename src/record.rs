@@ -11,7 +11,7 @@ use std::{
 
 use anyhow::{Context, Result, bail};
 
-use crate::capture::{media_path, on_path, timestamp};
+use crate::capture::{claim_media_path, on_path, timestamp};
 
 const PROGRAM: &str = "gpu-screen-recorder";
 
@@ -53,13 +53,17 @@ fn spawn(source: Source, path: &Path) -> Result<Child> {
 
 /// Starts recording for `game` and returns the recorder and its file. Waits a moment to see
 /// that it stays up, so run it off the daemon's main thread. Tries the screen first and the
-/// portal if that fails.
+/// portal if that fails. The calling thread must last as long as the recording (the daemon's
+/// waits on it): the signal that ends the recorder with the daemon comes when the thread that
+/// started it ends, not the process.
 pub fn start(game: &str) -> Result<(Child, PathBuf)> {
     if !on_path(PROGRAM) {
         bail!("{PROGRAM} is not installed");
     }
     let videos = crate::capture::media_base(dirs::video_dir(), "Videos")?;
-    let path = media_path(&videos, "Recordings", game, &timestamp(), "mp4");
+    // Held while the recorder starts, which is when it makes the file.
+    let claim = claim_media_path(&videos, "Recordings", game, &timestamp(), "mp4");
+    let path = claim.path().to_owned();
     std::fs::create_dir_all(path.parent().context("no folder")?).with_context(|| format!("creating {}", path.display()))?;
     for source in [Source::Screen, Source::Portal] {
         let mut child = spawn(source, &path)?;

@@ -42,7 +42,7 @@ const ROUNDS: usize = 3;
 fn profile_overlay_styles() {
     let _serial = serial();
     let Some(wayland) = wayland_socket() else {
-        report("overlay_styles", json!("skipped: no Wayland display, and the overlay is a layer-shell surface"));
+        report("overlay_styles", json!({"skipped": "no Wayland display, and the overlay is a layer-shell surface"}));
         return;
     };
     let only = std::env::var("PADWIGHT_PROFILE_CASES").unwrap_or_default();

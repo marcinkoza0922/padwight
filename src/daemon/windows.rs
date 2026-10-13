@@ -5,7 +5,7 @@ use std::{
     os::windows::process::CommandExt,
     path::Path,
     process::Command,
-    sync::{Mutex, OnceLock, PoisonError, mpsc::Sender},
+    sync::OnceLock,
     thread,
     time::Duration,
 };
@@ -22,7 +22,6 @@ use windows::{
     core::BOOL,
 };
 
-use super::Msg;
 use crate::ipc::{UnixListener, UnixStream};
 
 /// A directory named `name` in the temp directory, which on Windows is already the user's own.
@@ -42,13 +41,14 @@ pub fn detach(command: &mut Command) {
     command.creation_flags((CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP).0);
 }
 
-/// Where the console handler sends `Msg::Stop`.
-static STOP: OnceLock<Mutex<Sender<Msg>>> = OnceLock::new();
+/// What the console handler calls.
+type Stop = Box<dyn Fn() -> bool + Send + Sync>;
+static STOP: OnceLock<Stop> = OnceLock::new();
 
-/// Makes Ctrl+C, Ctrl+Break and the console closing send `Msg::Stop`, so the daemon can release
-/// what it holds before it exits.
-pub fn stop_on_signals(tx: Sender<Msg>) -> Result<()> {
-    if STOP.set(Mutex::new(tx)).is_err() {
+/// Makes Ctrl+C, Ctrl+Break and the console closing call `stop`, so the daemon (or a debug
+/// session) can release what it holds before it exits. `stop` returns false once nothing listens.
+pub fn stop_on_signals(stop: impl Fn() -> bool + Send + Sync + 'static) -> Result<()> {
+    if STOP.set(Box::new(stop)).is_err() {
         bail!("the console handler is already installed");
     }
     // SAFETY: the handler is a plain function that stays valid for the life of the process.
@@ -59,8 +59,8 @@ pub fn stop_on_signals(tx: Sender<Msg>) -> Result<()> {
 /// Runs on a thread Windows starts for the event. Windows ends the process once a close, log-off
 /// or shutdown handler returns, so those give the daemon a moment to release what it holds.
 unsafe extern "system" fn on_console_event(event: u32) -> BOOL {
-    let Some(tx) = STOP.get() else { return FALSE };
-    let sent = tx.lock().unwrap_or_else(PoisonError::into_inner).send(Msg::Stop).is_ok();
+    let Some(stop) = STOP.get() else { return FALSE };
+    let sent = stop();
     match event {
         CTRL_C_EVENT | CTRL_BREAK_EVENT => {
             if sent {

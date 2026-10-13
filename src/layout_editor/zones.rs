@@ -85,14 +85,17 @@ pub fn delete_zone(config: &mut Config, a: Analog, i: usize) -> bool {
 }
 
 /// Moves a zone's start (`ZONE_FROM`) or end (`ZONE_TO`) by one step (`dir` is -1 or 1). The
-/// start never passes the end, and neither leaves the travel.
+/// start never passes the end, and neither leaves the travel. A zone read from a file can start
+/// past its end, or outside the travel; the edge moved comes back inside.
 pub fn adjust_zone(config: &mut Config, a: Analog, i: usize, row: usize, dir: i32) -> EditStep {
     let Some(zone) = zones_mut(config, a).and_then(|zs| zs.get_mut(i)) else { return EditStep::Stay };
     let step = dir as f32 * EDGE_STEP;
     let before = (zone.min, zone.max);
+    // Not `clamp`, which panics when its bounds cross, as the other edge can make them.
+    let inside = |edge: f32| edge.max(EDGE_RANGE.0).min(EDGE_RANGE.1);
     match row {
-        ZONE_FROM => zone.min = (zone.min + step).clamp(EDGE_RANGE.0, zone.max),
-        ZONE_TO => zone.max = (zone.max + step).clamp(zone.min, EDGE_RANGE.1),
+        ZONE_FROM => zone.min = inside(zone.min + step).min(inside(zone.max)),
+        ZONE_TO => zone.max = inside(zone.max + step).max(inside(zone.min)),
         _ => {}
     }
     EditStep::changed(before != (zone.min, zone.max))
@@ -129,6 +132,22 @@ mod tests {
         assert!(zones(&config, a)[i].min <= zones(&config, a)[i].max);
         assert!(delete_zone(&mut config, a, i));
         assert!(zones(&config, a).is_empty());
+    }
+
+    #[test]
+    fn a_zone_read_outside_the_travel_comes_back_inside_when_moved() {
+        let mut config = Config::default();
+        let a = Analog::Trigger(Trigger::Right);
+        for (min, max) in [(1.5, 2.0), (-1.0, -0.5), (0.8, 0.2)] {
+            let i = add_zone(&mut config, a).unwrap();
+            zones_mut(&mut config, a).unwrap()[i] = Zone { min, max, action: ButtonAction::Disabled };
+            for (row, dir) in [(ZONE_FROM, 1), (ZONE_FROM, -1), (ZONE_TO, 1), (ZONE_TO, -1)] {
+                adjust_zone(&mut config, a, i, row, dir);
+                let z = &zones(&config, a)[i];
+                let moved = if row == ZONE_FROM { z.min } else { z.max };
+                assert!((0.0..=1.0).contains(&moved), "{min}–{max}: {z:?}");
+            }
+        }
     }
 
     #[test]

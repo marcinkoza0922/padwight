@@ -10,6 +10,7 @@ use std::{
 use anyhow::{Context, Result, bail};
 
 mod bridge;
+mod focus;
 mod glyphs;
 mod motion_shot;
 mod overlay_shot;
@@ -61,7 +62,7 @@ Without a session:
 ";
 
 fn usage() -> String {
-    format!("{USAGE}{}{}{}{}\nWith a session:\n{}", sound::USAGE, overlay_shot::USAGE, motion_shot::USAGE, crate::gui::shoot::USAGE, protocol::COMMANDS)
+    format!("{USAGE}{}{}{}{}{}\nWith a session:\n{}", focus::USAGE, sound::USAGE, overlay_shot::USAGE, motion_shot::USAGE, crate::gui::shoot::USAGE, protocol::COMMANDS)
 }
 
 #[expect(clippy::print_stdout, reason = "CLI output")]
@@ -79,6 +80,8 @@ pub fn run(args: &[&str]) -> Result<()> {
         }
         ["svg"] => println!("{}", rest_svg(None)),
         ["svg", name] => println!("{}", rest_svg(parse_model(name)?)),
+        ["focus", rest @ ..] => focus::run(rest)?,
+        ["steam", rest @ ..] => focus::steam(rest)?,
         ["sound", rest @ ..] => sound::run(rest)?,
         ["overlay", rest @ ..] => overlay_shot::run(rest)?,
         ["motion", rest @ ..] => motion_shot::run(rest)?,
@@ -119,12 +122,25 @@ fn start(args: &[&str]) -> Result<()> {
     }
     let path = server::socket_path();
     let session = Session::new(VirtualPad::of(model));
-    if attach {
-        let device = session.attach(live)?;
-        log!("attached to the daemon as {device}{}", if live { " (live output)" } else { "" });
-    }
+    // The socket first: attaching first left the controller in the daemon when another session
+    // already had the socket.
     server::serve(&session, &path)?;
     log!("debug session listening on {}", path.display());
+    // Ctrl+C ends the session the way `quit` does, so an attached controller lets go of what it holds.
+    let quit = session.clone();
+    crate::daemon::stop_on_signals(move || {
+        quit.quit();
+        true
+    })?;
+    if attach {
+        match session.attach(live) {
+            Ok(device) => log!("attached to the daemon as {device}{}", if live { " (live output)" } else { "" }),
+            Err(e) => {
+                let _ = std::fs::remove_file(&path);
+                return Err(e);
+            }
+        }
+    }
     let result = if headless {
         while !session.quitting() {
             std::thread::sleep(Duration::from_millis(50));

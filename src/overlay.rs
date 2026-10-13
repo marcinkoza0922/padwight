@@ -106,8 +106,10 @@ pub struct OverlayFrame {
     #[serde(default)]
     pub panel_keys: crate::config::Shortcuts,
     /// The icons the game in use carries, which `{icon:…}` can name besides the built-in ones.
-    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
-    pub pack_icons: std::collections::BTreeMap<String, String>,
+    /// `None` keeps the last ones: the daemon sends them only when they change, as they can be
+    /// tens of KB and the frames come with every input while an overlay is up.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pack_icons: Option<std::collections::BTreeMap<String, String>>,
     /// Where the fonts the game in use carries are, as files, by name (see `font::share_pack_fonts`).
     #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
     pub pack_fonts: std::collections::BTreeMap<String, std::path::PathBuf>,

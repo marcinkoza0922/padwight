@@ -15,7 +15,7 @@ use windows::Win32::{
     },
 };
 
-use super::{media_base, media_path};
+use super::{claim_media_path, media_base};
 
 /// The local time as `2026-10-07_19-58-03`.
 pub fn timestamp() -> String {
@@ -27,15 +27,16 @@ pub fn timestamp() -> String {
 /// Saves a screenshot for `game` and returns where it went.
 pub fn screenshot(game: &str) -> Result<PathBuf> {
     let pictures = media_base(dirs::picture_dir(), "Pictures")?;
-    let path = media_path(&pictures, "Screenshots", game, &timestamp(), "png");
+    let claim = claim_media_path(&pictures, "Screenshots", game, &timestamp(), "png");
+    let path = claim.path();
     std::fs::create_dir_all(path.parent().context("no folder")?).with_context(|| format!("creating {}", path.display()))?;
     let (width, height, rgba) = grab_desktop()?;
-    let file = std::fs::File::create(&path).with_context(|| format!("creating {}", path.display()))?;
+    let file = std::fs::File::create(path).with_context(|| format!("creating {}", path.display()))?;
     let mut encoder = png::Encoder::new(std::io::BufWriter::new(file), width, height);
     encoder.set_color(png::ColorType::Rgba);
     encoder.set_depth(png::BitDepth::Eight);
     encoder.write_header()?.write_image_data(&rgba)?;
-    Ok(path)
+    Ok(path.to_owned())
 }
 
 /// The desktop's pixels, as width, height and RGBA rows from the top.

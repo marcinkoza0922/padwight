@@ -192,8 +192,9 @@ fn expectation(words: &[&str]) -> Result<Expectation> {
     })
 }
 
+/// A finite number: `nan` and `inf` parse, but can't be sent (JSON has no word for them).
 fn number(s: &str) -> Result<f32> {
-    s.parse().map_err(|_| anyhow!("not a number: {s}"))
+    s.parse().ok().filter(|n: &f32| n.is_finite()).ok_or_else(|| anyhow!("not a number: {s}"))
 }
 
 fn millis(s: &str) -> Result<u64> {
@@ -339,5 +340,7 @@ mod tests {
         assert!(err("model nope").contains("xbox360"));
         assert!(err("stick middle 0 0").contains("left or right"));
         assert!(err("jump").contains("unknown debug command"));
+        assert!(err("stick left nan 0").contains("not a number"));
+        assert!(err("touch inf 0.5").contains("not a number"));
     }
 }

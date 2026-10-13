@@ -231,6 +231,11 @@ impl LayoutEditor {
         let Some(menu) = menus(config).get(m) else { return EditStep::Stay };
         let Some(&row) = item_rows(menu).get(self.cursor) else { return EditStep::Stay };
         let len = menu.items.len();
+        // The page names the item by position, which a profile switch under the menu can leave
+        // past the end of another game's menu.
+        if i >= len {
+            return EditStep::Stay;
+        }
         let Some(menu) = menu_mut(config, m) else { return EditStep::Stay };
         match row {
             ItemRow::Action => {
@@ -317,6 +322,23 @@ mod tests {
         assert_eq!(editor.choose_menu_item_row(0, 1, &mut config), EditStep::Changed);
         assert_eq!(menus(&config)[0].items[0].label, NEW_ITEM);
         assert_eq!(editor.page, Page::MenuItem(0, 0), "following the item");
+    }
+
+    #[test]
+    fn an_item_page_left_past_the_end_of_its_menu_does_nothing() {
+        let mut config = config();
+        let mut editor = LayoutEditor::new();
+        editor.page = Page::Menus;
+        editor.choose_menus_row(&mut config);
+        editor.cursor = 0;
+        editor.choose_menu_row(0, &mut config);
+        menu_mut(&mut config, 0).unwrap().kind = MenuKind::Buttons;
+        for cursor in 0..item_rows(&menus(&config)[0]).len() {
+            editor.page = Page::MenuItem(0, 3);
+            editor.cursor = cursor;
+            assert_eq!(editor.choose_menu_item_row(0, 3, &mut config), EditStep::Stay, "row {cursor}");
+        }
+        assert_eq!(menus(&config)[0].items.len(), 1);
     }
 
     #[test]

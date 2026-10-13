@@ -18,7 +18,7 @@ use std::{
 use anyhow::{Context, Result, bail};
 use windows::Win32::System::Threading::CREATE_NO_WINDOW;
 
-use crate::capture::{media_path, on_path, timestamp};
+use crate::capture::{claim_media_path, on_path, timestamp};
 
 const PROGRAM: &str = "ffmpeg";
 
@@ -44,7 +44,9 @@ pub fn start(game: &str) -> Result<(Child, PathBuf)> {
         bail!("{PROGRAM} is not installed (or use Xbox Game Bar: Win+Alt+R)");
     }
     let videos = crate::capture::media_base(dirs::video_dir(), "Videos")?;
-    let path = media_path(&videos, "Recordings", game, &timestamp(), "mp4");
+    // Held while the recorder starts, which is when it makes the file.
+    let claim = claim_media_path(&videos, "Recordings", game, &timestamp(), "mp4");
+    let path = claim.path().to_owned();
     std::fs::create_dir_all(path.parent().context("no folder")?).with_context(|| format!("creating {}", path.display()))?;
     let mut child = Command::new(PROGRAM)
         .args(args(&path))
@@ -59,7 +61,10 @@ pub fn start(game: &str) -> Result<(Child, PathBuf)> {
         bail!("{PROGRAM} couldn't start recording the screen");
     }
     if let Some(input) = child.stdin.take() {
-        INPUTS.lock().unwrap_or_else(PoisonError::into_inner).push((child.id(), input));
+        let mut inputs = INPUTS.lock().unwrap_or_else(PoisonError::into_inner);
+        // Recorders that ended by themselves were never stopped: their pipes go now.
+        inputs.retain(|(pid, _)| crate::quit::is_running(*pid));
+        inputs.push((child.id(), input));
     }
     Ok((child, path))
 }

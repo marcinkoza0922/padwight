@@ -196,3 +196,49 @@ fn open_when_granted(node: &std::path::Path) -> Device {
         }
     }
 }
+
+#[path = "../../tests/common/uhid.rs"]
+#[expect(dead_code, reason = "the integration tests' controller; this test only plugs it in")]
+mod uhid;
+
+/// R0-1: a controller plugged in, or woken, while Steam Input has the controllers stays Steam's,
+/// and is taken once they come back. Needs /dev/uinput and /dev/uhid:
+/// `scripts/kernel-test-docker.sh steam_keeps`.
+#[test]
+#[ignore]
+fn steam_keeps_a_pad_plugged_in_while_it_has_the_controllers() {
+    const NAME: &str = "Test Controller Steam";
+    // Real controllers on the machine are left alone.
+    let ignored_devices = std::fs::read_dir("/dev/input")
+        .unwrap()
+        .flatten()
+        .filter_map(|e| Device::open(e.path()).ok())
+        .filter(crate::input::is_gamepad)
+        .filter_map(|d| d.name().map(str::to_string))
+        .collect();
+    let config = crate::config::Config { ignored_devices, ..Default::default() };
+    let kbm = VirtualKbm::new().unwrap();
+    let (tx, _rx) = std::sync::mpsc::channel();
+    let mut daemon = super::Daemon::new(config, kbm, super::inject::Injection::new(false).unwrap(), tx);
+    daemon.steam_has_pads = true;
+
+    let _pad = uhid::HidPad::new(NAME);
+    let start = Instant::now();
+    let key = loop {
+        daemon.scan_devices();
+        if let Some((key, _)) = daemon.gamepads.iter().find(|(_, p)| p.name == NAME) {
+            break key.clone();
+        }
+        assert!(start.elapsed() < Duration::from_secs(5), "the daemon never saw the controller");
+        thread::sleep(Duration::from_millis(50));
+    };
+    assert!(daemon.devices.is_empty(), "a controller plugged in while Steam has them is left to Steam");
+    let mut dev = Device::open(&key.0).unwrap();
+    dev.grab().expect("nothing holds the controller's grab");
+    dev.ungrab().unwrap();
+
+    daemon.steam_has_pads = false;
+    daemon.scan_devices();
+    assert!(daemon.devices.values().any(|d| d.name == NAME), "taken once Steam lets go");
+    daemon.release_devices(|_, _| true);
+}

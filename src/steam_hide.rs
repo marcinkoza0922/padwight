@@ -33,7 +33,7 @@ pub enum Status {
 }
 
 /// The USB IDs Padwight's controller can present, as the variable lists them.
-fn ignored_ids() -> String {
+pub(crate) fn ignored_ids() -> String {
     [PadIdentity::Xbox360, PadIdentity::DualShock4, PadIdentity::DualSense, PadIdentity::SwitchPro]
         .map(|i| {
             let (vendor, product, _) = i.usb_id();

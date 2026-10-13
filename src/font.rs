@@ -115,7 +115,7 @@ fn set_pack(ready: BTreeMap<String, &'static str>) {
 /// Writes the game's fonts as files in a folder the overlay can read, so frames carry their
 /// paths rather than the fonts. Empty if there is no such folder.
 pub fn share_pack_fonts(fonts: &BTreeMap<String, String>) -> BTreeMap<String, PathBuf> {
-    let Some(dir) = crate::ipc::shared_runtime_dir().map(|d| d.join("padwight-fonts")) else { return BTreeMap::new() };
+    let Some(dir) = shared_font_dir() else { return BTreeMap::new() };
     if fonts.is_empty() || std::fs::create_dir_all(&dir).is_err() {
         return BTreeMap::new();
     }
@@ -124,7 +124,8 @@ pub fn share_pack_fonts(fonts: &BTreeMap<String, String>) -> BTreeMap<String, Pa
         .filter_map(|(name, data)| {
             let bytes = crate::config::decode_base64(data)?;
             let path = dir.join(format!("{:016x}.font", hash(&bytes)));
-            if !path.exists() {
+            // A file cut short (the daemon ended while writing it) is written again.
+            if std::fs::metadata(&path).map(|m| m.len()).ok() != Some(bytes.len() as u64) {
                 std::fs::write(&path, &bytes).ok()?;
             }
             Some((name.clone(), path))
@@ -132,10 +133,26 @@ pub fn share_pack_fonts(fonts: &BTreeMap<String, String>) -> BTreeMap<String, Pa
         .collect()
 }
 
+/// Where the shared font files go: the runtime folder, or on Windows, which has none, the user's
+/// local app data, which only they can open.
+fn shared_font_dir() -> Option<PathBuf> {
+    let dir = crate::ipc::shared_runtime_dir();
+    #[cfg(windows)]
+    let dir = dir.or_else(|| dirs::data_local_dir().map(|d| d.join("padwight")));
+    dir.map(|d| d.join("padwight-fonts"))
+}
+
 /// Like [`set_pack_fonts`], from the files [`share_pack_fonts`] wrote: for the overlay process.
+/// Every frame names them, so the files are read only when they change.
 pub fn set_pack_font_files(files: &BTreeMap<String, PathBuf>) {
+    static SOURCE: Mutex<Option<BTreeMap<String, PathBuf>>> = Mutex::new(None);
+    let mut source = SOURCE.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    if source.as_ref() == Some(files) {
+        return;
+    }
     let ready = files.iter().filter_map(|(name, path)| Some((name.clone(), load(&std::fs::read(path).ok()?).ok()?))).collect();
     set_pack(ready);
+    *source = Some(files.clone());
 }
 
 /// The names of the fonts the game in use carries, sorted.
@@ -192,5 +209,38 @@ mod tests {
         assert!(names().contains(&"Marquee Face".to_string()));
         assert_eq!(resolve(Some("Marquee Face")), Font::with_name("Bangers"), "drawn as the file's own family");
         assert!(valid_name("Press Start 2P") && !valid_name("a/b") && !valid_name(""));
+    }
+
+    #[test]
+    fn the_overlay_reads_a_pack_s_font_files_once_not_every_frame() {
+        let dir = std::env::temp_dir().join(format!("padwight-font-files-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("face.font");
+        std::fs::write(&path, BUNDLED.iter().find(|b| b.name == "Kreon").unwrap().bytes).unwrap();
+        let files = BTreeMap::from([("Face".to_string(), path.clone())]);
+        set_pack_font_files(&files);
+        assert_eq!(pack_names(), ["Face"]);
+        // A frame naming the same files reads nothing: gone now, the font stays.
+        std::fs::remove_file(&path).unwrap();
+        set_pack_font_files(&files);
+        assert_eq!(pack_names(), ["Face"]);
+        set_pack_font_files(&BTreeMap::new());
+        assert!(pack_names().is_empty());
+        let _ = std::fs::remove_dir(&dir);
+    }
+
+    #[test]
+    fn a_shared_font_file_cut_short_is_written_again() {
+        let runtime = std::env::temp_dir().join(format!("padwight-font-share-{}", std::process::id()));
+        std::fs::create_dir_all(&runtime).unwrap();
+        // SAFETY: nextest runs each test in a process of its own.
+        unsafe { std::env::set_var("XDG_RUNTIME_DIR", &runtime) };
+        let bytes = BUNDLED.iter().find(|b| b.name == "Kreon").unwrap().bytes;
+        let fonts = BTreeMap::from([("Face".to_string(), crate::config::encode_base64(bytes))]);
+        let path = share_pack_fonts(&fonts)["Face"].clone();
+        std::fs::write(&path, &bytes[..100]).unwrap();
+        assert_eq!(share_pack_fonts(&fonts)["Face"], path);
+        assert_eq!(std::fs::read(&path).unwrap(), bytes);
+        let _ = std::fs::remove_dir_all(&runtime);
     }
 }

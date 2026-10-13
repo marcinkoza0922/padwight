@@ -99,6 +99,17 @@ impl App {
         let notes = self.profile().map(|p| p.guide.notes.clone()).unwrap_or_default();
         self.guide_notes = text_editor::Content::with_text(&notes);
     }
+
+    /// Reloads the notes editor if it no longer holds the edited profile's notes: another game or
+    /// profile is shown, or Undo or Revert changed them. Typing in it would otherwise write what it
+    /// holds over that profile's notes.
+    pub(super) fn sync_guide_notes(&mut self) {
+        let text = self.guide_notes.text();
+        let shown = text.strip_suffix('\n').unwrap_or(&text);
+        if self.profile().map_or("", |p| p.guide.notes.as_str()) != shown {
+            self.reload_guide_notes();
+        }
+    }
 }
 
 /// Every input a row can name: the buttons (Guide excepted), the triggers and the sticks.

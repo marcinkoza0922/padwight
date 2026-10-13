@@ -13,7 +13,7 @@ fn moved(pairs: &[(Shortcut, Option<ShortcutInput>)]) -> Shortcuts {
 fn nothing_moved_builds_the_fixed_modes() {
     let s = Shortcuts::default();
     assert_eq!(Layer::guide_with(&s), Layer::guide());
-    assert_eq!(Layer::mouse_with(&s), Layer::mouse());
+    assert_eq!(Layer::mouse_with(&s, MouseModeExtras::default()), Layer::mouse());
     assert_eq!(s.engine_opener(), GuideOpener::Guide);
     assert!(s.all_warnings().is_empty());
 }
@@ -245,4 +245,11 @@ fn the_keyboard_keys_trade_among_themselves_and_leave_the_numpad_alone() {
     assert_eq!(s.panel_press(Group::Numpad, Button::North), PanelPress::Other, "the numpad has no North key");
     let s = moved(&[(Shortcut::KeyboardLeft, Some(ShortcutInput::button(Button::RightBumper)))]);
     assert_eq!(s.button(Shortcut::KeyboardRight), Button::LeftBumper, "the cursor keys trade");
+}
+
+#[test]
+fn an_input_listing_a_button_twice_is_tidied_when_loaded() {
+    let text = "[open_guide]\nbuttons = [\"Start\", \"Select\", \"Start\"]\n";
+    let shortcuts: Shortcuts = toml::from_str::<Shortcuts>(text).unwrap().sanitized();
+    assert_eq!(shortcuts.opener().unwrap().buttons, [Button::Start, Button::Select]);
 }

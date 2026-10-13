@@ -181,7 +181,8 @@ impl Daemon {
             .iter()
             .flat_map(|o| crate::info::input_tokens(o))
             .filter_map(|c| {
-                let after = Duration::from_millis(c.tracking.gap_ms + c.stay_ms);
+                // Either can be anything a `{current_input:…}` token says.
+                let after = Duration::from_millis(c.tracking.gap_ms.saturating_add(c.stay_ms));
                 inputlog::next_change(&inputs.entries(c.tracking.device), &c.tracking, after, now, FADE_FRAME)
             })
             .min()

@@ -122,6 +122,9 @@ pub struct Status {
     /// Recently focused windows, newest first, for building rules.
     #[serde(default)]
     pub recent_windows: Vec<WindowInfo>,
+    /// Steam Input has the controllers, for a game in front that Steam lists with full support.
+    #[serde(default)]
+    pub steam_has_pads: bool,
     /// Controller motion sensors the daemon may not open (needs the udev rule in dist/).
     #[serde(default)]
     pub motion_access_denied: Vec<String>,
@@ -350,12 +353,19 @@ pub fn watch(req: &Request) -> Result<iced::futures::channel::mpsc::UnboundedRec
     Ok(rx)
 }
 
+/// How long the daemon waits for its event loop to answer a request before it says so. A client
+/// waits a little longer, so it hears that rather than timing out first.
+pub const REPLY_WAIT: Duration = Duration::from_secs(2);
+
 /// Blocking request to the daemon. Fine to call from a GUI via `spawn_blocking`.
 pub fn request(req: &Request) -> Result<Response> {
-    let path = socket_path();
-    let stream = UnixStream::connect(&path)
+    request_at(&socket_path(), req)
+}
+
+fn request_at(path: &std::path::Path, req: &Request) -> Result<Response> {
+    let stream = UnixStream::connect(path)
         .with_context(|| format!("daemon not reachable at {}", path.display()))?;
-    stream.set_read_timeout(Some(Duration::from_secs(2)))?;
+    stream.set_read_timeout(Some(REPLY_WAIT + Duration::from_secs(2)))?;
     stream.set_write_timeout(Some(Duration::from_secs(2)))?;
 
     let mut line = serde_json::to_string(req)?;
@@ -363,9 +373,15 @@ pub fn request(req: &Request) -> Result<Response> {
     (&stream).write_all(line.as_bytes())?;
 
     let mut reply = String::new();
-    BufReader::new(&stream).read_line(&mut reply)?;
-    match serde_json::from_str(&reply)? {
+    BufReader::new(&stream).read_line(&mut reply).context("no reply from the daemon")?;
+    if reply.is_empty() {
+        bail!("the daemon closed the connection without replying");
+    }
+    match serde_json::from_str(&reply).context("the daemon's reply")? {
         Response::Error(e) => bail!(e),
         r => Ok(r),
     }
 }
+
+#[cfg(test)]
+mod tests;

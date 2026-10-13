@@ -13,10 +13,10 @@
 
 mod common;
 
-use std::{fs, thread, time::Duration};
+use std::{fs, path::Path, process::Command, thread, time::Duration};
 
-use common::{install_config, 
-    Daemon, assert_log_clean, daemon_log, hold_config, input::{Reader, find_node, grabbed}, serial, spawn_daemon, temp_root,
+use common::{
+    Daemon, assert_log_clean, daemon_log, hold_config, install_config, input::{Reader, assert_no_other_daemon, find_node, grabbed}, serial, spawn_daemon, temp_root,
     uhid::{BUTTON_EAST, BUTTON_SOUTH, HidPad}, wait_for,
 };
 use evdev::KeyCode;
@@ -25,6 +25,7 @@ const NAME: &str = "Test Controller";
 const HELD: u8 = BUTTON_SOUTH | BUTTON_EAST;
 
 fn start(root: &std::path::Path) -> Daemon {
+    assert_no_other_daemon();
     let config = root.join("config/padwight");
     fs::create_dir_all(&config).unwrap();
     install_config(&config, &hold_config());
@@ -108,6 +109,47 @@ fn hotplug_replugging_the_same_controller_works_again() {
     assert!(daemon.0.try_wait().unwrap().is_none(), "the daemon keeps running across the replug");
     let log = daemon_log(&root);
     assert_eq!(log.matches(&format!("managing {NAME} (")).count(), 2, "the controller was taken twice: {log}");
+    let _ = daemon.0.kill();
+    let _ = daemon.0.wait();
+    assert_log_clean(&root);
+    let _ = fs::remove_dir_all(&root);
+}
+
+/// Runs `padwight <args>` against the daemon started in `root`, and checks it succeeded.
+fn send(root: &Path, args: &[&str]) {
+    let out = Command::new(env!("CARGO_BIN_EXE_padwight"))
+        .args(args)
+        .env("XDG_CONFIG_HOME", root.join("config"))
+        .env("XDG_RUNTIME_DIR", root.join("run"))
+        .output()
+        .unwrap();
+    assert!(out.status.success(), "padwight {args:?}: {}", String::from_utf8_lossy(&out.stderr));
+}
+
+/// R1-3: the daemon let go of a controller only once its reader thread noticed, up to 200 ms
+/// later, so remapping switched off and straight back on couldn't take it again for 2 s.
+#[test]
+#[ignore]
+fn hotplug_switching_remapping_off_and_on_takes_the_controller_back_at_once() {
+    let _serial = serial();
+    let root = temp_root();
+    let mut daemon = start(&root);
+    let mut keys = Reader::open("Padwight Virtual Keyboard");
+    let mut mouse = Reader::open("Padwight Virtual Mouse");
+    let mut pad = connect();
+    hold(&mut pad, &mut keys, &mut mouse);
+    pad.report(0, 0, 0);
+
+    // Each time `enable` returns, the daemon has scanned and taken the controller again.
+    for round in 1..=3 {
+        send(&root, &["disable"]);
+        send(&root, &["enable"]);
+        let log = daemon_log(&root);
+        assert!(!log.contains("cannot grab"), "round {round}: the controller was still held by the old reader: {log}");
+        assert_eq!(log.matches(&format!("managing {NAME} (")).count(), round + 1, "round {round}: taken again: {log}");
+    }
+    hold(&mut pad, &mut keys, &mut mouse);
+
     let _ = daemon.0.kill();
     let _ = daemon.0.wait();
     assert_log_clean(&root);

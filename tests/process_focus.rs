@@ -30,8 +30,8 @@ const GAME_PROFILE: &str = "Fake Pad";
 fn game_config() -> String {
     // The default config has an empty `setups` list, which the game's `[[setups]]` would repeat.
     let text = default_config();
-    assert!(text.contains("\ngames = []\n"), "the default config has an empty games list");
-    let text = text.replace("\ngames = []\n", "\n");
+    assert!(text.contains("\nsetups = []\n"), "the default config has an empty setups list");
+    let text = text.replace("\nsetups = []\n", "\n");
     let mut general = Vec::new();
     let mut in_profile = false;
     for line in text.lines() {
@@ -44,7 +44,7 @@ fn game_config() -> String {
             general.push(line);
         }
     }
-    let profile = general.join("\n").replace("general.profiles", "games.profiles").replace("name = \"Gamepad\"", &format!("name = \"{GAME_PROFILE}\""));
+    let profile = general.join("\n").replace("general.profiles", "setups.profiles").replace("name = \"Gamepad\"", &format!("name = \"{GAME_PROFILE}\""));
     assert!(profile.contains(&format!("name = \"{GAME_PROFILE}\"")), "the default config has a Gamepad profile");
     format!(
         "{text}\n[[setups]]\nname = \"{GAME}\"\n\n[[setups.rules]]\nkind = \"executable\"\nvalue = \"{GAME_EXE}\"\nprofile = \"{GAME_PROFILE}\"\n\n{profile}\n"
@@ -83,11 +83,11 @@ fn a_game_process_switches_the_profile_and_back() {
     wait_for_log(&root, "focus tracking: running processes");
 
     let mut game = start_game(&root);
-    wait_for_log(&root, &format!("running processes → profile {GAME} › {GAME_PROFILE}"));
+    wait_for_log(&root, &format!("which matches Executable “{GAME_EXE}” → profile {GAME} › {GAME_PROFILE}"));
 
     game.kill().unwrap();
     game.wait().unwrap();
-    wait_for_log(&root, "no game running → profile Gamepad");
+    wait_for_log(&root, "no game running, so the default profile takes over → profile");
 
     // SIGTERM is the normal stop, so the log is complete once it exits.
     // SAFETY: `kill` only sends a signal, to a child we started and have not yet waited for.

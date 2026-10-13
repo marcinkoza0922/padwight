@@ -68,7 +68,9 @@ impl Overlay {
         crate::info::set_opener(frame.opener);
         crate::info::set_menu_keys(frame.menu_keys);
         crate::info::set_panel_keys(&frame.panel_keys);
-        crate::icons::set_pack_icons(&frame.pack_icons);
+        if let Some(icons) = &frame.pack_icons {
+            crate::icons::set_pack_icons(icons);
+        }
         crate::font::set_pack_font_files(&frame.pack_fonts);
         self.frame = frame;
         self.prune(now);

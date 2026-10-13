@@ -52,6 +52,7 @@ Each item has the expected result in the last column. Record the OS, compositor,
 | H-5 | Touchpad on DualSense/DS4 in touchpad-as-mouse mode. | Click and movement behave as configured. |
 | H-6 | Rumble test button on a pad that supports it and one that doesn't. | Rumble works, or the app says it isn't supported. |
 | H-7 | Run for several hours with the pad idle, then use it. | No drift, no lost input, no CPU use while idle (check `top`). Partly done in the container: `tests/daemon_health.rs` idles a fake controller for 5 s and fails if the daemon uses 1% of a core or more (measured 0.2%, one clock tick). The several-hour run, drift and lost input still need a person. |
+| H-8 | On a DualSense or DualShock 4, switch remapping off and straight back on (`padwight disable; padwight enable`), then use the touchpad (code review H-16). | The touchpad still drives the profile, not the desktop pointer; the log has no `touchpad: cannot take`. The pad itself is checked in the container (`hotplug_switching_remapping_off_and_on_takes_the_controller_back_at_once`). |
 
 ### 3.2 Desktop focus and auto-switching
 
@@ -63,6 +64,10 @@ Each item has the expected result in the last column. Record the OS, compositor,
 | D-3 | Use the Flatpak build on KWin, with the window matched by class and title only. | Auto-switching works. Note any window that is matched wrongly. |
 | D-4 | Games launched through Steam, Heroic, and Lutris, plus a plain binary. | The library finds them, and the rule matches the window. |
 | D-5 | Two games with rules for the same window. | The import preview shows the conflict. The imported game takes over only when the user chooses it. |
+| D-6 | On labwc or Wayfire, restart the daemon with a game that has a rule in front, then switch between two windows (code review H-6). | The game's profile comes on without touching a window. The log shows no `no window has focus` between the two windows. |
+| D-7 | On GNOME, log out and in once to load the updated extension, then restart the daemon with a game that has a rule in front (code review H-7). | The game's profile comes on straight away. |
+| D-8 | On Sway, from a game with a rule, go to an empty workspace and back. | The default profile on the empty workspace, the game's on return. |
+| D-9 | On a desktop without focus tracking, with automatic switching on, hold Force Quit over a game with a rule, then again just after closing it (code review H-17). | The first hold names and ends the game; the second says there is nothing to force quit. |
 
 ### 3.3 Overlays, layers and menus
 
@@ -73,6 +78,10 @@ Each item has the expected result in the last column. Record the OS, compositor,
 | O-3 | Hold and toggle layers, stack two layers, and change profiles while a layer is held. | Layer behaviour matches `docs/development/layers.md`. Held layers end on profile change. |
 | O-4 | Open a menu from a stick direction and a combo. Pick an item several times. | Items fire once each. The menu stays up while the input is held. |
 | O-5 | Info overlays and the live controller drawing, with layers on. | Labels show the layer's mappings. They don't overlap or overflow. |
+| O-6 | Open the in-game menu over a game with a rule, change a setting, then bring another window to the front with the mouse. Switch profile on Quick Settings' Profile row and Discard (code review H-11). | The menu keeps editing the game; the profile follows the window only once the menu closes. After Discard, `config.toml` has the settings as they were. |
+| O-7 | With the in-game menu open, save a change in the settings window (code review H-12). | The in-game menu closes, and opened again shows the new values without asking about unsaved changes. |
+| O-8 | Turn off every audio output, move a menu overlay's cursor, then turn one back on and move it again (code review H-13). | The log says once that there is no audio device. The cues sound again without a restart. |
+| O-9 | Open the Guide overlay with Steam running, then with Steam closed (code review H-18). | The Steam overlay row shows at once while Steam runs, and not otherwise. |
 
 ### 3.4 Games and packs
 
@@ -128,6 +137,11 @@ These need a person with the controller in hand. Record the values used, so a ch
 | I-8 | Read the daemon logs (`src/daemon/logs.rs`) after a full session. | No errors or panics. Messages are clear to a user. Partly done: `common::assert_log_clean` fails on a panic or an output error, and runs at the end of the daemon-exit, hotplug and idle tests (container). It doesn't check other error lines, and the user-facing wording still needs a read. |
 | I-9 | On a machine without `XDG_RUNTIME_DIR`, start the daemon and check the socket: `stat` on its directory shows `0700`, and on the socket `0600`. Run `padwight status` from another user's shell and check it is refused. | Only this user can reach the daemon (F2). |
 | I-10 | Install files are valid: systemd units, udev rule, desktop entry, metainfo, Flatpak manifest | Done in CI. `scripts/check-install.sh` runs `systemd-analyze verify`, `udevadm verify`, `desktop-file-validate`, `appstreamcli validate` and checks the manifest's required keys. A missing validator is an error. Checked that a broken `command` in the manifest fails. |
+| I-11 | On Windows at 125% or 150% scaling, look at the tray icon, then switch profiles 50 times (code review H-8). | The icon looks right. Task Manager's GDI objects for Padwight stay flat. |
+| I-12 | On Windows, start a recording, then end the daemon from Task Manager (code review H-9). | ffmpeg stops, and the file plays. If not, R5-12 needs a fix. |
+| I-13 | On Windows, force quit a launcher-started game, and take a screenshot in a game whose name has a colon (code review H-10). | Only the game and its helpers end. The screenshot is saved, in a folder with ` - ` for the colon. |
+| I-14 | On Windows, show an info overlay set in a font the game's pack carries (code review H-14). | The overlay draws in the pack's font. |
+| I-15 | On Windows, press Ctrl+C in the console running `padwight daemon`, and in one running `padwight debug --attach --live` while a button is held (code review H-15). | The daemon releases what it holds and exits; the debug session's controller goes from `padwight status` and its held key comes up. |
 
 ## 4. Security review (for a human)
 
@@ -202,7 +216,7 @@ scripts/kernel-test-docker.sh debug_          # debug sessions against a --debug
 Things that have tripped up container runs:
 
 - **Stale builds across checkouts.** Every checkout is mounted at `/src` and shares the `padwight-kernel-target` volume, and Cargo rebuilds by file times. After a run from another checkout (a worktree of `HEAD`, say), files that are older than that build aren't rebuilt, and the run tests the other checkout's code. Check the test count, then `touch` the sources (or `docker volume rm padwight-kernel-target`) before trusting the result.
-- **A padwight daemon running on the host.** The container sees the host's `/dev/input`, so the host daemon's virtual keyboard is there too. `find_newest_node` (`tests/common/input.rs`) picks the highest event number, not the newest node, and the kernel reuses free numbers, so a test daemon's keyboard can get a lower number than the host's. The test then watches the wrong keyboard and times out waiting for a key (seen once in `debug_live_output_reaches_the_virtual_keyboard` and `debug_detaching_a_controller_lets_go_of_what_it_held`; reruns passed). Stopping the host service (`systemctl --user stop padwight`) avoids it until the helper picks the node that appeared after the daemon started.
+- **A padwight daemon running on the host.** The container sees the host's `/dev/input`, so the host daemon's devices are there too. The `debug_` tests read the keyboard that appeared after their daemon started (`Reader::open_new`), so they run either way. The tests with a uhid controller (`hotplug_`, `daemon_`, `idle_`, the profiling suite) stop at once and say so: the host daemon would grab their controller first and type their keys into the desktop. Stop it with `systemctl --user stop padwight`. (Before pass 9 of the code review, a helper picked the keyboard with the highest event number; the kernel reuses free numbers, so it could pick the host's and time out.)
 - Outside the container, the tests that read virtual devices need the account in the `input` group; the others only need `/dev/uinput`.
 
 Performance (not a pass/fail check). `scripts/profile.sh` runs `tests/profile` in a release build and writes one JSON file per measurement to `target/profile/`: press-to-output latency for the daemon's virtual pad, idle and under a 1 kHz stick flood; daemon CPU and memory, idle and under flood; daemon start-up, cold (no config, binary evicted from the page cache) and warm; and settings-window start-up with the daemon running. The latency figure excludes USB polling and the controller's own scan, since the test uses a uhid pad. When the run ends, `scripts/plot_profile.py` draws the charts (`target/profile/charts/*.png`) and `target/profile/report.html`, which pairs each chart with its numbers.

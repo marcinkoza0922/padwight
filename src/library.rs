@@ -1,5 +1,7 @@
 //! The built-in game library: packs embedded from `packs/` at build time (see `build.rs`).
 
+use std::sync::LazyLock;
+
 use crate::{
     config::Config,
     pack::{self, Pack},
@@ -35,14 +37,17 @@ pub struct Entry {
 }
 
 /// Every library pack, by name. Packs that don't parse are left out (tests keep that from
-/// happening).
-pub fn entries() -> Vec<Entry> {
-    let mut all: Vec<Entry> = files::FILES
-        .iter()
-        .filter_map(|(file, text)| pack::parse(text).ok().map(|pack| Entry { file, pack }))
-        .collect();
-    all.sort_by_key(|e| e.pack.pack.name.to_lowercase());
-    all
+/// happening). Parsed once: that takes about 30 ms, and the daemon asks at each new window.
+pub fn entries() -> &'static [Entry] {
+    static ENTRIES: LazyLock<Vec<Entry>> = LazyLock::new(|| {
+        let mut all: Vec<Entry> = files::FILES
+            .iter()
+            .filter_map(|(file, text)| pack::parse(text).ok().map(|pack| Entry { file, pack }))
+            .collect();
+        all.sort_by_key(|e| e.pack.pack.name.to_lowercase());
+        all
+    });
+    &ENTRIES
 }
 
 /// Games added from the library that it now has a newer version of: (game name, index of
@@ -115,6 +120,12 @@ mod tests {
 
     /// The app's own packs add their icons, sounds and fonts to the built-in set (`assets/`) for
     /// every game, rather than carrying them, so every icon they name must be built in.
+    /// The daemon asks at each new window, on its own thread: the packs are parsed once.
+    #[test]
+    fn the_library_is_parsed_once() {
+        assert!(std::ptr::eq(entries(), entries()));
+    }
+
     #[test]
     fn library_packs_use_only_built_in_assets() {
         for (file, text) in files::FILES {
@@ -133,7 +144,7 @@ mod tests {
         let mut seen: Vec<(String, &str)> = Vec::new();
         for (file, text) in files::FILES {
             let pack = pack::parse(text).unwrap();
-            for r in pack.rules.iter().filter(|r| r.kind == crate::config::RuleKind::Executable && !r.value.contains(['/', '\\'])) {
+            for r in pack.rules.iter().filter(|r| r.kind == crate::config::RuleKind::Executable && !crate::focus::names_folder(&r.value)) {
                 let name = r.value.trim().to_ascii_lowercase();
                 if let Some((_, other)) = seen.iter().find(|(n, f)| *n == name && f != file) {
                     panic!("{file} and {other} both match {name}; name the folder in one of them");
@@ -214,6 +225,52 @@ mod tests {
             let again = pack::parse(&pack.to_toml().unwrap()).unwrap_or_else(|e| panic!("{file}: {e:#}"));
             assert_eq!(again, pack, "{file}");
         }
+    }
+
+    /// Every library game added to one config, saved as folders and loaded back, comes back the
+    /// same, and saving what was loaded writes the same files.
+    #[test]
+    fn a_config_with_every_library_game_saves_and_loads_unchanged() {
+        let mut config = Config::default();
+        for (file, text) in files::FILES {
+            let plan = pack::plan(&config, pack::parse(text).unwrap(), true);
+            pack::apply(&mut config, &plan, &pack::Choices::default());
+            assert!(config.games.last().is_some_and(|g| g.origin.is_some()), "{file} was added");
+        }
+        assert_eq!(config.games.len(), files::FILES.len());
+
+        let dir = std::env::temp_dir().join(format!("padwight-library-roundtrip-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let (first, second) = (dir.join("first/config.toml"), dir.join("second/config.toml"));
+        config.save_to(&first).unwrap();
+        let loaded = Config::load_from(&first).unwrap();
+        for (a, b) in loaded.games.iter().zip(&config.games) {
+            assert_eq!(a, b, "{}", b.name);
+        }
+        assert_eq!(loaded, config);
+        loaded.save_to(&second).unwrap();
+        let saved = tree(&dir.join("first"));
+        let setups = saved.keys().filter(|p| p.ends_with("setup.toml")).count();
+        assert_eq!(setups, config.games.len() + 1, "a folder per game, and General");
+        assert_eq!(saved, tree(&dir.join("second")));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Every file under `root`, by its path inside it, with its contents.
+    fn tree(root: &std::path::Path) -> std::collections::BTreeMap<std::path::PathBuf, Vec<u8>> {
+        let mut files = std::collections::BTreeMap::new();
+        let mut dirs = vec![root.to_path_buf()];
+        while let Some(dir) = dirs.pop() {
+            for entry in std::fs::read_dir(&dir).unwrap().flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    dirs.push(path);
+                } else {
+                    files.insert(path.strip_prefix(root).unwrap().to_path_buf(), std::fs::read(&path).unwrap());
+                }
+            }
+        }
+        files
     }
 
     #[test]

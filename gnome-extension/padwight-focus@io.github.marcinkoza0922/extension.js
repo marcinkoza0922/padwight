@@ -13,10 +13,14 @@ export default class PadwightFocus extends Extension {
     enable() {
         this._display = global.display;
         this._focusId = this._display.connect('notify::focus-window', () => this._report());
-        this._report();
+        // A daemon that starts (or restarts) after this hears nothing until focus moves, so
+        // report to it as soon as it is on the bus. This also covers the first report.
+        this._watchId = Gio.bus_watch_name(Gio.BusType.SESSION, BUS_NAME, Gio.BusNameWatcherFlags.NONE,
+            () => this._report(), null);
     }
 
     disable() {
+        Gio.bus_unwatch_name(this._watchId);
         this._display.disconnect(this._focusId);
         this._display = null;
     }

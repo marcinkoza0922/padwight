@@ -74,21 +74,9 @@ impl Session {
             DebugRequest::Expect(e) => return Ok(self.expect(&e)),
             DebugRequest::Output { clear } => return Ok(DebugResponse::Text(self.output(clear)?.join("\n"))),
             DebugRequest::Identify(identity) => self.identify(identity)?,
-            DebugRequest::Tap { buttons, ms } => {
-                buttons.iter().for_each(|&b| self.pad().press(b));
-                self.flush()?;
-                thread::sleep(Duration::from_millis(ms));
-                buttons.iter().for_each(|&b| self.pad().release(b));
-                self.flush()?;
-            }
+            DebugRequest::Tap { buttons, ms } => self.hold(ms, |pad| buttons.iter().for_each(|&b| pad.press(b)), |pad| buttons.iter().for_each(|&b| pad.release(b)))?,
             DebugRequest::Gyro { rates, ms } if self.attached().is_some() => self.turn(rates, if ms == 0 { 100 } else { ms })?,
-            DebugRequest::PadClick { ms: Some(ms), .. } => {
-                self.pad().set_touch_click(true);
-                self.flush()?;
-                thread::sleep(Duration::from_millis(ms));
-                self.pad().set_touch_click(false);
-                self.flush()?;
-            }
+            DebugRequest::PadClick { ms: Some(ms), .. } => self.hold(ms, |pad| pad.set_touch_click(true), |pad| pad.set_touch_click(false))?,
             DebugRequest::Swipe { from, to, ms } => self.swipe(from, to, ms)?,
             other => {
                 self.apply(other);
@@ -117,19 +105,33 @@ impl Session {
         }
     }
 
-    /// Strokes finger 0 across the touchpad in even steps over `ms`, then lifts it.
+    /// Does `down`, waits `ms`, then does `up`. `up` happens even when the daemon didn't take
+    /// `down`, so a failed send never leaves a button held.
+    fn hold(&self, ms: u64, down: impl FnOnce(&mut VirtualPad), up: impl FnOnce(&mut VirtualPad)) -> Result<()> {
+        down(&mut self.pad());
+        let sent = self.flush();
+        if sent.is_ok() {
+            thread::sleep(Duration::from_millis(ms));
+        }
+        up(&mut self.pad());
+        sent.and(self.flush())
+    }
+
+    /// Strokes finger 0 across the touchpad in even steps over `ms`, then lifts it, even when a
+    /// step didn't reach the daemon.
     fn swipe(&self, from: (f32, f32), to: (f32, f32), ms: u64) -> Result<()> {
         const STEPS: u32 = 10;
-        for i in 0..=STEPS {
+        let stroke = (0..=STEPS).try_for_each(|i| {
             let t = i as f32 / STEPS as f32;
             self.pad().touch(0, (from.0 + (to.0 - from.0) * t, from.1 + (to.1 - from.1) * t));
             self.flush()?;
             if i < STEPS {
                 thread::sleep(Duration::from_millis(ms) / STEPS);
             }
-        }
+            Ok::<_, anyhow::Error>(())
+        });
         self.pad().lift(0);
-        self.flush()
+        stroke.and(self.flush())
     }
 
     fn render(&self) -> String {

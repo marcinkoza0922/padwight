@@ -122,6 +122,17 @@ struct State {
     changes: Vec<Change>,
 }
 
+impl State {
+    /// Where focus ended up after the events read so far, if it changed. A compositor that
+    /// moves focus sends the old window's `done` before the new one's, and reporting both would
+    /// leave the game (and take the controllers back from Steam) for a moment.
+    fn settled(&mut self) -> Option<Change> {
+        let last = self.changes.pop();
+        self.changes.clear();
+        last
+    }
+}
+
 /// A connection to the compositor's foreign toplevel manager.
 pub struct Wlroots {
     queue: wayland_client::EventQueue<State>,
@@ -169,13 +180,13 @@ impl Wlroots {
     /// Reports the focused window now and on every change, until the connection ends.
     pub fn follow(mut self, notify: &Notify) -> Result<()> {
         loop {
-            self.queue.blocking_dispatch(&mut self.state)?;
-            for change in self.state.changes.drain(..) {
-                match change {
-                    Change::Focused { app_id, title } => report(notify, Reported { class: app_id, title, pid: 0 }),
-                    Change::Unfocused => notify(FocusEvent::Unfocused),
-                }
+            // The first time round, this is the window `connect`'s roundtrip found in front.
+            match self.state.settled() {
+                Some(Change::Focused { app_id, title }) => report(notify, Reported { class: app_id, title, pid: 0 }),
+                Some(Change::Unfocused) => notify(FocusEvent::Unfocused),
+                None => {}
             }
+            self.queue.blocking_dispatch(&mut self.state)?;
         }
     }
 }
@@ -228,7 +239,12 @@ impl Dispatch<ZwlrForeignToplevelHandleV1, ()> for State {
                 None
             }
             zwlr_foreign_toplevel_handle_v1::Event::Done => state.windows.done(&id),
-            zwlr_foreign_toplevel_handle_v1::Event::Closed => state.windows.closed(&id),
+            zwlr_foreign_toplevel_handle_v1::Event::Closed => {
+                // The protocol asks for the handle to be destroyed once closed; otherwise
+                // every window ever opened stays allocated, here and in the compositor.
+                handle.destroy();
+                state.windows.closed(&id)
+            }
             _ => None,
         };
         state.changes.extend(change);
@@ -288,6 +304,27 @@ mod tests {
         w.done(&1);
         assert_eq!(w.closed(&1), Some(Change::Unfocused));
         assert_eq!(w.closed(&1), None, "a closed window reports nothing more");
+    }
+
+    #[test]
+    fn moving_focus_settles_on_the_new_window_without_unfocusing_in_between() {
+        let mut state = State { windows: Windows::default(), changes: Vec::new() };
+        // Real ids need a connection; the window list works the same with any key.
+        let mut w: Windows<u32> = Windows::default();
+        for (id, app) in [(1, "foot"), (2, "kitty")] {
+            w.new_window(id);
+            w.app_id(&id, app.into());
+        }
+        w.state(&1, true);
+        state.changes.extend(w.done(&1));
+        assert_eq!(state.settled(), focused("foot", ""));
+        // The old window's done comes first, as wlroots sends it.
+        w.state(&1, false);
+        w.state(&2, true);
+        state.changes.extend(w.done(&1));
+        state.changes.extend(w.done(&2));
+        assert_eq!(state.settled(), focused("kitty", ""), "no Unfocused between the two");
+        assert_eq!(state.settled(), None, "reported once");
     }
 
     #[test]

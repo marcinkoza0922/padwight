@@ -286,3 +286,30 @@ fn clicks_run_the_action_on_press_and_release_it_and_letting_go_of_everything_re
     assert!(out.contains(&OutEvent::PadAxis(Axis::LeftX, 0.0)));
     assert!(f.touch(0, 0.75, 0.5).contains(&OutEvent::PadAxis(Axis::LeftX, 0.5)), "the finger lands afresh");
 }
+
+#[test]
+fn the_finger_first_down_keeps_the_pointer_when_another_lands_in_a_lower_slot() {
+    let p = profile(pad(TouchpadMotion::Mouse { speed: 1000.0, curve: SpeedCurve::default(), tap: false, scroll: false, inertia: false }));
+    let mut f = Finger::on(&p);
+    f.touch(0, 0.2, 0.5);
+    f.touch(1, 0.6, 0.5);
+    f.lift(0);
+    // Slot 1 is the only finger, so it moves the pointer; a new finger takes the free slot 0.
+    assert_eq!(moved(&f.touch(1, 0.725, 0.5)), (125, 0));
+    f.touch(0, 0.3, 0.3);
+    assert_eq!(moved(&f.touch(0, 0.425, 0.3)), (0, 0), "the second finger down doesn't move the pointer");
+    assert_eq!(moved(&f.touch(1, 0.85, 0.5)), (125, 0), "the first one still does");
+}
+
+#[test]
+fn a_joystick_side_switched_to_another_mode_lets_its_stick_go() {
+    let stick = profile(pad(TouchpadMotion::Joystick { stick: Stick::Left, relative: true, radius: 0.25, deadzone: 0.0 }));
+    let mouse = profile(pad(TouchpadMotion::mouse(1000.0)));
+    let mut f = Finger::on(&stick);
+    f.touch(0, 0.5, 0.2);
+    assert!(f.touch(0, 0.625, 0.2).contains(&OutEvent::PadAxis(Axis::LeftX, 0.5)));
+    // A layer turns the pad into a mouse with the finger still down.
+    f.p = &mouse;
+    let out = f.touch(0, 0.63, 0.2);
+    assert!(out.contains(&OutEvent::PadAxis(Axis::LeftX, 0.0)), "{out:?}");
+}

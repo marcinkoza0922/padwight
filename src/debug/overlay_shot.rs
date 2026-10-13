@@ -139,6 +139,8 @@ fn live(socket: &Path, wait: Duration) -> Result<OverlayFrame> {
     stream.write_all(request.as_bytes())?;
     let deadline = Instant::now() + wait;
     let mut lines = BufReader::new(stream);
+    // The icons come only in the frames where they change, which may show nothing.
+    let mut icons = None;
     loop {
         let left = deadline.saturating_duration_since(Instant::now());
         if left.is_zero() {
@@ -149,7 +151,12 @@ fn live(socket: &Path, wait: Duration) -> Result<OverlayFrame> {
         match lines.read_line(&mut line) {
             Ok(0) => bail!("the daemon stopped sending overlay frames"),
             Ok(_) => {
-                let frame: OverlayFrame = serde_json::from_str(&line).context("the daemon sent something that isn't a frame")?;
+                let mut frame: OverlayFrame = serde_json::from_str(&line).context("the daemon sent something that isn't a frame")?;
+                if frame.pack_icons.is_some() {
+                    icons.clone_from(&frame.pack_icons);
+                } else {
+                    frame.pack_icons.clone_from(&icons);
+                }
                 if frame.active.is_some() || !frame.info.is_empty() || !frame.logs.is_empty() {
                     return Ok(frame);
                 }
