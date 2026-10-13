@@ -1,11 +1,11 @@
-format = 19
+format = 20
 macros = []
 overlay_font = "Bangers"
 
 [pack]
 id = "ad3552b0-5842-5679-a859-21dec63acdc2"
 name = "Psychonauts"
-version = "1.0"
+version = "1.1"
 author = "Padwight"
 description = "Psychonauts (2005) on an Xbox-style pad, modelled on the Xbox release, for the game's default keys. A jumps, X punches, Y uses, B cancels. RT, RB and LB are the three PSI power slots, and holding LT locks on and levitates. The D-pad opens the backpack and the PSI Powers menu, R3 looks in first person, Select shows the stats and Start the journal."
 made_with = "Xbox controller"
@@ -47,10 +47,10 @@ curve = 1.0
 key_threshold = 0.25
 
 [profiles.left_stick.action.keys]
-up = "KEY_W"
-down = "KEY_S"
-left = "KEY_A"
-right = "KEY_D"
+up = "KEY_UP"
+down = "KEY_DOWN"
+left = "KEY_LEFT"
+right = "KEY_RIGHT"
 
 [profiles.right_stick]
 deadzone = 0.1

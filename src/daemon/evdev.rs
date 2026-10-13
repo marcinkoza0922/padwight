@@ -138,7 +138,7 @@ impl Daemon {
                 continue;
             }
             if let Some(pad) = self.gamepads.get(&key)
-                && (!self.config.enabled || self.config.ignored_devices.contains(&pad.name))
+                && (!self.takes_pads() || self.config.ignored_devices.contains(&pad.name))
             {
                 continue;
             }

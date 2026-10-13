@@ -101,7 +101,7 @@ pub fn scan() -> Installed {
     found
 }
 
-fn steam_roots(home: &Path) -> Vec<PathBuf> {
+pub(crate) fn steam_roots(home: &Path) -> Vec<PathBuf> {
     let candidates = steam_candidates(home);
     // ~/.steam/steam is usually a link to the first; look at each folder once.
     let mut seen = HashSet::new();

@@ -207,6 +207,10 @@ pub struct WindowInfo {
     pub pid: u32,
     /// Executable file name; for Wine/Proton the Windows `.exe`, not the Wine loader.
     pub exe: String,
+    /// Full path of that executable, as the process gives it (a Windows path for Wine/Proton);
+    /// empty when unknown. Rules that name a folder match its end.
+    #[serde(default)]
+    pub path: String,
     pub steam_app_id: Option<String>,
 }
 

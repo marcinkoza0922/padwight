@@ -82,7 +82,7 @@ impl Daemon {
             let name = controller.name(slot);
             self.gamepads
                 .insert(key, SeenGamepad { name: name.clone(), analog_triggers: true, rumble: controller.rumble, paddles: false });
-            if !self.config.enabled || self.config.ignored_devices.contains(&name) {
+            if !self.takes_pads() || self.config.ignored_devices.contains(&name) {
                 continue;
             }
             // A virtual pad whose slot isn't known yet may be this one.
