@@ -66,7 +66,35 @@ pub struct Layer {
     /// ones that hold a layer or switch modes themselves.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub swallow_unbound: bool,
+    /// The built-in modes only: the sticks, triggers, gyro and touchpad the layer doesn't set do
+    /// nothing either. Never stored; the modes a game defines keep the profile's analog inputs.
+    #[serde(skip)]
+    pub(super) swallow_analog: bool,
+    /// With `swallow_analog`: the profile's gyro moves the pointer instead of doing nothing.
+    #[serde(skip)]
+    pub(super) gyro_pointer: bool,
 }
+
+/// What mouse mode lets the gyro and touchpad do, which otherwise do nothing there. App-wide,
+/// like the shortcuts.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct MouseModeExtras {
+    /// The profile's gyro moves the pointer: as it is if it already does, else at a default speed.
+    pub gyro: bool,
+    /// The touchpad works as a laptop's does: it moves the pointer, and pressing it clicks.
+    pub touchpad: bool,
+}
+
+impl MouseModeExtras {
+    pub fn is_default(&self) -> bool {
+        *self == Self::default()
+    }
+}
+
+/// How fast the gyro moves the pointer in mouse mode when the profile's gyro doesn't, in pixels
+/// per degree: the templates' speed.
+const MOUSE_MODE_GYRO_SENSITIVITY: f32 = 15.0;
 
 /// The name of the built-in mode the Guide button turns on while it's held or its overlay is up.
 pub const GUIDE_MODE: &str = "Guide";
@@ -95,7 +123,7 @@ pub fn built_in_modes() -> [&'static Layer; 2] {
 
 impl Layer {
     /// The Guide mode: the system shortcuts on the Guide chords, and everything else
-    /// swallowed. Mouse mode (see [`Layer::mouse`]) has the mouse and the D-pad keys.
+    /// swallowed, the sticks, triggers, gyro and touchpad included. Mouse mode (see [`Layer::mouse`]) has the mouse and the D-pad keys.
     pub fn guide() -> Self {
         Self::guide_with(&Shortcuts::default())
     }
@@ -108,13 +136,14 @@ impl Layer {
         layer.indicator_title = Some("Guide shortcuts".into());
         layer.indicator_delay_ms = 100;
         layer.swallow_unbound = true;
+        layer.swallow_analog = true;
         layer
     }
 
     /// Mouse mode: the controller acts as a mouse and a keyboard for clicking, typing and
     /// scrolling. Only the inputs set here do anything, so the game underneath gets nothing.
     pub fn mouse() -> Self {
-        Self::mouse_with(&Shortcuts::default())
+        Self::mouse_with(&Shortcuts::default(), MouseModeExtras::default())
     }
 
     /// Mouse mode without its keys, which [`Layer::mouse_with`] puts on.
@@ -125,6 +154,7 @@ impl Layer {
         layer.indicator_style = OverlayStyle::sheet();
         layer.indicator_title = Some("Mouse mode: press {guide} to exit".into());
         layer.swallow_unbound = true;
+        layer.swallow_analog = true;
         layer.left_trigger = Some(TriggerAction::Button { action: Mouse(MouseButton::Right), threshold: 0.3 }.into());
         layer.right_trigger = Some(TriggerAction::Button { action: Mouse(MouseButton::Left), threshold: 0.3 }.into());
         layer.left_stick = Some(StickConfig::new(StickAction::Scroll { speed: 15.0, invert_y: false }, 0.15, 2.0));
@@ -176,28 +206,18 @@ impl Layer {
             gyro: None,
             touchpad: None,
             swallow_unbound: false,
+            swallow_analog: false,
+            gyro_pointer: false,
         }
     }
 
     /// Puts this layer's overrides on top of `p`.
     pub fn apply(&self, p: &mut Profile) {
         if self.swallow_unbound {
-            // Buttons that hold a layer or switch modes stay, so there's always a way back.
-            let shifts = |a: &ButtonAction| {
-                let mut found = false;
-                a.walk(&mut |a| found |= matches!(a, ButtonAction::Layer(_) | ButtonAction::Mode(_)));
-                found
-            };
-            // Every input that acts as a button: the paddles and the sticks' directions too.
-            for b in Button::EVERY.into_iter().chain(Button::PADDLES) {
-                let gestures = p.gestures.get(&b).is_some_and(|g| GestureKind::ALL.into_iter().any(|k| g.get(k).is_some_and(shifts)));
-                let holds = shifts(p.button(b)) || gestures;
-                if !holds && !self.buttons.contains_key(&b) {
-                    p.buttons.insert(b, ButtonAction::Disabled);
-                    p.gestures.remove(&b);
-                }
-            }
-            p.combos.retain(|c| shifts(&c.action));
+            self.swallow_buttons(p);
+        }
+        if self.swallow_analog {
+            self.swallow_analog_inputs(p);
         }
         for (b, a) in &self.buttons {
             p.buttons.insert(*b, a.clone());
@@ -232,6 +252,46 @@ impl Layer {
         if let Some(t) = &self.touchpad {
             p.touchpad = t.clone();
         }
+    }
+
+    /// Makes the buttons and combos this layer doesn't set do nothing.
+    fn swallow_buttons(&self, p: &mut Profile) {
+        // Buttons that hold a layer or switch modes stay, so there's always a way back.
+        let shifts = |a: &ButtonAction| {
+            let mut found = false;
+            a.walk(&mut |a| found |= matches!(a, ButtonAction::Layer(_) | ButtonAction::Mode(_)));
+            found
+        };
+        // Every input that acts as a button: the paddles and the sticks' directions too.
+        for b in Button::EVERY.into_iter().chain(Button::PADDLES) {
+            let gestures = p.gestures.get(&b).is_some_and(|g| GestureKind::ALL.into_iter().any(|k| g.get(k).is_some_and(shifts)));
+            let holds = shifts(p.button(b)) || gestures;
+            if !holds && !self.buttons.contains_key(&b) {
+                p.buttons.insert(b, ButtonAction::Disabled);
+                p.gestures.remove(&b);
+            }
+        }
+        p.combos.retain(|c| shifts(&c.action));
+    }
+
+    /// Makes the sticks, triggers, gyro and touchpad do nothing, for a built-in mode to set its own.
+    fn swallow_analog_inputs(&self, p: &mut Profile) {
+        // A stick keeps its deadzone and thresholds, so its direction buttons still press.
+        for s in [&mut p.left_stick, &mut p.right_stick] {
+            s.action = StickAction::Disabled;
+            s.zones.clear();
+        }
+        p.left_trigger = TriggerAction::Disabled.into();
+        p.right_trigger = TriggerAction::Disabled.into();
+        if !self.gyro_pointer {
+            p.gyro.mode = GyroMode::Off;
+        } else if !matches!(p.gyro.mode, GyroMode::Mouse { .. }) {
+            // Its activation and smoothing stay; a full-turn scale only means something with
+            // the player's own sensitivity.
+            p.gyro.mode = GyroMode::Mouse { sensitivity: MOUSE_MODE_GYRO_SENSITIVITY };
+            p.gyro.full_turn_px = None;
+        }
+        p.touchpad = TouchpadConfig { motion: TouchpadMotion::Off, click: ButtonAction::Disabled, right: None };
     }
 
     /// Every action it sets: buttons, gestures, combos, triggers and zones.

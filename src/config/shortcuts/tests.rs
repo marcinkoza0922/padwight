@@ -13,7 +13,7 @@ fn moved(pairs: &[(Shortcut, Option<ShortcutInput>)]) -> Shortcuts {
 fn nothing_moved_builds_the_fixed_modes() {
     let s = Shortcuts::default();
     assert_eq!(Layer::guide_with(&s), Layer::guide());
-    assert_eq!(Layer::mouse_with(&s), Layer::mouse());
+    assert_eq!(Layer::mouse_with(&s, MouseModeExtras::default()), Layer::mouse());
     assert_eq!(s.engine_opener(), GuideOpener::Guide);
     assert!(s.all_warnings().is_empty());
 }

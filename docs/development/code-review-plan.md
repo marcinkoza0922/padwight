@@ -41,6 +41,69 @@ Sizes are lines including tests, at the date above. Passes are ordered by the co
 | 8 | The GUI | `gui.rs`, `gui/` | ~16,100 (split in three) | Done, 2026-10-13 (state and messages; the editor views searched only) |
 | 9 | Debug tools and integration tests | `debug/`, `tests/` | ~3,200 + tests | Done, 2026-10-13 (the profiling suite searched only) |
 
+## Remaining issues
+
+Everything the passes left unsolved, gathered here as of commit `72f0c59` (2026-10-13). Each pass's table below keeps the full finding; when one of these is settled, update its row there and remove it here.
+
+### Needs a decision
+
+| ID | Area | What's left |
+|---|---|---|
+| R6-7 | `daemon/overlay_input.rs`, `daemon/in_game_menu.rs` | When the in-game menu closes without asking (controller unplugged, remapping switched off, overlay window gone), its unsaved changes stay applied and the next save writes them. Keep them (kind to a dropped controller's work) or discard them (matches "nothing is saved until Save")? |
+
+### Open bugs
+
+| ID | Area | What's left | Weight |
+|---|---|---|---|
+| R4-7 | `config.rs`, `config/store.rs` | One profile or item file that doesn't parse stops the whole config loading, so the daemon won't start. Loading could skip it, report it in the log and the GUI and leave it on disk; saving would then have to keep it. | High: the daemon doesn't start |
+| R1-3 | `daemon/evdev.rs`, `daemon/touchpad.rs` | Reader threads hold their grab up to 200 ms after letting go. A scan in that window misses the pad until the next scan (2 s), and a touchpad whose grab failed is never retried, so the desktop keeps it as a mouse until the pad reconnects. | Low: needs two state changes within 200 ms |
+| R5-13 | `daemon.rs` (`focused_target`) | Without focus tracking, force quit and recording scan every process on the daemon thread, twice per force-quit hold. | Minor |
+| R6-8 | `guide_menu.rs` | Opening the Guide overlay reads every process name from `/proc` on the daemon thread (about 3 ms) to know whether Steam runs. Could reuse the 2-second scan. | Minor |
+| R7-8 | `daemon/overlay.rs` | Every frame carries the pack's icons as SVG text (up to 64 KB each) and the overlay compares them. Could be sent only when they change. | Minor |
+| R8-9 | `gui.rs`, `gui/items.rs`, `gui/profile.rs` | Open cards and rows are kept by position, so after Undo, Revert, removing a zone or adding an info or log overlay another card can be open. | Minor: folding only |
+| R9-11 | `debug/bridge.rs` | After a daemon restart an attached debug session's controller is gone and every change fails until the session restarts; a failed change is dropped, so the two can disagree. | Minor: debug tool |
+| R9-12 | `debug/pack_scenes.rs` | Two menus or info overlays whose names give the same file name are drawn to one file; the second overwrites the first. | Minor: debug tool |
+
+### Needs Windows or hardware to settle
+
+| ID | What's left | Check |
+|---|---|---|
+| R5-12 | On Windows nothing ends ffmpeg when the daemon dies; it may record until the disk is full. A job object would kill it but leave the MP4 unplayable. | H-9 |
+| R0-7 | Whether a Steam game with Steam Input off inherits an `SDL_GAMECONTROLLER_IGNORE_DEVICES` that hides Padwight's controller. Checked only with Steam Input on. | H-3 |
+| R9-8 | The `hotplug_`, `daemon_`, `idle_` and profiling tests should stop at once when a daemon runs on the host; not yet tried with one running. | Run them with the host daemon up |
+
+Every fix with a hardware check (H-1 to H-15, [below](#hardware-checks)) is also unconfirmed on real devices until that check passes.
+
+### Long files still to split
+
+R0-10, R1-4, R2-7, R4-9 and R8-8 shrank the worst files, but these are still well over 400 lines (`scripts/long-files.sh`):
+
+| File | Lines | Next step named by a pass |
+|---|---|---|
+| `config.rs` | 2,146 | The stick and trigger types (R4-9) |
+| `gui/items.rs` | 1,643 | |
+| `daemon.rs` | 1,524 | |
+| `gui.rs` | 1,429 | |
+| `gui/profile.rs` | 1,425 | |
+| `engine.rs` | 1,186 | `emit`, which predates the size lints (R2-7) |
+| `gui/packs.rs` | 1,025 | |
+| `pack.rs` | 728 | |
+| `gui/actions.rs`, `gui/checks.rs` | 616, 579 | |
+
+### Not read in full
+
+These parts were only searched (for unwraps, indexing, clamps and slow work), not read line by line:
+
+- Pass 6: the rest of `overlay/draw/`, `overlay/windows.rs`, `info/catalog.rs`, `opener.rs`, `pad_model.rs`, `keyboard/xkb.rs`, `labels.rs`, `layout_editor/buttons.rs`, `values.rs`, `views.rs`, `menu/suite/`.
+- Pass 7: the drawing data in `pad_svg/models.rs` and `parts.rs`.
+- Pass 8: the GUI's editor views (`actions.rs`, `sticks.rs`, `triggers.rs`, `gyro.rs`, `touchpad.rs`, `style_editor.rs`, `overlays.rs`, `settings.rs`, the graphs), `manual.rs`, `tour.rs`, `shoot.rs`.
+- Pass 9: the profiling suite, `tests/profile/`.
+
+### Tools not yet built
+
+- A replay of a recorded input stream through the daemon's scan and dispatch, and a container test that a uhid pad appearing while `steam_has_pads` is set isn't grabbed (R0-1).
+- A sweep that loads, saves and compares every config folder in `tests/fixtures` and every library pack.
+
 ## Pass 0: Steam hand-off and game detection
 
 Reviewed commit `b6111fd` and the code it touches. Findings were checked against the code before fixing.
@@ -145,7 +208,7 @@ Read all of `config.rs`, `config/` (the store, shortcuts, gyro, curves, touchpad
 | R4-5 | `config.rs`, `pack.rs`, `config/shortcuts.rs` | R2-6: a combo listing a button twice fired on one press. Shortcut inputs read from `config.toml` could list a button twice too, which made a one-button "combo" opener that never fired. | **Fixed.** Loading and `pack::parse` drop repeated buttons from combos and from the combos layers switch off (`tidy_combos`), and `Shortcuts::sanitized` tidies each input. Tests: `combos_listing_a_button_twice_are_tidied_when_loaded`, `an_input_listing_a_button_twice_is_tidied_when_loaded`, and the pack test above. |
 | R4-6 | `config/window_game.rs` | Changing a setting outside any game makes a setup for the window in front, copying General's items so references resolve, but not General's icons and sounds, so `{icon:…}` tokens and sound cues in the copied menus and overlays found nothing. | **Fixed.** The assets are copied too. Test: `the_new_game_carries_general_s_icons_and_sounds`. |
 | R4-7 | `config.rs`, `config/store.rs` | One file that doesn't parse (a hand-edited profile, or a folder copied from a newer version, which the store's module comment invites) stops the whole config from loading, so the daemon won't start at all. | **Open.** Loading could skip such a file, report it in the log and the GUI, and leave it on disk; the next save would then have to keep it rather than rewrite the tree without it. |
-| R4-8 | `config.rs` (`Layer::mouse`, `Layer::guide`) | Swallowing covers buttons and combos only. While Guide is held the profile's sticks, triggers, touchpad and gyro still reach the game, and in mouse mode its touchpad and gyro do (a touchpad side mapped to keys, or gyro aiming while LT, mouse mode's right click, is held). | **Open: needs a decision.** The sticks under a held Guide may be wanted; the touchpad and gyro in mouse mode probably aren't. |
+| R4-8 | `config.rs` (`Layer::mouse`, `Layer::guide`) | Swallowing covers buttons and combos only. While Guide is held the profile's sticks, triggers, touchpad and gyro still reach the game, and in mouse mode its touchpad and gyro do (a touchpad side mapped to keys, or gyro aiming while LT, mouse mode's right click, is held). | **Fixed, 2026-10-13.** Decided: nothing reaches the game in the built-in modes but what they map. They also switch off the sticks, triggers, gyro and touchpad they don't set (`Layer::swallow_analog`); a stick keeps its deadzone and thresholds, so Guide shortcuts on stick directions still work. A game's own modes with "Do nothing while the mode is on" keep the profile's analog inputs, as three library packs rely on that. Test: `the_built_in_modes_let_none_of_the_profile_s_sticks_triggers_gyro_or_touchpad_through`. Two app-wide options under mouse mode's keys (`Config::mouse_mode`, off by default) let the gyro and the touchpad move the pointer there; test: `mouse_mode_can_let_the_gyro_and_touchpad_move_the_pointer`. |
 | R4-9 | `config.rs`, `pack.rs` | 3,656 and 1,102 lines. | **Partly done.** Menus moved to `config/menus.rs`, layers and the built-in modes to `config/layers.rs`, the profile templates to `config/templates.rs`, and the tests to `config/tests.rs` (with `tests/actions.rs` and `tests/behaviour.rs`) and `pack/tests.rs`, with no change in behaviour. `config.rs` is now 2,144 lines and `pack.rs` 727. The stick and trigger types are the next block to move. |
 
 Checked and found sound:

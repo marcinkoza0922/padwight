@@ -429,6 +429,7 @@ enum Message {
     SetShortcut(crate::config::Shortcut, Option<crate::config::ShortcutInput>),
     ResetShortcut(crate::config::Shortcut),
     ResetAllShortcuts,
+    SetMouseModeExtras(crate::config::MouseModeExtras),
     ListenShortcut(Option<(crate::config::Shortcut, usize)>),
     SetManualSearch(String),
     SetButtonSearch(String),

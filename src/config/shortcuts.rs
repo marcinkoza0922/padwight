@@ -7,7 +7,8 @@ use std::{collections::BTreeMap, fmt};
 use serde::{Deserialize, Serialize};
 
 use super::{
-    Button, ButtonAction, Combo, GUIDE_MODE, GestureKind, Layer, MOUSE_MODE, MouseButton, Profile,
+    Button, ButtonAction, Combo, GUIDE_MODE, GestureKind, Layer, MOUSE_MODE, MouseButton, MouseModeExtras, Profile,
+    TouchpadConfig,
 };
 
 /// The mode name the opener's gesture or combo is injected with into a profile. The engine reads
@@ -622,9 +623,14 @@ impl Layer {
         layer
     }
 
-    /// Mouse mode with its keys where `shortcuts` puts them. The sticks and triggers stay.
-    pub fn mouse_with(shortcuts: &Shortcuts) -> Self {
+    /// Mouse mode with its keys where `shortcuts` puts them, and the gyro and touchpad as
+    /// `extras` says. Its sticks and triggers stay.
+    pub fn mouse_with(shortcuts: &Shortcuts, extras: MouseModeExtras) -> Self {
         let mut layer = Layer::mouse_base();
+        layer.gyro_pointer = extras.gyro;
+        if extras.touchpad {
+            layer.touchpad = Some(TouchpadConfig::default());
+        }
         for s in Shortcut::of(Group::Mouse) {
             if let (Some(input), Some(action)) = (shortcuts.input(s), s.action()) {
                 input.bind(&mut layer, action);
@@ -640,11 +646,11 @@ impl fmt::Display for Shortcut {
     }
 }
 
-/// The built-in modes by name, built from `shortcuts`.
-pub fn built_in_with(shortcuts: &Shortcuts, name: &str) -> Option<Layer> {
+/// The built-in modes by name, built from `shortcuts` and what mouse mode lets through.
+pub fn built_in_with(shortcuts: &Shortcuts, extras: MouseModeExtras, name: &str) -> Option<Layer> {
     match name {
         GUIDE_MODE => Some(Layer::guide_with(shortcuts)),
-        MOUSE_MODE => Some(Layer::mouse_with(shortcuts)),
+        MOUSE_MODE => Some(Layer::mouse_with(shortcuts, extras)),
         _ => None,
     }
 }

@@ -4,7 +4,7 @@
 use iced::widget::{column, row};
 
 use super::*;
-use crate::config::{Group, Shortcut, ShortcutInput};
+use crate::config::{Group, MouseModeExtras, Shortcut, ShortcutInput};
 
 /// The tabs of the App settings page.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -237,11 +237,29 @@ impl App {
             }
             _ => {
                 "The keys mouse mode gives the buttons. The sticks and triggers (move, scroll, click) stay where they are. \
-                 Other buttons do nothing in mouse mode."
+                 Other buttons do nothing in mouse mode, and neither do the gyro and touchpad unless you tick them below."
             }
         };
-        let rows = Shortcut::of(group).map(|s| if s.choices().is_some() { self.button_row(s) } else { self.shortcut_row(s) }).collect();
+        let mut rows: Vec<_> = Shortcut::of(group).map(|s| if s.choices().is_some() { self.button_row(s) } else { self.shortcut_row(s) }).collect();
+        if group == Group::Mouse {
+            rows.push(self.mouse_mode_extras());
+        }
         section(group.title(), Some(help_text.into()), rows)
+    }
+
+    /// Whether the gyro and touchpad move the pointer in mouse mode.
+    fn mouse_mode_extras(&self) -> Element<'_, Message> {
+        let extras = self.config.mouse_mode;
+        column![
+            checkbox(extras.gyro)
+                .label("Gyro moves the pointer, as the profile's gyro does (at a default speed if it aims a stick or is off)")
+                .on_toggle(move |gyro| Message::SetMouseModeExtras(MouseModeExtras { gyro, ..extras })),
+            checkbox(extras.touchpad)
+                .label("Touchpad moves the pointer, and pressing it clicks")
+                .on_toggle(move |touchpad| Message::SetMouseModeExtras(MouseModeExtras { touchpad, ..extras })),
+        ]
+        .spacing(8)
+        .into()
     }
 
     /// A single button from the few `s` can take (see [`Shortcut::choices`]): confirm or back, or a

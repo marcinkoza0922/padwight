@@ -249,6 +249,67 @@ fn the_built_in_modes_let_nothing_of_the_profile_through_but_a_way_back() {
 }
 
 #[test]
+fn the_built_in_modes_let_none_of_the_profile_s_sticks_triggers_gyro_or_touchpad_through() {
+    let key = |k: &str| ButtonAction::Keys(vec![k.into()]);
+    let mut p = Profile::passthrough("Everything");
+    p.left_stick.zones.push(Zone { min: 0.9, max: 1.0, action: key("KEY_LEFTSHIFT") });
+    p.left_stick.deadzone = 0.3;
+    p.left_trigger.zones.push(Zone { min: 0.5, max: 1.0, action: key("KEY_E") });
+    p.gyro.mode = GyroMode::Mouse { sensitivity: 10.0 };
+    p.touchpad = TouchpadConfig::default();
+    assert!(p.left_stick.action != StickAction::Disabled && p.left_trigger.action != TriggerAction::Disabled);
+    let off = TouchpadConfig { motion: TouchpadMotion::Off, click: ButtonAction::Disabled, right: None };
+    for mode in [Layer::mouse(), Layer::guide()] {
+        let on = p.with_layers([&mode]);
+        assert_eq!(on.gyro.mode, GyroMode::Off, "{}", mode.name);
+        assert_eq!(on.touchpad, off, "{}", mode.name);
+        assert!(on.left_stick.zones.is_empty() && on.left_trigger.zones.is_empty(), "{}", mode.name);
+    }
+    let guide = p.with_layers([&Layer::guide()]);
+    for s in [&guide.left_stick, &guide.right_stick] {
+        assert_eq!(s.action, StickAction::Disabled);
+    }
+    assert_eq!(guide.left_stick.deadzone, 0.3, "the direction buttons keep the profile's deadzone");
+    for t in [&guide.left_trigger, &guide.right_trigger] {
+        assert_eq!(t.action, TriggerAction::Disabled);
+    }
+    let mouse = p.with_layers([&Layer::mouse()]);
+    assert_eq!(mouse.right_stick, Layer::mouse().right_stick.unwrap(), "mouse mode's own sticks stay");
+    // A game's own mode that does nothing with unset inputs still keeps the profile's analog ones.
+    let mut menus = Layer::new("Menus");
+    menus.swallow_unbound = true;
+    let own = p.with_layers([&menus]);
+    assert_eq!((own.left_stick, own.gyro, own.touchpad), (p.left_stick.clone(), p.gyro.clone(), p.touchpad.clone()));
+}
+
+#[test]
+fn mouse_mode_can_let_the_gyro_and_touchpad_move_the_pointer() {
+    let mut p = Profile::passthrough("Aim");
+    p.gyro.mode = GyroMode::Stick { stick: Stick::Right, full_rate: 300.0, anti_deadzone: 0.1 };
+    p.gyro.activation = GyroActivation::WhileHeld(GyroInput::Button(Button::LeftBumper));
+    p.gyro.full_turn_px = Some(4000.0);
+    p.touchpad.motion = TouchpadMotion::Off;
+    let config = Config { mouse_mode: MouseModeExtras { gyro: true, touchpad: true }, ..Config::default() };
+    let game = Game::new("G", vec![]);
+    let mouse = config.mode_for(&game, MOUSE_MODE).unwrap();
+    let on = p.with_layers([&*mouse]);
+    assert_eq!(on.gyro.mode, GyroMode::Mouse { sensitivity: 15.0 }, "a gyro aiming a stick moves the pointer at the default speed");
+    assert_eq!((on.gyro.activation, on.gyro.full_turn_px), (p.gyro.activation, None), "it keeps how it's switched on");
+    assert_eq!(on.touchpad, TouchpadConfig::default(), "the touchpad works as a laptop's");
+    p.gyro.mode = GyroMode::Mouse { sensitivity: 8.0 };
+    assert_eq!(p.with_layers([&*mouse]).gyro, p.gyro, "a gyro that already moves the pointer is kept as it is");
+    // The Guide mode still lets neither through.
+    let guide = config.mode_for(&game, GUIDE_MODE).unwrap();
+    assert_eq!(p.with_layers([&*guide]).gyro.mode, GyroMode::Off);
+
+    let dir = scratch_dir("mouse-mode-extras");
+    let path = dir.join("config.toml");
+    config.save_to(&path).unwrap();
+    assert_eq!(Config::load_from(&path).unwrap().mouse_mode, config.mouse_mode);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
 fn a_lost_config_file_keeps_the_setups_saved_beside_it() {
     let dir = scratch_dir("lost-settings");
     let path = dir.join("config.toml");

@@ -81,6 +81,7 @@ impl App {
             }
             Message::ResetShortcut(s) => self.config.shortcuts.reset(s),
             Message::ResetAllShortcuts => self.config.shortcuts = Default::default(),
+            Message::SetMouseModeExtras(extras) => self.config.mouse_mode = extras,
             Message::ListenShortcut(at) => self.shortcuts_ui.listening = at,
             Message::SetManualSearch(query) => self.manual_query = query,
             Message::SetButtonSearch(query) => self.button_query = query,

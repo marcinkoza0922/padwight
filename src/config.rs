@@ -1779,6 +1779,9 @@ pub struct Config {
     /// mouse mode's keys. They're the same in every setup.
     #[serde(default, skip_serializing_if = "Shortcuts::is_default")]
     pub shortcuts: Shortcuts,
+    /// Whether the gyro and touchpad move the pointer in mouse mode. Same in every setup.
+    #[serde(default, skip_serializing_if = "MouseModeExtras::is_default")]
+    pub mouse_mode: MouseModeExtras,
     /// Draws the added and removed rows of menus in blue and orange, with a + or − in front, so
     /// they can be told apart without red and green.
     /// The file keeps the key's first spelling, so configs that set it still load.
@@ -1847,6 +1850,7 @@ impl Default for Config {
             info_glyphs: crate::info::PadFamily::default(),
             nintendo_layout: false,
             shortcuts: Shortcuts::default(),
+            mouse_mode: MouseModeExtras::default(),
             overlay_font: None,
             general: Game::new("General", vec![Profile::passthrough("Gamepad"), Profile::desktop("Desktop")]),
             games: Vec::new(),
@@ -2108,13 +2112,13 @@ impl Config {
 
     /// The built-in modes, with the shortcuts where the player put them.
     pub fn built_in_modes(&self) -> [Layer; 2] {
-        [Layer::guide_with(&self.shortcuts), Layer::mouse_with(&self.shortcuts)]
+        [Layer::guide_with(&self.shortcuts), Layer::mouse_with(&self.shortcuts, self.mouse_mode)]
     }
 
     /// The built-in mode called `name`, built from the shortcuts, else `game`'s own. A game's mode
     /// can't stand in for a built-in one, even one a file put there under its name.
     pub fn mode_for<'a>(&self, game: &'a Game, name: &str) -> Option<std::borrow::Cow<'a, Mode>> {
-        match shortcuts::built_in_with(&self.shortcuts, name) {
+        match shortcuts::built_in_with(&self.shortcuts, self.mouse_mode, name) {
             Some(mode) => Some(std::borrow::Cow::Owned(mode)),
             None => game.mode_named(name).map(std::borrow::Cow::Borrowed),
         }
