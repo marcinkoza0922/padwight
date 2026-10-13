@@ -75,6 +75,8 @@ pub(crate) mod shoot;
 mod settings;
 mod sound_picker;
 mod sounds;
+#[cfg(target_os = "linux")]
+mod steam_card;
 mod sliders;
 mod sticks;
 mod style_editor;
@@ -513,6 +515,8 @@ enum Message {
     SetGameNintendoLayout(Option<bool>),
     /// The other controllers a setup supports (its Details tab).
     SetGameControllers(crate::pad_identity::ControllerSupport),
+    /// Use the game's setup even when Steam lists it with full controller support.
+    SetGameOverSteam(bool),
     /// The shown game's own overlay sounds, replacing its set.
     SetGameSounds(SoundSet),
     /// The App settings' sounds, which every setup without its own set uses.
@@ -554,6 +558,9 @@ enum Message {
     SetRumbleStrength(f32),
     /// Whether picking an overlay's item gives a faint pulse.
     SetPickRumble(bool),
+    /// Start Steam with Padwight's controller hidden from it, or not.
+    #[cfg(target_os = "linux")]
+    SetHideFromSteam(bool),
     /// The font of all overlays (`None`: the system's), or the shown game's own.
     SetOverlayFont(Option<String>),
     SetColorblindTones(bool),
@@ -1104,6 +1111,8 @@ impl App {
                 self.message = None;
             }
             Message::Tour(step) => return self.move_tour(step),
+            #[cfg(target_os = "linux")]
+            Message::SetHideFromSteam(hidden) => self.set_hide_from_steam(hidden),
             Message::Undo
             | Message::ShowProblem
             | Message::CloseRequested

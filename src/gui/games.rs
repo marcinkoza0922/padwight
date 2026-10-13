@@ -110,7 +110,7 @@ impl App {
             Message::AddRule(window) => {
                 let profile = self.profile().map(|p| p.name.clone()).unwrap_or_default();
                 let rule = match window {
-                    Some(w) => crate::focus::rule_for_window(&w, profile),
+                    Some(w) => crate::focus::rule_for_window(&self.config, &w, profile),
                     None => Rule::new(RuleKind::Executable, "", profile),
                 };
                 self.game_mut().rules.push(rule);
@@ -145,6 +145,7 @@ impl App {
             Message::SetNintendoLayout(on) => self.config.nintendo_layout = on,
             Message::SetGameNintendoLayout(choice) => self.game_mut().nintendo_layout = choice,
             Message::SetGameControllers(support) => self.game_mut().controllers = Some(support),
+            Message::SetGameOverSteam(on) => self.game_mut().over_steam = on,
             Message::SetGameSounds(sounds) => self.game_mut().sounds = Some(sounds),
             Message::SetSounds(sounds) => self.config.sounds = sounds,
             Message::ClearGameSounds => self.game_mut().sounds = None,
@@ -395,6 +396,14 @@ impl App {
                 toggle("DualShock 4", support.dualshock, |s, on| s.dualshock = on).into(),
                 toggle("DualSense", support.dualsense, |s, on| s.dualsense = on).into(),
                 toggle("Switch Pro Controller", support.switch_pro, |s, on| s.switch_pro = on).into(),
+                checkbox(self.game().over_steam)
+                    .label("Use this setup even when Steam lists the game with full controller support")
+                    .on_toggle(Message::SetGameOverSteam)
+                    .into(),
+                text("Otherwise, while a game Steam started with full controller support is in front, Padwight lets go of the controller and Steam Input has it.")
+                    .size(13)
+                    .color(MUTED_COLOR)
+                    .into(),
             ],
         )
     }
@@ -423,7 +432,7 @@ impl App {
         let mut rules = column![].spacing(8);
         for (i, r) in game.rules.iter().enumerate() {
             let placeholder = match r.kind {
-                RuleKind::Executable => "e.g. eldenring.exe",
+                RuleKind::Executable => "e.g. eldenring.exe or Folder/game.exe",
                 RuleKind::SteamAppId => "e.g. 1245620",
                 RuleKind::WindowClass => "e.g. steam_app_1245620",
             };
@@ -708,7 +717,7 @@ mod tests {
             ..Default::default()
         };
         let pick = |w: WindowInfo| {
-            let r = crate::focus::rule_for_window(&w, "P".into());
+            let r = crate::focus::rule_for_window(&Config::default(), &w, "P".into());
             (r.kind, r.value)
         };
         assert_eq!(pick(w("steam_app_1", "game.exe", Some("1"))), (RuleKind::SteamAppId, "1".into()));

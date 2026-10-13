@@ -161,7 +161,7 @@ impl App {
         );
         let query = self.settings_query.as_str();
         // Each card with the words it can be found by, besides the ones it shows.
-        let cards: Vec<(&str, Element<'_, Message>)> = vec![
+        let mut cards: Vec<(&str, Element<'_, Message>)> = vec![
             ("appearance theme light dark auto desktop colors", self.view_appearance()),
             ("button layout nintendo swap face buttons a b x y", self.view_nintendo_layout()),
             ("per-setup profiles switch automatically window rules no setup matches default profile", self.view_auto_switch()),
@@ -177,6 +177,8 @@ impl App {
             ("info overlays fallback glyphs xbox playstation nintendo labels", glyphs),
             ("help tour guided welcome introduction getting started", self.view_help_card()),
         ];
+        #[cfg(target_os = "linux")]
+        cards.push(("steam input hide controller big picture stick slay the spire", self.view_steam_card()));
         let shown: Vec<Element<'_, Message>> = cards.into_iter().filter(|(words, _)| matches_query(query, words)).map(|(_, card)| card).collect();
         let body: Element<'_, Message> = if shown.is_empty() {
             text("No settings match.").color(MUTED_COLOR).into()

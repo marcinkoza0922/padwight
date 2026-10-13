@@ -16,7 +16,15 @@ A profile is one complete set of mappings inside a setup, for example one for a 
 
 A rule matches a window by its program name, its Steam App ID, or its window class. Wine and Proton games match by their `.exe` name.
 
+Some games share a program name, such as `game.exe` or `gpp.exe`. To tell them apart, put the folder in an **Executable** rule: `Prince of Persia - The Sands of Time/gpp.exe` matches only a `gpp.exe` in a folder of that name. Add more folders if one isn't enough (`Ubisoft/Sands of Time/gpp.exe`). A rule that names a folder wins over one that names only the program. **Recently focused windows** adds the folder for you when another setup already uses the program's name.
+
 To make a rule quickly, focus the game and use **Recently focused windows** on the setup's Details tab. It adds a rule for the profile you're editing.
+
+## Games Steam looks after
+
+When Steam starts a game that it lists with full controller support, the game already plays well with a controller, so Padwight lets go of the controller while that game is in front and Steam Input has it. Padwight doesn't offer a library setup for such a game. Switch to another window and Padwight takes the controller back.
+
+To use a setup for such a game anyway, tick **Use this setup even when Steam lists the game with full controller support** in the setup's **Controllers this setup supports** card. Steam lists some older games, such as Deus Ex, with full support because of Valve's own controller layouts; tick it for those if you prefer Padwight's.
 
 > **Tip:** automatic switching needs a desktop that reports which window has focus: KDE Plasma, GNOME, Hyprland, Sway, or a wlroots compositor such as labwc. See [Troubleshooting](troubleshooting.md).
 

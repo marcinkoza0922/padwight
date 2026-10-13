@@ -21,24 +21,30 @@ const IDLE_CLOSE: Duration = Duration::from_secs(30);
 /// Library packs for the window in front, if it is a game the config doesn't have: no game
 /// rule matches it, none of the packs is installed or turned down for good, and at least one
 /// of its profiles works with the controllers' features `have` (`None`: no controller to
-/// judge by). Indexes into `library`.
+/// judge by), and the pack isn't for a game with controller support of its own that Steam
+/// started. When packs share a program name, those whose rules name its folder win.
+/// Indexes into `library`.
 pub fn candidates(config: &Config, library: &[Entry], window: &WindowInfo, have: Option<&[Feature]>) -> Vec<usize> {
     if focus::is_own_window(window) || focus::profile_for(config, window).is_some() {
         return Vec::new();
     }
     let seen = std::slice::from_ref(window);
-    library
+    let found: Vec<(usize, u8)> = library
         .iter()
         .enumerate()
         .filter(|(_, e)| {
             let id = &e.pack.pack.id;
-            !config.declined_packs.contains(id)
+            // Steam Input looks after a game that plays with a controller by itself.
+            let steam_has_it = e.pack.pack.native_controller && window.steam_app_id.is_some();
+            !steam_has_it
+                && !config.declined_packs.contains(id)
                 && !config.games.iter().any(|g| g.origin.as_ref().is_some_and(|o| &o.id == id))
-                && e.pack.rules.iter().any(|r| focus::rule_matches_any(r, seen))
                 && e.pack.profiles.iter().any(|p| have.is_none_or(|h| p.usable_with(h)))
         })
-        .map(|(i, _)| i)
-        .collect()
+        .filter_map(|(i, e)| Some((i, focus::match_specificity(&e.pack.rules, seen)?)))
+        .collect();
+    let closest = found.iter().map(|&(_, s)| s).max();
+    found.into_iter().filter(|&(_, s)| Some(s) == closest).map(|(i, _)| i).collect()
 }
 
 /// How long the hint that Guide adds a library setup stays up.
@@ -285,132 +291,4 @@ impl OfferSession {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{
-        config::{Game, Profile, Rule, RuleKind},
-        pack,
-    };
-
-    fn entry(name: &str, exe: &str) -> Entry {
-        let mut game = Game::new(name, vec![Profile::passthrough("P")]);
-        game.rules = vec![Rule::new(RuleKind::Executable, exe, "P")];
-        let pack = pack::export(&game, &pack::draft(&game, false)).pack;
-        Entry { file: "x.padpack", pack }
-    }
-
-    fn window(exe: &str) -> WindowInfo {
-        WindowInfo { exe: exe.into(), class: "game".into(), ..Default::default() }
-    }
-
-    fn press(s: &mut OfferSession, b: Button) -> Option<OfferOutcome> {
-        s.handle(InputEvent::Button(b, true), Instant::now())
-    }
-
-    /// The list on show, if the offer is at one, and its highlighted row.
-    fn choices(s: &OfferSession) -> (Vec<String>, Option<usize>) {
-        match s.view(&OverlayStyle::default()) {
-            crate::overlay::OverlayView::Menu(m) => (m.items.into_iter().map(|i| i.label).collect(), m.selected),
-            _ => (Vec::new(), None),
-        }
-    }
-
-    #[test]
-    fn only_unknown_library_games_are_offered() {
-        let library = vec![entry("Doom", "doom.exe"), entry("Doom Remix", "DOOM.EXE"), entry("Quake", "quake.exe")];
-        let mut config = Config::default();
-        assert_eq!(candidates(&config, &library, &window("doom.exe"), None), [0, 1], "both packs fit");
-        assert!(candidates(&config, &library, &window("other.exe"), None).is_empty());
-
-        config.declined_packs.push(library[1].pack.pack.id.clone());
-        assert_eq!(candidates(&config, &library, &window("doom.exe"), None), [0]);
-
-        let plan = pack::plan(&config, library[0].pack.clone(), true);
-        pack::apply(&mut config, &plan, &pack::Choices::default());
-        assert!(candidates(&config, &library, &window("doom.exe"), None).is_empty(), "a setup with rules is the config's");
-    }
-
-    #[test]
-    fn answers_and_picking() {
-        let library = vec![entry("Doom", "doom.exe"), entry("Doom Remix", "doom.exe")];
-        let one = |i: usize| OfferSession::new(&library, &[i], None, Instant::now());
-        assert_eq!(press(&mut one(0), Button::South), Some(OfferOutcome::Add(0, None)));
-        assert_eq!(press(&mut one(0), Button::East), Some(OfferOutcome::No));
-        assert_eq!(press(&mut one(0), Button::West), Some(OfferOutcome::Never));
-        assert_eq!(press(&mut one(0), Button::North), None);
-
-        let mut two = OfferSession::new(&library, &[0, 1], None, Instant::now());
-        assert_eq!(press(&mut two, Button::South), None, "yes leads to the list");
-        assert_eq!(choices(&two).0, ["Doom", "Doom Remix"]);
-        press(&mut two, Button::DpadDown);
-        press(&mut two, Button::DpadDown);
-        press(&mut two, Button::DpadUp);
-        assert_eq!(press(&mut two, Button::South), Some(OfferOutcome::Add(1, None)));
-
-        // A pack with several profiles asks which one.
-        let mut multi = entry("Doom", "doom.exe");
-        multi.pack.profiles.push(Profile::passthrough("Alt"));
-        let library = vec![multi];
-        let mut s = OfferSession::new(&library, &[0], None, Instant::now());
-        assert_eq!(press(&mut s, Button::South), None);
-        assert_eq!(choices(&s).0, ["P", "Alt"]);
-        press(&mut s, Button::DpadDown);
-        assert_eq!(press(&mut s, Button::South), Some(OfferOutcome::Add(0, Some(1))));
-        press(&mut s, Button::East);
-        assert!(choices(&s).0.is_empty(), "B from the profile list goes back to the question");
-
-    }
-
-    #[test]
-    fn profiles_the_controller_cannot_play_are_not_offered() {
-        // Profiles that need a gyro are neither listed nor offered without one.
-        let mut gyro = entry("Doom", "doom.exe");
-        gyro.pack.profiles[0].requires = vec![Feature::Gyro];
-        gyro.pack.profiles.push(Profile::passthrough("Plain"));
-        gyro.pack.profiles.push(Profile::passthrough("Plain 2"));
-        let library = vec![gyro];
-        let mut s = OfferSession::new(&library, &[0], Some(&[]), Instant::now());
-        press(&mut s, Button::South);
-        assert_eq!(choices(&s).0, ["Plain", "Plain 2"]);
-        press(&mut s, Button::DpadDown);
-        assert_eq!(press(&mut s, Button::South), Some(OfferOutcome::Add(0, Some(2))), "the position in the pack");
-        let mut s = OfferSession::new(&library, &[0], Some(&[Feature::Gyro]), Instant::now());
-        press(&mut s, Button::South);
-        assert_eq!(choices(&s).0, ["P", "Plain", "Plain 2"]);
-
-        let mut one = entry("Doom", "doom.exe");
-        one.pack.profiles[0].requires = vec![Feature::Gyro];
-        one.pack.profiles.push(Profile::passthrough("Plain"));
-        let library = vec![one];
-        let mut s = OfferSession::new(&library, &[0], Some(&[]), Instant::now());
-        assert_eq!(press(&mut s, Button::South), Some(OfferOutcome::Add(0, Some(1))), "a lone fit is used without asking");
-        let mut gyro_only = entry("Doom", "doom.exe");
-        gyro_only.pack.profiles[0].requires = vec![Feature::Gyro];
-        assert!(candidates(&Config::default(), &[gyro_only.clone()], &window("doom.exe"), Some(&[])).is_empty());
-        assert_eq!(candidates(&Config::default(), &[gyro_only.clone()], &window("doom.exe"), Some(&[Feature::Gyro])), [0]);
-        assert_eq!(candidates(&Config::default(), &[gyro_only], &window("doom.exe"), None), [0]);
-    }
-
-    #[test]
-    fn the_stick_moves_through_the_list_and_holding_repeats() {
-        let library = vec![entry("A", "a.exe"), entry("B", "a.exe"), entry("C", "a.exe")];
-        let t0 = Instant::now();
-        let mut s = OfferSession::new(&library, &[0, 1, 2], None, t0);
-        press(&mut s, Button::South);
-        s.handle(InputEvent::Axis(crate::input::Axis::LeftY, 0.9), t0);
-        assert_eq!(choices(&s).1.unwrap(), 1);
-        assert!(s.tick(t0 + crate::nav::REPEAT_DELAY));
-        assert_eq!(choices(&s).1.unwrap(), 2);
-        s.handle(InputEvent::Axis(crate::input::Axis::LeftY, 0.0), t0);
-        assert!(!s.tick(t0 + crate::nav::REPEAT_DELAY * 4));
-    }
-
-    #[test]
-    fn b_goes_back_to_the_question() {
-        let library = vec![entry("Doom", "doom.exe"), entry("Doom Remix", "doom.exe")];
-        let mut back = OfferSession::new(&library, &[0, 1], None, Instant::now());
-        press(&mut back, Button::South);
-        assert_eq!(press(&mut back, Button::East), None, "B goes back to the question");
-        assert!(choices(&back).0.is_empty());
-    }
-}
+mod tests;

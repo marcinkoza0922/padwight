@@ -109,6 +109,7 @@ fn process_info(pid: u32, path: &Path) -> WindowInfo {
     WindowInfo {
         pid,
         exe: path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(),
+        path: path.to_string_lossy().into_owned(),
         steam_app_id: steam_app_id(path),
         ..WindowInfo::default()
     }

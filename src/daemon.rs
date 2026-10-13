@@ -43,6 +43,7 @@ mod activity;
 mod devices;
 mod inject;
 mod logs;
+mod steam_handoff;
 /// The process around the service: signals, the control socket, running in the background.
 #[cfg_attr(target_os = "linux", path = "daemon/unix.rs")]
 #[cfg_attr(windows, path = "daemon/windows.rs")]
@@ -443,6 +444,8 @@ struct Daemon {
     recording: Option<u32>,
     recording_starting: bool,
     offers: Offers,
+    /// Steam Input has the controllers, for the game in front (see `steam_handoff`).
+    steam_has_pads: bool,
     pads: PadWatch,
     /// The game (or other program) that was in front when recording started, and its process:
     /// the recording ends when it does.
@@ -537,6 +540,7 @@ impl Daemon {
             recording: None,
             recording_starting: false,
             offers: Offers::default(),
+            steam_has_pads: false,
             pads: PadWatch::default(),
             recording_target: None,
             layer_started: HashMap::new(),
@@ -1741,6 +1745,9 @@ impl Daemon {
         if self.info_refresh.is_some() {
             self.broadcast_overlay();
         }
+        if self.hand_to_steam(window) {
+            return;
+        }
         self.hint_library_game(window);
 
         if !self.config.auto_switch.enabled {
@@ -1780,6 +1787,7 @@ impl Daemon {
     /// Nothing has focus (the desktop, or an empty workspace), so no game's rules apply.
     fn window_unfocused(&mut self) {
         self.focused = None;
+        self.take_pads_back();
         if self.config.auto_switch.enabled {
             self.leave_game("no window has focus");
         }

@@ -127,6 +127,23 @@ mod tests {
     }
 
     #[test]
+    fn library_packs_dont_share_executable_names() {
+        // Two packs matching the same program would both be offered for either game: a shared
+        // name (gpp.exe, game.exe) must name its folder in at least all but one pack.
+        let mut seen: Vec<(String, &str)> = Vec::new();
+        for (file, text) in files::FILES {
+            let pack = pack::parse(text).unwrap();
+            for r in pack.rules.iter().filter(|r| r.kind == crate::config::RuleKind::Executable && !r.value.contains(['/', '\\'])) {
+                let name = r.value.trim().to_ascii_lowercase();
+                if let Some((_, other)) = seen.iter().find(|(n, f)| *n == name && f != file) {
+                    panic!("{file} and {other} both match {name}; name the folder in one of them");
+                }
+                seen.push((name, file));
+            }
+        }
+    }
+
+    #[test]
     fn shooters_offer_plain_gyro_and_flick_stick_profiles() {
         use crate::config::{GyroMode, StickAction};
         for file in ["deus-ex", "fear", "max-payne", "max-payne-2", "thief-gold", "thief-2", "system-shock-2"] {

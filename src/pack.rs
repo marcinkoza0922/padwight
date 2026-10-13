@@ -29,8 +29,8 @@ use crate::config::{
 /// 18, menu item icons, text typography, ornaments, background pictures, looping effects and
 /// rumble cues; 19, `{icon:…}` tokens and inline text formatting in place of menu item icons,
 /// the `{gyro:…}` and `{trackpad}` tokens, icons and sounds carried in the pack (`[assets]`), and the
-/// `swift`, `dreamy` and `retro` motion styles.
-pub const FORMAT: u32 = 19;
+/// `swift`, `dreamy` and `retro` motion styles; 20, `native_controller` in the header.
+pub const FORMAT: u32 = 20;
 pub const EXTENSION: &str = "padpack";
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -109,6 +109,10 @@ pub struct Header {
     pub requires: Vec<Feature>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub based_on: Option<PackRef>,
+    /// The game plays with a controller by itself, so the pack is never offered when Steam
+    /// starts the game: Steam Input looks after it then.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub native_controller: bool,
 }
 
 pub use crate::config::Feature;
@@ -161,6 +165,7 @@ impl Pack {
             motion: self.motion,
             assets: self.assets.clone(),
             controllers: self.controllers,
+            over_steam: false,
         }
     }
 
@@ -420,6 +425,7 @@ pub fn export(game: &Game, info: &PackInfo) -> Export {
             made_with: info.made_with.clone(),
             requires: Vec::new(),
             based_on: info.based_on.clone(),
+            native_controller: false,
         },
         rules: pack_game.rules.iter().map(|r| Rule { enabled: true, ..r.clone() }).collect(),
         profiles: pack_game.profiles,
@@ -637,6 +643,8 @@ pub fn apply(config: &mut Config, plan: &Plan, choices: &Choices) -> String {
 
     // Rules: an update keeps each existing rule's on/off; clashes go as chosen.
     let previous = plan.update_of.as_deref().and_then(|n| config.games.iter().find(|g| g.name == n));
+    // So does whether the player uses the setup even when Steam Input could have the game.
+    game.over_steam = previous.is_some_and(|g| g.over_steam);
     for (i, rule) in game.rules.iter_mut().enumerate() {
         if let Some(old) = previous.and_then(|g| g.rules.iter().find(|r| r.same_match(rule))) {
             rule.enabled = old.enabled;
