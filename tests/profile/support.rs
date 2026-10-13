@@ -54,7 +54,9 @@ pub struct Pad {
 }
 
 impl Pad {
+    /// Made before the daemon starts, so a Padwight keyboard already there is another daemon's.
     pub fn new(name: &str) -> Self {
+        crate::common::input::assert_no_other_daemon();
         Pad { hid: HidPad::new(name), buttons: 0, x: 0, flood: false, sent: 0, last: Instant::now() }
     }
 

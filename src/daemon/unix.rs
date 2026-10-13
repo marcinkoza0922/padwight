@@ -5,13 +5,11 @@ use std::{
     os::unix::process::CommandExt,
     path::Path,
     process::Command,
-    sync::mpsc::Sender,
     thread,
 };
 
 use anyhow::{Context, Result, bail};
 
-use super::Msg;
 use crate::ipc::{UnixListener, UnixStream};
 
 /// A directory named `name` in the temp directory, for this user only: the temp directory is
@@ -42,10 +40,11 @@ pub fn detach(command: &mut Command) {
 /// The write end of the pipe that SIGTERM and SIGINT wake the daemon through; -1 until set up.
 static WAKE: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1);
 
-/// Makes SIGTERM and SIGINT send `Msg::Stop`, so the daemon can release what it holds before it
-/// exits. The handler only writes a byte to a pipe, the one thing a signal handler can do safely;
-/// a thread reads the byte and passes the message on, so the loop wakes straight away.
-pub fn stop_on_signals(tx: Sender<Msg>) -> Result<()> {
+/// Makes SIGTERM and SIGINT call `stop` instead of ending the process, so the daemon (or a debug
+/// session) can release what it holds before it exits. `stop` returns false once nothing listens
+/// any more. The handler only writes a byte to a pipe, the one thing a signal handler can do
+/// safely; a thread reads the byte and calls `stop`, so the caller wakes straight away.
+pub fn stop_on_signals(stop: impl Fn() -> bool + Send + Sync + 'static) -> Result<()> {
     let mut fds = [0 as libc::c_int; 2];
     // SAFETY: pipe2 writes two descriptors into the array it is given.
     if unsafe { libc::pipe2(fds.as_mut_ptr(), libc::O_CLOEXEC) } != 0 {
@@ -69,7 +68,7 @@ pub fn stop_on_signals(tx: Sender<Msg>) -> Result<()> {
             // SAFETY: reads at most one byte into a local buffer, from the pipe read end we own.
             let n = unsafe { libc::read(read_fd, byte.as_mut_ptr().cast(), 1) };
             if n == 1 {
-                if tx.send(Msg::Stop).is_err() {
+                if !stop() {
                     return;
                 }
             } else if std::io::Error::last_os_error().raw_os_error() != Some(libc::EINTR) {

@@ -15,8 +15,8 @@ mod common;
 
 use std::{fs, thread, time::Duration};
 
-use common::{install_config, 
-    Daemon, assert_log_clean, daemon_log, hold_config, input::{Reader, find_node, grabbed}, serial, spawn_daemon, temp_root,
+use common::{
+    Daemon, assert_log_clean, daemon_log, hold_config, install_config, input::{Reader, assert_no_other_daemon, find_node, grabbed}, serial, spawn_daemon, temp_root,
     uhid::{BUTTON_EAST, BUTTON_SOUTH, HidPad}, wait_for,
 };
 use evdev::KeyCode;
@@ -25,6 +25,7 @@ const NAME: &str = "Test Controller";
 const HELD: u8 = BUTTON_SOUTH | BUTTON_EAST;
 
 fn start(root: &std::path::Path) -> Daemon {
+    assert_no_other_daemon();
     let config = root.join("config/padwight");
     fs::create_dir_all(&config).unwrap();
     install_config(&config, &hold_config());

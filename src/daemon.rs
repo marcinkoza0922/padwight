@@ -67,7 +67,7 @@ mod kernel_tests;
 mod touchpad;
 
 use devices::{FfSpec, NodeKey, virtual_pad_for};
-pub(crate) use os::{bind_socket_at, prepare_private_dir};
+pub(crate) use os::{bind_socket_at, prepare_private_dir, stop_on_signals};
 pub(crate) use steam_handoff::left_to_steam;
 use ipc::{UnixListener, UnixStream};
 
@@ -579,7 +579,8 @@ impl Daemon {
 pub fn run(debug: bool) -> Result<()> {
     let config = Config::load()?;
     let (tx, rx) = mpsc::channel();
-    os::stop_on_signals(tx.clone())?;
+    let stop = tx.clone();
+    os::stop_on_signals(move || stop.send(Msg::Stop).is_ok())?;
     serve_ipc(tx.clone())?;
 
     let kbm = VirtualKbm::new().context("creating virtual keyboard/mouse (do you have write access to /dev/uinput?)")?;

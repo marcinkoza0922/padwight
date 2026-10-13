@@ -271,13 +271,20 @@ fn save_animation(frames: &[Image], fps: f32, path: &Path) -> Result<()> {
     encoder.set_color(png::ColorType::Rgba);
     encoder.set_depth(png::BitDepth::Eight);
     encoder.set_animated(frames.len() as u32, 0)?;
-    encoder.set_frame_delay(1000, (fps * 1000.0) as u16)?;
+    let (numerator, denominator) = frame_delay(fps);
+    encoder.set_frame_delay(numerator, denominator)?;
     let mut writer = encoder.write_header()?;
     for frame in frames {
         writer.write_image_data(&frame.rgba)?;
     }
     writer.finish()?;
     Ok(())
+}
+
+/// How long a frame shows at `fps`, as an APNG writes it: a fraction of a second, in ten
+/// thousandths, so it fits its 16 bits from below 1 fps to 10,000.
+fn frame_delay(fps: f32) -> (u16, u16) {
+    ((10_000.0 / fps).round().clamp(1.0, f32::from(u16::MAX)) as u16, 10_000)
 }
 
 #[cfg(test)]
@@ -301,6 +308,15 @@ mod tests {
         let script = script(&scenes::frame("menu-list").unwrap(), MotionStyle::Subtle).unwrap();
         let out = trace(&script, MotionStyle::Subtle, length(&script, MotionStyle::Subtle));
         assert!(out.trim_end().ends_with("(gone)"), "{out}");
+    }
+
+    #[test]
+    fn the_animation_plays_at_the_frame_rate_asked_for() {
+        for fps in [25.0, 50.0, 60.0, 100.0, 144.0] {
+            let (numerator, denominator) = frame_delay(fps);
+            let shown = f32::from(numerator) / f32::from(denominator);
+            assert!((shown - 1.0 / fps).abs() < 0.0001, "{fps} fps shows each frame {shown} s");
+        }
     }
 
     #[test]

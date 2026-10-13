@@ -17,7 +17,7 @@ use std::{
 
 use common::{
     assert_log_clean, serial, spawn_daemon, temp_root, wait_for,
-    input::{find_node, grabbed},
+    input::{assert_no_other_daemon, find_node, grabbed},
     uhid::HidPad,
 };
 
@@ -41,6 +41,7 @@ fn cpu_ticks(pid: u32) -> u64 {
 #[ignore]
 fn idle_daemon_uses_almost_no_cpu() {
     let _serial = serial();
+    assert_no_other_daemon();
     let root = temp_root();
     let run = root.join("run");
 

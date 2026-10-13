@@ -122,12 +122,25 @@ fn start(args: &[&str]) -> Result<()> {
     }
     let path = server::socket_path();
     let session = Session::new(VirtualPad::of(model));
-    if attach {
-        let device = session.attach(live)?;
-        log!("attached to the daemon as {device}{}", if live { " (live output)" } else { "" });
-    }
+    // The socket first: attaching first left the controller in the daemon when another session
+    // already had the socket.
     server::serve(&session, &path)?;
     log!("debug session listening on {}", path.display());
+    // Ctrl+C ends the session the way `quit` does, so an attached controller lets go of what it holds.
+    let quit = session.clone();
+    crate::daemon::stop_on_signals(move || {
+        quit.quit();
+        true
+    })?;
+    if attach {
+        match session.attach(live) {
+            Ok(device) => log!("attached to the daemon as {device}{}", if live { " (live output)" } else { "" }),
+            Err(e) => {
+                let _ = std::fs::remove_file(&path);
+                return Err(e);
+            }
+        }
+    }
     let result = if headless {
         while !session.quitting() {
             std::thread::sleep(Duration::from_millis(50));

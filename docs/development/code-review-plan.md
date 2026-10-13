@@ -39,7 +39,7 @@ Sizes are lines including tests, at the date above. Passes are ordered by the co
 | 6 | Overlays and menus | `overlay/`, `menu/`, `info/`, `keyboard/`, `system_menu/`, `radial.rs`, `guide_menu.rs`, `nav.rs`, `layout_editor/` | ~14,300 (split in three) | Done, 2026-10-13 |
 | 7 | Sound, drawing and fonts | `sound/`, `pad_svg/`, `font.rs`, `style.rs`, `icons.rs`, the widgets | ~4,400 | Done, 2026-10-13 |
 | 8 | The GUI | `gui.rs`, `gui/` | ~16,100 (split in three) | Done, 2026-10-13 (state and messages; the editor views searched only) |
-| 9 | Debug tools and integration tests | `debug/`, `tests/` | ~3,200 + tests | To do |
+| 9 | Debug tools and integration tests | `debug/`, `tests/` | ~3,200 + tests | Done, 2026-10-13 (the profiling suite searched only) |
 
 ## Pass 0: Steam hand-off and game detection
 
@@ -260,6 +260,32 @@ Checked and found sound:
 - Files are read and written, and the file dialogs run, off the window's thread. Pack files are checked for names, size and content when added (`PackAssets`).
 - Saving refuses an unreadable config and anything the daemon would refuse, and goes to the problem.
 
+## Pass 9: Debug tools and integration tests
+
+Read in full: `debug.rs` and `debug/` (`protocol.rs`, `server.rs`, `bridge.rs`, `pad.rs`, `window.rs`, `focus.rs`, `sound.rs`, `sound_panel.rs`, `glyphs.rs`, `overlay_shot.rs`, `pack_scenes.rs`, `motion_shot.rs`, the frame building in `scenes.rs`), the daemon's side of `--attach` (`daemon/inject.rs`), `snapshot.rs`, and `tests/` but for the profiling suite (`tests/profile/`, searched for how it finds its devices and controllers only). The `debug_`, `hotplug_`, `daemon_` and `idle_` container tests were run before and after (`scripts/kernel-test-docker.sh`), and the Windows build was checked with `cargo clippy --target x86_64-pc-windows-msvc --all-targets`.
+
+| ID | File | Finding | Status |
+|---|---|---|---|
+| R9-1 | `debug.rs` | Ctrl+C (or SIGTERM) on a `padwight debug --attach` session ended it without a word, so its controller stayed in the daemon with whatever it held. With `--live`, a key held at the time stayed down on the desktop until `padwight debug detach-all`. | **Fixed.** Ctrl+C ends the session the way `quit` does, which removes the controller and lets go of what it held. The daemon's signal handling (`stop_on_signals`) now takes what to do, and the session uses it. Test: `debug_ctrl_c_detaches_the_controller_and_lets_go_of_what_it_held` (container). Windows: H-15. |
+| R9-2 | `debug.rs` | An attached session attached to the daemon before taking its socket. A second `--attach` session, refused because the first had the socket, left its controller in the daemon. | **Fixed.** The socket comes first, and is removed again when attaching fails. Test: `debug_a_second_attached_session_leaves_no_controller_behind` (container). |
+| R9-3 | `debug/server.rs` | `tap`, `pad-click <ms>` and `swipe` returned as soon as a send to the daemon failed, before letting go. The session then showed the button, click or finger as held, and the next change sent its release on to a daemon that never had the press. | **Fixed.** The release always happens; the first error is still reported. Test: `debug_a_tap_the_daemon_never_got_leaves_nothing_held` (container). |
+| R9-4 | `snapshot.rs` | A zero, negative or `nan` size or scale (`debug overlay --size 0x0`, `--scale 0`, the same in `debug motion` and `debug gui`) panicked inside the renderer ("Create clip mask"), and a huge one ran out of memory. The Windows overlay draws its window through the same function, with the display's size. | **Fixed.** Refused with an error; each side must be 1 to 16,384 pixels. Test: `an_empty_or_huge_image_is_refused_not_a_panic`. |
+| R9-5 | `debug/sound.rs` | `padwight debug sound length=nan` (or `pitch=nan` for a recorded kind) panicked working out how long the cue lasts. | **Fixed.** A setting must be a finite number. Test: `a_setting_that_is_not_a_finite_number_is_refused`. |
+| R9-6 | `debug/protocol.rs` | `stick left nan 0` parsed, then JSON wrote the `nan` as `null`, and the session answered "bad request: invalid type: null". | **Fixed.** Refused as "not a number". Test: `mistakes_are_explained`. |
+| R9-7 | `debug/motion_shot.rs` | The animated PNG's frame time was `fps × 1000` over 1000 in 16 bits, which tops out at 65.5 fps: `--fps 100` played at 65.5. | **Fixed.** Written in ten-thousandths of a second. Test: `the_animation_plays_at_the_frame_rate_asked_for`. |
+| R9-8 | `tests/common/input.rs`, `tests/debug_session` | The daemon tests picked the test daemon's virtual keyboard as the one with the highest event number. The kernel reuses free numbers, so with a daemon running on the host they could watch its keyboard and time out (the flake in `qa-plan.md`). The tests with a uhid controller can't work then at all: the host daemon grabs their controller first (`grabbed` counts its grab as the test daemon's) and types their keys into the desktop. | **Fixed.** The `debug_` tests read the keyboard that appeared after their daemon started (`Reader::open_new`). The `hotplug_`, `daemon_`, `idle_` and profiling tests stop at once and say a daemon is running (`assert_no_other_daemon`). All pass in the container; the stop wasn't tried with a host daemon running. |
+| R9-9 | `tests/daemon_exit.rs`, `tests/common/mod.rs` | The SIGTERM failure message said the daemon has no SIGTERM handler (it has one), and `default_config`'s comment sat on `install_config`. | **Fixed.** |
+| R9-10 | `tests/debug_session.rs` | 619 lines, and this pass added three tests. | **Done.** Now `tests/debug_session/main.rs` (the session tests, 346 lines) and `daemon.rs` (the tests that need a daemon, 319). The test binary's name and the tests' names are unchanged. |
+| R9-11 | `debug/bridge.rs` | When the daemon restarts, an attached session's controller is gone and every change fails ("no injected controller debug:0") until the session is started again. A change whose send failed is dropped, so the two can disagree until that input changes again. | **Open, minor.** A debug tool; the window shows the error. |
+| R9-12 | `debug/pack_scenes.rs` | Two menus or info overlays whose names give the same file name (`Items` and `items!`, or two names with no letters or digits) are drawn to one file, and the second overwrites the first. | **Open, minor.** |
+
+Checked and found sound:
+
+- The session's locks are taken link then pad, everywhere, and poisoning is recovered from. `flush` holds the link across the request to the daemon on purpose: it keeps the window's changes and the socket's in order.
+- Script and command parsing can't panic: every number goes through a checked parse, a script is parsed whole before anything is sent, and the client waits at most 30 seconds for a reply.
+- `debug focus` reads `/proc/<pid>/environ` for any pid given and shows nothing when it can't; `debug steam` parses app IDs and reads each cache file once. `debug overlay live` waits no longer than `--wait` and skips frames that show nothing.
+- The integration tests kill their daemons and sessions when they fail (`Drop`), each test runs in its own temp folder with its own `XDG_RUNTIME_DIR`, and the daemon tests run one at a time (`serial`). The default config they write ignores every real gamepad on the machine.
+
 ## Tools for checking findings
 
 Tools added in pass 0:
@@ -299,3 +325,4 @@ These can't be checked without real controllers and Steam. When they pass, they 
 | H-12 | Open the in-game menu, then save a change in the settings window. The in-game menu closes; opened again, it shows the settings window's values, and closing it asks nothing. | R6-4 |
 | H-13 | Turn off or unplug every audio output, open a menu overlay and move its cursor, then plug one back in and move it again. The daemon's log says once that there is no audio device; the cues sound again once the output is back, without a restart. | R7-2 |
 | H-14 | On Windows, with a game whose pack carries a font used by an info overlay, bring the game up. The overlay draws in the pack's font. | R7-4 |
+| H-15 | On Windows, press Ctrl+C in a console running `padwight daemon`: it releases what it holds and exits. Then run `padwight debug --attach --live` against a `--debug` daemon, hold a button mapped to a key, and press Ctrl+C: `padwight status` no longer lists the debug controller, and the key comes up. | R9-1 |

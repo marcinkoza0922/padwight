@@ -34,12 +34,26 @@ pub fn run(args: &[&str]) -> Result<()> {
         println!("overlays: {}", SoundOverlay::ALL.map(SoundOverlay::key).join(" "));
         return Ok(());
     }
+    let (spec, whats) = parse_args(args)?;
+    let sounds = Sounds::start();
+    for what in whats {
+        match what {
+            What::Kind(kind) => play_kind(&sounds, SoundSpec { kind, ..spec }),
+            What::Overlay(overlay) => visit(&sounds, overlay),
+        }
+    }
+    Ok(())
+}
+
+/// The settings given, and what to play: every kind when nothing is named.
+fn parse_args(args: &[&str]) -> Result<(SoundSpec, Vec<What>)> {
     let mut spec = SoundSpec::new(SoundKind::default(), VOLUME, 1.0);
     let mut whats = Vec::new();
     for arg in args {
         match arg.split_once('=') {
             Some((key, value)) => {
-                let value: f32 = value.parse().with_context(|| format!("{key} takes a number"))?;
+                // `nan` parses, and a cue's length can't be worked out from it.
+                let value: f32 = value.parse().ok().filter(|v: &f32| v.is_finite()).with_context(|| format!("{key} takes a number"))?;
                 match key {
                     "volume" => spec.volume = value,
                     "pitch" => spec.pitch = value,
@@ -58,14 +72,7 @@ pub fn run(args: &[&str]) -> Result<()> {
     if whats.is_empty() {
         whats = SoundKind::ALL.map(What::Kind).into();
     }
-    let sounds = Sounds::start();
-    for what in whats {
-        match what {
-            What::Kind(kind) => play_kind(&sounds, SoundSpec { kind, ..spec }),
-            What::Overlay(overlay) => visit(&sounds, overlay),
-        }
-    }
-    Ok(())
+    Ok((spec, whats))
 }
 
 fn parse(word: &str) -> Result<What> {
@@ -119,4 +126,18 @@ pub(super) fn visit(sounds: &Sounds, overlay: SoundOverlay) {
     sounds.play(&pick);
     sleep(pick.duration().max(STEP * 3));
     play(sounds, cue(Feedback::Close));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_setting_that_is_not_a_finite_number_is_refused() {
+        for arg in ["length=nan", "pitch=NaN", "echo=inf", "volume=loud"] {
+            assert!(parse_args(&["tick", arg]).is_err(), "{arg}");
+        }
+        let (spec, whats) = parse_args(&["length=1.5"]).unwrap();
+        assert_eq!((spec.length, whats.len()), (1.5, SoundKind::ALL.len()));
+    }
 }

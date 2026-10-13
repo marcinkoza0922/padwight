@@ -19,9 +19,9 @@ use std::{
     time::{Duration, Instant},
 };
 
-use common::{install_config, 
-    Daemon, TIMEOUT, assert_log_clean, daemon_log, hold_config, serial, spawn_daemon, temp_root, wait_for,
-    input::{Reader, find_node, grabbed},
+use common::{
+    Daemon, install_config, TIMEOUT, assert_log_clean, daemon_log, hold_config, serial, spawn_daemon, temp_root, wait_for,
+    input::{Reader, assert_no_other_daemon, find_node, grabbed},
     uhid::{BUTTON_EAST, BUTTON_SOUTH, HidPad},
 };
 
@@ -57,6 +57,7 @@ fn wait_exit(daemon: &mut Daemon) {
 
 fn scenario(signal: Signal) {
     let _serial = serial();
+    assert_no_other_daemon();
     let root = temp_root();
 
     let mut pad = HidPad::new("Test Controller");
@@ -108,8 +109,7 @@ fn scenario(signal: Signal) {
     if let Signal::Term = signal {
         assert!(
             released_before_exit,
-            "SIGTERM: the daemon did not release its keys before exiting (KEY_A released: {}, left button released: {}). \
-             It has no SIGTERM handler, and the tray's Quit exits without releasing anything either",
+            "SIGTERM: the daemon did not release its keys before exiting (KEY_A released: {}, left button released: {})",
             !keys.pressed.contains(&KeyCode::KEY_A.0),
             !mouse.pressed.contains(&KeyCode::BTN_LEFT.0)
         );
