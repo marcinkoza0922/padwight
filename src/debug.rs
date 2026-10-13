@@ -10,6 +10,7 @@ use std::{
 use anyhow::{Context, Result, bail};
 
 mod bridge;
+mod focus;
 mod glyphs;
 mod motion_shot;
 mod overlay_shot;
@@ -61,7 +62,7 @@ Without a session:
 ";
 
 fn usage() -> String {
-    format!("{USAGE}{}{}{}{}\nWith a session:\n{}", sound::USAGE, overlay_shot::USAGE, motion_shot::USAGE, crate::gui::shoot::USAGE, protocol::COMMANDS)
+    format!("{USAGE}{}{}{}{}{}\nWith a session:\n{}", focus::USAGE, sound::USAGE, overlay_shot::USAGE, motion_shot::USAGE, crate::gui::shoot::USAGE, protocol::COMMANDS)
 }
 
 #[expect(clippy::print_stdout, reason = "CLI output")]
@@ -79,6 +80,8 @@ pub fn run(args: &[&str]) -> Result<()> {
         }
         ["svg"] => println!("{}", rest_svg(None)),
         ["svg", name] => println!("{}", rest_svg(parse_model(name)?)),
+        ["focus", rest @ ..] => focus::run(rest)?,
+        ["steam", rest @ ..] => focus::steam(rest)?,
         ["sound", rest @ ..] => sound::run(rest)?,
         ["overlay", rest @ ..] => overlay_shot::run(rest)?,
         ["motion", rest @ ..] => motion_shot::run(rest)?,

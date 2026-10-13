@@ -164,7 +164,7 @@ fn rule_matches(kind: RuleKind, value: &str, info: &WindowInfo) -> bool {
 /// Whether an Executable rule's value names folders as well as the file
 /// (`Prince of Persia - The Sands of Time/gpp.exe`), to tell apart games whose programs share
 /// a name.
-fn names_folder(value: &str) -> bool {
+pub(crate) fn names_folder(value: &str) -> bool {
     value.contains(['/', '\\'])
 }
 
@@ -182,12 +182,23 @@ fn specificity(rule: &Rule) -> u8 {
     u8::from(rule.kind == RuleKind::Executable && names_folder(&rule.value))
 }
 
-/// The most specific of the rules that match, the first of those in rule order.
+/// The highest [`specificity`]: a match this close ends the search.
+const MOST_SPECIFIC: u8 = 1;
+
+/// The most specific of the rules that match, the first of those in rule order. Stops at the
+/// first match nothing can beat, so the process scan doesn't try every rule.
 fn best<'a, T>(found: impl Iterator<Item = (&'a str, &'a Rule, T)>) -> Option<(&'a str, &'a Rule, T)> {
-    found.fold(None, |best, next| match &best {
-        Some(b) if specificity(b.1) >= specificity(next.1) => best,
-        _ => Some(next),
-    })
+    let mut best: Option<(&str, &Rule, T)> = None;
+    for next in found {
+        let closeness = specificity(next.1);
+        if best.as_ref().is_none_or(|b| closeness > specificity(b.1)) {
+            best = Some(next);
+            if closeness == MOST_SPECIFIC {
+                break;
+            }
+        }
+    }
+    best
 }
 
 /// Every game's switched-on rules, in order (games in order, then each game's rules).
@@ -238,7 +249,6 @@ pub fn game_launch_in(config: &Config, processes: &[WindowInfo]) -> Option<(Stri
     matching_process(config, processes).map(|(game, _, p)| (game.to_string(), p.pid))
 }
 
-/// Whether a rule matches any of these windows or processes.
 /// Rule for a window using its most specific identifier: Steam App ID, then a Windows `.exe`
 /// name, then the window class, then the native executable name. An `.exe` name that a rule
 /// in `config` already uses gets its folder too (`Sands of Time/gpp.exe`), so the two games
@@ -266,6 +276,7 @@ fn exe_with_folder_if_taken(config: &Config, w: &WindowInfo) -> String {
     }
 }
 
+/// Whether a rule matches any of these windows or processes.
 pub fn rule_matches_any(rule: &Rule, seen: &[WindowInfo]) -> bool {
     seen.iter().any(|w| rule_matches(rule.kind, &rule.value, w))
 }
@@ -277,118 +288,4 @@ pub fn match_specificity(rules: &[Rule], seen: &[WindowInfo]) -> Option<u8> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::config::Rule;
-
-
-    /// A config with one game per (game, rules) entry, each rule naming profile "P".
-    fn config(games: &[(&str, &[(RuleKind, &str)])]) -> Config {
-        let mut config = Config::default();
-        for (name, rules) in games {
-            let mut game = crate::config::Game::new(name, vec![crate::config::Profile::passthrough("P")]);
-            game.rules = rules.iter().map(|(kind, value)| Rule::new(*kind, *value, "P")).collect();
-            config.games.push(game);
-        }
-        config
-    }
-
-    fn at(game: &str) -> Option<ProfileRef> {
-        Some(ProfileRef::new(Some(game), "P"))
-    }
-
-    #[test]
-    fn first_matching_rule_wins() {
-        let mut config = config(&[
-            ("Souls", &[(RuleKind::SteamAppId, "1245620")]),
-            ("Other", &[(RuleKind::Executable, "ELDENRING.EXE")]),
-            ("Factorio", &[(RuleKind::WindowClass, "factorio")]),
-        ]);
-        let elden = WindowInfo {
-            class: "steam_app_1245620".into(),
-            exe: "eldenring.exe".into(),
-            steam_app_id: Some("1245620".into()),
-            ..Default::default()
-        };
-        assert_eq!(profile_for(&config, &elden), at("Souls"));
-        let factorio = WindowInfo { class: "Factorio".into(), exe: "factorio".into(), ..Default::default() };
-        assert_eq!(profile_for(&config, &factorio), at("Factorio"));
-
-        let browser = WindowInfo { class: "firefox".into(), exe: "firefox".into(), ..Default::default() };
-        assert_eq!(profile_for(&config, &browser), None, "the default is the daemon's call");
-        assert!(has_rules(&config, "Souls") && !has_rules(&config, "General"));
-
-        config.games[0].rules[0].enabled = false;
-        assert_eq!(profile_for(&config, &elden), at("Other"), "switched-off rules are skipped");
-    }
-
-    #[test]
-    fn empty_rule_values_never_match() {
-        let config = config(&[("X", &[(RuleKind::WindowClass, " ")])]);
-        assert_eq!(profile_for(&config, &WindowInfo::default()), None);
-    }
-
-    #[test]
-    fn process_scan_uses_rule_order() {
-        let config = config(&[("A", &[(RuleKind::Executable, "game.exe")]), ("B", &[(RuleKind::Executable, "bash")])]);
-        let procs = |names: &[&str]| -> Vec<WindowInfo> {
-            names.iter().map(|n| WindowInfo { exe: n.to_string(), ..Default::default() }).collect()
-        };
-        assert_eq!(profile_for_processes(&config, &procs(&["bash", "game.exe"])), at("A"));
-        assert_eq!(profile_for_processes(&config, &procs(&["bash"])), at("B"));
-        assert_eq!(profile_for_processes(&config, &procs(&["zsh"])), None);
-    }
-
-    #[test]
-    fn launches_come_from_rules_with_the_matching_process() {
-        let mut config = config(&[("Doom", &[(RuleKind::Executable, "doom.exe")])]);
-        config.auto_switch.default_profile = Some(ProfileRef::new(None, "Desktop"));
-        let doom = WindowInfo { exe: "doom.exe".into(), pid: 42, ..Default::default() };
-        assert_eq!(game_launch(&config, &doom), Some(("Doom".into(), 42)));
-        let shell = WindowInfo { exe: "bash".into(), pid: 7, ..Default::default() };
-        assert_eq!(game_launch(&config, &shell), None, "the default profile isn't a launch");
-        assert_eq!(game_launch_in(&config, &[shell, doom]), Some(("Doom".into(), 42)));
-    }
-
-    #[test]
-    fn rules_naming_folders_match_the_end_of_the_path() {
-        let pop = WindowInfo {
-            exe: "gpp.exe".into(),
-            path: "X:\\Games\\Heroic\\Prince of Persia - The Sands of Time\\gpp.exe".into(),
-            ..Default::default()
-        };
-        assert!(rule_matches(RuleKind::Executable, "Prince of Persia - The Sands of Time/gpp.exe", &pop));
-        assert!(rule_matches(RuleKind::Executable, "prince of persia - the sands of time\\GPP.EXE", &pop));
-        assert!(rule_matches(RuleKind::Executable, "gpp.exe", &pop));
-        assert!(!rule_matches(RuleKind::Executable, "Sands of Time/gpp.exe", &pop), "whole folder names only");
-        assert!(!rule_matches(RuleKind::Executable, "Warrior Within/gpp.exe", &pop));
-        let unknown = WindowInfo { path: String::new(), ..pop };
-        assert!(!rule_matches(RuleKind::Executable, "Prince of Persia - The Sands of Time/gpp.exe", &unknown));
-    }
-
-    #[test]
-    fn a_rule_naming_the_folder_wins_over_an_earlier_name_only_rule() {
-        let config = config(&[
-            ("Any", &[(RuleKind::Executable, "gpp.exe")]),
-            ("Sands", &[(RuleKind::Executable, "Sands of Time/gpp.exe")]),
-        ]);
-        let window = |path: &str| WindowInfo { exe: "gpp.exe".into(), path: path.into(), pid: 9, ..Default::default() };
-        let sands = window("/g/Sands of Time/gpp.exe");
-        assert_eq!(matching_rule(&config, &sands).map(|(g, _)| g), Some("Sands"));
-        assert_eq!(game_launch(&config, &sands), Some(("Sands".into(), 9)));
-        assert_eq!(matching_rule(&config, &window("/g/Other/gpp.exe")).map(|(g, _)| g), Some("Any"));
-        let running = [window("/g/Other/gpp.exe"), sands];
-        assert_eq!(matching_process(&config, &running).map(|(g, _, p)| (g, p.path.as_str())), Some(("Sands", "/g/Sands of Time/gpp.exe")));
-    }
-
-    #[test]
-    fn rules_from_windows_add_the_folder_when_the_exe_name_is_taken() {
-        let window = WindowInfo { exe: "gpp.exe".into(), path: "X:\\Games\\Sands of Time\\gpp.exe".into(), ..Default::default() };
-        let rule = |config: &Config| rule_for_window(config, &window, "P".into()).value;
-        assert_eq!(rule(&Config::default()), "gpp.exe");
-        let taken = config(&[("Other", &[(RuleKind::Executable, "GPP.EXE")])]);
-        assert_eq!(rule(&taken), "Sands of Time/gpp.exe");
-        let bare = WindowInfo { path: "X:\\gpp.exe".into(), ..window.clone() };
-        assert_eq!(rule_for_window(&taken, &bare, "P".into()).value, "gpp.exe", "a drive is no folder");
-    }
-}
+mod tests;

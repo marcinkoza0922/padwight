@@ -2,14 +2,39 @@
 //! Games Steam lists with full controller support are left to Steam Input when Steam starts them
 //! (see the daemon's Steam hand-off).
 
-use std::{collections::HashMap, fs, sync::Mutex};
+use std::{
+    collections::HashMap,
+    fs,
+    path::PathBuf,
+    sync::Mutex,
+    time::SystemTime,
+};
+
+/// Every app's controller support from Steam's app caches, and the files' modification times
+/// when they were read. Steam rewrites the cache as it learns about games, so a changed time
+/// means reading it again: a game installed after the daemon started is then found.
+struct Index {
+    stamps: Vec<(PathBuf, Option<SystemTime>)>,
+    apps: HashMap<u32, String>,
+}
 
 /// Steam's own words for how well a game plays with a controller: `"full"`, `"partial"`, or
 /// `None` when it says nothing (or can't be read).
 pub fn controller_support(app_id: &str) -> Option<String> {
-    static CACHE: Mutex<Option<HashMap<String, Option<String>>>> = Mutex::new(None);
-    let mut cache = CACHE.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-    cache.get_or_insert_with(HashMap::new).entry(app_id.to_string()).or_insert_with(|| read(app_id)).clone()
+    static INDEX: Mutex<Option<Index>> = Mutex::new(None);
+    let id: u32 = app_id.parse().ok()?;
+    let mut index = INDEX.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    support_in(&mut index, &appinfo_files(), id)
+}
+
+/// App `id`'s controller support in `files`, through `index`, which is read again when a file
+/// changed since.
+fn support_in(index: &mut Option<Index>, files: &[PathBuf], id: u32) -> Option<String> {
+    let stamps = stamps(files);
+    if index.as_ref().is_none_or(|i| i.stamps != stamps) {
+        *index = Some(Index { apps: read(&stamps), stamps });
+    }
+    index.as_ref()?.apps.get(&id).cloned()
 }
 
 /// Whether Steam lists the game as playable with a controller throughout.
@@ -17,13 +42,19 @@ pub fn full_support(app_id: &str) -> bool {
     controller_support(app_id).as_deref() == Some("full")
 }
 
-fn read(app_id: &str) -> Option<String> {
-    let id: u32 = app_id.parse().ok()?;
-    let home = dirs::home_dir()?;
-    crate::launchers::steam_roots(&home).into_iter().find_map(|root| {
-        let data = fs::read(root.join("appcache/appinfo.vdf")).ok()?;
-        find(&data, id)
-    })
+/// Each Steam install's `appinfo.vdf`, the first install first.
+pub fn appinfo_files() -> Vec<PathBuf> {
+    let Some(home) = dirs::home_dir() else { return Vec::new() };
+    crate::launchers::steam_roots(&home).into_iter().map(|root| root.join("appcache/appinfo.vdf")).collect()
+}
+
+fn stamps(files: &[PathBuf]) -> Vec<(PathBuf, Option<SystemTime>)> {
+    files.iter().map(|f| (f.clone(), fs::metadata(f).and_then(|m| m.modified()).ok())).collect()
+}
+
+/// The apps in these files; an app in an earlier file wins over the same app in a later one.
+fn read(stamps: &[(PathBuf, Option<SystemTime>)]) -> HashMap<u32, String> {
+    stamps.iter().rev().filter_map(|(file, _)| fs::read(file).ok()).flat_map(|data| index(&data)).collect()
 }
 
 const V40: u32 = 0x0756_4428;
@@ -33,30 +64,37 @@ const V41: u32 = 0x0756_4429;
 const APP_HEADER: usize = 8;
 const APP_STATE: usize = 60;
 
-/// `common/controller_support` of app `id` in an appinfo.vdf file.
-fn find(data: &[u8], id: u32) -> Option<String> {
-    let magic = u32_at(data, 0)?;
+/// `common/controller_support` of every app in an appinfo.vdf file that has one. A file that
+/// isn't one, or is cut short, gives the apps before the damage.
+pub fn index(data: &[u8]) -> HashMap<u32, String> {
+    let mut apps = HashMap::new();
+    let Some(magic) = u32_at(data, 0) else { return apps };
     let (strings, mut pos, end) = match magic {
         V41 => {
-            let table = usize::try_from(u64_at(data, 8)?).ok()?;
-            (Some(string_table(data, table)?), 16, table)
+            let Some((table, strings)) = u64_at(data, 8)
+                .and_then(|t| usize::try_from(t).ok())
+                .and_then(|t| Some((t, string_table(data, t)?)))
+            else {
+                return apps;
+            };
+            (Some(strings), 16, table)
         }
         V40 => (None, 8, data.len()),
-        _ => return None,
+        _ => return apps,
     };
+    let reader = Reader { data, strings: strings.as_deref() };
     while pos + APP_HEADER <= end {
-        let (app, size) = (u32_at(data, pos)?, u32_at(data, pos + 4)? as usize);
+        let (Some(app), Some(size)) = (u32_at(data, pos), u32_at(data, pos + 4)) else { break };
         if app == 0 {
-            return None;
+            break;
         }
         let body = pos + APP_HEADER;
-        if app == id {
-            let reader = Reader { data, strings: strings.as_deref() };
-            return reader.lookup(body + APP_STATE, &["appinfo", "common", "controller_support"]);
+        if let Some(support) = reader.lookup(body + APP_STATE, &["appinfo", "common", "controller_support"]) {
+            apps.insert(app, support);
         }
-        pos = body + size;
+        pos = body + size as usize;
     }
-    None
+    apps
 }
 
 fn u32_at(data: &[u8], pos: usize) -> Option<u32> {
@@ -197,6 +235,10 @@ mod tests {
         out
     }
 
+    fn find(data: &[u8], id: u32) -> Option<String> {
+        index(data).remove(&id)
+    }
+
     #[test]
     fn reads_each_apps_controller_support() {
         let data = file(&[(10, Some("partial")), (2_868_840, Some("full")), (13_600, None)]);
@@ -204,6 +246,26 @@ mod tests {
         assert_eq!(find(&data, 10).as_deref(), Some("partial"));
         assert_eq!(find(&data, 13_600), None, "an app that says nothing");
         assert_eq!(find(&data, 99), None, "an app that isn't there");
+    }
+
+    #[test]
+    fn a_game_steam_learns_about_later_is_found() {
+        let dir = std::env::temp_dir().join(format!("padwight-appinfo-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("appinfo.vdf");
+        let write = |apps: &[(u32, Option<&str>)], secs: u64| {
+            fs::write(&path, file(apps)).unwrap();
+            let when = SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(secs);
+            fs::File::options().write(true).open(&path).unwrap().set_modified(when).unwrap();
+        };
+        let mut index = None;
+        let files = [path.clone()];
+        write(&[(10, Some("partial"))], 1_000);
+        assert_eq!(support_in(&mut index, &files, 2_868_840), None);
+        write(&[(10, Some("partial")), (2_868_840, Some("full"))], 2_000);
+        assert_eq!(support_in(&mut index, &files, 2_868_840).as_deref(), Some("full"), "a changed file is read again");
+        fs::remove_dir_all(&dir).unwrap();
+        assert_eq!(support_in(&mut index, &files, 2_868_840), None, "a removed file holds nothing");
     }
 
     #[test]

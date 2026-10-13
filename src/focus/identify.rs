@@ -11,7 +11,7 @@ use crate::ipc::WindowInfo;
 
 /// Builds a [`WindowInfo`] for a window owned by `pid`, reading its process from /proc.
 pub fn identify(class: String, title: String, pid: u32) -> WindowInfo {
-    let pid = host_pid(pid);
+    let pid = host_pid(pid, &class);
     let mut info = process_info(pid).unwrap_or_default();
     // Proton names its windows `steam_app_<id>` even when the environment is unreadable.
     if info.steam_app_id.is_none() {
@@ -21,19 +21,56 @@ pub fn identify(class: String, title: String, pid: u32) -> WindowInfo {
 }
 
 /// The pid of `pid` as this daemon sees it. A program in a sandbox with its own pid namespace
-/// (a game launched from Flatpak Heroic, say) gives its window the pid it has in there, which
-/// names no process here or a different one, so look for the process that has that pid in a
-/// namespace below ours. A pid that names a process here is taken as it is.
-fn host_pid(pid: u32) -> u32 {
-    if pid == 0 || Path::new(&format!("/proc/{pid}")).exists() {
+/// (a game launched from Flatpak Heroic, say) can give its X11 window the pid it has in there,
+/// which names no process here or an unrelated one: sandboxes count from 1, so small pids are
+/// nearly always taken here too. When the process here doesn't look like the window's, the
+/// processes that have that pid in a namespace below ours are candidates too.
+fn host_pid(pid: u32, class: &str) -> u32 {
+    if pid == 0 {
         return pid;
     }
-    let Ok(entries) = fs::read_dir("/proc") else { return pid };
+    let here = process_info(pid);
+    if here.as_ref().is_some_and(|p| fits(p, class)) {
+        return pid;
+    }
+    pick_pid(pid, here.is_some(), &nested_processes(pid), class)
+}
+
+/// Which process owns a window that reported `pid`: a sandboxed one (`nested`, by their pids
+/// here) that looks like the window, else the process here if there is one, else the first
+/// sandboxed one.
+fn pick_pid(pid: u32, exists_here: bool, nested: &[WindowInfo], class: &str) -> u32 {
+    nested
+        .iter()
+        .find(|p| fits(p, class))
+        .or_else(|| nested.first().filter(|_| !exists_here))
+        .map_or(pid, |p| p.pid)
+}
+
+/// The processes whose pid in a namespace below ours is `pid`.
+fn nested_processes(pid: u32) -> Vec<WindowInfo> {
+    let Ok(entries) = fs::read_dir("/proc") else { return Vec::new() };
     entries
         .flatten()
         .filter_map(|e| e.file_name().to_str()?.parse::<u32>().ok())
-        .find(|&p| fs::read_to_string(format!("/proc/{p}/status")).is_ok_and(|s| nested_pid(&s) == Some(pid)))
-        .unwrap_or(pid)
+        .filter(|&p| fs::read_to_string(format!("/proc/{p}/status")).is_ok_and(|s| nested_pid(&s) == Some(pid)))
+        .filter_map(process_info)
+        .collect()
+}
+
+/// Whether a process looks like it owns a window of class `class`: a Wine window's class is its
+/// `.exe` (`gpp.exe`), Proton's is `steam_app_<id>`, and a native one usually holds the
+/// program's name (`org.kde.dolphin` for `dolphin`).
+fn fits(process: &WindowInfo, class: &str) -> bool {
+    let class = class.to_ascii_lowercase();
+    if let Some(app) = class.strip_prefix("steam_app_") {
+        return process.steam_app_id.as_deref() == Some(app);
+    }
+    let exe = process.exe.to_ascii_lowercase();
+    let stem = exe.strip_suffix(".exe").unwrap_or(&exe);
+    // Short names (`sh`) are inside too many classes to tell anything.
+    let long = |s: &str| s.len() >= 3;
+    !class.is_empty() && (class == exe || (long(stem) && class.contains(stem)) || (long(&class) && stem.contains(&class)))
 }
 
 /// A process's pid in the innermost of its pid namespaces, from /proc/<pid>/status, when that
@@ -79,7 +116,11 @@ fn program_path(cmdline: &[u8], exe_path: Option<&Path>, mapped: impl FnOnce() -
         .collect();
     let windows_exe = args.iter().find(|a| a.to_ascii_lowercase().ends_with(".exe"));
     if let Some(exe) = windows_exe {
-        return exe.clone();
+        // Started by its bare name from its own folder (`gpp.exe`, `.\game.exe`): the file
+        // mapped into the loader has the folders a rule can name.
+        let bare = !exe.trim_start_matches(['.', '/', '\\']).contains(['/', '\\']);
+        let same_file = |m: &String| base_name(m).eq_ignore_ascii_case(&base_name(exe));
+        return bare.then(mapped).flatten().filter(same_file).unwrap_or_else(|| exe.clone());
     }
     let loader = exe_path.and_then(|p| p.file_name()).is_some_and(|n| n.to_string_lossy().starts_with("wine"));
     if let Some(exe) = loader.then(mapped).flatten() {
@@ -178,6 +219,76 @@ mod tests {
         );
         // Only a Wine loader is asked: a native program keeps its own name.
         assert_eq!(program_path(&cmd, Some(Path::new("/usr/bin/game")), || first_mapped_exe(maps)), "/usr/bin/game");
+    }
+
+    #[test]
+    fn wine_programs_started_by_bare_name_report_the_mapped_path() {
+        let maps = "00400000-00401000 r--p 00000000 00:2a 123 /home/me/Games/Prince of Persia - The Sands of Time/gpp.exe\n";
+        let loader = Some(Path::new("/opt/proton/files/bin/wine64-preloader"));
+        for bare in ["gpp.exe", ".\\GPP.EXE", "./gpp.exe"] {
+            let cmd = nul_joined(&[bare, "-007"]);
+            assert_eq!(program_path(&cmd, loader, || first_mapped_exe(maps)), "/home/me/Games/Prince of Persia - The Sands of Time/gpp.exe", "{bare}");
+        }
+        // A mapped file of another name isn't this program; a path with folders is kept.
+        assert_eq!(program_path(&nul_joined(&["launcher.exe"]), loader, || first_mapped_exe(maps)), "launcher.exe");
+        let full = nul_joined(&["C:\\Games\\gpp.exe"]);
+        assert_eq!(program_path(&full, loader, || first_mapped_exe(maps)), "C:\\Games\\gpp.exe");
+    }
+
+    fn process(pid: u32, exe: &str, app: Option<&str>) -> WindowInfo {
+        WindowInfo { pid, exe: exe.into(), steam_app_id: app.map(Into::into), ..Default::default() }
+    }
+
+    #[test]
+    fn windows_from_sandboxes_find_their_process() {
+        let game = process(14_173, "gpp.exe", None);
+        let other = process(20_001, "bwrap", None);
+        // The pid names an unrelated process here: the sandboxed one that fits the class wins.
+        assert_eq!(pick_pid(3467, true, &[other.clone(), game.clone()], "gpp.exe"), 14_173);
+        // Nothing sandboxed fits: the process here stays, and with none here the first one.
+        assert_eq!(pick_pid(3467, true, std::slice::from_ref(&other), "gpp.exe"), 3467);
+        assert_eq!(pick_pid(3467, false, std::slice::from_ref(&other), "gpp.exe"), 20_001);
+        assert_eq!(pick_pid(3467, true, &[], "gpp.exe"), 3467);
+    }
+
+    #[test]
+    fn processes_fit_their_windows_class() {
+        assert!(fits(&process(1, "gpp.exe", None), "gpp.exe"));
+        assert!(fits(&process(1, "GPP.EXE", None), "gpp"));
+        assert!(fits(&process(1, "dolphin", None), "org.kde.dolphin"));
+        assert!(fits(&process(1, "eldenring.exe", Some("1245620")), "steam_app_1245620"));
+        assert!(!fits(&process(1, "eldenring.exe", Some("1245620")), "steam_app_99"));
+        assert!(!fits(&process(1, "systemd", None), "gpp.exe"));
+        assert!(!fits(&process(1, "sh", None), "flashplayer"), "short names tell nothing");
+        assert!(!fits(&process(1, "game", None), ""));
+    }
+
+    /// End to end with a real pid namespace: `unshare` starts a program whose pid in there is
+    /// small and names some other process here. Skipped where unprivileged namespaces are off.
+    #[test]
+    #[expect(clippy::print_stderr, reason = "says why the test was skipped")]
+    fn identifies_a_window_from_a_real_sandbox() {
+        let tag = format!("padwight-ns-{}", std::process::id());
+        let spawn = std::process::Command::new("unshare")
+            .args(["--user", "--map-root-user", "--pid", "--fork", "--kill-child", "--mount-proc", "sleep", "30"])
+            .env("PADWIGHT_TEST_TAG", &tag)
+            .spawn();
+        let Ok(mut child) = spawn else { return eprintln!("skipped: no unshare") };
+        let found = (0..50).find_map(|_| {
+            std::thread::sleep(std::time::Duration::from_millis(20));
+            running_processes().into_iter().find(|p| {
+                p.exe == "sleep" && fs::read(format!("/proc/{}/environ", p.pid)).is_ok_and(|e| e.windows(tag.len()).any(|w| w == tag.as_bytes()))
+            })
+        });
+        let inner = found.as_ref().and_then(|p| fs::read_to_string(format!("/proc/{}/status", p.pid)).ok()).and_then(|s| nested_pid(&s));
+        let result = found.zip(inner).map(|(p, inner)| (p.pid, identify("sleep".into(), String::new(), inner).pid));
+        // SIGKILL, which unshare can't ignore; --kill-child takes sleep down with it.
+        let _ = child.kill();
+        let _ = child.wait();
+        match result {
+            Some((host, identified)) => assert_eq!(identified, host),
+            None => eprintln!("skipped: no pid namespace (unprivileged user namespaces may be off)"),
+        }
     }
 
     #[test]

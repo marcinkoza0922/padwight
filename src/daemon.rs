@@ -60,6 +60,7 @@ mod touchpad;
 
 use devices::{FfSpec, NodeKey, virtual_pad_for};
 pub(crate) use os::{bind_socket_at, prepare_private_dir};
+pub(crate) use steam_handoff::left_to_steam;
 use ipc::{UnixListener, UnixStream};
 
 const TICK: Duration = Duration::from_millis(4);
@@ -1746,6 +1747,10 @@ impl Daemon {
             self.broadcast_overlay();
         }
         if self.hand_to_steam(window) {
+            // Steam has the controllers, but the last game's profile no longer fits what's in front.
+            if self.config.auto_switch.enabled {
+                self.leave_game(&format!("{} is left to Steam Input", describe(window)));
+            }
             return;
         }
         self.hint_library_game(window);
@@ -2590,6 +2595,7 @@ impl Daemon {
         self.release_devices(|d| !enabled || ignored.contains(&d.name));
         self.resync_all();
         self.broadcast_overlay();
+        self.recheck_steam_handoff();
         self.save_and_rescan()
     }
 
@@ -2754,6 +2760,7 @@ impl Daemon {
             focus_backend: self.focus_backend,
             focused: self.focused.clone(),
             recent_windows: self.recent_windows.clone(),
+            steam_has_pads: self.steam_has_pads,
             motion_access_denied: self.nodes.denied_sensors(),
             overlay_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Keyboard),
             numpad_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Numpad),

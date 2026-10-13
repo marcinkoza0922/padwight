@@ -133,7 +133,7 @@ mod tests {
         let mut seen: Vec<(String, &str)> = Vec::new();
         for (file, text) in files::FILES {
             let pack = pack::parse(text).unwrap();
-            for r in pack.rules.iter().filter(|r| r.kind == crate::config::RuleKind::Executable && !r.value.contains(['/', '\\'])) {
+            for r in pack.rules.iter().filter(|r| r.kind == crate::config::RuleKind::Executable && !crate::focus::names_folder(&r.value)) {
                 let name = r.value.trim().to_ascii_lowercase();
                 if let Some((_, other)) = seen.iter().find(|(n, f)| *n == name && f != file) {
                     panic!("{file} and {other} both match {name}; name the folder in one of them");

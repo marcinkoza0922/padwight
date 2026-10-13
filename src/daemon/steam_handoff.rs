@@ -11,16 +11,18 @@ use crate::{config::Config, focus, ipc::WindowInfo, monitor::log};
 /// Whether Steam Input should have the controllers while `window` is in front: Steam started it,
 /// `full_support` says Steam lists it with full controller support, and no setup for it says to
 /// use it anyway.
-pub(super) fn left_to_steam(config: &Config, window: &WindowInfo, full_support: impl Fn(&str) -> bool) -> bool {
+pub(crate) fn left_to_steam(config: &Config, window: &WindowInfo, full_support: impl Fn(&str) -> bool) -> bool {
     let Some(app) = &window.steam_app_id else { return false };
     let taken_back = focus::matching_rule(config, window).is_some_and(|(game, _)| config.game(Some(game)).is_some_and(|g| g.over_steam));
     !taken_back && full_support(app)
 }
 
 impl Daemon {
-    /// Whether the scans should take controllers: remapping is on, and Steam doesn't have them.
-    pub(super) fn takes_pads(&self) -> bool {
-        self.config.enabled && !self.steam_has_pads
+    /// Whether a scan should take the controller called `name`: remapping is on, Steam doesn't
+    /// have the controllers, and the user hasn't set it aside. Every path that grabs a pad asks
+    /// this, so a pad that appears while Steam has the others is left to Steam too.
+    pub(super) fn should_manage(&self, name: &str) -> bool {
+        self.config.enabled && !self.steam_has_pads && !self.config.ignored_devices.iter().any(|n| n == name)
     }
 
     /// Gives the controllers to Steam Input while `window` is in front, if it's a game to leave
@@ -39,6 +41,16 @@ impl Daemon {
             self.broadcast_overlay();
         }
         true
+    }
+
+    /// Decides again who has the controllers for the window in front, after the config changed
+    /// (a setup's `over_steam`, or its rules). The window is handled as if it had just gained
+    /// focus, so taking a game back also switches to its profile.
+    pub(super) fn recheck_steam_handoff(&mut self) {
+        let Some(window) = self.focused.clone() else { return };
+        if left_to_steam(&self.config, &window, crate::steam_appinfo::full_support) != self.steam_has_pads {
+            self.window_focused(&window);
+        }
     }
 
     /// Takes the controllers back from Steam Input, if it has them.
