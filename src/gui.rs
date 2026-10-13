@@ -1081,6 +1081,12 @@ impl App {
                 }
                 if let Some(e) = &err {
                     self.message = Some((format!("Couldn't load the config file: {e}"), true));
+                } else if let Some(first) = self.config.unreadable.first() {
+                    let more = match self.config.unreadable.len() - 1 {
+                        0 => String::new(),
+                        n => format!(" (and {n} more; the daemon's log lists them)"),
+                    };
+                    self.message = Some((format!("Left out of the config, and kept on disk: {}{more}", first.error), true));
                 }
                 self.unreadable = err;
             }

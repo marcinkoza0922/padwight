@@ -22,10 +22,15 @@ impl Daemon {
                 let mut new = *new;
                 new.enabled = self.config.enabled;
                 new.carry_active(&self.config.active);
+                // What the folder held when the daemon read it, whatever the window last saw.
+                new.unreadable.clone_from(&self.config.unreadable);
                 self.replace_config(new)
             }
             Request::Reload => match Config::load() {
-                Ok(new) => self.replace_config(new),
+                Ok(new) => {
+                    new.log_unreadable();
+                    self.replace_config(new)
+                }
                 Err(e) => Response::Error(format!("{e:#}")),
             },
             Request::SetEnabled(enabled) => {

@@ -1812,6 +1812,10 @@ pub struct Config {
     /// IDs of library packs the user asked never to be offered again (see `offer`).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub declined_packs: Vec<String>,
+    /// Files in the config folder that didn't load, left out and kept on disk (see `store`).
+    /// Read from the folder, not `config.toml`; sent along with the config to the settings window.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unreadable: Vec<store::Unreadable>,
 }
 
 /// The General setup a config starts with, for a `config.toml` that doesn't say.
@@ -1855,6 +1859,7 @@ impl Default for Config {
             general: Game::new("General", vec![Profile::passthrough("Gamepad"), Profile::desktop("Desktop")]),
             games: Vec::new(),
             declined_packs: Vec::new(),
+            unreadable: Vec::new(),
         }
     }
 }
@@ -1907,6 +1912,13 @@ impl Config {
             config.save_to(path)?;
         }
         Ok(config)
+    }
+
+    /// Says in the log which files loading left out (see `unreadable`).
+    pub fn log_unreadable(&self) {
+        for u in &self.unreadable {
+            crate::monitor::log!("left out of the config, and kept on disk: {}", u.error);
+        }
     }
 
     pub fn save(&self) -> Result<()> {

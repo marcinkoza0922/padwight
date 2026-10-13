@@ -353,7 +353,7 @@ fn a_game_s_mode_named_like_a_built_in_one_never_replaces_it() {
 }
 
 #[test]
-fn a_config_with_a_number_that_isn_t_finite_is_refused_naming_where() {
+fn a_number_that_isn_t_finite_is_refused_naming_where() {
     let dir = scratch_dir("not-finite");
     let path = dir.join("config.toml");
     let mut config = Config::default();
@@ -368,7 +368,10 @@ fn a_config_with_a_number_that_isn_t_finite_is_refused_naming_where() {
         rows: Vec::new(),
     });
     config.save_to(&path).unwrap();
-    let err = format!("{:#}", Config::load_from(&path).unwrap_err());
+    // An item file is left out; the rest loads.
+    let loaded = Config::load_from(&path).unwrap();
+    assert!(loaded.general.info.is_empty());
+    let err = &loaded.unreadable[0].error;
     assert!(err.contains("linger") && err.contains("Sheet"), "{err}");
 
     config.general.info.clear();

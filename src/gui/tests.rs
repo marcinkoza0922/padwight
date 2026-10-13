@@ -274,3 +274,15 @@ fn a_pack_file_goes_to_the_setup_it_was_added_from() {
     let _ = app.update(Message::PackFilePicked(Some("Gone".into()), pack_files::FileKind::Icon, Some(Ok(("leaf".into(), svg)))));
     assert!(app.message.as_ref().is_some_and(|(m, err)| *err && m.contains("leaf")));
 }
+
+#[test]
+fn files_left_out_of_the_config_are_named_on_load() {
+    let mut app = app();
+    let mut config = Config::default();
+    let left_out = |error: &str| serde_json::from_value(serde_json::json!({ "path": "setups/001-Doom", "error": error, "files": [] })).unwrap();
+    config.unreadable = vec![left_out("parsing setups/001-Doom/setup.toml"), left_out("parsing general/macros/001-Heal.toml")];
+    let _ = app.update(Message::ConfigLoaded(Box::new(config), None));
+    let (message, err) = app.message.clone().unwrap();
+    assert!(err && message.contains("001-Doom/setup.toml") && message.contains("1 more"), "{message}");
+    assert!(app.unreadable.is_none(), "the rest can be saved");
+}

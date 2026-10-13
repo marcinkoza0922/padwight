@@ -578,6 +578,7 @@ impl Daemon {
 /// Runs the service. With `debug`, controllers can also be injected over IPC (`padwight debug`).
 pub fn run(debug: bool) -> Result<()> {
     let config = Config::load()?;
+    config.log_unreadable();
     let (tx, rx) = mpsc::channel();
     let stop = tx.clone();
     os::stop_on_signals(move || stop.send(Msg::Stop).is_ok())?;
