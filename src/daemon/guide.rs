@@ -10,7 +10,12 @@ impl Daemon {
         match (open, self.guide_menu.as_ref().map(|menu| menu.chosen)) {
             (true, None) => {
                 let mode = self.guide_current_mode();
-                self.guide_menu = Some(GuideMenu { cursor: 0, steam: crate::guide_menu::steam_running(), page: 0, mode, chosen: false });
+                self.guide_menu = Some(GuideMenu { cursor: 0, steam: false, page: 0, mode, chosen: false });
+                // Reading every process's name takes a few milliseconds: not on this thread.
+                let tx = self.tx.clone();
+                thread::spawn(move || {
+                    let _ = tx.send(Msg::SteamRunning(crate::guide_menu::steam_running()));
+                });
                 self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Open));
             }
             (false, Some(chosen)) => {
@@ -19,6 +24,15 @@ impl Daemon {
             }
             _ => {}
         }
+    }
+
+    /// Lists the Steam overlay row in the Guide menu, or takes it away, once whether Steam runs
+    /// is known. The cursor stays on an item that is still there.
+    pub(super) fn guide_menu_steam(&mut self, running: bool) {
+        let Some(menu) = self.guide_menu.as_mut().filter(|m| m.steam != running) else { return };
+        menu.steam = running;
+        menu.cursor = menu.cursor.min(crate::guide_menu::items(running).len() - 1);
+        self.broadcast_overlay();
     }
 
     /// What the Guide overlay's Mappings show: the active profile in the mode and page the Guide

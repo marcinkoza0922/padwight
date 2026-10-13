@@ -1,7 +1,7 @@
 //! Following focus: which game is in front, switching to its profile (or back to the default),
 //! handing it to Steam Input, and noticing when a game starts.
 
-use std::time::Instant;
+use std::{collections::HashMap, time::Instant};
 
 use super::{Active, Daemon, RECENT_WINDOWS, describe, layered, with_fallback};
 use crate::{
@@ -172,6 +172,29 @@ impl Daemon {
         }
     }
 
+    /// What to force quit, by name, and its process: the focused window (a game with a rule
+    /// goes by the game's name), unless it is the desktop or this app. Without focus tracking,
+    /// only the active game's running process, as the 2-second scan last found it; only with
+    /// automatic switching off, when that scan doesn't run, are the processes read here.
+    pub(super) fn focused_target(&self) -> Option<(String, u32)> {
+        if self.focus_backend == FocusBackend::ProcessScan {
+            let active = &self.config.active_game().name;
+            if self.config.auto_switch.enabled {
+                return scanned_launch(&self.launches, active, crate::quit::is_running);
+            }
+            return focus::game_launch_in(&self.config, &focus::running_processes()).filter(|(game, _)| game == active);
+        }
+        let window = self.focused.as_ref()?;
+        if let Some(game) = focus::game_launch(&self.config, window) {
+            return Some(game);
+        }
+        if window.pid == 0 || crate::quit::protected(&window.exe) || focus::is_own_window(window) {
+            return None;
+        }
+        let name = [&window.title, &window.exe, &window.class].into_iter().find(|n| !n.is_empty())?;
+        Some((name.clone(), window.pid))
+    }
+
     /// Switches to a profile a rule (or the default) picked, with a toast if `toast`. `reason`
     /// says why, for the log and the GUI.
     pub(super) fn auto_switch_to(&mut self, target: ProfileRef, reason: &str, toast: bool) {
@@ -198,5 +221,25 @@ impl Daemon {
             let why = format!("{reason}, so the default profile takes over");
             self.auto_switch_to(default, &why, false);
         }
+    }
+}
+
+/// The `active` game's process as the last scan recorded it in `launches`, while it still runs.
+fn scanned_launch(launches: &HashMap<String, u32>, active: &str, is_running: impl Fn(u32) -> bool) -> Option<(String, u32)> {
+    launches.get(active).filter(|&&pid| is_running(pid)).map(|&pid| (active.to_owned(), pid))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn without_focus_tracking_the_target_is_the_scanned_launch_while_it_runs() {
+        let launches = HashMap::from([("Hades".to_owned(), 41), ("Celeste".to_owned(), 42)]);
+        assert_eq!(scanned_launch(&launches, "Hades", |_| true), Some(("Hades".to_owned(), 41)));
+        // The game exited since the scan: there is nothing to quit.
+        assert_eq!(scanned_launch(&launches, "Hades", |pid| pid != 41), None);
+        // Another game running isn't the active one.
+        assert_eq!(scanned_launch(&launches, "Desktop", |_| true), None);
     }
 }

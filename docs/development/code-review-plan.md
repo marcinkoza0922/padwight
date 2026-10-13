@@ -55,8 +55,6 @@ Everything the passes left unsolved, gathered here as of commit `72f0c59` (2026-
 
 | ID | Area | What's left | Weight |
 |---|---|---|---|
-| R5-13 | `daemon.rs` (`focused_target`) | Without focus tracking, force quit and recording scan every process on the daemon thread, twice per force-quit hold. | Minor |
-| R6-8 | `guide_menu.rs` | Opening the Guide overlay reads every process name from `/proc` on the daemon thread (about 3 ms) to know whether Steam runs. Could reuse the 2-second scan. | Minor |
 | R7-8 | `daemon/overlay.rs` | Every frame carries the pack's icons as SVG text (up to 64 KB each) and the overlay compares them. Could be sent only when they change. | Minor |
 | R8-9 | `gui.rs`, `gui/items.rs`, `gui/profile.rs` | Open cards and rows are kept by position, so after Undo, Revert, removing a zone or adding an info or log overlay another card can be open. | Minor: folding only |
 | R9-11 | `debug/bridge.rs` | After a daemon restart an attached debug session's controller is gone and every change fails until the session restarts; a failed change is dropped, so the two can disagree. | Minor: debug tool |
@@ -70,7 +68,7 @@ Everything the passes left unsolved, gathered here as of commit `72f0c59` (2026-
 | R0-7 | Whether a Steam game with Steam Input off inherits an `SDL_GAMECONTROLLER_IGNORE_DEVICES` that hides Padwight's controller. Checked only with Steam Input on. | H-3 |
 | R9-8 | The `hotplug_`, `daemon_`, `idle_` and profiling tests should stop at once when a daemon runs on the host; not yet tried with one running. | Run them with the host daemon up |
 
-Every fix with a hardware check (H-1 to H-16, [below](#hardware-checks)) is also unconfirmed on real devices until that check passes.
+Every fix with a hardware check (H-1 to H-18, [below](#hardware-checks)) is also unconfirmed on real devices until that check passes.
 
 ### Long files still to split
 
@@ -80,7 +78,7 @@ R0-10, R1-4, R2-7, R4-9 and R8-8 shrank the worst files, but these are still wel
 |---|---|---|
 | `config.rs` | 2,146 | The stick and trigger types (R4-9) |
 | `gui/items.rs` | 1,643 | |
-| `daemon.rs` | 1,524 | |
+| `daemon.rs` | 1,519 | |
 | `gui.rs` | 1,429 | |
 | `gui/profile.rs` | 1,425 | |
 | `engine.rs` | 1,186 | `emit`, which predates the size lints (R2-7) |
@@ -237,7 +235,7 @@ Read all of `ipc.rs`, `monitor.rs`, `main.rs`, `tray.rs` and `tray/windows.rs`, 
 | R5-10 | `media/mixer.rs` | Through `pactl` (PulseAudio without `wpctl`), D-pad up at full volume changed the player's volume instead, unlike `wpctl` and Windows, and a step from 98% went to 103%. | **Fixed.** The volume is set outright and capped at full; at full there is nothing to do. Test: `pactl_raises_the_volume_no_further_than_full`. |
 | R5-11 | `record/windows.rs` | A recorder that exited by itself left its stdin pipe in the list `stop` reads, for good. | **Fixed.** Ended recorders' pipes are dropped when the next one starts. |
 | R5-12 | `record/windows.rs` | Linux ends the recorder with the daemon (`PR_SET_PDEATHSIG`). Windows has nothing like it: if the daemon dies, ffmpeg's stdin closes, and ffmpeg may not take that as a reason to stop, so it would record until the disk is full. | **Open: needs Windows.** I-12. A job object would kill it, but then the MP4 isn't finished and won't play. |
-| R5-13 | `daemon.rs` (`focused_target`) | Without focus tracking, force quit and recording scan every process on the daemon thread, twice per force-quit hold. | **Open, minor.** Only on desktops without focus tracking, and only when the hold starts and when it fires. |
+| R5-13 | `daemon.rs` (`focused_target`) | Without focus tracking, force quit and recording scan every process on the daemon thread, twice per force-quit hold. | **Fixed, 2026-10-13.** `focused_target` (now in `daemon/auto_switch.rs`) takes the active game's process as the 2-second scan last recorded it (`launches`), while it still runs. With automatic switching off that scan doesn't run, so the processes are still read then. Test: `without_focus_tracking_the_target_is_the_scanned_launch_while_it_runs`. Desktop check H-17. |
 
 Checked and found sound:
 
@@ -261,7 +259,7 @@ Read in full: `menu.rs` and `menu/grid.rs`, `menu/touch.rs`, `radial.rs`, `nav.r
 | R6-5 | `daemon/auto_switch.rs`, `layout_editor/menus.rs` | A focus change while the in-game menu was open switched the profile under it (another game's window, a launcher, the desktop), so the menu went on editing the other game. Edit Controls' page for a menu item keeps the item's position, and in the other game's menu of the same position that could be past the end: Move up, Move down, Remove and the button row then panicked. Handing a Steam game to Steam Input also let go of the controller driving the menu, which closed it without asking about unsaved changes. | **Fixed, both halves.** Focus changes and the process scan wait while the in-game menu is open, and the window in front is handled once it closes (only if focus moved, so a profile chosen in the menu stays). The item page does nothing for an item that isn't there. Test: `an_item_page_left_past_the_end_of_its_menu_does_nothing` (panics on the old code). Desktop check H-11. |
 | R6-6 | `daemon.rs` (`set_profile`) | A profile switch writes `config.toml`, which holds the rumble strength and other settings Quick Settings changes. Switching profile from Quick Settings' Profile row wrote those unsaved changes to disk, so Discard reverted them in the daemon only, and the next start brought them back. | **Fixed.** Nothing is written while the in-game menu is open; its Save writes the whole config. Desktop check H-11. |
 | R6-7 | `daemon/overlay_input.rs`, `daemon/in_game_menu.rs` | When the in-game menu closes without its question (the controller driving it is unplugged, remapping is switched off from the tray, the overlay window dies), its unsaved changes stay applied but unsaved, and the next save writes them. | **Open: needs a decision.** Keeping them is kind to a dropped controller's work; discarding them would match "nothing is saved until Save". |
-| R6-8 | `guide_menu.rs` | Opening the Guide overlay reads every process's name from `/proc` on the daemon thread, to know whether Steam runs: about 3 ms for 526 processes (timed with an equivalent Python loop). | **Open, minor.** Like R5-13. Could be cached by the scan that already runs every 2 seconds. |
+| R6-8 | `guide_menu.rs` | Opening the Guide overlay reads every process's name from `/proc` on the daemon thread, to know whether Steam runs: about 3 ms for 526 processes (timed with an equivalent Python loop). | **Fixed, 2026-10-13.** The 2-second scan doesn't run on desktops with focus tracking, so it couldn't be reused. The menu opens without the Steam overlay row, a thread looks for Steam, and the row is added when it answers (`Msg::SteamRunning`); the cursor stays in range if the row goes. No automated test (the daemon needs uinput). Desktop check H-18. |
 | R6-9 | `daemon.rs` | R1-4 left the overlay and menu handling to this pass. | **Done.** Moved, with no change in behaviour, to `daemon/overlay.rs`, `overlay_input.rs`, `info_overlays.rs`, `guide.rs`, `in_game_menu.rs` and `offers.rs`. `daemon.rs` is now 1,523 lines. |
 
 Checked and found sound:
@@ -388,3 +386,5 @@ These can't be checked without real controllers and Steam. When they pass, they 
 | H-14 | On Windows, with a game whose pack carries a font used by an info overlay, bring the game up. The overlay draws in the pack's font. | R7-4 |
 | H-15 | On Windows, press Ctrl+C in a console running `padwight daemon`: it releases what it holds and exits. Then run `padwight debug --attach --live` against a `--debug` daemon, hold a button mapped to a key, and press Ctrl+C: `padwight status` no longer lists the debug controller, and the key comes up. | R9-1 |
 | H-16 | On a DualSense or DualShock 4, run `padwight disable; padwight enable` in one line, then move a finger on the touchpad. The desktop pointer doesn't move, and the log has no `touchpad: cannot take`. | R1-3 |
+| H-17 | On a desktop without focus tracking (`padwight status` says process scan), with automatic switching on and a game with a rule running, hold Force Quit. The toast names the game, and the game ends. Close the game, wait under 2 seconds and hold it again: "Nothing to force quit". | R5-13 |
+| H-18 | With Steam running, open the Guide overlay: the Steam overlay row is there at once. Quit Steam and open it again: the row isn't. | R6-8 |

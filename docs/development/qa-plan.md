@@ -67,6 +67,7 @@ Each item has the expected result in the last column. Record the OS, compositor,
 | D-6 | On labwc or Wayfire, restart the daemon with a game that has a rule in front, then switch between two windows (code review H-6). | The game's profile comes on without touching a window. The log shows no `no window has focus` between the two windows. |
 | D-7 | On GNOME, log out and in once to load the updated extension, then restart the daemon with a game that has a rule in front (code review H-7). | The game's profile comes on straight away. |
 | D-8 | On Sway, from a game with a rule, go to an empty workspace and back. | The default profile on the empty workspace, the game's on return. |
+| D-9 | On a desktop without focus tracking, with automatic switching on, hold Force Quit over a game with a rule, then again just after closing it (code review H-17). | The first hold names and ends the game; the second says there is nothing to force quit. |
 
 ### 3.3 Overlays, layers and menus
 
@@ -80,6 +81,7 @@ Each item has the expected result in the last column. Record the OS, compositor,
 | O-6 | Open the in-game menu over a game with a rule, change a setting, then bring another window to the front with the mouse. Switch profile on Quick Settings' Profile row and Discard (code review H-11). | The menu keeps editing the game; the profile follows the window only once the menu closes. After Discard, `config.toml` has the settings as they were. |
 | O-7 | With the in-game menu open, save a change in the settings window (code review H-12). | The in-game menu closes, and opened again shows the new values without asking about unsaved changes. |
 | O-8 | Turn off every audio output, move a menu overlay's cursor, then turn one back on and move it again (code review H-13). | The log says once that there is no audio device. The cues sound again without a restart. |
+| O-9 | Open the Guide overlay with Steam running, then with Steam closed (code review H-18). | The Steam overlay row shows at once while Steam runs, and not otherwise. |
 
 ### 3.4 Games and packs
 

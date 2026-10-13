@@ -118,6 +118,8 @@ enum Msg {
     Media(MediaState),
     /// A choice from the tray icon's menu.
     Tray(tray::Command),
+    /// Whether Steam runs, looked up as the Guide overlay opened.
+    SteamRunning(bool),
 }
 
 struct Managed {
@@ -400,7 +402,8 @@ struct Offers {
 
 
 /// The Guide overlay's menu while it's up: the cursor, and whether Steam was running when it
-/// opened (the Steam overlay row is listed only then).
+/// opened (the Steam overlay row is listed only then). That is learned off the daemon thread,
+/// so the row joins the menu a moment after it opens.
 struct GuideMenu {
     cursor: usize,
     steam: bool,
@@ -717,25 +720,6 @@ impl Daemon {
         self.check_info_changes();
     }
 
-    /// What to force quit, by name, and its process: the focused window (a game with a rule
-    /// goes by the game's name), unless it is the desktop or this app. Without focus tracking,
-    /// only the active game's running process.
-    fn focused_target(&self) -> Option<(String, u32)> {
-        if self.focus_backend == FocusBackend::ProcessScan {
-            let active = &self.config.active_game().name;
-            return crate::focus::game_launch_in(&self.config, &crate::focus::running_processes()).filter(|(game, _)| game == active);
-        }
-        let window = self.focused.as_ref()?;
-        if let Some(game) = crate::focus::game_launch(&self.config, window) {
-            return Some(game);
-        }
-        if window.pid == 0 || crate::quit::protected(&window.exe) || crate::focus::is_own_window(window) {
-            return None;
-        }
-        let name = [&window.title, &window.exe, &window.class].into_iter().find(|n| !n.is_empty())?;
-        Some((name.clone(), window.pid))
-    }
-
     /// Starts, cancels or completes the countdown of a ForceQuit action being held.
     fn update_force_quit(&mut self) {
         let held = self.devices.values().any(|d| d.engine.force_quit_held());
@@ -973,6 +957,7 @@ impl Daemon {
             Msg::Focus(event) => self.focus_event(event),
             Msg::Toast(lines) => self.say(lines),
             Msg::Media(state) => self.update_media(state),
+            Msg::SteamRunning(running) => self.guide_menu_steam(running),
             Msg::RecordingStarted { pid } => {
                 (self.recording, self.recording_starting) = (Some(pid), false);
                 self.say(vec!["Recording started".into()]);
