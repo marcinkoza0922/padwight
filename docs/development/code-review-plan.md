@@ -86,7 +86,6 @@ These parts were only searched (for unwraps, indexing, clamps and slow work), no
 ### Tools not yet built
 
 - A replay of a recorded input stream through the daemon's scan and dispatch, and a container test that a uhid pad appearing while `steam_has_pads` is set isn't grabbed (R0-1).
-- A sweep that loads, saves and compares every config folder in `tests/fixtures` and every library pack.
 
 ## Pass 0: Steam hand-off and game detection
 
@@ -351,7 +350,7 @@ Earlier tools that later passes will need are listed in `CLAUDE.md` (overlay and
 Tools later passes are likely to want, to be built when a finding needs them:
 
 - **Pass 1 (still worth having):** a way to replay a recorded input stream through the daemon's scan and dispatch without hardware. `daemon::kernel_tests` and `tests/hotplug.rs` cover parts of this in a container. Check that R0-1 has a container test there: a uhid pad that appears while `steam_has_pads` is set must not be grabbed.
-- **Pass 4:** a sweep that loads every config folder in `tests/fixtures` and every library pack, saves them and compares the result (A-5 and A-6 cover most of this).
+- **Pass 4 (built, 2026-10-13):** `library::tests::a_config_with_every_library_game_saves_and_loads_unchanged` adds every library pack to one config, saves it as folders, loads it back unchanged, and checks a second save writes the same files. `tests/fixtures` holds no config folders, only the one-file default config the integration tests lay out.
 
 ## Hardware checks
 

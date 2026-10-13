@@ -227,6 +227,52 @@ mod tests {
         }
     }
 
+    /// Every library game added to one config, saved as folders and loaded back, comes back the
+    /// same, and saving what was loaded writes the same files.
+    #[test]
+    fn a_config_with_every_library_game_saves_and_loads_unchanged() {
+        let mut config = Config::default();
+        for (file, text) in files::FILES {
+            let plan = pack::plan(&config, pack::parse(text).unwrap(), true);
+            pack::apply(&mut config, &plan, &pack::Choices::default());
+            assert!(config.games.last().is_some_and(|g| g.origin.is_some()), "{file} was added");
+        }
+        assert_eq!(config.games.len(), files::FILES.len());
+
+        let dir = std::env::temp_dir().join(format!("padwight-library-roundtrip-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let (first, second) = (dir.join("first/config.toml"), dir.join("second/config.toml"));
+        config.save_to(&first).unwrap();
+        let loaded = Config::load_from(&first).unwrap();
+        for (a, b) in loaded.games.iter().zip(&config.games) {
+            assert_eq!(a, b, "{}", b.name);
+        }
+        assert_eq!(loaded, config);
+        loaded.save_to(&second).unwrap();
+        let saved = tree(&dir.join("first"));
+        let setups = saved.keys().filter(|p| p.ends_with("setup.toml")).count();
+        assert_eq!(setups, config.games.len() + 1, "a folder per game, and General");
+        assert_eq!(saved, tree(&dir.join("second")));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Every file under `root`, by its path inside it, with its contents.
+    fn tree(root: &std::path::Path) -> std::collections::BTreeMap<std::path::PathBuf, Vec<u8>> {
+        let mut files = std::collections::BTreeMap::new();
+        let mut dirs = vec![root.to_path_buf()];
+        while let Some(dir) = dirs.pop() {
+            for entry in std::fs::read_dir(&dir).unwrap().flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    dirs.push(path);
+                } else {
+                    files.insert(path.strip_prefix(root).unwrap().to_path_buf(), std::fs::read(&path).unwrap());
+                }
+            }
+        }
+        files
+    }
+
     #[test]
     fn damaged_packs_are_refused_or_handled_without_panicking() {
         let base = Config::default();
