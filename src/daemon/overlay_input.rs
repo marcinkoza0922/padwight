@@ -63,8 +63,9 @@ impl Daemon {
             self.last_active = None;
             self.broadcast(None);
         }
-        // An overlay its controller left can't be driven any more.
-        if self.active.is_some() && self.overlay_driver() == Some(id) {
+        // An overlay its controller left can't be driven any more. The in-game menu waits for
+        // another controller rather than lose its changes.
+        if self.active.is_some() && self.overlay_driver() == Some(id) && !self.settings_lost_controller() {
             self.close_overlay();
         }
     }

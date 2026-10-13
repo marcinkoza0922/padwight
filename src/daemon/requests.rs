@@ -35,8 +35,9 @@ impl Daemon {
             },
             Request::SetEnabled(enabled) => {
                 self.config.enabled = enabled;
+                let kept = self.settings_remapping_set(enabled);
                 if !enabled {
-                    self.release_devices(|_| true);
+                    self.release_devices(|id, _| Some(id) != kept);
                 }
                 self.scan();
                 match self.config.save_settings() {
@@ -140,7 +141,7 @@ impl Daemon {
         self.refresh_scope();
         let ignored = self.config.ignored_devices.clone();
         let enabled = self.config.enabled;
-        self.release_devices(|d| !enabled || ignored.contains(&d.name));
+        self.release_devices(|_, d| !enabled || ignored.contains(&d.name));
         self.resync_all();
         self.broadcast_overlay();
         self.recheck_steam_handoff();

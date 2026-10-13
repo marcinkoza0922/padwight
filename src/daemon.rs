@@ -29,7 +29,7 @@ use crate::{
     media::{MediaOutcome, MediaSession, MediaState},
     offer::{OfferOutcome, OfferSession},
     menu::{MenuOutcome, MenuSession},
-    system_menu::{Outcome as SystemOutcome, Page, SystemMenu},
+    system_menu::{Hold, Outcome as SystemOutcome, Page, SystemMenu},
     overlay::{OverlayAction, OverlayController, OverlayFrame, OverlayView},
     rumble,
     tray::{self, TrayIcon},
@@ -1015,9 +1015,10 @@ impl Daemon {
             dev.engine.release_all(false, &mut out);
             dev.dispatch(&mut self.kbm, out);
             // A menu is run by the controller that opened it, and with no controller
-            // left nothing could close an overlay.
+            // left nothing could close an overlay. The in-game menu waits for one instead.
             let orphaned = match &self.active {
                 Some(Active::Menu { device, .. }) => *device == id || self.devices.is_empty(),
+                Some(Active::Settings(..)) => false,
                 Some(_) => self.devices.is_empty(),
                 None => false,
             };
@@ -1093,6 +1094,9 @@ impl Daemon {
         let logged = self.log_input(id, &events, Instant::now());
         let fires: Vec<bool> = events.iter().map(|ev| self.opener_fired(id, ev)).collect();
         let tapped = self.opener_tapped(&events, &fires);
+        if self.take_over_settings(id, &events) {
+            return;
+        }
         if self.drives_overlay(id) {
             return self.overlay_input(id, events, &fires);
         }
@@ -1304,8 +1308,8 @@ impl Daemon {
     }
 
     /// Stops managing (ungrabs) devices matching `pred`.
-    fn release_devices(&mut self, pred: impl Fn(&Managed) -> bool) {
-        let ids: Vec<u64> = self.devices.iter().filter(|(_, d)| pred(d)).map(|(id, _)| *id).collect();
+    fn release_devices(&mut self, pred: impl Fn(u64, &Managed) -> bool) {
+        let ids: Vec<u64> = self.devices.iter().filter(|(id, d)| pred(**id, d)).map(|(id, _)| *id).collect();
         for id in ids {
             let Some(mut dev) = self.devices.remove(&id) else { continue };
             dev.stop_threads();

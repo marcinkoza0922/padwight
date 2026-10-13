@@ -55,6 +55,16 @@ enum Screen {
     Confirm(Box<Screen>, usize, Exit),
 }
 
+/// Why the menu is on hold, drawn as a prompt over it until it carries on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Hold {
+    /// The controller driving it went away: the next controller to press a button takes over.
+    NoController,
+    /// Remapping was turned off elsewhere (the tray) with changes not saved: the controller
+    /// driving the menu is kept until Save or Discard.
+    RemappingOff,
+}
+
 /// How the menu was being left when it asked about unsaved changes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Exit {
@@ -94,6 +104,8 @@ pub struct SystemMenu {
     big_steps: bool,
     /// Turn remapping off was chosen once; choosing it again does it.
     remapping_armed: bool,
+    /// On hold, and why.
+    hold: Option<Hold>,
 }
 
 impl SystemMenu {
@@ -115,6 +127,7 @@ impl SystemMenu {
             paddles: false,
             big_steps: false,
             remapping_armed: false,
+            hold: None,
         }
     }
 
@@ -138,6 +151,9 @@ impl SystemMenu {
     /// Handles one controller event. `None` when nothing needs the daemon. A direction held on
     /// the D-pad or the left stick repeats through [`Self::tick`].
     pub fn handle(&mut self, ev: InputEvent, now: Instant, config: &mut Config) -> Option<Outcome> {
+        if let Some(hold) = self.hold {
+            return self.held(hold, ev);
+        }
         let step = match ev {
             InputEvent::Button(b, pressed) if crate::nav::dpad_dir(b).is_some() => {
                 let dir = crate::nav::dpad_dir(b)?;
@@ -236,9 +252,54 @@ impl SystemMenu {
     /// asks about first (the question then needs an answer).
     pub fn guide_pressed(&mut self, config: &Config) -> Option<Outcome> {
         match self.screen {
+            _ if self.hold.is_some() => None,
             Screen::Confirm(..) => None,
             _ if *self.saved == *config => Some(Outcome::Close),
             _ => self.leave(config, Exit::Close),
+        }
+    }
+
+    /// The config as it was when the menu opened, which Discard puts back.
+    pub fn saved(&self) -> &Config {
+        &self.saved
+    }
+
+    /// Whether `config` has changes the menu hasn't saved.
+    pub fn unsaved(&self, config: &Config) -> bool {
+        *self.saved != *config
+    }
+
+    /// Remapping was turned on or off elsewhere, which is saved at once: it isn't a change of
+    /// the menu's.
+    pub fn remapping_set(&mut self, enabled: bool) {
+        self.saved.enabled = enabled;
+    }
+
+    /// Puts the menu on hold, `why`. A held direction stops repeating.
+    pub fn hold(&mut self, why: Hold) {
+        self.hold = Some(why);
+        self.repeat.stop();
+        self.stick = (0.0, 0.0);
+        self.stick_dir = crate::nav::StickDir::default();
+        self.remapping_armed = false;
+    }
+
+    /// Takes the menu off hold, where it was.
+    pub fn carry_on(&mut self) {
+        self.hold = None;
+    }
+
+    /// Why the menu is on hold, if it is.
+    pub fn on_hold(&self) -> Option<Hold> {
+        self.hold
+    }
+
+    /// Input while on hold: once remapping is off, A saves and X discards, then the menu closes.
+    fn held(&self, hold: Hold, ev: InputEvent) -> Option<Outcome> {
+        match (hold, ev) {
+            (Hold::RemappingOff, InputEvent::Button(Button::South, true)) => Some(Outcome::Save { back: false }),
+            (Hold::RemappingOff, InputEvent::Button(Button::West, true)) => Some(Outcome::Discard { saved: self.saved.clone(), back: false }),
+            _ => None,
         }
     }
 
@@ -353,14 +414,18 @@ impl SystemMenu {
     /// What the overlay draws now. The unsaved-changes question is drawn over the screen it was
     /// asked on.
     pub fn view(&self, config: &Config) -> MenuView {
-        match &self.screen {
+        let mut view = match &self.screen {
             Screen::Confirm(left, cursor, how) => {
                 let mut view = self.screen_view(left, *cursor, config);
                 view.prompt = Some(Box::new(self.unsaved_prompt(*how, view.style.clone())));
                 view
             }
             screen => self.screen_view(screen, self.cursor, config),
+        };
+        if let Some(hold) = self.hold {
+            view.prompt = Some(Box::new(hold_prompt(hold, view.style.clone())));
         }
+        view
     }
 
     /// The question asked when the menu is left with changes not saved, in the look of the offer
@@ -413,6 +478,32 @@ impl SystemMenu {
     }
 }
 
+/// What the menu shows while on hold, in the look of the unsaved-changes question.
+fn hold_prompt(hold: Hold, mut style: OverlayStyle) -> OfferView {
+    style.background.opacity = 1.0;
+    let (title, detail, answers, hint) = match hold {
+        Hold::NoController => (
+            "Controller disconnected",
+            "Reconnect it, or press a button on another controller, to carry on.",
+            Vec::new(),
+            "The menu waits where it was",
+        ),
+        Hold::RemappingOff => (
+            "Remapping is off",
+            "It was turned off while you had changes here that aren't saved yet.",
+            vec![("{confirm}", "Save"), ("{west}", "Discard")],
+            "Save or Discard, then the controller is let go",
+        ),
+    };
+    OfferView {
+        title: title.into(),
+        detail: detail.into(),
+        answers: answers.into_iter().map(|(b, t)| (b.into(), t.into())).collect(),
+        hint: hint.into(),
+        style,
+    }
+}
+
 /// The step a direction makes.
 fn dir_step((x, y): crate::nav::Dir) -> Step {
     match (x, y) {
@@ -461,257 +552,4 @@ pub fn main_page(style: OverlayStyle, cursor: usize) -> MenuView {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::config::{MouseResponse, Stick, StickAction};
-
-    fn press(b: Button) -> InputEvent {
-        InputEvent::Button(b, true)
-    }
-
-    impl SystemMenu {
-        fn handle_now(&mut self, ev: InputEvent, config: &mut Config) -> Option<Outcome> {
-            self.handle(ev, Instant::now(), config)
-        }
-    }
-
-    /// A config whose active profile has a mouse-moving left stick.
-    fn mouse_config() -> Config {
-        let mut config = Config::default();
-        let profile = &mut config.general.profiles[0];
-        profile.left_stick.action = StickAction::Mouse { speed: 1000.0, response: MouseResponse::default(), invert_y: false };
-        config
-    }
-
-    fn speed(config: &Config) -> f32 {
-        match config.active().unwrap().left_stick.action {
-            StickAction::Mouse { speed, .. } => speed,
-            _ => panic!("left stick is not a mouse"),
-        }
-    }
-
-    #[test]
-    fn the_guide_rows_open_their_page_directly() {
-        let config = mouse_config();
-        assert_eq!(SystemMenu::new(&config).on_page(Page::Quick).screen, Screen::Quick);
-        assert!(matches!(SystemMenu::new(&config).on_page(Page::EditControls).screen, Screen::Editor(_)));
-        assert_eq!(SystemMenu::new(&config).on_page(Page::Main).screen, Screen::Main);
-    }
-
-    #[test]
-    fn b_on_a_page_opened_from_the_guide_goes_back_to_the_guide() {
-        let mut config = mouse_config();
-        let mut quick = SystemMenu::new(&config).on_page(Page::Quick);
-        assert_eq!(quick.handle_now(press(Button::East), &mut config), Some(Outcome::ReturnToGuide));
-        let mut editor = SystemMenu::new(&config).on_page(Page::EditControls);
-        assert_eq!(editor.handle_now(press(Button::East), &mut config), Some(Outcome::ReturnToGuide));
-    }
-
-    #[test]
-    fn main_menu_opens_quick_settings_first_and_edit_controls_last() {
-        let mut config = mouse_config();
-        let mut menu = SystemMenu::new(&config);
-        assert_eq!(menu.handle_now(press(Button::South), &mut config), None);
-        assert_eq!(menu.screen, Screen::Quick);
-        assert_eq!(menu.handle_now(press(Button::East), &mut config), None);
-        assert_eq!(menu.screen, Screen::Main);
-        assert_eq!(menu.handle_now(press(Button::DpadDown), &mut config), None);
-        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::EditControls));
-        // B leaves the editor for the main page, and B again closes the menu.
-        assert_eq!(menu.handle_now(press(Button::East), &mut config), None);
-        assert_eq!(menu.handle_now(press(Button::East), &mut config), Some(Outcome::Close));
-    }
-
-    #[test]
-    fn quick_settings_only_lists_what_the_profile_uses() {
-        let mut config = mouse_config();
-        config.general.profiles.truncate(1);
-        assert_eq!(quick::rows(&config, &config), [Row::StickSpeed(Stick::Left), Row::InvertY, Row::Deadzone(Stick::Left), Row::Deadzone(Stick::Right), Row::Rumble, Row::OverlaySize, Row::NintendoLayout, Row::Remapping]);
-        // A second profile adds the profile switch.
-        config.general.profiles.push(config.general.profiles[0].clone());
-        config.general.profiles[1].name = "Other".into();
-        assert_eq!(quick::rows(&config, &config).last(), Some(&Row::Remapping));
-        assert!(quick::rows(&config, &config).contains(&Row::Profile));
-    }
-
-    #[test]
-    fn quick_nintendo_layout_sets_the_active_game_only() {
-        let mut config = mouse_config();
-        assert!(!config.active_nintendo_layout());
-        // Picking the row turns it on for the game the menu is over, and leaves Settings alone.
-        assert_eq!(quick::adjust(Row::NintendoLayout, 1, false, &mut config, &Config::default()), Some(Outcome::Changed));
-        assert!(config.active_nintendo_layout());
-        assert_eq!(config.general.nintendo_layout, Some(true));
-        assert!(!config.nintendo_layout);
-        assert_eq!(quick::label(Row::NintendoLayout, &config, &config), "Nintendo button layout: on");
-        assert_eq!(quick::adjust(Row::NintendoLayout, 1, false, &mut config, &Config::default()), Some(Outcome::Changed));
-        assert_eq!(config.general.nintendo_layout, Some(false));
-    }
-
-    #[test]
-    fn closing_with_unsaved_changes_asks_first() {
-        let mut config = mouse_config();
-        let saved = config.clone();
-        let mut menu = SystemMenu::new(&saved);
-        // Change the stick speed: now the config differs from what was saved.
-        menu.handle_now(press(Button::South), &mut config);
-        menu.handle_now(press(Button::DpadRight), &mut config);
-        menu.handle_now(press(Button::East), &mut config);
-        assert_eq!(menu.screen, Screen::Main);
-        assert_eq!(menu.handle_now(press(Button::East), &mut config), None);
-        assert!(matches!(menu.screen, Screen::Confirm(..)));
-        // B keeps editing, back on the main page.
-        assert_eq!(menu.handle_now(press(Button::East), &mut config), None);
-        assert_eq!(menu.screen, Screen::Main);
-        // Closing again asks again: A saves and X discards, handing back what was saved.
-        menu.handle_now(press(Button::East), &mut config);
-        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Save { back: false }));
-        assert_eq!(
-            menu.handle_now(press(Button::West), &mut config),
-            Some(Outcome::Discard { saved: Box::new(saved.clone()), back: false })
-        );
-    }
-
-    #[test]
-    fn the_question_is_drawn_over_the_page_it_was_asked_on() {
-        let mut config = mouse_config();
-        let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
-        let plain = menu.view(&config);
-        assert!(plain.prompt.is_none());
-        menu.handle_now(press(Button::DpadRight), &mut config);
-        menu.handle_now(press(Button::East), &mut config);
-        let asked = menu.view(&config);
-        assert_eq!((asked.title.as_str(), asked.crumbs.as_slice()), ("Quick Settings", &["Guide".to_string()][..]), "the page stays");
-        let prompt = asked.prompt.expect("the question is on top of it");
-        assert_eq!(prompt.answers.iter().map(|(_, t)| t.as_str()).collect::<Vec<_>>(), ["Save", "Discard", "Keep editing"]);
-    }
-
-    #[test]
-    fn answering_after_back_returns_to_the_guide_but_after_guide_it_closes() {
-        let mut config = mouse_config();
-        let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
-        menu.handle_now(press(Button::DpadRight), &mut config);
-        menu.handle_now(press(Button::East), &mut config);
-        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Save { back: true }));
-
-        let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
-        menu.handle_now(press(Button::DpadRight), &mut config);
-        assert_eq!(menu.guide_pressed(&config), None);
-        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Save { back: false }));
-
-        // Opened with Guide + Start, there is no Guide overlay to go back to.
-        let mut menu = SystemMenu::new(&Config::default());
-        menu.handle_now(press(Button::East), &mut config);
-        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Save { back: false }));
-    }
-
-    #[test]
-    fn keep_editing_goes_back_to_the_page_that_was_left() {
-        let mut config = mouse_config();
-        let saved = config.clone();
-        let mut menu = SystemMenu::new(&saved).on_page(Page::Quick);
-        assert_eq!(menu.view(&config).crumbs, ["Guide"], "opened from the Guide overlay");
-        menu.handle_now(press(Button::DpadDown), &mut config);
-        menu.handle_now(press(Button::South), &mut config);
-        assert_eq!(menu.handle_now(press(Button::East), &mut config), None, "unsaved, so it asks");
-        assert!(matches!(menu.screen, Screen::Confirm(..)));
-        assert_eq!(menu.view(&config).crumbs, ["Guide"]);
-        menu.handle_now(press(Button::East), &mut config);
-        assert_eq!(menu.screen, Screen::Quick, "B keeps editing on Quick Settings");
-        assert_eq!(menu.cursor, 1, "on the row it was on");
-    }
-
-    #[test]
-    fn a_profile_switch_keeps_the_cursor_on_the_profile_row() {
-        let mut config = mouse_config();
-        config.general.profiles.truncate(1);
-        let mut other = config.general.profiles[0].clone();
-        other.name = "Other".into();
-        other.left_stick.action = StickAction::Disabled;
-        config.general.profiles.push(other);
-        let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
-        menu.cursor = quick::rows(&config, &config).iter().position(|r| *r == Row::Profile).unwrap();
-        let Some(Outcome::Switch(target)) = menu.handle_now(press(Button::South), &mut config) else { panic!("no switch") };
-        config.active = target;
-        menu.profile_switched(&config);
-        assert_eq!(quick::rows(&config, &config)[menu.cursor], Row::Profile, "fewer rows now, still on Profile");
-    }
-
-    #[test]
-    fn guide_closes_the_menu_but_asks_about_unsaved_changes_first() {
-        let mut config = mouse_config();
-        let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
-        assert_eq!(menu.guide_pressed(&config), Some(Outcome::Close), "closes, not back to the Guide overlay");
-        menu.handle_now(press(Button::DpadRight), &mut config);
-        assert_eq!(menu.guide_pressed(&config), None);
-        assert!(matches!(menu.screen, Screen::Confirm(..)));
-        assert_eq!(menu.guide_pressed(&config), None, "the question needs an answer");
-    }
-
-    #[test]
-    fn stick_speed_steps_up_and_down() {
-        let mut config = mouse_config();
-        let mut menu = SystemMenu::new(&config);
-        menu.handle_now(press(Button::South), &mut config);
-        assert_eq!(menu.handle_now(press(Button::DpadRight), &mut config), Some(Outcome::Changed));
-        assert!((speed(&config) - 1100.0).abs() < 0.01);
-        assert_eq!(menu.handle_now(press(Button::DpadLeft), &mut config), Some(Outcome::Changed));
-        assert!((speed(&config) - 1000.0).abs() < 0.01);
-    }
-
-    #[test]
-    fn holding_right_keeps_raising_the_speed() {
-        let mut config = mouse_config();
-        let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
-        let t0 = Instant::now();
-        assert_eq!(menu.handle(press(Button::DpadRight), t0, &mut config), Some(Outcome::Changed));
-        assert_eq!(menu.tick(t0, &mut config), None, "not before the delay");
-        let delay = crate::nav::REPEAT_DELAY;
-        assert_eq!(menu.tick(t0 + delay, &mut config), Some(Outcome::Changed));
-        assert!((speed(&config) - 1210.0).abs() < 0.1, "{}", speed(&config));
-        menu.handle(InputEvent::Button(Button::DpadRight, false), t0 + delay, &mut config);
-        assert_eq!(menu.next_deadline(), None);
-    }
-
-    #[test]
-    fn rb_makes_big_steps_and_a_changed_number_says_what_it_was() {
-        let mut config = mouse_config();
-        let saved = config.clone();
-        let mut menu = SystemMenu::new(&saved).on_page(Page::Quick);
-        menu.handle_now(press(Button::RightBumper), &mut config);
-        menu.handle_now(press(Button::DpadRight), &mut config);
-        assert!((speed(&config) - 1500.0).abs() < 0.1, "{}", speed(&config));
-        assert_eq!(menu.view(&config).items[0].label, "Left stick speed: 1500 px/s (was 1000 px/s)");
-        menu.handle_now(InputEvent::Button(Button::RightBumper, false), &mut config);
-        menu.handle_now(press(Button::DpadRight), &mut config);
-        assert!((speed(&config) - 1650.0).abs() < 0.1);
-    }
-
-    #[test]
-    fn invert_y_flips_every_flag_at_once() {
-        let mut config = mouse_config();
-        let mut menu = SystemMenu::new(&config);
-        menu.handle_now(press(Button::South), &mut config);
-        menu.handle_now(press(Button::DpadDown), &mut config);
-        assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Changed));
-        let profile = config.active().unwrap();
-        assert!(quick::inverted_y(profile));
-        assert!(matches!(profile.left_stick.action, StickAction::Mouse { invert_y: true, .. }));
-        assert!(profile.gyro.invert_y);
-        menu.handle_now(press(Button::South), &mut config);
-        assert!(!quick::inverted_y(config.active().unwrap()));
-    }
-
-    #[test]
-    fn stick_push_steps_once_until_let_go() {
-        let mut config = mouse_config();
-        let mut menu = SystemMenu::new(&config);
-        menu.handle_now(InputEvent::Axis(Axis::LeftY, 0.9), &mut config);
-        assert_eq!(menu.cursor, 1);
-        menu.handle_now(InputEvent::Axis(Axis::LeftY, 1.0), &mut config);
-        assert_eq!(menu.cursor, 1);
-        menu.handle_now(InputEvent::Axis(Axis::LeftY, 0.0), &mut config);
-        menu.handle_now(InputEvent::Axis(Axis::LeftY, -0.9), &mut config);
-        assert_eq!(menu.cursor, 0);
-    }
-}
+mod tests;

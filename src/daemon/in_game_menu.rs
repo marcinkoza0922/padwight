@@ -97,6 +97,91 @@ impl Daemon {
         } else {
             self.close_overlay();
         }
+        // Remapping turned off while the menu had changes kept its controller until now.
+        if !self.config.enabled {
+            self.release_devices(|_, _| true);
+        }
+    }
+
+    /// The controller driving the in-game menu went away. The menu waits on hold for another
+    /// controller; with remapping off none can come, so it closes and its unsaved changes are
+    /// discarded. `false` when the menu isn't up.
+    pub(super) fn settings_lost_controller(&mut self) -> bool {
+        let Some(Active::Settings(menu, _)) = &mut self.active else { return false };
+        if !self.config.enabled {
+            self.discard_settings();
+            return true;
+        }
+        log!("the in-game menu's controller went away: it waits for another");
+        menu.hold(Hold::NoController);
+        self.broadcast_overlay();
+        true
+    }
+
+    /// A button pressed while the in-game menu waits for a controller makes that controller the
+    /// menu's. The press only takes it over. `true` when it did.
+    pub(super) fn take_over_settings(&mut self, id: u64, events: &[InputEvent]) -> bool {
+        let Some(Active::Settings(menu, device)) = &mut self.active else { return false };
+        if menu.on_hold() != Some(Hold::NoController) || !events.iter().any(|ev| matches!(ev, InputEvent::Button(_, true))) {
+            return false;
+        }
+        menu.carry_on();
+        *device = id;
+        // What its mappings hold is let go of, as for the controller that opened the menu.
+        if let Some(dev) = self.devices.get_mut(&id) {
+            log!("{} took over the in-game menu", dev.name);
+            let mut out = Vec::new();
+            dev.engine.release_all(true, &mut out);
+            dev.refresh_layers(&self.config);
+            dev.dispatch(&mut self.kbm, out);
+        }
+        self.broadcast_overlay();
+        true
+    }
+
+    /// Remapping was turned on or off from the tray (or the command line), which is saved at
+    /// once. The in-game menu, if up, closes, unless it has changes not saved: then it keeps its
+    /// controller and asks to save them, or carries on if remapping comes back on. Returns the
+    /// controller kept.
+    pub(super) fn settings_remapping_set(&mut self, enabled: bool) -> Option<u64> {
+        let Some(Active::Settings(menu, device)) = &mut self.active else { return None };
+        menu.remapping_set(enabled);
+        let (hold, unsaved, device) = (menu.on_hold(), menu.unsaved(&self.config), *device);
+        match hold {
+            Some(Hold::RemappingOff) if enabled => menu.carry_on(),
+            _ if enabled => return None,
+            // No controller drives it, and with remapping off none can come.
+            Some(Hold::NoController) => {
+                self.discard_settings();
+                return None;
+            }
+            _ if unsaved => menu.hold(Hold::RemappingOff),
+            _ => {
+                self.close_overlay();
+                return None;
+            }
+        }
+        self.broadcast_overlay();
+        (!enabled).then_some(device)
+    }
+
+    /// Closes the in-game menu without its question, as when the overlay window dies: the config
+    /// goes back as it was when the menu opened (but for whether remapping is on), and with
+    /// remapping off the controller it kept is let go of.
+    pub(super) fn discard_settings(&mut self) {
+        let Some(Active::Settings(menu, _)) = &self.active else { return };
+        if menu.unsaved(&self.config) {
+            let mut saved = menu.saved().clone();
+            saved.enabled = self.config.enabled;
+            self.config = saved;
+            self.refresh_scope();
+            log!("the in-game menu closed without asking: its unsaved changes were discarded");
+            self.say(vec!["The in-game menu closed".into(), "Changes not saved were discarded".into()]);
+        }
+        self.close_overlay();
+        if !self.config.enabled {
+            self.release_devices(|_, _| true);
+        }
     }
 
     /// Quick Settings' Turn remapping off: closes the menu and lets go of every controller. It
@@ -104,7 +189,7 @@ impl Daemon {
     pub(super) fn remapping_off(&mut self) {
         self.close_overlay();
         self.config.enabled = false;
-        self.release_devices(|_| true);
+        self.release_devices(|_, _| true);
         self.say(vec!["Remapping is off".into(), "Turn it back on from the tray or the settings window".into()]);
     }
 

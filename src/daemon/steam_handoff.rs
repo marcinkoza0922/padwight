@@ -35,7 +35,7 @@ impl Daemon {
         if !self.steam_has_pads {
             log!("{} has full controller support in Steam, so Steam Input gets the controllers", describe(window));
             self.steam_has_pads = true;
-            self.release_devices(|_| true);
+            self.release_devices(|_, _| true);
             let name = if window.title.trim().is_empty() { "this game".to_owned() } else { window.title.trim().to_owned() };
             self.toast = Some(crate::info::Toast::new(vec![format!("Steam Input has the controller in {name}")], Instant::now()));
             self.broadcast_overlay();

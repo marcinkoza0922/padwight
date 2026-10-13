@@ -296,7 +296,12 @@ impl Daemon {
             self.overlay_process = None;
             if self.active.is_some() {
                 log!("overlay window went away");
-                self.close_overlay();
+                // Nothing can answer the in-game menu's question now.
+                if matches!(self.active, Some(Active::Settings(..))) {
+                    self.discard_settings();
+                } else {
+                    self.close_overlay();
+                }
             }
         }
     }
