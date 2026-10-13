@@ -51,6 +51,8 @@ mod guide_tab;
 mod shortcuts_tab;
 mod gyro;
 mod gyro_graph;
+mod details;
+mod overlay_cards;
 mod items;
 mod menu_combos;
 mod motion_demo;
@@ -599,7 +601,9 @@ enum Message {
     SetMenuStart(usize, usize),
     OpenKeyPicker(KeyField, Vec<String>, bool),
     AddPackFile(pack_files::FileKind),
-    PackFilePicked(pack_files::FileKind, Option<Result<(String, Vec<u8>), String>>),
+    /// A file picked for setup `.0` (by name, `None` for General), whichever page is shown when
+    /// the file dialog closes.
+    PackFilePicked(Option<String>, pack_files::FileKind, Option<Result<(String, Vec<u8>), String>>),
     RemovePackIcon(String),
     RemovePackSound(String),
     RemovePackFont(String),
@@ -674,7 +678,8 @@ enum Message {
     BrowseOpen(usize),
     CopyItem(usize),
     Save,
-    Saved(Result<(), String>),
+    /// The config the daemon (or the file) now has, or why it couldn't take it.
+    Saved(Result<Box<Config>, String>),
     Revert,
     Undo,
     /// Jump to the assignment the failed save is about.
@@ -954,8 +959,10 @@ impl App {
     }
 
     fn update(&mut self, message: Message) -> Task<Message> {
-        // Polling and live input don't change the config, and arrive many times a second.
-        let edits = !matches!(message, Message::Poll | Message::MotionTick(_) | Message::LiveInput(_) | Message::LiveFeed(_) | Message::ProbeStick(_) | Message::StatusLoaded(_));
+        // Polling and live input don't change the config, and arrive many times a second. Live
+        // input does while a shortcut listens for its button.
+        let listening = matches!(message, Message::LiveInput(_)) && self.shortcuts_ui.listening.is_some();
+        let edits = listening || !matches!(message, Message::Poll | Message::MotionTick(_) | Message::LiveInput(_) | Message::LiveFeed(_) | Message::ProbeStick(_) | Message::StatusLoaded(_));
         let message = self.new_layer_for(message);
         // Loading the config and undoing aren't edits to take back.
         let undoable = edits && !matches!(message, Message::ConfigLoaded(..) | Message::Undo);
@@ -980,6 +987,7 @@ impl App {
             crate::info::set_menu_keys(self.config.shortcuts.menu_keys());
             crate::info::set_panel_keys(&self.config.shortcuts);
             self.refresh_layer_view();
+            self.sync_guide_notes();
             self.edited = if self.page == Page::Game(None) { Vec::new() } else { pack::edited_items(self.game()) };
         }
         task
@@ -1085,8 +1093,7 @@ impl App {
             Message::Done(Ok(())) => return Task::done(Message::Poll),
             Message::Done(Err(e)) => self.message = Some((e, true)),
             Message::Save => {
-                if let Some(e) = &self.unreadable {
-                    self.message = Some((format!("Not saved: the config file couldn't be read ({e}). Fix or move it, then open Padwight again."), true));
+                if self.refuse_unreadable() {
                     self.quit_after_save = false;
                     return Task::none();
                 }
@@ -1098,10 +1105,14 @@ impl App {
                 }
                 return self.push(self.config.clone());
             }
-            Message::Saved(Ok(())) => {
-                self.saved = self.config.clone();
+            Message::Saved(Ok(config)) => {
+                // What was sent, not what's on screen now: edits made since, or kept back (see
+                // `SetIgnored`), are still unsaved.
+                self.saved = *config;
                 self.problem_at = None;
-                self.renames.clear();
+                if self.config == self.saved {
+                    self.renames.clear();
+                }
                 self.message = Some(("Saved and applied.".into(), false));
                 if std::mem::take(&mut self.quit_after_save) {
                     return iced::exit();
@@ -1169,8 +1180,13 @@ impl App {
                 }
             }
             Message::Undo => {
-                if self.picker.is_none()
-                    && self.dialog.is_none()
+                // A popup edits what it was opened from, which undoing could move or remove under it.
+                let popup = self.picker.is_some()
+                    || self.token_picker.is_some()
+                    || self.sound_picker.is_some()
+                    || self.char_picker.is_some()
+                    || self.dialog.is_some();
+                if !popup
                     && let Some(previous) = self.undo.pop()
                 {
                     self.config = previous;
@@ -1196,9 +1212,18 @@ impl App {
         Task::none()
     }
 
+    /// Whether saving must wait because the config file couldn't be read (see `unreadable`); says
+    /// so if it must.
+    fn refuse_unreadable(&mut self) -> bool {
+        let Some(e) = &self.unreadable else { return false };
+        self.message = Some((format!("Not saved: the config file couldn't be read ({e}). Fix or move it, then open Padwight again."), true));
+        true
+    }
+
     /// Sends a config to the daemon, or writes the file if the daemon is not running.
     fn push(&self, config: Config) -> Task<Message> {
         let daemon_up = self.status.is_some();
+        let sent = Box::new(config.clone());
         Task::perform(
             async move {
                 if daemon_up {
@@ -1210,7 +1235,7 @@ impl App {
                         .map_err(|e| format!("{e:#}"))
                 }
             },
-            Message::Saved,
+            move |result| Message::Saved(result.map(|()| sent)),
         )
     }
 
@@ -1401,188 +1426,4 @@ fn watch<T: serde::de::DeserializeOwned + Send + 'static>(
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// The app on General's page, editing its "Gamepad" profile.
-    pub(super) fn app() -> App {
-        let mut app = App::boot().0;
-        let _ = app.update(Message::SelectPage(Page::Game(None)));
-        app.editing = 0;
-        app
-    }
-
-    /// The app with a game "Doom" (profiles "Play" and "Menus") shown.
-    pub(super) fn with_game() -> App {
-        let mut app = app();
-        // Guide plain, so the game starts without the Guide layer; tests add their own layers.
-        let mut profiles = vec![Profile::pc_action("Play"), Profile::desktop("Menus")];
-        profiles.iter_mut().for_each(|p| p.set_button(Button::Guide, ButtonAction::Gamepad(Button::Guide)));
-        let mut game = Game::new("Doom", profiles);
-        game.rules.push(Rule::new(RuleKind::Executable, "doom.exe", "Play"));
-        app.config.games.push(game);
-        let _ = app.update(Message::SelectPage(Page::Game(Some("Doom".into()))));
-        app
-    }
-
-    pub(super) fn pick(app: &mut App, field: KeyField, single: bool, keys: &[&'static str]) {
-        let _ = app.update(Message::OpenKeyPicker(field, Vec::new(), single));
-        for k in keys {
-            let _ = app.update(Message::PickerKey(k));
-        }
-        if !single {
-            let _ = app.update(Message::PickerClose { apply: true });
-        }
-    }
-
-    #[test]
-    fn the_picture_holds_for_its_minimum_time_before_switching() {
-        let t0 = Instant::now();
-        let pick = |model| PadPick { model: Some(model), family: PadFamily::Xbox };
-        let ds = pick(PadModel::DualSense);
-        let pro = pick(PadModel::ProController);
-        let first = settle(None, ds, t0).unwrap();
-        assert_eq!(first.pick, ds, "the first controller goes up at once");
-        // Another controller used 0.5 s later waits for the hold.
-        let early = settle(Some(first), pro, t0 + Duration::from_millis(500)).unwrap();
-        assert_eq!(early.pick, ds);
-        assert_eq!(early.since, t0, "the hold is measured from when the picture went up");
-        // Once the hold has passed, it switches and starts a new hold.
-        let late = settle(Some(first), pro, t0 + PAD_HOLD).unwrap();
-        assert_eq!((late.pick, late.since), (pro, t0 + PAD_HOLD));
-        // A controller that is no longer wanted before the hold ends doesn't cause a switch back.
-        assert_eq!(settle(Some(first), ds, t0 + Duration::from_millis(100)), Some(first));
-        // A family change alone counts as another controller.
-        let generic = PadPick { model: None, family: PadFamily::Nintendo };
-        assert_eq!(settle(Some(first), generic, t0 + PAD_HOLD).unwrap().pick, generic);
-    }
-
-    pub(super) fn device(name: &str, analog_triggers: bool, ignored: bool) -> ipc::DeviceInfo {
-        ipc::DeviceInfo { name: name.into(), path: String::new(), managed: !ignored, ignored, analog_triggers, rumble: true, gyro: false, paddles: false, touchpad: false, family: None, model: None }
-    }
-
-    pub(super) fn snapshot(buttons: &[Button], right_stick: (f32, f32)) -> InputSnapshot {
-        InputSnapshot {
-            device: "Pad".into(),
-            model: None,
-            family: None,
-            buttons: buttons.to_vec(),
-            left_stick: (0.0, 0.0),
-            right_stick,
-            left_trigger: 0.0,
-            right_trigger: 0.0,
-            gyro: None,
-            gyro_out: None,
-            touches: Vec::new(),
-            touch_click: false,
-        }
-    }
-
-    #[test]
-    fn every_page_tab_and_dialog_builds() {
-        let mut app = with_game();
-        app.config.general.menus.push(Menu { name: "Wheel".into(), kind: MenuKind::List, items: vec![], cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() });
-        app.config.games[0].info.push(InfoOverlay { name: "Controls".into(), always: true, on_start: None, linger: None, title: None, current_input: Default::default(), style: OverlayStyle::info(), rows: vec![vec!["{south}".into()]] });
-        app.config.games[0].macros.push(Macro { name: "Dodge".into(), steps: vec![MacroStep::Wait(5)] });
-        app.config.games[0].layers.push(crate::config::Layer::new("Hotkeys"));
-        app.config.games[0].modes.push(crate::config::Mode::new("Driving"));
-        let status = Status { active_layers: vec!["Hotkeys".into()], active_mode: Some("Driving".into()), ..Default::default() };
-        app.status = Some(Status { devices: vec![device("Pad", true, false)], ..status });
-        let _ = app.view();
-        for page in [Page::Overview, Page::Settings, Page::Manual, Page::Game(None), Page::Game(Some("Doom".into()))] {
-            let _ = app.update(Message::SelectPage(page));
-            for tab in GameTab::ALL {
-                let _ = app.update(Message::SelectGameTab(tab));
-                let _ = app.update(Message::ToggleMacro(0));
-                let _ = app.update(Message::ToggleMenu(0));
-                let _ = app.update(Message::ToggleInfo(0));
-                let _ = app.view();
-            }
-        }
-        let _ = app.update(Message::SelectPage(Page::Game(Some("Doom".into()))));
-        let text = pack::export(app.game(), &pack::draft(app.game(), false)).pack.to_toml().unwrap();
-        let dialogs = [
-            Message::OpenAddGame,
-            Message::Installed(launchers::Installed::default()),
-            Message::PackFileRead(Some(Ok(text))),
-            Message::OpenExport,
-            Message::AskDeleteGame,
-            Message::OpenBrowse(ItemKind::Menu),
-            Message::BrowseFrom(BrowseSource::Game(None)),
-        ];
-        for m in dialogs {
-            let _ = app.update(m);
-            let _ = app.view();
-        }
-        let _ = app.update(Message::BrowseOpen(0));
-        let _ = app.view();
-    }
-
-    #[test]
-    fn ctrl_z_takes_back_the_last_edit() {
-        let mut app = app();
-        let before = app.config.clone();
-        let _ = app.update(Message::SetAction(Target::Button(Button::South), ButtonAction::Keys(vec!["KEY_A".into()])));
-        assert_ne!(app.config, before);
-        let _ = app.update(Message::Undo);
-        assert_eq!(app.config, before);
-        // Nothing left to undo: a no-op.
-        let _ = app.update(Message::Undo);
-        assert_eq!(app.config, before);
-    }
-
-    #[test]
-    fn quick_edits_of_one_kind_undo_together() {
-        let mut app = app();
-        let before = app.config.clone();
-        let _ = app.update(Message::SetAction(Target::Button(Button::South), ButtonAction::Keys(vec!["KEY_A".into()])));
-        let _ = app.update(Message::SetAction(Target::Button(Button::East), ButtonAction::Keys(vec!["KEY_B".into()])));
-        let _ = app.update(Message::Undo);
-        assert_eq!(app.config, before);
-    }
-
-    #[test]
-    fn closing_with_unsaved_edits_asks_first() {
-        let mut app = app();
-        let _ = app.update(Message::CloseRequested);
-        assert!(app.dialog.is_none(), "nothing unsaved: closes without asking");
-        let _ = app.update(Message::SetAction(Target::Button(Button::South), ButtonAction::Keys(vec!["KEY_A".into()])));
-        let _ = app.update(Message::CloseRequested);
-        assert!(matches!(app.dialog, Some(Dialog::ConfirmQuit)));
-        let _ = app.update(Message::CloseDialog);
-        assert!(app.dialog.is_none());
-    }
-
-    #[test]
-    fn a_config_that_failed_to_load_is_never_saved_over() {
-        let mut app = app();
-        let _ = app.update(Message::ConfigLoaded(Box::default(), Some("parsing setups/001-Doom/setup.toml".into())));
-        let _ = app.update(Message::SetAction(Target::Button(Button::South), ButtonAction::Keys(vec!["KEY_A".into()])));
-        let _ = app.update(Message::Save);
-        assert!(app.message.as_ref().is_some_and(|(m, err)| *err && m.starts_with("Not saved")), "{:?}", app.message);
-        // Once it reads, saving works again.
-        let _ = app.update(Message::ConfigLoaded(Box::default(), None));
-        app.message = None;
-        let _ = app.update(Message::Save);
-        assert!(!app.message.as_ref().is_some_and(|(m, _)| m.starts_with("Not saved")));
-    }
-
-    #[test]
-    fn a_blocked_save_can_jump_to_the_turbo_at_fault() {
-        let mut app = app();
-        app.config.general.macros.push(Macro { name: "Long".into(), steps: vec![MacroStep::Wait(300)] });
-        let turbo = ButtonAction::Turbo { action: Box::new(ButtonAction::Macro { name: "Long".into(), repeat: false }), rate: 10.0, every_ms: 50 };
-        app.config.general.profiles[0].set_button(Button::West, turbo);
-        let _ = app.update(Message::Save);
-        assert!(app.message.as_ref().is_some_and(|(m, err)| *err && m.contains("raise the turbo's gap")));
-        assert_eq!(app.problem_at.as_ref().map(|p| (p.game.clone(), p.profile, p.target)), Some((None, 0, Target::Button(Button::West))));
-
-        // Somewhere else first, then the jump brings the turbo's row up for editing.
-        app.show_game(None);
-        app.editing = 0;
-        app.expanded.clear();
-        let _ = app.update(Message::ShowProblem);
-        assert!(app.expanded.contains(&Target::Button(Button::West)));
-        assert_eq!(app.profile_tab, ProfileTab::Buttons);
-    }
-}
+mod tests;
