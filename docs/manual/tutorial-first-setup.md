@@ -33,13 +33,23 @@ Padwight switches to a setup when its window has focus. On the **Details** tab, 
 
 > **Tip:** automatic switching needs a desktop that reports which window has focus. See [Troubleshooting](troubleshooting.md).
 
-## 3. Change a button
+## 3. Check for native controller support
+
+Many games already support a DualShock, DualSense or Switch Pro Controller on their own. If this one does, tell Padwight, so the game sees your controller as the kind it knows and its own scheme works with it.
+
+1. Look for controller support in the game's options, its controls or gamepad menu, the store page, or the game's own documentation or community wiki. Count only explicit support: a store badge alone isn't enough, and a game released before 2006 doesn't count, since its controller support is unreliable.
+2. On the **Details** tab, scroll to **Controllers this setup supports**. Tick **DualShock 4**, **DualSense** or **Switch Pro Controller** for each kind the game supports, and leave the others unticked.
+3. The ticks apply while this setup is active. A controller of a ticked kind is then seen by the game as that kind, with its own button names and glyphs, and you only need to change the bindings the game doesn't cover.
+
+> **Tip:** an Xbox controller, or a kind the game doesn't list, is seen as an Xbox 360 pad, as before.
+
+## 4. Change a button
 
 1. Open the setup's **Profiles** tab. Rename the profile if you like.
 2. Click a button's name, say **A (South)**, to open its row. Pick what it does from the first dropdown: a key, a mouse button, the scroll wheel, a macro and so on. The [Buttons tutorial](tutorial-buttons.md) goes through the options.
 3. Not sure which row is which button? Press **Find by pressing**, then press the button on your controller.
 
-## 4. Save and try it
+## 5. Save and try it
 
 1. Press **Save & apply** at the bottom. It lights up only while something has changed, and the change starts working straight away.
 2. Switch to the game. The top bar's **Active profile** changes to the setup's profile when the window gets focus, and the **Overview** page shows the switch in **What's happening**.
