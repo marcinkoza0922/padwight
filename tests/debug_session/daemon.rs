@@ -317,3 +317,23 @@ fn debug_a_tap_the_daemon_never_got_leaves_nothing_held() {
     assert!(!env.debug(&["swipe", "0.1", "0.5", "0.9", "0.5", "10"]).ok);
     assert!(env.state().get("touches").and_then(Value::as_array).is_none_or(Vec::is_empty), "the finger was lifted");
 }
+
+#[test]
+#[ignore]
+fn debug_a_session_carries_on_with_a_restarted_daemon() {
+    let _serial = serial();
+    let env = Env::new();
+    let mut daemon = debug_daemon(&env, &hold_config());
+    let _session = env.session(&["--attach", "--model", "dualsense"]);
+    daemon.0.kill().unwrap();
+    daemon.0.wait().unwrap();
+    // Pressed while the daemon is gone: the session holds it, and no daemon hears of it.
+    assert!(!env.debug(&["press", "south"]).ok, "the daemon is gone");
+    let _daemon = debug_daemon(&env, &hold_config());
+    env.ok(&["press", "east"]);
+    assert!(status(&env).contains("Debug controller (dualsense)"), "{}", status(&env));
+    env.ok(&["expect", "output", "key KEY_A down"]);
+    env.ok(&["expect", "output", "mouse Left down"]);
+    env.ok(&["release", "south", "east"]);
+    env.ok(&["expect", "output", "key KEY_A up"]);
+}

@@ -25,6 +25,9 @@ pub struct Bridge {
     path: String,
     model: Option<PadModel>,
     live: bool,
+    /// A request failed, so the daemon may have forgotten this controller (it restarted) or
+    /// missed a change. The next flush attaches a fresh one and gives it the whole state.
+    stale: bool,
 }
 
 /// Where a session stands with the daemon.
@@ -60,7 +63,7 @@ impl Session {
             pad.model
         };
         let path = attach_pad(model, live)?;
-        *link = Some(Bridge { path: path.clone(), model, live });
+        *link = Some(Bridge { path: path.clone(), model, live, stale: false });
         drop(link);
         // Whatever is already held starts out held.
         let rebuilt = self.pad().state_events();
@@ -81,7 +84,9 @@ impl Session {
     }
 
     /// Sends the changes made to the pad since the last time. Changing the model replaces the
-    /// controller at the daemon, keeping what is held.
+    /// controller at the daemon, keeping what is held, and so does a failed send: whether the
+    /// daemon restarted or only missed the change, the fresh controller is back in step with
+    /// the pad. While the daemon can't take one, every flush tries again.
     pub fn flush(&self) -> Result<()> {
         let mut link = self.link.lock();
         let Some(bridge) = link.as_mut() else { return Ok(()) };
@@ -89,15 +94,22 @@ impl Session {
             let mut pad = self.pad();
             (pad.take_events(), pad.model)
         };
-        let events = if model == bridge.model {
-            events
-        } else {
-            let _ = ipc::request(&Request::DebugDetach(bridge.path.clone()));
-            bridge.path = attach_pad(model, bridge.live)?;
-            bridge.model = model;
-            self.pad().state_events()
-        };
-        self.send(&bridge.path, events)
+        if bridge.stale || model != bridge.model {
+            return self.reattach(bridge, model);
+        }
+        self.send(&bridge.path, events).or_else(|e| self.reattach(bridge, model).map_err(|_| e))
+    }
+
+    /// Replaces the daemon's controller with a fresh one of `model`, holding what the pad holds.
+    fn reattach(&self, bridge: &mut Bridge, model: Option<PadModel>) -> Result<()> {
+        bridge.stale = true;
+        // Lets go of what the old one held; after a restart the daemon has no such controller.
+        let _ = ipc::request(&Request::DebugDetach(bridge.path.clone()));
+        bridge.path = attach_pad(model, bridge.live)?;
+        bridge.model = model;
+        bridge.stale = false;
+        let rebuilt = self.pad().state_events();
+        self.send(&bridge.path, rebuilt).inspect_err(|_| bridge.stale = true)
     }
 
     fn send(&self, path: &str, events: Vec<DebugEvent>) -> Result<()> {
@@ -108,12 +120,23 @@ impl Session {
     }
 
     /// What the daemon's mappings have output for this controller (see `padwight debug help`).
+    /// When the daemon doesn't know the controller (it restarted), a fresh one is attached, which
+    /// has output nothing yet.
     pub fn output(&self, clear: bool) -> Result<Vec<String>> {
-        let Some(path) = self.attached() else { bail!("not attached to the daemon (start the session with --attach)") };
-        match ask(&Request::DebugOutput { path, clear })? {
+        let ask_output = |path: &str| match ask(&Request::DebugOutput { path: path.to_string(), clear })? {
             Response::Lines(lines) => Ok(lines),
             _ => bail!("unexpected reply from the daemon"),
+        };
+        let mut link = self.link.lock();
+        let Some(bridge) = link.as_mut() else { bail!("not attached to the daemon (start the session with --attach)") };
+        if !bridge.stale
+            && let Ok(lines) = ask_output(&bridge.path)
+        {
+            return Ok(lines);
         }
+        let model = self.pad().model;
+        self.reattach(bridge, model)?;
+        ask_output(&bridge.path)
     }
 
     /// Makes every virtual pad on the daemon present as `identity` (`None` lets it choose). This
@@ -140,6 +163,9 @@ impl Session {
             let step = DebugEvent::Motion { gyro: rates, ms: now.duration_since(last).as_millis().max(1) as u32 };
             last = now;
             if let Err(e) = self.send(&path, vec![step]) {
+                if let Some(bridge) = self.link.lock().as_mut() {
+                    bridge.stale = true;
+                }
                 break Err(e);
             }
             if now.duration_since(start) >= Duration::from_millis(ms) {

@@ -49,7 +49,6 @@ Everything the passes left unsolved, gathered here as of commit `72f0c59` (2026-
 
 | ID | Area | What's left | Weight |
 |---|---|---|---|
-| R9-11 | `debug/bridge.rs` | After a daemon restart an attached debug session's controller is gone and every change fails until the session restarts; a failed change is dropped, so the two can disagree. | Minor: debug tool |
 | R9-12 | `debug/pack_scenes.rs` | Two menus or info overlays whose names give the same file name are drawn to one file; the second overwrites the first. | Minor: debug tool |
 
 ### Needs Windows or hardware to settle
@@ -327,7 +326,7 @@ Read in full: `debug.rs` and `debug/` (`protocol.rs`, `server.rs`, `bridge.rs`, 
 | R9-8 | `tests/common/input.rs`, `tests/debug_session` | The daemon tests picked the test daemon's virtual keyboard as the one with the highest event number. The kernel reuses free numbers, so with a daemon running on the host they could watch its keyboard and time out (the flake in `qa-plan.md`). The tests with a uhid controller can't work then at all: the host daemon grabs their controller first (`grabbed` counts its grab as the test daemon's) and types their keys into the desktop. | **Fixed.** The `debug_` tests read the keyboard that appeared after their daemon started (`Reader::open_new`). The `hotplug_`, `daemon_`, `idle_` and profiling tests stop at once and say a daemon is running (`assert_no_other_daemon`). All pass in the container; the stop wasn't tried with a host daemon running. |
 | R9-9 | `tests/daemon_exit.rs`, `tests/common/mod.rs` | The SIGTERM failure message said the daemon has no SIGTERM handler (it has one), and `default_config`'s comment sat on `install_config`. | **Fixed.** |
 | R9-10 | `tests/debug_session.rs` | 619 lines, and this pass added three tests. | **Done.** Now `tests/debug_session/main.rs` (the session tests, 346 lines) and `daemon.rs` (the tests that need a daemon, 319). The test binary's name and the tests' names are unchanged. |
-| R9-11 | `debug/bridge.rs` | When the daemon restarts, an attached session's controller is gone and every change fails ("no injected controller debug:0") until the session is started again. A change whose send failed is dropped, so the two can disagree until that input changes again. | **Open, minor.** A debug tool; the window shows the error. |
+| R9-11 | `debug/bridge.rs` | When the daemon restarts, an attached session's controller is gone and every change fails ("no injected controller debug:0") until the session is started again. A change whose send failed is dropped, so the two can disagree until that input changes again. | **Fixed, 2026-10-13.** A failed send, or an output request the daemon can't answer, replaces the controller with a fresh one given the pad's whole state (`Session::reattach`); while the daemon can't take one, each change tries again. So a change made while the daemon was down reaches it once it is back. Test: `debug_a_session_carries_on_with_a_restarted_daemon` (container; on the old code the press after the restart fails). |
 | R9-12 | `debug/pack_scenes.rs` | Two menus or info overlays whose names give the same file name (`Items` and `items!`, or two names with no letters or digits) are drawn to one file, and the second overwrites the first. | **Open, minor.** |
 
 Checked and found sound:
