@@ -148,6 +148,9 @@ struct Managed {
     motion: Option<PathBuf>,
     /// Touchpad node of this controller, once found (and taken from the desktop).
     touchpad: Option<PathBuf>,
+    /// The nodes it took from the desktop, let go of when it is dropped.
+    #[cfg(target_os = "linux")]
+    grabs: Vec<devices::Grab>,
     /// Has back paddles (see `input::has_paddles`).
     paddles: bool,
     motion_frame: MotionFrame,
@@ -1098,6 +1101,10 @@ impl Daemon {
     }
 
     fn input(&mut self, id: u64, events: Vec<InputEvent>) {
+        // A controller let go of has a reader still running for a moment.
+        if !self.devices.contains_key(&id) {
+            return;
+        }
         let logged = self.log_input(id, &events, Instant::now());
         let fires: Vec<bool> = events.iter().map(|ev| self.opener_fired(id, ev)).collect();
         let tapped = self.opener_tapped(&events, &fires);
@@ -1459,6 +1466,8 @@ impl Daemon {
             uniq: None,
             motion: None,
             touchpad: None,
+            #[cfg(target_os = "linux")]
+            grabs: Vec::new(),
             paddles: false,
             motion_frame: MotionFrame::default(),
             gyro_bias: [0.0; 3],

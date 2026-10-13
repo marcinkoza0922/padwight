@@ -52,6 +52,7 @@ Each item has the expected result in the last column. Record the OS, compositor,
 | H-5 | Touchpad on DualSense/DS4 in touchpad-as-mouse mode. | Click and movement behave as configured. |
 | H-6 | Rumble test button on a pad that supports it and one that doesn't. | Rumble works, or the app says it isn't supported. |
 | H-7 | Run for several hours with the pad idle, then use it. | No drift, no lost input, no CPU use while idle (check `top`). Partly done in the container: `tests/daemon_health.rs` idles a fake controller for 5 s and fails if the daemon uses 1% of a core or more (measured 0.2%, one clock tick). The several-hour run, drift and lost input still need a person. |
+| H-8 | On a DualSense or DualShock 4, switch remapping off and straight back on (`padwight disable; padwight enable`), then use the touchpad (code review H-16). | The touchpad still drives the profile, not the desktop pointer; the log has no `touchpad: cannot take`. The pad itself is checked in the container (`hotplug_switching_remapping_off_and_on_takes_the_controller_back_at_once`). |
 
 ### 3.2 Desktop focus and auto-switching
 
