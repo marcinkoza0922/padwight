@@ -47,9 +47,7 @@ Everything the passes left unsolved, gathered here as of commit `72f0c59` (2026-
 
 ### Open bugs
 
-| ID | Area | What's left | Weight |
-|---|---|---|---|
-| R9-12 | `debug/pack_scenes.rs` | Two menus or info overlays whose names give the same file name are drawn to one file; the second overwrites the first. | Minor: debug tool |
+None.
 
 ### Needs Windows or hardware to settle
 
@@ -327,7 +325,7 @@ Read in full: `debug.rs` and `debug/` (`protocol.rs`, `server.rs`, `bridge.rs`, 
 | R9-9 | `tests/daemon_exit.rs`, `tests/common/mod.rs` | The SIGTERM failure message said the daemon has no SIGTERM handler (it has one), and `default_config`'s comment sat on `install_config`. | **Fixed.** |
 | R9-10 | `tests/debug_session.rs` | 619 lines, and this pass added three tests. | **Done.** Now `tests/debug_session/main.rs` (the session tests, 346 lines) and `daemon.rs` (the tests that need a daemon, 319). The test binary's name and the tests' names are unchanged. |
 | R9-11 | `debug/bridge.rs` | When the daemon restarts, an attached session's controller is gone and every change fails ("no injected controller debug:0") until the session is started again. A change whose send failed is dropped, so the two can disagree until that input changes again. | **Fixed, 2026-10-13.** A failed send, or an output request the daemon can't answer, replaces the controller with a fresh one given the pad's whole state (`Session::reattach`); while the daemon can't take one, each change tries again. So a change made while the daemon was down reaches it once it is back. Test: `debug_a_session_carries_on_with_a_restarted_daemon` (container; on the old code the press after the restart fails). |
-| R9-12 | `debug/pack_scenes.rs` | Two menus or info overlays whose names give the same file name (`Items` and `items!`, or two names with no letters or digits) are drawn to one file, and the second overwrites the first. | **Open, minor.** |
+| R9-12 | `debug/pack_scenes.rs` | Two menus or info overlays whose names give the same file name (`Items` and `items!`, or two names with no letters or digits) are drawn to one file, and the second overwrites the first. | **Fixed, 2026-10-13.** A name that gives a file name already taken is numbered (`items`, `items-2`), and a name with no letters or digits is drawn as `<file>-menu` or `<file>-info`, numbered the same way. Test: `names_that_give_the_same_file_name_are_numbered`. |
 
 Checked and found sound:
 
