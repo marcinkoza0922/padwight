@@ -161,6 +161,7 @@ impl App {
         );
         let query = self.settings_query.as_str();
         // Each card with the words it can be found by, besides the ones it shows.
+        #[cfg_attr(not(target_os = "linux"), expect(unused_mut, reason = "only the Linux build adds the Steam card"))]
         let mut cards: Vec<(&str, Element<'_, Message>)> = vec![
             ("appearance theme light dark auto desktop colors", self.view_appearance()),
             ("button layout nintendo swap face buttons a b x y", self.view_nintendo_layout()),
