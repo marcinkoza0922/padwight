@@ -256,4 +256,5 @@ To check Linux code from Windows, `cargo check --target x86_64-unknown-linux-gnu
 - To follow one button press: `input.rs` → `daemon.rs` (routing) → `engine.rs` (button, gesture and combo handling) → `output.rs`.
 - To change what a profile can do: `config.rs` (types and defaults), then `engine.rs`, then the editor in `gui/profile.rs`, then `pack.rs` if packs need it.
 - To add a built-in action: `ButtonAction` in `config.rs`, its summary in `config/summary.rs`, the engine, the action picker in `gui/actions.rs`, and the pack tests in `pack.rs`.
-- Design notes for larger features are in this folder: [specs.md](specs.md) for games and packs, [layers.md](layers.md), [sticks.md](sticks.md) and [guide.md](guide.md).
+- Design notes for larger features are in this folder: [specs.md](specs.md) for games and packs, [layers.md](layers.md), [sticks.md](sticks.md), [guide.md](guide.md), and
+  [steam-input.md](steam-input.md) for working alongside Steam Input.
