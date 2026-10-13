@@ -273,7 +273,6 @@ impl App {
             }
         }
         // Copies go first, the one asked for at the top of its list, opened.
-        let shift = |set: &HashSet<usize>, by: usize| set.iter().map(|j| j + by).collect::<HashSet<_>>();
         let (macros, menus, info, logs) = (copy.macros.len(), copy.menus.len(), copy.info.len(), copy.logs.len());
         let order = |list_kind: ItemKind, n: &str| !(list_kind == kind && n == renamed_root);
         copy.macros.sort_by_key(|m| order(ItemKind::Macro, &m.name));
@@ -288,13 +287,10 @@ impl App {
         self.logs_mut().splice(0..0, copy.logs);
         self.game_mut().layers.splice(0..0, copy.layers);
         self.game_mut().modes.splice(0..0, copy.modes);
-        self.open_macros = shift(&self.open_macros, macros);
-        self.open_menus = shift(&self.open_menus, menus);
-        self.open_appearance = self.open_appearance.iter().map(|a| a.map(|j| j + menus)).collect();
-        self.open_infos = shift(&self.open_infos, info);
-        self.open_info_appearance = shift(&self.open_info_appearance, info);
-        self.open_logs = shift(&self.open_logs, logs);
-        self.open_log_appearance = shift(&self.open_log_appearance, logs);
+        self.move_open_cards(ItemKind::Macro, open_cards::after_inserting(macros));
+        self.move_open_cards(ItemKind::Menu, open_cards::after_inserting(menus));
+        self.move_open_cards(ItemKind::Info, open_cards::after_inserting(info));
+        self.move_open_cards(ItemKind::Log, open_cards::after_inserting(logs));
         match kind {
             ItemKind::Macro => {
                 self.open_macros.insert(0);

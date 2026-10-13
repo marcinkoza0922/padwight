@@ -160,9 +160,8 @@ impl App {
                 let overlay = LogOverlay { always: true, ..LogOverlay::new(&name) };
                 // New ones go first, right under the button that made them, already open.
                 self.logs_mut().insert(0, overlay);
-                self.open_logs = self.open_logs.iter().map(|j| j + 1).collect();
+                self.move_open_cards(ItemKind::Log, open_cards::after_inserting(1));
                 self.open_logs.insert(0);
-                self.open_log_appearance = self.open_log_appearance.iter().map(|j| j + 1).collect();
             }
             Message::ToggleLog(i) => {
                 if !self.open_logs.remove(&i) {
@@ -177,8 +176,7 @@ impl App {
             Message::DeleteLog(i) => {
                 if i < self.logs().len() {
                     self.logs_mut().remove(i);
-                    self.open_logs = shift_removed(&self.open_logs, i);
-                    self.open_log_appearance = shift_removed(&self.open_log_appearance, i);
+                    self.move_open_cards(ItemKind::Log, open_cards::after_removing(i));
                 }
             }
             Message::RenameLog(i, name) => {

@@ -450,9 +450,8 @@ impl App {
                 };
                 // New ones go first, right under the button that made them, already open.
                 self.infos_mut().insert(0, overlay);
-                self.open_infos = self.open_infos.iter().map(|j| j + 1).collect();
+                self.move_open_cards(ItemKind::Info, open_cards::after_inserting(1));
                 self.open_infos.insert(0);
-                self.open_info_appearance = self.open_info_appearance.iter().map(|j| j + 1).collect();
             }
             Message::ToggleInfo(i) => {
                 if !self.open_infos.remove(&i) {
@@ -467,8 +466,7 @@ impl App {
             Message::DeleteInfo(i) => {
                 if i < self.infos().len() {
                     self.infos_mut().remove(i);
-                    self.open_infos = shift_removed(&self.open_infos, i);
-                    self.open_info_appearance = shift_removed(&self.open_info_appearance, i);
+                    self.move_open_cards(ItemKind::Info, open_cards::after_removing(i));
                 }
             }
             Message::RenameInfo(i, name) => {
@@ -557,13 +555,13 @@ impl App {
                 let tap = MacroStep::Tap { action: ButtonAction::Keys(Vec::new()), hold_ms: DEFAULT_TAP_MS };
                 // New macros go first, right under the button that made them, already open.
                 self.macros_mut().insert(0, Macro { name, steps: vec![tap] });
-                self.open_macros = self.open_macros.iter().map(|j| j + 1).collect();
+                self.move_open_cards(ItemKind::Macro, open_cards::after_inserting(1));
                 self.open_macros.insert(0);
             }
             Message::DeleteMacro(i) => {
                 if i < self.macros().len() {
                     self.macros_mut().remove(i);
-                    self.open_macros = shift_removed(&self.open_macros, i);
+                    self.move_open_cards(ItemKind::Macro, open_cards::after_removing(i));
                 }
             }
             Message::RenameMacro(mi, name) => {
@@ -613,21 +611,14 @@ impl App {
                 }
                 // New menus go first, right under the button that made them, already open.
                 self.menus_mut().insert(0, menu);
-                self.open_menus = self.open_menus.iter().map(|j| j + 1).collect();
+                self.move_open_cards(ItemKind::Menu, open_cards::after_inserting(1));
                 self.open_menus.insert(0);
-                self.open_appearance = self.open_appearance.iter().map(|a| a.map(|j| j + 1)).collect();
             }
             Message::DeleteMenu(i) => {
                 if i < self.menus().len() {
                     self.menus_mut().remove(i);
                     // Later menus move up one place, and so do their open cards.
-                    self.open_menus = shift_removed(&self.open_menus, i);
-                    let menus_open: HashSet<usize> = self.open_appearance.iter().filter_map(|a| *a).collect();
-                    let keyboard = self.open_appearance.contains(&None);
-                    self.open_appearance = shift_removed(&menus_open, i).into_iter().map(Some).collect();
-                    if keyboard {
-                        self.open_appearance.insert(None);
-                    }
+                    self.move_open_cards(ItemKind::Menu, open_cards::after_removing(i));
                 }
             }
             Message::RenameMenu(i, name) => {

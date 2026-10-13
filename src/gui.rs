@@ -59,6 +59,7 @@ mod motion_demo;
 mod menu_grid;
 #[cfg(test)]
 mod menu_suite;
+mod open_cards;
 mod keys;
 mod layers;
 mod logs;
@@ -389,11 +390,6 @@ enum Target {
     RingSector(Stick, usize),
     /// The touchpad's click or a swipe.
     Touch(TouchSlot),
-}
-
-/// Open-card indices after item `i` is removed: later items move up one place.
-fn shift_removed(set: &HashSet<usize>, i: usize) -> HashSet<usize> {
-    set.iter().filter(|j| **j != i).map(|j| if *j > i { j - 1 } else { *j }).collect()
 }
 
 /// `base`, or `base 2`, `base 3`, … whichever isn't taken.
@@ -1011,14 +1007,17 @@ impl App {
         self.last_edit = Some((kind, now));
     }
 
-    /// After the config was replaced wholesale: leaves a game that's gone, and keeps the
-    /// profile being edited in range.
-    fn settle_config(&mut self) {
+    /// After the config was replaced wholesale: leaves a game that's gone, keeps the profile
+    /// being edited in range, and the cards open on the items they were open on (`before`).
+    fn settle_config(&mut self, before: &open_cards::Shown) {
         let exists = self.game_key().is_none_or(|k| self.config.games.iter().any(|g| g.name == k));
         if !exists {
             self.show_game(None);
         }
         self.editing = self.editing.min(self.game().profiles.len().saturating_sub(1));
+        if exists {
+            self.follow_open_cards(before);
+        }
     }
 
     /// The app-wide messages: polling, status, saving. Each module handles its own and passes
@@ -1132,9 +1131,10 @@ impl App {
             }
             Message::Revert => {
                 self.problem_at = None;
+                let before = self.shown();
                 self.config = self.saved.clone();
                 self.renames.clear();
-                self.settle_config();
+                self.settle_config(&before);
                 self.message = None;
             }
             Message::Tour(step) => return self.move_tour(step),
@@ -1196,9 +1196,10 @@ impl App {
                 if !popup
                     && let Some(previous) = self.undo.pop()
                 {
+                    let before = self.shown();
                     self.config = previous;
                     self.last_edit = None;
-                    self.settle_config();
+                    self.settle_config(&before);
                 }
             }
             Message::CloseRequested => {

@@ -958,8 +958,7 @@ impl App {
                     && i < p.combos.len()
                 {
                     p.combos.remove(i);
-                    // Indices shift, so open state can't carry over.
-                    self.expanded.retain(|t| !matches!(t, Target::Combo(_)));
+                    self.move_open_combos(open_cards::after_removing(i));
                 }
             }
             Message::AddComboButton(i, b) => {
