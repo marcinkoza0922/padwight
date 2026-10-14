@@ -37,6 +37,7 @@ use crate::{
 
 mod activity;
 mod auto_switch;
+mod first_pad;
 mod guide;
 mod in_game_menu;
 mod info_overlays;
@@ -135,6 +136,10 @@ struct Managed {
     ff: Option<FfSpec>,
     /// Stops the rumble thread of the current virtual pad; set on its own when the pad is rebuilt.
     rumble_stop: Arc<AtomicBool>,
+    /// Its pad is the one kept ahead of the real controllers in Steam Input (see `first_pad.rs`).
+    first: bool,
+    /// When its pad, taken over from the kept one, is due to be rebuilt to fit it.
+    refit_at: Option<Instant>,
     /// What an injected controller's mappings have output, newest last.
     recorded: Option<Vec<String>>,
     stop: Arc<AtomicBool>,
@@ -194,10 +199,18 @@ impl Managed {
         if pad.identity() == identity {
             return;
         }
-        let Some(new) = virtual_pad_for(self.ff.as_ref(), identity) else { return };
         log!("{} now presents as {identity:?}", self.name);
+        self.rebuild_pad(identity);
+    }
+
+    /// Replaces the virtual pad with one presenting as `identity` and advertising the
+    /// controller's rumble. The old pad goes first, so the new one gets its Steam Input slot.
+    fn rebuild_pad(&mut self, identity: PadIdentity) {
+        self.refit_at = None;
         self.rumble_stop.store(true, Ordering::Relaxed);
         self.rumble_stop = Arc::new(AtomicBool::new(false));
+        self.pad = None;
+        let Some(new) = virtual_pad_for(self.ff.as_ref(), identity) else { return };
         if self.ff.is_some() {
             rumble::spawn(new.shared(), self.path.clone(), self.rumble_stop.clone());
         }
@@ -422,6 +435,8 @@ struct Daemon {
     sounds: sound::Sounds,
     kbm: VirtualKbm,
     devices: HashMap<u64, Managed>,
+    /// The virtual pad kept while no controller feeds it (see `first_pad.rs`).
+    spare_pad: Option<VirtualPad>,
     next_id: u64,
     /// Whether injected controllers are accepted, and how many there have been (see `inject.rs`).
     injection: inject::Injection,
@@ -531,6 +546,7 @@ impl Daemon {
             config,
             kbm,
             devices: HashMap::new(),
+            spare_pad: None,
             next_id: 0,
             injection,
             identity_override: None,
@@ -1022,6 +1038,7 @@ impl Daemon {
             }
             self.say(vec![format!("{} disconnected", dev.name)]);
         }
+        self.keep_first_pad();
     }
 
     fn motion(&mut self, id: u64, mut sample: MotionSample) {
@@ -1321,6 +1338,7 @@ impl Daemon {
             dev.dispatch(&mut self.kbm, out);
             log!("released {} ({})", dev.name, dev.path.display());
         }
+        self.keep_first_pad();
     }
 
     fn status(&self) -> Status {
@@ -1364,6 +1382,8 @@ impl Daemon {
     /// of what the scan watches.
     fn scan(&mut self) {
         let known: HashSet<u64> = self.devices.keys().copied().collect();
+        self.refit_pads();
+        self.keep_first_pad();
         self.scan_devices();
         self.check_overlay_process();
         self.check_recorded_game();
@@ -1446,6 +1466,8 @@ impl Daemon {
             pad,
             ff: None,
             rumble_stop: Arc::new(AtomicBool::new(false)),
+            first: false,
+            refit_at: None,
             recorded: None,
             stop,
             view: InputView::default(),

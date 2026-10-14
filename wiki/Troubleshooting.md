@@ -2,11 +2,13 @@
 
 ## A controller shows up twice (or the game sees two pads)
 
-If Steam Input manages the controller, the game can see both Steam's virtual pad and padwight's. For a pad that padwight manages, turn off Steam Input for it.
-
-PlayStation and Switch controllers are also readable through hidraw, which SDL (and Steam) use directly. The game may then see the real controller as well as padwight's. Either turn off Steam Input for the pad, or set `SDL_JOYSTICK_HIDAPI=0` for the game.
+PlayStation and Switch controllers are also readable through hidraw, which SDL (and Steam) use directly. The game may then see the real controller as well as padwight's. Either set `SDL_JOYSTICK_HIDAPI=0` for the game, or turn off Steam Input for the pad.
 
 padwight skips virtual uinput devices, such as Steam Input's pad and its own.
+
+## A game ignores the controller with Steam Input on
+
+Some games read only the first controller Steam Input lists, such as Slay the Spire 2. Steam lists controllers in the order it found them, and the controller padwight takes over has nothing to say to the game, so padwight keeps its own virtual controller ready while remapping is on, ahead of any controller you connect. If the game still ignores the controller, padwight was probably started after the controller was connected: unplug the controller (or turn it off) and connect it again.
 
 ## The controller isn't picked up
 

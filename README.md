@@ -317,7 +317,8 @@ Outside systemd (in a terminal, or from an autostart entry), the daemon also put
 ## Good to know
 
 - PlayStation and Switch controllers are also readable through hidraw, which SDL (and Steam) use directly. Games may then see the real controller as well as ours. Turn off Steam Input for the pad, or set `SDL_JOYSTICK_HIDAPI=0` for the game.
-- Virtual uinput devices, such as Steam Input's pad and padwight's own, are skipped. For a pad this app manages, turn off Steam Input, or games may see two controllers.
+- Virtual uinput devices, such as Steam Input's pad and padwight's own, are skipped.
+- While remapping is on, padwight keeps one virtual pad even with no controller connected, so it comes ahead of the real controllers in Steam Input. Some games, such as Slay the Spire 2, read only the first controller Steam lists.
 - Pads on the `xpad` driver report X/Y by label rather than position. This is corrected automatically.
 - Rumble from games is forwarded to the physical controller when it supports force feedback. The end-to-end check needs `/dev/uinput`, so it's opt-in: `cargo test -- --ignored rumble`.
 

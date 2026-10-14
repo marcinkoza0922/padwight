@@ -26,7 +26,6 @@ The setup also gets two radial menus (belt and augmentations) and a list of the 
 
 1. Make sure the daemon is running (`padwight status` should list your controller, as does the Overview page). Open the settings window with `padwight`.
 2. Launch Deus Ex once. Padwight needs to see the game to fill in the rule values, and the setup's **Details** tab lists the windows it has seen under **Recently focused windows**.
-3. If your controller is also visible to Steam, turn off Steam Input for it (see [Troubleshooting](troubleshooting.md)), or the game may see two pads.
 
 ## Step 1: Create the setup
 
@@ -279,7 +278,7 @@ The library is the set of packs that ship with the app, in `packs/`.
 ## Troubleshooting
 
 - **The rule doesn't switch to the profile.** Check the executable name (for Proton games, the Windows `.exe`, e.g. `DeusEx.exe`) and the Steam App ID. The **Details** tab's recently focused windows show what padwight saw.
-- **The game sees two controllers.** Turn off Steam Input for the pad, or set `SDL_JOYSTICK_HIDAPI=0` (see [Troubleshooting](troubleshooting.md)).
+- **The game sees two controllers.** A PlayStation or Switch controller can reach the game directly too. Set `SDL_JOYSTICK_HIDAPI=0` (see [Troubleshooting](troubleshooting.md)).
 - **A button feels late.** It has a gesture, so it waits for the tap window. See the latency note in Step 7.
 - **Guide's shortcuts don't work.** Hold Guide and press the shortcut, or tap Guide to open the overlay and then press it. See [The Guide button](guide-button.md).
 - **A row in the Mapping guide reads wrong.** Fix the text on the profile's **Guide** tab.

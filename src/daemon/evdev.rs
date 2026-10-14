@@ -242,7 +242,8 @@ impl Daemon {
         let grab = Grab::of(&dev, &name);
         let ff = FfSpec::of(&dev);
         let identity = PadIdentity::resolve(self.identity_override, model, self.active_support());
-        let Some(pad) = virtual_pad_for(ff.as_ref(), identity) else { return };
+        let Some(new_pad) = self.pad_for_new(ff.as_ref(), identity) else { return };
+        let pad = new_pad.pad;
         log!("managing {name} ({})", path.display());
         let id = self.next_id;
         self.next_id += 1;
@@ -254,10 +255,13 @@ impl Daemon {
             thread::spawn(move || read_device(id, dev, xbox_labels, &stop, &tx));
         }
         let rumble_stop = Arc::new(AtomicBool::new(false));
-        if ff.is_some() {
+        // The kept pad advertises no rumble until it's rebuilt to fit (see `first_pad.rs`).
+        if ff.is_some() && new_pad.refit_at.is_none() {
             rumble::spawn(pad.shared(), path.clone(), rumble_stop.clone());
         }
         let mut managed = self.new_managed(path, name, Some(pad), stop);
+        managed.first = new_pad.first;
+        managed.refit_at = new_pad.refit_at;
         managed.ff = ff;
         managed.rumble_stop = rumble_stop;
         managed.family = family;
