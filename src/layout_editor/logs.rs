@@ -70,9 +70,9 @@ pub(super) fn log_rows(config: &crate::config::Config, i: usize) -> Vec<Row> {
         Row::toggle("Always on screen", o.always, move |c, on| log_mut(c, i).is_some_and(|o| set(&mut o.always, on))),
     ];
     if !o.always {
-        let mut linger = LINGER.row("Stays after it's let go", o.linger.unwrap_or(0.0), move |c, v| log_mut(c, i).is_some_and(|o| set(&mut o.linger, (v > 0.0).then_some(v))));
+        let mut linger = LINGER.row("Lingers for", o.linger.unwrap_or(0.0), move |c, v| log_mut(c, i).is_some_and(|o| set(&mut o.linger, (v > 0.0).then_some(v))));
         if o.linger.is_none() {
-            linger.item.label = "Stays after it's let go: no".into();
+            linger.item.label = "Lingers for: no".into();
         }
         rows.push(linger);
     }

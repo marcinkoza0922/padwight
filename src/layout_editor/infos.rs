@@ -59,7 +59,7 @@ pub(super) fn info_rows(config: &Config, i: usize) -> Vec<Row> {
         named::rename_row(config, ItemKind::Info, i),
         Row::toggle("Always on screen", o.always, move |c, on| info_mut(c, i).is_some_and(|o| set(&mut o.always, on))),
         seconds("When the game starts, for", o.on_start, &ON_START, |o, v| set(&mut o.on_start, v), i),
-        seconds("Stays after it's let go", o.linger, &LINGER, |o, v| set(&mut o.linger, v), i),
+        seconds("Lingers for", o.linger, &LINGER, |o, v| set(&mut o.linger, v), i),
         Row::text(format!("Heading: {}", if title.is_empty() { "none" } else { &title }), "Heading of the overlay", title, move |c, typed| {
             let typed = typed.trim();
             info_mut(c, i).is_some_and(|o| set(&mut o.title, (!typed.is_empty()).then(|| typed.to_string())))
