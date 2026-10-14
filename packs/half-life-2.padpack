@@ -1,0 +1,269 @@
+format = 20
+macros = []
+overlay_font = "Inter"
+
+[pack]
+id = "31ad1dfa-4e20-42ca-a8e2-19f20f17f9c5"
+name = "Half-Life 2"
+version = "1.0"
+author = "Padwight"
+description = "Half-Life 2 and its episodes on an Xbox-style pad. The game has its own controller support, with the Xbox 360 layout of The Orange Box, so the controller passes through untouched and the game's Controller options set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard and the media controls, in the amber of the HEV suit's HUD."
+made_with = "Xbox controller"
+native_controller = true
+
+[[rules]]
+kind = "steam_app_id"
+value = "220"
+profile = "Half-Life 2"
+
+[[rules]]
+kind = "executable"
+value = "Half-Life 2/hl2_linux"
+profile = "Half-Life 2"
+
+[[rules]]
+kind = "executable"
+value = "Half-Life 2/hl2.exe"
+profile = "Half-Life 2"
+
+[[profiles]]
+name = "Half-Life 2"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+activation = "always"
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The controller goes to the game as it is. Half-Life 2 has its own controller support, so set the buttons, sensitivity and look inversion in the game's {b}Options → Controller{/b}. The episodes and Lost Coast use the same scheme.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard for the developer console or a save name, and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[keyboard_style]
+corners = 0.35
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0b0b0a"
+opacity = 0.82
+
+[keyboard_style.items]
+color = "#262112"
+opacity = 0.9
+
+[keyboard_style.selected]
+color = "#ffc42e"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#ffc42e"
+opacity = 0.35
+
+[keyboard_style.gradient]
+color = "#16140c"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4a3f1c"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.35
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0b0b0a"
+opacity = 0.82
+
+[numpad_style.items]
+color = "#262112"
+opacity = 0.9
+
+[numpad_style.selected]
+color = "#ffc42e"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#ffc42e"
+opacity = 0.35
+
+[numpad_style.gradient]
+color = "#16140c"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4a3f1c"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[media_style]
+corners = 0.35
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0b0b0a"
+opacity = 0.82
+
+[media_style.items]
+color = "#262112"
+opacity = 0.9
+
+[media_style.selected]
+color = "#ffc42e"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#ffc42e"
+opacity = 0.35
+
+[media_style.gradient]
+color = "#16140c"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4a3f1c"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.35
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0b0b0a"
+opacity = 0.82
+
+[menu_style.items]
+color = "#262112"
+opacity = 0.9
+
+[menu_style.selected]
+color = "#ffc42e"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#ffc42e"
+opacity = 0.35
+
+[menu_style.gradient]
+color = "#16140c"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4a3f1c"
+
+[menu_style.glow]
+color = "#ffc42e"
+opacity = 0.45
+blur = 20
+
+[menu_style.type]
+letter_spacing = 1
+
+[motion]
+keyboard = "brutal"
+numpad = "brutal"
+menu = "brutal"
+media = "brutal"
+offer = "brutal"
+info = "brutal"
+log = "brutal"
+
+[sounds.menu]
+step = {kind = "geiger", volume = 0.1}
+pick = {kind = "beep", volume = 0.15, pitch = 1.1}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "beep", volume = 0.15, pitch = 1.1}
+
+[sounds.media]
+pick = {kind = "beep", volume = 0.15, pitch = 1.1}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 18}
+pick = {strength = 0.4, length_ms = 40}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 14}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 14}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}
