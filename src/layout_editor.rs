@@ -21,6 +21,7 @@ mod menus;
 mod named;
 mod owner;
 mod pages;
+mod pictures;
 mod rows;
 mod sticks;
 mod style;
@@ -29,6 +30,7 @@ mod touchpad;
 mod triggers;
 
 use pages::Page;
+pub use pictures::Preview;
 
 use crate::{
     config::{Button, Config, MenuKind},
@@ -244,6 +246,21 @@ impl LayoutEditor {
         }
     }
 
+    /// The picture beside the current page, with the live input in it.
+    pub fn figure(&self, config: &Config, live: &crate::figures::Live) -> Option<crate::figures::Figure> {
+        pictures::figure(self.page, config, live)
+    }
+
+    /// The stick whose live position the current page shows: it doesn't move the cursor there.
+    pub fn live_stick(&self) -> Option<crate::config::Stick> {
+        pictures::live_stick(self.page)
+    }
+
+    /// The overlay the current page shows on screen where it goes.
+    pub fn preview(&self) -> Option<Preview> {
+        pictures::preview(self.page)
+    }
+
     /// The page as the overlay draws it. `parents` are the menus the editor was opened from,
     /// outermost first; the editor's own pages before this one follow them as breadcrumbs.
     pub fn view(&self, config: &Config, parents: &[String]) -> MenuView {
@@ -277,6 +294,7 @@ impl LayoutEditor {
             aim: None,
             prompt: None,
             one_column: columns == 1,
+            figure: None,
         }
     }
 }

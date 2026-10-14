@@ -299,3 +299,25 @@ fn guide_isnt_listed_and_paddles_are_when_the_controller_has_them() {
     assert!(!without.contains(&Button::LeftPaddle));
     assert!(buttons(&LayoutEditor::new().with_paddles(true)).contains(&Button::LeftPaddle));
 }
+
+#[test]
+fn pages_about_a_stick_trigger_gyro_or_menu_have_their_picture() {
+    use crate::figures::{Figure, Live};
+    let mut config = config();
+    let live = Live { sticks: [(0.5, 0.0), (0.0, 0.0)], triggers: [0.25, 0.0], ..Live::default() };
+    let mut editor = LayoutEditor::new();
+    assert!(editor.figure(&config, &live).is_none(), "the top page has none");
+    editor.pick("{ls} {rs} Sticks", &mut config);
+    editor.pick("{ls} Left stick", &mut config);
+    assert!(matches!(editor.figure(&config, &live), Some(Figure::Stick { live: Some((x, _)), .. }) if x == 0.5));
+    assert_eq!(editor.live_stick(), Some(crate::config::Stick::Left));
+    let mut editor = LayoutEditor::new();
+    editor.pick("{lt} {rt} Triggers", &mut config);
+    editor.pick("{lt} Left trigger", &mut config);
+    assert!(matches!(editor.figure(&config, &live), Some(Figure::Trigger { live: Some(v), .. }) if v == 0.25));
+    assert_eq!(editor.live_stick(), None);
+    let mut editor = LayoutEditor::new();
+    editor.pick("Info overlays", &mut config);
+    editor.pick("Add info overlay", &mut config);
+    assert_eq!(editor.preview(), Some(Preview::Info(0)), "an info overlay shows where it goes");
+}

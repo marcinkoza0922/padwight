@@ -1,6 +1,7 @@
 //! Drawing the overlays: each panel as an iced element, sized by its style's `Fit` (see
 //! `fit.rs`) and laid out where its position puts it.
 
+mod figure;
 mod glyphs;
 mod log_panel;
 mod look;

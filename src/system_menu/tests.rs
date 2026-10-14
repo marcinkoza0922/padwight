@@ -350,7 +350,7 @@ fn a_name_is_typed_on_the_keyboard_and_set_with_enter() {
     menu.handle_now(press(Button::South), &mut config);
     assert_eq!(menu.handle_now(press(Button::South), &mut config), None);
     assert!(menu.typing());
-    assert!(matches!(menu.overlay_view(&config), crate::overlay::OverlayView::Keyboard(k) if k.typed == "Jumps" && k.field.is_some()));
+    assert!(matches!(menu.overlay_view(&config, &crate::figures::Live::default()), crate::overlay::OverlayView::Keyboard(k) if k.typed == "Jumps" && k.field.is_some()));
     // X deletes the last letter, and Start (Enter) sets it.
     menu.handle_now(press(Button::West), &mut config);
     menu.handle_now(InputEvent::Button(Button::West, false), &mut config);
@@ -375,4 +375,19 @@ fn guide_puts_the_keyboard_away_without_setting_the_text() {
     assert_eq!(menu.guide_pressed(&config), None);
     assert!(!menu.typing());
     assert_eq!(config.general.macros[0].name, "Jumps");
+}
+
+#[test]
+fn on_a_left_stick_page_the_left_stick_is_left_to_the_picture() {
+    let mut config = mouse_config();
+    let mut menu = SystemMenu::new(&config).on_page(Page::EditControls);
+    // Sticks, then the left stick.
+    menu.handle_now(press(Button::DpadDown), &mut config);
+    menu.handle_now(press(Button::South), &mut config);
+    menu.handle_now(press(Button::South), &mut config);
+    let before = menu.view(&config).selected;
+    menu.handle_now(InputEvent::Axis(Axis::LeftY, 1.0), &mut config);
+    assert_eq!(menu.view(&config).selected, before, "pushing it doesn't move the cursor");
+    menu.handle_now(press(Button::DpadDown), &mut config);
+    assert_ne!(menu.view(&config).selected, before, "the D-pad still does");
 }

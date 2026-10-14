@@ -199,7 +199,7 @@ impl Daemon {
                 Some(OverlayView::Media(view))
             }
             Some(Active::Offer(o)) => Some(o.view(self.config.active_menu_style())),
-            Some(Active::Settings(m, _)) => Some(m.overlay_view(&self.config)),
+            Some(Active::Settings(m, _)) => Some(m.overlay_view(&self.config, &self.menu_live)),
             None => match &self.guide_menu {
                 Some(menu) => {
                     let profile = self.config.active().map(|p| p.name.as_str()).unwrap_or_default();
@@ -261,6 +261,7 @@ impl Daemon {
         if self.recording.is_some() {
             info.push(crate::info::recording_view());
         }
+        let (mut info, logs) = self.with_preview(info, logs, &values, now);
         let now = Instant::now();
         let toast = self.toast.as_ref().and_then(|t| Some((t.view(now)?, t.next_redraw(now, FADE_FRAME))));
         match toast {

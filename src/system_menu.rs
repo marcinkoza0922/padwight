@@ -220,6 +220,8 @@ impl SystemMenu {
                 }
                 return None;
             }
+            // A page that shows the left stick live leaves it to the picture.
+            InputEvent::Axis(Axis::LeftX | Axis::LeftY, _) if self.shows_left_stick() => return None,
             InputEvent::Axis(axis @ (Axis::LeftX | Axis::LeftY), v) => {
                 if axis == Axis::LeftX { self.stick.0 = v } else { self.stick.1 = v }
                 match self.stick_dir.update(self.stick)? {

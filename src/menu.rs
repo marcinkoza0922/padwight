@@ -60,6 +60,9 @@ pub struct MenuView {
     /// change the values its rows show.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub one_column: bool,
+    /// A picture beside the list: what the in-game editor's page sets, with the live input.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub figure: Option<Box<crate::figures::Figure>>,
 }
 
 impl MenuView {
@@ -349,6 +352,7 @@ impl MenuSession {
             aim: self.live_aim(menu),
             prompt: None,
             one_column: false,
+            figure: None,
         })
     }
 

@@ -22,7 +22,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 36] = [
+pub const SCENES: [(&str, &str); 39] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -59,6 +59,9 @@ pub const SCENES: [(&str, &str); 36] = [
     ("edit-typing", "Edit Controls: typing a macro's name on the on-screen keyboard"),
     ("edit-game", "Edit Controls: the game's own page"),
     ("edit-look", "Edit Controls: the game's own look for the in-game menu"),
+    ("edit-trigger", "Edit Controls: a trigger with its press point, beside its live travel"),
+    ("edit-touchpad", "Edit Controls: the touchpad beside its live picture"),
+    ("edit-menu", "Edit Controls: a menu's page beside the menu as it will look"),
 ];
 
 /// The frame of the scene called `name`.
@@ -107,6 +110,9 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "edit-layer" => active(edit_controls(&[[Button::DpadDown; 7].as_slice(), &[Button::South, Button::South]].concat())),
         "edit-typing" => active(edit_controls(&[[Button::DpadDown; 8].as_slice(), &[Button::South, Button::South, Button::South]].concat())),
         "edit-game" => active(edit_controls(&[Button::DpadUp, Button::South])),
+        "edit-trigger" => active(edit_controls(&[Button::DpadDown, Button::DpadDown, Button::South, Button::South, Button::DpadRight, Button::DpadRight])),
+        "edit-touchpad" => active(edit_controls(&[[Button::DpadDown; 4].as_slice(), &[Button::South]].concat())),
+        "edit-menu" => active(edit_controls(&[[Button::DpadDown; 9].as_slice(), &[Button::South, Button::South]].concat())),
         "edit-look" => active(edit_controls(&[[Button::DpadUp, Button::South].as_slice(), &[Button::DpadDown; 8], &[Button::South, Button::DpadDown, Button::South]].concat())),
         _ => bail!("no scene called {name} (see `padwight debug overlay list`)"),
     })
@@ -237,6 +243,8 @@ fn edit_controls(presses: &[Button]) -> OverlayView {
     let mut game = Game::new("Deus Ex", vec![Profile::gyro_aim("Gameplay")]);
     game.layers.push(Layer::new("Hotkeys"));
     game.macros.push(Macro { name: "Quick save".into(), steps: Vec::new() });
+    let items = ["Heal", "Reload", "Map", "Inventory"].map(|l| crate::config::MenuItem::new(l, crate::config::ButtonAction::Screenshot)).to_vec();
+    game.menus.push(crate::config::Menu { name: "Quick".into(), kind: crate::config::MenuKind::Grid { columns: 2 }, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() });
     config.games.push(game);
     config.active = ProfileRef::new(Some("Deus Ex"), "Gameplay");
     let mut menu = SystemMenu::new(&config).on_page(Page::EditControls);
@@ -245,7 +253,20 @@ fn edit_controls(presses: &[Button]) -> OverlayView {
         menu.handle(InputEvent::Button(b, true), now, &mut config);
         menu.handle(InputEvent::Button(b, false), now, &mut config);
     }
-    menu.overlay_view(&config)
+    menu.overlay_view(&config, &sample_live())
+}
+
+/// A controller with its sticks pushed, a trigger pulled, a finger on the touchpad and the gyro
+/// turning, for the editor's live pictures.
+fn sample_live() -> crate::figures::Live {
+    let mut live = crate::figures::Live { sticks: [(0.45, 0.2), (0.7, -0.35)], triggers: [0.65, 0.2], pad_height: crate::input::DUALSENSE_HEIGHT, ..Default::default() };
+    live.touches.insert(0, (0.3, 0.6));
+    let t0 = std::time::Instant::now();
+    for i in 0..40 {
+        let t = i as f32 / 10.0;
+        live.turning([40.0 * t.cos(), 60.0 * t.sin(), 0.0], t0 + std::time::Duration::from_millis(20 * i));
+    }
+    live
 }
 
 /// Quick Settings left with a change not saved: the question stands over the page.

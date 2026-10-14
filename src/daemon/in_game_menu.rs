@@ -3,6 +3,9 @@
 
 use super::*;
 
+/// How often the editor's live pictures redraw for the controller's turning, at most.
+const LIVE_REDRAW: Duration = Duration::from_millis(33);
+
 impl Daemon {
     /// Opens the Guide + Start menu over the game, on `page`, for the controller `device`. That
     /// controller drives it from now on.
@@ -14,6 +17,7 @@ impl Daemon {
         self.release_mappings();
         let paddles = self.devices.get(&device).is_some_and(|d| d.paddles);
         let menu = SystemMenu::new(&self.config).with_paddles(paddles).with_features(self.pad_features()).on_page(page);
+        self.menu_live = crate::figures::Live::default();
         self.active = Some(Active::Settings(menu, device));
         self.broadcast_overlay();
         self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Open));
@@ -22,6 +26,7 @@ impl Daemon {
     /// Runs one event on the Guide + Start menu. `true` when the menu closed.
     pub(super) fn settings_input(&mut self, ev: InputEvent) -> bool {
         let now = Instant::now();
+        self.menu_live.input(ev);
         self.settings_step(|menu, config| menu.handle(ev, now, config))
     }
 
@@ -111,6 +116,18 @@ impl Daemon {
             menu.profile_added(&self.config);
         }
         self.broadcast_overlay();
+    }
+
+    /// The controller driving the in-game menu turned: the editor's gyro picture follows it,
+    /// redrawn at most every [`LIVE_REDRAW`].
+    pub(super) fn menu_turned(&mut self, gyro: [f32; 3]) {
+        let now = Instant::now();
+        self.menu_live.turning(gyro, now);
+        let live = matches!(&self.active, Some(Active::Settings(m, _)) if m.live_picture(&self.config));
+        if live && self.live_drawn.is_none_or(|t| now.duration_since(t) >= LIVE_REDRAW) {
+            self.live_drawn = Some(now);
+            self.broadcast_overlay();
+        }
     }
 
     /// Closes the Guide + Start menu after its question about unsaved changes: back to the Guide

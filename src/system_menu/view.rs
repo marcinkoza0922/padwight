@@ -6,13 +6,37 @@ use std::time::Instant;
 use super::*;
 
 impl SystemMenu {
+    /// Whether the editor's page shows the left stick live, so it doesn't move the cursor.
+    pub(super) fn shows_left_stick(&self) -> bool {
+        matches!(&self.screen, Screen::Editor(e) if e.live_stick() == Some(crate::config::Stick::Left))
+    }
+
+    /// The overlay the editor's page shows on screen where it goes.
+    pub fn preview(&self) -> Option<crate::layout_editor::Preview> {
+        match &self.screen {
+            Screen::Editor(e) => e.preview(),
+            _ => None,
+        }
+    }
+
+    /// Whether the editor's page has a picture that follows the controller, so input and motion
+    /// redraw it.
+    pub fn live_picture(&self, config: &Config) -> bool {
+        matches!(&self.screen, Screen::Editor(e) if e.figure(config, &crate::figures::Live::default()).is_some_and(|f| !matches!(f, crate::figures::Figure::Menu(_))))
+    }
+
     /// What the overlay draws now: the keyboard while typing into a field, else the menu.
-    pub fn overlay_view(&self, config: &Config) -> OverlayView {
+    pub fn overlay_view(&self, config: &Config, live: &crate::figures::Live) -> OverlayView {
         match &self.screen {
             Screen::Typing(_, typing) => {
                 let mut view = typing.0.view(Instant::now());
                 view.style = config.active_keyboard_style().clone();
                 OverlayView::Keyboard(view)
+            }
+            Screen::Editor(editor) if self.hold.is_none() => {
+                let mut view = self.view(config);
+                view.figure = editor.figure(config, live).map(Box::new);
+                OverlayView::Menu(view)
             }
             _ => OverlayView::Menu(self.view(config)),
         }
@@ -95,6 +119,7 @@ impl SystemMenu {
                 aim: None,
                 prompt: None,
                 one_column: false,
+                figure: None,
             },
         }
     }
@@ -115,6 +140,7 @@ fn list_page(title: &str, items: Vec<ItemView>, cursor: usize, crumbs: Vec<Strin
         aim: None,
         prompt: None,
         one_column: false,
+        figure: None,
     }
 }
 
@@ -162,5 +188,6 @@ pub fn main_page(style: OverlayStyle, cursor: usize) -> MenuView {
         aim: None,
         prompt: None,
         one_column: false,
+        figure: None,
     }
 }

@@ -187,6 +187,7 @@ mod motion_tests {
             aim: None,
             prompt: None,
             one_column: false,
+            figure: None,
         };
         OverlayFrame {
             active: Some(OverlayView::Menu(view)),

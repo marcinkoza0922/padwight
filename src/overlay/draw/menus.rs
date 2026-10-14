@@ -59,6 +59,11 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
         MenuKind::Carousel { .. } => carousel(m, c, s),
         MenuKind::Grid { .. } => grid(m, c, s),
     };
+    // The in-game editor's picture of what its page sets, beside the list.
+    let body = match &m.figure {
+        Some(fig) => row![body, super::figure::figure(fig, c, s, font, look)].spacing(24.0 * s).align_y(Alignment::Center).into(),
+        None => body,
+    };
     // Where this page is in the menus, above its title: "Menu › Edit Controls › A button".
     let title = typeset::line(c.typ, c.font, &m.title, 20.0 * s, c.background_text);
     let heading: Element<'a, M> = if m.crumbs.is_empty() {

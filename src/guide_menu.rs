@@ -76,6 +76,7 @@ pub fn view(steam: bool, cursor: usize, profile: &str, style: OverlayStyle) -> M
         aim: None,
         prompt: None,
         one_column: false,
+        figure: None,
     }
 }
 

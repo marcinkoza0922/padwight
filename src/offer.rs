@@ -165,6 +165,7 @@ impl OfferSession {
                 aim: None,
                 prompt: None,
                 one_column: false,
+                figure: None,
             })
         };
         match self.stage {
