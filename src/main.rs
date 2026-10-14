@@ -43,7 +43,6 @@ mod layout_editor;
 mod snapshot;
 mod sound;
 mod steam_appinfo;
-#[cfg(target_os = "linux")]
 mod system_menu;
 mod touchpad_widget;
 #[cfg_attr(windows, path = "tray/windows.rs")]
