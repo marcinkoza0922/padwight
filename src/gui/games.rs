@@ -43,10 +43,7 @@ impl App {
                 self.message = Some(("Calibrating gyro: keep the controller still for 2 seconds.".into(), false));
                 return call_ok(Request::CalibrateGyro(path));
             }
-            Message::CopyMotionRuleCommand => {
-                self.message = Some(("Copied. Paste it into a terminal and enter your password.".into(), false));
-                return iced::clipboard::write(motion_rule_command());
-            }
+            Message::OpenSystemCheck | Message::RecheckSystem | Message::CopyFix(_) => return self.update_system_check(&message),
             Message::SelectPage(page) => {
                 // Also how a dialog's "Open it" leaves it.
                 self.dialog = None;

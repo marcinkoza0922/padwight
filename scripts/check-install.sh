@@ -26,8 +26,14 @@ for unit in dist/padwight.service dist/padwight-flatpak.service; do
     echo "ok: $unit"
 done
 
-udevadm verify dist/70-padwight-motion.rules
-echo "ok: dist/70-padwight-motion.rules"
+for rules in dist/70-padwight-motion.rules dist/70-padwight-uinput.rules; do
+    udevadm verify "$rules"
+    echo "ok: $rules"
+done
+
+sh -n dist/install.sh
+sh -n scripts/package.sh
+echo "ok: install scripts"
 
 desktop-file-validate flatpak/io.github.marcinkoza0922.Padwight.desktop
 echo "ok: desktop entry"

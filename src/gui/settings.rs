@@ -18,23 +18,6 @@ impl fmt::Display for DefaultChoice {
     }
 }
 
-/// The motion-sensor udev rule shipped in dist/, built in so the command works from anywhere.
-pub(super) const MOTION_RULE_FILE: &str = include_str!("../../dist/70-padwight-motion.rules");
-
-/// Shell command (bash or fish) that installs the motion-sensor udev rule and applies it.
-pub(super) fn motion_rule_command() -> String {
-    let rules: Vec<&str> = MOTION_RULE_FILE
-        .lines()
-        .map(str::trim)
-        .filter(|l| !l.is_empty() && !l.starts_with('#'))
-        .collect();
-    format!(
-        "echo '{}' | sudo tee /etc/udev/rules.d/70-padwight-motion.rules >/dev/null \
-         && sudo udevadm control --reload && sudo udevadm trigger",
-        rules.join("\n")
-    )
-}
-
 impl App {
     /// Light, dark or the desktop's choice. Only the settings window follows it; the overlays keep
     /// their own colors.
@@ -175,6 +158,7 @@ impl App {
             ("media controls player panel music volume", self.view_media_card()),
             ("in-game menu guide button", self.view_in_game_menu_card()),
             ("info overlays fallback glyphs xbox playstation nintendo labels", glyphs),
+            ("system check permissions uinput udev rules gyro doctor access", self.view_system_check_card()),
             ("help tour guided welcome introduction getting started", self.view_help_card()),
         ];
         let shown: Vec<Element<'_, Message>> = cards.into_iter().filter(|(words, _)| matches_query(query, words)).map(|(_, card)| card).collect();
@@ -261,23 +245,15 @@ impl App {
         {
             let names = status.motion_access_denied.join(", ");
             list = list.push(
-                column![
-                    text(format!(
-                        "Can't use the gyro on {names}: this app isn't allowed to read its motion sensors. \
-                         Installing a udev rule fixes this (it asks for your password once):"
-                    ))
-                    .size(12)
-                    .color(ERROR_COLOR),
-                    row![
-                        text(motion_rule_command()).size(11).font(iced::Font::MONOSPACE).width(Length::Fill),
-                        button(text("Copy command").size(13))
-                            .style(style::secondary)
-                            .on_press(Message::CopyMotionRuleCommand),
-                    ]
-                    .spacing(8)
-                    .align_y(Alignment::Center),
+                row![
+                    text(format!("Can't use the gyro on {names}: padwight isn't allowed to read its motion sensors."))
+                        .size(12)
+                        .color(ERROR_COLOR)
+                        .width(Length::Fill),
+                    button(text("Fix…").size(13)).style(style::secondary).on_press(Message::OpenSystemCheck),
                 ]
-                .spacing(6),
+                .spacing(8)
+                .align_y(Alignment::Center),
             );
         }
         list.into()
@@ -326,16 +302,5 @@ mod tests {
         assert_eq!(app.config.active_motion(), MotionSet::all(MotionStyle::Off));
         assert_eq!(app.config.scope().sounds, app.config.sounds.silenced());
         assert!(app.game().motion.is_some(), "the setup keeps its own motion for when performance allows it");
-    }
-
-    #[test]
-    fn motion_rule_command_installs_the_shipped_rule() {
-        let cmd = motion_rule_command();
-        assert!(cmd.contains("ENV{ID_INPUT_ACCELEROMETER}==\"1\""), "{cmd}");
-        assert!(cmd.contains("TAG+=\"uaccess\""), "{cmd}");
-        // Single-quoted for the shell, so the rule itself must not contain a quote.
-        let quoted = cmd.split('\'').nth(1).unwrap();
-        assert!(!quoted.is_empty() && !quoted.contains('#'), "comments are left out: {quoted}");
-        assert_eq!(cmd.matches('\'').count(), 2, "{cmd}");
     }
 }

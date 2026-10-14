@@ -23,7 +23,7 @@ Drawing the settings window without a display or a daemon (for the manual's scre
          picture <hide|show>     the live controller drawing
          open <button>           open that button's row (South, LeftBumper, ...)
          expand                  open every row               macro|menu|info <n>  open that card
-         dialog <add|export>     open a dialog                close  close it
+         dialog <add|export|system|system-demo>     open a dialog                close  close it
          shot <name>             save <out>/<name>.png
   options: --out <dir> (default screenshots/manual)   --size <w>x<h> (default 1280x2600)
            --dark (default is light)";
@@ -137,14 +137,25 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
         "macro" => send(app, Message::ToggleMacro(arg()?.parse()?)),
         "menu" => send(app, Message::ToggleMenu(arg()?.parse()?)),
         "info" => send(app, Message::ToggleInfo(arg()?.parse()?)),
-        "dialog" => match arg()? {
-            "add" => send(app, Message::OpenAddGame),
-            "export" => send(app, Message::OpenExport),
-            other => bail!("no dialog {other:?}"),
-        },
+        "dialog" => open_dialog(app, arg()?)?,
         "close" => send(app, Message::CloseDialog),
         "shot" => take_shot(app, options, arg()?)?,
         other => bail!("unknown step {other:?}{USAGE}"),
+    }
+    Ok(())
+}
+
+/// Opens the dialog named `word`.
+fn open_dialog(app: &mut App, word: &str) -> Result<()> {
+    match word {
+        "add" => send(app, Message::OpenAddGame),
+        "export" => send(app, Message::OpenExport),
+        "system" => send(app, Message::OpenSystemCheck),
+        "system-demo" => {
+            app.system_checks = system_check::demo();
+            app.dialog = Some(Dialog::SystemCheck);
+        }
+        other => bail!("no dialog {other:?}"),
     }
     Ok(())
 }

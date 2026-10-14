@@ -10,7 +10,7 @@ Some games read only the first controller Steam Input lists, such as Slay the Sp
 
 ## My controller doesn't show up
 
-Run `padwight status` in a terminal to see what the daemon has found. Your user needs access to the controller and to `/dev/uinput`. The README explains the udev rule, or joining the `input` group, that gives it.
+Run `padwight doctor` in a terminal. It checks that your user can open the controller, its motion sensor and `/dev/uinput`, and for anything missing it says why padwight needs it and prints the commands that fix it. `padwight status` shows what the running daemon has found.
 
 ## Why did my profile change?
 
@@ -37,7 +37,7 @@ Environment=PADWIGHT_KEYBOARD_LAYOUT=de
 
 ## Gyro does nothing on a PlayStation or Switch controller
 
-Those controllers' motion sensors need a permission rule of their own, which the README explains. Install it, then press **Calibrate gyro**.
+Those controllers' motion sensors need a permission rule of their own. `padwight doctor` tells you whether it's installed and prints the commands if not. Install it, reconnect the controller, then press **Calibrate gyro**.
 
 ## The top bar says the daemon isn't running
 
