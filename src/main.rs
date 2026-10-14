@@ -2,6 +2,8 @@ mod capture;
 mod config;
 mod daemon;
 mod debug;
+#[cfg(target_os = "linux")]
+mod doctor;
 mod engine;
 mod figures;
 mod focus;
@@ -59,6 +61,7 @@ commands:
   gui              open the settings window (default)
   daemon [--debug] run the background remapping service (--debug lets `debug --attach` inject controllers)
   status           show daemon status and detected controllers
+  doctor [--explain] check the permissions padwight needs and say how to fix them (Linux)
   enable|disable   turn remapping on or off
   profile <name>   switch to a profile (in the current game, General, or any game)
   next-profile     switch to the next profile
@@ -80,6 +83,8 @@ fn main() -> Result<()> {
         ["daemon"] => daemon::run(false),
         ["daemon", "--debug"] => daemon::run(true),
         ["status"] => status(),
+        #[cfg(target_os = "linux")]
+        ["doctor", rest @ ..] => doctor::run(rest),
         ["enable"] => send(&Request::SetEnabled(true)),
         ["disable"] => send(&Request::SetEnabled(false)),
         ["profile", name] => send(&Request::SetProfile(name.to_string())),

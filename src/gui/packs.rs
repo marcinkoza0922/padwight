@@ -22,6 +22,8 @@ pub(super) enum Dialog {
     Browse { kind: ItemKind, from: Option<BrowseSource>, open: Option<usize> },
     /// The window is closing with edits that aren't saved.
     ConfirmQuit,
+    /// What padwight needs from the system (`App::system_checks`).
+    SystemCheck,
 }
 
 /// Where "Copy from another game…" takes items from.
@@ -354,6 +356,7 @@ impl App {
             Dialog::DeleteGame(name) => self.view_delete(name),
             Dialog::Browse { kind, from, open } => self.view_browse(*kind, from.as_ref(), *open),
             Dialog::ConfirmQuit => self.view_confirm_quit(),
+            Dialog::SystemCheck => self.view_system_check(),
         };
         modal(body)
     }

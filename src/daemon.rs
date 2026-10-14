@@ -608,13 +608,29 @@ pub fn run(debug: bool) -> Result<()> {
     os::stop_on_signals(move || stop.send(Msg::Stop).is_ok())?;
     serve_ipc(tx.clone())?;
 
-    let kbm = VirtualKbm::new().context("creating virtual keyboard/mouse (do you have write access to /dev/uinput?)")?;
+    let kbm = VirtualKbm::new().map_err(explain_kbm_failure)?;
     let mut daemon = Daemon::new(config, kbm, inject::Injection::new(debug)?, tx);
     log!("padwight daemon started, socket at {}", ipc::socket_path().display());
     daemon.start_services();
     daemon.scan();
     daemon.run(&rx);
     Ok(())
+}
+
+/// Logs what to change when the virtual keyboard and mouse can't be made, which on Linux is almost
+/// always /dev/uinput.
+#[cfg(target_os = "linux")]
+fn explain_kbm_failure(e: anyhow::Error) -> anyhow::Error {
+    let report = crate::doctor::problems_report();
+    if !report.is_empty() {
+        log!("padwight can't start:\n{report}Run `padwight doctor --explain` for what each of these is for.");
+    }
+    e.context("creating virtual keyboard/mouse (run `padwight doctor` for what to change)")
+}
+
+#[cfg(windows)]
+fn explain_kbm_failure(e: anyhow::Error) -> anyhow::Error {
+    e.context("creating virtual keyboard/mouse")
 }
 
 /// Binds the control socket and serves it on a thread.

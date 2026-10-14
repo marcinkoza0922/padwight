@@ -53,6 +53,18 @@ The library is `packs/*.padpack` in this repository, embedded at build time. See
 
 ## Install
 
+From a release tarball (Linux, x86_64):
+
+```sh
+tar xzf padwight-*-linux-x86_64.tar.gz
+cd padwight-*-linux-x86_64
+./install.sh
+```
+
+It installs padwight for your user, starts the background service at login, and, after asking, copies three small system files with `sudo` (see Permissions below). `./install.sh --uninstall` removes it. `scripts/package.sh` builds the tarball; build it on the oldest distro you want to support, as the binary needs at least the glibc it was built against.
+
+From source:
+
 ```sh
 cargo install --path .
 mkdir -p ~/.config/systemd/user
@@ -72,12 +84,17 @@ Controllers can be unplugged, reconnected or swapped while padwight runs, and it
 
 If the pad that comes back (or replaces it) lacks something the active profile needs, such as gyro, the setup's first profile that doesn't need it takes over. If none does, the default profile takes over, and a toast tells you so. When a pad with the feature is connected again, your profile returns, unless you've changed it since. The switch only happens once the controllers have looked the same for two 2-second scans, so a motion sensor that appears a moment after its pad won't make the profile flicker.
 
-On most desktops (systemd-logind with `uaccess`), your user can already open `/dev/uinput` and the gamepad nodes, so no root is needed. If yours can't, add a udev rule that grants access, or add yourself to the `input` group.
+### Permissions
 
-For **gyro** on PlayStation and Switch controllers, also install the motion-sensor rule. Their motion sensors show up as a separate device that `uaccess` doesn't cover:
+`padwight doctor` checks all of this and prints the exact commands for whatever is missing; `padwight doctor --explain` says what each permission is for. The settings window also lists what's missing while the daemon isn't running, and the daemon logs it if it can't start.
+
+- **Write access to `/dev/uinput`**, to create the virtual gamepad, keyboard and mouse. On most desktops (systemd-logind with `uaccess`) you already have it. If not, install `dist/70-padwight-uinput.rules`, which tags the node for `uaccess` so the user at the machine gets access. If `/dev/uinput` doesn't exist, the `uinput` kernel module isn't loaded: `dist/padwight-uinput.conf` in `/etc/modules-load.d/` loads it at boot.
+- **Read access to the controller's `/dev/input/event*` node.** `uaccess` covers joysticks. If yours doesn't, add yourself to the `input` group (`sudo usermod -aG input $USER`) and log in again.
+- **Read access to the controller's motion sensor**, for gyro on PlayStation and Switch controllers. It's a separate node that `uaccess` doesn't cover. Install `dist/70-padwight-motion.rules`, which grants it for the `playstation`, `sony` and `nintendo` drivers only, so a laptop's tilt sensor is untouched. Without it, everything but gyro works.
+
+Rules go in `/etc/udev/rules.d/`, and apply after:
 
 ```sh
-sudo cp dist/70-padwight-motion.rules /etc/udev/rules.d/
 sudo udevadm control --reload && sudo udevadm trigger
 ```
 

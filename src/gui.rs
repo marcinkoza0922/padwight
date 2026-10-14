@@ -74,6 +74,7 @@ mod profile;
 mod response_graph;
 mod ring_preview;
 mod search;
+mod system_check;
 pub(crate) mod shoot;
 mod settings;
 mod sound_picker;
@@ -190,6 +191,8 @@ struct App {
     saved: Config,
     /// `None` while the daemon is unreachable.
     status: Option<Status>,
+    /// What the system check found, when the window opened or it was last run.
+    system_checks: Vec<system_check::Check>,
     page: Page,
     /// The profile being edited, by index in the current game's profiles.
     editing: usize,
@@ -452,7 +455,9 @@ enum Message {
     ToggleInGameMenuAppearance,
     SetInGameMenuStyle(OverlayStyle),
     CalibrateGyro(String),
-    CopyMotionRuleCommand,
+    OpenSystemCheck,
+    RecheckSystem,
+    CopyFix(usize),
     SetGyro(GyroConfig),
     SetTouchpad(TouchpadConfig),
     Guide(guide_tab::GuideMsg),
@@ -693,7 +698,7 @@ impl App {
             saved: config.clone(),
             config,
             sounds: crate::sound::Sounds::start(),
-            status: None,
+            status: None, system_checks: system_check::run(),
             page: Page::Overview,
             editing: 0,
             game_tab: GameTab::Profiles,
@@ -1328,6 +1333,11 @@ impl App {
                 ". You can still edit: your changes are saved and take effect once it starts.",
             ];
             header = header.push(how.size(13).color(MUTED_COLOR));
+        }
+        if self.page == Page::Overview
+            && let Some(banner) = self.view_system_check_banner()
+        {
+            header = header.push(banner);
         }
         header.into()
     }

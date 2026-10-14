@@ -14,3 +14,4 @@ The left side lists the pages and your setups. The rest of the window shows the 
 The first time the window opens, a short tour walks through it. To take it again, click **Take the tour** in the Help card on **App settings**.
 
 > **Tip:** if the top bar says the daemon isn't running, you can still edit. Your changes are saved, and they take effect once the daemon starts.
+- **System check**: a card on App settings, and a strip on the Overview when something is missing. It lists what padwight needs from your system (access to `/dev/uinput`, to your controller and to its gyro), why each is needed, and for anything missing the commands that set it up, with a Copy button. **Check again** looks once more after you've run them. `padwight doctor` in a terminal says the same.

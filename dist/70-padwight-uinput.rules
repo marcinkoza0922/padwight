@@ -1,0 +1,9 @@
+# Lets the logged-in user create virtual input devices through /dev/uinput. padwight presents
+# games with a virtual gamepad, keyboard and mouse, and the kernel only makes those through this
+# node. systemd-logind's uaccess tag gives the user at the machine access, and nobody else.
+# static_node makes udev create the node at boot, so this applies before the module is loaded.
+#
+# Install:
+#   sudo cp 70-padwight-uinput.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload && sudo udevadm trigger
+KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"
