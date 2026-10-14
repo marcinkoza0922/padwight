@@ -28,16 +28,6 @@ fn choices(s: &OfferSession) -> (Vec<String>, Option<usize>) {
 }
 
 #[test]
-fn packs_for_games_with_controller_support_are_not_offered_when_steam_starts_them() {
-    let mut library = vec![entry("Spire", "SlayTheSpire2")];
-    library[0].pack.pack.native_controller = true;
-    let config = Config::default();
-    assert_eq!(candidates(&config, &library, &window("SlayTheSpire2"), None), [0], "a copy Steam didn't start");
-    let steam = WindowInfo { steam_app_id: Some("2868840".into()), ..window("SlayTheSpire2") };
-    assert!(candidates(&config, &library, &steam, None).is_empty());
-}
-
-#[test]
 fn packs_naming_the_folder_beat_packs_sharing_the_program_name() {
     let library = vec![entry("Other", "gpp.exe"), entry("Sands", "Prince of Persia - The Sands of Time/gpp.exe")];
     let config = Config::default();

@@ -9,7 +9,6 @@ version = "1.0"
 author = "Padwight"
 description = "Motorslice on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard and the media controls, in the game's colors."
 made_with = "Xbox controller"
-native_controller = true
 
 [[rules]]
 kind = "executable"

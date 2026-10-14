@@ -2,8 +2,6 @@
 
 Ever wanted to play a PC game with a controller, only to find it ignores your pad, or only half-listens to it? padwight is for that. It sits between your gamepad and the desktop and turns what the pad does into something the game understands: keyboard keys, mouse movement, clicks, or a virtual controller of its own.
 
-> **Not for Steam games.** padwight and Steam Input don't work well together, and the options for living with both only go so far. padwight is meant for games you run outside Steam's controller handling: older games, GOG, Heroic or Lutris games, and the desktop. For a game you start from Steam, use Steam Input. See [Steam games](docs/manual/setups.md#games-steam-looks-after).
-
 It's built for two kinds of game:
 
 - **Games with no controller support, or only partial support.** Point a stick at the mouse or at WASD, put a macro on a button, give a trigger a mouse click, or send a whole combo of keys on one press. Missing a button the game never bound? Want gyro aiming on a pad that has a gyro? padwight can fill those gaps. Games that play well with a pad often still have a launcher that wants a mouse, or a name field that assumes you're sitting at a keyboard, and padwight covers those too (see [Mouse and keyboard from the couch](#mouse-and-keyboard-from-the-couch)).

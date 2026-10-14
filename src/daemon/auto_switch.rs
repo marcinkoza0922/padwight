@@ -1,5 +1,5 @@
 //! Following focus: which game is in front, switching to its profile (or back to the default),
-//! handing it to Steam Input, and noticing when a game starts.
+//! and noticing when a game starts.
 
 use std::{collections::HashMap, time::Instant};
 
@@ -26,13 +26,6 @@ impl Daemon {
             self.broadcast_overlay();
         }
         if self.focus_waits() {
-            return;
-        }
-        if self.hand_to_steam(window) {
-            // Steam has the controllers, but the last game's profile no longer fits what's in front.
-            if self.config.auto_switch.enabled {
-                self.leave_game(&format!("{} is left to Steam Input", describe(window)));
-            }
             return;
         }
         self.hint_library_game(window);
@@ -77,7 +70,6 @@ impl Daemon {
         if self.focus_waits() {
             return;
         }
-        self.take_pads_back();
         if self.config.auto_switch.enabled {
             self.leave_game("no window has focus");
         }

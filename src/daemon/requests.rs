@@ -148,7 +148,6 @@ impl Daemon {
         self.release_devices(|_, d| !enabled || ignored.contains(&d.name));
         self.resync_all();
         self.broadcast_overlay();
-        self.recheck_steam_handoff();
         self.save_and_rescan()
     }
 

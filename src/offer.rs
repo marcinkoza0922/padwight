@@ -34,10 +34,7 @@ pub fn candidates(config: &Config, library: &[Entry], window: &WindowInfo, have:
         .enumerate()
         .filter(|(_, e)| {
             let id = &e.pack.pack.id;
-            // Steam Input looks after a game that plays with a controller by itself.
-            let steam_has_it = e.pack.pack.native_controller && window.steam_app_id.is_some();
-            !steam_has_it
-                && !config.declined_packs.contains(id)
+            !config.declined_packs.contains(id)
                 && !config.games.iter().any(|g| g.origin.as_ref().is_some_and(|o| &o.id == id))
                 && e.pack.profiles.iter().any(|p| have.is_none_or(|h| p.usable_with(h)))
         })

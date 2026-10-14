@@ -9,7 +9,6 @@ version = "1.0"
 author = "Padwight"
 description = "Factorio on an Xbox-style pad. The game has its own controller support, with Xbox, PlayStation and Switch button pictures, so the controller passes through untouched and the game's Controls settings set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard for naming stations and the media controls, in the game's colors."
 made_with = "Xbox controller"
-native_controller = true
 
 [controllers]
 dualshock = true
