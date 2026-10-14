@@ -177,7 +177,6 @@ impl App {
             ("info overlays fallback glyphs xbox playstation nintendo labels", glyphs),
             ("help tour guided welcome introduction getting started", self.view_help_card()),
         ];
-        #[cfg(target_os = "linux")]
         let shown: Vec<Element<'_, Message>> = cards.into_iter().filter(|(words, _)| matches_query(query, words)).map(|(_, card)| card).collect();
         let body: Element<'_, Message> = if shown.is_empty() {
             text("No settings match.").color(MUTED_COLOR).into()

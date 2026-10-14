@@ -157,12 +157,24 @@ mod tests {
     #[test]
     #[cfg(target_os = "linux")]
     fn force_quit_ends_a_process_and_its_children() {
-        // A shell that starts a child and waits for it.
-        let mut shell = std::process::Command::new("sh").args(["-c", "sleep 60 & wait"]).spawn().unwrap();
-        thread::sleep(Duration::from_millis(200));
+        // A shell that starts a child, reports its ID, and waits for it. The shell's own exit
+        // status isn't checked: once its child is gone its `wait` returns and it can exit 0
+        // before the signal for the shell itself arrives.
+        let mut shell = std::process::Command::new("sh")
+            .args(["-c", "sleep 60 & echo $!; wait"])
+            .stdout(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        let mut line = String::new();
+        std::io::BufRead::read_line(&mut std::io::BufReader::new(shell.stdout.take().unwrap()), &mut line).unwrap();
+        let child: u32 = line.trim().parse().unwrap();
         force_quit(shell.id());
-        let status = shell.wait().unwrap();
-        assert!(!status.success());
+        shell.wait().unwrap();
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while is_running(child) && std::time::Instant::now() < deadline {
+            thread::sleep(Duration::from_millis(20));
+        }
+        assert!(!is_running(child));
     }
 
     #[test]
