@@ -81,7 +81,7 @@ activation = "always"
 noise_threshold = 1.0
 
 [profiles.guide]
-notes = '''The controller goes to the game as it is, so set the buttons in the game's own settings. If Steam starts the game with this setup in use, turn Steam Input off for it, and if the stick then does nothing, turn on Hide Padwight's controller from Steam in App settings and restart Steam.
+notes = '''The controller goes to the game as it is, so set the buttons in the game's own settings. If Steam starts the game with this setup in use, turn Steam Input off for it; the stick may then do nothing, and there is no known fix yet.
 {guide} still works over the game: {guide} + {west} opens the on-screen keyboard for a custom seed, and {guide} + {lb} the media controls.
 If the game stops answering the pad, check that no other remapper is running for it.'''
 

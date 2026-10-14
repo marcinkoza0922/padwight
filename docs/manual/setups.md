@@ -22,11 +22,9 @@ To make a rule quickly, focus the game and use **Recently focused windows** on t
 
 ## Games Steam looks after
 
-Padwight isn't intended for games you start from Steam. Padwight and Steam Input don't play nicely together: the game can see two controllers, read the stick through Steam instead of Padwight, or ignore the controller altogether. The options below reduce this but don't reliably fix it. Use Steam Input for Steam games.
+Most games work with Padwight even while Steam Input is on. Slay the Spire 2 is the exception: it reads the stick through Steam whenever Steam reports a controller, so Padwight's controller leaves it with a dead stick. When Steam starts that game, Padwight lets go of the controller while it is in front, so Steam Input has it, and takes the controller back when you switch to another window.
 
-When Steam starts a game that it lists with full controller support, Padwight lets go of the controller while that game is in front, so Steam Input has it. Padwight doesn't offer a library setup for such a game. Switch to another window and Padwight takes the controller back.
-
-If you still want a setup for such a game, tick **Use this setup even when Steam lists the game with full controller support** in the setup's **Controllers this setup supports** card. Expect to fiddle: see [Troubleshooting](troubleshooting.md). Steam lists some older games, such as Deus Ex, with full support because of Valve's own controller layouts, so this is the one case where ticking it is common.
+To use a setup for Slay the Spire 2 anyway, tick **Use this setup alongside Steam Input** in the setup's **Controllers this setup supports** card, and turn Steam Input off for the game in Steam (**Properties › Controller › Disable Steam Input**). Expect to fiddle: see [Troubleshooting](troubleshooting.md).
 
 > **Tip:** automatic switching needs a desktop that reports which window has focus: KDE Plasma, GNOME, Hyprland, Sway, or a wlroots compositor such as labwc. See [Troubleshooting](troubleshooting.md).
 

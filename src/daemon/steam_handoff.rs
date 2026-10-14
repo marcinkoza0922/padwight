@@ -1,6 +1,7 @@
-//! Leaving games to Steam Input. A game Steam starts and lists with full controller support
-//! already plays well with a pad, so while it's in front Padwight lets go of the controllers and
-//! Steam Input has them. A setup can take the game back (`Game::over_steam`). Leaving the game
+//! Leaving games to Steam Input. Slay the Spire 2 reads the stick through Steam whenever Steam
+//! reports a controller, so Padwight's virtual pad breaks it. While that game is in front, started
+//! by Steam with full controller support, Padwight lets go of the controllers and Steam Input has
+//! them. Other games work alongside Steam Input. A setup can take the game back (`Game::over_steam`). Leaving the game
 //! (another window, or none) takes the controllers back.
 
 use std::time::Instant;
@@ -8,11 +9,14 @@ use std::time::Instant;
 use super::{Daemon, describe};
 use crate::{config::Config, focus, ipc::WindowInfo, monitor::log};
 
-/// Whether Steam Input should have the controllers while `window` is in front: Steam started it,
-/// `full_support` says Steam lists it with full controller support, and no setup for it says to
+/// The only game left to Steam Input, until it's clear why it can't take Padwight's controller.
+pub(crate) const SLAY_THE_SPIRE_2: &str = "2868840";
+
+/// Whether Steam Input should have the controllers while `window` is in front: it's Slay the Spire 2
+/// started by Steam, `full_support` says Steam lists it with full controller support, and no setup for it says to
 /// use it anyway.
 pub(crate) fn left_to_steam(config: &Config, window: &WindowInfo, full_support: impl Fn(&str) -> bool) -> bool {
-    let Some(app) = &window.steam_app_id else { return false };
+    let Some(app) = window.steam_app_id.as_deref().filter(|app| *app == SLAY_THE_SPIRE_2) else { return false };
     let taken_back = focus::matching_rule(config, window).is_some_and(|(game, _)| config.game(Some(game)).is_some_and(|g| g.over_steam));
     !taken_back && full_support(app)
 }
@@ -77,7 +81,8 @@ mod tests {
         let full = |id: &str| id == "2868840";
         let mut config = Config::default();
         assert!(left_to_steam(&config, &window(Some("2868840")), full));
-        assert!(!left_to_steam(&config, &window(Some("6910")), full), "partial or no support stays with Padwight");
+        let everything = |_: &str| true;
+        assert!(!left_to_steam(&config, &window(Some("6910")), everything), "only Slay the Spire 2 is left to Steam");
         assert!(!left_to_steam(&config, &window(None), full), "a game Steam didn't start stays with Padwight");
 
         let mut game = Game::new("Slay the Spire 2", vec![Profile::passthrough("P")]);
