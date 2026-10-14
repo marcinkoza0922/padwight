@@ -240,7 +240,7 @@ Each menu is a collapsible card on the Menus tab, with a live preview. "Add a me
 
 ## In-game menu
 
-Hold Guide and press Start (the Quick Settings shortcut, which can be moved on App settings like the other Guide shortcuts) to open a menu over the game in front. **Quick Settings** changes a few handy values, such as stick and gyro sensitivity, Invert Y and the profile. **Edit Controls** changes that setup's buttons, sticks, triggers, gyro, combos, modes, layers, macros and zones. Changes apply right away and are saved when you choose Save. With no game in front, Edit Controls is refused. Quick settings instead makes a setup for the window in front.
+Hold Guide and press Start (the Quick Settings shortcut, which can be moved on App settings like the other Guide shortcuts) to open a menu over the game in front. **Quick Settings** changes a few handy values, such as stick and gyro sensitivity, Invert Y and the profile. **Edit Controls** changes almost anything the settings window does for that setup: buttons, sticks, triggers, gyro, touchpad, combos, modes, layers, macros, menus, info and log overlays, the Guide overlay, looks, sounds and window rules, with names typed on the on-screen keyboard and live pictures of sticks, gyro and touchpad as you use them. **Switch profile** on the Guide menu switches profiles or makes a new one. Changes apply right away and are saved when you choose Save. With no game in front, Edit Controls is refused. Quick settings instead makes a setup for the window in front.
 
 The wiki has the details: [the in-game menu](https://github.com/marcinkoza0922/padwight/wiki/In-Game-Menu) and [editing controls in game](https://github.com/marcinkoza0922/padwight/wiki/Editing-Controls-in-Game).
 

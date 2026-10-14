@@ -38,4 +38,4 @@ Each profile says whether it needs gyro. Tick **Can't be played without gyro** o
 
 ## Gyro while you play
 
-The [in-game editor](Editing-Controls-in-Game) sets gyro's mode (Off or Mouse), sensitivity, Y and X inversion, noise threshold and activation. Stick and steering modes are set in the pack file.
+The [in-game editor](Editing-Controls-in-Game) sets everything on this page, every mode included, with the response curve and your turning drawn beside it.

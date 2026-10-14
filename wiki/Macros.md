@@ -37,4 +37,4 @@ To loop a macro without holding anything, wrap a repeating macro in **Toggle**.
 
 ## Editing macros while you play
 
-The [in-game editor](Editing-Controls-in-Game) can add taps, presses, releases, waits and stick steps to a macro, and remove steps. It can't delete a macro that a button, layer or menu still uses; the macro's page says so. Motions and repeat settings are still set on the Macros tab.
+The [in-game editor](Editing-Controls-in-Game) names macros, adds every kind of step (motions included), sets each step's timing, moves and deletes steps, and sets whether a macro repeats while held. It can't delete a macro that a button, layer or menu still uses; the macro's page says so.

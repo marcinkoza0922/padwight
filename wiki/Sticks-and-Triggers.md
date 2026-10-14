@@ -53,4 +53,4 @@ Triggers can also have [zones](Buttons-and-Actions#zones).
 
 ## Changing sticks and triggers while you play
 
-The [in-game editor](Editing-Controls-in-Game) sets a stick's action, speed, Y inversion and deadzone, and a trigger's action, press point and zones. Stick rings and the flick stick are set in the pack file.
+The [in-game editor](Editing-Controls-in-Game) sets everything on this page: every kind of stick with its settings (rings and flick sticks included), deadzones and zones, and triggers, with pictures that follow the controller as you use it.

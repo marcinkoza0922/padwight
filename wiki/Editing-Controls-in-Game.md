@@ -1,103 +1,104 @@
 # Editing controls in game
 
-Edit Controls, in the [in-game menu](In-Game-Menu) (Guide + Start), changes the controls of the game you're playing. It edits that game's own profiles, so other games and General aren't touched. Changes apply straight away; they're written to the config file when you save.
+Edit Controls, in the [in-game menu](In-Game-Menu), changes the game you're playing without leaving it. It edits the profile you're on and the things the whole game shares (its modes, layers, macros, menus, overlays and details), so other games and General aren't touched. Changes apply straight away. They're written to the config file only when you save.
 
-The editor is a set of pages. Each row is a button, a setting, or a way to add something. A row's chip, such as **A** or **LS**, is the controller button it belongs to. A row that adds something is tinted lime, and a row that removes or deletes something is tinted red (see [colours](In-Game-Menu#colours-and-glyphs)).
+Almost anything the settings window does for a game can be done here. What's left to the settings window: a look's background picture, a cue's sound file from a pack, a pack's own details (author, version), and importing or exporting packs.
+
+## Moving around
+
+- **D-pad** or **Left Stick** move the cursor. **A** chooses. **B** goes back a page.
+- On a row with a value (a number, a switch, a choice), **left** and **right** change it. **A** steps it forward too. Pages with values stay in one column and scroll, so left and right are free for changing them.
+- **LB** and **RB** jump a page up or down a long list.
+- Deleting anything takes a second press of **A**.
+- A row that adds something is tinted lime, and a row that removes or deletes something is tinted red (see [colours](In-Game-Menu#colours-and-glyphs)). The top line shows where you are, such as `Guide › Edit Controls › Buttons`.
+
+## Typing
+
+Names, labels, overlay text, window rules and colors are typed on the on-screen keyboard. The field's name and its text show above the keys, and the keys go into the field, not the game. **A** types the key under the cursor, **X** deletes (hold it to keep deleting), **Y** types a space, and hold **LT** for Shift. **Start** (or the keyboard's Enter key) sets the text. Hold **B**, or press Guide, to put the keyboard away without changing anything.
+
+## Pictures
+
+Pages about a stick, a trigger, the gyro or the touchpad show the settings window's pictures beside the list, and they follow your controller as you use it: where the stick is and what its deadzone and curve do with it, how far the trigger is pulled against its press point and zones, how fast you're turning on the gyro's curve, and your fingers on the touchpad. On a Left Stick page, only the D-pad moves the cursor, so you can watch the stick.
+
+A menu being edited is drawn beside its pages as it will look, and an info or log overlay being edited shows on screen where it goes. A log overlay shows sample presses.
 
 ## The top page
 
-- The 15 buttons, each with what it does now.
-- **Left stick** and **Right stick**.
-- **Left trigger** and **Right trigger**.
-- **Gyro**.
-- **Combos**.
-- **Modes**.
-- **Layers**.
-- **Macros**.
+**Buttons**, **Sticks**, **Triggers**, **Gyro**, **Touchpad**, **Combos**, **Modes**, **Layers**, **Macros**, **Menus**, **Info overlays**, **Log overlays**, **Guide overlay**, **Profile** and **Game**. Each opens its own list.
 
-## A button
+## Actions
 
-Choosing a button opens its action list. The first two rows are the picker rows, then the actions:
+Anything that holds an action (a button, a gesture, a combo, a trigger, a zone, a ring sector, a touchpad click or swipe, a menu item, a macro step) opens the same page. Its first row says what it does now. Below that:
 
-- **Gamepad button…** sends another pad button, picked from the next page.
-- **Gestures…** (buttons only) opens the double tap, triple tap and long press of that button. Each can be set, or **Not set**.
-- **Disabled**, **On-screen keyboard**, **Numpad**, **Screenshot**, **Start / stop recording**, **Media controls**, **Force quit (hold)**.
-- **Left**, **Right**, **Middle**, **Back** and **Forward click**, and **Wheel up**, **down**, **left**, **right**.
-- **Keys…** opens a picker of 26 common keys. Tick several to send them together, such as Ctrl and Esc. **Done** leaves the picker.
-- **Switch to a mode…**, **Hold a layer…**, **Play a macro…**, **Open a menu…**, **Show an info overlay…** and **Show a log overlay…** each list what the game has, and pick one.
-- **Make it a toggle** or **Make it turbo (10 a second)** wraps the action. A layer or a mode switch can't be made a toggle. Once wrapped, the row reads **Stop toggling** or **Stop turbo**, and choosing it takes the wrapper off.
+- **Gamepad button…** sends another pad button.
+- **Gestures…** (a button's page) opens its double tap, triple tap and long press.
+- Mouse clicks, the wheel in four directions, the on-screen keyboard and numpad, a screenshot, recording, the media controls, Quick Settings and force quit. Choose **Disabled** to make it do nothing.
+- **Keys…** opens the full keyboard, a row at a time. Tick keys to press them together, such as Ctrl and C.
+- **Switch to a mode…**, **Hold a layer…**, **Play a macro…**, **Open a menu…**, **Show an info overlay…** and **Show a log overlay…** list what the game has.
+- **Several at once…** presses several actions together. Its page lists them, each with its own action page, and adds or removes them.
+- **Make it a toggle** and **Make it turbo** wrap the action. A wrapped action's page shows what it wraps on a page of its own, so you can change that and keep the wrapper. A toggle can start on, a turbo has its rate (and how often it plays a macro), and **Stop toggling** or **Stop turbo** takes the wrapper off. A macro can repeat while held.
+- **Not set** clears a gesture, or a button a mode or layer leaves to the profile.
 
-A wrapped action gets its own rows underneath: **Rate** for a turbo (5, 10, 15, 20 or 30 a second), and **Starts on** for a toggle.
-
-Gestures and layer buttons also have **Not set**, which clears them.
+A menu item can't hold a layer or be a turbo. A macro step presses keys, buttons, clicks or the wheel.
 
 ## Sticks
 
-- **Action**: Disabled, Gamepad stick, Mouse, or Scroll.
-- **Speed**: for Mouse and Scroll. Left and right change it.
-- **Invert Y**.
-- **Deadzone**.
-- **Zones**: see below.
+**Kind** is Off, Gamepad stick, Mouse pointer, Scroll wheel, Button ring or Flick stick, each with its settings:
 
-## Triggers
+- **Gamepad stick**: which stick it sends, Invert Y, curve.
+- **Mouse pointer**: speed, Invert Y, a response preset (Linear, Gentle, Aggressive, Wide, Extra wide, Precision, Turn boost) and its curve, acceleration, ramp time and outer boost, then vertical speed and smoothing.
+- **Scroll wheel**: speed, Invert Y, curve.
+- **Button ring**: 4, 8 or 12 sectors, where the first one points, how far out the ring starts, stickiness, each sector's action, and fills for WASD and the arrows.
+- **Flick stick**: turn size, flick point, flick time, turning smoothing, dead angle, and up-and-down look with its speed.
 
-- **Action**: Disabled, Gamepad trigger, or Button.
-- **Acts as**: for a Button trigger, one of six pad buttons, A, B, Y, X, LB or RB.
-- **Press at**: how far the trigger must be pulled, in steps of 0.05.
-- **Zones**.
+Every kind has a deadzone, how far out its direction buttons press, and **Zones**.
 
-## Zones
+## Triggers and zones
 
-A zone holds its action while the stick or trigger is pushed within its range. Its page has:
-
-- **From** and **To**: the edges of the range, moved with left and right. The start can't pass the end.
-- **Action**: the same choices as a button, including keys and holding a layer.
-- **Delete zone**.
-
-A new zone covers the top half of the travel.
+A trigger is Off, a Gamepad trigger (which one it sends), or a Button with an action and a press point. A zone holds its action while a stick or trigger is pushed within its range: **From** and **To** move its edges (the start can't pass the end). A new zone covers the top half of the travel.
 
 ## Gyro
 
-- **Mode**: Off, or Mouse. Stick and steering modes can only be set in the pack file.
-- **Sensitivity**: for Mouse. Left and right change it.
-- **Invert X** and **Invert Y**.
-- **Noise threshold**.
-- **Activation**: cycles through always on, on while LT or RT is held, off while LT or RT is held, and toggled by LT or RT.
+**Mode** is Off, Mouse, Stick (turning speed), Stick (position) or Steering, each with its settings: sensitivity and real-world sensitivity with the game's full turn, the stick it sends, how far is a full push, anti-deadzone and locking at the edge. Then how turning is read, which axes it moves, each axis's speed and inversion, the response preset and its curve, when it's on (always, while held, off while held, or toggled, with the input picked from every button and trigger, and a rumble on toggle), what recenters it, which stick pauses it, the jitter and smoothing thresholds, and drift re-measuring.
 
-## Combos
+## Touchpad
 
-- **Add combo** makes an empty combo.
-- A combo's page ticks its buttons. A combo needs two or more.
-- **Action** sets what the combo does, with the same choices as a button.
-- **Delete combo** removes it.
+What fingers do (Off, Mouse pointer, Gamepad stick, Menu zones or Swipes) with each kind's settings, what clicking does, and **Split into halves**, which gives the right half its own page.
 
-## Modes
+## Combos and gestures
 
-- **Add mode** makes a mode called **Mode 1**, **Mode 2** and so on. It does nothing until something switches to it: use **Switch to a mode…** on a button's or menu item's action list. That list also offers the built-in **Mouse mode**.
-- A mode's page sets each button's action while the mode is on. Choose **Not set** to leave a button as the profile has it.
-- The built-in Guide and Mouse modes aren't listed here: they can't be changed.
+A combo ticks its buttons (two or more), has an action, and can be deleted. A button's gestures are on its action page. Their timings are on the **Profile** page.
 
-## Layers
+## Modes and layers
 
-- **Add layer** makes a layer called **Layer 1**, **Layer 2** and so on. It does nothing until a button holds it: use **Hold a layer…** on a button's action list.
-- A layer's page sets each button's action while the layer is held. Choose **Not set** to leave a button unbound by the layer.
+**Add mode** or **Add layer** makes one. Its page has its name, its buttons (a button it doesn't set is left to the profile), its combos, the profile's combos it turns off, and its own sticks, triggers, gyro and touchpad: each says whether it's the profile's or its own. **Set it here** starts it from the profile's, and **Use the profile's** gives it back. Then whether other buttons do nothing while it's on, what shows while it's on (its name, its bindings, an info overlay, or nothing), after how long, the bindings sheet's heading, and the name label's look. A mode or layer something still uses can't be deleted.
 
 ## Macros
 
-- **Add macro** makes an empty macro.
-- A macro's steps are listed first. Choosing a step removes it.
-- The rows after the steps add to the macro:
-  - **Tap…**, **Press…** and **Release…** each pick a gamepad button.
-  - **Stick…** adds a stick step: one of nine directions (eight, and centre), for either stick.
-  - **Wait 100 ms** adds a pause.
-  - **Remove last step** takes off the end.
-- **Delete macro** removes the macro. It's refused while a button, layer or menu uses it, and the row says so.
+A macro has its name, its steps, and **Add a step…**: a tap, holding down, letting go, a wait, moving a stick, or a fighting-game motion (quarter circles, half circles, dragon punch). A step's page sets what it presses and for how long, or where the stick goes (by direction, or exactly), and moves or deletes it.
 
-## What the editor doesn't offer
+## Menus
 
-These stay in the pack file:
+A menu has its name, its items, its kind (radial, directional, list, buttons, carousel or grid) with the kind's settings (the stick that aims it, boxes, the buttons that pick, what turns a carousel, a grid's columns and starting item), what closes it, whether it stays up after a choice, and its look. An item has its label, its action, and what its menu's kind gives it: a button to pick it with, its share of a radial menu, or its size in a grid. Items move up and down.
 
-- **Multi**, which runs several actions from one button.
-- Stick and steering gyro modes, and the gyro's other inputs.
-- Macro steps beyond taps, presses, releases, stick steps and waits, such as an action's repeat setting. A macro picked from the editor plays once.
-- Keys outside the 26-key picker.
+## Info and log overlays
+
+An info overlay has its name, whether it's always on screen, how long it shows when the game starts and after it's let go, its heading, its cells row by row (each typed, with the same `{tokens}` as the settings window), what its `{current_input}` cells follow, its position and its look.
+
+A log overlay has its name, whether it's always on screen, how long it stays, what it follows (a controller, which inputs, how many per line and the pause that starts a new one), its lines, where the newest goes, fading, merged repeats, labels, hold times, its position and its look.
+
+## Looks
+
+A look page sets where an overlay sits and how far it's moved from there, its size, width and height (or fitted to its contents), the widest and tallest it gets, its corners, the colors of its background, items and selected item (from swatches, or typed as `#rrggbb`, with opacity), its text (case, spacing, size), and its decorations: outlines, shadow, gradient, glow, lines between items, a corner frame, scanlines and a vignette.
+
+## Guide overlay
+
+The notes for the Notes overlay, a line at a time, and the rows of the Mappings list: each row's text, whether it's shown, sharing it with other inputs (and splitting a shared row), and rows of your own.
+
+## Profile
+
+Its name, what a controller needs to play it (gyro, back paddles, a touchpad), and how long taps count together, a long press takes, and combo buttons wait for each other. Making and switching profiles is in [Switch Profile](In-Game-Menu#switch-profile) on the Guide menu.
+
+## Game
+
+Its name, the window rules that pick it (what they match, the value, the profile they switch to, on or off), its profiles (rename, copy, move, delete; deleting the one you're on moves to another), the Nintendo button layout, its font, its own looks for the keyboard, numpad, media controls and in-game menu, and its own sounds (each cue's sound, volume, pitch, length and effects), rumble (each buzz's strength and length) and motion. Renaming the game, a profile or any item keeps everything that names it pointing at it.
