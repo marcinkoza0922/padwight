@@ -90,26 +90,13 @@ fn sdl_environment(pid: u32) -> Vec<String> {
         .split(|b| *b == 0)
         .map(String::from_utf8_lossy)
         .filter(|v| v.starts_with("SDL_GAMECONTROLLER") || v.starts_with("SDL_JOYSTICK"))
-        .map(|v| match v.split_once('=') {
-            Some((name, ids)) if name.ends_with("IGNORE_DEVICES") => format!("{name}: {}", hidden(ids)),
-            _ => v.into_owned(),
-        })
+        .map(std::borrow::Cow::into_owned)
         .collect()
 }
 
 #[cfg(not(target_os = "linux"))]
 fn sdl_environment(_pid: u32) -> Vec<String> {
     Vec::new()
-}
-
-/// A device list as far as Padwight goes: how long it is and which of Padwight's IDs it hides.
-#[cfg(target_os = "linux")]
-fn hidden(ids: &str) -> String {
-    let listed: Vec<String> = ids.split(',').filter(|i| !i.is_empty()).map(str::to_ascii_lowercase).collect();
-    let ours = crate::steam_hide::ignored_ids();
-    let hit: Vec<&str> = ours.split(',').filter(|id| listed.iter().any(|l| l == id)).collect();
-    let verdict = if hit.is_empty() { "none of Padwight's controller IDs".to_owned() } else { format!("Padwight's {}", hit.join(", ")) };
-    format!("{} IDs, hiding {verdict}", listed.len())
 }
 
 #[expect(clippy::print_stdout, reason = "CLI output")]

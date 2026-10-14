@@ -6,13 +6,11 @@ If Steam Input manages the controller, the game sees Steam's virtual controller 
 
 PlayStation and Switch controllers can also be read directly, so for those you may need to turn off Steam Input, or set `SDL_JOYSTICK_HIDAPI=0` for the game.
 
-## A Steam game doesn't react to the controller, or ignores its stick
+## Slay the Spire 2 ignores the controller's stick
 
-Padwight isn't intended for Steam games, and the fixes here are best effort. A game that Steam starts and lists with full controller support gets the controller through Steam Input: Padwight lets go of it while the game is in front (see [Controller setups](setups.md)). Leave Steam Input on for such games.
+Slay the Spire 2 reads the stick through Steam whenever Steam reports a controller, which gets nothing from Padwight's. When Steam starts it, Padwight lets go of the controller so Steam Input has it (see [Controller setups](setups.md)). Leave Steam Input on for the game.
 
-If you use a setup for one anyway (**Use this setup even when Steam lists the game with full controller support**), turn off Steam Input for the game: in Steam, open the game's **Properties › Controller** and pick **Disable Steam Input**. If the buttons then work but the stick doesn't, the game is reading the stick through Steam, which sends nothing while Steam Input is off. Turn on **Hide Padwight's controller from Steam** in **App settings › Steam**, then quit and restart Steam. Games started from Steam still see Padwight's controller; Steam's own menus and Big Picture don't.
-
-The setting adds a copy of Steam's menu entry to `~/.local/share/applications` (or a Flatpak override for Flatpak Steam), so it only applies when Steam is started from the menu. If Steam starts some other way, such as at login or from a terminal, start it with `SDL_GAMECONTROLLER_IGNORE_DEVICES=0x045e/0x028e,0x054c/0x09cc,0x054c/0x0ce6,0x057e/0x2009` set.
+If you tick **Use this setup alongside Steam Input** anyway, turn off Steam Input for the game: in Steam, open the game's **Properties › Controller** and pick **Disable Steam Input**. The buttons may then work while the stick doesn't. There is no known fix yet.
 
 ## My controller doesn't show up
 
