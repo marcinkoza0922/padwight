@@ -22,7 +22,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 26] = [
+pub const SCENES: [(&str, &str); 28] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -49,6 +49,8 @@ pub const SCENES: [(&str, &str); 26] = [
     ("held-remapping", "the in-game menu asking to save once remapping is turned off from the tray"),
     ("guide", "the Guide overlay: its menu, Notes, and Mappings with a held layer's section"),
     ("guide-mode", "the Guide overlay turned to a mode that isn't on"),
+    ("switch-profile", "Switch Profile, opened from the Guide menu: the profiles and a new one"),
+    ("new-profile", "what a new profile from Switch Profile starts from"),
 ];
 
 /// The frame of the scene called `name`.
@@ -88,6 +90,8 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "held-remapping" => active(held(crate::system_menu::Hold::RemappingOff)),
         "guide" => guide(0),
         "guide-mode" => guide(1),
+        "switch-profile" => active(switch_profile(false)),
+        "new-profile" => active(switch_profile(true)),
         _ => bail!("no scene called {name} (see `padwight debug overlay list`)"),
     })
 }
@@ -183,6 +187,27 @@ fn guide(shown: usize) -> OverlayFrame {
     let info = view.overlays().iter().map(|o| info::resolve(o, &live)).collect();
     let menu = crate::guide_menu::view(false, 0, "Gameplay", OverlayStyle::default());
     OverlayFrame { info, ..OverlayFrame { active: Some(OverlayView::Menu(menu)), ..OverlayFrame::default() } }
+}
+
+/// Switch Profile's list (with the cursor on a profile that needs a gyro), or its new-profile page.
+fn switch_profile(new: bool) -> OverlayView {
+    use crate::{
+        config::{Config, Feature, Game, Profile, ProfileRef},
+        input::InputEvent,
+        system_menu::{Page, SystemMenu},
+    };
+    let mut config = Config::default();
+    let mut gyro = Profile::gyro_aim("Gyro aim");
+    gyro.requires = vec![Feature::Gyro];
+    config.games.push(Game::new("Deus Ex", vec![Profile::pc_action("Gameplay"), gyro, Profile::desktop("Menus")]));
+    config.active = ProfileRef::new(Some("Deus Ex"), "Gameplay");
+    let mut menu = SystemMenu::new(&config).with_features(Some(Vec::new())).on_page(Page::Profiles);
+    let now = std::time::Instant::now();
+    let presses: &[Button] = if new { &[Button::DpadUp, Button::South] } else { &[Button::DpadDown] };
+    for &b in presses {
+        menu.handle(InputEvent::Button(b, true), now, &mut config);
+    }
+    OverlayView::Menu(menu.view(&config))
 }
 
 /// Quick Settings left with a change not saved: the question stands over the page.

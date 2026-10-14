@@ -101,7 +101,8 @@ impl Daemon {
         self.broadcast_overlay();
     }
 
-    /// Runs a Guide menu item. The overlay goes away first, except for Quick Settings and Edit Controls, which open the Guide + Start menu on their page.
+    /// Runs a Guide menu item. The overlay goes away first. Quick Settings, Edit Controls and
+    /// Switch Profile open the Guide + Start menu on their page.
     pub(super) fn guide_choose(&mut self, device: u64, item: crate::guide_menu::Item) {
         use crate::guide_menu::Item;
         match item {
@@ -116,17 +117,16 @@ impl Daemon {
                     self.apply_settings_change();
                 }
             }
-            Item::Keyboard | Item::Numpad | Item::Media | Item::NextProfile | Item::Steam => {
+            Item::SwitchProfile => {
+                self.guide_close(device);
+                self.open_system_menu(device, Page::Profiles);
+            }
+            Item::Keyboard | Item::Numpad | Item::Media | Item::Steam => {
                 self.guide_close(device);
                 match item {
                     Item::Keyboard => self.toggle_overlay(Layout::Keyboard, Some(device)),
                     Item::Numpad => self.toggle_overlay(Layout::Numpad, Some(device)),
                     Item::Media => self.toggle_media(Some(device)),
-                    Item::NextProfile => {
-                        if let Some(next) = self.config.next_profile(self.pad_features().as_deref()) {
-                            self.switch_profile(next, BY_HAND);
-                        }
-                    }
                     _ => self.send_steam_overlay(device),
                 }
             }

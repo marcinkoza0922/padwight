@@ -60,6 +60,10 @@ Still in the pack file: Multi, which holds several actions in one slot. Stick an
 
 Gestures and combos (done): a button's Gestures page sets its double tap, triple tap and long press (or clears them to "Not set"). Combos lists the profile's combos, with "Add combo". A combo page ticks its buttons (two or more make a combo), sets its action, and deletes it. The gesture and combo actions use the same choices as a button.
 
+## Switch Profile (done)
+
+The Guide menu's "Next profile" row is now "Switch profile (now …)". It opens the in-game menu on `Page::Profiles` (`src/system_menu/profiles.rs`): the active game's profiles, then "New profile…". Picking a profile switches to it and leaves the menu (asking about unsaved changes first, if any). A switch to a profile that was saved updates the menu's saved copy, so it isn't an unsaved change on its own. "New profile…" offers a copy of the current profile, each `Template` (moved from the GUI to `config/templates.rs`), and in a game a copy of each General profile; the copy gets a `unique_name` in its game and is switched to (`Outcome::Added`). Discard puts back the profile the menu opened on.
+
 ## Open questions
 
 - Each change saves the whole config. If that is too heavy while a game runs, phase 2b can batch edits behind a Save.

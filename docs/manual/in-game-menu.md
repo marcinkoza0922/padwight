@@ -17,6 +17,12 @@ Hold Guide and press Start to open the in-game menu over the game you're playing
 
 Left and right change a number by about 10%, or by half with RB held, and keep changing it while held. A number you changed shows what it was when you opened the menu. A flips a switch or picks the next profile.
 
+## Switch Profile
+
+**Switch profile** on the Guide menu lists the profiles of the game in front of you (or General's, outside a game). The one you're on says "(current)", and one your controller can't play says what it needs, such as "(needs gyro)". Pick one to switch to it and go back to the game.
+
+**New profile…** at the bottom makes another profile and switches to it. It can start as a copy of the profile you're on, from one of the templates the settings window offers, or, in a game, as a copy of one of General's profiles. It gets a free name, such as `Gameplay 2`. A new profile is a change like any other in the menu: it's written to the config file only when you save.
+
 ## Edit Controls
 
 Opens the full editor for the game in front of you: its buttons (and back paddles, on a controller that has them), sticks, gyro, combos, modes, layers, macros, menus and info overlays. Changes apply straight away, but they're only written to the config file when you save.

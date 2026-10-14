@@ -29,6 +29,7 @@ mod window_game;
 mod menus;
 mod layers;
 mod templates;
+pub use templates::{Template, unique_name};
 pub mod problems;
 pub use menus::*;
 pub use layers::*;

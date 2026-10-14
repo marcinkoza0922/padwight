@@ -4,12 +4,13 @@
 
 use std::time::Instant;
 
+mod profiles;
 mod quick;
 use quick::Row;
 
 use crate::{
     layout_editor::{EditStep, LayoutEditor},
-    config::{Button, Config, OverlayStyle, Profile, ProfileRef},
+    config::{Button, Config, Feature, OverlayStyle, Profile, ProfileRef},
     input::{Axis, InputEvent},
     menu::{ItemView, MenuView, Tone},
     offer::OfferView,
@@ -22,8 +23,11 @@ pub enum Outcome {
     Close,
     /// A value changed in the config: save it and apply it.
     Changed,
-    /// Switch to this profile (the menu stays up).
+    /// Switch to this profile. The menu stays up, but for Switch Profile, which then leaves
+    /// (see [`SystemMenu::profile_switched`]).
     Switch(ProfileRef),
+    /// A new profile was added to the config: apply it and switch to it.
+    Added(ProfileRef),
     /// Edit Controls was chosen: the daemon makes a pack for the game if there isn't one.
     EditControls,
     /// Save the changes to the config file, then close, or go `back` to the Guide overlay.
@@ -37,12 +41,14 @@ pub enum Outcome {
     RemappingOff,
 }
 
-/// The page a menu opens on. The Guide overlay opens Quick Settings or Edit Controls directly.
+/// The page a menu opens on. The Guide overlay opens Quick Settings, Edit Controls or Switch
+/// Profile directly.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Page {
     Main,
     Quick,
     EditControls,
+    Profiles,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -50,6 +56,9 @@ enum Screen {
     Main,
     Quick,
     Editor(LayoutEditor),
+    /// Switch Profile's list, and what a new profile starts from.
+    Profiles,
+    NewProfile,
     /// Closing with changes not saved: save, discard, or keep editing, which goes back to the
     /// screen (and cursor) the menu was being left from. Drawn over that screen.
     Confirm(Box<Screen>, usize, Exit),
@@ -100,6 +109,9 @@ pub struct SystemMenu {
     saved: Box<Config>,
     /// The controller driving the menu has back paddles, which Edit Controls then lists.
     paddles: bool,
+    /// What the controllers have, so Switch Profile can say what a profile needs. `None`
+    /// without a controller.
+    features: Option<Vec<Feature>>,
     /// RB is held: Quick Settings' numbers change in bigger steps.
     big_steps: bool,
     /// Turn remapping off was chosen once; choosing it again does it.
@@ -125,6 +137,7 @@ impl SystemMenu {
             from_guide: false,
             saved: Box::new(saved.clone()),
             paddles: false,
+            features: None,
             big_steps: false,
             remapping_armed: false,
             hold: None,
@@ -136,6 +149,11 @@ impl SystemMenu {
         SystemMenu { paddles, ..self }
     }
 
+    /// This menu, for controllers with `features` (`None` without any).
+    pub fn with_features(self, features: Option<Vec<Feature>>) -> Self {
+        SystemMenu { features, ..self }
+    }
+
     /// This menu, opened on `page`. Edit Controls still needs the daemon's checks (see
     /// [`Outcome::EditControls`]).
     pub fn on_page(mut self, page: Page) -> Self {
@@ -144,6 +162,7 @@ impl SystemMenu {
             Page::Main => Screen::Main,
             Page::Quick => Screen::Quick,
             Page::EditControls => Screen::Editor(LayoutEditor::new().with_paddles(self.paddles)),
+            Page::Profiles => Screen::Profiles,
         };
         self
     }
@@ -212,6 +231,8 @@ impl SystemMenu {
             Screen::Confirm(..) => self.confirm_step(step),
             Screen::Quick => self.quick_step(step, config),
             Screen::Editor(_) => self.editor_step(step, config),
+            Screen::Profiles => self.profiles_step(step, config),
+            Screen::NewProfile => self.new_profile_step(step, config),
         }
     }
 
@@ -316,12 +337,29 @@ impl SystemMenu {
         self.from_guide
     }
 
-    /// Puts the cursor back on Quick Settings' Profile row after a switch, whose rows may differ.
-    pub fn profile_switched(&mut self, config: &Config) {
-        if self.screen == Screen::Quick {
-            let rows = quick::rows(config, &self.saved);
-            self.cursor = rows.iter().position(|r| *r == Row::Profile).unwrap_or(0).min(rows.len().saturating_sub(1));
+    /// After a switch to a profile: one that was saved isn't a change to save. Quick Settings
+    /// puts the cursor back on its Profile row, whose rows may differ; Switch Profile leaves, which
+    /// may ask about unsaved changes first (the outcome is what leaving asks of the daemon).
+    pub fn profile_switched(&mut self, config: &Config) -> Option<Outcome> {
+        if profiles::has(&self.saved, &config.active) {
+            self.saved.active = config.active.clone();
         }
+        match self.screen {
+            Screen::Quick => {
+                let rows = quick::rows(config, &self.saved);
+                self.cursor = rows.iter().position(|r| *r == Row::Profile).unwrap_or(0).min(rows.len().saturating_sub(1));
+                None
+            }
+            Screen::Profiles => self.leave(config, Exit::Close),
+            _ => None,
+        }
+    }
+
+    /// After a new profile was added and switched to: the list, with the cursor on it.
+    pub fn profile_added(&mut self, config: &Config) {
+        self.screen = Screen::Profiles;
+        let at = config.active_ref();
+        self.cursor = config.active_game().profiles.iter().position(|p| p.name == at.profile).unwrap_or(0);
     }
 
     /// The breadcrumb for the menu's own pages: where it was opened from.
@@ -385,6 +423,41 @@ impl SystemMenu {
                 quick::adjust(row, dir, self.big_steps, config, &self.saved)
             }
         }
+    }
+
+    fn profiles_step(&mut self, step: Step, config: &Config) -> Option<Outcome> {
+        let rows = profiles::rows(config);
+        match step {
+            Step::Up | Step::Down | Step::Left | Step::Right => self.cursor = list_move(self.cursor, step, rows.len()),
+            Step::Pick => match *rows.get(self.cursor)? {
+                profiles::Row::New => {
+                    self.screen = Screen::NewProfile;
+                    self.cursor = 0;
+                }
+                row => {
+                    let target = profiles::target(row, config)?;
+                    if target == config.active_ref() {
+                        return self.leave(config, Exit::Close);
+                    }
+                    return Some(Outcome::Switch(target));
+                }
+            },
+            Step::Back => return self.leave(config, Exit::Back),
+        }
+        None
+    }
+
+    fn new_profile_step(&mut self, step: Step, config: &mut Config) -> Option<Outcome> {
+        let rows = profiles::new_rows(config);
+        match step {
+            Step::Up | Step::Down | Step::Left | Step::Right => self.cursor = list_move(self.cursor, step, rows.len()),
+            Step::Pick => return profiles::create(*rows.get(self.cursor)?, config).map(Outcome::Added),
+            Step::Back => {
+                self.screen = Screen::Profiles;
+                self.cursor = profiles::rows(config).len() - 1;
+            }
+        }
+        None
     }
 
     fn editor_step(&mut self, step: Step, config: &mut Config) -> Option<Outcome> {
@@ -452,6 +525,20 @@ impl SystemMenu {
             Screen::Main => main_page(style, cursor),
             Screen::Editor(editor) => editor.view(config, &[self.parent()]),
             Screen::Confirm(left, cursor, _) => self.screen_view(left, *cursor, config),
+            Screen::Profiles => list_page(
+                "Switch Profile",
+                profiles::rows(config).into_iter().map(|r| profiles::item(r, config, self.features.as_deref())).collect(),
+                cursor,
+                vec![self.parent()],
+                style,
+            ),
+            Screen::NewProfile => list_page(
+                "New profile",
+                profiles::new_rows(config).into_iter().map(|r| profiles::new_item(r, config)).collect(),
+                cursor,
+                vec![self.parent(), "Switch Profile".into()],
+                style,
+            ),
             Screen::Quick => MenuView {
                 title: "Quick Settings".into(),
                 kind: crate::config::MenuKind::List,
@@ -475,6 +562,23 @@ impl SystemMenu {
                 prompt: None,
             },
         }
+    }
+}
+
+/// A page that is a plain list: {confirm} chooses, {back} goes back.
+fn list_page(title: &str, items: Vec<ItemView>, cursor: usize, crumbs: Vec<String>, style: OverlayStyle) -> MenuView {
+    MenuView {
+        title: title.into(),
+        kind: crate::config::MenuKind::List,
+        items,
+        selected: Some(cursor),
+        picks: 0,
+        crumbs,
+        hint: "{confirm} choose · {back} back".into(),
+        style,
+        touch: false,
+        aim: None,
+        prompt: None,
     }
 }
 
@@ -512,6 +616,17 @@ fn dir_step((x, y): crate::nav::Dir) -> Step {
         (-1, _) => Step::Left,
         _ => Step::Right,
     }
+}
+
+/// Where `step` moves the cursor of a list page of `len` rows, which may be in two columns.
+fn list_move(cursor: usize, step: Step, len: usize) -> usize {
+    let dir = match step {
+        Step::Up => (0, -1),
+        Step::Down => (0, 1),
+        Step::Left => (-1, 0),
+        _ => (1, 0),
+    };
+    crate::menu::list_step(cursor, len, dir)
 }
 
 /// The next index `step` moves to in a list of `len`, wrapping at both ends.

@@ -1,5 +1,5 @@
 //! The Guide overlay's center menu: Quick Settings, Edit Controls, the keyboard and numpad, mouse
-//! mode, media controls, the next profile and, while Steam runs, the Steam overlay. The daemon keeps the
+//! mode, media controls, Switch Profile and, while Steam runs, the Steam overlay. The daemon keeps the
 //! cursor and runs the chosen item; the engine delivers the presses. The rows fit one column.
 
 use crate::{
@@ -17,7 +17,8 @@ pub enum Item {
     Numpad,
     MouseMode,
     Media,
-    NextProfile,
+    /// Opens Switch Profile: the game's profiles, and a new one.
+    SwitchProfile,
     /// Sends the real Guide button to the virtual pad, which opens Steam's overlay.
     Steam,
 }
@@ -31,7 +32,7 @@ pub fn items(steam: bool) -> Vec<Item> {
         Item::Numpad,
         Item::MouseMode,
         Item::Media,
-        Item::NextProfile,
+        Item::SwitchProfile,
     ];
     if steam {
         items.push(Item::Steam);
@@ -47,7 +48,7 @@ fn label(item: Item, profile: &str) -> String {
         Item::Numpad => "On-screen numpad".into(),
         Item::MouseMode => "Mouse mode".into(),
         Item::Media => "Media controls".into(),
-        Item::NextProfile => format!("Next profile (now {profile})"),
+        Item::SwitchProfile => format!("Switch profile (now {profile})"),
         Item::Steam => "Steam overlay".into(),
     }
 }
@@ -58,7 +59,7 @@ pub fn view(steam: bool, cursor: usize, profile: &str, style: OverlayStyle) -> M
         .into_iter()
         .map(|item| ItemView {
             label: label(item, profile),
-            submenu: item == Item::QuickSettings,
+            submenu: matches!(item, Item::QuickSettings | Item::SwitchProfile),
             ..ItemView::plain()
         })
         .collect();
@@ -116,7 +117,7 @@ mod tests {
     fn the_view_names_the_profile_and_marks_the_cursor() {
         let menu = view(false, 1, "Gameplay", OverlayStyle::default());
         assert_eq!(menu.selected, Some(1));
-        assert_eq!(menu.items.last().unwrap().label, "Next profile (now Gameplay)");
+        assert_eq!(menu.items.last().unwrap().label, "Switch profile (now Gameplay)");
         assert_eq!(menu.items.len(), items(false).len());
     }
 }
