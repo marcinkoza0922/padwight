@@ -22,7 +22,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 39] = [
+pub const SCENES: [(&str, &str); 40] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -40,6 +40,7 @@ pub const SCENES: [(&str, &str); 39] = [
     ("offer", "the offer to add a library game"),
     ("library-hint", "the toast saying Guide adds a library game"),
     ("info", "an info overlay with live values and glyphs"),
+    ("info-empty", "a new info overlay, with no cells yet"),
     ("info-formatted", "an info overlay with bold, italic, underline, color, fonts, boxes, icons (one carried by the pack), gyro and trackpad"),
     ("log", "an input log"),
     ("recording", "the recording badge"),
@@ -88,6 +89,10 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
             OverlayFrame { info: toast.view(std::time::Instant::now()).into_iter().collect(), ..OverlayFrame::default() }
         }
         "info" => OverlayFrame { info: vec![info_view()], ..OverlayFrame::default() },
+        "info-empty" => OverlayFrame {
+            info: vec![crate::info::InfoView { title: None, rows: Vec::new(), ..info_view() }],
+            ..OverlayFrame::default()
+        },
         "info-formatted" => OverlayFrame {
             info: vec![formatted_view()],
             pack_icons: Some(std::collections::BTreeMap::from([("flame".to_string(), FLAME.to_string())])),
