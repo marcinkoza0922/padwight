@@ -21,8 +21,7 @@ const IDLE_CLOSE: Duration = Duration::from_secs(30);
 /// Library packs for the window in front, if it is a game the config doesn't have: no game
 /// rule matches it, none of the packs is installed or turned down for good, and at least one
 /// of its profiles works with the controllers' features `have` (`None`: no controller to
-/// judge by), and the pack isn't for a game with controller support of its own that Steam
-/// started. When packs share a program name, those whose rules name its folder win.
+/// judge by). When packs share a program name, those whose rules name its folder win.
 /// Indexes into `library`.
 pub fn candidates(config: &Config, library: &[Entry], window: &WindowInfo, have: Option<&[Feature]>) -> Vec<usize> {
     if focus::is_own_window(window) || focus::profile_for(config, window).is_some() {

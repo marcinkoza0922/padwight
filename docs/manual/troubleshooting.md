@@ -2,13 +2,11 @@
 
 ## The game sees my controller twice
 
-If Steam Input manages the controller, the game sees Steam's virtual controller as well as Padwight's. Turn off Steam Input for that controller.
+PlayStation and Switch controllers can also be read directly, by the game's SDL and by Steam, so the game may get their input as well as Padwight's. Set `SDL_JOYSTICK_HIDAPI=0` for the game, or turn off Steam Input for that controller.
 
-PlayStation and Switch controllers can also be read directly, so for those you may need to turn off Steam Input, or set `SDL_JOYSTICK_HIDAPI=0` for the game.
+## A game ignores the controller with Steam Input on
 
-## Slay the Spire 2 ignores the controller's stick
-
-When Steam starts Slay the Spire 2 with Steam Input on, the stick may do nothing while Padwight has the controller. The cause isn't known yet; other Steam games, such as Half-Life 2, work alongside Steam Input. Until it's fixed, switch Padwight off while you play it.
+Some games read only the first controller Steam Input lists, such as Slay the Spire 2. Steam lists controllers in the order it found them, and the controller Padwight takes over has nothing to say to the game, so Padwight keeps its own virtual controller ready while remapping is on, ahead of any controller you connect. If the game still ignores the controller, Padwight was probably started after the controller was connected: unplug the controller (or turn it off) and connect it again.
 
 ## My controller doesn't show up
 

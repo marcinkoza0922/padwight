@@ -90,7 +90,7 @@ These parts were only searched (for unwraps, indexing, clamps and slow work), no
 
 Reviewed commit `b6111fd` and the code it touches. Findings were checked against the code before fixing.
 
-The Steam hand-off was removed on 2026-10-14 (`steam_handoff.rs`, `steam_appinfo.rs`, `over_steam`, `debug steam` and the R0-1 container test went with it): Steam games, Half-Life 2 among them, work alongside Steam Input, and Slay the Spire 2's broken stick needs more debugging. The findings below about the hand-off are kept as history.
+The Steam hand-off was removed on 2026-10-14 (`steam_handoff.rs`, `steam_appinfo.rs`, `over_steam`, `debug steam` and the R0-1 container test went with it): Steam games, Half-Life 2 among them, work alongside Steam Input. Slay the Spire 2's dead stick turned out to be the game reading only the first controller Steam Input lists, which was the grabbed real pad; `daemon/first_pad.rs` keeps Padwight's pad ahead of it. The findings below about the hand-off are kept as history.
 
 | ID | File | Finding | Status |
 |---|---|---|---|
@@ -340,7 +340,7 @@ Tools added in pass 0:
 
 | Tool | What it answers |
 |---|---|
-| `padwight debug focus` | What the running daemon sees in front: the focus backend, the active profile, whether Steam Input has the controllers, and, for the focused window, its program and path, the Steam app and its controller support, the rule it matches, and the SDL controller variables the process runs with. A long `SDL_GAMECONTROLLER_IGNORE_DEVICES` list is summarised as its length and which of Padwight's controller IDs it hides. |
+| `padwight debug focus` | What the running daemon sees in front: the focus backend, the active profile, and, for the focused window, its program and path, the Steam app and its controller support, the rule it matches, and the SDL controller variables the process runs with. A long `SDL_GAMECONTROLLER_IGNORE_DEVICES` list is summarised as its length and which of Padwight's controller IDs it hides. |
 | `padwight debug focus <pid> [class] [title]` | The same for any window, without the daemon: identifies the pid as the daemon would now, including finding a sandboxed process from its inner pid (it says so when it does). |
 | `padwight debug focus processes` | For desktops without focus tracking: which running processes each rule matches, and which one the process scan picks. |
 | `scripts/sandbox-pid.sh [program [args]]` | Runs a program in its own pid namespace (as a Flatpak or the Steam runtime does) and prints its pid there and here, with the `debug focus` line to try. Needs unprivileged user namespaces. |
@@ -358,8 +358,8 @@ These can't be checked without real controllers and Steam. When they pass, they 
 
 | ID | Check | From |
 |---|---|---|
-| H-1 | With a Steam game with full controller support in front (`debug focus` says Steam Input has the controllers), turn a Bluetooth pad off and on, or plug in a second one. Steam must keep it: Padwight's log must not show `managing …`, and the game must respond to the pad. | R0-1 |
-| H-2 | With that game in front, tick "Use this setup alongside Steam Input" and save. Padwight takes the controllers and the game's profile becomes active straight away, without alt-tabbing. Untick it: Steam gets them back. | R0-5 |
+| H-1 | (Retired with the Steam hand-off.) | R0-1 |
+| H-2 | (Retired with the Steam hand-off.) | R0-5 |
 | H-4 | Start a game from Flatpak Heroic, on each desktop with focus tracking (KWin, GNOME, Sway, Hyprland). `debug focus` names the game's process, and its setup switches on. Where the desktop passes on the pid an X11 window gives itself, this exercises the sandbox lookup. | R0-2 |
 | H-5 | On a DualSense or Steam Deck touchpad in mouse mode with scrolling off, put two fingers down, lift the first, put a finger down again, and move each in turn. Only the finger that stayed down moves the pointer. | R2-3 |
 | H-6 | On labwc or Wayfire, with a game that has a rule in front, restart the daemon. The game's profile comes on straight away, without touching any window. Then switch between two windows: the log shows no `no window has focus` in between. | R3-2, R3-3 |
