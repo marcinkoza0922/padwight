@@ -22,7 +22,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 34] = [
+pub const SCENES: [(&str, &str); 36] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -57,6 +57,8 @@ pub const SCENES: [(&str, &str); 34] = [
     ("edit-gyro", "Edit Controls: the gyro page"),
     ("edit-layer", "Edit Controls: a layer's page"),
     ("edit-typing", "Edit Controls: typing a macro's name on the on-screen keyboard"),
+    ("edit-game", "Edit Controls: the game's own page"),
+    ("edit-look", "Edit Controls: the game's own look for the in-game menu"),
 ];
 
 /// The frame of the scene called `name`.
@@ -102,8 +104,10 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "edit-stick" => active(edit_controls(&[Button::DpadDown, Button::South, Button::DpadDown, Button::South])),
         "edit-action" => active(edit_controls(&[Button::South, Button::South])),
         "edit-gyro" => active(edit_controls(&[Button::DpadDown, Button::DpadDown, Button::DpadDown, Button::South])),
-        "edit-layer" => active(edit_controls(&[Button::DpadUp, Button::DpadUp, Button::DpadUp, Button::DpadUp, Button::South, Button::South])),
-        "edit-typing" => active(edit_controls(&[Button::DpadUp, Button::DpadUp, Button::DpadUp, Button::South, Button::South, Button::South])),
+        "edit-layer" => active(edit_controls(&[[Button::DpadDown; 7].as_slice(), &[Button::South, Button::South]].concat())),
+        "edit-typing" => active(edit_controls(&[[Button::DpadDown; 8].as_slice(), &[Button::South, Button::South, Button::South]].concat())),
+        "edit-game" => active(edit_controls(&[Button::DpadUp, Button::South])),
+        "edit-look" => active(edit_controls(&[[Button::DpadUp, Button::South].as_slice(), &[Button::DpadDown; 8], &[Button::South, Button::DpadDown, Button::South]].concat())),
         _ => bail!("no scene called {name} (see `padwight debug overlay list`)"),
     })
 }

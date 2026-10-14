@@ -4,10 +4,12 @@
 use crate::config::{Config, InfoOverlay, ItemKind, OverlayStyle, ScreenPosition};
 
 use super::{
+    logs::Tracked,
     named,
     owner::game_mut,
     pages::Page,
     rows::{Act, Nav, Number, Row, cycle, set},
+    style::StyleAt,
 };
 
 const ON_START: Number = Number::new(1.0, (0.0, 60.0), 0, " s");
@@ -53,7 +55,7 @@ pub(super) fn info_rows(config: &Config, i: usize) -> Vec<Row> {
     let Some(o) = config.active_game().info.get(i) else { return Vec::new() };
     let title = o.title.clone().unwrap_or_default();
     let position = o.style.position;
-    vec![
+    let mut rows = vec![
         named::rename_row(config, ItemKind::Info, i),
         Row::toggle("Always on screen", o.always, move |c, on| info_mut(c, i).is_some_and(|o| set(&mut o.always, on))),
         seconds("When the game starts, for", o.on_start, &ON_START, |o, v| set(&mut o.on_start, v), i),
@@ -63,13 +65,21 @@ pub(super) fn info_rows(config: &Config, i: usize) -> Vec<Row> {
             info_mut(c, i).is_some_and(|o| set(&mut o.title, (!typed.is_empty()).then(|| typed.to_string())))
         }),
         Row::open(format!("Cells ({} rows)", o.rows.len()), Page::InfoCells(i)),
+    ];
+    // Settings for the `{current_input}` cells, once the overlay has any.
+    if !crate::info::input_tokens(o).is_empty() {
+        rows.push(Row::open("Current input: what it follows…", Page::Tracking(Tracked::Info(i))));
+    }
+    rows.extend([
         Row::step(format!("Position: {position}"), move |c, dir| info_mut(c, i).is_some_and(|o| set(&mut o.style.position, cycle(&ScreenPosition::GRID, position, dir)))),
+        Row::open("Look…", Page::Style(StyleAt::Info(i))),
         named::delete_row(config, ItemKind::Info, i, move |c| {
             let Some(game) = game_mut(c).filter(|g| i < g.info.len()) else { return false };
             game.info.remove(i);
             true
         }),
-    ]
+    ]);
+    rows
 }
 
 /// An overlay's rows of cells, and a row to add one.

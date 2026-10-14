@@ -23,5 +23,9 @@ pub(super) fn rows(cx: &Cx) -> Vec<Row> {
         Row::open(format!("Macros ({})", game.macros.len()), Page::Macros),
         Row::open(format!("Menus ({})", game.menus.len()), Page::Menus),
         Row::open(format!("Info overlays ({})", game.info.len()), Page::Infos),
+        Row::open(format!("Log overlays ({})", game.logs.len()), Page::Logs),
+        Row::open("Guide overlay", Page::Guide),
+        Row::open(format!("Profile: {}", config.active_ref().profile), Page::Profile),
+        Row::open(format!("Game: {}", config.active_ref().game.unwrap_or_else(|| "General".into())), Page::Game),
     ]
 }

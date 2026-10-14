@@ -29,6 +29,7 @@ mod window_game;
 mod menus;
 mod layers;
 mod templates;
+mod renames;
 pub mod macro_presets;
 pub use macro_presets::{Motion, StickPreset};
 pub use templates::{Template, unique_name};

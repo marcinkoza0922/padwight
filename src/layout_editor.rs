@@ -7,10 +7,15 @@
 
 mod action;
 mod action_page;
+mod decor;
+mod feel;
+mod game;
+mod guide_page;
 mod gyro;
 mod infos;
 mod inputs;
 mod layers;
+mod logs;
 mod macros;
 mod menus;
 mod named;
@@ -18,6 +23,7 @@ mod owner;
 mod pages;
 mod rows;
 mod sticks;
+mod style;
 mod top;
 mod touchpad;
 mod triggers;

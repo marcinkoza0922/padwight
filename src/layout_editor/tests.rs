@@ -1,6 +1,8 @@
 use super::*;
 use super::action::{ActionAt, Slot};
 use super::owner::{self, Owner};
+
+mod game;
 use crate::config::{Analog, ButtonAction, GyroActivation, GyroInput, Profile, StickAction, Trigger};
 
 impl LayoutEditor {

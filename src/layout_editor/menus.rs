@@ -9,6 +9,7 @@ use super::{
     owner::game_mut,
     pages::{Page, stick_name},
     rows::{Act, Nav, Number, Row, cycle, set},
+    style::StyleAt,
 };
 
 const WEIGHT: Number = Number::new(0.25, (0.25, 4.0), 2, "×");
@@ -51,6 +52,7 @@ pub(super) fn menu_rows(config: &Config, m: usize) -> Vec<Row> {
     ];
     rows.extend(kind_rows(m, menu));
     rows.push(Row::open(format!("Closes with: {}", close_label(menu)), Page::MenuClose(m)));
+    rows.push(Row::open("Look…", Page::Style(StyleAt::Menu(m))));
     rows.push(Row::toggle("Stays up after a choice", menu.keep_open, move |c, on| menu_mut(c, m).is_some_and(|menu| set(&mut menu.keep_open, on))));
     rows.push(named::delete_row(config, ItemKind::Menu, m, move |c| {
         let Some(game) = game_mut(c).filter(|g| m < g.menus.len()) else { return false };
