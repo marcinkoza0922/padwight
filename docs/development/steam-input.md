@@ -140,6 +140,45 @@ Conclusions:
 - Not tried: other Bluetooth pads (Xbox over xpadneo, DualSense) may behave differently.
   Running the pad off its 2.4 GHz USB dongle makes it a USB device, so the USB route would apply.
 
+### Reordering Steam's slots without keeping the pad (2026-10-13, later)
+
+Asked whether launching games through Padwight would help. It can't change a Steam game's
+environment (Steam sets that), so its only lever is timing: getting the pads in order before the
+game starts. That led to a cheaper fix than reading the pad ourselves.
+
+Steam gives a new device the **lowest free index**, and open devices keep theirs: nothing shifts
+down when slot 0 frees up.
+
+| Sequence (GameSir, Padwight's daemon running) | Steam's indexes afterwards |
+|---|---|
+| `usb-takeover.py` for 3 s: detach, own pad, drop own pad, reattach | real pad 0 again. The daemon dropped its virtual pad with the real one and only rebuilt it after the real pad was back. |
+| `scripts/usb-reslot.py`: detach, wait 1 s, create a stand-in pad, reattach while it stays | stand-in **0**, real pad **1**, the daemon's rebuilt virtual pad 4 |
+
+So if the daemon itself detaches the driver for about two seconds, builds its virtual pad while
+index 0 is free, then reattaches and grabs the real pad as usual, Padwight's pad holds slot 0 and
+the real pad sits dead in a later slot. No protocol code: the kernel driver still reads the pad.
+The driver is detached only for those two seconds, so a hard kill rarely leaves it unbound, and
+reattach-on-start covers that case.
+
+Points to keep in mind:
+
+- The daemon ties the virtual pad's lifetime to the real pad (`Managed::pad`). The reorder needs
+  the new virtual pad to be adopted by the real pad when it returns, not built a second time.
+- `Managed::present_as` builds the new virtual pad before dropping the old one. With index 0
+  held by the old pad, the new one would land on a later index. It has to drop first.
+- Not yet tried in a game: Slay the Spire 2 with Padwight's pad in slot 0 through the daemon.
+- Wireless pads: a 2.4 GHz dongle is a USB device, so the reorder applies to it (untested; the Xbox
+  Wireless Adapter re-inits under `xone` and its pads must reconnect). Bluetooth has no usbfs.
+  Untested idea: wireless pads usually connect *after* Padwight and Steam are up, and again after
+  each sleep, and a new device takes the lowest free slot. If Padwight's virtual pad outlived its
+  real pad, a pad that reconnects would come back behind it with no detach at all. That costs a
+  phantom pad while the real one sleeps. Steam also reads Bluetooth pads through hidraw, so
+  the unremapped pad stays live in a later slot. Whether a game listens to that slot too is the
+  open question.
+- Launching through Padwight still has its own uses (start a game from the pad, set the profile
+  before the window appears, give non-Steam games an `SDL_GAMECONTROLLER_IGNORE_DEVICES` that
+  hides the grabbed real pad). For Steam games it is a moment to run the reorder, not a fix in itself.
+
 ## Proposed design
 
 1. **Take USB pads over usbfs.** When Padwight manages a USB pad and can open its USB node, it
