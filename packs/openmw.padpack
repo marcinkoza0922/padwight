@@ -1,0 +1,274 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "06c36430-88a9-57e0-8104-5d79b71e80cd"
+name = "OpenMW"
+version = "1.0"
+author = "Padwight"
+description = "OpenMW (the open-source Morrowind engine) on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard and the media controls, in the colors of Vvardenfell."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "openmw"
+profile = "OpenMW"
+
+[[rules]]
+kind = "executable"
+value = "openmw.exe"
+profile = "OpenMW"
+
+[[profiles]]
+name = "OpenMW"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+Guide = {mode = "Guide"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+activation = "always"
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''OpenMW has its own controller support, so the controller goes to the game as it is. Set the buttons in the game's own Options → Controls, where the gamepad buttons are listed under Controller; GUI controls need no mouse.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard, and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1b1510"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#3a2d1f"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c49a4a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#9a7a40"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#2a2016"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5a4326"
+
+[keyboard_style.type]
+letter_spacing = 2
+case = "upper"
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1b1510"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#3a2d1f"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c49a4a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#9a7a40"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#2a2016"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5a4326"
+
+[numpad_style.type]
+letter_spacing = 2
+case = "upper"
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1b1510"
+opacity = 0.92
+
+[media_style.items]
+color = "#3a2d1f"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c49a4a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#9a7a40"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#2a2016"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5a4326"
+
+[media_style.type]
+letter_spacing = 2
+case = "upper"
+
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1b1510"
+opacity = 0.92
+
+[menu_style.items]
+color = "#3a2d1f"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c49a4a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#9a7a40"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#2a2016"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5a4326"
+
+[menu_style.glow]
+color = "#e0b860"
+opacity = 0.6
+blur = 18
+pulse = true
+
+[menu_style.type]
+letter_spacing = 2
+case = "upper"
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 12, width = 1, color = "#c49a4a"}
+vignette = {color = "#000000", opacity = 0.45, reach = 25}
+
+[motion]
+keyboard = "dreamy"
+numpad = "dreamy"
+menu = "dreamy"
+media = "dreamy"
+offer = "dreamy"
+info = "dreamy"
+log = "dreamy"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "wood", volume = 0.16}
+open = {kind = "sand", volume = 0.08}
+close = {kind = "sand", volume = 0.05, pitch = 0.8}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "wood", volume = 0.16}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "wood", volume = 0.16}
+
+[sounds.media]
+pick = {kind = "wood", volume = 0.16}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 18}
+pick = {strength = 0.35, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.24, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.24, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.24, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.24, length_ms = 60}
