@@ -239,133 +239,6 @@ impl fmt::Display for StepKind {
 
 pub(super) const STEP_KINDS: [StepKind; 5] = [StepKind::Tap, StepKind::Press, StepKind::Release, StepKind::Wait, StepKind::Stick];
 
-/// One frame at 60 fps: the usual gap between motion inputs in fighting games.
-pub(super) const MOTION_FRAME_MS: u64 = 17;
-
-pub(super) const DIAGONAL: f32 = std::f32::consts::FRAC_1_SQRT_2;
-
-/// Stick positions offered for "Move stick" steps (y positive is down).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) enum StickPreset {
-    Center,
-    Up,
-    UpRight,
-    Right,
-    DownRight,
-    Down,
-    DownLeft,
-    Left,
-    UpLeft,
-    Custom,
-}
-
-impl StickPreset {
-    pub(super) const ALL: [StickPreset; 10] = [
-        StickPreset::Center,
-        StickPreset::Up,
-        StickPreset::UpRight,
-        StickPreset::Right,
-        StickPreset::DownRight,
-        StickPreset::Down,
-        StickPreset::DownLeft,
-        StickPreset::Left,
-        StickPreset::UpLeft,
-        StickPreset::Custom,
-    ];
-
-    pub(super) fn position(self) -> Option<(f32, f32)> {
-        let d = DIAGONAL;
-        Some(match self {
-            StickPreset::Center => (0.0, 0.0),
-            StickPreset::Up => (0.0, -1.0),
-            StickPreset::UpRight => (d, -d),
-            StickPreset::Right => (1.0, 0.0),
-            StickPreset::DownRight => (d, d),
-            StickPreset::Down => (0.0, 1.0),
-            StickPreset::DownLeft => (-d, d),
-            StickPreset::Left => (-1.0, 0.0),
-            StickPreset::UpLeft => (-d, -d),
-            StickPreset::Custom => return None,
-        })
-    }
-
-    pub(super) fn of(x: f32, y: f32) -> Self {
-        Self::ALL
-            .into_iter()
-            .find(|p| p.position().is_some_and(|(px, py)| (px - x).abs() < 0.01 && (py - y).abs() < 0.01))
-            .unwrap_or(StickPreset::Custom)
-    }
-}
-
-impl fmt::Display for StickPreset {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(match self {
-            StickPreset::Center => "● Center",
-            StickPreset::Up => "↑ Up",
-            StickPreset::UpRight => "↗ Up-right",
-            StickPreset::Right => "→ Right",
-            StickPreset::DownRight => "↘ Down-right",
-            StickPreset::Down => "↓ Down",
-            StickPreset::DownLeft => "↙ Down-left",
-            StickPreset::Left => "← Left",
-            StickPreset::UpLeft => "↖ Up-left",
-            StickPreset::Custom => "Custom",
-        })
-    }
-}
-
-/// Fighting-game motions, written for a character facing right.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) enum Motion {
-    QuarterCircleForward,
-    QuarterCircleBack,
-    DragonPunch,
-    HalfCircleForward,
-    HalfCircleBack,
-}
-
-impl Motion {
-    pub(super) const ALL: [Motion; 5] = [
-        Motion::QuarterCircleForward,
-        Motion::QuarterCircleBack,
-        Motion::DragonPunch,
-        Motion::HalfCircleForward,
-        Motion::HalfCircleBack,
-    ];
-
-    pub(super) fn directions(self) -> &'static [StickPreset] {
-        use StickPreset::*;
-        match self {
-            Motion::QuarterCircleForward => &[Down, DownRight, Right],
-            Motion::QuarterCircleBack => &[Down, DownLeft, Left],
-            Motion::DragonPunch => &[Right, Down, DownRight],
-            Motion::HalfCircleForward => &[Left, DownLeft, Down, DownRight, Right],
-            Motion::HalfCircleBack => &[Right, DownRight, Down, DownLeft, Left],
-        }
-    }
-
-    /// Steps moving the left stick through the motion, one frame per direction.
-    pub(super) fn steps(self) -> Vec<MacroStep> {
-        self.directions()
-            .iter()
-            .filter_map(|p| p.position())
-            .flat_map(|(x, y)| [MacroStep::Stick { stick: Stick::Left, x, y }, MacroStep::Wait(MOTION_FRAME_MS)])
-            .collect()
-    }
-}
-
-impl fmt::Display for Motion {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(match self {
-            Motion::QuarterCircleForward => "Quarter circle forward (↓↘→)",
-            Motion::QuarterCircleBack => "Quarter circle back (↓↙←)",
-            Motion::DragonPunch => "Dragon punch (→↓↘)",
-            Motion::HalfCircleForward => "Half circle forward (←↙↓↘→)",
-            Motion::HalfCircleBack => "Half circle back (→↘↓↙←)",
-        })
-    }
-}
-
 pub(super) const DEFAULT_TAP_MS: u64 = 50;
 
 /// Where "When the game starts, for" and "stays for" start, in seconds.
@@ -1372,6 +1245,7 @@ fn item_note<'a>(menu: &Menu, i: usize, reachable: &[&Menu], names: &Names, open
 mod tests {
     use super::*;
     use crate::gui::tests::*;
+    use crate::config::macro_presets::{DIAGONAL, MOTION_FRAME_MS};
 
     #[test]
     fn a_menu_close_button_can_be_another_or_none() {

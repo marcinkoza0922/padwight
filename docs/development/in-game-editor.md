@@ -64,6 +64,27 @@ Gestures and combos (done): a button's Gestures page sets its double tap, triple
 
 The Guide menu's "Next profile" row is now "Switch profile (now …)". It opens the in-game menu on `Page::Profiles` (`src/system_menu/profiles.rs`): the active game's profiles, then "New profile…". Picking a profile switches to it and leaves the menu (asking about unsaved changes first, if any). A switch to a profile that was saved updates the menu's saved copy, so it isn't an unsaved change on its own. "New profile…" offers a copy of the current profile, each `Template` (moved from the GUI to `config/templates.rs`), and in a game a copy of each General profile; the copy gets a `unique_name` in its game and is switched to (`Outcome::Added`). Discard puts back the profile the menu opened on.
 
+## Comprehensive editor (in progress, branch `in-game-editor`)
+
+Goal: anything the settings window can do to the current profile and its game, Edit Controls can do with the controller. Decisions from the interview (2026-10-14):
+
+| Topic | Decision |
+|---|---|
+| Scope | The active profile's own settings, plus the game-wide ones (modes, layers, macros, menus, info and log overlays, the game's details). No other profiles in the editor. |
+| Top page | A list of categories: Buttons, Sticks, Triggers, Gyro, Touchpad, Combos, Modes, Layers, Macros, Menus, Info overlays, Log overlays, Guide overlay, Profile, Game. List pages show their items; choosing one opens its settings. |
+| Text | Names, labels, overlay text and window rules are typed on the on-screen keyboard, whose keys go into the field instead of the game. |
+| Game details | Name and window rules, looks (styles, font, Nintendo layout), sounds, rumble and motion. Pack info (author, version…) stays in the settings window. |
+| Profiles | Switch Profile (Guide menu) switches and makes profiles. Renaming, duplicating and deleting are under Game › Profiles. |
+| Visuals | Live pictures beside the list for sticks, gyro and touchpad (the settings window's graphs, with the live input), and previews of the menu or info overlay being edited. |
+| Delivery | One branch, a commit per phase. |
+
+Progress:
+
+- Done: Switch Profile; the category top page; the row structure; text entry on the keyboard (`Screen::Typing` in `system_menu`, `OverlayController::for_field`); buttons, gestures and combos for the profile or any mode or layer; sticks (every kind: gamepad, mouse with its response presets and settings, scroll, ring with its sectors and fills, flick), triggers, zones; the whole gyro page; the touchpad (every kind, split halves); Multi, Toggle and Turbo nested to any depth, the key picker over the full keyboard; modes and layers (name, overrides, combos turned off, indicator); macros (every step kind, timing, moving steps, fighting-game motions); menus (kind settings, close button, items with label, button, weight and span); info overlays (timing, heading, cells).
+- Next: log overlays, the Guide overlay's settings, the profile's details (name, timings, what it needs), the game's details (name, window rules, profiles, looks, sounds, rumble, motion), the overlay style pages, then the pictures.
+
+Structure: every page builds a list of `Row`s (`layout_editor/rows.rs`), each carrying its label and what A and left/right do, so row counts, drawing, choosing and stepping all come from one place. Input pages take an `Owner` (the profile, or one of the game's modes or layers), so a layer's sticks, triggers, gyro, touchpad, gestures and combos use the same pages as the profile's. An action is reached through an `ActionAt` (a slot plus a path into Multi, Toggle and Turbo), so actions nest.
+
 ## Open questions
 
 - Each change saves the whole config. If that is too heavy while a game runs, phase 2b can batch edits behind a Save.

@@ -22,7 +22,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 28] = [
+pub const SCENES: [(&str, &str); 34] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -51,6 +51,12 @@ pub const SCENES: [(&str, &str); 28] = [
     ("guide-mode", "the Guide overlay turned to a mode that isn't on"),
     ("switch-profile", "Switch Profile, opened from the Guide menu: the profiles and a new one"),
     ("new-profile", "what a new profile from Switch Profile starts from"),
+    ("edit-controls", "Edit Controls' first page: what can be edited"),
+    ("edit-stick", "Edit Controls: a stick that moves the mouse, with its response settings"),
+    ("edit-action", "Edit Controls: a button's action page"),
+    ("edit-gyro", "Edit Controls: the gyro page"),
+    ("edit-layer", "Edit Controls: a layer's page"),
+    ("edit-typing", "Edit Controls: typing a macro's name on the on-screen keyboard"),
 ];
 
 /// The frame of the scene called `name`.
@@ -92,6 +98,12 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "guide-mode" => guide(1),
         "switch-profile" => active(switch_profile(false)),
         "new-profile" => active(switch_profile(true)),
+        "edit-controls" => active(edit_controls(&[])),
+        "edit-stick" => active(edit_controls(&[Button::DpadDown, Button::South, Button::DpadDown, Button::South])),
+        "edit-action" => active(edit_controls(&[Button::South, Button::South])),
+        "edit-gyro" => active(edit_controls(&[Button::DpadDown, Button::DpadDown, Button::DpadDown, Button::South])),
+        "edit-layer" => active(edit_controls(&[Button::DpadUp, Button::DpadUp, Button::DpadUp, Button::DpadUp, Button::South, Button::South])),
+        "edit-typing" => active(edit_controls(&[Button::DpadUp, Button::DpadUp, Button::DpadUp, Button::South, Button::South, Button::South])),
         _ => bail!("no scene called {name} (see `padwight debug overlay list`)"),
     })
 }
@@ -101,7 +113,7 @@ fn keyboard_view(board: Board) -> KeyboardView {
         Board::Basic | Board::Full => (OverlayStyle::keyboard(), keyboard::find(board, "KEY_H").unwrap_or_default(), vec!["KEY_LEFTSHIFT".into()]),
         Board::Numpad => (OverlayStyle::numpad(), board.home(), Vec::new()),
     };
-    KeyboardView { board, style, cursor, latched, pressed: None, closing: 0.0, caps: false, typed: String::new() }
+    KeyboardView { board, style, cursor, latched, pressed: None, closing: 0.0, caps: false, typed: String::new(), field: None }
 }
 
 /// A menu of this kind, open with the cursor on its second item: keys, a toggle, a submenu, a
@@ -208,6 +220,28 @@ fn switch_profile(new: bool) -> OverlayView {
         menu.handle(InputEvent::Button(b, true), now, &mut config);
     }
     OverlayView::Menu(menu.view(&config))
+}
+
+/// Edit Controls over a game with a mouse stick, a layer and a macro, after `presses`.
+fn edit_controls(presses: &[Button]) -> OverlayView {
+    use crate::{
+        config::{Config, Game, Layer, Macro, Profile, ProfileRef},
+        input::InputEvent,
+        system_menu::{Page, SystemMenu},
+    };
+    let mut config = Config::default();
+    let mut game = Game::new("Deus Ex", vec![Profile::gyro_aim("Gameplay")]);
+    game.layers.push(Layer::new("Hotkeys"));
+    game.macros.push(Macro { name: "Quick save".into(), steps: Vec::new() });
+    config.games.push(game);
+    config.active = ProfileRef::new(Some("Deus Ex"), "Gameplay");
+    let mut menu = SystemMenu::new(&config).on_page(Page::EditControls);
+    let now = std::time::Instant::now();
+    for &b in presses {
+        menu.handle(InputEvent::Button(b, true), now, &mut config);
+        menu.handle(InputEvent::Button(b, false), now, &mut config);
+    }
+    menu.overlay_view(&config)
 }
 
 /// Quick Settings left with a change not saved: the question stands over the page.

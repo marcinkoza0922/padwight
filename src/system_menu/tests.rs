@@ -334,3 +334,45 @@ fn a_new_profile_is_an_unsaved_change_and_back_returns_to_the_list() {
     let Some(Outcome::Discard { saved, .. }) = menu.handle_now(press(Button::West), &mut config) else { panic!("no discard") };
     assert_eq!(saved.active_ref().profile, config.general.profiles[0].name);
 }
+
+#[test]
+fn a_name_is_typed_on_the_keyboard_and_set_with_enter() {
+    let mut config = mouse_config();
+    config.general.macros.push(crate::config::Macro { name: "Jumps".into(), steps: Vec::new() });
+    let mut menu = SystemMenu::new(&config).on_page(Page::EditControls);
+    // Macros, then the macro, then its name.
+    let rows = menu.view(&config).items;
+    let macros = rows.iter().position(|r| r.label.starts_with("Macros")).unwrap();
+    for _ in 0..macros {
+        menu.handle_now(press(Button::DpadDown), &mut config);
+    }
+    menu.handle_now(press(Button::South), &mut config);
+    menu.handle_now(press(Button::South), &mut config);
+    assert_eq!(menu.handle_now(press(Button::South), &mut config), None);
+    assert!(menu.typing());
+    assert!(matches!(menu.overlay_view(&config), crate::overlay::OverlayView::Keyboard(k) if k.typed == "Jumps" && k.field.is_some()));
+    // X deletes the last letter, and Start (Enter) sets it.
+    menu.handle_now(press(Button::West), &mut config);
+    menu.handle_now(InputEvent::Button(Button::West, false), &mut config);
+    assert_eq!(menu.handle_now(press(Button::Start), &mut config), Some(Outcome::Changed));
+    assert!(!menu.typing());
+    assert_eq!(config.general.macros[0].name, "Jump");
+}
+
+#[test]
+fn guide_puts_the_keyboard_away_without_setting_the_text() {
+    let mut config = mouse_config();
+    config.general.macros.push(crate::config::Macro { name: "Jumps".into(), steps: Vec::new() });
+    let mut menu = SystemMenu::new(&config).on_page(Page::EditControls);
+    let macros = menu.view(&config).items.iter().position(|r| r.label.starts_with("Macros")).unwrap();
+    for _ in 0..macros {
+        menu.handle_now(press(Button::DpadDown), &mut config);
+    }
+    for _ in 0..3 {
+        menu.handle_now(press(Button::South), &mut config);
+    }
+    menu.handle_now(press(Button::West), &mut config);
+    assert_eq!(menu.guide_pressed(&config), None);
+    assert!(!menu.typing());
+    assert_eq!(config.general.macros[0].name, "Jumps");
+}

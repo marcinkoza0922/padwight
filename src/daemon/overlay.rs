@@ -199,7 +199,7 @@ impl Daemon {
                 Some(OverlayView::Media(view))
             }
             Some(Active::Offer(o)) => Some(o.view(self.config.active_menu_style())),
-            Some(Active::Settings(m, _)) => Some(OverlayView::Menu(m.view(&self.config))),
+            Some(Active::Settings(m, _)) => Some(m.overlay_view(&self.config)),
             None => match &self.guide_menu {
                 Some(menu) => {
                     let profile = self.config.active().map(|p| p.name.as_str()).unwrap_or_default();

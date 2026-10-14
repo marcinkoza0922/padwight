@@ -147,8 +147,9 @@ fn list<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
         c.moving(m, i, container(content).padding([10.0 * s, 14.0 * s]).width(Length::Fill).style(lit_cell_style(lit, selected, 40.0 * s)))
     };
     let marker = |t: &'static str| text(t).font(c.font).size(13.0 * s).color(c.muted);
-    let start = crate::menu::list_start(cursor, len);
-    let half = if crate::menu::list_columns(len) == 2 { len.div_ceil(2) } else { len };
+    let columns = m.columns();
+    let start = crate::menu::list_start_in(cursor, len, columns);
+    let half = if columns == 2 { len.div_ceil(2) } else { len };
     let shown = |from: usize, to: usize| (from..to.min(from + crate::menu::VISIBLE_ROWS)).map(&cell).collect::<Vec<Element<'a, M>>>();
     // Between rows, the style's dividers, if it has any.
     let divider = if m.style.lite.plain { None } else { m.style.ornament.dividers.as_ref() };

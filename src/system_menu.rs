@@ -6,12 +6,17 @@ use std::time::Instant;
 
 mod profiles;
 mod quick;
+mod leaving;
+mod steps;
+mod view;
+pub use view::main_page;
 use quick::Row;
 
 use crate::{
     layout_editor::{EditStep, LayoutEditor},
     config::{Button, Config, Feature, OverlayStyle, Profile, ProfileRef},
     input::{Axis, InputEvent},
+    overlay::{OverlayAction, OverlayController, OverlayView},
     menu::{ItemView, MenuView, Tone},
     offer::OfferView,
 };
@@ -59,10 +64,25 @@ enum Screen {
     /// Switch Profile's list, and what a new profile starts from.
     Profiles,
     NewProfile,
+    /// Typing into a field of the editor, drawn as the on-screen keyboard. The editor waits under
+    /// it, on the row that asked.
+    Typing(LayoutEditor, Box<Typing>),
     /// Closing with changes not saved: save, discard, or keep editing, which goes back to the
     /// screen (and cursor) the menu was being left from. Drawn over that screen.
     Confirm(Box<Screen>, usize, Exit),
 }
+
+/// The keyboard typing into a field. Two are equal when they hold the same text.
+#[derive(Debug, Clone)]
+pub struct Typing(OverlayController);
+
+impl PartialEq for Typing {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.typed() == other.0.typed()
+    }
+}
+
+impl Eq for Typing {}
 
 /// Why the menu is on hold, drawn as a prompt over it until it carries on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -173,6 +193,10 @@ impl SystemMenu {
         if let Some(hold) = self.hold {
             return self.held(hold, ev);
         }
+        if let Screen::Typing(_, typing) = &mut self.screen {
+            let actions = typing.0.handle(ev, now);
+            return self.typed(actions, config);
+        }
         let step = match ev {
             InputEvent::Button(b, pressed) if crate::nav::dpad_dir(b).is_some() => {
                 let dir = crate::nav::dpad_dir(b)?;
@@ -216,13 +240,26 @@ impl SystemMenu {
 
     /// Repeats a held direction once it's due.
     pub fn tick(&mut self, now: Instant, config: &mut Config) -> Option<Outcome> {
+        if let Screen::Typing(_, typing) = &mut self.screen {
+            let (actions, _) = typing.0.tick(now);
+            return self.typed(actions, config);
+        }
         let dir = self.repeat.due(now)?;
         self.step(dir_step(dir), config)
     }
 
     /// When [`Self::tick`] next has a repeat to make.
     pub fn next_deadline(&self) -> Option<Instant> {
-        self.repeat.deadline()
+        match &self.screen {
+            Screen::Typing(_, typing) => typing.0.next_deadline(),
+            _ => self.repeat.deadline(),
+        }
+    }
+
+    /// Whether the keyboard is up, typing into a field.
+    #[cfg(test)]
+    pub fn typing(&self) -> bool {
+        matches!(self.screen, Screen::Typing(..))
     }
 
     fn step(&mut self, step: Step, config: &mut Config) -> Option<Outcome> {
@@ -233,6 +270,7 @@ impl SystemMenu {
             Screen::Editor(_) => self.editor_step(step, config),
             Screen::Profiles => self.profiles_step(step, config),
             Screen::NewProfile => self.new_profile_step(step, config),
+            Screen::Typing(..) => None,
         }
     }
 
@@ -255,80 +293,6 @@ impl SystemMenu {
             },
             Step::Back => self.leave(config, Exit::Back),
             Step::Left | Step::Right => None,
-        }
-    }
-
-    /// Leaves the menu's top page, `how`: back to the Guide overlay, or closes. Unsaved changes
-    /// ask first.
-    fn leave(&mut self, config: &Config, how: Exit) -> Option<Outcome> {
-        if *self.saved == *config {
-            return Some(if self.from_guide && how == Exit::Back { Outcome::ReturnToGuide } else { Outcome::Close });
-        }
-        let left = std::mem::replace(&mut self.screen, Screen::Main);
-        self.screen = Screen::Confirm(Box::new(left), self.cursor, how);
-        None
-    }
-
-    /// Guide was pressed: closes the menu outright, unless there are unsaved changes, which it
-    /// asks about first (the question then needs an answer).
-    pub fn guide_pressed(&mut self, config: &Config) -> Option<Outcome> {
-        match self.screen {
-            _ if self.hold.is_some() => None,
-            Screen::Confirm(..) => None,
-            _ if *self.saved == *config => Some(Outcome::Close),
-            _ => self.leave(config, Exit::Close),
-        }
-    }
-
-    /// The config as it was when the menu opened, which Discard puts back.
-    pub fn saved(&self) -> &Config {
-        &self.saved
-    }
-
-    /// Whether `config` has changes the menu hasn't saved.
-    pub fn unsaved(&self, config: &Config) -> bool {
-        *self.saved != *config
-    }
-
-    /// Remapping was turned on or off elsewhere, which is saved at once: it isn't a change of
-    /// the menu's.
-    pub fn remapping_set(&mut self, enabled: bool) {
-        self.saved.enabled = enabled;
-    }
-
-    /// Puts the menu on hold, `why`. A held direction stops repeating.
-    pub fn hold(&mut self, why: Hold) {
-        self.hold = Some(why);
-        self.repeat.stop();
-        self.stick = (0.0, 0.0);
-        self.stick_dir = crate::nav::StickDir::default();
-        self.remapping_armed = false;
-    }
-
-    /// Takes the menu off hold, where it was.
-    pub fn carry_on(&mut self) {
-        self.hold = None;
-    }
-
-    /// Why the menu is on hold, if it is.
-    pub fn on_hold(&self) -> Option<Hold> {
-        self.hold
-    }
-
-    /// Input while on hold: once remapping is off, A saves and X discards, then the menu closes.
-    fn held(&self, hold: Hold, ev: InputEvent) -> Option<Outcome> {
-        match (hold, ev) {
-            (Hold::RemappingOff, InputEvent::Button(Button::South, true)) => Some(Outcome::Save { back: false }),
-            (Hold::RemappingOff, InputEvent::Button(Button::West, true)) => Some(Outcome::Discard { saved: self.saved.clone(), back: false }),
-            _ => None,
-        }
-    }
-
-    /// Back from the unsaved-changes question to the screen it was asked on.
-    fn keep_editing(&mut self) {
-        if let Screen::Confirm(left, cursor, _) = std::mem::replace(&mut self.screen, Screen::Main) {
-            self.screen = *left;
-            self.cursor = cursor;
         }
     }
 
@@ -367,245 +331,12 @@ impl SystemMenu {
         if self.from_guide { "Guide" } else { "Menu" }.into()
     }
 
-    /// Whether answering the unsaved-changes question goes back to the Guide overlay, not out.
-    fn answer_goes_back(&self) -> bool {
-        matches!(self.screen, Screen::Confirm(_, _, Exit::Back)) && self.from_guide
-    }
-
-    fn discard(&self) -> Option<Outcome> {
-        Some(Outcome::Discard { saved: self.saved.clone(), back: self.answer_goes_back() })
-    }
-
-    /// The unsaved-changes question: A saves, X discards, B keeps editing.
-    fn confirm_step(&mut self, step: Step) -> Option<Outcome> {
-        match step {
-            Step::Pick => Some(Outcome::Save { back: self.answer_goes_back() }),
-            Step::Back => {
-                self.keep_editing();
-                None
-            }
-            Step::Up | Step::Down | Step::Left | Step::Right => None,
-        }
-    }
-
     /// Back to the main page, from wherever the menu is.
     pub fn back_to_main(&mut self) {
         self.screen = Screen::Main;
         self.cursor = 0;
     }
 
-    fn quick_step(&mut self, step: Step, config: &mut Config) -> Option<Outcome> {
-        let rows = quick::rows(config, &self.saved);
-        let armed = std::mem::take(&mut self.remapping_armed);
-        match step {
-            Step::Up | Step::Down => {
-                self.cursor = wrap(self.cursor, step, rows.len());
-                None
-            }
-            // Turning remapping off takes a second press of A.
-            Step::Pick if rows.get(self.cursor) == Some(&Row::Remapping) && !armed => {
-                self.remapping_armed = true;
-                None
-            }
-            Step::Left | Step::Right if rows.get(self.cursor) == Some(&Row::Remapping) => None,
-            Step::Back if self.from_guide => self.leave(config, Exit::Back),
-            Step::Back => {
-                self.screen = Screen::Main;
-                self.cursor = 0;
-                None
-            }
-            Step::Left | Step::Right | Step::Pick => {
-                let row = *rows.get(self.cursor)?;
-                let dir = match step {
-                    Step::Left => -1,
-                    _ => 1,
-                };
-                quick::adjust(row, dir, self.big_steps, config, &self.saved)
-            }
-        }
-    }
-
-    fn profiles_step(&mut self, step: Step, config: &Config) -> Option<Outcome> {
-        let rows = profiles::rows(config);
-        match step {
-            Step::Up | Step::Down | Step::Left | Step::Right => self.cursor = list_move(self.cursor, step, rows.len()),
-            Step::Pick => match *rows.get(self.cursor)? {
-                profiles::Row::New => {
-                    self.screen = Screen::NewProfile;
-                    self.cursor = 0;
-                }
-                row => {
-                    let target = profiles::target(row, config)?;
-                    if target == config.active_ref() {
-                        return self.leave(config, Exit::Close);
-                    }
-                    return Some(Outcome::Switch(target));
-                }
-            },
-            Step::Back => return self.leave(config, Exit::Back),
-        }
-        None
-    }
-
-    fn new_profile_step(&mut self, step: Step, config: &mut Config) -> Option<Outcome> {
-        let rows = profiles::new_rows(config);
-        match step {
-            Step::Up | Step::Down | Step::Left | Step::Right => self.cursor = list_move(self.cursor, step, rows.len()),
-            Step::Pick => return profiles::create(*rows.get(self.cursor)?, config).map(Outcome::Added),
-            Step::Back => {
-                self.screen = Screen::Profiles;
-                self.cursor = profiles::rows(config).len() - 1;
-            }
-        }
-        None
-    }
-
-    fn editor_step(&mut self, step: Step, config: &mut Config) -> Option<Outcome> {
-        let Screen::Editor(editor) = &mut self.screen else { return None };
-        match step {
-            Step::Up => editor.move_cursor((0, -1), config),
-            Step::Down => editor.move_cursor((0, 1), config),
-            Step::Pick => return (editor.choose(config) == EditStep::Changed).then_some(Outcome::Changed),
-            Step::Back => {
-                if editor.back() == EditStep::Leave {
-                    if self.from_guide {
-                        return self.leave(config, Exit::Back);
-                    }
-                    self.screen = Screen::Main;
-                    self.cursor = 1;
-                }
-            }
-            Step::Left | Step::Right if editor.two_columns(config) => {
-                editor.move_cursor((if step == Step::Left { -1 } else { 1 }, 0), config);
-            }
-            Step::Left => return (editor.adjust(-1, config) == EditStep::Changed).then_some(Outcome::Changed),
-            Step::Right => return (editor.adjust(1, config) == EditStep::Changed).then_some(Outcome::Changed),
-        }
-        None
-    }
-
-    /// What the overlay draws now. The unsaved-changes question is drawn over the screen it was
-    /// asked on.
-    pub fn view(&self, config: &Config) -> MenuView {
-        let mut view = match &self.screen {
-            Screen::Confirm(left, cursor, how) => {
-                let mut view = self.screen_view(left, *cursor, config);
-                view.prompt = Some(Box::new(self.unsaved_prompt(*how, view.style.clone())));
-                view
-            }
-            screen => self.screen_view(screen, self.cursor, config),
-        };
-        if let Some(hold) = self.hold {
-            view.prompt = Some(Box::new(hold_prompt(hold, view.style.clone())));
-        }
-        view
-    }
-
-    /// The question asked when the menu is left with changes not saved, in the look of the offer
-    /// to add a game.
-    fn unsaved_prompt(&self, how: Exit, mut style: OverlayStyle) -> OfferView {
-        // Solid, so the page under it doesn't show through the words.
-        style.background.opacity = 1.0;
-        let then = if self.from_guide && how == Exit::Back { "back to the Guide" } else { "close the menu" };
-        OfferView {
-            title: "Save your changes?".into(),
-            detail: "You changed settings that aren't saved yet.".into(),
-            answers: [("{confirm}", "Save"), ("{west}", "Discard"), ("{back}", "Keep editing")]
-                .iter()
-                .map(|(b, t)| ((*b).into(), (*t).into()))
-                .collect(),
-            hint: format!("Save or Discard, then {then}"),
-            style,
-        }
-    }
-
-    fn screen_view(&self, screen: &Screen, cursor: usize, config: &Config) -> MenuView {
-        let style = config.active_menu_style().clone();
-        match screen {
-            Screen::Main => main_page(style, cursor),
-            Screen::Editor(editor) => editor.view(config, &[self.parent()]),
-            Screen::Confirm(left, cursor, _) => self.screen_view(left, *cursor, config),
-            Screen::Profiles => list_page(
-                "Switch Profile",
-                profiles::rows(config).into_iter().map(|r| profiles::item(r, config, self.features.as_deref())).collect(),
-                cursor,
-                vec![self.parent()],
-                style,
-            ),
-            Screen::NewProfile => list_page(
-                "New profile",
-                profiles::new_rows(config).into_iter().map(|r| profiles::new_item(r, config)).collect(),
-                cursor,
-                vec![self.parent(), "Switch Profile".into()],
-                style,
-            ),
-            Screen::Quick => MenuView {
-                title: "Quick Settings".into(),
-                kind: crate::config::MenuKind::List,
-                items: quick::rows(config, &self.saved)
-                    .into_iter()
-                    .map(|row| {
-                        let label = match row {
-                            Row::Remapping if self.remapping_armed => "Press {confirm} again to turn remapping off".into(),
-                            row => quick::label(row, config, &self.saved),
-                        };
-                        ItemView { tone: if row == Row::Remapping { Tone::Remove } else { Tone::Normal }, label, ..ItemView::plain() }
-                    })
-                    .collect(),
-                selected: Some(cursor),
-                picks: 0,
-                crumbs: vec![self.parent()],
-                hint: "{left} {right} or {confirm} change · hold {rb} for big steps · {back} back".into(),
-                style,
-                touch: false,
-                aim: None,
-                prompt: None,
-            },
-        }
-    }
-}
-
-/// A page that is a plain list: {confirm} chooses, {back} goes back.
-fn list_page(title: &str, items: Vec<ItemView>, cursor: usize, crumbs: Vec<String>, style: OverlayStyle) -> MenuView {
-    MenuView {
-        title: title.into(),
-        kind: crate::config::MenuKind::List,
-        items,
-        selected: Some(cursor),
-        picks: 0,
-        crumbs,
-        hint: "{confirm} choose · {back} back".into(),
-        style,
-        touch: false,
-        aim: None,
-        prompt: None,
-    }
-}
-
-/// What the menu shows while on hold, in the look of the unsaved-changes question.
-fn hold_prompt(hold: Hold, mut style: OverlayStyle) -> OfferView {
-    style.background.opacity = 1.0;
-    let (title, detail, answers, hint) = match hold {
-        Hold::NoController => (
-            "Controller disconnected",
-            "Reconnect it, or press a button on another controller, to carry on.",
-            Vec::new(),
-            "The menu waits where it was",
-        ),
-        Hold::RemappingOff => (
-            "Remapping is off",
-            "It was turned off while you had changes here that aren't saved yet.",
-            vec![("{confirm}", "Save"), ("{west}", "Discard")],
-            "Save or Discard, then the controller is let go",
-        ),
-    };
-    OfferView {
-        title: title.into(),
-        detail: detail.into(),
-        answers: answers.into_iter().map(|(b, t)| (b.into(), t.into())).collect(),
-        hint: hint.into(),
-        style,
-    }
 }
 
 /// The step a direction makes.
@@ -644,26 +375,6 @@ fn wrap(cursor: usize, step: Step, len: usize) -> usize {
 pub(crate) fn active_profile_mut(config: &mut Config) -> Option<&mut Profile> {
     let at = config.active_ref();
     config.game_mut(at.game.as_deref())?.profiles.iter_mut().find(|p| p.name == at.profile)
-}
-
-/// The menu's first page, drawn with `style`; the settings previews show it too.
-pub fn main_page(style: OverlayStyle, cursor: usize) -> MenuView {
-    MenuView {
-        title: "Menu".into(),
-        kind: crate::config::MenuKind::List,
-        items: vec![
-            ItemView { label: "Quick Settings".into(), button: None, submenu: true, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE },
-            ItemView { label: "Edit Controls".into(), button: None, submenu: false, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE },
-        ],
-        selected: Some(cursor),
-        picks: 0,
-        crumbs: Vec::new(),
-        hint: "{confirm} choose · {back} close".into(),
-        style,
-        touch: false,
-        aim: None,
-        prompt: None,
-    }
 }
 
 #[cfg(test)]

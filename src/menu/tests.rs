@@ -21,13 +21,13 @@ fn a_two_column_list_moves_down_and_up_through_both_columns_and_left_and_right_s
 #[test]
 fn a_two_column_list_scrolls_only_once_the_cursor_leaves_the_visible_rows() {
     // Twenty rows: 10 per column, 8 visible per column.
-    assert_eq!(list_start(7, 20), 0);
-    assert_eq!(list_start(8, 20), 1);
-    assert_eq!(list_start(9, 20), 2);
+    assert_eq!(list_start_in(7, 20, list_columns(20)), 0);
+    assert_eq!(list_start_in(8, 20, list_columns(20)), 1);
+    assert_eq!(list_start_in(9, 20, list_columns(20)), 2);
     // The right column's rows scroll with the left's: its row 7 is on screen, row 9 scrolls.
-    assert_eq!(list_start(17, 20), 0);
-    assert_eq!(list_start(19, 20), 2);
-    assert_eq!(list_start(0, 8), 0);
+    assert_eq!(list_start_in(17, 20, list_columns(20)), 0);
+    assert_eq!(list_start_in(19, 20, list_columns(20)), 2);
+    assert_eq!(list_start_in(0, 8, list_columns(8)), 0);
 }
 
 fn key(k: &str) -> ButtonAction {
@@ -552,4 +552,11 @@ fn a_menu_that_closes_as_it_picks_shows_the_item_it_picked() {
     press(&mut s, &menus, Button::North);
     let view = s.view(&menus).unwrap();
     assert_eq!((view.selected, view.picks), (Some(1), 1), "lit and counted, for the overlay to show");
+}
+
+#[test]
+fn a_list_kept_in_one_column_scrolls_with_the_cursor() {
+    assert_eq!(list_start_in(7, 20, 1), 0);
+    assert_eq!(list_start_in(12, 20, 1), 5);
+    assert_eq!(list_step_in(7, 20, 1, (0, 1)), 8, "down goes on past the visible rows");
 }

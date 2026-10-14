@@ -25,7 +25,7 @@ use crate::{
         Analog, Appearance, Button, ButtonAction, CarouselControls, Cluster, Combo, Config, Feature, Game, GestureKind, GRID_MAX, GyroActivation,
         CurrentInput, GyroConfig, GyroHorizontal, GyroInput, GyroMode, InfoOverlay, ItemKind, LogOverlay, Macro, MacroStep, Menu, MenuItem,
         MenuKind, MenuKindTag, MouseButton, OverlayStyle, Paint, Profile, ProfileRef, Rule, RuleKind,
-        ScreenPosition, Stick, StickAction, StickConfig, Toggled, TouchSlot, TouchpadConfig, Trigger, TriggerAction, WheelDirection, Template, Zone, free_name, unique_name,
+        ScreenPosition, Stick, StickAction, StickConfig, Toggled, TouchSlot, TouchpadConfig, Trigger, TriggerAction, WheelDirection, Template, Zone, free_name, unique_name, Motion, StickPreset,
     },
     engine::Opener,
     motion::{MotionStyle, OverlayKind},

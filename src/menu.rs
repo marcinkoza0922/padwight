@@ -56,6 +56,17 @@ pub struct MenuView {
     /// A question asked over the menu, drawn on top of it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub prompt: Option<Box<crate::offer::OfferView>>,
+    /// A list kept in one column however long it is (it scrolls), so left and right are free to
+    /// change the values its rows show.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub one_column: bool,
+}
+
+impl MenuView {
+    /// How many columns its list is shown in.
+    pub fn columns(&self) -> usize {
+        if self.one_column { 1 } else { list_columns(self.items.len()) }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -337,6 +348,7 @@ impl MenuSession {
             touch: false,
             aim: self.live_aim(menu),
             prompt: None,
+            one_column: false,
         })
     }
 
@@ -789,11 +801,16 @@ pub fn list_columns(n: usize) -> usize {
 /// Moves the cursor through a list of `n` rows, as the overlay shows it. A two-column list
 /// fills the left column first, then the right. Up and down follow that order, wrapping round the
 /// whole list. Left and right move to the other column, on the same row or its last one.
-pub fn list_step(cursor: usize, n: usize, (dx, dy): Step) -> usize {
+pub fn list_step(cursor: usize, n: usize, step: Step) -> usize {
+    list_step_in(cursor, n, list_columns(n), step)
+}
+
+/// [`list_step`] for a list shown in `columns` columns (one or two).
+pub fn list_step_in(cursor: usize, n: usize, columns: usize, (dx, dy): Step) -> usize {
     if n == 0 {
         return 0;
     }
-    if list_columns(n) == 1 || dx == 0 {
+    if columns == 1 || dx == 0 {
         // Up and down go through the list in order, from the bottom of one column to the top of
         // the next and round again.
         return (cursor as i32 + dx + dy).rem_euclid(n as i32) as usize;
@@ -805,13 +822,13 @@ pub fn list_step(cursor: usize, n: usize, (dx, dy): Step) -> usize {
     (1 - col) * half + row.min(other_len - 1)
 }
 
-/// The first row a two-column list shows, so the cursor's row is on screen. Both columns share
-/// it, so their rows line up. A one-column list always starts at the top.
-pub fn list_start(cursor: usize, n: usize) -> usize {
-    if list_columns(n) == 1 {
+/// The first row a list shown in `columns` columns (one or two) shows, so the cursor's row is
+/// on screen. Both columns of a two-column list share it, so their rows line up.
+pub fn list_start_in(cursor: usize, n: usize, columns: usize) -> usize {
+    if n == 0 {
         return 0;
     }
-    let half = n.div_ceil(2);
+    let half = if columns == 2 { n.div_ceil(2) } else { n };
     let row = cursor.min(n - 1) - usize::from(cursor >= half) * half;
     if row >= VISIBLE_ROWS { row + 1 - VISIBLE_ROWS } else { 0 }
 }

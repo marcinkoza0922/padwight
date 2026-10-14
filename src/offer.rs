@@ -164,6 +164,7 @@ impl OfferSession {
                 touch: false,
                 aim: None,
                 prompt: None,
+                one_column: false,
             })
         };
         match self.stage {

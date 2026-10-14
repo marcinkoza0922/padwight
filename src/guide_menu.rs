@@ -75,6 +75,7 @@ pub fn view(steam: bool, cursor: usize, profile: &str, style: OverlayStyle) -> M
         touch: false,
         aim: None,
         prompt: None,
+        one_column: false,
     }
 }
 
