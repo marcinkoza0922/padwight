@@ -1,6 +1,6 @@
 # In-game layout editing and Quick Settings
 
-Status: phases 1, 2a and 2b are done, and the save and discard prompt is in (branch `in-game-layout-edit`, not committed). The one thing the editor doesn't offer is Multi, which holds several actions in one slot; it stays in the pack file.
+Status: Edit Controls covers what the settings window edits for a game, with live pictures (branch `in-game-editor`). What stays in the settings window is listed under "Comprehensive editor".
 
 ## Goal
 
@@ -14,12 +14,12 @@ A player can change the controls of the game they are playing without leaving it
 | Menu items | "Quick Settings" first, "Edit Controls" last. |
 | Quick Settings | Stick speed (for sticks that move the mouse), gyro sensitivity (gyro in mouse mode), Invert Y (every Y inversion in the profile at once), and the profile when the game has more than one. |
 | Quick Settings target | The active profile of the active game. Edits are saved to the config and apply at once. |
-| Editor scope | The full pack of the current game. Other games and the General profile are not shown. |
+| Editor scope | The active profile, and what its game shares. Other games, and other profiles of the game, are not edited (but the game's profiles can be renamed, copied, moved and deleted). |
 | Editor overlay | Drawn over the game. Controller input goes to the UI while it is open. The game is not paused. |
-| Editor layout | Simplified: one column, large text, current game only. |
+| Editor layout | A list of categories, each opening a list. Pages of values stay in one column and scroll; others go to two columns past eight rows. |
 | Editor apply | Each change applies live to the running mappings. Nothing reaches the config file until Save. Closing with unsaved changes asks: save and close, discard and close, or keep editing. Discard puts back the config as it was when the menu opened. |
 | New pack | A game with no pack gets one. Outside any game, a Quick Settings change makes a pack for the window in front: the active profile is copied from General, the change goes into the copy, and General is left as it was. The pack is named after the executable. Without a window, the change stays in General. (Edit Controls is refused instead; see the phase 2a notes.) |
-| Navigation | Left stick and D-pad move the cursor. A chooses. B backs out. Bumpers (switching tabs) are not used yet, since the editor has no tabs. |
+| Navigation | Left stick and D-pad move the cursor (on a left-stick page, only the D-pad). A chooses. B backs out. Left and right change a value. The bumpers jump a page. |
 | Macros and turbo | Still in the app (turbo wraps a macro). Included in the editor. |
 
 ## Phase 1 (done)
@@ -28,41 +28,47 @@ A player can change the controls of the game they are playing without leaving it
 - `src/daemon.rs`: `Active::Settings`. `chord_opens_menu` runs before input routing and opens the menu. `settings_input` applies the menu's outcome. The menu is drawn as a normal `MenuView`, so the overlay process does not change.
 - Pack creation: `Config::add_game_for_window` (`src/config/window_game.rs`) and `Daemon::pack_from_general`.
 
-## Phase 2a (done): Edit Controls for buttons
+## Conventions that carried over
 
-- `src/layout_editor.rs`: three pages. The button list (each row shows the button's action), one button's action (Gamepad button…, Disabled, On-screen keyboard, Screenshot), and the choice of gamepad button. A choice goes back to the button list.
-- Choosing Edit Controls outside a game makes the pack first (`pack_from_general`), so the editor edits the game's own profile. With no window in front, it is refused: the menu goes back to its top page and says "Edit Controls needs a game" (`settings_input` in `daemon.rs`).
-- The editor is drawn with `MenuView`, so the overlay process didn't change.
-- Button rows carry the controller chips (A, B, LB, LS and so on, as the rest of the app draws them): the top page, the pad picker, gestures, combos and layer bindings. Stick and trigger rows use LS, RS, LT and RT.
-- In a two-column list, up and down follow the order the list reads in: bottom of the left column to top of the right, and back round (the last row to the first). Left and right move to the other column on the same row. Both columns scroll together. The rules are `list_step`, `list_start` and `list_columns` in `menu.rs`, shared by the config menus, the Guide menu and the editor. On an editor page in two columns, left and right move between columns rather than changing a value.
-- Rows carry a tone (`Tone` in `menu.rs`): adding rows ("Add combo", a macro's tap, press or release, and so on) are tinted green, and removing or deleting rows ("Delete combo", "Remove last step", "Delete macro") red. Ordinary items, such as a macro's steps, keep the plain color. This applies to every list menu that sets a tone. Added rows are lime (`#5a9a1a` mixed three-quarters into the row, about 4.7:1 with white text). Button rows draw the same controller glyphs as the info overlays, for the controller in use (`OverlayFrame::family`), not text badges; stick and trigger rows keep their text tags. A Settings page switch, "Color-blind mode" (`Config::colorblind_tones`), draws added rows in blue and removed rows in orange, and puts a + or − in front of each, so they don't rely on red and green.
-- Lists longer than 8 rows show in two columns, and longer ones scroll with the cursor (`ONE_COLUMN_ROWS` and `TWO_COLUMN_ROWS` in `overlay.rs`), with ▲ / ▼ when rows are hidden. This applies to every list menu.
-- Breadcrumbs: a page shows the menus it was opened from above its title ("Menu › Edit Controls › A button"), in place of the old "N deep" suffix. A config menu gets them from its menu stack (`MenuView::crumbs`); the editor from its own page history.
+- Choosing Edit Controls outside a game makes the pack first (`pack_from_general`), so the editor edits the game's own profile. With no window in front, it is refused: the menu goes back to its top page and says "Edit Controls needs a game" (`edit_controls` in `daemon/in_game_menu.rs`).
+- Button rows carry the controller's glyphs for the controller in use; stick and trigger rows use the `{ls}`, `{rs}`, `{lt}`, `{rt}` tokens.
+- In a two-column list, up and down follow the order the list reads in, and left and right move to the other column (`list_step_in`, `list_start_in` and `MenuView::columns` in `menu.rs`, shared by every list menu).
+- Rows carry a tone (`Tone` in `menu.rs`): adding rows are lime, removing or deleting rows red; "Color-blind mode" (`Config::colorblind_tones`) makes them blue and orange with a + or −.
+- Breadcrumbs: a page shows the pages it was opened from above its title.
+- Deleting takes a second press of A.
 
-## Phase 2b
+## Switch Profile (done)
 
-Sticks (done): Edit Controls lists Left stick and Right stick after the buttons. A stick page sets its action (Disabled, Gamepad stick, Mouse, Scroll), its speed (Mouse and Scroll), Invert Y, and its deadzone. Left and right on the D-pad or stick change the speed and deadzone by one step. Rings and flick are not editable here (zones are, see below); a stick with one shows "Other (edit in the pack file)", and choosing its action moves it to Disabled.
+The Guide menu's "Next profile" row is now "Switch profile (now …)". It opens the in-game menu on `Page::Profiles` (`src/system_menu/profiles.rs`): the active game's profiles, then "New profile…". Picking a profile switches to it and leaves the menu (asking about unsaved changes first, if any). A switch to a profile that was saved updates the menu's saved copy, so it isn't an unsaved change on its own. "New profile…" offers a copy of the current profile, each `Template` (moved from the GUI to `config/templates.rs`), and in a game a copy of each General profile; the copy gets a `unique_name` in its game and is switched to (`Outcome::Added`). Discard puts back the profile the menu opened on.
 
-Triggers (done): Action (Disabled, Gamepad trigger, Button), and for a Button trigger, what it acts as (six pad buttons) and the press point. Gyro (done): Mode (Off or Mouse), mouse sensitivity, Invert X and Y, and the noise threshold. Stick and steering gyro modes are edited in the pack file. A stick or gyro mode the editor doesn't cycle through is left as it is, not reset.
+## Comprehensive editor (done, branch `in-game-editor`)
 
-Modes and layers (done): the Modes and Layers rows list the game's modes and layers (`Shift`), and "Add mode" / "Add layer" make one. The built-in modes aren't listed, since they can't be changed; "Switch to a mode…" offers Mouse mode after the game's own. A layer's page sets each button's action (or leaves it unbound). A button can hold a layer through "Hold a layer…" on its action page, which lists the game's layers, and switch modes through "Switch to a mode…" (also offered for menu items). Layers and mode switches can't be made toggles. A new layer does nothing until a button holds it.
+Goal: anything the settings window can do to the current profile and its game, Edit Controls can do with the controller. Decisions from the interview (2026-10-14):
 
-Macros (done): the Macros row lists the game's macros, and "Add macro" makes one. A macro's page adds a tap, press or release (each picks a button), a stick step (one of nine directions for either stick), a 100 ms wait, and removes the last step. A step row removes that step. "Delete macro" removes the macro unless a button, layer or menu of the game still uses it; the page says so when it does.
+| Topic | Decision |
+|---|---|
+| Scope | The active profile's own settings, plus the game-wide ones (modes, layers, macros, menus, info and log overlays, the game's details). No other profiles in the editor. |
+| Top page | A list of categories: Buttons, Sticks, Triggers, Gyro, Touchpad, Combos, Modes, Layers, Macros, Menus, Info overlays, Log overlays, Guide overlay, Profile, Game. List pages show their items; choosing one opens its settings. |
+| Text | Names, labels, overlay text and window rules are typed on the on-screen keyboard, whose keys go into the field instead of the game. |
+| Game details | Name and window rules, looks (styles, font, Nintendo layout), sounds, rumble and motion. Pack info (author, version…) stays in the settings window. |
+| Profiles | Switch Profile (Guide menu) switches and makes profiles. Renaming, duplicating and deleting are under Game › Profiles. |
+| Visuals | Live pictures beside the list for sticks, gyro and touchpad (the settings window's graphs, with the live input), and the menu, info or log overlay being edited shown on screen where it goes, under the editor. |
+| Delivery | One branch, a commit per phase. |
 
-Zones (done): a stick's or trigger's page has a Zones row. A zone's page sets its start and end (moved with left and right, the start never passing the end), its action (the same choices as a button, with Keys and Hold a layer), and deletes it. A new zone covers the top half of the travel.
+Progress:
 
+- Done: Switch Profile; the category top page; the row structure; text entry on the keyboard (`Screen::Typing` in `system_menu`, `OverlayController::for_field`); buttons, gestures and combos for the profile or any mode or layer; sticks (every kind: gamepad, mouse with its response presets and settings, scroll, ring with its sectors and fills, flick), triggers, zones; the whole gyro page; the touchpad (every kind, split halves); Multi, Toggle and Turbo nested to any depth, the key picker over the full keyboard; modes and layers (name, overrides, combos turned off, indicator); macros (every step kind, timing, moving steps, fighting-game motions); menus (kind settings, close button, items with label, button, weight and span); info overlays (timing, heading, cells).
+- Done too: log overlays and what input displays follow (shared with info overlays' current-input cells); the Guide overlay (notes line by line, Mappings rows: text, hiding, sharing, splitting, the author's own rows); the profile's page (name, what it needs, timings); the game's page (name, window rules, profiles: rename, copy, move, delete; Nintendo layout, font, the four looks, sounds, rumble, motion); look pages for every overlay with a style (position, size, colors by swatch or typed #rrggbb, text, every decoration and ornament). Renames follow references (`named.rs`, `Config::rename_profile`, `Config::rename_game`).
+- Not offered in game: a look's background picture and a cue's pack sound file (both pick files), pack info (author, version), and importing or exporting packs.
+- Pictures (done): `MenuView::figure` carries a `figures::Figure` beside the list, drawn by `overlay/draw/figure.rs`. The SVG pictures moved from the settings window to `src/figures/` (deadzone, mouse response, ring, gyro) so both draw the same ones, plus a trigger's travel. `layout_editor/pictures.rs` picks the picture for a page: a stick (travel, ring, response), a trigger (press point, zones), the gyro (curve, turning), the touchpad, or the menu being edited, smaller. The daemon keeps the menu's controller's input in `Daemon::menu_live` (`figures::Live`), feeds it gyro readings while the menu is up (the engine's gyro is paused then, so the picture shows the raw turning), and redraws for them at most every 33 ms. A left-stick page leaves the left stick to its picture; the D-pad moves the cursor. An info or log overlay being edited is shown where it goes (`daemon/previews.rs`), a log overlay with sample presses.
 
-Gyro activation (done): "Activation" cycles always, held with LT or RT, off while LT or RT is held, and toggled by LT or RT. Other inputs stay in the pack file.
+Structure: every page builds a list of `Row`s (`layout_editor/rows.rs`), each carrying its label and what A and left/right do, so row counts, drawing, choosing and stepping all come from one place. Input pages take an `Owner` (the profile, or one of the game's modes or layers), so a layer's sticks, triggers, gyro, touchpad, gestures and combos use the same pages as the profile's. An action is reached through an `ActionAt` (a slot plus a path into Multi, Toggle and Turbo), so actions nest.
 
-Action choices (done): every simple `ButtonAction` the editor can offer is in the action page: Disabled, the on-screen keyboard and numpad, screenshot, recording, media controls, force quit, mouse buttons (left, right, middle, back, forward), wheel in all four directions, and keys (a picker that ticks several at once). Toggle, turbo and the turbo rate or the toggle's start state are on the same page. Picker rows open a list of the game's layers, macros, menus, info overlays or log overlays. A macro picked this way plays once; its repeat setting stays in the pack file.
-
-Still in the pack file: Multi, which holds several actions in one slot. Stick and steering gyro modes, and the gyro's other inputs, are there too.
-
-Gestures and combos (done): a button's Gestures page sets its double tap, triple tap and long press (or clears them to "Not set"). Combos lists the profile's combos, with "Add combo". A combo page ticks its buttons (two or more make a combo), sets its action, and deletes it. The gesture and combo actions use the same choices as a button.
+Peek: a menu being edited rides in `OverlayFrame::backdrop` (drawn under the editor by `overlay/ui.rs`); holding the peek trigger (`Config::peek_trigger`, left by default, set in the Shortcuts tab's Menu controls card) sets `OverlayFrame::peek`, which stops the editor being drawn while the overlay stays. A new menu with no items has nothing to show yet. The Guide overlay has no preview.
 
 ## Open questions
 
-- Each change saves the whole config. If that is too heavy while a game runs, phase 2b can batch edits behind a Save.
+- Not yet tried on a controller: the live pictures (especially the gyro's, which shows the raw turning because the engine's gyro is paused while the menu is up), typing on the keyboard in a field, and how the wider editor panel fits beside the game at large overlay sizes.
 
 ## User docs
 

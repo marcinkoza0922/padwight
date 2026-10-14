@@ -289,3 +289,105 @@ fn on_hold_with_remapping_off_a_saves_and_x_discards() {
     unchanged.enabled = false;
     assert!(!menu.unsaved(&unchanged));
 }
+
+/// General's Gamepad, its left stick moving the mouse, and Desktop.
+fn two_profiles() -> Config {
+    mouse_config()
+}
+
+#[test]
+fn switch_profile_switches_then_leaves_without_asking_to_save() {
+    let mut config = two_profiles();
+    let mut menu = SystemMenu::new(&config).on_page(Page::Profiles);
+    menu.handle_now(press(Button::DpadDown), &mut config);
+    let Some(Outcome::Switch(target)) = menu.handle_now(press(Button::South), &mut config) else { panic!("no switch") };
+    assert_eq!(target.profile, "Desktop");
+    // The daemon switches, then asks the menu what follows.
+    config.active = target;
+    assert_eq!(menu.profile_switched(&config), Some(Outcome::Close));
+    assert!(!menu.unsaved(&config));
+}
+
+#[test]
+fn choosing_the_current_profile_just_leaves() {
+    let mut config = two_profiles();
+    let mut menu = SystemMenu::new(&config).on_page(Page::Profiles);
+    assert_eq!(menu.handle_now(press(Button::South), &mut config), Some(Outcome::Close));
+}
+
+#[test]
+fn a_new_profile_is_an_unsaved_change_and_back_returns_to_the_list() {
+    let mut config = two_profiles();
+    let mut menu = SystemMenu::new(&config).on_page(Page::Profiles);
+    // Up wraps to "New profile…", the last row.
+    menu.handle_now(press(Button::DpadUp), &mut config);
+    assert_eq!(menu.handle_now(press(Button::South), &mut config), None);
+    assert_eq!(menu.screen, Screen::NewProfile);
+    let Some(Outcome::Added(at)) = menu.handle_now(press(Button::South), &mut config) else { panic!("nothing added") };
+    config.active = at.clone();
+    assert_eq!(menu.profile_switched(&config), None);
+    menu.profile_added(&config);
+    assert_eq!((menu.screen.clone(), menu.cursor), (Screen::Profiles, config.general.profiles.len() - 1));
+    assert!(menu.unsaved(&config));
+    // Leaving asks about the new profile, and Discard goes back to the profile it was on.
+    assert_eq!(menu.handle_now(press(Button::East), &mut config), None);
+    let Some(Outcome::Discard { saved, .. }) = menu.handle_now(press(Button::West), &mut config) else { panic!("no discard") };
+    assert_eq!(saved.active_ref().profile, config.general.profiles[0].name);
+}
+
+#[test]
+fn a_name_is_typed_on_the_keyboard_and_set_with_enter() {
+    let mut config = mouse_config();
+    config.general.macros.push(crate::config::Macro { name: "Jumps".into(), steps: Vec::new() });
+    let mut menu = SystemMenu::new(&config).on_page(Page::EditControls);
+    // Macros, then the macro, then its name.
+    let rows = menu.view(&config).items;
+    let macros = rows.iter().position(|r| r.label.starts_with("Macros")).unwrap();
+    for _ in 0..macros {
+        menu.handle_now(press(Button::DpadDown), &mut config);
+    }
+    menu.handle_now(press(Button::South), &mut config);
+    menu.handle_now(press(Button::South), &mut config);
+    assert_eq!(menu.handle_now(press(Button::South), &mut config), None);
+    assert!(menu.typing());
+    assert!(matches!(menu.overlay_view(&config, &crate::figures::Live::default()), crate::overlay::OverlayView::Keyboard(k) if k.typed == "Jumps" && k.field.is_some()));
+    // X deletes the last letter, and Start (Enter) sets it.
+    menu.handle_now(press(Button::West), &mut config);
+    menu.handle_now(InputEvent::Button(Button::West, false), &mut config);
+    assert_eq!(menu.handle_now(press(Button::Start), &mut config), Some(Outcome::Changed));
+    assert!(!menu.typing());
+    assert_eq!(config.general.macros[0].name, "Jump");
+}
+
+#[test]
+fn guide_puts_the_keyboard_away_without_setting_the_text() {
+    let mut config = mouse_config();
+    config.general.macros.push(crate::config::Macro { name: "Jumps".into(), steps: Vec::new() });
+    let mut menu = SystemMenu::new(&config).on_page(Page::EditControls);
+    let macros = menu.view(&config).items.iter().position(|r| r.label.starts_with("Macros")).unwrap();
+    for _ in 0..macros {
+        menu.handle_now(press(Button::DpadDown), &mut config);
+    }
+    for _ in 0..3 {
+        menu.handle_now(press(Button::South), &mut config);
+    }
+    menu.handle_now(press(Button::West), &mut config);
+    assert_eq!(menu.guide_pressed(&config), None);
+    assert!(!menu.typing());
+    assert_eq!(config.general.macros[0].name, "Jumps");
+}
+
+#[test]
+fn on_a_left_stick_page_the_left_stick_is_left_to_the_picture() {
+    let mut config = mouse_config();
+    let mut menu = SystemMenu::new(&config).on_page(Page::EditControls);
+    // Sticks, then the left stick.
+    menu.handle_now(press(Button::DpadDown), &mut config);
+    menu.handle_now(press(Button::South), &mut config);
+    menu.handle_now(press(Button::South), &mut config);
+    let before = menu.view(&config).selected;
+    menu.handle_now(InputEvent::Axis(Axis::LeftY, 1.0), &mut config);
+    assert_eq!(menu.view(&config).selected, before, "pushing it doesn't move the cursor");
+    menu.handle_now(press(Button::DpadDown), &mut config);
+    assert_ne!(menu.view(&config).selected, before, "the D-pad still does");
+}

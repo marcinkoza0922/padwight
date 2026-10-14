@@ -1,318 +1,336 @@
-//! Tests of the Edit Controls pages, through the editor's own steps.
-
 use super::*;
-use super::buttons::action_rows;
-use super::macros;
-use super::values;
-use crate::config::{Analog, GyroActivation, GyroInput, Trigger};
+use super::action::{ActionAt, Slot};
+use super::owner::{self, Owner};
 
-fn top_index(row: Top) -> usize {
-    top_rows(&LayoutEditor::new().inputs()).iter().position(|&r| r == row).unwrap()
+mod game;
+use crate::config::{Analog, ButtonAction, GyroActivation, GyroInput, Profile, StickAction, Trigger};
+
+impl LayoutEditor {
+    fn labels(&self, config: &Config) -> Vec<String> {
+        self.rows(config).into_iter().map(|r| r.item.label).collect()
+    }
+
+    /// Puts the cursor on the first row whose label starts with `label`, and chooses it.
+    fn pick(&mut self, label: &str, config: &mut Config) -> EditStep {
+        let labels = self.labels(config);
+        self.cursor = labels.iter().position(|l| l.starts_with(label)).unwrap_or_else(|| panic!("no row {label:?} on {:?}: {labels:?}", self.page));
+        self.choose(config)
+    }
+
+    /// Puts the cursor on the row for button `b` (a button list, or a combo's page).
+    fn pick_button(&mut self, b: Button, config: &mut Config) -> EditStep {
+        let rows = self.rows(config);
+        self.cursor = rows.iter().position(|r| r.item.buttons == vec![b]).unwrap_or_else(|| panic!("no row for {b:?}"));
+        self.choose(config)
+    }
+
+    fn step_row(&mut self, label: &str, dir: i32, config: &mut Config) -> EditStep {
+        let labels = self.labels(config);
+        self.cursor = labels.iter().position(|l| l.starts_with(label)).unwrap_or_else(|| panic!("no row {label:?}: {labels:?}"));
+        self.adjust(dir, config)
+    }
+}
+
+fn config() -> Config {
+    let mut config = Config::default();
+    config.general.profiles = vec![Profile::passthrough("Gamepad")];
+    config
+}
+
+fn button(config: &Config, b: Button) -> ButtonAction {
+    config.active().unwrap().button(b).clone()
 }
 
 #[test]
-fn choosing_a_gamepad_button_maps_it_and_returns_to_the_top() {
-    let mut config = Config::default();
+fn choosing_a_gamepad_button_maps_it_and_returns_to_the_button_list() {
+    let mut config = config();
     let mut editor = LayoutEditor::new();
-    editor.cursor = top_index(Top::Button(Button::East));
-    editor.choose(&mut config);
-    editor.cursor = 0; // "Gamepad button…"
-    assert_eq!(editor.choose(&mut config), EditStep::Stay);
-    editor.cursor = Button::ALL.iter().position(|&b| b == Button::North).unwrap();
-    assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    assert_eq!(config.active().unwrap().button(Button::East), &ButtonAction::Gamepad(Button::North));
-    assert_eq!(editor.page, Page::Top);
+    editor.pick("Buttons", &mut config);
+    editor.pick_button(Button::South, &mut config);
+    editor.pick("Gamepad button", &mut config);
+    assert_eq!(editor.pick_button(Button::East, &mut config), EditStep::Changed);
+    assert_eq!(button(&config, Button::South), ButtonAction::Gamepad(Button::East));
+    assert_eq!(editor.page, Page::Buttons(Owner::Profile));
 }
 
 #[test]
 fn a_choice_sets_the_button_and_back_leaves_the_editor() {
-    let mut config = Config::default();
+    let mut config = config();
     let mut editor = LayoutEditor::new();
-    editor.cursor = 0; // South
-    editor.choose(&mut config);
-    editor.cursor = action_rows(Slot::Button(Button::South)).iter().position(|r| matches!(r, ActionRow::Choice(1))).unwrap();
-    assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    assert_eq!(config.active().unwrap().button(Button::South), &ButtonAction::ToggleOverlay);
+    editor.pick("Buttons", &mut config);
+    editor.pick_button(Button::South, &mut config);
+    assert_eq!(editor.pick("Screenshot", &mut config), EditStep::Changed);
+    assert_eq!(button(&config, Button::South), ButtonAction::Screenshot);
+    assert_eq!(editor.back(), EditStep::Stay);
     assert_eq!(editor.back(), EditStep::Leave);
 }
 
 #[test]
 fn a_double_tap_gesture_is_set_from_the_gestures_page() {
-    let mut config = Config::default();
+    let mut config = config();
     let mut editor = LayoutEditor::new();
-    editor.cursor = 0; // South
-    editor.choose(&mut config);
-    editor.cursor = 1; // Gestures…
-    editor.choose(&mut config);
-    assert_eq!(editor.page, Page::Gestures(Button::South));
-    editor.cursor = 0; // Double tap
-    editor.choose(&mut config);
-    editor.cursor = action_rows(Slot::Gesture(Button::South, GestureKind::DoubleTap))
-        .iter()
-        .position(|r| matches!(r, ActionRow::Choice(1)))
-        .unwrap();
-    assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    let profile = config.active().unwrap();
-    assert_eq!(profile.gestures[&Button::South].double_tap, Some(ButtonAction::ToggleOverlay));
-    // Back on the gestures page, then the button, then the top.
-    assert_eq!(editor.page, Page::Gestures(Button::South));
-}
-
-#[test]
-fn a_layer_button_is_bound_from_the_layers_page() {
-    let mut config = Config::default();
-    config.general.layers.push(crate::config::Layer::new("Mine"));
-    let mut editor = LayoutEditor::new();
-    editor.cursor = top_index(Top::Layers(Shift::Layer));
-    editor.choose(&mut config);
-    editor.cursor = 0; // the first layer
-    editor.choose(&mut config);
-    assert_eq!(editor.page, Page::Layer(Shift::Layer, 0));
-    editor.cursor = Button::ALL.iter().position(|&b| b == Button::South).unwrap();
-    editor.choose(&mut config);
-    let shot = action_rows(Slot::Layer(Shift::Layer, 0, Button::South)).iter().position(|r| matches!(r, ActionRow::Choice(2))).unwrap();
-    editor.cursor = shot;
-    assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    assert_eq!(config.general.layers[0].buttons.get(&Button::South), Some(&ButtonAction::Screenshot));
+    editor.pick("Buttons", &mut config);
+    editor.pick_button(Button::South, &mut config);
+    editor.pick("Gestures", &mut config);
+    editor.pick("Double tap", &mut config);
+    editor.pick("Screenshot", &mut config);
+    let gestures = &config.active().unwrap().gestures[&Button::South];
+    assert_eq!(gestures.double_tap, Some(ButtonAction::Screenshot));
+    assert!(editor.labels(&config)[0].ends_with("Screenshot"), "back on the gestures page");
+    editor.pick("Double tap", &mut config);
+    editor.pick("Not set", &mut config);
+    assert!(config.active().unwrap().gestures.is_empty());
 }
 
 #[test]
 fn a_combo_is_added_given_buttons_and_an_action_and_then_deleted() {
-    let mut config = Config::default();
+    let mut config = config();
     let mut editor = LayoutEditor::new();
-    editor.cursor = top_index(Top::Combos);
-    editor.choose(&mut config);
-    editor.cursor = combos(&config).len(); // Add combo
+    editor.pick("Combos", &mut config);
+    assert_eq!(editor.pick("Add combo", &mut config), EditStep::Changed);
+    editor.pick_button(Button::LeftBumper, &mut config);
+    editor.pick_button(Button::RightBumper, &mut config);
+    editor.pick("Action", &mut config);
+    editor.pick("Screenshot", &mut config);
+    let combo = &config.active().unwrap().combos[0];
+    assert_eq!((combo.buttons.clone(), combo.action.clone()), (vec![Button::LeftBumper, Button::RightBumper], ButtonAction::Screenshot));
+    // Deleting takes a second press.
+    assert_eq!(editor.pick("Delete combo", &mut config), EditStep::Stay);
+    assert!(editor.view(&config, &[]).items[editor.cursor].label.contains("again"));
     assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    assert_eq!(editor.page, Page::Combo(0));
-    // Members: South and East.
-    let inputs = editor.inputs();
-    editor.cursor = inputs.iter().position(|&b| b == Button::South).unwrap();
-    editor.choose(&mut config);
-    editor.cursor = inputs.iter().position(|&b| b == Button::East).unwrap();
-    editor.choose(&mut config);
-    assert_eq!(config.active().unwrap().combos[0].buttons, [Button::South, Button::East]);
-    // Action: Screenshot.
-    editor.cursor = inputs.len();
-    editor.choose(&mut config);
-    let shot = action_rows(Slot::Combo(0)).iter().position(|r| matches!(r, ActionRow::Choice(2))).unwrap();
-    editor.cursor = shot;
-    editor.choose(&mut config);
-    assert_eq!(config.active().unwrap().combos[0].action, ButtonAction::Screenshot);
-    // Delete, which takes a second press.
-    editor.page = Page::Combo(0);
-    editor.cursor = inputs.len() + 1;
-    assert_eq!(editor.choose(&mut config), EditStep::Stay);
-    assert_eq!(combos(&config).len(), 1, "one press only asks");
-    assert!(editor.view(&config, &[]).items[editor.cursor].label.contains("again to delete"));
-    editor.choose(&mut config);
-    assert!(combos(&config).is_empty());
+    assert!(config.active().unwrap().combos.is_empty());
+    assert_eq!(editor.page, Page::Combos(Owner::Profile));
 }
 
 #[test]
-fn a_button_can_send_a_key_from_the_key_picker() {
-    let mut config = Config::default();
+fn keys_are_ticked_in_and_out_from_the_keyboards_rows() {
+    let mut config = config();
     let mut editor = LayoutEditor::new();
-    editor.cursor = 0; // South
-    editor.choose(&mut config);
-    editor.cursor = action_rows(Slot::Button(Button::South)).iter().position(|r| *r == ActionRow::Keys).unwrap();
-    editor.choose(&mut config);
-    assert_eq!(editor.page, Page::Keys(Slot::Button(Button::South)));
-    editor.cursor = buttons::KEY_PICKS.iter().position(|&k| k == "KEY_ENTER").unwrap();
-    assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    assert_eq!(config.active().unwrap().button(Button::South), &ButtonAction::Keys(vec!["KEY_ENTER".into()]));
-    // The picker stays open, so more keys can be added; Done leaves it.
-    assert_eq!(editor.page, Page::Keys(Slot::Button(Button::South)));
-    editor.cursor = buttons::KEY_PICKS.len();
-    assert_eq!(editor.choose(&mut config), EditStep::Stay);
-    assert_eq!(editor.page, Page::Top);
-}
-
-#[test]
-fn key_combinations_toggle_keys_in_and_out() {
-    let mut config = Config::default();
-    let mut editor = LayoutEditor::new();
-    editor.cursor = 0; // South
-    editor.choose(&mut config);
-    editor.cursor = action_rows(Slot::Button(Button::South)).iter().position(|r| *r == ActionRow::Keys).unwrap();
-    editor.choose(&mut config);
-    let key = |editor: &mut LayoutEditor, config: &mut Config, code: &str| {
-        editor.cursor = buttons::KEY_PICKS.iter().position(|&k| k == code).unwrap();
-        editor.choose(config);
-    };
-    key(&mut editor, &mut config, "KEY_LEFTCTRL");
-    key(&mut editor, &mut config, "KEY_ESC");
-    assert_eq!(config.active().unwrap().button(Button::South), &ButtonAction::Keys(vec!["KEY_LEFTCTRL".into(), "KEY_ESC".into()]));
-    // Choosing a key that is already pressed takes it out.
-    key(&mut editor, &mut config, "KEY_LEFTCTRL");
-    assert_eq!(config.active().unwrap().button(Button::South), &ButtonAction::Keys(vec!["KEY_ESC".into()]));
+    editor.pick("Buttons", &mut config);
+    editor.pick_button(Button::South, &mut config);
+    editor.pick("Keys", &mut config);
+    editor.pick("Tab Q W", &mut config);
+    editor.pick("[ ] Q", &mut config);
+    editor.pick("[ ] W", &mut config);
+    assert_eq!(button(&config, Button::South), ButtonAction::Keys(vec!["KEY_Q".into(), "KEY_W".into()]));
+    editor.pick("[x] Q", &mut config);
+    assert_eq!(button(&config, Button::South), ButtonAction::Keys(vec!["KEY_W".into()]));
+    editor.back();
+    assert_eq!(editor.pick("Done", &mut config), EditStep::Stay);
+    assert_eq!(editor.page, Page::Buttons(Owner::Profile));
 }
 
 #[test]
 fn breadcrumbs_follow_the_pages_opened() {
-    let mut config = Config::default();
-    let parents = ["Menu".to_string()];
+    let mut config = config();
     let mut editor = LayoutEditor::new();
-    assert!(editor.view(&config, &parents).crumbs == ["Menu"]);
-    editor.cursor = 0; // South
-    editor.choose(&mut config);
-    let view = editor.view(&config, &parents);
+    editor.pick("Buttons", &mut config);
+    editor.pick_button(Button::South, &mut config);
+    let view = editor.view(&config, &["Menu".into()]);
+    assert_eq!(view.crumbs, ["Menu", "Edit Controls", "Buttons"]);
     assert_eq!(view.title, "A button");
-    assert_eq!(view.crumbs, ["Menu", "Edit Controls"]);
-    editor.cursor = 1; // Gestures…
-    editor.choose(&mut config);
-    assert_eq!(editor.view(&config, &parents).crumbs, ["Menu", "Edit Controls", "A button"]);
 }
 
 #[test]
-fn a_button_can_be_made_a_toggle_and_back() {
-    let mut config = Config::default();
+fn a_toggle_wraps_the_action_and_keeps_it_on_a_page_of_its_own() {
+    let mut config = config();
     let mut editor = LayoutEditor::new();
-    editor.cursor = 0; // South
-    editor.choose(&mut config);
-    editor.cursor = action_rows(Slot::Button(Button::South)).iter().position(|r| *r == ActionRow::Wrap(buttons::Wrap::Toggle)).unwrap();
-    assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    let now = config.active().unwrap().button(Button::South).clone();
-    assert!(matches!(now, ButtonAction::Toggle(_)));
-    // Choosing it again unwraps the same action.
-    editor.page = Page::Action(Slot::Button(Button::South));
-    editor.cursor = action_rows(Slot::Button(Button::South)).iter().position(|r| *r == ActionRow::Wrap(buttons::Wrap::Toggle)).unwrap();
-    editor.choose(&mut config);
-    // South was Gamepad(South) before it was wrapped.
-    assert_eq!(config.active().unwrap().button(Button::South), &ButtonAction::Gamepad(Button::South));
+    editor.pick("Buttons", &mut config);
+    editor.pick_button(Button::South, &mut config);
+    editor.pick("Make it a toggle", &mut config);
+    assert!(matches!(button(&config, Button::South), ButtonAction::Toggle(_)));
+    editor.pick("Starts on", &mut config);
+    let ButtonAction::Toggle(t) = button(&config, Button::South) else { panic!("not a toggle") };
+    assert!(t.start_on);
+    // What it toggles is changed on its own page, and stays toggled.
+    editor.pick("Toggles", &mut config);
+    editor.pick("Screenshot", &mut config);
+    let ButtonAction::Toggle(t) = button(&config, Button::South) else { panic!("not a toggle") };
+    assert_eq!(*t.action, ButtonAction::Screenshot);
+    editor.pick("Stop toggling", &mut config);
+    assert_eq!(button(&config, Button::South), ButtonAction::Screenshot);
 }
 
 #[test]
-fn a_turbo_rate_and_a_toggles_start_state_can_be_set() {
-    let mut config = Config::default();
-    let mut editor = LayoutEditor::new();
-    editor.cursor = 0; // South
-    editor.choose(&mut config);
-    editor.cursor = action_rows(Slot::Button(Button::South)).iter().position(|r| *r == ActionRow::Wrap(buttons::Wrap::Turbo)).unwrap();
-    editor.choose(&mut config);
-    // The turbo's rate row is the one after the page's own rows.
-    let rate = page_rows(Slot::Button(Button::South), &config.active().unwrap().button(Button::South).clone())
-        .iter()
-        .position(|r| *r == ActionRow::Tuning(buttons::Tuning::TurboRate))
-        .unwrap();
-    editor.cursor = rate;
-    editor.choose(&mut config);
-    assert!(matches!(config.active().unwrap().button(Button::South), ButtonAction::Turbo { rate, .. } if *rate == 15.0));
-
-    // A toggle's start-on row flips the flag.
-    editor.cursor = action_rows(Slot::Button(Button::South)).iter().position(|r| *r == ActionRow::Wrap(buttons::Wrap::Toggle)).unwrap();
-    editor.choose(&mut config);
-    editor.cursor = page_rows(Slot::Button(Button::South), &config.active().unwrap().button(Button::South).clone())
-        .iter()
-        .position(|r| *r == ActionRow::Tuning(buttons::Tuning::ToggleStart))
-        .unwrap();
-    editor.choose(&mut config);
-    assert!(matches!(config.active().unwrap().button(Button::South), ButtonAction::Toggle(t) if t.start_on));
+fn a_menu_a_layer_or_a_mode_cant_be_made_a_toggle() {
+    let mut config = config();
+    for action in [ButtonAction::OpenMenu("M".into()), ButtonAction::Layer("L".into()), ButtonAction::Mode("D".into())] {
+        config.general.profiles[0].set_button(Button::South, action);
+        let rows = action_page::rows(&config, ActionAt::new(Slot::Button(Owner::Profile, Button::South)));
+        assert!(!rows.iter().any(|r| r.item.label == "Make it a toggle"));
+    }
 }
 
 #[test]
-fn gyro_activation_cycles_through_its_presets() {
-    let mut config = Config::default();
+fn a_turbos_rate_steps() {
+    let mut config = config();
     let mut editor = LayoutEditor::new();
-    editor.cursor = top_index(Top::Gyro);
-    editor.choose(&mut config);
-    editor.cursor = values::GYRO_ACTIVATION;
-    editor.choose(&mut config);
+    editor.pick("Buttons", &mut config);
+    editor.pick_button(Button::South, &mut config);
+    editor.pick("Make it turbo", &mut config);
+    assert_eq!(editor.step_row("Rate", 1, &mut config), EditStep::Changed);
+    assert!(matches!(button(&config, Button::South), ButtonAction::Turbo { rate, .. } if rate == 11.0));
+}
+
+#[test]
+fn several_actions_at_once_are_built_part_by_part() {
+    let mut config = config();
+    let mut editor = LayoutEditor::new();
+    editor.pick("Buttons", &mut config);
+    editor.pick_button(Button::South, &mut config);
+    editor.pick("Several at once", &mut config);
+    assert_eq!(editor.page, Page::Multi(ActionAt::new(Slot::Button(Owner::Profile, Button::South))));
+    editor.pick("Add an action", &mut config);
+    editor.pick("Screenshot", &mut config);
+    assert_eq!(button(&config, Button::South), ButtonAction::Multi(vec![ButtonAction::Gamepad(Button::South), ButtonAction::Screenshot]));
+    editor.pick("Keep only the first", &mut config);
+    assert_eq!(button(&config, Button::South), ButtonAction::Gamepad(Button::South));
+}
+
+#[test]
+fn gyro_activation_steps_through_its_kinds_and_takes_an_input() {
+    let mut config = config();
+    let mut editor = LayoutEditor::new();
+    editor.pick("Gyro", &mut config);
+    editor.step_row("Mode", 1, &mut config);
+    editor.step_row("Active", 1, &mut config);
     assert_eq!(config.active().unwrap().gyro.activation, GyroActivation::WhileHeld(GyroInput::LeftTrigger));
+    editor.pick("With", &mut config);
+    editor.pick_button(Button::RightBumper, &mut config);
+    assert_eq!(config.active().unwrap().gyro.activation, GyroActivation::WhileHeld(GyroInput::Button(Button::RightBumper)));
 }
 
 #[test]
-fn a_layer_can_be_added_and_held_from_a_button() {
-    let mut config = Config::default();
-    let before = config.general.layers.len();
+fn a_layer_is_added_bound_and_held_from_a_button() {
+    let mut config = config();
     let mut editor = LayoutEditor::new();
-    editor.cursor = top_index(Top::Layers(Shift::Layer));
-    editor.choose(&mut config);
-    editor.cursor = before; // Add layer
-    assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    assert_eq!(config.general.layers.len(), before + 1);
-    let name = config.general.layers.last().unwrap().name.clone();
-    // Back on the top page, bind South to hold that layer.
-    editor.page = Page::Top;
-    editor.cursor = 0;
-    editor.choose(&mut config);
-    editor.cursor = action_rows(Slot::Button(Button::South)).iter().position(|r| *r == ActionRow::Pick(buttons::Picker::Layer)).unwrap();
-    editor.choose(&mut config);
-    editor.cursor = config.general.layers.len() - 1;
-    assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    assert_eq!(config.active().unwrap().button(Button::South), &ButtonAction::Layer(name));
-}
-
-#[test]
-fn a_mode_is_added_bound_and_switched_to_from_a_button() {
-    let mut config = Config::default();
+    editor.pick("Layers", &mut config);
+    editor.pick("Add layer", &mut config);
+    editor.pick("Buttons", &mut config);
+    editor.pick_button(Button::South, &mut config);
+    editor.pick("Screenshot", &mut config);
+    assert_eq!(config.general.layers[0].buttons.get(&Button::South), Some(&ButtonAction::Screenshot));
+    // A layer leaves its other buttons to the profile.
+    assert!(editor.labels(&config).iter().filter(|l| *l == "not set").count() > 1);
     let mut editor = LayoutEditor::new();
-    editor.cursor = top_index(Top::Layers(Shift::Mode));
-    editor.choose(&mut config);
-    editor.cursor = 0; // Add mode
-    assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    assert_eq!(config.general.modes[0].name, "Mode 1");
-    assert_eq!(editor.page, Page::Layer(Shift::Mode, 0));
-    assert_eq!(page_title(editor.page, &config), "Mode 1");
-    // Its South button takes a screenshot; the profile's doesn't change.
-    editor.cursor = Button::ALL.iter().position(|&b| b == Button::South).unwrap();
-    editor.choose(&mut config);
-    editor.cursor = action_rows(Slot::Layer(Shift::Mode, 0, Button::South)).iter().position(|r| matches!(r, ActionRow::Choice(2))).unwrap();
-    assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    assert_eq!(config.general.modes[0].buttons.get(&Button::South), Some(&ButtonAction::Screenshot));
-    assert!(config.general.layers.iter().all(|l| l.buttons.get(&Button::South) != Some(&ButtonAction::Screenshot)));
-    // North switches to it.
-    editor.page = Page::Top;
-    editor.history.clear();
-    editor.cursor = top_index(Top::Button(Button::North));
-    editor.choose(&mut config);
-    editor.cursor = action_rows(Slot::Button(Button::North)).iter().position(|r| *r == ActionRow::Pick(buttons::Picker::Mode)).unwrap();
-    editor.choose(&mut config);
-    editor.cursor = 0;
-    assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    assert_eq!(config.active().unwrap().button(Button::North), &ButtonAction::Mode("Mode 1".into()));
+    editor.pick("Buttons", &mut config);
+    editor.pick_button(Button::LeftBumper, &mut config);
+    editor.pick("Hold a layer", &mut config);
+    editor.pick("Layer 1", &mut config);
+    assert_eq!(button(&config, Button::LeftBumper), ButtonAction::Layer("Layer 1".into()));
 }
 
 #[test]
-fn a_macro_in_use_is_kept_and_an_unused_one_is_deleted() {
-    let mut config = Config::default();
-    let unused = macros::add_macro(&mut config).unwrap();
-    let used = macros::add_macro(&mut config).unwrap();
-    let used_name = config.general.macros[used].name.clone();
-    active_profile_mut(&mut config).unwrap().buttons.insert(Button::East, ButtonAction::Macro { name: used_name, repeat: false });
-    assert!(!macros::delete_macro(&mut config, used));
-    assert!(macros::delete_macro(&mut config, unused));
-    assert_eq!(config.general.macros.len(), 1);
+fn a_layer_overrides_a_stick_and_gives_it_back() {
+    let mut config = config();
+    let mut editor = LayoutEditor::new();
+    editor.pick("Layers", &mut config);
+    editor.pick("Add layer", &mut config);
+    editor.pick("{ls} Left stick: the profile's", &mut config);
+    editor.pick("Set the left stick here", &mut config);
+    editor.step_row("Kind", 1, &mut config);
+    assert!(config.general.layers[0].left_stick.is_some());
+    assert_ne!(config.general.layers[0].left_stick.as_ref().unwrap().action, config.active().unwrap().left_stick.action);
+    editor.pick("Use the profile's", &mut config);
+    assert!(config.general.layers[0].left_stick.is_none());
+}
+
+#[test]
+fn a_mode_is_added_and_switched_to_from_a_button() {
+    let mut config = config();
+    let mut editor = LayoutEditor::new();
+    editor.pick("Modes", &mut config);
+    editor.pick("Add mode", &mut config);
+    let mut editor = LayoutEditor::new();
+    editor.pick("Buttons", &mut config);
+    editor.pick_button(Button::Select, &mut config);
+    editor.pick("Switch to a mode", &mut config);
+    editor.pick("Mode 1", &mut config);
+    assert_eq!(button(&config, Button::Select), ButtonAction::Mode("Mode 1".into()));
+}
+
+#[test]
+fn a_macro_is_renamed_everywhere_and_kept_while_in_use() {
+    let mut config = config();
+    let mut editor = LayoutEditor::new();
+    editor.pick("Macros", &mut config);
+    editor.pick("Add macro", &mut config);
+    assert!(editor.labels(&config).iter().any(|l| l == "Delete macro"));
+    config.general.profiles[0].set_button(Button::North, ButtonAction::Macro { name: "Macro 1".into(), repeat: false });
+    assert!(!editor.labels(&config).iter().any(|l| l == "Delete macro"), "in use");
+    assert_eq!(editor.pick("Name", &mut config), EditStep::Text { title: "Name of the macro".into(), text: "Macro 1".into() });
+    assert_eq!(editor.set_text(&mut config, "Reload"), EditStep::Changed);
+    assert_eq!(button(&config, Button::North), ButtonAction::Macro { name: "Reload".into(), repeat: false });
 }
 
 #[test]
 fn a_trigger_zone_is_added_and_given_an_action() {
-    let mut config = Config::default();
+    let mut config = config();
     let mut editor = LayoutEditor::new();
-    editor.cursor = top_index(Top::Trigger(Trigger::Left));
-    editor.choose(&mut config);
-    // The zones row comes after the trigger's own rows.
-    editor.cursor = values::TRIGGER_ROWS;
-    editor.choose(&mut config);
-    assert_eq!(editor.page, Page::Zones(Analog::Trigger(Trigger::Left)));
-    editor.cursor = 0; // Add zone
-    assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    assert_eq!(editor.page, Page::Zone(Analog::Trigger(Trigger::Left), 0));
-    editor.cursor = zones::ZONE_ACTION;
-    editor.choose(&mut config);
-    let shot = action_rows(Slot::Zone(Analog::Trigger(Trigger::Left), 0)).iter().position(|r| matches!(r, ActionRow::Choice(2))).unwrap();
-    editor.cursor = shot;
-    assert_eq!(editor.choose(&mut config), EditStep::Changed);
-    assert_eq!(zones::zone_action(&config, Analog::Trigger(Trigger::Left), 0), ButtonAction::Screenshot);
+    editor.pick("{lt} {rt} Triggers", &mut config);
+    editor.pick("{lt} Left trigger", &mut config);
+    editor.pick("Zones", &mut config);
+    editor.pick("Add zone", &mut config);
+    editor.pick("Action", &mut config);
+    editor.pick("Screenshot", &mut config);
+    assert_eq!(owner::zones(&config, Owner::Profile, Analog::Trigger(Trigger::Left))[0].action, ButtonAction::Screenshot);
+}
+
+#[test]
+fn a_stick_becomes_a_mouse_with_its_response_settings() {
+    let mut config = config();
+    let mut editor = LayoutEditor::new();
+    editor.pick("{ls} {rs} Sticks", &mut config);
+    editor.pick("{rs} Right stick", &mut config);
+    editor.step_row("Kind", 1, &mut config);
+    assert!(matches!(config.active().unwrap().right_stick.action, StickAction::Mouse { .. }));
+    assert!(!editor.two_columns(&config), "a page of values stays in one column");
+    assert!(editor.view(&config, &[]).one_column);
+    editor.step_row("Speed", 1, &mut config);
+    assert!(matches!(config.active().unwrap().right_stick.action, StickAction::Mouse { speed, .. } if speed == 1250.0));
 }
 
 #[test]
 fn guide_isnt_listed_and_paddles_are_when_the_controller_has_them() {
-    let config = Config::default();
-    let plain = LayoutEditor::new();
-    let labels = |editor: &LayoutEditor| editor.view(&config, &[]).items.iter().flat_map(|i| i.buttons.clone()).collect::<Vec<_>>();
-    assert!(!labels(&plain).contains(&Button::Guide), "Guide works the same in every game");
-    assert!(!labels(&plain).contains(&Button::LeftPaddle));
-    let paddles = LayoutEditor::new().with_paddles(true);
-    assert!(Button::PADDLES.iter().all(|p| labels(&paddles).contains(p)));
+    let config = config();
+    let buttons = |editor: &LayoutEditor| inputs::button_rows(&editor.cx(&config), Owner::Profile).into_iter().flat_map(|r| r.item.buttons).collect::<Vec<_>>();
+    let without = buttons(&LayoutEditor::new());
+    assert!(!without.contains(&Button::Guide));
+    assert!(!without.contains(&Button::LeftPaddle));
+    assert!(buttons(&LayoutEditor::new().with_paddles(true)).contains(&Button::LeftPaddle));
+}
+
+#[test]
+fn pages_about_a_stick_trigger_gyro_or_menu_have_their_picture() {
+    use crate::figures::{Figure, Live};
+    let mut config = config();
+    let live = Live { sticks: [(0.5, 0.0), (0.0, 0.0)], triggers: [0.25, 0.0], ..Live::default() };
+    let mut editor = LayoutEditor::new();
+    assert!(editor.figure(&config, &live).is_none(), "the top page has none");
+    editor.pick("{ls} {rs} Sticks", &mut config);
+    editor.pick("{ls} Left stick", &mut config);
+    assert!(matches!(editor.figure(&config, &live), Some(Figure::Stick { live: Some((x, _)), .. }) if x == 0.5));
+    assert_eq!(editor.live_stick(), Some(crate::config::Stick::Left));
+    let mut editor = LayoutEditor::new();
+    editor.pick("{lt} {rt} Triggers", &mut config);
+    editor.pick("{lt} Left trigger", &mut config);
+    assert!(matches!(editor.figure(&config, &live), Some(Figure::Trigger { live: Some(v), .. }) if v == 0.25));
+    assert_eq!(editor.live_stick(), None);
+    let mut editor = LayoutEditor::new();
+    editor.pick("Info overlays", &mut config);
+    editor.pick("Add info overlay", &mut config);
+    assert_eq!(editor.preview(), Some(Preview::Info(0)), "an info overlay shows where it goes");
+    let mut editor = LayoutEditor::new();
+    editor.pick("Menus (0)", &mut config);
+    editor.pick("Add menu", &mut config);
+    assert_eq!(editor.preview(), Some(Preview::Menu(0, None)), "a menu shows where it goes");
+    assert!(editor.figure(&config, &live).is_none(), "and has no picture beside the page");
+}
+
+#[test]
+fn the_peek_trigger_is_the_one_pulled() {
+    use crate::config::PeekTrigger;
+    assert!(PeekTrigger::Left.pulled([0.9, 0.0]) && !PeekTrigger::Left.pulled([0.2, 0.9]));
+    assert!(PeekTrigger::Right.pulled([0.0, 0.9]));
+    assert!(!PeekTrigger::Off.pulled([1.0, 1.0]));
 }

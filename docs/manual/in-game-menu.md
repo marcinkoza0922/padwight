@@ -17,14 +17,22 @@ Hold Guide and press Start to open the in-game menu over the game you're playing
 
 Left and right change a number by about 10%, or by half with RB held, and keep changing it while held. A number you changed shows what it was when you opened the menu. A flips a switch or picks the next profile.
 
+## Switch Profile
+
+**Switch profile** on the Guide menu lists the profiles of the game in front of you (or General's, outside a game). The one you're on says "(current)", and one your controller can't play says what it needs, such as "(needs gyro)". Pick one to switch to it and go back to the game.
+
+**New profile…** at the bottom makes another profile and switches to it. It can start as a copy of the profile you're on, from one of the templates the settings window offers, or, in a game, as a copy of one of General's profiles. It gets a free name, such as `Gameplay 2`. A new profile is a change like any other in the menu: it's written to the config file only when you save.
+
 ## Edit Controls
 
-Opens the full editor for the game in front of you: its buttons (and back paddles, on a controller that has them), sticks, gyro, combos, modes, layers, macros, menus and info overlays. Changes apply straight away, but they're only written to the config file when you save.
+Opens the full editor for the profile you're on and the game in front of you. Its first page lists what can be edited: **Buttons** (and back paddles, on a controller that has them), **Sticks**, **Triggers**, **Gyro**, **Touchpad**, **Combos**, **Modes**, **Layers**, **Macros**, **Menus**, **Info overlays**, **Log overlays**, the **Guide overlay**, the **Profile** and the **Game**. Each opens its own list, and each item there opens its settings. Almost anything the settings window does for a game can be done here, down to each stick's response curve, each layer's own sticks and gyro, a menu's look and the game's window rules. Changes apply straight away, but they're only written to the config file when you save.
 
-- **Menus**: add a menu, add items and pick each one's action (an item is named after its action), set an item's own button in a button menu, move items up and down, change the menu's kind with left and right, and remove items or the menu. Naming a menu, and a menu that a button opens, are left to the settings window.
-- **Info overlays**: choose whether each one is always on screen, and move it round the screen with left and right.
+- On a row with a value, left and right change it. A chooses. B goes back a page.
+- Names, labels, overlay text and colors are typed on the on-screen keyboard: its keys go into the field instead of the game. Start sets the text; hold B to put the keyboard away without changing it.
+- Pages about a stick, trigger, gyro or the touchpad show pictures that follow your controller as you use it. A menu being edited is drawn beside its pages, and an info or log overlay being edited shows where it goes.
+- Deleting anything asks you to press A a second time. LB and RB jump a page up or down a long list.
 
-Deleting a combo, zone, macro, menu item or menu asks you to press A a second time. LB and RB jump a page up or down a long list.
+The wiki's *Editing controls in game* page lists every page of the editor.
 
 If you leave with unsaved changes, a question appears over the page: **A** saves, **X** discards, and **B** keeps editing. After saving or discarding, B (back) takes you to the Guide overlay you came from, and Guide closes the menu.
 

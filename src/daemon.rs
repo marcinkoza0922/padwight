@@ -44,6 +44,7 @@ mod info_overlays;
 mod offers;
 mod overlay;
 mod overlay_input;
+mod previews;
 /// The controllers themselves: evdev nodes on Linux, XInput slots on Windows.
 #[cfg_attr(target_os = "linux", path = "daemon/evdev.rs")]
 #[cfg_attr(windows, path = "daemon/xinput.rs")]
@@ -481,6 +482,10 @@ struct Daemon {
     overlay_watchers: Vec<Sender<OverlayFrame>>,
     /// The frame last sent to the overlay window, to skip sending it again unchanged.
     last_frame: Option<OverlayFrame>,
+    /// What the controller driving the in-game menu is doing, for the editor's pictures, and when
+    /// its turning last redrew them.
+    menu_live: crate::figures::Live,
+    live_drawn: Option<Instant>,
     /// The Guide overlay's menu while the overlay is up.
     guide_menu: Option<GuideMenu>,
     /// When shown info overlays with live values next refresh.
@@ -573,6 +578,8 @@ impl Daemon {
             layer_started: HashMap::new(),
             overlay_watchers: Vec::new(),
             last_frame: None,
+            menu_live: crate::figures::Live::default(),
+            live_drawn: None,
             guide_menu: None,
             info_refresh: None,
             info_fade: None,
@@ -1068,6 +1075,11 @@ impl Daemon {
         }
         let sample = dev.motion_frame.to_standard(sample);
         dev.view.set_gyro(sample.gyro);
+        if matches!(self.active, Some(Active::Settings(_, driver)) if driver == id) {
+            self.menu_turned(sample.gyro);
+            return;
+        }
+        let Some(dev) = self.devices.get_mut(&id) else { return };
         let Some(base) = self.config.active().filter(|_| self.active.is_none()) else { return };
         let mut out = Vec::new();
         dev.engine.motion(layered(&dev.layered, base), sample, &mut out);

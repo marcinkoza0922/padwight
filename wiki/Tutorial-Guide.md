@@ -9,7 +9,7 @@ Tap Guide in a game. The overlay opens when you let go, and a second tap closes 
 ![The Guide overlay: Notes on the left, the menu in the middle, and the Mappings with a layer's own section on the right](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/manual/guide-overlay.png "The Guide overlay.")
 
 1. **Notes** (1): what the author of the setup wants you to know.
-2. **The menu** (2): Quick Settings, Edit Controls, the on-screen keyboard and numpad, mouse mode, media controls, the next profile and, while Steam runs, the Steam overlay. Move with the D-pad or Left Stick, choose with A, close with B.
+2. **The menu** (2): Quick Settings, Edit Controls, the on-screen keyboard and numpad, mouse mode, media controls, Switch Profile (to pick another profile of the game, or make a new one) and, while Steam runs, the Steam overlay. Move with the D-pad or Left Stick, choose with A, close with B.
 3. **Mappings** (3): what each button, trigger and stick does in the current profile and mode. When the setup has [modes](Tutorial-Modes), press Left or Right to look at the others.
 4. **A layer's section** (4): each [layer](Tutorial-Layers) a button holds gets its own box below.
 

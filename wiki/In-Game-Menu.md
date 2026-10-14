@@ -37,6 +37,12 @@ Changes take effect straight away, but they aren't written to the config file un
 - **Closing** the menu with unsaved changes asks: **Save and close**, **Discard and close**, or **Keep editing**.
 - **Discard** puts back the settings as they were when the menu opened, including any game it made.
 
+## Switch Profile
+
+**Switch profile** on the Guide menu lists the profiles of the game in front of you (or General's, outside a game). The one you're on says "(current)", and one your controller can't play says what it needs, such as "(needs gyro)". Pick one to switch to it and go back to the game.
+
+**New profile…** at the bottom makes another profile and switches to it. It can start as a copy of the profile you're on, from one of the templates the settings window offers, or, in a game, as a copy of one of General's profiles. It gets a free name, such as `Gameplay 2`. A new profile is a change like any other in the menu: it's written to the config file only when you save.
+
 ## Edit Controls
 
 Choosing **Edit Controls** opens the editor for the game in front. It needs a game: if no game or window is in front, the menu says so and stays on its top page, so nothing is changed. If you're outside a game but a window is in front, the editor makes a game for it first, the same way Quick Settings does.

@@ -139,6 +139,8 @@ pub fn touch_view(menu: &Menu, selected: Option<usize>, choose: TouchChoose, pic
         touch: true,
         aim: None,
         prompt: None,
+        one_column: false,
+        figure: None,
     }
 }
 

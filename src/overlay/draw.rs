@@ -1,6 +1,7 @@
 //! Drawing the overlays: each panel as an iced element, sized by its style's `Fit` (see
 //! `fit.rs`) and laid out where its position puts it.
 
+mod figure;
 mod glyphs;
 mod log_panel;
 mod look;
@@ -303,10 +304,14 @@ pub fn info_panel<'a, M: 'a>(v: &InfoView, font: Font, fit: &Fit, anim: &Anim) -
         })
     });
     // Columns are as wide as their widest cell; the table's padding is half the gap between them.
-    let grid = iced::widget::table(cols, 0..v.rows.len()).padding_x(10.0 * s).padding_y(2.0 * s).separator(0.0);
+    // A table of no columns divides by zero, so an overlay with no cells yet (a new one) has none.
+    let grid: Element<'a, M> = match columns {
+        0 => space().into(),
+        _ => iced::widget::table(cols, 0..v.rows.len()).padding_x(10.0 * s).padding_y(2.0 * s).separator(0.0).into(),
+    };
     let body: Element<'a, M> = match &v.title {
         Some(title) => column![info_cell(title, c, s, opacity), grid].spacing(8.0 * s).into(),
-        None => grid.into(),
+        None => grid,
     };
     framed(body, c, &v.style, [12.0 * s, 16.0 * s], fit)
 }

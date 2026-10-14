@@ -54,7 +54,7 @@ Each profile is a complete mapping: buttons, sticks, triggers, combos and gyro. 
 
 Profiles don't mix with each other. If a game needs a different control scheme for part of play, such as driving, use a [mode](Modes) instead.
 
-Switch profiles in [Quick Settings](In-Game-Menu#quick-settings) (Guide + Start) or in the app. No controller button switches profiles, so each profile stays a complete scheme.
+Switch profiles, or make a new one, with **Switch profile** on the [Guide menu](Guide-Button), in [Quick Settings](In-Game-Menu#quick-settings), or in the app. No controller button switches profiles, so each profile stays a complete scheme.
 
 ## Older configs
 

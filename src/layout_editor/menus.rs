@@ -1,133 +1,98 @@
-//! Edit Controls' menu and info overlay pages: a game's menus (their items, the items' actions
-//! and buttons, the order and kind) and whether each info overlay is always up and where. Names
-//! and texts need a keyboard, so they're left to the settings window.
+//! The menu pages of Edit Controls: the game's menus, a menu's kind and settings, its items, and
+//! an item's label, action, button and size.
 
-use crate::{
-    config::{Button, ButtonAction, Config, GRID_MAX, InfoOverlay, Menu, MenuItem, MenuKind, MenuKindTag, OverlayStyle, ScreenPosition},
-    menu::ItemView,
-    config::ItemKind,
-    pack::game_references,
+use crate::config::{Button, ButtonAction, CarouselControls, Cluster, Config, GRID_MAX, ItemKind, Menu, MenuItem, MenuKind, MenuKindTag, OverlayStyle, Span, Stick};
+
+use super::{
+    action::{ActionAt, NEW_ITEM, Slot},
+    named,
+    owner::game_mut,
+    pages::{Page, stick_name},
+    rows::{Act, Nav, Number, Row, cycle, set},
+    style::StyleAt,
 };
 
-use super::{EditStep, LayoutEditor, Page, active_game_mut, buttons::Slot, views::{add_item, item, remove_item}};
-
-/// The label a new item has until its action names it.
-const NEW_ITEM: &str = "New item";
-
-/// The rows of a menu item's page: its action, then (in a button menu) its button, then
-/// moving and removing it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ItemRow {
-    Action,
-    Button,
-    Up,
-    Down,
-    Remove,
-}
-
-fn item_rows(menu: &Menu) -> Vec<ItemRow> {
-    let button = matches!(menu.kind, MenuKind::Buttons).then_some(ItemRow::Button);
-    [ItemRow::Action].into_iter().chain(button).chain([ItemRow::Up, ItemRow::Down, ItemRow::Remove]).collect()
-}
-
-fn menus(config: &Config) -> &[Menu] {
-    &config.active_game().menus
-}
+const WEIGHT: Number = Number::new(0.25, (0.25, 4.0), 2, "×");
+const COLUMNS: Number = Number::new(1.0, (1.0, 8.0), 0, "");
 
 fn menu_mut(config: &mut Config, m: usize) -> Option<&mut Menu> {
-    active_game_mut(config)?.menus.get_mut(m)
+    game_mut(config)?.menus.get_mut(m)
 }
 
-/// Whether anything in the game opens menu `m`, so it can't be deleted.
-fn menu_in_use(config: &Config, m: usize) -> bool {
-    let game = config.active_game();
-    game.menus.get(m).is_some_and(|menu| game_references(game).contains(&(ItemKind::Menu, menu.name.clone())))
+fn item_mut(config: &mut Config, m: usize, i: usize) -> Option<&mut MenuItem> {
+    menu_mut(config, m)?.items.get_mut(i)
 }
 
-/// The item's action (for the editor's action page, through [`Slot::MenuItem`]).
-pub(super) fn item_action(config: &Config, m: usize, i: usize) -> ButtonAction {
-    menus(config).get(m).and_then(|menu| menu.items.get(i)).map_or(ButtonAction::Disabled, |item| item.action.clone())
+/// The game's menus, and a row to add one.
+pub(super) fn list_rows(config: &Config) -> Vec<Row> {
+    let menus = &config.active_game().menus;
+    let mut rows: Vec<Row> = menus.iter().enumerate().map(|(m, x)| Row::open(format!("{} · {} · {} items", x.name, x.kind.tag().short(), x.items.len()), Page::Menu(m))).collect();
+    let new = menus.len();
+    rows.push(Row::add("Add menu", move |c| {
+        let name = named::new_name(c, ItemKind::Menu, "Menu");
+        let Some(game) = game_mut(c) else { return Act::stay() };
+        game.menus.push(Menu { name, kind: MenuKind::List, items: Vec::new(), cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() });
+        Act::changed().then(Nav::Open(Page::Menu(new)))
+    }));
+    rows
 }
 
-/// Sets an item's action. An item still named for its old action (or new) is named for the new
-/// one, since there's no keyboard to name it here.
-pub(super) fn set_item_action(config: &mut Config, m: usize, i: usize, action: ButtonAction) {
-    let Some(item) = menu_mut(config, m).and_then(|menu| menu.items.get_mut(i)) else { return };
-    if item.label.is_empty() || item.label == NEW_ITEM || item.label == item.action.summary() {
-        item.label = action.summary();
+/// A menu's page: its name, kind and the kind's settings, items, close button, and deleting it.
+pub(super) fn menu_rows(config: &Config, m: usize) -> Vec<Row> {
+    let Some(menu) = config.active_game().menus.get(m) else { return Vec::new() };
+    let mut rows = vec![
+        named::rename_row(config, ItemKind::Menu, m),
+        Row::open(format!("Items ({})", menu.items.len()), Page::MenuItems(m)),
+        Row::step(format!("Kind: {}", menu.kind.tag().short()), move |c, dir| {
+            menu_mut(c, m).is_some_and(|menu| {
+                let next = next_kind(menu, dir);
+                set(&mut menu.kind, next)
+            })
+        }),
+    ];
+    rows.extend(kind_rows(m, menu));
+    rows.push(Row::open(format!("Closes with: {}", close_label(menu)), Page::MenuClose(m)));
+    rows.push(Row::open("Look…", Page::Style(StyleAt::Menu(m))));
+    rows.push(Row::toggle("Stays up after a choice", menu.keep_open, move |c, on| menu_mut(c, m).is_some_and(|menu| set(&mut menu.keep_open, on))));
+    rows.push(named::delete_row(config, ItemKind::Menu, m, move |c| {
+        let Some(game) = game_mut(c).filter(|g| m < g.menus.len()) else { return false };
+        game.menus.remove(m);
+        true
+    }));
+    rows
+}
+
+/// The settings of the menu's kind: a radial menu's stick and boxes, the buttons a directional
+/// menu uses, what turns a carousel, a grid's columns and where its cursor starts.
+fn kind_rows(m: usize, menu: &Menu) -> Vec<Row> {
+    let kind = menu.kind;
+    let set_kind = move |c: &mut Config, next: MenuKind| menu_mut(c, m).is_some_and(|menu| set(&mut menu.kind, next));
+    match kind {
+        MenuKind::Radial { stick, boxes } => vec![
+            Row::step(format!("Aimed with: {}", stick_name(stick)), move |c, _| {
+                let other = if stick == Stick::Left { Stick::Right } else { Stick::Left };
+                set_kind(c, MenuKind::Radial { stick: other, boxes })
+            }),
+            Row::toggle("Items in boxes", boxes, move |c, on| set_kind(c, MenuKind::Radial { stick, boxes: on })),
+        ],
+        MenuKind::Directional { cluster } => vec![Row::step(format!("Picked with: {cluster}"), move |c, _| {
+            let other = if cluster == Cluster::DPad { Cluster::FaceButtons } else { Cluster::DPad };
+            set_kind(c, MenuKind::Directional { cluster: other })
+        })],
+        MenuKind::Carousel { controls } => vec![Row::step(format!("Turned with: {controls}"), move |c, dir| {
+            set_kind(c, MenuKind::Carousel { controls: cycle(&CarouselControls::ALL, controls, dir) })
+        })],
+        MenuKind::Grid { columns } => {
+            let len = menu.items.len();
+            vec![
+                COLUMNS.row("Columns", f32::from(columns), move |c, v| set_kind(c, MenuKind::Grid { columns: v as u8 })),
+                Number::new(1.0, (1.0, len.max(1) as f32), 0, "").row_u("Cursor starts on item", menu.start as u64 + 1, move |c, v| {
+                    menu_mut(c, m).is_some_and(|menu| set(&mut menu.start, (v as usize).saturating_sub(1)))
+                }),
+            ]
+        }
+        MenuKind::List | MenuKind::Buttons => Vec::new(),
     }
-    item.action = action;
-}
-
-/// A menu's name, for page titles.
-pub(super) fn menu_name(config: &Config, m: usize) -> Option<&str> {
-    menus(config).get(m).map(|menu| menu.name.as_str())
-}
-
-fn menus_page(config: &Config) -> (Vec<ItemView>, &'static str) {
-    let mut rows: Vec<ItemView> =
-        menus(config).iter().map(|m| item(format!("{} · {} · {} items", m.name, m.kind.tag().short(), m.items.len()))).collect();
-    rows.push(add_item("Add menu".into()));
-    (rows, "{confirm} open or add · {back} back")
-}
-
-fn menu_page(config: &Config, m: usize) -> (Vec<ItemView>, &'static str) {
-    let Some(menu) = menus(config).get(m) else { return (Vec::new(), "{back} back") };
-    let mut rows: Vec<ItemView> = menu
-        .items
-        .iter()
-        .map(|it| ItemView { buttons: it.button.into_iter().collect(), keyword: it.action.keyword(), ..item(format!("{}: {}", it.label, it.action.summary())) })
-        .collect();
-    rows.push(add_item("Add item".into()));
-    rows.push(item(format!("Kind: {}", menu.kind.tag().short())));
-    rows.push(if menu_in_use(config, m) { item("Opened by a button: can't delete".into()) } else { remove_item("Delete menu".into()) });
-    (rows, "{confirm} open, add or change · {back} back")
-}
-
-fn item_page(config: &Config, m: usize, i: usize) -> (Vec<ItemView>, &'static str) {
-    let Some(menu) = menus(config).get(m) else { return (Vec::new(), "{back} back") };
-    let Some(it) = menu.items.get(i) else { return (Vec::new(), "{back} back") };
-    let rows = item_rows(menu)
-        .into_iter()
-        .map(|row| match row {
-            ItemRow::Action => ItemView { keyword: it.action.keyword(), ..item(format!("Action: {}", it.action.summary())) },
-            ItemRow::Button => ItemView {
-                buttons: it.button.into_iter().collect(),
-                ..item(if it.button.is_some() { "Its button (change)".into() } else { "Its button: none (choose)".into() })
-            },
-            ItemRow::Up => item("Move up".into()),
-            ItemRow::Down => item("Move down".into()),
-            ItemRow::Remove => remove_item("Remove item".into()),
-        })
-        .collect();
-    (rows, "{confirm} choose · {back} back")
-}
-
-fn infos_page(config: &Config) -> (Vec<ItemView>, &'static str) {
-    let rows = config
-        .active_game()
-        .info
-        .iter()
-        .map(|o| item(format!("{} · {} · {}", o.name, if o.always { "always up" } else { "shown by an action" }, o.style.position)))
-        .collect();
-    (rows, "{confirm} open · {back} back")
-}
-
-fn info_page(config: &Config, i: usize) -> (Vec<ItemView>, &'static str) {
-    let Some(o) = config.active_game().info.get(i) else { return (Vec::new(), "{back} back") };
-    let rows = vec![item(format!("Always on screen: {}", if o.always { "yes" } else { "no" })), item(format!("Position: {}", o.style.position))];
-    (rows, "{confirm} change · {left} {right} move it · {back} back")
-}
-
-fn info_mut(config: &mut Config, i: usize) -> Option<&mut InfoOverlay> {
-    active_game_mut(config)?.info.get_mut(i)
-}
-
-/// The next of the nine screen spots, `dir` steps on, in reading order.
-fn next_position(at: ScreenPosition, dir: i32) -> ScreenPosition {
-    let grid = ScreenPosition::GRID;
-    let i = grid.iter().position(|p| *p == at).unwrap_or(0) as i32;
-    grid[(i + dir).rem_euclid(grid.len() as i32) as usize]
 }
 
 /// The next kind a menu can be, `dir` steps on. A directional menu holds four items, so it's
@@ -143,226 +108,110 @@ fn next_kind(menu: &Menu, dir: i32) -> MenuKind {
     }
 }
 
-/// The button after `current` in the picks a button menu's item can have, `None` among them.
-fn next_button(current: Option<Button>) -> Option<Button> {
-    let picks: Vec<Option<Button>> = [None].into_iter().chain(Button::ALL.into_iter().filter(|&b| b != Button::Guide).map(Some)).collect();
-    let at = picks.iter().position(|p| *p == current).unwrap_or(0);
-    picks[(at + 1) % picks.len()]
-}
-
-/// The rows and hint of a menu or info overlay page.
-pub(super) fn page(page: Page, config: &Config) -> (Vec<ItemView>, &'static str) {
-    match page {
-        Page::Menus => menus_page(config),
-        Page::Menu(m) => menu_page(config, m),
-        Page::MenuItem(m, i) => item_page(config, m, i),
-        Page::Infos => infos_page(config),
-        Page::Info(i) => info_page(config, i),
-        _ => (Vec::new(), "{back} back"),
+fn close_label(menu: &Menu) -> String {
+    let default = menu.default_cancel();
+    match (menu.no_cancel, menu.cancel) {
+        (true, _) if default.is_some() => "nothing".into(),
+        (false, Some(b)) => b.short_name().into(),
+        _ => format!("{} (its kind's)", default.map_or("nothing", |b| b.short_name())),
     }
 }
 
-impl LayoutEditor {
-    /// Chooses the highlighted row of a menu or info overlay page.
-    pub(super) fn choose_on_menu_pages(&mut self, config: &mut Config) -> EditStep {
-        match self.page {
-            Page::Menus => self.choose_menus_row(config),
-            Page::Menu(m) => self.choose_menu_row(m, config),
-            Page::MenuItem(m, i) => self.choose_menu_item_row(m, i, config),
-            Page::Infos => {
-                self.push(Page::Info(self.cursor));
-                EditStep::Stay
-            }
-            Page::Info(i) => self.choose_info_row(i, config),
-            _ => EditStep::Stay,
-        }
+/// What a menu's close button can be: its kind's, none, or any button but Guide.
+pub(super) fn close_rows(config: &Config, m: usize) -> Vec<Row> {
+    let Some(menu) = config.active_game().menus.get(m) else { return Vec::new() };
+    let default = menu.default_cancel();
+    let mut rows = vec![Row::apply(format!("Its kind's ({})", default.map_or("nothing", |b| b.short_name())), move |c| {
+        let changed = menu_mut(c, m).is_some_and(|menu| set(&mut menu.cancel, None) | set(&mut menu.no_cancel, false));
+        Act::changed_if(changed).then(Nav::Back(1))
+    })];
+    if default.is_some() {
+        rows.push(Row::apply("Nothing (it goes when let go or chosen)", move |c| {
+            let changed = menu_mut(c, m).is_some_and(|menu| set(&mut menu.cancel, None) | set(&mut menu.no_cancel, true));
+            Act::changed_if(changed).then(Nav::Back(1))
+        }));
     }
-
-    fn choose_menus_row(&mut self, config: &mut Config) -> EditStep {
-        if self.cursor < menus(config).len() {
-            self.push(Page::Menu(self.cursor));
-            return EditStep::Stay;
-        }
-        let Some(game) = active_game_mut(config) else { return EditStep::Stay };
-        let taken = |n: &str| game.menus.iter().any(|m| m.name == n);
-        let name = (1..).map(|n| format!("Menu {n}")).find(|n| !taken(n)).unwrap_or_default();
-        game.menus.push(Menu { name, kind: MenuKind::List, items: Vec::new(), cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() });
-        let new = game.menus.len() - 1;
-        self.push(Page::Menu(new));
-        EditStep::Changed
-    }
-
-    fn choose_menu_row(&mut self, m: usize, config: &mut Config) -> EditStep {
-        let Some(len) = menus(config).get(m).map(|menu| menu.items.len()) else { return EditStep::Stay };
-        match self.cursor.checked_sub(len) {
-            None => {
-                self.push(Page::MenuItem(m, self.cursor));
-                EditStep::Stay
-            }
-            Some(0) => {
-                let Some(menu) = menu_mut(config, m) else { return EditStep::Stay };
-                menu.items.push(MenuItem::new(NEW_ITEM, ButtonAction::Disabled));
-                self.push(Page::MenuItem(m, len));
-                EditStep::Changed
-            }
-            Some(1) => self.adjust_menu(m, 1, config),
-            Some(_) if !menu_in_use(config, m) => {
-                if let Some(game) = active_game_mut(config) {
-                    game.menus.remove(m);
-                }
-                self.pop();
-                EditStep::Changed
-            }
-            Some(_) => EditStep::Stay,
-        }
-    }
-
-    /// Left and right on a menu's Kind row change its kind.
-    pub(super) fn adjust_menu(&mut self, m: usize, dir: i32, config: &mut Config) -> EditStep {
-        let Some(menu) = menu_mut(config, m) else { return EditStep::Stay };
-        if self.cursor != menu.items.len() + 1 {
-            return EditStep::Stay;
-        }
-        menu.kind = next_kind(menu, dir);
-        EditStep::Changed
-    }
-
-    fn choose_menu_item_row(&mut self, m: usize, i: usize, config: &mut Config) -> EditStep {
-        let Some(menu) = menus(config).get(m) else { return EditStep::Stay };
-        let Some(&row) = item_rows(menu).get(self.cursor) else { return EditStep::Stay };
-        let len = menu.items.len();
-        // The page names the item by position, which a profile switch under the menu can leave
-        // past the end of another game's menu.
-        if i >= len {
-            return EditStep::Stay;
-        }
-        let Some(menu) = menu_mut(config, m) else { return EditStep::Stay };
-        match row {
-            ItemRow::Action => {
-                self.push(Page::Action(Slot::MenuItem(m, i)));
-                return EditStep::Stay;
-            }
-            ItemRow::Button => menu.items[i].button = next_button(menu.items[i].button),
-            ItemRow::Up | ItemRow::Down => {
-                let to = if row == ItemRow::Up { i.checked_sub(1) } else { (i + 1 < len).then_some(i + 1) };
-                let Some(to) = to else { return EditStep::Stay };
-                menu.items.swap(i, to);
-                // Follow the item to where it went.
-                self.page = Page::MenuItem(m, to);
-                if let Some((_, cursor)) = self.history.last_mut() {
-                    *cursor = to;
-                }
-            }
-            ItemRow::Remove => {
-                menu.items.remove(i);
-                self.pop();
-                self.cursor = self.cursor.min(len.saturating_sub(1));
-            }
-        }
-        EditStep::Changed
-    }
-
-    /// Whether the cursor is on a menu page's delete row (of the menu, or of an item).
-    pub(super) fn on_menu_delete_row(&self, config: &Config) -> bool {
-        match self.page {
-            Page::Menu(m) => menus(config).get(m).is_some_and(|menu| self.cursor == menu.items.len() + 2 && !menu_in_use(config, m)),
-            Page::MenuItem(m, _) => menus(config).get(m).is_some_and(|menu| item_rows(menu).get(self.cursor) == Some(&ItemRow::Remove)),
-            _ => false,
-        }
-    }
-
-    fn choose_info_row(&mut self, i: usize, config: &mut Config) -> EditStep {
-        if self.cursor == 0 {
-            let Some(o) = info_mut(config, i) else { return EditStep::Stay };
-            o.always = !o.always;
-            return EditStep::Changed;
-        }
-        self.adjust_info(i, 1, config)
-    }
-
-    /// Left and right on an info overlay's Position row move it round the screen.
-    pub(super) fn adjust_info(&mut self, i: usize, dir: i32, config: &mut Config) -> EditStep {
-        let Some(o) = info_mut(config, i).filter(|_| self.cursor == 1) else { return EditStep::Stay };
-        o.style.position = next_position(o.style.position, dir);
-        EditStep::Changed
-    }
+    rows.extend(Button::ALL.into_iter().filter(|&b| b != Button::Guide && Some(b) != default).map(|b| {
+        Row::apply("", move |c| {
+            let changed = menu_mut(c, m).is_some_and(|menu| set(&mut menu.cancel, Some(b)) | set(&mut menu.no_cancel, false));
+            Act::changed_if(changed).then(Nav::Back(1))
+        })
+        .buttons(vec![b])
+    }));
+    rows
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::config::Profile;
+/// A menu's items, and a row to add one.
+pub(super) fn items_rows(config: &Config, m: usize) -> Vec<Row> {
+    let Some(menu) = config.active_game().menus.get(m) else { return Vec::new() };
+    let mut rows: Vec<Row> = menu
+        .items
+        .iter()
+        .enumerate()
+        .map(|(i, it)| Row::open(format!("{}: {}", it.label, it.action.summary()), Page::MenuItem(m, i)).buttons(it.button.into_iter().collect()).keyword(it.action.keyword()))
+        .collect();
+    let new = menu.items.len();
+    rows.push(Row::add("Add item", move |c| {
+        let Some(menu) = menu_mut(c, m) else { return Act::stay() };
+        menu.items.push(MenuItem::new(NEW_ITEM, ButtonAction::Disabled));
+        Act::changed().then(Nav::Open(Page::MenuItem(m, new)))
+    }));
+    rows
+}
 
-    fn config() -> Config {
-        let mut config = Config::default();
-        config.general.profiles = vec![Profile::passthrough("Gamepad")];
-        config
-    }
-
-    #[test]
-    fn a_menu_is_built_in_game_item_by_item() {
-        let mut config = config();
-        let mut editor = LayoutEditor::new();
-        editor.page = Page::Menus;
-        editor.cursor = 0;
-        assert_eq!(editor.choose_menus_row(&mut config), EditStep::Changed, "adds a menu");
-        assert_eq!(editor.page, Page::Menu(0));
-        editor.cursor = 0;
-        assert_eq!(editor.choose_menu_row(0, &mut config), EditStep::Changed, "adds an item");
-        assert_eq!(editor.page, Page::MenuItem(0, 0));
-        set_item_action(&mut config, 0, 0, ButtonAction::Screenshot);
-        assert_eq!(menus(&config)[0].items[0].label, ButtonAction::Screenshot.summary(), "named for its action");
-        set_item_action(&mut config, 0, 0, ButtonAction::ToggleOverlay);
-        assert_eq!(menus(&config)[0].items[0].label, ButtonAction::ToggleOverlay.summary(), "and renamed with it");
-        // A second item, moved above the first.
-        editor.back();
-        editor.cursor = 1;
-        editor.choose_menu_row(0, &mut config);
-        editor.cursor = item_rows(&menus(&config)[0]).iter().position(|r| *r == ItemRow::Up).unwrap();
-        assert_eq!(editor.choose_menu_item_row(0, 1, &mut config), EditStep::Changed);
-        assert_eq!(menus(&config)[0].items[0].label, NEW_ITEM);
-        assert_eq!(editor.page, Page::MenuItem(0, 0), "following the item");
-    }
-
-    #[test]
-    fn an_item_page_left_past_the_end_of_its_menu_does_nothing() {
-        let mut config = config();
-        let mut editor = LayoutEditor::new();
-        editor.page = Page::Menus;
-        editor.choose_menus_row(&mut config);
-        editor.cursor = 0;
-        editor.choose_menu_row(0, &mut config);
-        menu_mut(&mut config, 0).unwrap().kind = MenuKind::Buttons;
-        for cursor in 0..item_rows(&menus(&config)[0]).len() {
-            editor.page = Page::MenuItem(0, 3);
-            editor.cursor = cursor;
-            assert_eq!(editor.choose_menu_item_row(0, 3, &mut config), EditStep::Stay, "row {cursor}");
+/// An item's page: its label, action, the settings its menu's kind gives it, moving and removing it.
+pub(super) fn item_rows(config: &Config, m: usize, i: usize) -> Vec<Row> {
+    let Some(menu) = config.active_game().menus.get(m) else { return Vec::new() };
+    // The page names the item by position, which a profile switch under the menu can leave past
+    // the end of another game's menu.
+    let Some(it) = menu.items.get(i) else { return Vec::new() };
+    let mut rows = vec![
+        Row::text(format!("Label: {}", it.label), "Label of the item", it.label.clone(), move |c, typed| {
+            let typed = typed.trim();
+            !typed.is_empty() && item_mut(c, m, i).is_some_and(|it| set(&mut it.label, typed.to_string()))
+        }),
+        Row::open(format!("Action: {}", it.action.summary()), Page::Action(ActionAt::new(Slot::MenuItem(m, i)))).keyword(it.action.keyword()),
+    ];
+    match menu.kind {
+        MenuKind::Buttons => rows.push(Row::open(format!("Its button: {}", it.button.map_or("none", |b| b.short_name())), Page::ItemButton(m, i)).buttons(it.button.into_iter().collect())),
+        MenuKind::Radial { .. } => rows.push(WEIGHT.row("Share of the circle", it.weight, move |c, v| item_mut(c, m, i).is_some_and(|it| set(&mut it.weight, v)))),
+        MenuKind::Grid { columns } => {
+            let span = it.span;
+            let wide = Number::new(1.0, (1.0, f32::from(columns)), 0, " cells");
+            let tall = Number::new(1.0, (1.0, GRID_MAX as f32), 0, " cells");
+            rows.push(wide.row("Width", f32::from(span.columns), move |c, v| item_mut(c, m, i).is_some_and(|it| set(&mut it.span, Span { columns: v as u8, ..span }))));
+            rows.push(tall.row("Height", f32::from(span.rows), move |c, v| item_mut(c, m, i).is_some_and(|it| set(&mut it.span, Span { rows: v as u8, ..span }))));
         }
-        assert_eq!(menus(&config)[0].items.len(), 1);
+        _ => {}
     }
+    let len = menu.items.len();
+    for (label, to) in [("Move up", i.checked_sub(1)), ("Move down", (i + 1 < len).then_some(i + 1))] {
+        let Some(to) = to else { continue };
+        rows.push(Row::apply(label, move |c| {
+            let Some(menu) = menu_mut(c, m) else { return Act::stay() };
+            menu.items.swap(i, to);
+            // Follow the item to where it went.
+            Act::changed().then(Nav::Follow(Page::MenuItem(m, to), to))
+        }));
+    }
+    rows.push(Row::delete("Remove item", move |c| {
+        let Some(menu) = menu_mut(c, m).filter(|menu| i < menu.items.len()) else { return false };
+        menu.items.remove(i);
+        true
+    }));
+    rows
+}
 
-    #[test]
-    fn kinds_cycle_and_skip_what_the_menu_cant_be() {
-        let item = MenuItem::new("x", ButtonAction::Disabled);
-        let mut menu = Menu { name: "M".into(), kind: MenuKind::Radial { stick: crate::config::Stick::Right, boxes: false }, items: vec![item; 5], cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() };
-        assert_eq!(next_kind(&menu, 1).tag(), MenuKindTag::List, "five items don't fit four directions");
-        menu.items.truncate(4);
-        assert_eq!(next_kind(&menu, 1).tag(), MenuKindTag::Directional);
-        assert_eq!(next_kind(&menu, -1).tag(), MenuKindTag::Grid, "and round the other way");
-    }
-
-    #[test]
-    fn a_menu_a_button_opens_cant_be_deleted_and_info_overlays_move() {
-        let mut config = config();
-        let mut editor = LayoutEditor::new();
-        editor.page = Page::Menus;
-        editor.choose_menus_row(&mut config);
-        config.general.profiles[0].set_button(Button::Select, ButtonAction::OpenMenu("Menu 1".into()));
-        editor.cursor = 2;
-        assert!(!editor.on_menu_delete_row(&config), "in use");
-        assert_eq!(editor.choose_menu_row(0, &mut config), EditStep::Stay);
-        assert_eq!(menus(&config).len(), 1);
-        assert_eq!(next_position(ScreenPosition::TopLeft, -1), ScreenPosition::BottomRight);
-        assert_eq!(next_button(None), Some(Button::South));
-    }
+/// The buttons a button menu's item can be picked with: none, or any but Guide.
+pub(super) fn item_button_rows(config: &Config, m: usize, i: usize) -> Vec<Row> {
+    let taken: Vec<Button> = config.active_game().menus.get(m).map(|menu| menu.items.iter().filter_map(|it| it.button).collect()).unwrap_or_default();
+    let pick = |b: Option<Button>| {
+        move |c: &mut Config| Act::changed_if(item_mut(c, m, i).is_some_and(|it| set(&mut it.button, b))).then(Nav::Back(1))
+    };
+    let mut rows = vec![Row::apply("None", pick(None))];
+    rows.extend(Button::ALL.into_iter().filter(|&b| b != Button::Guide).map(|b| {
+        let used = if taken.contains(&b) { "taken" } else { "" };
+        Row::apply(used, pick(Some(b))).buttons(vec![b])
+    }));
+    rows
 }

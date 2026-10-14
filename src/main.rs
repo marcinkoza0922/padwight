@@ -3,6 +3,7 @@ mod config;
 mod daemon;
 mod debug;
 mod engine;
+mod figures;
 mod focus;
 mod assets;
 mod font;

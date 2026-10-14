@@ -11,9 +11,7 @@ use crate::{
     touchpad_widget::{PadPicture, touchpad_picture},
 };
 
-/// A finger's speed in pad widths/second is read by acceleration curves made for degrees/second
-/// of gyro turning at this scale.
-const CURVE_SCALE: f32 = 0.025;
+use crate::config::TOUCHPAD_CURVE_SCALE as CURVE_SCALE;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum TouchModeKind {

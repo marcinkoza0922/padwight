@@ -1,191 +1,189 @@
-//! The macro pages of Edit Controls: a macro's steps, which can be added to and removed. A step
-//! row removes that step when chosen; the rows after the steps add to the macro.
+//! The macro pages of Edit Controls: the game's macros, one macro's name and steps, a step's
+//! settings, and the steps that can be added (fighting-game motions among them).
 
 use crate::{
-    config::{Button, ButtonAction, Config, Game, ItemKind, Macro, MacroStep, Stick},
-    menu::ItemView,
-    pack::game_references,
+    config::{ButtonAction, Config, ItemKind, Macro, MacroStep, Motion, Stick, StickPreset},
+    menu::Tone,
 };
 
-use super::views::{add_item, item, remove_item};
-use super::EditStep;
+use super::{
+    action::{ActionAt, Slot},
+    named,
+    owner::game_mut,
+    pages::{Page, stick_name},
+    rows::{Act, Nav, Number, Row, cycle, set},
+};
 
-/// Hold time of a quick tap added to a macro, and the length of a quick wait.
-const TAP_HOLD_MS: u64 = 50;
+const TAP_MS: u64 = 50;
 const WAIT_MS: u64 = 100;
+const HOLD: Number = Number::new(10.0, (10.0, 1000.0), 0, " ms");
+const WAIT: Number = Number::new(10.0, (10.0, 5000.0), 0, " ms");
+const AXIS: Number = Number::new(0.05, (-1.0, 1.0), 2, "");
 
-/// What a step row adds to a macro, once its button is picked.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum StepKind {
-    Tap,
-    Press,
-    Release,
+fn macro_mut(config: &mut Config, m: usize) -> Option<&mut Macro> {
+    game_mut(config)?.macros.get_mut(m)
 }
 
-impl StepKind {
-    /// The kind of an add row's offset, from `ADD_LABELS`.
-    pub fn from_offset(offset: usize) -> Self {
-        match offset {
-            0 => StepKind::Tap,
-            1 => StepKind::Press,
-            _ => StepKind::Release,
-        }
-    }
-
-    /// The step this kind makes for `b`.
-    pub fn step(self, b: Button) -> MacroStep {
-        let action = ButtonAction::Gamepad(b);
-        match self {
-            StepKind::Tap => MacroStep::Tap { action, hold_ms: TAP_HOLD_MS },
-            StepKind::Press => MacroStep::Press(action),
-            StepKind::Release => MacroStep::Release(action),
-        }
-    }
+fn step_mut(config: &mut Config, m: usize, i: usize) -> Option<&mut MacroStep> {
+    macro_mut(config, m)?.steps.get_mut(i)
 }
 
-/// The rows after a macro's steps: a tap, press and release (each picks a button), a wait, and
-/// removing the last step. The delete row comes after them.
-const ADD_LABELS: [&str; 6] = ["Tap…", "Press…", "Release…", "Stick…", "Wait 100 ms", "Remove last step"];
-
-/// Directions a stick step can point, in row order: up, up right, right, down right, down, down
-/// left, left, up left and center. Each stick has one row per direction.
-const DIRECTIONS: [(&str, f32, f32); 9] = [
-    ("Up", 0.0, -1.0),
-    ("Up Right", 0.7, -0.7),
-    ("Right", 1.0, 0.0),
-    ("Down Right", 0.7, 0.7),
-    ("Down", 0.0, 1.0),
-    ("Down Left", -0.7, 0.7),
-    ("Left", -1.0, 0.0),
-    ("Up Left", -0.7, -0.7),
-    ("Center", 0.0, 0.0),
-];
-
-/// The stick step rows: the left stick's directions, then the right stick's.
-pub const STICK_STEPS: usize = 2 * DIRECTIONS.len();
-
-/// The stick step a row of the stick page makes.
-pub fn stick_step(row: usize) -> MacroStep {
-    let (stick, (_, x, y)) = if row < DIRECTIONS.len() {
-        (Stick::Left, DIRECTIONS[row])
-    } else {
-        (Stick::Right, DIRECTIONS[row - DIRECTIONS.len()])
-    };
-    MacroStep::Stick { stick, x, y }
+/// The game's macros, and a row to add one.
+pub(super) fn list_rows(config: &Config) -> Vec<Row> {
+    let macros = &config.active_game().macros;
+    let mut rows: Vec<Row> = macros.iter().enumerate().map(|(i, m)| Row::open(format!("{} ({} steps)", m.name, m.steps.len()), Page::Macro(i))).collect();
+    let new = macros.len();
+    rows.push(Row::add("Add macro", move |c| {
+        let name = named::new_name(c, ItemKind::Macro, "Macro");
+        let Some(game) = game_mut(c) else { return Act::stay() };
+        game.macros.push(Macro { name, steps: Vec::new() });
+        Act::changed().then(Nav::Open(Page::Macro(new)))
+    }));
+    rows
 }
 
-/// The label of a stick step row.
-pub fn stick_row_label(row: usize) -> String {
-    let (side, (name, _, _)) = if row < DIRECTIONS.len() {
-        ("Left", DIRECTIONS[row])
-    } else {
-        ("Right", DIRECTIONS[row - DIRECTIONS.len()])
-    };
-    format!("{side} Stick {name}")
+/// A macro's page: its name, its steps, adding one, and deleting the macro.
+pub(super) fn macro_rows(config: &Config, m: usize) -> Vec<Row> {
+    let Some(mac) = config.active_game().macros.get(m) else { return Vec::new() };
+    let mut rows = vec![named::rename_row(config, ItemKind::Macro, m)];
+    rows.extend(mac.steps.iter().enumerate().map(|(i, s)| Row::open(format!("{}. {}", i + 1, step_label(s)), Page::Step(m, i)).keyword(s.action().and_then(ButtonAction::keyword))));
+    rows.push(Row::open("Add a step…", Page::AddStep(m)).tone(Tone::Add));
+    rows.push(named::delete_row(config, ItemKind::Macro, m, move |c| {
+        let Some(game) = game_mut(c).filter(|g| m < g.macros.len()) else { return false };
+        game.macros.remove(m);
+        true
+    }));
+    rows
 }
 
-/// Adds `step` to the end of macro `i`.
-pub fn push_step(config: &mut Config, i: usize, step: MacroStep) {
-    if let Some(m) = game_macros_mut(config).and_then(|ms| ms.get_mut(i)) {
-        m.steps.push(step);
-    }
-}
-
-/// Which add row `row` of macro `i` is, counted from the first add row; `None` for a step row or
-/// the delete row.
-pub fn add_offset(config: &Config, i: usize, row: usize) -> Option<usize> {
-    let steps = config.active_game().macros.get(i)?.steps.len();
-    let offset = row.checked_sub(steps)?;
-    (offset < ADD_LABELS.len()).then_some(offset)
-}
-
-pub fn macro_rows(config: &Config, i: usize) -> usize {
-    config.active_game().macros.get(i).map_or(0, |m| m.steps.len()) + ADD_LABELS.len() + 1
-}
-
-/// Whether row `row` of macro `i` is its delete row.
-pub fn is_delete_row(config: &Config, i: usize, row: usize) -> bool {
-    row + 1 == macro_rows(config, i)
-}
-
-/// Whether a button, a layer or a menu of the active game uses macro `i`.
-pub fn macro_in_use(config: &Config, i: usize) -> bool {
-    let game = config.active_game();
-    game.macros.get(i).is_some_and(|m| game_references(game).contains(&(ItemKind::Macro, m.name.clone())))
-}
-
-/// Deletes macro `i` unless something uses it. True when it was deleted.
-pub fn delete_macro(config: &mut Config, i: usize) -> bool {
-    if macro_in_use(config, i) {
-        return false;
-    }
-    match game_macros_mut(config) {
-        Some(macros) if i < macros.len() => {
-            macros.remove(i);
-            true
-        }
-        _ => false,
-    }
-}
-
-pub fn macro_page(config: &Config, i: usize) -> (Vec<ItemView>, &'static str) {
-    let Some(m) = config.active_game().macros.get(i) else {
-        return (Vec::new(), "{back} back");
-    };
-    let delete_item = if macro_in_use(config, i) { item("Used by a button: can't delete".into()) } else { remove_item("Delete macro".into()) };
-    let rows = m
-        .steps
-        .iter()
-        .map(|s| item(step_label(s)))
-        .chain(ADD_LABELS.iter().map(|l| if l.starts_with("Remove") { remove_item((*l).into()) } else { add_item((*l).into()) }))
-        .chain(std::iter::once(delete_item))
-        .collect();
-    (rows, "{confirm} remove a step or add one · {back} back")
-}
-
-fn step_label(step: &MacroStep) -> String {
+pub(super) fn step_label(step: &MacroStep) -> String {
     match step {
         MacroStep::Tap { action, hold_ms } => format!("Tap {} ({hold_ms} ms)", action.summary()),
         MacroStep::Press(action) => format!("Press {}", action.summary()),
         MacroStep::Release(action) => format!("Release {}", action.summary()),
         MacroStep::Wait(ms) => format!("Wait {ms} ms"),
-        MacroStep::Stick { stick, x, y } => format!("{} stick ({x:.1}, {y:.1})", if *stick == Stick::Left { "Left" } else { "Right" }),
+        MacroStep::Stick { stick, x, y } => format!("{} to {}", stick_name(*stick), direction(*x, *y)),
     }
 }
 
-/// A choose on macro `i`'s `row`: a step row removes that step, an add row adds to the macro.
-pub fn choose_macro_row(config: &mut Config, i: usize, row: usize) -> EditStep {
-    let Some(m) = game_macros_mut(config).and_then(|ms| ms.get_mut(i)) else { return EditStep::Stay };
-    if row < m.steps.len() {
-        m.steps.remove(row);
-        return EditStep::Changed;
+/// Where a stick step points, by its preset's arrow and name, or its numbers.
+fn direction(x: f32, y: f32) -> String {
+    match StickPreset::of(x, y) {
+        StickPreset::Custom => format!("({x:.2}, {:.2})", -y),
+        preset => preset.to_string(),
     }
-    match row - m.steps.len() {
-        // Tap, press, release and stick pick their step on their own page.
-        4 => m.steps.push(MacroStep::Wait(WAIT_MS)),
-        5 => {
-            m.steps.pop();
-        }
-        _ => {}
-    }
-    EditStep::Changed
 }
 
-/// Adds a macro with a name no other macro of the game has. Returns its index.
-pub fn add_macro(config: &mut Config) -> Option<usize> {
-    let macros = game_macros_mut(config)?;
-    let name = (1..)
-        .map(|n| format!("Macro {n}"))
-        .find(|name| !macros.iter().any(|m| &m.name == name))
-        .unwrap_or_default();
-    macros.push(Macro { name, steps: Vec::new() });
-    Some(macros.len() - 1)
+/// What a new step can be, each added at the end and opened. A motion adds its stick steps.
+pub(super) fn add_rows(m: usize) -> Vec<Row> {
+    let add = |label: &str, step: fn() -> MacroStep, opens_action: bool| {
+        Row::add(label, move |c| {
+            let Some(mac) = macro_mut(c, m) else { return Act::stay() };
+            mac.steps.push(step());
+            let i = mac.steps.len() - 1;
+            let page = if opens_action { Page::Action(ActionAt::new(Slot::MacroStep(m, i))) } else { Page::Step(m, i) };
+            Act::changed().then(Nav::BackOpen(1, page))
+        })
+    };
+    let mut rows = vec![
+        add("Tap…", || MacroStep::Tap { action: ButtonAction::Keys(Vec::new()), hold_ms: TAP_MS }, true),
+        add("Hold down…", || MacroStep::Press(ButtonAction::Keys(Vec::new())), true),
+        add("Let go of…", || MacroStep::Release(ButtonAction::Keys(Vec::new())), true),
+        add("Wait", || MacroStep::Wait(WAIT_MS), false),
+        add("Move a stick", || MacroStep::Stick { stick: Stick::Left, x: 1.0, y: 0.0 }, false),
+    ];
+    rows.extend(Motion::ALL.into_iter().map(|motion| {
+        Row::add(motion.to_string(), move |c| {
+            let Some(mac) = macro_mut(c, m) else { return Act::stay() };
+            mac.steps.extend(motion.steps());
+            Act::changed().then(Nav::Back(1))
+        })
+    }));
+    rows
 }
 
-/// The macros of the game the active profile is in (General's when there is no game).
-fn game_macros_mut(config: &mut Config) -> Option<&mut Vec<Macro>> {
-    let at = config.active_ref();
-    config.game_mut(at.game.as_deref()).map(|g: &mut Game| &mut g.macros)
+/// The kinds a step can be switched between, keeping its action where it has one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Kind {
+    Tap,
+    Press,
+    Release,
+}
+
+/// A step's page: its action and timing, or where it moves a stick; moving it; deleting it.
+pub(super) fn step_rows(config: &Config, m: usize, i: usize) -> Vec<Row> {
+    let Some(step) = config.active_game().macros.get(m).and_then(|x| x.steps.get(i)) else { return Vec::new() };
+    let len = config.active_game().macros[m].steps.len();
+    let mut rows = match step {
+        MacroStep::Tap { action, hold_ms } => vec![
+            kind_row(m, i, Kind::Tap, action),
+            action_row(m, i, action),
+            HOLD.row_u("Held for", *hold_ms, move |c, v| match step_mut(c, m, i) {
+                Some(MacroStep::Tap { hold_ms, .. }) => set(hold_ms, v),
+                _ => false,
+            }),
+        ],
+        MacroStep::Press(action) => vec![kind_row(m, i, Kind::Press, action), action_row(m, i, action)],
+        MacroStep::Release(action) => vec![kind_row(m, i, Kind::Release, action), action_row(m, i, action)],
+        MacroStep::Wait(ms) => vec![WAIT.row_u("Wait", *ms, move |c, v| step_mut(c, m, i).is_some_and(|s| set(s, MacroStep::Wait(v))))],
+        MacroStep::Stick { stick, x, y } => stick_rows(m, i, *stick, *x, *y),
+    };
+    for (label, to) in [("Move up", i.checked_sub(1)), ("Move down", (i + 1 < len).then_some(i + 1))] {
+        let Some(to) = to else { continue };
+        rows.push(Row::apply(label, move |c| {
+            let Some(mac) = macro_mut(c, m) else { return Act::stay() };
+            mac.steps.swap(i, to);
+            Act::changed().then(Nav::Follow(Page::Step(m, to), to + 1))
+        }));
+    }
+    rows.push(Row::delete("Delete step", move |c| {
+        let Some(mac) = macro_mut(c, m).filter(|x| i < x.steps.len()) else { return false };
+        mac.steps.remove(i);
+        true
+    }));
+    rows
+}
+
+fn kind_row(m: usize, i: usize, kind: Kind, action: &ButtonAction) -> Row {
+    let name = match kind {
+        Kind::Tap => "Tap",
+        Kind::Press => "Hold down",
+        Kind::Release => "Let go",
+    };
+    let action = action.clone();
+    Row::step(format!("Kind: {name}"), move |c, dir| {
+        let next = match cycle(&[Kind::Tap, Kind::Press, Kind::Release], kind, dir) {
+            Kind::Tap => MacroStep::Tap { action: action.clone(), hold_ms: TAP_MS },
+            Kind::Press => MacroStep::Press(action.clone()),
+            Kind::Release => MacroStep::Release(action.clone()),
+        };
+        step_mut(c, m, i).is_some_and(|s| set(s, next))
+    })
+}
+
+fn action_row(m: usize, i: usize, action: &ButtonAction) -> Row {
+    Row::open(format!("Presses: {}", action.summary()), Page::Action(ActionAt::new(Slot::MacroStep(m, i)))).keyword(action.keyword())
+}
+
+/// A stick step: which stick, a direction from the presets, and the exact position.
+fn stick_rows(m: usize, i: usize, stick: Stick, x: f32, y: f32) -> Vec<Row> {
+    let preset = StickPreset::of(x, y);
+    let presets: Vec<StickPreset> = StickPreset::ALL.into_iter().filter(|p| *p != StickPreset::Custom).collect();
+    let set_step = move |c: &mut Config, stick: Stick, x: f32, y: f32| step_mut(c, m, i).is_some_and(|s| set(s, MacroStep::Stick { stick, x, y }));
+    vec![
+        Row::step(format!("Stick: {}", stick_name(stick)), move |c, _| {
+            let other = if stick == Stick::Left { Stick::Right } else { Stick::Left };
+            set_step(c, other, x, y)
+        }),
+        Row::step(format!("Direction: {}", direction(x, y)), move |c, dir| {
+            let next = if preset == StickPreset::Custom { StickPreset::Center } else { cycle(&presets, preset, dir) };
+            let (x, y) = next.position().unwrap_or_default();
+            set_step(c, stick, x, y)
+        }),
+        AXIS.row("Across", x, move |c, v| set_step(c, stick, v, y)),
+        // Shown with up as positive, as the settings window does.
+        AXIS.row("Up", -y, move |c, v| set_step(c, stick, x, -v)),
+    ]
 }
 
 #[cfg(test)]
@@ -193,54 +191,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn a_macro_gets_steps_and_loses_them_again() {
+    fn a_motion_adds_its_stick_steps_and_a_step_moves_and_goes() {
         let mut config = Config::default();
-        let i = add_macro(&mut config).unwrap();
-        assert_eq!(config.active_game().macros[i].name, "Macro 1");
-        // Add a tap of South (the first add row picks a button), then a wait (the fifth add row).
-        push_step(&mut config, i, StepKind::Tap.step(Button::South));
-        assert_eq!(choose_macro_row(&mut config, i, 1 + 4), EditStep::Changed);
-        assert_eq!(config.active_game().macros[i].steps.len(), 2);
-        assert!(matches!(config.active_game().macros[i].steps[1], MacroStep::Wait(WAIT_MS)));
-        // A step row removes that step: the wait is row 1.
-        choose_macro_row(&mut config, i, 1);
-        assert_eq!(config.active_game().macros[i].steps.len(), 1);
-    }
-
-    #[test]
-    fn new_macros_are_named_in_turn() {
-        let mut config = Config::default();
-        add_macro(&mut config);
-        let second = add_macro(&mut config).unwrap();
-        assert_eq!(config.active_game().macros[second].name, "Macro 2");
-    }
-
-    #[test]
-    fn a_stick_step_points_a_stick_and_is_labeled() {
-        let mut config = Config::default();
-        let i = add_macro(&mut config).unwrap();
-        push_step(&mut config, i, stick_step(STICK_STEPS / 2 + 6));
-        assert_eq!(config.active_game().macros[i].steps[0], MacroStep::Stick { stick: Stick::Right, x: -1.0, y: 0.0 });
-        assert_eq!(stick_row_label(2), "Left Stick Right");
-    }
-}
-
-#[cfg(test)]
-mod tone_tests {
-    use super::*;
-    use crate::menu::Tone;
-
-    #[test]
-    fn steps_are_plain_and_the_rows_that_add_or_remove_are_tinted() {
-        let mut config = Config::default();
-        let i = add_macro(&mut config).unwrap();
-        push_step(&mut config, i, StepKind::Tap.step(Button::South));
-        let (rows, _) = macro_page(&config, i);
-        // One step, then the add rows, then the delete row.
-        assert_eq!(rows[0].tone, Tone::Normal);
-        assert_eq!(rows[1].tone, Tone::Add);
-        assert_eq!(rows[1 + 4].tone, Tone::Add, "the wait adds");
-        assert_eq!(rows[1 + 5].tone, Tone::Remove, "removing the last step removes");
-        assert_eq!(rows.last().unwrap().tone, Tone::Remove, "deleting removes");
+        list_rows(&config).pop().map(|row| match row.choose {
+            super::super::rows::Choose::Apply(apply) => apply(&mut config),
+            _ => panic!("not an add row"),
+        });
+        let motion_row = add_rows(0).into_iter().find(|r| r.item.label.starts_with("Quarter circle forward")).unwrap();
+        let super::super::rows::Choose::Apply(apply) = motion_row.choose else { panic!("not an add row") };
+        apply(&mut config);
+        let steps = &config.active_game().macros[0].steps;
+        assert_eq!(steps.len(), Motion::QuarterCircleForward.steps().len());
+        assert_eq!(step_label(&steps[0]), "Left stick to ↓ Down");
     }
 }

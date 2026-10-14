@@ -89,11 +89,3 @@ fn a_menu_button_holds_its_menu_up_like_any_other_once_untoggled() {
     engine.handle(profile, InputEvent::Button(Button::North, true), Instant::now(), &mut out);
     assert!(engine.take_menu_request().is_some());
 }
-
-#[test]
-fn the_controller_layout_editor_wont_wrap_a_menu_in_a_toggle() {
-    use crate::layout_editor::buttons::{ActionRow, Wrap, action_row_label, wrapped};
-    assert_eq!(wrapped(&open_menu("M"), Wrap::Toggle), open_menu("M"));
-    assert_eq!(action_row_label(ActionRow::Wrap(Wrap::Toggle), &open_menu("M")), "A menu can't be a toggle");
-    assert!(matches!(wrapped(&key("KEY_A"), Wrap::Toggle), ButtonAction::Toggle(_)), "anything else still can be");
-}

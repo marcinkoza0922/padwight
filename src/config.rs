@@ -29,6 +29,10 @@ mod window_game;
 mod menus;
 mod layers;
 mod templates;
+mod renames;
+pub mod macro_presets;
+pub use macro_presets::{Motion, StickPreset};
+pub use templates::{Template, unique_name};
 pub mod problems;
 pub use menus::*;
 pub use layers::*;
@@ -1756,6 +1760,9 @@ pub struct Config {
     /// The controller gives a faint pulse as an overlay's item is picked (a key, a menu item).
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub pick_rumble: bool,
+    /// The trigger that, held in the in-game editor, hides it to show the overlay being edited.
+    #[serde(default, skip_serializing_if = "PeekTrigger::is_default")]
+    pub peek_trigger: PeekTrigger,
     #[serde(default = "default_numpad_style")]
     pub numpad_style: OverlayStyle,
     #[serde(default = "default_media_style")]
@@ -1819,6 +1826,44 @@ fn default_general() -> Game {
     Config::default().general
 }
 
+/// Which trigger hides the in-game editor while it's held, to show the overlay being edited.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PeekTrigger {
+    #[default]
+    Left,
+    Right,
+    Off,
+}
+
+impl PeekTrigger {
+    pub const ALL: [PeekTrigger; 3] = [PeekTrigger::Left, PeekTrigger::Right, PeekTrigger::Off];
+
+    fn is_default(&self) -> bool {
+        *self == PeekTrigger::default()
+    }
+
+    /// Whether `triggers` (the pull of the left, then the right) has it pulled.
+    pub fn pulled(self, triggers: [f32; 2]) -> bool {
+        let index = match self {
+            PeekTrigger::Left => 0,
+            PeekTrigger::Right => 1,
+            PeekTrigger::Off => return false,
+        };
+        triggers[index] > 0.5
+    }
+}
+
+impl fmt::Display for PeekTrigger {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            PeekTrigger::Left => "Left trigger",
+            PeekTrigger::Right => "Right trigger",
+            PeekTrigger::Off => "Off",
+        })
+    }
+}
+
 fn full_rumble() -> f32 {
     1.0
 }
@@ -1844,6 +1889,7 @@ impl Default for Config {
             full_keyboard: false,
             rumble_strength: 1.0,
             pick_rumble: false,
+            peek_trigger: PeekTrigger::default(),
             numpad_style: OverlayStyle::numpad(),
             media_style: OverlayStyle::media(),
             menu_style: OverlayStyle::default(),

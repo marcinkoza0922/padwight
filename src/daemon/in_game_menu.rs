@@ -3,6 +3,9 @@
 
 use super::*;
 
+/// How often the editor's live pictures redraw for the controller's turning, at most.
+const LIVE_REDRAW: Duration = Duration::from_millis(33);
+
 impl Daemon {
     /// Opens the Guide + Start menu over the game, on `page`, for the controller `device`. That
     /// controller drives it from now on.
@@ -13,7 +16,9 @@ impl Daemon {
         log!("opening the settings menu");
         self.release_mappings();
         let paddles = self.devices.get(&device).is_some_and(|d| d.paddles);
-        self.active = Some(Active::Settings(SystemMenu::new(&self.config).with_paddles(paddles).on_page(page), device));
+        let menu = SystemMenu::new(&self.config).with_paddles(paddles).with_features(self.pad_features()).on_page(page);
+        self.menu_live = crate::figures::Live::default();
+        self.active = Some(Active::Settings(menu, device));
         self.broadcast_overlay();
         self.overlay_sound(sound::SoundOverlay::Guide, Some(sound::Feedback::Open));
     }
@@ -21,7 +26,13 @@ impl Daemon {
     /// Runs one event on the Guide + Start menu. `true` when the menu closed.
     pub(super) fn settings_input(&mut self, ev: InputEvent) -> bool {
         let now = Instant::now();
-        self.settings_step(|menu, config| menu.handle(ev, now, config))
+        let peeking = self.peeking();
+        self.menu_live.input(ev);
+        let closed = self.settings_step(|menu, config| menu.handle(ev, now, config));
+        if !closed && self.peeking() != peeking {
+            self.broadcast_overlay();
+        }
+        closed
     }
 
     /// Runs one step of the Guide + Start menu (an event, or a held direction's repeat) and does
@@ -38,7 +49,7 @@ impl Daemon {
             }
             _ => (None, false, 0),
         };
-        let picked = matches!(outcome, Some(SystemOutcome::Changed | SystemOutcome::EditControls | SystemOutcome::Switch(_)));
+        let picked = matches!(outcome, Some(SystemOutcome::Changed | SystemOutcome::EditControls | SystemOutcome::Switch(_) | SystemOutcome::Added(_)));
         self.overlay_sound(sound::SoundOverlay::Guide, sound::Feedback::of(picked, moved && outcome.is_none()));
         match outcome {
             Some(SystemOutcome::Close) => {
@@ -66,16 +77,13 @@ impl Daemon {
             }
             Some(SystemOutcome::Discard { saved, back }) => {
                 self.config = *saved;
-                self.refresh_scope();
+                // It may go back to another profile too.
+                self.apply_settings_change();
                 self.leave_settings(device, back);
                 return true;
             }
-            Some(SystemOutcome::Switch(target)) => {
-                self.switch_profile(target, "Chosen in the in-game menu");
-                if let Some(Active::Settings(menu, _)) = &mut self.active {
-                    menu.profile_switched(&self.config);
-                }
-            }
+            Some(SystemOutcome::Switch(target)) => return self.settings_switch(target),
+            Some(SystemOutcome::Added(target)) => self.settings_added(target),
             Some(SystemOutcome::ReturnToGuide) => {
                 self.return_to_guide(device);
                 return true;
@@ -87,6 +95,44 @@ impl Daemon {
             None => {}
         }
         false
+    }
+
+    /// Switches to a profile the in-game menu chose. Switch Profile then leaves: `true` when the
+    /// menu closed.
+    fn settings_switch(&mut self, target: ProfileRef) -> bool {
+        self.switch_profile(target, "Chosen in the in-game menu");
+        let then = match &mut self.active {
+            Some(Active::Settings(menu, _)) => menu.profile_switched(&self.config),
+            _ => None,
+        };
+        if then == Some(SystemOutcome::Close) {
+            self.close_overlay();
+            return true;
+        }
+        self.broadcast_overlay();
+        false
+    }
+
+    /// Switches to the profile the in-game menu just made, and shows it in the list.
+    fn settings_added(&mut self, target: ProfileRef) {
+        self.apply_settings_change();
+        self.switch_profile(target, "Made in the in-game menu");
+        if let Some(Active::Settings(menu, _)) = &mut self.active {
+            menu.profile_added(&self.config);
+        }
+        self.broadcast_overlay();
+    }
+
+    /// The controller driving the in-game menu turned: the editor's gyro picture follows it,
+    /// redrawn at most every [`LIVE_REDRAW`].
+    pub(super) fn menu_turned(&mut self, gyro: [f32; 3]) {
+        let now = Instant::now();
+        self.menu_live.turning(gyro, now);
+        let live = matches!(&self.active, Some(Active::Settings(m, _)) if m.live_picture(&self.config));
+        if live && self.live_drawn.is_none_or(|t| now.duration_since(t) >= LIVE_REDRAW) {
+            self.live_drawn = Some(now);
+            self.broadcast_overlay();
+        }
     }
 
     /// Closes the Guide + Start menu after its question about unsaved changes: back to the Guide

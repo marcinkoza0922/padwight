@@ -10,6 +10,10 @@ use super::{ButtonAction, MouseButton, SpeedCurve, Stick};
 /// Default pointer speed: pixels the pointer moves when a finger crosses the whole pad.
 pub const DEFAULT_TOUCHPAD_SPEED: f32 = 1200.0;
 
+/// A finger's speed in pad widths/second is read by acceleration curves made for degrees/second
+/// of gyro turning at this scale.
+pub const TOUCHPAD_CURVE_SCALE: f32 = 0.025;
+
 #[expect(clippy::trivially_copy_pass_by_ref, reason = "serde's skip_serializing_if passes a reference")]
 fn is_false(v: &bool) -> bool {
     !*v

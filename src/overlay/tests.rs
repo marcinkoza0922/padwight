@@ -1,4 +1,12 @@
+use std::time::Instant;
+
 use super::*;
+use crate::{
+    config::Button,
+    input::{Axis, InputEvent},
+    keyboard::Layout,
+    keycode::KeyCode,
+};
 
 #[test]
 fn frames_from_an_older_daemon_still_load() {

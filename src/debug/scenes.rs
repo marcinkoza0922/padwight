@@ -22,7 +22,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 26] = [
+pub const SCENES: [(&str, &str); 40] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -40,6 +40,7 @@ pub const SCENES: [(&str, &str); 26] = [
     ("offer", "the offer to add a library game"),
     ("library-hint", "the toast saying Guide adds a library game"),
     ("info", "an info overlay with live values and glyphs"),
+    ("info-empty", "a new info overlay, with no cells yet"),
     ("info-formatted", "an info overlay with bold, italic, underline, color, fonts, boxes, icons (one carried by the pack), gyro and trackpad"),
     ("log", "an input log"),
     ("recording", "the recording badge"),
@@ -49,6 +50,19 @@ pub const SCENES: [(&str, &str); 26] = [
     ("held-remapping", "the in-game menu asking to save once remapping is turned off from the tray"),
     ("guide", "the Guide overlay: its menu, Notes, and Mappings with a held layer's section"),
     ("guide-mode", "the Guide overlay turned to a mode that isn't on"),
+    ("switch-profile", "Switch Profile, opened from the Guide menu: the profiles and a new one"),
+    ("new-profile", "what a new profile from Switch Profile starts from"),
+    ("edit-controls", "Edit Controls' first page: what can be edited"),
+    ("edit-stick", "Edit Controls: a stick that moves the mouse, with its response settings"),
+    ("edit-action", "Edit Controls: a button's action page"),
+    ("edit-gyro", "Edit Controls: the gyro page"),
+    ("edit-layer", "Edit Controls: a layer's page"),
+    ("edit-typing", "Edit Controls: typing a macro's name on the on-screen keyboard"),
+    ("edit-game", "Edit Controls: the game's own page"),
+    ("edit-look", "Edit Controls: the game's own look for the in-game menu"),
+    ("edit-trigger", "Edit Controls: a trigger with its press point, beside its live travel"),
+    ("edit-touchpad", "Edit Controls: the touchpad beside its live picture"),
+    ("edit-menu", "Edit Controls: a menu's page beside the menu as it will look"),
 ];
 
 /// The frame of the scene called `name`.
@@ -75,6 +89,10 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
             OverlayFrame { info: toast.view(std::time::Instant::now()).into_iter().collect(), ..OverlayFrame::default() }
         }
         "info" => OverlayFrame { info: vec![info_view()], ..OverlayFrame::default() },
+        "info-empty" => OverlayFrame {
+            info: vec![crate::info::InfoView { title: None, rows: Vec::new(), ..info_view() }],
+            ..OverlayFrame::default()
+        },
         "info-formatted" => OverlayFrame {
             info: vec![formatted_view()],
             pack_icons: Some(std::collections::BTreeMap::from([("flame".to_string(), FLAME.to_string())])),
@@ -88,6 +106,19 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "held-remapping" => active(held(crate::system_menu::Hold::RemappingOff)),
         "guide" => guide(0),
         "guide-mode" => guide(1),
+        "switch-profile" => active(switch_profile(false)),
+        "new-profile" => active(switch_profile(true)),
+        "edit-controls" => active(edit_controls(&[])),
+        "edit-stick" => active(edit_controls(&[Button::DpadDown, Button::South, Button::DpadDown, Button::South])),
+        "edit-action" => active(edit_controls(&[Button::South, Button::South])),
+        "edit-gyro" => active(edit_controls(&[Button::DpadDown, Button::DpadDown, Button::DpadDown, Button::South])),
+        "edit-layer" => active(edit_controls(&[[Button::DpadDown; 7].as_slice(), &[Button::South, Button::South]].concat())),
+        "edit-typing" => active(edit_controls(&[[Button::DpadDown; 8].as_slice(), &[Button::South, Button::South, Button::South]].concat())),
+        "edit-game" => active(edit_controls(&[Button::DpadUp, Button::South])),
+        "edit-trigger" => active(edit_controls(&[Button::DpadDown, Button::DpadDown, Button::South, Button::South, Button::DpadRight, Button::DpadRight])),
+        "edit-touchpad" => active(edit_controls(&[[Button::DpadDown; 4].as_slice(), &[Button::South]].concat())),
+        "edit-menu" => active(edit_controls(&[[Button::DpadDown; 9].as_slice(), &[Button::South, Button::South]].concat())),
+        "edit-look" => active(edit_controls(&[[Button::DpadUp, Button::South].as_slice(), &[Button::DpadDown; 8], &[Button::South, Button::DpadDown, Button::South]].concat())),
         _ => bail!("no scene called {name} (see `padwight debug overlay list`)"),
     })
 }
@@ -97,7 +128,7 @@ fn keyboard_view(board: Board) -> KeyboardView {
         Board::Basic | Board::Full => (OverlayStyle::keyboard(), keyboard::find(board, "KEY_H").unwrap_or_default(), vec!["KEY_LEFTSHIFT".into()]),
         Board::Numpad => (OverlayStyle::numpad(), board.home(), Vec::new()),
     };
-    KeyboardView { board, style, cursor, latched, pressed: None, closing: 0.0, caps: false, typed: String::new() }
+    KeyboardView { board, style, cursor, latched, pressed: None, closing: 0.0, caps: false, typed: String::new(), field: None }
 }
 
 /// A menu of this kind, open with the cursor on its second item: keys, a toggle, a submenu, a
@@ -183,6 +214,64 @@ fn guide(shown: usize) -> OverlayFrame {
     let info = view.overlays().iter().map(|o| info::resolve(o, &live)).collect();
     let menu = crate::guide_menu::view(false, 0, "Gameplay", OverlayStyle::default());
     OverlayFrame { info, ..OverlayFrame { active: Some(OverlayView::Menu(menu)), ..OverlayFrame::default() } }
+}
+
+/// Switch Profile's list (with the cursor on a profile that needs a gyro), or its new-profile page.
+fn switch_profile(new: bool) -> OverlayView {
+    use crate::{
+        config::{Config, Feature, Game, Profile, ProfileRef},
+        input::InputEvent,
+        system_menu::{Page, SystemMenu},
+    };
+    let mut config = Config::default();
+    let mut gyro = Profile::gyro_aim("Gyro aim");
+    gyro.requires = vec![Feature::Gyro];
+    config.games.push(Game::new("Deus Ex", vec![Profile::pc_action("Gameplay"), gyro, Profile::desktop("Menus")]));
+    config.active = ProfileRef::new(Some("Deus Ex"), "Gameplay");
+    let mut menu = SystemMenu::new(&config).with_features(Some(Vec::new())).on_page(Page::Profiles);
+    let now = std::time::Instant::now();
+    let presses: &[Button] = if new { &[Button::DpadUp, Button::South] } else { &[Button::DpadDown] };
+    for &b in presses {
+        menu.handle(InputEvent::Button(b, true), now, &mut config);
+    }
+    OverlayView::Menu(menu.view(&config))
+}
+
+/// Edit Controls over a game with a mouse stick, a layer and a macro, after `presses`.
+fn edit_controls(presses: &[Button]) -> OverlayView {
+    use crate::{
+        config::{Config, Game, Layer, Macro, Profile, ProfileRef},
+        input::InputEvent,
+        system_menu::{Page, SystemMenu},
+    };
+    let mut config = Config::default();
+    let mut game = Game::new("Deus Ex", vec![Profile::gyro_aim("Gameplay")]);
+    game.layers.push(Layer::new("Hotkeys"));
+    game.macros.push(Macro { name: "Quick save".into(), steps: Vec::new() });
+    let items = ["Heal", "Reload", "Map", "Inventory"].map(|l| crate::config::MenuItem::new(l, crate::config::ButtonAction::Screenshot)).to_vec();
+    game.menus.push(crate::config::Menu { name: "Quick".into(), kind: crate::config::MenuKind::Grid { columns: 2 }, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() });
+    config.games.push(game);
+    config.active = ProfileRef::new(Some("Deus Ex"), "Gameplay");
+    let mut menu = SystemMenu::new(&config).on_page(Page::EditControls);
+    let now = std::time::Instant::now();
+    for &b in presses {
+        menu.handle(InputEvent::Button(b, true), now, &mut config);
+        menu.handle(InputEvent::Button(b, false), now, &mut config);
+    }
+    menu.overlay_view(&config, &sample_live())
+}
+
+/// A controller with its sticks pushed, a trigger pulled, a finger on the touchpad and the gyro
+/// turning, for the editor's live pictures.
+fn sample_live() -> crate::figures::Live {
+    let mut live = crate::figures::Live { sticks: [(0.45, 0.2), (0.7, -0.35)], triggers: [0.65, 0.2], pad_height: crate::input::DUALSENSE_HEIGHT, ..Default::default() };
+    live.touches.insert(0, (0.3, 0.6));
+    let t0 = std::time::Instant::now();
+    for i in 0..40 {
+        let t = i as f32 / 10.0;
+        live.turning([40.0 * t.cos(), 60.0 * t.sin(), 0.0], t0 + std::time::Duration::from_millis(20 * i));
+    }
+    live
 }
 
 /// Quick Settings left with a change not saved: the question stands over the page.

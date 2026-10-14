@@ -42,6 +42,7 @@ impl App {
                 closing: 0.0,
                 caps: false,
                 typed: String::new(),
+                field: None,
             };
             rows.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         }
@@ -124,6 +125,7 @@ impl App {
                 closing: 0.0,
                 caps: false,
                 typed: String::new(),
+                field: None,
             };
             rows.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         }

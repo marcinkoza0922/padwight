@@ -25,7 +25,7 @@ use crate::{
         Analog, Appearance, Button, ButtonAction, CarouselControls, Cluster, Combo, Config, Feature, Game, GestureKind, GRID_MAX, GyroActivation,
         CurrentInput, GyroConfig, GyroHorizontal, GyroInput, GyroMode, InfoOverlay, ItemKind, LogOverlay, Macro, MacroStep, Menu, MenuItem,
         MenuKind, MenuKindTag, MouseButton, OverlayStyle, Paint, Profile, ProfileRef, Rule, RuleKind,
-        ScreenPosition, Stick, StickAction, StickConfig, Toggled, TouchSlot, TouchpadConfig, Trigger, TriggerAction, WheelDirection, Zone, free_name,
+        ScreenPosition, Stick, StickAction, StickConfig, Toggled, TouchSlot, TouchpadConfig, Trigger, TriggerAction, WheelDirection, Template, Zone, free_name, unique_name, Motion, StickPreset,
     },
     engine::Opener,
     motion::{MotionStyle, OverlayKind},
@@ -390,14 +390,6 @@ enum Target {
     Touch(TouchSlot),
 }
 
-/// `base`, or `base 2`, `base 3`, … whichever isn't taken.
-fn unique_name(base: &str, taken: impl Fn(&str) -> bool) -> String {
-    (1..)
-        .map(|i| if i == 1 { base.to_string() } else { format!("{base} {i}") })
-        .find(|n| !taken(n))
-        .unwrap()
-}
-
 #[derive(Debug, Clone)]
 enum Message {
     Poll,
@@ -556,6 +548,7 @@ enum Message {
     SetRumbleStrength(f32),
     /// Whether picking an overlay's item gives a faint pulse.
     SetPickRumble(bool),
+    SetPeekTrigger(crate::config::PeekTrigger),
     /// The font of all overlays (`None`: the system's), or the shown game's own.
     SetOverlayFont(Option<String>),
     SetColorblindTones(bool),

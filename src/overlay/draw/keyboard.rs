@@ -8,7 +8,7 @@ use iced::{
 };
 
 use super::*;
-use crate::{keyboard, overlay::{KEYBOARD_LEGEND, NUMPAD_LEGEND}};
+use crate::{keyboard, overlay::{FIELD_LEGEND, KEYBOARD_LEGEND, NUMPAD_LEGEND}};
 
 /// The space the keyboard's padding takes inside its box, at scale 1.
 const KEYBOARD_PADDING: f32 = 16.0;
@@ -83,7 +83,8 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::in
         let legend = row(NUMPAD_LEGEND.iter().map(|t| hint(t))).spacing(14.0 * s).wrap().vertical_spacing(4.0 * s).align_x(Horizontal::Center);
         (legend.into(), (v.board.units_wide() * (unit + gap)).max(230.0 * s))
     } else {
-        let legend = row(KEYBOARD_LEGEND.iter().map(|t| hint(t)))
+        let lines = if v.field.is_some() { FIELD_LEGEND } else { KEYBOARD_LEGEND };
+        let legend = row(lines.iter().map(|t| hint(t)))
         .spacing(18.0 * s)
         .align_y(Alignment::Center)
         .wrap()
@@ -92,13 +93,22 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::in
         (legend.into(), v.board.units_wide() * (unit + gap))
     };
     let mut body = column![].spacing(12.0 * s).width(width).align_x(Alignment::Center);
-    // What's been typed, above the keys, for when the game's own text box is hidden behind them.
-    if !v.typed.is_empty() {
-        body = body.push(text(format!("{}▏", v.typed)).font(c.font).size(18.0 * s).color(c.background_text));
-    }
+    body = typed_line(body, v, &c, s);
     body = body.push(rows).push(legend);
     if v.closing > 0.0 {
         body = body.push(progress_bar(0.0..=1.0, v.closing).girth(4.0 * s));
     }
     framed(body.into(), c, &v.style, KEYBOARD_PADDING * s, fit)
+}
+
+/// What's been typed, above the keys, for when the game's own text box is hidden behind them. A
+/// field shows its name, and its text even while empty, so it's clear what is being typed into.
+fn typed_line<'a, M: 'a>(mut body: iced::widget::Column<'a, M>, v: &KeyboardView, c: &Colors, s: f32) -> iced::widget::Column<'a, M> {
+    if let Some(field) = &v.field {
+        body = body.push(text(field.clone()).font(c.font).size(15.0 * s).color(c.muted));
+    }
+    if !v.typed.is_empty() || v.field.is_some() {
+        body = body.push(text(format!("{}▏", v.typed)).font(c.font).size(18.0 * s).color(c.background_text));
+    }
+    body
 }

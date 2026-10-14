@@ -227,3 +227,78 @@ impl Profile {
         p
     }
 }
+
+/// What a new profile starts from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Template {
+    Gamepad,
+    Desktop,
+    Action,
+    GyroAim,
+    FlickStick,
+    Strategy,
+    Platformer,
+    Duplicate,
+}
+
+impl Template {
+    /// A new profile from this template (Duplicate makes a passthrough one; copy instead).
+    pub fn make(self, name: &str) -> Profile {
+        match self {
+            Template::Gamepad | Template::Duplicate => Profile::passthrough(name),
+            Template::Desktop => Profile::desktop(name),
+            Template::Action => Profile::pc_action(name),
+            Template::GyroAim => Profile::gyro_aim(name),
+            Template::FlickStick => Profile::flick_stick(name),
+            Template::Strategy => Profile::strategy(name),
+            Template::Platformer => Profile::platformer(name),
+        }
+    }
+
+    /// Offered in the "New from template" list (Duplicate has its own button).
+    pub const NEW: [Template; 7] = [
+        Template::Gamepad,
+        Template::Action,
+        Template::GyroAim,
+        Template::FlickStick,
+        Template::Strategy,
+        Template::Platformer,
+        Template::Desktop,
+    ];
+
+    pub fn base_name(self) -> &'static str {
+        match self {
+            Template::Gamepad => "Gamepad",
+            Template::Desktop => "Desktop",
+            Template::Action => "PC Action",
+            Template::GyroAim => "Gyro Aim",
+            Template::FlickStick => "Flick Stick",
+            Template::Strategy => "Strategy",
+            Template::Platformer => "Platformer",
+            Template::Duplicate => "Copy",
+        }
+    }
+}
+
+impl std::fmt::Display for Template {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Template::Gamepad => "Gamepad passthrough",
+            Template::Desktop => "Desktop navigation",
+            Template::Action => "PC action (WASD + mouse look)",
+            Template::GyroAim => "PC action with gyro aiming (needs a gyro)",
+            Template::FlickStick => "PC action with a flick stick (needs a gyro)",
+            Template::Strategy => "Strategy (mouse pointer + hotkeys)",
+            Template::Platformer => "Retro / platformer (arrows + Z/X/C)",
+            Template::Duplicate => "Copy of this profile",
+        })
+    }
+}
+
+/// `base`, or `base 2`, `base 3`, … whichever isn't taken.
+pub fn unique_name(base: &str, taken: impl Fn(&str) -> bool) -> String {
+    (1..)
+        .map(|i| if i == 1 { base.to_string() } else { format!("{base} {i}") })
+        .find(|n| !taken(n))
+        .unwrap()
+}
