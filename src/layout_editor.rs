@@ -30,7 +30,7 @@ mod touchpad;
 mod triggers;
 
 use pages::Page;
-pub use pictures::Preview;
+pub use pictures::{Preview, menu_view};
 
 use crate::{
     config::{Button, Config, MenuKind},
@@ -279,7 +279,15 @@ impl LayoutEditor {
                 item
             })
             .collect();
-        let hint = if steps { "{confirm} choose · {left} {right} change · {back} back" } else { "{confirm} choose · {back} back" };
+        let mut hint = String::from(if steps { "{confirm} choose · {left} {right} change · {back} back" } else { "{confirm} choose · {back} back" });
+        // An overlay being edited is on screen: say what shows it whole.
+        if self.preview().is_some() {
+            match config.peek_trigger {
+                crate::config::PeekTrigger::Left => hint.push_str(" · hold {lt} to see the overlay"),
+                crate::config::PeekTrigger::Right => hint.push_str(" · hold {rt} to see the overlay"),
+                crate::config::PeekTrigger::Off => {}
+            }
+        }
         let crumbs = parents.iter().cloned().chain(self.history.iter().map(|&(page, _)| pages::title(page, config))).collect();
         MenuView {
             title: pages::title(self.page, config),
@@ -288,7 +296,7 @@ impl LayoutEditor {
             selected: Some(cursor),
             picks: 0,
             crumbs,
-            hint: hint.into(),
+            hint,
             style: config.active_menu_style().clone(),
             touch: false,
             aim: None,

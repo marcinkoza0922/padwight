@@ -22,7 +22,7 @@ impl SystemMenu {
     /// Whether the editor's page has a picture that follows the controller, so input and motion
     /// redraw it.
     pub fn live_picture(&self, config: &Config) -> bool {
-        matches!(&self.screen, Screen::Editor(e) if e.figure(config, &crate::figures::Live::default()).is_some_and(|f| !matches!(f, crate::figures::Figure::Menu(_))))
+        matches!(&self.screen, Screen::Editor(e) if e.figure(config, &crate::figures::Live::default()).is_some())
     }
 
     /// What the overlay draws now: the keyboard while typing into a field, else the menu.

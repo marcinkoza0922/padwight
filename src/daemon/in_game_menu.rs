@@ -26,8 +26,13 @@ impl Daemon {
     /// Runs one event on the Guide + Start menu. `true` when the menu closed.
     pub(super) fn settings_input(&mut self, ev: InputEvent) -> bool {
         let now = Instant::now();
+        let peeking = self.peeking();
         self.menu_live.input(ev);
-        self.settings_step(|menu, config| menu.handle(ev, now, config))
+        let closed = self.settings_step(|menu, config| menu.handle(ev, now, config));
+        if !closed && self.peeking() != peeking {
+            self.broadcast_overlay();
+        }
+        closed
     }
 
     /// Runs one step of the Guide + Start menu (an event, or a held direction's repeat) and does

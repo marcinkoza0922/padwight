@@ -275,6 +275,8 @@ impl Daemon {
             info,
             logs,
             active: self.overlay_view(),
+            backdrop: self.preview_menu(),
+            peek: self.peeking(),
             font: self.config.active_font().map(str::to_string),
             colorblind: self.config.colorblind_tones,
             opener: crate::info::OpenerLabel::of(&self.config.shortcuts),

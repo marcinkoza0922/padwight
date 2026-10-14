@@ -61,7 +61,7 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
     };
     // The in-game editor's picture of what its page sets, beside the list.
     let body = match &m.figure {
-        Some(fig) => row![body, super::figure::figure(fig, c, s, font, look)].spacing(24.0 * s).align_y(Alignment::Center).into(),
+        Some(fig) => row![body, super::figure::figure(fig, c, s)].spacing(24.0 * s).align_y(Alignment::Center).into(),
         None => body,
     };
     // Where this page is in the menus, above its title: "Menu › Edit Controls › A button".

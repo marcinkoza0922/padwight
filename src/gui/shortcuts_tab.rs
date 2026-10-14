@@ -244,7 +244,17 @@ impl App {
         if group == Group::Mouse {
             rows.push(self.mouse_mode_extras());
         }
+        if group == Group::Menu {
+            rows.push(self.peek_trigger_row());
+        }
         section(group.title(), Some(help_text.into()), rows)
+    }
+
+    /// The trigger that hides the in-game editor while held, to show the overlay being edited.
+    fn peek_trigger_row(&self) -> Element<'_, Message> {
+        let pick = dropdown(crate::config::PeekTrigger::ALL, Some(self.config.peek_trigger), Message::SetPeekTrigger).width(190);
+        let help = text("Hold it in the in-game editor, on a page about a menu or overlay, to hide the editor and see the overlay.").size(13).color(MUTED_COLOR);
+        column![labeled_in(190.0, "Show the overlay being edited", pick.into()), help].spacing(2).into()
     }
 
     /// Whether the gyro and touchpad move the pointer in mouse mode.

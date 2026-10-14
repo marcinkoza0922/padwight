@@ -52,7 +52,7 @@ Goal: anything the settings window can do to the current profile and its game, E
 | Text | Names, labels, overlay text and window rules are typed on the on-screen keyboard, whose keys go into the field instead of the game. |
 | Game details | Name and window rules, looks (styles, font, Nintendo layout), sounds, rumble and motion. Pack info (author, version…) stays in the settings window. |
 | Profiles | Switch Profile (Guide menu) switches and makes profiles. Renaming, duplicating and deleting are under Game › Profiles. |
-| Visuals | Live pictures beside the list for sticks, gyro and touchpad (the settings window's graphs, with the live input), and previews of the menu or info overlay being edited. |
+| Visuals | Live pictures beside the list for sticks, gyro and touchpad (the settings window's graphs, with the live input), and the menu, info or log overlay being edited shown on screen where it goes, under the editor. |
 | Delivery | One branch, a commit per phase. |
 
 Progress:
@@ -63,6 +63,8 @@ Progress:
 - Pictures (done): `MenuView::figure` carries a `figures::Figure` beside the list, drawn by `overlay/draw/figure.rs`. The SVG pictures moved from the settings window to `src/figures/` (deadzone, mouse response, ring, gyro) so both draw the same ones, plus a trigger's travel. `layout_editor/pictures.rs` picks the picture for a page: a stick (travel, ring, response), a trigger (press point, zones), the gyro (curve, turning), the touchpad, or the menu being edited, smaller. The daemon keeps the menu's controller's input in `Daemon::menu_live` (`figures::Live`), feeds it gyro readings while the menu is up (the engine's gyro is paused then, so the picture shows the raw turning), and redraws for them at most every 33 ms. A left-stick page leaves the left stick to its picture; the D-pad moves the cursor. An info or log overlay being edited is shown where it goes (`daemon/previews.rs`), a log overlay with sample presses.
 
 Structure: every page builds a list of `Row`s (`layout_editor/rows.rs`), each carrying its label and what A and left/right do, so row counts, drawing, choosing and stepping all come from one place. Input pages take an `Owner` (the profile, or one of the game's modes or layers), so a layer's sticks, triggers, gyro, touchpad, gestures and combos use the same pages as the profile's. An action is reached through an `ActionAt` (a slot plus a path into Multi, Toggle and Turbo), so actions nest.
+
+Peek: a menu being edited rides in `OverlayFrame::backdrop` (drawn under the editor by `overlay/ui.rs`); holding the peek trigger (`Config::peek_trigger`, left by default, set in the Shortcuts tab's Menu controls card) sets `OverlayFrame::peek`, which stops the editor being drawn while the overlay stays. A new menu with no items has nothing to show yet. The Guide overlay has no preview.
 
 ## Open questions
 

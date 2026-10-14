@@ -20,6 +20,8 @@ Names, labels, overlay text, window rules and colors are typed on the on-screen 
 
 Pages about a stick, a trigger, the gyro or the touchpad show the settings window's pictures beside the list, and they follow your controller as you use it: where the stick is and what its deadzone and curve do with it, how far the trigger is pulled against its press point and zones, how fast you're turning on the gyro's curve, and your fingers on the touchpad. On a Left Stick page, only the D-pad moves the cursor, so you can watch the stick.
 
+A menu, info overlay or log overlay you are editing shows on screen where it goes, under the editor, and follows each change. Hold the left trigger to hide the editor and see the overlay whole; the trigger is chosen in the app's Shortcuts tab, in the Menu controls card ("Show the overlay being edited"), or switched off. A new menu with no items has nothing to show yet.
+
 A menu being edited is drawn beside its pages as it will look, and an info or log overlay being edited shows on screen where it goes. A log overlay shows sample presses.
 
 ## The top page

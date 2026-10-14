@@ -70,6 +70,12 @@ pub struct OverlayFrame {
     #[serde(default)]
     pub logs: Vec<crate::inputlog::LogView>,
     pub active: Option<OverlayView>,
+    /// A menu being edited, drawn under `active` where it goes (see `Preview`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub backdrop: Option<crate::menu::MenuView>,
+    /// `active` is held back so what's under it shows: it stays up, but isn't drawn.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub peek: bool,
     /// The font everything here is drawn in; the system's when unset.
     #[serde(default)]
     pub font: Option<String>,
@@ -122,7 +128,7 @@ impl OverlayFrame {
     /// Whether something in the frame loops (see `OverlayStyle::loops`) and the performance
     /// settings let it, so the screen keeps redrawing while it shows.
     pub fn loops(&self) -> bool {
-        let styles = self.info.iter().map(|v| &v.style).chain(self.logs.iter().map(|v| &v.style)).chain(self.active.as_ref().map(OverlayView::style));
+        let styles = self.info.iter().map(|v| &v.style).chain(self.logs.iter().map(|v| &v.style)).chain(self.active.as_ref().map(OverlayView::style)).chain(self.backdrop.as_ref().map(|m| &m.style));
         styles.into_iter().any(|style| !style.lite.calm && style.loops())
     }
 
@@ -136,7 +142,8 @@ impl OverlayFrame {
             OverlayView::Media(m) => &mut m.style,
             OverlayView::Offer(o) => &mut o.style,
         });
-        for style in styles.chain(active) {
+        let backdrop = self.backdrop.as_mut().map(|m| &mut m.style);
+        for style in styles.chain(active).chain(backdrop) {
             style.lite = lite;
         }
     }

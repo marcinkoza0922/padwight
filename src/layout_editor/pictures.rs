@@ -1,6 +1,6 @@
 //! The pictures beside Edit Controls' pages: a stick, trigger, gyro or touchpad being set, with
-//! the controller's live input, and the menu being edited as it will look. An info or log overlay
-//! being edited shows on screen where it goes (see [`Preview`]).
+//! the controller's live input. A menu, info or log overlay being edited shows on screen where it
+//! goes (see [`Preview`]).
 
 use crate::{
     config::{Analog, Button, Config, Stick, StickAction, Trigger, TriggerAction},
@@ -21,6 +21,8 @@ use super::{
 pub enum Preview {
     Info(usize),
     Log(usize),
+    /// A menu, and the item being edited.
+    Menu(usize, Option<usize>),
 }
 
 /// What a page is about, for its picture.
@@ -85,6 +87,7 @@ pub(super) fn preview(page: Page) -> Option<Preview> {
     match about(page) {
         Some(About::Info(i)) => Some(Preview::Info(i)),
         Some(About::Log(i)) => Some(Preview::Log(i)),
+        Some(About::Menu(m, item)) => Some(Preview::Menu(m, item)),
         _ => None,
     }
 }
@@ -124,13 +127,12 @@ pub(super) fn figure(page: Page, config: &Config, live: &Live) -> Option<Figure>
             let height = if live.pad_height > 0.0 { live.pad_height } else { crate::input::DUALSENSE_HEIGHT };
             Figure::Touchpad { pad: Box::new(pad), menus: config.active_game().menus.clone(), touches: live.touches.values().copied().collect(), click: live.click, height }
         }
-        About::Menu(m, item) => Figure::Menu(Box::new(menu_view(config, m, item)?)),
-        About::Info(_) | About::Log(_) => return None,
+        About::Menu(..) | About::Info(_) | About::Log(_) => return None,
     })
 }
 
 /// Menu `m` as it opens, with the cursor on `item` when one is being edited.
-fn menu_view(config: &Config, m: usize, item: Option<usize>) -> Option<MenuView> {
+pub fn menu_view(config: &Config, m: usize, item: Option<usize>) -> Option<MenuView> {
     let menu = config.active_game().menus.get(m)?;
     let menus = std::slice::from_ref(menu);
     let opener = crate::engine::Opener { buttons: vec![Button::LeftBumper], ..crate::engine::Opener::default() };

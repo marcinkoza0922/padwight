@@ -26,8 +26,6 @@ pub enum Figure {
     Gyro { curve: Option<SpeedCurve>, speed: Option<f32>, trail: Vec<(f32, f32)>, at: (f32, f32) },
     /// The touchpad with what it does, its menu's items where they lie, and the fingers on it.
     Touchpad { pad: Box<TouchpadConfig>, menus: Vec<Menu>, touches: Vec<(f32, f32)>, click: bool, height: f32 },
-    /// A menu being edited, drawn as it will look.
-    Menu(Box<crate::menu::MenuView>),
 }
 
 /// One picture: its caption, its SVG, its size in logical pixels, and a note under it.
@@ -57,7 +55,7 @@ impl Figure {
                 pics.push(Picture { title: "Turning (live)", svg: gyro::aim_points_svg(trail, *at), size: (gyro::SIDE, gyro::SIDE), note });
                 pics
             }
-            Figure::Touchpad { .. } | Figure::Menu(_) => Vec::new(),
+            Figure::Touchpad { .. } => Vec::new(),
         }
     }
 }

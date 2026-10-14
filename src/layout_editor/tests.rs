@@ -320,4 +320,17 @@ fn pages_about_a_stick_trigger_gyro_or_menu_have_their_picture() {
     editor.pick("Info overlays", &mut config);
     editor.pick("Add info overlay", &mut config);
     assert_eq!(editor.preview(), Some(Preview::Info(0)), "an info overlay shows where it goes");
+    let mut editor = LayoutEditor::new();
+    editor.pick("Menus (0)", &mut config);
+    editor.pick("Add menu", &mut config);
+    assert_eq!(editor.preview(), Some(Preview::Menu(0, None)), "a menu shows where it goes");
+    assert!(editor.figure(&config, &live).is_none(), "and has no picture beside the page");
+}
+
+#[test]
+fn the_peek_trigger_is_the_one_pulled() {
+    use crate::config::PeekTrigger;
+    assert!(PeekTrigger::Left.pulled([0.9, 0.0]) && !PeekTrigger::Left.pulled([0.2, 0.9]));
+    assert!(PeekTrigger::Right.pulled([0.0, 0.9]));
+    assert!(!PeekTrigger::Off.pulled([1.0, 1.0]));
 }

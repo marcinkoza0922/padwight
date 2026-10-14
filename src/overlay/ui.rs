@@ -77,6 +77,14 @@ impl Overlay {
     }
 }
 
+/// The menu being edited, which sits under the editor.
+fn backdrop_layer<'a, M: 'a>(state: &'a Overlay, font: iced::Font, display: Size) -> Option<Element<'a, M>> {
+    let m = state.frame.backdrop.as_ref()?;
+    let look = draw::MenuLook { colorblind: state.frame.colorblind, family: state.frame.family, nintendo_layout: state.frame.nintendo_layout, anim: Anim::still() };
+    let fit = Fit::of(&m.style, display);
+    Some(draw::place(draw::menu_panel(m, font, look, &fit), &m.style, &fit, &Anim::still()))
+}
+
 /// The overlays on screen at `now`, sized for a display of `display`.
 pub(super) fn layers<'a, M: 'a>(state: &'a Overlay, display: Size, now: Instant) -> Vec<Element<'a, M>> {
     let motion = &state.frame.motion;
@@ -98,6 +106,10 @@ pub(super) fn layers<'a, M: 'a>(state: &'a Overlay, display: Size, now: Instant)
         }
     }
     let glyphs = crate::info::Glyphs { family: state.frame.family, nintendo_layout: state.frame.nintendo_layout };
+    layers.extend(backdrop_layer(state, font, display));
+    if state.frame.peek {
+        return layers;
+    }
     for (view, anim) in state.panels.shown(now, motion) {
         layers.push(match view {
             OverlayView::Keyboard(k) => {

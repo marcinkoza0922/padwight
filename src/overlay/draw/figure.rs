@@ -1,30 +1,22 @@
 //! The picture beside a page of the in-game editor: a stick's, trigger's or gyro's pictures with
-//! their captions, the touchpad, or the menu being edited, smaller, as it will look.
+//! their captions, or the touchpad.
 
 use iced::{
-    Alignment, Element, Font,
+    Alignment, Element,
     widget::{column, svg, text},
 };
 
 use super::*;
 use crate::{
     figures::Figure,
-    menu::MenuView,
     touchpad_widget::{PadPicture, touchpad_picture},
 };
 
-/// How much smaller than its own size a menu being edited is drawn beside the editor.
-const MENU_SCALE: f32 = 0.7;
 /// The touchpad picture's width at scale 1.
 const PAD_WIDTH: f32 = 240.0;
 
-pub(super) fn figure<'a, M: 'a>(fig: &Figure, c: Colors, s: f32, font: Font, look: MenuLook) -> Element<'a, M> {
+pub(super) fn figure<'a, M: 'a>(fig: &Figure, c: Colors, s: f32) -> Element<'a, M> {
     match fig {
-        Figure::Menu(view) => {
-            let style = crate::config::OverlayStyle { scale: (view.style.scale * MENU_SCALE).clamp(0.5, 2.0), ..view.style.clone() };
-            let small = MenuView { style, figure: None, ..(**view).clone() };
-            menu_panel(&small, font, look, &Fit::contents())
-        }
         Figure::Touchpad { pad, menus, touches, click, height } => {
             let menus: Vec<&crate::config::Menu> = menus.iter().collect();
             let picture = PadPicture { settings: Some((pad, &menus)), touches, click: *click, height: *height, width: PAD_WIDTH * s };

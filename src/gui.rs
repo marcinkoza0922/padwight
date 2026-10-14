@@ -548,6 +548,7 @@ enum Message {
     SetRumbleStrength(f32),
     /// Whether picking an overlay's item gives a faint pulse.
     SetPickRumble(bool),
+    SetPeekTrigger(crate::config::PeekTrigger),
     /// The font of all overlays (`None`: the system's), or the shown game's own.
     SetOverlayFont(Option<String>),
     SetColorblindTones(bool),
