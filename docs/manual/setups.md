@@ -20,12 +20,6 @@ Some games share a program name, such as `game.exe` or `gpp.exe`. To tell them a
 
 To make a rule quickly, focus the game and use **Recently focused windows** on the setup's Details tab. It adds a rule for the profile you're editing.
 
-## Games Steam looks after
-
-Most games work with Padwight even while Steam Input is on. Slay the Spire 2 is the exception: it reads the stick through Steam whenever Steam reports a controller, so Padwight's controller leaves it with a dead stick. When Steam starts that game, Padwight lets go of the controller while it is in front, so Steam Input has it, and takes the controller back when you switch to another window.
-
-To use a setup for Slay the Spire 2 anyway, tick **Use this setup alongside Steam Input** in the setup's **Controllers this setup supports** card, and turn Steam Input off for the game in Steam (**Properties › Controller › Disable Steam Input**). Expect to fiddle: see [Troubleshooting](troubleshooting.md).
-
 > **Tip:** automatic switching needs a desktop that reports which window has focus: KDE Plasma, GNOME, Hyprland, Sway, or a wlroots compositor such as labwc. See [Troubleshooting](troubleshooting.md).
 
 ## Reusing items

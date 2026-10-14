@@ -192,7 +192,6 @@ impl Daemon {
             let rumble = rumble::supports_rumble(&dev);
             let paddles = input::has_paddles(&dev);
             self.gamepads.insert(key, SeenGamepad { name: name.clone(), analog_triggers, rumble, paddles });
-            // Steam may have the controllers: a pad that wakes or is plugged in then stays its.
             if self.should_manage(&name) {
                 self.manage(path, name, dev);
             }

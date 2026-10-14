@@ -14,8 +14,8 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
   `screenshots/motion/`; `--from/--until/--every` pick the strip's span, `--scene keyboard`, `--trace` prints numbers)
 - Which overlay cue plays, no display or speakers needed: `scripts/sound-trace.sh [config.toml]` (a `--debug` daemon
   logs each cue as a `sound:` line); `cargo run -q -- debug sound list|<kind>|<overlay>` plays cues to hear them
-- Game detection and the Steam hand-off, no controller needed: `cargo run -q -- debug focus [pid [class]]|processes`,
-  `debug steam [app id]`; `scripts/sandbox-pid.sh` runs a program in its own pid namespace (see
+- Game detection, no controller needed: `cargo run -q -- debug focus [pid [class]]|processes`;
+  `scripts/sandbox-pid.sh` runs a program in its own pid namespace (see
   `docs/development/code-review-plan.md`, which also tracks the review passes)
 - Long files: `scripts/long-files.sh` (lists files over 400 lines; split them when you work in them)
 
@@ -24,6 +24,8 @@ A hook runs `cargo check` after each edit to a `.rs` file and reports only failu
 
 ## Rules
 
+- Breaking changes are fine: the app has no outside users yet. Don't keep old config or pack fields
+  readable, add migrations or bump formats just for compatibility; remove what's gone.
 - Keep clippy at zero warnings. Fix new warnings rather than allowing them; use
   `#[expect(..., reason = "...")]` only where the lint is wrong for that code.
   Functions marked "predates the size lints" are a baseline: shrink them when you touch them.

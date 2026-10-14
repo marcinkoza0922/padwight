@@ -90,6 +90,8 @@ These parts were only searched (for unwraps, indexing, clamps and slow work), no
 
 Reviewed commit `b6111fd` and the code it touches. Findings were checked against the code before fixing.
 
+The Steam hand-off was removed on 2026-10-14 (`steam_handoff.rs`, `steam_appinfo.rs`, `over_steam`, `debug steam` and the R0-1 container test went with it): Steam games, Half-Life 2 among them, work alongside Steam Input, and Slay the Spire 2's broken stick needs more debugging. The findings below about the hand-off are kept as history.
+
 | ID | File | Finding | Status |
 |---|---|---|---|
 | R0-1 | `daemon/evdev.rs` | A controller plugged in, or woken from sleep, while Steam had the controllers was grabbed anyway. The check for a pad seen before asked whether Padwight takes pads, but the check for a new one only asked whether remapping was on. | **Fixed.** Every scan path, evdev and XInput, now asks `Daemon::should_manage` (`daemon/steam_handoff.rs`). Test, added 2026-10-13: `daemon::kernel_tests::steam_keeps_a_pad_plugged_in_while_it_has_the_controllers` (container; a uhid pad plugged in while Steam has the controllers isn't grabbed, and is taken once they come back; fails on the old check). Hardware check H-1 for a real Bluetooth wake. |
@@ -329,7 +331,7 @@ Checked and found sound:
 
 - The session's locks are taken link then pad, everywhere, and poisoning is recovered from. `flush` holds the link across the request to the daemon on purpose: it keeps the window's changes and the socket's in order.
 - Script and command parsing can't panic: every number goes through a checked parse, a script is parsed whole before anything is sent, and the client waits at most 30 seconds for a reply.
-- `debug focus` reads `/proc/<pid>/environ` for any pid given and shows nothing when it can't; `debug steam` parses app IDs and reads each cache file once. `debug overlay live` waits no longer than `--wait` and skips frames that show nothing.
+- `debug focus` reads `/proc/<pid>/environ` for any pid given and shows nothing when it can't. `debug overlay live` waits no longer than `--wait` and skips frames that show nothing.
 - The integration tests kill their daemons and sessions when they fail (`Drop`), each test runs in its own temp folder with its own `XDG_RUNTIME_DIR`, and the daemon tests run one at a time (`serial`). The default config they write ignores every real gamepad on the machine.
 
 ## Tools for checking findings
@@ -341,7 +343,6 @@ Tools added in pass 0:
 | `padwight debug focus` | What the running daemon sees in front: the focus backend, the active profile, whether Steam Input has the controllers, and, for the focused window, its program and path, the Steam app and its controller support, the rule it matches, and the SDL controller variables the process runs with. A long `SDL_GAMECONTROLLER_IGNORE_DEVICES` list is summarised as its length and which of Padwight's controller IDs it hides. |
 | `padwight debug focus <pid> [class] [title]` | The same for any window, without the daemon: identifies the pid as the daemon would now, including finding a sandboxed process from its inner pid (it says so when it does). |
 | `padwight debug focus processes` | For desktops without focus tracking: which running processes each rule matches, and which one the process scan picks. |
-| `padwight debug steam [app id]...` | Reads Steam's app cache as the hand-off does: each cache file's size, how many apps list their controller support, how long reading took, and the support listed for each app ID given. |
 | `scripts/sandbox-pid.sh [program [args]]` | Runs a program in its own pid namespace (as a Flatpak or the Steam runtime does) and prints its pid there and here, with the `debug focus` line to try. Needs unprivileged user namespaces. |
 
 Earlier tools that later passes will need are listed in `CLAUDE.md` (overlay and motion screenshots, sound traces, long files), in `qa-plan.md` (project checks, container kernel tests with `scripts/kernel-test-docker.sh`) and in `overlay-debugging.md`.

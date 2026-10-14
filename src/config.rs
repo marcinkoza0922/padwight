@@ -1451,10 +1451,6 @@ pub struct Game {
     /// presents itself as it (see [`crate::pad_identity`]); `None` is an Xbox 360 pad.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub controllers: Option<ControllerSupport>,
-    /// Use this setup even when Steam starts Slay the Spire 2 with full controller support.
-    /// Otherwise Padwight lets go of the controllers while that game is in front, for Steam Input.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub over_steam: bool,
 }
 
 impl Game {
@@ -1483,7 +1479,6 @@ impl Game {
             motion: None,
             assets: PackAssets::default(),
             controllers: None,
-            over_steam: false,
         }
     }
 

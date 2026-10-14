@@ -145,7 +145,6 @@ impl App {
             Message::SetNintendoLayout(on) => self.config.nintendo_layout = on,
             Message::SetGameNintendoLayout(choice) => self.game_mut().nintendo_layout = choice,
             Message::SetGameControllers(support) => self.game_mut().controllers = Some(support),
-            Message::SetGameOverSteam(on) => self.game_mut().over_steam = on,
             Message::SetGameSounds(sounds) => self.game_mut().sounds = Some(sounds),
             Message::SetSounds(sounds) => self.config.sounds = sounds,
             Message::ClearGameSounds => self.game_mut().sounds = None,

@@ -51,7 +51,6 @@ mod inject;
 mod logs;
 mod requests;
 mod serve;
-mod steam_handoff;
 /// The process around the service: signals, the control socket, running in the background.
 #[cfg_attr(target_os = "linux", path = "daemon/unix.rs")]
 #[cfg_attr(windows, path = "daemon/windows.rs")]
@@ -68,7 +67,6 @@ mod touchpad;
 
 use devices::{FfSpec, NodeKey, virtual_pad_for};
 pub(crate) use os::{bind_socket_at, prepare_private_dir, stop_on_signals};
-pub(crate) use steam_handoff::left_to_steam;
 use ipc::{UnixListener, UnixStream};
 
 const TICK: Duration = Duration::from_millis(4);
@@ -459,8 +457,6 @@ struct Daemon {
     recording: Option<u32>,
     recording_starting: bool,
     offers: Offers,
-    /// Steam Input has the controllers, for the game in front (see `steam_handoff`).
-    steam_has_pads: bool,
     pads: PadWatch,
     /// The game (or other program) that was in front when recording started, and its process:
     /// the recording ends when it does.
@@ -556,7 +552,6 @@ impl Daemon {
             recording: None,
             recording_starting: false,
             offers: Offers::default(),
-            steam_has_pads: false,
             pads: PadWatch::default(),
             recording_target: None,
             layer_started: HashMap::new(),
@@ -1307,6 +1302,12 @@ impl Daemon {
         }
     }
 
+    /// Whether a scan should take the controller called `name`: remapping is on and the user
+    /// hasn't set it aside. Every path that grabs a pad asks this.
+    fn should_manage(&self, name: &str) -> bool {
+        self.config.enabled && !self.config.ignored_devices.iter().any(|n| n == name)
+    }
+
     /// Stops managing (ungrabs) devices matching `pred`.
     fn release_devices(&mut self, pred: impl Fn(u64, &Managed) -> bool) {
         let ids: Vec<u64> = self.devices.iter().filter(|(id, d)| pred(**id, d)).map(|(id, _)| *id).collect();
@@ -1352,7 +1353,6 @@ impl Daemon {
             focus_backend: self.focus_backend,
             focused: self.focused.clone(),
             recent_windows: self.recent_windows.clone(),
-            steam_has_pads: self.steam_has_pads,
             motion_access_denied: self.nodes.denied_sensors(),
             overlay_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Keyboard),
             numpad_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Numpad),

@@ -9,7 +9,6 @@ version = "1.0"
 author = "Padwight"
 description = "Half-Life 2 and its episodes on an Xbox-style pad. The game has its own controller support, with the Xbox 360 layout of The Orange Box, so the controller passes through untouched and the game's Controller options set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard and the media controls, in the amber of the HEV suit's HUD."
 made_with = "Xbox controller"
-native_controller = true
 
 [[rules]]
 kind = "steam_app_id"

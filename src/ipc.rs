@@ -122,9 +122,6 @@ pub struct Status {
     /// Recently focused windows, newest first, for building rules.
     #[serde(default)]
     pub recent_windows: Vec<WindowInfo>,
-    /// Steam Input has the controllers, for a game in front that Steam lists with full support.
-    #[serde(default)]
-    pub steam_has_pads: bool,
     /// Controller motion sensors the daemon may not open (needs the udev rule in dist/).
     #[serde(default)]
     pub motion_access_denied: Vec<String>,

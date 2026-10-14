@@ -56,14 +56,6 @@ impl App {
                 toggle("DualShock 4", support.dualshock, |s, on| s.dualshock = on).into(),
                 toggle("DualSense", support.dualsense, |s, on| s.dualsense = on).into(),
                 toggle("Switch Pro Controller", support.switch_pro, |s, on| s.switch_pro = on).into(),
-                checkbox(self.game().over_steam)
-                    .label("Use this setup alongside Steam Input")
-                    .on_toggle(Message::SetGameOverSteam)
-                    .into(),
-                text("Slay the Spire 2 breaks while Padwight and Steam Input both offer it a controller. Unless this is ticked, Padwight lets go of the controller while that game is in front, started by Steam, and Steam Input has it.")
-                    .size(13)
-                    .color(MUTED_COLOR)
-                    .into(),
             ],
         )
     }

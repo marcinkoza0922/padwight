@@ -515,8 +515,6 @@ enum Message {
     SetGameNintendoLayout(Option<bool>),
     /// The other controllers a setup supports (its Details tab).
     SetGameControllers(crate::pad_identity::ControllerSupport),
-    /// Use the game's setup alongside Steam Input (only Slay the Spire 2 is left to Steam otherwise).
-    SetGameOverSteam(bool),
     /// The shown game's own overlay sounds, replacing its set.
     SetGameSounds(SoundSet),
     /// The App settings' sounds, which every setup without its own set uses.

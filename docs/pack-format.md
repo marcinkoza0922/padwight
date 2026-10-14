@@ -47,7 +47,6 @@ Unknown top-level keys are an error, so a typo fails the import rather than bein
 | `name` | The game name. |
 | `version` | Free text, compared as versions (`1.2` is newer than `1.1`). |
 | `author`, `description`, `made_with` | Shown in the import preview. `made_with` is informational, e.g. `"Xbox controller"`. |
-| `native_controller` | Optional, `false` by default. Set it for a game that plays well with a controller by itself: the pack is then not offered when Steam starts the game, because Steam Input looks after it. |
 | `based_on` | Only on forks: a table with `id`, `name`, `author`, `version` of the original. |
 
 ### Rules
@@ -719,7 +718,7 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
   - 17 added modes (`[[modes]]` and the `mode` action), and stopped layers from being toggled. When an older pack is read, each `toggle` of a layer becomes a `mode` switch, and a layer that was only ever toggled becomes a mode.
   - 18 added menu item icons, the typography (`type`), ornaments, background pictures, looping effects (pulsing glows and drifting gradients and scanlines) and rumble cues (`[rumble.<overlay>]`).
   - 19 replaced the menu item `icon` with the `{icon:name}` token, replaced the typography's bold, italic and color and the style's `text` color with inline formatting tags (`{b}`, `{i}`, `{u}`, `{box}`, `{color:…}`), added the `{gyro:…}` and `{trackpad}` tokens, added the `{font:…}` tag, and added the icons, sounds and fonts a pack carries (`[assets]`).
-  - 20 added `native_controller` to `[pack]`.
+  - 20 added `native_controller` to `[pack]` (since removed).
 - Bump `format` only for a breaking change to the shape. Adding an optional key with a default doesn't need it.
 
 ## Checks

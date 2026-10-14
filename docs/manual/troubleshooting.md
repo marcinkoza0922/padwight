@@ -8,9 +8,7 @@ PlayStation and Switch controllers can also be read directly, so for those you m
 
 ## Slay the Spire 2 ignores the controller's stick
 
-Slay the Spire 2 reads the stick through Steam whenever Steam reports a controller, which gets nothing from Padwight's. When Steam starts it, Padwight lets go of the controller so Steam Input has it (see [Controller setups](setups.md)). Leave Steam Input on for the game.
-
-If you tick **Use this setup alongside Steam Input** anyway, turn off Steam Input for the game: in Steam, open the game's **Properties › Controller** and pick **Disable Steam Input**. The buttons may then work while the stick doesn't. There is no known fix yet.
+When Steam starts Slay the Spire 2 with Steam Input on, the stick may do nothing while Padwight has the controller. The cause isn't known yet; other Steam games, such as Half-Life 2, work alongside Steam Input. Until it's fixed, switch Padwight off while you play it.
 
 ## My controller doesn't show up
 

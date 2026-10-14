@@ -81,7 +81,6 @@ pub fn run(args: &[&str]) -> Result<()> {
         ["svg"] => println!("{}", rest_svg(None)),
         ["svg", name] => println!("{}", rest_svg(parse_model(name)?)),
         ["focus", rest @ ..] => focus::run(rest)?,
-        ["steam", rest @ ..] => focus::steam(rest)?,
         ["sound", rest @ ..] => sound::run(rest)?,
         ["overlay", rest @ ..] => overlay_shot::run(rest)?,
         ["motion", rest @ ..] => motion_shot::run(rest)?,

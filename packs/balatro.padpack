@@ -9,7 +9,6 @@ version = "1.0"
 author = "Padwight"
 description = "Balatro on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and the game's own scheme sets the buttons. Padwight adds the Guide overlay on top, with the media controls and the on-screen keyboard, in Balatro's slate panels and red buttons."
 made_with = "Xbox controller"
-native_controller = true
 
 [controllers]
 dualshock = true

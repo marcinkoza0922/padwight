@@ -7,9 +7,8 @@ id = "5081b502-b8b1-503c-ad10-5b1596ee6f00"
 name = "Slay the Spire 2"
 version = "1.1"
 author = "Padwight"
-description = "Slay the Spire 2 on an Xbox-style pad. When Steam starts the game, Steam Input looks after the controller and Padwight stays out of the way; this setup is for copies Steam doesn't start, or for using Padwight anyway. The controller passes through untouched and the game's own settings set the buttons. Padwight adds the Guide overlay on top, with the media controls and the on-screen keyboard, in the same look as Slay the Spire."
+description = "Slay the Spire 2 on an Xbox-style pad. The controller passes through untouched and the game's own settings set the buttons. Padwight adds the Guide overlay on top, with the media controls and the on-screen keyboard, in the same look as Slay the Spire."
 made_with = "Xbox controller"
-native_controller = true
 
 [controllers]
 dualshock = true
@@ -81,7 +80,7 @@ activation = "always"
 noise_threshold = 1.0
 
 [profiles.guide]
-notes = '''The controller goes to the game as it is, so set the buttons in the game's own settings. If Steam starts the game with this setup in use, turn Steam Input off for it; the stick may then do nothing, and there is no known fix yet.
+notes = '''The controller goes to the game as it is, so set the buttons in the game's own settings. If Steam starts the game with Steam Input on, the stick may do nothing; that isn't fixed yet.
 {guide} still works over the game: {guide} + {west} opens the on-screen keyboard for a custom seed, and {guide} + {lb} the media controls.
 If the game stops answering the pad, check that no other remapper is running for it.'''
 
