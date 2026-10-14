@@ -78,7 +78,6 @@ pub(crate) mod shoot;
 mod settings;
 mod sound_picker;
 mod sounds;
-#[cfg(target_os = "linux")]
 mod sliders;
 mod sticks;
 mod style_editor;
@@ -559,8 +558,6 @@ enum Message {
     SetRumbleStrength(f32),
     /// Whether picking an overlay's item gives a faint pulse.
     SetPickRumble(bool),
-    /// Start Steam with Padwight's controller hidden from it, or not.
-    #[cfg(target_os = "linux")]
     /// The font of all overlays (`None`: the system's), or the shown game's own.
     SetOverlayFont(Option<String>),
     SetColorblindTones(bool),
@@ -1136,7 +1133,6 @@ impl App {
                 self.message = None;
             }
             Message::Tour(step) => return self.move_tour(step),
-            #[cfg(target_os = "linux")]
             Message::Undo
             | Message::ShowProblem
             | Message::CloseRequested
