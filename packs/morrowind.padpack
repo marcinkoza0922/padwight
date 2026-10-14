@@ -1,0 +1,469 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "19ea66dd-4b94-5e17-990e-c74838dd50a5"
+name = "The Elder Scrolls III: Morrowind"
+version = "1.0"
+author = "Padwight"
+description = "Morrowind (GOG and Steam, 2002) on an Xbox-style pad, laid out like the original Xbox release for the game's default keys. A activates, RT attacks and casts, LT jumps, X readies the weapon (hold: fists) and Y readies magic. LB opens the journal, RB waits and rests. A light push on the left stick walks and a full push runs. In menus the right stick moves the cursor and RT clicks."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Morrowind.exe"
+profile = "The Elder Scrolls III: Morrowind"
+
+[[rules]]
+kind = "steam_app_id"
+value = "22320"
+profile = "The Elder Scrolls III: Morrowind"
+
+[[profiles]]
+name = "The Elder Scrolls III: Morrowind"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_SPACE"]}
+East = {mouse = "Right"}
+West = {keys = ["KEY_F"]}
+North = {keys = ["KEY_R"]}
+LeftBumper = {keys = ["KEY_J"]}
+RightBumper = {keys = ["KEY_T"]}
+LeftStick = {toggle = {keys = ["KEY_LEFTCTRL"]}}
+RightStick = {keys = ["KEY_TAB"]}
+DpadLeft = {keys = ["KEY_LEFTBRACE"]}
+DpadRight = {keys = ["KEY_RIGHTBRACE"]}
+DpadUp = {keys = ["KEY_EQUAL"]}
+DpadDown = {keys = ["KEY_MINUS"]}
+Select = {open_menu = "Screens"}
+Start = {keys = ["KEY_ESC"]}
+
+[profiles.gestures.West.long_press]
+keys = ["KEY_0"]
+
+[profiles.gestures.LeftBumper.long_press]
+open_menu = "Quick keys"
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F5"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.keys]
+up = "KEY_W"
+down = "KEY_S"
+left = "KEY_A"
+right = "KEY_D"
+
+[[profiles.left_stick.zones]]
+min = 0.6
+max = 1.0
+action = {keys = ["KEY_LEFTSHIFT"]}
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = {keys = ["KEY_E"]}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+activation = "always"
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''This is the original Xbox layout: {south} activates, {rt} attacks, casts and uses, and {lt} jumps. {west} readies your weapon (hold it for fists) and {north} readies magic.
+A light push on the left stick {ls} walks; push it all the way to run. Click {ls} to turn sneaking on or off.
+{lb} opens the journal and {rb} waits or rests. Hold {lb} for the quick keys 1 to 9. {dpad} left and right cycle weapons, up and down cycle spells.
+Morrowind's menus want a mouse: move the cursor with {rs} and click with {rt}. {b} opens and closes the inventory menu. {start} is the game menu; double tap it to quick save, hold it to quick load.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move (light push: walk)"}
+"stick:Right" = {text = "Look / menu cursor"}
+"trigger:Right" = {text = "{icon:sword} {b}Attack{/b}, cast, click"}
+"trigger:Left" = {text = "Jump"}
+"button:South" = {text = "Activate"}
+"button:East" = {text = "{icon:bag} Inventory menu"}
+"button:West" = {text = "{icon:sword} Ready weapon (hold: fists)"}
+"button:North" = {text = "{icon:scroll} Ready magic"}
+"button:LeftBumper" = {text = "{icon:book} Journal (hold: quick keys)"}
+"button:RightBumper" = {text = "{icon:sleep} Wait / rest"}
+"button:LeftStick" = {text = "{icon:footprints} Sneak (toggle)"}
+"button:RightStick" = {text = "{icon:eye} Change view"}
+"button:DpadLeft" = {text = "Previous weapon"}
+"button:DpadRight" = {text = "Next weapon"}
+"button:DpadUp" = {text = "Next spell"}
+"button:DpadDown" = {text = "Previous spell"}
+"button:Select" = {text = "{icon:map} Screens, run options"}
+"button:Start" = {text = "Menu (2x: save, hold: load)"}
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:book} {b}Journal{/b}"
+action = {keys = ["KEY_J"]}
+
+[[menus.items]]
+label = "{icon:sleep} Wait / rest"
+action = {keys = ["KEY_T"]}
+
+[[menus.items]]
+label = "{icon:footprints} Auto move"
+action = {keys = ["KEY_Q"]}
+
+[[menus.items]]
+label = "{icon:footprints} Always run"
+action = {keys = ["KEY_CAPSLOCK"]}
+
+[[menus.items]]
+label = "{icon:fist} Ready fists"
+action = {keys = ["KEY_0"]}
+
+[[menus.items]]
+label = "{icon:scroll} Assign quick keys"
+action = {keys = ["KEY_F1"]}
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1b1510"
+opacity = 0.92
+
+[menus.style.items]
+color = "#3a2d1f"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c49a4a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#9a7a40"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#2a2016"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5a4326"
+
+[menus.style.glow]
+color = "#e0b860"
+opacity = 0.6
+blur = 18
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 12, width = 1, color = "#c49a4a"}
+vignette = {color = "#000000", opacity = 0.45, reach = 25}
+
+[[menus]]
+name = "Quick keys"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:star} Quick key 1"
+action = {keys = ["KEY_1"]}
+
+[[menus.items]]
+label = "{icon:star} Quick key 2"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:star} Quick key 3"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:star} Quick key 4"
+action = {keys = ["KEY_4"]}
+
+[[menus.items]]
+label = "{icon:star} Quick key 5"
+action = {keys = ["KEY_5"]}
+
+[[menus.items]]
+label = "{icon:star} Quick key 6"
+action = {keys = ["KEY_6"]}
+
+[[menus.items]]
+label = "{icon:star} Quick key 7"
+action = {keys = ["KEY_7"]}
+
+[[menus.items]]
+label = "{icon:star} Quick key 8"
+action = {keys = ["KEY_8"]}
+
+[[menus.items]]
+label = "{icon:star} Quick key 9"
+action = {keys = ["KEY_9"]}
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1b1510"
+opacity = 0.92
+
+[menus.style.items]
+color = "#3a2d1f"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c49a4a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#9a7a40"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#2a2016"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5a4326"
+
+[menus.style.glow]
+color = "#e0b860"
+opacity = 0.6
+blur = 18
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 12, width = 1, color = "#c49a4a"}
+vignette = {color = "#000000", opacity = 0.45, reach = 25}
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1b1510"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#3a2d1f"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c49a4a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#9a7a40"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#2a2016"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5a4326"
+
+[keyboard_style.type]
+letter_spacing = 2
+case = "upper"
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1b1510"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#3a2d1f"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c49a4a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#9a7a40"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#2a2016"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5a4326"
+
+[numpad_style.type]
+letter_spacing = 2
+case = "upper"
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1b1510"
+opacity = 0.92
+
+[media_style.items]
+color = "#3a2d1f"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c49a4a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#9a7a40"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#2a2016"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5a4326"
+
+[media_style.type]
+letter_spacing = 2
+case = "upper"
+
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1b1510"
+opacity = 0.92
+
+[menu_style.items]
+color = "#3a2d1f"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c49a4a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#9a7a40"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#2a2016"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5a4326"
+
+[menu_style.glow]
+color = "#e0b860"
+opacity = 0.6
+blur = 18
+pulse = true
+
+[menu_style.type]
+letter_spacing = 2
+case = "upper"
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 12, width = 1, color = "#c49a4a"}
+vignette = {color = "#000000", opacity = 0.45, reach = 25}
+
+[motion]
+keyboard = "dreamy"
+numpad = "dreamy"
+menu = "dreamy"
+media = "dreamy"
+offer = "dreamy"
+info = "dreamy"
+log = "dreamy"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "wood", volume = 0.16}
+open = {kind = "sand", volume = 0.08}
+close = {kind = "sand", volume = 0.05, pitch = 0.8}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "wood", volume = 0.16}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "wood", volume = 0.16}
+
+[sounds.media]
+pick = {kind = "wood", volume = 0.16}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 18}
+pick = {strength = 0.35, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.24, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.24, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.24, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.24, length_ms = 60}
