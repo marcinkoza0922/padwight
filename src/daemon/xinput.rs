@@ -99,7 +99,9 @@ impl Daemon {
         let model = crate::info::PadModel::detect(controller.vendor, controller.product, &name);
         let ff = controller.rumble.then_some(FfSpec);
         let identity = PadIdentity::resolve(self.identity_override, model, self.active_support());
-        let Some(pad) = virtual_pad_for(ff.as_ref(), identity) else { return };
+        // No pad is kept on Windows (see `first_pad.rs`), so this is always a new one.
+        let Some(new_pad) = self.pad_for_new(ff.as_ref(), identity) else { return };
+        let pad = new_pad.pad;
         log!("managing {name} ({})", path.display());
         let id = self.next_id;
         self.next_id += 1;
@@ -114,6 +116,8 @@ impl Daemon {
             rumble::spawn(pad.shared(), path.clone(), rumble_stop.clone());
         }
         let mut managed = self.new_managed(path, name, Some(pad), stop);
+        managed.first = new_pad.first;
+        managed.refit_at = new_pad.refit_at;
         managed.ff = ff;
         managed.rumble_stop = rumble_stop;
         managed.family = family;
