@@ -255,7 +255,7 @@ impl Template {
         }
     }
 
-    /// Offered in the "New from template" list (Duplicate has its own button).
+    /// Offered in the "Create New Profile" list (Duplicate has its own button).
     pub const NEW: [Template; 7] = [
         Template::Gamepad,
         Template::Action,

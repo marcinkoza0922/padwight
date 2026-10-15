@@ -49,6 +49,18 @@ impl Daemon {
                     Err(e) => Response::Error(format!("saving config: {e:#}")),
                 }
             }
+            Request::SetProfileLock(locked) => {
+                self.profile_locked = locked;
+                Response::Ok
+            }
+            Request::Unsaved(unsaved) => {
+                self.report_unsaved(unsaved);
+                Response::Ok
+            }
+            Request::CancelStop => {
+                self.cancel_stop();
+                Response::Ok
+            }
             Request::SetProfile(name) => {
                 let Some(target) = self.config.find_profile(&name) else {
                     return Response::Error(format!("no profile named {name:?}"));

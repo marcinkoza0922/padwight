@@ -130,13 +130,20 @@ pub fn run() -> iced::Result {
         .title("Padwight")
         .theme(App::theme)
         .subscription(App::subscription)
-        .exit_on_close_request(false)
-        .window(iced::window::Settings {
-            size: iced::Size::new(1280.0, 960.0),
-            icon: crate::icon::window(),
-            ..Default::default()
-        });
+        .window(window_settings());
     crate::font::BUNDLED.iter().fold(app, |app, b| app.font(b.bytes)).run()
+}
+
+/// The settings window. Closing it is asked about first (`Message::CloseRequested`) rather than
+/// done by iced, so this must say so: `Application::window` replaces every window setting, and
+/// would undo an earlier `exit_on_close_request(false)`.
+fn window_settings() -> iced::window::Settings {
+    iced::window::Settings {
+        size: iced::Size::new(1280.0, 960.0),
+        icon: crate::icon::window(),
+        exit_on_close_request: false,
+        ..Default::default()
+    }
 }
 
 /// What every part of the window that needs the daemon says while it isn't running, in small
@@ -402,6 +409,7 @@ enum Message {
     StatusLoaded(Result<Status, String>),
     ConfigLoaded(Box<Config>, Option<String>),
     SetEnabled(bool),
+    SetProfileLock(bool),
     ActivateProfile(ProfileRef),
     Done(Result<(), String>),
     SelectPage(Page),
@@ -678,6 +686,8 @@ enum Message {
     SaveAndQuit,
     /// Close without saving (from the unsaved-changes prompt).
     DiscardAndQuit,
+    /// Stay open with the unsaved edits (from the unsaved-changes prompt), and let a pending stop go.
+    KeepEditing,
 }
 
 async fn call(req: Request) -> Result<Response, String> {
@@ -838,6 +848,7 @@ impl App {
             Subscription::run(watch_feed),
             iced::event::listen_with(undo_shortcut),
             iced::window::close_requests().map(|_| Message::CloseRequested),
+            Subscription::run(close_on_signals),
             iced::system::theme_changes().map(Message::SystemMode),
             self.motion_demo_clock(),
         ])
@@ -1020,12 +1031,15 @@ impl App {
             Message::Poll => {
                 // Polling is the only tick, so a picture waiting out its hold is put up here.
                 self.settle_pad(Instant::now());
-                return Task::perform(call(Request::Status), |r| {
+                // The daemon holds its stop until this window's unsaved edits are dealt with.
+                let unsaved = Task::future(call(Request::Unsaved(self.config != self.saved))).discard();
+                let status = Task::perform(call(Request::Status), |r| {
                     Message::StatusLoaded(r.and_then(|r| match r {
                         Response::Status(s) => Ok(s),
                         other => Err(format!("The daemon sent an unexpected reply: {other:?}")),
                     }))
                 });
+                return Task::batch([unsaved, status]);
             }
             Message::LiveInput(snapshot) => {
                 if self.shortcuts_ui.listening.is_some()
@@ -1052,7 +1066,11 @@ impl App {
                 self.saved.active = active.clone();
                 self.config.enabled = status.enabled;
                 self.config.active = follow_renames(&self.renames, active);
+                let stop_pending = status.stop_pending;
                 self.status = Some(status);
+                if stop_pending && self.config != self.saved && !matches!(self.dialog, Some(Dialog::ConfirmQuit)) {
+                    return self.ask_to_save();
+                }
             }
             Message::StatusLoaded(Err(_)) => {
                 // The daemon has quit (from its tray, say), so close like the window's close button:
@@ -1081,6 +1099,7 @@ impl App {
                 self.unreadable = err;
             }
             Message::SetEnabled(on) => return call_ok(Request::SetEnabled(on)),
+            Message::SetProfileLock(on) => return Task::batch([call_ok(Request::SetProfileLock(on)), Task::done(Message::Poll)]),
             Message::ActivateProfile(at) => {
                 if self.saved.profile(&at).is_some() {
                     return Task::batch([call_ok(Request::Activate(at)), Task::done(Message::Poll)]);
@@ -1133,7 +1152,8 @@ impl App {
             | Message::ShowProblem
             | Message::CloseRequested
             | Message::SaveAndQuit
-            | Message::DiscardAndQuit => {
+            | Message::DiscardAndQuit
+            | Message::KeepEditing => {
                 return self.update_session(&message);
             }
             other => return self.update_games(other),
@@ -1195,8 +1215,8 @@ impl App {
                 if self.config == self.saved {
                     return iced::exit();
                 }
-                if self.dialog.is_none() {
-                    self.dialog = Some(Dialog::ConfirmQuit);
+                if !matches!(self.dialog, Some(Dialog::ConfirmQuit)) {
+                    return self.ask_to_save();
                 }
             }
             Message::SaveAndQuit => {
@@ -1204,9 +1224,24 @@ impl App {
                 return Task::done(Message::Save);
             }
             Message::DiscardAndQuit => return iced::exit(),
+            Message::KeepEditing => {
+                self.dialog = None;
+                return Task::future(call(Request::CancelStop)).discard();
+            }
             _ => {}
         }
         Task::none()
+    }
+
+    /// Asks about this window's unsaved edits before it can close, or the daemon can end: the question
+    /// comes up over whatever is open, and the window is brought to the front.
+    fn ask_to_save(&mut self) -> Task<Message> {
+        self.picker = None;
+        self.token_picker = None;
+        self.sound_picker = None;
+        self.char_picker = None;
+        self.dialog = Some(Dialog::ConfirmQuit);
+        iced::window::latest().then(|id| id.map_or(Task::none(), iced::window::gain_focus))
     }
 
     /// Whether saving must wait because the config file couldn't be read (see `unreadable`); says
@@ -1311,9 +1346,23 @@ impl App {
         if !running {
             controls = controls.push(text("○ Daemon not running").color(ERROR_COLOR));
         }
-        controls = controls.push(space::horizontal()).push(text("Active profile")).push(
-            dropdown(profiles, Some(self.saved.active.clone()), Message::ActivateProfile).width(SETTING_WIDTH),
+        // Locked, the active profile stays put while rules and the default profile would switch it.
+        let locked = self.status.as_ref().is_some_and(|s| s.profile_locked);
+        let lock = button(tab_icons::lock(locked))
+            .style(style::secondary)
+            .on_press_maybe(running.then_some(Message::SetProfileLock(!locked)));
+        let lock = tooltip(
+            lock,
+            container(text(if locked { "Locked: rules won't switch this profile. Click to unlock." } else { "Lock this profile against automatic switching." }).size(13))
+                .padding(8)
+                .style(style::tooltip),
+            tooltip::Position::Bottom,
         );
+        controls = controls
+            .push(space::horizontal())
+            .push(text("Active profile"))
+            .push(dropdown(profiles, Some(self.saved.active.clone()), Message::ActivateProfile).width(SETTING_WIDTH))
+            .push(lock);
         let mut header = column![controls].spacing(8);
 
         if !running && self.page == Page::Overview {
@@ -1397,6 +1446,23 @@ fn load_config() -> Task<Message> {
 /// Streams live input from the daemon, reconnecting every second while it is unavailable.
 fn watch_input() -> impl iced::futures::Stream<Item = Message> {
     watch(Request::WatchInput, Message::LiveInput)
+}
+
+/// Asks to close when the process is sent SIGTERM or SIGINT (a terminal's Ctrl+C, `kill`), as the
+/// close button would, so unsaved edits are asked about rather than lost.
+fn close_on_signals() -> impl iced::futures::Stream<Item = Message> {
+    use iced::futures::{SinkExt, StreamExt, channel::mpsc};
+
+    iced::stream::channel(1, async move |mut output: mpsc::Sender<Message>| {
+        let (signals, mut received) = mpsc::unbounded::<()>();
+        if let Err(e) = crate::daemon::stop_on_signals(move || signals.unbounded_send(()).is_ok()) {
+            crate::monitor::log!("cannot handle SIGTERM and SIGINT: {e:#}");
+            return;
+        }
+        while received.next().await.is_some() {
+            let _ = output.send(Message::CloseRequested).await;
+        }
+    })
 }
 
 /// Streams the latest presses and what they did, like [`watch_input`].

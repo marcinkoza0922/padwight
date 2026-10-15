@@ -32,6 +32,14 @@ pub enum Request {
     /// Re-read the config file from disk.
     Reload,
     SetEnabled(bool),
+    /// Lock the active profile so rules and the default profile don't switch it away. Not kept
+    /// across restarts, and cleared by any switch of profile.
+    SetProfileLock(bool),
+    /// The settings window's unsaved edits, sent on every poll: a stop of the daemon waits for them
+    /// (see `daemon/stop.rs`).
+    Unsaved(bool),
+    /// The settings window keeps its unsaved edits: a stop the daemon is waiting on is dropped.
+    CancelStop,
     /// Switch to a profile found by name (see `Config::find_profile`).
     SetProfile(String),
     /// Switch to exactly this profile.
@@ -130,6 +138,12 @@ pub struct Status {
     pub overlay_visible: bool,
     #[serde(default)]
     pub numpad_visible: bool,
+    /// The daemon is ending, and waits for the settings window to save or discard its unsaved edits.
+    #[serde(default)]
+    pub stop_pending: bool,
+    /// The active profile is locked against automatic switching.
+    #[serde(default)]
+    pub profile_locked: bool,
     /// Profile switches, newest first, each with the reason the daemon made it.
     #[serde(default)]
     pub switches: Vec<SwitchEvent>,

@@ -229,8 +229,8 @@ by page.
   "+ Double tap", "Turn every sound off", "Turn everything off" and the Add a menu buttons are
   small. "+ New layer", "+ Add combo", "Open it now" and "Hide" are full size. One rule: page and tab level buttons (the items header, profile bar, Live input) are full size, buttons inside a card are small. The Add a menu buttons are full size now, "+ Add combo" and "Open it now" small, and the Guide's "+ Add a row" a secondary button.
 - [x] 66. "Copy from another setup…" is plain body text with no link or button look. It's a secondary button.
-- [x] 67. Dropdowns with a gray placeholder ("+ From template…", "Empty setup from a
-  template…", "Share with", "Pick a setup…") look disabled. Dropdowns that run an action ("+ From template…", "Empty setup from a template…", "Pick a setup…", "Share with", "Add an input") draw their label in the text color (`style::action_dropdown`).
+- [x] 67. Dropdowns with a gray placeholder ("+ Create New Profile…", "Empty setup from a
+  template…", "Share with", "Pick a setup…") look disabled. Dropdowns that run an action ("+ Create New Profile…", "Empty setup from a template…", "Pick a setup…", "Share with", "Add an input") draw their label in the text color (`style::action_dropdown`).
 - [x] 68. Nested editors each have their own background. Expanded button rows sit in white
   cards, "Several at once…" in a lavender box, Visualizers in a gray card inside a gray card,
   and the Gyro tab's single dropdown in a white card of its own. A "Several at once" list, and the action a Toggle or Turbo wraps, use the panel style, like the Visualizers.

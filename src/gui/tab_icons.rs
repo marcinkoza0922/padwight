@@ -84,6 +84,21 @@ fn details() -> String {
     ))
 }
 
+/// A padlock: closed and filled in the accent color when `locked`, open and gray when not.
+pub(super) fn lock(locked: bool) -> Element<'static, Message> {
+    let (ink, shackle, fill) = if locked {
+        let accent = hex([0x59, 0x73, 0xf2]);
+        (accent.clone(), "M8 11V8a4 4 0 0 1 8 0v3", accent)
+    } else {
+        (hex(INK), "M8 11V6a4 4 0 0 1 8 0", "none".to_owned())
+    };
+    let text = svg_of(&format!(
+        "<path d='{shackle}' fill='none' stroke='{ink}' stroke-width='2' stroke-linecap='round'/>\
+         <rect x='5' y='11' width='14' height='10' rx='2' fill='{fill}' stroke='{ink}' stroke-width='2'/>"
+    ));
+    tab_svg(text)
+}
+
 fn tab_svg(svg_text: String) -> Element<'static, Message> {
     svg(svg::Handle::from_memory(svg_text.into_bytes())).width(16).height(16).into()
 }

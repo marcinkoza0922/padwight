@@ -193,6 +193,10 @@ impl Daemon {
         if target == self.config.active_ref() {
             return;
         }
+        if self.profile_locked {
+            log!("{reason}, but the profile is locked → staying on {}", self.config.active_ref());
+            return;
+        }
         if self.config.profile(&target).is_none() {
             log!("auto-switch points to missing profile {target}");
             return;
