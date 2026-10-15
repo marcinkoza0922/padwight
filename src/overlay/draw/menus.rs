@@ -168,9 +168,13 @@ fn list<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
         }
         col
     };
-    let left = column_of(shown(start, half), 300.0);
+    // Wide enough that a long label stays on one line: a wrapped row is taller, and a full page of
+    // them overflows the box.
+    let longest = m.items.iter().map(|item| item.label.chars().count()).max().unwrap_or(0);
+    let width = (longest as f32 * 9.0 + 60.0).clamp(300.0, 440.0);
+    let left = column_of(shown(start, half), width);
     let grid: Element<'a, M> = if half < len {
-        row![left, column_of(shown(half + start, len), 300.0)].spacing(14.0 * s).into()
+        row![left, column_of(shown(half + start, len), width)].spacing(14.0 * s).into()
     } else {
         left.into()
     };
