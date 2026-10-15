@@ -104,7 +104,25 @@ def card():
     return snap + place(0.16, (0.015, slide))[: len(x)]
 
 
-SOUNDS = {f.__name__: f for f in [sand, boing, shutter, zap, purr, clank, card]}
+def carriage():
+    """A typewriter carriage thrown back: a fast ratchet of tiny clicks and a clunk at the stop."""
+    total = 0.42
+    ticks = []
+    at, gap = 0.0, 0.032
+    while at < 0.27:
+        n = int(RATE * 0.012)
+        click = bandpass(rng.standard_normal(n), 1800, 6500) * env(n, 0.0003, 0.003)
+        ticks.append((at, click * (0.5 + 0.5 * at / 0.27)))
+        at += gap
+        gap *= 0.93
+    x = t(0.15)
+    stop = np.sin(2 * np.pi * 140 * x) * env(len(x), 0.001, 0.025)
+    stop += bandpass(rng.standard_normal(len(x)), 900, 4000) * env(len(x), 0.0005, 0.012) * 0.7
+    stop += np.sin(2 * np.pi * 1180 * x) * env(len(x), 0.001, 0.05) * 0.18
+    return place(total, *ticks, (0.285, stop))
+
+
+SOUNDS = {f.__name__: f for f in [sand, boing, shutter, zap, purr, clank, card, carriage]}
 
 
 def write(name, samples):

@@ -543,7 +543,7 @@ color = "#080c0d"
 opacity = 0.94
 ```
 
-`keyboard_style`, `numpad_style`, `media_style` and `menu_style` use the same shape as an overlay's `style`. `overlay_font` names a bundled font or an installed family. The bundled fonts, all under the SIL Open Font License (see `assets/fonts`), are Inter, Cantarell, Comfortaa, Source Code Pro, Rajdhani, Press Start 2P, VT323, Silkscreen, Monoton, Creepster, Nosifer, Eater, UnifrakturMaguntia, Cinzel, Bangers, Kreon, Orbitron and Titillium Web.
+`keyboard_style`, `numpad_style`, `media_style` and `menu_style` use the same shape as an overlay's `style`. `overlay_font` names a bundled font or an installed family. The bundled fonts, under the SIL Open Font License (Special Elite under Apache 2.0; see `assets/fonts`), are Inter, Cantarell, Comfortaa, Source Code Pro, Rajdhani, Press Start 2P, VT323, Silkscreen, Monoton, Creepster, Nosifer, Eater, UnifrakturMaguntia, Cinzel, Bangers, Kreon, Orbitron, Titillium Web and Special Elite.
 
 ## Overlay sounds
 
@@ -615,6 +615,7 @@ The overlays are `keyboard` (the on-screen keyboard), `numpad`, `menu` (every me
 | `purr` | A cat's purr: a low, soft, pulsing rumble (sample). |
 | `clank` | A machine part landing on steel: a thump with a short metal ring (sample). |
 | `card` | A playing card flicked down on a table: a papery snap (sample). |
+| `carriage` | A typewriter carriage thrown back: a quick ratchet and a clunk at the stop (sample). |
 
 `volume` is 0–1, `pitch` is 0.5–2 (an octave either way) and `length` is 0.5–2 (half as long, or twice as long). All three are relative to the kind's own sound. A longer cue is the same sound played slower, not a longer tail. The recordings and samples (marked above) are CC0 files that come with the app: `pitch` plays them higher or lower, and `length` stretches or squeezes them without changing their pitch.
 

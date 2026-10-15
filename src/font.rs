@@ -15,7 +15,7 @@ pub struct Bundled {
     pub bytes: &'static [u8],
 }
 
-pub const BUNDLED: [Bundled; 18] = [
+pub const BUNDLED: [Bundled; 19] = [
     Bundled { name: "Inter", bytes: include_bytes!("../assets/fonts/Inter-Regular.ttf") },
     Bundled { name: "Cantarell", bytes: include_bytes!("../assets/fonts/Cantarell-VF.otf") },
     Bundled { name: "Comfortaa", bytes: include_bytes!("../assets/fonts/Comfortaa-Regular.otf") },
@@ -34,6 +34,7 @@ pub const BUNDLED: [Bundled; 18] = [
     Bundled { name: "Kreon", bytes: include_bytes!("../assets/fonts/Kreon-Regular.ttf") },
     Bundled { name: "Orbitron", bytes: include_bytes!("../assets/fonts/Orbitron-VF.ttf") },
     Bundled { name: "Titillium Web", bytes: include_bytes!("../assets/fonts/TitilliumWeb-Regular.ttf") },
+    Bundled { name: "Special Elite", bytes: include_bytes!("../assets/fonts/SpecialElite-Regular.ttf") },
 ];
 
 /// Names offered in the font dropdowns: the bundled fonts, then the ones the game in use carries.

@@ -114,10 +114,12 @@ pub enum SoundKind {
     Clank,
     /// A playing card flicked down on a table: a papery snap.
     Card,
+    /// A typewriter carriage thrown back: a quick ratchet and a clunk at the stop.
+    Carriage,
 }
 
 impl SoundKind {
-    pub const ALL: [SoundKind; 51] = [
+    pub const ALL: [SoundKind; 52] = [
         SoundKind::Click,
         SoundKind::Tick,
         SoundKind::Pop,
@@ -169,6 +171,7 @@ impl SoundKind {
         SoundKind::Purr,
         SoundKind::Clank,
         SoundKind::Card,
+        SoundKind::Carriage,
     ];
 
     pub fn label(self) -> &'static str {
@@ -224,6 +227,7 @@ impl SoundKind {
             SoundKind::Purr => "Purr",
             SoundKind::Clank => "Clank",
             SoundKind::Card => "Card",
+            SoundKind::Carriage => "Carriage",
         }
     }
 
