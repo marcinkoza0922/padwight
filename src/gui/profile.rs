@@ -7,9 +7,6 @@ use crate::info::{Glyphs, button_name};
 use super::guide_tab::{self, GuideView};
 use crate::pad_widget::controller_drawing;
 
-/// The profile bar's name field, found by id to focus it and to see whether it still has focus.
-const PROFILE_NAME_FIELD: &str = "profile-name";
-
 /// Sections of the profile editor.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum ProfileTab {
@@ -702,7 +699,6 @@ impl App {
             Message::EditProfile(name) => {
                 if let Some(i) = self.game().profiles.iter().position(|p| p.name == name) {
                     self.editing = i;
-                    self.renaming_profile = false;
                     self.reload_guide_notes();
                 }
             }
@@ -833,13 +829,6 @@ impl App {
             }
             Message::Guide(msg) => self.update_guide(msg),
             Message::TogglePicture => self.picture_hidden = !self.picture_hidden,
-            Message::OpenRenameProfile => {
-                self.renaming_profile = true;
-                return iced::widget::operation::focus(PROFILE_NAME_FIELD);
-            }
-            Message::CheckRenameFocus => return iced::widget::operation::is_focused(PROFILE_NAME_FIELD).map(Message::RenameFocusChecked),
-            Message::RenameFocusChecked(focused) => self.renaming_profile = focused,
-            Message::CloseRenameProfile => self.renaming_profile = false,
             Message::ToggleExpanded(target) => {
                 if !self.expanded.remove(&target) {
                     self.expanded.insert(target);
@@ -1189,21 +1178,7 @@ impl App {
             row![text("Edit profile").size(20), activate].spacing(12).align_y(Alignment::Center),
             row![
                 text("Profile"),
-                if self.renaming_profile {
-                    Element::from(field("Profile name", current.as_deref().unwrap_or(""))
-                        .id(PROFILE_NAME_FIELD)
-                        .on_input(Message::RenameProfile)
-                        .on_submit(Message::CloseRenameProfile)
-                        .width(170))
-                } else {
-                    row![
-                        dropdown(names, current.clone(), Message::EditProfile).width(170),
-                        button(text("Rename").size(13)).style(style::secondary).padding([3, 10]).on_press(Message::OpenRenameProfile),
-                    ]
-                    .spacing(8)
-                    .align_y(Alignment::Center)
-                    .into()
-                },
+                dropdown(names, current.clone(), Message::EditProfile).width(170),
                 space::horizontal(),
                 dropdown(Template::NEW, None::<Template>, Message::AddProfile)
                     .placeholder("+ From template…")
@@ -1211,6 +1186,12 @@ impl App {
                     .width(200),
                 button(text("Duplicate")).style(style::secondary).on_press(Message::AddProfile(Template::Duplicate)),
                 delete_profile_button(can_delete),
+            ]
+            .spacing(8)
+            .align_y(Alignment::Center),
+            row![
+                text("Name"),
+                field("Profile name", current.as_deref().unwrap_or("")).on_input(Message::RenameProfile).width(170),
             ]
             .spacing(8)
             .align_y(Alignment::Center),
