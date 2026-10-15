@@ -210,15 +210,19 @@ fn disabled(theme: &Theme) -> button::Style {
     }
 }
 
-/// A quiet "Delete …" for deleting a whole item: a button's edge with muted text, so it reads as
-/// a button without shouting, and red once hovered.
+/// A "Delete …" for removing a whole item: a light red button that turns dark red once hovered.
 pub fn quiet_danger(theme: &Theme, status: button::Status) -> button::Style {
     let p = theme.extended_palette();
-    let (text_color, edge) = match status {
-        button::Status::Hovered | button::Status::Pressed => (p.danger.base.color, p.danger.base.color),
-        _ => (muted(p.background.base.text), p.background.strong.color),
+    let (fill, text_color) = match status {
+        button::Status::Hovered | button::Status::Pressed => (p.danger.strong.color, p.danger.strong.text),
+        _ => (p.danger.weak.color, p.danger.weak.text),
     };
-    button::Style { text_color, border: Border { width: 1.0, radius: 5.0.into(), color: edge }, ..button::Style::default() }
+    button::Style {
+        background: Some(fill.into()),
+        text_color,
+        border: Border { width: 1.0, radius: 5.0.into(), color: fill },
+        ..button::Style::default()
+    }
 }
 
 /// Field surface shared by dropdowns and text inputs: lighter than both page and cards.
