@@ -53,6 +53,7 @@ mod inject;
 mod logs;
 mod requests;
 mod serve;
+mod stop;
 /// The process around the service: signals, the control socket, running in the background.
 #[cfg_attr(target_os = "linux", path = "daemon/unix.rs")]
 #[cfg_attr(windows, path = "daemon/windows.rs")]
@@ -92,7 +93,7 @@ const FORCE_QUIT_HOLD: Duration = Duration::from_secs(2);
 const GUIDE_TAP: Duration = Duration::from_millis(350);
 
 enum Msg {
-    /// SIGTERM or SIGINT: release what is held, then exit.
+    /// SIGTERM or SIGINT: end the daemon, once the settings window has dealt with unsaved edits.
     Stop,
     Input { id: u64, events: Vec<InputEvent> },
     Gone { id: u64 },
@@ -515,6 +516,10 @@ struct Daemon {
     settings_process: Option<std::process::Child>,
     tray: Option<TrayIcon>,
     tx: Sender<Msg>,
+    /// A stop was asked for and is waiting for the settings window's unsaved edits to be dealt with.
+    stop_asked: bool,
+    /// When the settings window last reported unsaved edits; `None` when it reported none.
+    unsaved_at: Option<Instant>,
 }
 
 /// Starts the daemon in the background unless one is already running, so opening the settings
@@ -598,6 +603,8 @@ impl Daemon {
             settings_process: None,
             tray: None,
             tx,
+            stop_asked: false,
+            unsaved_at: None,
         }
     }
 }
@@ -675,6 +682,7 @@ impl Daemon {
             }
 
             self.run_timers();
+            self.finish_stop();
             self.catch_up_on_focus();
             let now = Instant::now();
             if ticking {
@@ -715,6 +723,7 @@ impl Daemon {
             .chain(self.info_fade)
             .chain(self.log_redraw)
             .chain(self.quit_hold.filter(|(_, done)| !done).map(|(since, _)| since + FORCE_QUIT_HOLD))
+            .chain(self.stop_deadline())
             .min()
     }
 
@@ -902,7 +911,7 @@ impl Daemon {
             tray::Command::OpenSettings => self.open_settings(),
             tray::Command::Quit => {
                 log!("quit from the tray");
-                self.shut_down();
+                self.stop();
             }
         }
     }
@@ -929,9 +938,8 @@ impl Daemon {
         {
             return;
         }
-        // Not tied to the daemon's life: a signal would skip the window's unsaved-changes check.
-        // The window notices the daemon has gone and closes itself the same way, however it was
-        // opened.
+        // Not tied to the daemon's life: the window answers for its unsaved changes before the daemon
+        // ends (see `stop.rs`), and closes itself if the daemon goes without it.
         match os::windowless(&mut std::process::Command::new(std::env::current_exe().unwrap_or_default())).spawn() {
             Ok(child) => self.settings_process = Some(child),
             Err(e) => log!("cannot open the settings window: {e}"),
@@ -984,7 +992,7 @@ impl Daemon {
 
     fn handle(&mut self, msg: Msg) {
         match msg {
-            Msg::Stop => self.shut_down(),
+            Msg::Stop => self.stop(),
             Msg::Input { id, events } => self.input(id, events),
             Msg::Gone { id } => self.device_gone(id),
             Msg::Ipc { req, reply } => {
@@ -1407,6 +1415,7 @@ impl Daemon {
             motion_access_denied: self.nodes.denied_sensors(),
             overlay_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Keyboard),
             numpad_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Numpad),
+            stop_pending: self.stop_asked,
             profile_locked: self.profile_locked,
             switches: self.activity.switches(Instant::now()),
         }

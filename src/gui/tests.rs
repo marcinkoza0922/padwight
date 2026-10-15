@@ -152,6 +152,42 @@ fn closing_with_unsaved_edits_asks_first() {
 }
 
 #[test]
+fn the_close_button_is_asked_about_not_obeyed() {
+    assert!(!window_settings().exit_on_close_request, "iced would close the window itself, skipping the unsaved-changes question");
+}
+
+#[test]
+fn closing_after_changing_the_tap_window_asks_first() {
+    let mut app = app();
+    let _ = app.update(Message::SetTapWindow(300.0));
+    assert!(app.config != app.saved, "the slider is an unsaved edit");
+    let _ = app.update(Message::CloseRequested);
+    assert!(matches!(app.dialog, Some(Dialog::ConfirmQuit)));
+}
+
+#[test]
+fn closing_over_another_dialog_still_asks_about_unsaved_edits() {
+    let mut app = app();
+    let _ = app.update(Message::SetAction(Target::Button(Button::South), ButtonAction::Keys(vec!["KEY_A".into()])));
+    let _ = app.update(Message::OpenAddGame);
+    let _ = app.update(Message::CloseRequested);
+    assert!(matches!(app.dialog, Some(Dialog::ConfirmQuit)), "the close request isn't ignored behind another dialog");
+}
+
+#[test]
+fn a_daemon_stop_waiting_on_unsaved_edits_asks_first() {
+    let mut app = app();
+    let stopping = Status { stop_pending: true, ..Default::default() };
+    let _ = app.update(Message::StatusLoaded(Ok(stopping.clone())));
+    assert!(app.dialog.is_none(), "nothing unsaved: the daemon isn't held up, so nothing to ask");
+    let _ = app.update(Message::SetAction(Target::Button(Button::South), ButtonAction::Keys(vec!["KEY_A".into()])));
+    let _ = app.update(Message::StatusLoaded(Ok(stopping)));
+    assert!(matches!(app.dialog, Some(Dialog::ConfirmQuit)), "unsaved edits: the question comes up");
+    let _ = app.update(Message::KeepEditing);
+    assert!(app.dialog.is_none(), "keeping the edits closes the question");
+}
+
+#[test]
 fn a_config_that_failed_to_load_is_never_saved_over() {
     let mut app = app();
     let _ = app.update(Message::ConfigLoaded(Box::default(), Some("parsing setups/001-Doom/setup.toml".into())));

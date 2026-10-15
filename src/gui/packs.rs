@@ -575,7 +575,7 @@ impl App {
                 error,
                 row![
                     space::horizontal(),
-                    button(text("Cancel")).style(style::secondary).on_press(Message::CloseDialog),
+                    button(text("Cancel")).style(style::secondary).on_press(Message::KeepEditing),
                     button(text("Discard")).style(button::danger).on_press(Message::DiscardAndQuit),
                     button(text("Save & quit")).on_press(Message::SaveAndQuit),
                 ]
