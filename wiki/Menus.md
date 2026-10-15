@@ -1,6 +1,6 @@
 # Menus
 
-A menu is an on-screen list of choices. A game's **Menus** tab holds them, and shared menus can be used by every game.
+A menu is an on-screen list of choices. A setup's **Menus** tab holds them.
 
 ## Opening a menu
 

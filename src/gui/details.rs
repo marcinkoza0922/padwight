@@ -51,7 +51,7 @@ impl App {
         };
         section(
             "Controllers this setup supports",
-            Some("Tick a kind when the game has explicit support for it. While the game is active, a controller of that kind is seen by the game as that kind, with its own buttons and glyphs. Other controllers, and kinds left unticked, are seen as an Xbox controller.".into()),
+            Some("Tick a kind only if the game supports it explicitly. While this setup is active, the game sees a controller of that kind as that kind, with its own buttons and glyphs. Other controllers, and kinds left unticked, appear to the game as an Xbox controller.".into()),
             vec![
                 toggle("DualShock 4", support.dualshock, |s, on| s.dualshock = on).into(),
                 toggle("DualSense", support.dualsense, |s, on| s.dualsense = on).into(),

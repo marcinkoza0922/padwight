@@ -46,6 +46,6 @@ The [Guide overlay](Guide-Button)'s Mappings show what the controls do in the mo
 
 ## Editing
 
-The Modes tab works like the Layers tab: it uses the profile editor, shown over one of the game's profiles. Inputs a mode doesn't set read **Same as Gameplay: …** with an **Override** button; overridden ones have **Back to base**. **Copy from another game…** copies a mode with the macros, menus and info overlays it uses.
+The Modes tab works like the Layers tab: it uses the profile editor, shown over one of the setup's profiles. Inputs a mode doesn't set read **Same as Gameplay: …** with an **Override** button; overridden ones have **Back to base**. **Copy from another game…** copies a mode with the macros, menus and info overlays it uses.
 
 Older setups and packs that toggled a layer on and off are converted when they're loaded: the toggle becomes **Switch mode…**, and a layer that was only ever toggled becomes a mode.

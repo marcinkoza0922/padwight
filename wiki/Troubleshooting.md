@@ -26,7 +26,7 @@ Install the motion-sensor udev rule. See [Installation](Installation#gyro).
 
 ## The profile didn't change when I focused a game
 
-- Check the game's rules on its **Details** tab. Rules match on the executable, Steam App ID or window class, and for Wine and Proton games the match is on the `.exe`.
+- Check the setup's rules on its **Details** tab. Rules match on the executable, Steam App ID or window class, and for Wine and Proton games the match is on the `.exe`.
 - Check that the desktop supports focus tracking. See [Desktop support](Desktop-Support). On GNOME, the extension must be enabled. A log out and back in may be needed after the first install.
 - Check that the rule is switched on, and that no earlier rule matches the same game.
 
@@ -38,17 +38,13 @@ These need a compositor with layer-shell support: KDE Plasma, Sway, Hyprland and
 
 A disconnect releases everything that controller was holding and closes any menu it had open. A toast names the controller that left or arrived.
 
-When the controller comes back, the profile you were on returns, unless you've changed it since. If the replacement controller lacks a feature the profile needs, such as gyro, the game's first profile that doesn't need it takes over, or the default profile if none does. A toast says so.
+When the controller comes back, the profile you were on returns, unless you've changed it since. If the replacement controller lacks a feature the profile needs, such as gyro, the setup's first profile that doesn't need it takes over, or the default profile if none does. A toast says so.
 
 The change is made once the controllers have looked the same for two 2-second scans. This stops a motion sensor that appears a moment after its pad from making the profile flicker.
 
 ## I edited the config file by hand and nothing changed
 
 Run `padwight reload`. The daemon is the only writer of the file while it runs, and it re-reads the file only on reload.
-
-## My old single-file config stopped working
-
-The config is now a folder: `config.toml` plus one folder per setup. Older single-file configs aren't read, and nothing converts them. See [Games and profiles](Games-and-Profiles).
 
 ## Rumble doesn't reach the controller
 

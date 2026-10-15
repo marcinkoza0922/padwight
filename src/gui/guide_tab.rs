@@ -131,7 +131,7 @@ pub(super) fn sections<'a>(p: &'a Profile, guide: GuideView<'a>, in_layer: bool)
         )];
     }
     let notes = text_editor(guide.notes)
-        .placeholder("Tips for the player: what the controls don't cover, when to switch layers, and so on.")
+        .placeholder("Tips for the player: what the controls don't cover, when to switch modes, and so on.")
         .on_action(|action| Message::Guide(GuideMsg::Notes(action)))
         .height(Length::Fixed(140.0));
     let rows = editable_rows(p);

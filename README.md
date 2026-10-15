@@ -37,7 +37,7 @@ For developers, in [docs/development/](docs/development/):
 
 Everything is organized into setups: one controller setup per game. Each game keeps its own bindings and switches to them when you start it. A setup holds its own profiles, macros, menus, info overlays, and the auto-switch rules that activate it. All of its profiles can use all of its items. **General** is a built-in setup with no rules, for the desktop and a plain gamepad. Names only need to be unique within a setup. To reuse items from another setup, use **Copy from another setup…** on its Modes, Layers, Macros, Menus or Info overlays tab.
 
-The sidebar lists General and your setups (with a search). Each setup's page has five sub-tabs: **Profiles**, **Macros**, **Menus**, **Info overlays** and **Details** (name, rules, export, delete). On the Macros, Menus and Info overlays tabs, "Copy from another setup…" previews another setup's items (or one from the library) and copies the ones you want in, so you can adapt them.
+The sidebar lists General and your setups (with a search). Each setup's page has eight tabs: **Profiles**, **Modes**, **Layers**, **Macros**, **Menus**, **Info overlays**, **Log overlays** and **Details** (name, rules, export, delete). On every tab except Profiles and Details, "Copy from another setup…" previews another setup's items (or one from the library) and copies the ones you want in, so you can adapt them.
 
 ## Packs and the library
 
@@ -181,8 +181,6 @@ A mode is another control scheme inside a game that you switch to and stay in, s
 - **Built in**: every setup also has the **Guide** mode (while Guide is held or its overlay is up) and **Mouse mode**, which can't be changed or removed. While one is on it stands in for the setup's mode, held layers pause, and the mode you were in comes back after. "Switch mode…" can turn on Mouse mode.
 - **Seeing them**: the Guide overlay's Mappings show the mode you're in; Left and Right turn to the other modes. A mode can show its name on screen like a layer, and `{mode}` shows it in info overlays.
 
-Older setups and packs that toggled a layer are converted when loaded: the toggle becomes "Switch mode…", and a layer that was only ever toggled becomes a mode.
-
 ## Layers
 
 A layer changes some of your mappings while you hold a button, then changes them back when you let go. For example, hold LB and the face buttons type F1–F4 and the right stick scrolls, or hold the aim button and the mouse slows down. Layers extend or fine-tune whichever mode is on; for a scheme that stays on, use a mode. Layers belong to a setup (on its **Layers** tab) and apply over whichever of its profiles and modes are on. Anything a layer doesn't set stays as it was. A layer can override buttons and stick directions, gestures, sticks, triggers (with their zones), gyro and the touchpad. It can also add combos, or switch the profile's combos off.
@@ -227,14 +225,15 @@ The "On-screen keyboard" action (also a button on the Overview tab, and `padwigh
 |---|---|
 | D-pad / left stick | move between keys (repeats while held) |
 | A | press the selected key (holding A holds the key) |
-| Shift / Ctrl / Alt / Super | latch for the next key |
+| Shift / Ctrl / Alt / AltGr / Super | latch for the next key |
 | X / Y / Start | Backspace / Space / Enter |
+| LB / RB | move the text cursor left / right |
 | hold LT | hold Shift |
-| hold B | close |
+| hold B, or press Guide | close |
 
 Guide + X, or X with the Guide overlay open, opens the keyboard. It needs a compositor with layer-shell (KDE Plasma, Sway, Hyprland, …).
 
-The "On-screen numpad" action (or `padwight numpad-toggle`) opens a smaller pad with the digits 0–9 and a dot, for codes and number fields. Move with the D-pad or left stick, press A for a number, X for backspace, Start for Enter, and hold B to close. It types the top-row number keys, so it works whatever the Num Lock state. Both pads have their own position, size and colors on the App settings page, and opening one closes the other.
+The "On-screen numpad" action (or `padwight numpad-toggle`) opens a smaller pad with the digits 0–9, a dot, a comma and a minus, for codes and number fields. Move with the D-pad or left stick, press A for a number, X for backspace, Start for Enter, and hold B to close. It types the top-row number keys, so it works whatever the Num Lock state. Both pads have their own position, size and colors on the App settings page, and opening one closes the other.
 
 ## Menus
 
@@ -251,13 +250,13 @@ Pick the style that suits the job:
 
 Under a button, long press or combo that opens a directional or button menu, "+ Add menu combos" adds a combo for each item: the opening input plus the item's button (RB opens the menu, so RB + D-pad Up fires its Up item without the menu showing). They are ordinary combos, and the option is off while any of them exists.
 
-An item can open another menu of the same kind (radial menus can't open menus). The new menu is a child of the first, so letting go closes both. While a menu is open, the controller drives it, and anything the mappings were holding is released. A quick tap can't hold a menu up, so a menu opened by a tap (e.g. on a double tap that isn't the button's last gesture) needs a Toggle. Menus opened from the command line or an analog zone can't be held, so they stay until you choose an item or press B (Select for face-button menus). The overlay window stays running invisibly between uses, so menus appear instantly.
+An item can open another menu of the same kind (radial menus can't open menus). The new menu is a child of the first, so letting go closes both. While a menu is open, the controller drives it, and anything the mappings were holding is released. A quick tap can't hold a menu up, so a menu opened by a tap (e.g. on a double tap that isn't the button's last gesture) won't show. Use a list with a close button, which stays up after the tap. A menu can't be put in a Toggle. Menus opened from the command line or an analog zone can't be held, so they stay until you choose an item or press B (Select for face-button menus). The overlay window stays running invisibly between uses, so menus appear instantly.
 
-Each menu is a collapsible card on the Menus tab, with a live preview. "Add a menu" adds another at the top. Under **Appearance**, each menu (and the keyboard) gets its own screen position (a 3×3 grid of corners, edges and center, so it fits any monitor size or aspect ratio), a size (50–200%), a width and height as percentages of the screen (or fitted to the contents), an x and y offset, a max width and max height that stop it stretching off screen, and a color and opacity for the background, items and selected item. Text switches between light and dark to stay readable. Optional decorations give a game's overlays a look of their own: a panel outline, shadow and gradient, item outlines, a glow on the selected item and a text color. A Performance card on the App settings page turns decorations, motion and sounds off everywhere. Older configs with `cascade` menus still load.
+Each menu is a collapsible card on the Menus tab, with a live preview. "Add a menu" adds another at the top. Under **Appearance**, each menu (and the keyboard) gets its own screen position (a 3×3 grid of corners, edges and center, so it fits any monitor size or aspect ratio), a size (50–200%), a width and height as percentages of the screen (or fitted to the contents), an x and y offset, a max width and max height that stop it stretching off screen, and a color and opacity for the background, items and selected item. Text switches between light and dark to stay readable. Optional decorations give a game's overlays a look of their own: a panel outline, shadow and gradient, item outlines, a glow on the selected item and a text color. A Performance card on the App settings page turns decorations, motion and sounds off everywhere.
 
 ## In-game menu
 
-Hold Guide and press Start (the Quick Settings shortcut, which can be moved on App settings like the other Guide shortcuts) to open a menu over the game in front. **Quick Settings** changes a few handy values, such as stick and gyro sensitivity, Invert Y and the profile. **Edit Controls** changes almost anything the settings window does for that setup: buttons, sticks, triggers, gyro, touchpad, combos, modes, layers, macros, menus, info and log overlays, the Guide overlay, looks, sounds and window rules, with names typed on the on-screen keyboard and live pictures of sticks, gyro and touchpad as you use them. **Switch profile** on the Guide menu switches profiles or makes a new one. Changes apply right away and are saved when you choose Save. With no game in front, Edit Controls is refused. Quick settings instead makes a setup for the window in front.
+Hold Guide and press Start (the Quick Settings shortcut, which can be moved on App settings like the other Guide shortcuts) to open a menu over the game in front. **Quick Settings** changes a few handy values, such as stick and gyro sensitivity, Invert Y and the profile. **Edit Controls** changes almost anything the settings window does for that setup: buttons, sticks, triggers, gyro, touchpad, combos, modes, layers, macros, menus, info and log overlays, the Guide overlay, looks, sounds and window rules, with names typed on the on-screen keyboard and live pictures of sticks, gyro and touchpad as you use them. **Switch profile** on the Guide menu switches profiles or makes a new one. Changes apply right away and are saved when you choose Save. With no window in front, Edit Controls is refused. When a window is in front but no setup matches it, a change makes a new setup for that window.
 
 The wiki has the details: [the in-game menu](https://github.com/marcinkoza0922/padwight/wiki/In-Game-Menu) and [editing controls in game](https://github.com/marcinkoza0922/padwight/wiki/Editing-Controls-in-Game).
 
@@ -316,6 +315,7 @@ GNOME can't show the on-screen keyboard, menus or overlays, because Mutter has n
 - **A setup's Modes tab**: the setup's modes, edited like a profile (see Modes).
 - **A setup's Layers tab**: the setup's layers, edited like a profile (see Layers).
 - **A setup's Macros tab**: a step editor with exact millisecond fields.
+- **A setup's Menus, Info overlays and Log overlays tabs**: the setup's on-screen menus, text overlays, and lists of recent presses.
 
 Problems that would block saving (unknown keys, missing macros, incomplete combos) are flagged on the row and with ⚠ on its tab. Section explanations sit behind ⓘ tooltips, and keys can be picked from an on-screen keyboard.
 

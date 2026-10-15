@@ -104,10 +104,6 @@ pub struct Header {
     /// The controller it was made with (free text).
     #[serde(default)]
     pub made_with: String,
-    /// Read from packs made before profiles declared their own needs (format 7 and older),
-    /// which `parse` moves onto the profiles. Never written.
-    #[serde(default, skip_serializing)]
-    pub requires: Vec<Feature>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub based_on: Option<PackRef>,
 }
@@ -172,8 +168,6 @@ impl Pack {
 
 /// Reads a pack, refusing one from a newer app and anything malformed (whole or nothing).
 pub fn parse(text: &str) -> Result<Pack> {
-    let text = crate::config::migrate_text(text);
-    let text = text.as_str();
     let table: toml::Table = toml::from_str(text).context("not a valid pack file")?;
     crate::config::check_finite(&table)?;
     let format = table.get("format").and_then(toml::Value::as_integer).context("not a pack file (no format number)")?;
@@ -184,15 +178,6 @@ pub fn parse(text: &str) -> Result<Pack> {
         bail!("unknown pack format {format}");
     }
     let mut pack: Pack = toml::from_str(text).context("reading the pack")?;
-    // Before format 8 the pack listed what its gyro-aiming profiles needed, as a whole.
-    for feature in std::mem::take(&mut pack.pack.requires) {
-        for p in pack.profiles.iter_mut().filter(|p| feature == Feature::Gyro && p.gyro.mode != GyroMode::Off) {
-            p.requires.push(feature);
-        }
-    }
-    crate::config::untoggle_menus(&mut pack.profiles, &mut pack.menus, &mut pack.layers);
-    crate::config::untoggle_menus(&mut [], &mut [], &mut pack.modes);
-    crate::config::modes::toggled_layers_to_modes(&mut pack.profiles, &mut pack.menus, &mut pack.layers, &mut pack.modes);
     // The built-in modes are every game's, fixed: a pack can't bring its own (see `built_in_mode`).
     pack.layers.retain(|l| crate::config::built_in_mode(&l.name).is_none());
     pack.modes.retain(|l| crate::config::built_in_mode(&l.name).is_none());
@@ -429,7 +414,6 @@ pub fn export(game: &Game, info: &PackInfo) -> Export {
             author: info.author.clone(),
             description: info.description.clone(),
             made_with: info.made_with.clone(),
-            requires: Vec::new(),
             based_on: info.based_on.clone(),
         },
         rules: pack_game.rules.iter().map(|r| Rule { enabled: true, ..r.clone() }).collect(),

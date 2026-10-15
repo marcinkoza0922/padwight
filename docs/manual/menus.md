@@ -12,7 +12,7 @@ A **list** that has a close button stays up when you let go of its input, so a q
 
 ## Close button
 
-Lists, grids and carousels close with B. Radial, directional and button menus have no close button unless you give them one: they go when you let go of their input, or when you choose an item. Each menu can have another close button, or none, on the **Menus** tab. A list without one closes when you let go, like any other menu.
+Lists, grids and carousels close with B. Radial, directional and button menus have no close button unless you give them one: they go when you let go of their input, or when you choose an item. On the **Menus** tab, each menu can be given a different close button, or none. A list with none closes when you let go, like any other menu.
 
 ## Submenus
 

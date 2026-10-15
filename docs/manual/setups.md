@@ -1,6 +1,6 @@
 # Controller setups and profiles
 
-A **controller setup** holds everything Padwight keeps for one game: its profiles, its macros, menus, info overlays and layers, and the rules that pick it when that game's window has focus. In the sidebar, a setup is listed under **Setups**. **General** is the setup for the desktop and plain controller use. It has no rules, so it's used when no other setup matches.
+A **controller setup** holds everything Padwight keeps for one game: its profiles, modes, layers, macros, menus and overlays, and the rules that pick it when that game's window has focus. In the sidebar, a setup is listed under **Setups**. **General** is the setup for the desktop and plain controller use. It has no rules, so it's used when no other setup matches.
 
 ## Profiles
 
@@ -24,4 +24,4 @@ To make a rule quickly, focus the game and use **Recently focused windows** on t
 
 ## Reusing items
 
-Each setup's macros, menus, info overlays and layers are its own, and names only need to be unique within one setup. To reuse one from another setup, click **Copy from another setup…** on its tab. The copy brings along anything the item uses.
+Each setup's modes, layers, macros, menus and overlays are its own, and names only need to be unique within one setup. To reuse one from another setup, click **Copy from another setup…** on its tab. The copy brings along anything the item uses.

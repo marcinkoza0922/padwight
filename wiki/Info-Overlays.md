@@ -1,6 +1,6 @@
 # Info overlays
 
-Info overlays put text on screen without taking control of the controller. They're mainly for showing a game's controls. A game's **Info overlays** tab holds them; shared overlays are available to every game.
+Info overlays put text on screen without taking control of the controller. They're mainly for showing a game's controls. A setup's **Info overlays** tab holds them.
 
 Each overlay is a grid of cells, with its own position, size and colours. Rows of cells line up in columns.
 

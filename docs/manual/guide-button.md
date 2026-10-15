@@ -6,7 +6,7 @@ The Guide button (the PlayStation, Xbox or Home button) works the same in every 
 
 Tap Guide to open the overlay, and tap it again to close it. It opens when you let go, so a quick press with another button is a shortcut, not an overlay.
 
-The overlay has three parts:
+The overlay has four parts:
 
 - **Notes** on the left: what the game's author wants you to know, such as limits in the control scheme, or when to switch modes.
 - **The menu** in the middle: Quick Settings, Edit Controls, the on-screen keyboard and numpad, mouse mode, media controls, Switch Profile (to pick another profile of the game, or make a new one) and, while Steam runs, the Steam overlay.
@@ -100,4 +100,4 @@ Screenshots are saved to `Pictures/Screenshots`, in a folder for the game. Recor
 
 ## Steam
 
-Steam's overlay is reached from the menu, and only while Steam is running. A double tap of Guide no longer sends it on to Steam.
+Steam's overlay is reached from the menu, and only while Steam is running. Guide itself never reaches Steam.
