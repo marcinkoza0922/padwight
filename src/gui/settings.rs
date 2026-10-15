@@ -5,7 +5,7 @@ use iced::widget::{column, row};
 use super::*;
 use crate::config::Performance;
 
-/// An entry in the auto-switch "No setup matches" list.
+/// An entry in the auto-switch "Default Profile" list.
 #[derive(Debug, Clone, PartialEq)]
 pub(super) struct DefaultChoice(pub(super) Option<ProfileRef>);
 
@@ -277,12 +277,12 @@ impl App {
         let default = DefaultChoice(auto.default_profile.clone());
         section(
             "Per-setup profiles",
-            Some("On its Details tab, each setup's rules decide which windows switch to which of its profiles. When no setup's rule matches, the profile picked under \"No setup matches\" is used.".into()),
+            Some("On its Details tab, each setup's rules decide which windows switch to which of its profiles. When no setup's rule matches, the Default Profile is used.".into()),
             // The dropdown sits in the label column's layout, as every other setting's does.
             vec![
                 toggler(auto.enabled).label("Switch profiles automatically").on_toggle(Message::SetAutoSwitch).into(),
                 text(how).size(13).color(MUTED_COLOR).into(),
-                labeled("No setup matches", dropdown(defaults, Some(default), Message::SetDefaultProfile).width(SETTING_WIDTH).into()),
+                labeled("Default Profile", dropdown(defaults, Some(default), Message::SetDefaultProfile).width(SETTING_WIDTH).into()),
             ],
         )
     }

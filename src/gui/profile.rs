@@ -1168,13 +1168,11 @@ impl App {
         let current = self.profile().map(|p| p.name.clone());
         let can_delete = names.len() > 1;
         let active = self.profile_ref().is_some_and(|at| at == self.saved.active);
-        let activate: Element<'_, Message> = match self.profile_ref() {
-            Some(at) if !active && self.status.is_some() => {
-                button(text("Make active")).style(style::secondary).on_press(Message::ActivateProfile(at)).into()
-            }
-            // Nothing is active while the daemon is down, as the header's status says.
-            _ if active && self.status.is_some() => text("● active").size(13).color(style_accent()).into(),
-            _ => space().into(),
+        // Nothing is active while the daemon is down, as the header's status says.
+        let activate: Element<'_, Message> = if active && self.status.is_some() {
+            text("● active").size(13).color(style_accent()).into()
+        } else {
+            space().into()
         };
         column![
             row![text("Edit profile").size(20), activate].spacing(12).align_y(Alignment::Center),
