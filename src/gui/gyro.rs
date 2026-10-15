@@ -34,7 +34,7 @@ impl GyroModeKind {
         match self {
             GyroModeKind::Off => GyroMode::Off,
             GyroModeKind::Mouse => GyroMode::Mouse { sensitivity: 15.0 },
-            GyroModeKind::Stick => GyroMode::Stick { stick: Stick::Right, full_rate: 360.0, anti_deadzone: 0.15 },
+            GyroModeKind::Stick => GyroMode::Stick { stick: Stick::Right, full_rate: 360.0, anti_deadzone: 0.15, game_curve: 1.0 },
             GyroModeKind::Position => GyroMode::Position { stick: Stick::Right, max_angle: 30.0, anti_deadzone: 0.15, lock_at_edge: true },
             GyroModeKind::Steering => GyroMode::Steering { stick: Stick::Left, max_angle: 45.0 },
         }
@@ -112,8 +112,8 @@ pub(super) fn gyro_editor<'a>(cfg: &'a GyroConfig, flick_turn: Option<f32>, open
 /// "Gyro", the mode, and the stick it sends (and Invert, for steering) on one line.
 fn header<'a>(cfg: &GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Message + Copy + 'a) -> Element<'a, Message> {
     let options = match cfg.mode {
-        GyroMode::Stick { stick, full_rate, anti_deadzone } => {
-            Vec::from(as_stick(stick, move |s| with(&|c| c.mode = GyroMode::Stick { stick: s, full_rate, anti_deadzone })))
+        GyroMode::Stick { stick, full_rate, anti_deadzone, game_curve } => {
+            Vec::from(as_stick(stick, move |s| with(&|c| c.mode = GyroMode::Stick { stick: s, full_rate, anti_deadzone, game_curve })))
         }
         GyroMode::Position { stick, max_angle, anti_deadzone, lock_at_edge } => {
             Vec::from(as_stick(stick, move |s| with(&|c| c.mode = GyroMode::Position { stick: s, max_angle, anti_deadzone, lock_at_edge })))
@@ -129,6 +129,7 @@ fn header<'a>(cfg: &GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Messa
 }
 
 /// How far the stick starts out, for the stick modes.
+const GAME_CURVE: &str = "The game's own stick response: 1 is linear, higher means small pushes turn slowly. Set it to the game's, and turning the controller turns the game's view by the same amount, as a mouse would.";
 const ANTI_DEADZONE: &str = "Starts the stick this far out, past the game's own stick deadzone, so small turns aren't lost.";
 
 /// The mode's own settings: sensitivity, or how far the stick is pushed.
@@ -161,11 +162,15 @@ fn mode_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(&
                 None => rows,
             }
         }
-        GyroMode::Stick { stick, full_rate, anti_deadzone } => rows
-            .push(box_row("Full tilt at", slider_editor(60.0..=720.0, full_rate, 10.0, "°/s turning", move |v| with(&|c| c.mode = GyroMode::Stick { stick, full_rate: v, anti_deadzone }))))
+        GyroMode::Stick { stick, full_rate, anti_deadzone, game_curve } => rows
+            .push(box_row("Full tilt at", slider_editor(60.0..=720.0, full_rate, 10.0, "°/s turning", move |v| with(&|c| c.mode = GyroMode::Stick { stick, full_rate: v, anti_deadzone, game_curve }))))
             .push(box_row(
                 "Anti-deadzone",
-                with_help(fraction_editor(0.0..=0.4, anti_deadzone, 0.01, "of a full push", move |v| with(&|c| c.mode = GyroMode::Stick { stick, full_rate, anti_deadzone: v })), ANTI_DEADZONE),
+                with_help(fraction_editor(0.0..=0.4, anti_deadzone, 0.01, "of a full push", move |v| with(&|c| c.mode = GyroMode::Stick { stick, full_rate, anti_deadzone: v, game_curve })), ANTI_DEADZONE),
+            ))
+            .push(box_row(
+                "Game's curve",
+                with_help(slider_editor(1.0..=3.0, game_curve, 0.1, "power", move |v| with(&|c| c.mode = GyroMode::Stick { stick, full_rate, anti_deadzone, game_curve: v })), GAME_CURVE),
             )),
         GyroMode::Position { stick, max_angle, anti_deadzone, lock_at_edge } => {
             let set = move |max_angle: f32, anti_deadzone: f32, lock_at_edge: bool| with(&|c| c.mode = GyroMode::Position { stick, max_angle, anti_deadzone, lock_at_edge });

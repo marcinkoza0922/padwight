@@ -207,7 +207,7 @@ power = 1.0                         # shape of the blend between: 1 is straight
 button = "DpadUp"                   # or: "always", while_held, toggle
 ```
 
-- `mode`: `"off"`, `mouse = { sensitivity }`, `stick = { stick, full_rate, anti_deadzone }` (rotation speed deflects a virtual stick), `position = { stick, max_angle, anti_deadzone, lock_at_edge }` (how far the controller has turned deflects a virtual stick; `max_angle` degrees is full, and with `lock_at_edge` turning further is let go, so turning back leaves the edge at once), or `steering = { stick, max_angle }` (tilt steers a stick).
+- `mode`: `"off"`, `mouse = { sensitivity }`, `stick = { stick, full_rate, anti_deadzone, game_curve }` (rotation speed deflects a virtual stick; `game_curve`, default 1, is the exponent of the game's own stick response, which the deflection undoes so the game turns as fast as the controller does), `position = { stick, max_angle, anti_deadzone, lock_at_edge }` (how far the controller has turned deflects a virtual stick; `max_angle` degrees is full, and with `lock_at_edge` turning further is let go, so turning back leaves the edge at once), or `steering = { stick, max_angle }` (tilt steers a stick).
 - `horizontal`: which turning aims left and right. `player_space` and `world_space` use gravity, so turning left aims left however the controller is held; `world_space` also reads up and down against the horizon.
 - `full_turn_px` (optional, mouse mode): mouse pixels that turn the game a full circle. With it, `sensitivity` is real-world: 1.0 turns the game as far as the controller turned.
 - `curve`: the app's presets are Linear (no curve), Gentle, Aggressive, Wide, Extra wide, Precision and Turn boost.

@@ -195,6 +195,17 @@ fn normalized(v: [f32; 3]) -> Option<[f32; 3]> {
     (len > 1e-3).then(|| v.map(|c| c / len))
 }
 
+/// The deflection that makes a game whose stick turns at `deflection^game_curve` of its full rate
+/// turn at `(x, y)` (shares of that full rate): the inverse of the game's response.
+fn undo_game_curve(x: f32, y: f32, game_curve: f32) -> (f32, f32) {
+    let mag = x.hypot(y);
+    if mag <= 0.0 {
+        return (0.0, 0.0);
+    }
+    let scaled = mag.min(1.0).powf(1.0 / game_curve.max(0.1)) / mag;
+    (x * scaled, y * scaled)
+}
+
 /// A stick deflection, clamped to the stick's circle and lifted past a game's own deadzone.
 fn deflection(x: f32, y: f32, anti_deadzone: f32) -> (f32, f32) {
     let mag = x.hypot(y);
@@ -326,8 +337,9 @@ impl Engine {
                     out.push(OutEvent::MouseMove(dx, dy));
                 }
             }
-            GyroMode::Stick { stick, full_rate, anti_deadzone } => {
-                let d = deflection(x / full_rate.max(1.0), y / full_rate.max(1.0), anti_deadzone);
+            GyroMode::Stick { stick, full_rate, anti_deadzone, game_curve } => {
+                let (dx, dy) = undo_game_curve(x / full_rate.max(1.0), y / full_rate.max(1.0), game_curve);
+                let d = deflection(dx, dy, anti_deadzone);
                 self.set_gyro_stick(Some((stick, d)), out);
             }
             GyroMode::Position { stick, max_angle, anti_deadzone, lock_at_edge } => {

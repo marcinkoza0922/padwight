@@ -285,7 +285,7 @@ fn the_built_in_modes_let_none_of_the_profile_s_sticks_triggers_gyro_or_touchpad
 #[test]
 fn mouse_mode_can_let_the_gyro_and_touchpad_move_the_pointer() {
     let mut p = Profile::passthrough("Aim");
-    p.gyro.mode = GyroMode::Stick { stick: Stick::Right, full_rate: 300.0, anti_deadzone: 0.1 };
+    p.gyro.mode = GyroMode::Stick { stick: Stick::Right, full_rate: 300.0, anti_deadzone: 0.1, game_curve: 1.0 };
     p.gyro.activation = GyroActivation::WhileHeld(GyroInput::Button(Button::LeftBumper));
     p.gyro.full_turn_px = Some(4000.0);
     p.touchpad.motion = TouchpadMotion::Off;

@@ -64,7 +64,7 @@ impl Mode {
         match self {
             Mode::Off => GyroMode::Off,
             Mode::Mouse => GyroMode::Mouse { sensitivity: 15.0 },
-            Mode::Stick => GyroMode::Stick { stick: Stick::Right, full_rate: 360.0, anti_deadzone: 0.15 },
+            Mode::Stick => GyroMode::Stick { stick: Stick::Right, full_rate: 360.0, anti_deadzone: 0.15, game_curve: 1.0 },
             Mode::Position => GyroMode::Position { stick: Stick::Right, max_angle: 30.0, anti_deadzone: 0.15, lock_at_edge: true },
             Mode::Steering => GyroMode::Steering { stick: Stick::Left, max_angle: 45.0 },
         }
@@ -115,6 +115,7 @@ const REAL_SENSITIVITY: Number = Number::new(0.05, (0.1, 5.0), 2, "× real world
 const SENSITIVITY: Number = Number::new(1.0, (2.0, 60.0), 0, " px per degree");
 const FULL_TURN: Number = Number::new(50.0, (500.0, 30_000.0), 0, " px");
 const FULL_RATE: Number = Number::new(10.0, (60.0, 720.0), 0, "°/s");
+const GAME_CURVE: Number = Number::new(0.1, (1.0, 3.0), 1, "");
 const ANTI_DEADZONE: Number = Number::new(0.01, (0.0, 0.4), 2, "");
 const POSITION_ANGLE: Number = Number::new(1.0, (5.0, 90.0), 0, "°");
 const STEERING_ANGLE: Number = Number::new(1.0, (15.0, 90.0), 0, "°");
@@ -202,13 +203,17 @@ fn mode_rows(owner: Owner, g: &GyroConfig) -> Vec<Row> {
             }
             rows
         }
-        GyroMode::Stick { stick, full_rate, anti_deadzone } => vec![
+        GyroMode::Stick { stick, full_rate, anti_deadzone, game_curve } => vec![
             sends_row(owner, stick),
             num(owner, "Full tilt at", full_rate, &FULL_RATE, |g, v| match &mut g.mode {
                 GyroMode::Stick { full_rate, .. } => set(full_rate, v),
                 _ => false,
             }),
             num(owner, "Anti-deadzone", anti_deadzone, &ANTI_DEADZONE, set_anti_deadzone),
+            num(owner, "Game's curve", game_curve, &GAME_CURVE, |g, v| match &mut g.mode {
+                GyroMode::Stick { game_curve, .. } => set(game_curve, v),
+                _ => false,
+            }),
         ],
         GyroMode::Position { stick, max_angle, anti_deadzone, lock_at_edge } => vec![
             sends_row(owner, stick),

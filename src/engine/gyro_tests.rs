@@ -108,7 +108,7 @@ fn gyro_clutch_and_toggle() {
 #[test]
 fn gyro_stick_adds_to_physical_stick_and_clears_when_off() {
     let mut p = gyro_profile(GyroConfig {
-        mode: GyroMode::Stick { stick: Stick::Right, full_rate: 100.0, anti_deadzone: 0.0 },
+        mode: GyroMode::Stick { stick: Stick::Right, full_rate: 100.0, anti_deadzone: 0.0, game_curve: 1.0 },
         activation: GyroActivation::WhileHeld(GyroInput::LeftTrigger),
         ..GyroConfig::default()
     });
@@ -122,6 +122,21 @@ fn gyro_stick_adds_to_physical_stick_and_clears_when_off() {
     // Letting go of LT drops the gyro part immediately.
     let out = axis(&mut e, &p, Axis::LeftTrigger, 0.0);
     assert!(out.contains(&OutEvent::PadAxis(Axis::RightX, 0.3)), "{out:?}");
+}
+
+#[test]
+fn gyro_stick_undoes_the_games_curve() {
+    let p = gyro_profile(GyroConfig {
+        mode: GyroMode::Stick { stick: Stick::Right, full_rate: 100.0, anti_deadzone: 0.0, game_curve: 2.0 },
+        activation: GyroActivation::WhileHeld(GyroInput::LeftTrigger),
+        ..GyroConfig::default()
+    });
+    let mut e = Engine::default();
+    axis(&mut e, &p, Axis::LeftTrigger, 1.0);
+    // A game turning at deflection^2 turns at a quarter of its full rate with half deflection,
+    // so a quarter-rate turn (25 deg/s) sends 0.5.
+    let out = turn(&mut e, &p, 0.0, -25.0, 0.0, 0.02);
+    assert!(out.iter().any(|ev| matches!(ev, OutEvent::PadAxis(Axis::RightX, v) if (v - 0.5).abs() < 1e-3)), "{out:?}");
 }
 
 #[test]

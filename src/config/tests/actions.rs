@@ -38,7 +38,7 @@ fn toggles_that_start_on_add_a_field_others_read_as_before() {
 fn gyro_config_roundtrips_and_is_optional() {
     let mut config = Config::default();
     config.general.profiles[0].gyro = GyroConfig {
-        mode: GyroMode::Stick { stick: Stick::Right, full_rate: 300.0, anti_deadzone: 0.2 },
+        mode: GyroMode::Stick { stick: Stick::Right, full_rate: 300.0, anti_deadzone: 0.2, game_curve: 1.0 },
         horizontal: GyroHorizontal::YawAndRoll,
         invert_x: true,
         invert_y: false,

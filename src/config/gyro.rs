@@ -124,8 +124,16 @@ pub enum GyroMode {
     Mouse { sensitivity: f32 },
     /// Rotation speed deflects a virtual-pad stick (added to the physical stick). Turning at
     /// `full_rate` degrees/second is full deflection; `anti_deadzone` is the smallest
-    /// deflection sent, to get past a game's own stick deadzone.
-    Stick { stick: Stick, full_rate: f32, anti_deadzone: f32 },
+    /// deflection sent, to get past a game's own stick deadzone. `game_curve` is the exponent of
+    /// the game's own stick response (1 for linear): the deflection undoes it, so the game turns
+    /// at the rate the controller does, as a mouse would make it.
+    Stick {
+        stick: Stick,
+        full_rate: f32,
+        anti_deadzone: f32,
+        #[serde(default = "one")]
+        game_curve: f32,
+    },
     /// Turning the controller away from where gyro started (or was recentered) deflects a
     /// virtual-pad stick, `max_angle` degrees being full deflection. With `lock_at_edge`,
     /// turning further than that is let go, so turning back moves off the edge at once.
