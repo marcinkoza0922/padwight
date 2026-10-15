@@ -402,6 +402,7 @@ enum Message {
     StatusLoaded(Result<Status, String>),
     ConfigLoaded(Box<Config>, Option<String>),
     SetEnabled(bool),
+    SetProfileLock(bool),
     ActivateProfile(ProfileRef),
     Done(Result<(), String>),
     SelectPage(Page),
@@ -1081,6 +1082,7 @@ impl App {
                 self.unreadable = err;
             }
             Message::SetEnabled(on) => return call_ok(Request::SetEnabled(on)),
+            Message::SetProfileLock(on) => return Task::batch([call_ok(Request::SetProfileLock(on)), Task::done(Message::Poll)]),
             Message::ActivateProfile(at) => {
                 if self.saved.profile(&at).is_some() {
                     return Task::batch([call_ok(Request::Activate(at)), Task::done(Message::Poll)]);
@@ -1311,9 +1313,23 @@ impl App {
         if !running {
             controls = controls.push(text("○ Daemon not running").color(ERROR_COLOR));
         }
-        controls = controls.push(space::horizontal()).push(text("Active profile")).push(
-            dropdown(profiles, Some(self.saved.active.clone()), Message::ActivateProfile).width(SETTING_WIDTH),
+        // Locked, the active profile stays put while rules and the default profile would switch it.
+        let locked = self.status.as_ref().is_some_and(|s| s.profile_locked);
+        let lock = button(tab_icons::lock(locked))
+            .style(style::secondary)
+            .on_press_maybe(running.then_some(Message::SetProfileLock(!locked)));
+        let lock = tooltip(
+            lock,
+            container(text(if locked { "Locked: rules won't switch this profile. Click to unlock." } else { "Lock this profile against automatic switching." }).size(13))
+                .padding(8)
+                .style(style::tooltip),
+            tooltip::Position::Bottom,
         );
+        controls = controls
+            .push(space::horizontal())
+            .push(text("Active profile"))
+            .push(dropdown(profiles, Some(self.saved.active.clone()), Message::ActivateProfile).width(SETTING_WIDTH))
+            .push(lock);
         let mut header = column![controls].spacing(8);
 
         if !running && self.page == Page::Overview {

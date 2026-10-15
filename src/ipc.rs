@@ -32,6 +32,9 @@ pub enum Request {
     /// Re-read the config file from disk.
     Reload,
     SetEnabled(bool),
+    /// Lock the active profile so rules and the default profile don't switch it away. Not kept
+    /// across restarts, and cleared by any switch of profile.
+    SetProfileLock(bool),
     /// Switch to a profile found by name (see `Config::find_profile`).
     SetProfile(String),
     /// Switch to exactly this profile.
@@ -130,6 +133,9 @@ pub struct Status {
     pub overlay_visible: bool,
     #[serde(default)]
     pub numpad_visible: bool,
+    /// The active profile is locked against automatic switching.
+    #[serde(default)]
+    pub profile_locked: bool,
     /// Profile switches, newest first, each with the reason the daemon made it.
     #[serde(default)]
     pub switches: Vec<SwitchEvent>,

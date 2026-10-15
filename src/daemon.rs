@@ -460,6 +460,8 @@ struct Daemon {
     focused: Option<WindowInfo>,
     /// Focus moved while the in-game menu was open; it's handled once the menu closes.
     focus_waited: bool,
+    /// The active profile is locked: automatic switches are held until it changes by hand.
+    profile_locked: bool,
     recent_windows: Vec<WindowInfo>,
     /// Last profile chosen by process scanning, so manual switches stick until it changes.
     scan_target: Option<ProfileRef>,
@@ -565,6 +567,7 @@ impl Daemon {
             focus_backend: FocusBackend::ProcessScan,
             focused: None,
             focus_waited: false,
+            profile_locked: false,
             recent_windows: Vec::new(),
             scan_target: None,
             active: None,
@@ -1293,6 +1296,8 @@ impl Daemon {
             return false;
         }
         log!("switching to profile {target}");
+        // A new profile starts unlocked: the lock was for the one that was active.
+        self.profile_locked = false;
         // An open menu refers to menus by position, which another game's list changes.
         let game_changes = target.game != self.config.active_ref().game;
         if game_changes {
@@ -1402,6 +1407,7 @@ impl Daemon {
             motion_access_denied: self.nodes.denied_sensors(),
             overlay_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Keyboard),
             numpad_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Numpad),
+            profile_locked: self.profile_locked,
             switches: self.activity.switches(Instant::now()),
         }
     }
