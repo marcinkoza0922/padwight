@@ -4,7 +4,7 @@ Conventions for choosing where actions go when setting up a game's controller bi
 
 ## Games with native controller support
 
-- If the game is known to have **native XInput support**, even if it's imperfect, **don't change or add to its control scheme**. This program can't do better than a native scheme, so leave the bindings alone.
+- If the game is known to have **native XInput support**, even if it's imperfect, **don't change or add to its control scheme**. This program can't do better than a native scheme, so leave the bindings alone. Shooters are the exception: they still get gyro and flick stick profiles (see [Shooters](#shooters)).
 - **Games released before 2006 don't count as native XInput**, even if the store page lists controller support. XInput came out in December 2005, so an older game has at best spotty DirectInput support, which is unreliable. Map the gamepad to the keyboard and mouse bindings, as for a game with no controller support. Treat a store page's controller badge as a hint only, and check the release date first.
 - **Check for native DualShock and Nintendo support too.** A game may support a DualShock 4, DualSense or Switch Pro Controller without XInput, or alongside it. Tick the matching kind under **Controllers this setup supports** on the Details tab, so the game sees that controller as itself and its own scheme holds for it. The same rules apply: explicit support counts, a store badge alone doesn't, and games released before 2006 don't count. The [first setup tutorial](../manual/tutorial-first-setup.md#3-check-for-native-controller-support) walks through the setting.
 - Enhancements are still welcome where the game leaves a gap:
@@ -23,7 +23,7 @@ Conventions for choosing where actions go when setting up a game's controller bi
 
 Classic PC games often come in more than one version: the original, a modern remaster or re-release, and sometimes a port. Often only one of them has controller support. Each version gets its own pack, and the two packs are handled differently:
 
-- **A version with native controller support is a gamepad passthrough.** Every button, stick and trigger goes to the game as it is, the way the [Against the Storm pack](../../packs/against-the-storm.padpack) does it (`{gamepad = "South"}` and so on for each input). The Guide overlay still sits on top, and the notes say to set the buttons in the game's own options. Don't add bindings, shortcuts, layers or modes: they would only fight the game's scheme.
+- **A version with native controller support is a gamepad passthrough.** Every button, stick and trigger goes to the game as it is, the way the [Against the Storm pack](../../packs/against-the-storm.padpack) does it (`{gamepad = "South"}` and so on for each input). The Guide overlay still sits on top, and the notes say to set the buttons in the game's own options. Don't add bindings, shortcuts, layers or modes: they would only fight the game's scheme. The exception is a shooter, which gets gyro and flick stick profiles beside the passthrough (see [Shooters](#shooters)).
 - **Keep the menus the same across versions.** Both packs should look and sound like the same game. Use the same overlay font, colors, keyboard and numpad styles, icons and sound cues in each, so a player who switches versions sees no change in the overlays.
 - **A version without controller support follows the rest of this guide.** Build its scheme as usual, with the same presentation as the other version.
 
@@ -57,7 +57,9 @@ Classic PC games often come in more than one version: the original, a modern rem
 - **Aim assist** can't be used with this daemon, so don't try to reproduce it. Almost everything else from the console feel can be matched: the dead zone, the curve shape, per-axis sensitivity, and invert-Y.
 - **Zoom / aim down sights** can be a **layer** held over the right stick, or over the zoom button, that swaps in a more fitting response curve, usually a slower and more precise one. This matches the way layers extend a scheme, and it's released as soon as the aim button is let go.
 - **Hold or toggle for aim** depends on the game. If the game uses a toggle, make it a toggle. If the game uses a hold, make it a hold when it's on the **left trigger**, and a toggle when it's on any other input.
-- **Gyro and flick stick profiles** should always be added for shooters, so the player can try them. They should **never be the default**. The default is the game's own scheme.
+- **Gyro and flick stick profiles** should always be added for shooters, so the player can try them, even when the game has gamepad support and the rest of the scheme is passthrough. They should **never be the default**. The default is the game's own scheme.
+- **If the game is known to support mouse and gamepad at the same time**, map **gyro to mouse**. The gyro then aims with the mouse while the sticks and buttons keep playing the game's own scheme.
+- **Otherwise, try a mouse joystick approach**: map **gyro to the right stick**, shaped to emulate mouse movement as closely as possible, so the game's mouse aiming feels the same with a controller. Build the gyro and flick stick profiles on top of it.
 
 ## Hotkeys and menus
 
