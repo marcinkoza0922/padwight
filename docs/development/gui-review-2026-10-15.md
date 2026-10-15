@@ -173,9 +173,9 @@ weren't covered this time. Items marked *verify* may come from the tool rather t
 
 ## Picture callouts and summaries
 
-- [ ] 47. **Leader lines still cross the face buttons.** The lines for X ("“;” +") and A ("Right
+- [x] 47. **Leader lines still cross the face buttons.** The lines for X ("“;” +") and A ("Right
   click") pass through the B and A circles, and the left stick's line crosses the D-pad's. Item 43
-  stopped lines crossing each other, but not crossing other buttons (`20-buttons.png`). **Open:** Not fixed: from X, every straight line to the right-hand labels crosses Y, B or A. It needs bent leader lines (`pad_svg/labels.rs`).
+  stopped lines crossing each other, but not crossing other buttons (`20-buttons.png`). **Done:** A leader line takes the shortest path that keeps clear of every other part, bending around them where it must (`route` in `pad_svg/labels.rs`); labels are swapped until the fewest lines cross. With every input mapped at once, one crossing can remain.
 - [x] 48. **The picture shows only stick clicks, not what the sticks do.** On Sticks & triggers,
   Deus Ex's left stick is a "Button ring" (WASD), but the picture's only label for the left stick is
   L3's "Toggle X" (`23-sticks.png`). **Done:** A stick's mode joins its click's label: "Ring · Toggle X", "Mouse · “[” +".

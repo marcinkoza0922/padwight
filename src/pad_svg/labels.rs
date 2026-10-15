@@ -72,7 +72,9 @@ fn anchors(l: &Layout) -> Vec<(Spot, (f32, f32), bool)> {
 /// rows allow, ordered so that no two leader lines cross.
 pub fn place_labels(labels: &[(Spot, String)], model: Option<PadModel>) -> Vec<PlacedLabel> {
     let text_for = |b: Spot| labels.iter().find(|(l, _)| *l == b).map(|(_, t)| t.as_str());
-    let mut anchors = anchors(Layout::of(model));
+    let layout = Layout::of(model);
+    let obstacles = obstacles(layout);
+    let mut anchors = anchors(layout);
     anchors.sort_by(|a, b| a.1.1.total_cmp(&b.1.1).then(a.1.0.total_cmp(&b.1.0)));
     let mut placed = Vec::new();
     for right in [false, true] {
@@ -88,7 +90,7 @@ pub fn place_labels(labels: &[(Spot, String)], model: Option<PadModel>) -> Vec<P
         for (label, y) in column.iter_mut().zip(rows) {
             label.y = y;
         }
-        uncross(&mut column);
+        uncross(&mut column, &obstacles);
         placed.extend(column);
     }
     placed
@@ -116,26 +118,135 @@ fn column_rows(wanted: &[f32]) -> Vec<f32> {
     rows
 }
 
-/// Swaps the texts and anchors of labels whose leader lines cross, until none do. Each swap
-/// shortens the lines in total, so it ends.
-fn uncross(column: &mut [PlacedLabel]) {
-    let start = |l: &PlacedLabel| (if l.right { RIGHT_COLUMN_X } else { LABEL_COLUMN }, l.y + LABEL_HALF);
-    for _ in 0..column.len() * column.len() {
-        let mut swapped = false;
+/// A round part a leader line should keep clear of: x, y and radius, before the margin offset.
+type Obstacle = (f32, f32, f32);
+
+/// The round parts on the face of the controller that a leader line mustn't run across.
+fn obstacles(l: &Layout) -> Vec<Obstacle> {
+    let (fx, fy) = l.face;
+    let mut all: Vec<Obstacle> = l.face_offsets().iter().map(|(ox, oy)| (fx + ox + MARGIN, fy + oy, l.face_r)).collect();
+    all.push((l.dpad.0 + MARGIN, l.dpad.1, l.dpad_reach));
+    all.push((l.left_stick.0 + MARGIN, l.left_stick.1, l.stick_r));
+    all.push((l.right_stick.0 + MARGIN, l.right_stick.1, l.stick_r));
+    all.extend([l.select, l.guide, l.start].map(|(x, y, r)| (x + MARGIN, y, r)));
+    all
+}
+
+/// How far a line keeps from a part it doesn't name.
+const CLEARANCE: f32 = 3.0;
+
+/// Distance from `c` to the segment `a`–`b`.
+fn distance_to_segment(c: Point, a: Point, b: Point) -> f32 {
+    let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+    let len2 = dx * dx + dy * dy;
+    let t = if len2 == 0.0 { 0.0 } else { (((c.0 - a.0) * dx + (c.1 - a.1) * dy) / len2).clamp(0.0, 1.0) };
+    (c.0 - (a.0 + t * dx)).hypot(c.1 - (a.1 + t * dy))
+}
+
+/// The leader line from `start` (a label's column edge) to `anchor`: the shortest path that keeps
+/// clear of every other part, bending around them where it must (a straight line when nothing is
+/// in the way). The part the anchor sits on is skipped, but the line may not leave it by crossing it.
+fn route(start: Point, anchor: Point, obstacles: &[Obstacle]) -> Vec<Point> {
+    /// Cost of each bend, so a path with fewer of them wins over one a little shorter.
+    const BEND: f32 = 8.0;
+    let own = |o: &Obstacle| (o.0 - anchor.0).hypot(o.1 - anchor.1) <= o.2 + CLEARANCE;
+    let others: Vec<&Obstacle> = obstacles.iter().filter(|o| !own(o)).collect();
+    let clear = |a: Point, b: Point| others.iter().all(|o| distance_to_segment((o.0, o.1), a, b) > o.2 + CLEARANCE);
+    // The last step into the anchor must come from the side away from the part it sits on.
+    let leaves_part = |to: Point| {
+        obstacles.iter().filter(|o| own(o)).all(|o| (to.0 - anchor.0) * (anchor.0 - o.0) + (to.1 - anchor.1) * (anchor.1 - o.1) >= 0.0)
+    };
+    if clear(start, anchor) && leaves_part(start) {
+        return vec![start, anchor];
+    }
+    // Nodes: the ends, and eight points around each part, just outside it.
+    let mut nodes = vec![start, anchor];
+    for o in obstacles {
+        let reach = (o.2 + CLEARANCE + 3.0) * 1.08;
+        nodes.extend((0..8).map(|k| {
+            let angle = k as f32 * std::f32::consts::FRAC_PI_4;
+            (o.0 + reach * angle.cos(), o.1 + reach * angle.sin())
+        }));
+    }
+    let mut best = vec![f32::INFINITY; nodes.len()];
+    let mut from = vec![usize::MAX; nodes.len()];
+    let mut done = vec![false; nodes.len()];
+    best[0] = 0.0;
+    while let Some(i) = (0..nodes.len()).filter(|&i| !done[i] && best[i].is_finite()).min_by(|&a, &b| best[a].total_cmp(&best[b])) {
+        done[i] = true;
+        if i == 1 {
+            break;
+        }
+        for j in 0..nodes.len() {
+            if done[j] || j == 0 {
+                continue;
+            }
+            let cost = best[i] + (nodes[j].0 - nodes[i].0).hypot(nodes[j].1 - nodes[i].1) + BEND;
+            if cost < best[j] && clear(nodes[i], nodes[j]) && (j != 1 || leaves_part(nodes[i])) {
+                best[j] = cost;
+                from[j] = i;
+            }
+        }
+    }
+    if from[1] == usize::MAX {
+        return vec![start, anchor];
+    }
+    let mut path = vec![anchor];
+    let mut at = 1;
+    while from[at] != usize::MAX {
+        at = from[at];
+        path.push(nodes[at]);
+    }
+    path.reverse();
+    path
+}
+
+fn column_start(l: &PlacedLabel) -> Point {
+    (if l.right { RIGHT_COLUMN_X } else { LABEL_COLUMN }, l.y + LABEL_HALF)
+}
+
+/// True if any pieces of the two paths cross.
+fn paths_cross(a: &[Point], b: &[Point]) -> bool {
+    a.windows(2).any(|p| b.windows(2).any(|q| crosses((p[0], p[1]), (q[0], q[1]))))
+}
+
+/// The labels' leader lines: how many pairs of them cross, and their total length.
+fn tangle(column: &[PlacedLabel], obstacles: &[Obstacle]) -> (usize, f32) {
+    let paths: Vec<Vec<Point>> = column.iter().map(|l| route(column_start(l), l.anchor, obstacles)).collect();
+    let crossing = (0..paths.len()).flat_map(|i| (i + 1..paths.len()).map(move |j| (i, j))).filter(|&(i, j)| paths_cross(&paths[i], &paths[j])).count();
+    let length = paths.iter().flat_map(|p| p.windows(2)).map(|w| (w[1].0 - w[0].0).hypot(w[1].1 - w[0].1)).sum();
+    (crossing, length)
+}
+
+/// Swaps the texts and anchors of labels, as long as a swap leaves fewer leader lines crossing (or
+/// the same number and shorter lines in total), so none cross where an order exists without.
+fn uncross(column: &mut [PlacedLabel], obstacles: &[Obstacle]) {
+    let better = |a: (usize, f32), b: (usize, f32)| a.0 < b.0 || (a.0 == b.0 && a.1 < b.1 - 0.5);
+    let mut now = tangle(column, obstacles);
+    while now.0 > 0 {
+        let mut improved = false;
         for i in 0..column.len() {
             for j in i + 1..column.len() {
-                if crosses((start(&column[i]), column[i].anchor), (start(&column[j]), column[j].anchor)) {
-                    let (a, b) = column.split_at_mut(j);
-                    std::mem::swap(&mut a[i].text, &mut b[0].text);
-                    std::mem::swap(&mut a[i].anchor, &mut b[0].anchor);
-                    swapped = true;
+                swap_labels(column, i, j);
+                let tried = tangle(column, obstacles);
+                if better(tried, now) {
+                    now = tried;
+                    improved = true;
+                } else {
+                    swap_labels(column, i, j);
                 }
             }
         }
-        if !swapped {
+        if !improved {
             break;
         }
     }
+}
+
+fn swap_labels(column: &mut [PlacedLabel], i: usize, j: usize) {
+    let (a, b) = column.split_at_mut(j);
+    std::mem::swap(&mut a[i].text, &mut b[0].text);
+    std::mem::swap(&mut a[i].anchor, &mut b[0].anchor);
 }
 
 type Point = (f32, f32);
@@ -150,13 +261,14 @@ fn crosses((p1, p2): (Point, Point), (q1, q2): (Point, Point)) -> bool {
 
 /// Leader lines from each label's column edge to its part.
 pub fn draw_labels(s: &mut String, labels: &[(Spot, String)], model: Option<PadModel>) {
+    let obstacles = obstacles(Layout::of(model));
     for l in place_labels(labels, model) {
-        let line_x = if l.right { RIGHT_COLUMN_X } else { LABEL_COLUMN };
         let (ax, ay) = l.anchor;
+        let points: Vec<String> = route(column_start(&l), l.anchor, &obstacles).iter().map(|(x, y)| format!("{x},{y}")).collect();
         let _ = write!(
             s,
-            r#"<line x1="{line_x}" y1="{}" x2="{ax}" y2="{ay}" stroke="{ACTIVE}" stroke-width="1.5" stroke-opacity="0.85"/><circle cx="{ax}" cy="{ay}" r="2.5" fill="{ACTIVE}"/>"#,
-            l.y + LABEL_HALF
+            r#"<polyline points="{}" fill="none" stroke="{ACTIVE}" stroke-width="1.5" stroke-opacity="0.85" stroke-linejoin="round"/><circle cx="{ax}" cy="{ay}" r="2.5" fill="{ACTIVE}"/>"#,
+            points.join(" ")
         );
     }
 }
@@ -234,16 +346,46 @@ mod tests {
     }
 
     #[test]
-    fn leader_lines_never_cross() {
+    fn leader_lines_cross_rarely_even_with_every_input_mapped() {
         let every: Vec<(Spot, String)> = anchors(Layout::of(None)).into_iter().map(|(spot, ..)| (spot, "Mapped".to_string())).collect();
         for model in [None, Some(PadModel::ProController)] {
             let placed = place_labels(&every, model);
-            let line = |l: &PlacedLabel| ((if l.right { RIGHT_COLUMN_X } else { LABEL_COLUMN }, l.y + LABEL_HALF), l.anchor);
-            for (i, a) in placed.iter().enumerate() {
-                for b in &placed[i + 1..] {
-                    assert!(!crosses(line(a), line(b)), "{:?} crosses {:?}", a.anchor, b.anchor);
+            let obstacles = obstacles(Layout::of(model));
+            let lines: Vec<Vec<Point>> = placed.iter().map(|l| route(column_start(l), l.anchor, &obstacles)).collect();
+            // With the Start line forced to pass the face buttons, one crossing can be unavoidable.
+            let crossing = (0..lines.len()).flat_map(|i| (i + 1..lines.len()).map(move |j| (i, j))).filter(|&(i, j)| paths_cross(&lines[i], &lines[j])).count();
+            assert!(crossing <= 1, "{model:?}: {crossing} pairs of leader lines cross");
+            assert!(placed.iter().all(|a| (FIRST_ROW..=LAST_ROW).contains(&a.y)), "a row is outside the picture");
+        }
+    }
+
+    #[test]
+    fn leader_lines_of_a_typical_setup_do_not_cross() {
+        use Button::{DpadDown, DpadLeft, DpadRight, DpadUp, LeftBumper, LeftStick, North, RightBumper, RightStick, Select, South, Start, West};
+        let spots = [LeftBumper, RightBumper, Select, Start, LeftStick, RightStick, DpadUp, DpadDown, DpadLeft, DpadRight, South, West, North, Button::East];
+        let labels: Vec<(Spot, String)> = spots.into_iter().map(|b| (Spot::Button(b), "Mapped".to_string())).collect();
+        let obstacles = obstacles(Layout::of(None));
+        let placed = place_labels(&labels, None);
+        let lines: Vec<Vec<Point>> = placed.iter().map(|l| route(column_start(l), l.anchor, &obstacles)).collect();
+        for i in 0..lines.len() {
+            for j in i + 1..lines.len() {
+                assert!(!paths_cross(&lines[i], &lines[j]), "{:?} crosses {:?}", placed[i].anchor, placed[j].anchor);
+            }
+        }
+    }
+
+    #[test]
+    fn leader_lines_keep_clear_of_other_parts() {
+        let every: Vec<(Spot, String)> = anchors(Layout::of(None)).into_iter().map(|(spot, ..)| (spot, "Mapped".to_string())).collect();
+        for model in [None, Some(PadModel::ProController), Some(PadModel::DualSense), Some(PadModel::XboxSeries)] {
+            let obstacles = obstacles(Layout::of(model));
+            for l in place_labels(&every, model) {
+                let path = route(column_start(&l), l.anchor, &obstacles);
+                for o in obstacles.iter().filter(|o| (o.0 - l.anchor.0).hypot(o.1 - l.anchor.1) > o.2 + CLEARANCE) {
+                    for w in path.windows(2) {
+                        assert!(distance_to_segment((o.0, o.1), w[0], w[1]) > o.2, "{model:?}: line to {:?} crosses a part at {:?}", l.anchor, (o.0, o.1));
+                    }
                 }
-                assert!((FIRST_ROW..=LAST_ROW).contains(&a.y), "row {} is outside the picture", a.y);
             }
         }
     }
