@@ -1069,7 +1069,15 @@ impl App {
                 let stop_pending = status.stop_pending;
                 self.status = Some(status);
                 if stop_pending && self.config != self.saved && !matches!(self.dialog, Some(Dialog::ConfirmQuit)) {
-                    return self.ask_to_save();
+                    // Plasma on Wayland won't let a window raise itself, so also flag its taskbar entry.
+                    return Task::batch([
+                        self.ask_to_save(),
+                        iced::window::latest().then(|id| {
+                            id.map_or(Task::none(), |id| {
+                                iced::window::request_user_attention(id, Some(iced::window::UserAttention::Critical))
+                            })
+                        }),
+                    ]);
                 }
             }
             Message::StatusLoaded(Err(_)) => {
@@ -1241,7 +1249,10 @@ impl App {
         self.sound_picker = None;
         self.char_picker = None;
         self.dialog = Some(Dialog::ConfirmQuit);
-        iced::window::latest().then(|id| id.map_or(Task::none(), iced::window::gain_focus))
+        // A minimized window has to be restored first; focusing alone leaves it in the taskbar.
+        iced::window::latest().then(|id| {
+            id.map_or(Task::none(), |id| iced::window::minimize(id, false).chain(iced::window::gain_focus(id)))
+        })
     }
 
     /// Whether saving must wait because the config file couldn't be read (see `unreadable`); says
