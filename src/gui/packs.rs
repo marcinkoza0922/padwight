@@ -473,7 +473,7 @@ impl App {
                             .style(if choices.replace { style::secondary } else { button::primary })
                             .on_press(Message::SetReplaceGame(false)),
                         button(text("Replace mine").size(13))
-                            .style(if choices.replace { button::danger } else { style::secondary })
+                            .style(if choices.replace { style::danger } else { style::secondary })
                             .on_press(Message::SetReplaceGame(true)),
                     ]
                     .spacing(8),
@@ -578,7 +578,7 @@ impl App {
                 row![
                     space::horizontal(),
                     button(text("Cancel")).style(style::secondary).on_press(Message::KeepEditing),
-                    button(text("Discard")).style(button::danger).on_press(Message::DiscardAndQuit),
+                    button(text("Discard")).style(style::danger).on_press(Message::DiscardAndQuit),
                     button(text("Save & quit")).on_press(Message::SaveAndQuit),
                 ]
                 .spacing(8),
@@ -614,7 +614,7 @@ impl App {
             .push(row![
                 space::horizontal(),
                 button(text("Cancel")).style(style::secondary).on_press(Message::CloseDialog),
-                button(text("Delete")).style(button::danger).on_press(Message::ConfirmDeleteGame),
+                button(text("Delete")).style(style::danger).on_press(Message::ConfirmDeleteGame),
             ]
             .spacing(8))
             .width(520)

@@ -642,7 +642,8 @@ pub(super) fn combo_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message
             if let Some(problem) = problem {
                 line = line.push(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR));
             }
-            rows.push(line.push(remove).into());
+            // Deleted from inside the open row, as every item is.
+            rows.push(line.into());
             continue;
         }
         let mut members = row![].spacing(6).align_y(Alignment::Center);
@@ -699,7 +700,7 @@ pub(super) fn combo_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message
 
 /// Deletes the profile being edited. A setup's only profile can't go, and a tooltip says why.
 fn delete_profile_button<'a>(can_delete: bool) -> Element<'a, Message> {
-    let delete = button(text("Delete")).style(style::danger).on_press_maybe(can_delete.then_some(Message::DeleteProfile));
+    let delete = button(text("Delete")).style(style::quiet_danger).on_press_maybe(can_delete.then_some(Message::DeleteProfile));
     if can_delete {
         return delete.into();
     }
@@ -1224,7 +1225,7 @@ impl App {
                 dropdown(names, current.clone(), Message::EditProfile).width(170),
                 space::horizontal(),
                 dropdown(Template::NEW, None::<Template>, Message::AddProfile)
-                    .placeholder("+ Create New Profile…")
+                    .placeholder("+ New profile…")
                     .style(style::action_dropdown)
                     .width(200),
                 button(text("Duplicate")).style(style::secondary).on_press(Message::AddProfile(Template::Duplicate)),

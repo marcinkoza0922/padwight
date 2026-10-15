@@ -197,7 +197,7 @@ impl App {
                     row![
                         labeled("Name", field("Setup name", &game.name).on_input(Message::RenameGame).width(260).into()),
                         space::horizontal(),
-                        button(text("Delete setup")).style(style::danger).on_press(Message::AskDeleteGame),
+                        button(text("Delete setup")).style(style::quiet_danger).on_press(Message::AskDeleteGame),
                     ]
                     .align_y(Alignment::Center)
                     .into(),

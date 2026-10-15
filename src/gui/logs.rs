@@ -83,7 +83,10 @@ impl App {
         if let Some(problem) = problem {
             header = header.push(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR));
         }
-        header = header.push(delete_item("Delete log overlay", Message::DeleteLog(i)));
+        // Deleted from inside the open card, as every item is.
+        if open {
+            header = header.push(delete_item("Delete log overlay", Message::DeleteLog(i)));
+        }
         let mut col = column![header].spacing(12);
         if open {
             col = col.push(self.view_log_editor(i, o));

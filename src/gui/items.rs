@@ -672,7 +672,11 @@ impl App {
         if let Some(problem) = &problem {
             header = header.push(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR));
         }
-        header = header.push(delete_item("Delete macro", Message::DeleteMacro(mi)));
+        // An item is deleted from inside its open card, so a list of closed cards isn't a column
+        // of red buttons.
+        if open {
+            header = header.push(delete_item("Delete macro", Message::DeleteMacro(mi)));
+        }
         let mut col = column![header].spacing(12);
         if open {
             col = col.push(self.view_macro_editor(mi, m, names));
@@ -873,7 +877,9 @@ impl App {
         if let Some(problem) = problem {
             header = header.push(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR));
         }
-        header = header.push(delete_item("Delete info overlay", Message::DeleteInfo(i)));
+        if open {
+            header = header.push(delete_item("Delete info overlay", Message::DeleteInfo(i)));
+        }
         let mut col = column![header].spacing(12);
         if open {
             col = col.push(self.view_info_editor(i, o));
@@ -1079,7 +1085,9 @@ impl App {
         if let Some(note) = self.menu_card_note(menu, problem) {
             header = header.push(note);
         }
-        header = header.push(delete_item("Delete menu", Message::DeleteMenu(mi)));
+        if open {
+            header = header.push(delete_item("Delete menu", Message::DeleteMenu(mi)));
+        }
         let mut col = column![header].spacing(12);
         if open {
             col = col.push(self.view_menu_editor(mi, menu, names, reachable));

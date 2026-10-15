@@ -88,7 +88,7 @@ weren't covered this time. Items marked *verify* may come from the tool rather t
   the profile editor says "Find by pressing". Use one word for both (`04-settings-shortcuts.png`). **Done:** "Listen" is "Set by pressing", next to "Find by pressing" (they do different jobs: one sets, one finds). The manual says so too.
 - [x] 20. **Labels switch to Title Case in a few places:** "+ Create New Profile…", "Default
   Profile", "Quick Settings menu", while everything else is in sentence case ("Duplicate", "Find by
-  pressing", "Overlay font") (`02-general.png`, `03-settings.png`). **Done:** "Default profile". Left as they are: "+ Create New Profile…", named so in 3787467, and "Quick Settings", the name of a panel.
+  pressing", "Overlay font") (`02-general.png`, `03-settings.png`). **Done:** "Default profile", and "+ New profile…", like "+ New layer" and "+ New macro". "Quick Settings" stays: it's the name of a panel.
 - [x] 21. **"Mouse mode keys" lists things that aren't keys:** Middle click, Mouse back and Mouse
   forward. Maybe call it "Mouse mode buttons" or "In mouse mode" (`04-settings-shortcuts.png`). **Done:** "Mouse mode buttons".
 - [x] 22. **Labels in the same card repeat their heading on one card but not another.** "On-screen
@@ -98,7 +98,7 @@ weren't covered this time. Items marked *verify* may come from the tool rather t
   ("Delete menu", "Delete macro", "Delete info overlay") is pale pink in light mode and dark red in
   dark mode, and rows use ✕. After a8ef0ee the item buttons are pink on every closed card again, so
   the Menus list is three pink buttons stacked (item 1 had moved them inside or quieted them)
-  (`34-menus.png`). **Done:** No change: the light red item buttons are from a8ef0ee, made today on purpose.
+  (`34-menus.png`). **Done:** Every Delete on a page (profile, setup, item) is the light red `quiet_danger`, dark red on hover; only a dialog's final Delete is solid red. An item's Delete shows only while its card (or combo row) is open.
 - [x] 24. **The "You decide this; it isn't detected…" note is written three times,** under back
   paddles, gyro and touchpad, with slightly different wording ("lacks a ticked feature" and "has no
   paddles"). Each is two or three lines. One shared sentence, or an ⓘ, would do

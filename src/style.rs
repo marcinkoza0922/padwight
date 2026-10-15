@@ -191,7 +191,8 @@ pub fn primary(theme: &Theme, status: button::Status) -> button::Style {
     }
 }
 
-/// A destructive action (Delete): iced's danger, with the shared disabled look.
+/// A dialog's final destructive action (Delete, Discard): iced's solid danger, with the shared
+/// disabled look.
 pub fn danger(theme: &Theme, status: button::Status) -> button::Style {
     match status {
         button::Status::Disabled => disabled(theme),
@@ -212,17 +213,24 @@ fn disabled(theme: &Theme) -> button::Style {
     }
 }
 
-/// A "Delete …" for removing a whole item: a light red button that turns dark red once hovered.
+/// Every "Delete …" on a page (a profile, a setup, an item): a light red button that turns dark
+/// red once hovered. Only a dialog's final Delete is solid red.
 pub fn quiet_danger(theme: &Theme, status: button::Status) -> button::Style {
     let p = theme.extended_palette();
-    let (fill, text_color) = match status {
-        button::Status::Hovered | button::Status::Pressed => (p.danger.strong.color, p.danger.strong.text),
-        _ => (p.danger.weak.color, p.danger.weak.text),
+    // At rest: the light red fill with a red edge, and the text in a red deep enough to read on it
+    // (darkened in light mode, lifted toward white in dark mode, where the fill is dark).
+    let red = p.danger.base.color;
+    let lift = |c: f32| c + (1.0 - c) * 0.55;
+    let rest_text = if p.is_dark { Color { r: lift(red.r), g: lift(red.g), b: lift(red.b), ..red } } else { Color { r: red.r * 0.6, g: red.g * 0.6, b: red.b * 0.6, ..red } };
+    let (fill, text_color, edge) = match status {
+        button::Status::Hovered | button::Status::Pressed => (p.danger.strong.color, p.danger.strong.text, p.danger.strong.color),
+        button::Status::Disabled => return disabled(theme),
+        button::Status::Active => (p.danger.weak.color, rest_text, red),
     };
     button::Style {
         background: Some(fill.into()),
         text_color,
-        border: Border { width: 1.0, radius: 5.0.into(), color: fill },
+        border: Border { width: 1.0, radius: 5.0.into(), color: edge },
         ..button::Style::default()
     }
 }
@@ -260,7 +268,7 @@ pub fn dropdown(theme: &Theme, status: pick_list::Status) -> pick_list::Style {
     }
 }
 
-/// A dropdown that runs an action ("+ Create New Profile…") rather than holding a value: its
+/// A dropdown that runs an action ("+ New profile…") rather than holding a value: its
 /// placeholder is its label, so it's drawn in the text color instead of the faint placeholder
 /// gray, which would make it look disabled.
 pub fn action_dropdown(theme: &Theme, status: pick_list::Status) -> pick_list::Style {
