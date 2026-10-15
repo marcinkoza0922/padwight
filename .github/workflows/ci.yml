@@ -13,7 +13,49 @@ env:
   RUST_BACKTRACE: "0"
 
 jobs:
+  # Decides which jobs are worth running. Skipped jobs count as passing for required checks.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      packs: ${{ steps.filter.outputs.packs }}
+      deps: ${{ steps.filter.outputs.deps }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            # Anything that changes the compiled binary or how it is built and tested.
+            # docs/manual, dist and the GNOME extension are embedded with include_str!.
+            code:
+              - 'src/**'
+              - 'tests/**'
+              - 'build.rs'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'clippy.toml'
+              - '.config/**'
+              - 'assets/**'
+              - 'docs/manual/**'
+              - 'dist/**'
+              - 'gnome-extension/**'
+              - 'flatpak/*.svg'
+              - '.github/workflows/ci.yml'
+            # Library packs are embedded and validated by the Rust tests, but need no clippy or Windows run.
+            packs:
+              - 'packs/**'
+            deps:
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - '.github/workflows/ci.yml'
+
   build-and-test:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.packs == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,9 +73,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Check
+        if: needs.changes.outputs.code == 'true'
         run: cargo check --all-targets
 
       - name: Clippy (zero warnings)
+        if: needs.changes.outputs.code == 'true'
         run: cargo clippy --all-targets -- -D warnings
 
       - uses: taiki-e/install-action@v2
@@ -44,6 +88,8 @@ jobs:
         run: cargo nextest run --profile agent --hide-progress-bar --cargo-quiet
 
   build-and-test-windows:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -84,6 +130,8 @@ jobs:
         run: scripts/check-install.sh
 
   audit:
+    needs: changes
+    if: needs.changes.outputs.deps == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
