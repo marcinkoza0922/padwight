@@ -6,7 +6,7 @@
 use std::path::PathBuf;
 
 use anyhow::{Context, Result, bail};
-use iced::{Color, Size};
+use iced::Size;
 
 use super::*;
 
@@ -249,7 +249,9 @@ fn take_shot(app: &mut App, options: &Options, name: &str) -> Result<()> {
     let path = options.out.join(format!("{name}.png"));
     app.saved = app.config.clone();
     let theme = app.theme();
-    crate::snapshot::render_themed(app.view(), options.size, 1.0, Color::WHITE, &theme)?.save(&path)?;
+    // The window's own background, as a real window paints it, so dark mode isn't drawn on white.
+    let background = theme.extended_palette().background.base.color;
+    crate::snapshot::render_themed(app.view(), options.size, 1.0, background, &theme)?.save(&path)?;
     println!("{}", path.display());
     Ok(())
 }

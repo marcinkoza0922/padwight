@@ -6,14 +6,14 @@ Overlays need a desktop that supports them: KDE Plasma, Sway, Hyprland or labwc.
 
 ## 1. Make an info overlay
 
-![The Info overlays tab: a cheat sheet with its name, heading, always-shown switch, a preview and three rows of cells](../images/manual/info-tab.png "A cheat sheet with three rows.")
+![The Info overlays tab: a cheat sheet with its name, heading, always-shown switch, three rows of cells and a preview](../images/manual/info-tab.png "A cheat sheet with three rows.")
 
 1. Open the setup's **Info overlays** tab and press **+ New info overlay** (1). The new overlay opens.
 2. Give it a **Name** and a **Heading**, which is the title drawn above the grid.
 3. **Shown** (2) decides when it's on screen. Tick **Always, while this setup is active** for a permanent cheat sheet. Untick it to show the overlay only sometimes: map **Toggle on / off…** with **Show info overlay…** inside it to a button, and the Toggle can start on, to show the overlay at launch until dismissed.
-4. The **Preview** (3) shows the result as you type.
-5. **Cells** (4) is the grid. Each row is a list of cells, and cells line up in columns. A cell is text, or a `{token}`: `{south}` draws the A button's picture as your controller labels it (Xbox, PlayStation or Nintendo glyphs, to match the controller in use), and the **Insert…** button opens the token picker: every token in groups, each with a preview (buttons are shown for Xbox, PlayStation and Nintendo controllers side by side), plus every icon and the text formatting tags (`{b}` bold, `{i}` italic, `{u}` underline, `{color:red}`, `{box}`), the live values such as the time, CPU load and current mode, the gyro's turning rates and the touchpad's position. Put a button picture in the first cell and what it does in the second.
-6. **+ Cell** adds a cell to a row and **+ Add row** adds a row.
+4. **Cells** (3) is the grid. Each row is a list of cells, and cells line up in columns. A cell is text, or a `{token}`: `{south}` draws the A button's picture as your controller labels it (Xbox, PlayStation or Nintendo glyphs, to match the controller in use), and the **Insert…** button opens the token picker: every token in groups, each with a preview (buttons are shown for Xbox, PlayStation and Nintendo controllers side by side), plus every icon and the text formatting tags (`{b}` bold, `{i}` italic, `{u}` underline, `{color:red}`, `{box}`), the live values such as the time, CPU load and current mode, the gyro's turning rates and the touchpad's position. Put a button picture in the first cell and what it does in the second.
+5. **+ Cell** adds a cell to a row and **+ Add row** adds a row.
+6. The **Preview** (4) under the cells shows the result as you type.
 
 ![An info overlay on screen over a game](../images/manual/info-overlay.png "An info overlay with live values and glyphs.")
 

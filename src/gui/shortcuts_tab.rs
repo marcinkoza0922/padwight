@@ -31,77 +31,42 @@ pub(super) struct Ui {
     pub(super) listening: Option<(Shortcut, usize)>,
 }
 
-/// What kind of input a shortcut sits on.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) enum InputKind {
-    Button,
-    DoubleTap,
-    TripleTap,
-    LongPress,
-    Combo,
-    Off,
-}
+mod input_kind;
 
-impl InputKind {
-    const ALL: [InputKind; 6] = [InputKind::Button, InputKind::DoubleTap, InputKind::TripleTap, InputKind::LongPress, InputKind::Combo, InputKind::Off];
-
-    pub(super) fn of(input: Option<&ShortcutInput>) -> Self {
-        match input {
-            None => InputKind::Off,
-            Some(i) => match i.gesture {
-                Some(GestureKind::DoubleTap) => InputKind::DoubleTap,
-                Some(GestureKind::TripleTap) => InputKind::TripleTap,
-                Some(GestureKind::LongPress) => InputKind::LongPress,
-                None if i.is_combo() => InputKind::Combo,
-                None => InputKind::Button,
-            },
-        }
-    }
-
-    fn gesture(self) -> Option<GestureKind> {
-        match self {
-            InputKind::DoubleTap => Some(GestureKind::DoubleTap),
-            InputKind::TripleTap => Some(GestureKind::TripleTap),
-            InputKind::LongPress => Some(GestureKind::LongPress),
-            _ => None,
-        }
-    }
-
-    /// `input` as this kind: the buttons it has are kept as far as they fit.
-    pub(super) fn apply(self, input: Option<&ShortcutInput>, fallback: Button) -> Option<ShortcutInput> {
-        let mut buttons = input.map(|i| i.buttons.clone()).unwrap_or_default();
-        if buttons.is_empty() {
-            buttons.push(fallback);
-        }
-        match self {
-            InputKind::Off => None,
-            InputKind::Combo => {
-                if buttons.len() < 2 {
-                    let other = ShortcutInput::choices().into_iter().find(|b| !buttons.contains(b) && *b != Button::Guide);
-                    buttons.extend(other);
-                }
-                Some(ShortcutInput { buttons, gesture: None })
-            }
-            kind => Some(kind.gesture().map_or_else(|| ShortcutInput::button(buttons[0]), |g| ShortcutInput::gesture(buttons[0], g))),
-        }
-    }
-}
-
-impl fmt::Display for InputKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(match self {
-            InputKind::Button => "Button",
-            InputKind::DoubleTap => "Double tap",
-            InputKind::TripleTap => "Triple tap",
-            InputKind::LongPress => "Long press",
-            InputKind::Combo => "Combo",
-            InputKind::Off => "Off",
-        })
-    }
-}
+pub(super) use input_kind::InputKind;
 
 /// The most buttons in a combo.
 const MOST_COMBO: usize = 4;
+
+/// The width of a shortcut's kind dropdown. Rows that take a plain button leave this much room
+/// instead, so every button picker on the tab starts in the same place.
+const KIND_WIDTH: f32 = 130.0;
+
+/// The button that waits for a press on the controller, then takes it.
+const SET_BY_PRESSING: &str = "Set by pressing";
+
+/// A button in a shortcut's picker, named as the controller in use prints it, as the Buttons tab
+/// names it.
+#[derive(Debug, Clone, PartialEq)]
+struct NamedButton(Button, String);
+
+impl fmt::Display for NamedButton {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.1)
+    }
+}
+
+/// A shortcut's name in its row. The card's title already says whose keys these are, so the
+/// keyboard's and numpad's don't say it again (the warnings, read out of context, still do).
+fn row_label(s: Shortcut) -> &'static str {
+    match s {
+        Shortcut::NumpadBackspace | Shortcut::KeyboardBackspace => "Backspace",
+        Shortcut::NumpadEnter | Shortcut::KeyboardEnter => "Enter",
+        Shortcut::NumpadClose | Shortcut::KeyboardClose => "Close",
+        Shortcut::KeyboardSpace => "Space",
+        other => other.label(),
+    }
+}
 
 impl App {
     /// Setups with a profile that uses what the opener takes: the setup, then each such profile
@@ -149,14 +114,25 @@ impl App {
         true
     }
 
+    /// `buttons` as a picker's choices, named for the controller in use.
+    fn named(&self, buttons: impl IntoIterator<Item = Button>) -> Vec<NamedButton> {
+        let family = self.shown_pad().family;
+        buttons.into_iter().map(|b| NamedButton(b, crate::info::button_name(b, family))).collect()
+    }
+
     pub(super) fn view_shortcuts(&self) -> Element<'_, Message> {
         let shortcuts = &self.config.shortcuts;
         let mut page = column![
-            note(
-                "These apply to every setup and can't be changed per game. A shortcut can sit on a button, a \
-                 double tap, triple tap or long press of one, or a combo of buttons. The Guide button belongs to \
-                 the Guide overlay: it can't be given to anything else."
-            ),
+            row![
+                note("These apply to every setup and can't be changed per game."),
+                help(
+                    "A shortcut can sit on a button, a double tap, triple tap or long press of one, or a combo of \
+                     buttons. The Guide button belongs to the Guide overlay: it can't be given to anything else."
+                        .into()
+                ),
+            ]
+            .spacing(8)
+            .align_y(Alignment::Center),
         ]
         .spacing(16);
         let clashes = Shortcut::ALL.iter().filter(|s| !shortcuts.warnings(**s).is_empty()).count();
@@ -183,17 +159,7 @@ impl App {
 
     fn view_opener(&self) -> Element<'_, Message> {
         let s = Shortcut::OpenGuide;
-        let mut rows = vec![
-            note(
-                "Tap it to open the Guide overlay, and tap it again to close it. Held as a button, it also turns on the \
-                 Guide mode while you press a shortcut. As a double tap, triple tap, long press or combo it opens and \
-                 closes the overlay, and the shortcuts are then pressed with the overlay open. It also ends mouse mode and closes the panels it opened. The overlays' hints that say \"press Guide\" show it. \
-                 Handy for a controller without a Guide button, such as Start + Select. Guide still doesn't reach the game \
-                 or Steam when something else opens the overlay.",
-            )
-            .into(),
-            self.shortcut_row(s),
-        ];
+        let mut rows = vec![self.shortcut_row(s)];
         let conflicts = self.opener_conflicts();
         if !conflicts.is_empty() {
             rows.push(text("These setups already use that input in a profile, so it will do both. Move one of them:").size(13).color(WARNING_COLOR).into());
@@ -202,7 +168,19 @@ impl App {
                 rows.push(text(format!("⚠ {setup} — {}", detail.join(" "))).size(13).color(WARNING_COLOR).into());
             }
         }
-        section(Group::Opener.title(), None, rows)
+        section(
+            Group::Opener.title(),
+            Some(
+                "Tap it to open the Guide overlay, and tap it again to close it. Held as a button, it also turns on \
+                 the Guide mode while you press a shortcut. As a double tap, triple tap, long press or combo it opens \
+                 and closes the overlay, and the shortcuts are then pressed with the overlay open. It also ends mouse \
+                 mode and closes the panels it opened. The overlays' hints that say \"press Guide\" show it. Handy \
+                 for a controller without a Guide button, such as Start + Select. Guide still doesn't reach the game \
+                 or Steam when something else opens the overlay."
+                    .into(),
+            ),
+            rows,
+        )
     }
 
     fn view_shortcut_group(&self, group: Group) -> Element<'_, Message> {
@@ -275,12 +253,13 @@ impl App {
     /// A single button from the few `s` can take (see [`Shortcut::choices`]): confirm or back, or a
     /// panel key.
     fn button_row(&self, s: Shortcut) -> Element<'_, Message> {
-        let now = self.config.shortcuts.button(s);
-        let choices = s.choices().unwrap_or_default().to_vec();
+        let now = self.named([self.config.shortcuts.button(s)]).pop();
+        let choices = self.named(s.choices().unwrap_or_default().iter().copied());
         let listening = self.shortcuts_ui.listening == Some((s, 0));
         let mut line = row![
-            dropdown(choices, Some(now), move |b: Button| Message::SetShortcut(s, Some(ShortcutInput::button(b)))).width(190),
-            button(text(if listening { "Press a button…" } else { "Listen" }).size(13))
+            space().width(KIND_WIDTH),
+            dropdown(choices, now, move |b: NamedButton| Message::SetShortcut(s, Some(ShortcutInput::button(b.0)))).width(190),
+            button(text(if listening { "Press a button…" } else { SET_BY_PRESSING }).size(13))
                 .style(style::secondary)
                 .on_press(Message::ListenShortcut(if listening { None } else { Some((s, 0)) })),
         ]
@@ -289,7 +268,7 @@ impl App {
         if self.config.shortcuts.is_moved(s) {
             line = line.push(button(text("Reset").size(13)).style(style::secondary).on_press(Message::ResetShortcut(s)));
         }
-        let mut out = column![labeled_in(190.0, s.label(), line.wrap().into())].spacing(2);
+        let mut out = column![labeled_in(190.0, row_label(s), line.wrap().into())].spacing(2);
         for w in self.config.shortcuts.warnings(s) {
             out = out.push(text(format!("⚠ {w}")).size(13).color(WARNING_COLOR));
         }
@@ -305,7 +284,7 @@ impl App {
         let kinds = InputKind::ALL;
         let current = input.clone();
         let fallback = if opener { Button::Start } else { s.default_input().buttons[0] };
-        let mut line = row![dropdown(kinds, Some(kind), move |k: InputKind| Message::SetShortcut(s, k.apply(current.as_ref(), fallback))).width(130)]
+        let mut line = row![dropdown(kinds, Some(kind), move |k: InputKind| Message::SetShortcut(s, k.apply(current.as_ref(), fallback))).width(KIND_WIDTH)]
             .spacing(8)
             .align_y(Alignment::Center);
         if let Some(input) = &input {
@@ -316,16 +295,16 @@ impl App {
                 }
                 let base = input.clone();
                 line = line.push(
-                    dropdown(choices, Some(*b), move |picked: Button| {
+                    dropdown(self.named(choices), self.named([*b]).pop(), move |picked: NamedButton| {
                         let mut i = base.clone();
-                        i.buttons[at] = picked;
+                        i.buttons[at] = picked.0;
                         Message::SetShortcut(s, Some(i.tidied()))
                     })
                     .width(190),
                 );
                 let listening = self.shortcuts_ui.listening == Some((s, at));
                 line = line.push(
-                    button(text(if listening { "Press a button…" } else { "Listen" }).size(13))
+                    button(text(if listening { "Press a button…" } else { SET_BY_PRESSING }).size(13))
                         .style(style::secondary)
                         .on_press(if listening { Message::ListenShortcut(None) } else { Message::ListenShortcut(Some((s, at))) }),
                 );
@@ -346,7 +325,7 @@ impl App {
         if self.config.shortcuts.is_moved(s) {
             line = line.push(button(text("Reset").size(13)).style(style::secondary).on_press(Message::ResetShortcut(s)));
         }
-        let mut out = column![labeled_in(190.0, s.label(), line.wrap().into())].spacing(2);
+        let mut out = column![labeled_in(190.0, row_label(s), line.wrap().into())].spacing(2);
         for w in self.config.shortcuts.warnings(s) {
             out = out.push(text(format!("⚠ {w}")).size(13).color(WARNING_COLOR));
         }

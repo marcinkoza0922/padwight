@@ -276,7 +276,8 @@ fn check_motion_rule(roots: &Roots, nodes: &[Node]) -> Finding {
             Finding::new(
                 Level::Note,
                 format!("Gyro: {MOTION_RULE_NAME} isn't installed"),
-                format!("{needed} Those controllers' motion sensors are root-only without it. Run `padwight doctor --explain` for details."),
+                // The report's last line already points to `--explain`, as the window's dialog does.
+                format!("{needed} Those controllers' motion sensors are root-only without it."),
             )
             .fix(install_rule(MOTION_RULE_NAME, MOTION_RULE))
         }

@@ -418,11 +418,13 @@ impl App {
         list = list.push(scrollable(entries.padding(iced::Padding::ZERO.right(14))).height(LIBRARY_LIST_HEIGHT));
 
         let mut details = column![].spacing(8).width(320);
+        // The main action sits at the bottom with Cancel, as in every dialog.
+        let mut action = None;
         match selected.and_then(|i| self.library.get(i).map(|e| (i, e))) {
             Some((i, entry)) => {
                 let p = &entry.pack;
                 details = details.push(text(p.pack.name.clone()).size(20)).push(pack_summary(p, |f| self.pad_has(f)));
-                details = details.push(match added(&p.pack.id) {
+                action = Some(match added(&p.pack.id) {
                     Some(g) => button(text("Open it")).on_press(Message::SelectPage(Page::Game(Some(g.name.clone())))),
                     None => button(text("Preview & add…")).on_press(Message::PreviewLibrary(i)),
                 });
@@ -432,9 +434,9 @@ impl App {
 
         column![
             text("Add a setup").size(22),
-            field("Search the library", search).on_input(Message::SetLibrarySearch),
+            field("Search the library…", search).on_input(Message::SetLibrarySearch),
             row![list.width(Length::Fill), rule::vertical(1), details].spacing(16),
-            row![space::horizontal(), button(text("Cancel")).style(style::secondary).on_press(Message::CloseDialog)],
+            row![space::horizontal(), button(text("Cancel")).style(style::secondary).on_press(Message::CloseDialog)].push(action).spacing(8),
         ]
         .spacing(12)
         .width(820)
@@ -471,7 +473,7 @@ impl App {
                             .style(if choices.replace { style::secondary } else { button::primary })
                             .on_press(Message::SetReplaceGame(false)),
                         button(text("Replace mine").size(13))
-                            .style(if choices.replace { button::danger } else { style::secondary })
+                            .style(if choices.replace { style::danger } else { style::secondary })
                             .on_press(Message::SetReplaceGame(true)),
                     ]
                     .spacing(8),
@@ -528,19 +530,19 @@ impl App {
             labeled(label, field(placeholder, value).on_input(move |v| Message::SetPackField(field_kind, v)).width(width).into())
         };
         // The description is a paragraph or two, so it gets a box that wraps rather than a line.
-        // It grows with the text up to ten whole lines (16 px text, 1.3 line height, 5 px
-        // padding), so no line is ever cut through the middle.
+        // It grows with the text up to ten whole lines, so no line is ever cut through the middle.
         let description = iced::widget::text_editor(&self.export_description)
             .placeholder("What the setup does and how it plays")
             .on_action(Message::EditPackDescription)
             .height(Length::Shrink)
-            .min_height(5.0 * 20.8 + 10.0)
-            .max_height(10.0 * 20.8 + 10.0);
+            .min_height(editor_lines(5.0))
+            .max_height(editor_lines(10.0));
         col = col
             .push(input("Version", "1.0", &info.version, PackField::Version, 120.0))
             .push(input("Author", "Your name", &info.author, PackField::Author, 260.0))
             .push(input("Made with", "The controller you tried it on", &info.made_with, PackField::MadeWith, 260.0))
-            .push(labeled("Description", description.into()));
+            // The label sits at the top of the tall box, not halfway down it.
+            .push(row![text("Description").width(LABEL_WIDTH).height(Length::Fixed(32.0)).align_y(Alignment::Center), description].spacing(10));
         if cfg!(debug_assertions) || g.origin.as_ref().is_some_and(|o| o.library) {
             col = col.push(
                 checkbox(library)
@@ -576,7 +578,7 @@ impl App {
                 row![
                     space::horizontal(),
                     button(text("Cancel")).style(style::secondary).on_press(Message::KeepEditing),
-                    button(text("Discard")).style(button::danger).on_press(Message::DiscardAndQuit),
+                    button(text("Discard")).style(style::danger).on_press(Message::DiscardAndQuit),
                     button(text("Save & quit")).on_press(Message::SaveAndQuit),
                 ]
                 .spacing(8),
@@ -612,7 +614,7 @@ impl App {
             .push(row![
                 space::horizontal(),
                 button(text("Cancel")).style(style::secondary).on_press(Message::CloseDialog),
-                button(text("Delete")).style(button::danger).on_press(Message::ConfirmDeleteGame),
+                button(text("Delete")).style(style::danger).on_press(Message::ConfirmDeleteGame),
             ]
             .spacing(8))
             .width(520)

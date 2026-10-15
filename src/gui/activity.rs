@@ -31,14 +31,15 @@ impl App {
     }
 
     pub(super) fn view_activity(&self) -> Element<'_, Message> {
-        let hint = if self.status.is_some() { "Press a button on a managed controller." } else { NEEDS_DAEMON };
-        let presses = self.feed_box(self.feeds.as_ref().map(|f| &f.presses), hint);
-        let exports = self.feed_box(self.feeds.as_ref().map(|f| &f.exports), hint);
+        // The picture above already asks for a press, so the feeds only say they're empty.
+        let running = self.status.is_some();
+        let presses = self.feed_box(self.feeds.as_ref().map(|f| &f.presses), if running { "Nothing pressed yet." } else { NEEDS_DAEMON });
+        let exports = self.feed_box(self.feeds.as_ref().map(|f| &f.exports), if running { "Nothing sent yet." } else { NEEDS_DAEMON });
 
         let switches = self.status.as_ref().map(|s| s.switches.as_slice()).unwrap_or_default();
         let mut list = column![].spacing(10);
         if switches.is_empty() {
-            let none = if self.status.is_some() { "No profile has switched since the daemon started." } else { hint };
+            let none = if self.status.is_some() { "No profile has switched since the daemon started." } else { NEEDS_DAEMON };
             list = list.push(text(none).size(13).color(MUTED_COLOR));
         }
         for s in switches.iter().take(SHOWN_SWITCHES) {

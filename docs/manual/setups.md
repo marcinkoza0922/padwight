@@ -4,14 +4,14 @@ A **controller setup** holds everything Padwight keeps for one game: its profile
 
 ## Profiles
 
-A profile is one complete set of mappings inside a setup, for example one for a whole game or one for a different way of playing it. Profiles don't mix with each other. If a game needs a different control scheme for a context inside play, such as driving, use a [mode](modes.md) instead. On the **Profiles** tab, **Duplicate** copies the profile you're on, and **Create New Profile** starts from a ready-made one.
+A profile is one complete set of mappings inside a setup, for example one for a whole game or one for a different way of playing it. Profiles don't mix with each other. If a game needs a different control scheme for a context inside play, such as driving, use a [mode](modes.md) instead. On the **Profiles** tab, **Duplicate** copies the profile you're on, and **+ New profile** starts from a ready-made one.
 
 ## Switching profiles
 
 - **Automatically:** a rule in the setup picks its profile when the game's window has focus.
 - **By hand:** choose a profile in the top bar's *Active profile* list, or press Guide + Start and pick one in Quick Settings.
-- **Locked:** the padlock beside the *Active profile* list keeps the active profile on, so rules and the Default Profile don't switch it. Switching to another profile by hand unlocks it. The lock isn't kept when Padwight restarts.
-- **When no setup matches:** the *Default Profile* setting under Per-setup profiles on the App settings page picks the profile.
+- **Locked:** the padlock beside the *Active profile* list keeps the active profile on, so rules and the default profile don't switch it. Switching to another profile by hand unlocks it. The lock isn't kept when Padwight restarts.
+- **When no setup matches:** the *Default profile* setting under Per-setup profiles on the App settings page picks the profile.
 
 ## Rules
 

@@ -167,7 +167,7 @@ impl Group {
         match self {
             Group::Opener => "Guide overlay",
             Group::Guide => "Guide mode shortcuts",
-            Group::Mouse => "Mouse mode keys",
+            Group::Mouse => "Mouse mode buttons",
             Group::Menu => "Menu buttons",
             Group::Media => "Media controls buttons",
             Group::Numpad => "On-screen numpad buttons",

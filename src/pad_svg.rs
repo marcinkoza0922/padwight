@@ -253,7 +253,7 @@ mod tests {
         assert!(svg.starts_with("<svg") && svg.ends_with("</svg>"));
         assert!(!svg.contains("<text"), "text is drawn by the GUI, not the SVG");
         assert_eq!(svg.matches("<g").count(), svg.matches("</g>").count());
-        assert_eq!(svg.matches("<line ").count(), 1, "one leader line per label");
+        assert_eq!(svg.matches("<polyline ").count(), 1, "one leader line per label");
     }
 
     #[test]

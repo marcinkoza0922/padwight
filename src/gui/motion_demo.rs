@@ -4,7 +4,7 @@
 
 use std::time::{Duration, Instant};
 
-use iced::widget::{container, row, text};
+use iced::widget::{container, row};
 
 use super::*;
 use crate::motion::{Anim, MotionStyle, Timing};
@@ -77,6 +77,22 @@ impl App {
         }
     }
 
+    /// Starts the visualizer on the menu style of the page now shown, so it opens on a style the
+    /// page uses rather than the last one previewed elsewhere.
+    pub(super) fn sync_motion_demo(&mut self) {
+        if !self.motion_demo_shown() {
+            return;
+        }
+        let motion = match self.page {
+            Page::Game(_) => self.game().motion.unwrap_or(self.config.motion),
+            _ => self.config.motion,
+        };
+        let style = motion.get(crate::motion::OverlayKind::Menu);
+        if style != self.motion_demo.style {
+            self.motion_demo.show(style);
+        }
+    }
+
     pub(super) fn motion_demo_clock(&self) -> Subscription<Message> {
         if self.motion_demo_shown() { iced::time::every(FRAME).map(Message::MotionTick) } else { Subscription::none() }
     }
@@ -88,11 +104,12 @@ impl App {
         look.anim = demo.anim();
         let sample = crate::system_menu::main_page(OverlayStyle { scale: PREVIEW_SCALE, ..OverlayStyle::default() }, usize::from(demo.moved()));
         let panel = crate::overlay::draw::menu_panel(&sample, self.preview_font(), look, &crate::overlay::fit::Fit::contents());
-        let controls = iced::widget::column![
+        let controls = row![
             dropdown(MotionStyle::ALL, Some(demo.style), Message::MotionDemoStyle).width(160),
-            text("Opens, moves, picks and closes, then pauses and repeats.").size(12).color(MUTED_COLOR).width(160),
+            help("A sample menu opens, moves, picks and closes in this style, then pauses and repeats.".into()),
         ]
-        .spacing(8);
+        .spacing(8)
+        .align_y(Alignment::Center);
         // Room above and below for a style that slides the panel in from off its place.
         let stage = container(container(panel).center_x(Length::Fill)).width(Length::Fill).padding([30, 8]).clip(true).style(style::inset);
         let body = row![controls, stage].spacing(14).align_y(Alignment::Center);

@@ -5,7 +5,7 @@ use iced::widget::{column, row};
 use super::*;
 use crate::config::Performance;
 
-/// An entry in the auto-switch "Default Profile" list.
+/// An entry in the auto-switch "default profile" list.
 #[derive(Debug, Clone, PartialEq)]
 pub(super) struct DefaultChoice(pub(super) Option<ProfileRef>);
 
@@ -119,27 +119,22 @@ impl App {
             SettingsTab::General => self.view_general_settings(),
             SettingsTab::Shortcuts => self.view_shortcuts(),
         };
-        column![container(tabs).padding(3).style(style::segments), content].spacing(16).into()
+        // A title like every setup page's, so pages start the same way.
+        column![text("App settings").size(26), container(tabs).padding(3).style(style::segments), content].spacing(16).into()
     }
 
     fn view_general_settings(&self) -> Element<'_, Message> {
+        // The ⓘ by the title, as on every card.
         let glyphs = section(
             "Info overlays",
-            None,
+            Some(
+                "Glyphs follow the controller in use: Xbox, PlayStation or Nintendo labels. For a controller that \
+                 can't be recognized, they're drawn like the fallback kind instead. Also used for previews."
+                    .into(),
+            ),
             vec![labeled(
                 "Fallback glyphs",
-                row![
-                    dropdown(PadFamily::ALL, Some(self.config.info_glyphs), Message::SetInfoGlyphs).width(SETTING_WIDTH),
-                    help(
-                        "Glyphs follow the controller in use: Xbox, PlayStation or Nintendo labels. For a \
-                         controller that can't be recognized, they're drawn like this kind instead. Also \
-                         used for previews."
-                            .into(),
-                    ),
-                ]
-                .spacing(8)
-                .align_y(Alignment::Center)
-                .into(),
+                dropdown(PadFamily::ALL, Some(self.config.info_glyphs), Message::SetInfoGlyphs).width(SETTING_WIDTH).into(),
             )],
         );
         let query = self.settings_query.as_str();
@@ -158,8 +153,7 @@ impl App {
             ("media controls player panel music volume", self.view_media_card()),
             ("in-game menu guide button", self.view_in_game_menu_card()),
             ("info overlays fallback glyphs xbox playstation nintendo labels", glyphs),
-            ("system check permissions uinput udev rules gyro doctor access", self.view_system_check_card()),
-            ("help tour guided welcome introduction getting started", self.view_help_card()),
+            ("help tour guided welcome introduction getting started system check permissions uinput udev rules gyro doctor access", self.view_help_card()),
         ];
         let shown: Vec<Element<'_, Message>> = cards.into_iter().filter(|(words, _)| matches_query(query, words)).map(|(_, card)| card).collect();
         let body: Element<'_, Message> = if shown.is_empty() {
@@ -223,7 +217,7 @@ impl App {
                     };
                     list = list.push(
                         row![
-                            column![text(&d.name), text(format!("{} · {state}", d.path)).size(12).color(MUTED_COLOR)]
+                            column![text(&d.name), text(if d.path.is_empty() { state } else { format!("{} · {state}", d.path) }).size(12).color(MUTED_COLOR)]
                                 .width(Length::Fill),
                             calibrate,
                             rumble,
@@ -277,12 +271,12 @@ impl App {
         let default = DefaultChoice(auto.default_profile.clone());
         section(
             "Per-setup profiles",
-            Some("On its Details tab, each setup's rules decide which windows switch to which of its profiles. When no setup's rule matches, the Default Profile is used.".into()),
+            Some("On its Details tab, each setup's rules decide which windows switch to which of its profiles. When no setup's rule matches, the default profile is used.".into()),
             // The dropdown sits in the label column's layout, as every other setting's does.
             vec![
                 toggler(auto.enabled).label("Switch profiles automatically").on_toggle(Message::SetAutoSwitch).into(),
                 text(how).size(13).color(MUTED_COLOR).into(),
-                labeled("Default Profile", dropdown(defaults, Some(default), Message::SetDefaultProfile).width(SETTING_WIDTH).into()),
+                labeled("Default profile", dropdown(defaults, Some(default), Message::SetDefaultProfile).width(SETTING_WIDTH).into()),
             ],
         )
     }

@@ -8,7 +8,7 @@ The left side lists the pages and your setups. The rest of the window shows the 
 - **Manual**: this guide.
 - **General**: the built-in setup for the desktop and plain gamepad use. Its profiles are used when no other setup matches.
 - **Setups**: your setups, one for each game, each with its own profiles. **+ Add setup** creates one.
-- **System check**: a card on App settings, and a strip on the Overview when something is missing. It lists what Padwight needs from your system (access to `/dev/uinput`, to your controller and to its gyro), why each is needed, and for anything missing the commands that set it up, with a Copy button. **Check again** looks once more after you've run them. `padwight doctor` in a terminal says the same.
+- **System check**: a button in the Help card on App settings, and a strip on the Overview when something is missing. It lists what Padwight needs from your system (access to `/dev/uinput`, to your controller and to its gyro), why each is needed, and for anything missing the commands that set it up, with a Copy button. **Check again** looks once more after you've run them. `padwight doctor` in a terminal says the same.
 - **Top bar**: the *Remapping* switch turns all remapping on or off. It reads off, and can't be turned on, while the daemon isn't running. *Active profile* switches the profile in use right away.
 - **Bottom bar**: changes are kept until you press **Save & apply**, which saves them and starts using them. **Revert** throws them away.
 

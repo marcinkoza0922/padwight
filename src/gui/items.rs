@@ -75,7 +75,7 @@ fn keep_open_toggle<'a>(mi: usize, menu: &Menu) -> Option<Element<'a, Message>> 
 /// The picker for the button that closes menu `mi` (and backs out of its submenus), or none.
 fn close_picker<'a>(mi: usize, menu: &Menu) -> Element<'a, Message> {
     row![
-        dropdown(close_choices(menu), Some(CloseChoice::of(menu)), move |c| Message::SetMenuCancel(mi, c)).width(160),
+        dropdown(close_choices(menu), Some(CloseChoice::of(menu)), move |c| Message::SetMenuCancel(mi, c)).width(Length::Shrink),
         help(
             "Backs out of a submenu (held, it closes the whole menu), and closes the menu at the top. \
              A menu item can open another menu only when both have the same close button. A list with one \
@@ -96,7 +96,7 @@ pub(super) fn view_new_info_card<'a>() -> Element<'a, Message> {
     items_header(
         ItemKind::Info,
         button(text("+ New info overlay")).style(style::secondary).on_press(Message::NewInfo).into(),
-        "Text and button glyphs on screen, e.g. a game's controls.",
+        "Text and button glyphs on screen, such as a game's controls.",
         "An info overlay puts a grid of text on screen without taking over the controller: a \
          game's controls with glyphs that match the controller in use, the time, CPU load and \
          more. Show it always while its game is active, or with the \"Show info \
@@ -109,8 +109,11 @@ pub(super) fn view_new_info_card<'a>() -> Element<'a, Message> {
 pub(super) fn view_new_menu_card<'a>() -> Element<'a, Message> {
     let mut kinds = row![text("Add a menu:")].spacing(8).align_y(Alignment::Center);
     for kind in MenuKindTag::ALL {
-        kinds = kinds.push(button(text(kind.short())).style(style::secondary).on_press(Message::NewMenu(kind)));
+        let label = text(format!("+ {}", kind.short())).wrapping(text::Wrapping::None);
+        kinds = kinds.push(button(label).style(style::secondary).on_press(Message::NewMenu(kind)));
     }
+    // Six buttons don't fit beside the copy button in a narrow window, so they wrap.
+    let kinds = kinds.wrap().vertical_spacing(8);
     items_header(ItemKind::Menu, kinds.into(), "A menu lists actions to pick from on screen.", MENUS_HELP.into())
 }
 
@@ -247,6 +250,9 @@ pub(super) const DEFAULT_START_SECONDS: f32 = 5.0;
 pub(super) const DEFAULT_LINGER_SECONDS: f32 = 3.0;
 
 pub(super) const DEFAULT_WAIT_MS: u64 = 100;
+
+/// The width of a macro step's label before its slider ("Held for", "For"), so the sliders line up.
+const MACRO_LABEL_WIDTH: f32 = 60.0;
 
 pub(super) fn step_kind(step: &MacroStep) -> StepKind {
     match step {
@@ -666,7 +672,11 @@ impl App {
         if let Some(problem) = &problem {
             header = header.push(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR));
         }
-        header = header.push(delete_item("Delete macro", Message::DeleteMacro(mi)));
+        // An item is deleted from inside its open card, so a list of closed cards isn't a column
+        // of red buttons.
+        if open {
+            header = header.push(delete_item("Delete macro", Message::DeleteMacro(mi)));
+        }
         let mut col = column![header].spacing(12);
         if open {
             col = col.push(self.view_macro_editor(mi, m, names));
@@ -685,10 +695,12 @@ impl App {
             })
             .width(120);
             let body: Element<'_, Message> = match step {
+                // A wait's slider lines up with a tap's "Held for" one, label and all.
                 MacroStep::Wait(ms) => row![
+                    text("For").size(13).width(MACRO_LABEL_WIDTH),
                     slider(10.0..=5000.0, *ms as f32, move |v| Message::SetMacroStep(mi, i, MacroStep::Wait(v as u64)))
                         .step(10.0_f32)
-                        .width(220),
+                        .width(180),
                     ms_field(*ms, move |v| Message::SetMacroStep(mi, i, MacroStep::Wait(v))),
                 ]
                 .spacing(10)
@@ -700,7 +712,7 @@ impl App {
                     column![
                         fill_x(action_editor(action, Button::South, MACRO_STEP_KINDS, set_action(Target::MacroStep(mi, i)), KeyField::root(Target::MacroStep(mi, i)), names)),
                         row![
-                            text("held for").size(13),
+                            text("Held for").size(13).width(MACRO_LABEL_WIDTH),
                             slider(10.0..=1000.0, hold_ms as f32, move |v| {
                                 Message::SetMacroStep(mi, i, MacroStep::Tap { action: held.clone(), hold_ms: v as u64 })
                             })
@@ -782,7 +794,6 @@ impl App {
                 .style(style::inset),
             );
         }
-        let total: u64 = m.steps.iter().map(MacroStep::duration_ms).sum();
         let unreleased = unreleased_holds(m);
         let mut footer = column![
             row![
@@ -792,9 +803,7 @@ impl App {
                 button(text("Release").size(13)).style(style::secondary).on_press(Message::AddMacroStep(mi, StepKind::Release)),
                 button(text("Wait").size(13)).style(style::secondary).on_press(Message::AddMacroStep(mi, StepKind::Wait)),
                 button(text("Move stick").size(13)).style(style::secondary).on_press(Message::AddMacroStep(mi, StepKind::Stick)),
-                dropdown(Motion::ALL, None::<Motion>, move |m| Message::InsertMotion(mi, m)).placeholder("Insert motion…").width(230),
-                space::horizontal(),
-                text(format!("Plays for {total} ms")).size(13).color(MUTED_COLOR),
+                dropdown(Motion::ALL, None::<Motion>, move |m| Message::InsertMotion(mi, m)).placeholder("Insert motion…").style(style::action_dropdown).width(230),
             ]
             .spacing(8)
             .align_y(Alignment::Center),
@@ -852,7 +861,7 @@ impl App {
         let title = if problem.is_some() { title.color(ERROR_COLOR) } else { title };
         let rows = o.rows.len();
         let shown = match (o.always, o.on_start) {
-            (true, _) => "always shown (not by actions)".to_string(),
+            (true, _) => "always on screen".to_string(),
             (false, Some(s)) => format!("shown {s:.0} s when the game starts"),
             (false, None) => "shown by an action".to_string(),
         };
@@ -868,7 +877,9 @@ impl App {
         if let Some(problem) = problem {
             header = header.push(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR));
         }
-        header = header.push(delete_item("Delete info overlay", Message::DeleteInfo(i)));
+        if open {
+            header = header.push(delete_item("Delete info overlay", Message::DeleteInfo(i)));
+        }
         let mut col = column![header].spacing(12);
         if open {
             col = col.push(self.view_info_editor(i, o));
@@ -909,11 +920,11 @@ impl App {
                 .push(
                     note(if o.always {
                         "Stays on screen whenever the game is active, so actions can't show it. To show it only \
-                         sometimes, untick this and map \"Toggle → Show info overlay…\" to a button (the Toggle \
+                         sometimes, untick this and map “Toggle → Show info overlay…” to a button (the Toggle \
                          can start on, to show the overlay at launch until dismissed)."
                     } else {
                         "Shown when the game is first focused after launching, then fades out. You can also map \
-                         \"Show info overlay…\" to a button: it shows while the button is held, or until pressed \
+                         “Show info overlay…” to a button: it shows while the button is held, or until pressed \
                          again if wrapped in Toggle (which can start on, to keep it up until dismissed)."
                     }),
                 )
@@ -944,9 +955,14 @@ impl App {
             rows.push(style_editor(&o.style, Rc::new(move |s| Message::SetInfoStyle(i, s))));
             rows.extend(self.spot_note(o.style.position, false));
         }
+        // As on a menu, the preview sits under the Appearance editor while that's open, to show
+        // each change, and after the cells otherwise.
         let sample = InfoOverlay { style: preview_style(&o.style), ..o.clone() };
         let view = crate::info::resolve(&sample, &crate::info::Live::sample(self.config.info_glyphs).with_layout(self.nintendo_layout()));
-        rows.push(preview(crate::overlay::draw::info_panel(&view, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
+        let mut shown = Some(preview(crate::overlay::draw::info_panel(&view, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
+        if appearance_open && let Some(p) = shown.take() {
+            rows.push(p);
+        }
 
         // The grid: rows of cells, which line up in columns on screen.
         let small = |label: &'static str, msg: Option<Message>| button(text(label).size(13)).style(style::secondary).on_press_maybe(msg);
@@ -1004,6 +1020,7 @@ impl App {
         }
         grid = grid.push(button(text("+ Add row").size(13)).style(style::secondary).on_press(Message::AddInfoRow(i)));
         rows.push(grid.into());
+        rows.extend(shown);
         rows.extend(self.view_info_input(i, o));
         column(rows).spacing(10).into()
     }
@@ -1068,7 +1085,9 @@ impl App {
         if let Some(note) = self.menu_card_note(menu, problem) {
             header = header.push(note);
         }
-        header = header.push(delete_item("Delete menu", Message::DeleteMenu(mi)));
+        if open {
+            header = header.push(delete_item("Delete menu", Message::DeleteMenu(mi)));
+        }
         let mut col = column![header].spacing(12);
         if open {
             col = col.push(self.view_menu_editor(mi, menu, names, reachable));
@@ -1147,13 +1166,14 @@ impl App {
                 continue;
             }
             let target = Target::MenuItem(mi, i);
-            let name: String = match direction_slots {
-                Some(slots) => format!("{}  {}", crate::menu::button_badge(slots[i]), ["up", "right", "down", "left"][i]),
-                None => format!("{}.", i + 1),
+            // A number needs less room than a direction, which leaves the label more.
+            let (name, name_width): (String, f32) = match direction_slots {
+                Some(slots) => (format!("{}  {}", crate::menu::button_badge(slots[i]), ["up", "right", "down", "left"][i]), 70.0),
+                None => (format!("{}.", i + 1), 32.0),
             };
             let mut line = row![
-                container(text(name)).width(70).padding(iced::Padding::ZERO.top(6)),
-                field("Label", &item.label).on_input(move |l| Message::SetMenuItemLabel(mi, i, l)).width(150),
+                container(text(name)).width(name_width).padding(iced::Padding::ZERO.top(6)),
+                field("Label", &item.label).on_input(move |l| Message::SetMenuItemLabel(mi, i, l)).width(230),
                 container(row![insert_button(TokenTarget::MenuLabel(mi, i)), char_button(TokenTarget::MenuLabel(mi, i))].spacing(4)),
             ]
             .spacing(8)

@@ -122,8 +122,8 @@ impl App {
         Some(container(strip).padding(12).width(Length::Fill).style(style::card).into())
     }
 
-    /// The Settings card: a summary and the way into the dialog.
-    pub(super) fn view_system_check_card(&self) -> Element<'_, Message> {
+    /// The Help card's system check line: the way into the dialog, and a summary.
+    pub(super) fn system_check_row(&self) -> Element<'_, Message> {
         let n = self.problem_count();
         let summary = if self.system_checks.is_empty() {
             text("Nothing to check on this system.").color(MUTED_COLOR)
@@ -132,25 +132,18 @@ impl App {
         } else {
             text(format!("✗ {n} to fix.")).color(ERROR_COLOR)
         };
-        section(
-            "System check",
-            Some(
-                "The permissions Padwight needs to create its virtual gamepad, read your controller and use its \
-                 gyro. Also available in a terminal as padwight doctor."
-                    .into(),
-            ),
-            vec![row![summary, space::horizontal(), button(text("Check…")).style(style::secondary).on_press(Message::OpenSystemCheck)]
-                .align_y(Alignment::Center)
-                .into()],
-        )
+        row![button(text("System check…")).style(style::secondary).on_press(Message::OpenSystemCheck), summary]
+            .spacing(12)
+            .align_y(Alignment::Center)
+            .into()
     }
 
     pub(super) fn view_system_check(&self) -> Element<'_, Message> {
         let mut body = column![
             text("System check").size(22),
             text(
-                "Padwight needs a few things from your system. A ✗ is something that doesn't work yet. A • is \
-                 worth knowing. Each says why it's needed and, if it's missing, the commands that set it up."
+                "Padwight needs a few things from your system. Each line says why, and for anything missing, the \
+                 commands that set it up. ✗ doesn't work yet · • worth knowing · ✓ in place."
             )
             .size(13)
             .color(MUTED_COLOR),
@@ -166,7 +159,15 @@ impl App {
             body = body.push(text("Nothing to check on this system.").color(MUTED_COLOR));
         }
         body = body
-            .push(text("Running padwight doctor --explain in a terminal lists all of this.").size(12).color(MUTED_COLOR))
+            .push(
+                rich_text![
+                    "The same report, with what each check is for: ",
+                    text::Span::<'static, ()>::new("padwight doctor --explain").font(iced::Font::MONOSPACE),
+                    " in a terminal."
+                ]
+                    .size(12)
+                    .color(MUTED_COLOR),
+            )
             .push(
                 row![
                     space::horizontal(),

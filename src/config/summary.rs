@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::{Button, ButtonAction, MouseButton};
+use super::{Button, ButtonAction, MouseButton, WheelDirection};
 
 impl Button {
     /// A short name on Xbox terms, for one-line summaries.
@@ -79,6 +79,8 @@ pub enum Piece {
     Key(String),
     /// A mouse button, drawn as its glyph.
     Mouse(MouseButton),
+    /// A turn of the mouse wheel, drawn as a mouse button is.
+    Wheel(WheelDirection),
 }
 
 /// The pieces as plain text: a controller button or trigger by its name.
@@ -91,6 +93,7 @@ pub fn plain_text(pieces: &[Piece]) -> String {
             Piece::Pad(b) => b.short_name().to_string(),
             Piece::Key(code) => key_name(code),
             Piece::Mouse(m) => format!("{m} click"),
+            Piece::Wheel(d) => d.to_string(),
         })
         .collect()
 }
@@ -140,7 +143,7 @@ impl ButtonAction {
             ButtonAction::Keys(keys) if keys.is_empty() => vec![text("(no key)")],
             ButtonAction::Keys(keys) => keys.iter().enumerate().flat_map(|(i, k)| [text(if i > 0 { " + " } else { "" }), Piece::Key(k.clone())]).collect(),
             ButtonAction::Mouse(m) => vec![Piece::Mouse(*m)],
-            ButtonAction::Wheel(d) => vec![text(&d.to_string())],
+            ButtonAction::Wheel(d) => vec![Piece::Wheel(*d)],
             ButtonAction::ToggleOverlay => vec![text("On-screen keyboard")],
             ButtonAction::ToggleNumpad => vec![text("On-screen numpad")],
             ButtonAction::Screenshot => vec![text("Screenshot")],

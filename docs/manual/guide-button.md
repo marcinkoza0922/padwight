@@ -56,7 +56,7 @@ Each shortcut sits on one of these:
 - **Combo**: two to four buttons pressed together, such as Start + Select.
 - **Off**: nothing. A shortcut you switch off stays off, and nothing warns you about it, except the one that opens the overlay (below).
 
-Next to each button, **Listen** waits for you to press it on the controller, so you don't need to find its name in the list. **Reset** puts a shortcut back, and **Put every shortcut back** at the bottom resets them all.
+Next to each button, **Set by pressing** waits for you to press it on the controller, so you don't need to find its name in the list. **Reset** puts a shortcut back, and **Put every shortcut back** at the bottom resets them all.
 
 ### What opens the Guide overlay
 

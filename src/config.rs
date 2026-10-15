@@ -1241,7 +1241,8 @@ impl fmt::Display for ProfileRef {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.game {
             Some(game) => write!(f, "{game} › {}", self.profile),
-            None => f.write_str(&self.profile),
+            // General is a setup like any other in the window's sidebar, so it's named too.
+            None => write!(f, "General › {}", self.profile),
         }
     }
 }

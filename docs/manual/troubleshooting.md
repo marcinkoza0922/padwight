@@ -65,7 +65,7 @@ If a replacement controller lacks something the profile needs, such as gyro, a p
 
 **Keys and the mouse don't reach a game.** Windows doesn't let a program send input to one that runs as administrator. Run Padwight as administrator too.
 
-**My controller has no Guide button.** Open App settings, pick the Controller shortcuts tab, and set "Open the Guide overlay" to a combo such as Start + Select, a long press, or another button. Press Listen and then the button to choose it from the controller. Setups whose profiles already use that input show a ⚠ in the sidebar.
+**My controller has no Guide button.** Open App settings, pick the Controller shortcuts tab, and set "Open the Guide overlay" to a combo such as Start + Select, a long press, or another button. Press Set by pressing and then the button to choose it from the controller. Setups whose profiles already use that input show a ⚠ in the sidebar.
 
 **Guide opens the Xbox Game Bar.** Turn off the Game Bar's controller button in Windows' Settings, under Gaming, Xbox Game Bar.
 

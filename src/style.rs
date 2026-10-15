@@ -95,14 +95,15 @@ pub fn nav(selected: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |theme, status| {
         let p = theme.extended_palette();
         let hovered = matches!(status, button::Status::Hovered | button::Status::Pressed);
+        // The open page on a soft tint of the accent, which marks it without outweighing the page.
         let background = if selected {
-            Some(p.primary.weak.color.into())
+            Some(Color { a: 0.45, ..p.primary.weak.color }.into())
         } else if hovered {
             Some(p.background.weak.color.into())
         } else {
             None
         };
-        let text_color = if selected { p.primary.weak.text } else { p.background.base.text };
+        let text_color = p.background.base.text;
         button::Style {
             background,
             text_color,
@@ -190,7 +191,8 @@ pub fn primary(theme: &Theme, status: button::Status) -> button::Style {
     }
 }
 
-/// A destructive action (Delete): iced's danger, with the shared disabled look.
+/// A dialog's final destructive action (Delete, Discard): iced's solid danger, with the shared
+/// disabled look.
 pub fn danger(theme: &Theme, status: button::Status) -> button::Style {
     match status {
         button::Status::Disabled => disabled(theme),
@@ -199,41 +201,57 @@ pub fn danger(theme: &Theme, status: button::Status) -> button::Style {
 }
 
 /// Every disabled button, whatever its style: no fill and a faint edge, so it doesn't read as
-/// clickable, with gray text that stays readable.
+/// clickable, with pale text that can still be read. Paler than a field's muted text: a disabled
+/// arrow next to enabled ones must look out of use at a glance.
 fn disabled(theme: &Theme) -> button::Style {
     let p = theme.extended_palette();
     button::Style {
         background: None,
-        text_color: muted(p.background.base.text),
+        text_color: Color { a: 0.4, ..p.background.base.text },
         border: Border { width: 1.0, radius: 5.0.into(), color: p.background.weak.color },
         ..button::Style::default()
     }
 }
 
-/// A "Delete …" for removing a whole item: a light red button that turns dark red once hovered.
+/// Every "Delete …" on a page (a profile, a setup, an item): a light red button that turns dark
+/// red once hovered. Only a dialog's final Delete is solid red.
 pub fn quiet_danger(theme: &Theme, status: button::Status) -> button::Style {
     let p = theme.extended_palette();
-    let (fill, text_color) = match status {
-        button::Status::Hovered | button::Status::Pressed => (p.danger.strong.color, p.danger.strong.text),
-        _ => (p.danger.weak.color, p.danger.weak.text),
+    // At rest: the light red fill with a red edge, and the text in a red deep enough to read on it
+    // (darkened in light mode, lifted toward white in dark mode, where the fill is dark).
+    let red = p.danger.base.color;
+    let lift = |c: f32| c + (1.0 - c) * 0.55;
+    let rest_text = if p.is_dark { Color { r: lift(red.r), g: lift(red.g), b: lift(red.b), ..red } } else { Color { r: red.r * 0.6, g: red.g * 0.6, b: red.b * 0.6, ..red } };
+    let (fill, text_color, edge) = match status {
+        button::Status::Hovered | button::Status::Pressed => (p.danger.strong.color, p.danger.strong.text, p.danger.strong.color),
+        button::Status::Disabled => return disabled(theme),
+        button::Status::Active => (p.danger.weak.color, rest_text, red),
     };
     button::Style {
         background: Some(fill.into()),
         text_color,
-        border: Border { width: 1.0, radius: 5.0.into(), color: fill },
+        border: Border { width: 1.0, radius: 5.0.into(), color: edge },
         ..button::Style::default()
     }
 }
 
-/// Field surface shared by dropdowns and text inputs: lighter than both page and cards.
+/// Field surface shared by dropdowns and text inputs: the page's own color with an edge, set into
+/// the cards. Buttons are filled, so a field beside a button never reads as another button.
 fn field(theme: &Theme, emphasized: bool) -> (Background, Border, Color) {
     let p = theme.extended_palette();
     let border_color = if emphasized { p.primary.base.color } else { p.background.strong.color };
     (
-        p.background.weak.color.into(),
+        p.background.base.color.into(),
         Border { width: if emphasized { 2.0 } else { 1.0 }, radius: 5.0.into(), color: border_color },
-        p.background.weak.text,
+        p.background.base.text,
     )
+}
+
+/// A button that opens a list of its own (the font picker), drawn as a dropdown is.
+pub fn field_button(theme: &Theme, status: button::Status) -> button::Style {
+    let emphasized = matches!(status, button::Status::Hovered | button::Status::Pressed);
+    let (background, border, text_color) = field(theme, emphasized);
+    button::Style { background: Some(background), text_color, border, ..button::Style::default() }
 }
 
 pub fn dropdown(theme: &Theme, status: pick_list::Status) -> pick_list::Style {
@@ -250,7 +268,7 @@ pub fn dropdown(theme: &Theme, status: pick_list::Status) -> pick_list::Style {
     }
 }
 
-/// A dropdown that runs an action ("+ Create New Profile…") rather than holding a value: its
+/// A dropdown that runs an action ("+ New profile…") rather than holding a value: its
 /// placeholder is its label, so it's drawn in the text color instead of the faint placeholder
 /// gray, which would make it look disabled.
 pub fn action_dropdown(theme: &Theme, status: pick_list::Status) -> pick_list::Style {

@@ -73,13 +73,7 @@ impl GuideView<'_> {
     /// The Notes and Mappings overlays, and the layer sections on the page shown. Notes are left
     /// out when the author wrote none.
     pub fn overlays(&self) -> Vec<InfoOverlay> {
-        let mut overlays = Vec::new();
-        if !self.profile.guide.notes.trim().is_empty() {
-            let rows = self.profile.guide.notes.lines().map(|line| vec![line.to_string()]).collect();
-            let mut notes = panel("guide notes", ScreenPosition::CenterLeft, "Notes".into(), rows);
-            notes.style.max_width = NOTES_MAX_WIDTH;
-            overlays.push(notes);
-        }
+        let mut overlays: Vec<InfoOverlay> = notes_panel(&self.profile.guide.notes).into_iter().collect();
         let mapped = self.mapped();
         let rows: Vec<Vec<String>> = mapping_rows(&mapped).iter().map(cells).collect();
         let sections = self.sections(&mapped);
@@ -209,6 +203,18 @@ fn layout(rows: usize, sections: &[Section]) -> Vec<PageLayout> {
 }
 
 /// A panel of the Guide overlay.
+/// The Guide overlay's Notes panel for `notes`, a row per line, or `None` when there are none.
+/// The settings window previews the notes with it too.
+pub fn notes_panel(notes: &str) -> Option<InfoOverlay> {
+    if notes.trim().is_empty() {
+        return None;
+    }
+    let rows = notes.lines().map(|line| vec![line.to_string()]).collect();
+    let mut panel = panel("guide notes", ScreenPosition::CenterLeft, "Notes".into(), rows);
+    panel.style.max_width = NOTES_MAX_WIDTH;
+    Some(panel)
+}
+
 fn panel(name: &str, position: ScreenPosition, title: String, rows: Vec<Vec<String>>) -> InfoOverlay {
     InfoOverlay {
         name: name.into(),

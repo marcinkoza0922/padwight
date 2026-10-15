@@ -18,6 +18,9 @@ pub(super) struct GuideView<'a> {
     /// Whose glyphs the rows are drawn with, and how the Nintendo layout shows on the face buttons.
     pub(super) family: PadFamily,
     pub(super) swap: Swap,
+    /// How the notes' preview is drawn: the overlay font, and whether the Nintendo layout is on.
+    pub(super) font: iced::Font,
+    pub(super) nintendo_layout: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -133,7 +136,10 @@ pub(super) fn sections<'a>(p: &'a Profile, guide: GuideView<'a>, in_layer: bool)
     let notes = text_editor(guide.notes)
         .placeholder("Tips for the player: what the controls don't cover, when to switch modes, and so on.")
         .on_action(|action| Message::Guide(GuideMsg::Notes(action)))
-        .height(Length::Fixed(140.0));
+        // It grows with the notes, in whole lines, so the last one is never cut through.
+        .height(Length::Shrink)
+        .min_height(super::editor_lines(4.0))
+        .max_height(super::editor_lines(16.0));
     let rows = editable_rows(p);
     let label = |input: GuideInput| pieces::input_text(input, guide.family, guide.swap);
     // Inputs with a row of their own, which another row can share.
@@ -158,9 +164,10 @@ pub(super) fn sections<'a>(p: &'a Profile, guide: GuideView<'a>, in_layer: bool)
     list.push(button(text("+ Add a row").size(13)).style(style::secondary).on_press(Message::Guide(GuideMsg::AddCustom)).into());
     vec![
         section(
-            "Notes",
+            "Guide notes",
             Some("Shown on the left of the Guide overlay. Plain text; {buttons} show as glyphs, like info overlays.".into()),
-            vec![notes.into()],
+            // The notes' {tokens} only show as glyphs on screen, so a preview sits under the box.
+            std::iter::once(notes.into()).chain(notes_preview(&p.guide.notes, guide)).collect(),
         ),
         section(
             "Mapping guide",
@@ -168,6 +175,14 @@ pub(super) fn sections<'a>(p: &'a Profile, guide: GuideView<'a>, in_layer: bool)
             list,
         ),
     ]
+}
+
+/// The Notes panel as the Guide overlay draws it, with sample live values.
+fn notes_preview<'a>(notes: &str, guide: GuideView<'_>) -> Option<iced::Element<'a, Message>> {
+    let panel = crate::info::notes_panel(notes)?;
+    let panel = crate::config::InfoOverlay { style: super::preview_style(&panel.style), ..panel };
+    let view = crate::info::resolve(&panel, &crate::info::Live::sample(guide.family).with_layout(guide.nintendo_layout));
+    Some(super::preview(crate::overlay::draw::info_panel(&view, guide.font, &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())))
 }
 
 /// Widths of the columns after a row's text, the same on every row so the columns line up.

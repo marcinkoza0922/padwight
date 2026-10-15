@@ -28,8 +28,10 @@ impl App {
     pub(super) fn font_picker<'a>(&'a self, slot: FontSlot, unset: &'static str, current: Option<&'a str>, on_pick: fn(Option<String>) -> Message) -> Element<'a, Message> {
         let shown = text(current.unwrap_or(unset).to_string()).font(crate::font::resolve(current)).width(Length::Fill);
         let open = self.font_menu == Some(slot);
-        let head = button(row![shown, text(if open { "▴" } else { "▾" }).size(12)].spacing(8).align_y(Alignment::Center))
-            .style(style::secondary)
+        // The arrow in the accent color, as every other dropdown's is.
+        let arrow = text(if open { "▴" } else { "▾" }).size(14).style(|theme: &iced::Theme| text::Style { color: Some(theme.extended_palette().primary.base.color) });
+        let head = button(row![shown, arrow].spacing(8).align_y(Alignment::Center))
+            .style(style::field_button)
             .padding([6, 10])
             .width(SETTING_WIDTH)
             .on_press(Message::ToggleFontMenu(slot));
