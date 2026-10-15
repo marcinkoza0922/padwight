@@ -196,6 +196,8 @@ struct App {
     page: Page,
     /// The profile being edited, by index in the current game's profiles.
     editing: usize,
+    /// The profile bar's name field is open (see `view_profile_bar`).
+    renaming_profile: bool,
     game_tab: GameTab,
     /// The chapter open on the Manual page, by index in `manual::CHAPTERS`.
     manual_chapter: usize,
@@ -481,6 +483,13 @@ enum Message {
     /// The push (0..1) the mouse stick's response graphs show.
     ProbeStick(f32),
     TogglePicture,
+    /// Opens the profile name field and focuses it.
+    OpenRenameProfile,
+    /// A click happened while the profile name field is open; closes it if the field lost focus.
+    CheckRenameFocus,
+    RenameFocusChecked(bool),
+    /// Closes the profile name field (Enter or Escape).
+    CloseRenameProfile,
     /// Expand (true) or collapse every row in the current profile section.
     ExpandAll(bool),
     StartFind,
@@ -701,7 +710,7 @@ impl App {
             sounds: crate::sound::Sounds::start(),
             status: None, system_checks: system_check::run(),
             page: Page::Overview,
-            editing: 0,
+            editing: 0, renaming_profile: false,
             game_tab: GameTab::Profiles,
             manual_chapter: 0,
             settings_query: String::new(),
@@ -838,6 +847,17 @@ impl App {
             Subscription::run(watch_input),
             Subscription::run(watch_feed),
             iced::event::listen_with(undo_shortcut),
+            if self.renaming_profile {
+                iced::event::listen_with(|event, _, _| match event {
+                    iced::Event::Mouse(iced::mouse::Event::ButtonPressed(_)) => Some(Message::CheckRenameFocus),
+                    iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key: iced::keyboard::Key::Named(iced::keyboard::key::Named::Escape), .. }) => {
+                        Some(Message::CloseRenameProfile)
+                    }
+                    _ => None,
+                })
+            } else {
+                Subscription::none()
+            },
             iced::window::close_requests().map(|_| Message::CloseRequested),
             iced::system::theme_changes().map(Message::SystemMode),
             self.motion_demo_clock(),
