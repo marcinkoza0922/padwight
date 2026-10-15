@@ -870,42 +870,6 @@ impl StickAction {
     }
 }
 
-/// Rewrites stick actions saved in the old direction-keys mode (`keys = { up, down, left,
-/// right }`) as the equivalent [`StickAction::directions`] ring, so older configs and packs
-/// keep working. Everything else is left alone.
-pub fn migrate_direction_keys(value: &mut toml::Value) {
-    match value {
-        toml::Value::Table(table) => {
-            // The threshold the keys pressed at was the stick's, next to its action.
-            let threshold = table.get("key_threshold").and_then(toml::Value::as_float).map_or(default_key_threshold(), |t| t as f32);
-            if let Some(ring) = table.get("action").and_then(|a| direction_keys_ring(a, threshold)) {
-                table.insert("action".into(), ring);
-            }
-            table.iter_mut().for_each(|(_, v)| migrate_direction_keys(v));
-        }
-        toml::Value::Array(items) => items.iter_mut().for_each(migrate_direction_keys),
-        _ => {}
-    }
-}
-
-/// The ring that replaces a `keys` table, if `action` is one.
-fn direction_keys_ring(action: &toml::Value, key_threshold: f32) -> Option<toml::Value> {
-    let keys = action.as_table()?.get("keys")?.as_table()?;
-    let key = |dir: &str| keys.get(dir)?.as_str().map(str::to_string);
-    let (up, down, left, right) = (key("up")?, key("down")?, key("left")?, key("right")?);
-    let ring = StickAction::directions(&up, &down, &left, &right).starting_at(key_threshold);
-    toml::Value::try_from(ring).ok()
-}
-
-/// `text` with [`migrate_direction_keys`] applied. Text that isn't TOML comes back as it was,
-/// for the parse to report.
-pub fn migrate_text(text: &str) -> String {
-    let Ok(table) = text.parse::<toml::Table>() else { return text.to_string() };
-    let mut value = toml::Value::Table(table);
-    migrate_direction_keys(&mut value);
-    toml::to_string(&value).unwrap_or_else(|_| text.to_string())
-}
-
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StickConfig {
     pub action: StickAction,
@@ -1262,7 +1226,7 @@ impl Rule {
 /// A profile, by its game (`None`: General) and name.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub struct ProfileRef {
-    #[serde(default, rename = "setup", alias = "game", skip_serializing_if = "Option::is_none")]
+    #[serde(default, rename = "setup", skip_serializing_if = "Option::is_none")]
     pub game: Option<String>,
     pub profile: String,
 }
@@ -1497,14 +1461,6 @@ impl Game {
         self.modes.retain(|l| built_in_mode(&l.name).is_none());
     }
 
-    /// Takes its menus out of any Toggle (see [`untoggle_menus`]), and makes its toggled layers
-    /// modes (see [`modes::toggled_layers_to_modes`]).
-    pub fn untoggle_menus(&mut self) {
-        untoggle_menus(&mut self.profiles, &mut self.menus, &mut self.layers);
-        untoggle_menus(&mut [], &mut [], &mut self.modes);
-        modes::toggled_layers_to_modes(&mut self.profiles, &mut self.menus, &mut self.layers, &mut self.modes);
-    }
-
     /// Points every reference to the macro, menu or info overlay `old` (of `kind`) at `new`:
     /// in profiles, menu items and macro steps.
     pub fn rename_refs(&mut self, kind: ItemKind, old: &str, new: &str) {
@@ -1602,23 +1558,6 @@ impl ItemKind {
             _ => None,
         }
     }
-}
-
-/// Takes every menu opened through a Toggle out of it. A menu can't be toggled: one with a close
-/// button is put away with that, so a toggled one would leave the Toggle on with nothing open.
-pub fn untoggle_menus(profiles: &mut [Profile], menus: &mut [Menu], layers: &mut [Layer]) {
-    let mut untoggle = |a: &mut ButtonAction| {
-        a.walk_mut(&mut |a| {
-            if let ButtonAction::Toggle(Toggled { action, .. }) = a
-                && let ButtonAction::OpenMenu(_) = **action
-            {
-                *a = (**action).clone();
-            }
-        })
-    };
-    let actions = profiles.iter_mut().flat_map(Profile::actions_mut);
-    let items = menus.iter_mut().flat_map(|m| m.items.iter_mut().map(|item| &mut item.action));
-    actions.chain(items).chain(layers.iter_mut().flat_map(Layer::actions_mut)).for_each(&mut untoggle);
 }
 
 #[expect(clippy::too_many_arguments, reason = "predates the size lints")]
@@ -1810,7 +1749,7 @@ pub struct Config {
     /// Profiles that aren't for a particular game (desktop, plain gamepad). Read from its folder.
     #[serde(default = "default_general")]
     pub general: Game,
-    #[serde(default, rename = "setups", alias = "games")]
+    #[serde(default, rename = "setups")]
     pub games: Vec<Game>,
     /// IDs of library packs the user asked never to be offered again (see `offer`).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -1949,7 +1888,6 @@ impl Config {
             // A game left as imported stays so: the upgrade isn't an edit of the player's.
             let unedited = game.origin.is_some() && crate::pack::edited_items(game).is_empty();
             game.strip_built_in_modes();
-            game.untoggle_menus();
             tidy_combos(&mut game.profiles, &mut game.layers);
             tidy_combos(&mut [], &mut game.modes);
             if unedited {

@@ -4,8 +4,7 @@ Status: implemented (2026-10-06), except per-layer timings (see the open questio
 
 **Superseded in part by [modes](modes.md) (2026-10-11):** layers can no longer be toggled, and
 menu items can't hold them. A scheme that stays on until switched back is a mode. The sections
-below that describe toggled layers are history; older configs and packs have their toggled
-layers converted to modes when loaded.
+below that describe toggled layers are history; nothing converts old toggled layers.
 
 ## Goal
 

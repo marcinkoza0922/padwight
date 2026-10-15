@@ -1,6 +1,6 @@
 # Editing controls in game
 
-Edit Controls, in the [in-game menu](In-Game-Menu), changes the game you're playing without leaving it. It edits the profile you're on and the things the whole game shares (its modes, layers, macros, menus, overlays and details), so other games and General aren't touched. Changes apply straight away. They're written to the config file only when you save.
+Edit Controls, in the [in-game menu](In-Game-Menu), changes the game you're playing without leaving it. It edits the profile you're on and the things the whole setup shares (its modes, layers, macros, menus, overlays and details), so other setups and General aren't touched. Changes apply straight away. They're written to the config file only when you save.
 
 Almost anything the settings window does for a game can be done here. What's left to the settings window: a look's background picture, a cue's sound file from a pack, a pack's own details (author, version), and importing or exporting packs.
 

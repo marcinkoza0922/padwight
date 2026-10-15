@@ -63,7 +63,7 @@ pub(super) fn demo() -> Vec<Check> {
         check(
             Severity::Problem,
             "Virtual devices: no write access to /dev/uinput",
-            "/dev/uinput exists, but your user can't write to it. 70-padwight-uinput.rules tags it for systemd-logind's uaccess, which gives access to the user at the machine and nobody else.\npadwight shows games a virtual gamepad, and sends your keys and clicks through a virtual keyboard and mouse. The kernel makes virtual input devices only through /dev/uinput, so the daemon has to open it for writing.",
+            "/dev/uinput exists, but your user can't write to it. 70-padwight-uinput.rules tags it for systemd-logind's uaccess, which gives access to the user at the machine and nobody else.\nPadwight shows games a virtual gamepad, and sends your keys and clicks through a virtual keyboard and mouse. The kernel makes virtual input devices only through /dev/uinput, so the daemon has to open it for writing.",
             Some("printf '%s\\n' 'KERNEL==\"uinput\", SUBSYSTEM==\"misc\", OPTIONS+=\"static_node=uinput\", TAG+=\"uaccess\"' | sudo tee /etc/udev/rules.d/70-padwight-uinput.rules > /dev/null\nsudo udevadm control --reload && sudo udevadm trigger"),
         ),
         check(
@@ -88,7 +88,7 @@ impl App {
                 self.system_checks = run();
                 let n = self.problem_count();
                 self.message = Some((
-                    if n == 0 { "Everything padwight needs is in place.".into() } else { format!("{n} still to fix.") },
+                    if n == 0 { "Everything Padwight needs is in place.".into() } else { format!("{n} still to fix.") },
                     n > 0,
                 ));
             }
@@ -111,7 +111,7 @@ impl App {
     pub(super) fn view_system_check_banner(&self) -> Option<Element<'_, Message>> {
         let first = self.system_checks.iter().find(|c| c.severity == Severity::Problem)?;
         let n = self.problem_count();
-        let headline = if n == 1 { "One thing padwight needs isn't set up".to_owned() } else { format!("{n} things padwight needs aren't set up") };
+        let headline = if n == 1 { "One thing Padwight needs isn't set up".to_owned() } else { format!("{n} things Padwight needs aren't set up") };
         let strip = row![
             text("✗").size(18).color(ERROR_COLOR),
             column![text(headline), text(first.title.clone()).size(13).color(MUTED_COLOR)].spacing(2).width(Length::Fill),
@@ -128,14 +128,14 @@ impl App {
         let summary = if self.system_checks.is_empty() {
             text("Nothing to check on this system.").color(MUTED_COLOR)
         } else if n == 0 {
-            text("✓ Everything padwight needs is in place.").color(OK_COLOR)
+            text("✓ Everything Padwight needs is in place.").color(OK_COLOR)
         } else {
             text(format!("✗ {n} to fix.")).color(ERROR_COLOR)
         };
         section(
             "System check",
             Some(
-                "The permissions padwight needs to create its virtual gamepad, read your controller and use its \
+                "The permissions Padwight needs to create its virtual gamepad, read your controller and use its \
                  gyro. Also available in a terminal as padwight doctor."
                     .into(),
             ),

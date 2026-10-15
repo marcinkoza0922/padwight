@@ -1,6 +1,6 @@
 # Macros
 
-A macro is a named input sequence. A game's **Macros** tab holds them, each in its own collapsible card. **+ New macro** adds one at the top.
+A macro is a named input sequence. A setup's **Macros** tab holds them, each in its own collapsible card. **+ New macro** adds one at the top.
 
 ## Steps
 

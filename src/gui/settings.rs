@@ -246,7 +246,7 @@ impl App {
             let names = status.motion_access_denied.join(", ");
             list = list.push(
                 row![
-                    text(format!("Can't use the gyro on {names}: padwight isn't allowed to read its motion sensors."))
+                    text(format!("Can't use the gyro on {names}: Padwight isn't allowed to read its motion sensors."))
                         .size(12)
                         .color(ERROR_COLOR)
                         .width(Length::Fill),

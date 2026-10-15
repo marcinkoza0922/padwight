@@ -44,16 +44,6 @@ fn profiles_state_their_own_needs_and_old_packs_are_upgraded() {
     let back = parse(&out.pack.to_toml().unwrap()).unwrap();
     assert_eq!(back.profiles[0].requires, [Feature::Gyro]);
     assert!(back.profiles[1].requires.is_empty());
-
-    // Format 7 listed the need for the whole pack: it lands on the gyro profiles.
-    let mut old = out.pack.clone();
-    old.format = 7;
-    old.profiles.iter_mut().for_each(|p| p.requires.clear());
-    let text = old.to_toml().unwrap().replacen("[pack]\n", "[pack]\nrequires = [\"gyro\"]\n", 1);
-    let upgraded = parse(&text).unwrap();
-    assert_eq!(upgraded.profiles[0].requires, [Feature::Gyro]);
-    assert!(upgraded.profiles[1].requires.is_empty());
-    assert!(upgraded.pack.requires.is_empty());
 }
 
 #[test]
@@ -64,7 +54,6 @@ fn export_reports_problems() {
     let info = draft(game, false);
     let out = export(game, &info);
     assert_eq!(out.dangling, ["macro \"Gone\""]);
-    assert!(out.pack.pack.requires.is_empty(), "a pack doesn't state needs; its profiles do");
     let uses = FeatureUse { feature: Feature::Gyro, place: "profile “Play”".into(), required: false };
     assert_eq!(out.features, [uses], "the action template aims with gyro, which it can do without");
     assert_eq!(out.pack.pack.name, "Doom");

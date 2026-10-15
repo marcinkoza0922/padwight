@@ -2,7 +2,7 @@
 
 A layer changes some of a controller's mappings while you hold a button, then changes them back when you let go. For example: hold LB, and the face buttons type F1 to F4 and the right stick scrolls instead of moving the mouse. Or hold the aim button, and the mouse stick slows down. It works like Shift on a keyboard.
 
-Layers belong to a game. They're on its **Layers** tab, and they apply over whichever of its profiles and [modes](Modes) are on. Anything a layer doesn't set stays as it was.
+Layers belong to a setup. They're on its **Layers** tab, and they apply over whichever of its profiles and [modes](Modes) are on. Anything a layer doesn't set stays as it was.
 
 A layer can override:
 
@@ -44,15 +44,14 @@ The live controller drawing labels each input with the mapping of the layers tha
 
 ## Editing
 
-The Layers tab uses the same profile editor as the Profiles tab, shown over one of the game's profiles.
+The Layers tab uses the same profile editor as the Profiles tab, shown over one of the setup's profiles.
 
 - Inputs a layer doesn't set read **Same as Gameplay: …**. Click **Override** to set one.
 - Overridden inputs have **Back to base** to undo that.
 
 Layers use their profile's timings (combo window, tap window and so on).
 
-**Copy from another game…** copies a layer along with the macros, menus and info overlays it uses. This is handy for sequels.
+**Copy from another setup…** copies a layer along with the macros, menus and info overlays it uses. This is handy for sequels.
 
-Shared items can't use layers, because layers always belong to one game.
 
 The Guide button's shortcuts aren't a layer and don't appear on this tab. See [The Guide button](Guide-Button).

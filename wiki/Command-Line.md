@@ -17,9 +17,9 @@ Every command except `padwight` (which opens the settings window) and `padwight 
 
 ## Finding profiles and menus
 
-`padwight profile <name>` looks in the active game first, then in General, then in the first game that has a profile of that name.
+`padwight profile <name>` looks in the active setup first, then in General, then in the first setup that has a profile of that name.
 
-`padwight menu <name>` opens one of the active game's menus, or a shared one.
+`padwight menu <name>` opens one of the active setup's menus.
 
 ## Live status
 

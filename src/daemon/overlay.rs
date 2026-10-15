@@ -79,7 +79,7 @@ impl Daemon {
         if let Some(dev) = self.devices.get(&device)
             && !session.prime(&self.scope.menus, dev.view.buttons(), dev.view.axes())
         {
-            log!("menu {name:?} not shown: its button was already let go (use a Toggle to open it with a tap)");
+            log!("menu {name:?} not shown: its button was already let go (a list with a close button stays up after a tap)");
             return;
         }
         self.release_mappings();

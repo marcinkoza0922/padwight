@@ -79,9 +79,8 @@ pub struct OverlayFrame {
     /// The font everything here is drawn in; the system's when unset.
     #[serde(default)]
     pub font: Option<String>,
-    /// Whether menu rows are tinted in colors color-blind people can tell apart. An older daemon
-    /// spells it `colourblind`.
-    #[serde(default, alias = "colourblind")]
+    /// Whether menu rows are tinted in colors color-blind people can tell apart.
+    #[serde(default)]
     pub colorblind: bool,
     /// The controller in use, whose button glyphs menus draw as the info overlays do.
     #[serde(default)]

@@ -10,7 +10,7 @@ Hold Guide and press Start to open the in-game menu over the game you're playing
 - profile, to change to another profile of the setup
 - gyro on or off (turning it back on brings back the gyro as it was when you opened the menu)
 - Left Stick and Right Stick dead zones
-- rumble strength, for every game (also on the settings window's Controllers page)
+- rumble strength, for every game (also on the settings window's Overview page)
 - overlay size, for the on-screen keyboard and numpad, the media controls and the menus
 - Nintendo button layout, which swaps the A/B and X/Y labels (and, on a Nintendo pad, what the face buttons send) for this setup
 - Turn remapping off, a way out if a mapping gets in the way: press A twice, and the controller goes straight to the game until you turn remapping back on from the tray or the settings window (or restart Padwight)

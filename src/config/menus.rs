@@ -117,7 +117,6 @@ pub enum MenuKind {
     },
     /// Four slots (up, right, down, left) on the D-pad or face buttons. A slot fires its
     /// action; give it "Open menu" to make it a submenu.
-    #[serde(alias = "cascade")]
     Directional { cluster: Cluster },
     /// A list moved through with the D-pad or left stick; A chooses.
     List,

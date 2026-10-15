@@ -124,20 +124,13 @@ fn stick_direction_buttons_cover_every_direction_once() {
 }
 
 #[test]
-fn menus_come_out_of_toggles_and_grid_spans_roundtrip() {
-    let open = ButtonAction::OpenMenu("M".into());
+fn grid_spans_roundtrip() {
     let mut game = Game::new("g", vec![Profile::passthrough("p")]);
-    game.profiles[0].set_button(Button::North, ButtonAction::toggle(open.clone()));
-    game.profiles[0].set_button(Button::West, ButtonAction::toggle(ButtonAction::Keys(vec!["KEY_A".into()])));
-    let mut item = MenuItem::new("x", ButtonAction::Multi(vec![ButtonAction::toggle(open.clone())]));
+    let mut item = MenuItem::new("x", ButtonAction::OpenMenu("M".into()));
     item.span = Span { columns: 2, rows: 3 };
     game.menus.push(Menu { name: "M".into(), kind: MenuKind::Grid { columns: 3 }, items: vec![item], cancel: None, no_cancel: false, keep_open: false, start: 4, style: OverlayStyle::default() });
     let back: Game = toml::from_str(&toml::to_string_pretty(&game).unwrap()).unwrap();
     assert_eq!(back, game);
-    game.untoggle_menus();
-    assert_eq!(game.profiles[0].buttons[&Button::North], open);
-    assert!(matches!(game.profiles[0].buttons[&Button::West], ButtonAction::Toggle(_)), "other toggles stay");
-    assert_eq!(game.menus[0].items[0].action, ButtonAction::Multi(vec![open]));
 }
 
 #[test]
@@ -180,11 +173,11 @@ fn menus_roundtrip_and_pick_a_sensible_cancel_button() {
 }
 
 #[test]
-fn old_cascade_menus_and_unstyled_menus_still_load() {
+fn unstyled_menus_load_with_the_default_style() {
     let text = r#"
-        name = "Old"
+        name = "Plain"
         items = []
-        [kind.cascade]
+        [kind.directional]
         cluster = "DPad"
     "#;
     let menu: Menu = toml::from_str(text).unwrap();

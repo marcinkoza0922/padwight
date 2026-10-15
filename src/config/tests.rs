@@ -87,7 +87,7 @@ fn default_config_roundtrips_through_toml() {
 }
 
 #[test]
-fn setups_are_saved_as_setups_and_old_games_keys_still_load() {
+fn setups_are_saved_as_setups() {
     let mut config = Config::default();
     config.games.push(Game::new("Doom", vec![Profile::passthrough("Play")]));
     config.active = ProfileRef::new(Some("Doom"), "Gamepad");
@@ -95,8 +95,6 @@ fn setups_are_saved_as_setups_and_old_games_keys_still_load() {
     assert!(text.contains("[[setups]]") && text.contains("setup = \"Doom\""), "{text}");
     assert!(!text.contains("[[games]]"), "{text}");
     assert_eq!(toml::from_str::<Config>(&text).unwrap(), config);
-    let old = text.replace("setups", "games").replace("setup = ", "game = ");
-    assert_eq!(toml::from_str::<Config>(&old).unwrap(), config);
 }
 
 #[test]
@@ -211,20 +209,6 @@ fn gyro_templates_need_a_gyro() {
     assert!(matches!(flick.right_stick.action, StickAction::Flick { .. }));
     assert!(!flick.usable_with(&[]) && flick.usable_with(&[Feature::Gyro]));
     assert!(Profile::pc_action("c").usable_with(&[]), "PC action is playable without a gyro");
-}
-
-#[test]
-fn old_direction_keys_stick_loads_as_a_ring_at_its_threshold() {
-    let old = r#"
-action = { keys = { up = "KEY_W", down = "KEY_S", left = "KEY_A", right = "KEY_D" } }
-deadzone = 0.1
-key_threshold = 0.2
-"#;
-    let cfg: StickConfig = toml::from_str(&migrate_text(old)).unwrap();
-    assert_eq!(cfg.action, StickAction::wasd().starting_at(0.2));
-    assert_eq!(cfg.key_threshold, 0.2);
-    // Text that isn't a config passes through for the parse to report.
-    assert_eq!(migrate_text("not = [toml"), "not = [toml");
 }
 
 #[test]

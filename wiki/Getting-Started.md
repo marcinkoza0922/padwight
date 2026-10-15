@@ -6,34 +6,34 @@ This walks through the first mapping. Once [Installation](Installation) is done,
 
 The **Overview** page draws your controller and labels each input with the active profile's mapping. The controller list on the same page shows what padwight has found. Use **Test rumble** to check force feedback, and **Calibrate gyro** if the controller has motion sensors (keep it still while it runs).
 
-![The Overview page, with the controller drawing and the sidebar of games](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/overview.png)
+![The Overview page, with the controller drawing and the sidebar of setups](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/overview.png)
 
 ## 2. Know what the defaults do
 
-**General** is the built-in game for the desktop and for plain gamepad use, and it has two profiles:
+**General** is the built-in setup for the desktop and for plain gamepad use, and it has two profiles:
 
 - **Gamepad**: 1:1 passthrough. The pad behaves as if padwight weren't there.
 - **Desktop**: the left stick moves the mouse, the right stick scrolls, A and B click, and LB+RB sends Alt+Tab.
 
-The **Settings** page chooses the default profile, which is used when no game is in focus.
+The **App settings** page chooses the default profile, which is used when a game loses focus.
 
 ## 3. Edit a mapping
 
-Open a game's **Profiles** tab, pick a profile, and click a mapping's name to edit it. Each mapping collapses to a one-line summary such as `A ▸ Left click`.
+Open a setup's **Profiles** tab, pick a profile, and click a mapping's name to edit it. Each mapping collapses to a one-line summary such as `A ▸ Left click`.
 
 If you don't know which input is which, use **Find by pressing**: it jumps to whatever you press or push on the controller.
 
-## 4. Add a game
+## 4. Add a setup
 
-Click **+ Add game**. You can:
+Click **+ Add setup**. You can:
 
 - pick a game from the **built-in library** (games found installed in Steam, Heroic or Lutris, or running, are listed first),
-- start from an **empty game** from a template, or
+- start from an **empty setup** from a template, or
 - **import a file** (a `.padpack`). See [Packs and the library](Packs-and-the-Library).
 
 Templates include **PC action**, **PC action with gyro aiming**, **PC action with a flick stick**, **Strategy** and **Retro / platformer**. The two gyro ones need a controller with a gyro. Each one is a complete starting point for its kind of game.
 
-![The Add a game picker, with the library's built-in games and the template dropdown](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/add-game.png)
+![The Add setup picker, with the library's built-in games and the template dropdown](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/add-game.png)
 
 ## 5. Save
 
@@ -41,10 +41,10 @@ Edits stay in memory until you click **Save & apply**. **Revert** drops them. Pr
 
 ## Changing controls while you play
 
-Press Guide and Start together to open the [in-game menu](In-Game-Menu). It has quick settings for the game you're playing, and the editor for its controls. Tap Guide on its own to open the [Guide overlay](Guide-Button), with the game's notes, mappings and the keyboard, numpad and other shortcuts.
+Hold Guide and press Start to open the [in-game menu](In-Game-Menu). It has quick settings for the game you're playing, and the editor for its controls. Tap Guide on its own to open the [Guide overlay](Guide-Button), with the game's notes, mappings and the keyboard, numpad and other shortcuts.
 
 ## Next
 
-- [Games and profiles](Games-and-Profiles): make a game switch profiles when it gets focus.
+- [Games and profiles](Games-and-Profiles): make a setup switch profiles when its game gets focus.
 - [Buttons and actions](Buttons-and-Actions): what a button can do.
 - [Layers](Layers): change mappings while a button is held.

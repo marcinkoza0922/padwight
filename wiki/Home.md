@@ -11,9 +11,10 @@ padwight is a background service that remaps gamepad inputs, or turns them into 
 
 ## Mapping
 
-- [Games and profiles](Games-and-Profiles): how games, profiles and auto-switch rules fit together.
+- [Games and profiles](Games-and-Profiles): how setups, profiles and auto-switch rules fit together.
 - [Buttons and actions](Buttons-and-Actions): what a button can do, Toggle and Turbo, combos, gestures and zones.
 - [Sticks and triggers](Sticks-and-Triggers): stick output, button rings and the flick stick.
+- [Modes](Modes): switch to another control scheme and stay in it.
 - [Layers](Layers): hold a button to change some mappings.
 - [Macros](Macros): recorded input sequences, including fighting-game motions.
 - [Menus](Menus): on-screen radial, list, grid and other menus.
@@ -26,10 +27,11 @@ padwight is a background service that remaps gamepad inputs, or turns them into 
 
 ## Sharing
 
-- [Packs and the library](Packs-and-the-Library): export a game as a `.padpack`, import one, and the built-in library.
+- [Packs and the library](Packs-and-the-Library): export a setup as a `.padpack`, import one, and the built-in library.
 
-## Tutorial
+## Tutorials
 
+- [Your first setup for a game](Tutorial-First-Setup): start here. The sidebar lists a tutorial for each major feature.
 - [Tutorial: making a pack (Deus Ex, Xbox-style pad)](Tutorial-Deus-Ex-Pack): a step-by-step walkthrough that builds the shipped Deus Ex pack, with the reasons for the less obvious mappings.
 
 ## Reference

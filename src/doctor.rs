@@ -161,7 +161,7 @@ The kernel makes virtual input devices only through /dev/uinput, so the daemon h
             let note = if loaded == RuleState::Missing {
                 "The uinput kernel module isn't loaded, and nothing loads it at boot."
             } else {
-                "The uinput kernel module isn't loaded, though it is set to load at boot. It may not exist in this kernel."
+                "The uinput kernel module isn't loaded, though it is set to load at boot. This kernel may not have it."
             };
             let fix = format!(
                 "sudo modprobe uinput\n{}",
@@ -317,7 +317,7 @@ fn daemon_down() -> Finding {
     let detail = if unit {
         "Start it now and at every login."
     } else {
-        "No padwight.service is installed for your user, so start it by hand, or install the unit (scripts/install.sh does)."
+        "No padwight.service is installed for your user, so start it by hand, or install the unit (the install.sh in the release tarball does)."
     };
     Finding::new(Level::Note, "Daemon: not running", detail).fix(fix.to_owned())
 }
