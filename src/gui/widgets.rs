@@ -132,6 +132,12 @@ pub(super) fn ms_field<'a>(ms: u64, on_change: impl Fn(u64) -> Message + 'a) -> 
     .into()
 }
 
+/// The height of a text box that shows `lines` whole lines (16 px text, 1.3 line height, 5 px
+/// padding). Boxes grow with their text between two such heights, so no line is cut through.
+pub(super) const fn editor_lines(lines: f32) -> f32 {
+    lines * 20.8 + 10.0
+}
+
 /// The width of a setting's dropdown on the settings pages and the header, so the dropdowns
 /// on one page line up.
 pub(super) const SETTING_WIDTH: f32 = 260.0;
@@ -157,6 +163,11 @@ pub(super) fn search_field<'a>(placeholder: &str, query: &str, on_change: fn(Str
     row![field(placeholder, query).on_input(on_change).width(Length::Fill), clear].spacing(6).align_y(Alignment::Center).into()
 }
 
+/// A part of the Overview in a card, like a `section` but keeping the part's own heading.
+pub(super) fn overview_card<'a>(content: Element<'a, Message>) -> Element<'a, Message> {
+    container(content).padding(14).width(Length::Fill).style(style::card).into()
+}
+
 pub(super) fn section<'a>(title: &'a str, help_text: Option<String>, rows: Vec<Element<'a, Message>>) -> Element<'a, Message> {
     let mut heading = row![text(title).size(18)].spacing(8).align_y(Alignment::Center);
     if let Some(h) = help_text {
@@ -171,16 +182,15 @@ pub(super) fn section<'a>(title: &'a str, help_text: Option<String>, rows: Vec<E
 
 /// The card at the top of an items tab (layers, macros, menus, info and log overlays): the add
 /// buttons, a line on what the items are, the copy link and the tab's help. Every tab has this
-/// layout, so the controls sit in the same places. The blurb takes the free width and wraps
-/// there, so the copy button keeps to one line however many add buttons there are.
+/// layout, so the controls sit in the same places. The add buttons and the blurb under them take
+/// the width the copy button leaves, and wrap there, so nothing is pushed out of a narrow window.
 pub(super) fn items_header<'a>(kind: ItemKind, add: Element<'a, Message>, blurb: &'static str, explain: String) -> Element<'a, Message> {
     container(
         row![
-            add,
-            text(blurb).size(13).color(MUTED_COLOR).width(Length::Fill),
+            container(column![add, text(blurb).size(13).color(MUTED_COLOR)].spacing(6)).width(Length::Fill),
             // The link sits under the copy button, so it takes no width from the blurb.
             column![
-                row![button(text("Copy from another setup…")).style(style::secondary).on_press(Message::OpenBrowse(kind)), help(explain)]
+                row![button(text("Copy from another setup…").wrapping(text::Wrapping::None)).style(style::secondary).on_press(Message::OpenBrowse(kind)), help(explain)]
                     .spacing(12)
                     .align_y(Alignment::Center),
                 tutorial_link(item_tutorial(kind)),
@@ -194,6 +204,25 @@ pub(super) fn items_header<'a>(kind: ItemKind, add: Element<'a, Message>, blurb:
     .width(Length::Fill)
     .style(style::card)
     .into()
+}
+
+/// A bar of tabs (`segments`, made with `segment`) that wraps onto another line when the window is
+/// too narrow for one, so no tab is pushed out of reach.
+pub(super) fn segment_bar<'a>(segments: Vec<Element<'a, Message>>) -> Element<'a, Message> {
+    container(iced::widget::Row::with_children(segments).spacing(2).wrap().vertical_spacing(2))
+        .padding(3)
+        .style(style::segments)
+        .into()
+}
+
+/// One tab of a `segment_bar`: its glyph and name, kept on one line.
+pub(super) fn segment<'a>(glyph: Element<'a, Message>, label: String, size: f32, selected: bool, message: Message) -> Element<'a, Message> {
+    let padding = if size >= 15.0 { [6, 16] } else { [5, 14] };
+    button(row![glyph, text(label).size(size).wrapping(text::Wrapping::None)].spacing(6).align_y(Alignment::Center))
+        .style(style::segment(selected))
+        .padding(padding)
+        .on_press(message)
+        .into()
 }
 
 /// The title of an item's card, with the chevron that opens it at the same size as a disclosure's.

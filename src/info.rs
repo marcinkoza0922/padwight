@@ -23,7 +23,7 @@ use windows::{battery, cpu_times, gpu_busy, local_time, memory, wifi_strength};
 pub use windows::form_factor;
 
 pub use catalog::{Entry, Fold, folds};
-pub use guide::{DEFAULT_MODE, GuideView};
+pub use guide::{DEFAULT_MODE, GuideView, notes_panel};
 pub use opener::{OpenerLabel, set_menu_keys, set_opener, set_panel_keys};
 pub use pad_model::PadModel;
 pub use timers::{Timers, Toast, fade, redraw_at, seconds};
@@ -627,10 +627,17 @@ pub fn key_glyph(code: &str) -> Segment {
     glyph(&crate::keyboard::label(code), Some(KEY), false)
 }
 
-/// A mouse button, in a teal that tells it from a key or a controller's button.
+/// The teal mouse outputs are drawn in, which tells them from a key or a controller's button.
+const MOUSE: [u8; 3] = [0x2f, 0x7a, 0x7a];
+
+/// A mouse button, in the mouse teal.
 pub fn mouse_glyph(m: MouseButton) -> Segment {
-    const MOUSE: [u8; 3] = [0x2f, 0x7a, 0x7a];
     glyph(&format!("{m} click"), Some(MOUSE), false)
+}
+
+/// A turn of the mouse wheel, in the mouse buttons' teal.
+pub fn wheel_glyph(d: crate::config::WheelDirection) -> Segment {
+    glyph(&d.to_string(), Some(MOUSE), false)
 }
 
 /// The badge shown while the screen is being recorded: a red "● REC" in the top left.
@@ -762,6 +769,7 @@ pub fn button_name(b: Button, family: PadFamily) -> String {
         Button::RightBumper => named("Right Bumper (RB)", "Right Bumper (R1)", "Right Bumper (R)"),
         Button::Select => named("Back (View)", "Share", "Minus (−)"),
         Button::Start => named("Start (Menu)", "Options", "Plus (+)"),
+        Button::Guide => named("Guide (Xbox)", "PS", "Home"),
         other => other.to_string(),
     }
 }

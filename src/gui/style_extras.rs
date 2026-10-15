@@ -29,7 +29,8 @@ pub(super) fn typography_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>)
         labeled("        Case", row![case("As typed", Case::None), case("CAPITALS", Case::Upper), case("lower", Case::Lower)].spacing(4).into()),
         labeled("        Spacing", spacing),
         labeled("        Size", size),
-        text("        Bold, italic, underline and color go inside the text: {b}…{/b}, {i}…{/i}, {u}…{/u}, {color:red}…{/color}.").size(12).color(MUTED_COLOR),
+        // A hint at the size the editor's other notes use, under the controls it's about.
+        labeled("", note("Bold, italic, underline and color go inside the text: {b}…{/b}, {i}…{/i}, {u}…{/u}, {color:red}…{/color}.").into()),
     ]
     .spacing(8)
     .into()

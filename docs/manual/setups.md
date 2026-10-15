@@ -10,8 +10,8 @@ A profile is one complete set of mappings inside a setup, for example one for a 
 
 - **Automatically:** a rule in the setup picks its profile when the game's window has focus.
 - **By hand:** choose a profile in the top bar's *Active profile* list, or press Guide + Start and pick one in Quick Settings.
-- **Locked:** the padlock beside the *Active profile* list keeps the active profile on, so rules and the Default Profile don't switch it. Switching to another profile by hand unlocks it. The lock isn't kept when Padwight restarts.
-- **When no setup matches:** the *Default Profile* setting under Per-setup profiles on the App settings page picks the profile.
+- **Locked:** the padlock beside the *Active profile* list keeps the active profile on, so rules and the default profile don't switch it. Switching to another profile by hand unlocks it. The lock isn't kept when Padwight restarts.
+- **When no setup matches:** the *Default profile* setting under Per-setup profiles on the App settings page picks the profile.
 
 ## Rules
 

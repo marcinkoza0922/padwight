@@ -106,13 +106,18 @@ impl App {
             if let Some(other) = self.config.games.iter().find(|g| g.name != game.name && g.rules.iter().any(|o| o.enabled && o.same_match(r))) {
                 line = line.push(text(format!("also in {}", other.name)).size(12).color(MUTED_COLOR));
             }
-            rules = rules.push(line);
+            // In a narrow window the end of a rule goes onto a second line rather than out of view.
+            rules = rules.push(line.wrap().vertical_spacing(8));
         }
         if game.rules.is_empty() {
             rules = rules.push(text("No rules yet. This setup only starts when you pick it yourself.").size(13).color(MUTED_COLOR));
         }
         rules = rules.push(
-            row![button(text("+ Add rule").size(13)).style(style::secondary).on_press(Message::AddRule(None)), tutorial_link("tutorial-first-setup.md")]
+            row![
+                button(text("+ Add rule").size(13)).style(style::secondary).on_press(Message::AddRule(None)),
+                space::horizontal(),
+                tutorial_link("tutorial-first-setup.md"),
+            ]
                 .spacing(8)
                 .align_y(Alignment::Center),
         );

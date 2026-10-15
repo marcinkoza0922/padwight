@@ -14,7 +14,7 @@ Gyro belongs to a profile. A good habit is to keep your plain profile and make a
 
 ## 3. Turn it on
 
-![The Gyro tab: the mode, the sensitivity, the Active row set to off while Left Trigger is held](../images/manual/gyro-panel.png "The Gyro tab of a copy of the profile.")
+![The Gyro tab: the mode, the sensitivity, the Active row set to off while Left Trigger is held, and the box saying the profile needs gyro](../images/manual/gyro-panel.png "The Gyro tab of a copy of the profile.")
 
 1. Choose **Mouse (gyro aiming)** in the first dropdown (2). The other modes push a virtual stick instead, or steer like a wheel.
 2. **Sensitivity** (3) is how many pixels the pointer moves for each degree you turn. Start at 30. Tick **Real-world sensitivity** if you'd rather enter the game's full turn: then every game feels the same for the same setting.

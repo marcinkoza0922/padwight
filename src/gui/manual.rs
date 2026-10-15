@@ -125,6 +125,12 @@ pub(super) fn chapter_of(link: &str) -> Option<usize> {
     CHAPTERS.iter().position(|(file, _)| *file == link)
 }
 
+/// `s` with its first letter in capitals.
+fn capitalized(s: &str) -> String {
+    let mut chars = s.chars();
+    chars.next().map(|c| c.to_uppercase().chain(chars).collect()).unwrap_or_default()
+}
+
 /// The chapter's title: the text of its first line.
 fn title(source: &str) -> &str {
     source.lines().next().unwrap_or_default().trim_start_matches('#').trim()
@@ -171,8 +177,22 @@ impl App {
             chosen = first;
         }
         let mut index = column![search_field("Search the manual…", query, Message::SetManualSearch)].spacing(4);
+        // Unsearched, the tutorials sit under a heading of their own instead of each starting with
+        // "Tutorial:". A search lists chapters by how well they match, so there they keep it.
+        let mut in_tutorials = false;
         for &(i, line) in &hits {
-            let mut label = column![text(title(CHAPTERS[i].1)).size(14)].spacing(2);
+            let full = title(CHAPTERS[i].1);
+            let tutorial = full.strip_prefix("Tutorial: ").filter(|_| !searching);
+            if tutorial.is_some() != in_tutorials {
+                in_tutorials = tutorial.is_some();
+                index = index.push(if in_tutorials {
+                    Element::from(container(text("Tutorials").size(12).color(MUTED_COLOR)).padding(iced::Padding::ZERO.top(10).left(10)))
+                } else {
+                    container(rule::horizontal(1)).padding([6, 0]).into()
+                });
+            }
+            let shown = tutorial.map_or_else(|| full.to_string(), capitalized);
+            let mut label = column![text(shown).size(14)].spacing(2);
             if searching && let Some(line) = line {
                 label = label.push(text(line).size(12).color(MUTED_COLOR));
             }

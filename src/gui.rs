@@ -1273,12 +1273,11 @@ impl App {
 
     fn view(&self) -> Element<'_, Message> {
         let page: Element<'_, Message> = match &self.page {
+            // Each part in a card, as every other page's parts are.
             Page::Overview => column![
-                self.view_live(self.config.active().map(|p| self.with_active_layers(p)).as_ref(), false),
-                rule::horizontal(1),
-                self.view_activity(),
-                rule::horizontal(1),
-                self.view_devices()
+                overview_card(self.view_live(self.config.active().map(|p| self.with_active_layers(p)).as_ref(), true)),
+                overview_card(self.view_activity()),
+                overview_card(self.view_devices()),
             ]
                 .spacing(16)
                 .into(),

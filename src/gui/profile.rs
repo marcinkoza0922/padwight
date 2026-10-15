@@ -129,18 +129,44 @@ impl Ui<'_> {
 
 /// Labels for the controller drawing: every input that doesn't simply pass through. Guide's
 /// usual mapping is left out too: the engine ignores it (Guide is built in).
+/// A stick's mode in a word or two for the picture, or `None` while it's the stick it is.
+fn stick_mode(cfg: &StickConfig, s: Stick) -> Option<&'static str> {
+    Some(match cfg.action {
+        StickAction::Gamepad { stick, .. } if stick == s => return None,
+        StickAction::Gamepad { stick: Stick::Left, .. } => "Pad LS",
+        StickAction::Gamepad { stick: Stick::Right, .. } => "Pad RS",
+        StickAction::Disabled => "Stick off",
+        StickAction::Mouse { .. } => "Mouse",
+        StickAction::Scroll { .. } => "Scroll",
+        StickAction::Ring { .. } => "Ring",
+        StickAction::Flick { .. } => "Flick",
+    })
+}
+
 pub(super) fn drawing_labels(p: &Profile) -> Vec<(pad_svg::Spot, String)> {
     let mut labels = Vec::new();
     for b in Button::ALL {
         let usual = if b == Button::Guide { ButtonAction::guide_hold() } else { ButtonAction::Gamepad(b) };
         let gestures = p.gestures(b).is_some();
-        if *p.button(b) == usual && !gestures {
-            continue;
-        }
-        let mut label = summarize(p.button(b));
-        if gestures {
-            label.push_str(" +");
-        }
+        // A stick's own mode shares its click's label, since both meet the picture at the stick.
+        let stick = match b {
+            Button::LeftStick => stick_mode(p.stick(Stick::Left), Stick::Left),
+            Button::RightStick => stick_mode(p.stick(Stick::Right), Stick::Right),
+            _ => None,
+        };
+        let click = (*p.button(b) != usual || gestures).then(|| {
+            let mut label = summarize(p.button(b));
+            if gestures {
+                label.push_str(" +");
+            }
+            label
+        });
+        let label = match (stick, click) {
+            (Some(stick), Some(click)) => format!("{stick} · {click}"),
+            (Some(stick), None) => stick.to_string(),
+            (None, Some(click)) => click,
+            (None, None) => continue,
+        };
         labels.push((pad_svg::Spot::Button(b), label));
     }
     for t in [Trigger::Left, Trigger::Right] {
@@ -365,26 +391,23 @@ pub(super) fn requirement_rows(p: &Profile, f: Feature) -> Vec<Element<'_, Messa
         all.extend(on.then_some(f));
         Message::SetRequires(all)
     };
-    let hint = match f {
-        Feature::Gyro => {
-            "You decide this; it isn't detected. Tick it when the profile depends on the feature (for example a flick stick \
-             setup that turns vertically with gyro). Leave it unticked when it only adds to a scheme that works without. \
-             Players whose controller lacks a ticked feature aren't offered the profile, and Guide skips it."
-        }
-        Feature::Touchpad => {
-            "You decide this; it isn't detected. Tick it when the profile can't be played without the touchpad (a build menu \
-             that's only on the pad, say). Leave it unticked when the pad only adds a mouse or shortcuts to a scheme that works \
-             without it. Players whose controller has no touchpad aren't offered the profile, and Guide skips it."
-        }
-        Feature::BackPaddles => {
-            "You decide this; it isn't detected. Tick it when the profile needs a paddle to be played (a jump that's only on \
-             a paddle, say). Leave it unticked when paddles only add extra inputs to a scheme that works without them. \
-             Players whose controller has no paddles aren't offered the profile, and Guide skips it."
-        }
+    let example = match f {
+        Feature::Gyro => "a flick stick setup that turns vertically with gyro",
+        Feature::Touchpad => "a build menu that's only on the pad",
+        Feature::BackPaddles => "a jump that's only on a paddle",
     };
+    let label = f.label();
+    // The same explanation for every feature, behind an ⓘ rather than a paragraph under each box.
+    let hint = format!(
+        "You decide this; it isn't detected. Tick it when the profile can't be played without {label} ({example}). \
+         Leave it unticked when it is only an extra on a scheme that works without it. Players whose controller has \
+         no {label} aren't offered the profile, and Guide skips it."
+    );
     vec![
-        checkbox(has).label(format!("Can't be played without {}", f.label())).on_toggle(toggled).into(),
-        note(hint).into(),
+        row![checkbox(has).label(format!("Can't be played without {label}")).on_toggle(toggled), help(hint)]
+            .spacing(8)
+            .align_y(Alignment::Center)
+            .into(),
     ]
 }
 
@@ -480,22 +503,34 @@ pub(super) fn button_row<'a>(p: &'a Profile, b: Button, ui: &Ui) -> Vec<Element<
     if !open {
         let disabled = matches!(p.button(b), ButtonAction::Disabled) && set_gestures.is_empty();
         let passthrough = *p.button(b) == ButtonAction::Gamepad(b) && set_gestures.is_empty();
-        let summary = piece_line(p.button(b).pieces(), ui.family, ui.swap, disabled || passthrough);
-        let mut line = row![row_toggle(&button_name(b, ui.in_use), target, false, problem.is_some()), summary]
-            .spacing(10)
-            .align_y(Alignment::Center);
-        // Each gesture is its own segment, set off by a muted bar and its name in muted text.
+        // A button left as itself would show only its own glyph, which reads like the button's
+        // icon rather than what it does, so it says so in words.
+        let summary = if passthrough {
+            text("Same button").color(MUTED_COLOR).into()
+        } else {
+            piece_line(p.button(b).pieces(), ui.family, ui.swap, disabled)
+        };
+        let mut segments = row![summary].spacing(10).align_y(Alignment::Center);
+        // Each gesture is its own segment, set off by a muted bar and its name in muted text. The
+        // segments wrap onto another line when they don't fit, each kept whole.
         for (k, a) in &set_gestures {
-            line = line
-                .push(text("│").color(MUTED_COLOR))
-                .push(text(format!("{k}:")).color(MUTED_COLOR))
-                .push(piece_line(a.pieces(), ui.family, ui.swap, false));
+            segments = segments.push(
+                row![text("│").color(MUTED_COLOR), text(format!("{k}:")).color(MUTED_COLOR), piece_line(a.pieces(), ui.family, ui.swap, false)]
+                    .spacing(10)
+                    .align_y(Alignment::Center),
+            );
         }
+        let mut line = row![
+            row_toggle(&button_name(b, ui.in_use), target, false, problem.is_some()),
+            container(segments.wrap().vertical_spacing(4)).width(Length::Fill),
+        ]
+        .spacing(10)
+        .align_y(Alignment::Center);
         if let Some(problem) = problem {
-            line = line.push(space::horizontal()).push(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR));
+            line = line.push(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR));
         }
         if ui.layer.is_some() {
-            line = line.push(space::horizontal()).push(
+            line = line.push(
                 button(text("Back to base").size(13)).style(button::text).on_press(Message::RevertInput(LayerPart::Button(b))),
             );
         }
@@ -524,17 +559,19 @@ pub(super) fn button_row<'a>(p: &'a Profile, b: Button, ui: &Ui) -> Vec<Element<
 
     for (kind, action) in set_gestures {
         rows.push(rule::horizontal(1).into());
-        // Laid out like the Press row, with a ✕ at the end as other removable rows have.
+        // Laid out like the Press row, with a ✕ right after the action it removes. The row takes
+        // the free width, so the action still wraps there in a narrow window.
         let target = Target::Gesture(b, kind);
         rows.push(labeled(
             format!("    {kind}"),
-            row![
-                fill_x(action_editor(action, b, &ACTION_KINDS, set_action(target), KeyField::root(target), ui.names)),
-                button(text("✕").size(13)).style(style::secondary).on_press(Message::RemoveGesture(b, kind)),
-            ]
-            .spacing(8)
-            .align_y(Alignment::Start)
-            .into(),
+            fill_x(
+                row![
+                    action_editor(action, b, &ACTION_KINDS, set_action(target), KeyField::root(target), ui.names),
+                    button(text("✕").size(13)).style(style::secondary).on_press(Message::RemoveGesture(b, kind)),
+                ]
+                .spacing(8)
+                .align_y(Alignment::Start),
+            ),
         ));
         if kind == GestureKind::LongPress {
             rows.extend(menu_combos::offer(p, &[b], action, ui).map(|o| labeled("", o)));
@@ -623,7 +660,8 @@ pub(super) fn combo_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message
             Button::EVERY.into_iter().filter(|b| !combo.buttons.contains(b)).collect();
         members = members.push(
             dropdown(remaining, None::<Button>, move |b| Message::AddComboButton(i, b))
-                .placeholder("Add button…")
+                .placeholder("+ Add button…")
+                .style(style::action_dropdown)
                 .width(170),
         );
         let mut body = column![
@@ -964,7 +1002,8 @@ impl App {
         let live = (layer.is_none() && self.profile_ref().is_some_and(|at| at == self.saved.active)).then(|| self.with_active_layers(p));
         let mut col = column![self.view_live(Some(live.as_ref().unwrap_or(p)), true)].spacing(16);
 
-        let mut tabs = row![self.profile_segments(p, names), space::horizontal()]
+        // The tabs take what the buttons beside them leave, and wrap there when it's too little.
+        let mut tabs = row![container(self.profile_segments(p, names)).width(Length::Fill)]
             .spacing(6)
             .align_y(Alignment::Center);
         // Only where there are rows that open: every button, and the combos once there is one.
@@ -980,12 +1019,13 @@ impl App {
             ProfileTab::Touchpad => "tutorial-touchpad.md",
             ProfileTab::Guide => "tutorial-guide.md",
         };
-        tabs = tabs.push(tutorial_link(tutorial));
         if expandable {
             tabs = tabs
-                .push(button(text("Expand all")).style(style::secondary).on_press(Message::ExpandAll(true)))
-                .push(button(text("Collapse all")).style(style::secondary).on_press(Message::ExpandAll(false)));
+                .push(button(text("Expand all").wrapping(text::Wrapping::None)).style(style::secondary).on_press(Message::ExpandAll(true)))
+                .push(button(text("Collapse all").wrapping(text::Wrapping::None)).style(style::secondary).on_press(Message::ExpandAll(false)));
         }
+        // Last, so it stays at the right end whether or not the buttons before it show.
+        tabs = tabs.push(tutorial_link(tutorial));
         col = col.push(self.find_and_search()).push(tabs);
 
         let ui = Ui {
@@ -1010,7 +1050,7 @@ impl App {
             query: &self.button_query,
             touchpad_height: if self.shown_pad().model == Some(PadModel::DualShock4) { crate::input::DUALSHOCK4_HEIGHT } else { crate::input::DUALSENSE_HEIGHT },
         };
-        let guide = GuideView { notes: &self.guide_notes, family: ui.family, swap: ui.swap };
+        let guide = GuideView { notes: &self.guide_notes, family: ui.family, swap: ui.swap, font: self.preview_font(), nintendo_layout: self.nintendo_layout() };
         if let Some(also) = self.also_in_tabs(p, &ui) {
             col = col.push(also);
         }
@@ -1079,18 +1119,14 @@ impl App {
     /// control, with a ⚠ on a tab that has a problem.
     fn profile_segments<'a>(&self, p: &Profile, names: &Names) -> Element<'a, Message> {
         let family = self.glyph_family();
-        let sub_tab = |t: ProfileTab| {
-            let label = if section_has_problem(p, t, names) { format!("{t}  ⚠") } else { t.to_string() };
-            button(row![t.glyph(family), text(label).size(14)].spacing(6).align_y(Alignment::Center))
-                .style(style::segment(self.profile_tab == t))
-                .padding([5, 14])
-                .on_press(Message::SelectProfileTab(t))
-        };
-        let mut segments = row![].spacing(2);
-        for t in ProfileTab::ALL {
-            segments = segments.push(sub_tab(t));
-        }
-        container(segments).padding(3).style(style::segments).into()
+        let segments = ProfileTab::ALL
+            .into_iter()
+            .map(|t| {
+                let label = if section_has_problem(p, t, names) { format!("{t}  ⚠") } else { t.to_string() };
+                segment(t.glyph(family), label, 14.0, self.profile_tab == t, Message::SelectProfileTab(t))
+            })
+            .collect();
+        segment_bar(segments)
     }
 
     /// The live controller drawing, labeled with `labels_from`'s mappings.
@@ -1149,14 +1185,21 @@ impl App {
         };
         column![
             title,
-            container(controller_drawing(
+            // The labels are placed in the picture's own pixels, so it keeps its size in a narrow
+            // window and scrolls sideways there, rather than shrinking out from under them.
+            container(
+                scrollable(controller_drawing(
                     self.shown_input(),
                     pad.model,
                     // The picture is the controller itself, so it keeps the controller's own labels.
                     Glyphs { family: pad.family, nintendo_layout: false },
                     &labels,
                     self.picture_opacity(),
-                )).center_x(Length::Fill),
+                ))
+                .direction(scrollable::Direction::Horizontal(scrollable::Scrollbar::default()))
+                .width(Length::Shrink)
+            )
+            .center_x(Length::Fill),
             container(text(caption).size(13).color(MUTED_COLOR).align_x(iced::alignment::Horizontal::Center)).center_x(Length::Fill),
         ]
         .spacing(8)

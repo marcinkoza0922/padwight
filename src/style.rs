@@ -95,14 +95,15 @@ pub fn nav(selected: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |theme, status| {
         let p = theme.extended_palette();
         let hovered = matches!(status, button::Status::Hovered | button::Status::Pressed);
+        // The open page on a soft tint of the accent, which marks it without outweighing the page.
         let background = if selected {
-            Some(p.primary.weak.color.into())
+            Some(Color { a: 0.45, ..p.primary.weak.color }.into())
         } else if hovered {
             Some(p.background.weak.color.into())
         } else {
             None
         };
-        let text_color = if selected { p.primary.weak.text } else { p.background.base.text };
+        let text_color = p.background.base.text;
         button::Style {
             background,
             text_color,
@@ -199,12 +200,13 @@ pub fn danger(theme: &Theme, status: button::Status) -> button::Style {
 }
 
 /// Every disabled button, whatever its style: no fill and a faint edge, so it doesn't read as
-/// clickable, with gray text that stays readable.
+/// clickable, with pale text that can still be read. Paler than a field's muted text: a disabled
+/// arrow next to enabled ones must look out of use at a glance.
 fn disabled(theme: &Theme) -> button::Style {
     let p = theme.extended_palette();
     button::Style {
         background: None,
-        text_color: muted(p.background.base.text),
+        text_color: Color { a: 0.4, ..p.background.base.text },
         border: Border { width: 1.0, radius: 5.0.into(), color: p.background.weak.color },
         ..button::Style::default()
     }
@@ -225,15 +227,23 @@ pub fn quiet_danger(theme: &Theme, status: button::Status) -> button::Style {
     }
 }
 
-/// Field surface shared by dropdowns and text inputs: lighter than both page and cards.
+/// Field surface shared by dropdowns and text inputs: the page's own color with an edge, set into
+/// the cards. Buttons are filled, so a field beside a button never reads as another button.
 fn field(theme: &Theme, emphasized: bool) -> (Background, Border, Color) {
     let p = theme.extended_palette();
     let border_color = if emphasized { p.primary.base.color } else { p.background.strong.color };
     (
-        p.background.weak.color.into(),
+        p.background.base.color.into(),
         Border { width: if emphasized { 2.0 } else { 1.0 }, radius: 5.0.into(), color: border_color },
-        p.background.weak.text,
+        p.background.base.text,
     )
+}
+
+/// A button that opens a list of its own (the font picker), drawn as a dropdown is.
+pub fn field_button(theme: &Theme, status: button::Status) -> button::Style {
+    let emphasized = matches!(status, button::Status::Hovered | button::Status::Pressed);
+    let (background, border, text_color) = field(theme, emphasized);
+    button::Style { background: Some(background), text_color, border, ..button::Style::default() }
 }
 
 pub fn dropdown(theme: &Theme, status: pick_list::Status) -> pick_list::Style {

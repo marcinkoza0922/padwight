@@ -180,8 +180,16 @@ impl App {
     pub(super) fn view_help_card(&self) -> Element<'_, Message> {
         section(
             "Help",
-            Some("A short walk through the window, as on the first start.".into()),
-            vec![button(text("Take the tour")).style(style::secondary).on_press(Message::Tour(TourMove::Start)).into()],
+            Some(
+                "System check looks at the permissions Padwight needs to create its virtual gamepad, read your \
+                 controller and use its gyro (also padwight doctor in a terminal). The tour is a short walk \
+                 through the window, as on the first start."
+                    .into(),
+            ),
+            vec![
+                self.system_check_row(),
+                button(text("Take the tour")).style(style::secondary).on_press(Message::Tour(TourMove::Start)).into(),
+            ],
         )
     }
 }

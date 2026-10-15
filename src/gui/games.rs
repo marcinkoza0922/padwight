@@ -54,11 +54,13 @@ impl App {
                         self.reset_page_state();
                     }
                 }
+                self.sync_motion_demo();
             }
             Message::SetGameSearch(search) => self.game_search = search,
             Message::SelectGameTab(tab) => {
                 self.game_tab = tab;
                 self.found = None;
+                self.sync_motion_demo();
             }
             Message::GoToItem(kind, name) => return self.go_to_item(kind, &name),
             Message::SelectChapter(chapter) => self.manual_chapter = chapter,
@@ -169,7 +171,10 @@ impl App {
                 self.game_mut().motion = Some(set);
                 self.motion_demo.show(style);
             }
-            Message::OwnGameMotion(on) => self.game_mut().motion = on.then_some(self.config.motion),
+            Message::OwnGameMotion(on) => {
+                self.game_mut().motion = on.then_some(self.config.motion);
+                self.sync_motion_demo();
+            }
             Message::SetGameOverlayFont(font) => {
                 self.game_mut().overlay_font = font;
                 self.font_menu = None;
@@ -235,7 +240,13 @@ impl App {
             let selected = self.page == page;
             let mut line = row![text(label).size(15).width(Length::Fill)].spacing(6).align_y(Alignment::Center);
             if let Some(note) = note {
-                line = line.push(text(note).size(12).color(style_accent()));
+                // The dot alone doesn't say what it means, so it says so on hover.
+                let why = if note.contains('●') { "In use: the active profile is one of this setup's." } else if note.contains('⚠') { "One of its profiles uses what opens the Guide overlay." } else { "A newer version is in the library." };
+                line = line.push(tooltip(
+                    text(note).size(12).color(style_accent()),
+                    container(text(why).size(13)).padding(8).style(style::tooltip),
+                    tooltip::Position::Right,
+                ));
             }
             button(line)
                 .width(Length::Fill)
@@ -304,11 +315,14 @@ impl App {
         if let Some(note) = origin_note(game) {
             title = title.push(text(note).size(13).color(MUTED_COLOR));
         }
-        if general {
-            title = title.push(help(
-                "Profiles for no particular game, such as the desktop or a plain gamepad.".into(),
-            ));
-        }
+        // Every setup's title has an ⓘ saying what the page holds.
+        title = title.push(help(if general {
+            "Profiles for no particular game, such as the desktop or a plain gamepad.".into()
+        } else {
+            "This game's profiles, and the modes, layers, macros, menus and overlays they share. The rules on the \
+             Details tab switch to it when the game is focused."
+                .into()
+        }));
 
         let profile_issue = self.profile().is_some_and(|p| ProfileTab::ALL.iter().any(|t| section_has_problem(p, *t, &names)));
         let reachable = reachable_menus(&self.config, game);
@@ -323,16 +337,14 @@ impl App {
             GameTab::Details => !general && (rules_problem(game).is_some() || game.name.trim().is_empty()),
         };
         let family = self.glyph_family();
-        let mut segments = row![].spacing(2);
-        for tab in GameTab::ALL.into_iter().filter(|t| !(general && *t == GameTab::Details)) {
-            let label = if issue(tab) { format!("{tab}  ⚠") } else { tab.to_string() };
-            segments = segments.push(
-                button(row![tab.glyph(family), text(label).size(15)].spacing(6).align_y(Alignment::Center))
-                    .style(style::segment(self.game_tab == tab))
-                    .padding([6, 16])
-                    .on_press(Message::SelectGameTab(tab)),
-            );
-        }
+        let segments: Vec<_> = GameTab::ALL
+            .into_iter()
+            .filter(|t| !(general && *t == GameTab::Details))
+            .map(|tab| {
+                let label = if issue(tab) { format!("{tab}  ⚠") } else { tab.to_string() };
+                segment(tab.glyph(family), label, 15.0, self.game_tab == tab, Message::SelectGameTab(tab))
+            })
+            .collect();
         let tab = if general && self.game_tab == GameTab::Details { GameTab::Profiles } else { self.game_tab };
         let body = match tab {
             GameTab::Profiles => self.view_profile_tab(&names),
@@ -344,7 +356,7 @@ impl App {
             GameTab::Logs => self.view_logs(),
             GameTab::Details => self.view_details(),
         };
-        column![title, container(segments).padding(3).style(style::segments), body].spacing(16).into()
+        column![title, segment_bar(segments), body].spacing(16).into()
     }
 }
 

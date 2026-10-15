@@ -10,12 +10,11 @@ A mode is another control scheme inside a game. You switch to it, and you stay t
 
 ## 2. Set the mode's controls
 
-![The Modes tab with a mode picker, the built-in modes, the name, the on-screen indicator and the unset-buttons switch](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/manual/modes-tab.png "A mode's settings. Below them, the mode has the same tabs as a profile.")
+![The Modes tab with a mode picker, the name, the on-screen indicator and the unset-buttons switch](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/manual/modes-tab.png "A mode's settings. Below them, the mode has the same tabs as a profile.")
 
 1. The picker (1) chooses which mode to edit, **+ New mode** adds one.
-2. **Built-in modes** (2) lists the two every setup has: **Guide**, on while the Guide overlay is up, and **Mouse mode**, where the controller drives the pointer. They can't be changed or removed.
-3. **On screen while on** (3) works as for a layer: the mode's name, nothing, an info overlay or a generated bindings sheet.
-4. **Unset buttons: Do nothing while the mode is on** (4) turns off every button the mode doesn't set, except the ones that switch modes or hold layers, so there's always a way back.
+2. **On screen while on** (2) works as for a layer: the mode's name, nothing, an info overlay or a generated bindings sheet.
+3. **Unset buttons: Do nothing while the mode is on** (3) turns off every button the mode doesn't set, except the ones that switch modes or hold layers, so there's always a way back.
 
 Now give the mode its own controls on its tabs. A setting the mode doesn't change reads **Same as** the profile; **Override** lets the mode set its own value.
 

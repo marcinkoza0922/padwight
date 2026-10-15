@@ -6,7 +6,10 @@ use std::fmt::Write;
 /// Side of the square preview, in logical pixels.
 pub const SIZE: f32 = 120.0;
 const RADIUS: f32 = 56.0;
-const IDLE: &str = "#1d2026";
+/// The panel behind the ring, as the deadzone graphs beside it have, and the wedges a step lighter
+/// so they show on it.
+const PANEL: &str = "#1d2026";
+const IDLE: &str = "#262b33";
 const EDGE: &str = "#5d6470";
 const ACTIVE: &str = "#4ea1ff";
 const DEAD: &str = "#30343c";
@@ -22,7 +25,9 @@ fn polar(degrees: f32, fraction: f32) -> (f32, f32) {
 pub fn render(sectors: u8, start_angle: f32, inner_radius: f32, active: Option<usize>, stick: Option<(f32, f32)>) -> String {
     let n = usize::from(sectors.max(1));
     let width = 360.0 / n as f32;
-    let mut out = format!(r#"<svg xmlns="http://www.w3.org/2000/svg" width="{SIZE}" height="{SIZE}" viewBox="0 0 {SIZE} {SIZE}">"#);
+    let mut out = format!(
+        r#"<svg xmlns="http://www.w3.org/2000/svg" width="{SIZE}" height="{SIZE}" viewBox="0 0 {SIZE} {SIZE}"><rect width="{SIZE}" height="{SIZE}" rx="6" fill="{PANEL}"/>"#
+    );
     // One sector is the whole circle, which an arc from a point back to itself can't draw.
     if n == 1 {
         let fill = if active == Some(0) { ACTIVE } else { IDLE };

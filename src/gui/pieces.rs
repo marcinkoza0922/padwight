@@ -68,6 +68,7 @@ pub(super) fn piece_line<'a>(pieces: Vec<Piece>, family: PadFamily, swap: Swap, 
                 tooltip::Position::Top,
             )
             .into(),
+            Piece::Wheel(d) => chip(crate::info::wheel_glyph(d)),
         })
         .collect();
     row(items).align_y(Alignment::Center).into()
@@ -105,11 +106,26 @@ pub(super) fn row_glyphs<'a>(inputs: &[GuideInput], shape: RowShape, family: Pad
             items.push(text(shape.separator()).into());
         }
         items.push(input_chip(*input, family, swap));
+        // A D-pad glyph only lights one small arm, so the direction is spelled out beside it.
+        let arrow = match input {
+            GuideInput::Button(Button::DpadUp) => Some("↑"),
+            GuideInput::Button(Button::DpadDown) => Some("↓"),
+            GuideInput::Button(Button::DpadLeft) => Some("←"),
+            GuideInput::Button(Button::DpadRight) => Some("→"),
+            _ => None,
+        };
+        items.extend(arrow.map(|a| text(a).size(14).into()));
     }
-    if !shape.mark().is_empty() {
-        items.push(text(shape.mark()).into());
+    // The overlay draws a gesture's mark as a badge from its token; here it's the gesture's name.
+    if let RowShape::Gesture(kind) = shape {
+        let name = match kind {
+            GestureKind::DoubleTap => "Double tap",
+            GestureKind::TripleTap => "Triple tap",
+            GestureKind::LongPress => "Hold",
+        };
+        items.push(text(name).size(13).color(MUTED_COLOR).wrapping(text::Wrapping::None).into());
     }
-    row(items).spacing(2).align_y(Alignment::Center).into()
+    row(items).spacing(4).align_y(Alignment::Center).into()
 }
 
 /// A stick as a round LS or RS, the way the overlay draws `{ls}` and `{rs}`.
@@ -169,8 +185,16 @@ fn chip<'a>(segment: Segment) -> Element<'a, Message> {
         _ => return space().into(),
     };
     let fill = fill.map(|[r, g, b]| Color::from_rgb8(r, g, b));
+    // The thinnest marks stay a sliver at any size, so they're named instead.
+    let label = match label.as_str() {
+        "'" => "Apostrophe".to_string(),
+        "`" => "Backtick".to_string(),
+        "," => "Comma".to_string(),
+        "." => "Period".to_string(),
+        _ => label,
+    };
     // A one-character cap is square, as wide as a round one, and a lone punctuation mark (`;`,
-    // `'`) is drawn larger, so it isn't a sliver.
+    // `[`) is drawn larger, so it isn't a sliver.
     let single = label.chars().count() == 1;
     let punctuation = single && label.chars().all(|c| c.is_ascii_punctuation());
     let label = text(label).size(if punctuation { 17 } else { 12 });
