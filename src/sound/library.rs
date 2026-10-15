@@ -44,6 +44,7 @@ fn bytes(kind: SoundKind) -> Option<&'static [u8]> {
         SoundKind::Purr => wav!("purr"),
         SoundKind::Clank => wav!("clank"),
         SoundKind::Card => wav!("card"),
+        SoundKind::Carriage => wav!("carriage"),
         _ => None,
     }
 }

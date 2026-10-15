@@ -11,4 +11,4 @@ normalized and faded out from the original. All are CC0 (public domain); credit 
 | `wood`, `plate`, `tin`, `bell` | Kenney, [Impact Sounds](https://kenney.nl/assets/impact-sounds) (CC0) |
 | `typewriter` | Cassie-OrbitGames, [Typewriter sounds](https://opengameart.org/content/typewriter-sounds) on OpenGameArt (CC0) |
 | `geiger`, `nano`, `radio`, `heartbeat`, `casing`, `lockpick`, `shing`, `fault` | Synthesized for this app (CC0), first for the library packs |
-| `sand`, `boing`, `shutter`, `zap`, `purr`, `clank`, `card` | Synthesized for this app (CC0) by `scripts/synth-sounds.py` |
+| `sand`, `boing`, `shutter`, `zap`, `purr`, `clank`, `card`, `carriage` | Synthesized for this app (CC0) by `scripts/synth-sounds.py` |

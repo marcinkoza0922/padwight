@@ -1,0 +1,353 @@
+format = 20
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "94f6a8e2-9b6f-4e69-837d-d02ecfa430a2"
+name = "Breath of Fire IV"
+version = "1.0"
+author = "Padwight"
+description = "Breath of Fire IV (GOG, 2025 re-release of the 2000 game) on an Xbox-style pad, laid out like the PlayStation original for the game's default keys. A checks and talks, B acts and cancels, X runs, Y opens the sub screen. The triggers turn the camera and flip between characters, LB backs out, RB changes rank, and Select lists the camp and menu keys."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "BOF4.exe"
+profile = "Breath of Fire IV"
+
+[[profiles]]
+name = "Breath of Fire IV"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_C"]}
+East = {keys = ["KEY_V"]}
+West = {keys = ["KEY_X"]}
+North = {keys = ["KEY_Z"]}
+LeftBumper = {keys = ["KEY_ESC"]}
+RightBumper = {keys = ["KEY_TAB"]}
+Select = {open_menu = "Keys"}
+Start = {keys = ["KEY_ENTER"]}
+DpadUp = {keys = ["KEY_UP"]}
+DpadDown = {keys = ["KEY_DOWN"]}
+DpadLeft = {keys = ["KEY_LEFT"]}
+DpadRight = {keys = ["KEY_RIGHT"]}
+RightStickLeft = {keys = ["KEY_A"]}
+RightStickRight = {keys = ["KEY_D"]}
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.4
+
+[profiles.left_stick.action.keys]
+up = "KEY_UP"
+down = "KEY_DOWN"
+left = "KEY_LEFT"
+right = "KEY_RIGHT"
+
+[profiles.right_stick]
+deadzone = 0.3
+curve = 1.0
+key_threshold = 0.5
+
+
+action = "disabled"
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = {keys = ["KEY_A"]}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {keys = ["KEY_D"]}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+activation = "always"
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The layout follows the PlayStation original: {south} checks and talks, {east} is the action and cancel key, {west} runs (hold it) and {north} opens the Sub Screen, where items, magic, equipment and saving live. In a fight {north} shows the enemy's details.
+{lt} and {rt} turn the camera, the right stick {rs} does too, and in the Sub Screen and in battle they flip between characters. Hold {rt} in battle for the extra commands (Guard, Charge, Escape). {rb} changes rank, which puts characters on the front line or the rest bench.
+{lb} is Escape and backs out of menus; {start} is Enter, which pauses and opens the options. Press {select} for the camp (on the world map), Enter, Escape and rank in one list. The game saves at inns, in the camp and from the Sub Screen on the world map.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move"}
+"stick:Right" = {text = "Turn camera"}
+"trigger:Left" = {text = "{icon:rotate-left} Camera left / previous character"}
+"trigger:Right" = {text = "{icon:rotate} Camera right / next character (hold: more commands)"}
+"button:South" = {text = "{icon:search} {b}Check / talk{/b}"}
+"button:East" = {text = "Action / cancel"}
+"button:West" = {text = "{icon:fast} Run (hold)"}
+"button:North" = {text = "{icon:bag} {b}Sub Screen{/b} / enemy info"}
+"button:LeftBumper" = {text = "Escape: back out"}
+"button:RightBumper" = {text = "{icon:flip} Change rank"}
+"button:Select" = {text = "{icon:map} Camp and menu keys"}
+"button:Start" = {text = "Enter: pause, options"}
+
+[[info_overlays]]
+name = "Controls"
+title = "{b}Breath of Fire IV{/b}"
+rows = [
+    ["{south}", "Check / talk", "{east}", "Action / cancel"],
+    ["{west}", "Run (hold)", "{north}", "Sub Screen / enemy info"],
+    ["{lt} {rt}", "Camera, characters", "{rb}", "Change rank"],
+    ["{lb}", "Escape", "{start}", "Enter / pause"],
+    ["{select}", "Camp, Enter, Escape, rank", "{ls}", "Move"],
+]
+
+[[menus]]
+name = "Keys"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:cottage} {b}Camp{/b}"
+action = { keys = ["KEY_G"] }
+
+[[menus.items]]
+label = "{icon:flip} Change rank"
+action = { keys = ["KEY_TAB"] }
+
+[[menus.items]]
+label = "{icon:save} Enter (pause, options)"
+action = { keys = ["KEY_ENTER"] }
+
+[[menus.items]]
+label = "{icon:cancel} Escape"
+action = { keys = ["KEY_ESC"] }
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0b1430"
+opacity = 0.92
+
+[menus.style.items]
+color = "#16264f"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#5aa0e8"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8fb4e8"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#122252"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2c4a86"
+
+[menus.style.glow]
+color = "#9cc8ff"
+opacity = 0.5
+blur = 16
+pulse = true
+
+[menus.style.type]
+letter_spacing = 1
+case = "upper"
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#8fb4e8"}
+vignette = {color = "#000000", opacity = 0.4, reach = 25}
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0b1430"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#16264f"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#5aa0e8"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8fb4e8"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#122252"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#2c4a86"
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0b1430"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#16264f"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#5aa0e8"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8fb4e8"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#122252"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#2c4a86"
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0b1430"
+opacity = 0.92
+
+[media_style.items]
+color = "#16264f"
+opacity = 0.95
+
+[media_style.selected]
+color = "#5aa0e8"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8fb4e8"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#122252"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#2c4a86"
+
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0b1430"
+opacity = 0.92
+
+[menu_style.items]
+color = "#16264f"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#5aa0e8"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8fb4e8"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#122252"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#2c4a86"
+
+[menu_style.glow]
+color = "#9cc8ff"
+opacity = 0.5
+blur = 16
+pulse = true
+
+[menu_style.type]
+letter_spacing = 1
+case = "upper"
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#8fb4e8"}
+vignette = {color = "#000000", opacity = 0.4, reach = 25}
+
+[motion]
+keyboard = "dreamy"
+numpad = "dreamy"
+menu = "dreamy"
+media = "dreamy"
+offer = "dreamy"
+info = "dreamy"
+log = "dreamy"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07}
+pick = {kind = "select", volume = 0.12}
+open = {kind = "page", volume = 0.08}
+close = {kind = "page", volume = 0.05, pitch = 0.8}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.06}
+pick = {kind = "select", volume = 0.14}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.06}
+pick = {kind = "select", volume = 0.14}
+
+[sounds.media]
+pick = {kind = "select", volume = 0.14}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.22, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.22, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.22, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.24, length_ms = 60}
