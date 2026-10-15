@@ -47,6 +47,7 @@ mod checks;
 mod font_menu;
 mod games;
 mod goto;
+mod header_pick;
 mod guide_tab;
 mod shortcuts_tab;
 mod gyro;
@@ -190,6 +191,8 @@ fn settle(shown: Option<PadShown>, wanted: PadPick, now: Instant) -> Option<PadS
 }
 
 struct App {
+    /// The header's setup and profile comboboxes.
+    header_pick: header_pick::HeaderPick,
     /// Working copy being edited.
     config: Config,
     /// Plays the previews of menu sounds.
@@ -411,6 +414,10 @@ enum Message {
     SetEnabled(bool),
     SetProfileLock(bool),
     ActivateProfile(ProfileRef),
+    /// A setup picked in the header: its first profile becomes active.
+    PickSetup(String),
+    /// A profile of the active setup picked in the header.
+    PickProfile(String),
     Done(Result<(), String>),
     SelectPage(Page),
     SetGameSearch(String),
@@ -709,7 +716,7 @@ impl App {
             config,
             sounds: crate::sound::Sounds::start(),
             status: None, system_checks: system_check::run(),
-            page: Page::Overview,
+            page: Page::Overview, header_pick: header_pick::HeaderPick::new(),
             editing: 0,
             game_tab: GameTab::Profiles,
             manual_chapter: 0,
@@ -989,6 +996,7 @@ impl App {
             self.sync_guide_notes();
             self.edited = if self.page == Page::Game(None) { Vec::new() } else { pack::edited_items(self.game()) };
         }
+        self.header_pick.sync(&self.saved);
         task
     }
 
@@ -1105,6 +1113,16 @@ impl App {
                     return Task::batch([call_ok(Request::Activate(at)), Task::done(Message::Poll)]);
                 }
                 self.message = Some(("Save the new profile, then make it active.".into(), true));
+            }
+            Message::PickSetup(name) => {
+                if let Some(at) = header_pick::first_of(&self.saved, &name) {
+                    return Task::done(Message::ActivateProfile(at));
+                }
+                self.message = Some(("That setup has no profile to make active.".into(), true));
+            }
+            Message::PickProfile(name) => {
+                let at = ProfileRef::new(self.saved.active.game.as_deref(), &name);
+                return Task::done(Message::ActivateProfile(at));
             }
             Message::Done(Ok(())) => return Task::done(Message::Poll),
             Message::Done(Err(e)) => self.message = Some((e, true)),
@@ -1322,12 +1340,17 @@ impl App {
         layers.into()
     }
 
+    /// The setup and profile comboboxes under one label, with a chevron showing the profile
+    /// belongs to the setup.
+    fn view_profile_pick(&self) -> Element<'_, Message> {
+        let pick = &self.header_pick;
+        let setup = pick.setup_box().input_style(style::text_field).menu_style(style::dropdown_menu).padding([6, 10]).width(SETTING_WIDTH);
+        let profile = pick.profile_box().input_style(style::text_field).menu_style(style::dropdown_menu).padding([6, 10]).width(SETTING_WIDTH);
+        let pair = row![setup, text("›").size(20).color(MUTED_COLOR), profile].spacing(8).align_y(Alignment::Center);
+        labelled("Active profile", pair)
+    }
+
     fn view_header(&self) -> Element<'_, Message> {
-        let profiles: Vec<ProfileRef> = self
-            .saved
-            .all_games()
-            .flat_map(|(key, g)| g.profiles.iter().map(move |p| ProfileRef::new(key, &p.name)))
-            .collect();
         let running = self.status.is_some();
         let remapping = running && self.config.enabled;
 
@@ -1359,8 +1382,7 @@ impl App {
         );
         controls = controls
             .push(space::horizontal())
-            .push(text("Active profile"))
-            .push(dropdown(profiles, Some(self.saved.active.clone()), Message::ActivateProfile).width(SETTING_WIDTH))
+            .push(self.view_profile_pick())
             .push(lock);
         let mut header = column![controls].spacing(8);
 
@@ -1411,6 +1433,11 @@ impl App {
         ]
         .into()
     }
+}
+
+/// A control with a small muted label above it.
+fn labelled<'a>(label: &'static str, control: impl Into<Element<'a, Message>>) -> Element<'a, Message> {
+    column![text(label).size(11).color(MUTED_COLOR), control.into()].spacing(2).into()
 }
 
 /// Ctrl+Z, without Shift, undoes the last edit.
