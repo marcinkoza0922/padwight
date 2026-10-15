@@ -50,7 +50,7 @@ Automatic switching depends on the desktop. See [Desktop support](Desktop-Suppor
 
 ## Profiles
 
-Each profile is a complete mapping: buttons, sticks, triggers, combos and gyro. To make a second profile in a setup, use **Duplicate** on the Profiles tab, or start from a template under **New from template…**.
+Each profile is a complete mapping: buttons, sticks, triggers, combos and gyro. To make a second profile in a setup, use **Duplicate** on the Profiles tab, or start from a template under **Create New Profile…**.
 
 Profiles don't mix with each other. If a game needs a different control scheme for part of play, such as driving, use a [mode](Modes) instead.
 

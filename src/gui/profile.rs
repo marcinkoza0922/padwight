@@ -1181,7 +1181,7 @@ impl App {
                 dropdown(names, current.clone(), Message::EditProfile).width(170),
                 space::horizontal(),
                 dropdown(Template::NEW, None::<Template>, Message::AddProfile)
-                    .placeholder("+ From template…")
+                    .placeholder("+ Create New Profile…")
                     .style(style::action_dropdown)
                     .width(200),
                 button(text("Duplicate")).style(style::secondary).on_press(Message::AddProfile(Template::Duplicate)),
