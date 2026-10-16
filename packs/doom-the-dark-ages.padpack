@@ -1,0 +1,390 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "ec83cea2-92db-490c-bf84-0548790e0996"
+name = "Doom: The Dark Ages"
+version = "1.0"
+author = "Padwight"
+description = "Doom: The Dark Ages (2025) on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and you set the buttons in the game's controls. Padwight adds the Guide overlay on top, in worn gold on dark iron. Gyro and flick stick profiles are included to try; they move the mouse beside the pad."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "3017860"
+profile = "Doom: The Dark Ages"
+
+[[profiles]]
+name = "Doom: The Dark Ages"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''Doom: The Dark Ages has its own controller support, so the controller goes to the game as it is. Set the buttons in the game's Controls options.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[[profiles]]
+name = "Doom: The Dark Ages + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. The gyro moves the mouse, which the game reads beside the pad.
+Doom: The Dark Ages has its own controller support, so the controller goes to the game as it is. Set the buttons in the game's Controls options.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[[profiles]]
+name = "Doom: The Dark Ages + Flick stick"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming. Both move the mouse, which the game reads beside the pad.
+Doom: The Dark Ages has its own controller support, so the controller goes to the game as it is. Set the buttons in the game's Controls options.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0e0d0b"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#201d17"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c9a24b"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#c9a24b"
+opacity = 0.6
+
+[keyboard_style.gradient]
+color = "#16140f"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#554a33"
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0e0d0b"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#201d17"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c9a24b"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#c9a24b"
+opacity = 0.6
+
+[numpad_style.gradient]
+color = "#16140f"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#554a33"
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0e0d0b"
+opacity = 0.92
+
+[media_style.items]
+color = "#201d17"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c9a24b"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#c9a24b"
+opacity = 0.6
+
+[media_style.gradient]
+color = "#16140f"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#554a33"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0e0d0b"
+opacity = 0.92
+
+[menu_style.items]
+color = "#201d17"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c9a24b"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#c9a24b"
+opacity = 0.6
+
+[menu_style.gradient]
+color = "#16140f"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#554a33"
+
+[menu_style.glow]
+color = "#c9a24b"
+opacity = 0.4
+blur = 20
+pulse = false
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 14, width = 2, color = "#c9a24b"}
+vignette = {color = "#000000", opacity = 0.6, reach = 30}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "clank", volume = 0.3, pitch = 0.8}
+open = {kind = "shing", volume = 0.2}
+close = {kind = "swish", volume = 0.04, pitch = 0.6}
+
+[sounds.guide]
+open = {kind = "clank", volume = 0.3, pitch = 0.7}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "keys", volume = 0.25}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "beep", volume = 0.15, pitch = 0.7}
+
+[rumble.menu]
+step = {strength = 0.12, length_ms = 16}
+pick = {strength = 0.45, length_ms = 34}
+open = {strength = 0.3, length_ms = 80}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

@@ -1,0 +1,395 @@
+format = 20
+macros = []
+overlay_font = "Silkscreen"
+
+[pack]
+id = "bc7765bd-e32f-44f6-88b4-8cf4921a5c12"
+name = "Doom 64"
+version = "1.0"
+author = "Padwight"
+description = "Doom 64 (2020 re-release) on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and you set the buttons in the game's controls. Padwight adds the Guide overlay on top, in a cold green-grey panel with a red accent. Gyro and flick stick profiles are included to try; they move the mouse beside the pad."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "1148590"
+profile = "Doom 64"
+
+[[rules]]
+kind = "executable"
+value = "DOOM64.exe"
+profile = "Doom 64"
+
+[[profiles]]
+name = "Doom 64"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''Doom 64 has its own controller support, so the controller goes to the game as it is. Set the buttons in the game's Controls options.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[[profiles]]
+name = "Doom 64 + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. The gyro moves the mouse, which the game reads beside the pad.
+Doom 64 has its own controller support, so the controller goes to the game as it is. Set the buttons in the game's Controls options.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[[profiles]]
+name = "Doom 64 + Flick stick"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming. Both move the mouse, which the game reads beside the pad.
+Doom 64 has its own controller support, so the controller goes to the game as it is. Set the buttons in the game's Controls options.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0a0f10"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#16221f"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#d4411e"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#d4411e"
+opacity = 0.6
+
+[keyboard_style.gradient]
+color = "#101a18"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3a5249"
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0a0f10"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#16221f"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#d4411e"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#d4411e"
+opacity = 0.6
+
+[numpad_style.gradient]
+color = "#101a18"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3a5249"
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0a0f10"
+opacity = 0.92
+
+[media_style.items]
+color = "#16221f"
+opacity = 0.95
+
+[media_style.selected]
+color = "#d4411e"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#d4411e"
+opacity = 0.6
+
+[media_style.gradient]
+color = "#101a18"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3a5249"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0a0f10"
+opacity = 0.92
+
+[menu_style.items]
+color = "#16221f"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#d4411e"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#d4411e"
+opacity = 0.6
+
+[menu_style.gradient]
+color = "#101a18"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3a5249"
+
+[menu_style.glow]
+color = "#d4411e"
+opacity = 0.4
+blur = 20
+pulse = false
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+scanlines = {spacing = 3, opacity = 0.1, color = "#000000"}
+vignette = {color = "#000000", opacity = 0.55, reach = 26}
+
+[motion]
+keyboard = "retro"
+numpad = "retro"
+menu = "retro"
+media = "retro"
+offer = "retro"
+info = "retro"
+log = "retro"
+
+[sounds.menu]
+step = {kind = "blip", volume = 0.08, pitch = 0.8}
+pick = {kind = "thud", volume = 0.3, pitch = 0.9}
+open = {kind = "clank", volume = 0.25, pitch = 0.9}
+close = {kind = "swish", volume = 0.04, pitch = 0.7}
+
+[sounds.guide]
+open = {kind = "thud", volume = 0.3, pitch = 0.7}
+
+[sounds.keyboard]
+step = {kind = "blip", volume = 0.08, pitch = 0.8}
+pick = {kind = "keys", volume = 0.25}
+
+[sounds.numpad]
+step = {kind = "blip", volume = 0.08, pitch = 0.8}
+pick = {kind = "beep", volume = 0.15, pitch = 0.8}
+
+[rumble.menu]
+step = {strength = 0.12, length_ms = 16}
+pick = {strength = 0.45, length_ms = 34}
+open = {strength = 0.3, length_ms = 80}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

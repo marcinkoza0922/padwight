@@ -1,0 +1,689 @@
+format = 20
+macros = []
+overlay_font = "Silkscreen"
+
+[pack]
+id = "23de066e-3978-4a64-9be9-a0459a63735a"
+name = "GZDoom"
+version = "1.0"
+author = "Padwight"
+description = "GZDoom, the Doom source port that runs Doom, Doom II, Heretic, Hexen and most mods, on an Xbox-style pad for its default keys. A uses, B jumps, RT fires, X reloads, LT is the alternate fire, L3 toggles crouch, and the d-pad sends the arrow keys. Hold LB for the weapon ring, aiming with the right stick, RB cycles to the next weapon and Y to the previous. Start is the menu; double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "gzdoom.exe"
+profile = "GZDoom"
+
+[[rules]]
+kind = "executable"
+value = "gzdoom"
+profile = "GZDoom"
+
+[[profiles]]
+name = "GZDoom"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { wheel = "Up" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { keys = ["KEY_V"] }
+DpadUp = { keys = ["KEY_UP"] }
+DpadDown = { keys = ["KEY_DOWN"] }
+DpadLeft = { keys = ["KEY_LEFT"] }
+DpadRight = { keys = ["KEY_RIGHT"] }
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F6"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1000.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Zoom" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and backs out of every screen in it.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one.
+{a} uses doors and switches, {x} reloads in mods that have it, {b} jumps in mods and maps that allow it, and {l3} toggles crouch.
+{lt} is the alternate fire, or aim down sights in mods that use it. The right stick turns more slowly while it is held. {r3} is the zoom key.
+The d-pad {dpad} sends the arrow keys, for the menus, the automap and the console's history.
+Quick save is a double tap of {start}, and quick load is a long press of {start}.
+{select} (Tab) shows the automap.
+These are GZDoom's default keys, written from memory and not checked in the game. Turn on Always Run in the options. If a button does nothing, compare the game's Customize Controls screen with the keys here.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"button:Select" = { text = "Automap" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"trigger:Left" = { text = "Alt fire / aim" }
+"button:South" = { text = "Use" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Previous weapon" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Zoom" }
+
+[[profiles]]
+name = "GZDoom + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { wheel = "Up" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { keys = ["KEY_V"] }
+DpadUp = { keys = ["KEY_UP"] }
+DpadDown = { keys = ["KEY_DOWN"] }
+DpadLeft = { keys = ["KEY_LEFT"] }
+DpadRight = { keys = ["KEY_RIGHT"] }
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F6"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1000.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Zoom" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 15.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+{start} (Escape) opens the game's menu and backs out of every screen in it.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one.
+{a} uses doors and switches, {x} reloads in mods that have it, {b} jumps in mods and maps that allow it, and {l3} toggles crouch.
+{lt} is the alternate fire, or aim down sights in mods that use it. The right stick turns more slowly while it is held. {r3} is the zoom key.
+The d-pad {dpad} sends the arrow keys, for the menus, the automap and the console's history.
+Quick save is a double tap of {start}, and quick load is a long press of {start}.
+{select} (Tab) shows the automap.
+These are GZDoom's default keys, written from memory and not checked in the game. Turn on Always Run in the options. If a button does nothing, compare the game's Customize Controls screen with the keys here.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"button:Select" = { text = "Automap" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"trigger:Left" = { text = "Alt fire / aim" }
+"button:South" = { text = "Use" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Previous weapon" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Zoom" }
+
+[[profiles]]
+name = "GZDoom + Flick stick"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { wheel = "Up" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { keys = ["KEY_V"] }
+DpadUp = { keys = ["KEY_UP"] }
+DpadDown = { keys = ["KEY_DOWN"] }
+DpadLeft = { keys = ["KEY_LEFT"] }
+DpadRight = { keys = ["KEY_RIGHT"] }
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F6"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming.
+{start} (Escape) opens the game's menu and backs out of every screen in it.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one.
+{a} uses doors and switches, {x} reloads in mods that have it, {b} jumps in mods and maps that allow it, and {l3} toggles crouch.
+{lt} is the alternate fire, or aim down sights in mods that use it. The right stick turns more slowly while it is held. {r3} is the zoom key.
+The d-pad {dpad} sends the arrow keys, for the menus, the automap and the console's history.
+Quick save is a double tap of {start}, and quick load is a long press of {start}.
+{select} (Tab) shows the automap.
+These are GZDoom's default keys, written from memory and not checked in the game. Turn on Always Run in the options. If a button does nothing, compare the game's Customize Controls screen with the keys here.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"button:Select" = { text = "Automap" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"trigger:Left" = { text = "Alt fire / aim" }
+"button:South" = { text = "Use" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Previous weapon" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Zoom" }
+
+[[layers]]
+name = "Zoom"
+indicator = "off"
+
+[layers.right_stick]
+deadzone = 0.1
+curve = 2.4
+key_threshold = 0.5
+
+[layers.right_stick.action.mouse]
+speed = 500.0
+accel = 0.2
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:fist} Fist / Saw {color:#c0a080}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:pistol} Pistol {color:#c0a080}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:rifle} Shotgun {color:#c0a080}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:rifle} Chaingun {color:#c0a080}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:rocket} Rockets {color:#c0a080}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:bolt} Plasma {color:#c0a080}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:flame} BFG 9000 {color:#c0a080}7{/color}"
+action = { keys = ["KEY_7"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#120c0a"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2a1a14"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c0301c"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c0301c"
+opacity = 0.6
+
+[menus.style.gradient]
+color = "#1d120e"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5a3a2c"
+
+[menus.style.glow]
+color = "#c0301c"
+opacity = 0.4
+blur = 20
+pulse = false
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+scanlines = {spacing = 3, opacity = 0.1, color = "#000000"}
+vignette = {color = "#000000", opacity = 0.55, reach = 26}
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#120c0a"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#2a1a14"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c0301c"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#c0301c"
+opacity = 0.6
+
+[keyboard_style.gradient]
+color = "#1d120e"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5a3a2c"
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#120c0a"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#2a1a14"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c0301c"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#c0301c"
+opacity = 0.6
+
+[numpad_style.gradient]
+color = "#1d120e"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5a3a2c"
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#120c0a"
+opacity = 0.92
+
+[media_style.items]
+color = "#2a1a14"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c0301c"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#c0301c"
+opacity = 0.6
+
+[media_style.gradient]
+color = "#1d120e"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5a3a2c"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#120c0a"
+opacity = 0.92
+
+[menu_style.items]
+color = "#2a1a14"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c0301c"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#c0301c"
+opacity = 0.6
+
+[menu_style.gradient]
+color = "#1d120e"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5a3a2c"
+
+[menu_style.glow]
+color = "#c0301c"
+opacity = 0.4
+blur = 20
+pulse = false
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+scanlines = {spacing = 3, opacity = 0.1, color = "#000000"}
+vignette = {color = "#000000", opacity = 0.55, reach = 26}
+
+[motion]
+keyboard = "retro"
+numpad = "retro"
+menu = "retro"
+media = "retro"
+offer = "retro"
+info = "retro"
+log = "retro"
+
+[sounds.menu]
+step = {kind = "blip", volume = 0.08, pitch = 0.8}
+pick = {kind = "thud", volume = 0.3, pitch = 0.9}
+open = {kind = "clank", volume = 0.25, pitch = 0.9}
+close = {kind = "swish", volume = 0.04, pitch = 0.7}
+
+[sounds.guide]
+open = {kind = "thud", volume = 0.3, pitch = 0.7}
+
+[sounds.keyboard]
+step = {kind = "blip", volume = 0.08, pitch = 0.8}
+pick = {kind = "keys", volume = 0.25}
+
+[sounds.numpad]
+step = {kind = "blip", volume = 0.08, pitch = 0.8}
+pick = {kind = "beep", volume = 0.15, pitch = 0.8}
+
+[rumble.menu]
+step = {strength = 0.12, length_ms = 16}
+pick = {strength = 0.45, length_ms = 34}
+open = {strength = 0.3, length_ms = 80}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

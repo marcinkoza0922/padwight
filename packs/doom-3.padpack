@@ -1,0 +1,693 @@
+format = 20
+macros = []
+overlay_font = "Orbitron"
+
+[pack]
+id = "1c7b74b5-d1dc-4395-9446-1382c21020fb"
+name = "Doom 3"
+version = "1.0"
+author = "Padwight"
+description = "Doom 3 (2004) and Resurrection of Evil on an Xbox-style pad, for the game's default keys. A uses, B jumps, X reloads, RT fires, LT is the flashlight and L3 toggles crouch. Hold LB for the weapon ring, aiming with the right stick, RB cycles to the next weapon and Y to the previous. Start is the menu; double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "9050"
+profile = "Doom 3"
+
+[[rules]]
+kind = "steam_app_id"
+value = "9070"
+profile = "Doom 3"
+
+[[rules]]
+kind = "executable"
+value = "Doom3.exe"
+profile = "Doom 3"
+
+[[profiles]]
+name = "Doom 3"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { wheel = "Up" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+DpadUp = { keys = ["KEY_F"] }
+DpadDown = { keys = ["KEY_G"] }
+DpadLeft = { keys = ["KEY_LEFT"] }
+DpadRight = { keys = ["KEY_RIGHT"] }
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F5"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { keys = ["KEY_F"] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and backs out of every screen in it.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one.
+{a} uses things and talks to terminals, {b} jumps, {x} reloads and {l3} toggles crouch. {lt} is the flashlight. A light push of the left stick {ls} walks.
+{select} (Tab) opens your PDA. Quick save is a double tap of {start}, and quick load is a long press of {start}.
+These are Doom 3's default keys, written from memory and not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:eye} Flashlight" }
+"button:South" = { text = "Use" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Previous weapon" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:Select" = { text = "PDA" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles]]
+name = "Doom 3 + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { wheel = "Up" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+DpadUp = { keys = ["KEY_F"] }
+DpadDown = { keys = ["KEY_G"] }
+DpadLeft = { keys = ["KEY_LEFT"] }
+DpadRight = { keys = ["KEY_RIGHT"] }
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F5"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { keys = ["KEY_F"] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 15.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+{start} (Escape) opens the game's menu and backs out of every screen in it.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one.
+{a} uses things and talks to terminals, {b} jumps, {x} reloads and {l3} toggles crouch. {lt} is the flashlight. A light push of the left stick {ls} walks.
+{select} (Tab) opens your PDA. Quick save is a double tap of {start}, and quick load is a long press of {start}.
+These are Doom 3's default keys, written from memory and not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:eye} Flashlight" }
+"button:South" = { text = "Use" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Previous weapon" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:Select" = { text = "PDA" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles]]
+name = "Doom 3 + Flick stick"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { wheel = "Up" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+DpadUp = { keys = ["KEY_F"] }
+DpadDown = { keys = ["KEY_G"] }
+DpadLeft = { keys = ["KEY_LEFT"] }
+DpadRight = { keys = ["KEY_RIGHT"] }
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F5"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { keys = ["KEY_F"] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming.
+{start} (Escape) opens the game's menu and backs out of every screen in it.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one.
+{a} uses things and talks to terminals, {b} jumps, {x} reloads and {l3} toggles crouch. {lt} is the flashlight. A light push of the left stick {ls} walks.
+{select} (Tab) opens your PDA. Quick save is a double tap of {start}, and quick load is a long press of {start}.
+These are Doom 3's default keys, written from memory and not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:eye} Flashlight" }
+"button:South" = { text = "Use" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Previous weapon" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:Select" = { text = "PDA" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:fist} Fists {color:#e8a070}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:pistol} Pistol {color:#e8a070}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:rifle} Shotgun {color:#e8a070}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:rifle} MG {color:#e8a070}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:rifle} Chaingun {color:#e8a070}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:grenade} Grenades {color:#e8a070}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:bolt} Plasma {color:#e8a070}7{/color}"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:rocket} Rockets {color:#e8a070}8{/color}"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "{icon:flame} BFG 9000 {color:#e8a070}9{/color}"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "{icon:skull} Soul Cube {color:#e8a070}0{/color}"
+action = { keys = ["KEY_0"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0b0d0f"
+opacity = 0.92
+
+[menus.style.items]
+color = "#1a1f23"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#e8590c"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#e8590c"
+opacity = 0.6
+
+[menus.style.gradient]
+color = "#12161a"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3a424a"
+
+[menus.style.glow]
+color = "#e8590c"
+opacity = 0.4
+blur = 20
+pulse = false
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+frame = {kind = "brackets", size = 14, width = 2, color = "#e8590c"}
+vignette = {color = "#000000", opacity = 0.6, reach = 30}
+[keyboard_style]
+corners = 0.1
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0b0d0f"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#1a1f23"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#e8590c"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#e8590c"
+opacity = 0.6
+
+[keyboard_style.gradient]
+color = "#12161a"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3a424a"
+
+[numpad_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0b0d0f"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#1a1f23"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#e8590c"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#e8590c"
+opacity = 0.6
+
+[numpad_style.gradient]
+color = "#12161a"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3a424a"
+
+[media_style]
+corners = 0.1
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0b0d0f"
+opacity = 0.92
+
+[media_style.items]
+color = "#1a1f23"
+opacity = 0.95
+
+[media_style.selected]
+color = "#e8590c"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#e8590c"
+opacity = 0.6
+
+[media_style.gradient]
+color = "#12161a"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3a424a"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0b0d0f"
+opacity = 0.92
+
+[menu_style.items]
+color = "#1a1f23"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#e8590c"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#e8590c"
+opacity = 0.6
+
+[menu_style.gradient]
+color = "#12161a"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3a424a"
+
+[menu_style.glow]
+color = "#e8590c"
+opacity = 0.4
+blur = 20
+pulse = false
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+frame = {kind = "brackets", size = 14, width = 2, color = "#e8590c"}
+vignette = {color = "#000000", opacity = 0.6, reach = 30}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.1, pitch = 0.8}
+pick = {kind = "beep", volume = 0.2, pitch = 0.8}
+open = {kind = "radio", volume = 0.25, pitch = 0.9}
+close = {kind = "swish", volume = 0.04, pitch = 0.6}
+
+[sounds.guide]
+open = {kind = "radio", volume = 0.25, pitch = 0.8}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.1, pitch = 0.8}
+pick = {kind = "click", volume = 0.25, pitch = 1.1}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.1, pitch = 0.8}
+pick = {kind = "beep", volume = 0.15, pitch = 0.9}
+
+[rumble.menu]
+step = {strength = 0.12, length_ms = 16}
+pick = {strength = 0.45, length_ms = 34}
+open = {strength = 0.3, length_ms = 80}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}
