@@ -244,13 +244,14 @@ fn texture_rows<'a>(texture: &Texture, set: &Rc<dyn Fn(Texture) -> Message + 'a>
 
 /// The frame's shape, size, line width and color.
 fn frame_rows<'a>(frame: &Frame, set: &Rc<dyn Fn(Frame) -> Message + 'a>) -> Vec<Element<'a, Message>> {
-    let shape = |label: &'static str, kind: FrameKind| {
+    let shape = {
         let (f, set) = (frame.clone(), set.clone());
-        button(text(label).size(13)).style(if frame.kind == kind { button::primary } else { style::secondary }).on_press_with(move || set(Frame { kind, ..f.clone() }))
+        // A new shape brings its own size, at which its detail reads.
+        dropdown(FrameKind::ALL, Some(frame.kind), move |kind: FrameKind| set(Frame { kind, size: kind.natural_size(), ..f.clone() }))
     };
     let size = {
         let (f, set) = (frame.clone(), set.clone());
-        stepped_slider(4.0..=40.0, frame.size, format!("{:.0} px", frame.size), move |v| set(Frame { size: v.round(), ..f.clone() }))
+        stepped_slider(4.0..=80.0, frame.size, format!("{:.0} px", frame.size), move |v| set(Frame { size: v.round(), ..f.clone() }))
     };
     let width = {
         let (f, set) = (frame.clone(), set.clone());
@@ -261,7 +262,7 @@ fn frame_rows<'a>(frame: &Frame, set: &Rc<dyn Fn(Frame) -> Message + 'a>) -> Vec
         paint_row(&frame_paint(frame), true, &(Rc::new(move |p: Paint| set(Frame { color: p.color, opacity: p.opacity, ..f.clone() })) as Rc<dyn Fn(Paint) -> Message + 'a>))
     };
     vec![
-        labeled("        Shape", row![shape("Brackets", FrameKind::Brackets), shape("Chamfer", FrameKind::Chamfer)].spacing(4).into()),
+        labeled("        Shape", shape.into()),
         labeled("        Size", size),
         labeled("        Width", width),
         labeled("        Color", color),

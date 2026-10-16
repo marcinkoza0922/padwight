@@ -2,6 +2,7 @@
 //! `fit.rs`) and laid out where its position puts it.
 
 mod figure;
+mod frame;
 mod glyphs;
 mod log_panel;
 mod look;
@@ -278,7 +279,7 @@ fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, style: &OverlayStyle, padd
             }
         }
         if let Some(frame) = &ornaments.frame {
-            for mark in ornament::frame(frame, s, c.fade) {
+            for mark in frame::marks(frame, s, c.fade) {
                 layers = layers.push(mark);
             }
         }

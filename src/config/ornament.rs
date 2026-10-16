@@ -14,7 +14,7 @@ pub struct Ornament {
     /// A line between the rows of a list or button menu.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dividers: Option<Stroke>,
-    /// Brackets or chamfers at the panel's corners.
+    /// A mark at each of the panel's corners: brackets, a chamfer or an ornament.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub frame: Option<Frame>,
     /// Thin lines across the panel, like a screen.
@@ -57,6 +57,61 @@ pub enum FrameKind {
     Brackets,
     /// A corner cut off at 45 degrees.
     Chamfer,
+    /// A stepped corner with a sunburst and tapering double lines.
+    ArtDeco,
+    /// A vine sweeping round the corner, with curling tendrils and a leaf.
+    ArtNouveau,
+    /// A band of runes along each edge, a lozenge at the corner.
+    Runic,
+    /// A cusped arch across the corner, with a roundel in the spandrel.
+    Gothic,
+    /// Curling scrolls and leaves around a teardrop.
+    Baroque,
+    /// Circuit-board traces with pads.
+    Circuit,
+    /// A riveted iron plate.
+    Riveted,
+}
+
+impl FrameKind {
+    pub const ALL: [FrameKind; 9] = [
+        FrameKind::Brackets,
+        FrameKind::Chamfer,
+        FrameKind::ArtDeco,
+        FrameKind::ArtNouveau,
+        FrameKind::Runic,
+        FrameKind::Gothic,
+        FrameKind::Baroque,
+        FrameKind::Circuit,
+        FrameKind::Riveted,
+    ];
+
+    /// The size its detail reads well at, in pixels at scale 1: what picking it sets.
+    pub fn natural_size(self) -> f32 {
+        match self {
+            FrameKind::Brackets | FrameKind::Chamfer => default_frame_size(),
+            FrameKind::Riveted => 32.0,
+            FrameKind::ArtDeco | FrameKind::Gothic | FrameKind::Circuit => 44.0,
+            FrameKind::ArtNouveau | FrameKind::Baroque => 52.0,
+            FrameKind::Runic => 60.0,
+        }
+    }
+}
+
+impl std::fmt::Display for FrameKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            FrameKind::Brackets => "Brackets",
+            FrameKind::Chamfer => "Chamfer",
+            FrameKind::ArtDeco => "Art deco",
+            FrameKind::ArtNouveau => "Art nouveau",
+            FrameKind::Runic => "Runic",
+            FrameKind::Gothic => "Gothic",
+            FrameKind::Baroque => "Baroque",
+            FrameKind::Circuit => "Circuit",
+            FrameKind::Riveted => "Riveted",
+        })
+    }
 }
 
 /// A frame drawn over each corner: its shape, how big it is, and its color.

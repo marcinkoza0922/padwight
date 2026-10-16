@@ -360,7 +360,7 @@ Titles, labels, hints and the offer's answers all follow the typography. Keyboar
 ```toml
 [menus.style.ornament]
 dividers = { width = 1, color = "#c8a040", opacity = 0.6 }   # a line between a list's rows
-frame = { kind = "brackets", size = 16, width = 2, color = "#c8a040" }   # or kind = "chamfer"
+frame = { kind = "brackets", size = 16, width = 2, color = "#c8a040" }   # or "chamfer", "art_deco", …
 scanlines = { spacing = 4, opacity = 0.2, color = "#000000", drift = false }   # a filter
 grain = { opacity = 0.15, size = 1, animated = false }       # a filter: film noise
 pixels = { size = 6, opacity = 0.25 }                        # a filter: a mosaic of blocks
@@ -372,7 +372,7 @@ bevel = { depth = 0.5 }                                      # raised, 3D-lookin
 ```
 
 - `dividers` goes between the rows of list and button menus. Grid, directional, carousel and radial menus have no rows to divide.
-- `frame` marks each corner: `brackets` is an L along the edges, and `chamfer` a line across the corner. `size` is how far each mark reaches, at scale 1.
+- `frame` marks each corner: `brackets` is an L along the edges, and `chamfer` a line across the corner. The ornaments are `art_deco` (a stepped corner with a sunburst), `art_nouveau` (a vine with tendrils and a leaf), `runic` (a band of runes), `gothic` (a cusped arch with a roundel), `baroque` (scrolls and leaves), `circuit` (traces with pads) and `riveted` (an iron plate); they want a `size` of 32 to 60 for their detail to show, and the ones that run along the edges sit best on square corners (`corners = 0`). `size` is how far each mark reaches, at scale 1.
 - `scanlines` are thin lines `spacing` pixels apart across the whole panel. They sit over the contents, so keep `opacity` low. `drift` rolls them slowly down (see [Looping effects](#looping-effects)).
 - `vignette` darkens each edge, fading out `reach` percent of the panel's size in from it.
 - `scanlines`, `grain`, `pixels`, `texture`, `camo` and `tint` are the filters (the style editor groups them under Filters). They are layers over the contents, so keep them faint. `grain` is noise in blocks `size` pixels across; `animated` reshuffles it a dozen times a second. `pixels` is a mosaic of blocks `size` pixels across, each a little lighter or darker with a dark seam between them. It is a pattern over the panel, not a real pixelation of what's under it. `camo` is soft-edged blotches in three colors on a base, `size` pixels across; `scheme` is `woodland`, `desert`, `urban` or `arctic`. `tint` is a flat wash of `color`.

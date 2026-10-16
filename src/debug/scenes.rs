@@ -6,10 +6,11 @@ use std::time::Instant;
 
 use anyhow::{Result, bail};
 
+mod styles;
+
 use crate::{
     config::{
-        Bevel, Button, Camo, CamoScheme, ButtonAction, CarouselControls, Case, Cluster, Frame, FrameKind, Gradient, Grain, InfoOverlay, InputLogSettings, Menu, MenuItem, MenuKind, Ornament,
-        OverlayStyle, Paint, Pixels, Scanlines, Shade, Span, Stick, Stroke, Texture, TextureKind, Tint, Typography, Vignette,
+        Button, ButtonAction, CarouselControls, Cluster, InfoOverlay, InputLogSettings, Menu, MenuItem, MenuKind, OverlayStyle, Span, Stick,
     },
     engine::Opener,
     info::{self, Glyphs, Live, PadFamily},
@@ -22,7 +23,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 44] = [
+pub const SCENES: [(&str, &str); 51] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -39,6 +40,13 @@ pub const SCENES: [(&str, &str); 44] = [
     ("menu-metal", "a list menu on brushed metal with bevelled buttons"),
     ("menu-filters", "a list menu under grain, pixel blocks, scanlines and a color wash"),
     ("menu-camo", "a list menu under a woodland camo filter"),
+    ("frame-art-deco", "a list menu in an art deco frame"),
+    ("frame-art-nouveau", "a list menu in an art nouveau frame"),
+    ("frame-runic", "a list menu in a frame of runes"),
+    ("frame-gothic", "a list menu in a gothic frame"),
+    ("frame-baroque", "a list menu in a baroque frame"),
+    ("frame-circuit", "a list menu in a circuit-board frame"),
+    ("frame-riveted", "a list menu in a riveted frame"),
     ("in-game-menu", "the Guide + Start menu"),
     ("media", "the media controls"),
     ("offer", "the offer to add a library game"),
@@ -72,6 +80,9 @@ pub const SCENES: [(&str, &str); 44] = [
 /// The frame of the scene called `name`.
 pub fn frame(name: &str) -> Result<OverlayFrame> {
     let active = |view| OverlayFrame { active: Some(view), ..OverlayFrame::default() };
+    if let Some(style) = styles::list_scene(name) {
+        return Ok(active(menu_in(MenuKind::List, style, false)));
+    }
     Ok(match name {
         "keyboard" => active(OverlayView::Keyboard(keyboard_view(Board::Basic))),
         "keyboard-full" => active(OverlayView::Keyboard(keyboard_view(Board::Full))),
@@ -84,11 +95,7 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "menu-directional" => active(menu(MenuKind::Directional { cluster: Cluster::DPad })),
         "menu-face" => active(menu(MenuKind::Directional { cluster: Cluster::FaceButtons })),
         "menu-carousel" => active(menu(MenuKind::Carousel { controls: CarouselControls::Bumpers })),
-        "menu-filters" => active(menu_in(MenuKind::List, filtered(), false)),
-        "menu-camo" => active(menu_in(MenuKind::List, camouflaged(), false)),
-        "menu-paper" => active(menu_in(MenuKind::List, paper(), false)),
-        "menu-metal" => active(menu_in(MenuKind::List, metal(), false)),
-        "menu-styled" => active(menu_in(MenuKind::List, ornate(), true)),
+        "menu-styled" => active(menu_in(MenuKind::List, styles::ornate(), true)),
         "in-game-menu" => active(OverlayView::Menu(crate::system_menu::main_page(OverlayStyle::default(), 0))),
         "media" => active(OverlayView::Media(MediaView::sample(OverlayStyle::media()))),
         "offer" => active(OverlayView::Offer(offer())),
@@ -173,73 +180,6 @@ fn menu_in(kind: MenuKind, style: OverlayStyle, icons: bool) -> OverlayView {
     // Moving there by input would differ by kind; the drawing only reads the selection.
     view.selected = Some(1);
     OverlayView::Menu(view)
-}
-
-/// A panel under a woodland camo.
-fn camouflaged() -> OverlayStyle {
-    OverlayStyle { ornament: Ornament { camo: Some(Camo { scheme: CamoScheme::Woodland, opacity: 0.45, size: 60.0 }), ..Ornament::default() }, ..OverlayStyle::default() }
-}
-
-/// A dark panel under every filter.
-fn filtered() -> OverlayStyle {
-    OverlayStyle {
-        ornament: Ornament {
-            scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.25, color: "#000000".into(), drift: false }),
-            grain: Some(Grain { opacity: 0.2, size: 1.0, animated: true }),
-            pixels: Some(Pixels { size: 6.0, opacity: 0.3 }),
-            tint: Some(Tint { color: "#40ff80".into(), opacity: 0.1 }),
-            ..Ornament::default()
-        },
-        ..OverlayStyle::default()
-    }
-}
-
-/// Warm paper with ink-dark text and flat tan items.
-fn paper() -> OverlayStyle {
-    OverlayStyle {
-        background: Paint::new("#e8dcc0", 1.0),
-        items: Paint::new("#d6c6a0", 0.9),
-        selected: Paint::new("#8a3b2a", 1.0),
-        border: Some(Stroke { width: 2.0, color: "#6b5a3a".into(), opacity: 1.0 }),
-        ornament: Ornament { texture: Some(Texture { kind: TextureKind::Paper, opacity: 0.6 }), ..Ornament::default() },
-        ..OverlayStyle::default()
-    }
-}
-
-/// Brushed steel with raised, bevelled buttons.
-fn metal() -> OverlayStyle {
-    OverlayStyle {
-        background: Paint::new("#8d9299", 1.0),
-        items: Paint::new("#a9aeb5", 1.0),
-        selected: Paint::new("#2f5db0", 1.0),
-        corners: 0.2,
-        ornament: Ornament {
-            texture: Some(Texture { kind: TextureKind::BrushedMetal, opacity: 0.7 }),
-            bevel: Some(Bevel { depth: 0.8 }),
-            ..Ornament::default()
-        },
-        ..OverlayStyle::default()
-    }
-}
-
-/// A menu style with most of what the typography and ornaments can do switched on.
-fn ornate() -> OverlayStyle {
-    let gold = "#c8a040";
-    OverlayStyle {
-        background: Paint::new("#16181c", 0.92),
-        border: Some(Stroke { width: 2.0, color: gold.into(), opacity: 1.0 }),
-        gradient: Some(Gradient { color: "#3a1010".into(), opacity: 1.0, angle: 180.0, drift: true }),
-        glow: Some(Shade { pulse: true, ..Shade::glow("#ffcc40") }),
-        typography: Typography { case: Case::Upper, letter_spacing: 2.0, ..Typography::default() },
-        ornament: Ornament {
-            dividers: Some(Stroke { width: 1.0, color: gold.into(), opacity: 0.6 }),
-            frame: Some(Frame { kind: FrameKind::Brackets, size: 16.0, width: 2.0, color: gold.into(), opacity: 1.0 }),
-            scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.35, color: "#000000".into(), drift: true }),
-            vignette: Some(Vignette { color: "#000000".into(), opacity: 0.6, reach: 25.0 }),
-            ..Ornament::default()
-        },
-        ..OverlayStyle::default()
-    }
 }
 
 /// The Guide overlay over a profile with a Driving mode and a Hotkeys layer, its Mappings
