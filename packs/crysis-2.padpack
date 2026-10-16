@@ -1,0 +1,397 @@
+format = 20
+macros = []
+overlay_font = "Orbitron"
+
+[pack]
+id = "cb8602d5-1887-48b9-a220-a348fed14aa6"
+name = "Crysis 2"
+version = "1.0"
+author = "Padwight"
+description = "Crysis 2 on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and you set the buttons in the game's Controls options. Padwight adds the Guide overlay on top. Gyro and flick stick profiles are included to try; they move the mouse beside the pad."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Crysis2.exe"
+profile = "Crysis 2"
+
+[[rules]]
+kind = "steam_app_id"
+value = "108800"
+profile = "Crysis 2"
+
+[[profiles]]
+name = "Crysis 2"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''Crysis 2 has its own controller support, so the controller goes to the game as it is. Set the buttons in the game's Controls options.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[[profiles]]
+name = "Crysis 2 + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. The gyro moves the mouse, which the game reads beside the pad.
+Crysis 2 has its own controller support, so the controller goes to the game as it is. Set the buttons in the game's Controls options.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[[profiles]]
+name = "Crysis 2 + Flick stick"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming. Both move the mouse, which the game reads beside the pad.
+Crysis 2 has its own controller support, so the controller goes to the game as it is. Set the buttons in the game's Controls options.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0a131a"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#16252f"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#6fb7ff"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#6fb7ff"
+opacity = 0.6
+
+[keyboard_style.gradient]
+color = "#101f29"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#2c4452"
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0a131a"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#16252f"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#6fb7ff"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#6fb7ff"
+opacity = 0.6
+
+[numpad_style.gradient]
+color = "#101f29"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#2c4452"
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0a131a"
+opacity = 0.92
+
+[media_style.items]
+color = "#16252f"
+opacity = 0.95
+
+[media_style.selected]
+color = "#6fb7ff"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#6fb7ff"
+opacity = 0.6
+
+[media_style.gradient]
+color = "#101f29"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#2c4452"
+
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0a131a"
+opacity = 0.92
+
+[menu_style.items]
+color = "#16252f"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#6fb7ff"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#6fb7ff"
+opacity = 0.6
+
+[menu_style.gradient]
+color = "#101f29"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#2c4452"
+
+
+[menu_style.glow]
+color = "#6fb7ff"
+opacity = 0.4
+blur = 20
+pulse = true
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 14, width = 2, color = "#6fb7ff"}
+scanlines = {spacing = 4, opacity = 0.1, color = "#000000"}
+vignette = {color = "#000000", opacity = 0.55, reach = 28}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.1, pitch = 1.4}
+pick = {kind = "nano", volume = 0.25}
+open = {kind = "pulse", volume = 0.2, pitch = 1.2}
+close = {kind = "swish", volume = 0.04, pitch = 1.5}
+
+[sounds.guide]
+open = {kind = "nano", volume = 0.25}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.1, pitch = 1.4}
+pick = {kind = "click", volume = 0.25, pitch = 1.2}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.1, pitch = 1.4}
+pick = {kind = "beep", volume = 0.15, pitch = 1.2}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 14}
+pick = {strength = 0.4, length_ms = 30}
+open = {strength = 0.25, length_ms = 70}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}
