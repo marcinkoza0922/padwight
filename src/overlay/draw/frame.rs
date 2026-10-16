@@ -21,9 +21,12 @@ enum Part {
     Ring(f32, f32, f32),
     /// A filled circle.
     Dot(f32, f32, f32),
+    /// A stretch of a line where it passes over another: drawn again on top, with the lines
+    /// under it cut away either side, so they show a gap.
+    Over(&'static str),
 }
 
-use Part::{Dot, Fill, Line, Ring};
+use Part::{Dot, Fill, Line, Over, Ring};
 
 /// A kind's mark: `half` runs along the top arm and is mirrored across the diagonal onto the
 /// left one, `whole` is drawn as it is.
@@ -118,6 +121,48 @@ const RIVETED: Design = Design {
         round: false,
 };
 
+/// Two strands twisting along each edge, swapping sides through a ring at the corner, every
+/// crossing alternately over and under.
+const CELTIC: Design = Design {
+    half: &[
+        Line("M0.455,0.04 C0.511,0.04 0.554,0.2 0.61,0.2 C0.666,0.2 0.709,0.04 0.765,0.04 C0.821,0.04 0.864,0.2 0.92,0.2"),
+        Line("M0.455,0.2 C0.511,0.2 0.554,0.04 0.61,0.04 C0.666,0.04 0.709,0.2 0.765,0.2 C0.821,0.2 0.864,0.04 0.92,0.04"),
+        Line("M0.92,0.04 C0.964,0.04 1,0.076 1,0.12 C1,0.164 0.964,0.2 0.92,0.2"),
+    ],
+    // The crossings aren't mirror images: the strand that goes over along the top goes under
+    // along the left, so the weave keeps alternating round the corner.
+    whole: &[
+        Line("M0.455,0.04 C0.2,0.04 0.2,0.2 0.2,0.455"),
+        Line("M0.455,0.2 C0.2,0.2 0.04,0.2 0.04,0.455"),
+        Ring(0.213, 0.213, 0.11),
+        Over("M0.509,0.083 C0.525,0.106 0.54,0.134 0.556,0.157"),
+        Over("M0.157,0.509 C0.134,0.525 0.106,0.54 0.083,0.556"),
+        Over("M0.664,0.083 C0.68,0.106 0.695,0.134 0.711,0.157"),
+        Over("M0.157,0.664 C0.134,0.68 0.106,0.695 0.083,0.711"),
+        Over("M0.819,0.083 C0.835,0.106 0.85,0.134 0.866,0.157"),
+        Over("M0.157,0.819 C0.134,0.835 0.106,0.85 0.083,0.866"),
+        Over("M0.222,0.178 C0.215,0.2 0.21,0.225 0.207,0.252"),
+        Over("M0.37,0.2 C0.337,0.201 0.307,0.202 0.279,0.204"),
+        Over("M0.138,0.239 C0.119,0.249 0.103,0.261 0.089,0.278"),
+        Over("M0.194,0.105 C0.237,0.097 0.28,0.115 0.304,0.151"),
+        Over("M0.263,0.311 C0.224,0.331 0.178,0.326 0.144,0.299"),
+    ],
+    inset: true,
+    round: true,
+};
+
+/// A running key between two rails along each edge, a boxed square at the corner.
+const GREEK_KEY: Design = Design {
+    half: &[
+        Line("M1,0 L0,0"),
+        Line("M1,0.24 L0.24,0.24"),
+        Line("M0.28,0.2 L0.28,0.04 L0.44,0.04 L0.44,0.12 L0.36,0.12 L0.36,0.2 L0.52,0.2 L0.52,0.04 L0.68,0.04 L0.68,0.12 L0.6,0.12 L0.6,0.2 L0.76,0.2 L0.76,0.04 L0.92,0.04 L0.92,0.12 L0.84,0.12 L0.84,0.2 L1,0.2"),
+    ],
+    whole: &[Line("M0.06,0.06 L0.18,0.06 L0.18,0.18 L0.06,0.18 Z"), Fill("M0.1,0.1 L0.14,0.1 L0.14,0.14 L0.1,0.14 Z")],
+    inset: true,
+    round: false,
+};
+
 fn design(kind: FrameKind) -> &'static Design {
     match kind {
         FrameKind::Brackets => &BRACKETS,
@@ -129,6 +174,8 @@ fn design(kind: FrameKind) -> &'static Design {
         FrameKind::Baroque => &BAROQUE,
         FrameKind::Circuit => &CIRCUIT,
         FrameKind::Riveted => &RIVETED,
+        FrameKind::Celtic => &CELTIC,
+        FrameKind::GreekKey => &GREEK_KEY,
     }
 }
 
@@ -173,7 +220,7 @@ impl Place {
         };
         // Writing to a String can't fail.
         let _ = match *part {
-            Line(d) => write!(out, "<path d=\"{}\" fill=\"none\"/>", self.path(d)),
+            Line(d) | Over(d) => write!(out, "<path d=\"{}\" fill=\"none\"/>", self.path(d)),
             Fill(d) => write!(out, "<path d=\"{}\" stroke=\"none\" fill=\"currentColor\"/>", self.path(d)),
             Ring(x, y, r) => {
                 let (cx, cy, r) = ring(x, y, r);
@@ -196,16 +243,23 @@ fn markup(f: &Frame, corner: (f32, f32), s: f32, fade: f32) -> String {
     let opacity = (f.opacity * fade).clamp(0.0, 1.0);
     let d = design(f.kind);
     let inset = if d.inset { width / 2.0 } else { 0.0 };
-    let mut body = String::new();
+    let (mut body, mut over) = (String::new(), String::new());
     for mirrored in [false, true] {
         let place = Place { reach, inset, corner, mirrored };
         for part in d.half {
-            place.draw(part, &mut body);
+            place.draw(part, if matches!(part, Over(_)) { &mut over } else { &mut body });
         }
     }
     let place = Place { reach, inset, corner, mirrored: false };
     for part in d.whole {
-        place.draw(part, &mut body);
+        place.draw(part, if matches!(part, Over(_)) { &mut over } else { &mut body });
+    }
+    if !over.is_empty() {
+        // The stretches that go over, three lines wide, cut the lines under them away.
+        let cut = 3.0 * width;
+        body = format!(
+            "<mask id=\"over\" maskUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"{reach}\" height=\"{reach}\"><rect width=\"{reach}\" height=\"{reach}\" fill=\"white\"/><g stroke=\"black\" stroke-width=\"{cut}\" stroke-linecap=\"butt\">{over}</g></mask><g mask=\"url(#over)\">{body}</g>{over}"
+        );
     }
     let (cap, join) = if d.round { ("round", "round") } else { ("square", "miter") };
     // One group carries the opacity, so where the strokes cross they don't darken.

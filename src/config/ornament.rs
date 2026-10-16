@@ -6,8 +6,8 @@ use super::style::{black, opaque};
 use super::Stroke;
 
 /// The ornaments drawn over and around a panel: lines between items, a frame at its corners, a
-/// scanline screen, a vignette, filters (scanlines, grain, pixels, a tint), a texture and
-/// bevelled buttons. Each is off unless set.
+/// scanline screen, a vignette, filters (scanlines, grain, pixels, a tint), paper or brushed
+/// metal and bevelled buttons. Each is off unless set.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Ornament {
@@ -35,9 +35,12 @@ pub struct Ornament {
     /// A wash of color over the panel.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tint: Option<Tint>,
-    /// A material over the panel's background: paper or brushed metal.
+    /// Paper over the panel's background.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub texture: Option<Texture>,
+    pub paper: Option<Texture>,
+    /// Brushed metal over the panel's background.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub brushed_metal: Option<Texture>,
     /// Makes the items (and keys) look like raised buttons.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bevel: Option<Bevel>,
@@ -71,10 +74,14 @@ pub enum FrameKind {
     Circuit,
     /// A riveted iron plate.
     Riveted,
+    /// Two strands woven over and under each other, through a ring at the corner.
+    Celtic,
+    /// A running Greek key between two rails, a boxed square at the corner.
+    GreekKey,
 }
 
 impl FrameKind {
-    pub const ALL: [FrameKind; 9] = [
+    pub const ALL: [FrameKind; 11] = [
         FrameKind::Brackets,
         FrameKind::Chamfer,
         FrameKind::ArtDeco,
@@ -84,6 +91,8 @@ impl FrameKind {
         FrameKind::Baroque,
         FrameKind::Circuit,
         FrameKind::Riveted,
+        FrameKind::Celtic,
+        FrameKind::GreekKey,
     ];
 
     /// The size its detail reads well at, in pixels at scale 1: what picking it sets.
@@ -93,7 +102,8 @@ impl FrameKind {
             FrameKind::Riveted => 32.0,
             FrameKind::ArtDeco | FrameKind::Gothic | FrameKind::Circuit => 44.0,
             FrameKind::ArtNouveau | FrameKind::Baroque => 52.0,
-            FrameKind::Runic => 60.0,
+            FrameKind::Runic | FrameKind::Celtic => 60.0,
+            FrameKind::GreekKey => 72.0,
         }
     }
 }
@@ -110,6 +120,8 @@ impl std::fmt::Display for FrameKind {
             FrameKind::Baroque => "Baroque",
             FrameKind::Circuit => "Circuit",
             FrameKind::Riveted => "Riveted",
+            FrameKind::Celtic => "Celtic knot",
+            FrameKind::GreekKey => "Greek key",
         })
     }
 }
@@ -208,22 +220,10 @@ pub enum ImageFit {
     Stretch,
 }
 
-/// What a texture looks like.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum TextureKind {
-    /// Fine grain, soft blotches and a few fibres.
-    #[default]
-    Paper,
-    /// Fine streaks along the panel, with a soft sheen.
-    BrushedMetal,
-}
-
-/// A material drawn over the panel's background and under its contents. It only lightens and
-/// darkens, so the background's color still shows through.
+/// A material (paper or brushed metal) drawn over the panel's background and under its
+/// contents. It only lightens and darkens, so the background's color still shows through.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Texture {
-    pub kind: TextureKind,
     /// How strong the grain is, 0 to 1.
     #[serde(default = "default_texture_opacity")]
     pub opacity: f32,

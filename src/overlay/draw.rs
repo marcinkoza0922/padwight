@@ -263,8 +263,11 @@ fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, style: &OverlayStyle, padd
             layers = layers.push_under(ornament::picture(picture, c.fade));
         }
         let ornaments = &style.ornament;
-        if let Some(t) = &ornaments.texture {
-            layers = layers.push_under(texture::layer(t, c.fade));
+        // Metal goes under paper, should both be on.
+        for (material, t) in [(texture::Material::Paper, &ornaments.paper), (texture::Material::BrushedMetal, &ornaments.brushed_metal)] {
+            if let Some(t) = t {
+                layers = layers.push_under(texture::layer(material, t, c.fade));
+            }
         }
         if let Some(lines) = &ornaments.scanlines {
             let drift = lines.drift && !style.lite.calm;

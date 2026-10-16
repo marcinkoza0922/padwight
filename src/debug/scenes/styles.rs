@@ -1,7 +1,7 @@
 //! The sample styles the menu scenes are drawn in: textures, filters, ornaments and frames.
 
 use crate::config::{
-    Bevel, Camo, CamoScheme, Case, Frame, FrameKind, Gradient, Grain, Ornament, OverlayStyle, Paint, Pixels, Scanlines, Shade, Stroke, Texture, TextureKind, Tint, Typography,
+    Bevel, Camo, CamoScheme, Case, Frame, FrameKind, Gradient, Grain, Ornament, OverlayStyle, Paint, Pixels, Scanlines, Shade, Stroke, Texture, Tint, Typography,
     Vignette,
 };
 
@@ -31,7 +31,7 @@ pub(super) fn paper() -> OverlayStyle {
         items: Paint::new("#d6c6a0", 0.9),
         selected: Paint::new("#8a3b2a", 1.0),
         border: Some(Stroke { width: 2.0, color: "#6b5a3a".into(), opacity: 1.0 }),
-        ornament: Ornament { texture: Some(Texture { kind: TextureKind::Paper, opacity: 0.6 }), ..Ornament::default() },
+        ornament: Ornament { paper: Some(Texture { opacity: 0.6 }), ..Ornament::default() },
         ..OverlayStyle::default()
     }
 }
@@ -44,7 +44,7 @@ pub(super) fn metal() -> OverlayStyle {
         selected: Paint::new("#2f5db0", 1.0),
         corners: 0.2,
         ornament: Ornament {
-            texture: Some(Texture { kind: TextureKind::BrushedMetal, opacity: 0.7 }),
+            brushed_metal: Some(Texture { opacity: 0.7 }),
             bevel: Some(Bevel { depth: 0.8 }),
             ..Ornament::default()
         },
@@ -81,6 +81,8 @@ pub(super) fn framed(kind: FrameKind) -> OverlayStyle {
         FrameKind::Gothic => ("#141018", "#221a28", "#6a1e2a", "#b8a070"),
         FrameKind::Baroque => ("#24140e", "#341e16", "#8a2a1e", "#d8b060"),
         FrameKind::Circuit => ("#06140e", "#0c2218", "#14804a", "#40e090"),
+        FrameKind::Celtic => ("#0e1a14", "#18281e", "#2e6a3a", "#c8b878"),
+        FrameKind::GreekKey => ("#1c1610", "#2a2018", "#a0502a", "#d89a5a"),
         FrameKind::Riveted | FrameKind::Brackets | FrameKind::Chamfer => ("#2a2c2e", "#3a3c3e", "#8a4a1a", "#9a9ea2"),
     };
     let width = if kind == FrameKind::Riveted { 2.0 } else { 1.5 };

@@ -23,7 +23,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 51] = [
+pub const SCENES: [(&str, &str); 53] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -47,6 +47,8 @@ pub const SCENES: [(&str, &str); 51] = [
     ("frame-baroque", "a list menu in a baroque frame"),
     ("frame-circuit", "a list menu in a circuit-board frame"),
     ("frame-riveted", "a list menu in a riveted frame"),
+    ("frame-celtic-knot", "a list menu in a frame of Celtic knotwork"),
+    ("frame-greek-key", "a list menu in a Greek key frame"),
     ("in-game-menu", "the Guide + Start menu"),
     ("media", "the media controls"),
     ("offer", "the offer to add a library game"),

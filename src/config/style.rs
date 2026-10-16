@@ -385,7 +385,7 @@ pub(super) fn default_menu_style() -> OverlayStyle {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::{Case, FrameKind, ImageFit, Scanlines, TextureKind};
+    use crate::config::{Case, FrameKind, ImageFit, Scanlines};
 
     #[test]
     fn decorations_are_optional_and_fill_in_what_is_left_out() {
@@ -402,8 +402,9 @@ mod tests {
 
     #[test]
     fn textures_and_bevels_round_trip() {
-        let style: OverlayStyle = toml::from_str("[ornament.texture]\nkind = \"brushed_metal\"\n\n[ornament.bevel]\n").unwrap();
-        assert_eq!(style.ornament.texture.as_ref().map(|t| (t.kind, t.opacity)), Some((TextureKind::BrushedMetal, 0.5)));
+        let style: OverlayStyle = toml::from_str("[ornament.brushed_metal]\n\n[ornament.bevel]\n").unwrap();
+        assert_eq!(style.ornament.brushed_metal.as_ref().map(|t| t.opacity), Some(0.5));
+        assert_eq!(style.ornament.paper, None);
         assert_eq!(style.ornament.bevel.as_ref().map(|b| b.depth), Some(0.5));
         let again: OverlayStyle = toml::from_str(&toml::to_string(&style).unwrap()).unwrap();
         assert_eq!(again.ornament, style.ornament);

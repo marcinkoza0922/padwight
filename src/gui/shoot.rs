@@ -25,6 +25,7 @@ Drawing the settings window without a display or a daemon (for the manual's scre
          actions <button>        open the dialog that picks that button's action
          outputs <button>        open the dialog that picks the controller button it presses
          expand                  open every row               macro|menu|info <n>  open that card
+         appearance <n>          open menu n's Appearance     filters-demo <n>  turn on a few of menu n's filters
          dialog <add|export|system|system-demo>     open a dialog                close  close it
          shot <name>             save <out>/<name>.png
   options: --out <dir> (default screenshots/manual)   --size <w>x<h> (default 1280x2600)
@@ -162,6 +163,8 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
         "macro" => send(app, Message::ToggleMacro(arg()?.parse()?)),
         "menu" => send(app, Message::ToggleMenu(arg()?.parse()?)),
         "info" => send(app, Message::ToggleInfo(arg()?.parse()?)),
+        "appearance" => send(app, Message::ToggleAppearance(Some(arg()?.parse()?))),
+        "filters-demo" => filters_demo(app, arg()?.parse()?)?,
         "dialog" => open_dialog(app, arg()?)?,
         "close" => send(app, Message::CloseDialog),
         "shot" => take_shot(app, options, arg()?)?,
@@ -203,6 +206,17 @@ fn shortcuts_demo(app: &mut App) {
     send(app, Message::SetShortcut(Shortcut::OpenGuide, Some(opener)));
     send(app, Message::SetShortcut(Shortcut::Tab, Some(ShortcutInput::button(Button::Start))));
     send(app, Message::SetShortcut(Shortcut::Screenshot, Some(ShortcutInput::gesture(Button::Select, GestureKind::DoubleTap))));
+}
+
+/// Turns on scanlines, paper and a color wash on menu `n`, so the Filters group shows its editors.
+fn filters_demo(app: &mut App, n: usize) -> Result<()> {
+    use crate::config::{Scanlines, Texture, Tint};
+    let mut style = app.menus().get(n).with_context(|| format!("no menu {n}"))?.style.clone();
+    style.ornament.scanlines = Some(Scanlines { spacing: 4.0, opacity: 0.2, color: "#000000".into(), drift: false });
+    style.ornament.paper = Some(Texture { opacity: 0.5 });
+    style.ornament.tint = Some(Tint { color: "#ffa040".into(), opacity: 0.12 });
+    send(app, Message::SetMenuStyle(n, style));
+    Ok(())
 }
 
 fn send(app: &mut App, message: Message) {

@@ -6,7 +6,16 @@ use std::sync::{Mutex, OnceLock};
 
 use iced::{ContentFit, Element, Length, widget::{image, responsive}};
 
-use crate::config::{Camo, CamoScheme, Grain, Pixels, Texture, TextureKind};
+use crate::config::{Camo, CamoScheme, Grain, Pixels, Texture};
+
+/// What a texture looks like.
+#[derive(Debug, Clone, Copy)]
+pub enum Material {
+    /// Fine grain, soft blotches and a few fibres.
+    Paper,
+    /// Fine streaks along the panel, with a soft sheen.
+    BrushedMetal,
+}
 
 const WIDTH: usize = 1280;
 const HEIGHT: usize = 720;
@@ -40,8 +49,7 @@ fn cached(key: Key, build: impl FnOnce() -> Vec<u8>) -> image::Handle {
 }
 
 /// The material as a layer the size of the panel: the relief, repeated if the panel is bigger.
-pub fn layer<'a, M: 'a>(t: &Texture, fade: f32) -> Element<'a, M> {
-    let kind = t.kind;
+pub fn layer<'a, M: 'a>(kind: Material, t: &Texture, fade: f32) -> Element<'a, M> {
     sized([kind as u32, 0, 0], (t.opacity * fade).clamp(0.0, 1.0), move |w, h| {
         let source = reliefs(kind);
         let mut pixels = Vec::with_capacity(w * h * 4);
@@ -129,12 +137,12 @@ pub fn camo<'a, M: 'a>(c: &Camo, s: f32, fade: f32) -> Element<'a, M> {
 }
 
 /// The relief of each kind, as RGBA pixels, made on first use.
-fn reliefs(kind: TextureKind) -> &'static [u8] {
+fn reliefs(kind: Material) -> &'static [u8] {
     static PAPER: OnceLock<Vec<u8>> = OnceLock::new();
     static METAL: OnceLock<Vec<u8>> = OnceLock::new();
     match kind {
-        TextureKind::Paper => PAPER.get_or_init(|| relief(paper)),
-        TextureKind::BrushedMetal => METAL.get_or_init(|| relief(brushed_metal)),
+        Material::Paper => PAPER.get_or_init(|| relief(paper)),
+        Material::BrushedMetal => METAL.get_or_init(|| relief(brushed_metal)),
     }
 }
 
