@@ -34,9 +34,26 @@ Open **Active** (4). **Always on** is the simplest. For a clutch, pick **Off whi
 - Under **Advanced**, **Smooth below** steadies slow, careful aiming without delaying fast turns, and **Re-measure drift whenever the controller is set down still** keeps the baseline right as the controller warms up.
 - The **Visualizers** at the bottom draw the curve with your current turning speed on it. They show the active profile's saved settings, so make the profile active and press **Save & apply** to watch them move.
 
-## 6. Say if the profile needs gyro
+## 6. Aim a game that only reads the gamepad
+
+If the game has no mouse support alongside the gamepad, pick **Gamepad stick (turn speed)** in the first dropdown and send it to the **Right stick**. Turning the controller then pushes a virtual stick, added to the real one. Set these in order:
+
+1. **Full tilt at**: how fast you turn for a full push. Lower it to turn the view further with the same turn.
+2. **Anti-deadzone**: raise it until slow turns move the view, and lower it if the view creeps with the controller still.
+3. **Game's curve**: if turning the controller slowly turns the view less than you'd expect from turning it quickly, raise this a little at a time from 1 until slow and fast turns feel consistent. It undoes the game's own curve, so the right value is the game's.
+
+Set the game's own stick sensitivity before any of these, since each of them depends on it.
+
+## 7. Say if the profile needs gyro
 
 Tick **Can't be played without gyro** (1) only if the profile depends on it, such as a flick-stick profile that turns left and right with the stick and up and down with gyro. Players whose controller has no gyro then aren't offered it when they import your pack. Leave it unticked when gyro is an extra.
+
+## When it feels wrong
+
+- The view creeps with the controller on the table: **Calibrate gyro** again, then raise *Ignore jitter below* under **Advanced**.
+- Slow aiming is shaky: raise **Smooth below**.
+- Turning the controller the same angle gives a different turn in each game: tick **Real-world sensitivity** and enter each game's full turn.
+- Up and down feel backwards or too strong: **Invert vertical** and **Vertical speed**.
 
 ## Where next
 

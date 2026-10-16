@@ -40,6 +40,18 @@ While the stick is in the first 60% of its travel, Shift is held. In most games 
 
 Press **Save & apply** and walk around. The **Pointer speed** and **Speed by direction** pictures under the right stick show how the pointer will move; hover the graph to read the speed at any push.
 
+## 5. Fit the deadzone to the stick and the game
+
+Each stick's settings run in a fixed order, and tuning them in that order saves going back:
+
+1. **Deadzone**: with the controller untouched, raise it until the *Stick travel* picture's dot stays inside the shaded middle, then stop. A bigger one than needed only makes small pushes do nothing.
+2. **Deadzone shape**: leave it on **Circle**. Try **Cross** on a ring for movement that should stay clean along straight lines.
+3. **Anti-deadzone**: for a stick set to **Gamepad stick**, in a game that ignores small pushes. Raise it until the lightest push moves the game, then back off a step. The *Response* picture shows the step it adds. Mouse and ring modes don't need it.
+4. **Anti-deadzone buffer**: only if you want a flat patch just past the deadzone, such as a steady sneak.
+5. **Invert X** and **Rotate output** at the bottom: for a game that expects a flipped or turned stick.
+
+Change one setting, press **Save & apply**, and test it in the game before the next.
+
 ## Triggers
 
 Triggers are on this tab too. A trigger can pass its pull on as an analog value, or work as a button that fires past a **threshold**. Zones work on triggers: a half pull and a full pull can do different things. Controllers whose triggers are only on or off don't have zones.
@@ -47,4 +59,5 @@ Triggers are on this tab too. A trigger can pass its pull on as an analog value,
 ## Where next
 
 - [Sticks and triggers](sticks.md) for flick stick and scrolling.
+- [Game setup guidelines for shooters](../development/game-setup-guidelines.md#shooters) for the curve and deadzone values packs start from.
 - [Gyro](tutorial-gyro.md) to add motion aiming on top of the right stick.

@@ -32,6 +32,7 @@ Classic PC games often come in more than one version: the original, a modern rem
 - **WASD movement** should generally be assigned to the **left stick**. Strategy games that use WASD or the arrow keys to pan the camera can also assign that to the left stick.
 - **Camera or cursor control** should almost always be assigned to the **right stick**. As a rule of thumb, if the mouse controls it, it goes on the right stick.
 - **Walk or slow movement** should be bound to the **left stick** as a zone covering the first **50 to 70 percent** of the stick's travel, so a light push walks and a full push runs. The right value depends on the controller and game. The Deus Ex pack uses 60 percent (see [the Deus Ex tutorial](../manual/tutorial-deus-ex.md)), which works well enough as a starting point.
+- **Deadzone shape** stays on circle except for a ring that should only walk in straight lines, where cross keeps the sideways part clean. Use **Rotate output** and **Invert X** only for a game whose own stick is oriented differently.
 - **Sprint** should be bound to a **long press of A** with a short long-press window.
 
 ## Actions
@@ -55,6 +56,9 @@ Classic PC games often come in more than one version: the original, a modern rem
 
 - **Response curves** for shooters should loosely resemble those found in console shooters. Match the general shape and feel: a radial dead zone, a power curve on the right stick, and sensitivity in the same ballpark as a console game.
 - **Aim assist** can't be used with this daemon, so don't try to reproduce it. Almost everything else from the console feel can be matched: the dead zone, the curve shape, per-axis sensitivity, and invert-Y.
+- **Starting values** for a shooter's right stick: a small radial deadzone just above the pad's drift, a power curve near 2, and an anti-deadzone matched to the game's own deadzone only when the game reads the gamepad. Don't add an anti-deadzone to a mouse-mode stick, which has no deadzone of its own to beat.
+- **Gyro in a gamepad-only game** should use the turn-speed stick mode on the right stick, with **Game's curve** set to the game's stick response exponent so the controller turns the view as far as it turns, like a mouse would. Set the anti-deadzone to the game's deadzone. Note in the pack which values were assumed.
+- **Gyro in a mouse game** should use real-world sensitivity (1× to start) with the game's full turn entered, so the same setting feels the same in every pack.
 - **Zoom / aim down sights** can be a **layer** held over the right stick, or over the zoom button, that swaps in a more fitting response curve, usually a slower and more precise one. This matches the way layers extend a scheme, and it's released as soon as the aim button is let go.
 - **Hold or toggle for aim** depends on the game. If the game uses a toggle, make it a toggle. If the game uses a hold, make it a hold when it's on the **left trigger**, and a toggle when it's on any other input.
 - **Gyro and flick stick profiles** should always be added for shooters, so the player can try them, even when the game has gamepad support and the rest of the scheme is passthrough. They should **never be the default**. The default is the game's own scheme.
