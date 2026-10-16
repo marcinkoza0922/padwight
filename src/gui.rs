@@ -905,9 +905,10 @@ impl App {
         &mut self.game_mut().info
     }
 
-    /// What the shown profile and items can refer to.
+    /// What the shown profile and items can refer to, and the glyphs of the controller games see.
     fn names(&self) -> Names {
-        Names::for_game(&self.config, self.game())
+        let swapped = self.profile().is_some_and(|p| self.swap_for(p).labels());
+        Names { glyphs: crate::info::Glyphs { family: self.glyph_family(), nintendo_layout: swapped }, ..Names::for_game(&self.config, self.game()) }
     }
 
     /// The profile the editor shows: the edited profile, or on the Layers tab, the layer over

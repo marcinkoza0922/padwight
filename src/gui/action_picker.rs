@@ -1,11 +1,12 @@
 //! Picking what an input does: a button showing the action's kind, which opens a dialog of every
 //! kind the place allows, in groups, each with its icon and a line on what it does. A pick list
 //! can't group its entries or draw icons, and twenty-five bare names don't say which is which.
+//! A "Gamepad button" action picks its button the same way, from the glyphs the game will see.
 
 use iced::widget::{center, column, container, mouse_area, opaque, row, scrollable, space, text};
 
 use super::*;
-use crate::{config::Keyword, keyword_icon};
+use crate::{config::Keyword, info::Glyphs, keyword_icon};
 
 /// The kinds in the dialog, by group. Each place's own list (`ACTION_KINDS`, a menu item's…) picks
 /// from these, and groups it has nothing of are left out.
@@ -18,26 +19,126 @@ const GROUPS: [(&str, &[ActionKind]); 6] = [
     ("System", &[ActionKind::Screenshot, ActionKind::Recording, ActionKind::ForceQuit]),
 ];
 
-/// A tile's width, so the tiles of every group line up in columns.
-const TILE_WIDTH: f32 = 250.0;
+/// The controller buttons a "Gamepad button" action can press, by group: every one of
+/// `Button::EVERY`.
+const PAD_GROUPS: [(&str, &[Button]); 6] = [
+    ("Face buttons", &[Button::South, Button::East, Button::West, Button::North]),
+    ("Bumpers and center", &[Button::LeftBumper, Button::RightBumper, Button::Select, Button::Start, Button::Guide]),
+    ("Stick clicks", &[Button::LeftStick, Button::RightStick]),
+    ("D-pad", &[Button::DpadUp, Button::DpadDown, Button::DpadLeft, Button::DpadRight]),
+    ("Left stick", &[Button::LeftStickUp, Button::LeftStickDown, Button::LeftStickLeft, Button::LeftStickRight]),
+    ("Right stick", &[Button::RightStickUp, Button::RightStickDown, Button::RightStickLeft, Button::RightStickRight]),
+];
 
-/// The open dialog: the kind the action has now, and what picking each kind sends.
+/// A kind's tile width, so the tiles of every group line up in three columns.
+const TILE_WIDTH: f32 = 250.0;
+/// A controller button's tile: four to the same width.
+const PAD_TILE_WIDTH: f32 = (TILE_WIDTH * 3.0 - 8.0) / 4.0;
+
+/// What a tile offers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum Face {
+    Kind(ActionKind),
+    Pad(Button),
+}
+
+/// A tile: what it offers, whether the action has it now, and what picking it sends.
+#[derive(Debug, Clone)]
+struct Choice {
+    face: Face,
+    current: bool,
+    pick: Message,
+}
+
+/// The open dialog: its tiles by group, and the glyphs its controller buttons are drawn with.
 #[derive(Debug, Clone)]
 pub(super) struct ActionPicker {
-    current: ActionKind,
-    choices: Vec<(ActionKind, Message)>,
+    title: &'static str,
+    glyphs: Glyphs,
+    groups: Vec<(&'static str, Vec<Choice>)>,
 }
 
 impl ActionPicker {
-    /// The dialog for an action that `on_change` writes back, offering `kinds`.
-    fn new(action: &ButtonAction, kinds: &[ActionKind], default_button: Button, names: &Names, on_change: &OnAction<'_>) -> Self {
-        let choices = kinds.iter().map(|k| (*k, on_change(new_action(*k, default_button, action, names)))).collect();
-        Self { current: action_kind(action), choices }
+    /// The kinds dialog for an action that `on_change` writes back, offering `kinds`.
+    fn kinds(action: &ButtonAction, kinds: &[ActionKind], default_button: Button, names: &Names, on_change: &OnAction<'_>) -> Self {
+        let current = action_kind(action);
+        let groups = GROUPS.map(|(title, group)| {
+            let choices = group
+                .iter()
+                .filter(|k| kinds.contains(k))
+                .map(|k| Choice { face: Face::Kind(*k), current: *k == current, pick: on_change(new_action(*k, default_button, action, names)) })
+                .collect();
+            (title, choices)
+        });
+        Self::new("Choose an action", names.glyphs, groups)
     }
 
-    /// The dialog for the whole action at `target`, as its editor would open it.
+    /// The dialog that picks the controller button a "Gamepad button" action presses.
+    fn pad_buttons(current: Button, glyphs: Glyphs, on_change: &OnAction<'_>) -> Self {
+        let groups = PAD_GROUPS.map(|(title, group)| {
+            (title, group.iter().map(|b| Choice { face: Face::Pad(*b), current: *b == current, pick: on_change(ButtonAction::Gamepad(*b)) }).collect())
+        });
+        Self::new("Choose a controller button", glyphs, groups)
+    }
+
+    /// Groups the place offers nothing of are left out.
+    fn new(title: &'static str, glyphs: Glyphs, groups: [(&'static str, Vec<Choice>); 6]) -> Self {
+        Self { title, glyphs, groups: groups.into_iter().filter(|(_, c)| !c.is_empty()).collect() }
+    }
+
+    /// The kinds dialog for the whole action at `target`, as its editor would open it.
     pub(super) fn for_target(target: Target, action: &ButtonAction, kinds: &[ActionKind], default_button: Button, names: &Names) -> Self {
-        Self::new(action, kinds, default_button, names, &set_action(target))
+        Self::kinds(action, kinds, default_button, names, &set_action(target))
+    }
+
+    /// The controller-button dialog for the "Gamepad button" action at `target`.
+    pub(super) fn pad_for_target(target: Target, current: Button, glyphs: Glyphs) -> Self {
+        Self::pad_buttons(current, glyphs, &set_action(target))
+    }
+
+    /// What picking `face` sends, if the dialog offers it.
+    #[cfg(test)]
+    fn pick(&self, face: Face) -> Option<&Message> {
+        self.groups.iter().flat_map(|(_, c)| c).find(|c| c.face == face).map(|c| &c.pick)
+    }
+}
+
+/// A controller button by where it sits, beside its glyph, so a glyph that reads differently on
+/// another controller (B is East on an Xbox pad and South on a Nintendo one) can't be mistaken.
+fn position_name(b: Button) -> &'static str {
+    match b {
+        Button::South => "South",
+        Button::East => "East",
+        Button::West => "West",
+        Button::North => "North",
+        Button::LeftBumper => "Left bumper",
+        Button::RightBumper => "Right bumper",
+        Button::Select => "Select",
+        Button::Start => "Start",
+        Button::Guide => "Guide",
+        Button::LeftStick => "Left stick click",
+        Button::RightStick => "Right stick click",
+        Button::DpadUp => "D-pad up",
+        Button::DpadDown => "D-pad down",
+        Button::DpadLeft => "D-pad left",
+        Button::DpadRight => "D-pad right",
+        Button::LeftStickUp | Button::RightStickUp => "Up",
+        Button::LeftStickDown | Button::RightStickDown => "Down",
+        Button::LeftStickLeft | Button::RightStickLeft => "Left",
+        Button::LeftStickRight | Button::RightStickRight => "Right",
+        Button::LeftPaddle => "Left paddle",
+        Button::RightPaddle => "Right paddle",
+        Button::LeftPaddle2 => "Left paddle 2",
+        Button::RightPaddle2 => "Right paddle 2",
+    }
+}
+
+/// The full name of a stick direction, for the button showing the pick, where no group title says
+/// which stick it is.
+fn picked_name(b: Button) -> String {
+    match b.stick_direction() {
+        Some((stick, _)) => format!("{stick} {}", position_name(b).to_lowercase()),
+        None => position_name(b).to_string(),
     }
 }
 
@@ -141,40 +242,53 @@ pub(super) fn kind_button<'a>(
     button(row![icon(kind, 16.0), text(kind.name()).width(Length::Fill), arrow].spacing(8).align_y(Alignment::Center))
         .style(style::field_button)
         .padding([6, 10])
-        .width(200)
-        .on_press_with(move || Message::OpenActionPicker(Box::new(ActionPicker::new(&action, kinds, default_button, &names, &on_change))))
+        .width(VALUE_WIDTH)
+        .on_press_with(move || Message::OpenActionPicker(Box::new(ActionPicker::kinds(&action, kinds, default_button, &names, &on_change))))
         .into()
 }
 
-/// One kind in the dialog: its icon, name and what it does. The action's kind now is picked out.
-fn tile<'a>(kind: ActionKind, current: bool, pick: Message) -> Element<'a, Message> {
-    let words = column![text(kind.name()).size(14), text(kind.about()).size(12).color(MUTED_COLOR)].spacing(2);
-    button(row![icon(kind, 20.0), words].spacing(10).align_y(Alignment::Center))
+/// The button a "Gamepad button" action shows its button with: the glyph the game will see and
+/// where the button sits. It opens the dialog of every controller button.
+pub(super) fn pad_button<'a>(current: Button, glyphs: Glyphs, on_change: OnAction<'a>) -> Element<'a, Message> {
+    let arrow = text("▾").size(14).style(|theme: &iced::Theme| text::Style { color: Some(theme.extended_palette().primary.base.color) });
+    button(row![pad_chip(current, glyphs), text(picked_name(current)).width(Length::Fill), arrow].spacing(8).align_y(Alignment::Center))
+        .style(style::field_button)
+        .padding([4, 10])
+        .width(VALUE_WIDTH)
+        .on_press_with(move || Message::OpenActionPicker(Box::new(ActionPicker::pad_buttons(current, glyphs, &on_change))))
+        .into()
+}
+
+/// One tile: a kind's icon, name and what it does, or a controller button's glyph and where it
+/// sits. What the action has now is picked out.
+fn tile<'a>(choice: &Choice, glyphs: Glyphs) -> Element<'a, Message> {
+    let (content, width, height): (Element<'a, Message>, f32, f32) = match choice.face {
+        Face::Kind(kind) => {
+            let words = column![text(kind.name()).size(14), text(kind.about()).size(12).color(MUTED_COLOR)].spacing(2);
+            (row![icon(kind, 20.0), words].spacing(10).align_y(Alignment::Center).into(), TILE_WIDTH, 62.0)
+        }
+        Face::Pad(b) => (row![pad_chip(b, glyphs), text(position_name(b)).size(14)].spacing(10).align_y(Alignment::Center).into(), PAD_TILE_WIDTH, 40.0),
+    };
+    let current = choice.current;
+    button(content)
         .style(move |t, status| if current { style::segment(true)(t, status) } else { style::secondary(t, status) })
         .padding([8, 10])
-        .width(TILE_WIDTH)
-        .height(Length::Fill)
-        .on_press(Message::PickAction(Box::new(pick)))
+        .width(width)
+        .height(height)
+        .on_press(Message::PickAction(Box::new(choice.pick.clone())))
         .into()
 }
 
 /// The dialog over a dimmed page; clicking beside it closes it.
 pub(super) fn view_action_picker(picker: &ActionPicker) -> Element<'_, Message> {
     let mut groups = column![].spacing(14);
-    for (title, kinds) in GROUPS {
-        let tiles: Vec<Element<'_, Message>> = kinds
-            .iter()
-            .filter_map(|k| picker.choices.iter().find(|(c, _)| c == k))
-            .map(|(k, pick)| container(tile(*k, *k == picker.current, pick.clone())).height(62).into())
-            .collect();
-        if tiles.is_empty() {
-            continue;
-        }
-        groups = groups.push(column![text(title).size(13).color(MUTED_COLOR), row(tiles).spacing(8).wrap().vertical_spacing(8)].spacing(6));
+    for (title, choices) in &picker.groups {
+        let tiles = choices.iter().map(|c| tile(c, picker.glyphs));
+        groups = groups.push(column![text(*title).size(13).color(MUTED_COLOR), row(tiles).spacing(8).wrap().vertical_spacing(8)].spacing(6));
     }
     let dialog = container(
         column![
-            row![text("Choose an action").size(20), space::horizontal(), button(text("Cancel")).style(style::secondary).on_press(Message::CloseActionPicker)]
+            row![text(picker.title).size(20), space::horizontal(), button(text("Cancel")).style(style::secondary).on_press(Message::CloseActionPicker)]
                 .align_y(Alignment::Center),
             // Room on the right for the scrollbar, which shows in a short window.
             scrollable(groups.padding(iced::Padding::default().right(16))).height(Length::Shrink),
@@ -226,7 +340,7 @@ mod tests {
         let current = app.profile().unwrap().button(Button::South).clone();
         let picker = ActionPicker::for_target(target, &current, &ACTION_KINDS, Button::South, &app.names());
         let _ = app.update(Message::OpenActionPicker(Box::new(picker)));
-        let pick = app.action_picker.as_ref().unwrap().choices.iter().find(|(k, _)| *k == ActionKind::Mouse).unwrap().1.clone();
+        let pick = app.action_picker.as_ref().unwrap().pick(Face::Kind(ActionKind::Mouse)).unwrap().clone();
         let task = app.update(Message::PickAction(Box::new(pick.clone())));
         drop(task);
         assert!(app.action_picker.is_none());
@@ -238,7 +352,38 @@ mod tests {
     fn a_place_offers_only_its_own_kinds() {
         let app = app();
         let picker = ActionPicker::for_target(Target::MacroStep(0, 0), &ButtonAction::Keys(Vec::new()), MACRO_STEP_KINDS, Button::South, &app.names());
-        let offered: Vec<ActionKind> = picker.choices.iter().map(|(k, _)| *k).collect();
+        let mut offered: Vec<ActionKind> =
+            picker.groups.iter().flat_map(|(_, c)| c).filter_map(|c| match c.face { Face::Kind(k) => Some(k), Face::Pad(_) => None }).collect();
+        offered.sort_by_key(|k| MACRO_STEP_KINDS.iter().position(|m| m == k));
         assert_eq!(offered, MACRO_STEP_KINDS);
+    }
+
+    #[test]
+    fn the_pad_dialog_offers_every_output_button_once() {
+        let picker = ActionPicker::pad_for_target(Target::Button(Button::South), Button::East, Glyphs::default());
+        let offered: Vec<Button> = picker.groups.iter().flat_map(|(_, c)| c).filter_map(|c| match c.face { Face::Pad(b) => Some(b), Face::Kind(_) => None }).collect();
+        assert_eq!(offered.len(), Button::EVERY.len());
+        assert!(Button::EVERY.iter().all(|b| offered.contains(b)));
+        let current: Vec<Face> = picker.groups.iter().flat_map(|(_, c)| c).filter(|c| c.current).map(|c| c.face).collect();
+        assert_eq!(current, [Face::Pad(Button::East)]);
+    }
+
+    #[test]
+    fn pad_glyphs_follow_the_controller_the_game_is_shown() {
+        let mut app = with_game();
+        let pick = PadPick { model: Some(crate::info::PadModel::DualShock4), family: PadFamily::PlayStation };
+        app.pad_shown = Some(PadShown { pick, since: std::time::Instant::now() });
+        // A setup that doesn't list the DualShock gets an Xbox 360 pad, whatever is in hand.
+        assert_eq!(app.names().glyphs.family, PadFamily::Xbox);
+        app.game_mut().controllers = Some(crate::pad_identity::ControllerSupport { dualshock: true, ..Default::default() });
+        assert_eq!(app.names().glyphs.family, PadFamily::PlayStation);
+    }
+
+    #[test]
+    fn picking_a_pad_button_sets_it() {
+        let mut app = app();
+        let picker = ActionPicker::pad_for_target(Target::Button(Button::North), Button::South, Glyphs::default());
+        let _ = app.update(picker.pick(Face::Pad(Button::RightStickLeft)).unwrap().clone());
+        assert_eq!(app.profile().unwrap().button(Button::North), &ButtonAction::Gamepad(Button::RightStickLeft));
     }
 }

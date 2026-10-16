@@ -93,6 +93,11 @@ pub(super) fn input_chip<'a>(input: GuideInput, family: PadFamily, swap: Swap) -
     }
 }
 
+/// A controller button's glyph in `glyphs`' labels, as the overlays draw it.
+pub(super) fn pad_chip<'a>(b: Button, glyphs: crate::info::Glyphs) -> Element<'a, Message> {
+    chip(pad_glyph(b, glyphs.family, glyphs.nintendo_layout))
+}
+
 /// An input's glyph as plain text, for places that can't draw one, such as a dropdown: the same
 /// label the glyph is drawn with.
 pub(super) fn input_text(input: GuideInput, family: PadFamily, swap: Swap) -> String {

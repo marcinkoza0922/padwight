@@ -202,6 +202,9 @@ pub(super) const TURBO_INNER_KINDS: &[ActionKind] = &[
 
 pub(super) const DEFAULT_TURBO_RATE: f32 = 10.0;
 
+/// The width of an action's kind button and of the picker beside it, so they line up row to row.
+pub(super) const VALUE_WIDTH: f32 = 200.0;
+
 /// Callback that turns an edited action into a message; lets editors nest inside `Multi`.
 pub(super) type OnAction<'a> = Rc<dyn Fn(ButtonAction) -> Message + 'a>;
 
@@ -396,20 +399,16 @@ pub(super) fn action_value<'a>(
     names: &Names,
 ) -> Element<'a, Message> {
     match action {
-        ButtonAction::Gamepad(b) => dropdown(Button::EVERY, Some(*b), move |b| {
-            on_change(ButtonAction::Gamepad(b))
-        })
-        .width(220)
-        .into(),
+        ButtonAction::Gamepad(b) => super::action_picker::pad_button(*b, names.glyphs, on_change),
         ButtonAction::Mouse(m) => dropdown(MouseButton::ALL, Some(*m), move |m| {
             on_change(ButtonAction::Mouse(m))
         })
-        .width(220)
+        .width(VALUE_WIDTH)
         .into(),
         ButtonAction::Wheel(d) => dropdown(WheelDirection::ALL, Some(*d), move |d| {
             on_change(ButtonAction::Wheel(d))
         })
-        .width(220)
+        .width(VALUE_WIDTH)
         .into(),
         ButtonAction::Keys(keys) => key_input(
             keys,
@@ -461,7 +460,7 @@ pub(super) fn action_value<'a>(
             let pick = {
                 let on_change = on_change.clone();
                 dropdown(names.macros.clone(), Some(name.clone()), move |n| on_change(ButtonAction::Macro { name: n, repeat }))
-                    .width(200)
+                    .width(VALUE_WIDTH)
             };
             let name = name.clone();
             let missing = !names.macros.contains(&name);
@@ -511,7 +510,7 @@ pub(super) fn action_value<'a>(
             )
         }
         ButtonAction::ShowInfo(name) => {
-            let mut line = row![dropdown(names.infos.clone(), Some(name.clone()), move |n| on_change(ButtonAction::ShowInfo(n))).width(200)]
+            let mut line = row![dropdown(names.infos.clone(), Some(name.clone()), move |n| on_change(ButtonAction::ShowInfo(n))).width(VALUE_WIDTH)]
                 .spacing(8)
                 .align_y(Alignment::Center);
             if names.always_infos.contains(name) {
@@ -530,7 +529,7 @@ pub(super) fn action_value<'a>(
             )
         }
         ButtonAction::ShowLog(name) => {
-            let mut line = row![dropdown(names.logs.clone(), Some(name.clone()), move |n| on_change(ButtonAction::ShowLog(n))).width(200)]
+            let mut line = row![dropdown(names.logs.clone(), Some(name.clone()), move |n| on_change(ButtonAction::ShowLog(n))).width(VALUE_WIDTH)]
                 .spacing(8)
                 .align_y(Alignment::Center);
             if names.always_logs.contains(name) {
@@ -546,7 +545,7 @@ pub(super) fn action_value<'a>(
         ButtonAction::Layer(name) => {
             let mut options = names.layers.clone();
             options.push(NEW_LAYER.to_string());
-            let mut line = row![dropdown(options, Some(name.clone()), move |n| on_change(ButtonAction::Layer(n))).width(200)]
+            let mut line = row![dropdown(options, Some(name.clone()), move |n| on_change(ButtonAction::Layer(n))).width(VALUE_WIDTH)]
                 .spacing(8)
                 .align_y(Alignment::Center);
             if !names.layers.contains(name) {
@@ -557,7 +556,7 @@ pub(super) fn action_value<'a>(
         ButtonAction::Mode(name) => {
             let mut options = switchable_modes(names);
             options.push(NEW_MODE.to_string());
-            let mut line = row![dropdown(options, Some(name.clone()), move |n| on_change(ButtonAction::Mode(n))).width(200)]
+            let mut line = row![dropdown(options, Some(name.clone()), move |n| on_change(ButtonAction::Mode(n))).width(VALUE_WIDTH)]
                 .spacing(8)
                 .align_y(Alignment::Center);
             if !names.modes.contains(name) {
@@ -566,7 +565,7 @@ pub(super) fn action_value<'a>(
             line.push(goto_button(ItemKind::Mode, name, names.modes.contains(name))).into()
         }
         ButtonAction::OpenMenu(name) => {
-            let mut line = row![dropdown(names.menus.clone(), Some(name.clone()), move |n| on_change(ButtonAction::OpenMenu(n))).width(200)]
+            let mut line = row![dropdown(names.menus.clone(), Some(name.clone()), move |n| on_change(ButtonAction::OpenMenu(n))).width(VALUE_WIDTH)]
                 .spacing(8)
                 .align_y(Alignment::Center);
             if !names.menus.contains(name) {

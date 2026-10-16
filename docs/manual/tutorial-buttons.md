@@ -9,7 +9,7 @@ Each button has a row. Click its name to open it.
 ![A (South) opened on the Buttons tab, showing its action buttons and the gesture buttons](../images/manual/buttons-row.png "An open button row.")
 
 1. The **Press** button shows what a plain press does. Click it to open **Choose an action**, pick **Mouse button**, then choose **Left** in the dropdown beside it: A now clicks.
-2. The rows of other buttons stay as they were. A closed row shows the button's glyph, then what it does. Once any button has a gesture, each gesture gets a column of its own (**Double tap**, **Long press**…), so you can read all the long presses down one column. Rows still doing what the button itself does are dimmed.
+2. The rows of other buttons stay as they were. A closed row shows the button's glyph, then what it does. Once any button has a gesture, each gesture gets a column of its own (**Double tap**, **Long press**…), so you can read all the long presses down one column. In the picture (2), X (West) types ; and has a long press. Rows still doing what the button itself does are dimmed.
 3. The **Tap window** and **Long press after** sliders under the list set the timing for every button in the profile. Leave them for now.
 
 **Choose an action** lists every kind in groups, each with a line on what it does: **Press** (Keyboard, Mouse button, Scroll wheel, Gamepad button, Disabled), **Change how it presses** (Toggle, Turbo, Several at once, Macro), **Open or switch** (menus, layers, modes, info and log overlays), **On-screen tools**, **Gyro** and **System**. The kind the action has now is highlighted; Cancel, or a click beside the dialog, leaves it as it was.

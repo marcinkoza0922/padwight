@@ -23,6 +23,7 @@ Drawing the settings window without a display or a daemon (for the manual's scre
          picture <hide|show>     the live controller drawing
          open <button>           open that button's row (South, LeftBumper, ...)
          actions <button>        open the dialog that picks that button's action
+         outputs <button>        open the dialog that picks the controller button it presses
          expand                  open every row               macro|menu|info <n>  open that card
          dialog <add|export|system|system-demo>     open a dialog                close  close it
          shot <name>             save <out>/<name>.png
@@ -98,6 +99,18 @@ fn open_actions(app: &mut App, button: Button) -> Result<()> {
     Ok(())
 }
 
+/// Opens the dialog that picks the controller button `button` presses, as a "Gamepad button"
+/// action's button does (South when it presses none).
+fn open_outputs(app: &mut App, button: Button) -> Result<()> {
+    let current = match app.profile().map(|p| p.button(button)).context("no profile shown")? {
+        ButtonAction::Gamepad(b) => *b,
+        _ => Button::South,
+    };
+    let picker = action_picker::ActionPicker::pad_for_target(Target::Button(button), current, app.names().glyphs);
+    send(app, Message::OpenActionPicker(Box::new(picker)));
+    Ok(())
+}
+
 /// One step: `step`, and the values it takes from `steps`.
 fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut impl Iterator<Item = &'a str>) -> Result<()> {
     let mut arg = || steps.next().with_context(|| format!("{step} needs a value"));
@@ -144,6 +157,7 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
         }
         "open" => send(app, Message::ToggleExpanded(Target::Button(button_named(arg()?)?))),
         "actions" => open_actions(app, button_named(arg()?)?)?,
+        "outputs" => open_outputs(app, button_named(arg()?)?)?,
         "expand" => send(app, Message::ExpandAll(true)),
         "macro" => send(app, Message::ToggleMacro(arg()?.parse()?)),
         "menu" => send(app, Message::ToggleMenu(arg()?.parse()?)),
