@@ -23,7 +23,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 55] = [
+pub const SCENES: [(&str, &str); 56] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -38,6 +38,7 @@ pub const SCENES: [(&str, &str); 55] = [
     ("menu-styled", "a list menu with icons, forced capitals, ornaments and a drifting gradient"),
     ("menu-paper", "a list menu on a paper texture"),
     ("menu-metal", "a list menu on brushed metal with bevelled buttons"),
+    ("menu-concrete", "a list menu on poured concrete with bevelled buttons"),
     ("menu-filters", "a list menu under grain, pixel blocks, scanlines and a color wash"),
     ("menu-camo", "a list menu under a woodland camo filter"),
     ("frame-art-deco", "a list menu in an art deco frame"),

@@ -41,6 +41,9 @@ pub struct Ornament {
     /// Brushed metal over the panel's background.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub brushed_metal: Option<Texture>,
+    /// Concrete over the panel's background.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub concrete: Option<Texture>,
     /// Makes the items (and keys) look like raised buttons.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bevel: Option<Bevel>,
@@ -228,7 +231,7 @@ pub enum ImageFit {
     Stretch,
 }
 
-/// A material (paper or brushed metal) drawn over the panel's background and under its
+/// A material (paper, brushed metal or concrete) drawn over the panel's background and under its
 /// contents. It only lightens and darkens, so the background's color still shows through.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Texture {
