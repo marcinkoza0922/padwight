@@ -122,6 +122,7 @@ impl App {
     fn show_place(&mut self, place: &Place) -> Task<Message> {
         self.dialog = None;
         self.picker = None;
+        self.action_picker = None;
         match place {
             Place::Overview | Place::Settings => {
                 self.page = if matches!(place, Place::Overview) { Page::Overview } else { Page::Settings };

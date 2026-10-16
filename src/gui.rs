@@ -40,6 +40,7 @@ use crate::{
     style,
 };
 
+mod action_picker;
 mod actions;
 mod activity;
 mod chars;
@@ -224,6 +225,8 @@ struct App {
     /// The latest presses and what each did, streamed from the daemon.
     feeds: Option<Feeds>,
     picker: Option<KeyPicker>,
+    /// The dialog that picks an action's kind.
+    action_picker: Option<action_picker::ActionPicker>,
     token_picker: Option<TokenPicker>,
     sound_picker: Option<SoundPicker>,
     char_picker: Option<CharPicker>,
@@ -596,6 +599,10 @@ enum Message {
     /// The cell a grid's cursor starts on.
     SetMenuStart(usize, usize),
     OpenKeyPicker(KeyField, Vec<String>, bool),
+    OpenActionPicker(Box<action_picker::ActionPicker>),
+    CloseActionPicker,
+    /// A kind picked in the action dialog: closes it and sends what the pick sets.
+    PickAction(Box<Message>),
     AddPackFile(pack_files::FileKind),
     /// A file picked for setup `.0` (by name, `None` for General), whichever page is shown when
     /// the file dialog closes.
@@ -722,7 +729,7 @@ impl App {
             live: None,
             pad_shown: None,
             feeds: None,
-            picker: None, token_picker: None, sound_picker: None, char_picker: None, font_menu: None, motion_demo: MotionDemo::new(),
+            picker: None, action_picker: None, token_picker: None, sound_picker: None, char_picker: None, font_menu: None, motion_demo: MotionDemo::new(),
             dialog: None,
             profile_tab: ProfileTab::Buttons,
             guide_notes: iced::widget::text_editor::Content::new(),
@@ -1165,6 +1172,7 @@ impl App {
     fn go_to(&mut self, place: checks::Place) -> Task<Message> {
         self.dialog = None;
         self.picker = None;
+        self.action_picker = None;
         self.show_game(place.game);
         self.editing = place.profile;
         self.game_tab = GameTab::Profiles;
@@ -1198,6 +1206,7 @@ impl App {
             Message::Undo => {
                 // A popup edits what it was opened from, which undoing could move or remove under it.
                 let popup = self.picker.is_some()
+                    || self.action_picker.is_some()
                     || self.token_picker.is_some()
                     || self.sound_picker.is_some()
                     || self.char_picker.is_some()
@@ -1237,6 +1246,7 @@ impl App {
     /// comes up over whatever is open, and the window is brought to the front.
     fn ask_to_save(&mut self) -> Task<Message> {
         self.picker = None;
+        self.action_picker = None;
         self.token_picker = None;
         self.sound_picker = None;
         self.char_picker = None;
@@ -1303,6 +1313,8 @@ impl App {
         let base = row![self.view_sidebar(), rule::vertical(1), main];
         let popup = if let Some(picker) = &self.picker {
             Some(view_picker(picker))
+        } else if let Some(picker) = &self.action_picker {
+            Some(action_picker::view_action_picker(picker))
         } else if let Some(picker) = &self.token_picker {
             Some(self.view_token_picker(picker))
         } else if let Some(picker) = &self.sound_picker {

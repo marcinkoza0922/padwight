@@ -5,7 +5,7 @@ A layer is a second set of mappings that's on only while you hold a button. You'
 ## 1. Make the layer and the button that holds it
 
 1. Open the profile's **Buttons** tab and click **LB (Left Bumper)**.
-2. Choose **Hold layer…** in its **Press** dropdown, then **+ New layer** in the layer picker. A layer is made, with a name Padwight picks, and the button holds it. (The same works from the **Layers** tab with **+ New layer**.)
+2. Click its **Press** button and choose **Hold layer**, then **+ New layer** in the layer picker. A layer is made, with a name Padwight picks, and the button holds it. (The same works from the **Layers** tab with **+ New layer**.)
 3. Open the setup's **Layers** tab. Rename the layer to *Hotkeys*.
 
 ## 2. Set what the layer changes

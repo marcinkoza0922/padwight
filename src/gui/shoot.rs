@@ -22,6 +22,7 @@ Drawing the settings window without a display or a daemon (for the manual's scre
          size <w>x<h>            the size from here on
          picture <hide|show>     the live controller drawing
          open <button>           open that button's row (South, LeftBumper, ...)
+         actions <button>        open the dialog that picks that button's action
          expand                  open every row               macro|menu|info <n>  open that card
          dialog <add|export|system|system-demo>     open a dialog                close  close it
          shot <name>             save <out>/<name>.png
@@ -84,6 +85,19 @@ fn new_app(dark: bool) -> App {
     app
 }
 
+/// A button by its config name (South, LeftBumper, DpadUp, ...).
+fn button_named(name: &str) -> Result<Button> {
+    serde_json::from_str(&format!("\"{name}\"")).with_context(|| format!("no button {name:?} (South, LeftBumper, DpadUp, ...)"))
+}
+
+/// Opens the dialog that picks `button`'s action, as its editor's kind button does.
+fn open_actions(app: &mut App, button: Button) -> Result<()> {
+    let current = app.profile().map(|p| p.button(button).clone()).context("no profile shown")?;
+    let picker = action_picker::ActionPicker::for_target(Target::Button(button), &current, &ACTION_KINDS, button, &app.names());
+    send(app, Message::OpenActionPicker(Box::new(picker)));
+    Ok(())
+}
+
 /// One step: `step`, and the values it takes from `steps`.
 fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut impl Iterator<Item = &'a str>) -> Result<()> {
     let mut arg = || steps.next().with_context(|| format!("{step} needs a value"));
@@ -128,11 +142,8 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
                 send(app, Message::TogglePicture);
             }
         }
-        "open" => {
-            let name = arg()?;
-            let button: Button = serde_json::from_str(&format!("\"{name}\"")).with_context(|| format!("no button {name:?} (South, LeftBumper, DpadUp, ...)"))?;
-            send(app, Message::ToggleExpanded(Target::Button(button)));
-        }
+        "open" => send(app, Message::ToggleExpanded(Target::Button(button_named(arg()?)?))),
+        "actions" => open_actions(app, button_named(arg()?)?)?,
         "expand" => send(app, Message::ExpandAll(true)),
         "macro" => send(app, Message::ToggleMacro(arg()?.parse()?)),
         "menu" => send(app, Message::ToggleMenu(arg()?.parse()?)),

@@ -219,12 +219,7 @@ pub(super) fn action_editor<'a>(
     field: KeyField,
     names: &Names,
 ) -> Element<'a, Message> {
-    let kind = action_kind(action);
-    let kind_picker = {
-        let on_change = on_change.clone();
-        let (current, names) = (action.clone(), names.clone());
-        dropdown(kinds.to_vec(), Some(kind), move |k| on_change(new_action(k, default_button, &current, &names))).width(200)
-    };
+    let kind_picker = super::action_picker::kind_button(action, kinds, default_button, names, on_change.clone());
     let value = action_value(action, default_button, on_change, field, names);
     // Where there isn't room beside the kind, the value goes below it.
     row![kind_picker, value].spacing(8).align_y(Alignment::Start).wrap().vertical_spacing(6).into()

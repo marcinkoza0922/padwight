@@ -54,7 +54,17 @@ impl Swap {
 /// A summary on one line. `muted` grays the words, for rows that aren't changed. `swap` draws
 /// the Nintendo layout's face-button labels, each with a swap icon that explains them.
 pub(super) fn piece_line<'a>(pieces: Vec<Piece>, family: PadFamily, swap: Swap, muted: bool) -> Element<'a, Message> {
-    let items: Vec<Element<'a, Message>> = pieces
+    row(piece_items(pieces, family, swap, muted)).align_y(Alignment::Center).into()
+}
+
+/// A summary like `piece_line`'s that wraps between its pieces when it doesn't fit, for a
+/// column narrower than the summary.
+pub(super) fn piece_wrap<'a>(pieces: Vec<Piece>, family: PadFamily, swap: Swap, muted: bool) -> Element<'a, Message> {
+    row(piece_items(pieces, family, swap, muted)).align_y(Alignment::Center).wrap().vertical_spacing(2).into()
+}
+
+fn piece_items<'a>(pieces: Vec<Piece>, family: PadFamily, swap: Swap, muted: bool) -> Vec<Element<'a, Message>> {
+    pieces
         .into_iter()
         .map(|piece| match piece {
             Piece::Text(s) => text(s).color_maybe(muted.then_some(MUTED_COLOR)).into(),
@@ -70,8 +80,7 @@ pub(super) fn piece_line<'a>(pieces: Vec<Piece>, family: PadFamily, swap: Swap, 
             .into(),
             Piece::Wheel(d) => chip(crate::info::wheel_glyph(d)),
         })
-        .collect();
-    row(items).align_y(Alignment::Center).into()
+        .collect()
 }
 
 /// An input's glyph, as the overlays draw it: a button as its controller glyph, a trigger as its

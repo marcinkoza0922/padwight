@@ -184,6 +184,7 @@ impl App {
                     self.apply_keys(picker.field, picker.keys);
                 }
             }
+            Message::OpenActionPicker(_) | Message::CloseActionPicker | Message::PickAction(_) => return self.update_action_picker(message),
             other => return self.update_pack_files(other),
         }
         Task::none()
