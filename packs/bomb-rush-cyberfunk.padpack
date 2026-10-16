@@ -1,0 +1,259 @@
+format = 20
+macros = []
+overlay_font = "Bangers"
+
+[pack]
+id = "3fe59fd9-5579-4108-a504-456b1e9ec47d"
+name = "Bomb Rush Cyberfunk"
+version = "1.0"
+author = "Padwight"
+description = "Bomb Rush Cyberfunk on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and the game's Controls options set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard for names and the media controls, in the game's graffiti colors."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Bomb Rush Cyberfunk.exe"
+profile = "Bomb Rush Cyberfunk"
+
+[[rules]]
+kind = "steam_app_id"
+value = "1353230"
+profile = "Bomb Rush Cyberfunk"
+
+[[profiles]]
+name = "Bomb Rush Cyberfunk"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+Guide = {mode = "Guide"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''Bomb Rush Cyberfunk has its own controller support, so the controller goes to the game as it is. Set the buttons in the game's options, under Controls.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard for tagging your name, and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[keyboard_style]
+corners = 0.2
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0d0d14"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#23232f"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#ff2e93"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#f5e100"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#171722"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4a4a62"
+
+[numpad_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0d0d14"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#23232f"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#ff2e93"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#f5e100"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#171722"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4a4a62"
+
+[media_style]
+corners = 0.2
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0d0d14"
+opacity = 0.92
+
+[media_style.items]
+color = "#23232f"
+opacity = 0.95
+
+[media_style.selected]
+color = "#ff2e93"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#f5e100"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#171722"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4a4a62"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0d0d14"
+opacity = 0.92
+
+[menu_style.items]
+color = "#23232f"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#ff2e93"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#f5e100"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#171722"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4a4a62"
+
+[menu_style.glow]
+color = "#00e5ff"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+vignette = {color = "#000000", opacity = 0.45, reach = 22}
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "pop", volume = 0.07, pitch = 1.3}
+pick = {kind = "boing", volume = 0.12, pitch = 1.1}
+open = {kind = "swish", volume = 0.05, pitch = 1.1}
+close = {kind = "swish", volume = 0.04, pitch = 0.9}
+
+[sounds.numpad]
+step = {kind = "pop", volume = 0.07, pitch = 1.3}
+pick = {kind = "boing", volume = 0.12, pitch = 1.1}
+
+[sounds.keyboard]
+step = {kind = "pop", volume = 0.07, pitch = 1.3}
+pick = {kind = "keys", volume = 0.2}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.32, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}
