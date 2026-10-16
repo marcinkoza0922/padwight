@@ -8,6 +8,7 @@ use std::{
 };
 
 use crate::keycode::KeyCode;
+use crate::config::{Deadzone, DeadzoneShape};
 
 use crate::{
     config::{
@@ -1162,14 +1163,41 @@ fn trigger_axis(t: Trigger) -> Axis {
     }
 }
 
-/// Radial deadzone, rescaled so output still spans the full 0..1 range.
-pub(crate) fn apply_deadzone(x: f32, y: f32, deadzone: f32) -> (f32, f32) {
+/// A deadzone of the given settings, rescaled so output still spans the full 0..1 range.
+pub(crate) fn apply_deadzone(x: f32, y: f32, dead: impl Into<Deadzone>) -> (f32, f32) {
+    let dz = dead.into();
+    match dz.shape {
+        DeadzoneShape::Circle => radial(x, y, dz, x.hypot(y)),
+        DeadzoneShape::Square => radial(x, y, dz, x.abs().max(y.abs())),
+        DeadzoneShape::Cross => (axis(x, dz), axis(y, dz)),
+    }
+}
+
+/// The output for a push of `reach` (0..1) past the deadzone: flat at the anti-deadzone through
+/// the buffer, then rising to full.
+fn dead_response(reach: f32, dz: Deadzone) -> f32 {
+    if reach <= dz.size {
+        return 0.0;
+    }
+    let start = (dz.size + dz.buffer).min(1.0);
+    let rise = ((reach - start) / (1.0 - start).max(f32::EPSILON)).clamp(0.0, 1.0);
+    dz.anti + (1.0 - dz.anti) * rise
+}
+
+/// A deadzone measured by `reach`, applied along the stick's direction.
+fn radial(x: f32, y: f32, dz: Deadzone, reach: f32) -> (f32, f32) {
     let mag = x.hypot(y);
-    if mag <= deadzone || mag == 0.0 {
+    if mag == 0.0 {
         return (0.0, 0.0);
     }
-    let scaled = ((mag - deadzone) / (1.0 - deadzone).max(f32::EPSILON)).min(1.0);
-    (x * scaled / mag, y * scaled / mag)
+    let out = dead_response(reach, dz);
+    // The output's size is measured the same way as the reach, so a square's corners reach 1.
+    let k = if reach == 0.0 { 0.0 } else { out / reach };
+    (x * k, y * k)
+}
+
+fn axis(v: f32, dz: Deadzone) -> f32 {
+    dead_response(v.abs(), dz).copysign(v)
 }
 
 /// Adds a delta to a sub-unit accumulator and returns the whole units ready to emit.

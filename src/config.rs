@@ -875,6 +875,17 @@ pub struct StickConfig {
     pub action: StickAction,
     /// Radial deadzone, 0.0..1.0.
     pub deadzone: f32,
+    /// The shape of the dead middle.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub deadzone_shape: DeadzoneShape,
+    /// The least output once the stick leaves the deadzone, 0.0..1.0: the jump past the deadzone
+    /// that makes up for a game's own deadzone.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub anti_deadzone: f32,
+    /// Extra travel past the deadzone over which the output holds at the anti-deadzone before it
+    /// starts to rise.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub anti_deadzone_buffer: f32,
     /// Response curve exponent for mouse/scroll (1.0 = linear).
     #[serde(default = "default_curve")]
     pub curve: f32,
@@ -890,6 +901,57 @@ pub struct StickConfig {
     pub rotate: f32,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub zones: Vec<Zone>,
+}
+
+/// The shape of a stick's deadzone.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DeadzoneShape {
+    /// Dead within a circle around the center.
+    #[default]
+    Circle,
+    /// Dead within a square: both axes must pass the deadzone for the stick to count.
+    Square,
+    /// Each axis has its own deadzone, so a push along one axis stays clean of the other.
+    Cross,
+}
+
+impl DeadzoneShape {
+    pub const ALL: [DeadzoneShape; 3] = [DeadzoneShape::Circle, DeadzoneShape::Square, DeadzoneShape::Cross];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            DeadzoneShape::Circle => "Circle",
+            DeadzoneShape::Square => "Square",
+            DeadzoneShape::Cross => "Cross",
+        }
+    }
+}
+
+impl std::fmt::Display for DeadzoneShape {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+/// A stick's deadzone settings, as the engine applies them.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct Deadzone {
+    pub size: f32,
+    pub shape: DeadzoneShape,
+    pub anti: f32,
+    pub buffer: f32,
+}
+
+impl From<f32> for Deadzone {
+    /// A plain circular deadzone.
+    fn from(size: f32) -> Self {
+        Deadzone { size, shape: DeadzoneShape::Circle, anti: 0.0, buffer: 0.0 }
+    }
+}
+
+fn is_default<T: Default + PartialEq>(v: &T) -> bool {
+    *v == T::default()
 }
 
 fn default_curve() -> f32 {
@@ -917,8 +979,12 @@ pub enum Analog {
 }
 
 impl StickConfig {
+    pub fn dead(&self) -> Deadzone {
+        Deadzone { size: self.deadzone, shape: self.deadzone_shape, anti: self.anti_deadzone, buffer: self.anti_deadzone_buffer }
+    }
+
     pub fn new(action: StickAction, deadzone: f32, curve: f32) -> Self {
-        StickConfig { action, deadzone, curve, key_threshold: default_key_threshold(), invert_x: false, rotate: 0.0, zones: Vec::new() }
+        StickConfig { action, deadzone, deadzone_shape: DeadzoneShape::Circle, anti_deadzone: 0.0, anti_deadzone_buffer: 0.0, curve, key_threshold: default_key_threshold(), invert_x: false, rotate: 0.0, zones: Vec::new() }
     }
 }
 

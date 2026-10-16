@@ -34,7 +34,7 @@ impl Engine {
         let (ax, ay) = stick_axes(s);
         let x = self.axes.get(&ax).copied().unwrap_or(0.0);
         let y = self.axes.get(&ay).copied().unwrap_or(0.0);
-        let (x, y) = apply_deadzone(x, y, cfg.deadzone);
+        let (x, y) = apply_deadzone(x, y, cfg.dead());
         let x = if cfg.invert_x { -x } else { x };
         if cfg.rotate == 0.0 {
             return (x, y);

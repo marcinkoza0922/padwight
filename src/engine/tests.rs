@@ -548,6 +548,29 @@ fn an_x_inverted_stick_pushed_right_moves_the_mouse_left() {
 }
 
 #[test]
+fn a_square_deadzone_is_dead_until_an_axis_passes_it() {
+    let sq = Deadzone { shape: DeadzoneShape::Square, ..0.2.into() };
+    assert_eq!(apply_deadzone(0.19, 0.19, sq), (0.0, 0.0));
+    let (x, y) = apply_deadzone(0.6, 0.1, sq);
+    assert!(x > 0.0 && y > 0.0);
+}
+
+#[test]
+fn a_cross_deadzone_cleans_each_axis_on_its_own() {
+    let cross = Deadzone { shape: DeadzoneShape::Cross, ..0.2.into() };
+    assert_eq!(apply_deadzone(0.8, 0.1, cross), ((0.8 - 0.2) / 0.8, 0.0));
+}
+
+#[test]
+fn the_anti_deadzone_jumps_the_output_and_the_buffer_holds_it() {
+    let dz = Deadzone { anti: 0.3, buffer: 0.1, ..0.1.into() };
+    assert_eq!(apply_deadzone(0.1, 0.0, dz), (0.0, 0.0));
+    assert!((apply_deadzone(0.15, 0.0, dz).0 - 0.3).abs() < 1e-5);
+    assert!((apply_deadzone(1.0, 0.0, dz).0 - 1.0).abs() < 1e-5);
+    assert!(apply_deadzone(0.6, 0.0, dz).0 > 0.3);
+}
+
+#[test]
 fn deadzone_is_radial_and_rescaled() {
     assert_eq!(apply_deadzone(0.05, 0.05, 0.1), (0.0, 0.0));
     let (x, _) = apply_deadzone(1.0, 0.0, 0.2);

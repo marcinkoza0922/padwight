@@ -290,7 +290,7 @@ fn tab_words(tab: ProfileTab) -> &'static [&'static str] {
     match tab {
         ProfileTab::Buttons | ProfileTab::Combos => &[],
         ProfileTab::Sticks => &[
-            "sticks left stick right stick mode mouse gamepad flick ring sectors first sector wasd arrows scroll dead zone deadzone dead angle curve response speed vertical smoothing turn size invert directions press at stickiness fill with test turn",
+            "sticks left stick right stick mode mouse gamepad flick ring sectors first sector wasd arrows scroll dead zone deadzone shape anti-deadzone buffer dead angle curve response speed vertical smoothing turn size invert directions press at stickiness fill with test turn",
             "triggers left trigger right trigger zones add zone walk modifier shift partial push range from",
         ],
         ProfileTab::Gyro => &[

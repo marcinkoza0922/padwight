@@ -3,7 +3,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::config::{Menu, MouseResponse, SpeedCurve, TouchpadConfig};
+use crate::config::{Deadzone, Menu, MouseResponse, SpeedCurve, TouchpadConfig};
 
 use super::{deadzone, gyro, response, ring, trigger};
 
@@ -18,7 +18,7 @@ pub struct MouseShown {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Figure {
     /// A stick: its deadzone, its ring or mouse response when it has one, and where it is now.
-    Stick { deadzone: f32, ring: Option<(u8, f32, f32)>, mouse: Option<MouseShown>, live: Option<(f32, f32)> },
+    Stick { deadzone: Deadzone, ring: Option<(u8, f32, f32)>, mouse: Option<MouseShown>, live: Option<(f32, f32)> },
     /// A trigger: where it presses, its zones, and how far it's pulled now.
     Trigger { press_at: Option<f32>, zones: Vec<(f32, f32)>, live: Option<f32> },
     /// The gyro: its response curve when its mode has one, how fast the controller turns now, and
@@ -60,14 +60,14 @@ impl Figure {
     }
 }
 
-fn stick_pictures(dz: f32, r: Option<(u8, f32, f32)>, mouse: Option<&MouseShown>, live: Option<(f32, f32)>) -> Vec<Picture> {
+fn stick_pictures(dz: Deadzone, r: Option<(u8, f32, f32)>, mouse: Option<&MouseShown>, live: Option<(f32, f32)>) -> Vec<Picture> {
     let mut pics = Vec::new();
     if let Some((sectors, start, inner)) = r {
         let active = live.and_then(|pos| crate::engine::stick::ring_sector_at(pos, sectors, start, inner));
         let note = active.map(|i| format!("Sector {}", i + 1));
         pics.push(Picture { title: "Ring", svg: ring::render(sectors, start, inner, active, live), size: (ring::SIZE, ring::SIZE), note });
     }
-    let note = if dz <= 0.0 { "No deadzone".to_string() } else { format!("Flat for the first {:.0}%", dz * 100.0) };
+    let note = if dz.size <= 0.0 { "No deadzone".to_string() } else { format!("Flat for the first {:.0}%", dz.size * 100.0) };
     pics.push(Picture { title: "Stick travel", svg: deadzone::travel_svg(dz, live), size: (deadzone::SIDE, deadzone::SIDE), note: None });
     if let Some(m) = mouse {
         let push = live.map_or(1.0, |(x, y)| x.hypot(y).min(1.0));

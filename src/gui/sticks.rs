@@ -8,7 +8,7 @@
 use iced::widget::{Column, column, row};
 
 use super::*;
-use crate::config::FlickVertical;
+use crate::config::{DeadzoneShape, FlickVertical};
 
 mod mouse;
 use mouse::{mouse_advanced, mouse_rows};
@@ -92,6 +92,9 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
                 .into(),
         ));
     }
+    if !matches!(cfg.action, StickAction::Disabled) {
+        rows = deadzone_extras(rows, s, cfg);
+    }
     match cfg.action {
         StickAction::Mouse { .. } => rows = mouse_advanced(rows, cfg, open, s, with),
         StickAction::Flick { .. } => rows = flick_advanced(rows, cfg, open, s, with),
@@ -113,6 +116,38 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
         .push(box_row("Directions press at", fraction_editor(0.05..=0.95, cfg.key_threshold, 0.05, "of the way out", set(|c, v| c.key_threshold = v))))
         .push(box_row("Zones", zone_list(Analog::Stick(s), &cfg.zones, ui.names)))
         .into()
+}
+
+/// The deadzone's shape and anti-deadzone rows.
+fn deadzone_extras<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a StickConfig) -> Column<'a, Message> {
+    let set = move |f: fn(&mut StickConfig, f32)| {
+        move |v| {
+            let mut c = cfg.clone();
+            f(&mut c, v);
+            Message::SetStick(s, c)
+        }
+    };
+    let shape = dropdown(DeadzoneShape::ALL.to_vec(), Some(cfg.deadzone_shape), move |v| {
+        let mut c = cfg.clone();
+        c.deadzone_shape = v;
+        Message::SetStick(s, c)
+    });
+    let with_help = |editor: Element<'a, Message>, why: &str| row![editor, help(why.to_string())].spacing(10).align_y(Alignment::Center).into();
+    rows.push(box_row("Deadzone shape", shape.width(120).into()))
+        .push(box_row(
+            "Anti-deadzone",
+            with_help(
+                fraction_editor(0.0..=0.5, cfg.anti_deadzone, 0.01, "", set(|c, v| c.anti_deadzone = v)),
+                "Starts the output this far out as soon as the stick leaves the deadzone, to make up for a game's own deadzone.",
+            ),
+        ))
+        .push(box_row(
+            "Anti-deadzone buffer",
+            with_help(
+                fraction_editor(0.0..=0.5, cfg.anti_deadzone_buffer, 0.01, "", set(|c, v| c.anti_deadzone_buffer = v)),
+                "Extra travel past the deadzone where the output stays at the anti-deadzone before it starts to rise.",
+            ),
+        ))
 }
 
 /// The stick's name, its mode, and the mode's output options (which stick it sends, Invert Y),
@@ -169,9 +204,9 @@ fn visualizers<'a>(cfg: &StickConfig, live: Option<(f32, f32)>, probe: f32) -> O
         StickAction::Ring { sectors, start_angle, inner_radius, .. } => pics.push(super::ring_preview::view(sectors, start_angle, inner_radius, live)),
         _ => {}
     }
-    pics.extend(deadzone_graph::figures(cfg.deadzone, live));
+    pics.extend(deadzone_graph::figures(cfg.dead(), live));
     if let StickAction::Mouse { speed, response, .. } = cfg.action {
-        pics.extend(response_graph::figures(response_graph::Shown { speed, curve: cfg.curve, response, deadzone: cfg.deadzone, probe, live }));
+        pics.extend(response_graph::figures(response_graph::Shown { speed, curve: cfg.curve, response, deadzone: cfg.dead(), probe, live }));
     }
     let why = "Push the stick to see it live: where it is on the ring, its path, and how much output each push gives. \
                The live parts follow the active profile's saved settings.";

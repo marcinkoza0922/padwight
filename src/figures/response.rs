@@ -5,6 +5,7 @@
 use std::fmt::Write;
 
 use crate::config::MouseResponse;
+use crate::config::Deadzone;
 use crate::engine::apply_deadzone;
 use crate::engine::stick::{OUTER_EDGE, steady_speed};
 
@@ -28,7 +29,7 @@ pub struct Shown {
     pub speed: f32,
     pub curve: f32,
     pub response: MouseResponse,
-    pub deadzone: f32,
+    pub deadzone: Deadzone,
     pub probe: f32,
     pub live: Option<(f32, f32)>,
 }
@@ -157,7 +158,7 @@ mod tests {
     use super::*;
 
     fn shown(response: MouseResponse, probe: f32) -> Shown {
-        Shown { speed: 100.0, curve: 1.0, response, deadzone: 0.1, probe, live: None }
+        Shown { speed: 100.0, curve: 1.0, response, deadzone: 0.1.into(), probe, live: None }
     }
 
     fn tuned() -> MouseResponse {

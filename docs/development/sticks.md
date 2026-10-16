@@ -18,7 +18,7 @@ JoyShockMapper:
 
 - `StickAction` (`src/config.rs`) has `Disabled`, `Gamepad`, `Mouse { speed }`,
   `Scroll { speed }` and `Keys`.
-- `StickConfig` has a radial `deadzone`, one power-law `curve` (mouse and scroll only),
+- `StickConfig` has a `deadzone` with a `deadzone_shape`, `anti_deadzone` and `anti_deadzone_buffer`, one power-law `curve` (mouse and scroll only),
   `key_threshold`, `invert_x`, `rotate` and `zones`.
 - `Engine::tick` (`src/engine.rs`) turns the stick position into mouse and scroll output with a
   sub-pixel accumulator (`take_whole`). `Engine::stick` handles the gamepad and keys modes and

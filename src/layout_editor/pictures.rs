@@ -106,7 +106,7 @@ pub(super) fn figure(page: Page, config: &Config, live: &Live) -> Option<Figure>
                 StickAction::Mouse { speed, response, .. } => Some(MouseShown { speed, curve: cfg.curve, response }),
                 _ => None,
             };
-            Figure::Stick { deadzone: cfg.deadzone, ring, mouse, live: Some(live.sticks[usize::from(s == Stick::Right)]) }
+            Figure::Stick { deadzone: cfg.dead(), ring, mouse, live: Some(live.sticks[usize::from(s == Stick::Right)]) }
         }
         About::Trigger(o, t) => {
             let cfg = owner::trigger(config, o, t).unwrap_or(if t == Trigger::Left { &profile.left_trigger } else { &profile.right_trigger });

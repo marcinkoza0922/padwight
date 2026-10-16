@@ -7,13 +7,14 @@ use iced::Element;
 use iced::widget::svg;
 
 use super::*;
+use crate::config::Deadzone;
 use crate::figures::deadzone::{SIDE, response_svg, travel_svg};
 
 /// The deadzone's two pictures, for the stick's row of pictures.
-pub(super) fn figures<'a>(deadzone: f32, live: Option<(f32, f32)>) -> [Element<'a, Message>; 2] {
-    let travel = svg(svg::Handle::from_memory(travel_svg(deadzone, live).into_bytes())).width(SIDE).height(SIDE);
-    let response = svg(svg::Handle::from_memory(response_svg(deadzone, live).into_bytes())).width(SIDE).height(SIDE);
-    let note = if deadzone <= 0.0 { "No deadzone".to_string() } else { format!("Flat for the first {:.0}%", deadzone * 100.0) };
+pub(super) fn figures<'a>(dz: Deadzone, live: Option<(f32, f32)>) -> [Element<'a, Message>; 2] {
+    let travel = svg(svg::Handle::from_memory(travel_svg(dz, live).into_bytes())).width(SIDE).height(SIDE);
+    let response = svg(svg::Handle::from_memory(response_svg(dz, live).into_bytes())).width(SIDE).height(SIDE);
+    let note = if dz.size <= 0.0 { "No deadzone".to_string() } else { format!("Flat for the first {:.0}%", dz.size * 100.0) };
     [figure("Stick travel", travel, None, SIDE), figure("Response", response, Some(note), SIDE)]
 }
 

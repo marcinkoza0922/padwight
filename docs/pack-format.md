@@ -132,6 +132,9 @@ Key names are evdev names (`KEY_A`, `KEY_LEFTSHIFT`, `KEY_KPPLUS`, `KEY_RIGHTBRA
 [profiles.left_stick]
 deadzone = 0.12          # radial deadzone, 0.0–1.0
 curve = 1.0              # response exponent for mouse and scroll: 1.0 linear, higher = finer at small pushes (default 2.0)
+deadzone_shape = "square"  # "circle" (default), "square" or "cross" (each axis on its own)
+anti_deadzone = 0.1      # least output once past the deadzone, for games with their own deadzone (default 0)
+anti_deadzone_buffer = 0.05  # travel past the deadzone where output holds at the anti-deadzone (default 0)
 key_threshold = 0.25     # push at which direction keys and direction buttons press (default 0.5)
 invert_x = true          # mirror the stick left to right (default false)
 rotate = 90.0            # degrees clockwise the stick's output is turned: 90 makes up act as right (default 0)
