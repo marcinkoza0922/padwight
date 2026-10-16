@@ -4,7 +4,7 @@
 use std::rc::Rc;
 
 use super::{style_editor::{OnStyle, Slot, optional, paint_row, stepped_slider, stroke_rows}, *};
-use crate::config::{BackgroundImage, Case, Frame, FrameKind, ImageFit, Scanlines, Stroke, Typography, Vignette};
+use crate::config::{BackgroundImage, Bevel, Camo, CamoScheme, Case, Frame, FrameKind, Grain, ImageFit, Pixels, Scanlines, Stroke, Texture, TextureKind, Tint, Typography, Vignette};
 use iced::widget::{button, checkbox, column, row};
 
 /// How the text is set: its case, letter spacing and size.
@@ -36,7 +36,7 @@ pub(super) fn typography_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>)
     .into()
 }
 
-/// The panel's picture, its lines between items, its corner frame, scanlines and vignette.
+/// The panel's picture, its lines between items, its corner frame and vignette.
 pub(super) fn ornament_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a, Message> {
     let picture = optional(
         &Slot {
@@ -66,17 +66,6 @@ pub(super) fn ornament_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -
         style,
         on_change,
     );
-    let scanlines = optional(
-        &Slot {
-            label: "Scanlines",
-            get: |s| s.ornament.scanlines.as_ref(),
-            put: |s, v| s.ornament.scanlines = v,
-            start: |_| Scanlines { spacing: 4.0, opacity: 0.2, color: "#000000".into(), drift: false },
-        },
-        |l, set| scanline_rows(l, &set),
-        style,
-        on_change,
-    );
     let vignette = optional(
         &Slot {
             label: "Vignette",
@@ -88,16 +77,131 @@ pub(super) fn ornament_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -
         style,
         on_change,
     );
-    column![
-        text("    Ornaments").size(14).color(MUTED_COLOR),
-        picture,
-        dividers,
-        frame,
-        scanlines,
-        vignette,
-    ]
+    column![text("    Ornaments").size(14).color(MUTED_COLOR), picture, bevel_rows(style, on_change), dividers, frame, vignette, filter_rows(style, on_change)]
     .spacing(8)
     .into()
+}
+
+/// The filters on the panel: scanlines, grain, pixel blocks, a paper or metal texture, camo and a
+/// color wash.
+fn filter_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a, Message> {
+    let scanlines = optional(
+        &Slot {
+            label: "Scanlines",
+            get: |s| s.ornament.scanlines.as_ref(),
+            put: |s, v| s.ornament.scanlines = v,
+            start: |_| Scanlines { spacing: 4.0, opacity: 0.2, color: "#000000".into(), drift: false },
+        },
+        |l, set| scanline_rows(l, &set),
+        style,
+        on_change,
+    );
+    let grain = optional(
+        &Slot { label: "Grain", get: |s| s.ornament.grain.as_ref(), put: |s, v| s.ornament.grain = v, start: |_| Grain { opacity: 0.15, size: 1.0, animated: false } },
+        |g, set| grain_rows(g, &set),
+        style,
+        on_change,
+    );
+    let pixels = optional(
+        &Slot { label: "Pixel blocks", get: |s| s.ornament.pixels.as_ref(), put: |s, v| s.ornament.pixels = v, start: |_| Pixels { size: 6.0, opacity: 0.25 } },
+        |p, set| pixel_rows(p, &set),
+        style,
+        on_change,
+    );
+    let texture = optional(
+        &Slot {
+            label: "Paper or brushed metal",
+            get: |s| s.ornament.texture.as_ref(),
+            put: |s, v| s.ornament.texture = v,
+            start: |_| Texture { kind: TextureKind::Paper, opacity: 0.5 },
+        },
+        |t, set| texture_rows(t, &set),
+        style,
+        on_change,
+    );
+    let camo = optional(
+        &Slot { label: "Camo", get: |s| s.ornament.camo.as_ref(), put: |s, v| s.ornament.camo = v, start: |_| Camo { scheme: CamoScheme::Woodland, opacity: 0.3, size: 60.0 } },
+        |c, set| camo_rows(c, &set),
+        style,
+        on_change,
+    );
+    let tint = optional(
+        &Slot { label: "Color wash", get: |s| s.ornament.tint.as_ref(), put: |s, v| s.ornament.tint = v, start: |_| Tint { color: "#ffa040".into(), opacity: 0.12 } },
+        |t, set| {
+            let color = {
+                let (t, set) = (t.clone(), set.clone());
+                paint_row(&Paint::new(&t.color, t.opacity), true, &(Rc::new(move |p: Paint| set(Tint { color: p.color, opacity: p.opacity })) as Rc<dyn Fn(Paint) -> Message + 'a>))
+            };
+            vec![labeled("        Color", color)]
+        },
+        style,
+        on_change,
+    );
+    column![text("    Filters").size(14).color(MUTED_COLOR), scanlines, grain, pixels, texture, camo, tint].spacing(8).into()
+}
+
+/// The camo's colors, blotch size and strength.
+fn camo_rows<'a>(camo: &Camo, set: &Rc<dyn Fn(Camo) -> Message + 'a>) -> Vec<Element<'a, Message>> {
+    let scheme = |label: &'static str, scheme: CamoScheme| {
+        let (c, set) = (camo.clone(), set.clone());
+        button(text(label).size(13)).style(if camo.scheme == scheme { button::primary } else { style::secondary }).on_press_with(move || set(Camo { scheme, ..c.clone() }))
+    };
+    let size = {
+        let (c, set) = (camo.clone(), set.clone());
+        stepped_slider(16.0..=200.0, camo.size, format!("{:.0} px", camo.size), move |v| set(Camo { size: v.round(), ..c.clone() }))
+    };
+    let strength = {
+        let (c, set) = (camo.clone(), set.clone());
+        percent_of(camo.opacity, move |v| set(Camo { opacity: v, ..c.clone() }))
+    };
+    let schemes = row![scheme("Woodland", CamoScheme::Woodland), scheme("Desert", CamoScheme::Desert), scheme("Urban", CamoScheme::Urban), scheme("Arctic", CamoScheme::Arctic)].spacing(4);
+    vec![labeled("        Colors", schemes.into()), labeled("        Blotch size", size), labeled("        Strength", strength)]
+}
+
+/// The grain's strength, grain size and whether it flickers.
+fn grain_rows<'a>(grain: &Grain, set: &Rc<dyn Fn(Grain) -> Message + 'a>) -> Vec<Element<'a, Message>> {
+    let strength = {
+        let (g, set) = (grain.clone(), set.clone());
+        percent_of(grain.opacity, move |v| set(Grain { opacity: v, ..g.clone() }))
+    };
+    let size = {
+        let (g, set) = (grain.clone(), set.clone());
+        stepped_slider(1.0..=6.0, grain.size, format!("{:.0} px", grain.size), move |v| set(Grain { size: v.round(), ..g.clone() }))
+    };
+    let animated = {
+        let (g, set) = (grain.clone(), set.clone());
+        checkbox(grain.animated).label("Flicker").on_toggle(move |on| set(Grain { animated: on, ..g.clone() }))
+    };
+    vec![labeled("        Strength", strength), labeled("        Size", size), labeled("", animated.into())]
+}
+
+/// The pixel blocks' size and strength.
+fn pixel_rows<'a>(pixels: &Pixels, set: &Rc<dyn Fn(Pixels) -> Message + 'a>) -> Vec<Element<'a, Message>> {
+    let size = {
+        let (p, set) = (pixels.clone(), set.clone());
+        stepped_slider(2.0..=24.0, pixels.size, format!("{:.0} px", pixels.size), move |v| set(Pixels { size: v.round(), ..p.clone() }))
+    };
+    let strength = {
+        let (p, set) = (pixels.clone(), set.clone());
+        percent_of(pixels.opacity, move |v| set(Pixels { opacity: v, ..p.clone() }))
+    };
+    vec![labeled("        Block size", size), labeled("        Strength", strength)]
+}
+
+/// The 3D buttons.
+fn bevel_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a, Message> {
+    optional(
+        &Slot { label: "3D buttons", get: |s| s.ornament.bevel.as_ref(), put: |s, v| s.ornament.bevel = v, start: |_| Bevel { depth: 0.5 } },
+        |b, set| {
+            let depth = {
+                let set = set.clone();
+                percent_of(b.depth, move |v| set(Bevel { depth: v }))
+            };
+            vec![labeled("        Depth", depth)]
+        },
+        style,
+        on_change,
+    )
 }
 
 /// The picture's file (a name in the backgrounds folder, or a path), how far it shows and how it
@@ -119,6 +223,22 @@ fn picture_rows<'a>(picture: &BackgroundImage, set: &Rc<dyn Fn(BackgroundImage) 
         labeled("        File", file.into()),
         labeled("        Fit", row![fit("Cover", ImageFit::Cover), fit("Contain", ImageFit::Contain), fit("Stretch", ImageFit::Stretch)].spacing(4).into()),
         labeled("        Opacity", opacity),
+    ]
+}
+
+/// The texture's material and strength.
+fn texture_rows<'a>(texture: &Texture, set: &Rc<dyn Fn(Texture) -> Message + 'a>) -> Vec<Element<'a, Message>> {
+    let kind = |label: &'static str, kind: TextureKind| {
+        let (t, set) = (texture.clone(), set.clone());
+        button(text(label).size(13)).style(if texture.kind == kind { button::primary } else { style::secondary }).on_press_with(move || set(Texture { kind, ..t.clone() }))
+    };
+    let strength = {
+        let (t, set) = (texture.clone(), set.clone());
+        percent_of(texture.opacity, move |v| set(Texture { opacity: v, ..t.clone() }))
+    };
+    vec![
+        labeled("        Material", row![kind("Paper", TextureKind::Paper), kind("Brushed metal", TextureKind::BrushedMetal)].spacing(4).into()),
+        labeled("        Strength", strength),
     ]
 }
 

@@ -10,7 +10,7 @@ use iced::{
 
 use crate::{
     assets,
-    config::{BackgroundImage, Frame, FrameKind, ImageFit, Paint, Scanlines, Stroke, Vignette},
+    config::{BackgroundImage, Frame, FrameKind, ImageFit, Paint, Scanlines, Stroke, Tint, Vignette},
 };
 
 /// How far a scanline drifts per second, in pixels at scale 1.
@@ -135,4 +135,10 @@ pub fn divider<'a, M: 'a>(stroke: &Stroke, s: f32, fade: f32) -> Element<'a, M> 
         .height(Length::Fixed(stroke.width.max(0.5) * s))
         .style(move |_| container::Style { background: Some(color.into()), ..container::Style::default() })
         .into()
+}
+
+/// A flat wash of the tint's color over the panel.
+pub fn tint<'a, M: 'a>(t: &Tint, fade: f32) -> Element<'a, M> {
+    let color = color_of(&Paint::new(&t.color, t.opacity), [0xff, 0xa0, 0x40], fade);
+    container(space()).width(Length::Fill).height(Length::Fill).style(move |_| container::Style { background: Some(color.into()), ..container::Style::default() }).into()
 }

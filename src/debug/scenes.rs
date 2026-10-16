@@ -8,8 +8,8 @@ use anyhow::{Result, bail};
 
 use crate::{
     config::{
-        Button, ButtonAction, CarouselControls, Case, Cluster, Frame, FrameKind, Gradient, InfoOverlay, InputLogSettings, Menu, MenuItem, MenuKind, Ornament,
-        OverlayStyle, Paint, Scanlines, Shade, Span, Stick, Stroke, Typography, Vignette,
+        Bevel, Button, Camo, CamoScheme, ButtonAction, CarouselControls, Case, Cluster, Frame, FrameKind, Gradient, Grain, InfoOverlay, InputLogSettings, Menu, MenuItem, MenuKind, Ornament,
+        OverlayStyle, Paint, Pixels, Scanlines, Shade, Span, Stick, Stroke, Texture, TextureKind, Tint, Typography, Vignette,
     },
     engine::Opener,
     info::{self, Glyphs, Live, PadFamily},
@@ -22,7 +22,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 40] = [
+pub const SCENES: [(&str, &str); 44] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -35,6 +35,10 @@ pub const SCENES: [(&str, &str); 40] = [
     ("menu-face", "a face-button directional menu"),
     ("menu-carousel", "a carousel menu"),
     ("menu-styled", "a list menu with icons, forced capitals, ornaments and a drifting gradient"),
+    ("menu-paper", "a list menu on a paper texture"),
+    ("menu-metal", "a list menu on brushed metal with bevelled buttons"),
+    ("menu-filters", "a list menu under grain, pixel blocks, scanlines and a color wash"),
+    ("menu-camo", "a list menu under a woodland camo filter"),
     ("in-game-menu", "the Guide + Start menu"),
     ("media", "the media controls"),
     ("offer", "the offer to add a library game"),
@@ -80,6 +84,10 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "menu-directional" => active(menu(MenuKind::Directional { cluster: Cluster::DPad })),
         "menu-face" => active(menu(MenuKind::Directional { cluster: Cluster::FaceButtons })),
         "menu-carousel" => active(menu(MenuKind::Carousel { controls: CarouselControls::Bumpers })),
+        "menu-filters" => active(menu_in(MenuKind::List, filtered(), false)),
+        "menu-camo" => active(menu_in(MenuKind::List, camouflaged(), false)),
+        "menu-paper" => active(menu_in(MenuKind::List, paper(), false)),
+        "menu-metal" => active(menu_in(MenuKind::List, metal(), false)),
         "menu-styled" => active(menu_in(MenuKind::List, ornate(), true)),
         "in-game-menu" => active(OverlayView::Menu(crate::system_menu::main_page(OverlayStyle::default(), 0))),
         "media" => active(OverlayView::Media(MediaView::sample(OverlayStyle::media()))),
@@ -167,6 +175,53 @@ fn menu_in(kind: MenuKind, style: OverlayStyle, icons: bool) -> OverlayView {
     OverlayView::Menu(view)
 }
 
+/// A panel under a woodland camo.
+fn camouflaged() -> OverlayStyle {
+    OverlayStyle { ornament: Ornament { camo: Some(Camo { scheme: CamoScheme::Woodland, opacity: 0.45, size: 60.0 }), ..Ornament::default() }, ..OverlayStyle::default() }
+}
+
+/// A dark panel under every filter.
+fn filtered() -> OverlayStyle {
+    OverlayStyle {
+        ornament: Ornament {
+            scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.25, color: "#000000".into(), drift: false }),
+            grain: Some(Grain { opacity: 0.2, size: 1.0, animated: true }),
+            pixels: Some(Pixels { size: 6.0, opacity: 0.3 }),
+            tint: Some(Tint { color: "#40ff80".into(), opacity: 0.1 }),
+            ..Ornament::default()
+        },
+        ..OverlayStyle::default()
+    }
+}
+
+/// Warm paper with ink-dark text and flat tan items.
+fn paper() -> OverlayStyle {
+    OverlayStyle {
+        background: Paint::new("#e8dcc0", 1.0),
+        items: Paint::new("#d6c6a0", 0.9),
+        selected: Paint::new("#8a3b2a", 1.0),
+        border: Some(Stroke { width: 2.0, color: "#6b5a3a".into(), opacity: 1.0 }),
+        ornament: Ornament { texture: Some(Texture { kind: TextureKind::Paper, opacity: 0.6 }), ..Ornament::default() },
+        ..OverlayStyle::default()
+    }
+}
+
+/// Brushed steel with raised, bevelled buttons.
+fn metal() -> OverlayStyle {
+    OverlayStyle {
+        background: Paint::new("#8d9299", 1.0),
+        items: Paint::new("#a9aeb5", 1.0),
+        selected: Paint::new("#2f5db0", 1.0),
+        corners: 0.2,
+        ornament: Ornament {
+            texture: Some(Texture { kind: TextureKind::BrushedMetal, opacity: 0.7 }),
+            bevel: Some(Bevel { depth: 0.8 }),
+            ..Ornament::default()
+        },
+        ..OverlayStyle::default()
+    }
+}
+
 /// A menu style with most of what the typography and ornaments can do switched on.
 fn ornate() -> OverlayStyle {
     let gold = "#c8a040";
@@ -181,6 +236,7 @@ fn ornate() -> OverlayStyle {
             frame: Some(Frame { kind: FrameKind::Brackets, size: 16.0, width: 2.0, color: gold.into(), opacity: 1.0 }),
             scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.35, color: "#000000".into(), drift: true }),
             vignette: Some(Vignette { color: "#000000".into(), opacity: 0.6, reach: 25.0 }),
+            ..Ornament::default()
         },
         ..OverlayStyle::default()
     }
