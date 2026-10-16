@@ -882,6 +882,12 @@ pub struct StickConfig {
     /// buttons (e.g. `Button::LeftStickUp`) press.
     #[serde(default = "default_key_threshold")]
     pub key_threshold: f32,
+    /// Mirrors the stick left to right, before `rotate`.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub invert_x: bool,
+    /// Degrees clockwise the stick's output is turned: 90 makes pushing up act as pushing right.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub rotate: f32,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub zones: Vec<Zone>,
 }
@@ -912,7 +918,7 @@ pub enum Analog {
 
 impl StickConfig {
     pub fn new(action: StickAction, deadzone: f32, curve: f32) -> Self {
-        StickConfig { action, deadzone, curve, key_threshold: default_key_threshold(), zones: Vec::new() }
+        StickConfig { action, deadzone, curve, key_threshold: default_key_threshold(), invert_x: false, rotate: 0.0, zones: Vec::new() }
     }
 }
 

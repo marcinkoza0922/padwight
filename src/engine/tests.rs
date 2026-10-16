@@ -517,6 +517,37 @@ fn mouse_tick_moves_and_accumulates_subpixels() {
 }
 
 #[test]
+fn a_rotated_stick_pushed_up_moves_the_mouse_right() {
+    let mut p = Profile::desktop("d");
+    p.left_stick.rotate = 90.0;
+    let mut e = Engine::default();
+    run(&mut e, &p, InputEvent::Axis(Axis::LeftY, -1.0));
+    let mut out = Vec::new();
+    for _ in 0..250 {
+        e.tick(&p, 0.004, &mut out);
+    }
+    let (dx, dy) = out.iter().fold((0, 0), |(sx, sy), o| match o {
+        OutEvent::MouseMove(dx, dy) => (sx + dx, sy + dy),
+        _ => (sx, sy),
+    });
+    assert!(dx > 1000 && dy.abs() <= 1, "moved ({dx}, {dy})");
+}
+
+#[test]
+fn an_x_inverted_stick_pushed_right_moves_the_mouse_left() {
+    let mut p = Profile::desktop("d");
+    p.left_stick.invert_x = true;
+    let mut e = Engine::default();
+    run(&mut e, &p, InputEvent::Axis(Axis::LeftX, 1.0));
+    let mut out = Vec::new();
+    for _ in 0..250 {
+        e.tick(&p, 0.004, &mut out);
+    }
+    let dx: i32 = out.iter().map(|o| if let OutEvent::MouseMove(dx, _) = o { *dx } else { 0 }).sum();
+    assert!(dx < -1000, "moved {dx}px");
+}
+
+#[test]
 fn deadzone_is_radial_and_rescaled() {
     assert_eq!(apply_deadzone(0.05, 0.05, 0.1), (0.0, 0.0));
     let (x, _) = apply_deadzone(1.0, 0.0, 0.2);

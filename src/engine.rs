@@ -405,7 +405,7 @@ impl Engine {
     /// get actions, gestures and combos.
     fn update_stick_buttons(&mut self, profile: &Profile, s: Stick, now: Instant, out: &mut Vec<OutEvent>) {
         let cfg = profile.stick(s);
-        let (x, y) = self.stick_pos(s, cfg.deadzone);
+        let (x, y) = self.stick_pos(s, cfg);
         let t = cfg.key_threshold;
         let [up, down, left, right] = Button::stick_directions(s);
         for (b, v) in [(up, -y), (down, y), (left, -x), (right, x)] {

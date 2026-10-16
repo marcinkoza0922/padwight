@@ -109,7 +109,8 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
         rows = rows.push(rule::horizontal(1));
     }
     // The stick's direction buttons and zones work in every mode, so they come last, apart.
-    rows.push(box_row("Directions press at", fraction_editor(0.05..=0.95, cfg.key_threshold, 0.05, "of the way out", set(|c, v| c.key_threshold = v))))
+    rows.push(box_row("Rotate output", slider_editor(0.0..=345.0, cfg.rotate, 15.0, "° clockwise", set(|c, v| c.rotate = v))))
+        .push(box_row("Directions press at", fraction_editor(0.05..=0.95, cfg.key_threshold, 0.05, "of the way out", set(|c, v| c.key_threshold = v))))
         .push(box_row("Zones", zone_list(Analog::Stick(s), &cfg.zones, ui.names)))
         .into()
 }
@@ -137,6 +138,11 @@ fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message
         })
     };
     let invert = |on: bool, set: Box<dyn Fn(bool) -> Message + 'a>| checkbox(on).label("Invert Y").on_toggle(set).into();
+    let invert_x = {
+        let mut c = cfg.clone();
+        c.invert_x = !c.invert_x;
+        checkbox(cfg.invert_x).label("Invert X").on_toggle(move |_| Message::SetStick(s, c.clone())).into()
+    };
     let options: Vec<Element<'a, Message>> = match cfg.action {
         StickAction::Gamepad { stick, invert_y } => {
             let mut options = Vec::from(as_stick(stick, move |t| with(StickAction::Gamepad { stick: t, invert_y })));
@@ -147,6 +153,10 @@ fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message
         StickAction::Scroll { speed, invert_y } => vec![invert(invert_y, Box::new(move |inv| with(StickAction::Scroll { speed, invert_y: inv })))],
         _ => Vec::new(),
     };
+    let mut options = options;
+    if cfg.action != StickAction::Disabled {
+        options.push(invert_x);
+    }
     box_header(s.to_string(), kinds, kind, pick, options)
 }
 
