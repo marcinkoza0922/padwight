@@ -1,7 +1,7 @@
 //! Quick Settings: a few values of the active profile, and of the overlays and rumble, changed
 //! with the D-pad over the game. Which rows show depends on what the profile uses.
 
-use crate::config::{Config, GyroMode, Profile, ProfileRef, Stick, StickAction, StickConfig};
+use crate::config::{Config, GyroConfig, GyroMode, Layer, Profile, ProfileRef, Stick, StickAction, StickConfig};
 
 use super::{Outcome, active_profile_mut};
 
@@ -21,12 +21,50 @@ const RUMBLE_STEPS: (f32, f32) = (0.1, 0.5);
 const SIZE_STEPS: (f32, f32) = (0.1, 0.25);
 const SIZE_RANGE: (f32, f32) = (0.5, 2.0);
 
+/// A layer or mode of the active game (by its place in the game's list) that sets a speed of its
+/// own, which the profile's row doesn't change.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Scope {
+    Layer(usize),
+    Mode(usize),
+}
+
+impl Scope {
+    fn get(self, config: &Config) -> Option<&Layer> {
+        let game = config.active_game();
+        match self {
+            Scope::Layer(i) => game.layers.get(i),
+            Scope::Mode(i) => game.modes.get(i),
+        }
+    }
+
+    fn get_mut(self, config: &mut Config) -> Option<&mut Layer> {
+        let at = config.active_ref();
+        let game = config.game_mut(at.game.as_deref())?;
+        match self {
+            Scope::Layer(i) => game.layers.get_mut(i),
+            Scope::Mode(i) => game.modes.get_mut(i),
+        }
+    }
+
+    /// "Aim layer" or "Driving mode".
+    fn name(self, config: &Config) -> String {
+        let kind = if matches!(self, Scope::Layer(_)) { "layer" } else { "mode" };
+        format!("{} {kind}", self.get(config).map_or("", |l| l.name.as_str()))
+    }
+}
+
 /// One line of Quick Settings.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum Row {
     /// Speed of a stick that moves the mouse.
     StickSpeed(Stick),
     GyroSensitivity,
+    /// The speed of a stick that moves the mouse in a layer or mode, which sets that stick itself,
+    /// so the profile's speed doesn't reach it.
+    ScopedStickSpeed(Scope, Stick),
+    /// The same for a layer or mode's gyro sensitivity.
+    ScopedGyroSensitivity(Scope),
     /// Gyro off, or back on as it was when the menu opened.
     Gyro,
     /// Flips every Y inversion in the profile at once.
@@ -62,6 +100,7 @@ pub(super) fn rows(config: &Config, saved: &Config) -> Vec<Row> {
         if had_gyro(config) || had_gyro(saved) {
             rows.push(Row::Gyro);
         }
+        rows.extend(scoped_rows(config));
         rows.push(Row::InvertY);
         for (stick, cfg) in [(Stick::Left, &profile.left_stick), (Stick::Right, &profile.right_stick)] {
             if !matches!(cfg.action, StickAction::Disabled) {
@@ -74,6 +113,26 @@ pub(super) fn rows(config: &Config, saved: &Config) -> Vec<Row> {
         rows.push(Row::Profile);
     }
     rows.push(Row::Remapping);
+    rows
+}
+
+/// The rows for the speeds the active game's layers and modes set themselves, so a slower aim
+/// layer can be tuned from here without changing the base sensitivity.
+fn scoped_rows(config: &Config) -> Vec<Row> {
+    let game = config.active_game();
+    let mut rows = Vec::new();
+    let scopes = (0..game.layers.len()).map(Scope::Layer).chain((0..game.modes.len()).map(Scope::Mode));
+    for scope in scopes {
+        let Some(layer) = scope.get(config) else { continue };
+        for (stick, cfg) in [(Stick::Left, &layer.left_stick), (Stick::Right, &layer.right_stick)] {
+            if cfg.as_ref().is_some_and(|c| matches!(c.action, StickAction::Mouse { .. })) {
+                rows.push(Row::ScopedStickSpeed(scope, stick));
+            }
+        }
+        if layer.gyro.as_ref().is_some_and(|g| matches!(g.mode, GyroMode::Mouse { .. })) {
+            rows.push(Row::ScopedGyroSensitivity(scope));
+        }
+    }
     rows
 }
 
@@ -106,6 +165,18 @@ pub(super) fn label(row: Row, config: &Config, saved: &Config) -> String {
             }))
         ),
         Row::GyroSensitivity => format!("Gyro sensitivity: {}", was(&|c| c.active().and_then(|p| p.gyro.sensitivity_label()))),
+        Row::ScopedStickSpeed(scope, stick) => format!(
+            "{} stick speed, {}: {}",
+            side(stick),
+            scope.name(config),
+            was(&|c| scope.get(c).and_then(|l| match &(if stick == Stick::Left { &l.left_stick } else { &l.right_stick }).as_ref()?.action {
+                StickAction::Mouse { speed, .. } => Some(format!("{speed:.0} px/s")),
+                _ => None,
+            }))
+        ),
+        Row::ScopedGyroSensitivity(scope) => {
+            format!("Gyro sensitivity, {}: {}", scope.name(config), was(&|c| scope.get(c).and_then(|l| l.gyro.as_ref()?.sensitivity_label())))
+        }
         Row::Gyro => format!("Gyro: {}", on(config.active().is_some_and(|p| !matches!(p.gyro.mode, GyroMode::Off)))),
         Row::InvertY => format!("Invert Y: {}", on(config.active().is_some_and(inverted_y))),
         Row::Deadzone(stick) => format!("{} stick dead zone: {}", side(stick), was(&|c| c.active().map(|p| percent(stick_config(p, stick).deadzone)))),
@@ -170,6 +241,11 @@ pub(super) fn adjust(row: Row, dir: i32, big: bool, config: &mut Config, saved: 
                 _ => GyroMode::Off,
             };
         }
+        Row::ScopedStickSpeed(scope, stick) => {
+            let cfg = if stick == Stick::Left { &mut scope.get_mut(config)?.left_stick } else { &mut scope.get_mut(config)?.right_stick };
+            scale_speed(cfg.as_mut()?, dir, if big { BIG_STEP } else { STEP })?;
+        }
+        Row::ScopedGyroSensitivity(scope) => scale_sensitivity(scope.get_mut(config)?.gyro.as_mut()?, dir, if big { BIG_STEP } else { STEP })?,
         _ => adjust_profile(row, dir, if big { BIG_STEP } else { STEP }, pick(DEADZONE_STEPS), active_profile_mut(config)?)?,
     }
     Some(Outcome::Changed)
@@ -181,13 +257,9 @@ fn adjust_profile(row: Row, dir: i32, step: f32, deadzone_step: f32, profile: &m
     match row {
         Row::StickSpeed(stick) => {
             let cfg = if stick == Stick::Left { &mut profile.left_stick } else { &mut profile.right_stick };
-            let StickAction::Mouse { speed, .. } = &mut cfg.action else { return None };
-            *speed = scale(*speed, dir, step, SPEED_RANGE);
+            scale_speed(cfg, dir, step)?;
         }
-        Row::GyroSensitivity => {
-            let GyroMode::Mouse { sensitivity } = &mut profile.gyro.mode else { return None };
-            *sensitivity = scale(*sensitivity, dir, step, SENSITIVITY_RANGE);
-        }
+        Row::GyroSensitivity => scale_sensitivity(&mut profile.gyro, dir, step)?,
         Row::InvertY => {
             let flags = y_flags(profile);
             let on = flags.iter().any(|f| **f);
@@ -220,6 +292,20 @@ fn set_panel_size(config: &mut Config, size: f32) {
     for style in [keyboard.unwrap_or(keyboard_style), numpad.unwrap_or(numpad_style), media.unwrap_or(media_style), menu.unwrap_or(menu_style)] {
         style.scale = size;
     }
+}
+
+/// Scales the speed of a stick that moves the mouse.
+fn scale_speed(cfg: &mut StickConfig, dir: i32, step: f32) -> Option<()> {
+    let StickAction::Mouse { speed, .. } = &mut cfg.action else { return None };
+    *speed = scale(*speed, dir, step, SPEED_RANGE);
+    Some(())
+}
+
+/// Scales the sensitivity of a gyro that moves the mouse.
+fn scale_sensitivity(gyro: &mut GyroConfig, dir: i32, step: f32) -> Option<()> {
+    let GyroMode::Mouse { sensitivity } = &mut gyro.mode else { return None };
+    *sensitivity = scale(*sensitivity, dir, step, SENSITIVITY_RANGE);
+    Some(())
 }
 
 fn scale(value: f32, dir: i32, step: f32, (low, high): (f32, f32)) -> f32 {

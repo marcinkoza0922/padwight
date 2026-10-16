@@ -89,7 +89,7 @@ impl Picker {
 /// The simple actions offered, each with its label.
 type Choice = (&'static str, fn() -> ButtonAction);
 
-const CHOICES: [Choice; 17] = [
+const CHOICES: [Choice; 21] = [
     ("Disabled", || ButtonAction::Disabled),
     ("Left click", || ButtonAction::Mouse(MouseButton::Left)),
     ("Right click", || ButtonAction::Mouse(MouseButton::Right)),
@@ -107,6 +107,10 @@ const CHOICES: [Choice; 17] = [
     ("Media controls", || ButtonAction::ToggleMedia),
     ("Quick Settings", || ButtonAction::QuickSettings),
     ("Force quit (hold)", || ButtonAction::ForceQuit),
+    ("Gyro on / off", || ButtonAction::GyroToggle),
+    ("Gyro clutch (off while held)", || ButtonAction::GyroClutch),
+    ("Gyro on while held", || ButtonAction::GyroHold),
+    ("Recenter gyro", || ButtonAction::GyroRecenter),
 ];
 
 /// How many of `CHOICES` a macro step may press: Disabled, the mouse buttons and the wheel.

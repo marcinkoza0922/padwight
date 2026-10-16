@@ -38,12 +38,11 @@ fn toggles_that_start_on_add_a_field_others_read_as_before() {
 fn gyro_config_roundtrips_and_is_optional() {
     let mut config = Config::default();
     config.general.profiles[0].gyro = GyroConfig {
-        mode: GyroMode::Stick { stick: Stick::Right, full_rate: 300.0, anti_deadzone: 0.2 },
+        mode: GyroMode::Stick { stick: Stick::Right, full_rate: 300.0, anti_deadzone: 0.2, game_curve: 1.0 },
         horizontal: GyroHorizontal::YawAndRoll,
         invert_x: true,
         invert_y: false,
-        activation: GyroActivation::Toggle(GyroInput::Button(Button::RightStick)),
-        recenter: Some(GyroInput::Button(Button::Select)),
+        start_off: true,
         noise_threshold: 2.0,
         axes: GyroAxes::Vertical,
         y_scale: 1.5,
@@ -211,4 +210,18 @@ fn templates_roundtrip_through_toml() {
     let config = Config { general: Game::new("General", super::templates()), ..Config::default() };
     let back: Config = toml::from_str(&toml::to_string_pretty(&config).unwrap()).unwrap();
     assert_eq!(config, back);
+}
+
+#[test]
+fn pad_pushes_read_as_full_unless_an_amount_is_given() {
+    let full: ButtonAction = toml::from_str::<std::collections::BTreeMap<String, ButtonAction>>("a = { pad_trigger = { trigger = \"Left\" } }\nb = { pad_stick = { stick = \"Right\", angle = 47.0 } }")
+        .unwrap()
+        .into_values()
+        .next()
+        .unwrap();
+    assert_eq!(full, ButtonAction::PadTrigger { trigger: Trigger::Left, amount: 1.0 });
+    let stick = ButtonAction::PadStick { stick: Stick::Right, angle: 47.0, amount: 0.5 };
+    let text = toml::to_string(&std::collections::BTreeMap::from([("x", stick.clone())])).unwrap();
+    assert_eq!(toml::from_str::<std::collections::BTreeMap<String, ButtonAction>>(&text).unwrap()["x"], stick);
+    assert_eq!(crate::config::stick_vector(90.0, 1.0), (1.0, 0.0));
 }

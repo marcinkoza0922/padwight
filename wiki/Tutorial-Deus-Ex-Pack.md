@@ -206,9 +206,9 @@ Shooters always get gyro and flick stick profiles to try, and they're never the 
 2. On its **Gyro** tab:
    - **Gyro**: **Mouse (gyro aiming)**, **Sensitivity** **30** (pixels per degree turned).
    - **Turning read as**: **Player space (any grip)** (turning left aims left however you hold the controller).
-   - **Active**: **Off while held (clutch)**, with the **Left Trigger** as the clutch.
    - Under **Advanced**, **Ignore jitter below**: 1.0 °/s.
-3. Leave **Can't be played without gyro** unticked.
+3. On its **Buttons** tab, set the **Left Trigger** to **Gyro clutch (off while held)**.
+4. Leave **Can't be played without gyro** unticked.
 
 **Why:** gyro adds fine aim on top of the right stick, so the profile still plays without it and doesn't declare it. The clutch turns gyro off while held, to reposition the controller, and LT is the input this scheme leaves free.
 

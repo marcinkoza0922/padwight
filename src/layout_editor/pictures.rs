@@ -57,7 +57,7 @@ fn about(page: Page) -> Option<About> {
     Some(match page {
         Page::Stick(o, s) | Page::Ring(o, s) | Page::Zones(o, Analog::Stick(s)) | Page::Zone(o, Analog::Stick(s), _) => About::Stick(o, s),
         Page::Trigger(o, t) | Page::Zones(o, Analog::Trigger(t)) | Page::Zone(o, Analog::Trigger(t), _) => About::Trigger(o, t),
-        Page::Gyro(o) | Page::GyroInput(o, _) => About::Gyro(o),
+        Page::Gyro(o) => About::Gyro(o),
         Page::Touch(o, _) => About::Touchpad(o),
         Page::Menu(m) | Page::MenuItems(m) | Page::MenuClose(m) => About::Menu(m, None),
         Page::MenuItem(m, i) | Page::ItemButton(m, i) => About::Menu(m, Some(i)),
@@ -106,7 +106,7 @@ pub(super) fn figure(page: Page, config: &Config, live: &Live) -> Option<Figure>
                 StickAction::Mouse { speed, response, .. } => Some(MouseShown { speed, curve: cfg.curve, response }),
                 _ => None,
             };
-            Figure::Stick { deadzone: cfg.deadzone, ring, mouse, live: Some(live.sticks[usize::from(s == Stick::Right)]) }
+            Figure::Stick { deadzone: cfg.dead(), ring, mouse, live: Some(live.sticks[usize::from(s == Stick::Right)]) }
         }
         About::Trigger(o, t) => {
             let cfg = owner::trigger(config, o, t).unwrap_or(if t == Trigger::Left { &profile.left_trigger } else { &profile.right_trigger });

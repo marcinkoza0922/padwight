@@ -144,7 +144,6 @@ mode = "off"
 horizontal = "yaw"
 invert_x = false
 invert_y = false
-activation = "always"
 noise_threshold = 1.0
 [profiles.guide]
 notes = '''Hold {lt} for bullet time. Hold {rb} with a direction on the left stick {ls} to shootdodge.
@@ -186,6 +185,7 @@ tap_window_ms = 250
 long_press_ms = 500
 
 [profiles.buttons]
+DpadDown = "gyro_clutch"
 
 [profiles.buttons.Guide]
 mode = "Guide"
@@ -306,8 +306,6 @@ noise_threshold = 1.0
 [profiles.gyro.mode.mouse]
 sensitivity = 15.0
 
-[profiles.gyro.activation.unless_held]
-button = "DpadDown"
 [profiles.guide]
 notes = '''Hold {lt} for bullet time. Hold {rb} with a direction on the left stick {ls} to shootdodge.
 {north} takes a painkiller. {south} uses doors, switches and phones, zooms the sniper rifle, and {east} jumps.
@@ -350,6 +348,7 @@ long_press_ms = 500
 requires = ["gyro"]
 
 [profiles.buttons]
+DpadDown = "gyro_clutch"
 
 [profiles.buttons.Guide]
 mode = "Guide"
@@ -475,8 +474,6 @@ noise_threshold = 1.0
 [profiles.gyro.mode.mouse]
 sensitivity = 22.0
 
-[profiles.gyro.activation.unless_held]
-button = "DpadDown"
 [profiles.guide]
 notes = '''Hold {lt} for bullet time. Hold {rb} with a direction on the left stick {ls} to shootdodge.
 {north} takes a painkiller. {south} uses doors, switches and phones, zooms the sniper rifle, and {east} jumps.

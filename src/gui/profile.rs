@@ -7,6 +7,10 @@ use crate::info::{Glyphs, button_name};
 use super::guide_tab::{self, GuideView};
 use crate::pad_widget::controller_drawing;
 
+mod button_list;
+pub(super) use button_list::{button_rows, paddle_rows};
+use button_list::row_matches;
+
 /// Sections of the profile editor.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum ProfileTab {
@@ -290,11 +294,11 @@ fn tab_words(tab: ProfileTab) -> &'static [&'static str] {
     match tab {
         ProfileTab::Buttons | ProfileTab::Combos => &[],
         ProfileTab::Sticks => &[
-            "sticks left stick right stick mode mouse gamepad flick ring sectors first sector wasd arrows scroll dead zone deadzone dead angle curve response speed vertical smoothing turn size invert directions press at stickiness fill with test turn",
+            "sticks left stick right stick mode mouse gamepad flick ring sectors first sector wasd arrows scroll dead zone deadzone shape anti-deadzone buffer dead angle curve response speed vertical smoothing turn size invert directions press at stickiness fill with test turn",
             "triggers left trigger right trigger zones add zone walk modifier shift partial push range from",
         ],
         ProfileTab::Gyro => &[
-            "gyro motion aim mode off mouse stick steering flick sensitivity invert horizontal vertical axes turning response curve slow fast shape active always on only while held toggle rumble recenter pause pushing advanced jitter noise smoothing drift full tilt lock edge",
+            "gyro motion aim mode off mouse stick steering flick sensitivity invert horizontal vertical axes turning response curve slow fast shape start switched off rumble pause pushing advanced jitter noise smoothing drift full tilt lock edge",
         ],
         ProfileTab::Touchpad => &[
             "touchpad touch pad mouse stick menu swipe split left right half tap click two-finger scroll deadzone sensitivity response glide flick center finger speed",
@@ -411,59 +415,6 @@ pub(super) fn requirement_rows(p: &Profile, f: Feature) -> Vec<Element<'_, Messa
     ]
 }
 
-/// The back paddles' mappings, with the box saying whether the profile needs them. Layers
-/// can override them like any button, so the box is left out there.
-pub(super) fn paddle_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message>> {
-    let mut rows: Vec<Element<'a, Message>> = Vec::new();
-    if ui.layer.is_none() && ui.query.trim().is_empty() {
-        if !ui.any_paddles {
-            rows.push(
-                note("None of your managed controllers have back paddles. These mappings take effect once one is connected.").into(),
-            );
-        }
-        rows.extend(requirement_rows(p, Feature::BackPaddles));
-    }
-    for b in Button::PADDLES.into_iter().filter(|b| row_matches(p, *b, ui)) {
-        rows.extend(button_row(p, b, ui));
-    }
-    rows
-}
-
-/// Whether button `b`'s row has every word the search box holds: in its name, its action or a gesture's.
-fn row_matches(p: &Profile, b: Button, ui: &Ui) -> bool {
-    if ui.query.trim().is_empty() {
-        return true;
-    }
-    let base = ui.layer.map_or(p, |m| m.base);
-    let mut haystack = format!("{} {} {}", button_name(b, ui.in_use), short_button(b), summarize(p.button(b)));
-    for profile in [p, base] {
-        haystack.push(' ');
-        haystack.push_str(&summarize(profile.button(b)));
-        for (kind, action) in GestureKind::ALL.into_iter().filter_map(|k| profile.gestures.get(&b).and_then(|g| g.get(k)).map(|a| (k, a))) {
-            haystack.push_str(&format!(" {kind} {}", summarize(action)));
-        }
-    }
-    matches_query(ui.query, &haystack)
-}
-
-pub(super) fn button_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message>> {
-    // Layers use their profile's timings.
-    let searching = !ui.query.trim().is_empty();
-    let mut rows: Vec<Element<'a, Message>> = if ui.layer.is_some() || searching {
-        Vec::new()
-    } else {
-        vec![
-            value_slider("Tap window", 100.0..=600.0, p.tap_window_ms as f32, 10.0, "ms", Message::SetTapWindow),
-            value_slider("Long press after", 200.0..=1500.0, p.long_press_ms as f32, 50.0, "ms", Message::SetLongPress),
-        ]
-    };
-    // Guide is built in: the Guide tab says what it does, so it has no row here.
-    for b in Button::ALL.into_iter().filter(|b| *b != Button::Guide && row_matches(p, *b, ui)) {
-        rows.extend(button_row(p, b, ui));
-    }
-    rows
-}
-
 /// The label column of a collapsible row: click to open or close it.
 pub(super) fn row_toggle<'a>(label: &str, target: Target, open: bool, problem: bool) -> Element<'a, Message> {
     let chevron = if open { "▾" } else { "▸" };
@@ -475,135 +426,6 @@ pub(super) fn row_toggle<'a>(label: &str, target: Target, open: bool, problem: b
         .width(LABEL_WIDTH)
         .on_press(Message::ToggleExpanded(target))
         .into()
-}
-
-/// One button: collapsed to a summary ("A ▸ E · double tap: Q"), or open with its action
-/// editor, gesture rows and a "+ Double tap" style button for each gesture not yet set.
-#[expect(clippy::too_many_lines, reason = "predates the size lints")]
-pub(super) fn button_row<'a>(p: &'a Profile, b: Button, ui: &Ui) -> Vec<Element<'a, Message>> {
-    if let Some(marks) = ui.layer
-        && !marks.overrides(LayerPart::Button(b))
-    {
-        let mut summary = summarize(marks.base.button(b));
-        if marks.base.gestures(b).is_some() {
-            summary.push_str(" +");
-        }
-        return layer_part(ui, LayerPart::Button(b), button_name(b, ui.in_use), summary, Vec::new);
-    }
-    let target = Target::Button(b);
-    let open = ui.is_open(target);
-    let gestures = p.gestures.get(&b);
-    let set_gestures: Vec<(GestureKind, &'a ButtonAction)> =
-        GestureKind::ALL.into_iter().filter_map(|k| gestures.and_then(|g| g.get(k)).map(|a| (k, a))).collect();
-    let problem = std::iter::once(p.button(b))
-        .chain(set_gestures.iter().map(|(_, a)| *a))
-        .find_map(|a| action_problem(a, ui.names));
-    let mut rows: Vec<Element<'a, Message>> = Vec::new();
-
-    if !open {
-        let disabled = matches!(p.button(b), ButtonAction::Disabled) && set_gestures.is_empty();
-        let passthrough = *p.button(b) == ButtonAction::Gamepad(b) && set_gestures.is_empty();
-        // A button left as itself would show only its own glyph, which reads like the button's
-        // icon rather than what it does, so it says so in words.
-        let summary = if passthrough {
-            text("Same button").color(MUTED_COLOR).into()
-        } else {
-            piece_line(p.button(b).pieces(), ui.family, ui.swap, disabled)
-        };
-        let mut segments = row![summary].spacing(10).align_y(Alignment::Center);
-        // Each gesture is its own segment, set off by a muted bar and its name in muted text. The
-        // segments wrap onto another line when they don't fit, each kept whole.
-        for (k, a) in &set_gestures {
-            segments = segments.push(
-                row![text("│").color(MUTED_COLOR), text(format!("{k}:")).color(MUTED_COLOR), piece_line(a.pieces(), ui.family, ui.swap, false)]
-                    .spacing(10)
-                    .align_y(Alignment::Center),
-            );
-        }
-        let mut line = row![
-            row_toggle(&button_name(b, ui.in_use), target, false, problem.is_some()),
-            container(segments.wrap().vertical_spacing(4)).width(Length::Fill),
-        ]
-        .spacing(10)
-        .align_y(Alignment::Center);
-        if let Some(problem) = problem {
-            line = line.push(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR));
-        }
-        if ui.layer.is_some() {
-            line = line.push(
-                button(text("Back to base").size(13)).style(button::text).on_press(Message::RevertInput(LayerPart::Button(b))),
-            );
-        }
-        rows.push(line.into());
-        return rows;
-    }
-
-    let missing: Vec<GestureKind> = GestureKind::ALL
-        .into_iter()
-        .filter(|k| gestures.and_then(|g| g.get(*k)).is_none())
-        .collect();
-    // The name gets a line of its own so the open editor reads as sitting under it.
-    let mut header = row![row_toggle(&button_name(b, ui.in_use), target, true, problem.is_some()), space::horizontal()]
-        .spacing(10)
-        .align_y(Alignment::Center);
-    if ui.layer.is_some() {
-        header = header.push(
-            button(text("Back to base").size(13)).style(button::text).on_press(Message::RevertInput(LayerPart::Button(b))),
-        );
-    }
-    rows.push(labeled(
-        "    Press",
-        fill_x(action_editor(p.button(b), b, &ACTION_KINDS, set_action(target), KeyField::root(target), ui.names)),
-    ));
-    rows.extend(menu_combos::offer(p, &[b], p.button(b), ui).map(|o| labeled("", o)));
-
-    for (kind, action) in set_gestures {
-        rows.push(rule::horizontal(1).into());
-        // Laid out like the Press row, with a ✕ right after the action it removes. The row takes
-        // the free width, so the action still wraps there in a narrow window.
-        let target = Target::Gesture(b, kind);
-        rows.push(labeled(
-            format!("    {kind}"),
-            fill_x(
-                row![
-                    action_editor(action, b, &ACTION_KINDS, set_action(target), KeyField::root(target), ui.names),
-                    button(text("✕").size(13)).style(style::secondary).on_press(Message::RemoveGesture(b, kind)),
-                ]
-                .spacing(8)
-                .align_y(Alignment::Start),
-            ),
-        ));
-        if kind == GestureKind::LongPress {
-            rows.extend(menu_combos::offer(p, &[b], action, ui).map(|o| labeled("", o)));
-        }
-    }
-    // Adding a gesture sits under the rows it extends, one click per kind.
-    if !missing.is_empty() {
-        rows.push(rule::horizontal(1).into());
-        let adds = missing.into_iter().map(|k| {
-            button(text(format!("+ {k}")).size(13))
-                .style(style::secondary)
-                .padding([3, 10])
-                .on_press(Message::AddGesture(b, k))
-                .into()
-        });
-        rows.push(labeled("", row(adds).spacing(6).into()));
-    }
-    if let Some(problem) = problem {
-        rows.push(labeled("", text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR).into()));
-    }
-    // The details sit in a box under the name, like a combo's, picked out in the accent color
-    // when the button was just found. The name stays outside so it doesn't move on opening.
-    let found = ui.found == Some(b);
-    let details = container(column(rows).spacing(8)).padding(10).width(Length::Fill).style(move |t| {
-        let mut s = style::inset(t);
-        if found {
-            s.border.color = style_accent();
-            s.border.width = 2.0;
-        }
-        s
-    });
-    vec![column![header, details].spacing(4).into()]
 }
 
 /// LB + RB for a new combo, or the first pair of buttons no combo has yet.

@@ -2,7 +2,7 @@
 //! a ring of buttons, a flick stick) with each kind's settings, its deadzone and zones, and a
 //! ring's sectors.
 
-use crate::config::{Analog, ButtonAction, Config, CurvePreset, FlickVertical, MouseResponse, Stick, StickAction, StickConfig};
+use crate::config::{Analog, ButtonAction, Config, CurvePreset, DeadzoneShape, FlickVertical, MouseResponse, Stick, StickAction, StickConfig};
 
 use super::{
     action::{ActionAt, Slot},
@@ -137,6 +137,16 @@ pub(super) fn stick_rows(config: &Config, owner: Owner, s: Stick) -> Vec<Row> {
         StickAction::Flick { .. } => flick_rows(owner, s, &cfg.action),
     });
     rows.push(num((owner, s), "Deadzone", cfg.deadzone, &DEADZONE, |c, v| set(&mut c.deadzone, v)));
+    rows.push(Row::step(format!("Deadzone shape: {}", cfg.deadzone_shape), move |c, dir| {
+        stick_mut(c, owner, s).is_some_and(|sc| {
+            let next = cycle(&DeadzoneShape::ALL, sc.deadzone_shape, dir);
+            set(&mut sc.deadzone_shape, next)
+        })
+    }));
+    rows.push(num((owner, s), "Anti-deadzone", cfg.anti_deadzone, &DEADZONE, |c, v| set(&mut c.anti_deadzone, v)));
+    rows.push(num((owner, s), "Anti-deadzone buffer", cfg.anti_deadzone_buffer, &DEADZONE, |c, v| set(&mut c.anti_deadzone_buffer, v)));
+    rows.push(switch(owner, s, "Invert X", cfg.invert_x, |c, on| set(&mut c.invert_x, on)));
+    rows.push(num((owner, s), "Rotate output", cfg.rotate, &START_ANGLE, |c, v| set(&mut c.rotate, v)));
     rows.push(num((owner, s), "Directions press at", cfg.key_threshold, &FRACTION, |c, v| set(&mut c.key_threshold, v)));
     rows.push(Row::open(format!("Zones ({})", cfg.zones.len()), Page::Zones(owner, Analog::Stick(s))));
     rows.extend(back_to_profile(owner, Part::Stick(s)));

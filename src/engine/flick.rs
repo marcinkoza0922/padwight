@@ -90,8 +90,8 @@ impl FlickState {
 
 impl Engine {
     /// Whether a flick stick has anything to do: it's deflected or still turning.
-    pub(super) fn flick_needs_tick(&self, s: Stick, deadzone: f32) -> bool {
-        self.stick_pos(s, deadzone) != (0.0, 0.0) || self.flick.get(&s).is_some_and(FlickState::busy)
+    pub(super) fn flick_needs_tick(&self, s: Stick, cfg: &StickConfig) -> bool {
+        self.stick_pos(s, cfg) != (0.0, 0.0) || self.flick.get(&s).is_some_and(FlickState::busy)
     }
 
     /// Advances one flick stick and emits its mouse movement.
@@ -111,7 +111,7 @@ impl Engine {
             vertical_speed: *vertical_speed,
             curve: cfg.curve,
         };
-        let pos = self.stick_pos(s, cfg.deadzone);
+        let pos = self.stick_pos(s, cfg);
         let (dx, dy) = self.flick.entry(s).or_default().step(&params, pos, dt);
         let (dx, dy) = take_whole(&mut self.mouse_acc, dx, dy);
         if dx != 0 || dy != 0 {

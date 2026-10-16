@@ -18,6 +18,8 @@ pub(super) fn summarize(action: &ButtonAction) -> String {
 pub(super) enum ActionKind {
     Disabled,
     Gamepad,
+    PadTrigger,
+    PadStick,
     Keys,
     Mouse,
     Wheel,
@@ -28,6 +30,10 @@ pub(super) enum ActionKind {
     Media,
     QuickSettings,
     ForceQuit,
+    GyroToggle,
+    GyroClutch,
+    GyroHold,
+    GyroRecenter,
     Toggle,
     Turbo,
     Macro,
@@ -44,6 +50,8 @@ impl fmt::Display for ActionKind {
         f.write_str(match self {
             ActionKind::Disabled => "Disabled",
             ActionKind::Gamepad => "Gamepad button",
+            ActionKind::PadTrigger => "Gamepad trigger",
+            ActionKind::PadStick => "Gamepad stick",
             ActionKind::Keys => "Keyboard",
             ActionKind::Mouse => "Mouse button",
             ActionKind::Wheel => "Scroll wheel",
@@ -54,6 +62,10 @@ impl fmt::Display for ActionKind {
             ActionKind::Media => "Media controls",
             ActionKind::QuickSettings => "Quick Settings menu",
             ActionKind::ForceQuit => "Force quit (hold)",
+            ActionKind::GyroToggle => "Gyro on / off",
+            ActionKind::GyroClutch => "Gyro clutch (off while held)",
+            ActionKind::GyroHold => "Gyro on while held",
+            ActionKind::GyroRecenter => "Recenter gyro",
             ActionKind::Toggle => "Toggle on / off…",
             ActionKind::Macro => "Macro…",
             ActionKind::Menu => "Open menu…",
@@ -68,9 +80,11 @@ impl fmt::Display for ActionKind {
 }
 
 /// Every kind, for a top-level action.
-pub(super) const ACTION_KINDS: [ActionKind; 21] = [
+pub(super) const ACTION_KINDS: [ActionKind; 27] = [
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
@@ -81,6 +95,10 @@ pub(super) const ACTION_KINDS: [ActionKind; 21] = [
     ActionKind::Media,
     ActionKind::QuickSettings,
     ActionKind::ForceQuit,
+    ActionKind::GyroToggle,
+    ActionKind::GyroClutch,
+    ActionKind::GyroHold,
+    ActionKind::GyroRecenter,
     ActionKind::Toggle,
     ActionKind::Turbo,
     ActionKind::Macro,
@@ -96,6 +114,8 @@ pub(super) const ACTION_KINDS: [ActionKind; 21] = [
 pub(super) const RADIAL_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
@@ -111,12 +131,16 @@ pub(super) const RADIAL_ITEM_KINDS: &[ActionKind] = &[
 pub(super) const MENU_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
     ActionKind::Overlay,
     ActionKind::Numpad,
     ActionKind::Screenshot,
+    ActionKind::GyroToggle,
+    ActionKind::GyroRecenter,
     ActionKind::Toggle,
     ActionKind::Macro,
     ActionKind::Menu,
@@ -130,12 +154,16 @@ pub(super) const MENU_ITEM_KINDS: &[ActionKind] = &[
 pub(super) const NO_SUBMENU_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
     ActionKind::Overlay,
     ActionKind::Numpad,
     ActionKind::Screenshot,
+    ActionKind::GyroToggle,
+    ActionKind::GyroRecenter,
     ActionKind::Toggle,
     ActionKind::Macro,
     ActionKind::Mode,
@@ -150,6 +178,8 @@ pub(super) const MACRO_STEP_KINDS: &[ActionKind] =
 pub(super) const MULTI_ENTRY_KINDS: &[ActionKind] = &[
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
@@ -160,6 +190,8 @@ pub(super) const MULTI_ENTRY_KINDS: &[ActionKind] = &[
 pub(super) const TOGGLE_INNER_KINDS: &[ActionKind] = &[
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
@@ -176,6 +208,8 @@ pub(super) const TOGGLE_INNER_KINDS: &[ActionKind] = &[
 pub(super) const TURBO_INNER_KINDS: &[ActionKind] = &[
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
@@ -185,6 +219,9 @@ pub(super) const TURBO_INNER_KINDS: &[ActionKind] = &[
 ];
 
 pub(super) const DEFAULT_TURBO_RATE: f32 = 10.0;
+
+/// The width of an action's kind button and of the picker beside it, so they line up row to row.
+pub(super) const VALUE_WIDTH: f32 = 200.0;
 
 /// Callback that turns an edited action into a message; lets editors nest inside `Multi`.
 pub(super) type OnAction<'a> = Rc<dyn Fn(ButtonAction) -> Message + 'a>;
@@ -203,12 +240,7 @@ pub(super) fn action_editor<'a>(
     field: KeyField,
     names: &Names,
 ) -> Element<'a, Message> {
-    let kind = action_kind(action);
-    let kind_picker = {
-        let on_change = on_change.clone();
-        let (current, names) = (action.clone(), names.clone());
-        dropdown(kinds.to_vec(), Some(kind), move |k| on_change(new_action(k, default_button, &current, &names))).width(200)
-    };
+    let kind_picker = super::action_picker::kind_button(action, kinds, default_button, names, on_change.clone());
     let value = action_value(action, default_button, on_change, field, names);
     // Where there isn't room beside the kind, the value goes below it.
     row![kind_picker, value].spacing(8).align_y(Alignment::Start).wrap().vertical_spacing(6).into()
@@ -218,6 +250,8 @@ pub(super) fn action_kind(action: &ButtonAction) -> ActionKind {
     match action {
         ButtonAction::Disabled => ActionKind::Disabled,
         ButtonAction::Gamepad(_) => ActionKind::Gamepad,
+        ButtonAction::PadTrigger { .. } => ActionKind::PadTrigger,
+        ButtonAction::PadStick { .. } => ActionKind::PadStick,
         ButtonAction::Keys(_) => ActionKind::Keys,
         ButtonAction::Mouse(_) => ActionKind::Mouse,
         ButtonAction::Wheel(_) => ActionKind::Wheel,
@@ -228,6 +262,10 @@ pub(super) fn action_kind(action: &ButtonAction) -> ActionKind {
         ButtonAction::ToggleMedia => ActionKind::Media,
         ButtonAction::QuickSettings => ActionKind::QuickSettings,
         ButtonAction::ForceQuit => ActionKind::ForceQuit,
+        ButtonAction::GyroToggle => ActionKind::GyroToggle,
+        ButtonAction::GyroClutch => ActionKind::GyroClutch,
+        ButtonAction::GyroHold => ActionKind::GyroHold,
+        ButtonAction::GyroRecenter => ActionKind::GyroRecenter,
         ButtonAction::Multi(_) => ActionKind::Multiple,
         ButtonAction::Toggle(_) => ActionKind::Toggle,
         ButtonAction::Turbo { .. } => ActionKind::Turbo,
@@ -244,14 +282,17 @@ pub(super) fn action_kind(action: &ButtonAction) -> ActionKind {
 pub(super) fn new_action(k: ActionKind, default_button: Button, current: &ButtonAction, names: &Names) -> ButtonAction {
     // When wrapping in Toggle/Turbo, keep a simple existing action as the thing wrapped.
     let wrappable = match current {
-        ButtonAction::Gamepad(_) | ButtonAction::Keys(_) | ButtonAction::Mouse(_) | ButtonAction::Wheel(_) => {
+        ButtonAction::Gamepad(_) | ButtonAction::PadTrigger { .. } | ButtonAction::PadStick { .. } | ButtonAction::Keys(_) | ButtonAction::Mouse(_) | ButtonAction::Wheel(_) => {
             Some(current.clone())
         }
         _ => None,
     };
     match k {
         ActionKind::Disabled => ButtonAction::Disabled,
-        ActionKind::Gamepad => ButtonAction::Gamepad(default_button),
+        // A stick direction isn't a button the pad can press, so those rows start on South.
+        ActionKind::Gamepad => ButtonAction::Gamepad(if default_button.stick_direction().is_some() { Button::South } else { default_button }),
+        ActionKind::PadTrigger => ButtonAction::PadTrigger { trigger: Trigger::Right, amount: 1.0 },
+        ActionKind::PadStick => ButtonAction::PadStick { stick: Stick::Left, angle: 0.0, amount: 1.0 },
         ActionKind::Keys => ButtonAction::Keys(Vec::new()),
         ActionKind::Mouse => ButtonAction::Mouse(MouseButton::Left),
         ActionKind::Wheel => ButtonAction::Wheel(WheelDirection::Up),
@@ -262,6 +303,10 @@ pub(super) fn new_action(k: ActionKind, default_button: Button, current: &Button
         ActionKind::Media => ButtonAction::ToggleMedia,
         ActionKind::QuickSettings => ButtonAction::QuickSettings,
         ActionKind::ForceQuit => ButtonAction::ForceQuit,
+        ActionKind::GyroToggle => ButtonAction::GyroToggle,
+        ActionKind::GyroClutch => ButtonAction::GyroClutch,
+        ActionKind::GyroHold => ButtonAction::GyroHold,
+        ActionKind::GyroRecenter => ButtonAction::GyroRecenter,
         // Keep what was there as the first entry.
         ActionKind::Multiple => ButtonAction::Multi(wrappable.into_iter().collect()),
         ActionKind::Toggle => ButtonAction::toggle(wrappable.unwrap_or(ButtonAction::Keys(Vec::new()))),
@@ -377,20 +422,18 @@ pub(super) fn action_value<'a>(
     names: &Names,
 ) -> Element<'a, Message> {
     match action {
-        ButtonAction::Gamepad(b) => dropdown(Button::EVERY, Some(*b), move |b| {
-            on_change(ButtonAction::Gamepad(b))
-        })
-        .width(220)
-        .into(),
+        ButtonAction::Gamepad(b) => super::action_picker::pad_button(*b, names.glyphs, on_change),
+        ButtonAction::PadTrigger { trigger, amount } => super::pad_push::trigger_editor(*trigger, *amount, on_change),
+        ButtonAction::PadStick { stick, angle, amount } => super::pad_push::stick_editor(*stick, *angle, *amount, on_change),
         ButtonAction::Mouse(m) => dropdown(MouseButton::ALL, Some(*m), move |m| {
             on_change(ButtonAction::Mouse(m))
         })
-        .width(220)
+        .width(VALUE_WIDTH)
         .into(),
         ButtonAction::Wheel(d) => dropdown(WheelDirection::ALL, Some(*d), move |d| {
             on_change(ButtonAction::Wheel(d))
         })
-        .width(220)
+        .width(VALUE_WIDTH)
         .into(),
         ButtonAction::Keys(keys) => key_input(
             keys,
@@ -442,7 +485,7 @@ pub(super) fn action_value<'a>(
             let pick = {
                 let on_change = on_change.clone();
                 dropdown(names.macros.clone(), Some(name.clone()), move |n| on_change(ButtonAction::Macro { name: n, repeat }))
-                    .width(200)
+                    .width(VALUE_WIDTH)
             };
             let name = name.clone();
             let missing = !names.macros.contains(&name);
@@ -465,7 +508,14 @@ pub(super) fn action_value<'a>(
             }
             line.push(goto).into()
         }
-        ButtonAction::Disabled | ButtonAction::Screenshot | ButtonAction::ToggleRecording | ButtonAction::QuickSettings => space().into(),
+        ButtonAction::Disabled
+        | ButtonAction::Screenshot
+        | ButtonAction::ToggleRecording
+        | ButtonAction::QuickSettings
+        | ButtonAction::GyroToggle
+        | ButtonAction::GyroClutch
+        | ButtonAction::GyroHold
+        | ButtonAction::GyroRecenter => space().into(),
         ButtonAction::ToggleMedia => text("D-pad left and right seek, up and down change the volume, bumpers change track, A plays or pauses, B closes.").size(12).color(MUTED_COLOR).into(),
         ButtonAction::ForceQuit => {
             text("Hold for 2 seconds to close the program in the focused window. The desktop is never closed.")
@@ -485,7 +535,7 @@ pub(super) fn action_value<'a>(
             )
         }
         ButtonAction::ShowInfo(name) => {
-            let mut line = row![dropdown(names.infos.clone(), Some(name.clone()), move |n| on_change(ButtonAction::ShowInfo(n))).width(200)]
+            let mut line = row![dropdown(names.infos.clone(), Some(name.clone()), move |n| on_change(ButtonAction::ShowInfo(n))).width(VALUE_WIDTH)]
                 .spacing(8)
                 .align_y(Alignment::Center);
             if names.always_infos.contains(name) {
@@ -504,7 +554,7 @@ pub(super) fn action_value<'a>(
             )
         }
         ButtonAction::ShowLog(name) => {
-            let mut line = row![dropdown(names.logs.clone(), Some(name.clone()), move |n| on_change(ButtonAction::ShowLog(n))).width(200)]
+            let mut line = row![dropdown(names.logs.clone(), Some(name.clone()), move |n| on_change(ButtonAction::ShowLog(n))).width(VALUE_WIDTH)]
                 .spacing(8)
                 .align_y(Alignment::Center);
             if names.always_logs.contains(name) {
@@ -520,7 +570,7 @@ pub(super) fn action_value<'a>(
         ButtonAction::Layer(name) => {
             let mut options = names.layers.clone();
             options.push(NEW_LAYER.to_string());
-            let mut line = row![dropdown(options, Some(name.clone()), move |n| on_change(ButtonAction::Layer(n))).width(200)]
+            let mut line = row![dropdown(options, Some(name.clone()), move |n| on_change(ButtonAction::Layer(n))).width(VALUE_WIDTH)]
                 .spacing(8)
                 .align_y(Alignment::Center);
             if !names.layers.contains(name) {
@@ -531,7 +581,7 @@ pub(super) fn action_value<'a>(
         ButtonAction::Mode(name) => {
             let mut options = switchable_modes(names);
             options.push(NEW_MODE.to_string());
-            let mut line = row![dropdown(options, Some(name.clone()), move |n| on_change(ButtonAction::Mode(n))).width(200)]
+            let mut line = row![dropdown(options, Some(name.clone()), move |n| on_change(ButtonAction::Mode(n))).width(VALUE_WIDTH)]
                 .spacing(8)
                 .align_y(Alignment::Center);
             if !names.modes.contains(name) {
@@ -540,7 +590,7 @@ pub(super) fn action_value<'a>(
             line.push(goto_button(ItemKind::Mode, name, names.modes.contains(name))).into()
         }
         ButtonAction::OpenMenu(name) => {
-            let mut line = row![dropdown(names.menus.clone(), Some(name.clone()), move |n| on_change(ButtonAction::OpenMenu(n))).width(200)]
+            let mut line = row![dropdown(names.menus.clone(), Some(name.clone()), move |n| on_change(ButtonAction::OpenMenu(n))).width(VALUE_WIDTH)]
                 .spacing(8)
                 .align_y(Alignment::Center);
             if !names.menus.contains(name) {
@@ -611,6 +661,7 @@ mod tests {
             "Toggle Turbo Left click (12/s)"
         );
         assert_eq!(summarize(&ButtonAction::Macro { name: "QCF".into(), repeat: true }), "Macro “QCF” (repeat)");
-        assert_eq!(summarize(&ButtonAction::Gamepad(Button::RightStickRight)), "RS→");
+        assert_eq!(summarize(&ButtonAction::PadStick { stick: Stick::Right, angle: 90.0, amount: 0.5 }), "Right Stick right 50%");
+        assert_eq!(summarize(&ButtonAction::PadTrigger { trigger: Trigger::Left, amount: 1.0 }), "Left Trigger");
     }
 }

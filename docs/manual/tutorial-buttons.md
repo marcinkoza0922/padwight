@@ -6,13 +6,13 @@ You'll make A click, give B a second job on a long press, and switch a button in
 
 Each button has a row. Click its name to open it.
 
-![A (South) opened on the Buttons tab, showing its action dropdowns and the gesture buttons](../images/manual/buttons-row.png "An open button row.")
+![A (South) opened on the Buttons tab, showing its action buttons and the gesture buttons](../images/manual/buttons-row.png "An open button row.")
 
-1. The **Tap window** and **Long press after** sliders at the top set the timing for every button in the profile. Leave them for now.
-2. The **Press** dropdown is what a plain press does. Choose **Mouse button** and then **Left**: A now clicks.
-3. The rows of other buttons stay as they were. A closed row shows a one-line summary of its mapping.
+1. The **Press** button shows what a plain press does. Click it to open **Choose an action**, pick **Mouse button**, then choose **Left** in the dropdown beside it: A now clicks.
+2. The rows of other buttons stay as they were. A closed row shows the button's glyph, then what it does. Once any button has a gesture, each gesture gets a column of its own (**Double tap**, **Long press**…), so you can read all the long presses down one column. In the picture (2), X (West) types ; and has a long press. Rows still doing what the button itself does are dimmed.
+3. The **Tap window** and **Long press after** sliders under the list set the timing for every button in the profile. Leave them for now.
 
-The dropdown offers the gamepad buttons, **Keyboard** (a key, or a combination such as Left Ctrl + C), mouse buttons, the scroll wheel, **Several at once…**, **Toggle on / off…**, **Turbo…**, **Macro…**, **Open menu…**, **Hold layer…**, **Switch mode…** and the overlay actions. *Disabled* does nothing.
+**Choose an action** lists every kind in groups, each with a line on what it does: **Press** (Keyboard, Mouse button, Scroll wheel, Gamepad button, Disabled), **Change how it presses** (Toggle, Turbo, Several at once, Macro), **Open or switch** (menus, layers, modes, info and log overlays), **On-screen tools**, **Gyro** and **System**. The kind the action has now is highlighted; Cancel, or a click beside the dialog, leaves it as it was.
 
 ## 2. Give the same button a second job
 
@@ -28,7 +28,7 @@ A button with gestures answers a little later, because Padwight waits to see whe
 
 Games that want you to hold a button to crouch or run are easier with a toggle.
 
-1. Open the button's row and choose **Toggle on / off…** in the **Press** dropdown.
+1. Open the button's row, click its **Press** button and choose **Toggle on / off**.
 2. Pick the key or button to hold. The first press holds it down; the next press lets go.
 
 **Turbo…** does the opposite job: it presses the action over and over, 2 to 30 times a second, while you hold the button. Wrap a Turbo in a Toggle for auto-fire you can switch on and off.

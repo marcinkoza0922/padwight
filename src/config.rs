@@ -72,8 +72,8 @@ pub enum Button {
     DpadLeft,
     DpadRight,
     /// Virtual buttons: a stick pushed past its press threshold in one direction. They
-    /// work like any button (actions, gestures, combos), and as gamepad outputs they push
-    /// the virtual stick that way.
+    /// work like any button (actions, gestures, combos). They are inputs only; to push the
+    /// virtual stick, an action uses [`ButtonAction::PadStick`].
     LeftStickUp,
     LeftStickDown,
     LeftStickLeft,
@@ -256,12 +256,72 @@ impl fmt::Display for MouseButton {
     }
 }
 
+fn full_amount() -> f32 {
+    1.0
+}
+
+impl ButtonAction {
+    /// Where a `PadStick` push puts its stick (y positive is down), or `None` for other actions.
+    pub fn stick_push(&self) -> Option<(Stick, (f32, f32))> {
+        match self {
+            ButtonAction::PadStick { stick, angle, amount } => Some((*stick, stick_vector(*angle, *amount))),
+            _ => None,
+        }
+    }
+}
+
+/// The compass directions a stick push snaps to, clockwise from up: name and angle in degrees.
+pub const COMPASS: [(&str, f32); 8] = [
+    ("Up", 0.0),
+    ("Up-right", 45.0),
+    ("Right", 90.0),
+    ("Down-right", 135.0),
+    ("Down", 180.0),
+    ("Down-left", 225.0),
+    ("Left", 270.0),
+    ("Up-left", 315.0),
+];
+
+/// A push angle in words: its compass name if it is one of the eight, else degrees.
+pub fn angle_name(angle: f32) -> String {
+    let angle = angle.rem_euclid(360.0);
+    match COMPASS.iter().find(|(_, a)| (a - angle).abs() < 0.05) {
+        Some((name, _)) => name.to_lowercase(),
+        None => format!("{}°", angle.round()),
+    }
+}
+
+/// The stick position `amount` of the way toward `angle` degrees clockwise from up.
+pub fn stick_vector(angle: f32, amount: f32) -> (f32, f32) {
+    let (sin, cos) = angle.to_radians().sin_cos();
+    let amount = amount.clamp(0.0, 1.0);
+    // Rounding keeps the compass points exact: 90 degrees is (1, 0), not (1, 4e-8).
+    let exact = |v: f32| (v * 1e6).round() / 1e6;
+    (exact(sin * amount), exact(-cos * amount) + 0.0)
+}
+
 /// What a digital input produces. Keys are evdev names such as `KEY_A` or `KEY_LEFTCTRL`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ButtonAction {
     Disabled,
+    /// Presses a virtual-pad button (never a stick direction: see `PadStick`).
     Gamepad(Button),
+    /// Pulls a virtual-pad trigger `amount` of the way (0.0..=1.0) while held.
+    PadTrigger {
+        trigger: Trigger,
+        #[serde(default = "full_amount")]
+        amount: f32,
+    },
+    /// Pushes a virtual-pad stick `amount` of the way (0.0..=1.0) while held, toward `angle`
+    /// degrees clockwise from straight up (so 0 is up, 90 right, 180 down, 270 left).
+    PadStick {
+        stick: Stick,
+        #[serde(default)]
+        angle: f32,
+        #[serde(default = "full_amount")]
+        amount: f32,
+    },
     /// Pressed together, released together (e.g. `["KEY_LEFTCTRL", "KEY_C"]`).
     Keys(Vec<String>),
     Mouse(MouseButton),
@@ -306,6 +366,15 @@ pub enum ButtonAction {
     OpenMenu(String),
     /// While held, the game's layer named here applies on top of the active profile and mode.
     Layer(String),
+    /// Switches gyro off if it is on, or on if it is off.
+    GyroToggle,
+    /// Gyro is off while held: a clutch for repositioning the controller without moving the aim.
+    GyroClutch,
+    /// Gyro is on while held, even if it is switched off (see `start_off` in the gyro settings).
+    GyroHold,
+    /// Sets the controller's current tilt as straight ahead (steering and position modes) and
+    /// clears leftover motion.
+    GyroRecenter,
     /// Switches to the game's mode named here, which replaces whichever mode was on. Pressed
     /// while that mode is already on, it goes back to the default mode (no mode).
     Mode(String),
@@ -875,6 +944,17 @@ pub struct StickConfig {
     pub action: StickAction,
     /// Radial deadzone, 0.0..1.0.
     pub deadzone: f32,
+    /// The shape of the dead middle.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub deadzone_shape: DeadzoneShape,
+    /// The least output once the stick leaves the deadzone, 0.0..1.0: the jump past the deadzone
+    /// that makes up for a game's own deadzone.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub anti_deadzone: f32,
+    /// Extra travel past the deadzone over which the output holds at the anti-deadzone before it
+    /// starts to rise.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub anti_deadzone_buffer: f32,
     /// Response curve exponent for mouse/scroll (1.0 = linear).
     #[serde(default = "default_curve")]
     pub curve: f32,
@@ -882,8 +962,65 @@ pub struct StickConfig {
     /// buttons (e.g. `Button::LeftStickUp`) press.
     #[serde(default = "default_key_threshold")]
     pub key_threshold: f32,
+    /// Mirrors the stick left to right, before `rotate`.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub invert_x: bool,
+    /// Degrees clockwise the stick's output is turned: 90 makes pushing up act as pushing right.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub rotate: f32,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub zones: Vec<Zone>,
+}
+
+/// The shape of a stick's deadzone.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DeadzoneShape {
+    /// Dead within a circle around the center.
+    #[default]
+    Circle,
+    /// Dead within a square: both axes must pass the deadzone for the stick to count.
+    Square,
+    /// Each axis has its own deadzone, so a push along one axis stays clean of the other.
+    Cross,
+}
+
+impl DeadzoneShape {
+    pub const ALL: [DeadzoneShape; 3] = [DeadzoneShape::Circle, DeadzoneShape::Square, DeadzoneShape::Cross];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            DeadzoneShape::Circle => "Circle",
+            DeadzoneShape::Square => "Square",
+            DeadzoneShape::Cross => "Cross",
+        }
+    }
+}
+
+impl std::fmt::Display for DeadzoneShape {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+/// A stick's deadzone settings, as the engine applies them.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct Deadzone {
+    pub size: f32,
+    pub shape: DeadzoneShape,
+    pub anti: f32,
+    pub buffer: f32,
+}
+
+impl From<f32> for Deadzone {
+    /// A plain circular deadzone.
+    fn from(size: f32) -> Self {
+        Deadzone { size, shape: DeadzoneShape::Circle, anti: 0.0, buffer: 0.0 }
+    }
+}
+
+fn is_default<T: Default + PartialEq>(v: &T) -> bool {
+    *v == T::default()
 }
 
 fn default_curve() -> f32 {
@@ -911,8 +1048,12 @@ pub enum Analog {
 }
 
 impl StickConfig {
+    pub fn dead(&self) -> Deadzone {
+        Deadzone { size: self.deadzone, shape: self.deadzone_shape, anti: self.anti_deadzone, buffer: self.anti_deadzone_buffer }
+    }
+
     pub fn new(action: StickAction, deadzone: f32, curve: f32) -> Self {
-        StickConfig { action, deadzone, curve, key_threshold: default_key_threshold(), zones: Vec::new() }
+        StickConfig { action, deadzone, deadzone_shape: DeadzoneShape::Circle, anti_deadzone: 0.0, anti_deadzone_buffer: 0.0, curve, key_threshold: default_key_threshold(), invert_x: false, rotate: 0.0, zones: Vec::new() }
     }
 }
 

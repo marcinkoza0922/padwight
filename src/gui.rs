@@ -22,8 +22,8 @@ use iced::{
 
 use crate::{
     config::{
-        Analog, Appearance, Button, ButtonAction, CarouselControls, Cluster, Combo, Config, Feature, Game, GestureKind, GRID_MAX, GyroActivation,
-        CurrentInput, GyroConfig, GyroHorizontal, GyroInput, GyroMode, InfoOverlay, ItemKind, LogOverlay, Macro, MacroStep, Menu, MenuItem,
+        Analog, Appearance, Button, ButtonAction, CarouselControls, Cluster, Combo, Config, Feature, Game, GestureKind, GRID_MAX,
+        CurrentInput, GyroConfig, GyroHorizontal, GyroMode, InfoOverlay, ItemKind, LogOverlay, Macro, MacroStep, Menu, MenuItem,
         MenuKind, MenuKindTag, MouseButton, OverlayStyle, Paint, Profile, ProfileRef, Rule, RuleKind,
         ScreenPosition, Stick, StickAction, StickConfig, Toggled, TouchSlot, TouchpadConfig, Trigger, TriggerAction, WheelDirection, Template, Zone, free_name, unique_name, Motion, StickPreset,
     },
@@ -40,6 +40,7 @@ use crate::{
     style,
 };
 
+mod action_picker;
 mod actions;
 mod activity;
 mod chars;
@@ -80,6 +81,7 @@ pub(crate) mod shoot;
 mod settings;
 mod sound_picker;
 mod sounds;
+mod pad_push;
 mod sliders;
 mod sticks;
 mod style_editor;
@@ -227,6 +229,8 @@ struct App {
     /// The latest presses and what each did, streamed from the daemon.
     feeds: Option<Feeds>,
     picker: Option<KeyPicker>,
+    /// The dialog that picks an action's kind.
+    action_picker: Option<action_picker::ActionPicker>,
     token_picker: Option<TokenPicker>,
     sound_picker: Option<SoundPicker>,
     char_picker: Option<CharPicker>,
@@ -603,6 +607,10 @@ enum Message {
     /// The cell a grid's cursor starts on.
     SetMenuStart(usize, usize),
     OpenKeyPicker(KeyField, Vec<String>, bool),
+    OpenActionPicker(Box<action_picker::ActionPicker>),
+    CloseActionPicker,
+    /// A kind picked in the action dialog: closes it and sends what the pick sets.
+    PickAction(Box<Message>),
     AddPackFile(pack_files::FileKind),
     /// A file picked for setup `.0` (by name, `None` for General), whichever page is shown when
     /// the file dialog closes.
@@ -729,7 +737,7 @@ impl App {
             live: None,
             pad_shown: None,
             feeds: None,
-            picker: None, token_picker: None, sound_picker: None, char_picker: None, font_menu: None, motion_demo: MotionDemo::new(),
+            picker: None, action_picker: None, token_picker: None, sound_picker: None, char_picker: None, font_menu: None, motion_demo: MotionDemo::new(),
             dialog: None,
             profile_tab: ProfileTab::Buttons,
             guide_notes: iced::widget::text_editor::Content::new(),
@@ -905,9 +913,10 @@ impl App {
         &mut self.game_mut().info
     }
 
-    /// What the shown profile and items can refer to.
+    /// What the shown profile and items can refer to, and the glyphs of the controller games see.
     fn names(&self) -> Names {
-        Names::for_game(&self.config, self.game())
+        let swapped = self.profile().is_some_and(|p| self.swap_for(p).labels());
+        Names { glyphs: crate::info::Glyphs { family: self.glyph_family(), nintendo_layout: swapped }, ..Names::for_game(&self.config, self.game()) }
     }
 
     /// The profile the editor shows: the edited profile, or on the Layers tab, the layer over
@@ -1191,6 +1200,7 @@ impl App {
     fn go_to(&mut self, place: checks::Place) -> Task<Message> {
         self.dialog = None;
         self.picker = None;
+        self.action_picker = None;
         self.show_game(place.game);
         self.editing = place.profile;
         self.game_tab = GameTab::Profiles;
@@ -1224,6 +1234,7 @@ impl App {
             Message::Undo => {
                 // A popup edits what it was opened from, which undoing could move or remove under it.
                 let popup = self.picker.is_some()
+                    || self.action_picker.is_some()
                     || self.token_picker.is_some()
                     || self.sound_picker.is_some()
                     || self.char_picker.is_some()
@@ -1263,6 +1274,7 @@ impl App {
     /// comes up over whatever is open, and the window is brought to the front.
     fn ask_to_save(&mut self) -> Task<Message> {
         self.picker = None;
+        self.action_picker = None;
         self.token_picker = None;
         self.sound_picker = None;
         self.char_picker = None;
@@ -1332,6 +1344,8 @@ impl App {
         let base = row![self.view_sidebar(), rule::vertical(1), main];
         let popup = if let Some(picker) = &self.picker {
             Some(view_picker(picker))
+        } else if let Some(picker) = &self.action_picker {
+            Some(action_picker::view_action_picker(picker))
         } else if let Some(picker) = &self.token_picker {
             Some(self.view_token_picker(picker))
         } else if let Some(picker) = &self.sound_picker {

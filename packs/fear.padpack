@@ -166,7 +166,7 @@ text = "Lean"
 
 [[profiles]]
 name = "F.E.A.R. + Gyro"
-combos = []
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
 combo_window_ms = 120
 tap_window_ms = 250
 long_press_ms = 500
@@ -269,13 +269,13 @@ horizontal = "player_space"
 invert_x = false
 invert_y = false
 noise_threshold = 1.0
-activation = "always"
 
 [profiles.gyro.mode.mouse]
 sensitivity = 15.0
 
 [profiles.guide]
-notes = '''{start} (Escape) opens the game's menu and backs out of every screen in it.
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+{start} (Escape) opens the game's menu and backs out of every screen in it.
 Hold {lb} for the weapon and grenade ring, aiming with the right stick {rs}. Double tap {lb}, or pick Holster on the ring, to put the weapon away.
 {rb} is slow-mo.
 {l3} toggles crouch, and it stays on until you click it again.
@@ -310,7 +310,7 @@ text = "Lean"
 
 [[profiles]]
 name = "F.E.A.R. + Flick stick"
-combos = []
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
 combo_window_ms = 120
 tap_window_ms = 250
 long_press_ms = 500
@@ -419,13 +419,13 @@ horizontal = "player_space"
 invert_x = false
 invert_y = false
 noise_threshold = 1.0
-activation = "always"
 
 [profiles.gyro.mode.mouse]
 sensitivity = 22.0
 
 [profiles.guide]
-notes = '''{start} (Escape) opens the game's menu and backs out of every screen in it.
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+{start} (Escape) opens the game's menu and backs out of every screen in it.
 Hold {lb} for the weapon and grenade ring, aiming with the right stick {rs}. Double tap {lb}, or pick Holster on the ring, to put the weapon away.
 {rb} is slow-mo.
 {l3} toggles crouch, and it stays on until you click it again.

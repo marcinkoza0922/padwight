@@ -34,7 +34,7 @@ impl GyroModeKind {
         match self {
             GyroModeKind::Off => GyroMode::Off,
             GyroModeKind::Mouse => GyroMode::Mouse { sensitivity: 15.0 },
-            GyroModeKind::Stick => GyroMode::Stick { stick: Stick::Right, full_rate: 360.0, anti_deadzone: 0.15 },
+            GyroModeKind::Stick => GyroMode::Stick { stick: Stick::Right, full_rate: 360.0, anti_deadzone: 0.15, game_curve: 1.0 },
             GyroModeKind::Position => GyroMode::Position { stick: Stick::Right, max_angle: 30.0, anti_deadzone: 0.15, lock_at_edge: true },
             GyroModeKind::Steering => GyroMode::Steering { stick: Stick::Left, max_angle: 45.0 },
         }
@@ -49,25 +49,6 @@ impl fmt::Display for GyroModeKind {
             GyroModeKind::Stick => "Gamepad stick (turn speed)",
             GyroModeKind::Position => "Gamepad stick (turn position)",
             GyroModeKind::Steering => "Steering (tilt to steer)",
-        })
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) enum ActivationKind {
-    Always,
-    WhileHeld,
-    UnlessHeld,
-    Toggle,
-}
-
-impl fmt::Display for ActivationKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(match self {
-            ActivationKind::Always => "Always on",
-            ActivationKind::WhileHeld => "Only while held",
-            ActivationKind::UnlessHeld => "Off while held (clutch)",
-            ActivationKind::Toggle => "Toggle with",
         })
     }
 }
@@ -112,8 +93,8 @@ pub(super) fn gyro_editor<'a>(cfg: &'a GyroConfig, flick_turn: Option<f32>, open
 /// "Gyro", the mode, and the stick it sends (and Invert, for steering) on one line.
 fn header<'a>(cfg: &GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Message + Copy + 'a) -> Element<'a, Message> {
     let options = match cfg.mode {
-        GyroMode::Stick { stick, full_rate, anti_deadzone } => {
-            Vec::from(as_stick(stick, move |s| with(&|c| c.mode = GyroMode::Stick { stick: s, full_rate, anti_deadzone })))
+        GyroMode::Stick { stick, full_rate, anti_deadzone, game_curve } => {
+            Vec::from(as_stick(stick, move |s| with(&|c| c.mode = GyroMode::Stick { stick: s, full_rate, anti_deadzone, game_curve })))
         }
         GyroMode::Position { stick, max_angle, anti_deadzone, lock_at_edge } => {
             Vec::from(as_stick(stick, move |s| with(&|c| c.mode = GyroMode::Position { stick: s, max_angle, anti_deadzone, lock_at_edge })))
@@ -129,6 +110,7 @@ fn header<'a>(cfg: &GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Messa
 }
 
 /// How far the stick starts out, for the stick modes.
+const GAME_CURVE: &str = "The game's own stick response: 1 is linear, higher means small pushes turn slowly. Set it to the game's, and turning the controller turns the game's view by the same amount, as a mouse would.";
 const ANTI_DEADZONE: &str = "Starts the stick this far out, past the game's own stick deadzone, so small turns aren't lost.";
 
 /// The mode's own settings: sensitivity, or how far the stick is pushed.
@@ -161,11 +143,15 @@ fn mode_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(&
                 None => rows,
             }
         }
-        GyroMode::Stick { stick, full_rate, anti_deadzone } => rows
-            .push(box_row("Full tilt at", slider_editor(60.0..=720.0, full_rate, 10.0, "°/s turning", move |v| with(&|c| c.mode = GyroMode::Stick { stick, full_rate: v, anti_deadzone }))))
+        GyroMode::Stick { stick, full_rate, anti_deadzone, game_curve } => rows
+            .push(box_row("Full tilt at", slider_editor(60.0..=720.0, full_rate, 10.0, "°/s turning", move |v| with(&|c| c.mode = GyroMode::Stick { stick, full_rate: v, anti_deadzone, game_curve }))))
             .push(box_row(
                 "Anti-deadzone",
-                with_help(fraction_editor(0.0..=0.4, anti_deadzone, 0.01, "of a full push", move |v| with(&|c| c.mode = GyroMode::Stick { stick, full_rate, anti_deadzone: v })), ANTI_DEADZONE),
+                with_help(fraction_editor(0.0..=0.4, anti_deadzone, 0.01, "of a full push", move |v| with(&|c| c.mode = GyroMode::Stick { stick, full_rate, anti_deadzone: v, game_curve })), ANTI_DEADZONE),
+            ))
+            .push(box_row(
+                "Game's curve",
+                with_help(slider_editor(1.0..=3.0, game_curve, 0.1, "power", move |v| with(&|c| c.mode = GyroMode::Stick { stick, full_rate, anti_deadzone, game_curve: v })), GAME_CURVE),
             )),
         GyroMode::Position { stick, max_angle, anti_deadzone, lock_at_edge } => {
             let set = move |max_angle: f32, anti_deadzone: f32, lock_at_edge: bool| with(&|c| c.mode = GyroMode::Position { stick, max_angle, anti_deadzone, lock_at_edge });
@@ -222,46 +208,21 @@ fn curve_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(
         .push(sub_row("Shape", slider_editor(0.25..=4.0, curve.power, 0.05, "(1 = straight, more = slow for longer)", set(|c, v| c.power = v))))
 }
 
-/// When gyro is on: activation, recentering, pausing with a stick, and the toggle's rumble.
+/// Whether gyro starts on, the rumble of its on/off action, and pausing with a stick. Clutching,
+/// switching on and off and recentering are actions, set on the input that should do them.
 fn activation_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Message + Copy + 'a) -> Column<'a, Message> {
-    let (activation_kind, activation_input) = match cfg.activation {
-        GyroActivation::Always => (ActivationKind::Always, None),
-        GyroActivation::WhileHeld(i) => (ActivationKind::WhileHeld, Some(i)),
-        GyroActivation::UnlessHeld(i) => (ActivationKind::UnlessHeld, Some(i)),
-        GyroActivation::Toggle(i) => (ActivationKind::Toggle, Some(i)),
-    };
-    let activation = move |kind: ActivationKind, input: GyroInput| match kind {
-        ActivationKind::Always => GyroActivation::Always,
-        ActivationKind::WhileHeld => GyroActivation::WhileHeld(input),
-        ActivationKind::UnlessHeld => GyroActivation::UnlessHeld(input),
-        ActivationKind::Toggle => GyroActivation::Toggle(input),
-    };
-    let current_input = activation_input.unwrap_or(GyroInput::LeftTrigger);
-    let kinds = [ActivationKind::Always, ActivationKind::WhileHeld, ActivationKind::UnlessHeld, ActivationKind::Toggle];
-    let mut active_row = row![dropdown(kinds, Some(activation_kind), move |k| with(&|c| c.activation = activation(k, current_input))).width(SETTING_WIDTH)]
-        .spacing(10)
-        .align_y(Alignment::Center);
-    if activation_input.is_some() {
-        active_row = active_row.push(dropdown(GyroInput::all(), activation_input, move |i| with(&|c| c.activation = activation(activation_kind, i))).width(200));
-    }
-    if activation_kind == ActivationKind::Toggle {
-        active_row = active_row.push(checkbox(cfg.toggle_rumble).label("Rumble").on_toggle(move |v| with(&|c| c.toggle_rumble = v)));
-    }
-    let recenters = matches!(cfg.mode, GyroMode::Steering { .. } | GyroMode::Position { .. });
-    let mut recenter_choices = vec![Optional(None)];
-    recenter_choices.extend(GyroInput::all().into_iter().map(|i| Optional(Some(i))));
+    let starts = row![
+        checkbox(cfg.start_off).label("Starts switched off").on_toggle(move |v| with(&|c| c.start_off = v)),
+        checkbox(cfg.toggle_rumble).label("Rumble on gyro on / off").on_toggle(move |v| with(&|c| c.toggle_rumble = v)),
+        text("assign Gyro on / off, clutch, hold and recenter to any button, gesture, combo or menu item").size(12).color(MUTED_COLOR),
+    ]
+    .spacing(14)
+    .align_y(Alignment::Center);
     let pause_choices = [Optional(None), Optional(Some(Stick::Left)), Optional(Some(Stick::Right))];
     let hinted = |picker: Element<'a, Message>, hint: &'a str| -> Element<'a, Message> {
         row![picker, text(hint).size(12).color(MUTED_COLOR)].spacing(10).align_y(Alignment::Center).into()
     };
-    rows.push(box_row("Active", active_row.into()))
-        .push(box_row(
-            "Recenter with",
-            hinted(
-                dropdown(recenter_choices, Some(Optional(cfg.recenter)), move |r: Optional<GyroInput>| with(&|c| c.recenter = r.0)).width(SETTING_WIDTH).into(),
-                if recenters { "sets the current direction as straight" } else { "clears leftover motion" },
-            ),
-        ))
+    rows.push(box_row("Active", starts.into()))
         .push(box_row(
             "Pause while pushing",
             hinted(
@@ -347,7 +308,7 @@ mod tests {
                     axes,
                     curve,
                     full_turn_px: Some(7200.0),
-                    activation: GyroActivation::Toggle(GyroInput::LeftTrigger),
+                    start_off: true,
                     smoothing_threshold: 5.0,
                     pause_with_stick: Some(Stick::Right),
                     ..GyroConfig::default()

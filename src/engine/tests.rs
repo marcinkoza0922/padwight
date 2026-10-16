@@ -517,6 +517,60 @@ fn mouse_tick_moves_and_accumulates_subpixels() {
 }
 
 #[test]
+fn a_rotated_stick_pushed_up_moves_the_mouse_right() {
+    let mut p = Profile::desktop("d");
+    p.left_stick.rotate = 90.0;
+    let mut e = Engine::default();
+    run(&mut e, &p, InputEvent::Axis(Axis::LeftY, -1.0));
+    let mut out = Vec::new();
+    for _ in 0..250 {
+        e.tick(&p, 0.004, &mut out);
+    }
+    let (dx, dy) = out.iter().fold((0, 0), |(sx, sy), o| match o {
+        OutEvent::MouseMove(dx, dy) => (sx + dx, sy + dy),
+        _ => (sx, sy),
+    });
+    assert!(dx > 1000 && dy.abs() <= 1, "moved ({dx}, {dy})");
+}
+
+#[test]
+fn an_x_inverted_stick_pushed_right_moves_the_mouse_left() {
+    let mut p = Profile::desktop("d");
+    p.left_stick.invert_x = true;
+    let mut e = Engine::default();
+    run(&mut e, &p, InputEvent::Axis(Axis::LeftX, 1.0));
+    let mut out = Vec::new();
+    for _ in 0..250 {
+        e.tick(&p, 0.004, &mut out);
+    }
+    let dx: i32 = out.iter().map(|o| if let OutEvent::MouseMove(dx, _) = o { *dx } else { 0 }).sum();
+    assert!(dx < -1000, "moved {dx}px");
+}
+
+#[test]
+fn a_square_deadzone_is_dead_until_an_axis_passes_it() {
+    let sq = Deadzone { shape: DeadzoneShape::Square, ..0.2.into() };
+    assert_eq!(apply_deadzone(0.19, 0.19, sq), (0.0, 0.0));
+    let (x, y) = apply_deadzone(0.6, 0.1, sq);
+    assert!(x > 0.0 && y > 0.0);
+}
+
+#[test]
+fn a_cross_deadzone_cleans_each_axis_on_its_own() {
+    let cross = Deadzone { shape: DeadzoneShape::Cross, ..0.2.into() };
+    assert_eq!(apply_deadzone(0.8, 0.1, cross), ((0.8 - 0.2) / 0.8, 0.0));
+}
+
+#[test]
+fn the_anti_deadzone_jumps_the_output_and_the_buffer_holds_it() {
+    let dz = Deadzone { anti: 0.3, buffer: 0.1, ..0.1.into() };
+    assert_eq!(apply_deadzone(0.1, 0.0, dz), (0.0, 0.0));
+    assert!((apply_deadzone(0.15, 0.0, dz).0 - 0.3).abs() < 1e-5);
+    assert!((apply_deadzone(1.0, 0.0, dz).0 - 1.0).abs() < 1e-5);
+    assert!(apply_deadzone(0.6, 0.0, dz).0 > 0.3);
+}
+
+#[test]
 fn deadzone_is_radial_and_rescaled() {
     assert_eq!(apply_deadzone(0.05, 0.05, 0.1), (0.0, 0.0));
     let (x, _) = apply_deadzone(1.0, 0.0, 0.2);
@@ -1268,8 +1322,8 @@ fn bumper_plus_stick_direction_combo() {
 fn buttons_can_push_a_stick_direction() {
     let mut p = Profile::passthrough("p");
     p.left_stick.deadzone = 0.0;
-    p.set_button(Button::DpadRight, ButtonAction::Gamepad(Button::LeftStickRight));
-    p.set_button(Button::DpadUp, ButtonAction::Gamepad(Button::LeftStickUp));
+    p.set_button(Button::DpadRight, ButtonAction::PadStick { stick: Stick::Left, angle: 90.0, amount: 1.0 });
+    p.set_button(Button::DpadUp, ButtonAction::PadStick { stick: Stick::Left, angle: 0.0, amount: 1.0 });
     let mut e = Engine::default();
     let last_stick = |out: &[OutEvent]| -> (f32, f32) {
         let x = out.iter().rev().find_map(|ev| match ev { OutEvent::PadAxis(Axis::LeftX, v) => Some(*v), _ => None });
@@ -1286,6 +1340,41 @@ fn buttons_can_push_a_stick_direction() {
     // Pushing against the physical stick adds, limited to full deflection.
     axis(&mut e, &p, Axis::LeftX, 0.5);
     assert_eq!(last_stick(&run(&mut e, &p, InputEvent::Button(Button::DpadRight, true))), (1.0, 0.0));
+}
+
+#[test]
+fn stick_pushes_take_any_angle_and_amount() {
+    let mut p = Profile::passthrough("p");
+    p.left_stick.deadzone = 0.0;
+    // Halfway toward down-left (225 degrees clockwise from up).
+    p.set_button(Button::DpadLeft, ButtonAction::PadStick { stick: Stick::Left, angle: 225.0, amount: 0.5 });
+    let mut e = Engine::default();
+    let out = run(&mut e, &p, InputEvent::Button(Button::DpadLeft, true));
+    let at = |a: Axis| out.iter().rev().find_map(|ev| match ev { OutEvent::PadAxis(x, v) if *x == a => Some(*v), _ => None }).unwrap();
+    let d = 0.5 * std::f32::consts::FRAC_1_SQRT_2;
+    assert!((at(Axis::LeftX) + d).abs() < 1e-4 && (at(Axis::LeftY) - d).abs() < 1e-4);
+    let out = run(&mut e, &p, InputEvent::Button(Button::DpadLeft, false));
+    assert_eq!((at_last(&out, Axis::LeftX), at_last(&out, Axis::LeftY)), (0.0, 0.0));
+}
+
+fn at_last(out: &[OutEvent], a: Axis) -> f32 {
+    out.iter().rev().find_map(|ev| match ev { OutEvent::PadAxis(x, v) if *x == a => Some(*v), _ => None }).unwrap()
+}
+
+#[test]
+fn buttons_can_pull_a_trigger_part_of_the_way() {
+    let mut p = Profile::passthrough("p");
+    p.set_button(Button::South, ButtonAction::PadTrigger { trigger: Trigger::Right, amount: 0.4 });
+    p.set_button(Button::East, ButtonAction::PadTrigger { trigger: Trigger::Right, amount: 1.0 });
+    let mut e = Engine::default();
+    assert_eq!(run(&mut e, &p, InputEvent::Button(Button::South, true)), vec![OutEvent::PadAxis(Axis::RightTrigger, 0.4)]);
+    assert_eq!(run(&mut e, &p, InputEvent::Button(Button::East, true)), vec![OutEvent::PadAxis(Axis::RightTrigger, 1.0)]);
+    // Letting the deeper pull go falls back to the shallower one still held.
+    assert_eq!(run(&mut e, &p, InputEvent::Button(Button::East, false)), vec![OutEvent::PadAxis(Axis::RightTrigger, 0.4)]);
+    assert_eq!(run(&mut e, &p, InputEvent::Button(Button::South, false)), vec![OutEvent::PadAxis(Axis::RightTrigger, 0.0)]);
+    // The real trigger still feeds through, and the deeper of the two wins.
+    run(&mut e, &p, InputEvent::Button(Button::South, true));
+    assert_eq!(at_last(&axis(&mut e, &p, Axis::RightTrigger, 0.9), Axis::RightTrigger), 0.9);
 }
 
 #[test]

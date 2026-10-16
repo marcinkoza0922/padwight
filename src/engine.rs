@@ -8,6 +8,7 @@ use std::{
 };
 
 use crate::keycode::KeyCode;
+use crate::config::{Deadzone, DeadzoneShape};
 
 use crate::{
     config::{
@@ -184,8 +185,6 @@ pub struct Engine {
     /// Whether the face buttons send the letters on their Nintendo labels (see
     /// [`set_face_swap`](Self::set_face_swap)).
     face_swap: bool,
-    /// Physically held buttons, for gyro activation.
-    raw_buttons: HashSet<Button>,
     gyro: gyro::GyroState,
     /// What physical sticks currently send to each virtual-pad stick, so gyro can add to it.
     pad_sticks: HashMap<Stick, (f32, f32)>,
@@ -198,9 +197,12 @@ pub struct Engine {
     macro_sticks: HashMap<Stick, (f32, f32)>,
     /// Stick-direction virtual buttons currently pressed by stick movement.
     stick_buttons: HashSet<Button>,
-    /// Stick-direction gamepad outputs held by actions (reference counted), pushing the
-    /// virtual stick that way.
-    pushed_directions: HashMap<Button, u32>,
+    /// Stick pushes held by actions (one entry per hold), each moving the virtual stick.
+    pushed_sticks: Vec<(Stick, (f32, f32))>,
+    /// Trigger pulls held by actions (one entry per hold), each pulling the virtual trigger.
+    pushed_triggers: Vec<(Trigger, f32)>,
+    /// What each physical trigger last fed its virtual trigger.
+    trigger_fed: HashMap<Trigger, f32>,
     /// Set when a ToggleOverlay/ToggleNumpad action fires; the daemon takes it.
     overlay_toggled: Option<crate::keyboard::Layout>,
     /// Set when a Screenshot action fires; the daemon takes it.
@@ -231,11 +233,6 @@ pub struct Engine {
 type StateId = (Source, usize);
 
 impl Engine {
-    /// Forgets buttons let go while something else (an on-screen menu) had the controller.
-    pub fn forget_released(&mut self, down: &HashSet<Button>) {
-        self.raw_buttons.retain(|b| down.contains(b));
-    }
-
     /// Actions pressed since last taken, and the input behind each.
     pub fn take_fired(&mut self) -> Vec<(crate::inputlog::FiredFrom, ButtonAction)> {
         std::mem::take(&mut self.fired)
@@ -382,16 +379,8 @@ impl Engine {
 
     /// Processes one input.
     pub fn handle(&mut self, profile: &Profile, ev: InputEvent, now: Instant, out: &mut Vec<OutEvent>) {
-        let before = self.gyro_controls_held(&profile.gyro);
-        if let InputEvent::Button(b, pressed) = ev {
-            if pressed {
-                self.raw_buttons.insert(b);
-            } else {
-                self.raw_buttons.remove(&b);
-            }
-        }
         self.handle_mapped(profile, ev, now, out);
-        self.gyro_after_input(profile, before, out);
+        self.gyro_after_input(profile, out);
         // After the gyro edge checks above: the direction buttons run their own.
         if let InputEvent::Axis(axis, _) = ev
             && let Some(s) = axis_stick(axis)
@@ -405,7 +394,7 @@ impl Engine {
     /// get actions, gestures and combos.
     fn update_stick_buttons(&mut self, profile: &Profile, s: Stick, now: Instant, out: &mut Vec<OutEvent>) {
         let cfg = profile.stick(s);
-        let (x, y) = self.stick_pos(s, cfg.deadzone);
+        let (x, y) = self.stick_pos(s, cfg);
         let t = cfg.key_threshold;
         let [up, down, left, right] = Button::stick_directions(s);
         for (b, v) in [(up, -y), (down, y), (left, -x), (right, x)] {
@@ -681,22 +670,25 @@ impl Engine {
     fn emit(&mut self, src: &Source, action: &ButtonAction, pressed: bool, slot: usize, out: &mut Vec<OutEvent>) {
         match action {
             ButtonAction::Disabled => {}
-            ButtonAction::Gamepad(b) => match b.stick_direction() {
-                // A stick direction as output pushes the virtual stick while held.
-                Some((stick, _)) => {
-                    let count = self.pushed_directions.entry(*b).or_insert(0);
-                    if pressed {
-                        *count += 1;
-                    } else {
-                        *count = count.saturating_sub(1);
-                        if *count == 0 {
-                            self.pushed_directions.remove(b);
-                        }
-                    }
-                    self.emit_pad_stick(stick, out);
+            ButtonAction::Gamepad(b) => out.push(OutEvent::PadButton(*b, pressed)),
+            ButtonAction::PadStick { stick, .. } => {
+                let push = (*stick, action.stick_push().map_or((0.0, 0.0), |(_, v)| v));
+                if pressed {
+                    self.pushed_sticks.push(push);
+                } else if let Some(i) = self.pushed_sticks.iter().position(|p| *p == push) {
+                    self.pushed_sticks.remove(i);
                 }
-                None => out.push(OutEvent::PadButton(*b, pressed)),
-            },
+                self.emit_pad_stick(*stick, out);
+            }
+            ButtonAction::PadTrigger { trigger, amount } => {
+                let push = (*trigger, amount.clamp(0.0, 1.0));
+                if pressed {
+                    self.pushed_triggers.push(push);
+                } else if let Some(i) = self.pushed_triggers.iter().position(|p| *p == push) {
+                    self.pushed_triggers.remove(i);
+                }
+                self.emit_pad_trigger(*trigger, out);
+            }
             ButtonAction::Mouse(m) => out.push(OutEvent::MouseButton(*m, pressed)),
             // One notch right away; `tick_wheel` continues while held.
             ButtonAction::Wheel(d) => {
@@ -747,6 +739,22 @@ impl Engine {
             if pressed {
                 self.settings_requested = true;
                 self.close_guide_overlay();
+            }
+        }
+        ButtonAction::GyroToggle => self.gyro.toggle_pending |= pressed,
+        ButtonAction::GyroRecenter => self.gyro.recenter_pending |= pressed,
+        ButtonAction::GyroClutch => {
+            if pressed {
+                self.gyro.clutch_holds += 1;
+            } else {
+                self.gyro.clutch_holds = self.gyro.clutch_holds.saturating_sub(1);
+            }
+        }
+        ButtonAction::GyroHold => {
+            if pressed {
+                self.gyro.on_holds += 1;
+            } else {
+                self.gyro.on_holds = self.gyro.on_holds.saturating_sub(1);
             }
         }
         ButtonAction::ForceQuit => {
@@ -892,6 +900,14 @@ impl Engine {
         }
     }
 
+    /// Sends a virtual-pad trigger: the physical trigger fed to it, or the deepest pull an action
+    /// holds, whichever is further.
+    fn emit_pad_trigger(&self, t: Trigger, out: &mut Vec<OutEvent>) {
+        let fed = self.trigger_fed.get(&t).copied().unwrap_or(0.0);
+        let pulled = self.pushed_triggers.iter().filter(|(p, _)| *p == t).map(|(_, a)| *a).fold(0.0, f32::max);
+        out.push(OutEvent::PadAxis(trigger_axis(t), fed.max(pulled)));
+    }
+
     fn trigger(&mut self, profile: &Profile, t: Trigger, value: f32, out: &mut Vec<OutEvent>) {
         let action = profile.trigger(t);
         // A virtual trigger no longer fed (a layer changed this one's mode) goes back to rest.
@@ -903,7 +919,8 @@ impl Engine {
             && Some(old) != target
         {
             self.trigger_feeds.remove(&t);
-            out.push(OutEvent::PadAxis(trigger_axis(old), 0.0));
+            self.trigger_fed.remove(&old);
+            self.emit_pad_trigger(old, out);
         }
         let src = Source::Trigger(t);
         // A pull keeps its action until let go past where it pressed.
@@ -917,7 +934,8 @@ impl Engine {
             TriggerAction::Disabled => {}
             TriggerAction::Gamepad(target) => {
                 self.trigger_feeds.insert(t, *target);
-                out.push(OutEvent::PadAxis(trigger_axis(*target), value));
+                self.trigger_fed.insert(*target, value);
+                self.emit_pad_trigger(*target, out);
             }
             TriggerAction::Button { action, threshold } => {
                 if !self.trigger_release.contains_key(&t) && analog_pressed(value, *threshold, false, TRIGGER_HYSTERESIS) {
@@ -1162,14 +1180,41 @@ fn trigger_axis(t: Trigger) -> Axis {
     }
 }
 
-/// Radial deadzone, rescaled so output still spans the full 0..1 range.
-pub(crate) fn apply_deadzone(x: f32, y: f32, deadzone: f32) -> (f32, f32) {
+/// A deadzone of the given settings, rescaled so output still spans the full 0..1 range.
+pub(crate) fn apply_deadzone(x: f32, y: f32, dead: impl Into<Deadzone>) -> (f32, f32) {
+    let dz = dead.into();
+    match dz.shape {
+        DeadzoneShape::Circle => radial(x, y, dz, x.hypot(y)),
+        DeadzoneShape::Square => radial(x, y, dz, x.abs().max(y.abs())),
+        DeadzoneShape::Cross => (axis(x, dz), axis(y, dz)),
+    }
+}
+
+/// The output for a push of `reach` (0..1) past the deadzone: flat at the anti-deadzone through
+/// the buffer, then rising to full.
+fn dead_response(reach: f32, dz: Deadzone) -> f32 {
+    if reach <= dz.size {
+        return 0.0;
+    }
+    let start = (dz.size + dz.buffer).min(1.0);
+    let rise = ((reach - start) / (1.0 - start).max(f32::EPSILON)).clamp(0.0, 1.0);
+    dz.anti + (1.0 - dz.anti) * rise
+}
+
+/// A deadzone measured by `reach`, applied along the stick's direction.
+fn radial(x: f32, y: f32, dz: Deadzone, reach: f32) -> (f32, f32) {
     let mag = x.hypot(y);
-    if mag <= deadzone || mag == 0.0 {
+    if mag == 0.0 {
         return (0.0, 0.0);
     }
-    let scaled = ((mag - deadzone) / (1.0 - deadzone).max(f32::EPSILON)).min(1.0);
-    (x * scaled / mag, y * scaled / mag)
+    let out = dead_response(reach, dz);
+    // The output's size is measured the same way as the reach, so a square's corners reach 1.
+    let k = if reach == 0.0 { 0.0 } else { out / reach };
+    (x * k, y * k)
+}
+
+fn axis(v: f32, dz: Deadzone) -> f32 {
+    dead_response(v.abs(), dz).copysign(v)
 }
 
 /// Adds a delta to a sub-unit accumulator and returns the whole units ready to emit.

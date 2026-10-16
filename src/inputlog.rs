@@ -16,7 +16,7 @@ pub use view::{Inputs, LogCell, LogView, line_life, log_view, merged, next_chang
 pub use view::LogLine;
 
 use crate::{
-    config::{Button, ButtonAction, MouseButton, Stick, StickConfig, Trigger, TriggerAction, WheelDirection},
+    config::{Button, ButtonAction, Deadzone, MouseButton, Stick, StickConfig, Trigger, TriggerAction, WheelDirection},
     input::{Axis, InputEvent},
 };
 
@@ -145,14 +145,14 @@ enum Slot {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Thresholds {
     /// Per stick (left, right): deadzone and direction press threshold.
-    pub sticks: [(f32, f32); 2],
+    pub sticks: [(Deadzone, f32); 2],
     /// Per trigger (left, right): press threshold.
     pub triggers: [f32; 2],
 }
 
 impl Default for Thresholds {
     fn default() -> Self {
-        Thresholds { sticks: [(0.1, 0.5); 2], triggers: [0.5; 2] }
+        Thresholds { sticks: [(Deadzone::from(0.1), 0.5); 2], triggers: [0.5; 2] }
     }
 }
 
@@ -164,7 +164,7 @@ impl Thresholds {
             _ => 0.5,
         };
         Thresholds {
-            sticks: sticks.map(|s| (s.deadzone, s.key_threshold)),
+            sticks: sticks.map(|s| (s.dead(), s.key_threshold)),
             triggers: triggers.map(trigger),
         }
     }
@@ -385,7 +385,7 @@ impl InputLog {
         }
     }
 
-    fn stick(&mut self, stick: Stick, (deadzone, threshold): (f32, f32), now: Instant) -> bool {
+    fn stick(&mut self, stick: Stick, (deadzone, threshold): (Deadzone, f32), now: Instant) -> bool {
         let base = stick_index(stick) * 2;
         let (x, y) = crate::engine::apply_deadzone(self.axes[base], self.axes[base + 1], deadzone);
         let held = &mut self.sticks[stick_index(stick)];

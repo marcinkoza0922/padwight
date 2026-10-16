@@ -139,10 +139,6 @@ impl Daemon {
         }
         // The overlay window goes back to idle (it stays running for next time).
         self.broadcast_overlay();
-        for dev in self.devices.values_mut() {
-            let down = dev.view.buttons().collect();
-            dev.engine.forget_released(&down);
-        }
         self.resync_all();
         if let Some(overlay) = closing {
             self.overlay_sound(overlay, Some(sound::Feedback::Close));

@@ -29,11 +29,19 @@ pub(crate) fn steady_speed(mag: f32, curve: f32, outer_boost: f32) -> f32 {
 }
 
 impl Engine {
-    pub(super) fn stick_pos(&self, s: Stick, deadzone: f32) -> (f32, f32) {
+    /// The stick's position after its deadzone, X inversion and rotation.
+    pub(super) fn stick_pos(&self, s: Stick, cfg: &StickConfig) -> (f32, f32) {
         let (ax, ay) = stick_axes(s);
         let x = self.axes.get(&ax).copied().unwrap_or(0.0);
         let y = self.axes.get(&ay).copied().unwrap_or(0.0);
-        apply_deadzone(x, y, deadzone)
+        let (x, y) = apply_deadzone(x, y, cfg.dead());
+        let x = if cfg.invert_x { -x } else { x };
+        if cfg.rotate == 0.0 {
+            return (x, y);
+        }
+        // Y points down, so a positive angle turns clockwise on screen.
+        let (sin, cos) = cfg.rotate.to_radians().sin_cos();
+        (x * cos - y * sin, x * sin + y * cos)
     }
 
     /// A stick's settings as they apply now. While the Guide overlay is up the sticks move its
@@ -49,7 +57,7 @@ impl Engine {
 
     pub(super) fn stick(&mut self, profile: &Profile, s: Stick, out: &mut Vec<OutEvent>) {
         let cfg = &*self.stick_cfg(profile, s);
-        let (x, y) = self.stick_pos(s, cfg.deadzone);
+        let (x, y) = self.stick_pos(s, cfg);
         // A virtual stick no longer fed (a layer changed this stick's mode) recenters.
         let target = match &cfg.action {
             StickAction::Gamepad { stick, .. } => Some(*stick),
@@ -93,17 +101,12 @@ impl Engine {
         out.push(OutEvent::PadAxis(ay, y));
     }
 
-    /// Direction actions push a stick: one direction is full deflection, two make a
-    /// diagonal of the same length.
+    /// Push actions move a stick: one is its position, several add up, limited to the circle.
     pub(super) fn pushed(&self, target: Stick) -> (f32, f32) {
         let (mut x, mut y) = (0.0, 0.0);
-        for b in self.pushed_directions.keys() {
-            if let Some((s, (dx, dy))) = b.stick_direction()
-                && s == target
-            {
-                x += dx;
-                y += dy;
-            }
+        for (_, (dx, dy)) in self.pushed_sticks.iter().filter(|(s, _)| *s == target) {
+            x += dx;
+            y += dy;
         }
         let mag = f32::hypot(x, y);
         if mag > 1.0 { (x / mag, y / mag) } else { (x, y) }
@@ -116,9 +119,9 @@ impl Engine {
             let cfg = self.stick_cfg(profile, s);
             match cfg.action {
                 StickAction::Mouse { .. } | StickAction::Scroll { .. } => {
-                    self.stick_pos(s, cfg.deadzone) != (0.0, 0.0) || self.stick_smooth.contains_key(&s)
+                    self.stick_pos(s, &cfg) != (0.0, 0.0) || self.stick_smooth.contains_key(&s)
                 }
-                StickAction::Flick { .. } => self.flick_needs_tick(s, cfg.deadzone),
+                StickAction::Flick { .. } => self.flick_needs_tick(s, &cfg),
                 _ => false,
             }
         })
@@ -173,7 +176,7 @@ impl Engine {
                 StickAction::Mouse { response, .. } => *response,
                 _ => MouseResponse::default(),
             };
-            let raw = self.stick_pos(s, cfg.deadzone);
+            let raw = self.stick_pos(s, cfg);
             let (x, y) = self.smoothed_pos(s, raw, response.smoothing_ms, dt);
             let mag = x.hypot(y).min(1.0);
             if mag == 0.0 {
