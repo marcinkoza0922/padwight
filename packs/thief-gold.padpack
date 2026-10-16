@@ -164,7 +164,7 @@ text = "Previous / next item"
 
 [[profiles]]
 name = "Thief Gold + Gyro"
-combos = []
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
 combo_window_ms = 120
 tap_window_ms = 250
 long_press_ms = 500
@@ -273,13 +273,13 @@ horizontal = "player_space"
 invert_x = false
 invert_y = false
 noise_threshold = 1.0
-activation = "always"
 
 [profiles.gyro.mode.mouse]
 sensitivity = 30.0
 
 [profiles.guide]
-notes = '''A light push of the left stick {ls} creeps (Shift), a full push walks at full speed.
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+A light push of the left stick {ls} creeps (Shift), a full push walks at full speed.
 Hold {rt} to draw the bow and let go to loose the arrow; a sword or blackjack swings when {rt} is pulled.
 {south} frobs the world: opens doors, picks up loot and uses the item in hand on what you're looking at.
 Hold {lb} for the items (potions, lockpicks, flash bombs) and {rb} for the weapons and arrows, aiming with the right stick {rs}. Double tap either to put the item or weapon away.
@@ -316,7 +316,7 @@ text = "Previous / next item"
 
 [[profiles]]
 name = "Thief Gold + Flick stick"
-combos = []
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
 combo_window_ms = 120
 tap_window_ms = 250
 long_press_ms = 500
@@ -429,13 +429,13 @@ horizontal = "player_space"
 invert_x = false
 invert_y = false
 noise_threshold = 1.0
-activation = "always"
 
 [profiles.gyro.mode.mouse]
 sensitivity = 22.0
 
 [profiles.guide]
-notes = '''A light push of the left stick {ls} creeps (Shift), a full push walks at full speed.
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+A light push of the left stick {ls} creeps (Shift), a full push walks at full speed.
 Hold {rt} to draw the bow and let go to loose the arrow; a sword or blackjack swings when {rt} is pulled.
 {south} frobs the world: opens doors, picks up loot and uses the item in hand on what you're looking at.
 Hold {lb} for the items (potions, lockpicks, flash bombs) and {rb} for the weapons and arrows, aiming with the right stick {rs}. Double tap either to put the item or weapon away.

@@ -146,7 +146,6 @@ mode = "off"
 horizontal = "yaw"
 invert_x = false
 invert_y = false
-activation = "always"
 noise_threshold = 1.0
 [profiles.guide]
 notes = '''The right stick {rs} moves the cursor: {rt} selects (left click), and {lt} moves or targets (right click). The left stick {ls} scrolls the map.
@@ -185,7 +184,7 @@ text = "Assign group instead"
 
 [[profiles]]
 name = "Gameplay + Gyro"
-combos = []
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
 combo_window_ms = 120
 tap_window_ms = 250
 long_press_ms = 500
@@ -310,7 +309,6 @@ mouse = "Left"
 mode = "Menus"
 
 [profiles.gyro]
-activation = "always"
 horizontal = "yaw"
 invert_x = false
 invert_y = false
@@ -319,7 +317,8 @@ noise_threshold = 1.0
 [profiles.gyro.mode.mouse]
 sensitivity = 20.0
 [profiles.guide]
-notes = '''The right stick {rs} moves the cursor: {rt} selects (left click), and {lt} moves or targets (right click). The left stick {ls} scrolls the map.
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+The right stick {rs} moves the cursor: {rt} selects (left click), and {lt} moves or targets (right click). The left stick {ls} scrolls the map.
 Hold {lb} for the control groups: the face buttons and the {dpad} recall groups 1 to 8. Hold {rb} as well to assign the selection to the group instead.
 {rb} is Shift: hold it to queue orders or add to the selection. Click {l3} to select every unit of that type on screen (Ctrl + click).
 Click {r3} for the worker and unit commands, aimed with the right stick {rs}. Unit-specific keys (siege, cloak, burrow) aren't mapped: use the card in the game, or {guide} + {west} for the keyboard.

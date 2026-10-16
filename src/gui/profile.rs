@@ -294,7 +294,7 @@ fn tab_words(tab: ProfileTab) -> &'static [&'static str] {
             "triggers left trigger right trigger zones add zone walk modifier shift partial push range from",
         ],
         ProfileTab::Gyro => &[
-            "gyro motion aim mode off mouse stick steering flick sensitivity invert horizontal vertical axes turning response curve slow fast shape active always on only while held toggle rumble recenter pause pushing advanced jitter noise smoothing drift full tilt lock edge",
+            "gyro motion aim mode off mouse stick steering flick sensitivity invert horizontal vertical axes turning response curve slow fast shape start switched off rumble pause pushing advanced jitter noise smoothing drift full tilt lock edge",
         ],
         ProfileTab::Touchpad => &[
             "touchpad touch pad mouse stick menu swipe split left right half tap click two-finger scroll deadzone sensitivity response glide flick center finger speed",

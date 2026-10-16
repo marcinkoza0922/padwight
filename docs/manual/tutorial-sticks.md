@@ -59,5 +59,5 @@ Triggers are on this tab too. A trigger can pass its pull on as an analog value,
 ## Where next
 
 - [Sticks and triggers](sticks.md) for flick stick and scrolling.
-- [Game setup guidelines for shooters](../development/game-setup-guidelines.md#shooters) for the curve and deadzone values packs start from.
+- The game setup guidelines for shooters (in the repository's `docs/development`) list the curve and deadzone values packs start from.
 - [Gyro](tutorial-gyro.md) to add motion aiming on top of the right stick.

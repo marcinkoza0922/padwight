@@ -5,47 +5,7 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use super::{Button, SpeedCurve, Stick, is_one, is_zero};
-
-/// Something that can switch gyro on/off or recenter it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum GyroInput {
-    Button(Button),
-    /// Pulled past halfway.
-    LeftTrigger,
-    RightTrigger,
-}
-
-impl GyroInput {
-    pub fn all() -> Vec<GyroInput> {
-        let mut all: Vec<GyroInput> = Button::ALL.into_iter().map(GyroInput::Button).collect();
-        all.extend([GyroInput::LeftTrigger, GyroInput::RightTrigger]);
-        all
-    }
-}
-
-impl fmt::Display for GyroInput {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            GyroInput::Button(b) => write!(f, "{b}"),
-            GyroInput::LeftTrigger => f.write_str("Left Trigger"),
-            GyroInput::RightTrigger => f.write_str("Right Trigger"),
-        }
-    }
-}
-
-/// When gyro output is live.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum GyroActivation {
-    Always,
-    WhileHeld(GyroInput),
-    /// Off while held: a "clutch" for repositioning the controller without moving the aim.
-    UnlessHeld(GyroInput),
-    /// Each press switches gyro on or off.
-    Toggle(GyroInput),
-}
+use super::{SpeedCurve, Stick, is_one, is_zero};
 
 /// Which rotation drives horizontal aim. Pitch drives vertical, except in world space.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -199,10 +159,10 @@ pub struct GyroConfig {
     /// 1.0 turns the game as far as the controller turned.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub full_turn_px: Option<f32>,
-    pub activation: GyroActivation,
-    /// Sets the current tilt as straight ahead (Steering, Position) and clears accumulated motion.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub recenter: Option<GyroInput>,
+    /// Gyro is off until an action turns it on (Gyro on/off, or Gyro while held), instead of on
+    /// from the start. Clutching, toggling and recentering are actions, assigned to any input.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub start_off: bool,
     /// Rotation slower than this (degrees/second) is scaled down, hiding jitter and drift.
     pub noise_threshold: f32,
     /// Rotation slower than this (degrees/second) is smoothed over `smoothing_ms`, steadying
@@ -239,8 +199,7 @@ impl Default for GyroConfig {
             y_scale: 1.0,
             curve: SpeedCurve::default(),
             full_turn_px: None,
-            activation: GyroActivation::Always,
-            recenter: None,
+            start_off: false,
             noise_threshold: 1.0,
             smoothing_threshold: 0.0,
             smoothing_ms: default_smoothing_ms(),
@@ -277,11 +236,11 @@ mod tests {
 
     #[test]
     fn older_gyro_settings_still_load_and_new_defaults_stay_out_of_saves() {
-        let old = "horizontal = \"yaw\"\nactivation = \"always\"\nnoise_threshold = 1.0\n[mode.mouse]\nsensitivity = 15.0\n";
+        let old = "horizontal = \"yaw\"\nnoise_threshold = 1.0\n[mode.mouse]\nsensitivity = 15.0\n";
         let g: GyroConfig = toml::from_str(old).unwrap();
         assert_eq!(g, GyroConfig { mode: GyroMode::Mouse { sensitivity: 15.0 }, ..GyroConfig::default() });
         let saved = toml::to_string(&g).unwrap();
-        for new in ["axes", "x_scale", "curve", "full_turn_px", "smoothing", "pause_with_stick", "auto_calibrate", "toggle_rumble"] {
+        for new in ["axes", "x_scale", "curve", "full_turn_px", "smoothing", "pause_with_stick", "auto_calibrate", "toggle_rumble", "start_off"] {
             assert!(!saved.contains(new), "{new} in {saved}");
         }
     }

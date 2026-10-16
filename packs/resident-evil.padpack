@@ -102,7 +102,6 @@ mode = "off"
 horizontal = "yaw"
 invert_x = false
 invert_y = false
-activation = "always"
 noise_threshold = 1.0
 
 [profiles.guide]

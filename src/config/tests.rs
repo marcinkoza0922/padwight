@@ -203,7 +203,7 @@ fn templates() -> Vec<Profile> {
 fn gyro_templates_need_a_gyro() {
     let aim = Profile::gyro_aim("f");
     assert!(matches!(aim.gyro.mode, GyroMode::Mouse { .. }));
-    assert!(matches!(aim.gyro.activation, GyroActivation::UnlessHeld(_)));
+    assert!(matches!(aim.button(Button::LeftBumper), ButtonAction::Multi(list) if list.contains(&ButtonAction::GyroClutch)));
     assert!(!aim.usable_with(&[]) && aim.usable_with(&[Feature::Gyro]));
     let flick = Profile::flick_stick("g");
     assert!(matches!(flick.right_stick.action, StickAction::Flick { .. }));

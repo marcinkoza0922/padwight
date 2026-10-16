@@ -24,7 +24,14 @@ Gyro belongs to a profile. A good habit is to keep your plain profile and make a
 
 ## 4. Choose when it works
 
-Open **Active** (4). **Always on** is the simplest. For a clutch, pick **Off while held** and a button, as in the picture: hold Left Trigger to lift the controller and bring it back without the view turning. **Only while held** works the other way: gyro only while you hold the aim button. A toggle can give a short rumble when it switches.
+Gyro is on from the start. Tick **Starts switched off** if it should wait for you to turn it on. What switches it is an action, so you put it on whichever input suits you (a button, a gesture, a combo or a menu item) from the action list:
+
+- **Gyro clutch (off while held)**: hold it to lift the controller and bring it back without the view turning.
+- **Gyro on while held**: gyro only while you hold the aim button. Tick **Starts switched off** too.
+- **Gyro on / off**: each press switches gyro on or off. **Rumble on gyro on / off** gives a short buzz when it does.
+- **Recenter gyro**: counts the way the controller points now as straight ahead (steering and position modes), and clears leftover motion.
+
+Most games already use every button, so a combo or gesture is the way to add a clutch without taking one from the layout. Back paddles also suit, on controllers that have them, but a setup can't rely on them.
 
 **Pause while pushing** turns gyro off while you push a stick, so the stick and gyro don't fight.
 

@@ -286,7 +286,7 @@ fn the_built_in_modes_let_none_of_the_profile_s_sticks_triggers_gyro_or_touchpad
 fn mouse_mode_can_let_the_gyro_and_touchpad_move_the_pointer() {
     let mut p = Profile::passthrough("Aim");
     p.gyro.mode = GyroMode::Stick { stick: Stick::Right, full_rate: 300.0, anti_deadzone: 0.1, game_curve: 1.0 };
-    p.gyro.activation = GyroActivation::WhileHeld(GyroInput::Button(Button::LeftBumper));
+    p.gyro.start_off = true;
     p.gyro.full_turn_px = Some(4000.0);
     p.touchpad.motion = TouchpadMotion::Off;
     let config = Config { mouse_mode: MouseModeExtras { gyro: true, touchpad: true }, ..Config::default() };
@@ -294,7 +294,7 @@ fn mouse_mode_can_let_the_gyro_and_touchpad_move_the_pointer() {
     let mouse = config.mode_for(&game, MOUSE_MODE).unwrap();
     let on = p.with_layers([&*mouse]);
     assert_eq!(on.gyro.mode, GyroMode::Mouse { sensitivity: 15.0 }, "a gyro aiming a stick moves the pointer at the default speed");
-    assert_eq!((on.gyro.activation, on.gyro.full_turn_px), (p.gyro.activation, None), "it keeps how it's switched on");
+    assert_eq!((on.gyro.start_off, on.gyro.full_turn_px), (true, None), "it keeps whether it starts on");
     assert_eq!(on.touchpad, TouchpadConfig::default(), "the touchpad works as a laptop's");
     p.gyro.mode = GyroMode::Mouse { sensitivity: 8.0 };
     assert_eq!(p.with_layers([&*mouse]).gyro, p.gyro, "a gyro that already moves the pointer is kept as it is");

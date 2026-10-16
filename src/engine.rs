@@ -185,8 +185,6 @@ pub struct Engine {
     /// Whether the face buttons send the letters on their Nintendo labels (see
     /// [`set_face_swap`](Self::set_face_swap)).
     face_swap: bool,
-    /// Physically held buttons, for gyro activation.
-    raw_buttons: HashSet<Button>,
     gyro: gyro::GyroState,
     /// What physical sticks currently send to each virtual-pad stick, so gyro can add to it.
     pad_sticks: HashMap<Stick, (f32, f32)>,
@@ -232,11 +230,6 @@ pub struct Engine {
 type StateId = (Source, usize);
 
 impl Engine {
-    /// Forgets buttons let go while something else (an on-screen menu) had the controller.
-    pub fn forget_released(&mut self, down: &HashSet<Button>) {
-        self.raw_buttons.retain(|b| down.contains(b));
-    }
-
     /// Actions pressed since last taken, and the input behind each.
     pub fn take_fired(&mut self) -> Vec<(crate::inputlog::FiredFrom, ButtonAction)> {
         std::mem::take(&mut self.fired)
@@ -383,16 +376,8 @@ impl Engine {
 
     /// Processes one input.
     pub fn handle(&mut self, profile: &Profile, ev: InputEvent, now: Instant, out: &mut Vec<OutEvent>) {
-        let before = self.gyro_controls_held(&profile.gyro);
-        if let InputEvent::Button(b, pressed) = ev {
-            if pressed {
-                self.raw_buttons.insert(b);
-            } else {
-                self.raw_buttons.remove(&b);
-            }
-        }
         self.handle_mapped(profile, ev, now, out);
-        self.gyro_after_input(profile, before, out);
+        self.gyro_after_input(profile, out);
         // After the gyro edge checks above: the direction buttons run their own.
         if let InputEvent::Axis(axis, _) = ev
             && let Some(s) = axis_stick(axis)
@@ -748,6 +733,22 @@ impl Engine {
             if pressed {
                 self.settings_requested = true;
                 self.close_guide_overlay();
+            }
+        }
+        ButtonAction::GyroToggle => self.gyro.toggle_pending |= pressed,
+        ButtonAction::GyroRecenter => self.gyro.recenter_pending |= pressed,
+        ButtonAction::GyroClutch => {
+            if pressed {
+                self.gyro.clutch_holds += 1;
+            } else {
+                self.gyro.clutch_holds = self.gyro.clutch_holds.saturating_sub(1);
+            }
+        }
+        ButtonAction::GyroHold => {
+            if pressed {
+                self.gyro.on_holds += 1;
+            } else {
+                self.gyro.on_holds = self.gyro.on_holds.saturating_sub(1);
             }
         }
         ButtonAction::ForceQuit => {

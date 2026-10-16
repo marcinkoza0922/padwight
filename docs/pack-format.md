@@ -101,6 +101,7 @@ A button's value is an **action**. Each form is one TOML key:
 | `macro` | `macro = { name = "QCF", repeat = false }` | Plays a macro. `repeat = true` loops while held. |
 | `layer` | `layer = "Hotkeys"` | Holds a layer on while the input is held. Can't be inside `toggle`, or in a menu item. |
 | `mode` | `mode = "Driving"` | Switches to a mode, or back to the default mode if that mode is on. `"Mouse mode"` names the built-in mouse mode. |
+| `"gyro_toggle"`, `"gyro_clutch"`, `"gyro_hold"`, `"gyro_recenter"` | | Switch gyro on or off, turn it off while held, turn it on while held, or recenter it. |
 | `show_info` | `show_info = "Controls"` | Shows an info overlay while held. |
 | `show_log` | `show_log = "Inputs"` | Shows a log overlay while held. |
 | `open_menu` | `open_menu = "Belt"` | Opens a menu while held. |
@@ -196,7 +197,8 @@ smoothing_threshold = 8.0 # optional: rotation slower than this (degrees/second)
 smoothing_ms = 125        # optional: over this long
 pause_with_stick = "Right" # optional: gyro pauses while this stick is pushed
 auto_calibrate = false    # optional: re-measure drift whenever the controller is set down still
-toggle_rumble = false     # optional: a short rumble when a toggle switches gyro on or off
+toggle_rumble = false     # optional: a short rumble when the gyro on / off action switches it
+start_off = false         # optional: gyro waits for an action to turn it on
 
 [profiles.gyro.mode.mouse]          # or: "off", stick = {...}, position = {...}, steering = {...}
 sensitivity = 15.0                  # pixels per degree turned
@@ -207,21 +209,17 @@ fast_gain = 2.0                     # and from fast_speed
 slow_speed = 5.0                    # degrees/second
 fast_speed = 40.0
 power = 1.0                         # shape of the blend between: 1 is straight
-
-[profiles.gyro.activation.unless_held]
-button = "DpadUp"                   # or: "always", while_held, toggle
 ```
 
 - `mode`: `"off"`, `mouse = { sensitivity }`, `stick = { stick, full_rate, anti_deadzone, game_curve }` (rotation speed deflects a virtual stick; `game_curve`, default 1, is the exponent of the game's own stick response, which the deflection undoes so the game turns as fast as the controller does), `position = { stick, max_angle, anti_deadzone, lock_at_edge }` (how far the controller has turned deflects a virtual stick; `max_angle` degrees is full, and with `lock_at_edge` turning further is let go, so turning back leaves the edge at once), or `steering = { stick, max_angle }` (tilt steers a stick).
 - `horizontal`: which turning aims left and right. `player_space` and `world_space` use gravity, so turning left aims left however the controller is held; `world_space` also reads up and down against the horizon.
 - `full_turn_px` (optional, mouse mode): mouse pixels that turn the game a full circle. With it, `sensitivity` is real-world: 1.0 turns the game as far as the controller turned.
 - `curve`: the app's presets are Linear (no curve), Gentle, Aggressive, Wide, Extra wide, Precision and Turn boost.
-- `activation`: `"always"`, `while_held = { button = … }`, `unless_held = { button = … }` (a clutch: off while held), or `toggle = { button = … }`. The input can also be `left_trigger` or `right_trigger`, as in `while_held = "left_trigger"`.
-- `recenter` (optional): an input that sets the current direction as straight ahead (steering and position modes) and clears leftover motion.
+- `start_off` (optional): gyro starts switched off. What switches it is an action on any button, gesture, combo or menu item: `"gyro_toggle"` (on or off), `"gyro_hold"` (on while held), `"gyro_clutch"` (off while held) and `"gyro_recenter"` (sets the current direction as straight ahead in steering and position modes, and clears leftover motion). A trigger takes them as `action = "gyro_clutch"` inside its `button` action.
 
 The touchpad's mouse motion takes the same `curve`, with speeds in pad widths/second (`[profiles.touchpad.motion.mouse.curve]`). A finger's pad widths/second feel about like 40 times as many degrees/second of gyro.
 
-Everything in this section beyond `mode`, `horizontal`, the inverts, `noise_threshold`, `activation` and `recenter` is format 15; older app versions can't read packs that use the new modes or spaces.
+Everything in this section beyond `mode`, `horizontal`, the inverts, `noise_threshold` is format 15; older app versions can't read packs that use the new modes or spaces.
 
 ## Touchpad
 

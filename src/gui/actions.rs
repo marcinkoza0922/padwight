@@ -28,6 +28,10 @@ pub(super) enum ActionKind {
     Media,
     QuickSettings,
     ForceQuit,
+    GyroToggle,
+    GyroClutch,
+    GyroHold,
+    GyroRecenter,
     Toggle,
     Turbo,
     Macro,
@@ -54,6 +58,10 @@ impl fmt::Display for ActionKind {
             ActionKind::Media => "Media controls",
             ActionKind::QuickSettings => "Quick Settings menu",
             ActionKind::ForceQuit => "Force quit (hold)",
+            ActionKind::GyroToggle => "Gyro on / off",
+            ActionKind::GyroClutch => "Gyro clutch (off while held)",
+            ActionKind::GyroHold => "Gyro on while held",
+            ActionKind::GyroRecenter => "Recenter gyro",
             ActionKind::Toggle => "Toggle on / off…",
             ActionKind::Macro => "Macro…",
             ActionKind::Menu => "Open menu…",
@@ -68,7 +76,7 @@ impl fmt::Display for ActionKind {
 }
 
 /// Every kind, for a top-level action.
-pub(super) const ACTION_KINDS: [ActionKind; 21] = [
+pub(super) const ACTION_KINDS: [ActionKind; 25] = [
     ActionKind::Disabled,
     ActionKind::Gamepad,
     ActionKind::Keys,
@@ -81,6 +89,10 @@ pub(super) const ACTION_KINDS: [ActionKind; 21] = [
     ActionKind::Media,
     ActionKind::QuickSettings,
     ActionKind::ForceQuit,
+    ActionKind::GyroToggle,
+    ActionKind::GyroClutch,
+    ActionKind::GyroHold,
+    ActionKind::GyroRecenter,
     ActionKind::Toggle,
     ActionKind::Turbo,
     ActionKind::Macro,
@@ -117,6 +129,8 @@ pub(super) const MENU_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::Overlay,
     ActionKind::Numpad,
     ActionKind::Screenshot,
+    ActionKind::GyroToggle,
+    ActionKind::GyroRecenter,
     ActionKind::Toggle,
     ActionKind::Macro,
     ActionKind::Menu,
@@ -136,6 +150,8 @@ pub(super) const NO_SUBMENU_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::Overlay,
     ActionKind::Numpad,
     ActionKind::Screenshot,
+    ActionKind::GyroToggle,
+    ActionKind::GyroRecenter,
     ActionKind::Toggle,
     ActionKind::Macro,
     ActionKind::Mode,
@@ -228,6 +244,10 @@ pub(super) fn action_kind(action: &ButtonAction) -> ActionKind {
         ButtonAction::ToggleMedia => ActionKind::Media,
         ButtonAction::QuickSettings => ActionKind::QuickSettings,
         ButtonAction::ForceQuit => ActionKind::ForceQuit,
+        ButtonAction::GyroToggle => ActionKind::GyroToggle,
+        ButtonAction::GyroClutch => ActionKind::GyroClutch,
+        ButtonAction::GyroHold => ActionKind::GyroHold,
+        ButtonAction::GyroRecenter => ActionKind::GyroRecenter,
         ButtonAction::Multi(_) => ActionKind::Multiple,
         ButtonAction::Toggle(_) => ActionKind::Toggle,
         ButtonAction::Turbo { .. } => ActionKind::Turbo,
@@ -262,6 +282,10 @@ pub(super) fn new_action(k: ActionKind, default_button: Button, current: &Button
         ActionKind::Media => ButtonAction::ToggleMedia,
         ActionKind::QuickSettings => ButtonAction::QuickSettings,
         ActionKind::ForceQuit => ButtonAction::ForceQuit,
+        ActionKind::GyroToggle => ButtonAction::GyroToggle,
+        ActionKind::GyroClutch => ButtonAction::GyroClutch,
+        ActionKind::GyroHold => ButtonAction::GyroHold,
+        ActionKind::GyroRecenter => ButtonAction::GyroRecenter,
         // Keep what was there as the first entry.
         ActionKind::Multiple => ButtonAction::Multi(wrappable.into_iter().collect()),
         ActionKind::Toggle => ButtonAction::toggle(wrappable.unwrap_or(ButtonAction::Keys(Vec::new()))),
@@ -465,7 +489,14 @@ pub(super) fn action_value<'a>(
             }
             line.push(goto).into()
         }
-        ButtonAction::Disabled | ButtonAction::Screenshot | ButtonAction::ToggleRecording | ButtonAction::QuickSettings => space().into(),
+        ButtonAction::Disabled
+        | ButtonAction::Screenshot
+        | ButtonAction::ToggleRecording
+        | ButtonAction::QuickSettings
+        | ButtonAction::GyroToggle
+        | ButtonAction::GyroClutch
+        | ButtonAction::GyroHold
+        | ButtonAction::GyroRecenter => space().into(),
         ButtonAction::ToggleMedia => text("D-pad left and right seek, up and down change the volume, bumpers change track, A plays or pauses, B closes.").size(12).color(MUTED_COLOR).into(),
         ButtonAction::ForceQuit => {
             text("Hold for 2 seconds to close the program in the focused window. The desktop is never closed.")

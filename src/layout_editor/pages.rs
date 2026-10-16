@@ -14,11 +14,10 @@ use super::{
     feel, game, guide_page, infos, inputs, layers,
     style::{self, PaintOf, StyleAt},
     logs::{self, Tracked},
-    macros, menus,
+    gyro, macros, menus,
     owner::{Owner, Shift, layer, owner_name},
     rows::Row,
     sticks, top, touchpad, triggers,
-    gyro::{self, GyroPick},
 };
 
 /// Where the editor is. Each page's parent is the one it was opened from.
@@ -49,8 +48,6 @@ pub enum Page {
     Gyro(Owner),
     /// The touchpad, or its right half when it is split.
     Touch(Owner, TouchSide),
-    /// Picking the input that turns the gyro on or off, or recenters it.
-    GyroInput(Owner, GyroPick),
     /// The game's modes or layers, and one of them.
     Layers(Shift),
     Layer(Shift, usize),
@@ -140,7 +137,6 @@ fn input_rows(page: Page, cx: &Cx) -> Option<Vec<Row>> {
         Page::Zone(owner, a, i) => triggers::zone_rows(config, owner, a, i),
         Page::Gyro(owner) => gyro::gyro_rows(config, owner),
         Page::Touch(owner, side) => touchpad::touch_rows(config, owner, side),
-        Page::GyroInput(owner, pick) => gyro::input_rows(config, owner, pick),
         _ => return None,
     })
 }
@@ -221,7 +217,6 @@ fn input_title(page: Page, config: &Config) -> Option<String> {
         Page::Zone(owner, a, i) => in_owner(config, owner, &format!("{} zone {}", analog_name(a), i + 1)),
         Page::Gyro(owner) => in_owner(config, owner, "Gyro"),
         Page::Touch(owner, side) => in_owner(config, owner, if side == TouchSide::Left { "Touchpad" } else { "Touchpad · right half" }),
-        Page::GyroInput(owner, pick) => in_owner(config, owner, pick.title()),
         _ => return None,
     })
 }

@@ -1,31 +1,14 @@
 //! The gyro page of Edit Controls: its mode and the mode's settings, how turning is read, the
 //! response curve, when it's on, and the finer settings the settings window folds away.
 
-use crate::config::{Button, Config, CurvePreset, GyroActivation, GyroAxes, GyroConfig, GyroHorizontal, GyroInput, GyroMode, SpeedCurve, Stick};
+use crate::config::{Config, CurvePreset, GyroAxes, GyroConfig, GyroHorizontal, GyroMode, SpeedCurve, Stick};
 
 use super::{
     owner::{self, Owner, Part, gyro_mut},
-    pages::{Page, stick_name},
-    rows::{Act, Nav, Number, Row, cycle, set},
+    pages::stick_name,
+    rows::{Number, Row, cycle, set},
     triggers::{back_to_profile, override_rows},
 };
-
-/// Which input a picker on the gyro page sets.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GyroPick {
-    /// The input that holds, lets go of or toggles the gyro.
-    Activation,
-    Recenter,
-}
-
-impl GyroPick {
-    pub fn title(self) -> &'static str {
-        match self {
-            GyroPick::Activation => "Gyro · turned on with",
-            GyroPick::Recenter => "Gyro · recentered with",
-        }
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Mode {
@@ -71,46 +54,6 @@ impl Mode {
     }
 }
 
-/// When the gyro is on, without its input.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Active {
-    Always,
-    WhileHeld,
-    UnlessHeld,
-    Toggle,
-}
-
-const ACTIVES: [Active; 4] = [Active::Always, Active::WhileHeld, Active::UnlessHeld, Active::Toggle];
-
-impl Active {
-    fn of(a: GyroActivation) -> (Active, Option<GyroInput>) {
-        match a {
-            GyroActivation::Always => (Active::Always, None),
-            GyroActivation::WhileHeld(i) => (Active::WhileHeld, Some(i)),
-            GyroActivation::UnlessHeld(i) => (Active::UnlessHeld, Some(i)),
-            GyroActivation::Toggle(i) => (Active::Toggle, Some(i)),
-        }
-    }
-
-    fn name(self) -> &'static str {
-        match self {
-            Active::Always => "Always on",
-            Active::WhileHeld => "Only while held",
-            Active::UnlessHeld => "Off while held (clutch)",
-            Active::Toggle => "Toggled",
-        }
-    }
-
-    fn with(self, input: GyroInput) -> GyroActivation {
-        match self {
-            Active::Always => GyroActivation::Always,
-            Active::WhileHeld => GyroActivation::WhileHeld(input),
-            Active::UnlessHeld => GyroActivation::UnlessHeld(input),
-            Active::Toggle => GyroActivation::Toggle(input),
-        }
-    }
-}
-
 const REAL_SENSITIVITY: Number = Number::new(0.05, (0.1, 5.0), 2, "× real world");
 const SENSITIVITY: Number = Number::new(1.0, (2.0, 60.0), 0, " px per degree");
 const FULL_TURN: Number = Number::new(50.0, (500.0, 30_000.0), 0, " px");
@@ -136,15 +79,6 @@ fn num(owner: Owner, label: &str, value: f32, n: &Number, field: fn(&mut GyroCon
 
 fn switch(owner: Owner, label: &str, on: bool, field: fn(&mut GyroConfig, bool) -> bool) -> Row {
     Row::toggle(label, on, move |c, v| gyro_mut(c, owner).is_some_and(|g| field(g, v)))
-}
-
-/// The short name of a gyro input.
-fn input_name(i: GyroInput) -> &'static str {
-    match i {
-        GyroInput::Button(b) => b.short_name(),
-        GyroInput::LeftTrigger => "LT",
-        GyroInput::RightTrigger => "RT",
-    }
 }
 
 pub(super) fn gyro_rows(config: &Config, owner: Owner) -> Vec<Row> {
@@ -290,20 +224,13 @@ fn curve_rows(owner: Owner, curve: &SpeedCurve) -> Vec<Row> {
     rows
 }
 
-/// When gyro is on, recentering, and pausing with a stick.
+/// Whether gyro starts on, the rumble of its on/off action, and pausing with a stick. Clutching,
+/// switching on and off and recentering are actions, set on the input that should do them.
 fn activation_rows(owner: Owner, g: &GyroConfig) -> Vec<Row> {
-    let (active, input) = Active::of(g.activation);
-    let mut rows = vec![Row::step(format!("Active: {}", active.name()), move |c, dir| {
-        let next = cycle(&ACTIVES, active, dir).with(input.unwrap_or(GyroInput::LeftTrigger));
-        gyro_mut(c, owner).is_some_and(|g| set(&mut g.activation, next))
-    })];
-    if let Some(input) = input {
-        rows.push(Row::open(format!("With: {}", input_name(input)), Page::GyroInput(owner, GyroPick::Activation)));
-    }
-    if active == Active::Toggle {
-        rows.push(switch(owner, "Rumble on toggle", g.toggle_rumble, |g, on| set(&mut g.toggle_rumble, on)));
-    }
-    rows.push(Row::open(format!("Recenter with: {}", g.recenter.map_or("none", input_name)), Page::GyroInput(owner, GyroPick::Recenter)));
+    let mut rows = vec![
+        switch(owner, "Starts switched off", g.start_off, |g, on| set(&mut g.start_off, on)),
+        switch(owner, "Rumble on gyro on / off", g.toggle_rumble, |g, on| set(&mut g.toggle_rumble, on)),
+    ];
     let pause = g.pause_with_stick;
     let label = pause.map_or("no".into(), stick_name);
     rows.push(Row::step(format!("Pause while pushing: {label}"), move |c, dir| {
@@ -325,36 +252,4 @@ fn fine_rows(owner: Owner, g: &GyroConfig, steering: bool) -> Vec<Row> {
     }
     rows.push(switch(owner, "Re-measure drift when set down", g.auto_calibrate, |g, on| set(&mut g.auto_calibrate, on)));
     rows
-}
-
-/// The inputs a gyro picker offers: every button and both triggers (and none, to recenter).
-pub(super) fn input_rows(config: &Config, owner: Owner, pick: GyroPick) -> Vec<Row> {
-    let Some(g) = owner::gyro(config, owner) else { return Vec::new() };
-    let (active, _) = Active::of(g.activation);
-    let mut choices: Vec<Option<GyroInput>> = if pick == GyroPick::Recenter { vec![None] } else { Vec::new() };
-    choices.extend(GyroInput::all().into_iter().filter(|i| *i != GyroInput::Button(Button::Guide)).map(Some));
-    choices
-        .into_iter()
-        .map(|choice| {
-            let buttons = match choice {
-                Some(GyroInput::Button(b)) => vec![b],
-                _ => Vec::new(),
-            };
-            let label = match choice {
-                Some(GyroInput::Button(_)) => String::new(),
-                Some(i) => input_name(i).into(),
-                None => "None".into(),
-            };
-            Row::apply(label, move |c| {
-                let Some(g) = gyro_mut(c, owner) else { return Act::stay() };
-                let changed = match (pick, choice) {
-                    (GyroPick::Activation, Some(i)) => set(&mut g.activation, active.with(i)),
-                    (GyroPick::Recenter, r) => set(&mut g.recenter, r),
-                    (GyroPick::Activation, None) => false,
-                };
-                Act::changed_if(changed).then(Nav::Back(1))
-            })
-            .buttons(buttons)
-        })
-        .collect()
 }

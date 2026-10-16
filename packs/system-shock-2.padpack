@@ -114,8 +114,9 @@ accel = 0.5
 accel_ramp_ms = 350
 y_scale = 0.75
 
-[profiles.left_trigger]
-action = "disabled"
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = "gyro_clutch"
 
 [profiles.right_trigger.action.button]
 threshold = 0.3
@@ -252,8 +253,9 @@ accel = 0.5
 accel_ramp_ms = 350
 y_scale = 0.75
 
-[profiles.left_trigger]
-action = "disabled"
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = "gyro_clutch"
 
 [profiles.right_trigger.action.button]
 threshold = 0.3
@@ -264,7 +266,6 @@ horizontal = "player_space"
 invert_x = false
 invert_y = false
 noise_threshold = 1.0
-activation = { unless_held = "left_trigger" }
 
 [profiles.gyro.mode.mouse]
 sensitivity = 30.0
@@ -404,8 +405,9 @@ forward_deadzone = 0.0
 vertical = "off"
 vertical_speed = 1200.0
 
-[profiles.left_trigger]
-action = "disabled"
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = "gyro_clutch"
 
 [profiles.right_trigger.action.button]
 threshold = 0.3
@@ -416,7 +418,6 @@ horizontal = "player_space"
 invert_x = false
 invert_y = false
 noise_threshold = 1.0
-activation = { unless_held = "left_trigger" }
 
 [profiles.gyro.mode.mouse]
 sensitivity = 22.0

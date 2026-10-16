@@ -3,7 +3,7 @@ use super::action::{ActionAt, Slot};
 use super::owner::{self, Owner};
 
 mod game;
-use crate::config::{Analog, ButtonAction, GyroActivation, GyroInput, Profile, StickAction, Trigger};
+use crate::config::{Analog, ButtonAction, Profile, StickAction, Trigger};
 
 impl LayoutEditor {
     fn labels(&self, config: &Config) -> Vec<String> {
@@ -188,16 +188,14 @@ fn several_actions_at_once_are_built_part_by_part() {
 }
 
 #[test]
-fn gyro_activation_steps_through_its_kinds_and_takes_an_input() {
+fn gyro_can_start_switched_off() {
     let mut config = config();
     let mut editor = LayoutEditor::new();
     editor.pick("Gyro", &mut config);
     editor.step_row("Mode", 1, &mut config);
-    editor.step_row("Active", 1, &mut config);
-    assert_eq!(config.active().unwrap().gyro.activation, GyroActivation::WhileHeld(GyroInput::LeftTrigger));
-    editor.pick("With", &mut config);
-    editor.pick_button(Button::RightBumper, &mut config);
-    assert_eq!(config.active().unwrap().gyro.activation, GyroActivation::WhileHeld(GyroInput::Button(Button::RightBumper)));
+    assert!(!config.active().unwrap().gyro.start_off);
+    editor.pick("Starts switched off", &mut config);
+    assert!(config.active().unwrap().gyro.start_off);
 }
 
 #[test]

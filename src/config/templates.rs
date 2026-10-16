@@ -67,14 +67,10 @@ impl Profile {
             ]),
             left_stick,
             right_stick: StickConfig::new(StickAction::mouse(1600.0), 0.1, 2.0),
-            left_trigger: TriggerAction::Button { action: Mouse(MouseButton::Right), threshold: 0.3 }.into(),
+            left_trigger: TriggerAction::Button { action: Multi(vec![Mouse(MouseButton::Right), GyroHold]), threshold: 0.3 }.into(),
             right_trigger: TriggerAction::Button { action: Mouse(MouseButton::Left), threshold: 0.3 }.into(),
             // Gyro aiming while aiming down sights (LT), on pads that have a gyro.
-            gyro: GyroConfig {
-                mode: GyroMode::Mouse { sensitivity: 15.0 },
-                activation: GyroActivation::WhileHeld(GyroInput::LeftTrigger),
-                ..GyroConfig::default()
-            },
+            gyro: GyroConfig { mode: GyroMode::Mouse { sensitivity: 15.0 }, start_off: true, ..GyroConfig::default() },
             ..Profile::passthrough(name)
         }
     }
@@ -115,6 +111,14 @@ impl Profile {
         }
     }
 
+    /// Makes the gyro run all the time (not only while aiming down sights), with LB as a clutch
+    /// beside its own action.
+    fn always_on_with_clutch(&mut self) {
+        self.left_trigger = TriggerAction::Button { action: ButtonAction::Mouse(MouseButton::Right), threshold: 0.3 }.into();
+        let lb = self.button(Button::LeftBumper).clone();
+        self.set_button(Button::LeftBumper, ButtonAction::Multi(vec![lb, ButtonAction::GyroClutch]));
+    }
+
     /// PC action with gyro aiming: the gyro turns the view all the time, so it needs a gyro. LB
     /// is a clutch: hold it to reposition the controller without turning.
     pub fn gyro_aim(name: &str) -> Self {
@@ -122,9 +126,9 @@ impl Profile {
         p.requires = vec![Feature::Gyro];
         p.gyro = GyroConfig {
             mode: GyroMode::Mouse { sensitivity: 15.0 },
-            activation: GyroActivation::UnlessHeld(GyroInput::Button(Button::LeftBumper)),
             ..GyroConfig::default()
         };
+        p.always_on_with_clutch();
         p
     }
 
@@ -136,9 +140,9 @@ impl Profile {
         p.right_stick = StickConfig::new(StickAction::flick(), 0.1, 2.0);
         p.gyro = GyroConfig {
             mode: GyroMode::Mouse { sensitivity: 22.0 },
-            activation: GyroActivation::UnlessHeld(GyroInput::Button(Button::LeftBumper)),
             ..GyroConfig::default()
         };
+        p.always_on_with_clutch();
         p
     }
 

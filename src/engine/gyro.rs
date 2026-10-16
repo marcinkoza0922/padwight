@@ -5,8 +5,8 @@
 //! acceleration curve before the mode turns it into output.
 
 use crate::{
-    config::{GyroActivation, GyroConfig, GyroHorizontal, GyroInput, GyroMode, Profile, Stick},
-    input::{Axis, MotionSample},
+    config::{GyroConfig, GyroHorizontal, GyroMode, Profile, Stick},
+    input::MotionSample,
     ipc::GyroOut,
     output::OutEvent,
 };
@@ -32,8 +32,14 @@ const PAUSE_PUSH: f32 = 0.15;
 
 #[derive(Default)]
 pub(super) struct GyroState {
-    /// For `GyroActivation::Toggle`.
-    pub(super) toggled_on: bool,
+    /// Whether the gyro on/off actions have flipped gyro from how the profile starts it.
+    flipped: bool,
+    /// Inputs holding the clutch (gyro off) and the hold (gyro on) actions.
+    pub(super) clutch_holds: u32,
+    pub(super) on_holds: u32,
+    /// Set by the gyro actions, and acted on by [`Engine::gyro_apply_pending`].
+    pub(super) toggle_pending: bool,
+    pub(super) recenter_pending: bool,
     /// Virtual-pad stick the gyro is deflecting, and by how much.
     pub(super) stick: Option<(Stick, (f32, f32))>,
     pub(super) mouse_acc: (f32, f32),
@@ -172,7 +178,11 @@ impl GyroState {
     /// drift carry on.
     pub(super) fn reset(&mut self) {
         self.stick = None;
-        self.toggled_on = false;
+        self.flipped = false;
+        self.clutch_holds = 0;
+        self.on_holds = 0;
+        self.toggle_pending = false;
+        self.recenter_pending = false;
         self.aim = None;
         self.settle();
     }
@@ -233,51 +243,38 @@ impl Engine {
         }
     }
 
-    fn gyro_input_held(&self, input: GyroInput) -> bool {
-        let trigger = |axis| self.axes.get(&axis).copied().unwrap_or(0.0) > 0.5;
-        match input {
-            GyroInput::Button(b) => self.raw_buttons.contains(&b),
-            GyroInput::LeftTrigger => trigger(Axis::LeftTrigger),
-            GyroInput::RightTrigger => trigger(Axis::RightTrigger),
-        }
+    /// Whether gyro is switched on, before the clutch: how the profile starts it, flipped by the
+    /// on/off action, or held on.
+    fn gyro_enabled(&self, cfg: &GyroConfig) -> bool {
+        (cfg.start_off == self.gyro.flipped) || self.gyro.on_holds > 0
     }
 
-    /// (toggle input held, recenter input held), for edge detection around each event.
-    pub(super) fn gyro_controls_held(&self, cfg: &GyroConfig) -> (bool, bool) {
-        let toggle = match cfg.activation {
-            GyroActivation::Toggle(i) => self.gyro_input_held(i),
-            _ => false,
-        };
-        (toggle, cfg.recenter.is_some_and(|i| self.gyro_input_held(i)))
-    }
-
-    /// After an input: flips the toggle and recenters on a fresh press, and drops the gyro's
-    /// stick deflection once gyro is off.
-    pub(super) fn gyro_after_input(&mut self, profile: &Profile, before: (bool, bool), out: &mut Vec<OutEvent>) {
-        let cfg = &profile.gyro;
-        let after = self.gyro_controls_held(cfg);
-        if matches!(cfg.activation, GyroActivation::Toggle(_)) && after.0 && !before.0 {
-            self.gyro.toggled_on = !self.gyro.toggled_on;
+    /// Acts on what the gyro actions asked for since the last call: flips gyro on or off (with
+    /// rumble if asked for) and recenters.
+    pub(super) fn gyro_apply_pending(&mut self, cfg: &GyroConfig) {
+        if std::mem::take(&mut self.gyro.toggle_pending) {
+            self.gyro.flipped = !self.gyro.flipped;
             if cfg.toggle_rumble {
-                self.gyro.rumble = Some(self.gyro.toggled_on);
+                self.gyro.rumble = Some(cfg.start_off == self.gyro.flipped);
             }
         }
-        if after.1 && !before.1 {
+        if std::mem::take(&mut self.gyro.recenter_pending) {
             self.gyro.roll_center = self.gyro.roll.unwrap_or(0.0);
             self.gyro.settle();
         }
+    }
+
+    /// After an input: acts on the gyro actions, and drops the gyro's stick deflection once
+    /// gyro is off.
+    pub(super) fn gyro_after_input(&mut self, profile: &Profile, out: &mut Vec<OutEvent>) {
+        self.gyro_apply_pending(&profile.gyro);
         if !self.gyro_live(profile) {
             self.gyro_off(out);
         }
     }
 
     fn gyro_active(&self, cfg: &GyroConfig) -> bool {
-        match cfg.activation {
-            GyroActivation::Always => true,
-            GyroActivation::WhileHeld(i) => self.gyro_input_held(i),
-            GyroActivation::UnlessHeld(i) => !self.gyro_input_held(i),
-            GyroActivation::Toggle(_) => self.gyro.toggled_on,
-        }
+        self.gyro_enabled(cfg) && self.gyro.clutch_holds == 0
     }
 
     /// Whether the stick that pauses gyro is pushed.
@@ -314,6 +311,7 @@ impl Engine {
     /// Applies one motion-sensor sample (with calibration bias already removed).
     pub fn motion(&mut self, profile: &Profile, sample: MotionSample, out: &mut Vec<OutEvent>) {
         let cfg = &profile.gyro;
+        self.gyro_apply_pending(cfg);
         self.gyro.track_gravity(&sample);
         let rates = if cfg.auto_calibrate { self.gyro.calibrate(&sample) } else { sample.gyro };
         if !self.gyro_live(profile) {

@@ -306,6 +306,15 @@ pub enum ButtonAction {
     OpenMenu(String),
     /// While held, the game's layer named here applies on top of the active profile and mode.
     Layer(String),
+    /// Switches gyro off if it is on, or on if it is off.
+    GyroToggle,
+    /// Gyro is off while held: a clutch for repositioning the controller without moving the aim.
+    GyroClutch,
+    /// Gyro is on while held, even if it is switched off (see `start_off` in the gyro settings).
+    GyroHold,
+    /// Sets the controller's current tilt as straight ahead (steering and position modes) and
+    /// clears leftover motion.
+    GyroRecenter,
     /// Switches to the game's mode named here, which replaces whichever mode was on. Pressed
     /// while that mode is already on, it goes back to the default mode (no mode).
     Mode(String),
