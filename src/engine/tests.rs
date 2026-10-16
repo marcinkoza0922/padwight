@@ -1322,8 +1322,8 @@ fn bumper_plus_stick_direction_combo() {
 fn buttons_can_push_a_stick_direction() {
     let mut p = Profile::passthrough("p");
     p.left_stick.deadzone = 0.0;
-    p.set_button(Button::DpadRight, ButtonAction::Gamepad(Button::LeftStickRight));
-    p.set_button(Button::DpadUp, ButtonAction::Gamepad(Button::LeftStickUp));
+    p.set_button(Button::DpadRight, ButtonAction::PadStick { stick: Stick::Left, angle: 90.0, amount: 1.0 });
+    p.set_button(Button::DpadUp, ButtonAction::PadStick { stick: Stick::Left, angle: 0.0, amount: 1.0 });
     let mut e = Engine::default();
     let last_stick = |out: &[OutEvent]| -> (f32, f32) {
         let x = out.iter().rev().find_map(|ev| match ev { OutEvent::PadAxis(Axis::LeftX, v) => Some(*v), _ => None });
@@ -1340,6 +1340,41 @@ fn buttons_can_push_a_stick_direction() {
     // Pushing against the physical stick adds, limited to full deflection.
     axis(&mut e, &p, Axis::LeftX, 0.5);
     assert_eq!(last_stick(&run(&mut e, &p, InputEvent::Button(Button::DpadRight, true))), (1.0, 0.0));
+}
+
+#[test]
+fn stick_pushes_take_any_angle_and_amount() {
+    let mut p = Profile::passthrough("p");
+    p.left_stick.deadzone = 0.0;
+    // Halfway toward down-left (225 degrees clockwise from up).
+    p.set_button(Button::DpadLeft, ButtonAction::PadStick { stick: Stick::Left, angle: 225.0, amount: 0.5 });
+    let mut e = Engine::default();
+    let out = run(&mut e, &p, InputEvent::Button(Button::DpadLeft, true));
+    let at = |a: Axis| out.iter().rev().find_map(|ev| match ev { OutEvent::PadAxis(x, v) if *x == a => Some(*v), _ => None }).unwrap();
+    let d = 0.5 * std::f32::consts::FRAC_1_SQRT_2;
+    assert!((at(Axis::LeftX) + d).abs() < 1e-4 && (at(Axis::LeftY) - d).abs() < 1e-4);
+    let out = run(&mut e, &p, InputEvent::Button(Button::DpadLeft, false));
+    assert_eq!((at_last(&out, Axis::LeftX), at_last(&out, Axis::LeftY)), (0.0, 0.0));
+}
+
+fn at_last(out: &[OutEvent], a: Axis) -> f32 {
+    out.iter().rev().find_map(|ev| match ev { OutEvent::PadAxis(x, v) if *x == a => Some(*v), _ => None }).unwrap()
+}
+
+#[test]
+fn buttons_can_pull_a_trigger_part_of_the_way() {
+    let mut p = Profile::passthrough("p");
+    p.set_button(Button::South, ButtonAction::PadTrigger { trigger: Trigger::Right, amount: 0.4 });
+    p.set_button(Button::East, ButtonAction::PadTrigger { trigger: Trigger::Right, amount: 1.0 });
+    let mut e = Engine::default();
+    assert_eq!(run(&mut e, &p, InputEvent::Button(Button::South, true)), vec![OutEvent::PadAxis(Axis::RightTrigger, 0.4)]);
+    assert_eq!(run(&mut e, &p, InputEvent::Button(Button::East, true)), vec![OutEvent::PadAxis(Axis::RightTrigger, 1.0)]);
+    // Letting the deeper pull go falls back to the shallower one still held.
+    assert_eq!(run(&mut e, &p, InputEvent::Button(Button::East, false)), vec![OutEvent::PadAxis(Axis::RightTrigger, 0.4)]);
+    assert_eq!(run(&mut e, &p, InputEvent::Button(Button::South, false)), vec![OutEvent::PadAxis(Axis::RightTrigger, 0.0)]);
+    // The real trigger still feeds through, and the deeper of the two wins.
+    run(&mut e, &p, InputEvent::Button(Button::South, true));
+    assert_eq!(at_last(&axis(&mut e, &p, Axis::RightTrigger, 0.9), Axis::RightTrigger), 0.9);
 }
 
 #[test]

@@ -211,3 +211,17 @@ fn templates_roundtrip_through_toml() {
     let back: Config = toml::from_str(&toml::to_string_pretty(&config).unwrap()).unwrap();
     assert_eq!(config, back);
 }
+
+#[test]
+fn pad_pushes_read_as_full_unless_an_amount_is_given() {
+    let full: ButtonAction = toml::from_str::<std::collections::BTreeMap<String, ButtonAction>>("a = { pad_trigger = { trigger = \"Left\" } }\nb = { pad_stick = { stick = \"Right\", angle = 47.0 } }")
+        .unwrap()
+        .into_values()
+        .next()
+        .unwrap();
+    assert_eq!(full, ButtonAction::PadTrigger { trigger: Trigger::Left, amount: 1.0 });
+    let stick = ButtonAction::PadStick { stick: Stick::Right, angle: 47.0, amount: 0.5 };
+    let text = toml::to_string(&std::collections::BTreeMap::from([("x", stick.clone())])).unwrap();
+    assert_eq!(toml::from_str::<std::collections::BTreeMap<String, ButtonAction>>(&text).unwrap()["x"], stick);
+    assert_eq!(crate::config::stick_vector(90.0, 1.0), (1.0, 0.0));
+}

@@ -134,7 +134,7 @@ fn column_heads<'a>(columns: &[GestureKind], ui: &Ui) -> Option<Element<'a, Mess
 
 /// The action a button does when nothing remaps it: its own, or nothing for a paddle.
 fn usual(b: Button) -> ButtonAction {
-    if Button::PADDLES.contains(&b) { ButtonAction::Disabled } else { ButtonAction::Gamepad(b) }
+    if Button::PADDLES.contains(&b) || b.stick_direction().is_some() { ButtonAction::Disabled } else { ButtonAction::Gamepad(b) }
 }
 
 /// A row's name column: its glyph as the overlays draw it, then its name. `toggle` makes it a

@@ -101,17 +101,12 @@ impl Engine {
         out.push(OutEvent::PadAxis(ay, y));
     }
 
-    /// Direction actions push a stick: one direction is full deflection, two make a
-    /// diagonal of the same length.
+    /// Push actions move a stick: one is its position, several add up, limited to the circle.
     pub(super) fn pushed(&self, target: Stick) -> (f32, f32) {
         let (mut x, mut y) = (0.0, 0.0);
-        for b in self.pushed_directions.keys() {
-            if let Some((s, (dx, dy))) = b.stick_direction()
-                && s == target
-            {
-                x += dx;
-                y += dy;
-            }
+        for (_, (dx, dy)) in self.pushed_sticks.iter().filter(|(s, _)| *s == target) {
+            x += dx;
+            y += dy;
         }
         let mag = f32::hypot(x, y);
         if mag > 1.0 { (x / mag, y / mag) } else { (x, y) }

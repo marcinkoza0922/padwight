@@ -119,6 +119,11 @@ pub fn guide_text(pieces: &[Piece]) -> String {
         .collect()
 }
 
+/// " 50%" for a partial press, nothing for a full one.
+fn percent_suffix(amount: f32) -> String {
+    if amount >= 0.995 { String::new() } else { format!(" {}%", (amount * 100.0).round()) }
+}
+
 impl ButtonAction {
     /// One-line description, for collapsed rows, the controller drawing and the input log.
     pub fn summary(&self) -> String {
@@ -133,6 +138,15 @@ impl ButtonAction {
         })
     }
 
+    /// "Left Trigger 40%" or "Left Stick up-right 50%" for a trigger pull or stick push.
+    fn pad_push_text(&self) -> String {
+        match self {
+            ButtonAction::PadTrigger { trigger, amount } => format!("{trigger}{}", percent_suffix(*amount)),
+            ButtonAction::PadStick { stick, angle, amount } => format!("{stick} {}{}", super::angle_name(*angle), percent_suffix(*amount)),
+            _ => String::new(),
+        }
+    }
+
     /// The description in pieces (see [`Piece`]).
     pub fn pieces(&self) -> Vec<Piece> {
         let text = |s: &str| Piece::Text(s.to_string());
@@ -140,6 +154,7 @@ impl ButtonAction {
         match self {
             ButtonAction::Disabled => vec![text("Disabled")],
             ButtonAction::Gamepad(b) => vec![Piece::Pad(*b)],
+            ButtonAction::PadTrigger { .. } | ButtonAction::PadStick { .. } => vec![text(&self.pad_push_text())],
             ButtonAction::Keys(keys) if keys.is_empty() => vec![text("(no key)")],
             ButtonAction::Keys(keys) => keys.iter().enumerate().flat_map(|(i, k)| [text(if i > 0 { " + " } else { "" }), Piece::Key(k.clone())]).collect(),
             ButtonAction::Mouse(m) => vec![Piece::Mouse(*m)],

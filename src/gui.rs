@@ -80,6 +80,7 @@ pub(crate) mod shoot;
 mod settings;
 mod sound_picker;
 mod sounds;
+mod pad_push;
 mod sliders;
 mod sticks;
 mod style_editor;

@@ -72,8 +72,8 @@ pub enum Button {
     DpadLeft,
     DpadRight,
     /// Virtual buttons: a stick pushed past its press threshold in one direction. They
-    /// work like any button (actions, gestures, combos), and as gamepad outputs they push
-    /// the virtual stick that way.
+    /// work like any button (actions, gestures, combos). They are inputs only; to push the
+    /// virtual stick, an action uses [`ButtonAction::PadStick`].
     LeftStickUp,
     LeftStickDown,
     LeftStickLeft,
@@ -256,12 +256,72 @@ impl fmt::Display for MouseButton {
     }
 }
 
+fn full_amount() -> f32 {
+    1.0
+}
+
+impl ButtonAction {
+    /// Where a `PadStick` push puts its stick (y positive is down), or `None` for other actions.
+    pub fn stick_push(&self) -> Option<(Stick, (f32, f32))> {
+        match self {
+            ButtonAction::PadStick { stick, angle, amount } => Some((*stick, stick_vector(*angle, *amount))),
+            _ => None,
+        }
+    }
+}
+
+/// The compass directions a stick push snaps to, clockwise from up: name and angle in degrees.
+pub const COMPASS: [(&str, f32); 8] = [
+    ("Up", 0.0),
+    ("Up-right", 45.0),
+    ("Right", 90.0),
+    ("Down-right", 135.0),
+    ("Down", 180.0),
+    ("Down-left", 225.0),
+    ("Left", 270.0),
+    ("Up-left", 315.0),
+];
+
+/// A push angle in words: its compass name if it is one of the eight, else degrees.
+pub fn angle_name(angle: f32) -> String {
+    let angle = angle.rem_euclid(360.0);
+    match COMPASS.iter().find(|(_, a)| (a - angle).abs() < 0.05) {
+        Some((name, _)) => name.to_lowercase(),
+        None => format!("{}°", angle.round()),
+    }
+}
+
+/// The stick position `amount` of the way toward `angle` degrees clockwise from up.
+pub fn stick_vector(angle: f32, amount: f32) -> (f32, f32) {
+    let (sin, cos) = angle.to_radians().sin_cos();
+    let amount = amount.clamp(0.0, 1.0);
+    // Rounding keeps the compass points exact: 90 degrees is (1, 0), not (1, 4e-8).
+    let exact = |v: f32| (v * 1e6).round() / 1e6;
+    (exact(sin * amount), exact(-cos * amount) + 0.0)
+}
+
 /// What a digital input produces. Keys are evdev names such as `KEY_A` or `KEY_LEFTCTRL`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ButtonAction {
     Disabled,
+    /// Presses a virtual-pad button (never a stick direction: see `PadStick`).
     Gamepad(Button),
+    /// Pulls a virtual-pad trigger `amount` of the way (0.0..=1.0) while held.
+    PadTrigger {
+        trigger: Trigger,
+        #[serde(default = "full_amount")]
+        amount: f32,
+    },
+    /// Pushes a virtual-pad stick `amount` of the way (0.0..=1.0) while held, toward `angle`
+    /// degrees clockwise from straight up (so 0 is up, 90 right, 180 down, 270 left).
+    PadStick {
+        stick: Stick,
+        #[serde(default)]
+        angle: f32,
+        #[serde(default = "full_amount")]
+        amount: f32,
+    },
     /// Pressed together, released together (e.g. `["KEY_LEFTCTRL", "KEY_C"]`).
     Keys(Vec<String>),
     Mouse(MouseButton),

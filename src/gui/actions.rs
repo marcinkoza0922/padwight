@@ -18,6 +18,8 @@ pub(super) fn summarize(action: &ButtonAction) -> String {
 pub(super) enum ActionKind {
     Disabled,
     Gamepad,
+    PadTrigger,
+    PadStick,
     Keys,
     Mouse,
     Wheel,
@@ -48,6 +50,8 @@ impl fmt::Display for ActionKind {
         f.write_str(match self {
             ActionKind::Disabled => "Disabled",
             ActionKind::Gamepad => "Gamepad button",
+            ActionKind::PadTrigger => "Gamepad trigger",
+            ActionKind::PadStick => "Gamepad stick",
             ActionKind::Keys => "Keyboard",
             ActionKind::Mouse => "Mouse button",
             ActionKind::Wheel => "Scroll wheel",
@@ -76,9 +80,11 @@ impl fmt::Display for ActionKind {
 }
 
 /// Every kind, for a top-level action.
-pub(super) const ACTION_KINDS: [ActionKind; 25] = [
+pub(super) const ACTION_KINDS: [ActionKind; 27] = [
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
@@ -108,6 +114,8 @@ pub(super) const ACTION_KINDS: [ActionKind; 25] = [
 pub(super) const RADIAL_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
@@ -123,6 +131,8 @@ pub(super) const RADIAL_ITEM_KINDS: &[ActionKind] = &[
 pub(super) const MENU_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
@@ -144,6 +154,8 @@ pub(super) const MENU_ITEM_KINDS: &[ActionKind] = &[
 pub(super) const NO_SUBMENU_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
@@ -166,6 +178,8 @@ pub(super) const MACRO_STEP_KINDS: &[ActionKind] =
 pub(super) const MULTI_ENTRY_KINDS: &[ActionKind] = &[
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
@@ -176,6 +190,8 @@ pub(super) const MULTI_ENTRY_KINDS: &[ActionKind] = &[
 pub(super) const TOGGLE_INNER_KINDS: &[ActionKind] = &[
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
@@ -192,6 +208,8 @@ pub(super) const TOGGLE_INNER_KINDS: &[ActionKind] = &[
 pub(super) const TURBO_INNER_KINDS: &[ActionKind] = &[
     ActionKind::Disabled,
     ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
     ActionKind::Keys,
     ActionKind::Mouse,
     ActionKind::Wheel,
@@ -232,6 +250,8 @@ pub(super) fn action_kind(action: &ButtonAction) -> ActionKind {
     match action {
         ButtonAction::Disabled => ActionKind::Disabled,
         ButtonAction::Gamepad(_) => ActionKind::Gamepad,
+        ButtonAction::PadTrigger { .. } => ActionKind::PadTrigger,
+        ButtonAction::PadStick { .. } => ActionKind::PadStick,
         ButtonAction::Keys(_) => ActionKind::Keys,
         ButtonAction::Mouse(_) => ActionKind::Mouse,
         ButtonAction::Wheel(_) => ActionKind::Wheel,
@@ -262,14 +282,17 @@ pub(super) fn action_kind(action: &ButtonAction) -> ActionKind {
 pub(super) fn new_action(k: ActionKind, default_button: Button, current: &ButtonAction, names: &Names) -> ButtonAction {
     // When wrapping in Toggle/Turbo, keep a simple existing action as the thing wrapped.
     let wrappable = match current {
-        ButtonAction::Gamepad(_) | ButtonAction::Keys(_) | ButtonAction::Mouse(_) | ButtonAction::Wheel(_) => {
+        ButtonAction::Gamepad(_) | ButtonAction::PadTrigger { .. } | ButtonAction::PadStick { .. } | ButtonAction::Keys(_) | ButtonAction::Mouse(_) | ButtonAction::Wheel(_) => {
             Some(current.clone())
         }
         _ => None,
     };
     match k {
         ActionKind::Disabled => ButtonAction::Disabled,
-        ActionKind::Gamepad => ButtonAction::Gamepad(default_button),
+        // A stick direction isn't a button the pad can press, so those rows start on South.
+        ActionKind::Gamepad => ButtonAction::Gamepad(if default_button.stick_direction().is_some() { Button::South } else { default_button }),
+        ActionKind::PadTrigger => ButtonAction::PadTrigger { trigger: Trigger::Right, amount: 1.0 },
+        ActionKind::PadStick => ButtonAction::PadStick { stick: Stick::Left, angle: 0.0, amount: 1.0 },
         ActionKind::Keys => ButtonAction::Keys(Vec::new()),
         ActionKind::Mouse => ButtonAction::Mouse(MouseButton::Left),
         ActionKind::Wheel => ButtonAction::Wheel(WheelDirection::Up),
@@ -400,6 +423,8 @@ pub(super) fn action_value<'a>(
 ) -> Element<'a, Message> {
     match action {
         ButtonAction::Gamepad(b) => super::action_picker::pad_button(*b, names.glyphs, on_change),
+        ButtonAction::PadTrigger { trigger, amount } => super::pad_push::trigger_editor(*trigger, *amount, on_change),
+        ButtonAction::PadStick { stick, angle, amount } => super::pad_push::stick_editor(*stick, *angle, *amount, on_change),
         ButtonAction::Mouse(m) => dropdown(MouseButton::ALL, Some(*m), move |m| {
             on_change(ButtonAction::Mouse(m))
         })
@@ -636,6 +661,7 @@ mod tests {
             "Toggle Turbo Left click (12/s)"
         );
         assert_eq!(summarize(&ButtonAction::Macro { name: "QCF".into(), repeat: true }), "Macro “QCF” (repeat)");
-        assert_eq!(summarize(&ButtonAction::Gamepad(Button::RightStickRight)), "RS→");
+        assert_eq!(summarize(&ButtonAction::PadStick { stick: Stick::Right, angle: 90.0, amount: 0.5 }), "Right Stick right 50%");
+        assert_eq!(summarize(&ButtonAction::PadTrigger { trigger: Trigger::Left, amount: 1.0 }), "Left Trigger");
     }
 }

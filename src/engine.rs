@@ -197,9 +197,12 @@ pub struct Engine {
     macro_sticks: HashMap<Stick, (f32, f32)>,
     /// Stick-direction virtual buttons currently pressed by stick movement.
     stick_buttons: HashSet<Button>,
-    /// Stick-direction gamepad outputs held by actions (reference counted), pushing the
-    /// virtual stick that way.
-    pushed_directions: HashMap<Button, u32>,
+    /// Stick pushes held by actions (one entry per hold), each moving the virtual stick.
+    pushed_sticks: Vec<(Stick, (f32, f32))>,
+    /// Trigger pulls held by actions (one entry per hold), each pulling the virtual trigger.
+    pushed_triggers: Vec<(Trigger, f32)>,
+    /// What each physical trigger last fed its virtual trigger.
+    trigger_fed: HashMap<Trigger, f32>,
     /// Set when a ToggleOverlay/ToggleNumpad action fires; the daemon takes it.
     overlay_toggled: Option<crate::keyboard::Layout>,
     /// Set when a Screenshot action fires; the daemon takes it.
@@ -667,22 +670,25 @@ impl Engine {
     fn emit(&mut self, src: &Source, action: &ButtonAction, pressed: bool, slot: usize, out: &mut Vec<OutEvent>) {
         match action {
             ButtonAction::Disabled => {}
-            ButtonAction::Gamepad(b) => match b.stick_direction() {
-                // A stick direction as output pushes the virtual stick while held.
-                Some((stick, _)) => {
-                    let count = self.pushed_directions.entry(*b).or_insert(0);
-                    if pressed {
-                        *count += 1;
-                    } else {
-                        *count = count.saturating_sub(1);
-                        if *count == 0 {
-                            self.pushed_directions.remove(b);
-                        }
-                    }
-                    self.emit_pad_stick(stick, out);
+            ButtonAction::Gamepad(b) => out.push(OutEvent::PadButton(*b, pressed)),
+            ButtonAction::PadStick { stick, .. } => {
+                let push = (*stick, action.stick_push().map_or((0.0, 0.0), |(_, v)| v));
+                if pressed {
+                    self.pushed_sticks.push(push);
+                } else if let Some(i) = self.pushed_sticks.iter().position(|p| *p == push) {
+                    self.pushed_sticks.remove(i);
                 }
-                None => out.push(OutEvent::PadButton(*b, pressed)),
-            },
+                self.emit_pad_stick(*stick, out);
+            }
+            ButtonAction::PadTrigger { trigger, amount } => {
+                let push = (*trigger, amount.clamp(0.0, 1.0));
+                if pressed {
+                    self.pushed_triggers.push(push);
+                } else if let Some(i) = self.pushed_triggers.iter().position(|p| *p == push) {
+                    self.pushed_triggers.remove(i);
+                }
+                self.emit_pad_trigger(*trigger, out);
+            }
             ButtonAction::Mouse(m) => out.push(OutEvent::MouseButton(*m, pressed)),
             // One notch right away; `tick_wheel` continues while held.
             ButtonAction::Wheel(d) => {
@@ -894,6 +900,14 @@ impl Engine {
         }
     }
 
+    /// Sends a virtual-pad trigger: the physical trigger fed to it, or the deepest pull an action
+    /// holds, whichever is further.
+    fn emit_pad_trigger(&self, t: Trigger, out: &mut Vec<OutEvent>) {
+        let fed = self.trigger_fed.get(&t).copied().unwrap_or(0.0);
+        let pulled = self.pushed_triggers.iter().filter(|(p, _)| *p == t).map(|(_, a)| *a).fold(0.0, f32::max);
+        out.push(OutEvent::PadAxis(trigger_axis(t), fed.max(pulled)));
+    }
+
     fn trigger(&mut self, profile: &Profile, t: Trigger, value: f32, out: &mut Vec<OutEvent>) {
         let action = profile.trigger(t);
         // A virtual trigger no longer fed (a layer changed this one's mode) goes back to rest.
@@ -905,7 +919,8 @@ impl Engine {
             && Some(old) != target
         {
             self.trigger_feeds.remove(&t);
-            out.push(OutEvent::PadAxis(trigger_axis(old), 0.0));
+            self.trigger_fed.remove(&old);
+            self.emit_pad_trigger(old, out);
         }
         let src = Source::Trigger(t);
         // A pull keeps its action until let go past where it pressed.
@@ -919,7 +934,8 @@ impl Engine {
             TriggerAction::Disabled => {}
             TriggerAction::Gamepad(target) => {
                 self.trigger_feeds.insert(t, *target);
-                out.push(OutEvent::PadAxis(trigger_axis(*target), value));
+                self.trigger_fed.insert(*target, value);
+                self.emit_pad_trigger(*target, out);
             }
             TriggerAction::Button { action, threshold } => {
                 if !self.trigger_release.contains_key(&t) && analog_pressed(value, *threshold, false, TRIGGER_HYSTERESIS) {

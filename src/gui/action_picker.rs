@@ -11,7 +11,7 @@ use crate::{config::Keyword, info::Glyphs, keyword_icon};
 /// The kinds in the dialog, by group. Each place's own list (`ACTION_KINDS`, a menu item's…) picks
 /// from these, and groups it has nothing of are left out.
 const GROUPS: [(&str, &[ActionKind]); 6] = [
-    ("Press", &[ActionKind::Keys, ActionKind::Mouse, ActionKind::Wheel, ActionKind::Gamepad, ActionKind::Disabled]),
+    ("Press", &[ActionKind::Keys, ActionKind::Mouse, ActionKind::Wheel, ActionKind::Gamepad, ActionKind::PadTrigger, ActionKind::PadStick, ActionKind::Disabled]),
     ("Change how it presses", &[ActionKind::Toggle, ActionKind::Turbo, ActionKind::Multiple, ActionKind::Macro]),
     ("Open or switch", &[ActionKind::Menu, ActionKind::Layer, ActionKind::Mode, ActionKind::Info, ActionKind::Log]),
     ("On-screen tools", &[ActionKind::Overlay, ActionKind::Numpad, ActionKind::QuickSettings, ActionKind::Media]),
@@ -20,14 +20,12 @@ const GROUPS: [(&str, &[ActionKind]); 6] = [
 ];
 
 /// The controller buttons a "Gamepad button" action can press, by group: every one of
-/// `Button::EVERY`.
-const PAD_GROUPS: [(&str, &[Button]); 6] = [
+/// `Button::EVERY` but the stick directions, which a "Gamepad stick" action pushes instead.
+const PAD_GROUPS: [(&str, &[Button]); 4] = [
     ("Face buttons", &[Button::South, Button::East, Button::West, Button::North]),
     ("Bumpers and center", &[Button::LeftBumper, Button::RightBumper, Button::Select, Button::Start, Button::Guide]),
     ("Stick clicks", &[Button::LeftStick, Button::RightStick]),
     ("D-pad", &[Button::DpadUp, Button::DpadDown, Button::DpadLeft, Button::DpadRight]),
-    ("Left stick", &[Button::LeftStickUp, Button::LeftStickDown, Button::LeftStickLeft, Button::LeftStickRight]),
-    ("Right stick", &[Button::RightStickUp, Button::RightStickDown, Button::RightStickLeft, Button::RightStickRight]),
 ];
 
 /// A kind's tile width, so the tiles of every group line up in three columns.
@@ -82,7 +80,7 @@ impl ActionPicker {
     }
 
     /// Groups the place offers nothing of are left out.
-    fn new(title: &'static str, glyphs: Glyphs, groups: [(&'static str, Vec<Choice>); 6]) -> Self {
+    fn new(title: &'static str, glyphs: Glyphs, groups: impl IntoIterator<Item = (&'static str, Vec<Choice>)>) -> Self {
         Self { title, glyphs, groups: groups.into_iter().filter(|(_, c)| !c.is_empty()).collect() }
     }
 
@@ -149,7 +147,9 @@ impl ActionKind {
             ActionKind::Keys => "A key, or a chord like Ctrl + C.",
             ActionKind::Mouse => "A mouse button.",
             ActionKind::Wheel => "One notch of the scroll wheel.",
-            ActionKind::Gamepad => "A controller button, stick direction or the like.",
+            ActionKind::Gamepad => "A controller button.",
+            ActionKind::PadTrigger => "Pulls a trigger, all the way or part of the way.",
+            ActionKind::PadStick => "Pushes a stick toward any direction, by how much you choose.",
             ActionKind::Disabled => "Nothing at all.",
             ActionKind::Toggle => "Turns another action on or off with each press.",
             ActionKind::Turbo => "Repeats another action quickly while held.",
@@ -206,6 +206,8 @@ fn plain_icon(k: ActionKind) -> String {
         ActionKind::Mouse => "<rect x='6' y='3' width='12' height='18' rx='6'/><path d='M12 3v7'/>",
         ActionKind::Wheel => "<path d='M12 4v16M8 8l4-4 4 4M8 16l4 4 4-4'/>",
         ActionKind::Gamepad => "<path d='M7 7h10a5 5 0 0 1 5 5v1.5a3 3 0 0 1-5.6 1.5L15 13H9l-1.4 2A3 3 0 0 1 2 13.5V12a5 5 0 0 1 5-5Z'/><path d='M7 9.5v3M5.5 11h3M16 10h.01M18 12h.01'/>",
+        ActionKind::PadTrigger => "<path d='M7 3h10v6a5 5 0 0 1-10 0Z'/><path d='M12 9v5M9 21h6'/>",
+        ActionKind::PadStick => "<circle cx='12' cy='12' r='9'/><circle cx='15' cy='9' r='3' fill='#8a8f98'/><path d='M12 12l3-3'/>",
         ActionKind::Disabled => "<circle cx='12' cy='12' r='8.5'/><path d='M6 18 18 6'/>",
         ActionKind::Numpad => "<path d='M6 6h.01M12 6h.01M18 6h.01M6 12h.01M12 12h.01M18 12h.01M6 18h.01M12 18h.01M18 18h.01' stroke-width='3.5'/>",
         ActionKind::QuickSettings => "<path d='M4 7h16M4 17h16'/><circle cx='9' cy='7' r='2.2' fill='#8a8f98'/><circle cx='15' cy='17' r='2.2' fill='#8a8f98'/>",
@@ -362,8 +364,8 @@ mod tests {
     fn the_pad_dialog_offers_every_output_button_once() {
         let picker = ActionPicker::pad_for_target(Target::Button(Button::South), Button::East, Glyphs::default());
         let offered: Vec<Button> = picker.groups.iter().flat_map(|(_, c)| c).filter_map(|c| match c.face { Face::Pad(b) => Some(b), Face::Kind(_) => None }).collect();
-        assert_eq!(offered.len(), Button::EVERY.len());
-        assert!(Button::EVERY.iter().all(|b| offered.contains(b)));
+        assert_eq!(offered.len(), Button::ALL.len());
+        assert!(Button::ALL.iter().all(|b| offered.contains(b)));
         let current: Vec<Face> = picker.groups.iter().flat_map(|(_, c)| c).filter(|c| c.current).map(|c| c.face).collect();
         assert_eq!(current, [Face::Pad(Button::East)]);
     }
@@ -383,7 +385,7 @@ mod tests {
     fn picking_a_pad_button_sets_it() {
         let mut app = app();
         let picker = ActionPicker::pad_for_target(Target::Button(Button::North), Button::South, Glyphs::default());
-        let _ = app.update(picker.pick(Face::Pad(Button::RightStickLeft)).unwrap().clone());
-        assert_eq!(app.profile().unwrap().button(Button::North), &ButtonAction::Gamepad(Button::RightStickLeft));
+        let _ = app.update(picker.pick(Face::Pad(Button::DpadLeft)).unwrap().clone());
+        assert_eq!(app.profile().unwrap().button(Button::North), &ButtonAction::Gamepad(Button::DpadLeft));
     }
 }
