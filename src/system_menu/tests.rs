@@ -1,5 +1,5 @@
 use super::*;
-use crate::config::{MouseResponse, Stick, StickAction};
+use crate::config::{GyroMode, Layer, MouseResponse, Stick, StickAction, StickConfig};
 
 fn press(b: Button) -> InputEvent {
     InputEvent::Button(b, true)
@@ -56,6 +56,33 @@ fn main_menu_opens_quick_settings_first_and_edit_controls_last() {
     // B leaves the editor for the main page, and B again closes the menu.
     assert_eq!(menu.handle_now(press(Button::East), &mut config), None);
     assert_eq!(menu.handle_now(press(Button::East), &mut config), Some(Outcome::Close));
+}
+
+#[test]
+fn quick_settings_tunes_the_speeds_a_layer_or_mode_sets_itself() {
+    let mut config = mouse_config();
+    config.general.profiles.truncate(1);
+    let base = config.general.profiles[0].left_stick.clone();
+    let mut aim = Layer::new("Aim");
+    aim.left_stick = Some(StickConfig::new(StickAction::Mouse { speed: 500.0, response: MouseResponse::default(), invert_y: false }, 0.1, 1.0));
+    aim.gyro = Some(crate::config::GyroConfig { mode: GyroMode::Mouse { sensitivity: 5.0 }, ..Default::default() });
+    config.general.layers.push(aim);
+    let mut driving = Layer::new("Driving");
+    driving.left_stick = Some(StickConfig::new(StickAction::Mouse { speed: 300.0, response: MouseResponse::default(), invert_y: false }, 0.1, 1.0));
+    config.general.modes.push(driving);
+    let rows = quick::rows(&config, &config);
+    let (layer, mode) = (quick::Scope::Layer(0), quick::Scope::Mode(0));
+    for row in [Row::ScopedStickSpeed(layer, Stick::Left), Row::ScopedGyroSensitivity(layer), Row::ScopedStickSpeed(mode, Stick::Left)] {
+        assert!(rows.contains(&row), "{row:?} in {rows:?}");
+    }
+    assert_eq!(quick::label(Row::ScopedStickSpeed(layer, Stick::Left), &config, &config), "Left stick speed, Aim layer: 500 px/s");
+    assert_eq!(quick::label(Row::ScopedStickSpeed(mode, Stick::Left), &config, &config), "Left stick speed, Driving mode: 300 px/s");
+    let saved = config.clone();
+    assert_eq!(quick::adjust(Row::ScopedStickSpeed(layer, Stick::Left), -1, false, &mut config, &saved), Some(Outcome::Changed));
+    assert_eq!(quick::adjust(Row::ScopedGyroSensitivity(layer), 1, false, &mut config, &saved), Some(Outcome::Changed));
+    assert!(quick::label(Row::ScopedStickSpeed(layer, Stick::Left), &config, &saved).contains("(was 500 px/s)"));
+    assert_eq!(config.general.profiles[0].left_stick, base, "the base speed stays as it was");
+    assert_eq!(config.general.modes[0], saved.general.modes[0]);
 }
 
 #[test]

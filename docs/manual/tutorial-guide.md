@@ -52,7 +52,7 @@ Hold Guide and press Start (or choose it from the Guide menu) to open the in-gam
 
 ![The in-game menu with Quick Settings and Edit Controls](../images/manual/in-game-menu.png "The in-game menu.")
 
-**Quick Settings** changes stick speeds, gyro sensitivity, Invert Y, dead zones, rumble strength, overlay size and the profile, and has a switch that turns remapping off if a mapping gets in the way. Left and right change a number by about 10%, or by half with RB held. A number you changed shows what it was when you opened the menu.
+**Quick Settings** changes stick speeds, gyro sensitivity, Invert Y, dead zones, rumble strength, overlay size and the profile, and has a switch that turns remapping off if a mapping gets in the way. A layer or mode that sets its own stick speed or gyro sensitivity (an aim layer, say) gets its own row, such as "Right stick speed, Aim layer", so you can tune it without moving the base value. Left and right change a number by about 10%, or by half with RB held. A number you changed shows what it was when you opened the menu.
 
 **Edit Controls** opens the full editor for the game in front of you: buttons, sticks, gyro, combos, modes, layers, macros, menus and info overlays. Changes apply straight away, and are written to the config file only when you save. If you leave with unsaved changes, A saves, X discards and B keeps editing.
 
