@@ -83,11 +83,13 @@ pub(super) fn framed(kind: FrameKind) -> OverlayStyle {
         FrameKind::Circuit => ("#06140e", "#0c2218", "#14804a", "#40e090"),
         FrameKind::Celtic => ("#0e1a14", "#18281e", "#2e6a3a", "#c8b878"),
         FrameKind::GreekKey => ("#1c1610", "#2a2018", "#a0502a", "#d89a5a"),
+        FrameKind::Egyptian => ("#0c1a2e", "#16263e", "#1f7a7a", "#d8b45a"),
+        FrameKind::Floral => ("#241a22", "#33252f", "#8a3a5a", "#e0a8b8"),
         FrameKind::Riveted | FrameKind::Brackets | FrameKind::Chamfer => ("#2a2c2e", "#3a3c3e", "#8a4a1a", "#9a9ea2"),
     };
     let width = if kind == FrameKind::Riveted { 2.0 } else { 1.5 };
     // Marks that run along the edges want square corners to sit on; the curving ones fit a round panel.
-    let corners = if matches!(kind, FrameKind::ArtNouveau | FrameKind::Baroque | FrameKind::Circuit) { OverlayStyle::default().corners } else { 0.0 };
+    let corners = if matches!(kind, FrameKind::ArtNouveau | FrameKind::Baroque | FrameKind::Circuit | FrameKind::Floral) { OverlayStyle::default().corners } else { 0.0 };
     OverlayStyle {
         background: Paint::new(background, 0.95),
         items: Paint::new(items, 0.9),

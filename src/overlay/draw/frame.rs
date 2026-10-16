@@ -163,6 +163,44 @@ const GREEK_KEY: Design = Design {
     round: false,
 };
 
+/// A frieze of lotus flowers and buds between two rails along each edge, a sun disc boxed at
+/// the corner.
+const EGYPTIAN: Design = Design {
+    half: &[
+        Line("M1,0 L0,0"),
+        Line("M1,0.26 L0.26,0.26"),
+        Line("M0.26,0 L0.26,0.26"),
+        // Flower, bud, flower, bud, each rising from the inner rail toward the panel's edge.
+        Fill("M0.4,0.26 C0.38,0.18 0.325,0.12 0.33,0.03 L0.37,0.1 L0.4,0.02 L0.43,0.1 L0.47,0.03 C0.475,0.12 0.42,0.18 0.4,0.26 Z"),
+        Fill("M0.555,0.26 C0.505,0.17 0.515,0.08 0.555,0.04 C0.595,0.08 0.605,0.17 0.555,0.26 Z"),
+        Fill("M0.71,0.26 C0.69,0.18 0.635,0.12 0.64,0.03 L0.68,0.1 L0.71,0.02 L0.74,0.1 L0.78,0.03 C0.785,0.12 0.73,0.18 0.71,0.26 Z"),
+        Fill("M0.865,0.26 C0.815,0.17 0.825,0.08 0.865,0.04 C0.905,0.08 0.915,0.17 0.865,0.26 Z"),
+    ],
+    whole: &[Ring(0.13, 0.13, 0.08), Dot(0.13, 0.13, 0.04)],
+    inset: true,
+    round: false,
+};
+
+/// A five-petalled blossom at the corner, a leafy vine running from it along each edge to a bud.
+const FLORAL: Design = Design {
+    half: &[
+        Line("M0.34,0.12 C0.44,0.05 0.52,0.17 0.64,0.12 C0.76,0.07 0.82,0.14 0.92,0.1"),
+        Fill("M0.47,0.105 C0.47,0.205 0.57,0.205 0.57,0.205 C0.57,0.205 0.57,0.105 0.47,0.105 Z"),
+        Fill("M0.66,0.11 C0.755,0.115 0.76,0.02 0.76,0.02 C0.76,0.02 0.665,0.015 0.66,0.11 Z"),
+        Dot(0.94, 0.095, 0.035),
+    ],
+    whole: &[
+        Fill("M0.235,0.235 C0.235,0.341 0.298,0.348 0.323,0.323 C0.348,0.298 0.341,0.235 0.235,0.235 Z"),
+        Fill("M0.194,0.241 C0.093,0.274 0.106,0.337 0.137,0.353 C0.169,0.368 0.227,0.342 0.194,0.241 Z"),
+        Fill("M0.175,0.205 C0.113,0.119 0.057,0.15 0.052,0.185 C0.046,0.22 0.09,0.267 0.175,0.205 Z"),
+        Fill("M0.205,0.175 C0.267,0.09 0.22,0.046 0.185,0.052 C0.15,0.057 0.119,0.113 0.205,0.175 Z"),
+        Fill("M0.241,0.194 C0.342,0.227 0.368,0.169 0.353,0.137 C0.337,0.106 0.274,0.093 0.241,0.194 Z"),
+        Dot(0.21, 0.21, 0.03),
+    ],
+    inset: true,
+    round: true,
+};
+
 fn design(kind: FrameKind) -> &'static Design {
     match kind {
         FrameKind::Brackets => &BRACKETS,
@@ -176,6 +214,8 @@ fn design(kind: FrameKind) -> &'static Design {
         FrameKind::Riveted => &RIVETED,
         FrameKind::Celtic => &CELTIC,
         FrameKind::GreekKey => &GREEK_KEY,
+        FrameKind::Egyptian => &EGYPTIAN,
+        FrameKind::Floral => &FLORAL,
     }
 }
 

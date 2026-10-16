@@ -78,10 +78,14 @@ pub enum FrameKind {
     Celtic,
     /// A running Greek key between two rails, a boxed square at the corner.
     GreekKey,
+    /// A lotus frieze between two rails, a sun disc boxed at the corner.
+    Egyptian,
+    /// A blossom at the corner, a leafy vine running from it along each edge.
+    Floral,
 }
 
 impl FrameKind {
-    pub const ALL: [FrameKind; 11] = [
+    pub const ALL: [FrameKind; 13] = [
         FrameKind::Brackets,
         FrameKind::Chamfer,
         FrameKind::ArtDeco,
@@ -93,6 +97,8 @@ impl FrameKind {
         FrameKind::Riveted,
         FrameKind::Celtic,
         FrameKind::GreekKey,
+        FrameKind::Egyptian,
+        FrameKind::Floral,
     ];
 
     /// The size its detail reads well at, in pixels at scale 1: what picking it sets.
@@ -102,8 +108,8 @@ impl FrameKind {
             FrameKind::Riveted => 32.0,
             FrameKind::ArtDeco | FrameKind::Gothic | FrameKind::Circuit => 44.0,
             FrameKind::ArtNouveau | FrameKind::Baroque => 52.0,
-            FrameKind::Runic | FrameKind::Celtic => 60.0,
-            FrameKind::GreekKey => 72.0,
+            FrameKind::Runic | FrameKind::Celtic | FrameKind::Floral => 60.0,
+            FrameKind::GreekKey | FrameKind::Egyptian => 72.0,
         }
     }
 }
@@ -122,6 +128,8 @@ impl std::fmt::Display for FrameKind {
             FrameKind::Riveted => "Riveted",
             FrameKind::Celtic => "Celtic knot",
             FrameKind::GreekKey => "Greek key",
+            FrameKind::Egyptian => "Egyptian",
+            FrameKind::Floral => "Floral",
         })
     }
 }
