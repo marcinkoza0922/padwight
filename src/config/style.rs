@@ -164,7 +164,7 @@ pub struct Lite {
     /// No decorations: no shadows, gradients, glows, outlines or ornaments, whatever the style
     /// says.
     pub plain: bool,
-    /// Nothing loops: glows don't pulse, gradients and scanlines don't drift. Set by the
+    /// Nothing loops: glows don't pulse, gradients and scanlines don't drift, grain holds still. Set by the
     /// performance card's No looping animations, or by its No motion.
     pub calm: bool,
 }
@@ -231,7 +231,7 @@ pub struct OverlayStyle {
     /// the text itself (`{b}`, `{i}`, `{color:…}`).
     #[serde(default, rename = "type", skip_serializing_if = "Typography::is_default")]
     pub typography: Typography,
-    /// Lines, frames, scanlines and vignettes over and around the panel.
+    /// Lines, frames, filters, textures and bevels over and around the panel.
     #[serde(default, skip_serializing_if = "Ornament::is_default")]
     pub ornament: Ornament,
     /// A picture behind the panel's contents. Unset, the panel is one color.
@@ -305,12 +305,13 @@ impl Default for OverlayStyle {
 
 impl OverlayStyle {
     /// Whether something in the style loops while the overlay is up: a glow that pulses, or a
-    /// gradient or scanlines that drift. The overlay keeps redrawing for these unless the
+    /// gradient, scanlines or grain that drift or flicker. The overlay keeps redrawing for these unless the
     /// performance settings say nothing loops.
     pub fn loops(&self) -> bool {
         self.glow.as_ref().is_some_and(|g| g.pulse)
             || self.gradient.as_ref().is_some_and(|g| g.drift)
             || self.ornament.scanlines.as_ref().is_some_and(|s| s.drift)
+            || self.ornament.grain.as_ref().is_some_and(|g| g.animated)
     }
 
     /// The on-screen keyboard's default: along the bottom of the screen.
@@ -397,6 +398,25 @@ mod tests {
         for key in ["border", "shadow", "gradient", "item_border", "glow", "lite", "type", "ornament", "background_image"] {
             assert!(!plain.contains(key), "{key} in {plain}");
         }
+    }
+
+    #[test]
+    fn textures_and_bevels_round_trip() {
+        let style: OverlayStyle = toml::from_str("[ornament.brushed_metal]\n\n[ornament.bevel]\n").unwrap();
+        assert_eq!(style.ornament.brushed_metal.as_ref().map(|t| t.opacity), Some(0.5));
+        assert_eq!(style.ornament.paper, None);
+        assert_eq!(style.ornament.bevel.as_ref().map(|b| b.depth), Some(0.5));
+        let again: OverlayStyle = toml::from_str(&toml::to_string(&style).unwrap()).unwrap();
+        assert_eq!(again.ornament, style.ornament);
+    }
+
+    #[test]
+    fn filters_round_trip() {
+        let style: OverlayStyle = toml::from_str("[ornament.grain]\nanimated = true\n\n[ornament.pixels]\n\n[ornament.tint]\n").unwrap();
+        assert!(style.loops());
+        assert_eq!(style.ornament.pixels.as_ref().map(|p| p.size), Some(6.0));
+        let again: OverlayStyle = toml::from_str(&toml::to_string(&style).unwrap()).unwrap();
+        assert_eq!(again.ornament, style.ornament);
     }
 
     #[test]

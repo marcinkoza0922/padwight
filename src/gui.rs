@@ -86,6 +86,7 @@ mod sliders;
 mod sticks;
 mod style_editor;
 mod style_extras;
+mod style_filters;
 mod tab_icons;
 mod touchpad;
 mod tour;

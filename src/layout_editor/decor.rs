@@ -133,7 +133,7 @@ const STROKE: Number = Number::new(1.0, (0.0, 8.0), 0, " px");
 const BLUR: Number = Number::new(5.0, (0.0, 80.0), 0, " px");
 const DROP: Number = Number::new(1.0, (-30.0, 30.0), 0, " px");
 const ANGLE: Number = Number::new(15.0, (0.0, 345.0), 0, "°");
-const FRAME_SIZE: Number = Number::new(1.0, (4.0, 40.0), 0, " px");
+const FRAME_SIZE: Number = Number::new(1.0, (4.0, 80.0), 0, " px");
 const FRAME_WIDTH: Number = Number::new(1.0, (1.0, 8.0), 0, " px");
 const LINE_SPACING: Number = Number::new(1.0, (2.0, 12.0), 0, " px");
 const REACH: Number = Number::new(1.0, (5.0, 50.0), 0, "%");
@@ -180,9 +180,13 @@ pub(super) fn decor_rows(config: &Config, at: StyleAt, d: Decor) -> Vec<Row> {
         Decor::Frame => s.ornament.frame.as_ref().map_or_else(Vec::new, |x| {
             let kind = x.kind;
             vec![
-                Row::step(format!("Shape: {}", if kind == FrameKind::Brackets { "brackets" } else { "chamfer" }), move |c, _| {
-                    let other = if kind == FrameKind::Brackets { FrameKind::Chamfer } else { FrameKind::Brackets };
-                    style_mut(c, at).and_then(|s| s.ornament.frame.as_mut()).is_some_and(|x| set(&mut x.kind, other))
+                Row::step(format!("Shape: {}", kind.to_string().to_lowercase()), move |c, step| {
+                    let at_kind = FrameKind::ALL.iter().position(|&k| k == kind).unwrap_or(0) as i32;
+                    let next = FrameKind::ALL[(at_kind + step).rem_euclid(FrameKind::ALL.len() as i32) as usize];
+                    style_mut(c, at).and_then(|s| s.ornament.frame.as_mut()).is_some_and(|x| {
+                        x.size = next.natural_size();
+                        set(&mut x.kind, next)
+                    })
                 }),
                 num(at, "Size", x.size, &FRAME_SIZE, |s, v| s.ornament.frame.as_mut().is_some_and(|x| set(&mut x.size, v))),
                 num(at, "Width", x.width, &FRAME_WIDTH, |s, v| s.ornament.frame.as_mut().is_some_and(|x| set(&mut x.width, v))),

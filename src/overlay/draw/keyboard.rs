@@ -58,22 +58,22 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::in
             // The cursor's key lights up and the one it left goes dark, sliding between them.
             let lit = if pressed { 1.0 } else { anim.lit(cursor, anim.timing.from == Some(here)) };
             let round = c.corners * unit / 2.0;
-            let (bg, fg, border, glow) = if latched && !selected {
+            let (bg, fg, border, glow): (iced::Background, _, _, _) = if latched && !selected {
                 let green = Color::from_rgb8(0x2e, 0x7d, 0x46);
-                (green, Color::WHITE, Border { width: 1.0, radius: round.into(), color: Color::from_rgb8(0x3f, 0xb9, 0x50) }, iced::Shadow::default())
+                (green.into(), Color::WHITE, Border { width: 1.0, radius: round.into(), color: Color::from_rgb8(0x3f, 0xb9, 0x50) }, iced::Shadow::default())
             } else {
                 let flash = if pressed { anim.flash() * 0.5 } else { 0.0 };
                 (
-                    blend(blend(c.item, c.selected, lit), Color::WHITE, flash),
+                    look::item_fill(&Colors { item: blend(blend(c.item, c.selected, lit), Color::WHITE, flash), ..c }, lit),
                     blend(c.item_text, c.selected_text, lit),
                     look::item_outline(&c, selected, lit, round),
-                    look::item_glow(&c, lit),
+                    look::item_shadow(&c, lit),
                 )
             };
             let cap = container(text(keyboard::cap_label(key, v.board, shifted, v.caps)).font(c.font).size(if selected { label_size + 2.0 } else { label_size } * s).color(fg))
                 .center_x(width)
                 .center_y(unit)
-                .style(move |_| container::Style { background: Some(bg.into()), border, shadow: glow, ..container::Style::default() });
+                .style(move |_| container::Style { background: Some(bg), border, shadow: glow, ..container::Style::default() });
             line = line.push(transform(cap, anim.item_scale(cursor), iced::Vector::ZERO));
         }
         rows = rows.push(line);

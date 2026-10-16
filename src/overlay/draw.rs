@@ -2,6 +2,7 @@
 //! `fit.rs`) and laid out where its position puts it.
 
 mod figure;
+mod frame;
 mod glyphs;
 mod log_panel;
 mod look;
@@ -9,6 +10,7 @@ mod keyboard;
 mod marked;
 mod menus;
 mod ornament;
+mod texture;
 mod radial;
 mod transform;
 mod typeset;
@@ -228,6 +230,25 @@ fn sides(margin: f32, shift: f32, slot: usize) -> (f32, f32) {
     }
 }
 
+/// The style's filters, as layers over the contents: grain, pixel blocks, camo and a tint.
+fn filters<'a, M: 'a>(c: Colors, style: &OverlayStyle, s: f32) -> Vec<Element<'a, M>> {
+    let ornaments = &style.ornament;
+    let mut layers = Vec::new();
+        if let Some(grain) = &ornaments.grain {
+        layers.push(texture::grain(grain, s, c.anim.clock, grain.animated && !style.lite.calm, c.fade));
+        }
+        if let Some(pixels) = &ornaments.pixels {
+        layers.push(texture::pixels(pixels, s, c.fade));
+        }
+        if let Some(camo) = &ornaments.camo {
+        layers.push(texture::camo(camo, s, c.fade));
+        }
+        if let Some(tint) = &ornaments.tint {
+        layers.push(ornament::tint(tint, c.fade));
+        }
+    layers
+}
+
 /// A panel's box: its colors and padding, at the size `fit` gives. The contents scroll, so a
 /// box held to its max length scrolls rather than spilling, and the box clips anything wider.
 /// The style's picture sits behind the contents and its ornaments over them, all the panel's
@@ -242,9 +263,18 @@ fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, style: &OverlayStyle, padd
             layers = layers.push_under(ornament::picture(picture, c.fade));
         }
         let ornaments = &style.ornament;
+        // Metal goes under paper, should both be on.
+        for (material, t) in [(texture::Material::Paper, &ornaments.paper), (texture::Material::BrushedMetal, &ornaments.brushed_metal)] {
+            if let Some(t) = t {
+                layers = layers.push_under(texture::layer(material, t, c.fade));
+            }
+        }
         if let Some(lines) = &ornaments.scanlines {
             let drift = lines.drift && !style.lite.calm;
             layers = layers.push(ornament::scanlines(lines, s, c.anim.clock, drift, c.fade));
+        }
+        for filter in filters(c, style, s) {
+            layers = layers.push(filter);
         }
         if let Some(vignette) = &ornaments.vignette {
             for edge in ornament::vignette(vignette, c.fade) {
@@ -252,7 +282,7 @@ fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, style: &OverlayStyle, padd
             }
         }
         if let Some(frame) = &ornaments.frame {
-            for mark in ornament::frame(frame, s, c.fade) {
+            for mark in frame::marks(frame, s, c.fade) {
                 layers = layers.push(mark);
             }
         }

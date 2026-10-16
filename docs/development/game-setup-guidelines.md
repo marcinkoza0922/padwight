@@ -111,6 +111,7 @@ Classic PC games often come in more than one version: the original, a modern rem
 
 - Keyboard, numpad, and menu overlays should be colored and styled to match the game's theme as closely as possible.
 - Animations and sounds should be assigned to match the game as well.
+- **Use every fitting theming tool, but with restraint.** Craft the look to suit the game, and reach for what helps: fonts, colors, frames, textures, 3D buttons, filters, icons and sounds. Just because a theming feature exists doesn't mean the pack should use it. Each one should earn its place by making the overlay read more like the game or easier to use. A plain overlay that reads clearly beats a busy one with every effect switched on, and a texture or filter that competes with the text or the keys it sits over is a fault, not a flourish. When in doubt, leave it out, and check the result at text size with the overlay previews before keeping it.
 
 ### Text, icons and sounds
 

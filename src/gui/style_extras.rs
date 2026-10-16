@@ -3,9 +3,9 @@
 
 use std::rc::Rc;
 
-use super::{style_editor::{OnStyle, Slot, optional, paint_row, stepped_slider, stroke_rows}, *};
-use crate::config::{BackgroundImage, Case, Frame, FrameKind, ImageFit, Scanlines, Stroke, Typography, Vignette};
-use iced::widget::{button, checkbox, column, row};
+use super::{style_editor::{OnStyle, Slot, optional, paint_row, stepped_slider, stroke_rows}, style_filters::{filter_rows, percent_of}, *};
+use crate::config::{BackgroundImage, Bevel, Case, Frame, FrameKind, ImageFit, Stroke, Typography, Vignette};
+use iced::widget::{button, column, row};
 
 /// How the text is set: its case, letter spacing and size.
 pub(super) fn typography_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a, Message> {
@@ -36,7 +36,7 @@ pub(super) fn typography_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>)
     .into()
 }
 
-/// The panel's picture, its lines between items, its corner frame, scanlines and vignette.
+/// The panel's picture, its lines between items, its corner frame and vignette.
 pub(super) fn ornament_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a, Message> {
     let picture = optional(
         &Slot {
@@ -66,17 +66,6 @@ pub(super) fn ornament_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -
         style,
         on_change,
     );
-    let scanlines = optional(
-        &Slot {
-            label: "Scanlines",
-            get: |s| s.ornament.scanlines.as_ref(),
-            put: |s, v| s.ornament.scanlines = v,
-            start: |_| Scanlines { spacing: 4.0, opacity: 0.2, color: "#000000".into(), drift: false },
-        },
-        |l, set| scanline_rows(l, &set),
-        style,
-        on_change,
-    );
     let vignette = optional(
         &Slot {
             label: "Vignette",
@@ -88,16 +77,25 @@ pub(super) fn ornament_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -
         style,
         on_change,
     );
-    column![
-        text("    Ornaments").size(14).color(MUTED_COLOR),
-        picture,
-        dividers,
-        frame,
-        scanlines,
-        vignette,
-    ]
+    column![text("    Ornaments").size(14).color(MUTED_COLOR), picture, bevel_rows(style, on_change), dividers, frame, vignette, filter_rows(style, on_change)]
     .spacing(8)
     .into()
+}
+
+/// The 3D buttons.
+fn bevel_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a, Message> {
+    optional(
+        &Slot { label: "3D buttons", get: |s| s.ornament.bevel.as_ref(), put: |s, v| s.ornament.bevel = v, start: |_| Bevel { depth: 0.5 } },
+        |b, set| {
+            let depth = {
+                let set = set.clone();
+                percent_of(b.depth, move |v| set(Bevel { depth: v }))
+            };
+            vec![labeled("        Depth", depth)]
+        },
+        style,
+        on_change,
+    )
 }
 
 /// The picture's file (a name in the backgrounds folder, or a path), how far it shows and how it
@@ -124,13 +122,14 @@ fn picture_rows<'a>(picture: &BackgroundImage, set: &Rc<dyn Fn(BackgroundImage) 
 
 /// The frame's shape, size, line width and color.
 fn frame_rows<'a>(frame: &Frame, set: &Rc<dyn Fn(Frame) -> Message + 'a>) -> Vec<Element<'a, Message>> {
-    let shape = |label: &'static str, kind: FrameKind| {
+    let shape = {
         let (f, set) = (frame.clone(), set.clone());
-        button(text(label).size(13)).style(if frame.kind == kind { button::primary } else { style::secondary }).on_press_with(move || set(Frame { kind, ..f.clone() }))
+        // A new shape brings its own size, at which its detail reads.
+        dropdown(FrameKind::ALL, Some(frame.kind), move |kind: FrameKind| set(Frame { kind, size: kind.natural_size(), ..f.clone() }))
     };
     let size = {
         let (f, set) = (frame.clone(), set.clone());
-        stepped_slider(4.0..=40.0, frame.size, format!("{:.0} px", frame.size), move |v| set(Frame { size: v.round(), ..f.clone() }))
+        stepped_slider(4.0..=80.0, frame.size, format!("{:.0} px", frame.size), move |v| set(Frame { size: v.round(), ..f.clone() }))
     };
     let width = {
         let (f, set) = (frame.clone(), set.clone());
@@ -141,7 +140,7 @@ fn frame_rows<'a>(frame: &Frame, set: &Rc<dyn Fn(Frame) -> Message + 'a>) -> Vec
         paint_row(&frame_paint(frame), true, &(Rc::new(move |p: Paint| set(Frame { color: p.color, opacity: p.opacity, ..f.clone() })) as Rc<dyn Fn(Paint) -> Message + 'a>))
     };
     vec![
-        labeled("        Shape", row![shape("Brackets", FrameKind::Brackets), shape("Chamfer", FrameKind::Chamfer)].spacing(4).into()),
+        labeled("        Shape", shape.into()),
         labeled("        Size", size),
         labeled("        Width", width),
         labeled("        Color", color),
@@ -150,32 +149,6 @@ fn frame_rows<'a>(frame: &Frame, set: &Rc<dyn Fn(Frame) -> Message + 'a>) -> Vec
 
 fn frame_paint(frame: &Frame) -> Paint {
     Paint::new(&frame.color, frame.opacity)
-}
-
-/// The scanlines' spacing, opacity, color and whether they drift.
-fn scanline_rows<'a>(lines: &Scanlines, set: &Rc<dyn Fn(Scanlines) -> Message + 'a>) -> Vec<Element<'a, Message>> {
-    let spacing = {
-        let (l, set) = (lines.clone(), set.clone());
-        stepped_slider(2.0..=12.0, lines.spacing, format!("{:.0} px", lines.spacing), move |v| set(Scanlines { spacing: v.round(), ..l.clone() }))
-    };
-    let opacity = {
-        let (l, set) = (lines.clone(), set.clone());
-        percent_of(lines.opacity, move |v| set(Scanlines { opacity: v, ..l.clone() }))
-    };
-    let color = {
-        let (l, set) = (lines.clone(), set.clone());
-        paint_row(&Paint::new(&lines.color, 1.0), false, &(Rc::new(move |p: Paint| set(Scanlines { color: p.color, ..l.clone() })) as Rc<dyn Fn(Paint) -> Message + 'a>))
-    };
-    let drift = {
-        let (l, set) = (lines.clone(), set.clone());
-        checkbox(lines.drift).label("Drift down, slowly").on_toggle(move |on| set(Scanlines { drift: on, ..l.clone() }))
-    };
-    vec![
-        labeled("        Spacing", spacing),
-        labeled("        Opacity", opacity),
-        labeled("        Color", color),
-        labeled("", drift.into()),
-    ]
 }
 
 /// The vignette's color, opacity and how far in from the edges it reaches.
@@ -189,9 +162,4 @@ fn vignette_rows<'a>(vignette: &Vignette, set: &Rc<dyn Fn(Vignette) -> Message +
         paint_row(&Paint::new(&vignette.color, vignette.opacity), true, &(Rc::new(move |p: Paint| set(Vignette { color: p.color, opacity: p.opacity, ..v.clone() })) as Rc<dyn Fn(Paint) -> Message + 'a>))
     };
     vec![labeled("        Reach", reach), labeled("        Color", color)]
-}
-
-/// A 0 to 1 value as a percentage slider.
-fn percent_of<'a>(value: f32, on_change: impl Fn(f32) -> Message + 'a) -> Element<'a, Message> {
-    stepped_slider(0.0..=100.0, value * 100.0, format!("{:.0}%", value * 100.0), move |v| on_change((v / 100.0).clamp(0.0, 1.0)))
 }

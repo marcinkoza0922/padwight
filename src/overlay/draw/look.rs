@@ -24,6 +24,8 @@ pub(super) struct Look {
     glow: Option<Shadow>,
     /// Whether the glow breathes: its strength swells and fades while the overlay is up.
     glow_pulse: bool,
+    /// How deep the items' relief is, 0 to 1, and the style's scale; unset, they're flat.
+    bevel: Option<(f32, f32)>,
     /// Drawn without decorations, the default ones included.
     plain: bool,
 }
@@ -34,7 +36,7 @@ impl Look {
     pub(super) fn of(style: &OverlayStyle, s: f32, text: Color) -> Look {
         let plain = style.lite.plain;
         if plain {
-            return Look { border: None, shadow: None, gradient: None, item_border: None, glow: None, glow_pulse: false, plain };
+            return Look { border: None, shadow: None, gradient: None, item_border: None, glow: None, glow_pulse: false, bevel: None, plain };
         }
         let border = match &style.border {
             Some(stroke) => outline(stroke, s),
@@ -47,7 +49,8 @@ impl Look {
         let item_border = style.item_border.as_ref().map(|stroke| outline(stroke, s).unwrap_or((0.0, Color::TRANSPARENT)));
         let glow = style.glow.as_ref().and_then(|g| shade(g, s));
         let glow_pulse = style.glow.as_ref().is_some_and(|g| g.pulse) && !style.lite.calm;
-        Look { border, shadow, gradient, item_border, glow, glow_pulse, plain }
+        let bevel = style.ornament.bevel.as_ref().map(|b| (b.depth.clamp(0.0, 1.0), s));
+        Look { border, shadow, gradient, item_border, glow, glow_pulse, bevel, plain }
     }
 
     /// Every color at `opacity` times its own, as `Colors::faded` does for the rest.
@@ -114,6 +117,11 @@ pub(super) fn item_outline(c: &Colors, selected: bool, lit: f32, radius: f32) ->
         None if c.look.plain => (if selected { 2.0 } else { 0.0 }, c.selected_text),
         None => (if selected { 2.0 } else { 1.0 }, lit_color(c.item_text.scale_alpha(0.12))),
     };
+    // A bevelled item with no outline of its own catches light along its edge.
+    let (width, color) = match c.look.bevel {
+        Some((depth, _)) if c.look.item_border.is_none() && !selected => (1.0, Color { a: 0.12 + 0.3 * depth, ..Color::WHITE }),
+        _ => (width, color),
+    };
     Border { width, radius: radius.into(), color }
 }
 
@@ -135,9 +143,34 @@ pub(super) fn item_glow(c: &Colors, lit: f32) -> Shadow {
 pub(super) fn lit_cell_style(c: Colors, selected: bool, height: f32) -> impl Fn(&iced::Theme) -> container::Style {
     let lit = if selected { 1.0 } else { 0.0 };
     move |_| container::Style {
-        background: Some(c.item.into()),
+        background: Some(item_fill(&c, lit)),
         border: item_outline(&c, selected, lit, c.corners * height / 2.0),
-        shadow: item_glow(&c, lit),
+        shadow: item_shadow(&c, lit),
         ..container::Style::default()
+    }
+}
+
+/// An item's fill: its color, or with a bevel a gradient from a lit top to a darker bottom that
+/// flips as the item is pressed in (`lit` of the way).
+pub(super) fn item_fill(c: &Colors, lit: f32) -> Background {
+    let Some((depth, _)) = c.look.bevel else { return c.item.into() };
+    let (up, down) = (super::blend(c.item, Color::WHITE, 0.22 * depth), super::blend(c.item, Color::BLACK, 0.28 * depth));
+    let (top, bottom) = (super::blend(up, down, lit), super::blend(down, up, lit));
+    // The item's own opacity (its fade-in) carries over to both ends.
+    let with_alpha = |x: Color| Color { a: c.item.a, ..x };
+    Background::Gradient(gradient::Linear::new(std::f32::consts::PI).add_stop(0.0, with_alpha(top)).add_stop(1.0, with_alpha(bottom)).into())
+}
+
+/// An item's shadow: its glow when it is selected, and with a bevel the shadow of a raised
+/// button, which sinks away as the item is pressed in.
+pub(super) fn item_shadow(c: &Colors, lit: f32) -> Shadow {
+    let glow = item_glow(c, lit);
+    match c.look.bevel {
+        Some((depth, s)) if glow.color.a == 0.0 => Shadow {
+            color: Color { a: 0.45 * depth * c.item.a * (1.0 - lit.min(1.0)), ..Color::BLACK },
+            offset: Vector::new(0.0, 3.0 * depth * s),
+            blur_radius: 5.0 * depth * s,
+        },
+        _ => glow,
     }
 }
