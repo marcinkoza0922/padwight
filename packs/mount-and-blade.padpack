@@ -1,0 +1,653 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "327315ef-7003-4b7e-921d-b9634f19b393"
+name = "Mount & Blade"
+version = "1.0"
+author = "Padwight"
+description = "Mount & Blade on an Xbox-style pad, for the game's default keys. The right stick looks and aims your swings, RT attacks, LT blocks, A uses, B jumps, X kicks, Y changes weapon mode. Hold LB for the orders ring and RB for the weapons ring; the D-pad cycles weapons and shields. Select lists the game's screens and the retreat key. Hold Select to switch to the Map mode, where the D-pad zooms the world map. Double tap Start to quick save. "
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "mount&blade.exe"
+profile = "Mount & Blade"
+
+[[rules]]
+kind = "steam_app_id"
+value = "22100"
+profile = "Mount & Blade"
+
+[[profiles]]
+name = "Mount & Blade"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_E"] }
+North = { keys = ["KEY_X"] }
+LeftBumper = { open_menu = "Orders" }
+RightBumper = { open_menu = "Weapons" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_Z"] } } }
+RightStick = { keys = ["KEY_R"] }
+DpadUp = { open_menu = "Groups" }
+DpadDown = { keys = ["KEY_BACKSPACE"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.Select.long_press]
+mode = "Map"
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F12"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Aim your swings with the right stick {rs}: the way you move the mouse as you attack picks the direction, so push it up for an overhead, sideways for a slash or swing, and hold it still for a thrust. {rt} attacks and {lt} blocks, in the direction you are looking.
+Hold {lb} for the orders ring and pick with the right stick. In a field battle the order menus are on F1 to F6 and the groups on the number keys: open Groups on {dpad_up} to choose who you are ordering, then the order. {dpad_down} shows the order view.
+Hold {rb} for the weapons ring (the four item slots, drop weapon, change mode). {dpad_left} and {dpad_right} scroll to the next weapon and shield; {north} changes the weapon mode (one or two hands, arrows).
+{l3} toggles crouch. {r3} is the first and third person view. {east} jumps, {west} kicks and {south} uses.
+{select} lists the character, inventory, party, quest and log windows, plus Retreat (Tab, which leaves the battle). Hold {select} to switch to the Map mode, and again to switch back.
+{start} is Escape: it opens the menu and backs out of every screen. A double tap of {start} quick saves.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look · aim the swing" }
+"trigger:Right" = { text = "{icon:sword} Attack" }
+"trigger:Left" = { text = "{icon:shield} Block" }
+"button:South" = { text = "Use" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Kick" }
+"button:North" = { text = "Weapon mode" }
+"button:LeftBumper" = { text = "Hold: orders" }
+"button:RightBumper" = { text = "Hold: weapons" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "First / third person" }
+"button:DpadUp" = { text = "Order groups" }
+"button:DpadDown" = { text = "Order view" }
+"button:DpadLeft" = { text = "Next weapon" }
+"button:DpadRight" = { text = "Next shield" }
+"button:Select" = { text = "{icon:scroll} Screens · hold: map mode" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+
+[[modes]]
+name = "Map"
+indicator = "name"
+
+[modes.buttons]
+DpadLeft = { keys = ["KEY_KPMINUS"] }
+DpadRight = { keys = ["KEY_KPPLUS"] }
+DpadUp = { keys = ["KEY_KPPLUS"] }
+DpadDown = { keys = ["KEY_KPMINUS"] }
+
+[modes.gestures.Select.long_press]
+mode = "Map"
+
+[[menus]]
+name = "Orders"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:flag} View orders"
+action = { keys = ["KEY_BACKSPACE"] }
+
+[[menus.items]]
+label = "{icon:rally} Order menu 1 {color:#c9a45a}F1{/color}"
+action = { keys = ["KEY_F1"] }
+
+[[menus.items]]
+label = "{icon:rally} Order menu 2 {color:#c9a45a}F2{/color}"
+action = { keys = ["KEY_F2"] }
+
+[[menus.items]]
+label = "{icon:rally} Order menu 3 {color:#c9a45a}F3{/color}"
+action = { keys = ["KEY_F3"] }
+
+[[menus.items]]
+label = "{icon:rally} Order menu 4 {color:#c9a45a}F4{/color}"
+action = { keys = ["KEY_F4"] }
+
+[[menus.items]]
+label = "{icon:rally} Order menu 5 {color:#c9a45a}F5{/color}"
+action = { keys = ["KEY_F5"] }
+
+[[menus.items]]
+label = "{icon:rally} Order menu 6 {color:#c9a45a}F6{/color}"
+action = { keys = ["KEY_F6"] }
+
+[[menus.items]]
+label = "{icon:people} Everyone {color:#c9a45a}0{/color}"
+action = { keys = ["KEY_0"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1a1410"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2e2418"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#b8893a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b8893a"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#241b12"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menus.style.item_border]
+width = 1
+color = "#4d3b24"
+
+[menus.style.glow]
+color = "#b8893a"
+opacity = 0.45
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#b8893a", opacity = 0.5}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:sword} Item 1 {color:#c9a45a}1{/color}"
+action = { keys = ["KEY_KP1"] }
+
+[[menus.items]]
+label = "{icon:sword} Item 2 {color:#c9a45a}2{/color}"
+action = { keys = ["KEY_KP2"] }
+
+[[menus.items]]
+label = "{icon:sword} Item 3 {color:#c9a45a}3{/color}"
+action = { keys = ["KEY_KP3"] }
+
+[[menus.items]]
+label = "{icon:sword} Item 4 {color:#c9a45a}4{/color}"
+action = { keys = ["KEY_KP4"] }
+
+[[menus.items]]
+label = "{icon:flip} Weapon mode {color:#c9a45a}X{/color}"
+action = { keys = ["KEY_X"] }
+
+[[menus.items]]
+label = "{icon:drop-item} {color:orange}Drop weapon{/color} {color:#c9a45a}G{/color}"
+action = { keys = ["KEY_G"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1a1410"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2e2418"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#b8893a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b8893a"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#241b12"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menus.style.item_border]
+width = 1
+color = "#4d3b24"
+
+[menus.style.glow]
+color = "#b8893a"
+opacity = 0.45
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#b8893a", opacity = 0.5}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[[menus]]
+name = "Groups"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:person} Group 1 {color:#c9a45a}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:person} Group 2 {color:#c9a45a}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:person} Group 3 {color:#c9a45a}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:person} Group 4 {color:#c9a45a}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:people} Everyone {color:#c9a45a}0{/color}"
+action = { keys = ["KEY_0"] }
+
+[[menus.items]]
+label = "{icon:rally} Others {color:#c9a45a}={/color}"
+action = { keys = ["KEY_EQUAL"] }
+
+[[menus.items]]
+label = "{icon:path} Nearby soldiers {color:#c9a45a}-{/color}"
+action = { keys = ["KEY_MINUS"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1a1410"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2e2418"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#b8893a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b8893a"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#241b12"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menus.style.item_border]
+width = 1
+color = "#4d3b24"
+
+[menus.style.glow]
+color = "#b8893a"
+opacity = 0.45
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#b8893a", opacity = 0.5}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:person} Character {color:#c9a45a}C{/color}"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "{icon:bag} Inventory {color:#c9a45a}I{/color}"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "{icon:people} Party {color:#c9a45a}P{/color}"
+action = { keys = ["KEY_P"] }
+
+[[menus.items]]
+label = "{icon:scroll} Quests {color:#c9a45a}Q{/color}"
+action = { keys = ["KEY_Q"] }
+
+[[menus.items]]
+label = "{icon:book} Game log {color:#c9a45a}L{/color}"
+action = { keys = ["KEY_L"] }
+
+[[menus.items]]
+label = "{icon:messages} Chat (everyone) {color:#c9a45a}T{/color}"
+action = { keys = ["KEY_T"] }
+
+[[menus.items]]
+label = "{icon:cancel} {color:red}Retreat / leave{/color} {color:#c9a45a}Tab{/color}"
+action = { keys = ["KEY_TAB"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1a1410"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2e2418"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#b8893a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b8893a"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#241b12"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menus.style.item_border]
+width = 1
+color = "#4d3b24"
+
+[menus.style.glow]
+color = "#b8893a"
+opacity = 0.45
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#b8893a", opacity = 0.5}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[menu_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1a1410"
+opacity = 0.92
+
+[menu_style.items]
+color = "#2e2418"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#b8893a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#b8893a"
+opacity = 0.7
+
+[menu_style.gradient]
+color = "#241b12"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menu_style.item_border]
+width = 1
+color = "#4d3b24"
+
+[menu_style.glow]
+color = "#b8893a"
+opacity = 0.45
+blur = 18
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#b8893a", opacity = 0.5}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[keyboard_style]
+corners = 0.1
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1a1410"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#2e2418"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#b8893a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#b8893a"
+opacity = 0.7
+
+[keyboard_style.gradient]
+color = "#241b12"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4d3b24"
+
+[numpad_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1a1410"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#2e2418"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#b8893a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#b8893a"
+opacity = 0.7
+
+[numpad_style.gradient]
+color = "#241b12"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4d3b24"
+
+[media_style]
+corners = 0.1
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1a1410"
+opacity = 0.92
+
+[media_style.items]
+color = "#2e2418"
+opacity = 0.95
+
+[media_style.selected]
+color = "#b8893a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#b8893a"
+opacity = 0.7
+
+[media_style.gradient]
+color = "#241b12"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4d3b24"
+
+[media_style.type]
+letter_spacing = 1
+
+[motion]
+keyboard = "stagger"
+numpad = "stagger"
+menu = "stagger"
+media = "stagger"
+offer = "stagger"
+info = "stagger"
+log = "stagger"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "clank", volume = 0.22}
+open = {kind = "shing", volume = 0.15}
+close = {kind = "swish", volume = 0.04, pitch = 1.2}
+
+[sounds.guide]
+open = {kind = "shing", volume = 0.15}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "wood", volume = 0.16}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "wood", volume = 0.16}
+
+[rumble.menu]
+step = {strength = 0.12, length_ms = 18}
+pick = {strength = 0.45, length_ms = 40}
+open = {strength = 0.3, length_ms = 90}
+
+[rumble.keyboard]
+step = {strength = 0.1, length_ms = 14}
+pick = {strength = 0.32, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.1, length_ms = 14}
+pick = {strength = 0.32, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.32, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.32, length_ms = 60}

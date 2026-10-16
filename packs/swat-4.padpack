@@ -1,0 +1,836 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "b053eed6-298d-493a-93e6-04771d0dcc87"
+name = "SWAT 4"
+version = "1.0"
+author = "Padwight"
+description = "SWAT 4 and The Stetchkov Syndicate (2005) on an Xbox-style pad, for the game's default keys. RT fires, LT zooms, A uses, X reloads, Y is the flashlight, B is the quick command. RB holds the right mouse button for the graphical command menu, and the right stick picks from it. Hold LB for the gear ring. L3 toggles crouch, D-pad left and right lean, up cycles the command group. Select lists the viewports and the mission screens. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Swat4.exe"
+profile = "SWAT 4"
+
+[[rules]]
+kind = "executable"
+value = "Swat4X.exe"
+profile = "SWAT 4"
+
+[[profiles]]
+name = "SWAT 4"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_V"] }
+LeftBumper = { open_menu = "Gear" }
+RightBumper = { mouse = "Right" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { keys = ["KEY_X"] }
+DpadUp = { keys = ["KEY_TAB"] }
+DpadDown = { keys = ["KEY_LEFTSHIFT"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.LeftBumper.double_tap]
+open_menu = "Tools"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Zoom" }, { keys = ["KEY_Z"] }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{rb} holds the right mouse button, which opens the graphical command menu; steer it with the right stick {rs}, and click with {rt} to give the order. If you switched to Classic commands in the options, the number keys pick the order instead.
+{east} is the quick command: it gives the order for whatever you are looking at (open, clear, restrain).
+Hold {lb} for the gear ring, aiming with the right stick; double tap {lb} for the tools (toolkit, optiwand, door wedge). Slot 1 is the primary weapon, slot 2 the sidearm, then the grenades, the pepper spray and the tools. The handcuffs are on the ring too.
+{l3} toggles crouch, and it stays on until you click it again. {dpad_down} holds Shift, the game's walk and run key.
+{dpad_up} cycles the command group between Red, Blue and both.
+{select} lists the viewports (Red, Blue and sniper), the objectives and the score. {start} (Escape) opens the menu and backs out of every screen.
+SWAT 4 has no quick save.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Zoom" }
+"button:South" = { text = "Use / interact" }
+"button:East" = { text = "Quick command" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:eye} Flashlight" }
+"button:LeftBumper" = { text = "Hold: gear · double tap: tools" }
+"button:RightBumper" = { text = "Command menu" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Fire mode" }
+"button:DpadUp" = { text = "Cycle command group" }
+"button:DpadDown" = { text = "Walk / run (Shift)" }
+"button:Select" = { text = "{icon:map} Viewports, objectives" }
+"button:Start" = { text = "Menu / back out" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles]]
+name = "SWAT 4 + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_V"] }
+LeftBumper = { open_menu = "Gear" }
+RightBumper = { mouse = "Right" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { keys = ["KEY_X"] }
+DpadUp = { keys = ["KEY_TAB"] }
+DpadDown = { keys = ["KEY_LEFTSHIFT"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.LeftBumper.double_tap]
+open_menu = "Tools"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Zoom" }, { keys = ["KEY_Z"] }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 15.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+{rb} holds the right mouse button, which opens the graphical command menu; steer it with the right stick {rs}, and click with {rt} to give the order. If you switched to Classic commands in the options, the number keys pick the order instead.
+{east} is the quick command: it gives the order for whatever you are looking at (open, clear, restrain).
+Hold {lb} for the gear ring, aiming with the right stick; double tap {lb} for the tools (toolkit, optiwand, door wedge). Slot 1 is the primary weapon, slot 2 the sidearm, then the grenades, the pepper spray and the tools. The handcuffs are on the ring too.
+{l3} toggles crouch, and it stays on until you click it again. {dpad_down} holds Shift, the game's walk and run key.
+{dpad_up} cycles the command group between Red, Blue and both.
+{select} lists the viewports (Red, Blue and sniper), the objectives and the score. {start} (Escape) opens the menu and backs out of every screen.
+SWAT 4 has no quick save.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Zoom" }
+"button:South" = { text = "Use / interact" }
+"button:East" = { text = "Quick command" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:eye} Flashlight" }
+"button:LeftBumper" = { text = "Hold: gear · double tap: tools" }
+"button:RightBumper" = { text = "Command menu" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Fire mode" }
+"button:DpadUp" = { text = "Cycle command group" }
+"button:DpadDown" = { text = "Walk / run (Shift)" }
+"button:Select" = { text = "{icon:map} Viewports, objectives" }
+"button:Start" = { text = "Menu / back out" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles]]
+name = "SWAT 4 + Flick stick"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_V"] }
+LeftBumper = { open_menu = "Gear" }
+RightBumper = { mouse = "Right" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { keys = ["KEY_X"] }
+DpadUp = { keys = ["KEY_TAB"] }
+DpadDown = { keys = ["KEY_LEFTSHIFT"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.LeftBumper.double_tap]
+open_menu = "Tools"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { keys = ["KEY_Z"] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+{rb} holds the right mouse button, which opens the graphical command menu; steer it with the right stick {rs}, and click with {rt} to give the order. If you switched to Classic commands in the options, the number keys pick the order instead.
+{east} is the quick command: it gives the order for whatever you are looking at (open, clear, restrain).
+Hold {lb} for the gear ring, aiming with the right stick; double tap {lb} for the tools (toolkit, optiwand, door wedge). Slot 1 is the primary weapon, slot 2 the sidearm, then the grenades, the pepper spray and the tools. The handcuffs are on the ring too.
+{l3} toggles crouch, and it stays on until you click it again. {dpad_down} holds Shift, the game's walk and run key.
+{dpad_up} cycles the command group between Red, Blue and both.
+{select} lists the viewports (Red, Blue and sniper), the objectives and the score. {start} (Escape) opens the menu and backs out of every screen.
+SWAT 4 has no quick save.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Zoom" }
+"button:South" = { text = "Use / interact" }
+"button:East" = { text = "Quick command" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:eye} Flashlight" }
+"button:LeftBumper" = { text = "Hold: gear · double tap: tools" }
+"button:RightBumper" = { text = "Command menu" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Fire mode" }
+"button:DpadUp" = { text = "Cycle command group" }
+"button:DpadDown" = { text = "Walk / run (Shift)" }
+"button:Select" = { text = "{icon:map} Viewports, objectives" }
+"button:Start" = { text = "Menu / back out" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[layers]]
+name = "Zoom"
+indicator = "off"
+
+[layers.right_stick]
+deadzone = 0.1
+curve = 2.4
+key_threshold = 0.5
+
+[layers.right_stick.action.mouse]
+speed = 550.0
+accel = 0.2
+
+[[menus]]
+name = "Gear"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:rifle} Primary weapon {color:#7f9ab5}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:pistol} Sidearm {color:#7f9ab5}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:grenade} Flashbang {color:#7f9ab5}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:grenade} CS gas {color:#7f9ab5}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:grenade} Stinger {color:#7f9ab5}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:drop} Pepper spray {color:#7f9ab5}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:hammer} Breaching tool {color:#7f9ab5}7{/color}"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:rope} Handcuffs {color:#7f9ab5}H{/color}"
+action = { keys = ["KEY_H"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[menus.style.items]
+color = "#1b2835"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#4f8fd0"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#4f8fd0"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#142130"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menus.style.item_border]
+width = 1
+color = "#33485c"
+
+[menus.style.glow]
+color = "#4f8fd0"
+opacity = 0.45
+blur = 18
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+vignette = {color = "#000000", opacity = 0.5, reach = 25}
+
+[[menus]]
+name = "Tools"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:camera} Optiwand {color:#7f9ab5}9{/color}"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "{icon:wrench} Toolkit {color:#7f9ab5}8{/color}"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "{icon:gate} Door wedge {color:#7f9ab5}0{/color}"
+action = { keys = ["KEY_0"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[menus.style.items]
+color = "#1b2835"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#4f8fd0"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#4f8fd0"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#142130"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menus.style.item_border]
+width = 1
+color = "#33485c"
+
+[menus.style.glow]
+color = "#4f8fd0"
+opacity = 0.45
+blur = 18
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+vignette = {color = "#000000", opacity = 0.5, reach = 25}
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:scroll} Objectives {color:#7f9ab5}M{/color}"
+action = { keys = ["KEY_M"] }
+
+[[menus.items]]
+label = "{icon:chart} Scores {color:#7f9ab5}N{/color}"
+action = { keys = ["KEY_N"] }
+
+[[menus.items]]
+label = "{icon:pda} Status {color:#7f9ab5}O{/color}"
+action = { keys = ["KEY_O"] }
+
+[[menus.items]]
+label = "{icon:eye} Red team view"
+action = { keys = ["KEY_INSERT"] }
+
+[[menus.items]]
+label = "{icon:eye} Blue team view"
+action = { keys = ["KEY_HOME"] }
+
+[[menus.items]]
+label = "{icon:scope} Sniper view"
+action = { keys = ["KEY_PAGEUP"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Control view"
+action = { keys = ["KEY_CAPSLOCK"] }
+
+[[menus.items]]
+label = "{icon:cancel} Close view"
+action = { keys = ["KEY_END"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[menus.style.items]
+color = "#1b2835"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#4f8fd0"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#4f8fd0"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#142130"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menus.style.item_border]
+width = 1
+color = "#33485c"
+
+[menus.style.glow]
+color = "#4f8fd0"
+opacity = 0.45
+blur = 18
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+vignette = {color = "#000000", opacity = 0.5, reach = 25}
+
+[menu_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[menu_style.items]
+color = "#1b2835"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#4f8fd0"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#4f8fd0"
+opacity = 0.7
+
+[menu_style.gradient]
+color = "#142130"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menu_style.item_border]
+width = 1
+color = "#33485c"
+
+[menu_style.glow]
+color = "#4f8fd0"
+opacity = 0.45
+blur = 18
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+vignette = {color = "#000000", opacity = 0.5, reach = 25}
+
+[keyboard_style]
+corners = 0.1
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#1b2835"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#4f8fd0"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#4f8fd0"
+opacity = 0.7
+
+[keyboard_style.gradient]
+color = "#142130"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#33485c"
+
+[numpad_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#1b2835"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#4f8fd0"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#4f8fd0"
+opacity = 0.7
+
+[numpad_style.gradient]
+color = "#142130"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#33485c"
+
+[media_style]
+corners = 0.1
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[media_style.items]
+color = "#1b2835"
+opacity = 0.95
+
+[media_style.selected]
+color = "#4f8fd0"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#4f8fd0"
+opacity = 0.7
+
+[media_style.gradient]
+color = "#142130"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#33485c"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.08, pitch = 0.9}
+pick = {kind = "radio", volume = 0.2}
+open = {kind = "tick", volume = 0.2}
+close = {kind = "swish", volume = 0.03, pitch = 1.2}
+
+[sounds.guide]
+open = {kind = "radio", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.08, pitch = 0.9}
+pick = {kind = "beep", volume = 0.15, pitch = 1.0}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.08, pitch = 0.9}
+pick = {kind = "keys", volume = 0.25}
+
+[rumble.menu]
+step = {strength = 0.12, length_ms = 18}
+pick = {strength = 0.45, length_ms = 40}
+open = {strength = 0.3, length_ms = 90}
+
+[rumble.keyboard]
+step = {strength = 0.1, length_ms = 14}
+pick = {strength = 0.32, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.1, length_ms = 14}
+pick = {strength = 0.32, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.32, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.32, length_ms = 60}
