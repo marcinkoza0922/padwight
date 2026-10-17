@@ -1,0 +1,694 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "a9442761-ddfa-4c35-9480-7b7f973032f0"
+name = "Yamagi Quake II"
+version = "1.0"
+author = "Padwight"
+description = "Yamagi Quake II, the faithful Quake II source port, on an Xbox-style pad, for Quake II's classic keys. The left stick moves, A jumps, RT fires, LT runs, L3 toggles crouch, and the d-pad scrolls and uses inventory items. Hold LB for the weapon ring, aiming with the right stick, RB cycles to the next weapon and Y to the previous. Start is the menu; double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "yquake2.exe"
+profile = "Yamagi Quake II"
+
+[[rules]]
+kind = "executable"
+value = "yquake2"
+profile = "Yamagi Quake II"
+
+[[profiles]]
+name = "Yamagi Quake II"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_SPACE"] }
+East = { keys = ["KEY_9"] }
+West = { keys = ["KEY_3"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { wheel = "Up" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { keys = ["KEY_ENTER"] }
+DpadUp = { keys = ["KEY_UP"] }
+DpadDown = { keys = ["KEY_DOWN"] }
+DpadLeft = { keys = ["KEY_LEFTBRACE"] }
+DpadRight = { keys = ["KEY_RIGHTBRACE"] }
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F6"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.gestures.Select.long_press]
+keys = ["KEY_F1"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and backs out of every screen in it. In the menu the d-pad {dpad} up and down move the cursor and {r3} (Enter) picks.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one. {x} picks the Super Shotgun and {b} the Railgun.
+{a} jumps, and {l3} toggles crouch. Hold {lt} to run; if the port's Always Run is on, it walks instead.
+{select} (Tab) opens the inventory: the d-pad {dpad} left and right scroll the items and {r3} (Enter) uses the one shown. A long press of {select} shows your mission objectives (F1).
+Quick save is a double tap of {start} (F6), and quick load is a long press of {start} (F9).
+These are Quake II's classic keys, written from memory and not checked in the game. The ports don't all bind W, A, S and D, so bind them to forward, left, back and right in the Controls options, and turn on mouse look. Menu sliders need the mouse, since the d-pad left and right scroll the inventory. If a button does nothing, compare the Controls screen with the keys here.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Run (hold)" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Railgun" }
+"button:West" = { text = "Super Shotgun" }
+"button:North" = { text = "Previous weapon" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Use item / confirm" }
+"button:Select" = { text = "Inventory" }
+"gesture:button:Select:long_press" = { text = "Objectives" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles]]
+name = "Yamagi Quake II + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_SPACE"] }
+East = { keys = ["KEY_9"] }
+West = { keys = ["KEY_3"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { wheel = "Up" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { keys = ["KEY_ENTER"] }
+DpadUp = { keys = ["KEY_UP"] }
+DpadDown = { keys = ["KEY_DOWN"] }
+DpadLeft = { keys = ["KEY_LEFTBRACE"] }
+DpadRight = { keys = ["KEY_RIGHTBRACE"] }
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F6"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.gestures.Select.long_press]
+keys = ["KEY_F1"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 15.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+{start} (Escape) opens the game's menu and backs out of every screen in it. In the menu the d-pad {dpad} up and down move the cursor and {r3} (Enter) picks.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one. {x} picks the Super Shotgun and {b} the Railgun.
+{a} jumps, and {l3} toggles crouch. Hold {lt} to run; if the port's Always Run is on, it walks instead.
+{select} (Tab) opens the inventory: the d-pad {dpad} left and right scroll the items and {r3} (Enter) uses the one shown. A long press of {select} shows your mission objectives (F1).
+Quick save is a double tap of {start} (F6), and quick load is a long press of {start} (F9).
+These are Quake II's classic keys, written from memory and not checked in the game. The ports don't all bind W, A, S and D, so bind them to forward, left, back and right in the Controls options, and turn on mouse look. Menu sliders need the mouse, since the d-pad left and right scroll the inventory. If a button does nothing, compare the Controls screen with the keys here.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Run (hold)" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Railgun" }
+"button:West" = { text = "Super Shotgun" }
+"button:North" = { text = "Previous weapon" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Use item / confirm" }
+"button:Select" = { text = "Inventory" }
+"gesture:button:Select:long_press" = { text = "Objectives" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles]]
+name = "Yamagi Quake II + Flick stick"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_SPACE"] }
+East = { keys = ["KEY_9"] }
+West = { keys = ["KEY_3"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { wheel = "Up" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { keys = ["KEY_ENTER"] }
+DpadUp = { keys = ["KEY_UP"] }
+DpadDown = { keys = ["KEY_DOWN"] }
+DpadLeft = { keys = ["KEY_LEFTBRACE"] }
+DpadRight = { keys = ["KEY_RIGHTBRACE"] }
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F6"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.gestures.Select.long_press]
+keys = ["KEY_F1"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming.
+{start} (Escape) opens the game's menu and backs out of every screen in it. In the menu the d-pad {dpad} up and down move the cursor and {r3} (Enter) picks.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one. {x} picks the Super Shotgun and {b} the Railgun.
+{a} jumps, and {l3} toggles crouch. Hold {lt} to run; if the port's Always Run is on, it walks instead.
+{select} (Tab) opens the inventory: the d-pad {dpad} left and right scroll the items and {r3} (Enter) uses the one shown. A long press of {select} shows your mission objectives (F1).
+Quick save is a double tap of {start} (F6), and quick load is a long press of {start} (F9).
+These are Quake II's classic keys, written from memory and not checked in the game. The ports don't all bind W, A, S and D, so bind them to forward, left, back and right in the Controls options, and turn on mouse look. Menu sliders need the mouse, since the d-pad left and right scroll the inventory. If a button does nothing, compare the Controls screen with the keys here.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Run (hold)" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Railgun" }
+"button:West" = { text = "Super Shotgun" }
+"button:North" = { text = "Previous weapon" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Use item / confirm" }
+"button:Select" = { text = "Inventory" }
+"gesture:button:Select:long_press" = { text = "Objectives" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:pistol} Blaster {color:#e8b060}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:pistol} Shotgun {color:#e8b060}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:rifle} Super Shotgun {color:#e8b060}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:rifle} Machinegun {color:#e8b060}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:rifle} Chaingun {color:#e8b060}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:grenade} Grenades {color:#e8b060}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:rocket} Rockets {color:#e8b060}7{/color}"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:bolt} HyperBlaster {color:#e8b060}8{/color}"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "{icon:scope} Railgun {color:#e8b060}9{/color}"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "{icon:flame} BFG10K {color:#e8b060}0{/color}"
+action = { keys = ["KEY_0"] }
+
+[menus.style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0c0f12"
+opacity = 0.92
+
+[menus.style.items]
+color = "#1b2128"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#d98b2b"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#d98b2b"
+opacity = 0.6
+
+[menus.style.gradient]
+color = "#12171c"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3c4752"
+
+[menus.style.glow]
+color = "#d98b2b"
+opacity = 0.4
+blur = 20
+pulse = false
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 14, width = 2, color = "#d98b2b"}
+vignette = {color = "#000000", opacity = 0.55, reach = 28}
+[keyboard_style]
+corners = 0.05
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0c0f12"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#1b2128"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#d98b2b"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#d98b2b"
+opacity = 0.6
+
+[keyboard_style.gradient]
+color = "#12171c"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3c4752"
+
+[numpad_style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0c0f12"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#1b2128"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#d98b2b"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#d98b2b"
+opacity = 0.6
+
+[numpad_style.gradient]
+color = "#12171c"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3c4752"
+
+[media_style]
+corners = 0.05
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0c0f12"
+opacity = 0.92
+
+[media_style.items]
+color = "#1b2128"
+opacity = 0.95
+
+[media_style.selected]
+color = "#d98b2b"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#d98b2b"
+opacity = 0.6
+
+[media_style.gradient]
+color = "#12171c"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3c4752"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0c0f12"
+opacity = 0.92
+
+[menu_style.items]
+color = "#1b2128"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#d98b2b"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#d98b2b"
+opacity = 0.6
+
+[menu_style.gradient]
+color = "#12171c"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3c4752"
+
+[menu_style.glow]
+color = "#d98b2b"
+opacity = 0.4
+blur = 20
+pulse = false
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 14, width = 2, color = "#d98b2b"}
+vignette = {color = "#000000", opacity = 0.55, reach = 28}
+
+[motion]
+keyboard = "brutal"
+numpad = "brutal"
+menu = "brutal"
+media = "brutal"
+offer = "brutal"
+info = "brutal"
+log = "brutal"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.1, pitch = 0.8}
+pick = {kind = "beep", volume = 0.2, pitch = 0.8}
+open = {kind = "radio", volume = 0.25, pitch = 0.9}
+close = {kind = "swish", volume = 0.04, pitch = 0.6}
+
+[sounds.guide]
+open = {kind = "radio", volume = 0.25, pitch = 0.8}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.1, pitch = 0.8}
+pick = {kind = "click", volume = 0.25, pitch = 1.1}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.1, pitch = 0.8}
+pick = {kind = "beep", volume = 0.15, pitch = 0.9}
+
+[rumble.menu]
+step = {strength = 0.12, length_ms = 16}
+pick = {strength = 0.45, length_ms = 34}
+open = {strength = 0.3, length_ms = 80}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}
