@@ -1,0 +1,695 @@
+format = 20
+macros = []
+overlay_font = "Special Elite"
+
+[pack]
+id = "ab064e35-22aa-409c-a1e0-5f7f648797ee"
+name = "Return to Castle Wolfenstein"
+version = "1.0"
+author = "Padwight"
+description = "Return to Castle Wolfenstein (2001) on an Xbox-style pad, for the game's default keys. A uses, B jumps, RT fires, X reloads, Y draws the knife, L3 toggles crouch and LT is the alternate fire (the sniper scope). Hold LB for the weapon ring, aiming with the right stick, and RB cycles to the next weapon. D-pad left and right lean. Start is the menu; double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "9010"
+profile = "Return to Castle Wolfenstein"
+
+[[rules]]
+kind = "executable"
+value = "WolfSP.exe"
+profile = "Return to Castle Wolfenstein"
+
+[[profiles]]
+name = "Return to Castle Wolfenstein"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_1"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { wheel = "Up" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F5"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Zoom" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+{start} (Escape) opens the game's menu and backs out of every screen in it.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} cycles to the next weapon; {y} draws the knife.
+{l3} toggles crouch, and it stays on until you click it again.
+{lt} is the alternate fire, which is the scope on a sniper rifle. The right stick turns more slowly while it is held.
+Quick save is a double tap of {start}, and quick load is a long press of {start}.
+{select} (Tab) shows the status screen.
+These are the game's default keys, written from memory and not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Alt fire / scope" }
+"button:South" = { text = "Use / pick up" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:dagger} Knife" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:Select" = { text = "Status" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles]]
+name = "Return to Castle Wolfenstein + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_1"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { wheel = "Up" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F5"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Zoom" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 15.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+{start} (Escape) opens the game's menu and backs out of every screen in it.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} cycles to the next weapon; {y} draws the knife.
+{l3} toggles crouch, and it stays on until you click it again.
+{lt} is the alternate fire, which is the scope on a sniper rifle. The right stick turns more slowly while it is held.
+Quick save is a double tap of {start}, and quick load is a long press of {start}.
+{select} (Tab) shows the status screen.
+These are the game's default keys, written from memory and not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Alt fire / scope" }
+"button:South" = { text = "Use / pick up" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:dagger} Knife" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:Select" = { text = "Status" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles]]
+name = "Return to Castle Wolfenstein + Flick stick"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_1"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { wheel = "Up" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F5"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+{start} (Escape) opens the game's menu and backs out of every screen in it.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} cycles to the next weapon; {y} draws the knife.
+{l3} toggles crouch, and it stays on until you click it again.
+{lt} is the alternate fire, which is the scope on a sniper rifle. The right stick turns more slowly while it is held.
+Quick save is a double tap of {start}, and quick load is a long press of {start}.
+{select} (Tab) shows the status screen.
+These are the game's default keys, written from memory and not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Alt fire / scope" }
+"button:South" = { text = "Use / pick up" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:dagger} Knife" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:Select" = { text = "Status" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[layers]]
+name = "Zoom"
+indicator = "off"
+
+[layers.right_stick]
+deadzone = 0.1
+curve = 2.4
+key_threshold = 0.5
+
+[layers.right_stick.action.mouse]
+speed = 550.0
+accel = 0.2
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:dagger} Knife {color:#b9a56a}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:pistol} Pistol {color:#b9a56a}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:rifle} SMG {color:#b9a56a}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:rifle} Weapon 4 {color:#b9a56a}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:rocket} Weapon 5 {color:#b9a56a}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:flame} Weapon 6 {color:#b9a56a}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:bolt} Weapon 7 {color:#b9a56a}7{/color}"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:grenade} Weapon 8 {color:#b9a56a}8{/color}"
+action = { keys = ["KEY_8"] }
+
+[menus.style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#14130f"
+opacity = 0.92
+
+[menus.style.items]
+color = "#28261b"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#b9a56a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b9a56a"
+opacity = 0.5
+
+[menus.style.gradient]
+color = "#1d1b14"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menus.style.item_border]
+width = 1
+color = "#524d38"
+
+[menus.style.glow]
+color = "#b9a56a"
+opacity = 0.5
+blur = 24
+pulse = true
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+scanlines = {spacing = 4, opacity = 0.08, color = "#000000"}
+vignette = {color = "#000000", opacity = 0.6, reach = 30}
+[keyboard_style]
+corners = 0.3
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#14130f"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#28261b"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#b9a56a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#b9a56a"
+opacity = 0.5
+
+[keyboard_style.gradient]
+color = "#1d1b14"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#524d38"
+
+[numpad_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#14130f"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#28261b"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#b9a56a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#b9a56a"
+opacity = 0.5
+
+[numpad_style.gradient]
+color = "#1d1b14"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#524d38"
+
+[media_style]
+corners = 0.3
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#14130f"
+opacity = 0.92
+
+[media_style.items]
+color = "#28261b"
+opacity = 0.95
+
+[media_style.selected]
+color = "#b9a56a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#b9a56a"
+opacity = 0.5
+
+[media_style.gradient]
+color = "#1d1b14"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#524d38"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#14130f"
+opacity = 0.92
+
+[menu_style.items]
+color = "#28261b"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#b9a56a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#b9a56a"
+opacity = 0.5
+
+[menu_style.gradient]
+color = "#1d1b14"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menu_style.item_border]
+width = 1
+color = "#524d38"
+
+[menu_style.glow]
+color = "#b9a56a"
+opacity = 0.5
+blur = 24
+pulse = true
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+scanlines = {spacing = 4, opacity = 0.08, color = "#000000"}
+vignette = {color = "#000000", opacity = 0.6, reach = 30}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "thud", volume = 0.3, pitch = 0.7, reverb = 0.3}
+open = {kind = "heartbeat", volume = 0.35}
+close = {kind = "swish", volume = 0.03, pitch = 0.6, length = 1.5}
+
+[sounds.guide]
+open = {kind = "heartbeat", volume = 0.3}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "beep", volume = 0.15, pitch = 0.7}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "keys", volume = 0.25}
+
+[rumble.menu]
+step = {strength = 0.15, length_ms = 18}
+pick = {strength = 0.55, length_ms = 40}
+open = {strength = 0.35, length_ms = 90}
+
+[rumble.keyboard]
+step = {strength = 0.1, length_ms = 14}
+pick = {strength = 0.36, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.1, length_ms = 14}
+pick = {strength = 0.36, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.36, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.36, length_ms = 60}

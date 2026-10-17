@@ -1,0 +1,427 @@
+format = 20
+macros = []
+overlay_font = "Silkscreen"
+
+[pack]
+id = "48f53bef-9c02-4f5b-9432-175207111910"
+name = "Final Doom"
+version = "1.0"
+author = "Padwight"
+description = "Final Doom (1996: TNT: Evilution and The Plutonia Experiment) on an Xbox-style pad, for DOS Doom's default keys. The left stick walks and strafes, the right stick turns, RT fires, A uses, L3 toggles run and the d-pad sends the arrow keys. Hold LB for the weapon ring. Start is the menu."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "2290"
+profile = "Final Doom"
+
+[[profiles]]
+name = "Final Doom"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_LEFTALT"] }
+East = { keys = ["KEY_ENTER"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_RIGHTBRACE"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTSHIFT"] } } }
+DpadUp = { keys = ["KEY_UP"] }
+DpadDown = { keys = ["KEY_DOWN"] }
+DpadLeft = { keys = ["KEY_LEFT"] }
+DpadRight = { keys = ["KEY_RIGHT"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_DOT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_DOT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_COMMA"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_COMMA"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_COMMA"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.4
+
+[profiles.right_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.right_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.right_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.right_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.right_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.right_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.right_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.right_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.right_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { keys = ["KEY_LEFTCTRL"] }
+
+[profiles.guide]
+notes = '''Final Doom runs as DOS Doom: the left stick walks and strafes, the right stick turns, {rt} is the Ctrl key (fire) and {a} uses doors and switches (Space).
+{lb} opens the weapon ring, aiming with the right stick {rs}. {x} holds Alt, which turns the stick's sideways push into a strafe in DOS Doom.
+{l3} toggles Shift, which is run. {start} (Escape) opens the game's menu, {b} is Enter in it, and the d-pad {dpad} moves the menu cursor.
+{select} (Tab) shows the automap.
+These are DOS Doom's default keys, written from memory and not checked in the game. If a button does nothing, compare the game's controls screen with the keys here.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Turn" }
+"trigger:Right" = { text = "Fire" }
+"button:South" = { text = "Use" }
+"button:West" = { text = "Strafe (hold)" }
+"button:East" = { text = "Enter" }
+"button:North" = { text = "Automap" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Cycle weapon" }
+"button:LeftStick" = { text = "Run (toggle)" }
+"button:Select" = { text = "Automap" }
+"button:Start" = { text = "Menu / back out" }
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:fist} Fist / Saw {color:#c0a080}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:pistol} Pistol {color:#c0a080}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:rifle} Shotgun {color:#c0a080}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:rifle} Chaingun {color:#c0a080}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:rocket} Rockets {color:#c0a080}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:bolt} Plasma {color:#c0a080}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:flame} BFG 9000 {color:#c0a080}7{/color}"
+action = { keys = ["KEY_7"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#120c0a"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2a1a14"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c0301c"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c0301c"
+opacity = 0.6
+
+[menus.style.gradient]
+color = "#1d120e"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5a3a2c"
+
+[menus.style.glow]
+color = "#c0301c"
+opacity = 0.4
+blur = 20
+pulse = false
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+scanlines = {spacing = 3, opacity = 0.1, color = "#000000"}
+vignette = {color = "#000000", opacity = 0.55, reach = 26}
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#120c0a"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#2a1a14"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c0301c"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#c0301c"
+opacity = 0.6
+
+[keyboard_style.gradient]
+color = "#1d120e"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5a3a2c"
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#120c0a"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#2a1a14"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c0301c"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#c0301c"
+opacity = 0.6
+
+[numpad_style.gradient]
+color = "#1d120e"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5a3a2c"
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#120c0a"
+opacity = 0.92
+
+[media_style.items]
+color = "#2a1a14"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c0301c"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#c0301c"
+opacity = 0.6
+
+[media_style.gradient]
+color = "#1d120e"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5a3a2c"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#120c0a"
+opacity = 0.92
+
+[menu_style.items]
+color = "#2a1a14"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c0301c"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#c0301c"
+opacity = 0.6
+
+[menu_style.gradient]
+color = "#1d120e"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5a3a2c"
+
+[menu_style.glow]
+color = "#c0301c"
+opacity = 0.4
+blur = 20
+pulse = false
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+scanlines = {spacing = 3, opacity = 0.1, color = "#000000"}
+vignette = {color = "#000000", opacity = 0.55, reach = 26}
+
+[motion]
+keyboard = "retro"
+numpad = "retro"
+menu = "retro"
+media = "retro"
+offer = "retro"
+info = "retro"
+log = "retro"
+
+[sounds.menu]
+step = {kind = "blip", volume = 0.08, pitch = 0.8}
+pick = {kind = "thud", volume = 0.3, pitch = 0.9}
+open = {kind = "clank", volume = 0.25, pitch = 0.9}
+close = {kind = "swish", volume = 0.04, pitch = 0.7}
+
+[sounds.guide]
+open = {kind = "thud", volume = 0.3, pitch = 0.7}
+
+[sounds.keyboard]
+step = {kind = "blip", volume = 0.08, pitch = 0.8}
+pick = {kind = "keys", volume = 0.25}
+
+[sounds.numpad]
+step = {kind = "blip", volume = 0.08, pitch = 0.8}
+pick = {kind = "beep", volume = 0.15, pitch = 0.8}
+
+[rumble.menu]
+step = {strength = 0.12, length_ms = 16}
+pick = {strength = 0.45, length_ms = 34}
+open = {strength = 0.3, length_ms = 80}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

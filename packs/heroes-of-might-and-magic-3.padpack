@@ -1,0 +1,560 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "cf1eda2b-4f60-4485-b09a-72b46203de01"
+name = "Heroes of Might and Magic III"
+version = "1.0"
+author = "Padwight"
+description = "Heroes of Might and Magic III Complete (GOG) on an Xbox-style pad. The right stick moves the pointer, RT or A left-clicks, LT right-clicks (hold it for creature and object info). The left stick moves the hero a step, the d-pad scrolls the map, Y picks the next hero, RB ends the turn, R3 casts a spell. Hold LB for hero orders; Select lists the map screens. Click L3 to switch to the Battle mode, which puts wait, defend, cast and the combat commands on the buttons. Start is the system options."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Heroes3.exe"
+profile = "Heroes of Might and Magic III"
+
+[[rules]]
+kind = "executable"
+value = "Heroes3 HD.exe"
+profile = "Heroes of Might and Magic III"
+
+[[rules]]
+kind = "executable"
+value = "h3hota.exe"
+profile = "Heroes of Might and Magic III"
+
+[[rules]]
+kind = "executable"
+value = "h3hota HD.exe"
+profile = "Heroes of Might and Magic III"
+
+[[profiles]]
+name = "Heroes of Might and Magic III"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_ENTER"] }
+North = { keys = ["KEY_H"] }
+LeftBumper = { open_menu = "Hero" }
+RightBumper = { keys = ["KEY_E"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_O"] }
+LeftStick = { mode = "Battle" }
+RightStick = { keys = ["KEY_C"] }
+DpadUp = { keys = ["KEY_LEFTCTRL", "KEY_UP"] }
+DpadDown = { keys = ["KEY_LEFTCTRL", "KEY_DOWN"] }
+DpadLeft = { keys = ["KEY_LEFTCTRL", "KEY_LEFT"] }
+DpadRight = { keys = ["KEY_LEFTCTRL", "KEY_RIGHT"] }
+
+[profiles.left_stick]
+deadzone = 0.25
+curve = 1.0
+key_threshold = 0.5
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.3
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_LEFT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_LEFT"] }]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
+Moving a hero is two clicks, as with a mouse: the first shows the route, the second walks it. The left stick {ls} moves the hero one step with the arrow keys, and in a town it switches to the previous or next town. The d-pad scrolls the map; so does moving the pointer to the screen edge.
+{west} is Enter: it confirms dialogs and centers the map on the hero. {east} is Escape and cancels them; on the map it asks whether to quit, so answer No.
+{y} selects the next hero, {rb} ends the turn (confirm with {west}), {rs} casts a spell. Hold {lb} for hero orders, picking with the right stick.
+Click {ls} to switch to Battle and back. In Battle {y} waits, {x} defends, {rb} picks the next creature, {rs} casts and {lb} opens the combat commands.
+Heroes III has no quick save: {start} opens the system options, where S saves and L loads.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click" }
+"trigger:Left" = { text = "Right click (info)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Cancel / No" }
+"button:West" = { text = "OK / Yes / center hero" }
+"button:North" = { text = "Next hero" }
+"button:LeftBumper" = { text = "Hold: hero orders" }
+"button:RightBumper" = { text = "End turn" }
+"button:Select" = { text = "Map screens" }
+"button:Start" = { text = "System options" }
+"stick:Left" = { text = "Move the hero (arrow keys)" }
+"button:LeftStick" = { text = "Battle mode on / off" }
+"button:RightStick" = { text = "{icon:book} Cast spell" }
+"button:DpadUp" = { text = "Scroll the map up" }
+"button:DpadDown" = { text = "Scroll the map down" }
+"button:DpadLeft" = { text = "Scroll the map left" }
+"button:DpadRight" = { text = "Scroll the map right" }
+
+[[modes]]
+name = "Battle"
+indicator = "name"
+
+[modes.buttons]
+LeftStick = { mode = "Battle" }
+LeftBumper = { open_menu = "Combat" }
+North = { keys = ["KEY_W"] }
+West = { keys = ["KEY_D"] }
+RightBumper = { keys = ["KEY_SPACE"] }
+Start = { keys = ["KEY_O"] }
+DpadUp = { keys = ["KEY_UP"] }
+DpadDown = { keys = ["KEY_DOWN"] }
+
+[[menus]]
+name = "Hero"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:footprints} Move hero"
+action = { keys = ["KEY_M"] }
+
+[[menus.items]]
+label = "{icon:sleep} Sleep"
+action = { keys = ["KEY_Z"] }
+
+[[menus.items]]
+label = "{icon:sentry} Wake"
+action = { keys = ["KEY_W"] }
+
+[[menus.items]]
+label = "{icon:pick} Dig for the Grail"
+action = { keys = ["KEY_D"] }
+
+[[menus.items]]
+label = "{icon:underground} Switch level"
+action = { keys = ["KEY_U"] }
+
+[[menus.items]]
+label = "{icon:book} Cast spell"
+action = { keys = ["KEY_C"] }
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#2a1410"
+opacity = 0.92
+
+[menus.style.items]
+color = "#4a2a1e"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#d9a93a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b88a2e"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#3a1c14"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#6b4630"
+
+[menus.style.glow]
+color = "#f0c860"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#b88a2e", opacity = 0.5}
+frame = {kind = "brackets", size = 14, width = 1, color = "#b88a2e"}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:palace} Kingdom overview"
+action = { keys = ["KEY_K"] }
+
+[[menus.items]]
+label = "{icon:scroll} Quest log"
+action = { keys = ["KEY_Q"] }
+
+[[menus.items]]
+label = "{icon:globe} View world"
+action = { keys = ["KEY_V"] }
+
+[[menus.items]]
+label = "{icon:map} Puzzle map"
+action = { keys = ["KEY_P"] }
+
+[[menus.items]]
+label = "{icon:flag} Scenario info"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "{icon:gear} Adventure options"
+action = { keys = ["KEY_A"] }
+
+[[menus.items]]
+label = "{icon:book} Help"
+action = { keys = ["KEY_F1"] }
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#2a1410"
+opacity = 0.92
+
+[menus.style.items]
+color = "#4a2a1e"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#d9a93a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b88a2e"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#3a1c14"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#6b4630"
+
+[menus.style.glow]
+color = "#f0c860"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#b88a2e", opacity = 0.5}
+frame = {kind = "brackets", size = 14, width = 1, color = "#b88a2e"}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[[menus]]
+name = "Combat"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:automate} Auto combat"
+action = { keys = ["KEY_A"] }
+
+[[menus.items]]
+label = "{icon:book} Cast spell"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "{icon:eye} View troop"
+action = { keys = ["KEY_T"] }
+
+[[menus.items]]
+label = "{icon:gear} Combat options"
+action = { keys = ["KEY_O"] }
+
+[[menus.items]]
+label = "{icon:sword-cross} Begin battle (tactics)"
+action = { keys = ["KEY_S"] }
+
+[[menus.items]]
+label = "{icon:cancel} {color:orange}Retreat{/color}"
+action = { keys = ["KEY_R"] }
+
+[[menus.items]]
+label = "{icon:flag} {color:red}Surrender{/color}"
+action = { keys = ["KEY_S"] }
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#2a1410"
+opacity = 0.92
+
+[menus.style.items]
+color = "#4a2a1e"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#d9a93a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b88a2e"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#3a1c14"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#6b4630"
+
+[menus.style.glow]
+color = "#f0c860"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#b88a2e", opacity = 0.5}
+frame = {kind = "brackets", size = 14, width = 1, color = "#b88a2e"}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#2a1410"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#4a2a1e"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#d9a93a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#b88a2e"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#3a1c14"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#6b4630"
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#2a1410"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#4a2a1e"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#d9a93a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#b88a2e"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#3a1c14"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#6b4630"
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#2a1410"
+opacity = 0.92
+
+[media_style.items]
+color = "#4a2a1e"
+opacity = 0.95
+
+[media_style.selected]
+color = "#d9a93a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#b88a2e"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#3a1c14"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#6b4630"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#2a1410"
+opacity = 0.92
+
+[menu_style.items]
+color = "#4a2a1e"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#d9a93a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#b88a2e"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#3a1c14"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#6b4630"
+
+[menu_style.glow]
+color = "#f0c860"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#b88a2e", opacity = 0.5}
+frame = {kind = "brackets", size = 14, width = 1, color = "#b88a2e"}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[motion]
+keyboard = "stagger"
+numpad = "stagger"
+menu = "stagger"
+media = "stagger"
+offer = "stagger"
+info = "stagger"
+log = "stagger"
+
+[sounds.menu]
+step = {kind = "wood", volume = 0.08, pitch = 1.1}
+pick = {kind = "bell", volume = 0.12, pitch = 0.9}
+open = {kind = "page", volume = 0.06, pitch = 0.9}
+close = {kind = "page", volume = 0.04, pitch = 0.7}
+
+[sounds.numpad]
+step = {kind = "wood", volume = 0.08, pitch = 1.1}
+pick = {kind = "bell", volume = 0.12, pitch = 0.9}
+
+[sounds.keyboard]
+step = {kind = "wood", volume = 0.08, pitch = 1.1}
+pick = {kind = "typewriter", volume = 0.18, length = 0.6}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.32, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}

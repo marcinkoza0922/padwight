@@ -1,0 +1,573 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "9e0cfe78-c364-4390-b1a4-b13a425bd4af"
+name = "Hitman 2: Silent Assassin"
+version = "1.0"
+author = "Padwight"
+description = "Hitman 2: Silent Assassin (2002) on an Xbox-style pad, laid out like the Xbox release for the game's default keys. A carries out the action, X picks up, B drops (hold: throw) and Y reloads. RT fires, LT is the right mouse button (tap: holster, hold: inventory). L3 toggles crouch and sneak, and a full push on the left stick runs. The D-pad is the arrow keys, Select is the map and Start the menu. Gyro and flick stick profiles are included to try. Overlays in midnight black and crimson."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "6850"
+profile = "Hitman 2: Silent Assassin"
+
+[[rules]]
+kind = "executable"
+value = "Hitman 2 Silent Assassin/hitman2.exe"
+profile = "Hitman 2: Silent Assassin"
+
+[[profiles]]
+name = "Hitman 2: Silent Assassin"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_E"] }
+West = { keys = ["KEY_SPACE"] }
+East = { keys = ["KEY_G"] }
+North = { keys = ["KEY_R"] }
+LeftBumper = { wheel = "Down" }
+RightBumper = { wheel = "Up" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_X"] }
+Select = { keys = ["KEY_M"] }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+DpadUp = { keys = ["KEY_UP"] }
+DpadDown = { keys = ["KEY_DOWN"] }
+DpadLeft = { keys = ["KEY_LEFT"] }
+DpadRight = { keys = ["KEY_RIGHT"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.7
+max = 1.0
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''Hitman 2: Silent Assassin's keys here are the defaults from the Blood Money manual, not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.
+{a} carries out the action (hold it for the action list); {x} picks up an item (hold it for the list); {b} drops an item (hold it to throw). {y} reloads.
+{rt} fires. {lt} is the right mouse button: tap it to holster or draw the weapon, hold it for the inventory and let go on the item you want. {lb} and {rb} scroll through actions, items and the map.
+{l3} toggles crouch and sneak. A light push on the left stick {ls} walks; push it all the way to run. Click {r3} for the sniper scope and binoculars.
+The D-pad is the arrow keys, which the game's menus need. {select} is the map and {start} the menu.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move (full push: run)" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "{icon:pistol} Fire" }
+"trigger:Left" = { text = "{icon:holster} Holster (tap) / inventory (hold)" }
+"button:South" = { text = "{b}Action{/b} (hold: list)" }
+"button:West" = { text = "{icon:hand} Pick up (hold: list)" }
+"button:East" = { text = "{icon:drop-item} Drop (hold: throw)" }
+"button:North" = { text = "{icon:unload} Reload" }
+"button:LeftBumper" = { text = "Scroll down" }
+"button:RightBumper" = { text = "Scroll up" }
+"button:LeftStick" = { text = "{icon:footprints} Crouch / sneak (toggle)" }
+"button:RightStick" = { text = "{icon:scope} Scope / binoculars" }
+"button:Select" = { text = "{icon:map} Map" }
+"button:Start" = { text = "Menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown", "button:DpadLeft", "button:DpadRight"]
+text = "Menus (arrow keys)"
+
+[[profiles]]
+name = "Hitman 2: Silent Assassin + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_E"] }
+West = { keys = ["KEY_SPACE"] }
+East = { keys = ["KEY_G"] }
+North = { keys = ["KEY_R"] }
+LeftBumper = { wheel = "Down" }
+RightBumper = { wheel = "Up" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_X"] }
+Select = { keys = ["KEY_M"] }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+DpadUp = { keys = ["KEY_UP"] }
+DpadDown = { keys = ["KEY_DOWN"] }
+DpadLeft = { keys = ["KEY_LEFT"] }
+DpadRight = { keys = ["KEY_RIGHT"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.7
+max = 1.0
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 15.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
+Hitman 2: Silent Assassin's keys here are the defaults from the Blood Money manual, not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.
+{a} carries out the action (hold it for the action list); {x} picks up an item (hold it for the list); {b} drops an item (hold it to throw). {y} reloads.
+{rt} fires. {lt} is the right mouse button: tap it to holster or draw the weapon, hold it for the inventory and let go on the item you want. {lb} and {rb} scroll through actions, items and the map.
+{l3} toggles crouch and sneak. A light push on the left stick {ls} walks; push it all the way to run. Click {r3} for the sniper scope and binoculars.
+The D-pad is the arrow keys, which the game's menus need. {select} is the map and {start} the menu.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move (full push: run)" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "{icon:pistol} Fire" }
+"trigger:Left" = { text = "{icon:holster} Holster (tap) / inventory (hold)" }
+"button:South" = { text = "{b}Action{/b} (hold: list)" }
+"button:West" = { text = "{icon:hand} Pick up (hold: list)" }
+"button:East" = { text = "{icon:drop-item} Drop (hold: throw)" }
+"button:North" = { text = "{icon:unload} Reload" }
+"button:LeftBumper" = { text = "Scroll down" }
+"button:RightBumper" = { text = "Scroll up" }
+"button:LeftStick" = { text = "{icon:footprints} Crouch / sneak (toggle)" }
+"button:RightStick" = { text = "{icon:scope} Scope / binoculars" }
+"button:Select" = { text = "{icon:map} Map" }
+"button:Start" = { text = "Menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown", "button:DpadLeft", "button:DpadRight"]
+text = "Menus (arrow keys)"
+
+[[profiles]]
+name = "Hitman 2: Silent Assassin + Flick stick"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+South = { keys = ["KEY_E"] }
+West = { keys = ["KEY_SPACE"] }
+East = { keys = ["KEY_G"] }
+North = { keys = ["KEY_R"] }
+LeftBumper = { wheel = "Down" }
+RightBumper = { wheel = "Up" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_X"] }
+Select = { keys = ["KEY_M"] }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+DpadUp = { keys = ["KEY_UP"] }
+DpadDown = { keys = ["KEY_DOWN"] }
+DpadLeft = { keys = ["KEY_LEFT"] }
+DpadRight = { keys = ["KEY_RIGHT"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.7
+max = 1.0
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming.
+Hitman 2: Silent Assassin's keys here are the defaults from the Blood Money manual, not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.
+{a} carries out the action (hold it for the action list); {x} picks up an item (hold it for the list); {b} drops an item (hold it to throw). {y} reloads.
+{rt} fires. {lt} is the right mouse button: tap it to holster or draw the weapon, hold it for the inventory and let go on the item you want. {lb} and {rb} scroll through actions, items and the map.
+{l3} toggles crouch and sneak. A light push on the left stick {ls} walks; push it all the way to run. Click {r3} for the sniper scope and binoculars.
+The D-pad is the arrow keys, which the game's menus need. {select} is the map and {start} the menu.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move (full push: run)" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "{icon:pistol} Fire" }
+"trigger:Left" = { text = "{icon:holster} Holster (tap) / inventory (hold)" }
+"button:South" = { text = "{b}Action{/b} (hold: list)" }
+"button:West" = { text = "{icon:hand} Pick up (hold: list)" }
+"button:East" = { text = "{icon:drop-item} Drop (hold: throw)" }
+"button:North" = { text = "{icon:unload} Reload" }
+"button:LeftBumper" = { text = "Scroll down" }
+"button:RightBumper" = { text = "Scroll up" }
+"button:LeftStick" = { text = "{icon:footprints} Crouch / sneak (toggle)" }
+"button:RightStick" = { text = "{icon:scope} Scope / binoculars" }
+"button:Select" = { text = "{icon:map} Map" }
+"button:Start" = { text = "Menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown", "button:DpadLeft", "button:DpadRight"]
+text = "Menus (arrow keys)"
+
+[keyboard_style]
+corners = 0.1
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0b0b10"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#1a1a24"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#e03a3e"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#e03a3e"
+opacity = 0.6
+
+[keyboard_style.gradient]
+color = "#12121a"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4d2a33"
+
+[keyboard_style.type]
+case = "upper"
+letter_spacing = 2
+
+[numpad_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0b0b10"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#1a1a24"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#e03a3e"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#e03a3e"
+opacity = 0.6
+
+[numpad_style.gradient]
+color = "#12121a"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4d2a33"
+
+[numpad_style.type]
+case = "upper"
+letter_spacing = 2
+
+[media_style]
+corners = 0.1
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0b0b10"
+opacity = 0.92
+
+[media_style.items]
+color = "#1a1a24"
+opacity = 0.95
+
+[media_style.selected]
+color = "#e03a3e"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#e03a3e"
+opacity = 0.6
+
+[media_style.gradient]
+color = "#12121a"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4d2a33"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0b0b10"
+opacity = 0.92
+
+[menu_style.items]
+color = "#1a1a24"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#e03a3e"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#e03a3e"
+opacity = 0.6
+
+[menu_style.gradient]
+color = "#12121a"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4d2a33"
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.glow]
+color = "#e03a3e"
+opacity = 0.4
+blur = 20
+pulse = false
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 14, width = 2, color = "#e03a3e"}
+vignette = {color = "#000000", opacity = 0.55, reach = 28}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.1}
+pick = {kind = "shing", volume = 0.25}
+open = {kind = "latch", volume = 0.2}
+close = {kind = "swish", volume = 0.04, pitch = 1.5}
+
+[sounds.guide]
+open = {kind = "latch", volume = 0.2}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.1}
+pick = {kind = "keys", volume = 0.25}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.1}
+pick = {kind = "beep", volume = 0.15, pitch = 1.2}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 14}
+pick = {strength = 0.4, length_ms = 30}
+open = {strength = 0.25, length_ms = 70}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

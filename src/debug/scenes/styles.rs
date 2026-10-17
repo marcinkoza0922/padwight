@@ -52,6 +52,17 @@ pub(super) fn metal() -> OverlayStyle {
     }
 }
 
+/// Poured concrete with bevelled buttons.
+pub(super) fn concrete() -> OverlayStyle {
+    OverlayStyle {
+        background: Paint::new("#7b7b78", 1.0),
+        items: Paint::new("#8f8f8b", 0.95),
+        selected: Paint::new("#b5532a", 1.0),
+        ornament: Ornament { concrete: Some(Texture { opacity: 0.8 }), bevel: Some(Bevel { depth: 0.5 }), ..Ornament::default() },
+        ..OverlayStyle::default()
+    }
+}
+
 /// A menu style with most of what the typography and ornaments can do switched on.
 pub(super) fn ornate() -> OverlayStyle {
     let gold = "#c8a040";
@@ -108,6 +119,7 @@ pub(super) fn list_scene(name: &str) -> Option<OverlayStyle> {
         "menu-camo" => camouflaged(),
         "menu-paper" => paper(),
         "menu-metal" => metal(),
+        "menu-concrete" => concrete(),
         _ => {
             let slug = name.strip_prefix("frame-")?;
             framed(FrameKind::ALL.into_iter().find(|k| k.to_string().to_lowercase().replace(' ', "-") == slug)?)

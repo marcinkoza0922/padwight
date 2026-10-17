@@ -1,4 +1,4 @@
-//! The procedural pictures that texture a panel: paper and brushed metal behind its contents,
+//! The procedural pictures that texture a panel: paper, brushed metal and concrete behind its contents,
 //! and grain and pixel blocks over them. Each is translucent white and black, so it lightens
 //! and darkens whatever it sits on.
 
@@ -15,6 +15,8 @@ pub enum Material {
     Paper,
     /// Fine streaks along the panel, with a soft sheen.
     BrushedMetal,
+    /// Coarse mottling, shuttering seams, pits and the odd hairline crack.
+    Concrete,
 }
 
 const WIDTH: usize = 1280;
@@ -140,9 +142,11 @@ pub fn camo<'a, M: 'a>(c: &Camo, s: f32, fade: f32) -> Element<'a, M> {
 fn reliefs(kind: Material) -> &'static [u8] {
     static PAPER: OnceLock<Vec<u8>> = OnceLock::new();
     static METAL: OnceLock<Vec<u8>> = OnceLock::new();
+    static CONCRETE: OnceLock<Vec<u8>> = OnceLock::new();
     match kind {
         Material::Paper => PAPER.get_or_init(|| relief(paper)),
         Material::BrushedMetal => METAL.get_or_init(|| relief(brushed_metal)),
+        Material::Concrete => CONCRETE.get_or_init(|| relief(concrete)),
     }
 }
 
@@ -211,4 +215,42 @@ fn brushed_metal(x: usize, y: usize) -> f32 {
     let fine = hash(x as i64, y as i64, 9) - 0.5;
     let sheen = ((x as f32 / 260.0 + y as f32 / 900.0) * std::f32::consts::PI).sin() * 0.5;
     0.5 + streak * 0.30 + row * 0.12 + fine * 0.05 + sheen * 0.22
+}
+
+/// Poured concrete: broad stains, a sandy grain, scattered pits (small dark pockets with a
+/// pale lip) and, every 320 by 180 pixels, a seam where the shuttering met, with a hairline
+/// crack wandering down some of the vertical ones.
+fn concrete(x: usize, y: usize) -> f32 {
+    let stain = blotch(x, y, 140.0, 10) - 0.5;
+    let cloud = blotch(x, y, 34.0, 11) - 0.5;
+    let sand = hash(x as i64, y as i64, 12) - 0.5;
+    let fine = blotch(x, y, 3.0, 13) - 0.5;
+    // Pits: a pocket may sit in each 9-pixel cell, dark in the middle with a lighter rim.
+    let (cx, cy) = ((x / 9) as i64, (y / 9) as i64);
+    let pit = if hash(cx, cy, 14) > 0.93 {
+        let (dx, dy) = ((x % 9) as f32 - 3.0 - hash(cx, cy, 15) * 3.0, (y % 9) as f32 - 3.0 - hash(cx, cy, 16) * 3.0);
+        let d = (dx * dx + dy * dy).sqrt();
+        if d < 1.8 { -0.55 } else if d < 2.8 { 0.2 } else { 0.0 }
+    } else {
+        0.0
+    };
+    // Seams: a dark line with a pale edge beside it.
+    let seam = |at: usize, size: usize| -> f32 {
+        match at % size {
+            0 => -0.45,
+            1 => 0.18,
+            r if r == size - 1 => 0.12,
+            _ => 0.0,
+        }
+    };
+    let panel_cols = x / 320;
+    let crack = if hash(panel_cols as i64, 17, 17) > 0.45 {
+        // A crack down the seam's left, its x wandering with y.
+        let wander = ((blotch(0, y, 40.0, 18) - 0.5) * 22.0) as i64;
+        let line = (panel_cols * 320) as i64 + 160 + wander;
+        if (x as i64 - line).abs() == 0 && hash(y as i64 / 90, panel_cols as i64, 19) > 0.4 { -0.4 } else { 0.0 }
+    } else {
+        0.0
+    };
+    0.5 + stain * 0.30 + cloud * 0.22 + sand * 0.26 + fine * 0.14 + pit + seam(x, 320) + seam(y, 180) + crack
 }
