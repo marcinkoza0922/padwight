@@ -1,0 +1,792 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "c14c3c45-ba3d-4061-87fc-bb826e6b2aa5"
+name = "Company of Heroes"
+version = "1.0"
+author = "Padwight"
+description = "Company of Heroes on an Xbox-style pad, for the Classic hotkeys. The right stick moves the cursor, RT left-clicks, LT right-clicks, the left stick scrolls the map. Face buttons are Attack move / Cancel / Stop / Retreat, the d-pad is Reinforce / Attack ground / Primary and Secondary build menus, RB is Shift (queue). Hold LB for control groups 1-8 (also hold RB in there to assign the group instead). R3 opens a radial menu of camera and selection commands. Select resets the camera, Start is the game menu. Hold Select for the Menus mode (clicks, Enter, arrows) and again to come back. Keys are the Classic set from the Tales of Valor manual; the Opposing Fronts and Tales of Valor campaigns share them."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "RelicCOH.exe"
+profile = "Company of Heroes"
+
+[[rules]]
+kind = "steam_app_id"
+value = "228200"
+profile = "Company of Heroes"
+
+[[profiles]]
+name = "Company of Heroes"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+
+[profiles.buttons.South]
+keys = ["KEY_A"]
+
+[profiles.buttons.East]
+keys = ["KEY_ESC"]
+
+[profiles.buttons.North]
+keys = ["KEY_T"]
+
+[profiles.buttons.West]
+keys = ["KEY_H"]
+
+[profiles.buttons.LeftBumper]
+layer = "Groups"
+
+[profiles.buttons.RightBumper]
+keys = ["KEY_LEFTSHIFT"]
+
+[profiles.buttons.Select]
+keys = ["KEY_BACKSPACE"]
+
+[profiles.buttons.Start]
+keys = ["KEY_F10"]
+
+[profiles.buttons.LeftStick]
+keys = ["KEY_TAB"]
+
+[profiles.buttons.RightStick]
+open_menu = "Commands"
+
+[profiles.buttons.DpadUp]
+keys = ["KEY_R"]
+
+[profiles.buttons.DpadDown]
+keys = ["KEY_B"]
+
+[profiles.buttons.DpadLeft]
+keys = ["KEY_V"]
+
+[profiles.buttons.DpadRight]
+keys = ["KEY_G"]
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+
+[profiles.left_trigger.action.button.action]
+mouse = "Right"
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+
+[profiles.right_trigger.action.button.action]
+mouse = "Left"
+
+[profiles.gestures.Select.long_press]
+mode = "Menus"
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+[profiles.guide]
+notes = '''The right stick {rs} moves the cursor: {rt} selects (left click), and {lt} moves or targets (right click). The left stick {ls} scrolls the map. Hold Alt and move the mouse to rotate and tilt the camera; {select} resets it (Backspace).
+Hold {lb} for the control groups: the face buttons and the {dpad} recall groups 1 to 8. Hold {lb} and {rb} together to assign the selection to the group instead.
+{rb} is Shift: hold it to queue orders or add to the selection. Click {l3} to cycle the primary selection (Tab).
+{south} is attack move, {north} retreat and {west} stop; the {dpad} reinforces, attacks the ground and opens the primary and secondary build menus.
+Click {r3} for the camera and selection commands, aimed with the right stick {rs}. Hold {select} for the Menus mode, and hold it again to come back.
+{start} (F10) is the game menu. These are the Classic hotkeys, which are the default: check Options, Gameplay if a key does nothing.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Scroll map"}
+"stick:Right" = {text = "Cursor"}
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (move / target)" }
+"button:South" = { text = "Attack" }
+"button:East" = { text = "Cancel" }
+"button:West" = { text = "Stop" }
+"button:North" = { text = "Hold position" }
+"button:DpadUp" = { text = "Move" }
+"button:DpadRight" = { text = "Patrol" }
+"button:DpadLeft" = { text = "Basic structures" }
+"button:DpadDown" = { text = "Advanced structures" }
+"button:RightBumper" = { text = "Shift (queue)" }
+"button:LeftStick" = { text = "Click: ctrl-click (select same type)" }
+"button:LeftBumper" = { text = "Hold: control groups 1-8" }
+"button:RightStick" = { text = "Worker / unit commands" }
+"button:Select" = {text = "{icon:bell} Jump to last alert"}
+"button:Start" = { text = "Game menu" }
+"gesture:button:Select:long_press" = { text = "Menus mode on / off" }
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Assign group instead"
+
+[[profiles]]
+name = "Company of Heroes + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+
+[profiles.buttons.South]
+keys = ["KEY_A"]
+
+[profiles.buttons.East]
+keys = ["KEY_ESC"]
+
+[profiles.buttons.North]
+keys = ["KEY_T"]
+
+[profiles.buttons.West]
+keys = ["KEY_H"]
+
+[profiles.buttons.LeftBumper]
+layer = "Groups"
+
+[profiles.buttons.RightBumper]
+keys = ["KEY_LEFTSHIFT"]
+
+[profiles.buttons.Select]
+keys = ["KEY_BACKSPACE"]
+
+[profiles.buttons.Start]
+keys = ["KEY_F10"]
+
+[profiles.buttons.LeftStick]
+keys = ["KEY_TAB"]
+
+[profiles.buttons.RightStick]
+open_menu = "Commands"
+
+[profiles.buttons.DpadUp]
+keys = ["KEY_R"]
+
+[profiles.buttons.DpadDown]
+keys = ["KEY_B"]
+
+[profiles.buttons.DpadLeft]
+keys = ["KEY_V"]
+
+[profiles.buttons.DpadRight]
+keys = ["KEY_G"]
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+
+[profiles.left_trigger.action.button.action]
+mouse = "Right"
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+
+[profiles.right_trigger.action.button.action]
+mouse = "Left"
+
+[profiles.gestures.Select.long_press]
+mode = "Menus"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the cursor: {rt} selects (left click), and {lt} moves or targets (right click). The left stick {ls} scrolls the map. Hold Alt and move the mouse to rotate and tilt the camera; {select} resets it (Backspace).
+Hold {lb} for the control groups: the face buttons and the {dpad} recall groups 1 to 8. Hold {lb} and {rb} together to assign the selection to the group instead.
+{rb} is Shift: hold it to queue orders or add to the selection. Click {l3} to cycle the primary selection (Tab).
+{south} is attack move, {north} retreat and {west} stop; the {dpad} reinforces, attacks the ground and opens the primary and secondary build menus.
+Click {r3} for the camera and selection commands, aimed with the right stick {rs}. Hold {select} for the Menus mode, and hold it again to come back.
+{start} (F10) is the game menu. These are the Classic hotkeys, which are the default: check Options, Gameplay if a key does nothing.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Scroll map"}
+"stick:Right" = {text = "Cursor"}
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (move / target)" }
+"button:South" = { text = "Attack" }
+"button:East" = { text = "Cancel" }
+"button:West" = { text = "Stop" }
+"button:North" = { text = "Hold position" }
+"button:DpadUp" = { text = "Move" }
+"button:DpadRight" = { text = "Patrol" }
+"button:DpadLeft" = { text = "Basic structures" }
+"button:DpadDown" = { text = "Advanced structures" }
+"button:RightBumper" = { text = "Shift (queue)" }
+"button:LeftStick" = { text = "Click: ctrl-click (select same type)" }
+"button:LeftBumper" = { text = "Hold: control groups 1-8" }
+"button:RightStick" = { text = "Worker / unit commands" }
+"button:Select" = {text = "{icon:bell} Jump to last alert"}
+"button:Start" = { text = "Game menu" }
+"gesture:button:Select:long_press" = { text = "Menus mode on / off" }
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Assign group instead"
+
+[[menus]]
+name = "Commands"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:home} Headquarters"
+
+[menus.items.action]
+keys = ["KEY_F1"]
+
+[[menus.items]]
+label = "{icon:wrench} Repair"
+
+[menus.items.action]
+keys = ["KEY_E"]
+
+[[menus.items]]
+label = "{icon:unload} Unload"
+
+[menus.items.action]
+keys = ["KEY_U"]
+
+[[menus.items]]
+label = "{icon:trash} Scuttle"
+
+[menus.items.action]
+keys = ["KEY_DELETE"]
+
+[[menus.items]]
+label = "{icon:camera} Reset camera"
+
+[menus.items.action]
+keys = ["KEY_BACKSPACE"]
+
+[[menus.items]]
+label = "{icon:layers} Cycle primary"
+
+[menus.items.action]
+keys = ["KEY_TAB"]
+
+[menus.style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#12150c"
+opacity = 0.9
+
+[menus.style.items]
+color = "#2c3320"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#9fb35a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#9fb35a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#1b2012"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4a5a30"
+
+[menus.style.glow]
+color = "#cfe08a"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+case = "upper"
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#9fb35a"}
+scanlines = {spacing = 3, opacity = 0.12, color = "#000000", drift = true}
+[[layers]]
+name = "Groups"
+indicator = "name"
+
+[layers.indicator_style]
+position = "top_center"
+scale = 0.7
+
+[layers.indicator_style.background]
+color = "#12150c"
+opacity = 0.7
+
+[layers.indicator_style.items]
+color = "#2c3320"
+opacity = 0.95
+
+[layers.indicator_style.selected]
+color = "#9fb35a"
+opacity = 1.0
+
+[layers.buttons.South]
+keys = ["KEY_1"]
+
+[layers.buttons.East]
+keys = ["KEY_3"]
+
+[layers.buttons.North]
+keys = ["KEY_4"]
+
+[layers.buttons.West]
+keys = ["KEY_2"]
+
+[layers.buttons.RightBumper]
+layer = "Assign group"
+
+[layers.buttons.DpadUp]
+keys = ["KEY_5"]
+
+[layers.buttons.DpadDown]
+keys = ["KEY_7"]
+
+[layers.buttons.DpadLeft]
+keys = ["KEY_8"]
+
+[layers.buttons.DpadRight]
+keys = ["KEY_6"]
+
+[[layers]]
+name = "Assign group"
+indicator = "name"
+
+[layers.indicator_style]
+position = "top_center"
+scale = 0.7
+
+[layers.indicator_style.background]
+color = "#12150c"
+opacity = 0.7
+
+[layers.indicator_style.items]
+color = "#2c3320"
+opacity = 0.95
+
+[layers.indicator_style.selected]
+color = "#9fb35a"
+opacity = 1.0
+
+[layers.buttons.South]
+keys = [
+    "KEY_LEFTCTRL",
+    "KEY_1",
+]
+
+[layers.buttons.East]
+keys = [
+    "KEY_LEFTCTRL",
+    "KEY_3",
+]
+
+[layers.buttons.North]
+keys = [
+    "KEY_LEFTCTRL",
+    "KEY_4",
+]
+
+[layers.buttons.West]
+keys = [
+    "KEY_LEFTCTRL",
+    "KEY_2",
+]
+
+[layers.buttons.DpadUp]
+keys = [
+    "KEY_LEFTCTRL",
+    "KEY_5",
+]
+
+[layers.buttons.DpadDown]
+keys = [
+    "KEY_LEFTCTRL",
+    "KEY_7",
+]
+
+[layers.buttons.DpadLeft]
+keys = [
+    "KEY_LEFTCTRL",
+    "KEY_8",
+]
+
+[layers.buttons.DpadRight]
+keys = [
+    "KEY_LEFTCTRL",
+    "KEY_6",
+]
+
+[[modes]]
+name = "Menus"
+indicator = "name"
+swallow_unbound = true
+
+[modes.indicator_style]
+position = "top_center"
+scale = 0.7
+
+[modes.indicator_style.background]
+color = "#12150c"
+opacity = 0.7
+
+[modes.indicator_style.items]
+color = "#2c3320"
+opacity = 0.95
+
+[modes.indicator_style.selected]
+color = "#9fb35a"
+opacity = 1.0
+
+[modes.buttons]
+Select = "toggle_overlay"
+
+[modes.buttons.South]
+mouse = "Left"
+
+[modes.buttons.East]
+keys = ["KEY_ESC"]
+
+[modes.buttons.North]
+keys = ["KEY_ENTER"]
+
+[modes.buttons.West]
+mouse = "Right"
+
+[modes.buttons.Start]
+keys = ["KEY_ESC"]
+
+[modes.buttons.DpadUp]
+keys = ["KEY_UP"]
+
+[modes.buttons.DpadDown]
+keys = ["KEY_DOWN"]
+
+[modes.buttons.DpadLeft]
+keys = ["KEY_LEFT"]
+
+[modes.buttons.DpadRight]
+keys = ["KEY_RIGHT"]
+
+[modes.gestures.Select.long_press]
+mode = "Menus"
+
+[modes.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.5
+
+[modes.left_stick.action.scroll]
+speed = 12.0
+
+[keyboard_style]
+corners = 0.3
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#12150c"
+opacity = 0.9
+
+[keyboard_style.items]
+color = "#2c3320"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#9fb35a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#9fb35a"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#1b2012"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4a5a30"
+
+[numpad_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#12150c"
+opacity = 0.9
+
+[numpad_style.items]
+color = "#2c3320"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#9fb35a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#9fb35a"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#1b2012"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4a5a30"
+
+[media_style]
+corners = 0.3
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#12150c"
+opacity = 0.9
+
+[media_style.items]
+color = "#2c3320"
+opacity = 0.95
+
+[media_style.selected]
+color = "#9fb35a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#9fb35a"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#1b2012"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4a5a30"
+
+[media_style.type]
+letter_spacing = 1
+case = "upper"
+
+[menu_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#12150c"
+opacity = 0.9
+
+[menu_style.items]
+color = "#2c3320"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#9fb35a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#9fb35a"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#1b2012"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4a5a30"
+
+[menu_style.glow]
+color = "#cfe08a"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 1
+case = "upper"
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#9fb35a"}
+scanlines = {spacing = 3, opacity = 0.12, color = "#000000", drift = true}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "blip", volume = 0.05, pitch = 1.5, length = 0.5}
+pick = {kind = "radio", volume = 0.15}
+open = {kind = "rise", volume = 0.04, pitch = 1.4, length = 0.5}
+close = {kind = "fall", volume = 0.03, pitch = 1.4, length = 0.5}
+
+[sounds.numpad]
+step = {kind = "blip", volume = 0.05, pitch = 1.5, length = 0.5}
+pick = {kind = "beep", volume = 0.15, pitch = 1.1}
+
+[sounds.keyboard]
+step = {kind = "blip", volume = 0.05, pitch = 1.5, length = 0.5}
+pick = {kind = "keys", volume = 0.22}
+
+[rumble.menu]
+step = {strength = 0.11, length_ms = 18}
+pick = {strength = 0.41, length_ms = 35}
+open = {strength = 0.09, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.27, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.27, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.27, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.27, length_ms = 60}
