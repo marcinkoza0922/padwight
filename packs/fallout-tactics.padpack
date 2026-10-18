@@ -170,6 +170,163 @@ Tap {west} to reload, hold it for the weapon mode, double tap it for a targeted 
 "button:DpadDown" = { text = "Prone" }
 "button:DpadLeft" = { text = "Swap hands" }
 
+
+[[profiles]]
+name = "Fallout Tactics + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_BACKSPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_I"] }
+LeftBumper = { open_menu = "Squad" }
+RightBumper = { keys = ["KEY_LEFTSHIFT"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_LEFTCTRL"] }
+RightStick = { keys = ["KEY_ENTER"] }
+DpadUp = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_A"] }
+DpadDown = { keys = ["KEY_Z"] }
+DpadLeft = { keys = ["KEY_U"] }
+
+[profiles.gestures.East.long_press]
+keys = ["KEY_LEFTCTRL", "KEY_SPACE"]
+
+[profiles.gestures.West.long_press]
+keys = ["KEY_Y"]
+
+[profiles.gestures.West.double_tap]
+keys = ["KEY_T"]
+
+[profiles.gestures.LeftBumper.double_tap]
+keys = ["KEY_SPACE"]
+
+[profiles.gestures.RightStick.long_press]
+keys = ["KEY_PAUSE"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTALT", "KEY_S"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_LEFTALT", "KEY_L"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
+The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
+Hold {rb} while clicking to run there. Hold {l3} while clicking to force a move to the same level, or to get in and out of a vehicle.
+{r3} switches between continuous and turn-based play; hold it to pause continuous play.
+In turn-based play, {east} ends the selected character's turn, holding {east} ends the whole turn, and double tapping {lb} goes to the next character.
+Hold {lb} for squad members, the whole squad and the sentry modes, picking with the right stick {rs}.
+The {dpad} sets the stance: up stands, right crouches, down goes prone. Left swaps hands.
+Tap {west} to reload, hold it for the weapon mode, double tap it for a targeted shot.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the map" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (move, use, fire)" }
+"trigger:Left" = { text = "Right click (fire)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Stop / end this one's turn" }
+"gesture:button:East:long_press" = { text = "End turn" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Weapon mode" }
+"gesture:button:West:double_tap" = { text = "Targeted shot" }
+"button:North" = { text = "{icon:bag} Inventory" }
+"button:LeftBumper" = { text = "Hold: squad, sentry modes" }
+"gesture:button:LeftBumper:double_tap" = { text = "Next character" }
+"button:RightBumper" = { text = "Hold: run (Shift)" }
+"button:LeftStick" = { text = "Hold: Ctrl (force move, vehicles)" }
+"button:RightStick" = { text = "Turn-based on / off" }
+"gesture:button:RightStick:long_press" = { text = "{icon:pause} Pause" }
+"button:Select" = { text = "Skilldex, character, Pip-Boy" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"button:DpadUp" = { text = "Stand" }
+"button:DpadRight" = { text = "Crouch" }
+"button:DpadDown" = { text = "Prone" }
+"button:DpadLeft" = { text = "Swap hands" }
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
 [[menus]]
 name = "Squad"
 

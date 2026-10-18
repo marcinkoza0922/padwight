@@ -139,6 +139,142 @@ The d-pad {dpad_up} / {dpad_down} zooms; hold {dpad_down} to return to 100%.
 "button:DpadLeft" = { text = "Previous party" }
 "button:DpadRight" = { text = "Next party" }
 
+
+[[profiles]]
+name = "Age of Wonders: Shadow Magic + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_D"] }
+North = { keys = ["KEY_N"] }
+LeftBumper = { open_menu = "Orders" }
+RightBumper = { keys = ["KEY_SPACE"] }
+Select = { open_menu = "Map" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_A"] }
+RightStick = { keys = ["KEY_C"] }
+DpadUp = { keys = ["KEY_KPPLUS"] }
+DpadDown = { keys = ["KEY_KPMINUS"] }
+DpadLeft = { keys = ["KEY_P"] }
+DpadRight = { keys = ["KEY_N"] }
+
+[profiles.gestures.West.long_press]
+keys = ["KEY_G"]
+
+[profiles.gestures.RightBumper.long_press]
+keys = ["KEY_LEFTCTRL", "KEY_E"]
+
+[profiles.gestures.DpadDown.long_press]
+keys = ["KEY_0"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F2"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F3"]
+
+[profiles.left_stick]
+deadzone = 0.25
+curve = 1.0
+key_threshold = 0.5
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.3
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_LEFT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_LEFT"] }]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
+The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
+The left stick {ls} scrolls the map with the arrow keys; moving the pointer to the screen edge scrolls it too.
+{y} selects the next party and the d-pad {dpad_left} / {dpad_right} steps back and forth through them. {x} marks the selected party done for the turn, and holding it puts it on guard.
+{rb} jumps to the next event, such as a finished spell or a party with orders; hold it to end the turn. {rs} centers the view on the selected party and {ls} click toggles the magic domain.
+The d-pad {dpad_up} / {dpad_down} zooms; hold {dpad_down} to return to 100%.
+{east} is Escape. Age of Wonders has quick save on F2 and load on F3: double tap {start} to save, hold it to load.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (select, move)" }
+"trigger:Left" = { text = "Right click (info)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Cancel" }
+"button:West" = { text = "Party done" }
+"gesture:button:West:long_press" = { text = "Party guard" }
+"button:North" = { text = "Next party" }
+"button:LeftBumper" = { text = "Hold: party orders" }
+"button:RightBumper" = { text = "Next event" }
+"gesture:button:RightBumper:long_press" = { text = "End turn" }
+"button:Select" = { text = "Map commands" }
+"button:Start" = { text = "Escape" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Load" }
+"stick:Left" = { text = "Scroll the map" }
+"button:LeftStick" = { text = "Magic domain" }
+"button:RightStick" = { text = "Center on party" }
+"button:DpadUp" = { text = "Zoom in" }
+"button:DpadDown" = { text = "Zoom out" }
+"gesture:button:DpadDown:long_press" = { text = "Zoom 100%" }
+"button:DpadLeft" = { text = "Previous party" }
+"button:DpadRight" = { text = "Next party" }
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
 [[menus]]
 name = "Orders"
 
