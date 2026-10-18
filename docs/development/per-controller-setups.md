@@ -146,4 +146,9 @@ Checked against the code (`config.rs`, `daemon.rs`, `daemon/*.rs`).
    5 minutes. The answer is kept in the entry (`pass_through`, copied `profiles`). Not done: the
    question for identical pads without a unique id (they share one entry), a GUI way to undo
    "pass through" or forget a pad, and a hardware check.
-6. Player-number pinning against Steam Input (needs hardware).
+6. **Done, untested on hardware** (`daemon/first_pad.rs`, `fillers_needed`). A pad with `player = N`
+   (N > 1) gets placeholder virtual pads made ahead of its own until N-1 pads exist, so Steam places it
+   in slot N. An unpinned pad takes the kept pad, then the lowest placeholder, before a new one is made.
+   Placeholders go when remapping is turned off. Linux only. Not covered: the GUI has no way to set the
+   number yet beyond the existing player label; pinning to 1 is the kept pad's behaviour; a pad
+   connecting after a lower-numbered one left may land in a freed slot instead. Needs a check with Steam.

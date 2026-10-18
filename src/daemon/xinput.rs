@@ -104,7 +104,7 @@ impl Daemon {
         let ff = controller.rumble.then_some(FfSpec);
         let identity = PadIdentity::resolve(self.identity_override, model, self.active_support());
         // No pad is kept on Windows (see `first_pad.rs`), so this is always a new one.
-        let Some(new_pad) = self.pad_for_new(ff.as_ref(), identity) else { return };
+        let Some(new_pad) = self.pad_for_new(ff.as_ref(), identity, self.config.controller(&pad_id).and_then(|c| c.player)) else { return };
         let pad = new_pad.pad;
         log!("managing {name} ({})", path.display());
         let id = self.next_id;

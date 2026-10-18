@@ -22,7 +22,7 @@ pub struct ControllerEntry {
     /// `#rrggbb`, for telling pads apart.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub color: Option<String>,
-    /// A player number to show for it. Only a label until slots can be pinned.
+    /// A player number to show for it, and the slot its virtual pad is made in (see `first_pad.rs`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub player: Option<u8>,
     /// Pack (game name; empty for General) -> the profile this pad uses in it.

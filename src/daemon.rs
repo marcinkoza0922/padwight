@@ -449,6 +449,8 @@ struct Daemon {
     devices: HashMap<u64, Managed>,
     /// The virtual pad kept while no controller feeds it (see `first_pad.rs`).
     spare_pad: Option<VirtualPad>,
+    /// Pads held to keep the slots ahead of a controller pinned to a later player number.
+    filler_pads: Vec<VirtualPad>,
     next_id: u64,
     /// Whether injected controllers are accepted, and how many there have been (see `inject.rs`).
     injection: inject::Injection,
@@ -569,6 +571,7 @@ impl Daemon {
             kbm,
             devices: HashMap::new(),
             spare_pad: None,
+            filler_pads: Vec::new(),
             next_id: 0,
             injection,
             identity_override: None,

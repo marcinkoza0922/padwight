@@ -244,7 +244,7 @@ impl Daemon {
         let grab = Grab::of(&dev, &name);
         let ff = FfSpec::of(&dev);
         let identity = PadIdentity::resolve(self.identity_override, model, self.active_support());
-        let Some(new_pad) = self.pad_for_new(ff.as_ref(), identity) else { return };
+        let Some(new_pad) = self.pad_for_new(ff.as_ref(), identity, self.config.controller(&pad_id).and_then(|c| c.player)) else { return };
         let pad = new_pad.pad;
         log!("managing {name} ({})", path.display());
         let id = self.next_id;
