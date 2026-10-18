@@ -174,6 +174,165 @@ Naming a district or a beaver: {guide} + {west} opens the on-screen keyboard.'''
 inputs = ["button:DpadLeft", "button:DpadRight"]
 text = "Turn the camera"
 
+
+[[profiles]]
+name = "Timberborn + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_R"]}
+North = {open_menu = "Speed"}
+LeftBumper = {multi = [{keys = ["KEY_LEFTSHIFT"]}, {wheel = "Up"}]}
+RightBumper = {multi = [{keys = ["KEY_LEFTSHIFT"]}, {wheel = "Down"}]}
+Select = {open_menu = "Settlement"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_SPACE"]}
+RightStick = {keys = ["KEY_F"]}
+DpadUp = {keys = ["KEY_PAGEDOWN"]}
+DpadDown = {keys = ["KEY_PAGEUP"]}
+DpadLeft = {keys = ["KEY_Q"]}
+DpadRight = {keys = ["KEY_E"]}
+
+[profiles.gestures.West]
+long_press = {keys = ["KEY_LEFTSHIFT", "KEY_R"]}
+
+[profiles.gestures.LeftBumper]
+long_press = {multi = [{keys = ["KEY_LEFTCTRL"]}, {wheel = "Up"}]}
+
+[profiles.gestures.RightBumper]
+long_press = {multi = [{keys = ["KEY_LEFTCTRL"]}, {wheel = "Down"}]}
+
+[profiles.gestures.DpadUp]
+long_press = {multi = [{keys = ["KEY_LEFTALT"]}, {wheel = "Up"}]}
+
+[profiles.gestures.DpadDown]
+long_press = {multi = [{keys = ["KEY_LEFTALT"]}, {wheel = "Down"}]}
+
+[profiles.gestures.DpadLeft]
+long_press = {keys = ["KEY_Z"]}
+
+[profiles.gestures.DpadRight]
+long_press = {keys = ["KEY_C"]}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.3
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.15
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer and the left stick {ls} the camera. {rt} or {south} clicks; {lt} right-clicks, which drops the tool in hand.
+{lb} and {rb} step through the tools of the open toolbar group. Hold them to move to the previous or next group.
+{west} rotates what you're placing; hold it to turn the other way. {r3} flips it where it can be flipped.
+Click {l3} to pause. Hold {north} and press the {dpad} for the speed: left is normal, up fast, right fastest, and down pauses.
+{up} and {down} zoom. Hold them to show a higher or lower layer of the map. {left} and {right} turn the camera; hold them to turn it 90°.
+{select} lists the settlement panels (F1 to F10), the wellbeing box and batch control.
+Naming a district or a beaver: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move the camera"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Left click"}
+"trigger:Left" = {text = "Right click (drop the tool)"}
+"button:South" = {text = "Left click"}
+"button:East" = {text = "Cancel / close"}
+"button:West" = {text = "{icon:rotate} Rotate"}
+"gesture:button:West:long_press" = {text = "{icon:rotate-left} Rotate the other way"}
+"button:North" = {text = "Hold + {dpad}: game speed"}
+"button:LeftBumper" = {text = "Previous tool"}
+"button:RightBumper" = {text = "Next tool"}
+"gesture:button:LeftBumper:long_press" = {text = "Previous toolbar group"}
+"gesture:button:RightBumper:long_press" = {text = "Next toolbar group"}
+"button:Select" = {text = "Settlement panels"}
+"button:Start" = {text = "Menu"}
+"button:LeftStick" = {text = "{icon:pause} Pause"}
+"button:RightStick" = {text = "{icon:flip} Flip"}
+"button:DpadUp" = {text = "Zoom in"}
+"button:DpadDown" = {text = "Zoom out"}
+"gesture:button:DpadUp:long_press" = {text = "Show a higher layer"}
+"gesture:button:DpadDown:long_press" = {text = "Show a lower layer"}
+"gesture:button:DpadLeft:long_press" = {text = "Turn 90° left"}
+"gesture:button:DpadRight:long_press" = {text = "Turn 90° right"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Turn the camera"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
 [[menus]]
 name = "Speed"
 

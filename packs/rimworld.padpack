@@ -168,6 +168,155 @@ text = "Zoom in / out"
 inputs = ["button:DpadLeft", "button:DpadRight"]
 text = "Previous / next colonist"
 
+
+[[profiles]]
+name = "RimWorld + Gyro"
+combos = [
+    {buttons = ["North", "DpadUp"], action = {keys = ["KEY_2"]}},
+    {buttons = ["North", "DpadRight"], action = {keys = ["KEY_3"]}},
+    {buttons = ["North", "DpadDown"], action = {keys = ["KEY_SPACE"]}},
+    {buttons = ["North", "DpadLeft"], action = {keys = ["KEY_1"]}},
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_R"]}
+North = {open_menu = "Speed"}
+LeftBumper = {keys = ["KEY_Q"]}
+RightBumper = {keys = ["KEY_E"]}
+LeftStick = {keys = ["KEY_SPACE"]}
+RightStick = {keys = ["KEY_LEFTSHIFT"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_COMMA"]}
+DpadRight = {keys = ["KEY_DOT"]}
+Select = {open_menu = "Tabs"}
+Start = {keys = ["KEY_ESC"]}
+
+[profiles.gestures.West.long_press]
+open_menu = "Orders"
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer and the left stick {ls} pans the map. {rt} or {south} clicks to select and place; {lt} right-clicks to give orders and drop the tool in hand.
+{east} cancels and closes windows. Click {l3} to pause.
+Hold {north} and press the {dpad} for the speed: left normal, up fast, right superfast, down pause.
+{west} drafts and undrafts the selected colonists. Hold {west} for the orders (deconstruct, cancel, forbid, power, room stats, beauty, search), picking with the right stick {rs}.
+{lb} and {rb} rotate what you're placing. {up} and {down} zoom, {left} and {right} step through the colonists.
+Hold {r3} while clicking to queue orders or to take 100 at a time.
+{select} lists the tabs: architect, work, schedule, assign, animals, wildlife, research, quests, world and history. Naming a colonist or a zone: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan the map"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click (select, place)"}
+"trigger:Left" = {text = "Right-click (orders)"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Cancel / close"}
+"button:West" = {text = "{icon:sword-cross} Draft"}
+"gesture:button:West:long_press" = {text = "Hold: orders"}
+"button:North" = {text = "Hold: speed"}
+"button:LeftStick" = {text = "{icon:pause} Pause"}
+"button:RightStick" = {text = "Queue / ×100 (hold)"}
+"button:Select" = {text = "Tabs"}
+"button:Start" = {text = "Menu"}
+"combo:button:North+button:DpadUp" = {text = "{icon:speed2} Fast"}
+"combo:button:North+button:DpadRight" = {text = "{icon:speed3} Superfast"}
+"combo:button:North+button:DpadDown" = {text = "{icon:pause} Pause"}
+"combo:button:North+button:DpadLeft" = {text = "{icon:speed1} Normal"}
+
+[[profiles.guide.merged]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Rotate left / right"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next colonist"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
 [[menus]]
 name = "Speed"
 
