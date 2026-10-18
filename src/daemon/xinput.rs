@@ -93,12 +93,13 @@ impl Daemon {
             if !slots_known() {
                 continue;
             }
-            self.manage(slot, path, name, id, &controller);
+            self.manage(slot, name, id, &controller);
         }
         self.gamepads.retain(|k, _| present.contains(k));
     }
 
-    fn manage(&mut self, slot: u32, path: PathBuf, name: String, pad_id: String, controller: &Controller) {
+    fn manage(&mut self, slot: u32, name: String, pad_id: String, controller: &Controller) {
+        let path = xinput::slot_path(slot);
         let family = crate::info::PadFamily::detect(controller.vendor, &name).or(Some(crate::info::PadFamily::Xbox));
         let model = crate::info::PadModel::detect(controller.vendor, controller.product, &name);
         let ff = controller.rumble.then_some(FfSpec);
