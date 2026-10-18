@@ -172,12 +172,13 @@ mod tests {
     }
 
     #[test]
-    fn starcraft_has_a_gyro_pointer_profile_that_works_without_gyro() {
-        use crate::config::GyroMode;
+    fn starcraft_has_a_gyro_pointer_profile_that_declares_gyro() {
+        use crate::config::{Feature, GyroMode};
         let text = files::FILES.iter().find(|(f, _)| f.contains("starcraft")).map(|(_, t)| t).unwrap();
         let pack = pack::parse(text).unwrap();
         let p = pack.profiles.iter().find(|p| p.name == "Gameplay + Gyro").unwrap();
-        assert!(matches!(p.gyro.mode, GyroMode::Mouse { .. }) && p.usable_with(&[]));
+        assert!(matches!(p.gyro.mode, GyroMode::Mouse { .. }));
+        assert!(p.usable_with(&[Feature::Gyro]) && !p.usable_with(&[]), "tilting needs gyro, so it says so");
         assert!(pack.modes.iter().any(|l| l.name == "Menus"), "menus are a mode, not a profile");
         assert!(pack.profiles.iter().all(|p| !p.name.contains("Menus")));
         // Guide stays for things that aren't about this game: a long press of Select switches to it.
