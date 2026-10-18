@@ -2,7 +2,9 @@
 
 ## A controller shows up twice (or the game sees two pads)
 
-PlayStation and Switch controllers are also readable through hidraw, which SDL (and Steam) use directly. The game may then see the real controller as well as padwight's. Either set `SDL_JOYSTICK_HIDAPI=0` for the game, or turn off Steam Input for the pad.
+PlayStation and Switch controllers are also readable through their raw HID node (`/dev/hidraw*`), which SDL, Steam and Chromium browsers use directly. padwight's exclusive hold covers only the input node, so they may see the real controller as well as padwight's, and Steam may act on its buttons. When padwight finds a program doing this, it says so in a desktop notification and on screen, and the settings window names it in a banner across the top of every page.
+
+Install `72-padwight-hidraw.rules` (`padwight doctor` prints the commands), then turn the controller off and on. It closes the raw node to every program, so they read the input node, which padwight holds. While padwight is off, Steam then has no gyro or lightbar control for those controllers. Without the rule, turn off Steam Input for the pad, or set `SDL_JOYSTICK_HIDAPI=0` for the game.
 
 padwight skips virtual uinput devices, such as Steam Input's pad and its own.
 

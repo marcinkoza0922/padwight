@@ -47,6 +47,7 @@ mod offers;
 mod overlay;
 mod overlay_input;
 mod previews;
+mod raw_readers;
 /// The controllers themselves: evdev nodes on Linux, XInput slots on Windows.
 #[cfg_attr(target_os = "linux", path = "daemon/evdev.rs")]
 #[cfg_attr(windows, path = "daemon/xinput.rs")]
@@ -460,6 +461,8 @@ struct Daemon {
     gamepads: HashMap<NodeKey, SeenGamepad>,
     /// The other input nodes the scans found (see `scan_devices`).
     nodes: devices::Nodes,
+    /// Other programs reading the controllers' raw HID nodes (see `raw_readers.rs`).
+    raw_readers: raw_readers::Watch,
     /// Clients streaming live input (the GUI's controller view).
     watchers: Vec<Sender<Option<InputSnapshot>>>,
     /// Clients streaming the latest presses and what they did (the GUI's "what's happening").
@@ -577,6 +580,7 @@ impl Daemon {
             identity_override: None,
             gamepads: HashMap::new(),
             nodes: devices::Nodes::default(),
+            raw_readers: raw_readers::Watch::default(),
             watchers: Vec::new(),
             feed_watchers: Vec::new(),
             activity: activity::Activity::default(),
@@ -1449,6 +1453,7 @@ impl Daemon {
             focused: self.focused.clone(),
             recent_windows: self.recent_windows.clone(),
             motion_access_denied: self.nodes.denied_sensors(),
+            raw_readers: self.raw_readers.found(),
             overlay_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Keyboard),
             numpad_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Numpad),
             stop_pending: self.stop_asked,
@@ -1464,6 +1469,8 @@ impl Daemon {
         self.refit_pads();
         self.keep_first_pad();
         self.scan_devices();
+        #[cfg(target_os = "linux")]
+        self.check_raw_readers(Instant::now());
         self.check_overlay_process();
         self.check_recorded_game();
         self.scan_processes();

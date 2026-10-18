@@ -163,7 +163,6 @@ impl App {
         .into()
     }
 
-    #[expect(clippy::too_many_lines, reason = "predates the size lints")]
     pub(super) fn view_devices(&self) -> Element<'_, Message> {
         let mut list = column![text("Controllers").size(20)].spacing(8);
         match &self.status {
@@ -218,23 +217,33 @@ impl App {
             None => list = list.push(text(NEEDS_DAEMON).size(13).color(MUTED_COLOR)),
         }
         list = list.push(self.rumble_strength_row());
-        if let Some(status) = &self.status
-            && !status.motion_access_denied.is_empty()
-        {
-            let names = status.motion_access_denied.join(", ");
-            list = list.push(
-                row![
-                    text(format!("Can't use the gyro on {names}: Padwight isn't allowed to read its motion sensors."))
-                        .size(12)
-                        .color(ERROR_COLOR)
-                        .width(Length::Fill),
-                    button(text("Fix…").size(13)).style(style::secondary).on_press(Message::OpenSystemCheck),
-                ]
-                .spacing(8)
-                .align_y(Alignment::Center),
-            );
-        }
         list.into()
+    }
+
+    /// What the system check can fix about how Padwight reaches the controllers.
+    pub(super) fn access_warnings(&self) -> Vec<String> {
+        let Some(status) = &self.status else { return Vec::new() };
+        let gyro = (!status.motion_access_denied.is_empty()).then(|| {
+            let names = status.motion_access_denied.join(", ");
+            format!("Can't use the gyro on {names}: Padwight isn't allowed to read its motion sensors.")
+        });
+        gyro.into_iter().chain(status.raw_readers.iter().map(crate::ipc::RawReaders::warning)).collect()
+    }
+
+    /// The access warnings, across the top of every page so they aren't missed. With none it is
+    /// an empty space, so the page under it keeps its place in the widget tree (see `view`).
+    pub(super) fn view_access_banner(&self) -> Element<'_, Message> {
+        let warnings = self.access_warnings();
+        if warnings.is_empty() {
+            return space().height(0).into();
+        }
+        let lines = warnings.into_iter().fold(column![].spacing(4), |lines, w| lines.push(text(w).size(14)));
+        let fix = button(text("Fix…").size(14)).style(style::primary).on_press(Message::OpenSystemCheck);
+        container(row![text("⚠").size(22), lines.width(Length::Fill), fix].spacing(12).align_y(Alignment::Center))
+            .padding([10, 20])
+            .width(Length::Fill)
+            .style(style::warning_banner)
+            .into()
     }
 
     pub(super) fn view_auto_switch(&self) -> Element<'_, Message> {

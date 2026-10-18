@@ -47,6 +47,18 @@ pub fn panel(theme: &Theme) -> container::Style {
     }
 }
 
+/// A banner across the top of the window for something that needs fixing: the danger color,
+/// tinted enough to read in light and dark themes.
+pub fn warning_banner(theme: &Theme) -> container::Style {
+    let p = theme.extended_palette();
+    container::Style {
+        background: Some(Color { a: 0.25, ..p.danger.base.color }.into()),
+        text_color: Some(p.background.base.text),
+        border: Border { width: 0.0, radius: 0.0.into(), color: p.danger.base.color },
+        ..container::Style::default()
+    }
+}
+
 /// The header of a fold: accent text that marks it as something to open, tinted on hover.
 pub fn fold_header(theme: &Theme, status: button::Status) -> button::Style {
     let p = theme.extended_palette();

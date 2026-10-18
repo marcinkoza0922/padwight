@@ -144,6 +144,9 @@ pub struct Status {
     /// Controller motion sensors the daemon may not open (needs the udev rule in dist/).
     #[serde(default)]
     pub motion_access_denied: Vec<String>,
+    /// Managed controllers that other programs also read through their raw HID node, past the grab.
+    #[serde(default)]
+    pub raw_readers: Vec<RawReaders>,
     /// The on-screen keyboard is up.
     #[serde(default)]
     pub overlay_visible: bool,
@@ -261,6 +264,29 @@ impl ControllerInfo {
     /// What to call it: its nickname, else the name it last connected under, else its id.
     pub fn nickname_or_name(&self) -> &str {
         [&self.nickname, &self.name, &self.id].into_iter().find(|s| !s.is_empty()).map_or("", |s| s.as_str())
+    }
+}
+
+/// A managed controller and the other programs that have its raw HID node (/dev/hidrawN) open.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RawReaders {
+    pub controller: String,
+    /// Their process names, such as `steam`.
+    pub programs: Vec<String>,
+}
+
+impl RawReaders {
+    /// The programs, as a sentence starts with them: "Steam", "Brave, steam".
+    pub fn who(&self) -> String {
+        let all = self.programs.join(", ");
+        let mut chars = all.chars();
+        chars.next().map(|c| c.to_uppercase().chain(chars).collect()).unwrap_or_default()
+    }
+
+    /// Says that they get the controller's presses as well as Padwight's virtual pad.
+    pub fn warning(&self) -> String {
+        let (verb, gets) = if self.programs.len() == 1 { ("reads", "it gets") } else { ("read", "they get") };
+        format!("{} also {verb} {} directly, so {gets} your presses as well as Padwight's virtual pad.", self.who(), self.controller)
     }
 }
 

@@ -18,6 +18,7 @@ Drawing the settings window without a display or a daemon (for the manual's scre
          tab <profiles|modes|layers|macros|menus|info|logs|details>
          sub <buttons|sticks|combos|gyro|touchpad|guide>      chapter <file.md>  open a manual chapter
          demo                    add a macro and an info overlay to the game shown
+         readers-demo            have Steam read the controller past Padwight (the warning banner)
          settings <general|shortcuts>   the App settings tab    shortcuts-demo  move the opener to Start + Select and Tab to Start
          size <w>x<h>            the size from here on
          picture <hide|show>     the live controller drawing
@@ -126,6 +127,7 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
             app.saved = app.config.clone();
         }
         "demo" => demo(app),
+        "readers-demo" => readers_demo(app),
         "settings" => settings_tab(app, arg()?)?,
         "shortcuts-demo" => shortcuts_demo(app),
         "page" => send(app, Message::SelectPage(page_named(arg()?)?)),
@@ -173,6 +175,13 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
         other => bail!("unknown step {other:?}{USAGE}"),
     }
     Ok(())
+}
+
+/// Has Steam read the controller past Padwight, for the warning banner across the top.
+fn readers_demo(app: &mut App) {
+    if let Some(status) = &mut app.status {
+        status.raw_readers = vec![crate::ipc::RawReaders { controller: "Pro Controller".into(), programs: vec!["steam".into()] }];
+    }
 }
 
 /// Opens the dialog named `word`.

@@ -1394,7 +1394,9 @@ impl App {
         // Nothing is edited on the Manual, so its footer shows only while there's something to save
         // from another page, or a message.
         let footer = self.page != Page::Manual || self.config != self.saved || self.message.is_some();
-        let main = column![scrollable(content).id("main").height(Length::Fill)].push(footer.then(|| self.view_footer())).width(Length::Fill);
+        let main = column![self.view_access_banner(), scrollable(content).id("main").height(Length::Fill)]
+            .push(footer.then(|| self.view_footer()))
+            .width(Length::Fill);
         // Always a stack with the page first, popups or not: iced keeps widget state (such as
         // the page's scroll position) by place in the tree, so the shape must not change when
         // a popup opens or closes.

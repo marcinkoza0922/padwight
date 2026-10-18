@@ -26,7 +26,7 @@ for unit in dist/padwight.service dist/padwight-flatpak.service; do
     echo "ok: $unit"
 done
 
-for rules in dist/70-padwight-motion.rules dist/70-padwight-uinput.rules; do
+for rules in dist/70-padwight-motion.rules dist/70-padwight-uinput.rules dist/72-padwight-hidraw.rules; do
     udevadm verify "$rules"
     echo "ok: $rules"
 done
