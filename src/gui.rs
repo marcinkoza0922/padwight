@@ -1072,6 +1072,11 @@ impl App {
                 return Task::batch([unsaved, status]);
             }
             Message::LiveInput(snapshot) => {
+                // With one controller picked, the live view follows that one only.
+                let other = |s: &InputSnapshot| self.picked_controller().is_some_and(|d| d.name != s.device);
+                if snapshot.as_ref().is_some_and(other) {
+                    return Task::none();
+                }
                 if self.shortcuts_ui.listening.is_some()
                     && let Some(b) = snapshot.as_ref().and_then(|s| newly_pressed(self.live.as_ref(), s))
                     && self.heard_shortcut_button(b)
@@ -1150,7 +1155,10 @@ impl App {
                 }
                 self.message = Some(("That setup has no profile to make active.".into(), true));
             }
-            Message::PickController(id) => self.controller = id,
+            Message::PickController(id) => {
+                self.controller = id;
+                self.live = None;
+            }
             Message::ControllerNick(id, nick) => {
                 self.nick_drafts.insert(id, nick);
             }
