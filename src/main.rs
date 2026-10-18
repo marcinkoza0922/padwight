@@ -24,6 +24,7 @@ mod keyword_icon;
 mod launchers;
 mod library;
 mod media;
+mod new_pad;
 mod offer;
 mod opener_watch;
 mod menu;

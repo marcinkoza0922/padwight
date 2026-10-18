@@ -123,7 +123,27 @@ Checked against the code (`config.rs`, `daemon.rs`, `daemon/*.rs`).
 2. **Done** (`config/controllers.rs`, `Config::profile_for`; status, toast and info overlays still read
    `Config.active`). Add `controllers` to the config (id, nickname, colour, player label, `profiles` map). Resolve each
    `Managed`'s profile through it, falling back to `Config.active`. Window rules still set the game.
-3. Make Guide menu, mappings and Edit Controls take the opening device's profile.
-4. GUI controller picker and `Status` per device.
-5. New-pad prompt overlay.
+3. **Done** (`Config.acting`, `Daemon::guide_profile`). The Guide menu and Mappings read the profile of
+   the pad that opened the Guide overlay. The Quick Settings / Edit Controls menu sets `Config.acting`
+   to its pad's id when it opens (cleared in `close_overlay`), so `Config::active()` and the layout
+   editor's `active_profile_mut` stand for that pad's profile without touching their ~150 call sites.
+   Not covered: Switch Profile still sets the global `Config.active` rather than the pad's entry, and
+   nothing writes `controllers` entries yet, so behaviour is unchanged until step 4.
+4. **Done, first part** (`Request::ActivateFor`, `DeviceInfo.profile`, `header_pick::ControllerChoice`).
+   The header gets a controller picker (managed pads, shown once any exists); with a pad picked, the
+   profile box shows that pad's profile and sets it through the daemon, which writes its entry. The
+   daemon owns `controllers` (`SetConfig` keeps its copy, as for `active`). `Status.active_profile` is
+   still the global one. Also done: a "Remembered controllers" card on the Overview (`gui/controllers.rs`;
+   `Status.controllers`, `Request::SetController` / `ForgetController`) with nickname, colour, player
+   label, a pass-through switch and Forget, greyed out while the pad is away; the Overview's live view
+   labels from the profile of the pad in use; and Switch Profile in the in-game menu sets the opening
+   pad's entry (it is kept by that menu's Save, and Discard undoes it) when the profile is in the
+   active setup. Still global: the status line and toast, which name the setup's active profile.
+5. **Done** (`new_pad.rs`, `daemon/new_pads.rs`, `Active::NewPad`). The first controller is
+   remembered without a question; one that joins while another is in use gets a `pending` entry and
+   a list overlay on its own pad: use the defaults / copy settings from a remembered pad / pass
+   through. Back (or 60 s idle) leaves it pending, passing through, and it is asked again every
+   5 minutes. The answer is kept in the entry (`pass_through`, copied `profiles`). Not done: the
+   question for identical pads without a unique id (they share one entry), a GUI way to undo
+   "pass through" or forget a pad, and a hardware check.
 6. Player-number pinning against Steam Input (needs hardware).

@@ -52,8 +52,33 @@ impl HeaderPick {
         combo_box(&self.setups, "Setup", Some(&self.setup), Message::PickSetup)
     }
 
-    pub(super) fn profile_box(&self) -> combo_box::ComboBox<'_, String, Message> {
-        combo_box(&self.profiles, "Profile", Some(&self.profile), Message::PickProfile)
+    /// The profile box, showing `shown` (the profile of the picked controller) instead of the
+    /// active profile when there is one.
+    pub(super) fn profile_box<'a>(&'a self, shown: Option<&'a String>) -> combo_box::ComboBox<'a, String, Message> {
+        combo_box(&self.profiles, "Profile", Some(shown.unwrap_or(&self.profile)), Message::PickProfile)
+    }
+}
+
+/// One entry of the controller picker: all controllers (`id` is `None`), or one by its id.
+#[derive(Debug, Clone, PartialEq)]
+pub(super) struct ControllerChoice {
+    pub(super) id: Option<String>,
+    label: String,
+}
+
+impl ControllerChoice {
+    pub(super) fn all() -> Self {
+        ControllerChoice { id: None, label: "All controllers".into() }
+    }
+
+    pub(super) fn one(id: &str, name: &str) -> Self {
+        ControllerChoice { id: Some(id.to_string()), label: name.to_string() }
+    }
+}
+
+impl std::fmt::Display for ControllerChoice {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.label)
     }
 }
 

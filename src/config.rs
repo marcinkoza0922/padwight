@@ -1829,6 +1829,10 @@ pub struct Config {
     /// Controllers remembered by id, with the profile each uses per pack.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub controllers: Vec<ControllerEntry>,
+    /// The controller whose profile [`Config::active`] stands for while one of its menus is up
+    /// (Quick Settings, Edit Controls): its id. Never saved.
+    #[serde(skip)]
+    pub acting: Option<String>,
     #[serde(default)]
     pub auto_switch: AutoSwitch,
     /// Gyro drift (degrees/second per raw sensor axis) measured by "Calibrate gyro", per controller id.
@@ -1965,6 +1969,7 @@ impl Default for Config {
             active: ProfileRef::new(None, "Gamepad"),
             ignored_devices: Vec::new(),
             controllers: Vec::new(),
+            acting: None,
             auto_switch: AutoSwitch::default(),
             colorblind_tones: false,
             appearance: Appearance::Auto,
@@ -2154,10 +2159,27 @@ impl Config {
             .unwrap_or(&self.general)
     }
 
-    /// The active profile, or the first one of its game (or of General) if it's gone.
+    /// The active profile, or the first one of its game (or of General) if it's gone. While a
+    /// controller's menu is up ([`Config::acting`]) it is the one that controller uses.
     pub fn active(&self) -> Option<&Profile> {
+        match &self.acting {
+            Some(id) => self.profile_for(id),
+            None => self.active_fallback(),
+        }
+    }
+
+    /// The profile of the active setting itself, which controllers without a choice of their own follow.
+    pub(crate) fn active_fallback(&self) -> Option<&Profile> {
         let game = self.active_game();
         game.profile(&self.active.profile).or(game.profiles.first())
+    }
+
+    /// Where the active setting really is, whichever controller's menu is up.
+    pub fn setting_ref(&self) -> ProfileRef {
+        let game = self.active_game();
+        let name = self.active_fallback().map(|p| p.name.as_str()).unwrap_or_default();
+        let game = (!std::ptr::eq(game, &self.general)).then_some(game.name.as_str());
+        ProfileRef::new(game, name)
     }
 
     /// Where the active profile really is, after the fallbacks of [`Config::active`].

@@ -71,6 +71,7 @@ fn new_app(dark: bool) -> App {
             name: "Xbox Wireless Controller".into(),
             id: "045e:02fd".into(),
             path: String::new(),
+            profile: String::new(),
             managed: true,
             ignored: false,
             analog_triggers: true,

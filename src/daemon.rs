@@ -21,12 +21,13 @@ use crate::{
     engine::{Engine, Opener},
     focus::{self, FocusEvent},
     input::{InputEvent, MotionFrame, MotionSample},
-    ipc::{self, DeviceInfo, Feeds, FocusBackend, InputSnapshot, Request, Response, Status, WindowInfo},
+    ipc::{self, ControllerInfo, DeviceInfo, Feeds, FocusBackend, InputSnapshot, Request, Response, Status, WindowInfo},
     keyboard::Layout,
     monitor::{self, InputView, OutputView, log},
     output::{OutEvent, VirtualKbm, VirtualPad},
     pad_identity::{ControllerSupport, PadIdentity},
     media::{MediaOutcome, MediaSession, MediaState},
+    new_pad::{NewPadOutcome, NewPadSession},
     offer::{OfferOutcome, OfferSession},
     menu::{MenuOutcome, MenuSession},
     system_menu::{Hold, Outcome as SystemOutcome, Page, SystemMenu},
@@ -41,6 +42,7 @@ mod first_pad;
 mod guide;
 mod in_game_menu;
 mod info_overlays;
+mod new_pads;
 mod offers;
 mod overlay;
 mod overlay_input;
@@ -352,6 +354,8 @@ enum Active {
     Offer(OfferSession),
     /// The menu Guide + Start opens: Quick Settings and Edit Controls.
     Settings(SystemMenu, u64),
+    /// The question of how to set up a new controller (its id).
+    NewPad(NewPadSession, String),
 }
 
 /// The sounds of the on-screen keyboard or the numpad, whichever is up.
@@ -369,7 +373,7 @@ fn active_sound(active: &Active) -> sound::SoundOverlay {
         Active::Menu { .. } => sound::SoundOverlay::Menu,
         Active::Settings(..) => sound::SoundOverlay::Guide,
         Active::Media(_) => sound::SoundOverlay::Media,
-        Active::Offer(_) => sound::SoundOverlay::Offer,
+        Active::Offer(_) | Active::NewPad(..) => sound::SoundOverlay::Offer,
     }
 }
 
@@ -415,6 +419,8 @@ struct Offers {
     /// Game windows (by process, class and executable) already told that Guide adds their
     /// library setup, so switching back to one doesn't say it again.
     hinted: HashSet<(u32, String, String)>,
+    /// Not before this is a controller that is still unanswered asked about again.
+    new_pad_after: Option<Instant>,
 }
 
 
@@ -705,6 +711,7 @@ impl Daemon {
                 if let Err(e) = self.kbm.sync() {
                     log!("output error: {e:#}");
                 }
+                self.ask_pending_pad();
                 next_scan = now + SCAN_INTERVAL;
             }
         }
@@ -717,6 +724,7 @@ impl Daemon {
             Some(Active::Media(m)) => m.next_deadline(),
             Some(Active::Offer(o)) => o.next_deadline(),
             Some(Active::Settings(m, _)) => m.next_deadline(),
+            Some(Active::NewPad(s, _)) => s.next_deadline(),
             None => None,
         };
         self.devices
@@ -1306,14 +1314,14 @@ impl Daemon {
 
     /// Switches profile, recording `why`; false if it was already active.
     fn set_profile(&mut self, target: ProfileRef, why: &str) -> bool {
-        if target == self.config.active_ref() {
+        if target == self.config.setting_ref() {
             return false;
         }
         log!("switching to profile {target}");
         // A new profile starts unlocked: the lock was for the one that was active.
         self.profile_locked = false;
         // An open menu refers to menus by position, which another game's list changes.
-        let game_changes = target.game != self.config.active_ref().game;
+        let game_changes = target.game != self.config.setting_ref().game;
         if game_changes {
             self.info_timers.clear();
             self.log_timers.clear();
@@ -1396,6 +1404,7 @@ impl Daemon {
                 name: pad.name.clone(),
                 id: pad.id.clone(),
                 path: path.display().to_string(),
+                profile: self.devices.values().find(|d| &d.path == path).and_then(|d| self.config.profile_for(&d.id)).map(|p| p.name.clone()).unwrap_or_default(),
                 managed: self.devices.values().any(|d| &d.path == path),
                 ignored: self.config.ignored_devices.contains(&pad.id),
                 gyro: self.devices.values().any(|d| &d.path == path && d.motion.is_some()),
@@ -1409,10 +1418,26 @@ impl Daemon {
             .collect();
         devices.sort_by(|a, b| a.path.cmp(&b.path));
         devices.extend(self.injected_devices());
+        let controllers = self
+            .config
+            .controllers
+            .iter()
+            .map(|c| ControllerInfo {
+                id: c.id.clone(),
+                name: c.name.clone(),
+                nickname: c.nickname.clone(),
+                color: c.color.clone(),
+                player: c.player,
+                pass_through: c.pass_through,
+                pending: c.pending,
+                connected: self.devices.values().any(|d| d.id == c.id),
+            })
+            .collect();
         Status {
+            controllers,
             enabled: self.config.enabled,
-            active_profile: self.config.active().map(|p| p.name.clone()).unwrap_or_default(),
-            active_game: self.config.active_ref().game,
+            active_profile: self.config.active_fallback().map(|p| p.name.clone()).unwrap_or_default(),
+            active_game: self.config.setting_ref().game,
             active_layers: self.active_layers(),
             active_mode: self.active_mode(),
             devices,
@@ -1544,6 +1569,7 @@ impl Daemon {
 
     /// Starts running `managed` as controller `id`, with its mappings in step with the profile.
     fn add_managed(&mut self, id: u64, mut managed: Managed) {
+        self.remember_controller(&managed.id, &managed.name);
         if let Some(profile) = self.config.profile_for(&managed.id) {
             let mut out = Vec::new();
             managed.engine.resync(profile, &mut out);

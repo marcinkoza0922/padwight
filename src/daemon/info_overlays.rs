@@ -133,7 +133,7 @@ impl Daemon {
         let pad = self.last_active.and_then(|id| self.devices.get(&id)).or_else(|| self.devices.values().next());
         let identity = PadIdentity::resolve(self.identity_override, pad.and_then(|d| d.model), self.active_support());
         crate::info::Live {
-            profile: self.config.active().map(|p| p.name.clone()).unwrap_or_default(),
+            profile: pad.and_then(|d| self.config.profile_for(&d.id)).or(self.config.active()).map(|p| p.name.clone()).unwrap_or_default(),
             app: window.exe,
             title: window.title,
             pid: window.pid,

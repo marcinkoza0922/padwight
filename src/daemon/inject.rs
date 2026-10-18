@@ -179,6 +179,7 @@ impl Daemon {
                 name: d.name.clone(),
                 id: String::new(),
                 path: d.path.display().to_string(),
+                profile: String::new(),
                 managed: true,
                 ignored: false,
                 analog_triggers: true,

@@ -16,6 +16,8 @@ impl Daemon {
         log!("opening the settings menu");
         self.release_mappings();
         let paddles = self.devices.get(&device).is_some_and(|d| d.paddles);
+        // The menu shows and edits the profile of the pad that opened it.
+        self.config.acting = self.devices.get(&device).map(|d| d.id.clone()).filter(|id| !id.is_empty());
         let menu = SystemMenu::new(&self.config).with_paddles(paddles).with_features(self.pad_features()).on_page(page);
         self.menu_live = crate::figures::Live::default();
         self.active = Some(Active::Settings(menu, device));
@@ -100,7 +102,14 @@ impl Daemon {
     /// Switches to a profile the in-game menu chose. Switch Profile then leaves: `true` when the
     /// menu closed.
     fn settings_switch(&mut self, target: ProfileRef) -> bool {
-        self.switch_profile(target, "Chosen in the in-game menu");
+        match self.config.acting.clone().filter(|_| target.game == self.config.setting_ref().game) {
+            // Another profile of the same setup is for the pad that opened the menu only.
+            Some(id) => {
+                self.config.set_profile_for(&id, &target.profile);
+                self.resync_all();
+            }
+            None => self.switch_profile(target, "Chosen in the in-game menu"),
+        }
         let then = match &mut self.active {
             Some(Active::Settings(menu, _)) => menu.profile_switched(&self.config),
             _ => None,

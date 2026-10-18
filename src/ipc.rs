@@ -44,6 +44,12 @@ pub enum Request {
     SetProfile(String),
     /// Switch to exactly this profile.
     Activate(ProfileRef),
+    /// Sets how a remembered controller is told apart and whether it passes through.
+    SetController(ControllerInfo),
+    /// Forgets a remembered controller: on its next connection it counts as new.
+    ForgetController(String),
+    /// Makes a profile of the active game the one controller `id` uses.
+    ActivateFor { id: String, profile: String },
     NextProfile,
     /// Keep the connection open; the daemon streams one `Option<InputSnapshot>` JSON line per
     /// update (at most ~60/s). `null` means no controller is active.
@@ -122,6 +128,9 @@ pub struct Status {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub active_mode: Option<String>,
     pub devices: Vec<DeviceInfo>,
+    /// Every controller remembered, connected or not.
+    #[serde(default)]
+    pub controllers: Vec<ControllerInfo>,
     #[serde(default)]
     pub focus_backend: FocusBackend,
     /// Currently focused window (when the desktop reports it).
@@ -228,6 +237,21 @@ pub struct WindowInfo {
     pub steam_app_id: Option<String>,
 }
 
+/// A remembered controller (see `config::ControllerEntry`).
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct ControllerInfo {
+    pub id: String,
+    /// The name it last connected under.
+    pub name: String,
+    pub nickname: String,
+    pub color: Option<String>,
+    pub player: Option<u8>,
+    pub pass_through: bool,
+    /// Its set-up question is still unanswered.
+    pub pending: bool,
+    pub connected: bool,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DeviceInfo {
     pub name: String,
@@ -235,6 +259,9 @@ pub struct DeviceInfo {
     #[serde(default)]
     pub id: String,
     pub path: String,
+    /// The profile it uses now (empty for a controller that isn't managed).
+    #[serde(default)]
+    pub profile: String,
     /// Grabbed and being remapped right now.
     pub managed: bool,
     pub ignored: bool,

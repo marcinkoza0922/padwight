@@ -44,6 +44,7 @@ mod action_picker;
 mod actions;
 mod activity;
 mod chars;
+mod controllers;
 mod checks;
 mod font_menu;
 mod games;
@@ -196,6 +197,10 @@ fn settle(shown: Option<PadShown>, wanted: PadPick, now: Instant) -> Option<PadS
 struct App {
     /// The header's setup and profile comboboxes.
     header_pick: header_pick::HeaderPick,
+    /// The controller the header's profile box is for (its id); `None` is the active profile itself.
+    controller: Option<String>,
+    /// Nicknames typed but not yet sent, by controller id.
+    nick_drafts: std::collections::HashMap<String, String>,
     /// Working copy being edited.
     config: Config,
     /// Plays the previews of menu sounds.
@@ -423,6 +428,13 @@ enum Message {
     PickSetup(String),
     /// A profile of the active setup picked in the header.
     PickProfile(String),
+    /// A controller picked in the header (`None`: all of them): the profile box then shows and sets its profile.
+    PickController(Option<String>),
+    /// The nickname being typed for a remembered controller (by id), not yet sent.
+    ControllerNick(String, String),
+    /// A remembered controller's nickname, colour, player or passing through, as it should be now.
+    SetController(crate::ipc::ControllerInfo),
+    ForgetController(String),
     Done(Result<(), String>),
     SelectPage(Page),
     SetGameSearch(String),
@@ -725,7 +737,7 @@ impl App {
             config,
             sounds: crate::sound::Sounds::start(),
             status: None, system_checks: system_check::run(),
-            page: Page::Overview, header_pick: header_pick::HeaderPick::new(),
+            page: Page::Overview, header_pick: header_pick::HeaderPick::new(), controller: None, nick_drafts: std::collections::HashMap::new(),
             editing: 0,
             game_tab: GameTab::Profiles,
             manual_chapter: 0,
@@ -1138,6 +1150,25 @@ impl App {
                 }
                 self.message = Some(("That setup has no profile to make active.".into(), true));
             }
+            Message::PickController(id) => self.controller = id,
+            Message::ControllerNick(id, nick) => {
+                self.nick_drafts.insert(id, nick);
+            }
+            Message::SetController(info) => {
+                self.nick_drafts.remove(&info.id);
+                return Task::batch([call_ok(Request::SetController(info)), Task::done(Message::Poll)]);
+            }
+            Message::ForgetController(id) => {
+                self.nick_drafts.remove(&id);
+                if self.controller.as_deref() == Some(id.as_str()) {
+                    self.controller = None;
+                }
+                return Task::batch([call_ok(Request::ForgetController(id)), Task::done(Message::Poll)]);
+            }
+            Message::PickProfile(name) if self.picked_controller().is_some() => {
+                let id = self.picked_controller().map(|d| d.id.clone()).unwrap_or_default();
+                return Task::batch([call_ok(Request::ActivateFor { id, profile: name }), Task::done(Message::Poll)]);
+            }
             Message::PickProfile(name) => {
                 let at = ProfileRef::new(self.saved.active.game.as_deref(), &name);
                 return Task::done(Message::ActivateProfile(at));
@@ -1317,10 +1348,11 @@ impl App {
         let page: Element<'_, Message> = match &self.page {
             // Each part in a card, as every other page's parts are.
             Page::Overview => column![
-                overview_card(self.view_live(self.config.active().map(|p| self.with_active_layers(p)).as_ref(), true)),
+                overview_card(self.view_live(self.overview_profile().map(|p| self.with_active_layers(p)).as_ref(), true)),
                 overview_card(self.view_activity()),
                 overview_card(self.view_devices()),
             ]
+                .push(self.view_remembered().map(overview_card))
                 .spacing(16)
                 .into(),
             Page::Settings => self.view_settings(),
@@ -1366,14 +1398,40 @@ impl App {
         layers.into()
     }
 
+    /// The profile the Overview's live view labels from: the one the picked controller uses, else
+    /// the one the controller in use does, else the active profile.
+    fn overview_profile(&self) -> Option<&Profile> {
+        let devices = self.status.as_ref().map(|s| s.devices.as_slice()).unwrap_or_default();
+        let name = match self.picked_controller() {
+            Some(d) => Some(&d.profile),
+            None => self.live.as_ref().and_then(|l| devices.iter().find(|d| d.managed && d.name == l.device)).map(|d| &d.profile),
+        };
+        name.filter(|n| !n.is_empty()).and_then(|n| self.config.active_game().profile(n)).or_else(|| self.config.active())
+    }
+
+    /// The managed controller the header is set to, if it is still connected.
+    fn picked_controller(&self) -> Option<&crate::ipc::DeviceInfo> {
+        let id = self.controller.as_deref()?;
+        self.status.as_ref()?.devices.iter().find(|d| d.id == id && d.managed)
+    }
+
     /// The setup and profile comboboxes under one label, with a chevron showing the profile
     /// belongs to the setup.
     fn view_profile_pick(&self) -> Element<'_, Message> {
         let pick = &self.header_pick;
+        let shown = self.picked_controller().map(|d| &d.profile).filter(|p| !p.is_empty());
         let setup = pick.setup_box().input_style(style::text_field).menu_style(style::dropdown_menu).padding([6, 10]).width(SETTING_WIDTH);
-        let profile = pick.profile_box().input_style(style::text_field).menu_style(style::dropdown_menu).padding([6, 10]).width(SETTING_WIDTH);
+        let profile = pick.profile_box(shown).input_style(style::text_field).menu_style(style::dropdown_menu).padding([6, 10]).width(SETTING_WIDTH);
         let pair = row![setup, text("›").size(20).color(MUTED_COLOR), profile].spacing(8).align_y(Alignment::Center);
-        labelled("Active profile", pair)
+        let Some(status) = self.status.as_ref().filter(|s| s.devices.iter().filter(|d| !d.id.is_empty()).count() > 0) else {
+            return labelled("Active profile", pair);
+        };
+        let choices: Vec<header_pick::ControllerChoice> = std::iter::once(header_pick::ControllerChoice::all())
+            .chain(status.devices.iter().filter(|d| d.managed && !d.id.is_empty()).map(|d| header_pick::ControllerChoice::one(&d.id, &d.name)))
+            .collect();
+        let chosen = self.picked_controller().map_or_else(header_pick::ControllerChoice::all, |d| header_pick::ControllerChoice::one(&d.id, &d.name));
+        let controller = pick_list(choices, Some(chosen), |c| Message::PickController(c.id)).padding([6, 10]);
+        labelled("Active profile", row![controller, pair].spacing(8).align_y(Alignment::Center))
     }
 
     fn view_header(&self) -> Element<'_, Message> {
