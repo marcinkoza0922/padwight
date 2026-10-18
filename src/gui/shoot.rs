@@ -69,6 +69,7 @@ fn new_app(dark: bool) -> App {
         enabled: true,
         devices: vec![crate::ipc::DeviceInfo {
             name: "Xbox Wireless Controller".into(),
+            id: "045e:02fd".into(),
             path: String::new(),
             managed: true,
             ignored: false,

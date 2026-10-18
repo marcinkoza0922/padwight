@@ -157,7 +157,7 @@ impl Daemon {
         self.refresh_scope();
         let ignored = self.config.ignored_devices.clone();
         let enabled = self.config.enabled;
-        self.release_devices(|_, d| !enabled || ignored.contains(&d.name));
+        self.release_devices(|_, d| !enabled || ignored.contains(&d.id));
         self.resync_all();
         self.broadcast_overlay();
         self.save_and_rescan()

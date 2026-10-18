@@ -164,7 +164,7 @@ impl Daemon {
         let mut out = Vec::new();
         dev.engine.tap_menu_item(menu, item, action, &mut out);
         if dev.refresh_layers(&self.config)
-            && let Some(base) = self.config.active()
+            && let Some(base) = self.config.profile_for(&dev.id)
         {
             dev.engine.resync(layered(&dev.layered, base), &mut out);
         }

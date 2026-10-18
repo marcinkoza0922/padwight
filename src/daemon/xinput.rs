@@ -17,6 +17,7 @@ use std::{
 };
 
 use super::{Daemon, Msg, SeenGamepad};
+use crate::controller_id::controller_id;
 use crate::{
     input::xinput::{self, Controller, XInputNormalizer},
     monitor::log,
@@ -80,21 +81,24 @@ impl Daemon {
                 continue;
             }
             let name = controller.name(slot);
-            self.gamepads
-                .insert(key, SeenGamepad { name: name.clone(), analog_triggers: true, rumble: controller.rumble, paddles: false });
-            if !self.should_manage(&name) {
+            let id = controller_id(controller.vendor, controller.product, None);
+            self.gamepads.insert(
+                key,
+                SeenGamepad { name: name.clone(), id: id.clone(), analog_triggers: true, rumble: controller.rumble, paddles: false },
+            );
+            if !self.should_manage(&id) {
                 continue;
             }
             // A virtual pad whose slot isn't known yet may be this one.
             if !slots_known() {
                 continue;
             }
-            self.manage(slot, path, name, &controller);
+            self.manage(slot, path, name, id, &controller);
         }
         self.gamepads.retain(|k, _| present.contains(k));
     }
 
-    fn manage(&mut self, slot: u32, path: PathBuf, name: String, controller: &Controller) {
+    fn manage(&mut self, slot: u32, path: PathBuf, name: String, pad_id: String, controller: &Controller) {
         let family = crate::info::PadFamily::detect(controller.vendor, &name).or(Some(crate::info::PadFamily::Xbox));
         let model = crate::info::PadModel::detect(controller.vendor, controller.product, &name);
         let ff = controller.rumble.then_some(FfSpec);
@@ -122,6 +126,7 @@ impl Daemon {
         managed.rumble_stop = rumble_stop;
         managed.family = family;
         managed.model = model;
+        managed.id = pad_id;
         self.add_managed(id, managed);
     }
 }

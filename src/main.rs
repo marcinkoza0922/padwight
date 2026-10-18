@@ -1,5 +1,6 @@
 mod capture;
 mod config;
+mod controller_id;
 mod daemon;
 mod debug;
 #[cfg(target_os = "linux")]

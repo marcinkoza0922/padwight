@@ -206,7 +206,7 @@ impl App {
                     } else {
                         space().into()
                     };
-                    let name = d.name.clone();
+                    let id = d.id.clone();
                     let rumble: Element<'_, Message> = if d.rumble {
                         button(text("Test rumble").size(13))
                             .style(style::secondary)
@@ -223,7 +223,7 @@ impl App {
                             rumble,
                             checkbox(!d.ignored)
                                 .label("Manage")
-                                .on_toggle(move |on| Message::SetIgnored(name.clone(), !on)),
+                                .on_toggle(move |on| Message::SetIgnored(id.clone(), !on)),
                         ]
                         .spacing(12)
                         .align_y(Alignment::Center),

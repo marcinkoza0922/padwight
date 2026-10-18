@@ -8,6 +8,7 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use crate::{motion::MotionSet, pad_identity::ControllerSupport, sound::SoundSet};
 
+mod controllers;
 mod curve;
 mod guide;
 mod gyro;
@@ -37,6 +38,7 @@ pub mod problems;
 pub use menus::*;
 pub use layers::*;
 
+pub use controllers::ControllerEntry;
 pub use curve::*;
 pub use finite::check_finite;
 pub use guide::*;
@@ -1821,12 +1823,15 @@ pub struct Config {
     pub enabled: bool,
     #[serde(default)]
     pub active: ProfileRef,
-    /// Device names the daemon should leave alone.
+    /// Ids of the controllers the daemon should leave alone (see `controller_id`).
     #[serde(default)]
     pub ignored_devices: Vec<String>,
+    /// Controllers remembered by id, with the profile each uses per pack.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub controllers: Vec<ControllerEntry>,
     #[serde(default)]
     pub auto_switch: AutoSwitch,
-    /// Gyro drift (degrees/second per raw sensor axis) measured by "Calibrate gyro", per controller.
+    /// Gyro drift (degrees/second per raw sensor axis) measured by "Calibrate gyro", per controller id.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub gyro_calibration: BTreeMap<String, [f32; 3]>,
     #[serde(default = "default_keyboard_style")]
@@ -1959,6 +1964,7 @@ impl Default for Config {
             enabled: true,
             active: ProfileRef::new(None, "Gamepad"),
             ignored_devices: Vec::new(),
+            controllers: Vec::new(),
             auto_switch: AutoSwitch::default(),
             colorblind_tones: false,
             appearance: Appearance::Auto,

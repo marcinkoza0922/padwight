@@ -21,6 +21,7 @@ use evdev::Device;
 
 pub(super) use super::pads::{FfSpec, virtual_pad_for};
 use super::{Daemon, Managed, Msg, SeenGamepad};
+use crate::controller_id::controller_id;
 use crate::{
     input::{self, InputEvent, MotionFrame, MotionNormalizer, MotionSample, Normalizer},
     monitor::log,
@@ -170,7 +171,7 @@ impl Daemon {
                 continue;
             }
             if let Some(pad) = self.gamepads.get(&key)
-                && !self.should_manage(&pad.name)
+                && !self.should_manage(&pad.id)
             {
                 continue;
             }
@@ -191,9 +192,10 @@ impl Daemon {
             let analog_triggers = input::has_analog_triggers(&dev);
             let rumble = rumble::supports_rumble(&dev);
             let paddles = input::has_paddles(&dev);
-            self.gamepads.insert(key, SeenGamepad { name: name.clone(), analog_triggers, rumble, paddles });
-            if self.should_manage(&name) {
-                self.manage(path, name, dev);
+            let id = controller_id(dev.input_id().vendor(), dev.input_id().product(), dev.unique_name());
+            self.gamepads.insert(key, SeenGamepad { name: name.clone(), id: id.clone(), analog_triggers, rumble, paddles });
+            if self.should_manage(&id) {
+                self.manage(path, name, id, dev);
             }
         }
         self.nodes.skipped.retain(|k| present.contains(k));
@@ -223,13 +225,13 @@ impl Daemon {
             log!("gyro: using {motion_name} for {}", dev.name);
             dev.motion_frame = MotionFrame::of(&path);
             dev.motion = Some(path);
-            dev.gyro_bias = self.config.gyro_calibration.get(&dev.name).copied().unwrap_or_default();
+            dev.gyro_bias = self.config.gyro_calibration.get(&dev.id).copied().unwrap_or_default();
             let (stop, tx) = (dev.stop.clone(), self.tx.clone());
             thread::spawn(move || read_motion(id, motion_dev, &stop, &tx));
         }
     }
 
-    fn manage(&mut self, path: PathBuf, name: String, mut dev: Device) {
+    fn manage(&mut self, path: PathBuf, name: String, pad_id: String, mut dev: Device) {
         let parent = hid_parent(&path);
         let family = crate::info::PadFamily::detect(dev.input_id().vendor(), &name);
         let model = crate::info::PadModel::detect(dev.input_id().vendor(), dev.input_id().product(), &name);
@@ -268,6 +270,7 @@ impl Daemon {
         managed.model = model;
         managed.parent = parent;
         managed.uniq = uniq;
+        managed.id = pad_id;
         managed.paddles = paddles;
         managed.grabs.extend(grab);
         self.add_managed(id, managed);

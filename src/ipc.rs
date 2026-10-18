@@ -231,6 +231,9 @@ pub struct WindowInfo {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DeviceInfo {
     pub name: String,
+    /// What settings saved for this controller are keyed by (see `controller_id`); empty when it has none.
+    #[serde(default)]
+    pub id: String,
     pub path: String,
     /// Grabbed and being remapped right now.
     pub managed: bool,

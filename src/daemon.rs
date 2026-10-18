@@ -151,6 +151,8 @@ struct Managed {
     parent: Option<PathBuf>,
     #[cfg(target_os = "linux")]
     uniq: Option<String>,
+    /// See `controller_id`; empty for an injected controller.
+    id: String,
     /// Motion-sensor device feeding this controller's gyro, once found.
     motion: Option<PathBuf>,
     /// Touchpad node of this controller, once found (and taken from the desktop).
@@ -279,7 +281,7 @@ impl Managed {
         } else {
             let game = config.active_game();
             let mode = shifts.0.as_deref().and_then(|m| config.mode_for(game, m));
-            config.active().map(|base| {
+            config.profile_for(&self.id).map(|base| {
                 let mut profile = base.with_layers(mode.iter().map(|m| &**m).chain(game.layers_named(&shifts.1)));
                 config.shortcuts.inject(&mut profile);
                 (shifts.clone(), profile)
@@ -298,6 +300,8 @@ impl Managed {
 
 struct SeenGamepad {
     name: String,
+    /// See `controller_id`.
+    id: String,
     analog_triggers: bool,
     rumble: bool,
     paddles: bool,
@@ -731,7 +735,9 @@ impl Daemon {
     fn run_timers(&mut self) {
         let now = Instant::now();
         self.tick_overlays(now);
-        let Some(base) = self.config.active() else { return };
+        if self.config.active().is_none() {
+            return;
+        }
         let mut requests = Vec::new();
         let mut fired = Vec::new();
         let mut guide_keys = Vec::new();
@@ -740,6 +746,7 @@ impl Daemon {
                 continue;
             }
             fired.push(*id);
+            let Some(base) = self.config.profile_for(&dev.id) else { continue };
             let mut out = Vec::new();
             dev.engine.timers(layered(&dev.layered, base), now, &mut out);
             let keys = dev.engine.take_guide_nav();
@@ -970,13 +977,12 @@ impl Daemon {
     }
 
     fn needs_tick(&self) -> bool {
-        let Some(base) = self.config.active() else { return false };
-        self.devices.values().any(|d| d.engine.needs_tick(layered(&d.layered, base)))
+        self.devices.values().any(|d| self.config.profile_for(&d.id).is_some_and(|base| d.engine.needs_tick(layered(&d.layered, base))))
     }
 
     fn tick(&mut self, dt: f32) {
-        let Some(base) = self.config.active() else { return };
         for dev in self.devices.values_mut() {
+            let Some(base) = self.config.profile_for(&dev.id) else { continue };
             let mut out = Vec::new();
             dev.engine.tick(layered(&dev.layered, base), dt, &mut out);
             dev.dispatch(&mut self.kbm, out);
@@ -1089,9 +1095,8 @@ impl Daemon {
             let bias = cal.sum.map(|s| (s / n) as f32);
             dev.gyro_bias = bias;
             dev.calibrating = None;
-            let name = dev.name.clone();
-            log!("gyro calibrated for {name}: bias {bias:.2?} deg/s");
-            self.config.gyro_calibration.insert(name, bias);
+            log!("gyro calibrated for {}: bias {bias:.2?} deg/s", dev.name);
+            self.config.gyro_calibration.insert(dev.id.clone(), bias);
             if let Err(e) = self.config.save_settings() {
                 log!("saving config: {e:#}");
             }
@@ -1107,7 +1112,7 @@ impl Daemon {
             return;
         }
         let Some(dev) = self.devices.get_mut(&id) else { return };
-        let Some(base) = self.config.active().filter(|_| self.active.is_none()) else { return };
+        let Some(base) = self.config.profile_for(&dev.id).filter(|_| self.active.is_none()) else { return };
         let mut out = Vec::new();
         dev.engine.motion(layered(&dev.layered, base), sample, &mut out);
         dev.dispatch(&mut self.kbm, out);
@@ -1152,8 +1157,8 @@ impl Daemon {
             return self.overlay_input(id, events, &fires);
         }
         self.sync_face_swap(id);
-        let Some(base) = self.config.active() else { return };
         let Some(dev) = self.devices.get_mut(&id) else { return };
+        let Some(base) = self.config.profile_for(&dev.id) else { return };
         dev.feed(&self.config, base, events, &mut self.kbm);
         if !dev.engine.needs_tick(layered(&dev.layered, base)) {
             dev.out_view.stop_motion();
@@ -1270,7 +1275,8 @@ impl Daemon {
     /// Tells pad `id`'s engine whether its face buttons send the Nintendo letters now, under the
     /// active profile: see [`PadIdentity::swaps_face_output`].
     fn sync_face_swap(&mut self, id: u64) {
-        let swap = self.config.active().is_some_and(|base| self.face_output_swapped(id, base));
+        let base = self.devices.get(&id).and_then(|d| self.config.profile_for(&d.id));
+        let swap = base.is_some_and(|base| self.face_output_swapped(id, base));
         if let Some(dev) = self.devices.get_mut(&id) {
             dev.engine.set_face_swap(swap);
         }
@@ -1350,8 +1356,8 @@ impl Daemon {
     /// Re-applies analog state under the active profile (and each controller's layers, which
     /// are rebuilt from it).
     fn resync_all(&mut self) {
-        let Some(base) = self.config.active() else { return };
         for dev in self.devices.values_mut() {
+            let Some(base) = self.config.profile_for(&dev.id) else { continue };
             dev.layered = None;
             dev.refresh_layers(&self.config);
             let mut out = Vec::new();
@@ -1360,10 +1366,10 @@ impl Daemon {
         }
     }
 
-    /// Whether a scan should take the controller called `name`: remapping is on and the user
+    /// Whether a scan should take the controller with id `id`: remapping is on and the user
     /// hasn't set it aside. Every path that grabs a pad asks this.
-    fn should_manage(&self, name: &str) -> bool {
-        self.config.enabled && !self.config.ignored_devices.iter().any(|n| n == name)
+    fn should_manage(&self, id: &str) -> bool {
+        self.config.enabled && !self.config.ignored_devices.iter().any(|i| i == id)
     }
 
     /// Stops managing (ungrabs) devices matching `pred`.
@@ -1388,9 +1394,10 @@ impl Daemon {
             .iter()
             .map(|((path, _), pad)| DeviceInfo {
                 name: pad.name.clone(),
+                id: pad.id.clone(),
                 path: path.display().to_string(),
                 managed: self.devices.values().any(|d| &d.path == path),
-                ignored: self.config.ignored_devices.contains(&pad.name),
+                ignored: self.config.ignored_devices.contains(&pad.id),
                 gyro: self.devices.values().any(|d| &d.path == path && d.motion.is_some()),
                 analog_triggers: pad.analog_triggers,
                 rumble: pad.rumble,
@@ -1518,6 +1525,7 @@ impl Daemon {
             parent: None,
             #[cfg(target_os = "linux")]
             uniq: None,
+            id: String::new(),
             motion: None,
             touchpad: None,
             #[cfg(target_os = "linux")]
@@ -1536,7 +1544,7 @@ impl Daemon {
 
     /// Starts running `managed` as controller `id`, with its mappings in step with the profile.
     fn add_managed(&mut self, id: u64, mut managed: Managed) {
-        if let Some(profile) = self.config.active() {
+        if let Some(profile) = self.config.profile_for(&managed.id) {
             let mut out = Vec::new();
             managed.engine.resync(profile, &mut out);
             managed.dispatch(&mut self.kbm, out);

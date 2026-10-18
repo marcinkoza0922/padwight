@@ -121,8 +121,8 @@ impl Daemon {
         log!("{game} started");
         self.toast_profile();
         self.info_timers.game_started(&self.scope.info, Instant::now());
-        let Some(base) = self.config.active() else { return };
         for dev in self.devices.values_mut() {
+            let Some(base) = self.config.profile_for(&dev.id) else { continue };
             let mut out = Vec::new();
             // A toggle starting "Next profile" would be odd; it isn't followed.
             dev.engine.start_toggles(layered(&dev.layered, base), &self.scope.menus, &mut out);

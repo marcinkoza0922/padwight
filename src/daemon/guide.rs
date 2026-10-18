@@ -153,7 +153,7 @@ impl Daemon {
         let Some(dev) = self.devices.get_mut(&device) else { return };
         let mut out = Vec::new();
         if dev.refresh_layers(&self.config)
-            && let Some(base) = self.config.active()
+            && let Some(base) = self.config.profile_for(&dev.id)
         {
             dev.engine.resync(layered(&dev.layered, base), &mut out);
         }
