@@ -63,15 +63,13 @@ impl App {
     /// A game's own choice of the Nintendo layout, or the one App settings gives.
     fn view_game_nintendo_layout(&self) -> Element<'_, Message> {
         let own = self.game().nintendo_layout;
-        let global = self.config.nintendo_layout;
-        let mut rows = own_rows("button layout", own.is_some(), move |on| Message::SetGameNintendoLayout(on.then_some(global)));
+        let mut rows = own_rows("button layout", own.is_some(), move |on| Message::SetGameNintendoLayout(on.then_some(false)));
         if let Some(on) = own {
             rows.push(toggler(on).label("Nintendo button layout").on_toggle(|on| Message::SetGameNintendoLayout(Some(on))).into());
         }
-        let settings = if global { "on" } else { "off" };
         section(
             "Button layout",
-            Some(format!("Nintendo layout for this setup's glyphs. On the App settings page it is currently {settings}.")),
+            Some("Nintendo layout for this setup's glyphs. Without its own choice, each controller's setting on the Profiles tab applies.".into()),
             rows,
         )
     }

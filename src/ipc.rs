@@ -48,6 +48,8 @@ pub enum Request {
     SetController(ControllerInfo),
     /// Forgets a remembered controller: on its next connection it counts as new.
     ForgetController(String),
+    /// Turns the Nintendo button layout on or off for controller `id`.
+    SetNintendoLayout { id: String, on: bool },
     /// Makes a profile of the active game the one controller `id` uses.
     ActivateFor { id: String, profile: String },
     NextProfile,
@@ -247,9 +249,19 @@ pub struct ControllerInfo {
     pub color: Option<String>,
     pub player: Option<u8>,
     pub pass_through: bool,
+    /// Its face buttons use the Nintendo layout (a pack's own choice wins).
+    #[serde(default)]
+    pub nintendo_layout: bool,
     /// Its set-up question is still unanswered.
     pub pending: bool,
     pub connected: bool,
+}
+
+impl ControllerInfo {
+    /// What to call it: its nickname, else the name it last connected under, else its id.
+    pub fn nickname_or_name(&self) -> &str {
+        [&self.nickname, &self.name, &self.id].into_iter().find(|s| !s.is_empty()).map_or("", |s| s.as_str())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

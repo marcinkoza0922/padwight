@@ -1863,11 +1863,6 @@ pub struct Config {
     /// Whose button glyphs info overlays use when the controller in use isn't recognized.
     #[serde(default)]
     pub info_glyphs: crate::info::PadFamily,
-    /// Swaps A with B and X with Y, to match prompts drawn in the Nintendo layout. On a Nintendo
-    /// pad the face buttons send the letters on their labels; a face button's plain press that
-    /// is reassigned turns that off. Other pads only get swapped labels.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub nintendo_layout: bool,
     /// Where the system shortcuts sit: the Guide overlay's opener, the Guide mode's shortcuts and
     /// mouse mode's keys. They're the same in every setup.
     #[serde(default, skip_serializing_if = "Shortcuts::is_default")]
@@ -1986,7 +1981,6 @@ impl Default for Config {
             media_style: OverlayStyle::media(),
             menu_style: OverlayStyle::default(),
             info_glyphs: crate::info::PadFamily::default(),
-            nintendo_layout: false,
             shortcuts: Shortcuts::default(),
             mouse_mode: MouseModeExtras::default(),
             overlay_font: None,
@@ -2147,9 +2141,15 @@ impl Config {
     }
 
     /// Whether button glyphs are swapped to the Nintendo layout now: the active game's own
-    /// choice, else the global one.
+    /// choice, else the setting of the controller whose menu is up (none: off).
     pub fn active_nintendo_layout(&self) -> bool {
-        self.active_game().nintendo_layout.unwrap_or(self.nintendo_layout)
+        self.nintendo_layout_for(self.acting.as_deref().unwrap_or_default())
+    }
+
+    /// Whether controller `id` uses the Nintendo layout: the active game's own choice, else the
+    /// controller's setting.
+    pub fn nintendo_layout_for(&self, id: &str) -> bool {
+        self.active_game().nintendo_layout.unwrap_or_else(|| self.controller(id).is_some_and(|c| c.nintendo_layout))
     }
 
     /// The active profile's game, or General if it's gone.

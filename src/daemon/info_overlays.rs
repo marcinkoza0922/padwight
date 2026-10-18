@@ -142,7 +142,7 @@ impl Daemon {
             mode: self.active_mode(),
             family: pad.and_then(|d| d.family).unwrap_or(self.config.info_glyphs),
             pad_family: identity.family(),
-            nintendo_layout: identity.applies_nintendo_layout(self.config.active_nintendo_layout()),
+            nintendo_layout: identity.applies_nintendo_layout(pad.is_some_and(|d| self.config.nintendo_layout_for(&d.id))),
             system: self.sampler.stats.clone(),
             controller_battery: pad.and_then(|d| d.parent.as_deref()).and_then(crate::info::controller_battery),
             form: crate::info::form_factor(),

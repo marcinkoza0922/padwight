@@ -1297,7 +1297,7 @@ impl Daemon {
         let Some(dev) = self.devices.get(&id) else { return false };
         let identity = PadIdentity::resolve(self.identity_override, dev.model, self.active_support());
         let nintendo_pad = dev.family == Some(crate::info::PadFamily::Nintendo);
-        identity.swaps_face_output(nintendo_pad, self.config.active_nintendo_layout(), base.faces_default())
+        identity.swaps_face_output(nintendo_pad, self.config.nintendo_layout_for(&dev.id), base.faces_default())
     }
 
     /// Makes every controller's virtual pad present the identity the active game asks for.
@@ -1432,6 +1432,7 @@ impl Daemon {
                 color: c.color.clone(),
                 player: c.player,
                 pass_through: c.pass_through,
+                nintendo_layout: c.nintendo_layout,
                 pending: c.pending,
                 connected: self.devices.values().any(|d| d.id == c.id),
             })

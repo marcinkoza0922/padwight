@@ -40,21 +40,6 @@ impl App {
         )
     }
 
-    /// The Nintendo layout's switch: which label each face button shows. The bindings don't move.
-    fn view_nintendo_layout(&self) -> Element<'_, Message> {
-        section(
-            "Button layout",
-            Some(
-                "Swaps A with B and X with Y, to match prompts that a game draws in the Nintendo layout. On a \
-                 Nintendo pad the face buttons send the letter on their label, so the B button sends B. A face \
-                 button whose plain press is changed turns that off, and the buttons send their positions again. \
-                 On other pads only the labels change. The swapped labels carry a swap icon wherever they show here."
-                    .into(),
-            ),
-            vec![toggler(self.config.nintendo_layout).label("Nintendo button layout").on_toggle(Message::SetNintendoLayout).into()],
-        )
-    }
-
     /// The App settings page's sounds: the set every setup without its own set uses.
     fn view_default_sounds(&self) -> Element<'_, Message> {
         let set = self.config.sounds;
@@ -141,7 +126,6 @@ impl App {
         // Each card with the words it can be found by, besides the ones it shows.
         let cards: Vec<(&str, Element<'_, Message>)> = vec![
             ("appearance theme light dark auto desktop colors", self.view_appearance()),
-            ("button layout nintendo swap face buttons a b x y", self.view_nintendo_layout()),
             ("per-setup profiles switch automatically window rules no setup matches default profile", self.view_auto_switch()),
             ("overlay font typeface", self.view_font_card()),
             ("menu colors color-blind colorblind tint blue orange red", self.view_color_card()),

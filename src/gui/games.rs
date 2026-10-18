@@ -141,7 +141,10 @@ impl App {
             }
             Message::SetInfoGlyphs(family) => self.config.info_glyphs = family,
             Message::SetAppearance(appearance) => self.config.appearance = appearance,
-            Message::SetNintendoLayout(on) => self.config.nintendo_layout = on,
+            Message::SetNintendoLayout(on) => {
+                let Some(id) = self.layout_controller().map(|c| c.id.clone()) else { return Task::none() };
+                return Task::batch([call_ok(Request::SetNintendoLayout { id, on }), Task::done(Message::Poll)]);
+            }
             Message::SetGameNintendoLayout(choice) => self.game_mut().nintendo_layout = choice,
             Message::SetGameControllers(support) => self.game_mut().controllers = Some(support),
             Message::SetGameSounds(sounds) => self.game_mut().sounds = Some(sounds),

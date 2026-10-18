@@ -105,7 +105,6 @@ fn quick_nintendo_layout_sets_the_active_game_only() {
     assert_eq!(quick::adjust(Row::NintendoLayout, 1, false, &mut config, &Config::default()), Some(Outcome::Changed));
     assert!(config.active_nintendo_layout());
     assert_eq!(config.general.nintendo_layout, Some(true));
-    assert!(!config.nintendo_layout);
     assert_eq!(quick::label(Row::NintendoLayout, &config, &config), "Nintendo button layout: on");
     assert_eq!(quick::adjust(Row::NintendoLayout, 1, false, &mut config, &Config::default()), Some(Outcome::Changed));
     assert_eq!(config.general.nintendo_layout, Some(false));

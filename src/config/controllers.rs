@@ -28,6 +28,11 @@ pub struct ControllerEntry {
     /// Pack (game name; empty for General) -> the profile this pad uses in it.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub profiles: BTreeMap<String, String>,
+    /// Swaps A with B and X with Y, to match prompts drawn in the Nintendo layout. On a Nintendo
+    /// pad the face buttons send the letters on their labels; a face button's plain press that
+    /// is reassigned turns that off. Other pads only get swapped labels. A pack's own choice wins.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub nintendo_layout: bool,
     /// Hand its input to the game unchanged, whatever the profiles say.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub pass_through: bool,
@@ -60,6 +65,14 @@ impl Config {
             }
         };
         self.controllers[at].profiles.insert(key, profile.to_string());
+    }
+
+    /// Sets controller `id`'s Nintendo layout, remembering the controller if it is new.
+    pub fn set_nintendo_layout_for(&mut self, id: &str, on: bool) {
+        match self.controllers.iter_mut().find(|c| c.id == id) {
+            Some(entry) => entry.nintendo_layout = on,
+            None => self.controllers.push(ControllerEntry { id: id.to_string(), nintendo_layout: on, ..ControllerEntry::default() }),
+        }
     }
 
     /// Answers the new-controller question for `id`: it follows the active profile, passes
@@ -177,6 +190,19 @@ mod tests {
         let mut config = config_with(&[("Deus Ex", "Gyro aim")]);
         config.answer_new_controller("pad-b", Some("pad-a"), false);
         assert_eq!(config.controller("pad-b").map(|c| c.profiles.clone()), config.controller("pad-a").map(|c| c.profiles.clone()));
+    }
+
+    #[test]
+    fn the_nintendo_layout_is_per_controller_and_a_packs_choice_wins() {
+        let mut config = Config::default();
+        config.set_nintendo_layout_for("pad-a", true);
+        assert!(config.nintendo_layout_for("pad-a"));
+        assert!(!config.nintendo_layout_for("pad-b"));
+        config.general.nintendo_layout = Some(false);
+        assert!(!config.nintendo_layout_for("pad-a"));
+        config.general.nintendo_layout = None;
+        config.acting = Some("pad-a".into());
+        assert!(config.active_nintendo_layout());
     }
 
     #[test]

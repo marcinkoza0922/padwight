@@ -103,6 +103,16 @@ impl Daemon {
                     Err(e) => Response::Error(format!("saving config: {e:#}")),
                 }
             }
+            Request::SetNintendoLayout { id, on } => {
+                self.config.set_nintendo_layout_for(&id, on);
+                self.release_all(true);
+                self.resync_all();
+                self.broadcast_overlay();
+                match self.config.save_settings() {
+                    Ok(()) => Response::Ok,
+                    Err(e) => Response::Error(format!("saving config: {e:#}")),
+                }
+            }
             Request::ActivateFor { id, profile } => {
                 if self.config.active_game().profile(&profile).is_none() {
                     return Response::Error(format!("no profile {profile:?} in the active setup"));

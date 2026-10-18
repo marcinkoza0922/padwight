@@ -833,10 +833,26 @@ impl App {
         self.live.as_ref().filter(|live| live.model == self.shown_pad().model)
     }
 
+    /// The controller the Nintendo layout setting is shown and set for: the one picked in the
+    /// header, else the one in use.
+    fn layout_controller(&self) -> Option<&crate::ipc::ControllerInfo> {
+        let status = self.status.as_ref()?;
+        let id = match self.picked_controller() {
+            Some(d) => &d.id,
+            None => &status.devices.iter().find(|d| d.managed && self.live.as_ref().is_some_and(|l| l.device == d.name))?.id,
+        };
+        status.controllers.iter().find(|c| c.id == *id)
+    }
+
+    /// The Nintendo layout as set for the game on screen or, failing that, for that controller.
+    fn nintendo_setting(&self) -> bool {
+        self.game().nintendo_layout.unwrap_or_else(|| self.layout_controller().is_some_and(|c| c.nintendo_layout))
+    }
+
     /// Whether button glyphs use the Nintendo layout here: the game on screen's own choice, else
-    /// the one set in Settings, unless the controller is presented as a Switch Pro.
+    /// the viewed controller's, unless the controller is presented as a Switch Pro.
     fn nintendo_layout(&self) -> bool {
-        let setting = self.game().nintendo_layout.unwrap_or(self.config.nintendo_layout);
+        let setting = self.nintendo_setting();
         self.presented_identity().applies_nintendo_layout(setting)
     }
 
@@ -844,7 +860,7 @@ impl App {
     /// buttons send the swapped letters (see [`pieces::Swap`]).
     fn swap_for(&self, p: &Profile) -> pieces::Swap {
         use pieces::Swap;
-        let setting = self.game().nintendo_layout.unwrap_or(self.config.nintendo_layout);
+        let setting = self.nintendo_setting();
         let identity = self.presented_identity();
         if !identity.applies_nintendo_layout(setting) {
             return Swap::Off;
