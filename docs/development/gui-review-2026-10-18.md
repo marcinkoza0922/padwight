@@ -16,68 +16,68 @@ How it was looked at:
 
 Nothing was tried on hardware. Items marked *verify* may come from the debug scene's made-up data.
 
-Tick an item when it's done and merged.
+Tick an item once it's committed.
 
 ## Guide overlay and its menus
 
-- [ ] 1. **The Guide menu mixes Title Case and sentence case.** "Quick Settings" and "Edit Controls"
+- [x] 1. **The Guide menu mixes Title Case and sentence case.** "Quick Settings" and "Edit Controls"
   are in Title Case, while "On-screen keyboard", "Mouse mode", "Media controls" and
   "Switch profile (now Gameplay)" are in sentence case. The page that "Switch profile" opens is titled
   "Switch Profile", and the page under it is "New profile". Pick one rule for these names, such as
   Title Case for panel names (Quick Settings, Edit Controls, Switch Profile) and sentence case for
   everything else, and give "Switch profile" the same casing as the page it opens (`guide.png`,
   `switch-profile.png`, `new-profile.png`).
-- [ ] 2. **The Guide's three panels don't line up.** Notes is centered vertically on the screen, the
+- [x] 2. **The Guide's three panels don't line up.** Notes is centered vertically on the screen, the
   menu is a bit higher, and Mappings starts at the top of the menu. With a layer section, the
   Mappings column runs below the menu. Aligning the tops of the three panels, or centering all three,
   would look tidier (`guide.png`).
-- [ ] 3. **The Mappings header "· ◀ ▶ modes" is hard to read.** It shows two small D-pad crosses,
+- [x] 3. **The Mappings header "· ◀ ▶ modes" is hard to read.** It shows two small D-pad crosses,
   each with one tiny blue arm, followed by "modes". At this size the arms can't be told apart.
   "Mappings · Default mode" with a separate small hint line ("◀ ▶ D-pad: other modes") would be
   clearer. The same D-pad pairs in the footers of Quick Settings and Edit Controls ("✚✚ change")
   have the same problem (`guide.png`, `edit-stick.png`, `unsaved.png`).
-- [ ] 4. **A layer is named in two ways in one view.** The Mappings row says
+- [x] 4. **A layer is named in two ways in one view.** The Mappings row says
   "LB  Layer “Hotkeys”", and the panel under it is headed "Hotkeys layer · LB". Use one form, such as
   "Hotkeys layer" in both (`guide.png`).
-- [ ] 5. **"Driving mode (not on)" doesn't say how to turn it on.** When the Mappings panel is moved
+- [x] 5. **"Driving mode (not on)" doesn't say how to turn it on.** When the Mappings panel is moved
   to a mode that isn't on, a hint such as "(preview; Y switches to it)" or just "(preview)" would
   say more than "not on" (`guide-mode.png`).
-- [ ] 6. **Submenu rows say "…" and "▸" at once.** "New profile… ▸", "Gamepad button… ▸",
+- [x] 6. **Submenu rows say "…" and "▸" at once.** "New profile… ▸", "Gamepad button… ▸",
   "Gestures… ▸", "Keys… ▸" and "Look… ▸" carry both marks. Other rows that open a page
   ("Quick Settings ▸", "Buttons ▸") have only the arrow. Drop the "…" in the overlays. The arrow
   also sits right after the text, so it lands at a different place on every row; right-aligning it
   would make the rows easier to scan (`switch-profile.png`, `edit-action.png`, `edit-menu.png`).
-- [ ] 7. **"New profile…" in Switch Profile is solid green.** No other row in any Guide page has a
+- [x] 7. **"New profile…" in Switch Profile is solid green.** No other row in any Guide page has a
   colored fill, and the green looks like the "selected" state of some other UI. A plain row with a
   "+" ("+ New profile") would match "+ New profile…" in the settings window
   (`switch-profile.png`).
-- [ ] 8. **The current profile isn't marked, only labeled.** "Gameplay (current)" looks like every
+- [x] 8. **The current profile isn't marked, only labeled.** "Gameplay (current)" looks like every
   other row. A check mark or the accent edge would show it at a glance (`switch-profile.png`).
-- [ ] 9. **"needs gyro" and "needs a gyro" sit one page apart.** Switch Profile says
+- [x] 9. **"needs gyro" and "needs a gyro" sit one page apart.** Switch Profile says
   "Gyro aim (needs gyro)" (`system_menu/profiles.rs`), and New profile says "PC action with gyro
   aiming (needs a gyro)" (`config/templates.rs:293`). Use "needs a gyro" in both.
-- [ ] 10. **New profile mixes copies and templates.** The two-column grid reads "Copy of Gameplay",
+- [x] 10. **New profile mixes copies and templates.** The two-column grid reads "Copy of Gameplay",
   four templates, then "Copy of General's Gamepad" and "Copy of General's Desktop" at the end of the
   right column. Put the copies together, before or after the templates (`new-profile.png`).
-- [ ] 11. **"Gamepad passthrough" is one word only here.** The template is "Gamepad passthrough"
+- [x] 11. **"Gamepad passthrough" is one word only here.** The template is "Gamepad passthrough"
   (`config/templates.rs:290`), but the new-controller choice and the controller card say
   "Pass through" (`new_pad.rs:45`, `gui/controllers.rs:96`). Use "pass-through" as a noun and
   "pass through" as a verb, or just "Gamepad (pass through)".
-- [ ] 12. **The in-game menu opened with Guide + Start is titled "Menu".** It's called "In-game menu" on
+- [x] 12. **The in-game menu opened with Guide + Start is titled "Menu".** It's called "In-game menu" on
   App settings, and its pages are titled "Quick Settings" and "Edit Controls". "Menu" is too generic
   to tell the user where they are; "In-game menu" or "Padwight" would say it
   (`in-game-menu.png`, `system_menu/view.rs:176`).
-- [ ] 13. **Dialogs over Quick Settings don't dim the menu under them.** In the unsaved-changes,
+- [x] 13. **Dialogs over Quick Settings don't dim the menu under them.** In the unsaved-changes,
   disconnected and remapping-off prompts, half-hidden rows peek out above and below the dialog,
   and one is cut through its text ("Nintendo button layout: off"). A dark scrim over the menu would
   make the dialog the obvious focus (`unsaved.png`, `held-controller.png`, `held-remapping.png`).
-- [ ] 14. **The dialogs' buttons all look the same.** Save, Discard and Keep editing have one style,
+- [x] 14. **The dialogs' buttons all look the same.** Save, Discard and Keep editing have one style,
   so nothing says which one is the safe default. Give Save the selected look, or put Keep editing
   first, since B is "back" everywhere else (`unsaved.png`).
-- [ ] 15. **"then the controller is let go" is jargon.** The remapping-off prompt ends with
+- [x] 15. **"then the controller is let go" is jargon.** The remapping-off prompt ends with
   "Save or Discard, then the controller is let go". Something like "Save or Discard to hand the
   controller back to the game" says what happens (`held-remapping.png`).
-- [ ] 16. **The dialogs' footer lines have no period, and their body text does.** "You changed
+- [x] 16. **The dialogs' footer lines have no period, and their body text does.** "You changed
   settings that aren't saved yet." ends with one, "Save or Discard, then back to the Guide" and "The
   menu waits where it was" don't (`unsaved.png`, `held-controller.png`).
 
