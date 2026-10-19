@@ -282,37 +282,53 @@ Tick an item once it's committed.
 - [x] 60. **"Quick Settings menu" on Controller shortcuts, "Quick Settings" in the overlay.** Item 20
   of the third pass kept "Quick Settings" as the panel's name; the shortcut row and the action
   picker add "menu" (`03-shortcuts.png`, `32-actions.png`).
-- [ ] 61. **"Play or pause" in the window, "play / pause" in the overlay.** The media shortcut row says
+- [x] 61. **"Play or pause" in the window, "play / pause" in the overlay.** The media shortcut row says
   "Play or pause" and the media overlay's footer says "play / pause" (`03-shortcuts.png`,
   `media.png`).
+  *The overlay now says "play or pause".*
 
 ## Settings window: pictures and summaries
 
-- [ ] 62. **Callouts on the controller picture are still cut off.** "Gyro clutch (off w…" and
+- [x] 62. **Callouts on the controller picture are still cut off.** "Gyro clutch (off w…" and
   "Menu “Augmentat…”" at 1300 px wide. For the gyro clutch a shorter name ("Gyro clutch") would fit;
   for menus, the menu name alone in quotes, without "Menu", fits more (`10-buttons.png`).
-- [ ] 63. **The "+" legend under the picture is cryptic.** "“+”: also does something on a double tap,
+  *The picture says "Gyro clutch", and a menu by its name alone ("“Augmentations”"); the list under
+  it still says "Menu".*
+- [x] 63. **The "+" legend under the picture is cryptic.** "“+”: also does something on a double tap,
   triple tap or long press". A label ending in "+" ("Esc +", "“;” +") is not an obvious sign for
   that. A small superscript gesture glyph, or "…", or a dot, would be easier to learn; at least
   start the legend with a word ("A “+” after a label: …") (`10-buttons.png`).
-- [ ] 64. **The Buttons summary has no Triple tap column.** The columns are Press, Double tap and Long
+  *The "+" is drawn in blue apart from the label, survives a cut ("Menu “Augment…” +"), and the
+  legend reads "A blue “+” after a label: that button also does something on …".*
+- [x] 64. **The Buttons summary has no Triple tap column.** The columns are Press, Double tap and Long
   press, but every row offers "+ Triple tap". A triple tap, when set, has nowhere to go
   (`10-buttons.png`, `11-expanded.png`) — *verify* where it's drawn.
-- [ ] 65. **Lone punctuation keys are still slivers in the chips.** Item 50 of the third pass named
+  *Checked: the columns are the gestures any shown button has, so a Triple tap column appears once
+  one is set. Nothing changed.*
+- [x] 65. **Lone punctuation keys are still slivers in the chips.** Item 50 of the third pass named
   the apostrophe, backtick, comma and period ("Apostrophe"), but ";" (X), "[" and "]" (R3) are still
   bare marks, and X's row now shows one key as a mark and the other as a word. Name these too
   ("Semicolon", "Left bracket") (`10-buttons.png`).
-- [ ] 66. **The keyboard field's tiny ⌨ button has no label.** On every keyboard row the gray button
+  *`keyboard::mark_name` names `;`, `[`, `]`, `/`, `\`, `=` too, for the chips and the summaries
+  alike. `+` and `-` keep their marks: they are also Nintendo glyphs.*
+- [x] 66. **The keyboard field's tiny ⌨ button has no label.** On every keyboard row the gray button
   after the key field shows only a keyboard icon. A tooltip ("Pick a key from a keyboard") would
   explain it, if it doesn't have one (`11-expanded.png`, `12-sticks.png`).
-- [ ] 67. **The Sticks tab's labels wrap.** "Anti-deadzone buffer" takes two lines in the label
+  *It has the tooltip "Pick a key from a keyboard" now.*
+- [x] 67. **The Sticks tab's labels wrap.** "Anti-deadzone buffer" takes two lines in the label
   column; the sector rows read only "↑ Sector 1", "↗ Sector 2". Naming the direction
   ("Sector 1 · Up") would help on an 8-way ring where the arrow glyphs are small (`12-sticks.png`).
-- [ ] 68. **The action picker's sections end with a lone card.** Each of five sections fills a row of
+  *"Anti-deadzone buffer" is "Anti-deadzone hold" (the manual and the in-game editor too), and the
+  sectors read "Sector 4 · Down-right" without the arrow.*
+- [x] 68. **The action picker's sections end with a lone card.** Each of five sections fills a row of
   three and leaves one card alone (Disabled, Macro, Recenter gyro, Media controls). Four columns, or
   regrouping, would make the grid even. Also, some icons are colored (Toggle, Turbo, Macro, Open
   menu, Hold layer, Switch mode, Info, Log) and the rest gray, with no pattern a reader can use
   (`32-actions.png`).
+  *Four columns, with info and log overlays moved to "On screen" (was "On-screen tools") beside the
+  keyboard, numpad, Quick Settings and media controls; no section ends on a lone tile. The icon
+  colors are kept: they are the colored keyword marks the summaries draw ("≡ Menu “Belt”"), so the
+  dialog teaches those.*
 
 ## Not changed, worth a look
 
