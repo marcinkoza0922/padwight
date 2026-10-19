@@ -111,7 +111,7 @@ fn a_game_gets_a_look_of_its_own_and_gives_it_back() {
     assert!(config.games[0].menu_style.as_ref().unwrap().ornament.scanlines.is_some());
     editor.back();
     editor.back();
-    editor.pick("Use the app's look", &mut config);
+    editor.pick("Use the look from App settings", &mut config);
     assert!(config.games[0].menu_style.is_none());
 }
 

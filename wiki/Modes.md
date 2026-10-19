@@ -23,7 +23,7 @@ Map **Switch mode…** to any button, trigger, stick direction, zone, gesture, c
 - To move between several modes, a carousel or list [menu](Menus) of **Switch mode…** items works well.
 - **Do nothing while the mode is on** (for unset buttons) never turns off buttons that switch modes or hold layers, so there's always a way back.
 
-In the [in-game editor](Editing-Controls-in-Game), **Switch to a mode…** on a button's action list picks one of the game's modes.
+In the [in-game editor](Editing-Controls-in-Game), **Switch mode** on a button's action list picks one of the game's modes.
 
 ## Modes, layers and profiles
 

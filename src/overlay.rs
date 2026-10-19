@@ -22,7 +22,7 @@ pub const FIELD_LEGEND: &[&str] = &[
     "{keyboard_space} space",
     "{keyboard_enter} done",
     "hold {lt} shift",
-    "hold {back} to cancel",
+    "hold {back} cancel",
 ];
 
 pub const KEYBOARD_LEGEND: &[&str] = &[

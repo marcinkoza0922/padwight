@@ -157,7 +157,7 @@ pub(super) fn label(row: Row, config: &Config, saved: &Config) -> String {
     let on = |yes: bool| if yes { "on" } else { "off" };
     match row {
         Row::StickSpeed(stick) => format!(
-            "{} stick speed: {}",
+            "{} Stick speed: {}",
             side(stick),
             was(&|c| c.active().and_then(|p| match &stick_config(p, stick).action {
                 StickAction::Mouse { speed, .. } => Some(format!("{speed:.0} px/s")),
@@ -166,7 +166,7 @@ pub(super) fn label(row: Row, config: &Config, saved: &Config) -> String {
         ),
         Row::GyroSensitivity => format!("Gyro sensitivity: {}", was(&|c| c.active().and_then(|p| p.gyro.sensitivity_label()))),
         Row::ScopedStickSpeed(scope, stick) => format!(
-            "{} stick speed, {}: {}",
+            "{} Stick speed, {}: {}",
             side(stick),
             scope.name(config),
             was(&|c| scope.get(c).and_then(|l| match &(if stick == Stick::Left { &l.left_stick } else { &l.right_stick }).as_ref()?.action {
@@ -179,7 +179,7 @@ pub(super) fn label(row: Row, config: &Config, saved: &Config) -> String {
         }
         Row::Gyro => format!("Gyro: {}", on(config.active().is_some_and(|p| !matches!(p.gyro.mode, GyroMode::Off)))),
         Row::InvertY => format!("Invert Y: {}", on(config.active().is_some_and(inverted_y))),
-        Row::Deadzone(stick) => format!("{} stick dead zone: {}", side(stick), was(&|c| c.active().map(|p| percent(stick_config(p, stick).deadzone)))),
+        Row::Deadzone(stick) => format!("{} Stick deadzone: {}", side(stick), was(&|c| c.active().map(|p| percent(stick_config(p, stick).deadzone)))),
         Row::Rumble => format!("Rumble: {}", was(&|c| Some(percent(c.rumble_strength)))),
         Row::OverlaySize => format!("Overlay size: {}", was(&|c| Some(percent(c.active_menu_style().scale)))),
         Row::NintendoLayout => format!("Nintendo button layout: {}", on(config.active_nintendo_layout())),

@@ -20,7 +20,7 @@ pub(super) fn figures<'a>(cfg: &GyroConfig, live: Option<GyroOut>, trail: &Trail
     let mut pics = Vec::new();
     if cfg.mode.uses_curve() {
         let readout = match live {
-            Some(out) => format!("{:.0}°/s now: {:.2}× sensitivity", out.speed, cfg.curve.gain(out.speed)),
+            Some(out) => format!("Turning {:.0}°/s: {:.2}× sensitivity", out.speed, cfg.curve.gain(out.speed)),
             None => format!("{:.2}× slow, {:.2}× fast", cfg.curve.slow_gain, cfg.curve.fast_gain),
         };
         let faint = |s: String| text(s).size(11).color(MUTED_COLOR);

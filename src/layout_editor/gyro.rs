@@ -232,7 +232,7 @@ fn activation_rows(owner: Owner, g: &GyroConfig) -> Vec<Row> {
         switch(owner, "Rumble on gyro on / off", g.toggle_rumble, |g, on| set(&mut g.toggle_rumble, on)),
     ];
     let pause = g.pause_with_stick;
-    let label = pause.map_or("no".into(), stick_name);
+    let label = pause.map_or("off".into(), stick_name);
     rows.push(Row::step(format!("Pause while pushing: {label}"), move |c, dir| {
         let next = cycle(&[None, Some(Stick::Left), Some(Stick::Right)], pause, dir);
         gyro_mut(c, owner).is_some_and(|g| set(&mut g.pause_with_stick, next))

@@ -21,7 +21,7 @@ A zone adds an action while the stick is pushed part of the way.
 ![The Zones row with a Left Shift zone from 0.00 to 0.60, and the right stick set to Mouse pointer](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/manual/sticks-zones.png "A zone for the first 60% of the stick's travel, and a mouse stick below it.")
 
 1. At the bottom of the left stick's box, press **+ Add zone** (or **+ Walk modifier (Shift on partial push)**, which makes the zone below for you) (2).
-2. Set the zone **From 0.00 to 0.60** and give it the action **Keyboard** and **Left Shift** (1).
+2. Set the zone **From 0.00 to 0.60** and give it the action **Keys** and **Left Shift** (1).
 
 While the stick is in the first 60% of its travel, Shift is held. In most games that means a light push walks and a full push runs.
 

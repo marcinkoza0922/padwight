@@ -106,7 +106,7 @@ For the **left stick**:
 
 - Action: **Button ring** with **8** sectors. Press **WASD** next to *Fill with*: up is **W**, down **S**, left **A**, right **D**, and the diagonals press two keys at once.
 - **Deadzone** 12%, **Starts at** 25% of the way out, **Stickiness** 10% of a sector.
-- Add a **zone** from **0.00 to 0.60** with action **Keyboard** and **Left Shift**.
+- Add a **zone** from **0.00 to 0.60** with action **Keys** and **Left Shift**.
 
 ![The left stick's zone, from 0.00 to 0.60 with Left Shift, and the right stick set to Mouse pointer](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/manual/sticks-zones.png "The walk zone (1), and below it the right stick's mouse settings (3, 4).")
 
@@ -136,7 +136,7 @@ On the game's own screens the right stick is the mouse cursor, so the inventory,
 
 ## Step 6: The triggers
 
-- **Right trigger (RT)**: works as a button, with a **threshold** of 0.30, and the action **Mouse button** **Left** (fire).
+- **Right trigger (RT)**: works as a button, with a **threshold** of 0.30, and the action **Mouse click** **Left** (fire).
 - **Left trigger (LT)**: **Disabled**.
 
 Deus Ex has no secondary fire, and its right mouse button is Use, which went on A. Rather than invent a job for LT, the plain profile leaves it free. The gyro profiles use it as the gyro clutch (Step 11).

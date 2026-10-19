@@ -10,7 +10,7 @@ use super::{
     action::{ActionAt, Slot},
     owner::{self, Owner, Part, set_override, trigger_mut, zones_mut},
     pages::{Page, trigger_name},
-    rows::{Act, Nav, Number, Row, set},
+    rows::{Act, Nav, Number, Row, counted, set},
 };
 
 const PRESS_AT: Number = Number::new(0.05, (0.05, 0.95), 2, "");
@@ -22,23 +22,22 @@ const NEW_ZONE: (f32, f32) = (0.5, 1.0);
 /// What a mode or layer shows for a part it leaves to the profile: a row to set it here.
 pub(super) fn override_rows(owner: Owner, part: Part, name: &str) -> Vec<Row> {
     vec![
-        Row::note(format!("Uses the profile's {}", name.to_lowercase())),
+        Row::note(format!("Same {} as the profile", name.to_lowercase())),
         Row::apply(format!("Set the {} here", name.to_lowercase()), move |c| Act::changed_if(set_override(c, owner, part, true))).tone(Tone::Add),
     ]
 }
 
 /// The row that gives a part back to the profile, on a mode's or layer's page.
 pub(super) fn back_to_profile(owner: Owner, part: Part) -> Option<Row> {
-    owner.is_shift().then(|| Row::apply("Use the profile's", move |c| Act::changed_if(set_override(c, owner, part, false))).tone(Tone::Remove))
+    owner.is_shift().then(|| Row::apply("Same as profile", move |c| Act::changed_if(set_override(c, owner, part, false))).tone(Tone::Remove))
 }
 
 pub(super) fn triggers_rows(config: &Config, owner: Owner) -> Vec<Row> {
     [Trigger::Left, Trigger::Right]
         .into_iter()
         .map(|t| {
-            let now = owner::trigger(config, owner, t).map_or("the profile's".into(), |c| action_name(&c.action));
-            let glyph = if t == Trigger::Left { "{lt}" } else { "{rt}" };
-            Row::open(format!("{glyph} {}: {now}", trigger_name(t)), Page::Trigger(owner, t))
+            let now = owner::trigger(config, owner, t).map_or("same as profile".into(), |c| action_name(&c.action));
+            Row::open(format!("{}: {now}", trigger_name(t)), Page::Trigger(owner, t))
         })
         .collect()
 }
@@ -86,7 +85,7 @@ pub(super) fn trigger_rows(config: &Config, owner: Owner, t: Trigger) -> Vec<Row
         }
         TriggerAction::Disabled => {}
     }
-    rows.push(Row::open(format!("Zones ({})", cfg.zones.len()), Page::Zones(owner, Analog::Trigger(t))));
+    rows.push(Row::open(counted("Zones", cfg.zones.len()), Page::Zones(owner, Analog::Trigger(t))));
     rows.extend(back_to_profile(owner, Part::Trigger(t)));
     rows
 }

@@ -72,7 +72,7 @@ pub(super) fn log_rows(config: &crate::config::Config, i: usize) -> Vec<Row> {
     if !o.always {
         let mut linger = LINGER.row("Lingers for", o.linger.unwrap_or(0.0), move |c, v| log_mut(c, i).is_some_and(|o| set(&mut o.linger, (v > 0.0).then_some(v))));
         if o.linger.is_none() {
-            linger.item.label = "Lingers for: no".into();
+            linger.item.label = "Lingers for: off".into();
         }
         rows.push(linger);
     }

@@ -135,6 +135,7 @@ pub fn touch_view(menu: &Menu, selected: Option<usize>, choose: TouchChoose, pic
         picks,
         crumbs: Vec::new(),
         hint: hint.into(),
+        about: String::new(),
         style: menu.style.clone(),
         touch: true,
         aim: None,

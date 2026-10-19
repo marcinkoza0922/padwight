@@ -19,7 +19,7 @@ A layer is a second set of mappings that's on only while you hold a button. You'
 
 Below that, the layer has the same tabs as a profile: Buttons, Sticks & triggers, Combos, Gyro and Touchpad. A setting the layer doesn't change reads **Same as** the profile, with an **Override** button.
 
-1. On the layer's **Buttons** tab, press **Override** on **A (South)**, and choose **Keyboard** and **F1**.
+1. On the layer's **Buttons** tab, press **Override** on **A (South)**, and choose **Keys** and **F1**.
 2. Do the same for B (F2), X (F3) and Y (F4).
 
 **Back to base** removes an override again.

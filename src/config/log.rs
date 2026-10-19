@@ -160,8 +160,8 @@ impl TrackedInput {
         match self {
             TrackedInput::Button(b) => b.short_name(),
             TrackedInput::Dpad => "D-pad",
-            TrackedInput::Stick(Stick::Left) => "Left stick",
-            TrackedInput::Stick(Stick::Right) => "Right stick",
+            TrackedInput::Stick(Stick::Left) => "Left Stick",
+            TrackedInput::Stick(Stick::Right) => "Right Stick",
             TrackedInput::Trigger(Trigger::Left) => "LT",
             TrackedInput::Trigger(Trigger::Right) => "RT",
         }

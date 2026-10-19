@@ -202,6 +202,6 @@ mod tests {
         apply(&mut config);
         let steps = &config.active_game().macros[0].steps;
         assert_eq!(steps.len(), Motion::QuarterCircleForward.steps().len());
-        assert_eq!(step_label(&steps[0]), "Left stick to ↓ Down");
+        assert_eq!(step_label(&steps[0]), "Left Stick to ↓ Down");
     }
 }

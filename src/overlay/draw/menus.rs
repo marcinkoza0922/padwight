@@ -68,7 +68,7 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
     };
     // The in-game editor's picture of what its page sets, beside the list.
     let body = match &m.figure {
-        Some(fig) => row![body, super::figure::figure(fig, c, s)].spacing(24.0 * s).align_y(Alignment::Center).into(),
+        Some(fig) => row![body, super::figure::figure(fig, c, s)].spacing(24.0 * s).align_y(Alignment::Start).into(),
         None => body,
     };
     // Where this page is in the menus, above its title: "Menu › Edit Controls › A button".
@@ -79,13 +79,13 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
         let crumbs = typeset::line(c.typ, c.font, &m.crumbs.join(" › "), 13.0 * s, c.muted);
         column![crumbs, title].spacing(4.0 * s).align_x(Alignment::Center).into()
     };
-    let contents = column![
-        heading,
-        body,
-        rich_text(&m.hint, c, 13.0 * s, c.muted),
-    ]
-    .spacing(14.0 * s)
-    .align_x(Alignment::Center);
+    let mut contents = column![heading, body].spacing(14.0 * s).align_x(Alignment::Center);
+    // What the highlighted row means, in the editor's own words, just above the controls.
+    if !m.about.is_empty() {
+        let about = text(m.about.clone()).font(c.font).size(14.0 * s).color(c.background_text).align_x(Alignment::Center);
+        contents = contents.push(container(about).max_width(520.0 * s));
+    }
+    let contents = contents.push(rich_text(&m.hint, c, 13.0 * s, c.muted));
     framed(contents.into(), c, &m.style, 22.0 * s, fit)
 }
 
@@ -93,8 +93,9 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
 /// cursor is on it.
 pub(super) fn item_cell<'a, M: 'a>(m: &MenuView, i: usize, c: Colors, size: f32) -> (Element<'a, M>, Colors, bool) {
     let item = &m.items[i];
-    let selected = m.selected == Some(i);
-    let lit = toned(c, item.tone).lit_item(m, i);
+    let note = item.tone == crate::menu::Tone::Note;
+    let selected = m.selected == Some(i) && !note;
+    let lit = if note { toned(c, item.tone) } else { toned(c, item.tone).lit_item(m, i) };
     // A list's rows are as wide as the list, so their arrows line up at the right.
     let fills = matches!(m.kind, MenuKind::List | MenuKind::Buttons);
     (item_text(lit, item, &toned_label(c, item), size, fills), lit, selected)
@@ -158,9 +159,14 @@ fn list<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
     let cursor = m.selected.unwrap_or(0);
     let cell = |i: usize| -> Element<'a, M> {
         let (content, lit, selected) = item_cell(m, i, c, 17.0 * s);
-        c.moving(m, i, container(content).padding([10.0 * s, 14.0 * s]).width(Length::Fill).style(lit_cell_style(lit, selected, 40.0 * s)))
+        // As tall as a glyph, so rows with glyphs are no taller than plain ones.
+        let content = container(content).height(24.0 * s).align_y(Alignment::Center);
+        let boxed = container(content).padding([10.0 * s, 14.0 * s]).width(Length::Fill);
+        // A note has no box, so it doesn't look like something to pick.
+        let boxed = if m.items[i].tone == crate::menu::Tone::Note { boxed } else { boxed.style(lit_cell_style(lit, selected, 40.0 * s)) };
+        c.moving(m, i, boxed)
     };
-    let marker = |t: &'static str| text(t).font(c.font).size(13.0 * s).color(c.muted);
+    let marker = |t: String| text(t).font(c.font).size(13.0 * s).color(c.muted);
     let columns = m.columns();
     let start = crate::menu::list_start_in(cursor, len, columns);
     let half = if columns == 2 { len.div_ceil(2) } else { len };
@@ -187,13 +193,18 @@ fn list<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
     } else {
         left.into()
     };
-    let mut body = column![].spacing(6.0 * s);
-    if start > 0 {
-        body = body.push(marker("▲"));
+    // How many rows are scrolled out above and below, in both columns.
+    let right = len - half;
+    let above = start + start.min(right);
+    let end = start + crate::menu::VISIBLE_ROWS;
+    let below = half.saturating_sub(end) + right.saturating_sub(end);
+    let mut body = column![].spacing(6.0 * s).align_x(Alignment::Center);
+    if above > 0 {
+        body = body.push(marker(format!("▲ {above} more")));
     }
     body = body.push(grid);
-    if start + crate::menu::VISIBLE_ROWS < half {
-        body = body.push(marker("▼"));
+    if below > 0 {
+        body = body.push(marker(format!("▼ {below} more")));
     }
     body.into()
 }

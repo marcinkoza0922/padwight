@@ -43,6 +43,9 @@ pub struct MenuView {
     pub crumbs: Vec<String>,
     /// Short reminder of the controls.
     pub hint: String,
+    /// A line on what the highlighted row means, above the hint (the in-game editor's).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub about: String,
     #[serde(default)]
     pub style: OverlayStyle,
     /// Laid out on a touchpad: the items stay where the pad has them, so a carousel is drawn as
@@ -113,6 +116,9 @@ pub enum Tone {
     Add,
     /// Removes something, or deletes it.
     Remove,
+    /// Only says something, such as what a slot does now: drawn flat and muted, and the cursor
+    /// passes it by.
+    Note,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -347,6 +353,7 @@ impl MenuSession {
             picks: self.picks,
             crumbs: self.stack[..self.stack.len() - 1].iter().filter_map(|f| menus.get(f.menu)).map(|m| m.name.clone()).collect(),
             hint,
+            about: String::new(),
             style: menu.style.clone(),
             touch: false,
             aim: self.live_aim(menu),

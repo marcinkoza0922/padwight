@@ -222,6 +222,7 @@ mod motion_tests {
             picks: 0,
             crumbs: Vec::new(),
             hint: String::new(),
+            about: String::new(),
             style: Default::default(),
             touch: false,
             aim: None,

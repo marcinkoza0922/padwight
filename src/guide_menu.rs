@@ -71,6 +71,7 @@ pub fn view(steam: bool, cursor: usize, profile: &str, style: OverlayStyle) -> M
         picks: 0,
         crumbs: Vec::new(),
         hint: "{confirm} choose · {back} close".into(),
+        about: String::new(),
         style,
         touch: false,
         aim: None,

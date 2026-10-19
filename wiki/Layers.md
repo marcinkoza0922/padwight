@@ -20,7 +20,7 @@ Layers can hold further layers.
 
 A layer can't be toggled on, and menu items can't hold layers. If a set of mappings should stay on until you switch back, make it a [mode](Modes) instead.
 
-In the [in-game editor](Editing-Controls-in-Game), **Add layer** makes a layer, its page sets its buttons, combos, sticks, triggers, gyro, touchpad and indicator, and **Hold a layer…** on a button's action list makes that button hold it.
+In the [in-game editor](Editing-Controls-in-Game), **Add layer** makes a layer, its page sets its buttons, combos, sticks, triggers, gyro, touchpad and indicator, and **Hold layer** on a button's action list makes that button hold it.
 
 ## Layers or modes
 

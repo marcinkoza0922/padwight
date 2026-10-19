@@ -36,8 +36,8 @@ Anything that holds an action (a button, a gesture, a combo, a trigger, a zone, 
 - **Gestures…** (a button's page) opens its double tap, triple tap and long press.
 - Mouse clicks, the wheel in four directions, the on-screen keyboard and numpad, a screenshot, recording, the media controls, Quick Settings and force quit. Choose **Disabled** to make it do nothing.
 - **Keys…** opens the full keyboard, a row at a time. Tick keys to press them together, such as Ctrl and C.
-- **Switch to a mode…**, **Hold a layer…**, **Play a macro…**, **Open a menu…**, **Show an info overlay…** and **Show a log overlay…** list what the game has.
-- **Several at once…** presses several actions together. Its page lists them, each with its own action page, and adds or removes them.
+- **Switch mode**, **Hold layer**, **Macro**, **Open menu**, **Info overlay** and **Log overlay** list what the game has.
+- **Several at once** presses several actions together. Its page lists them, each with its own action page, and adds or removes them.
 - **Make it a toggle** and **Make it turbo** wrap the action. A wrapped action's page shows what it wraps on a page of its own, so you can change that and keep the wrapper. A toggle can start on, a turbo has its rate (and how often it plays a macro), and **Stop toggling** or **Stop turbo** takes the wrapper off. A macro can repeat while held.
 - **Not set** clears a gesture, or a button a mode or layer leaves to the profile.
 
@@ -73,7 +73,7 @@ A combo ticks its buttons (two or more), has an action, and can be deleted. A bu
 
 ## Modes and layers
 
-**Add mode** or **Add layer** makes one. Its page has its name, its buttons (a button it doesn't set is left to the profile), its combos, the profile's combos it turns off, and its own sticks, triggers, gyro and touchpad: each says whether it's the profile's or its own. **Set it here** starts it from the profile's, and **Use the profile's** gives it back. Then whether other buttons do nothing while it's on, what shows while it's on (its name, its bindings, an info overlay, or nothing), after how long, the bindings sheet's heading, and the name label's look. A mode or layer something still uses can't be deleted.
+**Add mode** or **Add layer** makes one. Its page has its name, its buttons (a button it doesn't set is left to the profile), its combos, the profile's combos it turns off, and its own sticks, triggers, gyro and touchpad: each says whether it's the same as the profile's or its own. **Set it here** starts it from the profile's, and **Same as profile** gives it back. Then whether other buttons do nothing while it's on, what shows while it's on (its name, its bindings, an info overlay, or nothing), after how long, the bindings sheet's heading, and the name label's look. A mode or layer something still uses can't be deleted.
 
 ## Macros
 

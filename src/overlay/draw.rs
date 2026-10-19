@@ -291,6 +291,8 @@ fn toned(c: Colors, tone: crate::menu::Tone) -> Colors {
     // Lime with white text stays readable at this mix (about 4.7:1 on the default items).
     let (tint, share) = match (tone, c.colorblind) {
         (crate::menu::Tone::Normal, _) => return c,
+        // No box of its own: muted words on the panel, like the hint under it.
+        (crate::menu::Tone::Note, _) => return Colors { item: Color::TRANSPARENT, item_text: c.muted, ..c },
         (crate::menu::Tone::Add, false) => (Color::from_rgb8(0x5a, 0x9a, 0x1a), 0.75),
         (crate::menu::Tone::Remove, false) => (Color::from_rgb8(0xd0, 0x64, 0x64), 0.4),
         (crate::menu::Tone::Add, true) => (Color::from_rgb8(0x4a, 0x8f, 0xe0), 0.4),

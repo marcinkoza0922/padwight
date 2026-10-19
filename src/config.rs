@@ -1951,8 +1951,8 @@ impl PeekTrigger {
 impl fmt::Display for PeekTrigger {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            PeekTrigger::Left => "Left trigger",
-            PeekTrigger::Right => "Right trigger",
+            PeekTrigger::Left => "Left Trigger",
+            PeekTrigger::Right => "Right Trigger",
             PeekTrigger::Off => "Off",
         })
     }

@@ -160,6 +160,7 @@ impl OfferSession {
                 picks: 0,
                 crumbs: vec!["Add controller profiles".into()],
                 hint: "{updown} choose · {confirm} add · {back} back".into(),
+                about: String::new(),
                 style: style.clone(),
                 touch: false,
                 aim: None,

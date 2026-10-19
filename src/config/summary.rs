@@ -162,7 +162,7 @@ impl ButtonAction {
             ButtonAction::ToggleOverlay => vec![text("On-screen keyboard")],
             ButtonAction::ToggleNumpad => vec![text("On-screen numpad")],
             ButtonAction::Screenshot => vec![text("Screenshot")],
-            ButtonAction::ToggleRecording => vec![text("Start / stop recording")],
+            ButtonAction::ToggleRecording => vec![text("Start or stop recording")],
             ButtonAction::ToggleMedia => vec![text("Media controls")],
             ButtonAction::QuickSettings => vec![text("Quick Settings")],
             ButtonAction::GyroToggle => vec![text("Gyro on / off")],

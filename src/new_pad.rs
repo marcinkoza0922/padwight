@@ -69,6 +69,7 @@ impl NewPadSession {
             picks: 0,
             crumbs: vec!["Set up a controller".into()],
             hint: "{updown} choose · {confirm} pick · {back} later".into(),
+            about: String::new(),
             style: style.clone(),
             touch: false,
             aim: None,
