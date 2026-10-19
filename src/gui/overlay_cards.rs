@@ -13,7 +13,7 @@ impl App {
                 button(text(if keyboard_open { "Close it" } else { "Open it now" }).size(13))
                     .style(style::secondary)
                     .on_press(Message::ToggleOverlay),
-                disclosure("Appearance", appearance_open, Message::ToggleAppearance(None)),
+                appearance_row(appearance_open, Message::ToggleAppearance(None), StageTarget::Keyboard),
             ]
             .spacing(12)
             .align_y(Alignment::Center)
@@ -60,7 +60,7 @@ impl App {
     }
 
     pub(super) fn view_media_card(&self) -> Element<'_, Message> {
-        let mut rows: Vec<Element<'_, Message>> = vec![disclosure("Appearance", self.media_appearance, Message::ToggleMediaAppearance)];
+        let mut rows: Vec<Element<'_, Message>> = vec![appearance_row(self.media_appearance, Message::ToggleMediaAppearance, StageTarget::Media)];
         if self.media_appearance {
             let style = &self.config.media_style;
             rows.push(style_editor(style, Rc::new(Message::SetMediaStyle)));
@@ -80,7 +80,7 @@ impl App {
     }
 
     pub(super) fn view_in_game_menu_card(&self) -> Element<'_, Message> {
-        let mut rows: Vec<Element<'_, Message>> = vec![disclosure("Appearance", self.menu_appearance, Message::ToggleInGameMenuAppearance)];
+        let mut rows: Vec<Element<'_, Message>> = vec![appearance_row(self.menu_appearance, Message::ToggleInGameMenuAppearance, StageTarget::InGameMenu)];
         if self.menu_appearance {
             let style = &self.config.menu_style;
             rows.push(style_editor(style, Rc::new(Message::SetInGameMenuStyle)));
@@ -106,7 +106,7 @@ impl App {
                 button(text(if numpad_open { "Close it" } else { "Open it now" }).size(13))
                     .style(style::secondary)
                     .on_press(Message::ToggleNumpad),
-                disclosure("Appearance", self.numpad_appearance, Message::ToggleNumpadAppearance),
+                appearance_row(self.numpad_appearance, Message::ToggleNumpadAppearance, StageTarget::Numpad),
             ]
             .spacing(12)
             .align_y(Alignment::Center)

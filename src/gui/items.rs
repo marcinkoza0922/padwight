@@ -950,7 +950,7 @@ impl App {
 
         // Appearance, and a live preview with the fallback glyphs.
         let appearance_open = self.open_info_appearance.contains(&i);
-        rows.push(labeled("", disclosure("Appearance", appearance_open, Message::ToggleInfoAppearance(i))));
+        rows.push(labeled("", appearance_row(appearance_open, Message::ToggleInfoAppearance(i), StageTarget::Info(i))));
         if appearance_open {
             rows.push(style_editor(&o.style, Rc::new(move |s| Message::SetInfoStyle(i, s))));
             rows.extend(self.spot_note(o.style.position, false));
@@ -964,62 +964,7 @@ impl App {
             rows.push(p);
         }
 
-        // The grid: rows of cells, which line up in columns on screen.
-        let small = |label: &'static str, msg: Option<Message>| button(text(label).size(13)).style(style::secondary).on_press_maybe(msg);
-        let mut grid = column![
-            row![
-                text("Cells").size(16),
-                help(
-                    "Each row's cells line up in columns. Type text, and insert {tokens}: button tokens \
-                     ({south}, {lb}, {lt}, {start}, …) draw that button as the controller in use labels \
-                     it (A, ✕ or B for {south}); others show live values such as {time}, {cpu} or {app}."
-                        .into(),
-                ),
-            ]
-            .spacing(8)
-            .align_y(Alignment::Center)
-        ]
-        .spacing(8);
-        let last = o.rows.len().saturating_sub(1);
-        for (r, cells) in o.rows.iter().enumerate() {
-            let mut line = row![].spacing(10);
-            for (c, cell) in cells.iter().enumerate() {
-                // Each cell gets its own box, so neighbours on the same row read as separate.
-                line = line.push(
-                    container(
-                        row![
-                            field("Text or {token}", cell).on_input(move |v| Message::SetInfoCell(i, r, c, v)).width(170),
-                            insert_button(TokenTarget::InfoCell(i, r, c)),
-                            char_button(TokenTarget::InfoCell(i, r, c)),
-                            small("✕", Some(Message::RemoveInfoCell(i, r, c))),
-                        ]
-                        .spacing(4)
-                        .align_y(Alignment::Center),
-                    )
-                    .padding([6, 8])
-                    .style(style::card),
-                );
-            }
-            line = line.push(small("+ Cell", Some(Message::AddInfoCell(i, r))));
-            grid = grid.push(
-                container(
-                    row![
-                        container(text(format!("{}.", r + 1))).width(28).padding(iced::Padding::ZERO.top(6)),
-                        line.wrap().vertical_spacing(6),
-                        space::horizontal(),
-                        small("↑", (r > 0).then_some(Message::MoveInfoRow(i, r, true))),
-                        small("↓", (r < last).then_some(Message::MoveInfoRow(i, r, false))),
-                        small("✕", Some(Message::RemoveInfoRow(i, r))),
-                    ]
-                    .spacing(8)
-                    .align_y(Alignment::Start),
-                )
-                .padding(8)
-                .style(style::inset),
-            );
-        }
-        grid = grid.push(button(text("+ Add row").size(13)).style(style::secondary).on_press(Message::AddInfoRow(i)));
-        rows.push(grid.into());
+        rows.push(info_cells_editor(i, o));
         rows.extend(shown);
         rows.extend(self.view_info_input(i, o));
         column(rows).spacing(10).into()
@@ -1090,7 +1035,7 @@ impl App {
         }
         let mut col = column![header].spacing(12);
         if open {
-            col = col.push(self.view_menu_editor(mi, menu, names, reachable));
+            col = col.push(self.view_menu_editor(mi, menu, names));
         }
         container(col).padding(14).width(Length::Fill).style(style::card).into()
     }
@@ -1106,21 +1051,12 @@ impl App {
         Some(text(format!("⚠ {warning}")).size(12).color(WARNING_COLOR).into())
     }
 
-    #[expect(clippy::too_many_lines, reason = "predates the size lints")]
-    pub(super) fn view_menu_editor<'a>(&'a self, mi: usize, menu: &'a Menu, names: &Names, reachable: &[&Menu]) -> Element<'a, Message> {
-        let mut rows: Vec<Element<'a, Message>> = vec![labeled(
-            "Name",
-            field("Menu name", &menu.name).on_input(move |n| Message::RenameMenu(mi, n)).width(240).into(),
-        )];
-
-        rows.push(labeled("Kind", menu_kind_row(mi, menu)));
-        rows.push(labeled("Close button", close_picker(mi, menu)));
-        rows.extend(keep_open_toggle(mi, menu).map(|t| labeled("After a pick", t)));
-        rows.extend(grid_start_picker(mi, menu).map(|p| labeled("Cursor starts on", p)));
+    pub(super) fn view_menu_editor<'a>(&'a self, mi: usize, menu: &'a Menu, names: &Names) -> Element<'a, Message> {
+        let mut rows = menu_basics(mi, menu);
 
         // Appearance, with a live preview.
         let appearance_open = self.open_appearance.contains(&Some(mi));
-        rows.push(labeled("", disclosure("Appearance", appearance_open, Message::ToggleAppearance(Some(mi)))));
+        rows.push(labeled("", appearance_row(appearance_open, Message::ToggleAppearance(Some(mi)), StageTarget::Menu(mi))));
         if appearance_open {
             rows.push(style_editor(&menu.style, Rc::new(move |s| Message::SetMenuStyle(mi, s))));
             rows.extend(self.spot_note(menu.style.position, true));
@@ -1136,8 +1072,16 @@ impl App {
         if appearance_open && let Some(p) = shown.take() {
             rows.push(p);
         }
+        rows.push(self.menu_items_editor(mi, menu, names, false));
+        rows.extend(shown);
+        column(rows).spacing(10).into()
+    }
 
-        // Items.
+    /// A menu's items: each one's label and what picking it does, and a row to add more. `narrow`
+    /// puts what an item does on a line of its own under its label, for the on-screen editor's panel.
+    #[expect(clippy::too_many_lines, reason = "predates the size lints")]
+    pub(super) fn menu_items_editor<'a>(&'a self, mi: usize, menu: &'a Menu, names: &Names, narrow: bool) -> Element<'a, Message> {
+        let reachable = &reachable_menus(&self.config, self.game());
         let direction_slots = match menu.kind {
             MenuKind::Directional { cluster } => Some(cluster.slots()),
             _ => None,
@@ -1195,7 +1139,11 @@ impl App {
             if quick {
                 line = line.push(item_button_picker(mi, i, item.button));
             }
-            line = line.push(fill_x(action_editor(&item.action, Button::South, item_kinds, set_action(target), KeyField::root(target), &item_names)));
+            let action = fill_x(action_editor(&item.action, Button::South, item_kinds, set_action(target), KeyField::root(target), &item_names));
+            let below = if narrow { Some(action) } else {
+                line = line.push(action);
+                None
+            };
             if let Some(grid) = &grid {
                 line = line.push(merge_buttons(mi, i, item.span, grid));
             }
@@ -1208,7 +1156,7 @@ impl App {
                     .push(small("↓", (i < last).then_some(Message::MoveMenuItem(mi, i, false))))
                     .push(small("✕", Some(Message::RemoveMenuItem(mi, i))));
             }
-            let boxed = column![line].spacing(4).push(item_note(menu, i, reachable, names, &openers));
+            let boxed = column![line].spacing(4).push(below).push(item_note(menu, i, reachable, names, &openers));
             boxes.push(container(boxed).padding(8).style(style::inset).into());
         }
         items = items.push(item_boxes(menu.kind, boxes));
@@ -1219,11 +1167,81 @@ impl App {
                 text("Give a direction \"Open menu…\" to open another menu with the same close button.").size(12).color(MUTED_COLOR),
             );
         }
-        rows.push(items.into());
-        rows.extend(shown);
-        column(rows).spacing(10).into()
+        items.into()
     }
 
+}
+
+/// A menu's name, kind, and how it closes and where its cursor starts.
+pub(super) fn menu_basics<'a>(mi: usize, menu: &'a Menu) -> Vec<Element<'a, Message>> {
+    let mut rows: Vec<Element<'a, Message>> = vec![
+        labeled("Name", field("Menu name", &menu.name).on_input(move |n| Message::RenameMenu(mi, n)).width(240).into()),
+        labeled("Kind", menu_kind_row(mi, menu)),
+        labeled("Close button", close_picker(mi, menu)),
+    ];
+    rows.extend(keep_open_toggle(mi, menu).map(|t| labeled("After a pick", t)));
+    rows.extend(grid_start_picker(mi, menu).map(|p| labeled("Cursor starts on", p)));
+    rows
+}
+
+/// An info overlay's cells, row by row, with buttons to add, move and remove them.
+pub(super) fn info_cells_editor<'a>(i: usize, o: &'a InfoOverlay) -> Element<'a, Message> {
+    // The grid: rows of cells, which line up in columns on screen.
+    let small = |label: &'static str, msg: Option<Message>| button(text(label).size(13)).style(style::secondary).on_press_maybe(msg);
+    let mut grid = column![
+        row![
+            text("Cells").size(16),
+            help(
+                "Each row's cells line up in columns. Type text, and insert {tokens}: button tokens \
+                 ({south}, {lb}, {lt}, {start}, …) draw that button as the controller in use labels \
+                 it (A, ✕ or B for {south}); others show live values such as {time}, {cpu} or {app}."
+                    .into(),
+            ),
+        ]
+        .spacing(8)
+        .align_y(Alignment::Center)
+    ]
+    .spacing(8);
+    let last = o.rows.len().saturating_sub(1);
+    for (r, cells) in o.rows.iter().enumerate() {
+        let mut line = row![].spacing(10);
+        for (c, cell) in cells.iter().enumerate() {
+            // Each cell gets its own box, so neighbours on the same row read as separate.
+            line = line.push(
+                container(
+                    row![
+                        field("Text or {token}", cell).on_input(move |v| Message::SetInfoCell(i, r, c, v)).width(170),
+                        insert_button(TokenTarget::InfoCell(i, r, c)),
+                        char_button(TokenTarget::InfoCell(i, r, c)),
+                        small("✕", Some(Message::RemoveInfoCell(i, r, c))),
+                    ]
+                    .spacing(4)
+                    .align_y(Alignment::Center),
+                )
+                .padding([6, 8])
+                .style(style::card),
+            );
+        }
+        line = line.push(small("+ Cell", Some(Message::AddInfoCell(i, r))));
+        grid = grid.push(
+            container(
+                row![
+                    container(text(format!("{}.", r + 1))).width(28).padding(iced::Padding::ZERO.top(6)),
+                    line.wrap().vertical_spacing(6),
+                    space::horizontal(),
+                    small("↑", (r > 0).then_some(Message::MoveInfoRow(i, r, true))),
+                    small("↓", (r < last).then_some(Message::MoveInfoRow(i, r, false))),
+                    small("✕", Some(Message::RemoveInfoRow(i, r))),
+                ]
+                .spacing(8)
+                .align_y(Alignment::Start),
+            )
+            .padding(8)
+            .style(style::inset),
+        );
+    }
+    grid = grid.push(button(text("+ Add row").size(13)).style(style::secondary).on_press(Message::AddInfoRow(i)));
+    grid.into()
 }
 
 /// What `menu`'s items can do, and the menus they can open: only others with the same close
