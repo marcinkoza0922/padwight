@@ -184,7 +184,13 @@ impl Daemon {
             }
             dev.draw_status();
         }
+        // The overlay's glyphs show the labelled buttons, so it hears them too.
+        let swapped = self.faces_swapped(id);
         for (ev, fired) in events.into_iter().zip(fires) {
+            let ev = match ev {
+                InputEvent::Button(b, down) if swapped => InputEvent::Button(crate::info::nintendo_face(b), down),
+                other => other,
+            };
             // What opens the Guide overlay (Guide, unless moved) closes whatever is up, as well as
             // its own close inputs: the offer as "not now", the in-game menu once any unsaved
             // changes are answered. The tap it ends isn't a tap, so it doesn't offer a library

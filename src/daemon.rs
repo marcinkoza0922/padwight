@@ -1290,11 +1290,17 @@ impl Daemon {
     /// Tells pad `id`'s engine whether its face buttons send the Nintendo letters now, under the
     /// active profile: see [`PadIdentity::swaps_face_output`].
     fn sync_face_swap(&mut self, id: u64) {
-        let base = self.devices.get(&id).and_then(|d| self.config.profile_for(&d.id));
-        let swap = base.is_some_and(|base| self.face_output_swapped(id, base));
+        let swap = self.faces_swapped(id);
         if let Some(dev) = self.devices.get_mut(&id) {
             dev.engine.set_face_swap(swap);
         }
+    }
+
+    /// Whether pad `id`'s face buttons currently send the Nintendo letters, so its menus should
+    /// hear the labelled buttons too.
+    pub(super) fn faces_swapped(&self, id: u64) -> bool {
+        let base = self.devices.get(&id).and_then(|d| self.config.profile_for(&d.id));
+        base.is_some_and(|base| self.face_output_swapped(id, base))
     }
 
     fn face_output_swapped(&self, id: u64, base: &Profile) -> bool {

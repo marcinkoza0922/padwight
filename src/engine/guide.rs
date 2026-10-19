@@ -40,6 +40,7 @@ impl Engine {
         }
         if self.guide_open {
             // The menu hears A and B where the confirm and back buttons are.
+            let b = if self.face_swap { crate::info::nintendo_face(b) } else { b };
             let b = self.menu_keys.logical(b, true);
             if guide_nav(b) {
                 self.guide_nav.push(b);
