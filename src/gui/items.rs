@@ -92,21 +92,22 @@ fn close_picker<'a>(mi: usize, menu: &Menu) -> Element<'a, Message> {
 }
 
 /// The info overlays tab's header: adds an info overlay.
-pub(super) fn view_new_info_card<'a>() -> Element<'a, Message> {
+pub(super) fn view_new_info_card<'a>(empty: bool) -> Element<'a, Message> {
     items_header(
         ItemKind::Info,
         button(text("+ New info overlay")).style(style::secondary).on_press(Message::NewInfo).into(),
-        "Text and button glyphs on screen, such as a game's controls.",
+        "An info overlay shows text and button glyphs on screen, such as a game's controls.",
         "An info overlay puts a grid of text on screen without taking over the controller: a \
          game's controls with glyphs that match the controller in use, the time, CPU load and \
          more. Show it always while its game is active, or with the \"Show info \
          overlay…\" action."
             .into(),
+        empty.then_some("This setup has no info overlays yet."),
     )
 }
 
 /// The menus tab's header: adds a menu of each kind, kept apart from the menus themselves.
-pub(super) fn view_new_menu_card<'a>() -> Element<'a, Message> {
+pub(super) fn view_new_menu_card<'a>(empty: bool) -> Element<'a, Message> {
     let mut kinds = row![text("Add a menu:")].spacing(8).align_y(Alignment::Center);
     for kind in MenuKindTag::ALL {
         let label = text(format!("+ {}", kind.short())).wrapping(text::Wrapping::None);
@@ -114,7 +115,8 @@ pub(super) fn view_new_menu_card<'a>() -> Element<'a, Message> {
     }
     // Six buttons don't fit beside the copy button in a narrow window, so they wrap.
     let kinds = kinds.wrap().vertical_spacing(8);
-    items_header(ItemKind::Menu, kinds.into(), "A menu lists actions to pick from on screen.", MENUS_HELP.into())
+    let empty = empty.then_some("This setup has no menus yet.");
+    items_header(ItemKind::Menu, kinds.into(), "A menu lists actions to pick from on screen.", MENUS_HELP.into(), empty)
 }
 
 /// A directional menu always has exactly four slots (up, right, down, left), some maybe empty.
@@ -639,11 +641,9 @@ impl App {
             "A macro plays a sequence of inputs. Map it to any button, gesture, combo, trigger, \
              zone or menu item with the \"Macro…\" action."
                 .into(),
+            self.macros().is_empty().then_some("This setup has no macros yet."),
         );
         let mut col = column![add].spacing(16);
-        if self.macros().is_empty() {
-            col = col.push(text("This setup has no macros yet.").color(MUTED_COLOR));
-        }
         for (i, m) in self.macros().iter().enumerate() {
             col = col.push(self.view_macro_card(i, m, names));
         }
@@ -832,10 +832,7 @@ impl App {
     }
 
     pub(super) fn view_menus<'a>(&'a self, names: &Names, reachable: &[&Menu]) -> Element<'a, Message> {
-        let mut col = column![view_new_menu_card()].spacing(16);
-        if self.menus().is_empty() {
-            col = col.push(text("This setup has no menus yet.").color(MUTED_COLOR));
-        }
+        let mut col = column![view_new_menu_card(self.menus().is_empty())].spacing(16);
         for (i, menu) in self.menus().iter().enumerate() {
             col = col.push(self.view_menu_card(i, menu, names, reachable));
         }
@@ -843,10 +840,7 @@ impl App {
     }
 
     pub(super) fn view_infos(&self) -> Element<'_, Message> {
-        let mut col = column![view_new_info_card()].spacing(16);
-        if self.infos().is_empty() {
-            col = col.push(text("This setup has no info overlays yet.").color(MUTED_COLOR));
-        }
+        let mut col = column![view_new_info_card(self.infos().is_empty())].spacing(16);
         for (i, o) in self.infos().iter().enumerate() {
             col = col.push(self.view_info_card(i, o));
         }

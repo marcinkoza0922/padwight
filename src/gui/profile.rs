@@ -11,6 +11,9 @@ mod button_list;
 pub(super) use button_list::{button_rows, paddle_rows};
 use button_list::row_matches;
 
+/// The label column of the Edit profile card, so its Profile and Name fields line up.
+const PROFILE_LABEL: f32 = 60.0;
+
 /// Sections of the profile editor.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum ProfileTab {
@@ -851,7 +854,7 @@ impl App {
     pub(super) fn view_profile_editor<'a>(&'a self, p: &'a Profile, names: &Names, layer: Option<LayerMarks<'a>>) -> Element<'a, Message> {
         // The active profile's drawing also shows the layers that are on right now.
         let live = (layer.is_none() && self.profile_ref().is_some_and(|at| at == self.saved.active)).then(|| self.with_active_layers(p));
-        let mut col = column![self.view_live(Some(live.as_ref().unwrap_or(p)), None, true)].spacing(16);
+        let mut col = column![overview_card(self.view_live(Some(live.as_ref().unwrap_or(p)), None, true))].spacing(16);
 
         // The tabs take what the buttons beside them leave, and wrap there when it's too little.
         let mut tabs = row![container(self.profile_segments(p, names)).width(Length::Fill)]
@@ -1078,27 +1081,28 @@ impl App {
         let bar = column![
             row![text("Edit profile").size(20), activate].spacing(12).align_y(Alignment::Center),
             row![
-                text("Profile"),
+                text("Profile").width(PROFILE_LABEL),
                 dropdown(names, current.clone(), Message::EditProfile).width(170),
                 space::horizontal(),
+                // A list of what to start from, so it's a dropdown that says so.
                 dropdown(Template::NEW, None::<Template>, Message::AddProfile)
-                    .placeholder("+ New profile…")
+                    .placeholder("+ New profile from…")
                     .style(style::action_dropdown)
-                    .width(200),
+                    .width(220),
                 button(text("Duplicate")).style(style::secondary).on_press(Message::AddProfile(Template::Duplicate)),
                 delete_profile_button(can_delete),
             ]
             .spacing(8)
             .align_y(Alignment::Center),
+            row![
+                text("Name").width(PROFILE_LABEL),
+                field("Profile name", current.as_deref().unwrap_or("")).on_input(Message::RenameProfile).width(170),
+            ]
+            .spacing(8)
+            .align_y(Alignment::Center),
         ]
         .spacing(8);
-        let name = row![
-            text("Name"),
-            field("Profile name", current.as_deref().unwrap_or("")).on_input(Message::RenameProfile).width(170),
-        ]
-        .spacing(8)
-        .align_y(Alignment::Center);
-        column![container(bar).padding(14).width(Length::Fill).style(style::card), name].spacing(8).into()
+        container(bar).padding(14).width(Length::Fill).style(style::card).into()
     }
 
 }

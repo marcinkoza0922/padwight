@@ -22,17 +22,18 @@ fn settings(o: &mut LogOverlay) -> &mut InputLogSettings {
     s
 }
 
-fn view_new_log_card<'a>() -> Element<'a, Message> {
+fn view_new_log_card<'a>(empty: bool) -> Element<'a, Message> {
     items_header(
         ItemKind::Log,
         button(text("+ New log overlay")).style(style::secondary).on_press(Message::NewLog).into(),
-        "The buttons just pressed, and what each did.",
+        "A log overlay shows the buttons just pressed and what each did.",
         "A log overlay lists recent input on screen, one line per burst of presses: a fireball \
          motion reads ↓ ↘ → X. Under each button is what it did when it's mapped to something \
          else, and how long it was held. Show it always while its game is active, or with the \
          \"Show log overlay…\" action. For just the latest burst inside an info overlay, use the \
          {current_input} token there."
             .into(),
+        empty.then_some("This setup has no log overlays yet."),
     )
 }
 
@@ -55,10 +56,7 @@ impl App {
     }
 
     pub(super) fn view_logs(&self) -> Element<'_, Message> {
-        let mut col = column![view_new_log_card()].spacing(16);
-        if self.logs().is_empty() {
-            col = col.push(text("This setup has no log overlays yet.").color(MUTED_COLOR));
-        }
+        let mut col = column![view_new_log_card(self.logs().is_empty())].spacing(16);
         for (i, o) in self.logs().iter().enumerate() {
             col = col.push(self.view_log_card(i, o));
         }

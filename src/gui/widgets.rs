@@ -184,10 +184,22 @@ pub(super) fn section<'a>(title: &'a str, help_text: Option<String>, rows: Vec<E
 /// buttons, a line on what the items are, the copy link and the tab's help. Every tab has this
 /// layout, so the controls sit in the same places. The add buttons and the blurb under them take
 /// the width the copy button leaves, and wrap there, so nothing is pushed out of a narrow window.
-pub(super) fn items_header<'a>(kind: ItemKind, add: Element<'a, Message>, blurb: &'static str, explain: String) -> Element<'a, Message> {
+/// `empty` is the note for a setup that has none yet, kept inside the card with the add button as
+/// the Combos card keeps its own.
+pub(super) fn items_header<'a>(
+    kind: ItemKind,
+    add: Element<'a, Message>,
+    blurb: &'static str,
+    explain: String,
+    empty: Option<&'static str>,
+) -> Element<'a, Message> {
+    let mut left = column![add, text(blurb).size(13).color(MUTED_COLOR)].spacing(6);
+    if let Some(empty) = empty {
+        left = left.push(text(empty).color(MUTED_COLOR));
+    }
     container(
         row![
-            container(column![add, text(blurb).size(13).color(MUTED_COLOR)].spacing(6)).width(Length::Fill),
+            container(left).width(Length::Fill),
             // The link sits under the copy button, so it takes no width from the blurb.
             column![
                 row![button(text("Copy from another setup…").wrapping(text::Wrapping::None)).style(style::secondary).on_press(Message::OpenBrowse(kind)), help(explain)]

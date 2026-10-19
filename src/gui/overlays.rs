@@ -212,14 +212,14 @@ fn keyboard_preview(layout: Layout, style: &OverlayStyle, font: iced::Font, glyp
 
 /// What each motion style is like, for the settings to explain them.
 pub(super) fn motion_guide() -> String {
-    let styles = MotionStyle::ALL.iter().map(|style| format!("{style}: {}", style.describe())).collect::<Vec<_>>().join(" ");
-    format!("{styles} Guide menus move as Menus do.")
+    MotionStyle::ALL.iter().map(|style| format!("{style}: {}", style.describe())).collect::<Vec<_>>().join(" ")
 }
 
 /// One row per kind of overlay, each with a dropdown for its style. `change` makes the message
-/// for a new style, so the same rows serve the global set and a setup's own.
+/// for a new style, so the same rows serve the global set and a setup's own. The list differs
+/// from the sounds cards' one, so a line under it says why.
 pub(super) fn motion_rows<'a>(set: MotionSet, change: fn(OverlayKind, MotionStyle) -> Message) -> Vec<Element<'a, Message>> {
-    OverlayKind::ALL
+    let mut rows: Vec<Element<'a, Message>> = OverlayKind::ALL
         .into_iter()
         .map(|kind| {
             let style = set.get(kind);
@@ -228,7 +228,14 @@ pub(super) fn motion_rows<'a>(set: MotionSet, change: fn(OverlayKind, MotionStyl
                 dropdown(MotionStyle::ALL, Some(style), move |style| change(kind, style)).width(SETTING_WIDTH).into(),
             )
         })
-        .collect()
+        .collect();
+    rows.push(note("Guide menus move as Menus do.").into());
+    rows
+}
+
+/// The line under a sounds card's toggles on why its list differs from the motion cards' one.
+pub(super) fn silent_overlays_note<'a>() -> Element<'a, Message> {
+    note("Info and log overlays have nothing to pick, so they make no sound.").into()
 }
 
 #[cfg(test)]

@@ -3,7 +3,7 @@
 use iced::widget::{column, row};
 
 use super::*;
-use super::overlays::{motion_guide, motion_rows};
+use super::overlays::{motion_guide, motion_rows, silent_overlays_note};
 
 impl App {
     /// The setup's overlay sounds: each overlay's cues, on or off, and what its steps and picks sound like.
@@ -13,12 +13,14 @@ impl App {
         let global = self.config.sounds;
         let mut rows = own_rows("sounds", "the sounds set on the App settings page", own.is_some(), move |on| if on { Message::SetGameSounds(global) } else { Message::ClearGameSounds });
         if let Some(set) = own {
+            rows.extend(self.sounds_off_note());
             rows.extend(SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, &self.open_sounds, &self.open_cue_edits, true)));
-            rows.push(button(text("Turn every sound off").size(13)).style(style::secondary).on_press(Message::SetGameSounds(set.silenced())).into());
+            rows.push(silent_overlays_note());
+            rows.push(button(text("Turn them all off").size(13)).style(style::secondary).on_press(Message::SetGameSounds(set.silenced())).into());
         }
         section(
             "Overlay sounds",
-            Some("A faint sound as the cursor moves in an overlay, another when something is picked, and a softer one as it pops in and out. A setup's own sounds start as a copy of the ones on App settings. Any overlay can be turned off. Info and log overlays have nothing to pick, so they make no sound.".into()),
+            Some("A faint sound as the cursor moves in an overlay, another when something is picked, and a softer one as it pops in and out. A setup's own sounds start as a copy of the ones on App settings. Any overlay can be turned off.".into()),
             rows,
         )
     }
