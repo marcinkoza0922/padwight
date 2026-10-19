@@ -18,7 +18,6 @@ use crate::{
     keyboard::{self, Board},
     media::MediaView,
     menu::MenuSession,
-    offer::OfferView,
     overlay::{KeyboardView, OverlayFrame, OverlayView},
 };
 
@@ -103,16 +102,13 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "menu-styled" => active(menu_in(MenuKind::List, styles::ornate(), true)),
         "in-game-menu" => active(OverlayView::Menu(crate::system_menu::main_page(OverlayStyle::default(), 0))),
         "media" => active(OverlayView::Media(MediaView::sample(OverlayStyle::media()))),
-        "offer" => active(OverlayView::Offer(offer())),
+        "offer" => active(offer()),
         "library-hint" => {
-            let toast = crate::offer::hint("Deus Ex", std::time::Instant::now());
-            OverlayFrame { info: toast.view(std::time::Instant::now()).into_iter().collect(), ..OverlayFrame::default() }
+            let toast = crate::offer::hint("Deus Ex", Instant::now());
+            OverlayFrame { info: toast.view(Instant::now(), crate::info::Glyphs::default()).into_iter().collect(), ..OverlayFrame::default() }
         }
         "info" => OverlayFrame { info: vec![info_view()], ..OverlayFrame::default() },
-        "info-empty" => OverlayFrame {
-            info: vec![crate::info::InfoView { title: None, rows: Vec::new(), ..info_view() }],
-            ..OverlayFrame::default()
-        },
+        "info-empty" => OverlayFrame { info: vec![blank_info()], ..OverlayFrame::default() },
         "info-formatted" => OverlayFrame {
             info: vec![formatted_view()],
             pack_icons: Some(std::collections::BTreeMap::from([("flame".to_string(), FLAME.to_string())])),
@@ -298,14 +294,26 @@ fn held(why: crate::system_menu::Hold) -> OverlayView {
     OverlayView::Menu(menu.view(&config))
 }
 
-fn offer() -> OfferView {
-    OfferView {
-        title: "Add Deus Ex?".into(),
-        detail: "The library has controls for this game.".into(),
-        answers: vec![("A".into(), "Add".into()), ("B".into(), "Not now".into()), ("Y".into(), "Never".into())],
-        hint: "A add · B not now · Y never".into(),
-        style: OverlayStyle::default(),
-    }
+/// The offer as the daemon makes it, for the library's Deus Ex pack.
+fn offer() -> OverlayView {
+    let library = crate::library::entries();
+    let deus_ex = library.iter().position(|e| e.pack.pack.name == "Deus Ex").expect("the library has Deus Ex");
+    crate::offer::OfferSession::new(library, &[deus_ex], None, Instant::now()).view(&OverlayStyle::default())
+}
+
+/// An info overlay with nothing written in it yet, as its preview shows it.
+fn blank_info() -> crate::info::InfoView {
+    let blank = InfoOverlay {
+        name: "Info".into(),
+        always: false,
+        on_start: None,
+        linger: None,
+        title: None,
+        current_input: Default::default(),
+        style: OverlayStyle::info(),
+        rows: Vec::new(),
+    };
+    info::resolve(&blank, &Live::sample(PadFamily::Xbox))
 }
 
 /// An info overlay using most kinds of token, with the sample live values the settings show.

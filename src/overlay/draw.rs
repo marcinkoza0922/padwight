@@ -313,20 +313,22 @@ pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, glyphs: crate::info::Gl
         None => text("No media player is running").font(c.font).size(18.0 * s).color(c.background_text).into(),
         Some(player) => {
             let title = if m.title.is_empty() { "Nothing playing" } else { &m.title };
-            let by = [m.artist.as_str(), player.as_str()].iter().filter(|p| !p.is_empty()).copied().collect::<Vec<_>>().join(" · ");
+            let by = if m.artist.is_empty() { "Unknown artist".to_string() } else { m.artist.clone() };
             let progress = if m.length_ms > 0 { (m.position_ms as f32 / m.length_ms as f32).clamp(0.0, 1.0) } else { 0.0 };
             let times = format!("{} / {}", media::clock(m.position_ms), if m.length_ms > 0 { media::clock(m.length_ms) } else { "--:--".into() });
             let mut meta = row![text(times).font(c.font).size(14.0 * s).color(c.muted)].spacing(16.0 * s);
-            // The system's sound, which the D-pad changes, then the player's own volume.
+            // The system's sound, which the D-pad changes, then the player's own volume under
+            // the player's name.
             match (m.system_volume, m.muted) {
-                (Some(_), true) => meta = meta.push(text("Sound muted").font(c.font).size(14.0 * s).color(c.muted)),
-                (Some(v), false) => meta = meta.push(text(format!("Sound {:.0}%", v * 100.0)).font(c.font).size(14.0 * s).color(c.muted)),
+                (Some(_), true) => meta = meta.push(text("System muted").font(c.font).size(14.0 * s).color(c.muted)),
+                (Some(v), false) => meta = meta.push(text(format!("System {:.0}%", v * 100.0)).font(c.font).size(14.0 * s).color(c.muted)),
                 (None, _) => {}
             }
-            if let Some(v) = m.volume {
-                let what = if m.system_volume.is_some() { "Player" } else { "Volume" };
-                meta = meta.push(text(format!("{what} {:.0}%", v * 100.0)).font(c.font).size(14.0 * s).color(c.muted));
-            }
+            let own = match m.volume {
+                Some(v) => format!("{player} {:.0}%", v * 100.0),
+                None => player.clone(),
+            };
+            meta = meta.push(text(own).font(c.font).size(14.0 * s).color(c.muted));
             if m.players > 1 {
                 meta = meta.push(text(format!("{} players", m.players)).font(c.font).size(14.0 * s).color(c.muted));
             }
@@ -348,7 +350,8 @@ pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, glyphs: crate::info::Gl
             .into()
         }
     };
-    let contents = column![body, rich_text(&m.hint, c, 12.0 * s, c.muted)]
+    let hint = column(m.hint.lines().map(|l| rich_text(l, c, 13.0 * s, c.muted))).spacing(4.0 * s).align_x(Alignment::Center);
+    let contents = column![body, hint]
         .spacing(12.0 * s)
         .width(width)
         .align_x(Alignment::Center);

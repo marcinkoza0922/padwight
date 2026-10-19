@@ -254,6 +254,7 @@ impl Daemon {
         self.log_redraw = self.log_redraw.into_iter().chain(token_redraw).min();
         let mut info: Vec<_> = shown
             .iter()
+            .filter(|(o, _)| !crate::info::is_blank(o))
             .map(|(o, opacity)| crate::info::InfoView { opacity: *opacity, ..crate::info::resolve(o, &values) })
             .collect();
         if self.recording.is_some() {
@@ -261,7 +262,8 @@ impl Daemon {
         }
         let (mut info, logs) = self.with_preview(info, logs, &values, now);
         let now = Instant::now();
-        let toast = self.toast.as_ref().and_then(|t| Some((t.view(now)?, t.next_redraw(now, FADE_FRAME))));
+        let glyphs = crate::info::Glyphs { family: values.family, nintendo_layout: values.nintendo_layout };
+        let toast = self.toast.as_ref().and_then(|t| Some((t.view(now, glyphs)?, t.next_redraw(now, FADE_FRAME))));
         match toast {
             Some((view, redraw)) => {
                 info.push(view);

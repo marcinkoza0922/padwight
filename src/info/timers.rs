@@ -6,7 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use super::{InfoView, Segment};
+use super::{Glyphs, InfoView, Segment};
 use crate::config::{InfoOverlay, OverlayStyle};
 
 /// How long an info overlay takes to fade out at the end of its time.
@@ -137,10 +137,11 @@ impl Toast {
         Toast { lines, end: now + length + TOAST_TIME, progress: Some((now, length)) }
     }
 
-    /// What to draw now, or `None` once it's gone.
-    pub fn view(&self, now: Instant) -> Option<InfoView> {
+    /// What to draw now, its controller tokens (`{guide}`, `{south}`…) as glyphs in `glyphs`'
+    /// labels, or `None` once it's gone.
+    pub fn view(&self, now: Instant, glyphs: Glyphs) -> Option<InfoView> {
         let opacity = fade(now, self.end)?;
-        let mut rows: Vec<Vec<Vec<Segment>>> = self.lines.iter().map(|l| vec![vec![Segment::Text(l.clone())]]).collect();
+        let mut rows: Vec<Vec<Vec<Segment>>> = self.lines.iter().map(|l| vec![super::glyph_text(l, glyphs)]).collect();
         if let Some((start, length)) = self.progress {
             let done = now.saturating_duration_since(start).as_secs_f32() / length.as_secs_f32().max(f32::EPSILON);
             rows.push(vec![vec![Segment::Bar(done.min(1.0))]]);
@@ -187,7 +188,7 @@ mod tests {
     fn a_filling_toast_draws_its_bar_and_redraws_while_it_fills() {
         let t0 = Instant::now();
         let toast = Toast::filling(vec!["Keep holding".into()], t0, Duration::from_secs(2));
-        let bar = |at| toast.view(at).unwrap().rows.last().unwrap()[0][0].clone();
+        let bar = |at| toast.view(at, Glyphs::default()).unwrap().rows.last().unwrap()[0][0].clone();
         assert_eq!(bar(t0), Segment::Bar(0.0));
         assert_eq!(bar(t0 + Duration::from_secs(1)), Segment::Bar(0.5));
         assert!(toast.next_redraw(t0, Duration::from_millis(33)) <= t0 + BAR_FRAME);
@@ -208,12 +209,12 @@ mod tests {
     fn toasts_show_their_lines_then_fade_away() {
         let now = Instant::now();
         let toast = Toast::new(vec!["Doom".into(), "Play".into()], now);
-        let view = toast.view(now).unwrap();
+        let view = toast.view(now, Glyphs::default()).unwrap();
         assert_eq!(view.rows, [[[Segment::Text("Doom".into())]], [[Segment::Text("Play".into())]]]);
         assert_eq!(view.opacity, 1.0);
         assert_eq!(toast.next_redraw(now, Duration::from_millis(33)), now + TOAST_TIME - FADE_OUT);
-        assert!(toast.view(now + TOAST_TIME - FADE_OUT / 2).unwrap().opacity < 1.0);
-        assert_eq!(toast.view(now + TOAST_TIME), None);
+        assert!(toast.view(now + TOAST_TIME - FADE_OUT / 2, Glyphs::default()).unwrap().opacity < 1.0);
+        assert_eq!(toast.view(now + TOAST_TIME, Glyphs::default()), None);
     }
 
     #[test]

@@ -883,8 +883,21 @@ fn stat(s: Stat, live: &Live) -> String {
     }
 }
 
-/// Turns an overlay's cells into text and glyphs, with live values filled in.
+/// Whether `overlay` has nothing written in it yet: no title and no cell with anything in it.
+/// The overlays drawn in game leave it out.
+pub fn is_blank(overlay: &InfoOverlay) -> bool {
+    overlay.title.as_ref().is_none_or(|t| t.trim().is_empty()) && overlay.rows.iter().flatten().all(|c| c.trim().is_empty())
+}
+
+/// Turns an overlay's cells into text and glyphs, with live values filled in. A blank overlay
+/// shows its name over "No rows yet", so its preview has something to find it by.
 pub fn resolve(overlay: &InfoOverlay, live: &Live) -> InfoView {
+    if is_blank(overlay) {
+        let name = if overlay.name.trim().is_empty() { "Info overlay" } else { &overlay.name };
+        let note = vec![Segment::Mark(Mark::Italic(true)), Segment::Text("No rows yet".into()), Segment::Mark(Mark::Italic(false))];
+        let title = Some(vec![Segment::Text(name.into())]);
+        return InfoView { name: overlay.name.clone(), style: overlay.style.clone(), title, rows: vec![vec![note]], opacity: 1.0 };
+    }
     let rows = overlay.rows.iter().map(|row| row.iter().map(|cell| cell_segments(&overlay.current_input, cell, live)).collect()).collect();
     let title = overlay.title.as_ref().filter(|t| !t.trim().is_empty()).map(|t| cell_segments(&overlay.current_input, t, live));
     InfoView { name: overlay.name.clone(), style: overlay.style.clone(), title, rows, opacity: 1.0 }
