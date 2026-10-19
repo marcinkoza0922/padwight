@@ -145,7 +145,7 @@ pub(super) fn row_rows(config: &Config, i: usize) -> Vec<Row> {
         }));
     }
     if matches!(key, RowKey::Row(RowId::Input(_)) | RowKey::Merged(_) | RowKey::Custom(_)) {
-        rows.push(Row::open("Share it with another input…", Page::GuideShare(i)));
+        rows.push(Row::open("Share it with another input", Page::GuideShare(i)));
     }
     match key {
         RowKey::Merged(m) => rows.push(Row::apply("Split it into rows of their own", move |c| {

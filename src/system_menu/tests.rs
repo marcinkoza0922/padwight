@@ -345,7 +345,7 @@ fn choosing_the_current_profile_just_leaves() {
 fn a_new_profile_is_an_unsaved_change_and_back_returns_to_the_list() {
     let mut config = two_profiles();
     let mut menu = SystemMenu::new(&config).on_page(Page::Profiles);
-    // Up wraps to "New profile…", the last row.
+    // Up wraps to "+ New profile", the last row.
     menu.handle_now(press(Button::DpadUp), &mut config);
     assert_eq!(menu.handle_now(press(Button::South), &mut config), None);
     assert_eq!(menu.screen, Screen::NewProfile);

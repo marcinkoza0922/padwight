@@ -30,12 +30,12 @@ impl Picker {
 
     fn label(self) -> &'static str {
         match self {
-            Picker::Mode => "Switch to a mode…",
-            Picker::Layer => "Hold a layer…",
-            Picker::Macro => "Play a macro…",
-            Picker::Menu => "Open a menu…",
-            Picker::Info => "Show an info overlay…",
-            Picker::Log => "Show a log overlay…",
+            Picker::Mode => "Switch to a mode",
+            Picker::Layer => "Hold a layer",
+            Picker::Macro => "Play a macro",
+            Picker::Menu => "Open a menu",
+            Picker::Info => "Show an info overlay",
+            Picker::Log => "Show a log overlay",
         }
     }
 
@@ -129,14 +129,14 @@ pub(super) fn rows(config: &Config, at: ActionAt) -> Vec<Row> {
     if let Some(current) = &current {
         rows.extend(wrapper_rows(at, current));
     }
-    rows.push(Row::open("Gamepad button…", Page::Pad(at)));
+    rows.push(Row::open("Gamepad button", Page::Pad(at)));
     if let (Slot::Button(owner, b), true) = (at.slot, at.is_top()) {
-        rows.push(Row::open("Gestures…", Page::Gestures(owner, b)));
+        rows.push(Row::open("Gestures", Page::Gestures(owner, b)));
     }
     let step = matches!(at.slot, Slot::MacroStep(..));
     let choices = if step { &CHOICES[..STEP_CHOICES] } else { &CHOICES[..] };
     rows.extend(choices.iter().map(|&(label, make)| Row::apply(label, move |c| Act::changed_if(set_action(c, at, Some(make()))).then(Nav::Back(1)))));
-    rows.push(Row::open("Keys…", Page::KeyGroups(at)));
+    rows.push(Row::open("Keys", Page::KeyGroups(at)));
     // A menu item is a tap: it can't hold a layer (it can switch modes). A macro step presses
     // what it holds, so it can't open anything.
     let item = matches!(at.slot, Slot::MenuItem(..));

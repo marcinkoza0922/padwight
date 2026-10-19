@@ -23,7 +23,7 @@ use windows::{battery, cpu_times, gpu_busy, local_time, memory, wifi_strength};
 pub use windows::form_factor;
 
 pub use catalog::{Entry, Fold, folds};
-pub use guide::{DEFAULT_MODE, GuideView, notes_panel};
+pub use guide::{DEFAULT_MODE, GuideView, is_guide_panel, notes_panel};
 pub use opener::{OpenerLabel, set_menu_keys, set_opener, set_panel_keys};
 pub use pad_model::PadModel;
 pub use timers::{Timers, Toast, fade, redraw_at, seconds};
@@ -279,6 +279,8 @@ pub enum Token {
     /// The stick itself (for "move"), not its click.
     Stick(Stick),
     Dpad,
+    /// Both arms of one axis lit, for "change" and "scroll" hints: `{leftright}` and `{updown}`.
+    DpadArms([bool; 4]),
     Stat(Stat),
     Icon(IconToken),
     Gauge { gauge: Gauge, icon: bool },
@@ -446,6 +448,8 @@ fn plain_token(name: &str) -> Option<Token> {
         "down" => Token::Button(Button::DpadDown),
         "left" => Token::Button(Button::DpadLeft),
         "right" => Token::Button(Button::DpadRight),
+        "leftright" => Token::DpadArms([false, false, true, true]),
+        "updown" => Token::DpadArms([true, true, false, false]),
         "time" => Token::Stat(Stat::Time),
         "time12" => Token::Stat(Stat::Time12),
         "date" => Token::Stat(Stat::Date),
@@ -686,6 +690,7 @@ pub fn glyph_text(text: &str, glyphs: Glyphs) -> Vec<Segment> {
             Err(Token::Stick(Stick::Left)) => glyph("LS", None, true),
             Err(Token::Stick(Stick::Right)) => glyph("RS", None, true),
             Err(Token::Dpad) => glyph("✚", None, false),
+            Err(Token::DpadArms(lit)) => Segment::Dpad(lit),
             Err(Token::Picture(name)) => Segment::Picture(name),
             Err(Token::Mark(m)) => Segment::Mark(m),
             Err(_) => continue,
@@ -911,6 +916,7 @@ fn cell_segments(input: &CurrentInput, cell: &str, live: &Live) -> Vec<Segment> 
             Err(Token::Stick(Stick::Left)) => glyph("LS", None, true),
             Err(Token::Stick(Stick::Right)) => glyph("RS", None, true),
             Err(Token::Dpad) => glyph("✚", None, false),
+            Err(Token::DpadArms(lit)) => Segment::Dpad(lit),
             Err(Token::Stat(s)) => Segment::Text(stat(s, live)),
             Err(Token::Picture(name)) => Segment::Picture(name),
             Err(Token::Mark(m)) => Segment::Mark(m),

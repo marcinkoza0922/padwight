@@ -68,7 +68,7 @@ impl NewPadSession {
             selected: Some(self.selected),
             picks: 0,
             crumbs: vec!["Set up a controller".into()],
-            hint: "{up} {down} choose · {confirm} pick · {back} later".into(),
+            hint: "{updown} choose · {confirm} pick · {back} later".into(),
             style: style.clone(),
             touch: false,
             aim: None,

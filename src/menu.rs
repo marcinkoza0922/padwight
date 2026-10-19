@@ -334,7 +334,7 @@ impl MenuSession {
             MenuKind::Directional { cluster } => format!("Press a {} direction · {close}", cluster.to_string().to_lowercase()),
             MenuKind::List if pages(menu) => format!("{{dpad}} move · {{lb}} {{rb}} page · {{confirm}} choose · {close}"),
             MenuKind::List if list_columns(menu.items.len()) == 2 => format!("{{dpad}} move · {{confirm}} choose · {close}"),
-            MenuKind::List => format!("{{up}} {{down}} move · {{confirm}} choose · {close}"),
+            MenuKind::List => format!("{{updown}} move · {{confirm}} choose · {close}"),
             MenuKind::Buttons => format!("Press an item's button · {close}"),
             MenuKind::Carousel { controls } => format!("{} to cycle · {{confirm}} choose · {close}", carousel_hint(controls)),
             MenuKind::Grid { .. } => format!("{{dpad}} move · {{confirm}} choose · {close}"),
@@ -718,7 +718,7 @@ fn carousel_hint(controls: CarouselControls) -> &'static str {
     match controls {
         CarouselControls::Bumpers => "{lb} {rb}",
         CarouselControls::Triggers => "{lt} {rt}",
-        CarouselControls::DPad => "{left} {right}",
+        CarouselControls::DPad => "{leftright}",
         CarouselControls::LeftStick => "{ls}",
         CarouselControls::RightStick => "{rs}",
     }

@@ -67,6 +67,8 @@ fn buttons() -> Vec<Entry> {
         entry("down", "D-pad Down"),
         entry("left", "D-pad Left"),
         entry("right", "D-pad Right"),
+        entry("leftright", "D-pad Left and Right"),
+        entry("updown", "D-pad Up and Down"),
     ]
 }
 

@@ -68,11 +68,11 @@ pub(super) fn info_rows(config: &Config, i: usize) -> Vec<Row> {
     ];
     // Settings for the `{current_input}` cells, once the overlay has any.
     if !crate::info::input_tokens(o).is_empty() {
-        rows.push(Row::open("Current input: what it follows…", Page::Tracking(Tracked::Info(i))));
+        rows.push(Row::open("Current input: what it follows", Page::Tracking(Tracked::Info(i))));
     }
     rows.extend([
         Row::step(format!("Position: {position}"), move |c, dir| info_mut(c, i).is_some_and(|o| set(&mut o.style.position, cycle(&ScreenPosition::GRID, position, dir)))),
-        Row::open("Look…", Page::Style(StyleAt::Info(i))),
+        Row::open("Look", Page::Style(StyleAt::Info(i))),
         named::delete_row(config, ItemKind::Info, i, move |c| {
             let Some(game) = game_mut(c).filter(|g| i < g.info.len()) else { return false };
             game.info.remove(i);

@@ -29,7 +29,7 @@ The setup also gets two radial menus (belt and augmentations) and a list of the 
 
 ## Step 1: Create the setup
 
-1. In the sidebar, click **+ Add setup**, then open **Empty setup from a template…** in the picker and choose **Gamepad passthrough**, so you start with no preset mappings.
+1. In the sidebar, click **+ Add setup**, then open **Empty setup from a template…** in the picker and choose **Gamepad pass-through**, so you start with no preset mappings.
 2. The new setup opens on its **Details** tab, named *New setup*. Name it **Deus Ex**. The setup's name becomes the pack's name when you export it.
 
 ![The Add a setup picker, with the Empty setup from a template dropdown and the library's built-in setups](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/manual/first-setup-add.png "The picker. The dropdown (1) holds the blank template. The list (3) is the library, which is where the finished pack comes from in these screenshots.")

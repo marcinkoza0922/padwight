@@ -78,7 +78,7 @@ pub(super) fn log_rows(config: &crate::config::Config, i: usize) -> Vec<Row> {
     }
     let newest = s.newest;
     rows.extend([
-        Row::open("What it follows…", Page::Tracking(Tracked::Log(i))),
+        Row::open("What it follows", Page::Tracking(Tracked::Log(i))),
         LINES.row("Lines", f32::from(s.lines), move |c, v| settings_mut(c, i).is_some_and(|s| set(&mut s.lines, v as u8))),
         Row::step(format!("Newest line: {}", if newest == LogEnd::Top { "at the top" } else { "at the bottom" }), move |c, _| {
             let other = if newest == LogEnd::Top { LogEnd::Bottom } else { LogEnd::Top };
@@ -95,7 +95,7 @@ pub(super) fn log_rows(config: &crate::config::Config, i: usize) -> Vec<Row> {
     rows.push(switch(i, "How long each press was held", s.show_holds, |s, v| set(&mut s.show_holds, v)));
     let position = o.style.position;
     rows.push(Row::step(format!("Position: {position}"), move |c, dir| log_mut(c, i).is_some_and(|o| set(&mut o.style.position, cycle(&ScreenPosition::GRID, position, dir)))));
-    rows.push(Row::open("Look…", Page::Style(StyleAt::Log(i))));
+    rows.push(Row::open("Look", Page::Style(StyleAt::Log(i))));
     rows.push(named::delete_row(config, ItemKind::Log, i, move |c| {
         let Some(game) = game_mut(c).filter(|g| i < g.logs.len()) else { return false };
         game.logs.remove(i);
@@ -148,7 +148,7 @@ pub(super) fn tracking_rows(config: &crate::config::Config, of: Tracked) -> Vec<
             })
         }));
         if members.len() > 1 {
-            rows.push(Row::open(format!("    Each of {}…", name.to_lowercase()), Page::TrackGroup(of, g)));
+            rows.push(Row::open(format!("    Each of {}", name.to_lowercase()), Page::TrackGroup(of, g)));
         }
     }
     let what = if matches!(of, Tracked::Log(_)) { "line" } else { "sequence" };

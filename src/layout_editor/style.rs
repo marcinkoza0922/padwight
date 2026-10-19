@@ -184,8 +184,8 @@ pub(super) fn style_rows(config: &Config, at: StyleAt) -> Vec<Row> {
     for (label, of, paint) in [("Background", PaintOf::Background, &s.background), ("Items", PaintOf::Items, &s.items), ("Selected item", PaintOf::Selected, &s.selected)] {
         rows.push(Row::open(format!("{label}: {}", paint_name(paint)), Page::Paint(at, of)));
     }
-    rows.push(Row::open("Text…", Page::StyleText(at)));
-    rows.push(Row::open("Decorations…", Page::Decorations(at)));
+    rows.push(Row::open("Text", Page::StyleText(at)));
+    rows.push(Row::open("Decorations", Page::Decorations(at)));
     if let StyleAt::Game(look) = at {
         rows.push(Row::apply("Use the app's look", move |c| {
             let Some(game) = game_mut(c) else { return Act::stay() };

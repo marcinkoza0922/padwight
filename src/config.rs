@@ -1136,6 +1136,15 @@ impl Feature {
         }
     }
 
+    /// What a profile that uses it needs, as in "needs a gyro".
+    pub fn needs(self) -> &'static str {
+        match self {
+            Feature::Gyro => "a gyro",
+            Feature::BackPaddles => "back paddles",
+            Feature::Touchpad => "a touchpad",
+        }
+    }
+
     /// What a player without it loses, for warnings.
     pub fn missing(self) -> &'static str {
         match self {

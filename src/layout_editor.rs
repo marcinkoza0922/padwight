@@ -279,7 +279,7 @@ impl LayoutEditor {
                 item
             })
             .collect();
-        let mut hint = String::from(if steps { "{confirm} choose · {left} {right} change · {back} back" } else { "{confirm} choose · {back} back" });
+        let mut hint = String::from(if steps { "{confirm} choose · {leftright} change · {back} back" } else { "{confirm} choose · {back} back" });
         // An overlay being edited is on screen: say what shows it whole.
         if self.preview().is_some() {
             match config.peek_trigger {

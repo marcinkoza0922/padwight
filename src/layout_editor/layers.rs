@@ -94,7 +94,7 @@ fn indicator_rows(config: &Config, shift: Shift, i: usize, l: &Layer) -> Vec<Row
         rows.push(DELAY.row_u("Shows after", u64::from(l.indicator_delay_ms), move |c, v| layer_mut(c, shift, i).is_some_and(|l| set(&mut l.indicator_delay_ms, v as u32))));
     }
     if l.indicator == Indicator::Name {
-        rows.push(Row::open("Name label's look…", Page::Style(StyleAt::Indicator(shift, i))));
+        rows.push(Row::open("Name label's look", Page::Style(StyleAt::Indicator(shift, i))));
     }
     if l.indicator == Indicator::Bindings {
         let title = l.indicator_title.clone().unwrap_or_default();

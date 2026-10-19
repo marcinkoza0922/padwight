@@ -159,7 +159,7 @@ impl OfferSession {
                 selected: Some(self.selected),
                 picks: 0,
                 crumbs: vec!["Add controller profiles".into()],
-                hint: "{up} {down} choose · {confirm} add · {back} back".into(),
+                hint: "{updown} choose · {confirm} add · {back} back".into(),
                 style: style.clone(),
                 touch: false,
                 aim: None,

@@ -8,10 +8,13 @@ use iced::{
 
 use super::*;
 
-/// An item's glyphs (the same as the info overlays'), its label, and a ▸ for submenus. A
-/// text badge (a stick's LS, say) is drawn as a small tag.
-fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, size: f32, fg: Color) -> Element<'a, M> {
-    let font = c.font;
+/// How much of a menu shows through under a question asked over it.
+const UNDER_PROMPT: f32 = 0.35;
+
+/// An item's glyphs (the same as the info overlays'), its label, and a ▸ for submenus, at the
+/// row's right end when it `fills` one. A text badge (a stick's LS, say) is drawn as a small tag.
+fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, size: f32, fills: bool) -> Element<'a, M> {
+    let (font, fg) = (c.font, c.item_text);
     // Glyphs, badges and icons fade in and out with the label.
     let fade = fg.a;
     let mut line = row![].spacing(size * 0.5).align_y(Alignment::Center);
@@ -36,6 +39,9 @@ fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, si
     }
     line = line.push(rich_text(label, c, size, fg));
     if item.submenu {
+        if fills {
+            line = line.push(space().width(Length::Fill));
+        }
         line = line.push(text("▸").font(font).size(size).color(fg.scale_alpha(0.7)));
     }
     line.into()
@@ -50,7 +56,8 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
         ..colors(&m.style, font)
     };
     let solid = c;
-    let c = c.faded(look.anim.opacity());
+    // Under a question, the menu is dimmed so the question is what stands out.
+    let c = c.faded(look.anim.opacity() * if m.prompt.is_some() { UNDER_PROMPT } else { 1.0 });
     let s = m.style.scale.clamp(0.5, 2.0);
     let body: Element<'a, M> = match m.kind {
         MenuKind::Radial { .. } => radial(m, solid, s),
@@ -88,7 +95,9 @@ pub(super) fn item_cell<'a, M: 'a>(m: &MenuView, i: usize, c: Colors, size: f32)
     let item = &m.items[i];
     let selected = m.selected == Some(i);
     let lit = toned(c, item.tone).lit_item(m, i);
-    (item_text(lit, item, &toned_label(c, item), size, lit.item_text), lit, selected)
+    // A list's rows are as wide as the list, so their arrows line up at the right.
+    let fills = matches!(m.kind, MenuKind::List | MenuKind::Buttons);
+    (item_text(lit, item, &toned_label(c, item), size, fills), lit, selected)
 }
 
 /// An item's label, with a + or − in front of adding and removing rows in color-blind mode.

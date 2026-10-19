@@ -89,22 +89,9 @@ fn backdrop_layer<'a, M: 'a>(state: &'a Overlay, font: iced::Font, display: Size
 pub(super) fn layers<'a, M: 'a>(state: &'a Overlay, display: Size, now: Instant) -> Vec<Element<'a, M>> {
     let motion = &state.frame.motion;
     let font = crate::font::resolve(state.frame.font.as_deref());
-    // Info and log overlays sharing a spot stack up there; the keyboard or a menu goes on top.
-    let mut layers: Vec<Element<'_, M>> = Vec::new();
-    for spot in ScreenPosition::GRID {
-        let infos: Vec<_> = state.info.shown(now, motion).filter(|(v, _)| v.style.position == spot).collect();
-        let logs: Vec<_> = state.logs.shown(now, motion).filter(|(v, _)| v.style.position == spot).collect();
-        let style = infos.first().map(|(v, _)| &v.style).or_else(|| logs.first().map(|(v, _)| &v.style));
-        if let Some(style) = style {
-            let panels = infos
-                .iter()
-                .map(|(v, anim)| draw::info_panel(v, font, &Fit::of(&v.style, display), anim))
-                .chain(logs.iter().map(|(v, anim)| draw::log_panel(v, font, &Fit::of(&v.style, display), anim)))
-                .collect::<Vec<Element<'_, M>>>();
-            let fit = Fit::of(style, display);
-            layers.push(draw::place(column(panels).spacing(12).into(), style, &fit, &Anim::still()));
-        }
-    }
+    // The keyboard or a menu goes on top of the info and log overlays.
+    let guide = guide_up(state, display, now);
+    let (mut layers, [mut left, mut right]) = stacks(state, font, display, now, guide);
     let glyphs = crate::info::Glyphs { family: state.frame.family, nintendo_layout: state.frame.nintendo_layout };
     layers.extend(backdrop_layer(state, font, display));
     if state.frame.peek {
@@ -125,7 +112,8 @@ pub(super) fn layers<'a, M: 'a>(state: &'a Overlay, display: Size, now: Instant)
                 };
                 menu_log(m, &anim);
                 let fit = Fit::of(&m.style, display);
-                let menu = draw::place(draw::menu_panel(m, font, look, &fit), &m.style, &fit, &anim);
+                let panel = draw::menu_panel(m, font, look, &fit);
+                let menu = if guide { draw::beside(left.take(), panel, right.take(), &anim) } else { draw::place(panel, &m.style, &fit, &anim) };
                 // A question asked over the menu stands on top of it, in the middle of the screen.
                 match &m.prompt {
                     Some(o) => {
@@ -147,6 +135,46 @@ pub(super) fn layers<'a, M: 'a>(state: &'a Overlay, display: Size, now: Instant)
         });
     }
     layers
+}
+
+/// The info and log overlays, those sharing a spot stacked up there. With the Guide overlay up,
+/// the stacks at the middle of the left and right edges (its Notes and Mappings) are handed back
+/// instead, to stand in a row with its menu.
+fn stacks<'a, M: 'a>(state: &'a Overlay, font: iced::Font, display: Size, now: Instant, guide: bool) -> (Vec<Element<'a, M>>, [Option<Element<'a, M>>; 2]) {
+    let motion = &state.frame.motion;
+    let mut layers = Vec::new();
+    let mut sides = [None, None];
+    for spot in ScreenPosition::GRID {
+        let infos: Vec<_> = state.info.shown(now, motion).filter(|(v, _)| v.style.position == spot).collect();
+        let logs: Vec<_> = state.logs.shown(now, motion).filter(|(v, _)| v.style.position == spot).collect();
+        let style = infos.first().map(|(v, _)| &v.style).or_else(|| logs.first().map(|(v, _)| &v.style));
+        let Some(style) = style else { continue };
+        let panels = infos
+            .iter()
+            .map(|(v, anim)| draw::info_panel(v, font, &Fit::of(&v.style, display), anim))
+            .chain(logs.iter().map(|(v, anim)| draw::log_panel(v, font, &Fit::of(&v.style, display), anim)))
+            .collect::<Vec<Element<'_, M>>>();
+        let stack: Element<'_, M> = column(panels).spacing(12).into();
+        match spot {
+            ScreenPosition::CenterLeft if guide => sides[0] = Some(stack),
+            ScreenPosition::CenterRight if guide => sides[1] = Some(stack),
+            _ => layers.push(draw::place(stack, style, &Fit::of(style, display), &Anim::still())),
+        }
+    }
+    (layers, sides)
+}
+
+/// Whether the Guide overlay is up with its menu alone in the middle of the screen, its size and
+/// place the style's own, so Notes and Mappings can line up beside it.
+fn guide_up(state: &Overlay, display: Size, now: Instant) -> bool {
+    let motion = &state.frame.motion;
+    let mut panels = state.panels.shown(now, motion);
+    let (Some((OverlayView::Menu(menu), _)), None) = (panels.next(), panels.next()) else { return false };
+    let fit = Fit::of(&menu.style, display);
+    !state.frame.peek
+        && menu.style.position == ScreenPosition::Center
+        && (fit.width, fit.height, fit.x, fit.y) == (None, None, 0.0, 0.0)
+        && state.info.shown(now, motion).any(|(v, _)| crate::info::is_guide_panel(&v.name))
 }
 
 /// Draws `frame` as the overlay window shows it once everything has finished opening, on a

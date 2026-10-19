@@ -287,7 +287,7 @@ impl Template {
 impl std::fmt::Display for Template {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
-            Template::Gamepad => "Gamepad passthrough",
+            Template::Gamepad => "Gamepad pass-through",
             Template::Desktop => "Desktop navigation",
             Template::Action => "PC action (WASD + mouse look)",
             Template::GyroAim => "PC action with gyro aiming (needs a gyro)",

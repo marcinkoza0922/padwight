@@ -21,6 +21,9 @@ use crate::{
     offer::OfferView,
 };
 
+/// The menu's name on screen, as App settings names it.
+const TITLE: &str = "In-game menu";
+
 /// What the menu asks the daemon to do after a choice.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Outcome {
@@ -330,7 +333,7 @@ impl SystemMenu {
 
     /// The breadcrumb for the menu's own pages: where it was opened from.
     fn parent(&self) -> String {
-        if self.from_guide { "Guide" } else { "Menu" }.into()
+        if self.from_guide { "Guide" } else { TITLE }.into()
     }
 
     /// Back to the main page, from wherever the menu is.

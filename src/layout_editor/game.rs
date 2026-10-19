@@ -80,9 +80,9 @@ pub(super) fn game_rows(config: &Config) -> Vec<Row> {
         };
         rows.push(Row::open(format!("{} look: {}", look.name(), if own { "its own" } else { "the app's" }), Page::Style(StyleAt::Game(look))));
     }
-    rows.push(Row::open("Sounds…", Page::Sounds));
-    rows.push(Row::open("Rumble…", Page::Rumble));
-    rows.push(Row::open("Motion…", Page::Motion));
+    rows.push(Row::open("Sounds", Page::Sounds));
+    rows.push(Row::open("Rumble", Page::Rumble));
+    rows.push(Row::open("Motion", Page::Motion));
     rows
 }
 
