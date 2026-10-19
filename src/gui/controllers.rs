@@ -95,6 +95,13 @@ impl App {
         let pass = checkbox(c.pass_through)
             .label("Pass through")
             .on_toggle(move |on| Message::SetController(ControllerInfo { pass_through: on, ..with.clone() }));
+        let pass = tooltip(
+            pass,
+            container(text("Hand this controller's input to the game unchanged, whatever the profiles say.").size(13))
+                .padding(8)
+                .style(style::tooltip),
+            tooltip::Position::Top,
+        );
         let forget = button(text("Forget").size(13)).style(style::secondary).on_press(Message::ForgetController(c.id.clone()));
         column![title, row![nickname, color, player, pass, space::horizontal(), forget].spacing(8).align_y(Alignment::Center)]
             .spacing(6)
