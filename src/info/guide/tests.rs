@@ -29,6 +29,16 @@ fn the_notes_show_only_when_there_are_some() {
 }
 
 #[test]
+fn a_profile_with_no_changes_shows_no_mappings() {
+    let mut p = Profile::passthrough("p");
+    assert!(view(&p, &[], &[], 0).overlays().is_empty());
+    p.guide.notes = "Hello".into();
+    let overlays = view(&p, &[], &[], 0).overlays();
+    assert_eq!(overlays.len(), 1, "the notes stay");
+    assert_eq!(overlays[0].name, "guide notes");
+}
+
+#[test]
 fn a_long_mappings_list_shows_a_page_at_a_time() {
     let mut p = Profile::passthrough("p");
     let names = ["KEY_A", "KEY_B", "KEY_C", "KEY_D", "KEY_E", "KEY_F", "KEY_G", "KEY_H", "KEY_I", "KEY_J", "KEY_K", "KEY_L", "KEY_M", "KEY_N", "KEY_O"];

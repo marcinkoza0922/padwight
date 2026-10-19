@@ -80,7 +80,8 @@ impl GuideView<'_> {
     }
 
     /// The Notes and Mappings overlays, and the layer sections on the page shown. Notes are left
-    /// out when the author wrote none.
+    /// out when the author wrote none, and the Mappings when nothing is mapped and there are no
+    /// modes to turn to.
     pub fn overlays(&self) -> Vec<InfoOverlay> {
         let mut overlays: Vec<InfoOverlay> = notes_panel(&self.profile.guide.notes).into_iter().collect();
         let mapped = self.mapped();
@@ -89,6 +90,10 @@ impl GuideView<'_> {
         let pages = layout(rows.len(), &sections);
         let at = self.page.min(pages.len() - 1);
         let page = &pages[at];
+        // Nothing changed, and no other modes to turn to: nothing to show.
+        if rows.is_empty() && sections.is_empty() && self.modes.is_empty() {
+            return overlays;
+        }
         let mut shown = rows[page.rows.clone()].to_vec();
         shown.extend(self.hints(pages.len()));
         overlays.push(panel(&format!("{PANEL_PREFIX}mappings"), ScreenPosition::CenterRight, self.title(at, pages.len()), shown));

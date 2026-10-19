@@ -77,6 +77,7 @@ fn a_log_overlay_is_added_and_leaves_out_a_group_of_inputs() {
 #[test]
 fn guide_notes_are_written_line_by_line_and_a_mapping_row_is_hidden() {
     let mut config = config();
+    config.general.profiles[0].set_button(Button::North, ButtonAction::Keys(vec!["KEY_R".into()]));
     let mut editor = LayoutEditor::new();
     editor.pick("Guide overlay", &mut config);
     editor.pick("Notes", &mut config);

@@ -40,12 +40,12 @@ pub struct EditableRow {
 }
 
 /// Every input the profile maps, with its default text in pieces, in order: buttons, then
-/// triggers, then sticks. Guide itself, disabled inputs and plain pass-through triggers and sticks
-/// aren't listed.
+/// triggers, then sticks. Guide itself, disabled inputs and plain pass-through buttons, triggers and
+/// sticks aren't listed.
 fn mapped_inputs(profile: &Profile) -> Vec<(GuideInput, Vec<Piece>)> {
     let mut inputs = Vec::new();
     for (b, action) in &profile.buttons {
-        if *b != Button::Guide && *action != ButtonAction::Disabled {
+        if *b != Button::Guide && *action != ButtonAction::Disabled && *action != ButtonAction::Gamepad(*b) {
             inputs.push((GuideInput::Button(*b), action.pieces()));
         }
     }
