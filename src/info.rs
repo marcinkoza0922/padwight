@@ -278,8 +278,8 @@ pub enum Token {
     Trigger(Trigger),
     /// The stick itself (for "move"), not its click.
     Stick(Stick),
-    Dpad,
-    /// Both arms of one axis lit, for "change" and "scroll" hints: `{leftright}` and `{updown}`.
+    /// A D-pad with these arms lit (`[up, down, left, right]`): none for `{dpad}`, both arms of one
+    /// axis for "change" and "scroll" hints (`{leftright}`, `{updown}`).
     DpadArms([bool; 4]),
     Stat(Stat),
     Icon(IconToken),
@@ -443,7 +443,7 @@ fn plain_token(name: &str) -> Option<Token> {
         "rs" => Token::Stick(Stick::Right),
         "l3" => Token::Button(Button::LeftStick),
         "r3" => Token::Button(Button::RightStick),
-        "dpad" => Token::Dpad,
+        "dpad" => Token::DpadArms([false; 4]),
         "up" => Token::Button(Button::DpadUp),
         "down" => Token::Button(Button::DpadDown),
         "left" => Token::Button(Button::DpadLeft),
@@ -687,7 +687,6 @@ pub fn glyph_text(text: &str, glyphs: Glyphs) -> Vec<Segment> {
             Err(Token::Gesture(kind)) => gesture_glyph(kind),
             Err(Token::Stick(Stick::Left)) => glyph("LS", None, true),
             Err(Token::Stick(Stick::Right)) => glyph("RS", None, true),
-            Err(Token::Dpad) => glyph("✚", None, false),
             Err(Token::DpadArms(lit)) => Segment::Dpad(lit),
             Err(Token::Picture(name)) => Segment::Picture(name),
             Err(Token::Mark(m)) => Segment::Mark(m),
@@ -924,7 +923,6 @@ fn cell_segments(input: &CurrentInput, cell: &str, live: &Live) -> Vec<Segment> 
             Err(Token::Gesture(kind)) => gesture_glyph(kind),
             Err(Token::Stick(Stick::Left)) => glyph("LS", None, true),
             Err(Token::Stick(Stick::Right)) => glyph("RS", None, true),
-            Err(Token::Dpad) => glyph("✚", None, false),
             Err(Token::DpadArms(lit)) => Segment::Dpad(lit),
             Err(Token::Stat(s)) => Segment::Text(stat(s, live)),
             Err(Token::Picture(name)) => Segment::Picture(name),

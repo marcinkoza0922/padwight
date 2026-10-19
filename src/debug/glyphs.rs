@@ -106,7 +106,7 @@ fn buttons(family: PadFamily, swapped: bool) -> InfoView {
     // `{ls}`, `{rs}` and `{dpad}` draw these whatever the family.
     let mut sticks = vec![info::glyph("LS", None, true), info::glyph("RS", None, true)];
     sticks.extend(glyphs(&[Button::LeftStick, Button::RightStick]));
-    let mut dpad = vec![info::glyph("✚", None, false)];
+    let mut dpad = vec![Segment::Dpad([false; 4])];
     dpad.extend(glyphs(&[Button::DpadUp, Button::DpadDown, Button::DpadLeft, Button::DpadRight]));
     // Diagonals, as the input log lights two arms.
     dpad.extend([[true, false, true, false], [true, false, false, true], [false, true, true, false], [false, true, false, true]].map(Segment::Dpad));
