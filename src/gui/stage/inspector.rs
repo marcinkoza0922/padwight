@@ -13,8 +13,8 @@ const CHROME: f32 = 230.0;
 
 const HOW_TO: &str = "Drag the overlay to move it: it takes the nearest of the nine spots and grows from there. Drag an edge \
                       or corner to resize it. With snapping on, the edges you move land on the grid, or back on the spot \
-                      itself; hold Alt to place it freely. The arrow keys nudge it (with Shift, 10 px). Esc closes this \
-                      editor and Ctrl+S saves.";
+                      itself; hold Alt to place it freely. The arrow keys nudge it (with Shift, 10 px). Click a menu's item \
+                      or an info overlay's cell to edit it. Esc closes this editor and Ctrl+S saves.";
 
 impl App {
     pub(super) fn view_inspector<'a>(&'a self, stage: &'a Stage, display: iced::Size) -> Element<'a, Message> {
@@ -44,7 +44,7 @@ impl App {
             self.inspector_header(stage),
             tabs,
             rule::horizontal(1),
-            container(scrollable(container(page).padding(iced::Padding::ZERO.right(14)))).max_height(tallest.max(120.0)),
+            container(scrollable(container(page).padding(iced::Padding::ZERO.right(14))).id(super::pick::PAGE)).max_height(tallest.max(120.0)),
             rule::horizontal(1),
             self.inspector_footer(),
         ]
@@ -104,7 +104,7 @@ impl App {
     }
 
     /// What the stage shows, as its card calls it.
-    fn stage_title(&self, target: StageTarget) -> String {
+    pub(super) fn stage_title(&self, target: StageTarget) -> String {
         let named = |kind: &str, name: Option<&String>| match name.filter(|n| !n.is_empty()) {
             Some(name) => format!("{kind} “{name}”"),
             None => kind.to_string(),
@@ -113,10 +113,8 @@ impl App {
             StageTarget::Menu(i) => named("Menu", self.menus().get(i).map(|m| &m.name)),
             StageTarget::Info(i) => named("Info overlay", self.infos().get(i).map(|o| &o.name)),
             StageTarget::Log(i) => named("Log overlay", self.logs().get(i).map(|o| &o.name)),
-            StageTarget::Keyboard => "On-screen keyboard".into(),
-            StageTarget::Numpad => "On-screen numpad".into(),
-            StageTarget::Media => "Media controls".into(),
-            StageTarget::InGameMenu => "In-game menu".into(),
+            StageTarget::Panel(panel) => panel.name().into(),
+            StageTarget::Setup(panel) => format!("{} for {}", panel.name(), self.game().name),
         }
     }
 
@@ -146,6 +144,7 @@ impl App {
             rows.push(labeled("Spot", text(format!("{} · moved {:.1}% across, {:.1}% down", style.position, style.x_offset, style.y_offset)).size(14).into()));
             rows.push(labeled("Size", row![text(size).size(14), fit].spacing(12).align_y(Alignment::Center).into()));
         }
+        rows.push(labeled("Around it", self.around_picker(stage)));
         rows.push(note(HOW_TO).into());
         column(rows).spacing(10).into()
     }

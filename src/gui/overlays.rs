@@ -132,28 +132,28 @@ impl App {
         let glyphs = self.glyphs();
         column![
             game_overlay_card(
-                "On-screen keyboard",
+                stage::Panel::Keyboard,
                 game.keyboard_style.as_ref(),
                 &self.config.keyboard_style,
                 |s| Message::SetGameOverlayStyle(Layout::Keyboard, s),
                 move |style| keyboard_preview(Layout::Keyboard, style, font, glyphs),
             ),
             game_overlay_card(
-                "On-screen numpad",
+                stage::Panel::Numpad,
                 game.numpad_style.as_ref(),
                 &self.config.numpad_style,
                 |s| Message::SetGameOverlayStyle(Layout::Numpad, s),
                 move |style| keyboard_preview(Layout::Numpad, style, font, glyphs),
             ),
             game_overlay_card(
-                "Media controls",
+                stage::Panel::Media,
                 game.media_style.as_ref(),
                 &self.config.media_style,
                 Message::SetGameMediaStyle,
                 move |style| preview(crate::overlay::draw::media_panel(&crate::media::MediaView::sample(preview_style(style)), font, glyphs, &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())),
             ),
             game_overlay_card(
-                "In-game menu",
+                stage::Panel::InGameMenu,
                 game.menu_style.as_ref(),
                 &self.config.menu_style,
                 Message::SetGameMenuStyle,
@@ -168,10 +168,10 @@ impl App {
     }
 }
 
-/// One overlay's card: whether the game has its own look (`own`), that look's editor and a
+/// One panel's card: whether the game has its own look (`own`), that look's editor and a
 /// preview, or a note that it follows `global`. `set` makes the message for a new look.
 fn game_overlay_card<'a>(
-    title: &'a str,
+    panel: stage::Panel,
     own: Option<&'a OverlayStyle>,
     global: &'a OverlayStyle,
     set: impl Fn(Option<OverlayStyle>) -> Message + 'a,
@@ -184,10 +184,11 @@ fn game_overlay_card<'a>(
     };
     let mut rows = own_rows("appearance", own.is_some(), move |on| set(on.then(|| global.clone())));
     if let Some(style) = own {
+        rows.push(stage::edit_button(StageTarget::Setup(panel)));
         rows.push(style_editor(style, on_style));
         rows.push(sample(style));
     }
-    section(title, Some("A setup can have its own look here, or follow the one set on the App settings page.".into()), rows)
+    section(panel.name(), Some("A setup can have its own look here, or follow the one set on the App settings page.".into()), rows)
 }
 
 /// A keyboard or numpad drawn with `style`, with the cursor on a key, for the card's preview.

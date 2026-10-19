@@ -36,7 +36,7 @@ fn radial_arcs<'a, M: 'a>(m: &MenuView, solid: Colors, s: f32) -> Element<'a, M>
         // Each label sits in the middle of its arc.
         let (x, y) = point((start + end) / 2.0, (inner + outer) / 2.0);
         let (label, _, _) = item_cell(m, i, c, 15.0 * s);
-        let content = container(label).center_x(cell_w).center_y(cell_h);
+        let content = super::tag::tag(container(label).center_x(cell_w).center_y(cell_h), Part::Item(i));
         layers.push(pin(content).x(x - cell_w / 2.0).y(y - cell_h / 2.0).into());
     }
     layers.push(radial_hub(m, c, s, (hub, size), false));
@@ -226,6 +226,7 @@ fn radial_boxes<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
             .center_x(cell_w)
             .center_y(cell_h)
             .style(lit_cell_style(lit, selected, cell_h));
+        let content = super::tag::tag(content, Part::Item(i));
         layers.push(pin(content).x(x - cell_w / 2.0).y(y - cell_h / 2.0).into());
     }
     layers.push(radial_hub(m, c, s, (48.0 * s, size), true));

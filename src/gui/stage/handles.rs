@@ -1,7 +1,8 @@
 //! A panel on the stage with an outline and grips around it: dragging the middle moves it, an
 //! edge or a corner resizes it, and the arrow keys nudge it (Shift for 10 px). Each move of the
 //! pointer reports where the panel would be (`Gesture`), measured from where it was when the drag
-//! began, so the panel can be redrawn under it as it goes.
+//! began, so the panel can be redrawn under it as it goes. A click that doesn't drag picks the
+//! item or cell under it (`Part`), which is outlined as the pointer passes over it.
 
 use iced::{
     Background, Border, Color, Element, Event, Length, Point, Rectangle, Size, Vector,
@@ -13,10 +14,13 @@ use iced::{
 };
 
 use super::snap::{Gesture, Grip};
+use crate::overlay::draw::{Part, found_at};
 
 /// How far outside or inside an edge the pointer still holds it, and a grip's half size.
 const REACH: f32 = 7.0;
 const GRIP: f32 = 5.0;
+/// How far the pointer goes before a press is a drag rather than a click.
+const SLOP: f32 = 4.0;
 /// The outline's color: the stage's accent, which reads on light and dark games alike.
 const ACCENT: Color = Color::from_rgb(0.25, 0.65, 1.0);
 
@@ -24,18 +28,30 @@ pub struct Handles<'a, M> {
     content: Element<'a, M>,
     display: Size,
     on_gesture: Box<dyn Fn(Gesture) -> M + 'a>,
+    on_pick: Box<dyn Fn(Part) -> M + 'a>,
 }
 
 /// `content` with grips, on a display of `display`.
-pub fn handles<'a, M: 'a>(content: impl Into<Element<'a, M>>, display: Size, on_gesture: impl Fn(Gesture) -> M + 'a) -> Element<'a, M> {
-    Element::new(Handles { content: content.into(), display, on_gesture: Box::new(on_gesture) })
+pub fn handles<'a, M: 'a>(content: impl Into<Element<'a, M>>, display: Size, on_gesture: impl Fn(Gesture) -> M + 'a, on_pick: impl Fn(Part) -> M + 'a) -> Element<'a, M> {
+    Element::new(Handles { content: content.into(), display, on_gesture: Box::new(on_gesture), on_pick: Box::new(on_pick) })
 }
 
 #[derive(Default)]
 struct State {
-    /// What is held, where the pointer was when it took hold, and where the panel was.
-    held: Option<(Grip, Point, Rectangle)>,
+    held: Option<Hold>,
+    /// The part under the pointer, and where it is.
+    hovered: Option<(Part, Rectangle)>,
     modifiers: keyboard::Modifiers,
+}
+
+/// What is held, where the pointer was when it took hold, where the panel was, and whether it
+/// has gone far enough to be a drag.
+#[derive(Clone, Copy)]
+struct Hold {
+    grip: Grip,
+    start: Point,
+    from: Rectangle,
+    dragging: bool,
 }
 
 /// What the pointer at `at` would take hold of on a panel at `bounds`.
@@ -141,6 +157,12 @@ impl<M> Widget<M, iced::Theme, iced::Renderer> for Handles<'_, M> {
             );
             let (x0, x1, xm) = (b.x, b.x + b.width, b.x + b.width / 2.0);
             let (y0, y1, ym) = (b.y, b.y + b.height, b.y + b.height / 2.0);
+            if let Some((_, part)) = tree.state.downcast_ref::<State>().hovered {
+                renderer.fill_quad(
+                    renderer::Quad { bounds: part, border: Border { color: ACCENT, width: 1.5, radius: 4.0.into() }, ..renderer::Quad::default() },
+                    Background::Color(Color { a: 0.15, ..ACCENT }),
+                );
+            }
             for (x, y) in [(x0, y0), (xm, y0), (x1, y0), (x0, ym), (x1, ym), (x0, y1), (xm, y1), (x1, y1)] {
                 let square = Rectangle { x: x - GRIP, y: y - GRIP, width: GRIP * 2.0, height: GRIP * 2.0 };
                 renderer.fill_quad(
@@ -168,18 +190,41 @@ impl<M> Widget<M, iced::Theme, iced::Renderer> for Handles<'_, M> {
                 if let Some(at) = cursor.position()
                     && let Some(grip) = grip_at(bounds, at)
                 {
-                    state.held = Some((grip, at, bounds));
+                    state.held = Some(Hold { grip, start: at, from: bounds, dragging: false });
                     shell.capture_event();
                 }
             }
-            Event::Mouse(mouse::Event::CursorMoved { position }) => {
-                if let Some((grip, start, from)) = state.held {
-                    let to = dragged(from, grip, *position - start);
-                    shell.publish((self.on_gesture)(report(grip, from, to, state.modifiers.alt())));
+            Event::Mouse(mouse::Event::CursorMoved { position }) => match &mut state.held {
+                Some(hold) => {
+                    let by = *position - hold.start;
+                    // A hand that shakes a little as it clicks doesn't move the panel, which
+                    // with snapping on could jump a whole grid step.
+                    hold.dragging |= by.x.abs().max(by.y.abs()) > SLOP;
+                    if hold.dragging {
+                        let to = dragged(hold.from, hold.grip, by);
+                        shell.publish((self.on_gesture)(report(hold.grip, hold.from, to, state.modifiers.alt())));
+                        state.hovered = None;
+                    }
                     shell.capture_event();
                 }
+                None => {
+                    let over = grip_at(bounds, *position) == Some(Grip::Move);
+                    let hovered = over.then(|| found_at(&mut self.content, &mut tree.children[0], layout, renderer, *position)).flatten();
+                    let state = tree.state.downcast_mut::<State>();
+                    if hovered != state.hovered {
+                        state.hovered = hovered;
+                        shell.request_redraw();
+                    }
+                }
+            },
+            Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)) if state.held.is_some() => {
+                if let Some(Hold { grip: Grip::Move, start, dragging: false, .. }) = state.held.take()
+                    && let Some((part, _)) = found_at(&mut self.content, &mut tree.children[0], layout, renderer, start)
+                {
+                    shell.publish((self.on_pick)(part));
+                }
+                shell.capture_event();
             }
-            Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)) if state.held.take().is_some() => shell.capture_event(),
             // Clicks belong to the grips; the rest (a scroll inside a long panel) to the panel.
             Event::Mouse(mouse::Event::ButtonPressed(_) | mouse::Event::ButtonReleased(_)) => {}
             _ => self.content.as_widget_mut().update(&mut tree.children[0], event, layout, cursor, renderer, clipboard, shell, viewport),
@@ -188,8 +233,11 @@ impl<M> Widget<M, iced::Theme, iced::Renderer> for Handles<'_, M> {
 
     fn mouse_interaction(&self, tree: &Tree, layout: Layout<'_>, cursor: mouse::Cursor, _viewport: &Rectangle, _renderer: &iced::Renderer) -> mouse::Interaction {
         let state = tree.state.downcast_ref::<State>();
-        if let Some((grip, ..)) = state.held {
-            return cursor_for(grip, true);
+        if let Some(hold) = state.held {
+            return cursor_for(hold.grip, hold.dragging);
+        }
+        if state.hovered.is_some_and(|(_, part)| cursor.is_over(part)) {
+            return mouse::Interaction::Pointer;
         }
         cursor.position().and_then(|at| grip_at(layout.bounds(), at)).map_or(mouse::Interaction::None, |grip| cursor_for(grip, false))
     }
@@ -209,6 +257,35 @@ mod tests {
         assert_eq!(grip_at(PANEL, Point::new(200.0, 204.0)), Some(Grip::S));
         assert_eq!(grip_at(PANEL, Point::new(95.0, 150.0)), Some(Grip::W));
         assert_eq!(grip_at(PANEL, Point::new(50.0, 150.0)), None, "outside reach");
+    }
+
+    #[derive(Debug, Clone, PartialEq)]
+    enum Got {
+        Moved(Grip),
+        Picked(Part),
+    }
+
+    /// Two items, one over the other, held by grips: what pressing at `at`, moving to `to` and
+    /// letting go sends.
+    fn press_move_release(at: Point, to: Point) -> Vec<Got> {
+        use crate::overlay::draw::tag;
+        use iced::widget::{column, space};
+        let items = column![tag(space().width(200).height(50), Part::Item(0)), tag(space().width(200).height(50), Part::Item(1))];
+        let panel = handles(items, Size::new(1000.0, 1000.0), |g| Got::Moved(g.grip), Got::Picked);
+        let mut sim = iced_test::Simulator::with_size(iced::Settings::default(), Size::new(1000.0, 1000.0), panel);
+        sim.point_at(at);
+        let _ = sim.simulate([Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))]);
+        sim.point_at(to);
+        let _ = sim.simulate([Event::Mouse(mouse::Event::CursorMoved { position: to }), Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left))]);
+        sim.into_messages().collect()
+    }
+
+    #[test]
+    fn a_click_picks_the_item_under_it_and_a_drag_moves_the_panel() {
+        assert_eq!(press_move_release(Point::new(100.0, 75.0), Point::new(100.0, 75.0)), [Got::Picked(Part::Item(1))]);
+        assert_eq!(press_move_release(Point::new(100.0, 75.0), Point::new(102.0, 77.0)), [Got::Picked(Part::Item(1))], "a shaky click is still a click");
+        assert_eq!(press_move_release(Point::new(100.0, 25.0), Point::new(130.0, 25.0)), [Got::Moved(Grip::Move)]);
+        assert_eq!(press_move_release(Point::new(200.0, 25.0), Point::new(200.0, 25.0)), [], "an edge picks nothing");
     }
 
     #[test]

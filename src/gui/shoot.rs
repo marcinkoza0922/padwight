@@ -30,7 +30,11 @@ Drawing the settings window without a display or a daemon (for the manual's scre
          dialog <add|export|system|system-demo>     open a dialog                close  close it
          stage <menu:n|info:n|log:n|keyboard|numpad|media|in-game-menu>  open the on-screen editor
                                  on it; shots then draw that full-screen window over a stand-in game
+                                 (own-keyboard, own-media, ...: the shown setup's own look)
          stage-tab <layout|look|content>                      the on-screen editor's tab
+         stage-pick <item:n|cell:r:c>                         click that item or cell on the stage
+         stage-panel <fold|dock>                              fold the stage's panel, or dock it on the other side
+         stage-around <all|none|menu:n|keyboard|...>          draw that overlay faintly around the edited one
          shot <name>             save <out>/<name>.png
   options: --out <dir> (default screenshots/manual)   --size <w>x<h> (default 1280x2600)
            --dark (default is light)";
@@ -174,7 +178,7 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
         "filters-demo" => filters_demo(app, arg()?.parse()?)?,
         "dialog" => open_dialog(app, arg()?)?,
         "close" => send(app, Message::CloseDialog),
-        "stage" | "stage-tab" => send(app, Message::Stage(stage_step(step, arg()?)?)),
+        "stage" | "stage-tab" | "stage-pick" | "stage-panel" | "stage-around" => send(app, Message::Stage(stage_step(step, arg()?)?)),
         "shot" => take_shot(app, options, arg()?)?,
         other => bail!("unknown step {other:?}{USAGE}"),
     }
@@ -183,6 +187,21 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
 
 /// What `stage` puts on the stage (`menu:0`, `keyboard`, ...), or the tab `stage-tab` shows.
 fn stage_step(step: &str, word: &str) -> Result<StageMessage> {
+    if step == "stage-panel" {
+        return match word {
+            "fold" => Ok(StageMessage::Fold),
+            "dock" => Ok(StageMessage::Dock),
+            _ => bail!("no {word:?} for the stage's panel{USAGE}"),
+        };
+    }
+    if step == "stage-pick" {
+        let numbers: Vec<usize> = word.split(':').skip(1).filter_map(|n| n.parse().ok()).collect();
+        return Ok(StageMessage::Pick(match (word.split(':').next(), numbers.as_slice()) {
+            (Some("item"), [n]) => crate::overlay::draw::Part::Item(*n),
+            (Some("cell"), [r, c]) => crate::overlay::draw::Part::Cell(*r, *c),
+            _ => bail!("no part {word:?} to pick on the stage{USAGE}"),
+        }));
+    }
     if step == "stage-tab" {
         return Ok(StageMessage::Tab(match word {
             "look" => stage::StageTab::Look,
@@ -190,17 +209,36 @@ fn stage_step(step: &str, word: &str) -> Result<StageMessage> {
             _ => stage::StageTab::Layout,
         }));
     }
+    if step == "stage-around" {
+        return Ok(match word {
+            "all" => StageMessage::AroundAll(true),
+            "none" => StageMessage::AroundAll(false),
+            _ => StageMessage::Around(stage_target(word)?, true),
+        });
+    }
+    Ok(StageMessage::Open(stage_target(word)?))
+}
+
+/// The overlay `word` names: `menu:0`, `keyboard`, `own-keyboard`, ...
+fn stage_target(word: &str) -> Result<StageTarget> {
     let (kind, n) = word.split_once(':').map_or((word, 0), |(k, n)| (k, n.parse().unwrap_or(0)));
-    Ok(StageMessage::Open(match kind {
+    Ok(match kind {
         "menu" => StageTarget::Menu(n),
         "info" => StageTarget::Info(n),
         "log" => StageTarget::Log(n),
-        "keyboard" => StageTarget::Keyboard,
-        "numpad" => StageTarget::Numpad,
-        "media" => StageTarget::Media,
-        "in-game-menu" => StageTarget::InGameMenu,
-        _ => bail!("no overlay {word:?} for the stage{USAGE}"),
-    }))
+        _ => {
+            // `own-keyboard` is the shown setup's own look, from its Details tab.
+            let (name, own) = kind.strip_prefix("own-").map_or((kind, false), |k| (k, true));
+            let panel = match name {
+                "keyboard" => stage::Panel::Keyboard,
+                "numpad" => stage::Panel::Numpad,
+                "media" => stage::Panel::Media,
+                "in-game-menu" => stage::Panel::InGameMenu,
+                _ => bail!("no overlay {word:?} for the stage{USAGE}"),
+            };
+            if own { StageTarget::Setup(panel) } else { StageTarget::Panel(panel) }
+        }
+    })
 }
 
 /// Has Steam read the controller past Padwight, for the warning banner across the top.

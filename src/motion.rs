@@ -326,6 +326,12 @@ impl Anim {
         Anim::default()
     }
 
+    /// Drawn still, at `opacity` of its full strength: held that far into a linear fade-in.
+    pub fn faint(opacity: f32) -> Self {
+        let timing = Timing { opened: opacity.clamp(0.0, 1.0), ..Timing::default() };
+        Anim { feel: Feel { open: 1.0, ..Feel::OFF }, timing, clock: 0.0 }
+    }
+
     /// How far into its opening the overlay is, 0 to 1 (past 1 as a spring overshoots).
     fn opening(&self) -> f32 {
         self.feel.ease(self.timing.opened, self.feel.open, self.feel.curve)
@@ -448,6 +454,13 @@ mod tests {
 
     fn only(motion: MotionStyle) -> MotionSet {
         MotionSet { menu: motion, ..MotionSet::default() }
+    }
+
+    #[test]
+    fn a_faint_overlay_is_see_through_but_in_place() {
+        let faint = Anim::faint(0.45);
+        assert!((faint.opacity() - 0.45).abs() < 1e-4);
+        assert_eq!((faint.scale(), faint.offset(), faint.item_fade(3)), (1.0, (0.0, 0.0), 1.0));
     }
 
     #[test]
