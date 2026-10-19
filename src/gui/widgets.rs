@@ -232,12 +232,12 @@ pub(super) fn card_title<'a>(open: bool, title: iced::widget::Text<'a>) -> iced:
 }
 
 /// The top of a Details card that a setup can override: a toggle for "Use its own `what` in this
-/// setup", and while it's off, a note that the card follows App settings. Every such card starts
-/// with this, and shows its editor only while the toggle is on.
-pub(super) fn own_rows<'a>(what: &str, own: bool, on_toggle: impl Fn(bool) -> Message + 'a) -> Vec<Element<'a, Message>> {
+/// setup", and while it's off, a note that the card follows `follows` (such as "the font set on the
+/// App settings page"). Every such card starts with this, and shows its editor only while the toggle is on.
+pub(super) fn own_rows<'a>(what: &str, follows: &str, own: bool, on_toggle: impl Fn(bool) -> Message + 'a) -> Vec<Element<'a, Message>> {
     let mut rows = vec![toggler(own).label(format!("Use its own {what} in this setup")).on_toggle(on_toggle).into()];
     if !own {
-        rows.push(text(format!("Following the {what} set on the App settings page.")).size(13).color(MUTED_COLOR).into());
+        rows.push(text(format!("Following {follows}.")).size(13).color(MUTED_COLOR).into());
     }
     rows
 }

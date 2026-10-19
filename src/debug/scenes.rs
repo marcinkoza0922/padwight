@@ -197,7 +197,8 @@ fn guide(shown: usize) -> OverlayFrame {
     p.set_button(Button::West, keys("KEY_R"));
     p.set_button(Button::North, ButtonAction::Mode("Driving".into()));
     p.set_button(Button::LeftBumper, ButtonAction::Layer("Hotkeys".into()));
-    p.guide.notes = "Hold LB for the hotkeys.\nThe driving mode turns the face buttons into pedals, and the bumpers into the gears and the lights.".into();
+    // A glyph leading a long note, and one before the last words, show how a note wraps around glyphs.
+    p.guide.notes = "{start} backs out of every in-game screen, from the inventory to the keypads and computers.\nHold {lb} for the hotkeys.\nThe driving mode turns the face buttons into pedals, and the bumpers {lb} {rb} into the gears and the lights.".into();
     let mut driving = Mode::new("Driving");
     driving.buttons.insert(Button::South, keys("KEY_W"));
     driving.buttons.insert(Button::East, keys("KEY_S"));

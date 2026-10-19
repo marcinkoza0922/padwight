@@ -347,6 +347,7 @@ impl App {
                     insert_button(TokenTarget::LayerHeading),
                     char_button(TokenTarget::LayerHeading),
                 ]
+                .push(token_preview(layer.indicator_title.as_deref().unwrap_or(""), self.config.info_glyphs, self.preview_font()))
                 .spacing(6)
                 .align_y(Alignment::Center)
                 .into(),

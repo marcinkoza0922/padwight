@@ -30,15 +30,14 @@ impl App {
         }
     }
 
-    /// Says which controller the two feeds on the left are of: only inputs from that one show.
-    fn feed_note<'a>(&self) -> Element<'a, Message> {
+    /// The heading of the presses feed, naming the controller it follows: only inputs from that one show.
+    fn presses_heading(&self) -> String {
         let name = self.feeds.as_ref().map(|f| f.controller.as_str()).filter(|n| !n.is_empty());
-        let note = match (self.picked_controller(), name) {
-            (Some(d), _) => format!("Showing only inputs from {}, the controller picked above. Pick All controllers to follow the one used last.", d.name),
-            (None, Some(n)) => format!("Showing only inputs from {n}, the controller used last. Pick a controller above to follow it instead."),
-            (None, None) => "Shows the inputs of one controller: the one picked above, else the one used last.".into(),
-        };
-        text(note).size(12).color(MUTED_COLOR).into()
+        match (self.picked_controller(), name) {
+            (Some(d), _) => format!("Pressed on {}", d.name),
+            (None, Some(n)) => format!("Pressed on {n}"),
+            (None, None) => "Pressed on the controller".into(),
+        }
     }
 
     pub(super) fn view_activity(&self) -> Element<'_, Message> {
@@ -50,7 +49,7 @@ impl App {
         let switches = self.status.as_ref().map(|s| s.switches.as_slice()).unwrap_or_default();
         let mut list = column![].spacing(10);
         if switches.is_empty() {
-            let none = if self.status.is_some() { "No profile has switched since the daemon started." } else { NEEDS_DAEMON };
+            let none = if self.status.is_some() { "No profile switches yet." } else { NEEDS_DAEMON };
             list = list.push(text(none).size(13).color(MUTED_COLOR));
         }
         for s in switches.iter().take(SHOWN_SWITCHES) {
@@ -70,20 +69,19 @@ impl App {
             row![
                 text("What's happening").size(20),
                 help(
-                    "The latest presses on the controller picked in the header (else the one used last), one line per burst, as the controller labels them, \
+                    "The latest presses on the controller picked in the header, or on the one used last while All controllers is picked, one line per burst, as the controller labels them, \
                      with what each did when it's mapped to something else. Beside them, what Padwight sent the game \
                      for those presses: gamepad buttons, labeled as the game's controller would be, and keys, \
-                     mouse buttons and wheel turns. Below, each profile \
+                     mouse buttons and wheel turns. Last, each profile \
                      switch and the rule or action that made it."
                         .into(),
                 ),
             ]
             .spacing(8)
             .align_y(Alignment::Center),
-            self.feed_note(),
             // Three feeds side by side, so none sits alone under the others.
             row![
-                column![text("Pressed on the controller").size(14), presses].spacing(6).width(Length::Fill),
+                column![text(self.presses_heading()).size(14), presses].spacing(6).width(Length::Fill),
                 column![text("Sent to the game").size(14), exports].spacing(6).width(Length::Fill),
                 column![text("Profile switches").size(14), list].spacing(6).width(Length::Fill),
             ]

@@ -175,6 +175,12 @@ impl App {
     }
 }
 
+/// What `text` looks like on screen, for beside the field that holds it, or `None` when it has no
+/// `{token}` and reads the same in the field.
+pub(super) fn token_preview<'a>(text: &str, family: PadFamily, font: iced::Font) -> Option<Element<'a, Message>> {
+    text.contains('{').then(|| chip(text, family, font))
+}
+
 /// A preview chip: what `cell` shows on a controller of `family`.
 fn chip<'a>(cell: &str, family: PadFamily, font: iced::Font) -> Element<'a, Message> {
     crate::overlay::draw::chip(&crate::info::preview(cell, family), font)

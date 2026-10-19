@@ -240,7 +240,9 @@ pub(super) fn action_editor<'a>(
     field: KeyField,
     names: &Names,
 ) -> Element<'a, Message> {
-    let kind_picker = super::action_picker::kind_button(action, kinds, default_button, names, on_change.clone());
+    let KeyField::Action { target, .. } = field;
+    let place = super::action_picker::Place { target, kinds, default_button };
+    let kind_picker = super::action_picker::kind_button(place, action, names, on_change.clone());
     let value = action_value(action, default_button, on_change, field, names);
     // Where there isn't room beside the kind, the value goes below it.
     row![kind_picker, value].spacing(8).align_y(Alignment::Start).wrap().vertical_spacing(6).into()

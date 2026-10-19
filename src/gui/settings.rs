@@ -155,7 +155,7 @@ impl App {
             text("Rumble strength").width(140),
             iced::widget::slider(0.0..=1.0, strength, Message::SetRumbleStrength).step(0.05_f32).width(240),
             text(format!("{:.0}%", strength * 100.0)).size(13).color(MUTED_COLOR),
-            checkbox(self.config.pick_rumble).label("A faint pulse as an overlay item is picked").on_toggle(Message::SetPickRumble),
+            checkbox(self.config.pick_rumble).label("Pulse when picking an overlay item").on_toggle(Message::SetPickRumble),
         ]
         .spacing(12)
         .align_y(Alignment::Center)

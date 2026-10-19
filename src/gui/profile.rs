@@ -538,6 +538,16 @@ pub(super) fn short_button(b: Button) -> &'static str {
     b.short_name()
 }
 
+/// The caption of a picture of `p` without callouts, which alone doesn't say whether anything is
+/// mapped. Where the page doesn't name the profile (`named` is its setup), a bare "every input
+/// passes through" would read as remapping doing nothing, so the caption names it.
+fn passthrough_caption(p: &Profile, named: Option<&str>, caption: &str) -> String {
+    match named {
+        Some(setup) => format!("{setup} › {} passes every input through · {caption}", p.name),
+        None => format!("Every input passes through unchanged · {caption}"),
+    }
+}
+
 impl App {
     #[expect(clippy::too_many_lines, clippy::cognitive_complexity, reason = "predates the size lints")]
     pub(super) fn update_profile(&mut self, message: Message) -> Task<Message> {
@@ -822,8 +832,12 @@ impl App {
                     On other pads only the labels change. A setup can set its own choice, which wins.";
         let toggle = toggler(pad.is_some_and(|c| c.nintendo_layout)).label("Nintendo button layout");
         let toggle = if pad.is_some() { toggle.on_toggle(Message::SetNintendoLayout) } else { toggle };
-        let hint = pad.map_or_else(|| "Pick a controller in the header to set this.".to_string(), |c| format!("For {}.", c.nickname_or_name()));
-        section("Button layout", Some(format!("{note} {hint}")), vec![toggle.into()])
+        // It's the controller's setting, not the profile's, which the card's place on every profile doesn't say.
+        let hint = pad.map_or_else(
+            || "A setting of each controller, the same in every profile. Pick a controller in the header to set it.".to_string(),
+            |c| format!("For {}, in every profile.", c.nickname_or_name()),
+        );
+        section("Button layout", Some(note.into()), vec![toggle.into(), text(hint).size(13).color(MUTED_COLOR).into()])
     }
 
     pub(super) fn view_profile_tab<'a>(&'a self, names: &Names) -> Element<'a, Message> {
@@ -837,7 +851,7 @@ impl App {
     pub(super) fn view_profile_editor<'a>(&'a self, p: &'a Profile, names: &Names, layer: Option<LayerMarks<'a>>) -> Element<'a, Message> {
         // The active profile's drawing also shows the layers that are on right now.
         let live = (layer.is_none() && self.profile_ref().is_some_and(|at| at == self.saved.active)).then(|| self.with_active_layers(p));
-        let mut col = column![self.view_live(Some(live.as_ref().unwrap_or(p)), true)].spacing(16);
+        let mut col = column![self.view_live(Some(live.as_ref().unwrap_or(p)), None, true)].spacing(16);
 
         // The tabs take what the buttons beside them leave, and wrap there when it's too little.
         let mut tabs = row![container(self.profile_segments(p, names)).width(Length::Fill)]
@@ -977,7 +991,8 @@ impl App {
         }
     }
 
-    pub(super) fn view_live(&self, labels_from: Option<&Profile>, foldable: bool) -> Element<'_, Message> {
+    /// The line under the live picture: the controller pressed last (and its gyro), the mode and the layers on.
+    fn live_caption(&self) -> String {
         let caption = match (&self.live, &self.status) {
             (Some(live), _) => match live.gyro {
                 Some([pitch, yaw, roll]) => {
@@ -994,7 +1009,11 @@ impl App {
             Some(mode) => format!("{caption} · Mode: {mode}"),
             None => caption,
         };
-        let caption = if layers.is_empty() { caption } else { format!("{caption} · Layers: {}", layers.join(" + ")) };
+        if layers.is_empty() { caption } else { format!("{caption} · Layers: {}", layers.join(" + ")) }
+    }
+
+    /// `named` is the setup of `labels_from`, given where the page doesn't already say which profile it is.
+    pub(super) fn view_live(&self, labels_from: Option<&Profile>, named: Option<&str>, foldable: bool) -> Element<'_, Message> {
         let folded = foldable && self.picture_hidden;
         let title: Element<'_, Message> = if foldable {
             row![
@@ -1012,8 +1031,10 @@ impl App {
         }
         let pad = self.shown_pad();
         let labels = labels_from.map(drawing_labels).unwrap_or_default();
-        // Without callouts the picture alone doesn't say whether anything is mapped.
-        let caption = if labels_from.is_some() && labels.is_empty() { format!("Every input passes through unchanged · {caption}") } else { caption };
+        let caption = match labels_from {
+            Some(p) if labels.is_empty() => passthrough_caption(p, named, &self.live_caption()),
+            _ => self.live_caption(),
+        };
         // A trailing "+" on a callout is too short to explain itself.
         let caption = if labels.iter().any(|(_, l)| l.ends_with(" +")) {
             format!("{caption}\n“+”: also does something on a double tap, triple tap or long press")

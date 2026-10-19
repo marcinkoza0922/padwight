@@ -474,8 +474,6 @@ pub enum Segment {
     Glyph { label: String, fill: Option<[u8; 3]>, round: bool },
     /// A cross-shaped D-pad with its lit arms, `[up, down, left, right]` (two for a diagonal).
     Dpad([bool; 4]),
-    /// A stick pressed in: a stick cap with a down arrow. `right` picks R over L.
-    StickClick { right: bool },
     /// A drawn icon: the form factor, the controller's kind, or a gauge.
     Icon(Icon),
     /// An icon by name (`{icon:bow}`): one built in, or one of the game's pack.
@@ -743,8 +741,6 @@ pub fn button_glyph(b: Button, family: PadFamily, swapped: bool) -> Segment {
         Button::Select => named("View", "Share", "−"),
         Button::Start => named("Menu", "Options", "+"),
         Button::Guide => named("Guide", "PS", "Home"),
-        Button::LeftStick => Segment::StickClick { right: false },
-        Button::RightStick => Segment::StickClick { right: true },
         Button::DpadUp => Segment::Dpad([true, false, false, false]),
         Button::DpadDown => Segment::Dpad([false, true, false, false]),
         Button::DpadLeft => Segment::Dpad([false, false, true, false]),

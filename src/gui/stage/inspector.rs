@@ -162,7 +162,7 @@ impl App {
                 let Some(o) = self.infos().get(i) else { return space().into() };
                 column![
                     labeled("Name", field("Info overlay name", &o.name).on_input(move |n| Message::RenameInfo(i, n)).width(240).into()),
-                    info_cells_editor(i, o),
+                    info_cells_editor(i, o, self.config.info_glyphs, self.preview_font()),
                 ]
                 .spacing(10)
                 .into()

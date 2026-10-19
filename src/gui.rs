@@ -108,7 +108,7 @@ use chars::{CharPicker, char_button};
 use font_menu::FontSlot;
 use motion_demo::MotionDemo;
 use sound_picker::{SoundPicker, SoundTarget};
-use tokens::{TokenPicker, TokenTarget, insert_button};
+use tokens::{TokenPicker, TokenTarget, insert_button, token_preview};
 use layers::IndicatorChoice;
 use packs::{BrowseSource, Dialog, PackField};
 use pieces::*;
@@ -1402,7 +1402,11 @@ impl App {
         let page: Element<'_, Message> = match &self.page {
             // Each part in a card, as every other page's parts are.
             Page::Overview => column![
-                overview_card(self.view_live(self.overview_profile().map(|p| self.with_active_layers(p)).as_ref(), true)),
+                overview_card(self.view_live(
+                    self.overview_profile().map(|p| self.with_active_layers(p)).as_ref(),
+                    Some(&self.config.active_game().name),
+                    true,
+                )),
                 overview_card(self.view_activity()),
                 overview_card(self.view_devices()),
             ]

@@ -898,6 +898,7 @@ impl App {
                     insert_button(TokenTarget::InfoTitle(i)),
                     char_button(TokenTarget::InfoTitle(i)),
                 ]
+                .push(token_preview(o.title.as_deref().unwrap_or(""), self.config.info_glyphs, self.preview_font()))
                 .spacing(6)
                 .align_y(Alignment::Center)
                 .into(),
@@ -905,9 +906,10 @@ impl App {
             labeled(
                 "Shown",
                 column![
-                    checkbox(o.always)
-                        .label("Always, while this setup is active")
-                        .on_toggle(move |a| Message::SetInfoAlways(i, a)),
+                    with_help(
+                        checkbox(o.always).label("Always, while this setup is active").on_toggle(move |a| Message::SetInfoAlways(i, a)),
+                        "A Toggle can start on, to show the overlay when the game starts and keep it up until it's dismissed.",
+                    ),
                 ]
                 .extend((!o.always).then(|| {
                     seconds_option(
@@ -919,13 +921,12 @@ impl App {
                 }))
                 .push(
                     note(if o.always {
-                        "Stays on screen whenever the game is active, so actions can't show it. To show it only \
-                         sometimes, untick this and map “Toggle → Show info overlay…” to a button (the Toggle \
-                         can start on, to show the overlay at launch until dismissed)."
+                        "Stays on screen while this setup is active, so actions can't show it. To show it only \
+                         sometimes, untick this and map “Toggle → Show info overlay…” to a button."
                     } else {
                         "Shown when the game is first focused after launching, then fades out. You can also map \
-                         “Show info overlay…” to a button: it shows while the button is held, or until pressed \
-                         again if wrapped in Toggle (which can start on, to keep it up until dismissed)."
+                         “Show info overlay…” to a button. It shows while the button is held, or until it's \
+                         pressed again if wrapped in Toggle."
                     }),
                 )
                 .spacing(4)
@@ -964,7 +965,7 @@ impl App {
             rows.push(p);
         }
 
-        rows.push(info_cells_editor(i, o));
+        rows.push(info_cells_editor(i, o, self.config.info_glyphs, self.preview_font()));
         rows.extend(shown);
         rows.extend(self.view_info_input(i, o));
         column(rows).spacing(10).into()
@@ -1120,6 +1121,7 @@ impl App {
                 field("Label", &item.label).on_input(move |l| Message::SetMenuItemLabel(mi, i, l)).id(stage::item_field(mi, i)).width(230),
                 container(row![insert_button(TokenTarget::MenuLabel(mi, i)), char_button(TokenTarget::MenuLabel(mi, i))].spacing(4)),
             ]
+            .push(token_preview(&item.label, self.config.info_glyphs, self.preview_font()).map(|p| container(p).padding(iced::Padding::ZERO.top(4))))
             .spacing(8)
             .align_y(Alignment::Start);
             if weighted {
@@ -1184,8 +1186,9 @@ pub(super) fn menu_basics<'a>(mi: usize, menu: &'a Menu) -> Vec<Element<'a, Mess
     rows
 }
 
-/// An info overlay's cells, row by row, with buttons to add, move and remove them.
-pub(super) fn info_cells_editor<'a>(i: usize, o: &'a InfoOverlay) -> Element<'a, Message> {
+/// An info overlay's cells, row by row, with buttons to add, move and remove them. A cell with a
+/// `{token}` shows under its field what it draws, with glyphs of `family` in `font`.
+pub(super) fn info_cells_editor<'a>(i: usize, o: &'a InfoOverlay, family: crate::info::PadFamily, font: iced::Font) -> Element<'a, Message> {
     // The grid: rows of cells, which line up in columns on screen.
     let small = |label: &'static str, msg: Option<Message>| button(text(label).size(13)).style(style::secondary).on_press_maybe(msg);
     let mut grid = column![
@@ -1209,14 +1212,18 @@ pub(super) fn info_cells_editor<'a>(i: usize, o: &'a InfoOverlay) -> Element<'a,
             // Each cell gets its own box, so neighbours on the same row read as separate.
             line = line.push(
                 container(
-                    row![
-                        field("Text or {token}", cell).on_input(move |v| Message::SetInfoCell(i, r, c, v)).id(stage::cell_field(i, r, c)).width(170),
-                        insert_button(TokenTarget::InfoCell(i, r, c)),
-                        char_button(TokenTarget::InfoCell(i, r, c)),
-                        small("✕", Some(Message::RemoveInfoCell(i, r, c))),
+                    column![
+                        row![
+                            field("Text or {token}", cell).on_input(move |v| Message::SetInfoCell(i, r, c, v)).id(stage::cell_field(i, r, c)).width(170),
+                            insert_button(TokenTarget::InfoCell(i, r, c)),
+                            char_button(TokenTarget::InfoCell(i, r, c)),
+                            small("✕", Some(Message::RemoveInfoCell(i, r, c))),
+                        ]
+                        .spacing(4)
+                        .align_y(Alignment::Center),
                     ]
-                    .spacing(4)
-                    .align_y(Alignment::Center),
+                    .push(token_preview(cell, family, font))
+                    .spacing(4),
                 )
                 .padding([6, 8])
                 .style(style::card),

@@ -11,7 +11,7 @@ impl App {
     fn view_game_sounds(&self) -> Element<'_, Message> {
         let own = self.game().sounds;
         let global = self.config.sounds;
-        let mut rows = own_rows("sounds", own.is_some(), move |on| if on { Message::SetGameSounds(global) } else { Message::ClearGameSounds });
+        let mut rows = own_rows("sounds", "the sounds set on the App settings page", own.is_some(), move |on| if on { Message::SetGameSounds(global) } else { Message::ClearGameSounds });
         if let Some(set) = own {
             rows.extend(SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, &self.open_sounds, &self.open_cue_edits, true)));
             rows.push(button(text("Turn every sound off").size(13)).style(style::secondary).on_press(Message::SetGameSounds(set.silenced())).into());
@@ -26,7 +26,7 @@ impl App {
     /// The setup's own overlay motion: each kind of overlay, starting as a copy of the global set.
     fn view_game_motion(&self) -> Element<'_, Message> {
         let own = self.game().motion;
-        let mut rows = own_rows("motion", own.is_some(), Message::OwnGameMotion);
+        let mut rows = own_rows("motion", "the motion set on the App settings page", own.is_some(), Message::OwnGameMotion);
         if let Some(set) = own {
             rows.extend(motion_rows(set, Message::SetGameMotion));
             rows.push(self.view_motion_demo());
@@ -53,6 +53,7 @@ impl App {
             "Controllers this setup supports",
             Some("Tick a kind only if the game supports it explicitly. While this setup is active, the game sees a controller of that kind as that kind, with its own buttons and glyphs. Other controllers, and kinds left unticked, appear to the game as an Xbox controller.".into()),
             vec![
+                text("The game sees a controller as an Xbox one unless its kind is ticked here. Tick only kinds the game supports itself.").size(13).color(MUTED_COLOR).into(),
                 toggle("DualShock 4", support.dualshock, |s, on| s.dualshock = on).into(),
                 toggle("DualSense", support.dualsense, |s, on| s.dualsense = on).into(),
                 toggle("Switch Pro Controller", support.switch_pro, |s, on| s.switch_pro = on).into(),
@@ -63,7 +64,7 @@ impl App {
     /// A game's own choice of the Nintendo layout, or the one App settings gives.
     fn view_game_nintendo_layout(&self) -> Element<'_, Message> {
         let own = self.game().nintendo_layout;
-        let mut rows = own_rows("button layout", own.is_some(), move |on| Message::SetGameNintendoLayout(on.then_some(false)));
+        let mut rows = own_rows("button layout", "each controller's setting on the Profiles tab", own.is_some(), move |on| Message::SetGameNintendoLayout(on.then_some(false)));
         if let Some(on) = own {
             rows.push(toggler(on).label("Nintendo button layout").on_toggle(|on| Message::SetGameNintendoLayout(Some(on))).into());
         }

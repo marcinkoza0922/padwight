@@ -143,7 +143,7 @@ impl App {
                     .label("Always, while this setup is active")
                     .on_toggle(move |a| e(&|o| o.always = a)),
                 text(if o.always {
-                    "Stays on screen whenever the setup is active, so actions can't show it."
+                    "Stays on screen while this setup is active, so actions can't show it."
                 } else {
                     "Map \"Show log overlay…\" to a button: it shows while held, or until pressed again if \
                      wrapped in Toggle."

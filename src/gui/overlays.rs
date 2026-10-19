@@ -106,7 +106,7 @@ impl App {
     pub(super) fn view_game_font(&self) -> Element<'_, Message> {
         let own = self.game().overlay_font.as_deref();
         let global = self.config.overlay_font.clone();
-        let mut rows = own_rows("font", own.is_some(), move |on| Message::SetGameOverlayFont(on.then(|| global.clone().unwrap_or_default())));
+        let mut rows = own_rows("font", "the font set on the App settings page", own.is_some(), move |on| Message::SetGameOverlayFont(on.then(|| global.clone().unwrap_or_default())));
         if let Some(own) = own {
             let picker = self.font_picker(FontSlot::Game, "System default", Some(own).filter(|f| !f.is_empty()), |f| Message::SetGameOverlayFont(Some(f.unwrap_or_default())));
             rows.push(labeled("Font", picker));
@@ -182,7 +182,7 @@ fn game_overlay_card<'a>(
         let set = set.clone();
         Rc::new(move |s| set(Some(s))) as OnStyle<'a>
     };
-    let mut rows = own_rows("appearance", own.is_some(), move |on| set(on.then(|| global.clone())));
+    let mut rows = own_rows("appearance", "the appearance set on the App settings page", own.is_some(), move |on| set(on.then(|| global.clone())));
     if let Some(style) = own {
         rows.push(stage::edit_button(StageTarget::Setup(panel)));
         rows.push(style_editor(style, on_style));

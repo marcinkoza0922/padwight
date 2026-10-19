@@ -4,7 +4,7 @@
 
 use iced::{
     Alignment, Length,
-    widget::{button, checkbox, container, row, space, text, text_editor},
+    widget::{button, checkbox, column, container, row, space, text, text_editor},
 };
 
 use super::{App, Message, style, pieces::{self, Swap}, widgets::{dropdown, field, section}};
@@ -203,8 +203,10 @@ fn mapping_row<'a>(r: &crate::config::EditableRow, others: &[Choice], guide: Gui
     let edit = field(placeholder, value).on_input({
         let key = key.clone();
         move |t| Message::Guide(GuideMsg::Text(key.clone(), t))
-    })
-    .width(Length::Fill);
+    });
+    // A field shows its {tokens} as written, so what the overlay draws sits under it.
+    let shown_text = if r.overridden { r.text.as_str() } else { r.default_label.as_str() };
+    let edit = column![edit].push(super::tokens::token_preview(shown_text, guide.family, guide.font)).spacing(4).width(Length::Fill);
     // Custom rows aren't hidden: they're removed instead.
     let shown: iced::Element<'a, Message> = match r.key {
         RowKey::Custom(_) => space().into(),
