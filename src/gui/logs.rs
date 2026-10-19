@@ -120,7 +120,7 @@ impl App {
         rows.extend(input_settings(s, &edit));
 
         let appearance_open = self.open_log_appearance.contains(&i);
-        rows.push(labeled("", disclosure("Appearance", appearance_open, Message::ToggleLogAppearance(i))));
+        rows.push(labeled("", appearance_row(appearance_open, Message::ToggleLogAppearance(i), StageTarget::Log(i))));
         if appearance_open {
             let e = edit.clone();
             rows.push(style_editor(&o.style, Rc::new(move |style| e(&|o| o.style = style.clone()))));

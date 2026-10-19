@@ -35,7 +35,11 @@ A small list of the buttons you pressed lately, and what each one did. It's usef
 
 Controls the music or video player that's running. The D-pad left and right seek, up and down change the system's volume (the player's own, if the system's can't be changed), X mutes or unmutes, the bumpers change track, A plays or pauses, Y chooses the player, and B closes.
 
-> **Tip:** each overlay has its own position, size and colors. Set them on the App settings page.
+> **Tip:** each overlay has its own position, size and colors. Set them on the App settings page, or drag it into place with **Edit on screen** (see below).
+
+## Editing an overlay on screen
+
+**Edit on screen**, beside an overlay's or menu's **Appearance**, shows it full size over everything, where it will appear in game, with a panel of settings at one side. Drag the overlay to move it: it takes the nearest of the nine screen spots and grows from there. Drag an edge or corner to resize it. With **Snap to the grid** on, the edges you move land on the grid (8 to 64 px), or back on the spot itself; hold Alt to place it freely, and use the arrow keys to nudge it (Shift for 10 px). The panel's **Look** tab has the same settings as Appearance, and **Content** a menu's items or an info overlay's cells, so what you add shows on the overlay as you type. **Undo** and **Save & apply** work as they do in the settings window; **Done** or Esc closes the editor, and Ctrl+S saves. Fold the panel with **–** to see what's behind it, or move it to the other side with **⇆**. On a desktop without compositing, the screen behind the editor shows black.
 
 ## Giving a game's overlays their own look
 

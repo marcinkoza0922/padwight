@@ -82,6 +82,7 @@ pub(crate) mod shoot;
 mod settings;
 mod sound_picker;
 mod sounds;
+mod stage;
 mod pad_push;
 mod sliders;
 mod sticks;
@@ -121,6 +122,7 @@ use triggers::*;
 use goto::goto_button;
 use tour::TourMove;
 use search::*;
+use stage::{StageMessage, StageTarget, appearance_row};
 use widgets::*;
 
 pub fn run() -> iced::Result {
@@ -131,17 +133,17 @@ pub fn run() -> iced::Result {
     {
         crate::monitor::log!("cannot start the daemon: {e:#}");
     }
-    let app = iced::application(App::boot, App::update, App::view)
-        .title("Padwight")
-        .theme(App::theme)
-        .subscription(App::subscription)
-        .window(window_settings());
+    // A daemon rather than an application: the on-screen editor is a second window.
+    let app = iced::daemon(App::boot, App::update, App::view_window)
+        .title(App::title)
+        .theme(App::theme_for)
+        .style(App::window_style)
+        .subscription(App::subscription);
     crate::font::BUNDLED.iter().fold(app, |app, b| app.font(b.bytes)).run()
 }
 
 /// The settings window. Closing it is asked about first (`Message::CloseRequested`) rather than
-/// done by iced, so this must say so: `Application::window` replaces every window setting, and
-/// would undo an earlier `exit_on_close_request(false)`.
+/// done by iced.
 fn window_settings() -> iced::window::Settings {
     iced::window::Settings {
         size: iced::Size::new(1280.0, 960.0),
@@ -195,6 +197,10 @@ fn settle(shown: Option<PadShown>, wanted: PadPick, now: Instant) -> Option<PadS
 }
 
 struct App {
+    /// The settings window; the on-screen editor's is in `stage`.
+    main_window: iced::window::Id,
+    /// The on-screen editor, while it's up.
+    stage: Option<stage::Stage>,
     /// The header's setup and profile comboboxes.
     header_pick: header_pick::HeaderPick,
     /// The controller the header's profile box is for (its id); `None` is the active profile itself.
@@ -710,6 +716,9 @@ enum Message {
     ShowProblem,
     /// The window's close button was pressed.
     CloseRequested,
+    /// A window's close button was pressed: the settings window's, or the stage's.
+    WindowCloseRequested(iced::window::Id),
+    Stage(StageMessage),
     /// Save first, then close (from the unsaved-changes prompt).
     SaveAndQuit,
     /// Close without saving (from the unsaved-changes prompt).
@@ -732,7 +741,9 @@ fn call_ok(req: Request) -> Task<Message> {
 impl App {
     fn boot() -> (Self, Task<Message>) {
         let config = Config::default();
+        let (main_window, open) = iced::window::open(window_settings());
         let app = App {
+            main_window, stage: None,
             saved: config.clone(),
             config,
             sounds: crate::sound::Sounds::start(),
@@ -778,9 +789,7 @@ impl App {
             installed: None,
             renames: Vec::new(),
             edited: Vec::new(),
-            layer: 0,
-            mode: 0,
-            compare: 0,
+            layer: 0, mode: 0, compare: 0,
             layer_view: None,
             indicator_appearance: false,
             problem_at: None,
@@ -790,7 +799,7 @@ impl App {
             tour: None,
         };
         let tour = if tour::first_run() { Task::done(Message::Tour(TourMove::Start)) } else { Task::none() };
-        (app, Task::batch([load_config(), Task::done(Message::Poll), iced::system::theme().map(Message::SystemMode), tour]))
+        (app, Task::batch([open.discard(), load_config(), Task::done(Message::Poll), iced::system::theme().map(Message::SystemMode), tour]))
     }
 
     /// The controller the daemon presents the editor's controller as, under the game on screen's support.
@@ -885,13 +894,34 @@ impl App {
         <iced::Theme as iced::theme::Base>::default(mode)
     }
 
+    fn theme_for(&self, window: iced::window::Id) -> iced::Theme {
+        let theme = self.theme();
+        if self.stage.as_ref().is_some_and(|s| s.window == window) { stage::stage_theme(&theme) } else { theme }
+    }
+
+    /// The stage draws over nothing, so the screen shows through it.
+    fn window_style(&self, theme: &iced::Theme) -> iced::theme::Style {
+        let base = iced::theme::Base::base(theme);
+        if stage::is_stage_theme(theme) { iced::theme::Style { background_color: Color::TRANSPARENT, ..base } } else { base }
+    }
+
+    fn title(&self, window: iced::window::Id) -> String {
+        if self.stage.as_ref().is_some_and(|s| s.window == window) { "Padwight on-screen editor".into() } else { "Padwight".into() }
+    }
+
+    fn view_window(&self, window: iced::window::Id) -> Element<'_, Message> {
+        if self.stage.as_ref().is_some_and(|s| s.window == window) { self.view_stage() } else { self.view() }
+    }
+
     fn subscription(&self) -> Subscription<Message> {
         Subscription::batch([
             iced::time::every(Duration::from_secs(1)).map(|_| Message::Poll),
             Subscription::run(watch_input),
             Subscription::run(watch_feed),
             iced::event::listen_with(undo_shortcut),
-            iced::window::close_requests().map(|_| Message::CloseRequested),
+            iced::window::close_requests().map(Message::WindowCloseRequested),
+            iced::window::close_events().map(|id| Message::Stage(StageMessage::Closed(id))),
+            if self.stage.is_some() { iced::event::listen_with(stage::stage_keys) } else { Subscription::none() },
             Subscription::run(close_on_signals),
             iced::system::theme_changes().map(Message::SystemMode),
             self.motion_demo_clock(),
@@ -1035,7 +1065,8 @@ impl App {
             self.edited = if self.page == Page::Game(None) { Vec::new() } else { pack::edited_items(self.game()) };
         }
         self.header_pick.sync(&self.saved);
-        task
+        let stage = self.settle_stage();
+        Task::batch([task, stage])
     }
 
     /// Keeps `before` for Ctrl+Z if the config changed. A run of edits of one kind close
@@ -1123,11 +1154,7 @@ impl App {
                     // Plasma on Wayland won't let a window raise itself, so also flag its taskbar entry.
                     return Task::batch([
                         self.ask_to_save(),
-                        iced::window::latest().then(|id| {
-                            id.map_or(Task::none(), |id| {
-                                iced::window::request_user_attention(id, Some(iced::window::UserAttention::Critical))
-                            })
-                        }),
+                        iced::window::request_user_attention(self.main_window, Some(iced::window::UserAttention::Critical)),
                     ]);
                 }
             }
@@ -1239,6 +1266,9 @@ impl App {
                 self.message = None;
             }
             Message::Tour(step) => return self.move_tour(step),
+            Message::Stage(message) => return self.update_stage(message),
+            Message::WindowCloseRequested(id) if self.stage.as_ref().is_some_and(|s| s.window == id) => return self.close_stage(),
+            Message::WindowCloseRequested(_) => return Task::done(Message::CloseRequested),
             Message::Undo
             | Message::ShowProblem
             | Message::CloseRequested
@@ -1335,10 +1365,10 @@ impl App {
         self.sound_picker = None;
         self.char_picker = None;
         self.dialog = Some(Dialog::ConfirmQuit);
-        // A minimized window has to be restored first; focusing alone leaves it in the taskbar.
-        iced::window::latest().then(|id| {
-            id.map_or(Task::none(), |id| iced::window::minimize(id, false).chain(iced::window::gain_focus(id)))
-        })
+        // A minimized window has to be restored first; focusing alone leaves it in the taskbar. The
+        // stage would cover the question, so it goes.
+        let id = self.main_window;
+        Task::batch([self.close_stage(), iced::window::minimize(id, false).chain(iced::window::gain_focus(id))])
     }
 
     /// Whether saving must wait because the config file couldn't be read (see `unreadable`); says
@@ -1401,7 +1431,20 @@ impl App {
         // the page's scroll position) by place in the tree, so the shape must not change when
         // a popup opens or closes.
         let base = row![self.view_sidebar(), rule::vertical(1), main];
-        let popup = if let Some(picker) = &self.picker {
+        let mut layers = stack![base];
+        // While the stage is up, what it opens shows over it instead.
+        if let Some(popup) = self.popup().filter(|_| self.stage.is_none()) {
+            layers = layers.push(popup);
+        }
+        if let Some(step) = self.tour {
+            layers = layers.push(self.view_tour(step));
+        }
+        layers.into()
+    }
+
+    /// The picker or dialog that's open, if any.
+    fn popup(&self) -> Option<Element<'_, Message>> {
+        if let Some(picker) = &self.picker {
             Some(view_picker(picker))
         } else if let Some(picker) = &self.action_picker {
             Some(action_picker::view_action_picker(picker))
@@ -1413,15 +1456,7 @@ impl App {
             Some(self.view_char_picker(picker))
         } else {
             self.dialog.as_ref().map(|dialog| self.view_dialog(dialog))
-        };
-        let mut layers = stack![base];
-        if let Some(popup) = popup {
-            layers = layers.push(popup);
         }
-        if let Some(step) = self.tour {
-            layers = layers.push(self.view_tour(step));
-        }
-        layers.into()
     }
 
     /// The profile the Overview's live view labels from: the one the picked controller uses, else

@@ -51,7 +51,7 @@ const UNIT: f32 = 46.0;
 const GAP: f32 = 4.0;
 
 /// Distance from the screen edge for edge and corner positions.
-const EDGE_MARGIN: f32 = 40.0;
+pub const EDGE_MARGIN: f32 = 40.0;
 
 /// What a menu is drawn with besides its own style: the controller in use (for its button
 /// glyphs), the color-blind tints, and how the menu is moving.

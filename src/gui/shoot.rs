@@ -28,6 +28,9 @@ Drawing the settings window without a display or a daemon (for the manual's scre
          expand                  open every row               macro|menu|info <n>  open that card
          appearance <n>          open menu n's Appearance     filters-demo <n>  turn on a few of menu n's filters
          dialog <add|export|system|system-demo>     open a dialog                close  close it
+         stage <menu:n|info:n|log:n|keyboard|numpad|media|in-game-menu>  open the on-screen editor
+                                 on it; shots then draw that full-screen window over a stand-in game
+         stage-tab <layout|look|content>                      the on-screen editor's tab
          shot <name>             save <out>/<name>.png
   options: --out <dir> (default screenshots/manual)   --size <w>x<h> (default 1280x2600)
            --dark (default is light)";
@@ -171,10 +174,33 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
         "filters-demo" => filters_demo(app, arg()?.parse()?)?,
         "dialog" => open_dialog(app, arg()?)?,
         "close" => send(app, Message::CloseDialog),
+        "stage" | "stage-tab" => send(app, Message::Stage(stage_step(step, arg()?)?)),
         "shot" => take_shot(app, options, arg()?)?,
         other => bail!("unknown step {other:?}{USAGE}"),
     }
     Ok(())
+}
+
+/// What `stage` puts on the stage (`menu:0`, `keyboard`, ...), or the tab `stage-tab` shows.
+fn stage_step(step: &str, word: &str) -> Result<StageMessage> {
+    if step == "stage-tab" {
+        return Ok(StageMessage::Tab(match word {
+            "look" => stage::StageTab::Look,
+            "content" => stage::StageTab::Content,
+            _ => stage::StageTab::Layout,
+        }));
+    }
+    let (kind, n) = word.split_once(':').map_or((word, 0), |(k, n)| (k, n.parse().unwrap_or(0)));
+    Ok(StageMessage::Open(match kind {
+        "menu" => StageTarget::Menu(n),
+        "info" => StageTarget::Info(n),
+        "log" => StageTarget::Log(n),
+        "keyboard" => StageTarget::Keyboard,
+        "numpad" => StageTarget::Numpad,
+        "media" => StageTarget::Media,
+        "in-game-menu" => StageTarget::InGameMenu,
+        _ => bail!("no overlay {word:?} for the stage{USAGE}"),
+    }))
 }
 
 /// Has Steam read the controller past Padwight, for the warning banner across the top.
@@ -299,6 +325,13 @@ fn take_shot(app: &mut App, options: &Options, name: &str) -> Result<()> {
     let path = options.out.join(format!("{name}.png"));
     app.saved = app.config.clone();
     let theme = app.theme();
+    if app.stage.is_some() {
+        // The stage is see-through: a muted blue stands in for the game behind it.
+        let game = iced::Color::from_rgb8(0x3a, 0x4d, 0x63);
+        crate::snapshot::render_themed(app.view_stage(), options.size, 1.0, game, &stage::stage_theme(&theme))?.save(&path)?;
+        println!("{}", path.display());
+        return Ok(());
+    }
     // The window's own background, as a real window paints it, so dark mode isn't drawn on white.
     let background = theme.extended_palette().background.base.color;
     crate::snapshot::render_themed(app.view(), options.size, 1.0, background, &theme)?.save(&path)?;
