@@ -141,18 +141,18 @@ Tick an item once it's committed.
 
 ## Other overlays
 
-- [ ] 29. **The library offer draws its buttons as plain letters.** "A Add", "B Not now",
+- [x] 29. **The library offer draws its buttons as plain letters.** "A Add", "B Not now",
   "Y Never" use a plain "A" where the unsaved-changes prompt uses the colored glyph disc. The
   footer "A add · B not now · Y never" then repeats the buttons word for word. Use glyphs on the
   buttons and drop the footer (`offer.png`).
-- [ ] 30. **The library hint has two unpunctuated lines and a plain "Guide".** "Padwight has controls
+- [x] 30. **The library hint has two unpunctuated lines and a plain "Guide".** "Padwight has controls
   for Deus Ex / Tap Guide to set them up" could end each line with a period and draw Guide as its
   glyph, like every other hint. The offer says "The library has controls for this game." for the
   same fact; one wording would do (`library-hint.png`).
-- [ ] 31. **A new, empty info overlay is a tiny dark pill** in the top-right corner, with nothing in
+- [x] 31. **A new, empty info overlay is a tiny dark pill** in the top-right corner, with nothing in
   it. While it has no cells it could show its name and "No rows yet", or nothing at all
   (`info-empty.png`).
-- [ ] 32. **The media controls footer is very long and very small.** Seven hints in about 11 px
+- [x] 32. **The media controls footer is very long and very small.** Seven hints in about 11 px
   type. "Sound 45%" and "Player 70%" are also unclear: "System 45%" and "Player 70%", or a speaker
   icon for each, would say which volume is which. "Artist · Music" shows the player's name as if
   it were the album (`media.png`).
