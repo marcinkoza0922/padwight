@@ -30,6 +30,17 @@ impl App {
         }
     }
 
+    /// Says which controller the two feeds on the left are of: only inputs from that one show.
+    fn feed_note<'a>(&self) -> Element<'a, Message> {
+        let name = self.feeds.as_ref().map(|f| f.controller.as_str()).filter(|n| !n.is_empty());
+        let note = match (self.picked_controller(), name) {
+            (Some(d), _) => format!("Showing only inputs from {}, the controller picked above. Pick All controllers to follow the one used last.", d.name),
+            (None, Some(n)) => format!("Showing only inputs from {n}, the controller used last. Pick a controller above to follow it instead."),
+            (None, None) => "Shows the inputs of one controller: the one picked above, else the one used last.".into(),
+        };
+        text(note).size(12).color(MUTED_COLOR).into()
+    }
+
     pub(super) fn view_activity(&self) -> Element<'_, Message> {
         // The picture above already asks for a press, so the feeds only say they're empty.
         let running = self.status.is_some();
@@ -59,7 +70,7 @@ impl App {
             row![
                 text("What's happening").size(20),
                 help(
-                    "The latest presses on the controller in use, one line per burst, as the controller labels them, \
+                    "The latest presses on the controller picked in the header (else the one used last), one line per burst, as the controller labels them, \
                      with what each did when it's mapped to something else. Beside them, what Padwight sent the game \
                      for those presses: gamepad buttons, labeled as the game's controller would be, and keys, \
                      mouse buttons and wheel turns. Below, each profile \
@@ -69,6 +80,7 @@ impl App {
             ]
             .spacing(8)
             .align_y(Alignment::Center),
+            self.feed_note(),
             // Three feeds side by side, so none sits alone under the others.
             row![
                 column![text("Pressed on the controller").size(14), presses].spacing(6).width(Length::Fill),
@@ -120,7 +132,7 @@ mod tests {
             show_labels: true,
             show_holds: true,
         };
-        let feeds = Feeds { presses: feed.clone(), exports: feed.clone() };
+        let feeds = Feeds { controller: "Pad".into(), presses: feed.clone(), exports: feed.clone() };
         let _ = app.update(Message::LiveFeed(Some(Box::new(feeds.clone()))));
         assert_eq!(app.feeds, Some(feeds));
         let _ = app.view();

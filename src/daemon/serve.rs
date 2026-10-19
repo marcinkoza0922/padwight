@@ -44,7 +44,7 @@ fn serve_client(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
     let response = match serde_json::from_str::<Request>(&line) {
         Ok(Request::WatchInput) => return watch_input(conn, tx),
         Ok(Request::WatchOverlay) => return watch_overlay(conn, tx),
-        Ok(Request::WatchFeed) => return watch_feed(conn, tx),
+        Ok(Request::WatchFeed(pick)) => return watch_feed(conn, tx, pick),
         Ok(req) => {
             let (reply_tx, reply_rx) = mpsc::channel();
             tx.send(Msg::Ipc { req, reply: reply_tx })?;
@@ -110,9 +110,9 @@ fn watch_input(conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
 }
 
 /// Streams the latest presses and what they did, like [`watch_input`].
-fn watch_feed(conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
+fn watch_feed(conn: &UnixStream, tx: &Sender<Msg>, pick: Option<String>) -> Result<()> {
     let (feed_tx, feed_rx) = mpsc::channel();
-    tx.send(Msg::WatchFeed(feed_tx))?;
+    tx.send(Msg::WatchFeed(pick, feed_tx))?;
     stream_latest(conn, &feed_rx)
 }
 

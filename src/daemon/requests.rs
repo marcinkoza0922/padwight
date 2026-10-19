@@ -133,7 +133,7 @@ impl Daemon {
                 Response::Ok
             }
             // Handled by the connection thread, which registers through `Msg::Watch`.
-            Request::WatchInput | Request::WatchFeed => Response::Error("watch requests must be the only request".into()),
+            Request::WatchInput | Request::WatchFeed(_) => Response::Error("watch requests must be the only request".into()),
             Request::ToggleOverlay => {
                 self.toggle_overlay(Layout::Keyboard, None);
                 Response::Ok

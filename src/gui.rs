@@ -917,7 +917,7 @@ impl App {
         Subscription::batch([
             iced::time::every(Duration::from_secs(1)).map(|_| Message::Poll),
             Subscription::run(watch_input),
-            Subscription::run(watch_feed),
+            Subscription::run_with(self.controller.clone(), watch_feed),
             iced::event::listen_with(undo_shortcut),
             iced::window::close_requests().map(Message::WindowCloseRequested),
             iced::window::close_events().map(|id| Message::Stage(StageMessage::Closed(id))),
@@ -1637,8 +1637,8 @@ fn close_on_signals() -> impl iced::futures::Stream<Item = Message> {
 }
 
 /// Streams the latest presses and what they did, like [`watch_input`].
-fn watch_feed() -> impl iced::futures::Stream<Item = Message> {
-    watch(Request::WatchFeed, |feeds: Option<Feeds>| Message::LiveFeed(feeds.map(Box::new)))
+fn watch_feed(pick: &Option<String>) -> impl iced::futures::Stream<Item = Message> + use<> {
+    watch(Request::WatchFeed(pick.clone()), |feeds: Option<Feeds>| Message::LiveFeed(feeds.map(Box::new)))
 }
 
 /// Streams the values a watch request sends, each wrapped by `wrap`; `None` when the daemon
