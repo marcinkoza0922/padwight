@@ -83,7 +83,7 @@ Tick an item once it's committed.
 
 ## Edit Controls and Quick Settings
 
-- [ ] 17. **The same setting has different words in the overlay and the window.**
+- [x] 17. **The same setting has different words in the overlay and the window.**
   - "Left stick dead zone" in Quick Settings vs "Deadzone" on the Sticks tab.
   - "Right stick" and "Left stick: the profile's" in Edit Controls vs "Left Stick" and
     "aim with Right Stick" in the window. Item 15 of the first pass capitalized sticks "everywhere",
@@ -93,48 +93,48 @@ Tick an item once it's committed.
     every row in Quick Settings says "on"/"off". Use one pair.
 
   (`unsaved.png`, `edit-stick.png`, `edit-gyro.png`, `edit-menu.png`, `12-sticks.png`)
-- [ ] 18. **The action page names actions differently from the window's action picker.**
+- [x] 18. **The action page names actions differently from the window's action picker.**
   The overlay lists "Keys…", "Left click", "Right click", "Middle click", "Back click" and
   "Quick Settings"; the window's "Choose an action" dialog lists "Keyboard", "Mouse button" and
   "Quick Settings menu". App settings calls the shortcuts "Screenshot" and "Start or stop recording",
   and the action picker calls the actions "Take screenshot" and "Toggle recording". One name each
   would let someone who learned one find it in the other (`edit-action.png`, `32-actions.png`,
   `03-shortcuts.png`).
-- [ ] 19. **On a button's action page, "Keys…" is the last item.** It's the most common action but
+- [x] 19. **On a button's action page, "Keys…" is the last item.** It's the most common action but
   sits at the bottom of the right column, after Force quit and four gyro actions. Keys, Gamepad
   button and Mouse clicks first, then gyro and system actions, would match the window's picker
   order (Press, Change how it presses, Open or switch, …) (`edit-action.png`).
-- [ ] 20. **"Now: E" looks like an action.** The first row of the action page shows the current
+- [x] 20. **"Now: E" looks like an action.** The first row of the action page shows the current
   binding but is styled like the choices under it. A non-selectable line under the title
   ("Now: E"), or a muted row, would read as status (`edit-action.png`).
-- [ ] 21. **Rows with glyph chips are taller than plain rows.** In Edit Controls, "LS RS Sticks" and
+- [x] 21. **Rows with glyph chips are taller than plain rows.** In Edit Controls, "LS RS Sticks" and
   "LT RT Triggers" are a few pixels taller than "Buttons" and "Gyro", and in a layer's page
   "LS Left stick: the profile's" rows are taller than "Combos (0)". The list looks uneven
   (`edit-controls.png`, `edit-layer.png`).
-- [ ] 22. **Only Sticks and Triggers have glyphs** on the Edit Controls page. Either give Buttons, Gyro
+- [x] 22. **Only Sticks and Triggers have glyphs** on the Edit Controls page. Either give Buttons, Gyro
   and Touchpad an icon too, or drop the chips, which repeat what the word says (`edit-controls.png`).
-- [ ] 23. **Counts are written two ways.** "Macros (1)", "Combos (0)", but "Buttons (0 bound)" on a
+- [x] 23. **Counts are written two ways.** "Macros (1)", "Combos (0)", but "Buttons (0 bound)" on a
   layer page. And a "(0)" count on an empty list doesn't add much: "Modes (0) ▸" could read
   "Modes: none ▸" or be dimmed (`edit-controls.png`, `edit-layer.png`).
-- [ ] 24. **"the app's" and "the profile's" are awkward values.** "Font: the app's",
+- [x] 24. **"the app's" and "the profile's" are awkward values.** "Font: the app's",
   "On-screen keyboard look: the app's", "Nintendo button layout: as the controller's",
   "Left stick: the profile's" and "Closes with: B (its kind's)". The window says "Following the …
   set on the App settings page". Short words such as "Font: App settings", "Left stick: same as
   profile" and "Closes with: B (default)" would read better (`edit-game.png`, `edit-layer.png`,
   `edit-menu.png`).
-- [ ] 25. **Some stick and gyro values have no unit or meaning.** "Outer boost: 0.00", "Curve: 2.00",
+- [x] 25. **Some stick and gyro values have no unit or meaning.** "Outer boost: 0.00", "Curve: 2.00",
   "Acceleration: 0% faster", "Turning read as: Yaw (turn)" and the graph caption
   "50°/s now: 1.00×". The window's sliders have explanations beside them; the overlay could add a
   one-line hint for the highlighted row at the bottom of the panel (`edit-stick.png`,
   `edit-gyro.png`).
-- [ ] 26. **The "▼ more below" mark is a lone triangle at the bottom-left.** It's small, sits under
+- [x] 26. **The "▼ more below" mark is a lone triangle at the bottom-left.** It's small, sits under
   the first column only and doesn't say how many rows are hidden. Center it, or show "▼ 4 more"
   (`edit-action.png`, `edit-game.png`, `edit-menu.png`).
-- [ ] 27. **The visualizer panels float in the middle of the right column.** On the stick and gyro
+- [x] 27. **The visualizer panels float in the middle of the right column.** On the stick and gyro
   pages the "Stick travel" and "Pointer speed" panels start well below the first row, leaving a gap
   above them. Top-aligning them with the first row would tie them to the list (`edit-stick.png`,
   `edit-gyro.png`).
-- [ ] 28. **The typing footer is laid out differently from every other footer.** It has no "·"
+- [x] 28. **The typing footer is laid out differently from every other footer.** It has no "·"
   separators and wider gaps ("✚ move  A type  X delete (hold to repeat)  Y space  Menu done  hold
   LT shift  hold B to cancel"), and "hold B to cancel" has a "to" that the others don't. Match the
   other footers: "… · hold LT shift · hold B cancel" (`edit-typing.png`).
@@ -277,7 +277,7 @@ Tick an item once it's committed.
 - [ ] 59. **The mouse-mode gyro checkbox is hard to parse.** "Gyro moves the pointer, as the
   profile's gyro does (at a default speed if it aims a stick or is off)". Something like "Gyro moves
   the pointer" with the bracketed part in an ⓘ would do (`03-shortcuts.png`).
-- [ ] 60. **"Quick Settings menu" on Controller shortcuts, "Quick Settings" in the overlay.** Item 20
+- [x] 60. **"Quick Settings menu" on Controller shortcuts, "Quick Settings" in the overlay.** Item 20
   of the third pass kept "Quick Settings" as the panel's name; the shortcut row and the action
   picker add "menu" (`03-shortcuts.png`, `32-actions.png`).
 - [ ] 61. **"Play or pause" in the window, "play / pause" in the overlay.** The media shortcut row says
