@@ -100,7 +100,11 @@ pub(super) fn key_input<'a>(
 ) -> Element<'a, Message> {
     let valid = keys.iter().all(|k| KeyCode::from_str(k).is_ok());
     let input = field(placeholder, &keys_to_text(keys)).on_input(on_input).width(180);
-    let pick = button(text("⌨").size(14)).style(style::secondary).on_press(open_picker);
+    let pick = tooltip(
+        button(text("⌨").size(14)).style(style::secondary).on_press(open_picker),
+        container(text("Pick a key from a keyboard").size(13)).padding(8).style(style::tooltip),
+        tooltip::Position::Top,
+    );
     let mut r = row![input, pick].spacing(6).align_y(Alignment::Center);
     if !valid {
         r = r.push(text("unknown key").size(12).color(ERROR_COLOR));

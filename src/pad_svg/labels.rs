@@ -24,6 +24,10 @@ pub const LABEL_TEXT_SIZE: f32 = 11.0;
 /// Room for label text inside its pill: the column less the pill's padding and border.
 const LABEL_TEXT_WIDTH: f32 = LABEL_COLUMN - 14.0;
 
+/// What ends the label of a button that also has a double tap, triple tap or long press. It
+/// survives the label being cut, and the picture draws it in blue.
+pub const GESTURE_MARK: &str = " +";
+
 /// A mapping label's text and row; it sits in the left or right column.
 pub struct PlacedLabel {
     pub text: String,
@@ -283,9 +287,17 @@ pub fn leaders(labels: &[(Spot, String)], model: Option<PadModel>) -> String {
 }
 
 /// Shortens `label` with an ellipsis so it fits on one line of its column. A quoted name that
-/// is cut keeps its closing quote: “Menu “Augmentat…””.
+/// is cut keeps its closing quote: “Menu “Augmentat…””, and a [`GESTURE_MARK`] stays at the end.
 fn fit_label(label: &str) -> String {
-    let budget = LABEL_TEXT_WIDTH / LABEL_TEXT_SIZE;
+    if let Some(rest) = label.strip_suffix(GESTURE_MARK) {
+        let mark: f32 = GESTURE_MARK.chars().map(glyph_width).sum();
+        return fit_within(rest, LABEL_TEXT_WIDTH / LABEL_TEXT_SIZE - mark) + GESTURE_MARK;
+    }
+    fit_within(label, LABEL_TEXT_WIDTH / LABEL_TEXT_SIZE)
+}
+
+/// [`fit_label`] for a `budget` in ems.
+fn fit_within(label: &str, budget: f32) -> String {
     if label.chars().map(glyph_width).sum::<f32>() <= budget {
         return label.to_string();
     }
@@ -341,6 +353,7 @@ mod tests {
     fn wide_letters_are_cut_sooner_than_narrow_ones() {
         assert_eq!(fit_label("Menu “Augmentations”"), "Menu “Augmentat…”", "a cut name keeps its closing quote");
         assert_eq!(fit_label("Menu “Belt” +"), "Menu “Belt” +");
+        assert_eq!(fit_label("Menu “Augmentations” +"), "Menu “Augment…” +", "the gesture mark outlives the cut");
         assert_eq!(fit_label("Hold: fill all"), "Hold: fill all");
         assert_eq!(fit_label("Keypad PLUS"), "Keypad PLUS");
     }

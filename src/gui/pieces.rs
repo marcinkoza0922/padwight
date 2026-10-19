@@ -191,15 +191,9 @@ fn chip<'a>(segment: Segment) -> Element<'a, Message> {
     };
     let fill = fill.map(|[r, g, b]| Color::from_rgb8(r, g, b));
     // The thinnest marks stay a sliver at any size, so they're named instead.
-    let label = match label.as_str() {
-        "'" => "Apostrophe".to_string(),
-        "`" => "Backtick".to_string(),
-        "," => "Comma".to_string(),
-        "." => "Period".to_string(),
-        _ => label,
-    };
-    // A one-character cap is square, as wide as a round one, and a lone punctuation mark (`;`,
-    // `[`) is drawn larger, so it isn't a sliver.
+    let label = crate::keyboard::mark_name(&label).map_or(label, str::to_string);
+    // A one-character cap is square, as wide as a round one, and a lone punctuation mark left
+    // unnamed (`-`, `*`) is drawn larger, so it isn't a sliver.
     let single = label.chars().count() == 1;
     let punctuation = single && label.chars().all(|c| c.is_ascii_punctuation());
     let label = text(label).size(if punctuation { 17 } else { 12 });

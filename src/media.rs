@@ -85,7 +85,7 @@ pub struct MediaView {
 }
 
 /// The controls, as the overlay reminds you, a line for each.
-const HINT: &str = "{leftright} seek · {updown} volume · {mute} mute\n{previous} {next} track · {play} play / pause · {player} player · {media_close} close";
+const HINT: &str = "{leftright} seek · {updown} volume · {mute} mute\n{previous} {next} track · {play} play or pause · {player} player · {media_close} close";
 
 impl MediaView {
     /// A made-up track, drawn with `style`, for the settings previews.

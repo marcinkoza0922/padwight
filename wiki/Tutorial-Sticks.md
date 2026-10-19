@@ -47,7 +47,7 @@ Each stick's settings run in a fixed order, and tuning them in that order saves 
 1. **Deadzone**: with the controller untouched, raise it until the *Stick travel* picture's dot stays inside the shaded middle, then stop. A bigger one than needed only makes small pushes do nothing.
 2. **Deadzone shape**: leave it on **Circle**. Try **Cross** on a ring for movement that should stay clean along straight lines.
 3. **Anti-deadzone**: for a stick set to **Gamepad stick**, in a game that ignores small pushes. Raise it until the lightest push moves the game, then back off a step. The *Response* picture shows the step it adds. Mouse and ring modes don't need it.
-4. **Anti-deadzone buffer**: only if you want a flat patch just past the deadzone, such as a steady sneak.
+4. **Anti-deadzone hold**: only if you want a flat patch just past the deadzone, such as a steady sneak.
 5. **Invert X** and **Rotate output** at the bottom: for a game that expects a flipped or turned stick.
 
 Change one setting, press **Save & apply**, and test it in the game before the next.

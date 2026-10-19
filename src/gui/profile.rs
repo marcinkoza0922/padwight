@@ -150,6 +150,16 @@ fn stick_mode(cfg: &StickConfig, s: Stick) -> Option<&'static str> {
     })
 }
 
+/// An action as its callout on the picture says it: the summary, shortened where the column is
+/// too narrow for it. A menu is its name alone, as the list below the picture marks it a menu.
+fn callout(action: &ButtonAction) -> String {
+    match action {
+        ButtonAction::GyroClutch => "Gyro clutch".into(),
+        ButtonAction::OpenMenu(name) => format!("“{name}”"),
+        _ => summarize(action),
+    }
+}
+
 pub(super) fn drawing_labels(p: &Profile) -> Vec<(pad_svg::Spot, String)> {
     let mut labels = Vec::new();
     for b in Button::ALL {
@@ -162,9 +172,9 @@ pub(super) fn drawing_labels(p: &Profile) -> Vec<(pad_svg::Spot, String)> {
             _ => None,
         };
         let click = (*p.button(b) != usual || gestures).then(|| {
-            let mut label = summarize(p.button(b));
+            let mut label = callout(p.button(b));
             if gestures {
-                label.push_str(" +");
+                label.push_str(pad_svg::GESTURE_MARK);
             }
             label
         });
@@ -181,7 +191,7 @@ pub(super) fn drawing_labels(p: &Profile) -> Vec<(pad_svg::Spot, String)> {
             TriggerAction::Gamepad(out) if *out == t => continue,
             TriggerAction::Gamepad(out) => format!("Pad {}", if *out == Trigger::Left { "LT" } else { "RT" }),
             TriggerAction::Disabled => "Disabled".into(),
-            TriggerAction::Button { action, .. } => summarize(action),
+            TriggerAction::Button { action, .. } => callout(action),
         };
         labels.push((pad_svg::Spot::Trigger(t), label));
     }
@@ -297,7 +307,7 @@ fn tab_words(tab: ProfileTab) -> &'static [&'static str] {
     match tab {
         ProfileTab::Buttons | ProfileTab::Combos => &[],
         ProfileTab::Sticks => &[
-            "sticks left stick right stick mode mouse gamepad flick ring sectors first sector wasd arrows scroll dead zone deadzone shape anti-deadzone buffer dead angle curve response speed vertical smoothing turn size invert directions press at stickiness fill with test turn",
+            "sticks left stick right stick mode mouse gamepad flick ring sectors first sector wasd arrows scroll dead zone deadzone shape anti-deadzone hold buffer dead angle curve response speed vertical smoothing turn size invert directions press at stickiness fill with test turn",
             "triggers left trigger right trigger zones add zone walk modifier shift partial push range from",
         ],
         ProfileTab::Gyro => &[
@@ -1039,8 +1049,8 @@ impl App {
             _ => self.live_caption(),
         };
         // A trailing "+" on a callout is too short to explain itself.
-        let caption = if labels.iter().any(|(_, l)| l.ends_with(" +")) {
-            format!("{caption}\n“+”: also does something on a double tap, triple tap or long press")
+        let caption = if labels.iter().any(|(_, l)| l.ends_with(pad_svg::GESTURE_MARK)) {
+            format!("{caption}\nA blue “+” after a label: that button also does something on a double tap, triple tap or long press")
         } else {
             caption
         };

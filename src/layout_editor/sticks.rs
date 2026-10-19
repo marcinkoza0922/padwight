@@ -143,7 +143,7 @@ pub(super) fn stick_rows(config: &Config, owner: Owner, s: Stick) -> Vec<Row> {
         })
     }));
     rows.push(num((owner, s), "Anti-deadzone", cfg.anti_deadzone, &DEADZONE, |c, v| set(&mut c.anti_deadzone, v)));
-    rows.push(num((owner, s), "Anti-deadzone buffer", cfg.anti_deadzone_buffer, &DEADZONE, |c, v| set(&mut c.anti_deadzone_buffer, v)));
+    rows.push(num((owner, s), "Anti-deadzone hold", cfg.anti_deadzone_buffer, &DEADZONE, |c, v| set(&mut c.anti_deadzone_buffer, v)));
     rows.push(switch(owner, s, "Invert X", cfg.invert_x, |c, on| set(&mut c.invert_x, on)));
     rows.push(num((owner, s), "Rotate output", cfg.rotate, &START_ANGLE, |c, v| set(&mut c.rotate, v)));
     rows.push(num((owner, s), "Directions press at", cfg.key_threshold, &FRACTION, |c, v| set(&mut c.key_threshold, v)));

@@ -212,14 +212,15 @@ impl ButtonAction {
     }
 }
 
-/// A key's label, with single punctuation characters quoted so they stay visible (“;”, “]”).
-/// The apostrophe and backtick are named instead: between quote marks they read as empty quotes.
+/// A key's label, with thin marks named (“Semicolon”) and other single punctuation characters
+/// quoted so they stay visible (“-”).
 fn key_name(code: &str) -> String {
     let label = crate::keyboard::label(code);
+    if let Some(name) = crate::keyboard::mark_name(&label) {
+        return name.into();
+    }
     let mut chars = label.chars();
     match (chars.next(), chars.next()) {
-        (Some('\''), None) => "Apostrophe".into(),
-        (Some('`'), None) => "Backtick".into(),
         (Some(c), None) if !c.is_alphanumeric() => format!("“{c}”"),
         _ => label,
     }

@@ -12,7 +12,7 @@ Each button has a row. Click its name to open it.
 2. The rows of other buttons stay as they were. A closed row shows the button's glyph, then what it does. Once any button has a gesture, each gesture gets a column of its own (**Double tap**, **Long press**…), so you can read all the long presses down one column. In the picture (2), X (West) types ; and has a long press. Rows still doing what the button itself does are dimmed.
 3. The **Tap window** and **Long press after** sliders under the list set the timing for every button in the profile. Leave them for now.
 
-The action dialog lists every kind in groups, each with a line on what it does: **Press** (Keys, Mouse click, Scroll wheel, Gamepad button, Disabled), **Change how it presses** (Toggle, Turbo, Several at once, Macro), **Open or switch** (menus, layers, modes, info and log overlays), **On-screen tools**, **Gyro** and **System**. The kind the action has now is highlighted; Cancel, or a click beside the dialog, leaves it as it was.
+The action dialog lists every kind in groups, each with a line on what it does: **Press** (Keys, Mouse click, Scroll wheel, Gamepad button, Disabled), **Change how it presses** (Toggle, Turbo, Several at once, Macro), **Open or switch** (menus, layers, modes), **On screen** (the keyboard, numpad, Quick Settings, media controls, info and log overlays), **Gyro** and **System**. The kind the action has now is highlighted; Cancel, or a click beside the dialog, leaves it as it was.
 
 ## 2. Give the same button a second job
 

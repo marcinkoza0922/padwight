@@ -2,7 +2,7 @@
 
 use iced::{
     Color, Element,
-    widget::{container, pin, stack, svg, text},
+    widget::{container, pin, row, stack, svg, text},
 };
 
 use crate::{
@@ -10,6 +10,9 @@ use crate::{
     ipc::InputSnapshot,
     pad_svg::{self, Spot},
 };
+
+/// The sign a [`pad_svg::GESTURE_MARK`] is drawn as.
+const GESTURE_SIGN: &str = "+";
 
 /// The controller SVG with button letters and mapping-label pills placed over it. (iced's
 /// SVG renderer may not draw SVG text, so text is real widgets pinned at drawing
@@ -49,8 +52,14 @@ pub fn controller_drawing<'a, M: 'a>(
         // An input that does nothing is grayed, as the list below the picture shows it.
         let off = l.text.starts_with("Disabled");
         let (ink, edge) = if off { ([0x8a, 0x8f, 0x98], [0x5d, 0x64, 0x70]) } else { ([0xe6, 0xed, 0xf3], [0x4e, 0xa1, 0xff]) };
-        let label = text(l.text).size(pad_svg::LABEL_TEXT_SIZE).wrapping(text::Wrapping::None);
-        let pill = container(label.color(Color::from_rgb8(ink[0], ink[1], ink[2])))
+        let label = |s: String| text(s).size(pad_svg::LABEL_TEXT_SIZE).wrapping(text::Wrapping::None);
+        // The gesture mark is drawn in blue, apart from the action, so it reads as a sign.
+        let (words, mark) = match l.text.strip_suffix(pad_svg::GESTURE_MARK) {
+            Some(words) => (words.to_string(), Some(label(GESTURE_SIGN.into()).color(Color::from_rgb8(0x4e, 0xa1, 0xff)))),
+            None => (l.text, None),
+        };
+        let words = label(words).color(Color::from_rgb8(ink[0], ink[1], ink[2]));
+        let pill = container(row![words].extend(mark.map(Element::from)).spacing(3))
             .padding([2, 6])
             .style(move |_: &iced::Theme| container::Style {
                 background: Some(Color::from_rgb8(0x1d, 0x20, 0x26).into()),

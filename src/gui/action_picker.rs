@@ -12,12 +12,13 @@ mod icons;
 use icons::icon;
 
 /// The kinds in the dialog, by group. Each place's own list (`ACTION_KINDS`, a menu item's…) picks
-/// from these, and groups it has nothing of are left out.
+/// from these, and groups it has nothing of are left out. Each group is sized so that, in rows of
+/// [`COLUMNS`], none ends on a lone tile.
 const GROUPS: [(&str, &[ActionKind]); 6] = [
     ("Press", &[ActionKind::Keys, ActionKind::Mouse, ActionKind::Wheel, ActionKind::Gamepad, ActionKind::PadTrigger, ActionKind::PadStick, ActionKind::Disabled]),
     ("Change how it presses", &[ActionKind::Toggle, ActionKind::Turbo, ActionKind::Multiple, ActionKind::Macro]),
-    ("Open or switch", &[ActionKind::Menu, ActionKind::Layer, ActionKind::Mode, ActionKind::Info, ActionKind::Log]),
-    ("On-screen tools", &[ActionKind::Overlay, ActionKind::Numpad, ActionKind::QuickSettings, ActionKind::Media]),
+    ("Open or switch", &[ActionKind::Menu, ActionKind::Layer, ActionKind::Mode]),
+    ("On screen", &[ActionKind::Overlay, ActionKind::Numpad, ActionKind::QuickSettings, ActionKind::Media, ActionKind::Info, ActionKind::Log]),
     ("Gyro", &[ActionKind::GyroToggle, ActionKind::GyroClutch, ActionKind::GyroHold, ActionKind::GyroRecenter]),
     ("System", &[ActionKind::Screenshot, ActionKind::Recording, ActionKind::ForceQuit]),
 ];
@@ -31,10 +32,12 @@ const PAD_GROUPS: [(&str, &[Button]); 4] = [
     ("D-pad", &[Button::DpadUp, Button::DpadDown, Button::DpadLeft, Button::DpadRight]),
 ];
 
-/// A kind's tile width, so the tiles of every group line up in three columns.
+/// How many kind tiles a row holds, in a window wide enough.
+const COLUMNS: f32 = 4.0;
+/// A kind's tile width, so the tiles of every group line up in columns.
 const TILE_WIDTH: f32 = 250.0;
-/// A controller button's tile: four to the same width.
-const PAD_TILE_WIDTH: f32 = (TILE_WIDTH * 3.0 - 8.0) / 4.0;
+/// A controller button's tile: five to the same width, so each group of buttons is one row.
+const PAD_TILE_WIDTH: f32 = (TILE_WIDTH * COLUMNS + 8.0 * (COLUMNS - 1.0) - 8.0 * 4.0) / 5.0;
 
 /// What a tile offers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -272,7 +275,7 @@ pub(super) fn view_action_picker(picker: &ActionPicker) -> Element<'_, Message> 
         .spacing(14),
     )
     .padding(20)
-    .max_width(TILE_WIDTH * 3.0 + 8.0 * 2.0 + 16.0 + 40.0)
+    .max_width(TILE_WIDTH * COLUMNS + 8.0 * (COLUMNS - 1.0) + 16.0 + 40.0)
     .style(style::dialog);
     let backdrop = container(center(opaque(dialog)).padding(24))
         .width(Length::Fill)

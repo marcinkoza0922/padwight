@@ -27,7 +27,7 @@ fn stick(name: &str) -> Option<&'static str> {
         "Deadzone" => "How far the stick moves before anything happens, of a full push.",
         "Deadzone shape" => "Circle treats every direction alike; Cross keeps a push along one axis clean of the other.",
         "Anti-deadzone" => "Starts the output this far out, to get past the game's own deadzone.",
-        "Anti-deadzone buffer" => "Travel past the deadzone that stays at the anti-deadzone before rising.",
+        "Anti-deadzone hold" => "Travel past the deadzone that stays at the anti-deadzone before rising.",
         "Rotate output" => "Turns the stick's directions by this angle.",
         "Directions press at" => "How far a push goes before the stick's directions count as pressed.",
         "First sector at" => "Where the first sector is centered, clockwise from up.",

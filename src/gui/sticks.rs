@@ -142,7 +142,7 @@ fn deadzone_extras<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a StickConfig
             ),
         ))
         .push(box_row(
-            "Anti-deadzone buffer",
+            "Anti-deadzone hold",
             with_help(
                 fraction_editor(0.0..=0.5, cfg.anti_deadzone_buffer, 0.01, "", set(|c, v| c.anti_deadzone_buffer = v)),
                 "Extra travel past the deadzone where the output stays at the anti-deadzone before it starts to rise.",
@@ -256,11 +256,12 @@ fn ring_sectors<'a>(
     let mut list = column![].spacing(14);
     for i in 0..usize::from(*sectors) {
         let angle = start_angle + i as f32 * width;
-        let arrow = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"][((angle / 45.0).round() as usize) % 8];
+        // The nearest of the eight directions, in words: an arrow glyph is too small to tell apart.
+        let direction = crate::config::COMPASS[((angle / 45.0).round() as usize) % 8].0;
         let action = actions.get(i).unwrap_or(&ButtonAction::Disabled);
         let target = Target::RingSector(s, i);
         // Top-aligned, since an editor can be several lines tall: the label stays by its first.
-        let label = container(text(format!("{arrow}  Sector {}", i + 1))).padding([6, 0]).width(ROW_LABEL);
+        let label = container(text(format!("Sector {} · {direction}", i + 1)).wrapping(text::Wrapping::None)).padding([6, 0]).width(ROW_LABEL);
         let editor = fill_x(action_editor(action, Button::South, &ACTION_KINDS, set_action(target), KeyField::root(target), names));
         list = list.push(row![label, editor].spacing(10));
     }
