@@ -35,18 +35,26 @@ impl Daemon {
         self.broadcast_overlay();
     }
 
-    /// What the Guide overlay's Mappings show: the active profile in the mode and page the Guide
-    /// menu is on.
+    /// What the Guide overlay's Mappings show: the profile of the controller that opened the Guide
+    /// overlay, in the mode and page the Guide menu is on.
     pub(super) fn guide_view(&self) -> Option<crate::info::GuideView<'_>> {
         let menu = self.guide_menu.as_ref();
         Some(crate::info::GuideView {
-            profile: self.config.active()?,
+            profile: self.guide_profile()?,
             modes: self.scope.game_modes(),
             layers: &self.scope.layers,
             shown: menu.map_or_else(|| self.guide_current_mode(), |m| m.mode),
             current: self.guide_current_mode(),
             page: menu.map_or(0, |m| m.page),
         })
+    }
+
+    /// The profile of the controller that opened the Guide overlay (the active one when none is found).
+    pub(super) fn guide_profile(&self) -> Option<&Profile> {
+        match self.devices.values().find(|d| d.engine.guide_overlay_open()) {
+            Some(pad) => self.config.profile_for(&pad.id),
+            None => self.config.active(),
+        }
     }
 
     /// The mode on for the controller that opened the Guide overlay, counted as the Mappings
@@ -153,7 +161,7 @@ impl Daemon {
         let Some(dev) = self.devices.get_mut(&device) else { return };
         let mut out = Vec::new();
         if dev.refresh_layers(&self.config)
-            && let Some(base) = self.config.active()
+            && let Some(base) = self.config.profile_for(&dev.id)
         {
             dev.engine.resync(layered(&dev.layered, base), &mut out);
         }

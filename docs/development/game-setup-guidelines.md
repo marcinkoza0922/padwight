@@ -66,6 +66,14 @@ Classic PC games often come in more than one version: the original, a modern rem
 - **If the game is known to support mouse and gamepad at the same time**, map **gyro to mouse**. The gyro then aims with the mouse while the sticks and buttons keep playing the game's own scheme.
 - **Otherwise, try a mouse joystick approach**: map **gyro to the right stick**, shaped to emulate mouse movement as closely as possible, so the game's mouse aiming feels the same with a controller. Build the gyro and flick stick profiles on top of it.
 
+## Strategy games
+
+This covers every game played with a pointer on a map or a board: real-time and turn-based strategy, city builders, tycoon games and colony builders.
+
+- **Ship a gyro variant** next to the plain profile, so the player can try a tilt-controlled cursor. Copy the plain profile and add `requires = ["gyro"]`, gyro-to-mouse at 1x to start, and a Select + Start chord for the clutch, like the [StarCraft pack](../../packs/starcraft.padpack) ("Gameplay + Gyro"). The gyro is a fine pointer next to the right stick, which keeps moving the cursor, so no button changes. Name it `<Game> + Gyro` and say so at the top of its notes.
+- **A game with native controller support is exempt.** Its scheme is a passthrough (Factorio, Against the Storm), and a gyro-driven mouse would fight it.
+- **The rules point to the plain profile.** Gyro is an extra and is never the default.
+
 ## Hotkeys and menus
 
 - Useful hotkeys that are only used occasionally can go in a menu. Choose the menu type by what the menu holds:

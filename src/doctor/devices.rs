@@ -10,8 +10,8 @@ use std::{
 const BTN_SOUTH: usize = 0x130;
 /// INPUT_PROP_ACCELEROMETER: how the kernel marks a motion sensor.
 const PROP_ACCELEROMETER: usize = 6;
-/// The drivers (as udev's `DRIVERS` match sees them) whose motion sensors the shipped rule covers.
-const MOTION_DRIVERS: [&str; 3] = ["playstation", "sony", "nintendo"];
+/// The drivers (as udev's `DRIVERS` match sees them) the shipped motion-sensor and hidraw rules cover.
+const PAD_DRIVERS: [&str; 3] = ["playstation", "sony", "nintendo"];
 
 /// An input node that is a gamepad or a motion sensor.
 pub struct Node {
@@ -29,7 +29,16 @@ pub struct Node {
 impl Node {
     /// A motion sensor of a PlayStation or Nintendo controller, which the motion-sensor rule covers.
     pub fn is_pad_motion(&self) -> bool {
-        self.motion && self.drivers.iter().any(|d| MOTION_DRIVERS.contains(&d.as_str()))
+        self.motion && self.pad_driver()
+    }
+
+    /// A PlayStation or Nintendo controller, whose raw HID node Steam and SDL games read.
+    pub fn is_hidraw_pad(&self) -> bool {
+        self.gamepad && self.pad_driver()
+    }
+
+    fn pad_driver(&self) -> bool {
+        self.drivers.iter().any(|d| PAD_DRIVERS.contains(&d.as_str()))
     }
 
     pub fn denied(&self) -> bool {

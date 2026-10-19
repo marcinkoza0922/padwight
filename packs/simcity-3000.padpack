@@ -146,6 +146,149 @@ text = "Zoom in / out"
 inputs = ["button:DpadLeft", "button:DpadRight"]
 text = "Rotate"
 
+
+[[profiles]]
+name = "SimCity 3000 + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_B"] }
+North = { keys = ["KEY_LEFTCTRL"] }
+LeftBumper = { open_menu = "Zones" }
+RightBumper = { open_menu = "Build" }
+Select = { open_menu = "Windows" }
+Start = { keys = ["KEY_LEFTCTRL", "KEY_P"] }
+LeftStick = { keys = ["KEY_SLASH"] }
+RightStick = { keys = ["KEY_SPACE"] }
+DpadUp = { keys = ["KEY_KPPLUS"] }
+DpadDown = { keys = ["KEY_KPMINUS"] }
+DpadLeft = { keys = ["KEY_PAGEUP"] }
+DpadRight = { keys = ["KEY_PAGEDOWN"] }
+
+[profiles.gestures.DpadLeft.long_press]
+keys = ["KEY_COMMA"]
+
+[profiles.gestures.DpadRight.long_press]
+keys = ["KEY_DOT"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTCTRL", "KEY_S"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
+The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
+Hold {lb} for the zones and {rb} for roads, utilities and services, picking with the right stick {rs}, then drag with {rt} to place.
+{east} closes the open window, or picks the centering tool when none is open.
+Hold {north} and click to query a tile. Hold the {dpad} left or right to slow down or speed up time, and click {l3} to pause.
+Double tap {start} to save the city.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the view" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (use the tool)" }
+"trigger:Left" = { text = "Right click" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close window / centering tool" }
+"button:West" = { text = "Bulldoze" }
+"button:North" = { text = "Hold and click: query" }
+"button:LeftBumper" = { text = "Hold: zones" }
+"button:RightBumper" = { text = "Hold: roads, utilities, services" }
+"button:LeftStick" = { text = "{icon:pause} Pause" }
+"button:RightStick" = { text = "Center on the pointer" }
+"button:Select" = { text = "Budget, advisors, data" }
+"button:Start" = { text = "Preferences" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Save city" }
+"gesture:button:DpadLeft:long_press" = { text = "Slower" }
+"gesture:button:DpadRight:long_press" = { text = "Faster" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
 [[menus]]
 name = "Zones"
 

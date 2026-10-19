@@ -162,6 +162,153 @@ Naming a ride or a park: {guide} + {west} opens the on-screen keyboard.'''
 inputs = ["button:DpadLeft", "button:DpadRight"]
 text = "Rotate the camera"
 
+
+[[profiles]]
+name = "Parkitect + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_SPACE"]}
+North = {keys = ["KEY_LEFTSHIFT"]}
+LeftBumper = {open_menu = "Build"}
+RightBumper = {open_menu = "Speed"}
+Select = {open_menu = "View"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_LEFTALT"]}
+RightStick = {keys = ["KEY_LEFTCTRL"]}
+DpadUp = {keys = ["KEY_PAGEUP"]}
+DpadDown = {keys = ["KEY_PAGEDOWN"]}
+DpadLeft = {keys = ["KEY_Q"]}
+DpadRight = {keys = ["KEY_E"]}
+
+[profiles.gestures.Start]
+double_tap = {keys = ["KEY_O"]}
+
+[profiles.gestures.West]
+long_press = {keys = ["KEY_P"]}
+
+[profiles.gestures.DpadUp]
+long_press = {keys = ["KEY_DOT"]}
+
+[profiles.gestures.DpadDown]
+long_press = {keys = ["KEY_COMMA"]}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.3
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.15
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer and the left stick {ls} moves the camera. {rt} or {south} clicks, {lt} right-clicks to delete what's under the pointer.
+Hold {lb} for the build tools, aiming with the right stick {rs}. Hold {rb} and press the {dpad} for the game speed: left is normal, up fast, right fastest, and down pauses.
+{west} rotates what you're placing; hold it to pick up the look of an object already placed. Hold {north} and move the pointer to change height.
+Hold {l3} to snap to the grid and {r3} to snap to height while you place.
+{up} and {down} zoom, and holding them grows or shrinks the object. {left} and {right} turn the camera.
+{select} lists the map view, the X-ray toggles and the screenshot. Double tap {start} to quick save.
+Naming a ride or a park: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move the camera"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Left click"}
+"trigger:Left" = {text = "Right click (delete object)"}
+"button:South" = {text = "Left click"}
+"button:East" = {text = "Cancel / close"}
+"button:West" = {text = "{icon:rotate} Rotate object"}
+"gesture:button:West:long_press" = {text = "Pipette (pick up a placed object)"}
+"button:North" = {text = "Hold: change height"}
+"button:LeftBumper" = {text = "Hold: build"}
+"button:RightBumper" = {text = "Hold + {dpad}: game speed"}
+"button:Select" = {text = "View and screens"}
+"button:LeftStick" = {text = "Hold: snap to grid"}
+"button:RightStick" = {text = "Hold: snap to height"}
+"button:Start" = {text = "Menu"}
+"gesture:button:Start:double_tap" = {text = "{icon:save} Quick save"}
+"button:DpadUp" = {text = "Zoom in"}
+"button:DpadDown" = {text = "Zoom out"}
+"gesture:button:DpadUp:long_press" = {text = "Bigger object"}
+"gesture:button:DpadDown:long_press" = {text = "Smaller object"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate the camera"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
 [[menus]]
 name = "Build"
 

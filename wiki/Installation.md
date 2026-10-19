@@ -34,6 +34,7 @@ Run `padwight doctor`. It checks each item below, and for anything missing it pr
 | The `uinput` kernel module | `/dev/uinput` doesn't exist without it. | `dist/padwight-uinput.conf` in `/etc/modules-load.d/`, or `sudo modprobe uinput` for now. |
 | Read access to the controller's `/dev/input/event*` node | Its buttons and sticks come from there, and padwight takes the node exclusively so a game doesn't see both pads. | systemd's `uaccess` covers joysticks. Otherwise `sudo usermod -aG input $USER` and log in again. |
 | Read access to the controller's motion sensor | Gyro comes from a separate node, classed as an accelerometer, that `uaccess` leaves to root. | `dist/70-padwight-motion.rules`, which covers the `playstation`, `sony` and `nintendo` drivers only, so a laptop's tilt sensor is untouched. Without it everything but gyro works. |
+| Optional: no access to PlayStation and Switch controllers' `/dev/hidraw*` node | Steam, SDL games and Chromium browsers read those controllers there, past padwight's hold on the input node, so they see every press as well as the virtual pad. | `dist/72-padwight-hidraw.rules`, which closes the node to every program for the same three drivers. While padwight is off, Steam then has no gyro or lightbar control for them. |
 
 Rules go in `/etc/udev/rules.d/` and apply after `sudo udevadm control --reload && sudo udevadm trigger`.
 

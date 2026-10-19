@@ -56,7 +56,7 @@ fn the_picture_holds_for_its_minimum_time_before_switching() {
 }
 
 pub(super) fn device(name: &str, analog_triggers: bool, ignored: bool) -> ipc::DeviceInfo {
-    ipc::DeviceInfo { name: name.into(), path: String::new(), managed: !ignored, ignored, analog_triggers, rumble: true, gyro: false, paddles: false, touchpad: false, family: None, model: None }
+    ipc::DeviceInfo { name: name.into(), id: name.into(), path: String::new(), profile: String::new(), managed: !ignored, ignored, analog_triggers, rumble: true, gyro: false, paddles: false, touchpad: false, family: None, model: None }
 }
 
 pub(super) fn snapshot(buttons: &[Button], right_stick: (f32, f32)) -> InputSnapshot {

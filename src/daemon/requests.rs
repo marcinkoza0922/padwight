@@ -26,6 +26,8 @@ impl Daemon {
                 let mut new = *new;
                 new.enabled = self.config.enabled;
                 new.carry_active(&self.config.active);
+                // Chosen from the controller picker, not the editor.
+                new.controllers.clone_from(&self.config.controllers);
                 // What the folder held when the daemon read it, whatever the window last saw.
                 new.unreadable.clone_from(&self.config.unreadable);
                 self.replace_config(new)
@@ -74,6 +76,55 @@ impl Daemon {
                 }
                 self.switch_profile(target, BY_HAND);
                 Response::Ok
+            }
+            Request::SetController(look) => {
+                let Some(entry) = self.config.controllers.iter_mut().find(|c| c.id == look.id) else {
+                    return Response::Error("that controller isn't remembered".into());
+                };
+                entry.nickname = look.nickname.trim().to_string();
+                entry.color = look.color;
+                entry.player = look.player;
+                // Passing through is the only thing this can turn on or off; answering the
+                // question is done on the controller.
+                entry.pass_through = look.pass_through;
+                self.release_all(true);
+                self.resync_all();
+                match self.config.save_settings() {
+                    Ok(()) => Response::Ok,
+                    Err(e) => Response::Error(format!("saving config: {e:#}")),
+                }
+            }
+            Request::ForgetController(id) => {
+                self.config.controllers.retain(|c| c.id != id);
+                self.release_all(true);
+                self.resync_all();
+                match self.config.save_settings() {
+                    Ok(()) => Response::Ok,
+                    Err(e) => Response::Error(format!("saving config: {e:#}")),
+                }
+            }
+            Request::SetNintendoLayout { id, on } => {
+                self.config.set_nintendo_layout_for(&id, on);
+                self.release_all(true);
+                self.resync_all();
+                self.broadcast_overlay();
+                match self.config.save_settings() {
+                    Ok(()) => Response::Ok,
+                    Err(e) => Response::Error(format!("saving config: {e:#}")),
+                }
+            }
+            Request::ActivateFor { id, profile } => {
+                if self.config.active_game().profile(&profile).is_none() {
+                    return Response::Error(format!("no profile {profile:?} in the active setup"));
+                }
+                self.config.set_profile_for(&id, &profile);
+                self.release_all(true);
+                self.resync_all();
+                self.broadcast_overlay();
+                match self.config.save_settings() {
+                    Ok(()) => Response::Ok,
+                    Err(e) => Response::Error(format!("saving config: {e:#}")),
+                }
             }
             Request::NextProfile => {
                 if let Some(next) = self.config.next_profile(self.pad_features().as_deref()) {
@@ -157,7 +208,7 @@ impl Daemon {
         self.refresh_scope();
         let ignored = self.config.ignored_devices.clone();
         let enabled = self.config.enabled;
-        self.release_devices(|_, d| !enabled || ignored.contains(&d.name));
+        self.release_devices(|_, d| !enabled || ignored.contains(&d.id));
         self.resync_all();
         self.broadcast_overlay();
         self.save_and_rescan()

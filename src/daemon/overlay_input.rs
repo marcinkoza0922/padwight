@@ -40,6 +40,10 @@ impl Daemon {
                     changed = true;
                 }
             }
+            Some(Active::NewPad(..)) => match self.tick_new_pad(now) {
+                Some(moved) => (changed, repeated_step) = (moved, moved.then_some(sound::SoundOverlay::Offer)),
+                None => return,
+            },
             Some(Active::Settings(m, _)) if m.next_deadline().is_some_and(|d| d <= now) => {
                 if !self.settings_step(|menu, config| menu.tick(now, config)) {
                     self.broadcast_overlay();
@@ -114,6 +118,7 @@ impl Daemon {
     pub(super) fn guide_closes_overlay(&mut self) -> bool {
         match &mut self.active {
             Some(Active::Offer(_)) => self.answer_offer(OfferOutcome::No),
+            Some(Active::NewPad(..)) => self.answer_new_pad(NewPadOutcome::Later),
             Some(Active::Settings(menu, _)) => {
                 if menu.guide_pressed(&self.config) != Some(SystemOutcome::Close) {
                     self.broadcast_overlay();
@@ -222,6 +227,11 @@ impl Daemon {
                 Some(Active::Offer(_)) => {
                     if let Some(outcome) = self.offer_input(ev, now) {
                         return self.answer_offer(outcome);
+                    }
+                }
+                Some(Active::NewPad(..)) => {
+                    if let Some(outcome) = self.new_pad_input(ev, now) {
+                        return self.answer_new_pad(outcome);
                     }
                 }
                 None => return,

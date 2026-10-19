@@ -156,6 +156,152 @@ Click {r3} for the Track building mode while the ride construction window is ope
 inputs = ["button:DpadLeft", "button:DpadRight"]
 text = "Rotate the view left / right"
 
+
+[[profiles]]
+name = "OpenRCT2 + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_BACKSPACE"]}
+West = {keys = ["KEY_ESC"]}
+North = {keys = ["KEY_Z"]}
+LeftBumper = {open_menu = "Build"}
+RightBumper = {open_menu = "View"}
+Select = {open_menu = "Park"}
+Start = {keys = ["KEY_PAUSE"]}
+DpadUp = {keys = ["KEY_PAGEDOWN"]}
+DpadDown = {keys = ["KEY_PAGEUP"]}
+DpadLeft = {keys = ["KEY_LEFTSHIFT", "KEY_ENTER"]}
+DpadRight = {keys = ["KEY_ENTER"]}
+LeftStick = {keys = ["KEY_MINUS"]}
+RightStick = {mode = "Track building"}
+
+[profiles.gestures.East]
+long_press = {keys = ["KEY_LEFTSHIFT", "KEY_BACKSPACE"]}
+
+[profiles.gestures.Start]
+double_tap = {keys = ["KEY_LEFTCTRL", "KEY_F10"]}
+long_press = {keys = ["KEY_LEFTCTRL", "KEY_L"]}
+
+[profiles.gestures.LeftStick]
+long_press = {keys = ["KEY_EQUAL"]}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.3
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.15
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer. {rt} or {south} clicks, and {lt} right-clicks: it removes scenery and paths while building. Hold {lt} and move the pointer to drag the view.
+The left stick {ls} scrolls the view. {up} and {down} zoom, {left} and {right} rotate it.
+Hold {lb} for the build tools (land, water, scenery, paths, new rides) and {rb} for the view options, aiming with the right stick {rs}. The view menu stays open, so you can flip several.
+{select} lists the park screens: finances, research, rides, guests, staff, messages and the map.
+Click {l3} to slow the game down, hold it to speed it up. Double tap {start} to save and hold it to load.
+{north} rotates the object you're placing. {east} closes the top window, and holding {east} closes them all. {west} cancels building.
+Naming a ride or a guest: {guide} + {west} opens the on-screen keyboard.
+Click {r3} for the Track building mode while the ride construction window is open: the {dpad} turns and slopes, {lb} and {rb} bank, {south} builds, {west} removes, {north} goes straight (hold for the chain lift). {r3} or {east} comes back.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Scroll the view"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Left click"}
+"trigger:Left" = {text = "Right click (hold and move: drag the view)"}
+"button:South" = {text = "Left click"}
+"button:East" = {text = "Close window"}
+"gesture:button:East:long_press" = {text = "Close all windows"}
+"button:West" = {text = "Cancel construction"}
+"button:North" = {text = "{icon:rotate} Rotate object"}
+"button:LeftBumper" = {text = "Hold: build"}
+"button:RightBumper" = {text = "Hold: view options"}
+"button:Select" = {text = "Park screens"}
+"button:Start" = {text = "{icon:pause} Pause"}
+"button:DpadUp" = {text = "Zoom in"}
+"button:DpadDown" = {text = "Zoom out"}
+"button:LeftStick" = {text = "Slower game"}
+"gesture:button:LeftStick:long_press" = {text = "Faster game"}
+"button:RightStick" = {text = "{icon:coaster} Track building mode"}
+"gesture:button:Start:double_tap" = {text = "{icon:save} Save"}
+"gesture:button:Start:long_press" = {text = "{icon:load} Load"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate the view left / right"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
 [[menus]]
 name = "Build"
 

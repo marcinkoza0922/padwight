@@ -1,0 +1,490 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "0bded8dd-d277-4889-bb6e-8c5ed88e247a"
+name = "Planescape: Torment"
+version = "1.0"
+author = "Padwight"
+description = "Planescape: Torment on an Xbox-style pad, for the Infinity Engine's mouse and keyboard controls. The right stick moves the pointer, the left stick scrolls the map, RT or A left-clicks and LT right-clicks. B pauses, X selects the whole party, Y is the inventory and hold RB to highlight what you can use. Hold LB to pick a companion. Select lists the screens. Start backs out of every screen; double tap it to quick save, hold it to quick load."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Torment.exe"
+profile = "Planescape: Torment"
+
+[[rules]]
+kind = "executable"
+value = "Planescape Torment Enhanced Edition/Baldur.exe"
+profile = "Planescape: Torment"
+
+[[rules]]
+kind = "executable"
+value = "Planescape - Torment Enhanced Edition/Baldur.exe"
+profile = "Planescape: Torment"
+
+[[rules]]
+kind = "steam_app_id"
+value = "466300"
+profile = "Planescape: Torment"
+
+[[profiles]]
+name = "Planescape: Torment"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_0"] }
+North = { keys = ["KEY_I"] }
+LeftBumper = { open_menu = "Party" }
+RightBumper = { keys = ["KEY_TAB"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_J"] }
+DpadRight = { keys = ["KEY_M"] }
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTCTRL", "KEY_Q"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_LEFTCTRL", "KEY_L"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
+{east} pauses and unpauses, which is how most fights are played: pause, give orders, unpause. Hold {rb} to highlight doors, containers and people you can use.
+Hold {lb} and point with the right stick {rs} to pick one party member (or all six), then click. {west} selects the whole party.
+{start} (Escape) closes the inventory, character record, spell books and map, and opens the options in play.
+{select} lists the screens. The keys behind them are the game's defaults; if one does nothing, check Options, Gameplay, Assign Keys.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the map" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (move, use, attack)" }
+"trigger:Left" = { text = "Right click (cancel)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "{icon:pause} Pause" }
+"button:West" = { text = "Select the whole party" }
+"button:North" = { text = "{icon:bag} Inventory" }
+"button:LeftBumper" = { text = "Hold: pick a party member" }
+"button:RightBumper" = { text = "Hold: highlight objects" }
+"button:Select" = { text = "{icon:book} Character, spells, rest" }
+"button:Start" = { text = "Options / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"button:DpadLeft" = { text = "{icon:scroll} Journal" }
+"button:DpadRight" = { text = "{icon:map} Map" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Scroll lists"
+
+[[menus]]
+name = "Party"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:person} Player 1"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:person} Party 2"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:person} Party 3"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:person} Party 4"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:person} Party 5"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:person} Party 6"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:people} Everyone"
+action = { keys = ["KEY_0"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#150d12"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2a1a22"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c0623a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8a4a3a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#1c1016"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5c2f2a"
+
+[menus.style.glow]
+color = "#f0a070"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#8a4a3a"}
+vignette = {color = "#000000", opacity = 0.45, reach = 25}
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:person} Character record"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "{icon:bag} Inventory"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "{icon:scroll} Journal"
+action = { keys = ["KEY_J"] }
+
+[[menus.items]]
+label = "{icon:map} Map"
+action = { keys = ["KEY_M"] }
+
+[[menus.items]]
+label = "{icon:book} Mage spells"
+action = { keys = ["KEY_W"] }
+
+[[menus.items]]
+label = "{icon:cross} Priest spells"
+action = { keys = ["KEY_P"] }
+
+[[menus.items]]
+label = "{icon:sleep} {color:green}Rest{/color}"
+action = { keys = ["KEY_R"] }
+
+[[menus.items]]
+label = "{icon:gear} Options"
+action = { keys = ["KEY_O"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#150d12"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2a1a22"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c0623a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8a4a3a"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#1c1016"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5c2f2a"
+
+[menus.style.glow]
+color = "#f0a070"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#8a4a3a"}
+vignette = {color = "#000000", opacity = 0.45, reach = 25}
+
+[keyboard_style]
+corners = 0.1
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#150d12"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#2a1a22"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c0623a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8a4a3a"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#1c1016"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5c2f2a"
+
+[numpad_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#150d12"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#2a1a22"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c0623a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8a4a3a"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#1c1016"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5c2f2a"
+
+[media_style]
+corners = 0.1
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#150d12"
+opacity = 0.92
+
+[media_style.items]
+color = "#2a1a22"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c0623a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8a4a3a"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#1c1016"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5c2f2a"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#150d12"
+opacity = 0.92
+
+[menu_style.items]
+color = "#2a1a22"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c0623a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8a4a3a"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#1c1016"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5c2f2a"
+
+[menu_style.glow]
+color = "#f0a070"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#8a4a3a"}
+vignette = {color = "#000000", opacity = 0.45, reach = 25}
+
+[motion]
+keyboard = "stagger"
+numpad = "stagger"
+menu = "stagger"
+media = "stagger"
+offer = "stagger"
+info = "stagger"
+log = "stagger"
+
+[sounds.menu]
+step = {kind = "pluck", volume = 0.1, pitch = 1.1}
+pick = {kind = "clank", volume = 0.14, pitch = 1.2}
+open = {kind = "page", volume = 0.08}
+close = {kind = "page", volume = 0.06, pitch = 0.8}
+
+[sounds.numpad]
+step = {kind = "pluck", volume = 0.08, pitch = 1.1}
+pick = {kind = "clank", volume = 0.12, pitch = 1.2}
+
+[sounds.keyboard]
+step = {kind = "pluck", volume = 0.08, pitch = 1.1}
+pick = {kind = "keys", volume = 0.18}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}

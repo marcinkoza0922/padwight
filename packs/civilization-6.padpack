@@ -171,6 +171,154 @@ text = "Zoom in / out"
 inputs = ["button:DpadLeft", "button:DpadRight"]
 text = "Previous / next unit"
 
+
+[[profiles]]
+name = "Civilization VI + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_SPACE"] }
+North = { keys = ["KEY_F"] }
+LeftBumper = { open_menu = "Orders" }
+RightBumper = { keys = ["KEY_ENTER"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_BACKSLASH"] }
+RightStick = { open_menu = "Lenses" }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_COMMA"] }
+DpadRight = { keys = ["KEY_DOT"] }
+
+[profiles.gestures.DpadLeft.long_press]
+keys = ["KEY_LEFTBRACE"]
+
+[profiles.gestures.DpadRight.long_press]
+keys = ["KEY_RIGHTBRACE"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F5"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F6"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
+The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
+{lt} gives a right click, which moves the selected unit to the tile under the pointer.
+{east} closes the open screen. {start} opens the game menu.
+Hold {lb} for the unit orders, picking with the right stick {rs}.
+{rb} goes to the next unit that needs orders, and ends the turn when none do.
+Double tap {start} to quick save and hold it to quick load. Click {r3} for the lens list. Civilization VI on PC has no controller support of its own, so the controller works through these keys.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (move to)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close screen" }
+"button:LeftBumper" = { text = "Hold: unit orders" }
+"button:Select" = { text = "Advisors, screens" }
+"button:Start" = { text = "Game menu" }
+"stick:Left" = { text = "Pan the map" }
+"button:West" = { text = "Skip the unit's turn" }
+"button:North" = { text = "{icon:fortify} Fortify" }
+"button:RightBumper" = { text = "Next action / end turn" }
+"button:LeftStick" = { text = "Go to the capital" }
+"button:RightStick" = { text = "Lenses" }
+"gesture:button:DpadLeft:long_press" = { text = "Previous city" }
+"gesture:button:DpadRight:long_press" = { text = "Next city" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next unit"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
 [[menus]]
 name = "Orders"
 

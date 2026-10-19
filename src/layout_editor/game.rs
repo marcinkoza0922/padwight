@@ -63,7 +63,7 @@ pub(super) fn game_rows(config: &Config) -> Vec<Row> {
     rows.push(Row::open(format!("Profiles ({})", game.profiles.len()), Page::GameProfiles));
     let own = game.nintendo_layout;
     let label = match own {
-        None => format!("as the app's ({})", if config.nintendo_layout { "on" } else { "off" }),
+        None => String::from("as the controller's"),
         Some(true) => "on".into(),
         Some(false) => "off".into(),
     };

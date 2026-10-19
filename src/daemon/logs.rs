@@ -42,7 +42,7 @@ impl Daemon {
     /// Records controller `id`'s raw input. Returns whether its log changed.
     pub(super) fn log_input(&mut self, id: u64, events: &[InputEvent], now: Instant) -> bool {
         let Some(dev) = self.devices.get_mut(&id) else { return false };
-        let t = self.config.active().map(|base| dev.thresholds(base)).unwrap_or_default();
+        let t = self.config.profile_for(&dev.id).map(|base| dev.thresholds(base)).unwrap_or_default();
         events.iter().fold(false, |changed, ev| dev.log.event(*ev, t, now) | changed)
     }
 

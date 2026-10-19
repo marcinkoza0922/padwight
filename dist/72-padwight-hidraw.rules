@@ -1,0 +1,15 @@
+# Keeps programs from opening PlayStation and Nintendo controllers' raw HID nodes (/dev/hidraw*).
+# Steam and SDL games read these controllers there rather than through their input node, so
+# padwight's exclusive hold on the input node doesn't stop them: they get every press as well as
+# padwight's virtual gamepad. Without the raw node they fall back to the input node, which padwight
+# holds. padwight itself never opens the raw node.
+# The cost: while padwight is off, those programs reach these controllers only through the input
+# node too, so Steam's own gyro, lightbar and player-light control are gone for them.
+# It sorts after the rules that grant the access (Steam's 60-steam-input.rules among them), and
+# before 73-seat-late.rules, which applies it.
+#
+# Install:
+#   sudo cp 72-padwight-hidraw.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload && sudo udevadm trigger
+# then turn the controller off and on, so programs that already opened it let go.
+ACTION!="remove", SUBSYSTEM=="hidraw", DRIVERS=="playstation|sony|nintendo", MODE:="0000", TAG-="uaccess"

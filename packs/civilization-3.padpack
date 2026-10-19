@@ -142,6 +142,130 @@ Hold {lb} for the unit orders, picking with the right stick {rs}.
 inputs = ["button:DpadLeft", "button:DpadRight"]
 text = "Previous / next unit"
 
+
+[[profiles]]
+name = "Civilization III + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_SPACE"] }
+North = { keys = ["KEY_F"] }
+LeftBumper = { open_menu = "Orders" }
+RightBumper = { keys = ["KEY_ENTER"] }
+Select = { open_menu = "Advisors" }
+Start = { keys = ["KEY_LEFTCTRL", "KEY_P"] }
+LeftStick = { keys = ["KEY_W"] }
+RightStick = { keys = ["KEY_LEFTCTRL", "KEY_C"] }
+DpadUp = { keys = ["KEY_Z"] }
+DpadDown = { keys = ["KEY_C"] }
+DpadLeft = { keys = ["KEY_LEFTBRACE"] }
+DpadRight = { keys = ["KEY_RIGHTBRACE"] }
+
+[profiles.gestures.RightBumper.long_press]
+keys = ["KEY_LEFTSHIFT", "KEY_ENTER"]
+
+[profiles.gestures.DpadLeft.long_press]
+keys = ["KEY_COMMA"]
+
+[profiles.gestures.DpadRight.long_press]
+keys = ["KEY_DOT"]
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTCTRL", "KEY_S"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_LEFTCTRL", "KEY_L"]
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.5
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.6
+hysteresis = 0.15
+actions = [
+    { keys = ["KEY_KP8"] },
+    { keys = ["KEY_KP9"] },
+    { keys = ["KEY_KP6"] },
+    { keys = ["KEY_KP3"] },
+    { keys = ["KEY_KP2"] },
+    { keys = ["KEY_KP1"] },
+    { keys = ["KEY_KP4"] },
+    { keys = ["KEY_KP7"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
+The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
+The left stick moves the active unit one tile in each of eight directions, through the numeric keypad: push and let go for one step. Pan the map by moving the pointer to the edge of the screen, or click a tile to center on it.
+{lt} gives a right click, which opens the menu of the units on a tile.
+{east} (Escape) closes advisors and pop-ups. On the map it asks whether to quit, so answer No.
+Hold {lb} for the unit orders, picking with the right stick {rs}.
+{rb} ends the turn once every unit has moved; hold it to end the turn at once. Civilization III has no quick save: double tap {start} to save, hold it to load.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (unit menu)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close screen" }
+"button:LeftBumper" = { text = "Hold: unit orders" }
+"button:Select" = { text = "Advisors, screens" }
+"button:Start" = { text = "Preferences" }
+"stick:Left" = { text = "Move the active unit (8 ways)" }
+"button:West" = { text = "Hold (skip this turn)" }
+"button:North" = { text = "{icon:fortify} Fortify" }
+"button:RightBumper" = { text = "End turn / next" }
+"gesture:button:RightBumper:long_press" = { text = "End turn now" }
+"button:LeftStick" = { text = "Wait" }
+"button:RightStick" = { text = "Civilopedia" }
+"button:DpadUp" = { text = "Zoom in / out" }
+"button:DpadDown" = { text = "Center on the unit" }
+"gesture:button:DpadLeft:long_press" = { text = "Previous city" }
+"gesture:button:DpadRight:long_press" = { text = "Next city" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next unit"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
 [[menus]]
 name = "Orders"
 

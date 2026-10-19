@@ -812,8 +812,22 @@ impl App {
         iced::widget::operation::snap_to("main", scrollable::RelativeOffset { x: Some(0.0), y: Some(position) })
     }
 
+    /// The Nintendo layout's switch for the controller picked in the header (greyed out on all of them): which
+    /// label each face button shows. The bindings don't move.
+    fn view_nintendo_layout(&self) -> Element<'_, Message> {
+        let pad = self.picked_controller().and_then(|d| self.status.as_ref()?.controllers.iter().find(|c| c.id == d.id));
+        let note = "Swaps A with B and X with Y, to match prompts that a game draws in the Nintendo layout. On a \
+                    Nintendo pad the face buttons send the letter on their label, so the B button sends B. A face \
+                    button whose plain press is changed turns that off, and the buttons send their positions again. \
+                    On other pads only the labels change. A setup can set its own choice, which wins.";
+        let toggle = toggler(pad.is_some_and(|c| c.nintendo_layout)).label("Nintendo button layout");
+        let toggle = if pad.is_some() { toggle.on_toggle(Message::SetNintendoLayout) } else { toggle };
+        let hint = pad.map_or_else(|| "Pick a controller in the header to set this.".to_string(), |c| format!("For {}.", c.nickname_or_name()));
+        section("Button layout", Some(format!("{note} {hint}")), vec![toggle.into()])
+    }
+
     pub(super) fn view_profile_tab<'a>(&'a self, names: &Names) -> Element<'a, Message> {
-        let col = column![self.view_profile_bar()].spacing(16);
+        let col = column![self.view_profile_bar(), self.view_nintendo_layout()].spacing(16);
         let Some(p) = self.profile() else { return col.into() };
         col.push(self.view_profile_editor(p, names, None)).into()
     }

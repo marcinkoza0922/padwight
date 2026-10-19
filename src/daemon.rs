@@ -21,12 +21,13 @@ use crate::{
     engine::{Engine, Opener},
     focus::{self, FocusEvent},
     input::{InputEvent, MotionFrame, MotionSample},
-    ipc::{self, DeviceInfo, Feeds, FocusBackend, InputSnapshot, Request, Response, Status, WindowInfo},
+    ipc::{self, ControllerInfo, DeviceInfo, Feeds, FocusBackend, InputSnapshot, Request, Response, Status, WindowInfo},
     keyboard::Layout,
     monitor::{self, InputView, OutputView, log},
     output::{OutEvent, VirtualKbm, VirtualPad},
     pad_identity::{ControllerSupport, PadIdentity},
     media::{MediaOutcome, MediaSession, MediaState},
+    new_pad::{NewPadOutcome, NewPadSession},
     offer::{OfferOutcome, OfferSession},
     menu::{MenuOutcome, MenuSession},
     system_menu::{Hold, Outcome as SystemOutcome, Page, SystemMenu},
@@ -41,10 +42,12 @@ mod first_pad;
 mod guide;
 mod in_game_menu;
 mod info_overlays;
+mod new_pads;
 mod offers;
 mod overlay;
 mod overlay_input;
 mod previews;
+mod raw_readers;
 /// The controllers themselves: evdev nodes on Linux, XInput slots on Windows.
 #[cfg_attr(target_os = "linux", path = "daemon/evdev.rs")]
 #[cfg_attr(windows, path = "daemon/xinput.rs")]
@@ -151,6 +154,8 @@ struct Managed {
     parent: Option<PathBuf>,
     #[cfg(target_os = "linux")]
     uniq: Option<String>,
+    /// See `controller_id`; empty for an injected controller.
+    id: String,
     /// Motion-sensor device feeding this controller's gyro, once found.
     motion: Option<PathBuf>,
     /// Touchpad node of this controller, once found (and taken from the desktop).
@@ -279,7 +284,7 @@ impl Managed {
         } else {
             let game = config.active_game();
             let mode = shifts.0.as_deref().and_then(|m| config.mode_for(game, m));
-            config.active().map(|base| {
+            config.profile_for(&self.id).map(|base| {
                 let mut profile = base.with_layers(mode.iter().map(|m| &**m).chain(game.layers_named(&shifts.1)));
                 config.shortcuts.inject(&mut profile);
                 (shifts.clone(), profile)
@@ -298,6 +303,8 @@ impl Managed {
 
 struct SeenGamepad {
     name: String,
+    /// See `controller_id`.
+    id: String,
     analog_triggers: bool,
     rumble: bool,
     paddles: bool,
@@ -348,6 +355,8 @@ enum Active {
     Offer(OfferSession),
     /// The menu Guide + Start opens: Quick Settings and Edit Controls.
     Settings(SystemMenu, u64),
+    /// The question of how to set up a new controller (its id).
+    NewPad(NewPadSession, String),
 }
 
 /// The sounds of the on-screen keyboard or the numpad, whichever is up.
@@ -365,7 +374,7 @@ fn active_sound(active: &Active) -> sound::SoundOverlay {
         Active::Menu { .. } => sound::SoundOverlay::Menu,
         Active::Settings(..) => sound::SoundOverlay::Guide,
         Active::Media(_) => sound::SoundOverlay::Media,
-        Active::Offer(_) => sound::SoundOverlay::Offer,
+        Active::Offer(_) | Active::NewPad(..) => sound::SoundOverlay::Offer,
     }
 }
 
@@ -411,6 +420,8 @@ struct Offers {
     /// Game windows (by process, class and executable) already told that Guide adds their
     /// library setup, so switching back to one doesn't say it again.
     hinted: HashSet<(u32, String, String)>,
+    /// Not before this is a controller that is still unanswered asked about again.
+    new_pad_after: Option<Instant>,
 }
 
 
@@ -439,6 +450,8 @@ struct Daemon {
     devices: HashMap<u64, Managed>,
     /// The virtual pad kept while no controller feeds it (see `first_pad.rs`).
     spare_pad: Option<VirtualPad>,
+    /// Pads held to keep the slots ahead of a controller pinned to a later player number.
+    filler_pads: Vec<VirtualPad>,
     next_id: u64,
     /// Whether injected controllers are accepted, and how many there have been (see `inject.rs`).
     injection: inject::Injection,
@@ -448,6 +461,8 @@ struct Daemon {
     gamepads: HashMap<NodeKey, SeenGamepad>,
     /// The other input nodes the scans found (see `scan_devices`).
     nodes: devices::Nodes,
+    /// Other programs reading the controllers' raw HID nodes (see `raw_readers.rs`).
+    raw_readers: raw_readers::Watch,
     /// Clients streaming live input (the GUI's controller view).
     watchers: Vec<Sender<Option<InputSnapshot>>>,
     /// Clients streaming the latest presses and what they did (the GUI's "what's happening").
@@ -559,11 +574,13 @@ impl Daemon {
             kbm,
             devices: HashMap::new(),
             spare_pad: None,
+            filler_pads: Vec::new(),
             next_id: 0,
             injection,
             identity_override: None,
             gamepads: HashMap::new(),
             nodes: devices::Nodes::default(),
+            raw_readers: raw_readers::Watch::default(),
             watchers: Vec::new(),
             feed_watchers: Vec::new(),
             activity: activity::Activity::default(),
@@ -701,6 +718,7 @@ impl Daemon {
                 if let Err(e) = self.kbm.sync() {
                     log!("output error: {e:#}");
                 }
+                self.ask_pending_pad();
                 next_scan = now + SCAN_INTERVAL;
             }
         }
@@ -713,6 +731,7 @@ impl Daemon {
             Some(Active::Media(m)) => m.next_deadline(),
             Some(Active::Offer(o)) => o.next_deadline(),
             Some(Active::Settings(m, _)) => m.next_deadline(),
+            Some(Active::NewPad(s, _)) => s.next_deadline(),
             None => None,
         };
         self.devices
@@ -731,7 +750,9 @@ impl Daemon {
     fn run_timers(&mut self) {
         let now = Instant::now();
         self.tick_overlays(now);
-        let Some(base) = self.config.active() else { return };
+        if self.config.active().is_none() {
+            return;
+        }
         let mut requests = Vec::new();
         let mut fired = Vec::new();
         let mut guide_keys = Vec::new();
@@ -740,6 +761,7 @@ impl Daemon {
                 continue;
             }
             fired.push(*id);
+            let Some(base) = self.config.profile_for(&dev.id) else { continue };
             let mut out = Vec::new();
             dev.engine.timers(layered(&dev.layered, base), now, &mut out);
             let keys = dev.engine.take_guide_nav();
@@ -970,13 +992,12 @@ impl Daemon {
     }
 
     fn needs_tick(&self) -> bool {
-        let Some(base) = self.config.active() else { return false };
-        self.devices.values().any(|d| d.engine.needs_tick(layered(&d.layered, base)))
+        self.devices.values().any(|d| self.config.profile_for(&d.id).is_some_and(|base| d.engine.needs_tick(layered(&d.layered, base))))
     }
 
     fn tick(&mut self, dt: f32) {
-        let Some(base) = self.config.active() else { return };
         for dev in self.devices.values_mut() {
+            let Some(base) = self.config.profile_for(&dev.id) else { continue };
             let mut out = Vec::new();
             dev.engine.tick(layered(&dev.layered, base), dt, &mut out);
             dev.dispatch(&mut self.kbm, out);
@@ -1089,9 +1110,8 @@ impl Daemon {
             let bias = cal.sum.map(|s| (s / n) as f32);
             dev.gyro_bias = bias;
             dev.calibrating = None;
-            let name = dev.name.clone();
-            log!("gyro calibrated for {name}: bias {bias:.2?} deg/s");
-            self.config.gyro_calibration.insert(name, bias);
+            log!("gyro calibrated for {}: bias {bias:.2?} deg/s", dev.name);
+            self.config.gyro_calibration.insert(dev.id.clone(), bias);
             if let Err(e) = self.config.save_settings() {
                 log!("saving config: {e:#}");
             }
@@ -1107,7 +1127,7 @@ impl Daemon {
             return;
         }
         let Some(dev) = self.devices.get_mut(&id) else { return };
-        let Some(base) = self.config.active().filter(|_| self.active.is_none()) else { return };
+        let Some(base) = self.config.profile_for(&dev.id).filter(|_| self.active.is_none()) else { return };
         let mut out = Vec::new();
         dev.engine.motion(layered(&dev.layered, base), sample, &mut out);
         dev.dispatch(&mut self.kbm, out);
@@ -1152,8 +1172,8 @@ impl Daemon {
             return self.overlay_input(id, events, &fires);
         }
         self.sync_face_swap(id);
-        let Some(base) = self.config.active() else { return };
         let Some(dev) = self.devices.get_mut(&id) else { return };
+        let Some(base) = self.config.profile_for(&dev.id) else { return };
         dev.feed(&self.config, base, events, &mut self.kbm);
         if !dev.engine.needs_tick(layered(&dev.layered, base)) {
             dev.out_view.stop_motion();
@@ -1270,7 +1290,8 @@ impl Daemon {
     /// Tells pad `id`'s engine whether its face buttons send the Nintendo letters now, under the
     /// active profile: see [`PadIdentity::swaps_face_output`].
     fn sync_face_swap(&mut self, id: u64) {
-        let swap = self.config.active().is_some_and(|base| self.face_output_swapped(id, base));
+        let base = self.devices.get(&id).and_then(|d| self.config.profile_for(&d.id));
+        let swap = base.is_some_and(|base| self.face_output_swapped(id, base));
         if let Some(dev) = self.devices.get_mut(&id) {
             dev.engine.set_face_swap(swap);
         }
@@ -1280,7 +1301,7 @@ impl Daemon {
         let Some(dev) = self.devices.get(&id) else { return false };
         let identity = PadIdentity::resolve(self.identity_override, dev.model, self.active_support());
         let nintendo_pad = dev.family == Some(crate::info::PadFamily::Nintendo);
-        identity.swaps_face_output(nintendo_pad, self.config.active_nintendo_layout(), base.faces_default())
+        identity.swaps_face_output(nintendo_pad, self.config.nintendo_layout_for(&dev.id), base.faces_default())
     }
 
     /// Makes every controller's virtual pad present the identity the active game asks for.
@@ -1300,14 +1321,14 @@ impl Daemon {
 
     /// Switches profile, recording `why`; false if it was already active.
     fn set_profile(&mut self, target: ProfileRef, why: &str) -> bool {
-        if target == self.config.active_ref() {
+        if target == self.config.setting_ref() {
             return false;
         }
         log!("switching to profile {target}");
         // A new profile starts unlocked: the lock was for the one that was active.
         self.profile_locked = false;
         // An open menu refers to menus by position, which another game's list changes.
-        let game_changes = target.game != self.config.active_ref().game;
+        let game_changes = target.game != self.config.setting_ref().game;
         if game_changes {
             self.info_timers.clear();
             self.log_timers.clear();
@@ -1350,8 +1371,8 @@ impl Daemon {
     /// Re-applies analog state under the active profile (and each controller's layers, which
     /// are rebuilt from it).
     fn resync_all(&mut self) {
-        let Some(base) = self.config.active() else { return };
         for dev in self.devices.values_mut() {
+            let Some(base) = self.config.profile_for(&dev.id) else { continue };
             dev.layered = None;
             dev.refresh_layers(&self.config);
             let mut out = Vec::new();
@@ -1360,10 +1381,10 @@ impl Daemon {
         }
     }
 
-    /// Whether a scan should take the controller called `name`: remapping is on and the user
+    /// Whether a scan should take the controller with id `id`: remapping is on and the user
     /// hasn't set it aside. Every path that grabs a pad asks this.
-    fn should_manage(&self, name: &str) -> bool {
-        self.config.enabled && !self.config.ignored_devices.iter().any(|n| n == name)
+    fn should_manage(&self, id: &str) -> bool {
+        self.config.enabled && !self.config.ignored_devices.iter().any(|i| i == id)
     }
 
     /// Stops managing (ungrabs) devices matching `pred`.
@@ -1388,9 +1409,11 @@ impl Daemon {
             .iter()
             .map(|((path, _), pad)| DeviceInfo {
                 name: pad.name.clone(),
+                id: pad.id.clone(),
                 path: path.display().to_string(),
+                profile: self.devices.values().find(|d| &d.path == path).and_then(|d| self.config.profile_for(&d.id)).map(|p| p.name.clone()).unwrap_or_default(),
                 managed: self.devices.values().any(|d| &d.path == path),
-                ignored: self.config.ignored_devices.contains(&pad.name),
+                ignored: self.config.ignored_devices.contains(&pad.id),
                 gyro: self.devices.values().any(|d| &d.path == path && d.motion.is_some()),
                 analog_triggers: pad.analog_triggers,
                 rumble: pad.rumble,
@@ -1402,10 +1425,27 @@ impl Daemon {
             .collect();
         devices.sort_by(|a, b| a.path.cmp(&b.path));
         devices.extend(self.injected_devices());
+        let controllers = self
+            .config
+            .controllers
+            .iter()
+            .map(|c| ControllerInfo {
+                id: c.id.clone(),
+                name: c.name.clone(),
+                nickname: c.nickname.clone(),
+                color: c.color.clone(),
+                player: c.player,
+                pass_through: c.pass_through,
+                nintendo_layout: c.nintendo_layout,
+                pending: c.pending,
+                connected: self.devices.values().any(|d| d.id == c.id),
+            })
+            .collect();
         Status {
+            controllers,
             enabled: self.config.enabled,
-            active_profile: self.config.active().map(|p| p.name.clone()).unwrap_or_default(),
-            active_game: self.config.active_ref().game,
+            active_profile: self.config.active_fallback().map(|p| p.name.clone()).unwrap_or_default(),
+            active_game: self.config.setting_ref().game,
             active_layers: self.active_layers(),
             active_mode: self.active_mode(),
             devices,
@@ -1413,6 +1453,7 @@ impl Daemon {
             focused: self.focused.clone(),
             recent_windows: self.recent_windows.clone(),
             motion_access_denied: self.nodes.denied_sensors(),
+            raw_readers: self.raw_readers.found(),
             overlay_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Keyboard),
             numpad_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Numpad),
             stop_pending: self.stop_asked,
@@ -1428,6 +1469,8 @@ impl Daemon {
         self.refit_pads();
         self.keep_first_pad();
         self.scan_devices();
+        #[cfg(target_os = "linux")]
+        self.check_raw_readers(Instant::now());
         self.check_overlay_process();
         self.check_recorded_game();
         self.scan_processes();
@@ -1518,6 +1561,7 @@ impl Daemon {
             parent: None,
             #[cfg(target_os = "linux")]
             uniq: None,
+            id: String::new(),
             motion: None,
             touchpad: None,
             #[cfg(target_os = "linux")]
@@ -1536,7 +1580,8 @@ impl Daemon {
 
     /// Starts running `managed` as controller `id`, with its mappings in step with the profile.
     fn add_managed(&mut self, id: u64, mut managed: Managed) {
-        if let Some(profile) = self.config.active() {
+        self.remember_controller(&managed.id, &managed.name);
+        if let Some(profile) = self.config.profile_for(&managed.id) {
             let mut out = Vec::new();
             managed.engine.resync(profile, &mut out);
             managed.dispatch(&mut self.kbm, out);

@@ -44,6 +44,14 @@ pub enum Request {
     SetProfile(String),
     /// Switch to exactly this profile.
     Activate(ProfileRef),
+    /// Sets how a remembered controller is told apart and whether it passes through.
+    SetController(ControllerInfo),
+    /// Forgets a remembered controller: on its next connection it counts as new.
+    ForgetController(String),
+    /// Turns the Nintendo button layout on or off for controller `id`.
+    SetNintendoLayout { id: String, on: bool },
+    /// Makes a profile of the active game the one controller `id` uses.
+    ActivateFor { id: String, profile: String },
     NextProfile,
     /// Keep the connection open; the daemon streams one `Option<InputSnapshot>` JSON line per
     /// update (at most ~60/s). `null` means no controller is active.
@@ -122,6 +130,9 @@ pub struct Status {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub active_mode: Option<String>,
     pub devices: Vec<DeviceInfo>,
+    /// Every controller remembered, connected or not.
+    #[serde(default)]
+    pub controllers: Vec<ControllerInfo>,
     #[serde(default)]
     pub focus_backend: FocusBackend,
     /// Currently focused window (when the desktop reports it).
@@ -133,6 +144,9 @@ pub struct Status {
     /// Controller motion sensors the daemon may not open (needs the udev rule in dist/).
     #[serde(default)]
     pub motion_access_denied: Vec<String>,
+    /// Managed controllers that other programs also read through their raw HID node, past the grab.
+    #[serde(default)]
+    pub raw_readers: Vec<RawReaders>,
     /// The on-screen keyboard is up.
     #[serde(default)]
     pub overlay_visible: bool,
@@ -228,10 +242,64 @@ pub struct WindowInfo {
     pub steam_app_id: Option<String>,
 }
 
+/// A remembered controller (see `config::ControllerEntry`).
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct ControllerInfo {
+    pub id: String,
+    /// The name it last connected under.
+    pub name: String,
+    pub nickname: String,
+    pub color: Option<String>,
+    pub player: Option<u8>,
+    pub pass_through: bool,
+    /// Its face buttons use the Nintendo layout (a pack's own choice wins).
+    #[serde(default)]
+    pub nintendo_layout: bool,
+    /// Its set-up question is still unanswered.
+    pub pending: bool,
+    pub connected: bool,
+}
+
+impl ControllerInfo {
+    /// What to call it: its nickname, else the name it last connected under, else its id.
+    pub fn nickname_or_name(&self) -> &str {
+        [&self.nickname, &self.name, &self.id].into_iter().find(|s| !s.is_empty()).map_or("", |s| s.as_str())
+    }
+}
+
+/// A managed controller and the other programs that have its raw HID node (/dev/hidrawN) open.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RawReaders {
+    pub controller: String,
+    /// Their process names, such as `steam`.
+    pub programs: Vec<String>,
+}
+
+impl RawReaders {
+    /// The programs, as a sentence starts with them: "Steam", "Brave, steam".
+    pub fn who(&self) -> String {
+        let all = self.programs.join(", ");
+        let mut chars = all.chars();
+        chars.next().map(|c| c.to_uppercase().chain(chars).collect()).unwrap_or_default()
+    }
+
+    /// Says that they get the controller's presses as well as Padwight's virtual pad.
+    pub fn warning(&self) -> String {
+        let (verb, gets) = if self.programs.len() == 1 { ("reads", "it gets") } else { ("read", "they get") };
+        format!("{} also {verb} {} directly, so {gets} your presses as well as Padwight's virtual pad.", self.who(), self.controller)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DeviceInfo {
     pub name: String,
+    /// What settings saved for this controller are keyed by (see `controller_id`); empty when it has none.
+    #[serde(default)]
+    pub id: String,
     pub path: String,
+    /// The profile it uses now (empty for a controller that isn't managed).
+    #[serde(default)]
+    pub profile: String,
     /// Grabbed and being remapped right now.
     pub managed: bool,
     pub ignored: bool,

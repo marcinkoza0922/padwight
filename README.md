@@ -91,6 +91,7 @@ If the pad that comes back (or replaces it) lacks something the active profile n
 - **Write access to `/dev/uinput`**, to create the virtual gamepad, keyboard and mouse. On most desktops (systemd-logind with `uaccess`) you already have it. If not, install `dist/70-padwight-uinput.rules`, which tags the node for `uaccess` so the user at the machine gets access. If `/dev/uinput` doesn't exist, the `uinput` kernel module isn't loaded: `dist/padwight-uinput.conf` in `/etc/modules-load.d/` loads it at boot.
 - **Read access to the controller's `/dev/input/event*` node.** `uaccess` covers joysticks. If yours doesn't, add yourself to the `input` group (`sudo usermod -aG input $USER`) and log in again.
 - **Read access to the controller's motion sensor**, for gyro on PlayStation and Switch controllers. It's a separate node that `uaccess` doesn't cover. Install `dist/70-padwight-motion.rules`, which grants it for the `playstation`, `sony` and `nintendo` drivers only, so a laptop's tilt sensor is untouched. Without it, everything but gyro works.
+- **Optional: no access to PlayStation and Switch controllers' raw HID node** (`/dev/hidraw*`). Steam, SDL games and Chromium browsers read those controllers there, past padwight's hold on the input node, so they see every press as well as padwight's virtual pad. `dist/72-padwight-hidraw.rules` closes the raw node to every program (padwight doesn't use it), so they read the input node, which padwight holds. Turn the controller off and on after installing it. The cost: while padwight is off, Steam has no gyro or lightbar control for those controllers either. When padwight finds a program reading a controller this way, it says so in a desktop notification (with a button that opens the settings window) and on screen, and the settings window names it in a banner across the top.
 
 Rules go in `/etc/udev/rules.d/`, and apply after:
 
@@ -333,7 +334,7 @@ Outside systemd (in a terminal, or from an autostart entry), the daemon also put
 
 ## Good to know
 
-- PlayStation and Switch controllers are also readable through hidraw, which SDL (and Steam) use directly. Games may then see the real controller as well as ours. Turn off Steam Input for the pad, or set `SDL_JOYSTICK_HIDAPI=0` for the game.
+- PlayStation and Switch controllers are also readable through hidraw, which SDL, Steam and Chromium browsers use directly, so they may see the real controller as well as ours. `dist/72-padwight-hidraw.rules` (see [Permissions](#permissions)) stops that.
 - Virtual uinput devices, such as Steam Input's pad and padwight's own, are skipped.
 - While remapping is on, padwight keeps one virtual pad even with no controller connected, so it comes ahead of the real controllers in Steam Input. Some games, such as Slay the Spire 2, read only the first controller Steam lists.
 - Pads on the `xpad` driver report X/Y by label rather than position. This is corrected automatically.

@@ -164,6 +164,162 @@ text = "Zoom in / out"
 inputs = ["button:DpadLeft", "button:DpadRight"]
 text = "Rotate the camera"
 
+
+[[profiles]]
+name = "SimCity 4 + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_B"] }
+North = { keys = ["KEY_SLASH"] }
+LeftBumper = { open_menu = "Zones" }
+RightBumper = { open_menu = "Build" }
+Select = { open_menu = "Modes and speed" }
+Start = { keys = ["KEY_F4"] }
+LeftStick = { keys = ["KEY_LEFTCTRL", "KEY_GRAVE"] }
+RightStick = { keys = ["KEY_SPACE"] }
+DpadUp = { keys = ["KEY_KPPLUS"] }
+DpadDown = { keys = ["KEY_KPMINUS"] }
+DpadLeft = { keys = ["KEY_PAGEUP"] }
+DpadRight = { keys = ["KEY_PAGEDOWN"] }
+
+[profiles.gestures.North.long_press]
+keys = ["KEY_LEFTALT", "KEY_SLASH"]
+
+[profiles.gestures.DpadLeft.long_press]
+keys = ["KEY_END"]
+
+[profiles.gestures.DpadRight.long_press]
+keys = ["KEY_HOME"]
+
+[profiles.gestures.Select.long_press]
+mode = "Driving"
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTCTRL", "KEY_LEFTALT", "KEY_S"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_LEFTCTRL", "KEY_S"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
+The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
+Hold {lb} for the zones and {rb} for transport and services, picking with the right stick {rs}, then drag with {rt} to place. Power, water and other buildings are on the game's toolbar.
+{east} drops the current tool or closes the open panel. Hold the {dpad} left or right to turn a building before placing it.
+Tap {select} for God, Mayor and My Sim modes, the game speed and going back to the region.
+U-Drive-It missions: start one in the game, then hold {select} for Driving mode. The left stick drives, {rt} and {lt} are the mouse buttons, {south} and {west} are the special actions, {north} snaps to roads, and {east} leaves the vehicle and the mode.
+Double tap {start} to save quickly without updating the region view; hold it for a full save.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the view" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Left click (use the tool)" }
+"trigger:Left" = { text = "Right click" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close / drop the tool" }
+"button:West" = { text = "Demolish" }
+"button:North" = { text = "Query" }
+"gesture:button:North:long_press" = { text = "Route query" }
+"button:LeftBumper" = { text = "Hold: zones" }
+"button:RightBumper" = { text = "Hold: transport, services" }
+"button:LeftStick" = { text = "{icon:pause} Pause" }
+"button:RightStick" = { text = "Center on the pointer" }
+"button:Select" = { text = "Modes, speed" }
+"gesture:button:Select:long_press" = { text = "Driving mode on / off" }
+"button:Start" = { text = "Options" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Fast save" }
+"gesture:button:Start:long_press" = { text = "{icon:save} Save with region update" }
+"gesture:button:DpadLeft:long_press" = { text = "Turn building left" }
+"gesture:button:DpadRight:long_press" = { text = "Turn building right" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate the camera"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
 [[menus]]
 name = "Zones"
 

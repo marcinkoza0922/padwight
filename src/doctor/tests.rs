@@ -154,6 +154,22 @@ fn the_motion_rule_is_current_outdated_or_missing() {
 }
 
 #[test]
+fn the_hidraw_rule_is_a_note_that_names_a_connected_switch_pad() {
+    let tree = Tree::new("hidraw-rule");
+    tree.node("event5", "pad", "xpad");
+    let findings = check_controllers(&tree.roots());
+    let f = titled(&findings, "Raw controller access");
+    assert_eq!(f.level, Level::Note);
+    assert!(f.fix.as_deref().unwrap().contains("72-padwight-hidraw.rules") && !f.detail.contains("is connected"), "{}", f.detail);
+    tree.node("event6", "pad", "nintendo");
+    let findings = check_controllers(&tree.roots());
+    assert!(titled(&findings, "Raw controller access").detail.starts_with("A PlayStation or Switch controller is connected."));
+    tree.put("rules", HIDRAW_RULE_NAME, HIDRAW_RULE);
+    let findings = check_controllers(&tree.roots());
+    assert_eq!(titled(&findings, "Raw controller access").level, Level::Ok);
+}
+
+#[test]
 fn bitmaps_read_most_significant_word_first() {
     assert!(devices::scan(Path::new("/nonexistent"), Path::new("/nonexistent")).is_empty());
     let tree = Tree::new("bits");
@@ -166,6 +182,7 @@ fn bitmaps_read_most_significant_word_first() {
 fn the_shipped_files_install_what_the_checks_look_for() {
     assert!(MOTION_RULE.contains("DRIVERS==\"playstation|sony|nintendo\""));
     assert!(UINPUT_RULE.contains("KERNEL==\"uinput\""));
+    assert!(HIDRAW_RULE.contains("DRIVERS==\"playstation|sony|nintendo\", MODE:=\"0000\", TAG-=\"uaccess\""));
     assert!(MODULES_CONF.lines().any(|l| l == "uinput"));
 }
 

@@ -20,6 +20,8 @@ const MOTION_RULE_NAME: &str = "70-padwight-motion.rules";
 const MOTION_RULE: &str = include_str!("../dist/70-padwight-motion.rules");
 const UINPUT_RULE_NAME: &str = "70-padwight-uinput.rules";
 const UINPUT_RULE: &str = include_str!("../dist/70-padwight-uinput.rules");
+const HIDRAW_RULE_NAME: &str = "72-padwight-hidraw.rules";
+const HIDRAW_RULE: &str = include_str!("../dist/72-padwight-hidraw.rules");
 const MODULES_CONF_NAME: &str = "padwight-uinput.conf";
 const MODULES_CONF: &str = include_str!("../dist/padwight-uinput.conf");
 
@@ -46,11 +48,18 @@ What padwight needs from the system, and why
    playstation, sony and nintendo drivers, so a laptop's tilt sensor is untouched.
    Without it, everything but gyro works.
 
-4. A graphical session, for the settings window, the on-screen keyboard and the overlays.
+4. Optional: no access to PlayStation and Switch controllers' raw HID node (/dev/hidrawN).
+   Steam and SDL games read those controllers there instead of through the input node, so taking
+   the input node doesn't stop them: they see every press as well as the virtual gamepad.
+   dist/72-padwight-hidraw.rules closes the raw node to every program (padwight doesn't use it),
+   so they read the input node, which padwight holds. While padwight is off they then read it
+   there too, which costs Steam's own gyro and lightbar control for those controllers.
+
+5. A graphical session, for the settings window, the on-screen keyboard and the overlays.
    The overlays need a Wayland compositor with layer-shell (KDE Plasma, Sway, Hyprland,
    labwc and other wlroots compositors). GNOME has none, so it shows no overlays.
 
-5. Optional: the daemon running. `systemctl --user enable --now padwight` starts it at login.
+6. Optional: the daemon running. `systemctl --user enable --now padwight` starts it at login.
 
 All udev rules go in /etc/udev/rules.d/ and need root once. `padwight doctor` prints the
 exact commands for whatever is missing.";
@@ -207,6 +216,7 @@ fn check_controllers(roots: &Roots) -> Vec<Finding> {
         ));
     }
     findings.push(check_motion_rule(roots, &nodes));
+    findings.push(check_hidraw_rule(roots, &nodes));
     findings
 }
 
@@ -280,6 +290,37 @@ fn check_motion_rule(roots: &Roots, nodes: &[Node]) -> Finding {
                 format!("{needed} Those controllers' motion sensors are root-only without it."),
             )
             .fix(install_rule(MOTION_RULE_NAME, MOTION_RULE))
+        }
+    }
+}
+
+/// Reports whether the rule closing PlayStation and Switch controllers' raw HID nodes is installed.
+/// Nothing padwight needs depends on it, so a missing rule is a note.
+fn check_hidraw_rule(roots: &Roots, nodes: &[Node]) -> Finding {
+    match file_state(&roots.rule_dirs, HIDRAW_RULE_NAME, HIDRAW_RULE) {
+        RuleState::Current => Finding::new(Level::Ok, format!("Raw controller access: {HIDRAW_RULE_NAME} is installed"), ""),
+        RuleState::Outdated => Finding::new(
+            Level::Note,
+            format!("Raw controller access: the installed {HIDRAW_RULE_NAME} differs from this version's"),
+            "Install this version's to be sure Steam and games keep reading those controllers through padwight.",
+        )
+        .fix(install_rule(HIDRAW_RULE_NAME, HIDRAW_RULE)),
+        RuleState::Missing => {
+            let connected = if nodes.iter().any(Node::is_hidraw_pad) {
+                "A PlayStation or Switch controller is connected. "
+            } else {
+                ""
+            };
+            Finding::new(
+                Level::Note,
+                format!("Raw controller access: {HIDRAW_RULE_NAME} isn't installed"),
+                format!(
+                    "{connected}Steam and SDL games read PlayStation and Switch controllers through their raw HID node, which padwight \
+can't take from them, so they see your presses as well as the virtual gamepad. The rule closes that node. Turn the controller \
+off and on after installing it."
+                ),
+            )
+            .fix(install_rule(HIDRAW_RULE_NAME, HIDRAW_RULE))
         }
     }
 }

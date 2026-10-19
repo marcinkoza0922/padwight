@@ -16,7 +16,7 @@ bin_dir=${XDG_BIN_HOME:-$HOME/.local/bin}
 data_dir=${XDG_DATA_HOME:-$HOME/.local/share}
 config_dir=${XDG_CONFIG_HOME:-$HOME/.config}
 app_id=io.github.marcinkoza0922.Padwight
-rules="70-padwight-motion.rules 70-padwight-uinput.rules"
+rules="70-padwight-motion.rules 70-padwight-uinput.rules 72-padwight-hidraw.rules"
 
 system=1 service=1 yes=0 uninstall=0
 for arg in "$@"; do
@@ -40,12 +40,14 @@ confirm_system() {
     [ "$yes" -eq 1 ] && return 0
     cat <<'TEXT'
 
-padwight needs three small system files, which take root to copy:
+padwight needs four small system files, which take root to copy:
   /etc/udev/rules.d/70-padwight-uinput.rules   lets you create the virtual gamepad, keyboard and mouse
                                                games and your mappings go through (/dev/uinput)
   /etc/udev/rules.d/70-padwight-motion.rules   lets you read PlayStation and Switch controllers' gyro
+  /etc/udev/rules.d/72-padwight-hidraw.rules   keeps Steam and games from reading those controllers
+                                               around padwight (their raw /dev/hidraw node)
   /etc/modules-load.d/padwight-uinput.conf     loads the uinput kernel module at boot
-The rules only give access to you, the user at the machine. `padwight doctor --explain` says more.
+The first two only give access to you, the user at the machine. `padwight doctor --explain` says more.
 TEXT
     printf 'Install them with sudo? [Y/n] '
     read -r answer || answer=n

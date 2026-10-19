@@ -10,7 +10,7 @@ impl Daemon {
         match &self.active {
             Some(Active::Keyboard(k)) if k.layout() == layout => return self.close_overlay(),
             Some(Active::Keyboard(_)) => self.close_overlay(),
-            Some(Active::Menu { .. } | Active::Media(_) | Active::Offer(_) | Active::Settings(..)) => return,
+            Some(Active::Menu { .. } | Active::Media(_) | Active::Offer(_) | Active::Settings(..) | Active::NewPad(..)) => return,
             None => {}
         }
         self.driving.owner = by;
@@ -124,6 +124,7 @@ impl Daemon {
 
     pub(super) fn close_overlay(&mut self) {
         self.driving.owner = None;
+        self.config.acting = None;
         let closing = self.active.as_ref().map(active_sound);
         match self.active.take() {
             Some(Active::Keyboard(mut k)) => {
@@ -134,7 +135,7 @@ impl Daemon {
             }
             Some(Active::Menu { .. }) => {}
             Some(Active::Media(_)) => log!("media controls closed"),
-            Some(Active::Offer(_) | Active::Settings(..)) => {}
+            Some(Active::Offer(_) | Active::Settings(..) | Active::NewPad(..)) => {}
             None => return,
         }
         // The overlay window goes back to idle (it stays running for next time).
@@ -164,7 +165,7 @@ impl Daemon {
         let mut out = Vec::new();
         dev.engine.tap_menu_item(menu, item, action, &mut out);
         if dev.refresh_layers(&self.config)
-            && let Some(base) = self.config.active()
+            && let Some(base) = self.config.profile_for(&dev.id)
         {
             dev.engine.resync(layered(&dev.layered, base), &mut out);
         }
@@ -196,9 +197,10 @@ impl Daemon {
             }
             Some(Active::Offer(o)) => Some(o.view(self.config.active_menu_style())),
             Some(Active::Settings(m, _)) => Some(m.overlay_view(&self.config, &self.menu_live)),
+            Some(Active::NewPad(s, _)) => Some(s.view(self.config.active_menu_style())),
             None => match &self.guide_menu {
                 Some(menu) => {
-                    let profile = self.config.active().map(|p| p.name.as_str()).unwrap_or_default();
+                    let profile = self.guide_profile().map(|p| p.name.as_str()).unwrap_or_default();
                     let style = self.config.active_menu_style().clone();
                     Some(OverlayView::Menu(crate::guide_menu::view(menu.steam, menu.cursor, profile, style)))
                 }

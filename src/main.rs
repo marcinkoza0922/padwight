@@ -1,5 +1,6 @@
 mod capture;
 mod config;
+mod controller_id;
 mod daemon;
 mod debug;
 #[cfg(target_os = "linux")]
@@ -23,6 +24,7 @@ mod keyword_icon;
 mod launchers;
 mod library;
 mod media;
+mod new_pad;
 mod offer;
 mod opener_watch;
 mod menu;

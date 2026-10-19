@@ -8,6 +8,7 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use crate::{motion::MotionSet, pad_identity::ControllerSupport, sound::SoundSet};
 
+mod controllers;
 mod curve;
 mod guide;
 mod gyro;
@@ -37,6 +38,7 @@ pub mod problems;
 pub use menus::*;
 pub use layers::*;
 
+pub use controllers::ControllerEntry;
 pub use curve::*;
 pub use finite::check_finite;
 pub use guide::*;
@@ -1821,12 +1823,19 @@ pub struct Config {
     pub enabled: bool,
     #[serde(default)]
     pub active: ProfileRef,
-    /// Device names the daemon should leave alone.
+    /// Ids of the controllers the daemon should leave alone (see `controller_id`).
     #[serde(default)]
     pub ignored_devices: Vec<String>,
+    /// Controllers remembered by id, with the profile each uses per pack.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub controllers: Vec<ControllerEntry>,
+    /// The controller whose profile [`Config::active`] stands for while one of its menus is up
+    /// (Quick Settings, Edit Controls): its id. Never saved.
+    #[serde(skip)]
+    pub acting: Option<String>,
     #[serde(default)]
     pub auto_switch: AutoSwitch,
-    /// Gyro drift (degrees/second per raw sensor axis) measured by "Calibrate gyro", per controller.
+    /// Gyro drift (degrees/second per raw sensor axis) measured by "Calibrate gyro", per controller id.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub gyro_calibration: BTreeMap<String, [f32; 3]>,
     #[serde(default = "default_keyboard_style")]
@@ -1854,11 +1863,6 @@ pub struct Config {
     /// Whose button glyphs info overlays use when the controller in use isn't recognized.
     #[serde(default)]
     pub info_glyphs: crate::info::PadFamily,
-    /// Swaps A with B and X with Y, to match prompts drawn in the Nintendo layout. On a Nintendo
-    /// pad the face buttons send the letters on their labels; a face button's plain press that
-    /// is reassigned turns that off. Other pads only get swapped labels.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub nintendo_layout: bool,
     /// Where the system shortcuts sit: the Guide overlay's opener, the Guide mode's shortcuts and
     /// mouse mode's keys. They're the same in every setup.
     #[serde(default, skip_serializing_if = "Shortcuts::is_default")]
@@ -1959,6 +1963,8 @@ impl Default for Config {
             enabled: true,
             active: ProfileRef::new(None, "Gamepad"),
             ignored_devices: Vec::new(),
+            controllers: Vec::new(),
+            acting: None,
             auto_switch: AutoSwitch::default(),
             colorblind_tones: false,
             appearance: Appearance::Auto,
@@ -1975,7 +1981,6 @@ impl Default for Config {
             media_style: OverlayStyle::media(),
             menu_style: OverlayStyle::default(),
             info_glyphs: crate::info::PadFamily::default(),
-            nintendo_layout: false,
             shortcuts: Shortcuts::default(),
             mouse_mode: MouseModeExtras::default(),
             overlay_font: None,
@@ -2136,9 +2141,15 @@ impl Config {
     }
 
     /// Whether button glyphs are swapped to the Nintendo layout now: the active game's own
-    /// choice, else the global one.
+    /// choice, else the setting of the controller whose menu is up (none: off).
     pub fn active_nintendo_layout(&self) -> bool {
-        self.active_game().nintendo_layout.unwrap_or(self.nintendo_layout)
+        self.nintendo_layout_for(self.acting.as_deref().unwrap_or_default())
+    }
+
+    /// Whether controller `id` uses the Nintendo layout: the active game's own choice, else the
+    /// controller's setting.
+    pub fn nintendo_layout_for(&self, id: &str) -> bool {
+        self.active_game().nintendo_layout.unwrap_or_else(|| self.controller(id).is_some_and(|c| c.nintendo_layout))
     }
 
     /// The active profile's game, or General if it's gone.
@@ -2148,10 +2159,27 @@ impl Config {
             .unwrap_or(&self.general)
     }
 
-    /// The active profile, or the first one of its game (or of General) if it's gone.
+    /// The active profile, or the first one of its game (or of General) if it's gone. While a
+    /// controller's menu is up ([`Config::acting`]) it is the one that controller uses.
     pub fn active(&self) -> Option<&Profile> {
+        match &self.acting {
+            Some(id) => self.profile_for(id),
+            None => self.active_fallback(),
+        }
+    }
+
+    /// The profile of the active setting itself, which controllers without a choice of their own follow.
+    pub(crate) fn active_fallback(&self) -> Option<&Profile> {
         let game = self.active_game();
         game.profile(&self.active.profile).or(game.profiles.first())
+    }
+
+    /// Where the active setting really is, whichever controller's menu is up.
+    pub fn setting_ref(&self) -> ProfileRef {
+        let game = self.active_game();
+        let name = self.active_fallback().map(|p| p.name.as_str()).unwrap_or_default();
+        let game = (!std::ptr::eq(game, &self.general)).then_some(game.name.as_str());
+        ProfileRef::new(game, name)
     }
 
     /// Where the active profile really is, after the fallbacks of [`Config::active`].

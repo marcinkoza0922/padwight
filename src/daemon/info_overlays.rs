@@ -133,7 +133,7 @@ impl Daemon {
         let pad = self.last_active.and_then(|id| self.devices.get(&id)).or_else(|| self.devices.values().next());
         let identity = PadIdentity::resolve(self.identity_override, pad.and_then(|d| d.model), self.active_support());
         crate::info::Live {
-            profile: self.config.active().map(|p| p.name.clone()).unwrap_or_default(),
+            profile: pad.and_then(|d| self.config.profile_for(&d.id)).or(self.config.active()).map(|p| p.name.clone()).unwrap_or_default(),
             app: window.exe,
             title: window.title,
             pid: window.pid,
@@ -142,7 +142,7 @@ impl Daemon {
             mode: self.active_mode(),
             family: pad.and_then(|d| d.family).unwrap_or(self.config.info_glyphs),
             pad_family: identity.family(),
-            nintendo_layout: identity.applies_nintendo_layout(self.config.active_nintendo_layout()),
+            nintendo_layout: identity.applies_nintendo_layout(pad.is_some_and(|d| self.config.nintendo_layout_for(&d.id))),
             system: self.sampler.stats.clone(),
             controller_battery: pad.and_then(|d| d.parent.as_deref()).and_then(crate::info::controller_battery),
             form: crate::info::form_factor(),

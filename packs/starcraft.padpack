@@ -188,6 +188,7 @@ combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
 combo_window_ms = 120
 tap_window_ms = 250
 long_press_ms = 500
+requires = ["gyro"]
 
 [profiles.buttons]
 Guide = {mode = "Guide"}
