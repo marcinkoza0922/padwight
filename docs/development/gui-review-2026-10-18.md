@@ -159,65 +159,65 @@ Tick an item once it's committed.
 
 ## Settings window: wrong or misleading text
 
-- [ ] 33. **Details → Button layout points to the wrong page.** While the setup has no choice of its
+- [x] 33. **Details → Button layout points to the wrong page.** While the setup has no choice of its
   own, the card says "Following the button layout set on the App settings page." (`own_rows` in
   `gui/widgets.rs:240`). App settings has no button layout: it's set per controller on the Profiles
   tab, as the card's own ⓘ says. Let `own_rows` take the place it follows, and say "Following each
   controller's setting on the Profiles tab." here (`27-details.png`).
-- [ ] 34. **The Profiles tab's "Button layout" card looks like part of the profile.** It sits between
+- [x] 34. **The Profiles tab's "Button layout" card looks like part of the profile.** It sits between
   Edit profile and Live input, on every profile, but it's a per-controller setting and doesn't
   change with the profile. With "All controllers" picked in the header it's greyed out with no
   visible reason (the hint is behind the ⓘ). Move it to the controller card on the Overview, or say
   on the card itself "For: Xbox Wireless Controller" / "Pick a controller in the header"
   (`06-general.png`, `10-buttons.png`, `gui/profile.rs:817`).
-- [ ] 35. **The Overview's picture says "Every input passes through unchanged"** while remapping is
+- [x] 35. **The Overview's picture says "Every input passes through unchanged"** while remapping is
   on with General's Gamepad profile. That's true of that profile, but on the Overview it reads like
   remapping is doing nothing. Name the profile ("General › Gamepad passes every input through") or
   leave the line out on the Overview (`01-overview.png`).
-- [ ] 36. **"since the daemon started"** is the one place the Overview uses the word daemon while
+- [x] 36. **"since the daemon started"** is the one place the Overview uses the word daemon while
   it's running: "No profile has switched since the daemon started." "No profile switches yet." is
   enough (`01-overview.png`).
-- [ ] 37. **The sidebar's empty-state note repeats the button under it.** "No game setups yet. Use
+- [x] 37. **The sidebar's empty-state note repeats the button under it.** "No game setups yet. Use
   + Add setup to add one." sits right above "+ Add setup". "No game setups yet." would do
   (`01-overview.png`).
-- [ ] 38. **The Overview's "What's happening" card explains itself twice:** a gray sentence under
+- [x] 38. **The Overview's "What's happening" card explains itself twice:** a gray sentence under
   the title and an ⓘ beside it. Keep one (`01-overview.png`).
-- [ ] 39. **The rumble checkbox's label is unclear.** "A faint pulse as an overlay item is picked"
+- [x] 39. **The rumble checkbox's label is unclear.** "A faint pulse as an overlay item is picked"
   is on the Rumble strength row, so it reads like a strength. "Pulse when picking an overlay item"
   says it's an on/off feature (`01-overview.png`).
-- [ ] 40. **The info overlay's "Shown" note is one long sentence with a bracket inside.** "Stays on
+- [x] 40. **The info overlay's "Shown" note is one long sentence with a bracket inside.** "Stays on
   screen whenever the game is active, so actions can't show it. To show it only sometimes, untick
   this and map “Toggle → Show info overlay…” to a button (the Toggle can start on, to show the
   overlay at launch until dismissed)." Split it, and move the bracketed part to the ⓘ. The checkbox
   says "while this setup is active" and the note "whenever the game is active"; use one
   (`25-info.png`).
-- [ ] 41. **Tautological descriptions in the action picker.** "Mouse button: A mouse button.",
+- [x] 41. **Tautological descriptions in the action picker.** "Mouse button: A mouse button.",
   "Gamepad button: A controller button.", "Info overlay: Shows an info overlay.", "Log overlay:
   Shows a log overlay.", "Quick Settings menu: Opens the Quick Settings menu." Say what each is for,
   as Turbo and Several at once do ("Left, right, middle, back or forward click.", "Text and glyphs
   that stay on screen, such as a cheat sheet.") (`32-actions.png`).
-- [ ] 42. **The action picker doesn't say which button it's for.** The title is "Choose an action";
+- [x] 42. **The action picker doesn't say which button it's for.** The title is "Choose an action";
   "Action for A (South)" or a subtitle would help when it's opened from a gesture or a sector
   (`32-actions.png`).
-- [ ] 43. **"Controllers this setup supports" lists three pads with no Xbox.** It isn't clear whether
+- [x] 43. **"Controllers this setup supports" lists three pads with no Xbox.** It isn't clear whether
   an Xbox pad is always supported, or what ticking one changes. The ⓘ may say it, but a short line
   under the title ("Xbox-style pads always work. Tick the others you've tested.") would make the
   card readable without it (`27-details.png`).
-- [ ] 44. **"Installed ones first" isn't shown in the list.** The Add a setup dialog says
+- [x] 44. **"Installed ones first" isn't shown in the list.** The Add a setup dialog says
   "Built-in games (installed ones first):", but nothing in the list marks which games are installed
   or where the installed ones end. A small "installed" tag or a divider would show it
   (`30-add.png`).
-- [ ] 45. **The Guide notes preview breaks a line after a leading glyph.** The first note,
+- [x] 45. **The Guide notes preview breaks a line after a leading glyph.** The first note,
   "{start} (Escape) backs out of every in-game screen…", draws the Menu chip alone on a line and
   "(Escape) backs out…" on the next. The last note wraps with a leading space (" match the F-keys…"),
   so its second line is indented one space. Check `info::notes_panel`'s wrapping: a glyph at the
   start of a paragraph should stay on the line with the text after it, and a wrapped line shouldn't
   start with a space. The Guide overlay draws the notes the same way, so it likely has the same bug
   (`16-guide.png`).
-- [ ] 46. **{r3} is drawn as "R↓" in the notes and as "R3" everywhere else.** The preview's "click
+- [x] 46. **{r3} is drawn as "R↓" in the notes and as "R3" everywhere else.** The preview's "click
   {r3} to look through it" shows a round "R↓" glyph, while the Mapping guide, the button list and
   the overlays show "R3". Use one glyph for stick clicks (`16-guide.png`).
-- [ ] 47. **The Mapping guide's text fields still show raw tokens** ("{icon:bag} Inventory, goals").
+- [x] 47. **The Mapping guide's text fields still show raw tokens** ("{icon:bag} Inventory, goals").
   Item 52 of the third pass added a preview for the notes, but the Mapping guide has none, and menu
   item names ("{icon:key} Nanokey ring") and info overlay cells ("{south}") show the same raw text in
   their fields. A small rendered chip beside each field, or rendering the token inline when the
