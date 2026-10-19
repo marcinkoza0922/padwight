@@ -2,17 +2,26 @@
 //! whole screen, right where the overlay process would put it, to move and resize with the mouse
 //! (its edges snapping to a grid), restyle and fill from a panel beside it, and save from there.
 //! Edits go through the same messages as the settings window's cards, so undo and Save & apply
-//! work as they do there.
+//! work as they do there. Clicking an item or cell on the overlay opens it in the panel, and the
+//! overlays that can be up with it are drawn faintly around it.
 
 use iced::window;
 
 use super::*;
-use crate::{motion::Anim, overlay::fit::Fit};
+use crate::{
+    motion::Anim,
+    overlay::{draw::Part, fit::Fit},
+};
 
+mod context;
 mod grid;
 mod handles;
 mod inspector;
+mod panel;
+mod pick;
 pub(super) mod snap;
+
+pub(super) use pick::{cell_field, item_field};
 
 /// The overlay on the stage. Menus, info and log overlays are the shown setup's, by index.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -20,16 +29,36 @@ pub(super) enum StageTarget {
     Menu(usize),
     Info(usize),
     Log(usize),
+    /// A panel in the look set on the App settings page.
+    Panel(Panel),
+    /// A panel in the shown setup's own look, from its Details tab.
+    Setup(Panel),
+}
+
+/// The overlays that come one at a time, each with one look for the app and maybe one per setup.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum Panel {
     Keyboard,
     Numpad,
     Media,
     InGameMenu,
 }
 
+impl Panel {
+    pub(super) fn name(self) -> &'static str {
+        match self {
+            Panel::Keyboard => "On-screen keyboard",
+            Panel::Numpad => "On-screen numpad",
+            Panel::Media => "Media controls",
+            Panel::InGameMenu => "In-game menu",
+        }
+    }
+}
+
 impl StageTarget {
     /// Whether it belongs to a setup, rather than to the app.
     fn in_setup(self) -> bool {
-        matches!(self, StageTarget::Menu(_) | StageTarget::Info(_) | StageTarget::Log(_))
+        !matches!(self, StageTarget::Panel(_))
     }
 }
 
@@ -63,6 +92,10 @@ pub(super) struct Stage {
     dim: bool,
     dock_left: bool,
     folded: bool,
+    /// The other overlays drawn faintly around it.
+    around: Vec<StageTarget>,
+    /// The item or cell last clicked on the overlay, open in the Content tab.
+    picked: Option<Part>,
 }
 
 #[derive(Debug, Clone)]
@@ -78,6 +111,11 @@ pub(super) enum StageMessage {
     Step(f32),
     ShowGrid(bool),
     Dim(bool),
+    /// Draws another overlay around it, or stops.
+    Around(StageTarget, bool),
+    /// Draws all the others around it, or none.
+    AroundAll(bool),
+    Pick(Part),
     Dock,
     Fold,
     Key(window::Id, StageKey),
@@ -125,13 +163,18 @@ pub(super) fn stage_keys(event: iced::Event, status: iced::event::Status, id: wi
 
 /// The Appearance toggle of a card, with the button that opens the overlay on screen beside it.
 pub(super) fn appearance_row<'a>(open: bool, toggle: Message, target: StageTarget) -> Element<'a, Message> {
+    row![disclosure("Appearance", open, toggle), edit_button(target)].spacing(12).align_y(Alignment::Center).into()
+}
+
+/// The button that opens `target` on the stage.
+pub(super) fn edit_button<'a>(target: StageTarget) -> Element<'a, Message> {
     let edit = button(text("Edit on screen").size(13)).style(style::secondary).on_press(Message::Stage(StageMessage::Open(target)));
-    let edit = tooltip(
+    tooltip(
         edit,
         container(text("Show it full size where it goes, over everything, to drag, resize and restyle it there.").size(13)).padding(8).style(style::tooltip),
         tooltip::Position::Top,
-    );
-    row![disclosure("Appearance", open, toggle), edit].spacing(12).align_y(Alignment::Center).into()
+    )
+    .into()
 }
 
 impl App {
@@ -162,6 +205,13 @@ impl App {
                     return self.restyle(target, moved);
                 }
             }
+            StageMessage::Pick(part) => return self.pick(part),
+            StageMessage::AroundAll(on) => {
+                let all = if on { self.stage.as_ref().map(|s| self.around_choices(s.target)).unwrap_or_default() } else { Vec::new() };
+                if let Some(stage) = &mut self.stage {
+                    stage.around = all;
+                }
+            }
             StageMessage::FitContents => {
                 let Some(target) = self.stage.as_ref().map(|s| s.target) else { return Task::none() };
                 if let Some(style) = self.stage_style(target) {
@@ -187,6 +237,7 @@ impl App {
             stage.target = target;
             stage.game = game;
             stage.dock_left = dock_left;
+            stage.picked = None;
             return window::gain_focus(stage.window);
         }
         let (window, open) = window::open(stage_window());
@@ -201,6 +252,8 @@ impl App {
             dim: false,
             dock_left,
             folded: false,
+            around: self.default_around(),
+            picked: None,
         });
         open.discard()
     }
@@ -227,10 +280,19 @@ impl App {
             StageTarget::Menu(i) => self.menus().get(i).map(|m| &m.style),
             StageTarget::Info(i) => self.infos().get(i).map(|o| &o.style),
             StageTarget::Log(i) => self.logs().get(i).map(|o| &o.style),
-            StageTarget::Keyboard => Some(&self.config.keyboard_style),
-            StageTarget::Numpad => Some(&self.config.numpad_style),
-            StageTarget::Media => Some(&self.config.media_style),
-            StageTarget::InGameMenu => Some(&self.config.menu_style),
+            StageTarget::Panel(Panel::Keyboard) => Some(&self.config.keyboard_style),
+            StageTarget::Panel(Panel::Numpad) => Some(&self.config.numpad_style),
+            StageTarget::Panel(Panel::Media) => Some(&self.config.media_style),
+            StageTarget::Panel(Panel::InGameMenu) => Some(&self.config.menu_style),
+            StageTarget::Setup(panel) => {
+                let game = self.game();
+                match panel {
+                    Panel::Keyboard => game.keyboard_style.as_ref(),
+                    Panel::Numpad => game.numpad_style.as_ref(),
+                    Panel::Media => game.media_style.as_ref(),
+                    Panel::InGameMenu => game.menu_style.as_ref(),
+                }
+            }
         }
     }
 
@@ -240,10 +302,14 @@ impl App {
             StageTarget::Menu(i) => Message::SetMenuStyle(i, style),
             StageTarget::Info(i) => Message::SetInfoStyle(i, style),
             StageTarget::Log(i) => Message::SetLog(i, LogOverlay { style, ..self.logs().get(i)?.clone() }),
-            StageTarget::Keyboard => Message::SetKeyboardStyle(style),
-            StageTarget::Numpad => Message::SetNumpadStyle(style),
-            StageTarget::Media => Message::SetMediaStyle(style),
-            StageTarget::InGameMenu => Message::SetInGameMenuStyle(style),
+            StageTarget::Panel(Panel::Keyboard) => Message::SetKeyboardStyle(style),
+            StageTarget::Panel(Panel::Numpad) => Message::SetNumpadStyle(style),
+            StageTarget::Panel(Panel::Media) => Message::SetMediaStyle(style),
+            StageTarget::Panel(Panel::InGameMenu) => Message::SetInGameMenuStyle(style),
+            StageTarget::Setup(Panel::Keyboard) => Message::SetGameOverlayStyle(crate::keyboard::Layout::Keyboard, Some(style)),
+            StageTarget::Setup(Panel::Numpad) => Message::SetGameOverlayStyle(crate::keyboard::Layout::Numpad, Some(style)),
+            StageTarget::Setup(Panel::Media) => Message::SetGameMediaStyle(Some(style)),
+            StageTarget::Setup(Panel::InGameMenu) => Message::SetGameMenuStyle(Some(style)),
         })
     }
 
@@ -251,8 +317,8 @@ impl App {
         self.stage_restyle(target, style).map_or_else(Task::none, |set| self.handle(set))
     }
 
-    /// The stage window: the grid, the overlay with its grips, the inspector, and any picker the
-    /// inspector opened.
+    /// The stage window: the grid, the overlays that can be up with this one, the overlay with its
+    /// grips, the inspector, and any picker the inspector opened.
     pub(super) fn view_stage(&self) -> Element<'_, Message> {
         let Some(stage) = &self.stage else { return space().into() };
         iced::widget::responsive(move |display| {
@@ -262,12 +328,13 @@ impl App {
                 .stage_style(stage.target)
                 .and_then(|style| {
                     let fit = Fit::of(style, display);
-                    let panel = self.stage_panel(stage.target, style, &fit)?;
-                    let held = handles::handles(panel, display, |g| Message::Stage(StageMessage::Gesture(g)));
+                    let panel = self.stage_panel(stage.target, style, &fit, &Anim::still())?;
+                    let held = handles::handles(panel, display, |g| Message::Stage(StageMessage::Gesture(g)), |p| Message::Stage(StageMessage::Pick(p)));
                     Some(crate::overlay::draw::place(held, style, &fit, &Anim::still()))
                 })
                 .unwrap_or_else(|| space().into());
-            let mut layers = stack![grid, panel, self.view_inspector(stage, display)];
+            let context = self.stage_context(stage, display);
+            let mut layers = stack![grid, context, panel, self.view_inspector(stage, display)];
             if let Some(popup) = self.popup() {
                 layers = layers.push(popup);
             }
@@ -275,66 +342,6 @@ impl App {
         })
         .into()
     }
-
-    /// The overlay as the overlay process draws it, at its real size on this display, with
-    /// made-up contents where the real ones come from the game (a log's presses, the media playing).
-    fn stage_panel<'a>(&self, target: StageTarget, style: &OverlayStyle, fit: &Fit) -> Option<Element<'a, Message>> {
-        use crate::overlay::draw;
-        let font = self.preview_font();
-        let still = Anim::still();
-        Some(match target {
-            StageTarget::Menu(i) => {
-                let menu = self.menus().get(i)?;
-                let menus = std::slice::from_ref(menu);
-                let opener = Opener { buttons: vec![Button::LeftBumper], ..Opener::default() };
-                match MenuSession::open(menus, &menu.name, opener).and_then(|s| s.view(menus)) {
-                    Some(view) => draw::menu_panel(&view, font, self.menu_look(), fit),
-                    None => placeholder("This menu has nothing to show yet: give it a name and an item."),
-                }
-            }
-            StageTarget::Info(i) => {
-                let live = crate::info::Live::sample(self.config.info_glyphs).with_layout(self.nintendo_layout());
-                draw::info_panel(&crate::info::resolve(self.infos().get(i)?, &live), font, fit, &still)
-            }
-            StageTarget::Log(i) => {
-                let o = self.logs().get(i)?;
-                let crate::config::LogSource::Input(source) = &o.source;
-                let sample = crate::inputlog::Inputs::sample();
-                let now = sample.now.unwrap_or_else(Instant::now);
-                let glyphs = crate::info::Glyphs { family: self.config.info_glyphs, nintendo_layout: self.nintendo_layout() };
-                draw::log_panel(&crate::inputlog::log_view(&sample.entries(None), source, style, glyphs, now), font, fit, &still)
-            }
-            StageTarget::Keyboard | StageTarget::Numpad => {
-                let board = match target {
-                    StageTarget::Numpad => crate::keyboard::Board::Numpad,
-                    _ if self.config.full_keyboard => crate::keyboard::Board::Full,
-                    _ => crate::keyboard::Board::Basic,
-                };
-                let view = crate::overlay::KeyboardView {
-                    board,
-                    style: style.clone(),
-                    cursor: crate::keyboard::find(board, "KEY_H").unwrap_or_default(),
-                    latched: Vec::new(),
-                    pressed: None,
-                    closing: 0.0,
-                    caps: false,
-                    typed: String::new(),
-                    field: None,
-                };
-                draw::keyboard_panel(&view, font, self.glyphs(), fit, &still)
-            }
-            StageTarget::Media => draw::media_panel(&crate::media::MediaView::sample(style.clone()), font, self.glyphs(), fit, &still),
-            StageTarget::InGameMenu => draw::menu_panel(&crate::system_menu::main_page(style.clone(), 0), font, self.menu_look(), fit),
-        })
-    }
-}
-
-/// Something to hold on to where an overlay draws nothing yet.
-fn placeholder<'a>(note: &'a str) -> Element<'a, Message> {
-    container(text(note).size(16).color(Color::WHITE))
-        .padding(24)
-        .style(|_: &iced::Theme| container::Style { background: Some(Color::from_rgba(0.1, 0.1, 0.12, 0.85).into()), ..container::Style::default() })
-        .into()
 }
 
 impl Stage {
@@ -346,6 +353,8 @@ impl Stage {
             StageMessage::Step(step) => self.step = step,
             StageMessage::ShowGrid(on) => self.show_grid = on,
             StageMessage::Dim(on) => self.dim = on,
+            StageMessage::Around(target, true) if !self.shows_around(target) => self.around.push(target),
+            StageMessage::Around(target, false) => self.around.retain(|t| !context::same_overlay(*t, target)),
             StageMessage::Dock => self.dock_left = !self.dock_left,
             StageMessage::Fold => self.folded = !self.folded,
             _ => {}
