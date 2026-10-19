@@ -226,55 +226,57 @@ Tick an item once it's committed.
 
 ## Settings window: inconsistent words and controls
 
-- [ ] 48. **"New" and "Add" are both used for creating things.** "+ New mode", "+ New layer",
+- [x] 48. **"New" and "Add" are both used for creating things.** "+ New mode", "+ New layer",
   "+ New macro", "+ New info overlay", "+ New profile…" vs "+ Add combo", "+ Add rule",
   "+ Add item", "+ Add row", "+ Add output", "+ Add setup". One reading: "New" for a top-level item
   with its own card, "Add" for a row inside one. If that's the rule, "+ Add combo" should be
   "+ New combo". Otherwise pick one word (`13-combos.png`, `20-modes.png`, `27-details.png`).
-- [ ] 49. **Empty states are drawn two ways.** On Combos the "This profile has no combos yet." line
+  *Kept that rule: a combo has no name and is a row in the Combos card, so "+ Add combo" fits it, and
+  "+ Add setup" picks an existing game from the library.*
+- [x] 49. **Empty states are drawn two ways.** On Combos the "This profile has no combos yet." line
   is inside the card, under the title and above the add button. On Modes, Layers and Log overlays,
   "This setup has no … yet." sits outside, under the card with the add button (`13-combos.png`,
   `20-modes.png`, `21-layers.png`, `26-logs.png`).
-- [ ] 50. **Tab blurbs are written in different forms.** "A mode swaps in another control scheme
+- [x] 50. **Tab blurbs are written in different forms.** "A mode swaps in another control scheme
   until you switch back.", "A layer changes some of the mappings while you hold it." and "A macro
   plays a sequence of inputs." are sentences; "The buttons just pressed, and what each did." (Log
   overlays) and "Text and button glyphs on screen, such as a game's controls." (Info overlays) are
   fragments. "A log overlay shows the buttons just pressed and what each did." and "An info overlay
   shows text and button glyphs on screen, such as a game's controls." match the others
   (`26-logs.png`, `25-info.png`).
-- [ ] 51. **"+ New profile…" is drawn as a dropdown.** It has the dropdown's field look and chevron,
+- [x] 51. **"+ New profile…" is drawn as a dropdown.** It has the dropdown's field look and chevron,
   next to Duplicate and Delete, which are buttons. If it opens a list of templates that's right, but
   then its label could say so ("+ New profile from…"); otherwise make it a button like "+ New macro"
   (`06-general.png`).
-- [ ] 52. **The profile's Name field is outside its card.** "Name" sits on the page between the Edit
+- [x] 52. **The profile's Name field is outside its card.** "Name" sits on the page between the Edit
   profile card and the Button layout card. On Details, a setup's Name is inside the Setup card, and a
   macro's or menu's Name is inside its card. Move it under the Profile dropdown (`06-general.png`).
-- [ ] 53. **Live input is a card on the Overview but loose on a setup's page.** Item 43 of the third
+- [x] 53. **Live input is a card on the Overview but loose on a setup's page.** Item 43 of the third
   pass made the Overview's parts cards; on the Profiles tab "Live input" and its Hide button sit on
   the page background, between two cards (`01-overview.png`, `10-buttons.png`).
-- [ ] 54. **Three styles side by side for an overlay's actions.** On App settings, the On-screen
+- [x] 54. **Three styles side by side for an overlay's actions.** On App settings, the On-screen
   keyboard card reads "[Open it now] ▸ Appearance [Edit on screen]": a button, a disclosure link and
   another button in one row. Moving "▸ Appearance" to its own line below the buttons (as on a
   menu's card) would separate "do" from "show more" (`02-settings.png`).
-- [ ] 55. **The App settings toggles in Performance are negatives.** "No motion", "No sounds", "No
+- [x] 55. **The App settings toggles in Performance are negatives.** "No motion", "No sounds", "No
   looping animations" and "Plain overlays" are on when the feature is off. "No sounds" sits under
   an Overlay sounds card full of toggles that are on, so turning on "No sounds" makes six "on"
   toggles above it meaningless. Either name them positively and default them on ("Overlay sounds"),
   or grey out the Overlay sounds card while "No sounds" is on (`02-settings.png`).
-- [ ] 56. **The overlay lists differ between Overlay motion and Overlay sounds.** Motion lists
+- [x] 56. **The overlay lists differ between Overlay motion and Overlay sounds.** Motion lists
   On-screen keyboard, numpad, Menus, Media controls, Library offers, Info overlays and Log overlays;
   Sounds lists keyboard, numpad, Menus, Guide menus, Media controls and Library offers. Guide menus
   have sounds but no motion setting, and info and log overlays the other way round. If that's
   because they don't apply, a line in the ⓘ would say so; if not, the lists should match
   (`02-settings.png`, `27-details.png`).
-- [ ] 57. **"Turn everything off" vs "Turn every sound off".** App settings → Performance has
+- [x] 57. **"Turn everything off" vs "Turn every sound off".** App settings → Performance has
   "Turn everything off"; Details → Overlay sounds has "Turn every sound off", and App settings' own
   Overlay sounds card has no such button (`02-settings.png`, `27-details.png`).
-- [ ] 58. **"Show the overlay being edited" wraps onto two lines** in the label column on Controller
+- [x] 58. **"Show the overlay being edited" wraps onto two lines** in the label column on Controller
   shortcuts → Menu buttons, and its dropdown starts in the kind-dropdown column (x≈371) while every
   other row in the card puts its button picker at x≈486 (item 44 of the third pass lined these up)
   (`03-shortcuts.png`).
-- [ ] 59. **The mouse-mode gyro checkbox is hard to parse.** "Gyro moves the pointer, as the
+- [x] 59. **The mouse-mode gyro checkbox is hard to parse.** "Gyro moves the pointer, as the
   profile's gyro does (at a default speed if it aims a stick or is off)". Something like "Gyro moves
   the pointer" with the bracketed part in an ⓘ would do (`03-shortcuts.png`).
 - [x] 60. **"Quick Settings menu" on Controller shortcuts, "Quick Settings" in the overlay.** Item 20
