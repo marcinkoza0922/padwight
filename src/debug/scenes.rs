@@ -22,7 +22,7 @@ use crate::{
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 56] = [
+pub const SCENES: [(&str, &str); 57] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -62,6 +62,7 @@ pub const SCENES: [(&str, &str); 56] = [
     ("recording", "the recording badge"),
     ("busy", "an info overlay, an input log and a menu at once"),
     ("unsaved", "the question about unsaved changes, over Quick Settings"),
+    ("quick-styled", "Quick Settings in forced capitals with wide letter spacing, its long rows wrapping"),
     ("held-controller", "the in-game menu waiting for a controller after its own went away"),
     ("held-remapping", "the in-game menu asking to save once remapping is turned off from the tray"),
     ("guide", "the Guide overlay: its menu, Notes, and Mappings with a held layer's section"),
@@ -118,6 +119,7 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "recording" => OverlayFrame { info: vec![info::recording_view()], ..OverlayFrame::default() },
         "busy" => OverlayFrame { info: vec![info_view()], logs: vec![log_view()], ..active(menu(MenuKind::Buttons)) },
         "unsaved" => active(unsaved()),
+        "quick-styled" => active(quick_styled()),
         "held-controller" => active(held(crate::system_menu::Hold::NoController)),
         "held-remapping" => active(held(crate::system_menu::Hold::RemappingOff)),
         "guide" => guide(0),
@@ -283,6 +285,18 @@ fn unsaved() -> OverlayView {
     let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
     config.general.nintendo_layout = Some(true);
     menu.handle(InputEvent::Button(Button::East, true), std::time::Instant::now(), &mut config);
+    OverlayView::Menu(menu.view(&config))
+}
+
+/// Quick Settings in a style whose capitals and letter spacing make its labels long.
+fn quick_styled() -> OverlayView {
+    use crate::system_menu::{Page, SystemMenu};
+    let mut config = crate::config::Config::default();
+    config.menu_style = OverlayStyle {
+        typography: crate::config::Typography { case: crate::config::Case::Upper, letter_spacing: 3.0, ..Default::default() },
+        ..styles::ornate()
+    };
+    let menu = SystemMenu::new(&config).on_page(Page::Quick);
     OverlayView::Menu(menu.view(&config))
 }
 

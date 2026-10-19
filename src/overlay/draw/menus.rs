@@ -159,8 +159,9 @@ fn list<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
     let cursor = m.selected.unwrap_or(0);
     let cell = |i: usize| -> Element<'a, M> {
         let (content, lit, selected) = item_cell(m, i, c, 17.0 * s);
-        // As tall as a glyph, so rows with glyphs are no taller than plain ones.
-        let content = container(content).height(24.0 * s).align_y(Alignment::Center);
+        // At least as tall as a glyph, so rows with glyphs are no taller than plain ones, and
+        // taller when a long label wraps.
+        let content = row![space().height(24.0 * s), content].align_y(Alignment::Center);
         let boxed = container(content).padding([10.0 * s, 14.0 * s]).width(Length::Fill);
         // A note has no box, so it doesn't look like something to pick.
         let boxed = if m.items[i].tone == crate::menu::Tone::Note { boxed } else { boxed.style(lit_cell_style(lit, selected, 40.0 * s)) };
@@ -183,10 +184,14 @@ fn list<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
         }
         col
     };
-    // Wide enough that a long label stays on one line: a wrapped row is taller, and a full page of
-    // them overflows the box.
+    // Wide enough that a long label stays on one line, in the style's case, size and letter
+    // spacing: a wrapped row is taller, and a full page of them overflows the box. Past the
+    // widest, labels wrap.
+    let t = &m.style.typography;
+    let capitals = if t.case == crate::config::Case::Upper { 1.25 } else { 1.0 };
+    let per_letter = 9.0 * capitals * t.size.clamp(0.5, 2.0) + t.letter_spacing.clamp(0.0, 12.0);
     let longest = m.items.iter().map(|item| item.label.chars().count()).max().unwrap_or(0);
-    let width = (longest as f32 * 9.0 + 60.0).clamp(300.0, 440.0);
+    let width = (longest as f32 * per_letter + 60.0).clamp(300.0, 560.0);
     let left = column_of(shown(start, half), width);
     let grid: Element<'a, M> = if half < len {
         row![left, column_of(shown(half + start, len), width)].spacing(14.0 * s).into()

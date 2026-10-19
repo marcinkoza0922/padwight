@@ -120,9 +120,10 @@ pub(super) fn line<'a, M: 'a>(segments: &[Segment], c: Colors, set: Setting) -> 
 /// beside a glyph would otherwise drop whole to the next line and leave the glyph alone there,
 /// and a wrapped line can't start with a space. Where the line keeps its spaces (`trim` off), a
 /// word followed by one, or the piece before text that starts with one, is padded by a space's width.
+/// Spaced letters space their words as much again, as after any letter.
 fn words<'a, M: 'a>(t: &str, face: typeset::Face, ty: typeset::Type, set: Setting, done: &mut Vec<Element<'a, M>>) {
     // The gap between pieces is part of the space.
-    let space = if set.trim { 0.0 } else { (ty.size(set.size) * 0.25 - set.gap).max(0.0) };
+    let space = if set.trim { 0.0 } else { (ty.size(set.size) * 0.25 - set.gap).max(0.0) } + ty.spacing();
     let spaced = |e: Element<'a, M>| -> Element<'a, M> { container(e).padding(Padding::ZERO.right(space)).into() };
     if space > 0.0
         && t.starts_with(char::is_whitespace)

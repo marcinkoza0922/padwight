@@ -36,6 +36,11 @@ impl Type {
         }
     }
 
+    /// The space between letters, in pixels.
+    pub fn spacing(self) -> f32 {
+        self.spacing
+    }
+
     /// `size` as the typography sets it.
     pub fn size(self, size: f32) -> f32 {
         size * self.size
