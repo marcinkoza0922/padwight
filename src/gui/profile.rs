@@ -5,9 +5,11 @@ use iced::widget::{column, row};
 use super::*;
 use crate::info::{Glyphs, button_name};
 use super::guide_tab::{self, GuideView};
-use crate::pad_widget::controller_drawing;
+use crate::pad_widget::{Callouts, controller_drawing};
 
 mod button_list;
+mod callouts;
+use callouts::{drawing_labels, drawing_tips};
 pub(super) use button_list::{button_rows, paddle_rows};
 use button_list::row_matches;
 
@@ -132,70 +134,6 @@ impl Ui<'_> {
     pub(super) fn is_open(&self, target: Target) -> bool {
         self.expanded.contains(&target) || matches!(target, Target::Button(b) if self.found == Some(b))
     }
-}
-
-/// Labels for the controller drawing: every input that doesn't simply pass through. Guide's
-/// usual mapping is left out too: the engine ignores it (Guide is built in).
-/// A stick's mode in a word or two for the picture, or `None` while it's the stick it is.
-fn stick_mode(cfg: &StickConfig, s: Stick) -> Option<&'static str> {
-    Some(match cfg.action {
-        StickAction::Gamepad { stick, .. } if stick == s => return None,
-        StickAction::Gamepad { stick: Stick::Left, .. } => "Pad LS",
-        StickAction::Gamepad { stick: Stick::Right, .. } => "Pad RS",
-        StickAction::Disabled => "Stick off",
-        StickAction::Mouse { .. } => "Mouse",
-        StickAction::Scroll { .. } => "Scroll",
-        StickAction::Ring { .. } => "Ring",
-        StickAction::Flick { .. } => "Flick",
-    })
-}
-
-/// An action as its callout on the picture says it: the summary, shortened where the column is
-/// too narrow for it. A menu is its name alone, as the list below the picture marks it a menu.
-fn callout(action: &ButtonAction) -> String {
-    match action {
-        ButtonAction::GyroClutch => "Gyro clutch".into(),
-        ButtonAction::OpenMenu(name) => format!("“{name}”"),
-        _ => summarize(action),
-    }
-}
-
-pub(super) fn drawing_labels(p: &Profile) -> Vec<(pad_svg::Spot, String)> {
-    let mut labels = Vec::new();
-    for b in Button::ALL {
-        let usual = if b == Button::Guide { ButtonAction::guide_hold() } else { ButtonAction::Gamepad(b) };
-        let gestures = p.gestures(b).is_some();
-        // A stick's own mode shares its click's label, since both meet the picture at the stick.
-        let stick = match b {
-            Button::LeftStick => stick_mode(p.stick(Stick::Left), Stick::Left),
-            Button::RightStick => stick_mode(p.stick(Stick::Right), Stick::Right),
-            _ => None,
-        };
-        let click = (*p.button(b) != usual || gestures).then(|| {
-            let mut label = callout(p.button(b));
-            if gestures {
-                label.push_str(pad_svg::GESTURE_MARK);
-            }
-            label
-        });
-        let label = match (stick, click) {
-            (Some(stick), Some(click)) => format!("{stick} · {click}"),
-            (Some(stick), None) => stick.to_string(),
-            (None, Some(click)) => click,
-            (None, None) => continue,
-        };
-        labels.push((pad_svg::Spot::Button(b), label));
-    }
-    for t in [Trigger::Left, Trigger::Right] {
-        let label = match p.trigger(t) {
-            TriggerAction::Gamepad(out) if *out == t => continue,
-            TriggerAction::Gamepad(out) => format!("Pad {}", if *out == Trigger::Left { "LT" } else { "RT" }),
-            TriggerAction::Disabled => "Disabled".into(),
-            TriggerAction::Button { action, .. } => callout(action),
-        };
-        labels.push((pad_svg::Spot::Trigger(t), label));
-    }
-    labels
 }
 
 #[expect(clippy::too_many_lines, reason = "predates the size lints")]
@@ -1044,13 +982,14 @@ impl App {
         }
         let pad = self.shown_pad();
         let labels = labels_from.map(drawing_labels).unwrap_or_default();
+        let tips = labels_from.map(drawing_tips).unwrap_or_default();
         let caption = match labels_from {
             Some(p) if labels.is_empty() => passthrough_caption(p, named, &self.live_caption()),
             _ => self.live_caption(),
         };
         // A trailing "+" on a callout is too short to explain itself.
         let caption = if labels.iter().any(|(_, l)| l.ends_with(pad_svg::GESTURE_MARK)) {
-            format!("{caption}\nA blue “+” after a label: that button also does something on a double tap, triple tap or long press")
+            format!("{caption}\nA blue “+” after a label: that button also does something on a double tap, triple tap or long press. Point at a button to see what")
         } else {
             caption
         };
@@ -1064,7 +1003,7 @@ impl App {
                     pad.model,
                     // The picture is the controller itself, so it keeps the controller's own labels.
                     Glyphs { family: pad.family, nintendo_layout: false },
-                    &labels,
+                    Callouts { labels: &labels, tips: &tips },
                     self.picture_opacity(),
                 ))
                 .direction(scrollable::Direction::Horizontal(scrollable::Scrollbar::default()))

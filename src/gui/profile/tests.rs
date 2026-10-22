@@ -163,3 +163,20 @@ fn a_new_combo_takes_buttons_no_other_combo_has() {
     assert_eq!(crate::config::duplicate_combo(combos), None, "{combos:?}");
     assert_eq!(app.validate(), None);
 }
+
+#[test]
+fn the_pictures_tips_list_a_buttons_press_gestures_and_combos() {
+    use crate::config::{Combo, GestureKind};
+    let mut p = app().profile().unwrap().clone();
+    p.combos = vec![Combo { buttons: vec![Button::LeftBumper, Button::South], action: ButtonAction::Keys(vec!["KEY_R".into()]) }];
+    *p.gestures.entry(Button::South).or_default().slot(GestureKind::LongPress) = Some(ButtonAction::Keys(vec!["KEY_E".into()]));
+    let tips = drawing_tips(&p);
+    // Each line's lead, before its action.
+    let tip = |b| {
+        let (_, t) = tips.iter().find(|(s, _)| *s == pad_svg::Spot::Button(b))?;
+        Some(t.lines().map(|l| l.split(':').next().unwrap_or_default().to_string()).collect::<Vec<_>>())
+    };
+    assert_eq!(tip(Button::South).unwrap(), ["Press", "Long press", "LB + A"]);
+    assert_eq!(tip(Button::LeftBumper).unwrap(), ["Press", "LB + A"], "a combo alone earns a tip");
+    assert_eq!(tip(Button::East), None, "a button that does one thing needs none");
+}
