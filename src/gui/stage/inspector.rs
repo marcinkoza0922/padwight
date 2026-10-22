@@ -144,7 +144,10 @@ impl App {
             rows.push(labeled("Spot", text(format!("{} · moved {:.1}% across, {:.1}% down", style.position, style.x_offset, style.y_offset)).size(14).into()));
             rows.push(labeled("Size", row![text(size).size(14), fit].spacing(12).align_y(Alignment::Center).into()));
         }
-        rows.push(labeled("Around it", self.around_picker(stage)));
+        let flash = button(text("Flash").size(13)).style(style::secondary).on_press(Message::Stage(StageMessage::Flash));
+        let tip = container(text("Make the overlay flash, to spot it against a dark or busy background.").size(13)).padding(8).style(style::tooltip);
+        rows.push(labeled("Find it", tooltip(flash, tip, tooltip::Position::Top).into()));
+        rows.push(labeled("Also show", self.around_picker(stage)));
         rows.push(note(HOW_TO).into());
         column(rows).spacing(10).into()
     }

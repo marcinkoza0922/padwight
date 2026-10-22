@@ -11,6 +11,8 @@ use crate::config::ScreenPosition;
 
 /// How strongly the overlays around the edited one are drawn.
 const FAINT: f32 = 0.45;
+/// How tall the list of overlays to show gets before it scrolls: about nine of them.
+const AROUND_HEIGHT: f32 = 270.0;
 
 impl App {
     /// The overlays that can be drawn around `target`.
@@ -75,11 +77,14 @@ impl App {
     pub(super) fn around_picker<'a>(&self, stage: &Stage) -> Element<'a, Message> {
         let choices = self.around_choices(stage.target);
         let all = |label: &'static str, on: bool| button(text(label).size(13)).style(style::secondary).on_press(Message::Stage(StageMessage::AroundAll(on)));
-        let mut list = column![row![all("All", true), all("None", false)].spacing(6)].spacing(6);
+        let mut boxes = column![].spacing(6);
         for t in choices {
             let shown = stage.shows_around(t);
-            list = list.push(checkbox(shown).label(self.stage_title(t)).on_toggle(move |on| Message::Stage(StageMessage::Around(t, on))));
+            boxes = boxes.push(checkbox(shown).label(self.stage_title(t)).on_toggle(move |on| Message::Stage(StageMessage::Around(t, on))));
         }
+        // Past about nine overlays the list scrolls, so it doesn't push the rest of the page away.
+        let scrolling = container(scrollable(container(boxes).padding(iced::Padding::ZERO.right(14)))).max_height(AROUND_HEIGHT);
+        let mut list = column![row![all("All", true), all("None", false)].spacing(6), scrolling].spacing(6);
         let stacked = self.stacked_with(stage.target);
         if stacked > 0 {
             let others = if stacked == 1 { "1 more overlay is".to_string() } else { format!("{stacked} more overlays are") };
