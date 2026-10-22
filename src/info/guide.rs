@@ -9,8 +9,17 @@ use super::input_token;
 /// What the default mode (no mode switched to) is called on screen.
 pub const DEFAULT_MODE: &str = "Default";
 
-/// Rows of the Guide overlay's Mappings shown at once, layer sections included.
+/// Rows of the Guide overlay's Mappings shown at once, layer sections included. The hints under
+/// them (other modes, more pages) come on top.
 const MAPPING_ROWS: usize = 14;
+
+/// What the names of the Guide overlay's panels start with.
+const PANEL_PREFIX: &str = "guide ";
+
+/// Whether the info overlay named `name` is one of the Guide overlay's panels.
+pub fn is_guide_panel(name: &str) -> bool {
+    name.starts_with(PANEL_PREFIX)
+}
 
 /// Size of the Guide overlay's panels, relative to the default, so they read from across a room.
 const PANEL_SCALE: f32 = 1.4;
@@ -71,7 +80,8 @@ impl GuideView<'_> {
     }
 
     /// The Notes and Mappings overlays, and the layer sections on the page shown. Notes are left
-    /// out when the author wrote none.
+    /// out when the author wrote none, and the Mappings when nothing is mapped and there are no
+    /// modes to turn to.
     pub fn overlays(&self) -> Vec<InfoOverlay> {
         let mut overlays: Vec<InfoOverlay> = notes_panel(&self.profile.guide.notes).into_iter().collect();
         let mapped = self.mapped();
@@ -80,10 +90,16 @@ impl GuideView<'_> {
         let pages = layout(rows.len(), &sections);
         let at = self.page.min(pages.len() - 1);
         let page = &pages[at];
-        overlays.push(panel("guide mappings", ScreenPosition::CenterRight, self.title(at, pages.len()), rows[page.rows.clone()].to_vec()));
+        // Nothing changed, and no other modes to turn to: nothing to show.
+        if rows.is_empty() && sections.is_empty() && self.modes.is_empty() {
+            return overlays;
+        }
+        let mut shown = rows[page.rows.clone()].to_vec();
+        shown.extend(self.hints(pages.len()));
+        overlays.push(panel(&format!("{PANEL_PREFIX}mappings"), ScreenPosition::CenterRight, self.title(at, pages.len()), shown));
         for &i in &page.sections {
             let section = &sections[i];
-            overlays.push(panel(&format!("guide layer {i}"), ScreenPosition::CenterRight, section.title.clone(), section.rows.clone()));
+            overlays.push(panel(&format!("{PANEL_PREFIX}layer {i}"), ScreenPosition::CenterRight, section.title.clone(), section.rows.clone()));
         }
         overlays
     }
@@ -94,27 +110,69 @@ impl GuideView<'_> {
         layout(mapping_rows(&mapped).len(), &self.sections(&mapped)).len()
     }
 
-    /// "Mappings", then which mode it is when the game has modes, then which page.
+
+    /// "Mappings", then which page, then which mode it is when the game has modes. A mode that
+    /// isn't on is a preview, and says what turns it on.
     fn title(&self, page: usize, pages: usize) -> String {
         let mut title = "Mappings".to_string();
         if pages > 1 {
-            title.push_str(&format!(" {}/{pages} · push {{rs}} up or down to scroll", page + 1));
+            title.push_str(&format!(" {}/{pages}", page + 1));
         }
         if !self.modes.is_empty() {
             let name = self.mode().map_or(DEFAULT_MODE, |m| m.name.as_str());
             // "Mouse mode" is named a mode already.
             let mode = if name.to_lowercase().ends_with("mode") { "" } else { " mode" };
-            let off = if self.shown == self.current { "" } else { " (not on)" };
-            title.push_str(&format!(" · {name}{mode}{off} · {{left}} {{right}} modes"));
+            title.push_str(&format!(" · {name}{mode}"));
+            if self.shown != self.current {
+                title.push_str(&match self.switches_to_shown().first() {
+                    Some(input) => format!(" (preview; {input} turns it on)"),
+                    None => " (preview)".into(),
+                });
+            }
         }
         title
+    }
+
+    /// The muted rows under the mappings that say what turns to other modes and pages, written
+    /// like the mappings: the input, then what it does.
+    fn hints(&self, pages: usize) -> Vec<Vec<String>> {
+        let hint = |glyph: &str, text: &str| vec![glyph.to_string(), format!("{{color:gray}}{text}{{/color}}")];
+        let mut hints = Vec::new();
+        if !self.modes.is_empty() {
+            hints.push(hint("{leftright}", "Other modes"));
+        }
+        if pages > 1 {
+            hints.push(hint("{rs}", "Up or down: more mappings"));
+        }
+        hints
+    }
+
+    /// The inputs that switch to the shown mode from the mode that's on.
+    fn switches_to_shown(&self) -> Vec<String> {
+        let Some(target) = self.mode() else { return Vec::new() };
+        let on = match self.current.checked_sub(1).and_then(|i| self.modes.get(i)) {
+            Some(mode) => self.profile.with_layers([mode]),
+            None => self.profile.clone(),
+        };
+        holders(&on, |a| match a {
+            ButtonAction::Mode(name) => Some(name.as_str()),
+            _ => None,
+        })
+        .into_iter()
+        .filter(|(name, _)| *name == target.name)
+        .map(|(_, input)| input)
+        .collect()
     }
 
     /// A section for each of the game's layers that an input of `mapped` holds, in the order
     /// they're first held.
     fn sections(&self, mapped: &Profile) -> Vec<Section> {
         let mut held: Vec<(String, Vec<String>)> = Vec::new();
-        for (name, holder) in layer_holders(mapped) {
+        let layers = holders(mapped, |a| match a {
+            ButtonAction::Layer(name) => Some(name.as_str()),
+            _ => None,
+        });
+        for (name, holder) in layers {
             match held.iter_mut().find(|(n, _)| *n == name) {
                 Some((_, holders)) => holders.push(holder),
                 None => held.push((name, vec![holder])),
@@ -126,7 +184,8 @@ impl GuideView<'_> {
                 let mut over = mapped.with_layers([layer]);
                 over.guide = over.guide.without_changes_of(layer);
                 let rows = mapping_rows(&over).iter().filter(|r| about(layer, r)).map(cells).collect();
-                Some(Section { title: format!("{name} layer · {}", holders.join(", ")), rows })
+                // Named as its Mappings row names it.
+                Some(Section { title: format!("Layer “{name}” · {}", holders.join(", ")), rows })
             })
             .collect()
     }
@@ -146,16 +205,17 @@ fn cells(row: &MappingRow) -> Vec<String> {
     vec![row.shape.join(&glyphs), row.text.clone()]
 }
 
-/// Every layer an input of `p` holds, with that input's glyphs (a gesture's or combo's marked
-/// like their Mappings rows), in the order of the Mappings: buttons, gestures, combos, triggers.
-fn layer_holders(p: &Profile) -> Vec<(String, String)> {
+/// Every layer or mode (as `named` picks them out of actions) an input of `p` holds or switches
+/// to, with that input's glyphs (a gesture's or combo's marked like their Mappings rows), in the
+/// order of the Mappings: buttons, gestures, combos, triggers.
+fn holders(p: &Profile, named: impl Fn(&ButtonAction) -> Option<&str>) -> Vec<(String, String)> {
     let glyph = |b: Button| input_token(GuideInput::Button(b)).map(|t| format!("{{{t}}}"));
     let mut holders = Vec::new();
     let mut add = |action: &ButtonAction, shape: RowShape, glyphs: Option<Vec<String>>| {
         let Some(glyphs) = glyphs else { return };
         action.walk(&mut |a| {
-            if let ButtonAction::Layer(name) = a {
-                holders.push((name.clone(), shape.join(&glyphs)));
+            if let Some(name) = named(a) {
+                holders.push((name.to_string(), shape.join(&glyphs)));
             }
         });
     };
@@ -210,7 +270,7 @@ pub fn notes_panel(notes: &str) -> Option<InfoOverlay> {
         return None;
     }
     let rows = notes.lines().map(|line| vec![line.to_string()]).collect();
-    let mut panel = panel("guide notes", ScreenPosition::CenterLeft, "Notes".into(), rows);
+    let mut panel = panel(&format!("{PANEL_PREFIX}notes"), ScreenPosition::CenterLeft, "Notes".into(), rows);
     panel.style.max_width = NOTES_MAX_WIDTH;
     Some(panel)
 }

@@ -165,7 +165,7 @@ pub struct Lite {
     /// says.
     pub plain: bool,
     /// Nothing loops: glows don't pulse, gradients and scanlines don't drift, grain holds still. Set by the
-    /// performance card's No looping animations, or by its No motion.
+    /// performance card's Looping animations or Motion switch turned off.
     pub calm: bool,
 }
 

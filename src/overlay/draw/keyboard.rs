@@ -82,9 +82,11 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::in
     let (legend, width): (Element<'a, M>, f32) = if numpad {
         let legend = row(NUMPAD_LEGEND.iter().map(|t| hint(t))).spacing(14.0 * s).wrap().vertical_spacing(4.0 * s).align_x(Horizontal::Center);
         (legend.into(), (v.board.units_wide() * (unit + gap)).max(230.0 * s))
+    } else if v.field.is_some() {
+        // Typing into the in-game menu: a footer like the menu's own, one line in its size.
+        (rich_text::<M>(&FIELD_LEGEND.join(" · "), c, 13.0 * s, c.muted), v.board.units_wide() * (unit + gap))
     } else {
-        let lines = if v.field.is_some() { FIELD_LEGEND } else { KEYBOARD_LEGEND };
-        let legend = row(lines.iter().map(|t| hint(t)))
+        let legend = row(KEYBOARD_LEGEND.iter().map(|t| hint(t)))
         .spacing(18.0 * s)
         .align_y(Alignment::Center)
         .wrap()

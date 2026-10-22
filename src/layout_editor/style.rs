@@ -161,7 +161,7 @@ pub(super) fn style_rows(config: &Config, at: StyleAt) -> Vec<Row> {
     let Some(s) = style(config, at) else {
         let StyleAt::Game(look) = at else { return Vec::new() };
         return vec![
-            Row::note("Looks as the app's settings have it"),
+            Row::note("Looks as App settings have it"),
             Row::add("Give it a look of its own", move |c| {
                 let app = look.app(c);
                 let Some(game) = game_mut(c) else { return Act::stay() };
@@ -184,10 +184,10 @@ pub(super) fn style_rows(config: &Config, at: StyleAt) -> Vec<Row> {
     for (label, of, paint) in [("Background", PaintOf::Background, &s.background), ("Items", PaintOf::Items, &s.items), ("Selected item", PaintOf::Selected, &s.selected)] {
         rows.push(Row::open(format!("{label}: {}", paint_name(paint)), Page::Paint(at, of)));
     }
-    rows.push(Row::open("Text…", Page::StyleText(at)));
-    rows.push(Row::open("Decorations…", Page::Decorations(at)));
+    rows.push(Row::open("Text", Page::StyleText(at)));
+    rows.push(Row::open("Decorations", Page::Decorations(at)));
     if let StyleAt::Game(look) = at {
-        rows.push(Row::apply("Use the app's look", move |c| {
+        rows.push(Row::apply("Use the look from App settings", move |c| {
             let Some(game) = game_mut(c) else { return Act::stay() };
             Act::changed_if(set(look.slot(game), None))
         }).tone(crate::menu::Tone::Remove));

@@ -11,6 +11,9 @@ mod button_list;
 pub(super) use button_list::{button_rows, paddle_rows};
 use button_list::row_matches;
 
+/// The label column of the Edit profile card, so its Profile and Name fields line up.
+const PROFILE_LABEL: f32 = 60.0;
+
 /// Sections of the profile editor.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum ProfileTab {
@@ -147,6 +150,16 @@ fn stick_mode(cfg: &StickConfig, s: Stick) -> Option<&'static str> {
     })
 }
 
+/// An action as its callout on the picture says it: the summary, shortened where the column is
+/// too narrow for it. A menu is its name alone, as the list below the picture marks it a menu.
+fn callout(action: &ButtonAction) -> String {
+    match action {
+        ButtonAction::GyroClutch => "Gyro clutch".into(),
+        ButtonAction::OpenMenu(name) => format!("“{name}”"),
+        _ => summarize(action),
+    }
+}
+
 pub(super) fn drawing_labels(p: &Profile) -> Vec<(pad_svg::Spot, String)> {
     let mut labels = Vec::new();
     for b in Button::ALL {
@@ -159,9 +172,9 @@ pub(super) fn drawing_labels(p: &Profile) -> Vec<(pad_svg::Spot, String)> {
             _ => None,
         };
         let click = (*p.button(b) != usual || gestures).then(|| {
-            let mut label = summarize(p.button(b));
+            let mut label = callout(p.button(b));
             if gestures {
-                label.push_str(" +");
+                label.push_str(pad_svg::GESTURE_MARK);
             }
             label
         });
@@ -178,7 +191,7 @@ pub(super) fn drawing_labels(p: &Profile) -> Vec<(pad_svg::Spot, String)> {
             TriggerAction::Gamepad(out) if *out == t => continue,
             TriggerAction::Gamepad(out) => format!("Pad {}", if *out == Trigger::Left { "LT" } else { "RT" }),
             TriggerAction::Disabled => "Disabled".into(),
-            TriggerAction::Button { action, .. } => summarize(action),
+            TriggerAction::Button { action, .. } => callout(action),
         };
         labels.push((pad_svg::Spot::Trigger(t), label));
     }
@@ -294,7 +307,7 @@ fn tab_words(tab: ProfileTab) -> &'static [&'static str] {
     match tab {
         ProfileTab::Buttons | ProfileTab::Combos => &[],
         ProfileTab::Sticks => &[
-            "sticks left stick right stick mode mouse gamepad flick ring sectors first sector wasd arrows scroll dead zone deadzone shape anti-deadzone buffer dead angle curve response speed vertical smoothing turn size invert directions press at stickiness fill with test turn",
+            "sticks left stick right stick mode mouse gamepad flick ring sectors first sector wasd arrows scroll dead zone deadzone shape anti-deadzone hold buffer dead angle curve response speed vertical smoothing turn size invert directions press at stickiness fill with test turn",
             "triggers left trigger right trigger zones add zone walk modifier shift partial push range from",
         ],
         ProfileTab::Gyro => &[
@@ -536,6 +549,16 @@ fn delete_profile_button<'a>(can_delete: bool) -> Element<'a, Message> {
 
 pub(super) fn short_button(b: Button) -> &'static str {
     b.short_name()
+}
+
+/// The caption of a picture of `p` without callouts, which alone doesn't say whether anything is
+/// mapped. Where the page doesn't name the profile (`named` is its setup), a bare "every input
+/// passes through" would read as remapping doing nothing, so the caption names it.
+fn passthrough_caption(p: &Profile, named: Option<&str>, caption: &str) -> String {
+    match named {
+        Some(setup) => format!("{setup} › {} passes every input through · {caption}", p.name),
+        None => format!("Every input passes through unchanged · {caption}"),
+    }
 }
 
 impl App {
@@ -822,8 +845,12 @@ impl App {
                     On other pads only the labels change. A setup can set its own choice, which wins.";
         let toggle = toggler(pad.is_some_and(|c| c.nintendo_layout)).label("Nintendo button layout");
         let toggle = if pad.is_some() { toggle.on_toggle(Message::SetNintendoLayout) } else { toggle };
-        let hint = pad.map_or_else(|| "Pick a controller in the header to set this.".to_string(), |c| format!("For {}.", c.nickname_or_name()));
-        section("Button layout", Some(format!("{note} {hint}")), vec![toggle.into()])
+        // It's the controller's setting, not the profile's, which the card's place on every profile doesn't say.
+        let hint = pad.map_or_else(
+            || "A setting of each controller, the same in every profile. Pick a controller in the header to set it.".to_string(),
+            |c| format!("For {}, in every profile.", c.nickname_or_name()),
+        );
+        section("Button layout", Some(note.into()), vec![toggle.into(), text(hint).size(13).color(MUTED_COLOR).into()])
     }
 
     pub(super) fn view_profile_tab<'a>(&'a self, names: &Names) -> Element<'a, Message> {
@@ -837,7 +864,7 @@ impl App {
     pub(super) fn view_profile_editor<'a>(&'a self, p: &'a Profile, names: &Names, layer: Option<LayerMarks<'a>>) -> Element<'a, Message> {
         // The active profile's drawing also shows the layers that are on right now.
         let live = (layer.is_none() && self.profile_ref().is_some_and(|at| at == self.saved.active)).then(|| self.with_active_layers(p));
-        let mut col = column![self.view_live(Some(live.as_ref().unwrap_or(p)), true)].spacing(16);
+        let mut col = column![overview_card(self.view_live(Some(live.as_ref().unwrap_or(p)), None, true))].spacing(16);
 
         // The tabs take what the buttons beside them leave, and wrap there when it's too little.
         let mut tabs = row![container(self.profile_segments(p, names)).width(Length::Fill)]
@@ -977,7 +1004,8 @@ impl App {
         }
     }
 
-    pub(super) fn view_live(&self, labels_from: Option<&Profile>, foldable: bool) -> Element<'_, Message> {
+    /// The line under the live picture: the controller pressed last (and its gyro), the mode and the layers on.
+    fn live_caption(&self) -> String {
         let caption = match (&self.live, &self.status) {
             (Some(live), _) => match live.gyro {
                 Some([pitch, yaw, roll]) => {
@@ -994,7 +1022,11 @@ impl App {
             Some(mode) => format!("{caption} · Mode: {mode}"),
             None => caption,
         };
-        let caption = if layers.is_empty() { caption } else { format!("{caption} · Layers: {}", layers.join(" + ")) };
+        if layers.is_empty() { caption } else { format!("{caption} · Layers: {}", layers.join(" + ")) }
+    }
+
+    /// `named` is the setup of `labels_from`, given where the page doesn't already say which profile it is.
+    pub(super) fn view_live(&self, labels_from: Option<&Profile>, named: Option<&str>, foldable: bool) -> Element<'_, Message> {
         let folded = foldable && self.picture_hidden;
         let title: Element<'_, Message> = if foldable {
             row![
@@ -1012,11 +1044,13 @@ impl App {
         }
         let pad = self.shown_pad();
         let labels = labels_from.map(drawing_labels).unwrap_or_default();
-        // Without callouts the picture alone doesn't say whether anything is mapped.
-        let caption = if labels_from.is_some() && labels.is_empty() { format!("Every input passes through unchanged · {caption}") } else { caption };
+        let caption = match labels_from {
+            Some(p) if labels.is_empty() => passthrough_caption(p, named, &self.live_caption()),
+            _ => self.live_caption(),
+        };
         // A trailing "+" on a callout is too short to explain itself.
-        let caption = if labels.iter().any(|(_, l)| l.ends_with(" +")) {
-            format!("{caption}\n“+”: also does something on a double tap, triple tap or long press")
+        let caption = if labels.iter().any(|(_, l)| l.ends_with(pad_svg::GESTURE_MARK)) {
+            format!("{caption}\nA blue “+” after a label: that button also does something on a double tap, triple tap or long press")
         } else {
             caption
         };
@@ -1057,27 +1091,28 @@ impl App {
         let bar = column![
             row![text("Edit profile").size(20), activate].spacing(12).align_y(Alignment::Center),
             row![
-                text("Profile"),
+                text("Profile").width(PROFILE_LABEL),
                 dropdown(names, current.clone(), Message::EditProfile).width(170),
                 space::horizontal(),
+                // A list of what to start from, so it's a dropdown that says so.
                 dropdown(Template::NEW, None::<Template>, Message::AddProfile)
-                    .placeholder("+ New profile…")
+                    .placeholder("+ New profile from…")
                     .style(style::action_dropdown)
-                    .width(200),
+                    .width(220),
                 button(text("Duplicate")).style(style::secondary).on_press(Message::AddProfile(Template::Duplicate)),
                 delete_profile_button(can_delete),
             ]
             .spacing(8)
             .align_y(Alignment::Center),
+            row![
+                text("Name").width(PROFILE_LABEL),
+                field("Profile name", current.as_deref().unwrap_or("")).on_input(Message::RenameProfile).width(170),
+            ]
+            .spacing(8)
+            .align_y(Alignment::Center),
         ]
         .spacing(8);
-        let name = row![
-            text("Name"),
-            field("Profile name", current.as_deref().unwrap_or("")).on_input(Message::RenameProfile).width(170),
-        ]
-        .spacing(8)
-        .align_y(Alignment::Center);
-        column![container(bar).padding(14).width(Length::Fill).style(style::card), name].spacing(8).into()
+        container(bar).padding(14).width(Length::Fill).style(style::card).into()
     }
 
 }

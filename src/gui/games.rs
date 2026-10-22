@@ -282,7 +282,7 @@ impl App {
         .spacing(6);
         // General is always listed, so the search box and the empty note are about the games.
         if self.config.games.is_empty() {
-            col = col.push(text("No game setups yet. Use + Add setup to add one.").size(13).color(MUTED_COLOR));
+            col = col.push(text("No game setups yet.").size(13).color(MUTED_COLOR));
         } else {
             col = col.push(field("Search setups…", &self.game_search).on_input(Message::SetGameSearch).size(14));
         }

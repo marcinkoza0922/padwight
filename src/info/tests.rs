@@ -51,7 +51,6 @@ fn current_input_shows_the_sample_motion() {
         .filter_map(|s| match s {
             Segment::Glyph { label, .. } => Some(label.as_str()),
             Segment::Dpad(_) => Some("dpad"),
-            Segment::StickClick { .. } => Some("stick"),
             Segment::Icon(_) | Segment::Text(_) | Segment::Bar(_) | Segment::Picture(_) | Segment::Mark(_) => None,
         })
         .collect();

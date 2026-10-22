@@ -13,7 +13,7 @@ mod parts;
 pub use hit::{Part, hit, stick_value, trigger_value};
 #[cfg(test)]
 pub use hit::{face_center, stick_center};
-pub use labels::{HEIGHT, LABEL_COLUMN, LABEL_TEXT_SIZE, MARGIN, RIGHT_COLUMN_X, WIDTH, leaders, place_labels};
+pub use labels::{GESTURE_MARK, HEIGHT, LABEL_COLUMN, LABEL_TEXT_SIZE, MARGIN, RIGHT_COLUMN_X, WIDTH, leaders, place_labels};
 use layout::Layout;
 
 use crate::{

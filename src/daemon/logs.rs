@@ -96,8 +96,11 @@ impl Daemon {
     /// The latest presses of the controller in use, drawn as the log overlays draw them. The
     /// presses are drawn with the controller's own labels, and the exports with the labels of the
     /// controller the game sees, so each reads as the controller it's drawn for.
-    pub(super) fn feeds(&self, now: Instant) -> Option<Feeds> {
-        let dev = self.devices.get(&self.last_active?)?;
+    pub(super) fn feeds(&self, pick: Option<&str>, now: Instant) -> Option<Feeds> {
+        let dev = match pick {
+            Some(id) => self.devices.values().find(|d| d.id == id)?,
+            None => self.devices.get(&self.last_active?)?,
+        };
         let identity = PadIdentity::resolve(self.identity_override, dev.model, self.active_support());
         let pressed = Glyphs { family: dev.family.unwrap_or(self.config.info_glyphs), nintendo_layout: false };
         let exported = Glyphs { family: identity.family(), nintendo_layout: false };
@@ -105,13 +108,13 @@ impl Daemon {
             let view = inputlog::log_view(entries, &feed_settings(), &OverlayStyle::default(), glyphs, now);
             LogView { name: "feed".into(), opacity: 1.0, ..view }
         };
-        Some(Feeds { presses: feed(dev.log.entries(), pressed), exports: feed(dev.exports.entries(), exported) })
+        Some(Feeds { controller: self.gamepads.values().find(|p| p.id == dev.id).map(|p| p.name.clone()).unwrap_or_default(), presses: feed(dev.log.entries(), pressed), exports: feed(dev.exports.entries(), exported) })
     }
 
     /// Adds a watcher of the feeds, sending it the current ones first.
-    pub(super) fn watch_feed(&mut self, watcher: Sender<Option<Feeds>>) {
-        if watcher.send(self.feeds(Instant::now())).is_ok() {
-            self.feed_watchers.push(watcher);
+    pub(super) fn watch_feed(&mut self, pick: Option<String>, watcher: Sender<Option<Feeds>>) {
+        if watcher.send(self.feeds(pick.as_deref(), Instant::now())).is_ok() {
+            self.feed_watchers.push((pick, watcher));
         }
     }
 
@@ -120,8 +123,9 @@ impl Daemon {
         if self.feed_watchers.is_empty() {
             return;
         }
-        let feeds = self.feeds(Instant::now());
-        self.feed_watchers.retain(|w| w.send(feeds.clone()).is_ok());
+        let now = Instant::now();
+        let watchers = std::mem::take(&mut self.feed_watchers);
+        self.feed_watchers = watchers.into_iter().filter(|(pick, w)| w.send(self.feeds(pick.as_deref(), now)).is_ok()).collect();
     }
 
     /// One controller's entries by its number, or every controller's merged.

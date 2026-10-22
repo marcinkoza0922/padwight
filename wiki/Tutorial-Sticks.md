@@ -21,7 +21,7 @@ A zone adds an action while the stick is pushed part of the way.
 ![The Zones row with a Left Shift zone from 0.00 to 0.60, and the right stick set to Mouse pointer](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/manual/sticks-zones.png "A zone for the first 60% of the stick's travel, and a mouse stick below it.")
 
 1. At the bottom of the left stick's box, press **+ Add zone** (or **+ Walk modifier (Shift on partial push)**, which makes the zone below for you) (2).
-2. Set the zone **From 0.00 to 0.60** and give it the action **Keyboard** and **Left Shift** (1).
+2. Set the zone **From 0.00 to 0.60** and give it the action **Keys** and **Left Shift** (1).
 
 While the stick is in the first 60% of its travel, Shift is held. In most games that means a light push walks and a full push runs.
 
@@ -47,7 +47,7 @@ Each stick's settings run in a fixed order, and tuning them in that order saves 
 1. **Deadzone**: with the controller untouched, raise it until the *Stick travel* picture's dot stays inside the shaded middle, then stop. A bigger one than needed only makes small pushes do nothing.
 2. **Deadzone shape**: leave it on **Circle**. Try **Cross** on a ring for movement that should stay clean along straight lines.
 3. **Anti-deadzone**: for a stick set to **Gamepad stick**, in a game that ignores small pushes. Raise it until the lightest push moves the game, then back off a step. The *Response* picture shows the step it adds. Mouse and ring modes don't need it.
-4. **Anti-deadzone buffer**: only if you want a flat patch just past the deadzone, such as a steady sneak.
+4. **Anti-deadzone hold**: only if you want a flat patch just past the deadzone, such as a steady sneak.
 5. **Invert X** and **Rotate output** at the bottom: for a game that expects a flipped or turned stick.
 
 Change one setting, press **Save & apply**, and test it in the game before the next.

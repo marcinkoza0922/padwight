@@ -8,16 +8,13 @@ impl App {
     pub(super) fn view_keyboard_card(&self) -> Element<'_, Message> {
         let keyboard_open = self.status.as_ref().is_some_and(|s| s.overlay_visible);
         let appearance_open = self.open_appearance.contains(&None);
+        // Opening it is a line of its own, apart from the Appearance disclosure, which comes last
+        // so what it shows opens right under it.
         let mut rows: Vec<Element<'_, Message>> = vec![
-            row![
-                button(text(if keyboard_open { "Close it" } else { "Open it now" }).size(13))
-                    .style(style::secondary)
-                    .on_press(Message::ToggleOverlay),
-                appearance_row(appearance_open, Message::ToggleAppearance(None), StageTarget::Panel(stage::Panel::Keyboard)),
-            ]
-            .spacing(12)
-            .align_y(Alignment::Center)
-            .into(),
+            button(text(if keyboard_open { "Close it" } else { "Open it now" }).size(13))
+                .style(style::secondary)
+                .on_press(Message::ToggleOverlay)
+                .into(),
             labeled(
                 "Keys",
                 row![
@@ -27,6 +24,7 @@ impl App {
                 .spacing(16)
                 .into(),
             ),
+            appearance_row(appearance_open, Message::ToggleAppearance(None), StageTarget::Panel(stage::Panel::Keyboard)),
         ];
         if appearance_open {
             let style = &self.config.keyboard_style;
@@ -102,15 +100,11 @@ impl App {
     pub(super) fn view_numpad_card(&self) -> Element<'_, Message> {
         let numpad_open = self.status.as_ref().is_some_and(|s| s.numpad_visible);
         let mut rows: Vec<Element<'_, Message>> = vec![
-            row![
-                button(text(if numpad_open { "Close it" } else { "Open it now" }).size(13))
-                    .style(style::secondary)
-                    .on_press(Message::ToggleNumpad),
-                appearance_row(self.numpad_appearance, Message::ToggleNumpadAppearance, StageTarget::Panel(stage::Panel::Numpad)),
-            ]
-            .spacing(12)
-            .align_y(Alignment::Center)
-            .into(),
+            button(text(if numpad_open { "Close it" } else { "Open it now" }).size(13))
+                .style(style::secondary)
+                .on_press(Message::ToggleNumpad)
+                .into(),
+            appearance_row(self.numpad_appearance, Message::ToggleNumpadAppearance, StageTarget::Panel(stage::Panel::Numpad)),
         ];
         if self.numpad_appearance {
             let style = &self.config.numpad_style;

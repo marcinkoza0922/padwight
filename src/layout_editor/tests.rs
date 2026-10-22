@@ -66,6 +66,23 @@ fn a_choice_sets_the_button_and_back_leaves_the_editor() {
 }
 
 #[test]
+fn the_cursor_passes_the_note_of_what_a_button_does_now() {
+    let mut config = config();
+    let mut editor = LayoutEditor::new();
+    editor.pick("Buttons", &mut config);
+    editor.pick_button(Button::South, &mut config);
+    let labels = editor.labels(&config);
+    assert!(labels[0].starts_with("Now: "));
+    assert_eq!(labels[editor.cursor], "Keys", "opens on the first choice");
+    editor.move_cursor((0, -1), &config);
+    assert_eq!(editor.cursor, labels.len() - 1, "up from it wraps round to the end, past the note");
+    editor.move_cursor((0, 1), &config);
+    assert_eq!(labels[editor.cursor], "Keys", "and down wraps back past it");
+    let view = editor.view(&config, &[]);
+    assert_eq!(view.items[0].tone, crate::menu::Tone::Note);
+}
+
+#[test]
 fn a_double_tap_gesture_is_set_from_the_gestures_page() {
     let mut config = config();
     let mut editor = LayoutEditor::new();
@@ -213,7 +230,7 @@ fn a_layer_is_added_bound_and_held_from_a_button() {
     let mut editor = LayoutEditor::new();
     editor.pick("Buttons", &mut config);
     editor.pick_button(Button::LeftBumper, &mut config);
-    editor.pick("Hold a layer", &mut config);
+    editor.pick("Hold layer", &mut config);
     editor.pick("Layer 1", &mut config);
     assert_eq!(button(&config, Button::LeftBumper), ButtonAction::Layer("Layer 1".into()));
 }
@@ -224,12 +241,12 @@ fn a_layer_overrides_a_stick_and_gives_it_back() {
     let mut editor = LayoutEditor::new();
     editor.pick("Layers", &mut config);
     editor.pick("Add layer", &mut config);
-    editor.pick("{ls} Left stick: the profile's", &mut config);
+    editor.pick("Left Stick: same as profile", &mut config);
     editor.pick("Set the left stick here", &mut config);
     editor.step_row("Kind", 1, &mut config);
     assert!(config.general.layers[0].left_stick.is_some());
     assert_ne!(config.general.layers[0].left_stick.as_ref().unwrap().action, config.active().unwrap().left_stick.action);
-    editor.pick("Use the profile's", &mut config);
+    editor.pick("Same as profile", &mut config);
     assert!(config.general.layers[0].left_stick.is_none());
 }
 
@@ -242,7 +259,7 @@ fn a_mode_is_added_and_switched_to_from_a_button() {
     let mut editor = LayoutEditor::new();
     editor.pick("Buttons", &mut config);
     editor.pick_button(Button::Select, &mut config);
-    editor.pick("Switch to a mode", &mut config);
+    editor.pick("Switch mode", &mut config);
     editor.pick("Mode 1", &mut config);
     assert_eq!(button(&config, Button::Select), ButtonAction::Mode("Mode 1".into()));
 }
@@ -265,8 +282,8 @@ fn a_macro_is_renamed_everywhere_and_kept_while_in_use() {
 fn a_trigger_zone_is_added_and_given_an_action() {
     let mut config = config();
     let mut editor = LayoutEditor::new();
-    editor.pick("{lt} {rt} Triggers", &mut config);
-    editor.pick("{lt} Left trigger", &mut config);
+    editor.pick("Triggers", &mut config);
+    editor.pick("Left Trigger", &mut config);
     editor.pick("Zones", &mut config);
     editor.pick("Add zone", &mut config);
     editor.pick("Action", &mut config);
@@ -278,8 +295,8 @@ fn a_trigger_zone_is_added_and_given_an_action() {
 fn a_stick_becomes_a_mouse_with_its_response_settings() {
     let mut config = config();
     let mut editor = LayoutEditor::new();
-    editor.pick("{ls} {rs} Sticks", &mut config);
-    editor.pick("{rs} Right stick", &mut config);
+    editor.pick("Sticks", &mut config);
+    editor.pick("Right Stick", &mut config);
     editor.step_row("Kind", 1, &mut config);
     assert!(matches!(config.active().unwrap().right_stick.action, StickAction::Mouse { .. }));
     assert!(!editor.two_columns(&config), "a page of values stays in one column");
@@ -305,13 +322,13 @@ fn pages_about_a_stick_trigger_gyro_or_menu_have_their_picture() {
     let live = Live { sticks: [(0.5, 0.0), (0.0, 0.0)], triggers: [0.25, 0.0], ..Live::default() };
     let mut editor = LayoutEditor::new();
     assert!(editor.figure(&config, &live).is_none(), "the top page has none");
-    editor.pick("{ls} {rs} Sticks", &mut config);
-    editor.pick("{ls} Left stick", &mut config);
+    editor.pick("Sticks", &mut config);
+    editor.pick("Left Stick", &mut config);
     assert!(matches!(editor.figure(&config, &live), Some(Figure::Stick { live: Some((x, _)), .. }) if x == 0.5));
     assert_eq!(editor.live_stick(), Some(crate::config::Stick::Left));
     let mut editor = LayoutEditor::new();
-    editor.pick("{lt} {rt} Triggers", &mut config);
-    editor.pick("{lt} Left trigger", &mut config);
+    editor.pick("Triggers", &mut config);
+    editor.pick("Left Trigger", &mut config);
     assert!(matches!(editor.figure(&config, &live), Some(Figure::Trigger { live: Some(v), .. }) if v == 0.25));
     assert_eq!(editor.live_stick(), None);
     let mut editor = LayoutEditor::new();
@@ -319,7 +336,7 @@ fn pages_about_a_stick_trigger_gyro_or_menu_have_their_picture() {
     editor.pick("Add info overlay", &mut config);
     assert_eq!(editor.preview(), Some(Preview::Info(0)), "an info overlay shows where it goes");
     let mut editor = LayoutEditor::new();
-    editor.pick("Menus (0)", &mut config);
+    editor.pick("Menus: none", &mut config);
     editor.pick("Add menu", &mut config);
     assert_eq!(editor.preview(), Some(Preview::Menu(0, None)), "a menu shows where it goes");
     assert!(editor.figure(&config, &live).is_none(), "and has no picture beside the page");

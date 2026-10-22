@@ -73,9 +73,9 @@ pub enum Request {
     /// change. `null` means nothing is shown (the resident overlay idles).
     WatchOverlay,
     /// Keep the connection open; the daemon streams one `Option<Feeds>` JSON line per change: the
-    /// latest presses of the most recently used controller, and what padwight exported for them.
-    /// `null` when no controller is active.
-    WatchFeed,
+    /// latest presses of the controller with this id (the most recently used one for `None`), and
+    /// what padwight exported for them. `null` when that controller isn't connected.
+    WatchFeed(Option<String>),
     /// Debug mode only (the daemon must run with `--debug`): adds a controller that no hardware
     /// backs, and replies `Attached` with its device path. Its output is recorded, and also sent
     /// to real virtual devices if `live`.
@@ -163,9 +163,12 @@ pub struct Status {
     pub switches: Vec<SwitchEvent>,
 }
 
-/// The Overview's two feeds for the controller in use.
+/// The Overview's two feeds for one controller.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Feeds {
+    /// The controller they are of, as the header names it.
+    #[serde(default)]
+    pub controller: String,
     /// The presses as the controller labels them, with what each did.
     pub presses: LogView,
     /// The buttons padwight exported for those presses, labeled as the controller in use labels them.

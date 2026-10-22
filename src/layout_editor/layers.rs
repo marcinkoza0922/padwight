@@ -7,7 +7,7 @@ use super::{
     named,
     owner::{self, Owner, Part, Shift, layer, layer_mut},
     pages::Page,
-    rows::{Act, Nav, Number, Row, set},
+    rows::{Act, Nav, Number, Row, counted, set},
     style::StyleAt,
 };
 
@@ -37,7 +37,7 @@ pub(super) fn list_rows(config: &Config, shift: Shift) -> Vec<Row> {
 /// Something a mode or layer may override, with whether it does.
 fn part_row(config: &Config, owner: Owner, part: Part, label: &str, page: Page) -> Row {
     let own = owner::overrides(config, owner, part);
-    Row::open(format!("{label}: {}", if own { "its own" } else { "the profile's" }), page)
+    Row::open(format!("{label}: {}", if own { "its own" } else { "same as profile" }), page)
 }
 
 /// A mode's or layer's page.
@@ -45,18 +45,18 @@ pub(super) fn layer_rows(config: &Config, shift: Shift, i: usize) -> Vec<Row> {
     let Some(l) = layer(config, shift, i) else { return Vec::new() };
     let owner = Owner::Shift(shift, i);
     let parts = [
-        (Part::Stick(crate::config::Stick::Left), "{ls} Left stick", Page::Stick(owner, crate::config::Stick::Left)),
-        (Part::Stick(crate::config::Stick::Right), "{rs} Right stick", Page::Stick(owner, crate::config::Stick::Right)),
-        (Part::Trigger(crate::config::Trigger::Left), "{lt} Left trigger", Page::Trigger(owner, crate::config::Trigger::Left)),
-        (Part::Trigger(crate::config::Trigger::Right), "{rt} Right trigger", Page::Trigger(owner, crate::config::Trigger::Right)),
+        (Part::Stick(crate::config::Stick::Left), "Left Stick", Page::Stick(owner, crate::config::Stick::Left)),
+        (Part::Stick(crate::config::Stick::Right), "Right Stick", Page::Stick(owner, crate::config::Stick::Right)),
+        (Part::Trigger(crate::config::Trigger::Left), "Left Trigger", Page::Trigger(owner, crate::config::Trigger::Left)),
+        (Part::Trigger(crate::config::Trigger::Right), "Right Trigger", Page::Trigger(owner, crate::config::Trigger::Right)),
         (Part::Gyro, "Gyro", Page::Gyro(owner)),
         (Part::Touchpad, "Touchpad", Page::Touch(owner, crate::config::TouchSide::Left)),
     ];
     let mut rows = vec![
         named::rename_row(config, kind(shift), i),
-        Row::open(format!("Buttons ({} bound)", l.buttons.len()), Page::Buttons(owner)),
-        Row::open(format!("Combos ({})", l.combos.len()), Page::Combos(owner)),
-        Row::open(format!("Profile combos it turns off ({})", l.disabled_combos.len()), Page::OffCombos(shift, i)),
+        Row::open(counted("Buttons", l.buttons.len()), Page::Buttons(owner)),
+        Row::open(counted("Combos", l.combos.len()), Page::Combos(owner)),
+        Row::open(counted("Profile combos it turns off", l.disabled_combos.len()), Page::OffCombos(shift, i)),
     ];
     rows.extend(parts.into_iter().map(|(part, label, page)| part_row(config, owner, part, label, page)));
     rows.push(Row::toggle("Other buttons do nothing", l.swallow_unbound, move |c, on| layer_mut(c, shift, i).is_some_and(|l| set(&mut l.swallow_unbound, on))));
@@ -94,7 +94,7 @@ fn indicator_rows(config: &Config, shift: Shift, i: usize, l: &Layer) -> Vec<Row
         rows.push(DELAY.row_u("Shows after", u64::from(l.indicator_delay_ms), move |c, v| layer_mut(c, shift, i).is_some_and(|l| set(&mut l.indicator_delay_ms, v as u32))));
     }
     if l.indicator == Indicator::Name {
-        rows.push(Row::open("Name label's look…", Page::Style(StyleAt::Indicator(shift, i))));
+        rows.push(Row::open("Name label's look", Page::Style(StyleAt::Indicator(shift, i))));
     }
     if l.indicator == Indicator::Bindings {
         let title = l.indicator_title.clone().unwrap_or_default();

@@ -6,15 +6,19 @@
 use iced::widget::{center, column, container, mouse_area, opaque, row, scrollable, space, text};
 
 use super::*;
-use crate::{config::Keyword, info::Glyphs, keyword_icon};
+use crate::info::Glyphs;
+
+mod icons;
+use icons::icon;
 
 /// The kinds in the dialog, by group. Each place's own list (`ACTION_KINDS`, a menu item's…) picks
-/// from these, and groups it has nothing of are left out.
+/// from these, and groups it has nothing of are left out. Each group is sized so that, in rows of
+/// [`COLUMNS`], none ends on a lone tile.
 const GROUPS: [(&str, &[ActionKind]); 6] = [
     ("Press", &[ActionKind::Keys, ActionKind::Mouse, ActionKind::Wheel, ActionKind::Gamepad, ActionKind::PadTrigger, ActionKind::PadStick, ActionKind::Disabled]),
     ("Change how it presses", &[ActionKind::Toggle, ActionKind::Turbo, ActionKind::Multiple, ActionKind::Macro]),
-    ("Open or switch", &[ActionKind::Menu, ActionKind::Layer, ActionKind::Mode, ActionKind::Info, ActionKind::Log]),
-    ("On-screen tools", &[ActionKind::Overlay, ActionKind::Numpad, ActionKind::QuickSettings, ActionKind::Media]),
+    ("Open or switch", &[ActionKind::Menu, ActionKind::Layer, ActionKind::Mode]),
+    ("On screen", &[ActionKind::Overlay, ActionKind::Numpad, ActionKind::QuickSettings, ActionKind::Media, ActionKind::Info, ActionKind::Log]),
     ("Gyro", &[ActionKind::GyroToggle, ActionKind::GyroClutch, ActionKind::GyroHold, ActionKind::GyroRecenter]),
     ("System", &[ActionKind::Screenshot, ActionKind::Recording, ActionKind::ForceQuit]),
 ];
@@ -28,10 +32,12 @@ const PAD_GROUPS: [(&str, &[Button]); 4] = [
     ("D-pad", &[Button::DpadUp, Button::DpadDown, Button::DpadLeft, Button::DpadRight]),
 ];
 
-/// A kind's tile width, so the tiles of every group line up in three columns.
+/// How many kind tiles a row holds, in a window wide enough.
+const COLUMNS: f32 = 4.0;
+/// A kind's tile width, so the tiles of every group line up in columns.
 const TILE_WIDTH: f32 = 250.0;
-/// A controller button's tile: four to the same width.
-const PAD_TILE_WIDTH: f32 = (TILE_WIDTH * 3.0 - 8.0) / 4.0;
+/// A controller button's tile: five to the same width, so each group of buttons is one row.
+const PAD_TILE_WIDTH: f32 = (TILE_WIDTH * COLUMNS + 8.0 * (COLUMNS - 1.0) - 8.0 * 4.0) / 5.0;
 
 /// What a tile offers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -48,27 +54,36 @@ struct Choice {
     pick: Message,
 }
 
+/// Where an action is picked: the input it's for, which names the dialog, the kinds the place
+/// allows, and the button a new "Gamepad button" action starts on.
+#[derive(Clone, Copy)]
+pub(super) struct Place<'k> {
+    pub(super) target: Target,
+    pub(super) kinds: &'k [ActionKind],
+    pub(super) default_button: Button,
+}
+
 /// The open dialog: its tiles by group, and the glyphs its controller buttons are drawn with.
 #[derive(Debug, Clone)]
 pub(super) struct ActionPicker {
-    title: &'static str,
+    title: String,
     glyphs: Glyphs,
     groups: Vec<(&'static str, Vec<Choice>)>,
 }
 
 impl ActionPicker {
-    /// The kinds dialog for an action that `on_change` writes back, offering `kinds`.
-    fn kinds(action: &ButtonAction, kinds: &[ActionKind], default_button: Button, names: &Names, on_change: &OnAction<'_>) -> Self {
+    /// The kinds dialog for an action at `place` that `on_change` writes back.
+    fn kinds(place: Place<'_>, action: &ButtonAction, names: &Names, on_change: &OnAction<'_>) -> Self {
         let current = action_kind(action);
         let groups = GROUPS.map(|(title, group)| {
             let choices = group
                 .iter()
-                .filter(|k| kinds.contains(k))
-                .map(|k| Choice { face: Face::Kind(*k), current: *k == current, pick: on_change(new_action(*k, default_button, action, names)) })
+                .filter(|k| place.kinds.contains(k))
+                .map(|k| Choice { face: Face::Kind(*k), current: *k == current, pick: on_change(new_action(*k, place.default_button, action, names)) })
                 .collect();
             (title, choices)
         });
-        Self::new("Choose an action", names.glyphs, groups)
+        Self::new(title_for(place.target, names.glyphs.family), names.glyphs, groups)
     }
 
     /// The dialog that picks the controller button a "Gamepad button" action presses.
@@ -76,17 +91,17 @@ impl ActionPicker {
         let groups = PAD_GROUPS.map(|(title, group)| {
             (title, group.iter().map(|b| Choice { face: Face::Pad(*b), current: *b == current, pick: on_change(ButtonAction::Gamepad(*b)) }).collect())
         });
-        Self::new("Choose a controller button", glyphs, groups)
+        Self::new("Choose a controller button".into(), glyphs, groups)
     }
 
     /// Groups the place offers nothing of are left out.
-    fn new(title: &'static str, glyphs: Glyphs, groups: impl IntoIterator<Item = (&'static str, Vec<Choice>)>) -> Self {
+    fn new(title: String, glyphs: Glyphs, groups: impl IntoIterator<Item = (&'static str, Vec<Choice>)>) -> Self {
         Self { title, glyphs, groups: groups.into_iter().filter(|(_, c)| !c.is_empty()).collect() }
     }
 
     /// The kinds dialog for the whole action at `target`, as its editor would open it.
     pub(super) fn for_target(target: Target, action: &ButtonAction, kinds: &[ActionKind], default_button: Button, names: &Names) -> Self {
-        Self::kinds(action, kinds, default_button, names, &set_action(target))
+        Self::kinds(Place { target, kinds, default_button }, action, names, &set_action(target))
     }
 
     /// The controller-button dialog for the "Gamepad button" action at `target`.
@@ -98,6 +113,21 @@ impl ActionPicker {
     #[cfg(test)]
     fn pick(&self, face: Face) -> Option<&Message> {
         self.groups.iter().flat_map(|(_, c)| c).find(|c| c.face == face).map(|c| &c.pick)
+    }
+}
+
+/// The kinds dialog's title, naming the input it's for, as a dialog opened from a gesture or a
+/// ring sector doesn't otherwise say. Buttons go by the names `family` prints on them. Places that
+/// aren't an input keep a plain title.
+fn title_for(target: Target, family: crate::info::PadFamily) -> String {
+    let name = |b| crate::info::button_name(b, family);
+    match target {
+        Target::Button(b) => format!("Action for {}", name(b)),
+        Target::Trigger(t) => format!("Action for {t}"),
+        Target::Gesture(b, g) => format!("{g} action for {}", name(b)),
+        Target::RingSector(stick, i) => format!("Action for sector {} of the {stick} ring", i + 1),
+        Target::Combo(i) => format!("Action for combo {}", i + 1),
+        _ => "Choose an action".into(),
     }
 }
 
@@ -114,8 +144,8 @@ fn position_name(b: Button) -> &'static str {
         Button::Select => "Select",
         Button::Start => "Start",
         Button::Guide => "Guide",
-        Button::LeftStick => "Left stick click",
-        Button::RightStick => "Right stick click",
+        Button::LeftStick => "Left Stick click",
+        Button::RightStick => "Right Stick click",
         Button::DpadUp => "D-pad up",
         Button::DpadDown => "D-pad down",
         Button::DpadLeft => "D-pad left",
@@ -145,9 +175,9 @@ impl ActionKind {
     fn about(self) -> &'static str {
         match self {
             ActionKind::Keys => "A key, or a chord like Ctrl + C.",
-            ActionKind::Mouse => "A mouse button.",
+            ActionKind::Mouse => "Left, right, middle, back or forward click.",
             ActionKind::Wheel => "One notch of the scroll wheel.",
-            ActionKind::Gamepad => "A controller button.",
+            ActionKind::Gamepad => "Presses a button of the controller the game sees.",
             ActionKind::PadTrigger => "Pulls a trigger, all the way or part of the way.",
             ActionKind::PadStick => "Pushes a stick toward any direction, by how much you choose.",
             ActionKind::Disabled => "Nothing at all.",
@@ -158,11 +188,11 @@ impl ActionKind {
             ActionKind::Menu => "Opens a menu to pick from.",
             ActionKind::Layer => "Changes other buttons while held.",
             ActionKind::Mode => "Switches to another set of mappings.",
-            ActionKind::Info => "Shows an info overlay.",
-            ActionKind::Log => "Shows a log overlay.",
+            ActionKind::Info => "Text and glyphs that stay on screen, such as a cheat sheet.",
+            ActionKind::Log => "A list of the latest presses on screen.",
             ActionKind::Overlay => "Opens the on-screen keyboard to type with.",
             ActionKind::Numpad => "Opens an on-screen numpad.",
-            ActionKind::QuickSettings => "Opens the Quick Settings menu.",
+            ActionKind::QuickSettings => "Changes a few of the profile's values in game.",
             ActionKind::Media => "Opens play, pause, volume and track controls.",
             ActionKind::GyroToggle => "Turns gyro aiming on or off with each press.",
             ActionKind::GyroClutch => "Stops the gyro while held, to reposition.",
@@ -181,62 +211,9 @@ impl ActionKind {
     }
 }
 
-/// The kind's icon: a keyword's own, in its color, as the summaries draw it, or a plain one.
-fn icon<'a>(k: ActionKind, size: f32) -> Element<'a, Message> {
-    let keyword = match k {
-        ActionKind::Toggle => Some(Keyword::Toggle),
-        ActionKind::Turbo => Some(Keyword::Turbo),
-        ActionKind::Macro => Some(Keyword::Macro),
-        ActionKind::Menu => Some(Keyword::Menu),
-        ActionKind::Info => Some(Keyword::Info),
-        ActionKind::Log => Some(Keyword::Log),
-        ActionKind::Layer => Some(Keyword::Layer),
-        ActionKind::Mode => Some(Keyword::Mode),
-        _ => None,
-    };
-    let svg_text = keyword.map_or_else(|| plain_icon(k), keyword_icon::svg);
-    svg(svg::Handle::from_memory(svg_text.into_bytes())).width(size).height(size).into()
-}
-
-/// The kinds without a keyword: a line drawing in a neutral gray that reads in either theme.
-fn plain_icon(k: ActionKind) -> String {
-    let body = match k {
-        ActionKind::Keys => "<rect x='3' y='6' width='18' height='12' rx='2.5'/><path d='M7 10h.01M11 10h.01M15 10h.01M8 14h8'/>",
-        ActionKind::Overlay => "<rect x='2' y='5' width='20' height='14' rx='2.5'/><path d='M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 12.5h.01M18 12.5h.01M8 16h8'/>",
-        ActionKind::Mouse => "<rect x='6' y='3' width='12' height='18' rx='6'/><path d='M12 3v7'/>",
-        ActionKind::Wheel => "<path d='M12 4v16M8 8l4-4 4 4M8 16l4 4 4-4'/>",
-        ActionKind::Gamepad => "<path d='M7 7h10a5 5 0 0 1 5 5v1.5a3 3 0 0 1-5.6 1.5L15 13H9l-1.4 2A3 3 0 0 1 2 13.5V12a5 5 0 0 1 5-5Z'/><path d='M7 9.5v3M5.5 11h3M16 10h.01M18 12h.01'/>",
-        ActionKind::PadTrigger => "<path d='M7 3h10v6a5 5 0 0 1-10 0Z'/><path d='M12 9v5M9 21h6'/>",
-        ActionKind::PadStick => "<circle cx='12' cy='12' r='9'/><circle cx='15' cy='9' r='3' fill='#8a8f98'/><path d='M12 12l3-3'/>",
-        ActionKind::Disabled => "<circle cx='12' cy='12' r='8.5'/><path d='M6 18 18 6'/>",
-        ActionKind::Numpad => "<path d='M6 6h.01M12 6h.01M18 6h.01M6 12h.01M12 12h.01M18 12h.01M6 18h.01M12 18h.01M18 18h.01' stroke-width='3.5'/>",
-        ActionKind::QuickSettings => "<path d='M4 7h16M4 17h16'/><circle cx='9' cy='7' r='2.2' fill='#8a8f98'/><circle cx='15' cy='17' r='2.2' fill='#8a8f98'/>",
-        ActionKind::Media => "<path d='M8 5v14l11-7Z'/>",
-        // Two outputs stacked: one press, both sent.
-        ActionKind::Multiple => "<rect x='3' y='8' width='13' height='13' rx='2'/><path d='M8 8V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-3'/>",
-        ActionKind::GyroToggle | ActionKind::GyroClutch | ActionKind::GyroHold | ActionKind::GyroRecenter => {
-            "<circle cx='12' cy='12' r='8.5'/><ellipse cx='12' cy='12' rx='8.5' ry='3.5'/><circle cx='12' cy='12' r='1.5' fill='#8a8f98'/>"
-        }
-        ActionKind::Screenshot => "<path d='M4 8h3l2-3h6l2 3h3v11H4Z'/><circle cx='12' cy='13' r='3.5'/>",
-        ActionKind::Recording => "<circle cx='12' cy='12' r='8.5'/><circle cx='12' cy='12' r='4' fill='#8a8f98'/>",
-        ActionKind::ForceQuit => "<path d='M12 3v8M6.3 6.3a8 8 0 1 0 11.4 0'/>",
-        _ => "",
-    };
-    format!(
-        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='#8a8f98' stroke-width='2' \
-         stroke-linecap='round' stroke-linejoin='round'>{body}</svg>"
-    )
-}
-
 /// The button an action editor shows its kind with, drawn as a dropdown is. It opens the dialog
-/// for the action that `on_change` writes back, offering `kinds`.
-pub(super) fn kind_button<'a>(
-    action: &ButtonAction,
-    kinds: &'static [ActionKind],
-    default_button: Button,
-    names: &Names,
-    on_change: OnAction<'a>,
-) -> Element<'a, Message> {
+/// for the action at `place` that `on_change` writes back.
+pub(super) fn kind_button<'a>(place: Place<'static>, action: &ButtonAction, names: &Names, on_change: OnAction<'a>) -> Element<'a, Message> {
     let kind = action_kind(action);
     let arrow = text("▾").size(14).style(|theme: &iced::Theme| text::Style { color: Some(theme.extended_palette().primary.base.color) });
     let (action, names) = (action.clone(), names.clone());
@@ -245,7 +222,7 @@ pub(super) fn kind_button<'a>(
         .style(style::field_button)
         .padding([6, 10])
         .width(VALUE_WIDTH)
-        .on_press_with(move || Message::OpenActionPicker(Box::new(ActionPicker::kinds(&action, kinds, default_button, &names, &on_change))))
+        .on_press_with(move || Message::OpenActionPicker(Box::new(ActionPicker::kinds(place, &action, &names, &on_change))))
         .into()
 }
 
@@ -290,7 +267,7 @@ pub(super) fn view_action_picker(picker: &ActionPicker) -> Element<'_, Message> 
     }
     let dialog = container(
         column![
-            row![text(picker.title).size(20), space::horizontal(), button(text("Cancel")).style(style::secondary).on_press(Message::CloseActionPicker)]
+            row![text(&picker.title).size(20), space::horizontal(), button(text("Cancel")).style(style::secondary).on_press(Message::CloseActionPicker)]
                 .align_y(Alignment::Center),
             // Room on the right for the scrollbar, which shows in a short window.
             scrollable(groups.padding(iced::Padding::default().right(16))).height(Length::Shrink),
@@ -298,7 +275,7 @@ pub(super) fn view_action_picker(picker: &ActionPicker) -> Element<'_, Message> 
         .spacing(14),
     )
     .padding(20)
-    .max_width(TILE_WIDTH * 3.0 + 8.0 * 2.0 + 16.0 + 40.0)
+    .max_width(TILE_WIDTH * COLUMNS + 8.0 * (COLUMNS - 1.0) + 16.0 + 40.0)
     .style(style::dialog);
     let backdrop = container(center(opaque(dialog)).padding(24))
         .width(Length::Fill)

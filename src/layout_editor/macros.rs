@@ -47,7 +47,7 @@ pub(super) fn macro_rows(config: &Config, m: usize) -> Vec<Row> {
     let Some(mac) = config.active_game().macros.get(m) else { return Vec::new() };
     let mut rows = vec![named::rename_row(config, ItemKind::Macro, m)];
     rows.extend(mac.steps.iter().enumerate().map(|(i, s)| Row::open(format!("{}. {}", i + 1, step_label(s)), Page::Step(m, i)).keyword(s.action().and_then(ButtonAction::keyword))));
-    rows.push(Row::open("Add a step…", Page::AddStep(m)).tone(Tone::Add));
+    rows.push(Row::open("Add a step", Page::AddStep(m)).tone(Tone::Add));
     rows.push(named::delete_row(config, ItemKind::Macro, m, move |c| {
         let Some(game) = game_mut(c).filter(|g| m < g.macros.len()) else { return false };
         game.macros.remove(m);
@@ -202,6 +202,6 @@ mod tests {
         apply(&mut config);
         let steps = &config.active_game().macros[0].steps;
         assert_eq!(steps.len(), Motion::QuarterCircleForward.steps().len());
-        assert_eq!(step_label(&steps[0]), "Left stick to ↓ Down");
+        assert_eq!(step_label(&steps[0]), "Left Stick to ↓ Down");
     }
 }

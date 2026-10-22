@@ -187,6 +187,24 @@ pub fn label(code: &str) -> String {
     }
 }
 
+/// A word for a key labeled with a lone mark that is too thin to read in a small chip or between
+/// quote marks ("Semicolon" for `;`). Marks that are also controller glyphs (`+`, `-`) keep theirs.
+pub fn mark_name(label: &str) -> Option<&'static str> {
+    Some(match label {
+        "'" => "Apostrophe",
+        "`" => "Backtick",
+        "," => "Comma",
+        "." => "Period",
+        ";" => "Semicolon",
+        "[" => "Left bracket",
+        "]" => "Right bracket",
+        "/" => "Slash",
+        "\\" => "Backslash",
+        "=" => "Equals",
+        _ => return None,
+    })
+}
+
 /// Every key the layouts draw, spacers left out.
 pub fn drawn_keys() -> impl Iterator<Item = &'static Key> {
     let boards = [Board::Basic, Board::Full, Board::Numpad].into_iter().flat_map(Board::keys);

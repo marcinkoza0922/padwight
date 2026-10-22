@@ -52,15 +52,15 @@ impl fmt::Display for ActionKind {
             ActionKind::Gamepad => "Gamepad button",
             ActionKind::PadTrigger => "Gamepad trigger",
             ActionKind::PadStick => "Gamepad stick",
-            ActionKind::Keys => "Keyboard",
-            ActionKind::Mouse => "Mouse button",
+            ActionKind::Keys => "Keys",
+            ActionKind::Mouse => "Mouse click",
             ActionKind::Wheel => "Scroll wheel",
             ActionKind::Overlay => "On-screen keyboard",
             ActionKind::Numpad => "On-screen numpad",
-            ActionKind::Screenshot => "Take screenshot",
-            ActionKind::Recording => "Toggle recording",
+            ActionKind::Screenshot => "Screenshot",
+            ActionKind::Recording => "Start or stop recording",
             ActionKind::Media => "Media controls",
-            ActionKind::QuickSettings => "Quick Settings menu",
+            ActionKind::QuickSettings => "Quick Settings",
             ActionKind::ForceQuit => "Force quit (hold)",
             ActionKind::GyroToggle => "Gyro on / off",
             ActionKind::GyroClutch => "Gyro clutch (off while held)",
@@ -240,7 +240,9 @@ pub(super) fn action_editor<'a>(
     field: KeyField,
     names: &Names,
 ) -> Element<'a, Message> {
-    let kind_picker = super::action_picker::kind_button(action, kinds, default_button, names, on_change.clone());
+    let KeyField::Action { target, .. } = field;
+    let place = super::action_picker::Place { target, kinds, default_button };
+    let kind_picker = super::action_picker::kind_button(place, action, names, on_change.clone());
     let value = action_value(action, default_button, on_change, field, names);
     // Where there isn't room beside the kind, the value goes below it.
     row![kind_picker, value].spacing(8).align_y(Alignment::Start).wrap().vertical_spacing(6).into()
@@ -651,7 +653,8 @@ mod tests {
         let keys = |k: &[&str]| ButtonAction::Keys(k.iter().map(std::string::ToString::to_string).collect());
         assert_eq!(summarize(&keys(&["KEY_LEFTCTRL", "KEY_C"])), "Left Ctrl + C");
         assert_eq!(summarize(&ButtonAction::Disabled), "Disabled");
-        assert_eq!(summarize(&keys(&["KEY_SEMICOLON"])), "“;”");
+        assert_eq!(summarize(&keys(&["KEY_SEMICOLON"])), "Semicolon");
+        assert_eq!(summarize(&keys(&["KEY_MINUS"])), "“-”");
         assert_eq!(
             summarize(&ButtonAction::toggle(ButtonAction::Turbo {
                 action: Box::new(ButtonAction::Mouse(MouseButton::Left)),

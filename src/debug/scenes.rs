@@ -18,12 +18,11 @@ use crate::{
     keyboard::{self, Board},
     media::MediaView,
     menu::MenuSession,
-    offer::OfferView,
     overlay::{KeyboardView, OverlayFrame, OverlayView},
 };
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 56] = [
+pub const SCENES: [(&str, &str); 57] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("numpad", "the on-screen numpad"),
@@ -63,6 +62,7 @@ pub const SCENES: [(&str, &str); 56] = [
     ("recording", "the recording badge"),
     ("busy", "an info overlay, an input log and a menu at once"),
     ("unsaved", "the question about unsaved changes, over Quick Settings"),
+    ("quick-styled", "Quick Settings in forced capitals with wide letter spacing, its long rows wrapping"),
     ("held-controller", "the in-game menu waiting for a controller after its own went away"),
     ("held-remapping", "the in-game menu asking to save once remapping is turned off from the tray"),
     ("guide", "the Guide overlay: its menu, Notes, and Mappings with a held layer's section"),
@@ -103,16 +103,13 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "menu-styled" => active(menu_in(MenuKind::List, styles::ornate(), true)),
         "in-game-menu" => active(OverlayView::Menu(crate::system_menu::main_page(OverlayStyle::default(), 0))),
         "media" => active(OverlayView::Media(MediaView::sample(OverlayStyle::media()))),
-        "offer" => active(OverlayView::Offer(offer())),
+        "offer" => active(offer()),
         "library-hint" => {
-            let toast = crate::offer::hint("Deus Ex", std::time::Instant::now());
-            OverlayFrame { info: toast.view(std::time::Instant::now()).into_iter().collect(), ..OverlayFrame::default() }
+            let toast = crate::offer::hint("Deus Ex", Instant::now());
+            OverlayFrame { info: toast.view(Instant::now(), crate::info::Glyphs::default()).into_iter().collect(), ..OverlayFrame::default() }
         }
         "info" => OverlayFrame { info: vec![info_view()], ..OverlayFrame::default() },
-        "info-empty" => OverlayFrame {
-            info: vec![crate::info::InfoView { title: None, rows: Vec::new(), ..info_view() }],
-            ..OverlayFrame::default()
-        },
+        "info-empty" => OverlayFrame { info: vec![blank_info()], ..OverlayFrame::default() },
         "info-formatted" => OverlayFrame {
             info: vec![formatted_view()],
             pack_icons: Some(std::collections::BTreeMap::from([("flame".to_string(), FLAME.to_string())])),
@@ -122,6 +119,7 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "recording" => OverlayFrame { info: vec![info::recording_view()], ..OverlayFrame::default() },
         "busy" => OverlayFrame { info: vec![info_view()], logs: vec![log_view()], ..active(menu(MenuKind::Buttons)) },
         "unsaved" => active(unsaved()),
+        "quick-styled" => active(quick_styled()),
         "held-controller" => active(held(crate::system_menu::Hold::NoController)),
         "held-remapping" => active(held(crate::system_menu::Hold::RemappingOff)),
         "guide" => guide(0),
@@ -201,7 +199,8 @@ fn guide(shown: usize) -> OverlayFrame {
     p.set_button(Button::West, keys("KEY_R"));
     p.set_button(Button::North, ButtonAction::Mode("Driving".into()));
     p.set_button(Button::LeftBumper, ButtonAction::Layer("Hotkeys".into()));
-    p.guide.notes = "Hold LB for the hotkeys.\nThe driving mode turns the face buttons into pedals, and the bumpers into the gears and the lights.".into();
+    // A glyph leading a long note, and one before the last words, show how a note wraps around glyphs.
+    p.guide.notes = "{start} backs out of every in-game screen, from the inventory to the keypads and computers.\nHold {lb} for the hotkeys.\nThe driving mode turns the face buttons into pedals, and the bumpers {lb} {rb} into the gears and the lights.".into();
     let mut driving = Mode::new("Driving");
     driving.buttons.insert(Button::South, keys("KEY_W"));
     driving.buttons.insert(Button::East, keys("KEY_S"));
@@ -289,6 +288,18 @@ fn unsaved() -> OverlayView {
     OverlayView::Menu(menu.view(&config))
 }
 
+/// Quick Settings in a style whose capitals and letter spacing make its labels long.
+fn quick_styled() -> OverlayView {
+    use crate::system_menu::{Page, SystemMenu};
+    let mut config = crate::config::Config::default();
+    config.menu_style = OverlayStyle {
+        typography: crate::config::Typography { case: crate::config::Case::Upper, letter_spacing: 3.0, ..Default::default() },
+        ..styles::ornate()
+    };
+    let menu = SystemMenu::new(&config).on_page(Page::Quick);
+    OverlayView::Menu(menu.view(&config))
+}
+
 /// The in-game menu on hold, `why`, over Quick Settings.
 fn held(why: crate::system_menu::Hold) -> OverlayView {
     use crate::system_menu::{Page, SystemMenu};
@@ -298,14 +309,26 @@ fn held(why: crate::system_menu::Hold) -> OverlayView {
     OverlayView::Menu(menu.view(&config))
 }
 
-fn offer() -> OfferView {
-    OfferView {
-        title: "Add Deus Ex?".into(),
-        detail: "The library has controls for this game.".into(),
-        answers: vec![("A".into(), "Add".into()), ("B".into(), "Not now".into()), ("Y".into(), "Never".into())],
-        hint: "A add · B not now · Y never".into(),
-        style: OverlayStyle::default(),
-    }
+/// The offer as the daemon makes it, for the library's Deus Ex pack.
+fn offer() -> OverlayView {
+    let library = crate::library::entries();
+    let deus_ex = library.iter().position(|e| e.pack.pack.name == "Deus Ex").expect("the library has Deus Ex");
+    crate::offer::OfferSession::new(library, &[deus_ex], None, Instant::now()).view(&OverlayStyle::default())
+}
+
+/// An info overlay with nothing written in it yet, as its preview shows it.
+fn blank_info() -> crate::info::InfoView {
+    let blank = InfoOverlay {
+        name: "Info".into(),
+        always: false,
+        on_start: None,
+        linger: None,
+        title: None,
+        current_input: Default::default(),
+        style: OverlayStyle::info(),
+        rows: Vec::new(),
+    };
+    info::resolve(&blank, &Live::sample(PadFamily::Xbox))
 }
 
 /// An info overlay using most kinds of token, with the sample live values the settings show.

@@ -2,7 +2,7 @@
 //! `{i}`, `{u}`, `{color:…}`, `{box}`) applied to the text they hold between them.
 
 use iced::{
-    Alignment, Border, Color, Element, Font,
+    Alignment, Border, Color, Element, Font, Padding,
     font::{Style as Slant, Weight},
     widget::{container, row},
 };
@@ -56,6 +56,10 @@ impl Look {
         }
     }
 
+    fn face(&self, base: Font, set: Setting) -> typeset::Face {
+        typeset::Face { font: self.font(base), size: set.size, color: self.ink(set.color), underline: self.underline }
+    }
+
     /// `base` unless a color tag says another; the alpha stays the line's, so a fade still fades.
     fn ink(&self, base: Color) -> Color {
         self.color.map_or(base, |[r, g, b]| Color { a: base.a, ..Color::from_rgb8(r, g, b) })
@@ -87,12 +91,16 @@ pub(super) fn line<'a, M: 'a>(segments: &[Segment], c: Colors, set: Setting) -> 
                 look.apply(mark);
                 continue;
             }
+            Segment::Text(t) if boxed.is_none() && !single => {
+                words(t, look.face(c.font, set), ty, set, &mut done);
+                continue;
+            }
             Segment::Text(t) => {
                 let t = if set.trim && !single { t.trim() } else { t.as_str() };
                 if t.is_empty() {
                     continue;
                 }
-                typeset::underlined(ty, t, typeset::Face { font: look.font(c.font), size: set.size, color: look.ink(set.color), underline: look.underline })
+                typeset::underlined(ty, t, look.face(c.font, set))
             }
             Segment::Picture(name) => picture(name, look.ink(set.color), set, c, ty),
             other => segment_element(other, c, set.scale, set.opacity),
@@ -106,6 +114,29 @@ pub(super) fn line<'a, M: 'a>(segments: &[Segment], c: Colors, set: Setting) -> 
         done.push(outline(inner, c, set));
     }
     row(done).spacing(set.gap).align_y(Alignment::Center).wrap().vertical_spacing(set.gap).into()
+}
+
+/// Text outside a box, a piece per word, so the row wraps between words: a run too long to fit
+/// beside a glyph would otherwise drop whole to the next line and leave the glyph alone there,
+/// and a wrapped line can't start with a space. Where the line keeps its spaces (`trim` off), a
+/// word followed by one, or the piece before text that starts with one, is padded by a space's width.
+/// Spaced letters space their words as much again, as after any letter.
+fn words<'a, M: 'a>(t: &str, face: typeset::Face, ty: typeset::Type, set: Setting, done: &mut Vec<Element<'a, M>>) {
+    // The gap between pieces is part of the space.
+    let space = if set.trim { 0.0 } else { (ty.size(set.size) * 0.25 - set.gap).max(0.0) } + ty.spacing();
+    let spaced = |e: Element<'a, M>| -> Element<'a, M> { container(e).padding(Padding::ZERO.right(space)).into() };
+    if space > 0.0
+        && t.starts_with(char::is_whitespace)
+        && let Some(before) = done.pop()
+    {
+        done.push(spaced(before));
+    }
+    let words: Vec<&str> = t.split_whitespace().collect();
+    let trailing = t.ends_with(char::is_whitespace);
+    for (i, word) in words.iter().enumerate() {
+        let element = typeset::underlined(ty, word, face);
+        done.push(if space > 0.0 && (i + 1 < words.len() || trailing) { spaced(element) } else { element });
+    }
 }
 
 /// The pieces of a `{box}` run inside a light outline in the text's color.

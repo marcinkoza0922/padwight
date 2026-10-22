@@ -72,9 +72,14 @@ pub(super) struct Row {
 }
 
 impl Row {
-    /// A row that only says `label`.
+    /// A row that only says `label`, drawn muted; the cursor passes it by.
     pub fn note(label: impl Into<String>) -> Self {
-        Row { item: item(label.into()), choose: Choose::Nothing, step: None }
+        Row { item: ItemView { tone: Tone::Note, ..item(label.into()) }, choose: Choose::Nothing, step: None }
+    }
+
+    /// Whether the cursor can land on it: anything but a note.
+    pub fn stops(&self) -> bool {
+        self.item.tone != Tone::Note
     }
 
     /// A row that opens `page`.
@@ -110,7 +115,7 @@ impl Row {
 
     /// A switch: A and left/right flip it. `set` takes the new state and says whether it changed.
     pub fn toggle(label: &str, on: bool, set: impl Fn(&mut Config, bool) -> bool + 'static) -> Self {
-        Row::step(format!("{label}: {}", yes_no(on)), move |c, _| set(c, !on))
+        Row::step(format!("{label}: {}", on_off(on)), move |c, _| set(c, !on))
     }
 
     pub fn tone(mut self, tone: Tone) -> Self {
@@ -133,8 +138,14 @@ pub(super) fn item(label: String) -> ItemView {
     ItemView { label, ..ItemView::plain() }
 }
 
-pub(super) fn yes_no(on: bool) -> &'static str {
-    if on { "yes" } else { "no" }
+/// A switch's value, worded as Quick Settings words its own.
+pub(super) fn on_off(on: bool) -> &'static str {
+    if on { "on" } else { "off" }
+}
+
+/// A row's label with how many things it holds: "Macros (2)", or "Macros: none".
+pub(super) fn counted(label: &str, n: usize) -> String {
+    if n == 0 { format!("{label}: none") } else { format!("{label} ({n})") }
 }
 
 /// The value `options` has after `at`, `dir` steps on, round the end.

@@ -316,8 +316,8 @@ impl fmt::Display for CarouselControls {
             CarouselControls::Bumpers => "Bumpers (LB / RB)",
             CarouselControls::Triggers => "Triggers (LT / RT)",
             CarouselControls::DPad => "D-pad left / right",
-            CarouselControls::LeftStick => "Left stick",
-            CarouselControls::RightStick => "Right stick",
+            CarouselControls::LeftStick => "Left Stick",
+            CarouselControls::RightStick => "Right Stick",
         })
     }
 }

@@ -48,7 +48,7 @@ fn label(item: Item, profile: &str) -> String {
         Item::Numpad => "On-screen numpad".into(),
         Item::MouseMode => "Mouse mode".into(),
         Item::Media => "Media controls".into(),
-        Item::SwitchProfile => format!("Switch profile (now {profile})"),
+        Item::SwitchProfile => format!("Switch Profile (now {profile})"),
         Item::Steam => "Steam overlay".into(),
     }
 }
@@ -71,6 +71,7 @@ pub fn view(steam: bool, cursor: usize, profile: &str, style: OverlayStyle) -> M
         picks: 0,
         crumbs: Vec::new(),
         hint: "{confirm} choose · {back} close".into(),
+        about: String::new(),
         style,
         touch: false,
         aim: None,
@@ -119,7 +120,7 @@ mod tests {
     fn the_view_names_the_profile_and_marks_the_cursor() {
         let menu = view(false, 1, "Gameplay", OverlayStyle::default());
         assert_eq!(menu.selected, Some(1));
-        assert_eq!(menu.items.last().unwrap().label, "Switch profile (now Gameplay)");
+        assert_eq!(menu.items.last().unwrap().label, "Switch Profile (now Gameplay)");
         assert_eq!(menu.items.len(), items(false).len());
     }
 }

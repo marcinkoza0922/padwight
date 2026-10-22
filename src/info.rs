@@ -23,7 +23,7 @@ use windows::{battery, cpu_times, gpu_busy, local_time, memory, wifi_strength};
 pub use windows::form_factor;
 
 pub use catalog::{Entry, Fold, folds};
-pub use guide::{DEFAULT_MODE, GuideView, notes_panel};
+pub use guide::{DEFAULT_MODE, GuideView, is_guide_panel, notes_panel};
 pub use opener::{OpenerLabel, set_menu_keys, set_opener, set_panel_keys};
 pub use pad_model::PadModel;
 pub use timers::{Timers, Toast, fade, redraw_at, seconds};
@@ -278,7 +278,9 @@ pub enum Token {
     Trigger(Trigger),
     /// The stick itself (for "move"), not its click.
     Stick(Stick),
-    Dpad,
+    /// A D-pad with these arms lit (`[up, down, left, right]`): none for `{dpad}`, both arms of one
+    /// axis for "change" and "scroll" hints (`{leftright}`, `{updown}`).
+    DpadArms([bool; 4]),
     Stat(Stat),
     Icon(IconToken),
     Gauge { gauge: Gauge, icon: bool },
@@ -441,11 +443,13 @@ fn plain_token(name: &str) -> Option<Token> {
         "rs" => Token::Stick(Stick::Right),
         "l3" => Token::Button(Button::LeftStick),
         "r3" => Token::Button(Button::RightStick),
-        "dpad" => Token::Dpad,
+        "dpad" => Token::DpadArms([false; 4]),
         "up" => Token::Button(Button::DpadUp),
         "down" => Token::Button(Button::DpadDown),
         "left" => Token::Button(Button::DpadLeft),
         "right" => Token::Button(Button::DpadRight),
+        "leftright" => Token::DpadArms([false, false, true, true]),
+        "updown" => Token::DpadArms([true, true, false, false]),
         "time" => Token::Stat(Stat::Time),
         "time12" => Token::Stat(Stat::Time12),
         "date" => Token::Stat(Stat::Date),
@@ -470,8 +474,6 @@ pub enum Segment {
     Glyph { label: String, fill: Option<[u8; 3]>, round: bool },
     /// A cross-shaped D-pad with its lit arms, `[up, down, left, right]` (two for a diagonal).
     Dpad([bool; 4]),
-    /// A stick pressed in: a stick cap with a down arrow. `right` picks R over L.
-    StickClick { right: bool },
     /// A drawn icon: the form factor, the controller's kind, or a gauge.
     Icon(Icon),
     /// An icon by name (`{icon:bow}`): one built in, or one of the game's pack.
@@ -685,7 +687,7 @@ pub fn glyph_text(text: &str, glyphs: Glyphs) -> Vec<Segment> {
             Err(Token::Gesture(kind)) => gesture_glyph(kind),
             Err(Token::Stick(Stick::Left)) => glyph("LS", None, true),
             Err(Token::Stick(Stick::Right)) => glyph("RS", None, true),
-            Err(Token::Dpad) => glyph("✚", None, false),
+            Err(Token::DpadArms(lit)) => Segment::Dpad(lit),
             Err(Token::Picture(name)) => Segment::Picture(name),
             Err(Token::Mark(m)) => Segment::Mark(m),
             Err(_) => continue,
@@ -738,8 +740,6 @@ pub fn button_glyph(b: Button, family: PadFamily, swapped: bool) -> Segment {
         Button::Select => named("View", "Share", "−"),
         Button::Start => named("Menu", "Options", "+"),
         Button::Guide => named("Guide", "PS", "Home"),
-        Button::LeftStick => Segment::StickClick { right: false },
-        Button::RightStick => Segment::StickClick { right: true },
         Button::DpadUp => Segment::Dpad([true, false, false, false]),
         Button::DpadDown => Segment::Dpad([false, true, false, false]),
         Button::DpadLeft => Segment::Dpad([false, false, true, false]),
@@ -878,8 +878,21 @@ fn stat(s: Stat, live: &Live) -> String {
     }
 }
 
-/// Turns an overlay's cells into text and glyphs, with live values filled in.
+/// Whether `overlay` has nothing written in it yet: no title and no cell with anything in it.
+/// The overlays drawn in game leave it out.
+pub fn is_blank(overlay: &InfoOverlay) -> bool {
+    overlay.title.as_ref().is_none_or(|t| t.trim().is_empty()) && overlay.rows.iter().flatten().all(|c| c.trim().is_empty())
+}
+
+/// Turns an overlay's cells into text and glyphs, with live values filled in. A blank overlay
+/// shows its name over "No rows yet", so its preview has something to find it by.
 pub fn resolve(overlay: &InfoOverlay, live: &Live) -> InfoView {
+    if is_blank(overlay) {
+        let name = if overlay.name.trim().is_empty() { "Info overlay" } else { &overlay.name };
+        let note = vec![Segment::Mark(Mark::Italic(true)), Segment::Text("No rows yet".into()), Segment::Mark(Mark::Italic(false))];
+        let title = Some(vec![Segment::Text(name.into())]);
+        return InfoView { name: overlay.name.clone(), style: overlay.style.clone(), title, rows: vec![vec![note]], opacity: 1.0 };
+    }
     let rows = overlay.rows.iter().map(|row| row.iter().map(|cell| cell_segments(&overlay.current_input, cell, live)).collect()).collect();
     let title = overlay.title.as_ref().filter(|t| !t.trim().is_empty()).map(|t| cell_segments(&overlay.current_input, t, live));
     InfoView { name: overlay.name.clone(), style: overlay.style.clone(), title, rows, opacity: 1.0 }
@@ -910,7 +923,7 @@ fn cell_segments(input: &CurrentInput, cell: &str, live: &Live) -> Vec<Segment> 
             Err(Token::Gesture(kind)) => gesture_glyph(kind),
             Err(Token::Stick(Stick::Left)) => glyph("LS", None, true),
             Err(Token::Stick(Stick::Right)) => glyph("RS", None, true),
-            Err(Token::Dpad) => glyph("✚", None, false),
+            Err(Token::DpadArms(lit)) => Segment::Dpad(lit),
             Err(Token::Stat(s)) => Segment::Text(stat(s, live)),
             Err(Token::Picture(name)) => Segment::Picture(name),
             Err(Token::Mark(m)) => Segment::Mark(m),

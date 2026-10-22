@@ -1,4 +1,4 @@
-//! Button glyphs, D-pads, stick presses and icons, for info overlays, logs and menu rows.
+//! Button glyphs, D-pads and icons, for info overlays, logs and menu rows.
 
 use iced::{
     Border, Color, Element,
@@ -17,7 +17,6 @@ pub(super) fn segment_element<'a, M: 'a>(seg: &Segment, c: Colors, s: f32, opaci
         Segment::Text(t) => Element::from(text(t.clone()).font(c.font).size(16.0 * s).color(c.background_text)),
         Segment::Glyph { label, fill, round } => glyph(label, *fill, *round, c, s, opacity),
         Segment::Dpad(lit) => dpad_glyph(*lit, c, s),
-        Segment::StickClick { right } => stick_click_glyph(*right, c, s),
         Segment::Icon(icon) => icon_glyph(icon, c, s),
         // Formatting tags and icons by name are laid out by `marked::line`; one that gets here
         // on its own is drawn as nothing, or as the icon's own space.
@@ -44,24 +43,6 @@ fn dpad_glyph<'a, M: 'a>([up, down, left, right]: [bool; 4], c: Colors, s: f32) 
     };
     let gap = || -> Element<'a, M> { space().width(cell).height(cell).into() };
     column![row![gap(), arm(up), gap()], row![arm(left), arm(false), arm(right)], row![gap(), arm(down), gap()]]
-    .into()
-}
-
-/// A stick press: a round stick cap marked L or R, with a down arrow for the push.
-fn stick_click_glyph<'a, M: 'a>(right: bool, c: Colors, s: f32) -> Element<'a, M> {
-    let size = 26.0 * s;
-    let label = if right { "R" } else { "L" };
-    let cap = container(row![
-        text(label).font(c.font).size(12.0 * s).color(c.item_text),
-        text("↓").font(c.font).size(12.0 * s).color(c.item_text),
-    ])
-    .center_x(size)
-    .center_y(size);
-    cap.style(move |_: &iced::Theme| container::Style {
-        background: Some(c.item.into()),
-        border: Border { width: 2.0, radius: (size / 2.0).into(), color: c.item_text.scale_alpha(0.6) },
-        ..container::Style::default()
-    })
     .into()
 }
 

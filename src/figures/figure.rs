@@ -48,7 +48,7 @@ impl Figure {
             Figure::Gyro { curve, speed, trail, at } => {
                 let mut pics = Vec::new();
                 if let Some(curve) = curve {
-                    let note = speed.map(|v| format!("{v:.0}°/s now: {:.2}×", curve.gain(v)));
+                    let note = speed.map(|v| format!("Turning {v:.0}°/s: {:.2}× sensitivity", curve.gain(v)));
                     pics.push(Picture { title: "Sensitivity by speed", svg: gyro::curve_svg(curve, *speed), size: (gyro::W, gyro::H), note });
                 }
                 let note = trail.is_empty().then(|| "Turn the controller".to_string());

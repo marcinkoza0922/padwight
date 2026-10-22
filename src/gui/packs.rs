@@ -371,6 +371,7 @@ impl App {
             .collect();
         // The user's own games first.
         order.sort_by_key(|i| !installed(*i).unwrap_or(false));
+        let any_installed = order.iter().any(|i| installed(*i) == Some(true));
         // The first entry is shown until another is picked, so the details pane is never blank.
         let selected = selected.filter(|i| order.contains(i)).or_else(|| order.first().copied());
 
@@ -383,7 +384,8 @@ impl App {
             row![
                 text(match &self.installed {
                     None => "Checking which games you have installed…",
-                    Some(_) => "Built-in games (installed ones first):",
+                    Some(_) if any_installed => "Built-in games, installed ones first:",
+                    Some(_) => "Built-in games:",
                 })
                 .size(13)
                 .color(MUTED_COLOR),
@@ -394,16 +396,21 @@ impl App {
         ]
         .spacing(8);
         let mut entries = column![].spacing(4);
-        for i in &order {
+        for (n, i) in order.iter().enumerate() {
+            // Where the installed games end, so the order says what it's sorted by.
+            if any_installed && installed(*i) != Some(true) && n > 0 && installed(order[n - 1]) == Some(true) {
+                entries = entries.push(text("Not installed").size(12).color(MUTED_COLOR));
+            }
             let pack = &self.library[*i].pack;
             let mut line = row![text(pack.pack.name.clone()).size(15).width(Length::Fill)].spacing(8).align_y(Alignment::Center);
             for f in pack.required_by_all() {
                 line = line.push(text(f.label()).size(12).color(MUTED_COLOR));
             }
+            if installed(*i) == Some(true) {
+                line = line.push(text("installed").size(12).color(style_accent()));
+            }
             if added(&pack.pack.id).is_some() {
                 line = line.push(text("added").size(12).color(MUTED_COLOR));
-            } else if installed(*i) == Some(true) {
-                line = line.push(text("installed").size(12).color(style_accent()));
             }
             entries = entries.push(
                 button(line).width(Length::Fill).padding([6, 10]).style(style::segment(selected == Some(*i))).on_press(Message::SelectLibrary(*i)),

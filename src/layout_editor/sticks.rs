@@ -8,7 +8,7 @@ use super::{
     action::{ActionAt, Slot},
     owner::{self, Owner, Part, stick_mut},
     pages::{Page, stick_name},
-    rows::{Number, Row, cycle, set},
+    rows::{Number, Row, counted, cycle, set},
     triggers::{back_to_profile, override_rows},
 };
 
@@ -83,9 +83,8 @@ pub(super) fn sticks_rows(config: &Config, owner: Owner) -> Vec<Row> {
     [Stick::Left, Stick::Right]
         .into_iter()
         .map(|s| {
-            let now = owner::stick(config, owner, s).map_or("the profile's".into(), |c| Kind::of(&c.action).name().to_string());
-            let glyph = if s == Stick::Left { "{ls}" } else { "{rs}" };
-            Row::open(format!("{glyph} {}: {now}", stick_name(s)), Page::Stick(owner, s))
+            let now = owner::stick(config, owner, s).map_or("same as profile".into(), |c| Kind::of(&c.action).name().to_string());
+            Row::open(format!("{}: {now}", stick_name(s)), Page::Stick(owner, s))
         })
         .collect()
 }
@@ -144,11 +143,11 @@ pub(super) fn stick_rows(config: &Config, owner: Owner, s: Stick) -> Vec<Row> {
         })
     }));
     rows.push(num((owner, s), "Anti-deadzone", cfg.anti_deadzone, &DEADZONE, |c, v| set(&mut c.anti_deadzone, v)));
-    rows.push(num((owner, s), "Anti-deadzone buffer", cfg.anti_deadzone_buffer, &DEADZONE, |c, v| set(&mut c.anti_deadzone_buffer, v)));
+    rows.push(num((owner, s), "Anti-deadzone hold", cfg.anti_deadzone_buffer, &DEADZONE, |c, v| set(&mut c.anti_deadzone_buffer, v)));
     rows.push(switch(owner, s, "Invert X", cfg.invert_x, |c, on| set(&mut c.invert_x, on)));
     rows.push(num((owner, s), "Rotate output", cfg.rotate, &START_ANGLE, |c, v| set(&mut c.rotate, v)));
     rows.push(num((owner, s), "Directions press at", cfg.key_threshold, &FRACTION, |c, v| set(&mut c.key_threshold, v)));
-    rows.push(Row::open(format!("Zones ({})", cfg.zones.len()), Page::Zones(owner, Analog::Stick(s))));
+    rows.push(Row::open(counted("Zones", cfg.zones.len()), Page::Zones(owner, Analog::Stick(s))));
     rows.extend(back_to_profile(owner, Part::Stick(s)));
     rows
 }

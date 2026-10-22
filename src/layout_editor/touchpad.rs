@@ -129,7 +129,7 @@ fn split_rows(owner: Owner, pad: &TouchpadConfig) -> Vec<Row> {
         touchpad_mut(c, owner).is_some_and(|t| set(&mut t.right, on.then_some(TouchRegion { motion: TouchpadMotion::Off, click: ButtonAction::Disabled })))
     })];
     if split {
-        rows.push(Row::open("Right half…", Page::Touch(owner, TouchSide::Right)));
+        rows.push(Row::open("Right half", Page::Touch(owner, TouchSide::Right)));
     }
     rows
 }

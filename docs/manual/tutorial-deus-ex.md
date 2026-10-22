@@ -29,7 +29,7 @@ The setup also gets two radial menus (belt and augmentations) and a list of the 
 
 ## Step 1: Create the setup
 
-1. In the sidebar, click **+ Add setup**, then open **Empty setup from a template…** in the picker and choose **Gamepad passthrough**, so you start with no preset mappings.
+1. In the sidebar, click **+ Add setup**, then open **Empty setup from a template…** in the picker and choose **Gamepad pass-through**, so you start with no preset mappings.
 2. The new setup opens on its **Details** tab, named *New setup*. Name it **Deus Ex**. The setup's name becomes the pack's name when you export it.
 
 ![The Add a setup picker, with the Empty setup from a template dropdown and the library's built-in setups](../images/manual/first-setup-add.png "The picker. The dropdown (1) holds the blank template. The list (3) is the library, which is where the finished pack comes from in these screenshots.")
@@ -106,7 +106,7 @@ For the **left stick**:
 
 - Action: **Button ring** with **8** sectors. Press **WASD** next to *Fill with*: up is **W**, down **S**, left **A**, right **D**, and the diagonals press two keys at once.
 - **Deadzone** 12%, **Starts at** 25% of the way out, **Stickiness** 10% of a sector.
-- Add a **zone** from **0.00 to 0.60** with action **Keyboard** and **Left Shift**.
+- Add a **zone** from **0.00 to 0.60** with action **Keys** and **Left Shift**.
 
 ![The left stick's zone, from 0.00 to 0.60 with Left Shift, and the right stick set to Mouse pointer](../images/manual/sticks-zones.png "The walk zone (1), and below it the right stick's mouse settings (3, 4).")
 
@@ -136,7 +136,7 @@ On the game's own screens the right stick is the mouse cursor, so the inventory,
 
 ## Step 6: The triggers
 
-- **Right trigger (RT)**: works as a button, with a **threshold** of 0.30, and the action **Mouse button** **Left** (fire).
+- **Right trigger (RT)**: works as a button, with a **threshold** of 0.30, and the action **Mouse click** **Left** (fire).
 - **Left trigger (LT)**: **Disabled**.
 
 Deus Ex has no secondary fire, and its right mouse button is Use, which went on A. Rather than invent a job for LT, the plain profile leaves it free. The gyro profiles use it as the gyro clutch (Step 11).

@@ -39,7 +39,7 @@ A player can change the controls of the game they are playing without leaving it
 
 ## Switch Profile (done)
 
-The Guide menu's "Next profile" row is now "Switch profile (now …)". It opens the in-game menu on `Page::Profiles` (`src/system_menu/profiles.rs`): the active game's profiles, then "New profile…". Picking a profile switches to it and leaves the menu (asking about unsaved changes first, if any). A switch to a profile that was saved updates the menu's saved copy, so it isn't an unsaved change on its own. "New profile…" offers a copy of the current profile, each `Template` (moved from the GUI to `config/templates.rs`), and in a game a copy of each General profile; the copy gets a `unique_name` in its game and is switched to (`Outcome::Added`). Discard puts back the profile the menu opened on.
+The Guide menu's "Next profile" row is now "Switch Profile (now …)". It opens the in-game menu on `Page::Profiles` (`src/system_menu/profiles.rs`): the active game's profiles, then "+ New profile". Picking a profile switches to it and leaves the menu (asking about unsaved changes first, if any). A switch to a profile that was saved updates the menu's saved copy, so it isn't an unsaved change on its own. "+ New profile" offers a copy of the current profile, each `Template` (moved from the GUI to `config/templates.rs`), and in a game a copy of each General profile; the copy gets a `unique_name` in its game and is switched to (`Outcome::Added`). Discard puts back the profile the menu opened on.
 
 ## Comprehensive editor (done, branch `in-game-editor`)
 

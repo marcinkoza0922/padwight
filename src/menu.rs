@@ -43,6 +43,9 @@ pub struct MenuView {
     pub crumbs: Vec<String>,
     /// Short reminder of the controls.
     pub hint: String,
+    /// A line on what the highlighted row means, above the hint (the in-game editor's).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub about: String,
     #[serde(default)]
     pub style: OverlayStyle,
     /// Laid out on a touchpad: the items stay where the pad has them, so a carousel is drawn as
@@ -113,6 +116,9 @@ pub enum Tone {
     Add,
     /// Removes something, or deletes it.
     Remove,
+    /// Only says something, such as what a slot does now: drawn flat and muted, and the cursor
+    /// passes it by.
+    Note,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -334,7 +340,7 @@ impl MenuSession {
             MenuKind::Directional { cluster } => format!("Press a {} direction · {close}", cluster.to_string().to_lowercase()),
             MenuKind::List if pages(menu) => format!("{{dpad}} move · {{lb}} {{rb}} page · {{confirm}} choose · {close}"),
             MenuKind::List if list_columns(menu.items.len()) == 2 => format!("{{dpad}} move · {{confirm}} choose · {close}"),
-            MenuKind::List => format!("{{up}} {{down}} move · {{confirm}} choose · {close}"),
+            MenuKind::List => format!("{{updown}} move · {{confirm}} choose · {close}"),
             MenuKind::Buttons => format!("Press an item's button · {close}"),
             MenuKind::Carousel { controls } => format!("{} to cycle · {{confirm}} choose · {close}", carousel_hint(controls)),
             MenuKind::Grid { .. } => format!("{{dpad}} move · {{confirm}} choose · {close}"),
@@ -347,6 +353,7 @@ impl MenuSession {
             picks: self.picks,
             crumbs: self.stack[..self.stack.len() - 1].iter().filter_map(|f| menus.get(f.menu)).map(|m| m.name.clone()).collect(),
             hint,
+            about: String::new(),
             style: menu.style.clone(),
             touch: false,
             aim: self.live_aim(menu),
@@ -718,7 +725,7 @@ fn carousel_hint(controls: CarouselControls) -> &'static str {
     match controls {
         CarouselControls::Bumpers => "{lb} {rb}",
         CarouselControls::Triggers => "{lt} {rt}",
-        CarouselControls::DPad => "{left} {right}",
+        CarouselControls::DPad => "{leftright}",
         CarouselControls::LeftStick => "{ls}",
         CarouselControls::RightStick => "{rs}",
     }

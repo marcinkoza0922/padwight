@@ -75,8 +75,8 @@ fn quick_settings_tunes_the_speeds_a_layer_or_mode_sets_itself() {
     for row in [Row::ScopedStickSpeed(layer, Stick::Left), Row::ScopedGyroSensitivity(layer), Row::ScopedStickSpeed(mode, Stick::Left)] {
         assert!(rows.contains(&row), "{row:?} in {rows:?}");
     }
-    assert_eq!(quick::label(Row::ScopedStickSpeed(layer, Stick::Left), &config, &config), "Left stick speed, Aim layer: 500 px/s");
-    assert_eq!(quick::label(Row::ScopedStickSpeed(mode, Stick::Left), &config, &config), "Left stick speed, Driving mode: 300 px/s");
+    assert_eq!(quick::label(Row::ScopedStickSpeed(layer, Stick::Left), &config, &config), "Left Stick speed, Aim layer: 500 px/s");
+    assert_eq!(quick::label(Row::ScopedStickSpeed(mode, Stick::Left), &config, &config), "Left Stick speed, Driving mode: 300 px/s");
     let saved = config.clone();
     assert_eq!(quick::adjust(Row::ScopedStickSpeed(layer, Stick::Left), -1, false, &mut config, &saved), Some(Outcome::Changed));
     assert_eq!(quick::adjust(Row::ScopedGyroSensitivity(layer), 1, false, &mut config, &saved), Some(Outcome::Changed));
@@ -243,7 +243,7 @@ fn rb_makes_big_steps_and_a_changed_number_says_what_it_was() {
     menu.handle_now(press(Button::RightBumper), &mut config);
     menu.handle_now(press(Button::DpadRight), &mut config);
     assert!((speed(&config) - 1500.0).abs() < 0.1, "{}", speed(&config));
-    assert_eq!(menu.view(&config).items[0].label, "Left stick speed: 1500 px/s (was 1000 px/s)");
+    assert_eq!(menu.view(&config).items[0].label, "Left Stick speed: 1500 px/s (was 1000 px/s)");
     menu.handle_now(InputEvent::Button(Button::RightBumper, false), &mut config);
     menu.handle_now(press(Button::DpadRight), &mut config);
     assert!((speed(&config) - 1650.0).abs() < 0.1);
@@ -345,7 +345,7 @@ fn choosing_the_current_profile_just_leaves() {
 fn a_new_profile_is_an_unsaved_change_and_back_returns_to_the_list() {
     let mut config = two_profiles();
     let mut menu = SystemMenu::new(&config).on_page(Page::Profiles);
-    // Up wraps to "New profile…", the last row.
+    // Up wraps to "+ New profile", the last row.
     menu.handle_now(press(Button::DpadUp), &mut config);
     assert_eq!(menu.handle_now(press(Button::South), &mut config), None);
     assert_eq!(menu.screen, Screen::NewProfile);

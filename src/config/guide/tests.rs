@@ -7,7 +7,15 @@ fn profile() -> Profile {
     p.set_button(Button::DpadLeft, ButtonAction::Keys(vec!["KEY_Q".into()]));
     p.set_button(Button::DpadRight, ButtonAction::Keys(vec!["KEY_E".into()]));
     p.set_button(Button::Select, ButtonAction::Disabled);
+    p.set_button(Button::West, ButtonAction::Keys(vec!["KEY_R".into()]));
     p
+}
+
+#[test]
+fn pass_through_buttons_have_no_rows() {
+    let rows = mapping_rows(&profile());
+    assert!(row_of(&rows, &[btn(Button::North)]).is_none());
+    assert!(row_of(&rows, &[btn(Button::South)]).is_some());
 }
 
 fn btn(b: Button) -> GuideInput {

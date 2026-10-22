@@ -47,9 +47,10 @@ pub fn candidates(config: &Config, library: &[Entry], window: &WindowInfo, have:
 const HINT_TIME: Duration = Duration::from_secs(7);
 
 /// The toast shown when the game `name`, which the library has a setup for, comes to the front:
-/// a tap of Guide opens the offer.
+/// a tap of Guide opens the offer. It words the fact as the offer's question does.
 pub fn hint(name: &str, now: Instant) -> crate::info::Toast {
-    crate::info::Toast::lasting(vec![format!("Padwight has controls for {name}"), "Tap Guide to set them up".into()], now, HINT_TIME)
+    let lines = vec![format!("The library has controller profiles for {name}."), "Tap {guide} to add them.".into()];
+    crate::info::Toast::lasting(lines, now, HINT_TIME)
 }
 
 /// What the overlay draws.
@@ -159,7 +160,8 @@ impl OfferSession {
                 selected: Some(self.selected),
                 picks: 0,
                 crumbs: vec!["Add controller profiles".into()],
-                hint: "{up} {down} choose · {confirm} add · {back} back".into(),
+                hint: "{updown} choose · {confirm} add · {back} back".into(),
+                about: String::new(),
                 style: style.clone(),
                 touch: false,
                 aim: None,
@@ -185,7 +187,7 @@ impl OfferSession {
             title,
             detail,
             answers: answers.iter().map(|(b, t)| ((*b).into(), (*t).into())).collect(),
-            hint: "Not now asks again the next time this game starts and you tap Guide in it".into(),
+            hint: "Not now asks again the next time this game starts and you tap {guide} in it.".into(),
             style: style.clone(),
         })
     }

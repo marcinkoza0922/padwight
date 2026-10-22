@@ -3,7 +3,7 @@
 
 use crate::{
     config::{Config, Feature, ProfileRef, Template, unique_name},
-    menu::{ItemView, Tone},
+    menu::ItemView,
 };
 
 /// One row of the profile list.
@@ -29,26 +29,28 @@ pub(super) fn rows(config: &Config) -> Vec<Row> {
 
 pub(super) fn new_rows(config: &Config) -> Vec<NewRow> {
     let general = if std::ptr::eq(config.active_game(), &config.general) { 0 } else { config.general.profiles.len() };
+    // The copies together, then the templates.
     [NewRow::Copy]
         .into_iter()
-        .chain(Template::NEW.into_iter().map(NewRow::Template))
         .chain((0..general).map(NewRow::General))
+        .chain(Template::NEW.into_iter().map(NewRow::Template))
         .collect()
 }
 
-/// A row of the profile list. The active profile is marked, and one the controllers can't play
-/// (it needs a gyro, say) says what it needs.
+/// A row of the profile list. The active profile is ticked, as the editor ticks what's chosen,
+/// and one the controllers can't play (it needs a gyro, say) says what it needs.
 pub(super) fn item(row: Row, config: &Config, have: Option<&[Feature]>) -> ItemView {
     let Row::Profile(i) = row else {
-        return ItemView { label: "New profile…".into(), submenu: true, tone: Tone::Add, ..ItemView::plain() };
+        // A plain row, like the pages it sits with, written as the settings window writes it.
+        return ItemView { label: "+ New profile".into(), submenu: true, ..ItemView::plain() };
     };
     let Some(profile) = config.active_game().profiles.get(i) else { return ItemView::plain() };
     let mut label = profile.name.clone();
     if profile.name == config.active_ref().profile {
-        label.push_str(" (current)");
+        label.insert_str(0, "✓ ");
     }
     if let Some(have) = have {
-        let missing: Vec<&str> = profile.requires.iter().filter(|f| !have.contains(f)).map(|f| f.label()).collect();
+        let missing: Vec<&str> = profile.requires.iter().filter(|f| !have.contains(f)).map(|f| f.needs()).collect();
         if !missing.is_empty() {
             label.push_str(&format!(" (needs {})", missing.join(", ")));
         }
@@ -115,15 +117,15 @@ mod tests {
     fn the_list_has_every_profile_and_a_new_row_last() {
         let config = two_profiles();
         assert_eq!(rows(&config), vec![Row::Profile(0), Row::Profile(1), Row::New]);
-        assert!(item(Row::Profile(0), &config, None).label.ends_with("(current)"));
-        assert!(!item(Row::Profile(1), &config, None).label.contains("current"));
+        assert!(item(Row::Profile(0), &config, None).label.starts_with("✓ "));
+        assert!(!item(Row::Profile(1), &config, None).label.contains('✓'));
     }
 
     #[test]
     fn a_profile_the_controller_cant_play_says_what_it_needs() {
         let mut config = two_profiles();
         config.general.profiles[1].requires = vec![Feature::Gyro];
-        assert!(item(Row::Profile(1), &config, Some(&[])).label.ends_with("(needs gyro)"));
+        assert!(item(Row::Profile(1), &config, Some(&[])).label.ends_with("(needs a gyro)"));
         assert!(!item(Row::Profile(1), &config, Some(&[Feature::Gyro])).label.contains("needs"));
     }
 

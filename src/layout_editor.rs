@@ -5,6 +5,7 @@
 //! Every page is a list of rows ([`rows::Row`]) built from the config each time; a row says what
 //! A and left/right do. `pages.rs` has the pages and their titles.
 
+mod about;
 mod action;
 mod action_page;
 mod decor;
@@ -121,7 +122,23 @@ impl LayoutEditor {
     pub fn move_cursor(&mut self, step: (i32, i32), config: &Config) {
         self.armed = false;
         let rows = self.rows(config);
-        self.cursor = crate::menu::list_step_in(self.cursor.min(rows.len().saturating_sub(1)), rows.len(), Self::columns(&rows), step);
+        let (len, columns) = (rows.len(), Self::columns(&rows));
+        let from = self.cursor.min(len.saturating_sub(1));
+        // A note is passed by: on to the next row the same way, or nowhere if there is none.
+        let mut to = crate::menu::list_step_in(from, len, columns, step);
+        while to != from && rows.get(to).is_some_and(|r| !r.stops()) {
+            let next = crate::menu::list_step_in(to, len, columns, step);
+            to = if next == to { from } else { next };
+        }
+        self.cursor = to;
+    }
+
+    /// Moves the cursor off a note, to the first row it can land on.
+    fn settle(&mut self, config: &Config) {
+        let rows = self.rows(config);
+        if rows.get(self.cursor).is_some_and(|r| !r.stops()) {
+            self.cursor = rows.iter().position(Row::stops).unwrap_or(self.cursor);
+        }
     }
 
     /// Moves the cursor a page of rows up or down (`dir` -1 or 1), stopping at the ends.
@@ -129,10 +146,17 @@ impl LayoutEditor {
         self.armed = false;
         let last = self.row_count(config).saturating_sub(1) as i32;
         self.cursor = (self.cursor as i32 + dir * crate::menu::VISIBLE_ROWS as i32).clamp(0, last) as usize;
+        self.settle(config);
     }
 
     /// Chooses the highlighted row.
     pub fn choose(&mut self, config: &mut Config) -> EditStep {
+        let step = self.choose_row(config);
+        self.settle(config);
+        step
+    }
+
+    fn choose_row(&mut self, config: &mut Config) -> EditStep {
         let mut rows = self.rows(config);
         if rows.is_empty() {
             return EditStep::Stay;
@@ -279,7 +303,7 @@ impl LayoutEditor {
                 item
             })
             .collect();
-        let mut hint = String::from(if steps { "{confirm} choose · {left} {right} change · {back} back" } else { "{confirm} choose · {back} back" });
+        let mut hint = String::from(if steps { "{confirm} choose · {leftright} change · {back} back" } else { "{confirm} choose · {back} back" });
         // An overlay being edited is on screen: say what shows it whole.
         if self.preview().is_some() {
             match config.peek_trigger {
@@ -288,6 +312,7 @@ impl LayoutEditor {
                 crate::config::PeekTrigger::Off => {}
             }
         }
+        let about = items.get(cursor).and_then(|item| about::about(self.page, &item.label)).unwrap_or_default().to_string();
         let crumbs = parents.iter().cloned().chain(self.history.iter().map(|&(page, _)| pages::title(page, config))).collect();
         MenuView {
             title: pages::title(self.page, config),
@@ -297,6 +322,7 @@ impl LayoutEditor {
             picks: 0,
             crumbs,
             hint,
+            about,
             style: config.active_menu_style().clone(),
             touch: false,
             aim: None,

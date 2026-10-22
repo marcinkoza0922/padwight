@@ -8,7 +8,7 @@ use super::{
     named,
     owner::game_mut,
     pages::{Page, stick_name},
-    rows::{Act, Nav, Number, Row, cycle, set},
+    rows::{Act, Nav, Number, Row, counted, cycle, set},
     style::StyleAt,
 };
 
@@ -42,7 +42,7 @@ pub(super) fn menu_rows(config: &Config, m: usize) -> Vec<Row> {
     let Some(menu) = config.active_game().menus.get(m) else { return Vec::new() };
     let mut rows = vec![
         named::rename_row(config, ItemKind::Menu, m),
-        Row::open(format!("Items ({})", menu.items.len()), Page::MenuItems(m)),
+        Row::open(counted("Items", menu.items.len()), Page::MenuItems(m)),
         Row::step(format!("Kind: {}", menu.kind.tag().short()), move |c, dir| {
             menu_mut(c, m).is_some_and(|menu| {
                 let next = next_kind(menu, dir);
@@ -52,7 +52,7 @@ pub(super) fn menu_rows(config: &Config, m: usize) -> Vec<Row> {
     ];
     rows.extend(kind_rows(m, menu));
     rows.push(Row::open(format!("Closes with: {}", close_label(menu)), Page::MenuClose(m)));
-    rows.push(Row::open("Look…", Page::Style(StyleAt::Menu(m))));
+    rows.push(Row::open("Look", Page::Style(StyleAt::Menu(m))));
     rows.push(Row::toggle("Stays up after a choice", menu.keep_open, move |c, on| menu_mut(c, m).is_some_and(|menu| set(&mut menu.keep_open, on))));
     rows.push(named::delete_row(config, ItemKind::Menu, m, move |c| {
         let Some(game) = game_mut(c).filter(|g| m < g.menus.len()) else { return false };
@@ -113,15 +113,15 @@ fn close_label(menu: &Menu) -> String {
     match (menu.no_cancel, menu.cancel) {
         (true, _) if default.is_some() => "nothing".into(),
         (false, Some(b)) => b.short_name().into(),
-        _ => format!("{} (its kind's)", default.map_or("nothing", |b| b.short_name())),
+        _ => format!("{} (default)", default.map_or("nothing", |b| b.short_name())),
     }
 }
 
-/// What a menu's close button can be: its kind's, none, or any button but Guide.
+/// What a menu's close button can be: its kind's default, none, or any button but Guide.
 pub(super) fn close_rows(config: &Config, m: usize) -> Vec<Row> {
     let Some(menu) = config.active_game().menus.get(m) else { return Vec::new() };
     let default = menu.default_cancel();
-    let mut rows = vec![Row::apply(format!("Its kind's ({})", default.map_or("nothing", |b| b.short_name())), move |c| {
+    let mut rows = vec![Row::apply(format!("Default ({})", default.map_or("nothing", |b| b.short_name())), move |c| {
         let changed = menu_mut(c, m).is_some_and(|menu| set(&mut menu.cancel, None) | set(&mut menu.no_cancel, false));
         Act::changed_if(changed).then(Nav::Back(1))
     })];

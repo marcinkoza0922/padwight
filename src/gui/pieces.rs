@@ -69,8 +69,8 @@ fn piece_items<'a>(pieces: Vec<Piece>, family: PadFamily, swap: Swap, muted: boo
         .map(|piece| match piece {
             Piece::Text(s) => text(s).color_maybe(muted.then_some(MUTED_COLOR)).into(),
             Piece::Keyword(k) => keyword(k),
-            Piece::Pad(b) if swap.marked() && is_face(b) => row![chip(pad_glyph(b, family, true)), swap_marker(swap)].spacing(2).align_y(Alignment::Center).into(),
-            Piece::Pad(b) => chip(pad_glyph(b, family, swap.labels())),
+            Piece::Pad(b) if swap.marked() && is_face(b) => row![chip(button_glyph(b, family, true)), swap_marker(swap)].spacing(2).align_y(Alignment::Center).into(),
+            Piece::Pad(b) => chip(button_glyph(b, family, swap.labels())),
             Piece::Key(code) => chip(key_glyph(&code)),
             Piece::Mouse(m) => tooltip(
                 chip(mouse_glyph(m)),
@@ -95,14 +95,14 @@ pub(super) fn input_chip<'a>(input: GuideInput, family: PadFamily, swap: Swap) -
 
 /// A controller button's glyph in `glyphs`' labels, as the overlays draw it.
 pub(super) fn pad_chip<'a>(b: Button, glyphs: crate::info::Glyphs) -> Element<'a, Message> {
-    chip(pad_glyph(b, glyphs.family, glyphs.nintendo_layout))
+    chip(button_glyph(b, glyphs.family, glyphs.nintendo_layout))
 }
 
 /// An input's glyph as plain text, for places that can't draw one, such as a dropdown: the same
 /// label the glyph is drawn with.
 pub(super) fn input_text(input: GuideInput, family: PadFamily, swap: Swap) -> String {
     let segment = match input {
-        GuideInput::Button(b) => pad_glyph(b, family, swap.labels()),
+        GuideInput::Button(b) => button_glyph(b, family, swap.labels()),
         GuideInput::Trigger(t) => trigger_glyph(t, family),
         GuideInput::Stick(s) => stick_glyph(s),
     };
@@ -171,15 +171,6 @@ fn swap_marker<'a>(swap: Swap) -> Element<'a, Message> {
     .into()
 }
 
-/// A button's glyph, as the overlays draw it. A stick press is named here, since its cap is too
-/// big for a line of text.
-fn pad_glyph(b: Button, family: PadFamily, swapped: bool) -> Segment {
-    match button_glyph(b, family, swapped) {
-        Segment::StickClick { right } => glyph(if right { "R3" } else { "L3" }, None, false),
-        other => other,
-    }
-}
-
 /// The D-pad as the overlays draw it: a cross of cells, the pressed arms (`[up, down, left, right]`) lit.
 fn dpad_chip<'a>([up, down, left, right]: [bool; 4]) -> Element<'a, Message> {
     let cell = |x: f32, y: f32, on: bool| {
@@ -200,15 +191,9 @@ fn chip<'a>(segment: Segment) -> Element<'a, Message> {
     };
     let fill = fill.map(|[r, g, b]| Color::from_rgb8(r, g, b));
     // The thinnest marks stay a sliver at any size, so they're named instead.
-    let label = match label.as_str() {
-        "'" => "Apostrophe".to_string(),
-        "`" => "Backtick".to_string(),
-        "," => "Comma".to_string(),
-        "." => "Period".to_string(),
-        _ => label,
-    };
-    // A one-character cap is square, as wide as a round one, and a lone punctuation mark (`;`,
-    // `[`) is drawn larger, so it isn't a sliver.
+    let label = crate::keyboard::mark_name(&label).map_or(label, str::to_string);
+    // A one-character cap is square, as wide as a round one, and a lone punctuation mark left
+    // unnamed (`-`, `*`) is drawn larger, so it isn't a sliver.
     let single = label.chars().count() == 1;
     let punctuation = single && label.chars().all(|c| c.is_ascii_punctuation());
     let label = text(label).size(if punctuation { 17 } else { 12 });

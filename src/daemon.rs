@@ -102,7 +102,7 @@ enum Msg {
     Gone { id: u64 },
     Ipc { req: Request, reply: Sender<Response> },
     Watch(Sender<Option<InputSnapshot>>),
-    WatchFeed(Sender<Option<Feeds>>),
+    WatchFeed(Option<String>, Sender<Option<Feeds>>),
     Focus(FocusEvent),
     #[cfg_attr(not(target_os = "linux"), expect(dead_code, reason = "only evdev has motion-sensor and touchpad nodes"))]
     Motion { id: u64, sample: MotionSample },
@@ -466,7 +466,7 @@ struct Daemon {
     /// Clients streaming live input (the GUI's controller view).
     watchers: Vec<Sender<Option<InputSnapshot>>>,
     /// Clients streaming the latest presses and what they did (the GUI's "what's happening").
-    feed_watchers: Vec<Sender<Option<Feeds>>>,
+    feed_watchers: Vec<(Option<String>, Sender<Option<Feeds>>)>,
     /// Profile switches and why they were made, for the GUI.
     activity: activity::Activity,
     /// Device whose input watchers are shown.
@@ -1065,7 +1065,7 @@ impl Daemon {
                     self.watchers.push(watcher);
                 }
             }
-            Msg::WatchFeed(watcher) => self.watch_feed(watcher),
+            Msg::WatchFeed(pick, watcher) => self.watch_feed(pick, watcher),
         }
     }
 

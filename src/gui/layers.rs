@@ -304,11 +304,11 @@ impl App {
                 picker = picker.push(dropdown(names, current, Message::SelectLayer).width(220));
             }
             let add = picker.push(button(text(words.new)).style(style::secondary).on_press(Message::NewLayer));
-            items_header(shift.kind(), add.into(), words.blurb, words.explain.into())
+            items_header(shift.kind(), add.into(), words.blurb, words.explain.into(), list.is_empty().then_some(words.empty))
         };
         let mut col = column![picker_row].spacing(16);
         let Some(layer) = list.get(self.shift_index(shift)) else {
-            return col.push(text(words.empty).color(MUTED_COLOR)).into();
+            return col.into();
         };
 
         // Name, indicator and the profile it's shown over.
@@ -347,6 +347,7 @@ impl App {
                     insert_button(TokenTarget::LayerHeading),
                     char_button(TokenTarget::LayerHeading),
                 ]
+                .push(token_preview(layer.indicator_title.as_deref().unwrap_or(""), self.config.info_glyphs, self.preview_font()))
                 .spacing(6)
                 .align_y(Alignment::Center)
                 .into(),

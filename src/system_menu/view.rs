@@ -64,7 +64,7 @@ impl SystemMenu {
     pub(super) fn unsaved_prompt(&self, how: Exit, mut style: OverlayStyle) -> OfferView {
         // Solid, so the page under it doesn't show through the words.
         style.background.opacity = 1.0;
-        let then = if self.from_guide && how == Exit::Back { "back to the Guide" } else { "close the menu" };
+        let then = if self.from_guide && how == Exit::Back { "go back to the Guide" } else { "close the menu" };
         OfferView {
             title: "Save your changes?".into(),
             detail: "You changed settings that aren't saved yet.".into(),
@@ -72,7 +72,7 @@ impl SystemMenu {
                 .iter()
                 .map(|(b, t)| ((*b).into(), (*t).into()))
                 .collect(),
-            hint: format!("Save or Discard, then {then}"),
+            hint: format!("Save or Discard to {then}."),
             style,
         }
     }
@@ -113,7 +113,8 @@ impl SystemMenu {
                 selected: Some(cursor),
                 picks: 0,
                 crumbs: vec![self.parent()],
-                hint: "{left} {right} or {confirm} change · hold {rb} for big steps · {back} back".into(),
+                hint: "{leftright} or {confirm} change · hold {rb} for big steps · {back} back".into(),
+                about: String::new(),
                 style,
                 touch: false,
                 aim: None,
@@ -135,6 +136,7 @@ fn list_page(title: &str, items: Vec<ItemView>, cursor: usize, crumbs: Vec<Strin
         picks: 0,
         crumbs,
         hint: "{confirm} choose · {back} back".into(),
+        about: String::new(),
         style,
         touch: false,
         aim: None,
@@ -152,13 +154,13 @@ fn hold_prompt(hold: Hold, mut style: OverlayStyle) -> OfferView {
             "Controller disconnected",
             "Reconnect it, or press a button on another controller, to carry on.",
             Vec::new(),
-            "The menu waits where it was",
+            "The menu waits where it was.",
         ),
         Hold::RemappingOff => (
             "Remapping is off",
             "It was turned off while you had changes here that aren't saved yet.",
             vec![("{confirm}", "Save"), ("{west}", "Discard")],
-            "Save or Discard, then the controller is let go",
+            "Save or Discard to hand the controller back to the game.",
         ),
     };
     OfferView {
@@ -173,7 +175,7 @@ fn hold_prompt(hold: Hold, mut style: OverlayStyle) -> OfferView {
 /// The menu's first page, drawn with `style`; the settings previews show it too.
 pub fn main_page(style: OverlayStyle, cursor: usize) -> MenuView {
     MenuView {
-        title: "Menu".into(),
+        title: TITLE.into(),
         kind: crate::config::MenuKind::List,
         items: vec![
             ItemView { label: "Quick Settings".into(), button: None, submenu: true, buttons: Vec::new(), tone: Tone::Normal, keyword: None, weight: 1.0, span: crate::config::Span::ONE },
@@ -183,6 +185,7 @@ pub fn main_page(style: OverlayStyle, cursor: usize) -> MenuView {
         picks: 0,
         crumbs: Vec::new(),
         hint: "{confirm} choose · {back} close".into(),
+        about: String::new(),
         style,
         touch: false,
         aim: None,

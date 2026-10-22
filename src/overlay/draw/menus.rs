@@ -8,10 +8,13 @@ use iced::{
 
 use super::*;
 
-/// An item's glyphs (the same as the info overlays'), its label, and a ▸ for submenus. A
-/// text badge (a stick's LS, say) is drawn as a small tag.
-fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, size: f32, fg: Color) -> Element<'a, M> {
-    let font = c.font;
+/// How much of a menu shows through under a question asked over it.
+const UNDER_PROMPT: f32 = 0.35;
+
+/// An item's glyphs (the same as the info overlays'), its label, and a ▸ for submenus, at the
+/// row's right end when it `fills` one. A text badge (a stick's LS, say) is drawn as a small tag.
+fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, size: f32, fills: bool) -> Element<'a, M> {
+    let (font, fg) = (c.font, c.item_text);
     // Glyphs, badges and icons fade in and out with the label.
     let fade = fg.a;
     let mut line = row![].spacing(size * 0.5).align_y(Alignment::Center);
@@ -36,6 +39,9 @@ fn item_text<'a, M: 'a>(c: Colors, item: &crate::menu::ItemView, label: &str, si
     }
     line = line.push(rich_text(label, c, size, fg));
     if item.submenu {
+        if fills {
+            line = line.push(space().width(Length::Fill));
+        }
         line = line.push(text("▸").font(font).size(size).color(fg.scale_alpha(0.7)));
     }
     line.into()
@@ -50,7 +56,8 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
         ..colors(&m.style, font)
     };
     let solid = c;
-    let c = c.faded(look.anim.opacity());
+    // Under a question, the menu is dimmed so the question is what stands out.
+    let c = c.faded(look.anim.opacity() * if m.prompt.is_some() { UNDER_PROMPT } else { 1.0 });
     let s = m.style.scale.clamp(0.5, 2.0);
     let body: Element<'a, M> = match m.kind {
         MenuKind::Radial { .. } => radial(m, solid, s),
@@ -61,7 +68,7 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
     };
     // The in-game editor's picture of what its page sets, beside the list.
     let body = match &m.figure {
-        Some(fig) => row![body, super::figure::figure(fig, c, s)].spacing(24.0 * s).align_y(Alignment::Center).into(),
+        Some(fig) => row![body, super::figure::figure(fig, c, s)].spacing(24.0 * s).align_y(Alignment::Start).into(),
         None => body,
     };
     // Where this page is in the menus, above its title: "Menu › Edit Controls › A button".
@@ -72,13 +79,13 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
         let crumbs = typeset::line(c.typ, c.font, &m.crumbs.join(" › "), 13.0 * s, c.muted);
         column![crumbs, title].spacing(4.0 * s).align_x(Alignment::Center).into()
     };
-    let contents = column![
-        heading,
-        body,
-        rich_text(&m.hint, c, 13.0 * s, c.muted),
-    ]
-    .spacing(14.0 * s)
-    .align_x(Alignment::Center);
+    let mut contents = column![heading, body].spacing(14.0 * s).align_x(Alignment::Center);
+    // What the highlighted row means, in the editor's own words, just above the controls.
+    if !m.about.is_empty() {
+        let about = text(m.about.clone()).font(c.font).size(14.0 * s).color(c.background_text).align_x(Alignment::Center);
+        contents = contents.push(container(about).max_width(520.0 * s));
+    }
+    let contents = contents.push(rich_text(&m.hint, c, 13.0 * s, c.muted));
     framed(contents.into(), c, &m.style, 22.0 * s, fit)
 }
 
@@ -86,9 +93,12 @@ pub fn menu_panel<'a, M: 'a>(m: &MenuView, font: Font, look: MenuLook, fit: &Fit
 /// cursor is on it.
 pub(super) fn item_cell<'a, M: 'a>(m: &MenuView, i: usize, c: Colors, size: f32) -> (Element<'a, M>, Colors, bool) {
     let item = &m.items[i];
-    let selected = m.selected == Some(i);
-    let lit = toned(c, item.tone).lit_item(m, i);
-    (item_text(lit, item, &toned_label(c, item), size, lit.item_text), lit, selected)
+    let note = item.tone == crate::menu::Tone::Note;
+    let selected = m.selected == Some(i) && !note;
+    let lit = if note { toned(c, item.tone) } else { toned(c, item.tone).lit_item(m, i) };
+    // A list's rows are as wide as the list, so their arrows line up at the right.
+    let fills = matches!(m.kind, MenuKind::List | MenuKind::Buttons);
+    (item_text(lit, item, &toned_label(c, item), size, fills), lit, selected)
 }
 
 /// An item's label, with a + or − in front of adding and removing rows in color-blind mode.
@@ -149,9 +159,15 @@ fn list<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
     let cursor = m.selected.unwrap_or(0);
     let cell = |i: usize| -> Element<'a, M> {
         let (content, lit, selected) = item_cell(m, i, c, 17.0 * s);
-        c.moving(m, i, container(content).padding([10.0 * s, 14.0 * s]).width(Length::Fill).style(lit_cell_style(lit, selected, 40.0 * s)))
+        // At least as tall as a glyph, so rows with glyphs are no taller than plain ones, and
+        // taller when a long label wraps.
+        let content = row![space().height(24.0 * s), content].align_y(Alignment::Center);
+        let boxed = container(content).padding([10.0 * s, 14.0 * s]).width(Length::Fill);
+        // A note has no box, so it doesn't look like something to pick.
+        let boxed = if m.items[i].tone == crate::menu::Tone::Note { boxed } else { boxed.style(lit_cell_style(lit, selected, 40.0 * s)) };
+        c.moving(m, i, boxed)
     };
-    let marker = |t: &'static str| text(t).font(c.font).size(13.0 * s).color(c.muted);
+    let marker = |t: String| text(t).font(c.font).size(13.0 * s).color(c.muted);
     let columns = m.columns();
     let start = crate::menu::list_start_in(cursor, len, columns);
     let half = if columns == 2 { len.div_ceil(2) } else { len };
@@ -168,23 +184,32 @@ fn list<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
         }
         col
     };
-    // Wide enough that a long label stays on one line: a wrapped row is taller, and a full page of
-    // them overflows the box.
+    // Wide enough that a long label stays on one line, in the style's case, size and letter
+    // spacing: a wrapped row is taller, and a full page of them overflows the box. Past the
+    // widest, labels wrap.
+    let t = &m.style.typography;
+    let capitals = if t.case == crate::config::Case::Upper { 1.25 } else { 1.0 };
+    let per_letter = 9.0 * capitals * t.size.clamp(0.5, 2.0) + t.letter_spacing.clamp(0.0, 12.0);
     let longest = m.items.iter().map(|item| item.label.chars().count()).max().unwrap_or(0);
-    let width = (longest as f32 * 9.0 + 60.0).clamp(300.0, 440.0);
+    let width = (longest as f32 * per_letter + 60.0).clamp(300.0, 560.0);
     let left = column_of(shown(start, half), width);
     let grid: Element<'a, M> = if half < len {
         row![left, column_of(shown(half + start, len), width)].spacing(14.0 * s).into()
     } else {
         left.into()
     };
-    let mut body = column![].spacing(6.0 * s);
-    if start > 0 {
-        body = body.push(marker("▲"));
+    // How many rows are scrolled out above and below, in both columns.
+    let right = len - half;
+    let above = start + start.min(right);
+    let end = start + crate::menu::VISIBLE_ROWS;
+    let below = half.saturating_sub(end) + right.saturating_sub(end);
+    let mut body = column![].spacing(6.0 * s).align_x(Alignment::Center);
+    if above > 0 {
+        body = body.push(marker(format!("▲ {above} more")));
     }
     body = body.push(grid);
-    if start + crate::menu::VISIBLE_ROWS < half {
-        body = body.push(marker("▼"));
+    if below > 0 {
+        body = body.push(marker(format!("▼ {below} more")));
     }
     body.into()
 }

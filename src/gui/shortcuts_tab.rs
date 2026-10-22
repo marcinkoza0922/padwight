@@ -232,16 +232,23 @@ impl App {
     fn peek_trigger_row(&self) -> Element<'_, Message> {
         let pick = dropdown(crate::config::PeekTrigger::ALL, Some(self.config.peek_trigger), Message::SetPeekTrigger).width(190);
         let help = text("While editing a menu or overlay in the in-game editor, hold this to hide the editor and see the overlay.").size(13).color(MUTED_COLOR);
-        column![labeled_in(190.0, "Show the overlay being edited", pick.into()), help].spacing(2).into()
+        // The picker starts where the other rows' button pickers do, past their kind column.
+        let line = row![space().width(KIND_WIDTH), pick].spacing(8).align_y(Alignment::Center);
+        column![labeled_in(190.0, "Peek while editing", line.into()), help].spacing(2).into()
     }
 
     /// Whether the gyro and touchpad move the pointer in mouse mode.
     fn mouse_mode_extras(&self) -> Element<'_, Message> {
         let extras = self.config.mouse_mode;
         column![
-            checkbox(extras.gyro)
-                .label("Gyro moves the pointer, as the profile's gyro does (at a default speed if it aims a stick or is off)")
-                .on_toggle(move |gyro| Message::SetMouseModeExtras(MouseModeExtras { gyro, ..extras })),
+            row![
+                checkbox(extras.gyro)
+                    .label("Gyro moves the pointer")
+                    .on_toggle(move |gyro| Message::SetMouseModeExtras(MouseModeExtras { gyro, ..extras })),
+                help("As the profile's gyro moves it. If the profile's gyro aims a stick or is off, at a default speed.".into()),
+            ]
+            .spacing(8)
+            .align_y(Alignment::Center),
             checkbox(extras.touchpad)
                 .label("Touchpad moves the pointer, and pressing it clicks")
                 .on_toggle(move |touchpad| Message::SetMouseModeExtras(MouseModeExtras { touchpad, ..extras })),

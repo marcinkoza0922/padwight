@@ -1,5 +1,5 @@
-//! The Buttons tab's list: a row per button with its glyph and name, then what it does, its
-//! gestures in columns the whole list shares so each kind reads down one column.
+//! The Buttons tab's list: a row per button with its glyph and name, then what it does, with
+//! its gestures in rows underneath.
 
 use iced::widget::{column, row};
 
@@ -30,14 +30,10 @@ pub(in crate::gui) fn button_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a
     let groups: Vec<Vec<Button>> =
         GROUPS.iter().map(|g| g.iter().copied().filter(|b| row_matches(p, *b, ui)).collect::<Vec<_>>()).filter(|g| !g.is_empty()).collect();
     let shown: Vec<Button> = groups.iter().flatten().copied().collect();
-    let columns = gesture_columns(p, &shown, ui);
     let mut rows: Vec<Element<'a, Message>> = Vec::new();
     rows.extend(layer_note(&shown, ui));
-    if !shown.is_empty() {
-        rows.extend(column_heads(&columns, ui));
-    }
     for (n, group) in groups.iter().enumerate() {
-        let list = column(group.iter().flat_map(|b| button_row(p, *b, ui, &columns))).spacing(10);
+        let list = column(group.iter().flat_map(|b| button_row(p, *b, ui))).spacing(10);
         // The gap before a group is a little wider than the one between its rows.
         rows.push(container(list).padding(iced::Padding::default().top(if n > 0 { 6 } else { 0 })).into());
     }
@@ -64,13 +60,9 @@ pub(in crate::gui) fn paddle_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a
         rows.extend(requirement_rows(p, Feature::BackPaddles));
     }
     let shown: Vec<Button> = Button::PADDLES.into_iter().filter(|b| row_matches(p, *b, ui)).collect();
-    let columns = gesture_columns(p, &shown, ui);
     rows.extend(layer_note(&shown, ui));
-    if !shown.is_empty() {
-        rows.extend(column_heads(&columns, ui));
-    }
     for b in shown {
-        rows.extend(button_row(p, b, ui, &columns));
+        rows.extend(button_row(p, b, ui));
     }
     rows
 }
@@ -100,14 +92,6 @@ fn source<'p>(p: &'p Profile, b: Button, layer: Option<LayerMarks<'p>>) -> &'p P
     }
 }
 
-/// The gestures any of `buttons` has, in the order their columns show.
-fn gesture_columns(p: &Profile, buttons: &[Button], ui: &Ui) -> Vec<GestureKind> {
-    GestureKind::ALL
-        .into_iter()
-        .filter(|k| buttons.iter().any(|b| source(p, *b, ui.layer).gestures.get(b).and_then(|g| g.get(*k)).is_some()))
-        .collect()
-}
-
 /// In a layer, what the muted rows are, when some of `shown` are the profile's own.
 fn layer_note<'a>(shown: &[Button], ui: &Ui) -> Option<Element<'a, Message>> {
     let marks = ui.layer?;
@@ -115,21 +99,6 @@ fn layer_note<'a>(shown: &[Button], ui: &Ui) -> Option<Element<'a, Message>> {
         .iter()
         .any(|b| !marks.overrides(LayerPart::Button(*b)))
         .then(|| note(format!("Muted rows are the same as {}. Override one to change it while this layer is on.", marks.base.name)).into())
-}
-
-/// What each column holds, over the rows, once a gesture makes more than one column. Alone,
-/// "Press" would only state the obvious.
-fn column_heads<'a>(columns: &[GestureKind], ui: &Ui) -> Option<Element<'a, Message>> {
-    if columns.is_empty() {
-        return None;
-    }
-    let head = |s: String| container(text(s).size(12).color(MUTED_COLOR)).width(Length::FillPortion(1)).into();
-    let mut line = row![space().width(NAME_WIDTH)].spacing(10);
-    line = line.push(row(std::iter::once(head("Press".into())).chain(columns.iter().map(|k| head(k.to_string())))).spacing(10).width(Length::Fill));
-    if ui.layer.is_some() {
-        line = line.push(space().width(LAYER_WIDTH));
-    }
-    Some(line.into())
 }
 
 /// The action a button does when nothing remaps it: its own, or nothing for a paddle.
@@ -152,18 +121,18 @@ fn name_column<'a>(b: Button, ui: &Ui, toggle: Option<bool>, color: Option<Color
 
 /// One button: collapsed to its columns, or open with its action editor, gesture rows and a
 /// "+ Double tap" style button for each gesture not yet set.
-fn button_row<'a>(p: &'a Profile, b: Button, ui: &Ui, columns: &[GestureKind]) -> Vec<Element<'a, Message>> {
+fn button_row<'a>(p: &'a Profile, b: Button, ui: &Ui) -> Vec<Element<'a, Message>> {
     let from_base = ui.layer.is_some_and(|marks| !marks.overrides(LayerPart::Button(b)));
     let target = Target::Button(b);
     if from_base || !ui.is_open(target) {
-        return collapsed_row(p, b, ui, columns, from_base);
+        return collapsed_row(p, b, ui, from_base);
     }
     open_row(p, b, ui)
 }
 
-/// A closed row: the name, the button's action and each gesture in its column. In a layer that
+/// A closed row: the name and the button's action, then a row under it per gesture. In a layer that
 /// doesn't override it, the profile's own, muted, with "Override".
-fn collapsed_row<'a>(p: &'a Profile, b: Button, ui: &Ui, columns: &[GestureKind], from_base: bool) -> Vec<Element<'a, Message>> {
+fn collapsed_row<'a>(p: &'a Profile, b: Button, ui: &Ui, from_base: bool) -> Vec<Element<'a, Message>> {
     let shown = source(p, b, ui.layer);
     let gestures = shown.gestures.get(&b);
     let gesture = |k: GestureKind| gestures.and_then(|g| g.get(k));
@@ -185,13 +154,9 @@ fn collapsed_row<'a>(p: &'a Profile, b: Button, ui: &Ui, columns: &[GestureKind]
     } else {
         piece_wrap(shown.button(b).pieces(), ui.family, ui.swap, from_base || matches!(shown.button(b), ButtonAction::Disabled))
     };
-    let cell = |e: Element<'a, Message>| container(e).width(Length::FillPortion(1)).into();
-    let cells = std::iter::once(cell(press)).chain(columns.iter().map(|k| {
-        cell(gesture(*k).map_or_else(|| space().into(), |a| piece_wrap(a.pieces(), ui.family, ui.swap, from_base)))
-    }));
     let mut line = row![
         name_column(b, ui, (!from_base).then_some(false), name_color),
-        row(cells).spacing(10).width(Length::Fill).align_y(Alignment::Center),
+        container(press).width(Length::Fill),
     ]
     .spacing(10)
     .align_y(Alignment::Center);
@@ -214,7 +179,19 @@ fn collapsed_row<'a>(p: &'a Profile, b: Button, ui: &Ui, columns: &[GestureKind]
         };
         line = line.push(container(control).width(LAYER_WIDTH).align_right(LAYER_WIDTH));
     }
-    let mut rows = vec![line.into()];
+    // Each gesture sits under the action it extends, indented to the glyph and named in muted text.
+    let mut lines: Vec<Element<'a, Message>> = vec![line.into()];
+    for (kind, action) in GestureKind::ALL.into_iter().filter_map(|k| gesture(k).map(|a| (k, a))) {
+        let name = container(text(kind.to_string()).size(13).color(MUTED_COLOR)).padding(iced::Padding::default().left(CHEVRON_WIDTH + 24.0)).width(NAME_WIDTH);
+        let mut line = row![name, container(piece_wrap(action.pieces(), ui.family, ui.swap, from_base)).width(Length::Fill)]
+            .spacing(10)
+            .align_y(Alignment::Center);
+        if ui.layer.is_some() {
+            line = line.push(space().width(LAYER_WIDTH));
+        }
+        lines.push(line.into());
+    }
+    let mut rows = vec![column(lines).spacing(2).into()];
     // On a line of its own, so it doesn't push this row's columns out of line with the others.
     if let Some(problem) = problem {
         rows.push(labeled_in(NAME_WIDTH, "", text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR).into()));

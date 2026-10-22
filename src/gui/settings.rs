@@ -43,21 +43,32 @@ impl App {
     /// The App settings page's sounds: the set every setup without its own set uses.
     fn view_default_sounds(&self) -> Element<'_, Message> {
         let set = self.config.sounds;
-        // Silencing everything is Performance's "No sounds", so this card has no button for it.
-        let rows: Vec<Element<'_, Message>> = SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, &self.open_sounds, &self.open_cue_edits, false)).collect();
+        // Silencing everything is Performance's Sounds switch, so this card has no button for it.
+        let mut rows: Vec<Element<'_, Message>> = self.sounds_off_note().into_iter().collect();
+        rows.extend(SoundOverlay::ALL.iter().map(|&overlay| overlay_sounds(set, overlay, &self.open_sounds, &self.open_cue_edits, false)));
+        rows.push(overlays::silent_overlays_note());
         section(
             "Overlay sounds",
-            Some("A faint sound as the cursor moves in an overlay, another when something is picked, and a softer one as it pops in and out. These apply to every setup that doesn't set its own on its Details tab. Any overlay can be turned off, and \"No sounds\" under Performance silences them all. Info and log overlays have nothing to pick, so they make no sound.".into()),
+            Some("A faint sound as the cursor moves in an overlay, another when something is picked, and a softer one as it pops in and out. These apply to every setup that doesn't set its own on its Details tab. Any overlay can be turned off, and turning off Sounds under Performance silences them all.".into()),
             rows,
         )
     }
 
-    /// What every overlay can go without, on machines where drawing them costs too much.
+    /// While Performance has every sound off, a line over a sounds card's toggles saying that
+    /// none of them plays.
+    pub(super) fn sounds_off_note(&self) -> Option<Element<'_, Message>> {
+        self.config.performance.quiet.then(|| {
+            text("Sounds are off under App settings → Performance, so none of these play.").size(13).color(WARNING_COLOR).into()
+        })
+    }
+
+    /// What every overlay can go without, on machines where drawing them costs too much. Each
+    /// switch is on while the overlays have that thing, so "off" means off everywhere on the page.
     fn view_performance(&self) -> Element<'_, Message> {
         let p = self.config.performance;
-        let switch = |on: bool, label: &'static str, what: &'static str, set: fn(&mut Performance, bool)| -> Element<'_, Message> {
+        let switch = |has: bool, label: &'static str, what: &'static str, set: fn(&mut Performance, bool)| -> Element<'_, Message> {
             column![
-                toggler(on).label(label).on_toggle(move |v| {
+                toggler(has).label(label).on_toggle(move |v| {
                     let mut p = p;
                     set(&mut p, v);
                     Message::SetPerformance(p)
@@ -68,9 +79,9 @@ impl App {
             .into()
         };
         let all = if p == Performance::lightest() {
-            button(text("Turn everything back on").size(13)).style(style::secondary).on_press(Message::SetPerformance(Performance::default()))
+            button(text("Turn them all back on").size(13)).style(style::secondary).on_press(Message::SetPerformance(Performance::default()))
         } else {
-            button(text("Turn everything off").size(13)).style(style::secondary).on_press(Message::SetPerformance(Performance::lightest()))
+            button(text("Turn them all off").size(13)).style(style::secondary).on_press(Message::SetPerformance(Performance::lightest()))
         };
         section(
             "Performance",
@@ -81,10 +92,10 @@ impl App {
                     .into(),
             ),
             vec![
-                switch(p.still, "No motion", "Overlays appear, move and close at once. Redraws only when something changes.", |p, v| p.still = v),
-                switch(p.plain, "Plain overlays", "No shadows, outlines, gradients or glows, the default ones included.", |p, v| p.plain = v),
-                switch(p.quiet, "No sounds", "No overlay sounds, and the audio device is never opened.", |p, v| p.quiet = v),
-                switch(p.no_loops, "No looping animations", "Glows stop pulsing, and gradients and scanlines stop drifting. Motion styles still play.", |p, v| p.no_loops = v),
+                switch(!p.still, "Motion", "Overlays move as they open and close. Off, they appear and close at once, and redraw only when something changes.", |p, v| p.still = !v),
+                switch(!p.plain, "Decorations", "Shadows, outlines, gradients and glows, the default ones included.", |p, v| p.plain = !v),
+                switch(!p.quiet, "Sounds", "Overlay sounds. Off, every overlay is silent and the audio device is never opened.", |p, v| p.quiet = !v),
+                switch(!p.no_loops, "Looping animations", "Glows pulse, and gradients and scanlines drift. Off, they stand still while motion styles still play.", |p, v| p.no_loops = !v),
                 all.into(),
             ],
         )
@@ -131,7 +142,7 @@ impl App {
             ("menu colors color-blind colorblind tint blue orange red", self.view_color_card()),
             ("motion animation overlay style", self.view_motion_card()),
             ("overlay sounds audio cue volume", self.view_default_sounds()),
-            ("performance still plain quiet no motion no sounds shadows graphics", self.view_performance()),
+            ("performance still plain quiet motion sounds decorations shadows looping animations graphics", self.view_performance()),
             ("on-screen keyboard full keyboard basic layout position", self.view_keyboard_card()),
             ("on-screen numpad number pad digits position", self.view_numpad_card()),
             ("media controls player panel music volume", self.view_media_card()),
@@ -155,7 +166,7 @@ impl App {
             text("Rumble strength").width(140),
             iced::widget::slider(0.0..=1.0, strength, Message::SetRumbleStrength).step(0.05_f32).width(240),
             text(format!("{:.0}%", strength * 100.0)).size(13).color(MUTED_COLOR),
-            checkbox(self.config.pick_rumble).label("A faint pulse as an overlay item is picked").on_toggle(Message::SetPickRumble),
+            checkbox(self.config.pick_rumble).label("Pulse when picking an overlay item").on_toggle(Message::SetPickRumble),
         ]
         .spacing(12)
         .align_y(Alignment::Center)

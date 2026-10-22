@@ -301,11 +301,11 @@ pub(super) fn gesture_name(kind: GestureKind) -> &'static str {
 }
 
 pub(super) fn stick_name(s: Stick) -> String {
-    format!("{} stick", side(s == Stick::Left))
+    format!("{} Stick", side(s == Stick::Left))
 }
 
 pub(super) fn trigger_name(t: Trigger) -> String {
-    format!("{} trigger", side(t == Trigger::Left))
+    format!("{} Trigger", side(t == Trigger::Left))
 }
 
 pub(super) fn analog_name(a: Analog) -> String {

@@ -320,7 +320,7 @@ impl Shortcut {
             Shortcut::Media => "Media controls",
             Shortcut::Screenshot => "Screenshot",
             Shortcut::Recording => "Start or stop recording",
-            Shortcut::QuickSettings => "Quick Settings menu",
+            Shortcut::QuickSettings => "Quick Settings",
             Shortcut::ForceQuit => "Force quit (hold 2 s)",
             Shortcut::MouseMode => "Mouse mode",
             Shortcut::Shift => "Shift",

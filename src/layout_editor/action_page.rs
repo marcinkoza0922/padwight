@@ -30,12 +30,12 @@ impl Picker {
 
     fn label(self) -> &'static str {
         match self {
-            Picker::Mode => "Switch to a mode…",
-            Picker::Layer => "Hold a layer…",
-            Picker::Macro => "Play a macro…",
-            Picker::Menu => "Open a menu…",
-            Picker::Info => "Show an info overlay…",
-            Picker::Log => "Show a log overlay…",
+            Picker::Mode => "Switch mode",
+            Picker::Layer => "Hold layer",
+            Picker::Macro => "Macro",
+            Picker::Menu => "Open menu",
+            Picker::Info => "Info overlay",
+            Picker::Log => "Log overlay",
         }
     }
 
@@ -89,8 +89,8 @@ impl Picker {
 /// The simple actions offered, each with its label.
 type Choice = (&'static str, fn() -> ButtonAction);
 
-const CHOICES: [Choice; 21] = [
-    ("Disabled", || ButtonAction::Disabled),
+/// What a press sends: the ones a macro step may press too.
+const PRESSES: [Choice; 10] = [
     ("Left click", || ButtonAction::Mouse(MouseButton::Left)),
     ("Right click", || ButtonAction::Mouse(MouseButton::Right)),
     ("Middle click", || ButtonAction::Mouse(MouseButton::Middle)),
@@ -100,21 +100,24 @@ const CHOICES: [Choice; 21] = [
     ("Wheel down", || ButtonAction::Wheel(WheelDirection::Down)),
     ("Wheel left", || ButtonAction::Wheel(WheelDirection::Left)),
     ("Wheel right", || ButtonAction::Wheel(WheelDirection::Right)),
+    ("Disabled", || ButtonAction::Disabled),
+];
+
+/// The on-screen tools, the gyro's actions and the system's, after everything that presses or
+/// opens something, in the order of the window's action picker.
+const TOOLS: [Choice; 11] = [
     ("On-screen keyboard", || ButtonAction::ToggleOverlay),
-    ("Numpad", || ButtonAction::ToggleNumpad),
-    ("Screenshot", || ButtonAction::Screenshot),
-    ("Start / stop recording", || ButtonAction::ToggleRecording),
-    ("Media controls", || ButtonAction::ToggleMedia),
+    ("On-screen numpad", || ButtonAction::ToggleNumpad),
     ("Quick Settings", || ButtonAction::QuickSettings),
-    ("Force quit (hold)", || ButtonAction::ForceQuit),
+    ("Media controls", || ButtonAction::ToggleMedia),
     ("Gyro on / off", || ButtonAction::GyroToggle),
     ("Gyro clutch (off while held)", || ButtonAction::GyroClutch),
     ("Gyro on while held", || ButtonAction::GyroHold),
     ("Recenter gyro", || ButtonAction::GyroRecenter),
+    ("Screenshot", || ButtonAction::Screenshot),
+    ("Start or stop recording", || ButtonAction::ToggleRecording),
+    ("Force quit (hold)", || ButtonAction::ForceQuit),
 ];
-
-/// How many of `CHOICES` a macro step may press: Disabled, the mouse buttons and the wheel.
-const STEP_CHOICES: usize = 10;
 
 /// The rate a new turbo presses at, in presses a second.
 const TURBO_RATE: f32 = 10.0;
@@ -129,28 +132,31 @@ pub(super) fn rows(config: &Config, at: ActionAt) -> Vec<Row> {
     if let Some(current) = &current {
         rows.extend(wrapper_rows(at, current));
     }
-    rows.push(Row::open("Gamepad button…", Page::Pad(at)));
-    if let (Slot::Button(owner, b), true) = (at.slot, at.is_top()) {
-        rows.push(Row::open("Gestures…", Page::Gestures(owner, b)));
-    }
     let step = matches!(at.slot, Slot::MacroStep(..));
-    let choices = if step { &CHOICES[..STEP_CHOICES] } else { &CHOICES[..] };
-    rows.extend(choices.iter().map(|&(label, make)| Row::apply(label, move |c| Act::changed_if(set_action(c, at, Some(make()))).then(Nav::Back(1)))));
-    rows.push(Row::open("Keys…", Page::KeyGroups(at)));
-    // A menu item is a tap: it can't hold a layer (it can switch modes). A macro step presses
-    // what it holds, so it can't open anything.
-    let item = matches!(at.slot, Slot::MenuItem(..));
-    for p in Picker::ALL.into_iter().filter(|p| !step && !(item && *p == Picker::Layer)) {
-        rows.push(Row::open(p.label(), Page::Pick(at, p)).keyword(Some(p.keyword())));
+    let choice = |&(label, make): &Choice| Row::apply(label, move |c| Act::changed_if(set_action(c, at, Some(make()))).then(Nav::Back(1)));
+    // In the order of the window's action picker: what it presses, how it presses, what it
+    // opens, then the tools, the gyro and the system.
+    rows.push(Row::open("Keys", Page::KeyGroups(at)));
+    rows.push(Row::open("Gamepad button", Page::Pad(at)));
+    rows.extend(PRESSES.iter().map(choice));
+    if let (Slot::Button(owner, b), true) = (at.slot, at.is_top()) {
+        rows.push(Row::open("Gestures", Page::Gestures(owner, b)));
     }
     if !matches!(current, Some(ButtonAction::Multi(_))) {
-        rows.push(Row::apply("Several at once…", move |c| {
+        rows.push(Row::apply("Several at once", move |c| {
             let now = action(c, at).unwrap_or(ButtonAction::Disabled);
             Act::changed_if(set_action(c, at, Some(ButtonAction::Multi(vec![now])))).then(Nav::Open(Page::Multi(at)))
         }));
     }
+    // A macro step presses what it holds, so it can't open anything. A menu item is a tap: it
+    // can't hold a layer (it can switch modes).
     if !step {
+        let item = matches!(at.slot, Slot::MenuItem(..));
         rows.extend(wrap_rows(at, current.as_ref(), item));
+        for p in Picker::ALL.into_iter().filter(|p| !(item && *p == Picker::Layer)) {
+            rows.push(Row::open(p.label(), Page::Pick(at, p)).keyword(Some(p.keyword())));
+        }
+        rows.extend(TOOLS.iter().map(choice));
     }
     if at.slot.unsettable() && at.is_top() {
         rows.push(Row::apply("Not set", move |c| Act::changed_if(set_action(c, at, None)).then(Nav::Back(1))));

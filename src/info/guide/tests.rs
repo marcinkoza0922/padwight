@@ -29,6 +29,16 @@ fn the_notes_show_only_when_there_are_some() {
 }
 
 #[test]
+fn a_profile_with_no_changes_shows_no_mappings() {
+    let mut p = Profile::passthrough("p");
+    assert!(view(&p, &[], &[], 0).overlays().is_empty());
+    p.guide.notes = "Hello".into();
+    let overlays = view(&p, &[], &[], 0).overlays();
+    assert_eq!(overlays.len(), 1, "the notes stay");
+    assert_eq!(overlays[0].name, "guide notes");
+}
+
+#[test]
 fn a_long_mappings_list_shows_a_page_at_a_time() {
     let mut p = Profile::passthrough("p");
     let names = ["KEY_A", "KEY_B", "KEY_C", "KEY_D", "KEY_E", "KEY_F", "KEY_G", "KEY_H", "KEY_I", "KEY_J", "KEY_K", "KEY_L", "KEY_M", "KEY_N", "KEY_O"];
@@ -41,8 +51,9 @@ fn a_long_mappings_list_shows_a_page_at_a_time() {
     let pages = view(&p, &[], &[], 0).pages();
     assert!(pages > 1);
     let first = &view(&p, &[], &[], 0).overlays()[0];
-    assert_eq!(first.rows.len(), MAPPING_ROWS);
+    assert_eq!(first.rows.len(), MAPPING_ROWS + 1, "a page of rows, and the hint for the rest");
     assert!(first.title.as_deref().is_some_and(|t| t.starts_with("Mappings 1/")));
+    assert_eq!(first.rows.last(), Some(&row("{rs}", "{color:gray}Up or down: more mappings{/color}")));
     let last = &GuideView { page: 99, ..view(&p, &[], &[], 0) }.overlays()[0];
     assert!(last.title.as_deref().is_some_and(|t| t.starts_with(&format!("Mappings {pages}/"))), "past the end shows the last page");
 }
@@ -52,6 +63,7 @@ fn the_mappings_show_one_mode_at_a_time() {
     let mut p = Profile::passthrough("p");
     p.set_button(Button::South, keys("KEY_SPACE"));
     p.set_button(Button::East, keys("KEY_C"));
+    p.set_button(Button::North, ButtonAction::Mode("Driving".into()));
     p.guide.edits.insert(RowId::Input(GuideInput::Button(Button::South)), RowEdit { text: Some("Jump".into()), hidden: false });
     p.guide.edits.insert(RowId::Input(GuideInput::Button(Button::East)), RowEdit { text: Some("Crouch".into()), hidden: false });
     let mut driving = Mode::new("Driving");
@@ -60,14 +72,18 @@ fn the_mappings_show_one_mode_at_a_time() {
 
     let default = &view(&p, &modes, &[], 0).overlays()[0];
     assert!(default.rows.contains(&row("{south}", "Jump")));
-    assert_eq!(default.title.as_deref(), Some("Mappings · Default mode · {left} {right} modes"));
+    assert_eq!(default.title.as_deref(), Some("Mappings · Default mode"));
+    assert_eq!(default.rows.last(), Some(&row("{leftright}", "{color:gray}Other modes{/color}")), "the hint for other modes, under the rows");
 
     let shown = &view(&p, &modes, &[], 1).overlays()[0];
     assert!(shown.rows.contains(&row("{south}", "{keyboard:w}")), "the mode's mapping, not the text written for Jump: {:?}", shown.rows);
     assert!(shown.rows.contains(&row("{east}", "Crouch")), "what the mode leaves alone keeps its text");
-    assert_eq!(shown.title.as_deref(), Some("Mappings · Driving mode (not on) · {left} {right} modes"));
+    assert_eq!(shown.title.as_deref(), Some("Mappings · Driving mode (preview; {north} turns it on)"));
     let on = &GuideView { current: 1, ..view(&p, &modes, &[], 1) }.overlays()[0];
-    assert!(on.title.as_deref().is_some_and(|t| t.contains("Driving mode ·")), "{:?}", on.title);
+    assert_eq!(on.title.as_deref(), Some("Mappings · Driving mode"));
+    p.buttons.remove(&Button::North);
+    let unswitched = &view(&p, &modes, &[], 1).overlays()[0];
+    assert_eq!(unswitched.title.as_deref(), Some("Mappings · Driving mode (preview)"), "nothing turns it on from here");
 }
 
 #[test]
@@ -88,13 +104,13 @@ fn a_held_layer_gets_a_section_of_what_it_changes() {
     // The pad's own buttons fill the first page; the section follows them.
     let overlays = GuideView { page: 99, ..view(&p, &modes, &layers, 0) }.overlays();
     assert_eq!(overlays.len(), 2, "the mappings and one section");
-    assert_eq!(overlays[1].title.as_deref(), Some("Hotkeys layer · {lb}, {north} {gesture:hold}"));
+    assert_eq!(overlays[1].title.as_deref(), Some("Layer “Hotkeys” · {lb}, {north} {gesture:hold}"));
     assert_eq!(overlays[1].rows, [row("{south}", "{keyboard:f1}")], "only what the layer sets");
     assert_eq!(overlays[1].style.position, ScreenPosition::CenterRight, "under the mappings");
 
     let overlays = GuideView { page: 99, ..view(&p, &modes, &layers, 1) }.overlays();
     let titles: Vec<_> = overlays.iter().filter_map(|o| o.title.clone()).collect();
-    assert!(titles.contains(&"Lean layer · {rb}".to_string()), "{titles:?}");
+    assert!(titles.contains(&"Layer “Lean” · {rb}".to_string()), "{titles:?}");
 }
 
 #[test]

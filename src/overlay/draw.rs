@@ -11,6 +11,7 @@ mod keyboard;
 mod marked;
 mod menus;
 mod ornament;
+mod place;
 mod texture;
 mod radial;
 mod tag;
@@ -28,6 +29,7 @@ use glyphs::{segment_element, state_icon};
 use look::{Look, lit_cell_style, panel_style};
 pub use keyboard::keyboard_panel;
 pub use menus::menu_panel;
+pub use place::{beside, place};
 use menus::item_cell;
 use radial::radial;
 pub use tag::{Part, found_at};
@@ -45,7 +47,7 @@ use iced::Font;
 
 use super::{KeyboardView, fit::Fit};
 use crate::{
-    config::{MenuKind, OverlayStyle, Paint, ScreenPosition},
+    config::{MenuKind, OverlayStyle, Paint},
     info::{InfoView, Segment},
     media,
     media::MediaView,
@@ -208,36 +210,6 @@ fn colors(style: &OverlayStyle, font: Font) -> Colors {
     }
 }
 
-/// Positions an overlay panel on the full-screen surface, moved by its animation and by the
-/// style's offset.
-pub fn place<'a, M: 'a>(panel: Element<'a, M>, style: &OverlayStyle, fit: &Fit, anim: &Anim) -> Element<'a, M> {
-    let (col, row) = style.position.cell();
-    let horizontal = [Horizontal::Left, Horizontal::Center, Horizontal::Right][col];
-    let vertical = [Vertical::Top, Vertical::Center, Vertical::Bottom][row];
-    let margin = if style.position == ScreenPosition::Center { 0.0 } else { EDGE_MARGIN };
-    let (x, y) = anim.offset();
-    let (left, right) = sides(margin, x + fit.x, col);
-    let (top, bottom) = sides(margin, y + fit.y, row);
-    container(transform(panel, anim.scale(), iced::Vector::ZERO))
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .align_x(horizontal)
-        .align_y(vertical)
-        .padding(Padding { top, right, bottom, left })
-        .into()
-}
-
-/// The padding on the two sides of a panel, for a panel `shift` pixels off where it sits in
-/// `slot` (0 start, 1 center, 2 end) of a `margin` from the edge.
-fn sides(margin: f32, shift: f32, slot: usize) -> (f32, f32) {
-    match slot {
-        0 => ((margin + shift).max(0.0), margin),
-        2 => (margin, (margin - shift).max(0.0)),
-        // A centered panel sits halfway between its two paddings.
-        _ => (margin + (2.0 * shift).max(0.0), margin + (-2.0 * shift).max(0.0)),
-    }
-}
-
 /// The style's filters, as layers over the contents: grain, pixel blocks, camo and a tint.
 fn filters<'a, M: 'a>(c: Colors, style: &OverlayStyle, s: f32) -> Vec<Element<'a, M>> {
     let ornaments = &style.ornament;
@@ -319,6 +291,8 @@ fn toned(c: Colors, tone: crate::menu::Tone) -> Colors {
     // Lime with white text stays readable at this mix (about 4.7:1 on the default items).
     let (tint, share) = match (tone, c.colorblind) {
         (crate::menu::Tone::Normal, _) => return c,
+        // No box of its own: muted words on the panel, like the hint under it.
+        (crate::menu::Tone::Note, _) => return Colors { item: Color::TRANSPARENT, item_text: c.muted, ..c },
         (crate::menu::Tone::Add, false) => (Color::from_rgb8(0x5a, 0x9a, 0x1a), 0.75),
         (crate::menu::Tone::Remove, false) => (Color::from_rgb8(0xd0, 0x64, 0x64), 0.4),
         (crate::menu::Tone::Add, true) => (Color::from_rgb8(0x4a, 0x8f, 0xe0), 0.4),
@@ -326,7 +300,8 @@ fn toned(c: Colors, tone: crate::menu::Tone) -> Colors {
     };
     let mix = |a: f32, b: f32| a + (b - a) * share;
     let item = Color { r: mix(c.item.r, tint.r), g: mix(c.item.g, tint.g), b: mix(c.item.b, tint.b), a: c.item.a };
-    Colors { item, item_text: text_on(item), ..c }
+    // The text keeps the faded colors' opacity.
+    Colors { item, item_text: Color { a: c.item_text.a, ..text_on(item) }, ..c }
 }
 
 /// The media controls: what is playing, how far along, and the volume.
@@ -338,20 +313,22 @@ pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, glyphs: crate::info::Gl
         None => text("No media player is running").font(c.font).size(18.0 * s).color(c.background_text).into(),
         Some(player) => {
             let title = if m.title.is_empty() { "Nothing playing" } else { &m.title };
-            let by = [m.artist.as_str(), player.as_str()].iter().filter(|p| !p.is_empty()).copied().collect::<Vec<_>>().join(" · ");
+            let by = if m.artist.is_empty() { "Unknown artist".to_string() } else { m.artist.clone() };
             let progress = if m.length_ms > 0 { (m.position_ms as f32 / m.length_ms as f32).clamp(0.0, 1.0) } else { 0.0 };
             let times = format!("{} / {}", media::clock(m.position_ms), if m.length_ms > 0 { media::clock(m.length_ms) } else { "--:--".into() });
             let mut meta = row![text(times).font(c.font).size(14.0 * s).color(c.muted)].spacing(16.0 * s);
-            // The system's sound, which the D-pad changes, then the player's own volume.
+            // The system's sound, which the D-pad changes, then the player's own volume under
+            // the player's name.
             match (m.system_volume, m.muted) {
-                (Some(_), true) => meta = meta.push(text("Sound muted").font(c.font).size(14.0 * s).color(c.muted)),
-                (Some(v), false) => meta = meta.push(text(format!("Sound {:.0}%", v * 100.0)).font(c.font).size(14.0 * s).color(c.muted)),
+                (Some(_), true) => meta = meta.push(text("System muted").font(c.font).size(14.0 * s).color(c.muted)),
+                (Some(v), false) => meta = meta.push(text(format!("System {:.0}%", v * 100.0)).font(c.font).size(14.0 * s).color(c.muted)),
                 (None, _) => {}
             }
-            if let Some(v) = m.volume {
-                let what = if m.system_volume.is_some() { "Player" } else { "Volume" };
-                meta = meta.push(text(format!("{what} {:.0}%", v * 100.0)).font(c.font).size(14.0 * s).color(c.muted));
-            }
+            let own = match m.volume {
+                Some(v) => format!("{player} {:.0}%", v * 100.0),
+                None => player.clone(),
+            };
+            meta = meta.push(text(own).font(c.font).size(14.0 * s).color(c.muted));
             if m.players > 1 {
                 meta = meta.push(text(format!("{} players", m.players)).font(c.font).size(14.0 * s).color(c.muted));
             }
@@ -373,7 +350,8 @@ pub fn media_panel<'a, M: 'a>(m: &MediaView, font: Font, glyphs: crate::info::Gl
             .into()
         }
     };
-    let contents = column![body, rich_text(&m.hint, c, 12.0 * s, c.muted)]
+    let hint = column(m.hint.lines().map(|l| rich_text(l, c, 13.0 * s, c.muted))).spacing(4.0 * s).align_x(Alignment::Center);
+    let contents = column![body, hint]
         .spacing(12.0 * s)
         .width(width)
         .align_x(Alignment::Center);
@@ -389,7 +367,8 @@ pub fn offer_panel<'a, M: 'a>(o: &OfferView, font: Font, glyphs: crate::info::Gl
             .padding([8.0 * s, 16.0 * s])
             .style(lit_cell_style(lit, selected, 36.0 * s))
     };
-    let answers = o.answers.iter().map(|(button, what)| cell(format!("{button}  {what}"), c, false).into());
+    // What {confirm} answers is the default, so it has the selected look.
+    let answers = o.answers.iter().map(|(button, what)| cell(format!("{button}  {what}"), c, button == "{confirm}").into());
     let body: Element<'a, M> = row(answers).spacing(10.0 * s).into();
     let contents = column![
         text(o.title.clone()).font(c.font).size(20.0 * s).color(c.background_text),

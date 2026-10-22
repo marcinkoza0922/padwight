@@ -12,7 +12,7 @@ use crate::{
 use super::{
     owner::game_mut,
     pages::Page,
-    rows::{Act, Nav, Number, Row, cycle, set},
+    rows::{Act, Nav, Number, Row, counted, cycle, set},
     style::{Look, StyleAt},
 };
 
@@ -58,19 +58,19 @@ pub(super) fn game_rows(config: &Config) -> Vec<Row> {
     let mut rows = Vec::new();
     if let Some(old) = key.clone() {
         rows.push(Row::text(format!("Name: {old}"), "Name of the setup", old.clone(), move |c, typed| c.rename_game(&old, typed.trim())));
-        rows.push(Row::open(format!("Window rules ({})", game.rules.len()), Page::Rules));
+        rows.push(Row::open(counted("Window rules", game.rules.len()), Page::Rules));
     }
-    rows.push(Row::open(format!("Profiles ({})", game.profiles.len()), Page::GameProfiles));
+    rows.push(Row::open(counted("Profiles", game.profiles.len()), Page::GameProfiles));
     let own = game.nintendo_layout;
     let label = match own {
-        None => String::from("as the controller's"),
+        None => String::from("per controller"),
         Some(true) => "on".into(),
         Some(false) => "off".into(),
     };
     rows.push(Row::step(format!("Nintendo button layout: {label}"), move |c, dir| {
         game_mut(c).is_some_and(|g| set(&mut g.nintendo_layout, cycle(&[None, Some(true), Some(false)], own, dir)))
     }));
-    rows.push(Row::open(format!("Font: {}", game.overlay_font.as_deref().unwrap_or("the app's")), Page::GameFont));
+    rows.push(Row::open(format!("Font: {}", game.overlay_font.as_deref().unwrap_or("App settings")), Page::GameFont));
     for look in Look::ALL {
         let own = match look {
             Look::Keyboard => game.keyboard_style.is_some(),
@@ -78,11 +78,11 @@ pub(super) fn game_rows(config: &Config) -> Vec<Row> {
             Look::Media => game.media_style.is_some(),
             Look::Menu => game.menu_style.is_some(),
         };
-        rows.push(Row::open(format!("{} look: {}", look.name(), if own { "its own" } else { "the app's" }), Page::Style(StyleAt::Game(look))));
+        rows.push(Row::open(format!("{} look: {}", look.name(), if own { "its own" } else { "App settings" }), Page::Style(StyleAt::Game(look))));
     }
-    rows.push(Row::open("Sounds…", Page::Sounds));
-    rows.push(Row::open("Rumble…", Page::Rumble));
-    rows.push(Row::open("Motion…", Page::Motion));
+    rows.push(Row::open("Sounds", Page::Sounds));
+    rows.push(Row::open("Rumble", Page::Rumble));
+    rows.push(Row::open("Motion", Page::Motion));
     rows
 }
 
@@ -91,7 +91,7 @@ pub(super) fn font_rows(config: &Config) -> Vec<Row> {
     let now = config.active_game().overlay_font.clone();
     let pick = |font: Option<String>| move |c: &mut Config| Act::changed_if(game_mut(c).is_some_and(|g| set(&mut g.overlay_font, font.clone()))).then(Nav::Back(1));
     let tick = |on: bool| if on { "✓ " } else { "" };
-    let mut rows = vec![Row::apply(format!("{}The app's", tick(now.is_none())), pick(None))];
+    let mut rows = vec![Row::apply(format!("{}Same as App settings", tick(now.is_none())), pick(None))];
     rows.extend(crate::font::names().into_iter().map(|name| Row::apply(format!("{}{name}", tick(now.as_deref() == Some(name.as_str()))), pick(Some(name)))));
     rows
 }
@@ -141,7 +141,7 @@ pub(super) fn rule_rows(config: &Config, i: usize) -> Vec<Row> {
             let Some(next) = names.get(at).cloned() else { return false };
             rule_mut(c, i).is_some_and(|r| set(&mut r.profile, next))
         }),
-        Row::toggle("On", r.enabled, move |c, on| rule_mut(c, i).is_some_and(|r| set(&mut r.enabled, on))),
+        Row::toggle("Rule in use", r.enabled, move |c, on| rule_mut(c, i).is_some_and(|r| set(&mut r.enabled, on))),
         Row::delete("Delete rule", move |c| {
             let Some(game) = game_mut(c).filter(|g| i < g.rules.len()) else { return false };
             game.rules.remove(i);

@@ -280,7 +280,7 @@ pub fn dropdown(theme: &Theme, status: pick_list::Status) -> pick_list::Style {
     }
 }
 
-/// A dropdown that runs an action ("+ New profile…") rather than holding a value: its
+/// A dropdown that runs an action ("+ New profile from…") rather than holding a value: its
 /// placeholder is its label, so it's drawn in the text color instead of the faint placeholder
 /// gray, which would make it look disabled.
 pub fn action_dropdown(theme: &Theme, status: pick_list::Status) -> pick_list::Style {
