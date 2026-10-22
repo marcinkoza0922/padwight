@@ -28,9 +28,9 @@ fn view_new_log_card<'a>(empty: bool) -> Element<'a, Message> {
         button(text("+ New log overlay")).style(style::secondary).on_press(Message::NewLog).into(),
         "A log overlay shows the buttons just pressed and what each did.",
         "A log overlay lists recent input on screen, one line per burst of presses: a fireball \
-         motion reads ↓ ↘ → X. Under each button is what it did when it's mapped to something \
-         else, and how long it was held. Show it always while its game is active, or with the \
-         \"Show log overlay…\" action. For just the latest burst inside an info overlay, use the \
+         motion reads ↓ ↘ → X. Under each button is what it did, if remapped, \
+         and how long it was held. Show it always while its game is active, or with the \
+         \"Log overlay…\" action. For just the latest burst inside an info overlay, use the \
          {current_input} token there."
             .into(),
         empty.then_some("This setup has no log overlays yet."),
@@ -143,8 +143,8 @@ impl App {
                 text(if o.always {
                     "Stays on screen while this setup is active, so actions can't show it."
                 } else {
-                    "Map \"Show log overlay…\" to a button: it shows while held, or until pressed again if \
-                     wrapped in Toggle."
+                    "Map \"Log overlay…\" to a button: it shows while held, or until pressed again if \
+                     wrapped in \"Toggle on / off…\"."
                 })
                 .size(12)
                 .color(MUTED_COLOR),

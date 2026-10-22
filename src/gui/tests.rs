@@ -208,7 +208,7 @@ fn a_blocked_save_can_jump_to_the_turbo_at_fault() {
     let turbo = ButtonAction::Turbo { action: Box::new(ButtonAction::Macro { name: "Long".into(), repeat: false }), rate: 10.0, every_ms: 50 };
     app.config.general.profiles[0].set_button(Button::West, turbo);
     let _ = app.update(Message::Save);
-    assert!(app.message.as_ref().is_some_and(|(m, err)| *err && m.contains("raise the turbo's gap")));
+    assert!(app.message.as_ref().is_some_and(|(m, err)| *err && m.contains("raise the gap")));
     assert_eq!(app.problem_at.as_ref().map(|p| (p.game.clone(), p.profile, p.target)), Some((None, 0, Target::Button(Button::West))));
 
     // Somewhere else first, then the jump brings the turbo's row up for editing.

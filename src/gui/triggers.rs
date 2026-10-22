@@ -43,8 +43,8 @@ pub(super) fn zone_list<'a>(analog: Analog, zones: &'a [Zone], names: &Names) ->
         Analog::Trigger(_) => "pulled",
     };
     let zones_help = help(format!(
-        "Extra outputs held while it is {what} within a range (0 = just past rest, 1 = all the \
-         way), on top of its main action."
+        "Extra outputs held, on top of its main action, while it's {what} within a range (0 = just \
+         past rest, 1 = all the way)."
     ));
     let mut col = column![].spacing(8);
 

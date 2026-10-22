@@ -10,7 +10,7 @@ Overlays need a desktop that supports them: KDE Plasma, Sway, Hyprland or labwc.
 
 1. Open the setup's **Info overlays** tab and press **+ New info overlay** (1). The new overlay opens.
 2. Give it a **Name** and a **Heading**, which is the title drawn above the grid.
-3. **Shown** (2) decides when it's on screen. Tick **Always, while this setup is active** for a permanent cheat sheet. Untick it to show the overlay only sometimes: map **Toggle on / off…** with **Show info overlay…** inside it to a button, and the Toggle can start on, to show the overlay at launch until dismissed.
+3. **Shown** (2) decides when it's on screen. Tick **Always, while this setup is active** for a permanent cheat sheet. Untick it to show the overlay only sometimes: map **Toggle on / off…** with **Info overlay…** inside it to a button, and the Toggle can start on, to show the overlay at launch until dismissed.
 4. **Cells** (3) is the grid. Each row is a list of cells, and cells line up in columns. A cell is text, or a `{token}`: `{south}` draws the A button's picture as your controller labels it (Xbox, PlayStation or Nintendo glyphs, to match the controller in use), and the **Insert…** button opens the token picker: every token in groups, each with a preview (buttons are shown for Xbox, PlayStation and Nintendo controllers side by side), plus every icon and the text formatting tags (`{b}` bold, `{i}` italic, `{u}` underline, `{color:red}`, `{box}`), the live values such as the time, CPU load and current mode, the gyro's turning rates and the touchpad's position. Put a button picture in the first cell and what it does in the second.
 5. **+ Cell** adds a cell to a row and **+ Add row** adds a row.
 6. The **Preview** (4) under the cells shows the result as you type.
@@ -21,7 +21,7 @@ Under **Appearance**, each overlay can have its own position, size and colors. F
 
 ## 2. Show a log of your presses
 
-The **Log overlays** tab makes a small list of the buttons you pressed lately and what each did. It's useful while you check a mapping. It's made the same way as an info overlay, and shown with **Show log overlay…**.
+The **Log overlays** tab makes a small list of the buttons you pressed lately and what each did. It's useful while you check a mapping. It's made the same way as an info overlay, and shown with **Log overlay…**.
 
 ## 3. The on-screen keyboard
 

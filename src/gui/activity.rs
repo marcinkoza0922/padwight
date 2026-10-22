@@ -69,11 +69,10 @@ impl App {
             row![
                 text("What's happening").size(20),
                 help(
-                    "The latest presses on the controller picked in the header, or on the one used last while All controllers is picked, one line per burst, as the controller labels them, \
-                     with what each did when it's mapped to something else. Beside them, what Padwight sent the game \
-                     for those presses: gamepad buttons, labeled as the game's controller would be, and keys, \
-                     mouse buttons and wheel turns. Last, each profile \
-                     switch and the rule or action that made it."
+                    "Left: the latest presses on the controller picked in the header (or the last one used, with \
+                     All controllers), one line per burst, and what each did if it's remapped. Middle: what Padwight \
+                     sent the game, labeled as the game's controller shows it, plus keys, mouse buttons and wheel \
+                     turns. Right: each profile switch and the rule or action behind it."
                         .into(),
                 ),
             ]

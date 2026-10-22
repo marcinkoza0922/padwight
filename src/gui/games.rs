@@ -322,8 +322,8 @@ impl App {
         title = title.push(help(if general {
             "Profiles for no particular game, such as the desktop or a plain gamepad.".into()
         } else {
-            "This game's profiles, and the modes, layers, macros, menus and overlays they share. The rules on the \
-             Details tab switch to it when the game is focused."
+            "This game's profiles and the modes, layers, macros, menus and overlays they share. Rules on the \
+             Details tab switch to it when the game has focus."
                 .into()
         }));
 

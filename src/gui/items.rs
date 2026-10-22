@@ -66,9 +66,9 @@ fn keep_open_toggle<'a>(mi: usize, menu: &Menu) -> Option<Element<'a, Message>> 
         return None;
     }
     let toggle = checkbox(menu.keep_open).label("Stay open for more picks").on_toggle(move |on| Message::SetMenuKeepOpen(mi, on));
-    let note = "Choosing an item closes the menu. With this on, it stays up instead, so several items can be picked in \
-                one go; it then closes as its input is let go (or pressed again, for a list with a close button), or with \
-                its close button.";
+    let note = "Normally choosing an item closes the menu. With this on, it stays up so you can pick several, and \
+                closes when its input is let go (or pressed again, for a list with a close button), or with its close \
+                button.";
     Some(row![toggle, help(note.into())].spacing(8).align_y(Alignment::Center).into())
 }
 
@@ -77,12 +77,11 @@ fn close_picker<'a>(mi: usize, menu: &Menu) -> Element<'a, Message> {
     row![
         dropdown(close_choices(menu), Some(CloseChoice::of(menu)), move |c| Message::SetMenuCancel(mi, c)).width(Length::Shrink),
         help(
-            "Backs out of a submenu (held, it closes the whole menu), and closes the menu at the top. \
-             A menu item can open another menu only when both have the same close button. A list with one \
-             stays up when its input is let go, until the input is pressed again. With none, the menu goes \
-             when its input is let go, or when an item is chosen. A \
-             menu nothing holds up (opened from the command line or a zone) then closes only by choosing, \
-             or after 30 seconds."
+            "Backs out of a submenu, or closes the menu at the top; held, it closes the whole menu. \
+             An item can open another menu only if both share a close button. A list with one stays up \
+             after its input is let go, until the input is pressed again. With none, the menu closes when \
+             its input is let go or an item is chosen; a menu nothing holds up (opened from the command \
+             line or a zone) closes only by choosing, or after 30 seconds."
                 .into(),
         ),
     ]
@@ -98,9 +97,8 @@ pub(super) fn view_new_info_card<'a>(empty: bool) -> Element<'a, Message> {
         button(text("+ New info overlay")).style(style::secondary).on_press(Message::NewInfo).into(),
         "An info overlay shows text and button glyphs on screen, such as a game's controls.",
         "An info overlay puts a grid of text on screen without taking over the controller: a \
-         game's controls with glyphs that match the controller in use, the time, CPU load and \
-         more. Show it always while its game is active, or with the \"Show info \
-         overlay…\" action."
+         game's controls with glyphs matching the controller in use, the time, CPU load and \
+         more. Show it always while its game is active, or with the \"Info overlay…\" action."
             .into(),
         empty.then_some("This setup has no info overlays yet."),
     )
@@ -295,16 +293,16 @@ pub(super) fn unreleased_holds(m: &Macro) -> usize {
     held.len()
 }
 
-pub(super) const MENUS_HELP: &str = "On-screen menus you open with the \"Open menu…\" action from any button, \
-    gesture, combo or trigger. A menu is up while that input is held and closes when you let go, or with its \
-    close button. A list with a close button stays up until its input is pressed again. Radial: aim a stick, let go to choose. \
-    Directional: four slots on the D-pad or face buttons; pressing one fires it. List: move with the D-pad or Left Stick, A \
-    chooses. Button menu: each item has its own button; pressing it fires the item. Carousel: cycle with the chosen \
-    controls, A chooses. Grid: a list laid out in up to 6 columns and 6 rows, moved through in all four \
-    directions; merge a cell with the ones beside or below it to make a bigger item. Items tap their \
-    action like a button press, and choosing one closes the menu unless it's set to stay open. An item can open another menu with the same close button (not from radial \
-    menus), which takes its place; the close button goes back, and held, closes them all. Under an input that \
-    opens a directional or button menu, \"+ Add menu combos\" adds a combo per item (the input plus the item's button).";
+pub(super) const MENUS_HELP: &str = "On-screen menus opened by the \"Open menu…\" action on any button, \
+    gesture, combo or trigger. A menu stays up while that input is held, and closes when you let go or press its \
+    close button; a list with a close button stays up until its input is pressed again. \
+    Radial: aim a stick, let go to choose. Directional: four slots on the D-pad or face buttons; press one to fire it. \
+    List: move with the D-pad or Left Stick, A chooses. Button menu: each item has its own button. Carousel: cycle \
+    with the chosen controls, A chooses. Grid: up to 6 × 6 cells, moved through in all four directions; merge cells \
+    to make bigger items. Items tap their action like a button press, and choosing one closes the menu unless it's \
+    set to stay open. An item can open another menu with the same close button (not from radial menus), which \
+    takes its place; the close button goes back, and held, closes them all. Under an input that opens a \
+    directional or button menu, \"+ Add menu combos\" adds a combo per item (the input plus the item's button).";
 
 impl App {
     #[expect(clippy::too_many_lines, clippy::cognitive_complexity, reason = "predates the size lints")]
@@ -812,7 +810,7 @@ impl App {
         if unreleased > 0 {
             footer = footer.push(
                 text(format!(
-                    "{unreleased} held input(s) are never released by a step; they are released when the macro ends."
+                    "{unreleased} held input(s) have no release step; they're released when the macro ends."
                 ))
                 .size(12)
                 .color(MUTED_COLOR),
@@ -916,11 +914,11 @@ impl App {
                 .push(
                     note(if o.always {
                         "Stays on screen while this setup is active, so actions can't show it. To show it only \
-                         sometimes, untick this and map “Toggle → Show info overlay…” to a button."
+                         sometimes, untick this and map “Info overlay…” to a button."
                     } else {
-                        "Shown when the game is first focused after launching, then fades out. You can also map \
-                         “Show info overlay…” to a button. It shows while the button is held, or until it's \
-                         pressed again if wrapped in Toggle."
+                        "Shown when the game is first focused after launch, then fades out. You can also map \
+                         “Info overlay…” to a button: it shows while the button is held, or until it's \
+                         pressed again if wrapped in “Toggle on / off…”."
                     }),
                 )
                 .spacing(4)
@@ -935,7 +933,7 @@ impl App {
                     seconds_option("After it's let go (or toggled off), stays for", o.linger, DEFAULT_LINGER_SECONDS, move |v| {
                         Message::SetInfoLinger(i, v)
                     }),
-                    help("Then it fades out. Pressing the button again while it lingers keeps it up as usual.".into()),
+                    help("Then it fades out. Pressing the button again while it lingers keeps it up.".into()),
                 ]
                 .spacing(8)
                 .align_y(Alignment::Center)
@@ -976,8 +974,8 @@ impl App {
             row![
                 text("Input").size(16),
                 help(
-                    "What the {current_input} cells show: the latest burst of presses, until it's been over \
-                     for a moment. A token can still set its own controller and timings, e.g. \
+                    "What the {current_input} cells show: the latest burst of presses, kept a moment after it \
+                     ends. A token can set its own controller and timings, e.g. \
                      {current_input_device_1:400:2000}."
                         .into(),
                 ),
@@ -995,7 +993,7 @@ impl App {
                     .step(100.0_f32)
                     .width(300),
                 text(format!("{} ms", o.current_input.stay_ms)).size(13),
-                help("How long a sequence stays after it's over, then it's cleared.".into()),
+                help("How long a sequence stays after it ends before it's cleared.".into()),
             ]
             .spacing(10)
             .align_y(Alignment::Center)
@@ -1091,7 +1089,7 @@ impl App {
         let mut items = column![
             row![
                 text("Items").size(16),
-                help("Each item has a label, then what picking it does. A radial menu's items also have a size: how wide an arc each takes, against an equal share. A button menu's items have the button that picks them.".into()),
+                help("Each item has a label and what picking it does. Radial menu items also have a size: their arc's width against an equal share. Button menu items have the button that picks them.".into()),
             ]
             .spacing(8)
             .align_y(Alignment::Center)
@@ -1160,7 +1158,7 @@ impl App {
             items = items.push(add_menu_item_row(mi, menu));
         } else {
             items = items.push(
-                text("Give a direction \"Open menu…\" to open another menu with the same close button.").size(12).color(MUTED_COLOR),
+                text("Set a direction to \"Open menu…\" to open another menu with the same close button.").size(12).color(MUTED_COLOR),
             );
         }
         items.into()
@@ -1189,8 +1187,8 @@ pub(super) fn info_cells_editor<'a>(i: usize, o: &'a InfoOverlay, family: crate:
         row![
             text("Cells").size(16),
             help(
-                "Each row's cells line up in columns. Type text, and insert {tokens}: button tokens \
-                 ({south}, {lb}, {lt}, {start}, …) draw that button as the controller in use labels \
+                "Each row's cells line up in columns. Type text and insert {tokens}: button tokens \
+                 ({south}, {lb}, {lt}, {start}, …) draw the button as the controller in use labels \
                  it (A, ✕ or B for {south}); others show live values such as {time}, {cpu} or {app}."
                     .into(),
             ),

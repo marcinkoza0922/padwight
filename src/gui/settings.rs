@@ -49,7 +49,7 @@ impl App {
         rows.push(overlays::silent_overlays_note());
         section(
             "Overlay sounds",
-            Some("A faint sound as the cursor moves in an overlay, another when something is picked, and a softer one as it pops in and out. These apply to every setup that doesn't set its own on its Details tab. Any overlay can be turned off, and turning off Sounds under Performance silences them all.".into()),
+            Some("Faint sounds as the cursor moves in an overlay, when something is picked, and as it opens and closes. They apply to every setup that doesn't set its own on its Details tab. Any overlay can be silenced; turning off Sounds under Performance silences them all.".into()),
             rows,
         )
     }
@@ -86,16 +86,16 @@ impl App {
         section(
             "Performance",
             Some(
-                "These apply to every overlay in every setup, whatever its own settings say. With a working \
-                 graphics card, motion is the main cost: overlays redraw every frame while something moves. \
-                 Without one (in a virtual machine, say), shadows and the other decorations cost the most."
+                "These apply to every overlay in every setup, overriding their own settings. With a working \
+                 graphics card, motion costs the most: overlays redraw every frame while something moves. \
+                 Without one (e.g. in a virtual machine), shadows and other decorations cost the most."
                     .into(),
             ),
             vec![
-                switch(!p.still, "Motion", "Overlays move as they open and close. Off, they appear and close at once, and redraw only when something changes.", |p, v| p.still = !v),
+                switch(!p.still, "Motion", "Overlays animate as they open and close. Off, they appear and vanish at once, and redraw only when something changes.", |p, v| p.still = !v),
                 switch(!p.plain, "Decorations", "Shadows, outlines, gradients and glows, the default ones included.", |p, v| p.plain = !v),
                 switch(!p.quiet, "Sounds", "Overlay sounds. Off, every overlay is silent and the audio device is never opened.", |p, v| p.quiet = !v),
-                switch(!p.no_loops, "Looping animations", "Glows pulse, and gradients and scanlines drift. Off, they stand still while motion styles still play.", |p, v| p.no_loops = !v),
+                switch(!p.no_loops, "Looping animations", "Glows pulse, and gradients and scanlines drift. Off, they hold still; motion styles still play.", |p, v| p.no_loops = !v),
                 all.into(),
             ],
         )
@@ -124,8 +124,8 @@ impl App {
         let glyphs = section(
             "Info overlays",
             Some(
-                "Glyphs follow the controller in use: Xbox, PlayStation or Nintendo labels. For a controller that \
-                 can't be recognized, they're drawn like the fallback kind instead. Also used for previews."
+                "Glyphs follow the controller in use: Xbox, PlayStation or Nintendo labels. An unrecognized \
+                 controller, and previews, use the fallback kind."
                     .into(),
             ),
             vec![labeled(
@@ -275,7 +275,7 @@ impl App {
         let default = DefaultChoice(auto.default_profile.clone());
         section(
             "Per-setup profiles",
-            Some("On its Details tab, each setup's rules decide which windows switch to which of its profiles. When no setup's rule matches, the default profile is used.".into()),
+            Some("Each setup's rules, on its Details tab, decide which windows switch to which of its profiles. When no rule matches, the default profile is used.".into()),
             // The dropdown sits in the label column's layout, as every other setting's does.
             vec![
                 toggler(auto.enabled).label("Switch profiles automatically").on_toggle(Message::SetAutoSwitch).into(),

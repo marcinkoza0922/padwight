@@ -63,13 +63,13 @@ pub(super) fn demo() -> Vec<Check> {
         check(
             Severity::Problem,
             "Virtual devices: no write access to /dev/uinput",
-            "/dev/uinput exists, but your user can't write to it. 70-padwight-uinput.rules tags it for systemd-logind's uaccess, which gives access to the user at the machine and nobody else.\nPadwight shows games a virtual gamepad, and sends your keys and clicks through a virtual keyboard and mouse. The kernel makes virtual input devices only through /dev/uinput, so the daemon has to open it for writing.",
+            "Your user can't write to /dev/uinput. 70-padwight-uinput.rules tags it for systemd-logind's `uaccess`, which gives access only to the user at the machine.\npadwight shows games a virtual gamepad, and sends keys and clicks through a virtual keyboard and mouse. The kernel creates virtual input devices only through /dev/uinput, so the daemon must open it for writing.",
             Some("printf '%s\\n' 'KERNEL==\"uinput\", SUBSYSTEM==\"misc\", OPTIONS+=\"static_node=uinput\", TAG+=\"uaccess\"' | sudo tee /etc/udev/rules.d/70-padwight-uinput.rules > /dev/null\nsudo udevadm control --reload && sudo udevadm trigger"),
         ),
         check(
             Severity::Note,
             "Gyro: 70-padwight-motion.rules isn't installed",
-            "You need it only for gyro on PlayStation and Switch controllers. Those controllers' motion sensors are root-only without it.",
+            "You need it only for gyro on PlayStation and Switch controllers. Without it, their motion sensors are root-only.",
             Some("printf '%s\\n' 'SUBSYSTEM==\"input\", KERNEL==\"event*\", ENV{ID_INPUT_ACCELEROMETER}==\"1\", DRIVERS==\"playstation|sony|nintendo\", TAG+=\"uaccess\"' | sudo tee /etc/udev/rules.d/70-padwight-motion.rules > /dev/null\nsudo udevadm control --reload && sudo udevadm trigger"),
         ),
         check(Severity::Ok, "Controller: Wireless Controller (event12) is readable", "", None),

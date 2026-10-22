@@ -9,8 +9,8 @@ use crate::{
     overlay::KeyboardView,
 };
 
-const FONT_HELP: &str = "One font for every overlay, menu and the on-screen keyboard and numpad. Pick one of the \
-                         free fonts that come with the app. (A pack can also name any font installed on your system.)";
+const FONT_HELP: &str = "One font for every overlay and menu, and the on-screen keyboard and numpad. Pick one of the \
+                         free fonts bundled with the app. (A pack can also name any font installed on your system.)";
 
 impl App {
     /// The font overlay previews are drawn in: the shown game's, else the global one.
@@ -83,7 +83,7 @@ impl App {
     pub(super) fn view_color_card(&self) -> Element<'_, Message> {
         section(
             "Menu colors",
-            Some("Rows that add to a list are tinted, and rows that remove from one are tinted red. Color-blind mode uses blue and orange instead, and puts a + or − in front of each row.".into()),
+            Some("Rows that add to a list are tinted, and rows that remove from one are tinted red. Color-blind mode uses blue and orange instead, and marks each row with + or −.".into()),
             vec![toggler(self.config.colorblind_tones).label("Color-blind mode").on_toggle(Message::SetColorblindTones).into()],
         )
     }
@@ -92,7 +92,7 @@ impl App {
     pub(super) fn view_motion_card(&self) -> Element<'_, Message> {
         section(
             "Overlay motion",
-            Some(format!("How overlays move as they open and close, as the cursor moves and as something is picked. Each kind of overlay has its own style, and a setup can set its own on its Details tab. {}", motion_guide())),
+            Some(format!("How overlays move as they open and close, as the cursor moves and as something is picked. Each kind has its own style; a setup can override it on its Details tab. {}", motion_guide())),
             {
                 let mut rows = motion_rows(self.config.motion, Message::SetMotion);
                 rows.push(self.view_motion_demo());

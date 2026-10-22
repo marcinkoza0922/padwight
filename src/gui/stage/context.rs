@@ -88,7 +88,7 @@ impl App {
         let stacked = self.stacked_with(stage.target);
         if stacked > 0 {
             let others = if stacked == 1 { "1 more overlay is".to_string() } else { format!("{stacked} more overlays are") };
-            list = list.push(note(format!("{others} at this spot: on screen they stack with this one there, so they aren't drawn around it.")));
+            list = list.push(note(format!("{others} at this spot and stack with this one on screen, so they aren't drawn around it.")));
         }
         list.into()
     }

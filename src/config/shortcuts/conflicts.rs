@@ -34,7 +34,7 @@ impl Shortcuts {
     pub fn all_warnings(&self) -> Vec<String> {
         let mut lines = Vec::new();
         if self.opener_off() {
-            lines.push("Nothing opens the Guide overlay, so its menu, Notes and Mappings can't be reached, and neither can the Guide shortcuts or mouse mode.".into());
+            lines.push("Nothing opens the Guide overlay, so its menu, Notes, Mappings, the Guide shortcuts and mouse mode are out of reach.".into());
         }
         for s in Shortcut::ALL {
             lines.extend(self.warnings(s).into_iter().map(|w| format!("{}: {w}", s.label())));

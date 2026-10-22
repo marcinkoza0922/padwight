@@ -11,10 +11,10 @@ const WIDTH: f32 = 720.0;
 /// Room the inspector keeps above and below its scrolling page, for its header, tabs and footer.
 const CHROME: f32 = 230.0;
 
-const HOW_TO: &str = "Drag the overlay to move it: it takes the nearest of the nine spots and grows from there. Drag an edge \
-                      or corner to resize it. With snapping on, the edges you move land on the grid, or back on the spot \
-                      itself; hold Alt to place it freely. The arrow keys nudge it (with Shift, 10 px). Click a menu's item \
-                      or an info overlay's cell to edit it. Esc closes this editor and Ctrl+S saves.";
+const HOW_TO: &str = "Drag the overlay to move it: it snaps to the nearest of nine spots and grows from there. Drag an \
+                      edge or corner to resize it. With snapping on, moved edges land on the grid or back on the spot; \
+                      hold Alt to place freely. Arrow keys nudge it (10 px with Shift). Click a menu item or info \
+                      overlay cell to edit it. Esc closes the editor; Ctrl+S saves.";
 
 impl App {
     pub(super) fn view_inspector<'a>(&'a self, stage: &'a Stage, display: iced::Size) -> Element<'a, Message> {

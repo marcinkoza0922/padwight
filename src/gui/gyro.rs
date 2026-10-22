@@ -110,7 +110,7 @@ fn header<'a>(cfg: &GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Messa
 }
 
 /// How far the stick starts out, for the stick modes.
-const GAME_CURVE: &str = "The game's own stick response: 1 is linear, higher means small pushes turn slowly. Set it to the game's, and turning the controller turns the game's view by the same amount, as a mouse would.";
+const GAME_CURVE: &str = "The game's own stick response: 1 is linear, higher means small pushes turn slowly. Match the game's, and the view turns as much as the controller does, as with a mouse.";
 const ANTI_DEADZONE: &str = "Starts the stick this far out, past the game's own stick deadzone, so small turns aren't lost.";
 
 /// The mode's own settings: sensitivity, or how far the stick is pushed.
@@ -137,7 +137,7 @@ fn mode_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(&
                     "Game's full turn",
                     with_help(
                         slider_editor(500.0..=30000.0, turn, 50.0, "px", move |v| with(&|c| c.full_turn_px = Some(v))),
-                        "Mouse pixels that turn the game all the way round; find it as for a flick stick. A flick stick in this profile shares it.",
+                        "Mouse pixels for a full 360° turn in game, measured as for a flick stick. Shared with this profile's flick stick.",
                     ),
                 )),
                 None => rows,
@@ -161,7 +161,7 @@ fn mode_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(&
                     "",
                     with_help(
                         checkbox(lock_at_edge).label("Lock at edge").on_toggle(move |on| set(max_angle, anti_deadzone, on)),
-                        "Turning back leaves the edge at once, rather than first undoing the turn made past it.",
+                        "Turning back leaves the edge at once, without first undoing the turn made past it.",
                     ),
                 ))
         }
@@ -277,7 +277,7 @@ pub(super) fn gyro_sections<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Mess
     // Without a gyro controller this is a status worth seeing, not just help.
     if !ui.any_gyro {
         rows.push(
-            note("None of your managed controllers have a gyro (PlayStation and Switch controllers do). These settings take effect once one is connected.").into(),
+            note("None of your managed controllers has a gyro (PlayStation and Switch controllers do). These settings apply once one is connected.").into(),
         );
     }
     let open = ui.expanded.contains(&Target::GyroAdvanced);
@@ -289,7 +289,7 @@ pub(super) fn gyro_sections<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Mess
     }
     vec![section(
         "Gyro",
-        Some("Aim by turning the controller. If the aim drifts, calibrate the gyro from the controller list on the Overview page.".into()),
+        Some("Aim by turning the controller. If the aim drifts, calibrate the gyro from the controller list on Overview.".into()),
         rows,
     )]
 }

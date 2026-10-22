@@ -177,9 +177,9 @@ impl ActionKind {
             ActionKind::Keys => "A key, or a chord like Ctrl + C.",
             ActionKind::Mouse => "Left, right, middle, back or forward click.",
             ActionKind::Wheel => "One notch of the scroll wheel.",
-            ActionKind::Gamepad => "Presses a button of the controller the game sees.",
+            ActionKind::Gamepad => "Presses a button on the controller the game sees.",
             ActionKind::PadTrigger => "Pulls a trigger, all the way or part of the way.",
-            ActionKind::PadStick => "Pushes a stick toward any direction, by how much you choose.",
+            ActionKind::PadStick => "Pushes a stick in any direction, as far as you choose.",
             ActionKind::Disabled => "Nothing at all.",
             ActionKind::Toggle => "Turns another action on or off with each press.",
             ActionKind::Turbo => "Repeats another action quickly while held.",
@@ -192,7 +192,7 @@ impl ActionKind {
             ActionKind::Log => "A list of the latest presses on screen.",
             ActionKind::Overlay => "Opens the on-screen keyboard to type with.",
             ActionKind::Numpad => "Opens an on-screen numpad.",
-            ActionKind::QuickSettings => "Changes a few of the profile's values in game.",
+            ActionKind::QuickSettings => "Adjusts some of the profile's settings in game.",
             ActionKind::Media => "Opens play, pause, volume and track controls.",
             ActionKind::GyroToggle => "Turns gyro aiming on or off with each press.",
             ActionKind::GyroClutch => "Stops the gyro while held, to reposition.",
@@ -200,7 +200,7 @@ impl ActionKind {
             ActionKind::GyroRecenter => "Takes the controller's position now as center.",
             ActionKind::Screenshot => "Saves a picture of the screen.",
             ActionKind::Recording => "Starts or stops recording the screen.",
-            ActionKind::ForceQuit => "Held for 2 seconds, closes the focused program.",
+            ActionKind::ForceQuit => "Hold for 2 seconds to close the focused program.",
         }
     }
 

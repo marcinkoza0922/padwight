@@ -36,36 +36,35 @@ const STEPS: &[Step] = &[
     Step {
         title: "Welcome to Padwight",
         body: "Padwight runs in the background and changes what your controller does: buttons to keys, a stick \
-               to the mouse, a different layout for each game.\n\nThis is the Overview. It draws your controller \
-               with what each button does right now, lists your latest presses, and the controllers Padwight has \
-               found.",
+               to the mouse, a different layout for each game.\n\nThis is the Overview: your controller with what \
+               each button does right now, your latest presses, and the controllers Padwight has found.",
         place: Place::Overview,
     },
     Step {
         title: "Setups and profiles",
-        body: "Each game can have a setup, and General is used when no game's setup matches. A setup holds \
-               profiles: complete layouts you can switch between.\n\nClick a button's row to change what it does, \
-               or click Find by pressing and press the button on your controller.",
+        body: "Each game can have a setup; General is used when none matches. A setup holds profiles: \
+               complete layouts you can switch between.\n\nClick a button's row to change what it does, or \
+               click Find by pressing and press the button on your controller.",
         place: Place::General,
     },
     Step {
         title: "Save & apply",
-        body: "Edits wait here until you press Save & apply at the bottom of the window. Revert throws them \
-               away, and Ctrl+Z takes back the last one.",
+        body: "Edits take effect when you press Save & apply at the bottom of the window. Revert discards \
+               them, and Ctrl+Z undoes the last one.",
         place: Place::General,
     },
     Step {
         title: "Your games",
-        body: "+ Add setup in the sidebar lists the setups that come with Padwight, with the games you have \
-               installed first. Once added, a game's setup takes over by itself whenever the game is in front.",
+        body: "+ Add setup in the sidebar lists the setups that come with Padwight, installed games first. \
+               Once added, a game's setup takes over whenever the game is in front.",
         place: Place::General,
     },
     Step {
         title: "In the game",
-        body: "Tap Guide (the Xbox, PlayStation or Home button) to see what every button does. When Padwight has \
-               a setup for the game in front that you haven't added, a tap of Guide offers to add it.\n\nPress \
-               Guide and Start together for the in-game menu, to switch profiles and change settings without \
-               leaving the game.",
+        body: "Tap Guide (the Xbox, PlayStation or Home button) to see what every button does. If Padwight has \
+               a setup for the game in front that you haven't added, Guide offers to add it.\n\nPress Guide and \
+               Start together for the in-game menu, to switch profiles and change settings without leaving the \
+               game.",
         place: Place::Chapter("guide-button.md"),
     },
     Step {
@@ -76,8 +75,8 @@ const STEPS: &[Step] = &[
     },
     Step {
         title: "The Manual",
-        body: "Everything Padwight does is explained in the Manual, and its search box finds any topic. Enjoy \
-               your games!",
+        body: "The Manual explains everything Padwight does, and its search box finds any topic. Enjoy your \
+               games!",
         place: Place::Chapter("welcome.md"),
     },
 ];
@@ -183,8 +182,8 @@ impl App {
             "Help",
             Some(
                 "System check looks at the permissions Padwight needs to create its virtual gamepad, read your \
-                 controller and use its gyro (also padwight doctor in a terminal). The tour is a short walk \
-                 through the window, as on the first start."
+                 controller and use its gyro (or run padwight doctor in a terminal). The tour is the short walk \
+                 through the window shown on first start."
                     .into(),
             ),
             vec![

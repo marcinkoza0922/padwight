@@ -89,13 +89,13 @@ pub(super) fn touchpad_problem(cfg: &TouchpadConfig, names: &Names) -> Option<St
 /// The Touchpad tab's sections.
 pub(super) fn touchpad_sections<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message>> {
     let base = ui.layer.map_or(&p.touchpad, |m| &m.base.touchpad);
-    let help = "DualShock 4 and DualSense controllers have a touchpad. It can move the mouse pointer, push a gamepad stick, \
-                be divided into the items of one of your menus, or take swipes. Split it to give each half its own job.";
+    let help = "DualShock 4 and DualSense controllers have a touchpad. It can move the pointer, push a gamepad stick, \
+                hold one of your menus' items, or take swipes. Split it to give each half its own job.";
     let mut rows: Vec<Element<'a, Message>> = Vec::new();
     // Without a touchpad controller this is a status worth seeing, not just help.
     if !ui.any_touchpad {
         rows.push(
-            note("None of your managed controllers have a touchpad. These settings take effect once one is connected.").into(),
+            note("None of your managed controllers has a touchpad. These settings apply once one is connected.").into(),
         );
     }
     // What the profile can't be played without sits with the feature, as the back paddles' does.
@@ -262,9 +262,9 @@ fn menu_rows<'a>(rows: Column<'a, Message>, (menu, choose, overlay): (&'a String
         "Choose by",
         with_help(
             picker,
-            "The pad is divided the way the menu is drawn: a radial menu by direction from the middle, a grid into its cells, \
-             a list into rows, a carousel from left to right. A clicked item stays pressed until the click lets go. The game \
-             keeps getting input while the menu shows.",
+            "The pad is divided as the menu is drawn: a radial menu by direction from the middle, a grid into cells, \
+             a list into rows, a carousel left to right. A clicked item stays pressed until the click is released. The game \
+             still gets input while the menu shows.",
         ),
     ))
     .push(box_row("", checkbox(overlay).label("Show the menu while a finger is on the pad").on_toggle(move |v| entry(menu_name.clone(), choose, v)).into()))

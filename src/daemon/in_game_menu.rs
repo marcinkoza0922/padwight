@@ -231,7 +231,7 @@ impl Daemon {
             self.config = saved;
             self.refresh_scope();
             log!("the in-game menu closed without asking: its unsaved changes were discarded");
-            self.say(vec!["The in-game menu closed".into(), "Changes not saved were discarded".into()]);
+            self.say(vec!["The in-game menu closed".into(), "Unsaved changes were discarded".into()]);
         }
         self.close_overlay();
         if !self.config.enabled {

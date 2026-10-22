@@ -17,7 +17,7 @@ Open it with the **On-screen keyboard** action, or from the Overview page. Contr
 - **Hold LT**: holds Shift.
 - **Hold B, or press Guide**: closes the keyboard.
 
-The keys are labelled in your keyboard layout, and change while Shift is on. On the App settings page, choose **Basic** keys (what typing into a game needs, the default) or **Full** ones (function keys and editing keys too).
+The keys are labeled in your keyboard layout, and change while Shift is on. On the App settings page, choose **Basic** keys (what typing into a game needs, the default) or **Full** ones (function keys and editing keys too).
 
 ## On-screen numpad
 

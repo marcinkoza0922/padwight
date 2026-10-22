@@ -171,7 +171,7 @@ pub(super) fn sections<'a>(p: &'a Profile, guide: GuideView<'a>, in_layer: bool)
         ),
         section(
             "Mapping guide",
-            Some("The list behind the Mappings box on the right of the Guide overlay. Each row says what an input, gesture or combo does: change its text, or show or hide it (the mapping still works). Inputs can share a row with another input, such as both D-pad sides for \"Lean\". \"+ Add a row\" writes a row of your own, for things the mappings don't show, such as what a layer's chord does: choose its inputs, then its text.".into()),
+            Some("The Mappings list on the right of the Guide overlay. Each row says what an input, gesture or combo does: edit its text, or hide it (the mapping still works). Inputs can share a row, such as both D-pad sides for \"Lean\". \"+ Add a row\" adds your own, for things the mappings don't show, such as a layer's chord: pick its inputs, then its text.".into()),
             list,
         ),
     ]
