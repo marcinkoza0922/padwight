@@ -985,12 +985,6 @@ impl App {
             Some(p) if labels.is_empty() => passthrough_caption(p, named, &self.live_caption()),
             _ => self.live_caption(),
         };
-        // A trailing "+" on a callout is too short to explain itself.
-        let caption = if labels.iter().any(|(_, l)| l.ends_with(pad_svg::GESTURE_MARK)) {
-            format!("{caption}\nA blue “+” after a label: the button also has a double tap, triple tap or long press. Point at it to see what.")
-        } else {
-            caption
-        };
         column![
             title,
             // The labels are placed in the picture's own pixels, so it keeps its size in a narrow
