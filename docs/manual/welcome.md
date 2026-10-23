@@ -1,8 +1,6 @@
 # What Padwight does
 
-Padwight runs in the background and changes what your controller does. It can make a gamepad act like a keyboard and mouse, remap buttons, and switch to a different set of controls when you start a game.
-
-Each game you play can have its own setup. Padwight uses it whenever that game has focus.
+Padwight runs in the background and changes what your controller does. It can make a gamepad act as a keyboard and mouse, remap buttons, and give each game its own controls, used whenever that game has focus.
 
 ## You can
 
@@ -15,4 +13,4 @@ Each game you play can have its own setup. Padwight uses it whenever that game h
 
 ## Tutorials
 
-New to Padwight? Start with [your first setup](tutorial-first-setup.md). There is a step-by-step tutorial for each major feature: [buttons](tutorial-buttons.md), [sticks](tutorial-sticks.md), [gyro](tutorial-gyro.md), [touchpad](tutorial-touchpad.md), [modes](tutorial-modes.md), [layers](tutorial-layers.md), [macros](tutorial-macros.md), [menus](tutorial-menus.md), [overlays](tutorial-overlays.md), [the Guide button](tutorial-guide.md) and [sharing](tutorial-sharing.md), and a long one that builds a whole pack for [Deus Ex](tutorial-deus-ex.md). Each panel in the settings window has a small **Tutorial ↗** link to its tutorial.
+New to Padwight? Start with [your first setup](tutorial-first-setup.md). Each major feature has a step-by-step tutorial: [buttons](tutorial-buttons.md), [sticks](tutorial-sticks.md), [gyro](tutorial-gyro.md), [touchpad](tutorial-touchpad.md), [modes](tutorial-modes.md), [layers](tutorial-layers.md), [macros](tutorial-macros.md), [menus](tutorial-menus.md), [overlays](tutorial-overlays.md), [the Guide button](tutorial-guide.md) and [sharing](tutorial-sharing.md), and a long one that builds a whole pack for [Deus Ex](tutorial-deus-ex.md). Each panel in the settings window links to its tutorial with **Tutorial ↗**.

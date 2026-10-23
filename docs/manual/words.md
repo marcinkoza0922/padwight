@@ -5,10 +5,10 @@
 - **Action**: what a button or stick does: a key, a mouse click, a gamepad button, a macro, and so on.
 - **Toggle**: press once to hold an action down, and press again to let it go.
 - **Turbo**: repeats an action as long as you hold the button.
-- **Combo**: two or more buttons pressed together, which act as their own input, such as LB + RB.
+- **Combo**: two or more buttons pressed together that act as an input of their own, such as LB + RB.
 - **Gesture**: a special press: a double tap, a triple tap, or a long press.
 - **Zone**: an extra action that applies while a stick or trigger is pushed part of the way.
-- **Mode**: another control scheme inside a game, such as driving, that you switch to and stay in. Only one is on at a time; with none, you're in the profile's default mode. See [Modes](modes.md).
+- **Mode**: another control scheme inside a game, such as driving, that you switch to and stay in. See [Modes](modes.md).
 - **Layer**: a second set of mappings that applies while you hold a button, on top of the mode you're in. See [Layers](layers.md).
 - **Macro**: a saved sequence of presses, holds and waits, played with one press. See [Macros](macros.md).
 - **Menu**: a list or ring of choices that opens on screen while you hold a button. See [On-screen menus](menus.md).
@@ -16,9 +16,9 @@
 - **Log overlay**: a small on-screen list of the buttons you pressed lately, and what each one did.
 - **Gyro**: motion sensors in some controllers, used to aim or steer by turning or tilting. See [Gyro](gyro.md).
 - **Flick stick**: a stick that turns the camera in a direction at once, for quick turns.
-- **Deadzone**: how far a stick must move before it counts. It stops a stick that rests slightly off-center from drifting. It can be a circle, a square or a cross. See [Sticks and triggers](sticks.md).
+- **Deadzone**: how far a stick must move before it counts, so a stick that rests slightly off-center doesn't drift. See [Sticks and triggers](sticks.md).
 - **Anti-deadzone**: the least output once a stick is past its deadzone, to make up for a game's own deadzone.
-- **Guide**: the middle button (PlayStation, Xbox or Home). By default it's a modifier, so a plain press doesn't reach Steam. The overlay it opens, the Guide shortcuts and mouse mode's keys can be moved to other inputs. See [The Guide button](guide-button.md).
+- **Guide**: the middle button (PlayStation, Xbox or Home). Padwight keeps it for its own overlay and shortcuts, so neither the game nor Steam gets it. The overlay and the shortcuts can be moved to other inputs. See [The Guide button](guide-button.md).
 - **Daemon**: the background part of Padwight that does the remapping. It keeps running when the window is closed.
 - **Auto-switch rule**: a rule that picks a setup's profile when a matching window has focus.
 - **Pack**: a `.padpack` file that holds a setup's profiles and items, for sharing.

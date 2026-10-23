@@ -1,6 +1,6 @@
 # Tutorial: a Driving mode you switch to and stay in
 
-A mode is another control scheme inside a game. You switch to it, and you stay there until you switch again. You'll make a **Driving** mode where the sticks and triggers steer and accelerate, and a button that switches in and out of it.
+A mode is another control scheme inside a game that you switch to and stay in. You'll make a **Driving** mode where the sticks and triggers steer and accelerate, and a button that switches in and out of it.
 
 ## 1. Make the mode and the switch
 
@@ -12,18 +12,18 @@ A mode is another control scheme inside a game. You switch to it, and you stay t
 
 ![The Modes tab with a mode picker, the name, the on-screen indicator and the unset-buttons switch](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/manual/modes-tab.png "A mode's settings. Below them, the mode has the same tabs as a profile.")
 
-1. The picker (1) chooses which mode to edit, **+ New mode** adds one.
-2. **On screen while on** (2) works as for a layer: the mode's name, nothing, an info overlay or a generated bindings sheet.
-3. **Unset buttons: Do nothing while the mode is on** (3) turns off every button the mode doesn't set, except the ones that switch modes or hold layers, so there's always a way back.
+1. The picker (1) chooses which mode to edit; **+ New mode** adds one.
+2. **On screen while on** (2): the mode's name, nothing, an info overlay, or a generated sheet of its bindings.
+3. **Unset buttons: Do nothing while the mode is on** (3) turns off every button the mode doesn't set, except those that switch modes or hold layers, so there's always a way back.
 
-Now give the mode its own controls on its tabs. A setting the mode doesn't change reads **Same as** the profile; **Override** lets the mode set its own value.
+Now give the mode its own controls on its tabs. A setting the mode doesn't change reads **Same as** the profile; **Override** gives the mode its own value.
 
-1. On the **Sticks & triggers** tab, override the sticks and triggers the game should read differently. If the profile maps the left stick to keys, for example, override it to a **Gamepad stick** so the game gets analog steering.
+1. On **Sticks & triggers**, override what the game should read differently. If the profile maps the left stick to keys, say, override it to a **Gamepad stick** for analog steering.
 2. On the **Buttons** tab, override what you need, such as A for handbrake.
 
 ## 3. Add the way back
 
-Inside the Driving mode, give **Y (North)** the action **Switch mode…** *Driving* as well. Pressing the switch while that mode is on goes back to the default mode. (To go from one mode straight to another, give the first mode a **Switch mode…** for the second.)
+Inside the Driving mode, give **Y (North)** the same **Switch mode…** *Driving*. Pressing it while Driving is on goes back to the default mode. (To go straight to another mode, give it a **Switch mode…** for that one.)
 
 ## 4. Save and try it
 
@@ -31,9 +31,9 @@ Press **Save & apply**. Tap Y: the mode's name shows on screen and the controls 
 
 ## Good to know
 
-- Only one mode is on at a time, on top of the profile. With none on, you're in the *default mode*: the profile itself.
-- A mode stays on when a menu or the on-screen keyboard opens, and when the profile changes within the same game. It goes back to the default when you switch to another game.
-- For a mode that changes every time you pick from a list, put **Switch mode…** items in a list or carousel [menu](Tutorial-Menus).
+- Only one mode is on at a time. With none on, you're in the *default mode*: the profile itself.
+- A mode stays on when a menu or the keyboard opens, and when the profile changes within the game. Switching to another game goes back to the default.
+- For several modes, put **Switch mode…** items in a list or carousel [menu](Tutorial-Menus).
 - Mode or layer? A mode is for a change of context (driving, flying, a minigame). A [layer](Tutorial-Layers) is for extra controls while you hold a button.
 
 ## Where next
