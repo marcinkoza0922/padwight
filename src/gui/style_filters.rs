@@ -1,5 +1,5 @@
 //! The style editor's Filters group: a material under the panel's contents (paper, brushed
-//! metal, concrete) and the layers over them (scanlines, grain, pixel blocks, camo, a color wash). Each is
+//! metal, concrete, cloth, denim, leather, steel, wood) and the layers over them (scanlines, grain, pixel blocks, camo, a color wash). Each is
 //! a button that turns it on and off, and each that's on gets its editor under its name.
 
 use std::rc::Rc;
@@ -10,21 +10,17 @@ use iced::widget::{button, checkbox, column, row};
 
 /// The filters' buttons, by what they do, and the editors of those that are on.
 pub(super) fn filter_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a, Message> {
-    let paper = texture_filter(
-        &Slot { label: "Paper", get: |s| s.ornament.paper.as_ref(), put: |s, v| s.ornament.paper = v, start: |_| Texture { opacity: 0.5 } },
-        style,
-        on_change,
-    );
-    let metal = texture_filter(
-        &Slot { label: "Brushed metal", get: |s| s.ornament.brushed_metal.as_ref(), put: |s, v| s.ornament.brushed_metal = v, start: |_| Texture { opacity: 0.5 } },
-        style,
-        on_change,
-    );
-    let concrete = texture_filter(
-        &Slot { label: "Concrete", get: |s| s.ornament.concrete.as_ref(), put: |s, v| s.ornament.concrete = v, start: |_| Texture { opacity: 0.5 } },
-        style,
-        on_change,
-    );
+    let materials: [Slot<Texture>; 8] = [
+        material("Paper", |s| s.ornament.paper.as_ref(), |s, v| s.ornament.paper = v),
+        material("Brushed metal", |s| s.ornament.brushed_metal.as_ref(), |s, v| s.ornament.brushed_metal = v),
+        material("Concrete", |s| s.ornament.concrete.as_ref(), |s, v| s.ornament.concrete = v),
+        material("Cloth", |s| s.ornament.cloth.as_ref(), |s, v| s.ornament.cloth = v),
+        material("Denim", |s| s.ornament.denim.as_ref(), |s, v| s.ornament.denim = v),
+        material("Leather", |s| s.ornament.leather.as_ref(), |s, v| s.ornament.leather = v),
+        material("Steel", |s| s.ornament.steel.as_ref(), |s, v| s.ornament.steel = v),
+        material("Wood", |s| s.ornament.wood.as_ref(), |s, v| s.ornament.wood = v),
+    ];
+    let materials = materials.iter().map(|slot| filter(slot, |t, set| texture_rows(t, &set), style, on_change)).collect();
     let scanlines = filter(
         &Slot {
             label: "Scanlines",
@@ -60,12 +56,12 @@ pub(super) fn filter_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> 
         style,
         on_change,
     );
-    grouped([("        Material", vec![paper, metal, concrete]), ("        Screen", vec![scanlines, grain, pixels]), ("        Color", vec![camo, tint])])
+    grouped([("        Material", materials), ("        Screen", vec![scanlines, grain, pixels]), ("        Color", vec![camo, tint])])
 }
 
-/// A material's button, with its strength editor when it's on.
-fn texture_filter<'a>(slot: &Slot<Texture>, style: &OverlayStyle, on_change: &OnStyle<'a>) -> Filter<'a> {
-    filter(slot, |t, set| texture_rows(t, &set), style, on_change)
+/// A material's slot, starting at half strength.
+fn material(label: &'static str, get: fn(&OverlayStyle) -> Option<&Texture>, put: fn(&mut OverlayStyle, Option<Texture>)) -> Slot<Texture> {
+    Slot { label, get, put, start: |_| Texture { opacity: 0.5 } }
 }
 
 /// Each group's buttons on a row under its name, then the editors of the filters that are on.

@@ -44,6 +44,21 @@ pub struct Ornament {
     /// Concrete over the panel's background.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub concrete: Option<Texture>,
+    /// Woven cloth over the panel's background.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cloth: Option<Texture>,
+    /// Denim twill over the panel's background.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub denim: Option<Texture>,
+    /// Pebbled leather over the panel's background.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub leather: Option<Texture>,
+    /// Steel tread plate over the panel's background.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub steel: Option<Texture>,
+    /// Wooden planks over the panel's background.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wood: Option<Texture>,
     /// Makes the items (and keys) look like raised buttons.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bevel: Option<Bevel>,
@@ -231,7 +246,7 @@ pub enum ImageFit {
     Stretch,
 }
 
-/// A material (paper, brushed metal or concrete) drawn over the panel's background and under its
+/// A material (paper, brushed metal, concrete, cloth, denim, leather, steel or wood) drawn over the panel's background and under its
 /// contents. It only lightens and darkens, so the background's color still shows through.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Texture {

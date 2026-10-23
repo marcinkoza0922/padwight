@@ -1,4 +1,5 @@
-//! The procedural pictures that texture a panel: paper, brushed metal and concrete behind its contents,
+//! The procedural pictures that texture a panel: paper, brushed metal, concrete, cloth, denim,
+//! leather, steel tread plate and wood behind its contents,
 //! and grain and pixel blocks over them. Each is translucent white and black, so it lightens
 //! and darkens whatever it sits on.
 
@@ -7,6 +8,10 @@ use std::sync::{Mutex, OnceLock};
 use iced::{ContentFit, Element, Length, widget::{image, responsive}};
 
 use crate::config::{Camo, CamoScheme, Grain, Pixels, Texture};
+
+mod materials;
+
+use materials::{brushed_metal, cloth, concrete, denim, leather, paper, steel, wood};
 
 /// What a texture looks like.
 #[derive(Debug, Clone, Copy)]
@@ -17,6 +22,16 @@ pub enum Material {
     BrushedMetal,
     /// Coarse mottling, shuttering seams, pits and the odd hairline crack.
     Concrete,
+    /// Uneven threads woven over and under each other, like linen.
+    Cloth,
+    /// Twill: threads woven in diagonal ribs.
+    Denim,
+    /// Pebbled grain with creases between the pebbles and the odd wrinkle.
+    Leather,
+    /// Tread plate: raised lugs in a herringbone, on a mottled steel.
+    Steel,
+    /// Planks with wavy grain, fibres and the odd knot.
+    Wood,
 }
 
 const WIDTH: usize = 1280;
@@ -143,10 +158,20 @@ fn reliefs(kind: Material) -> &'static [u8] {
     static PAPER: OnceLock<Vec<u8>> = OnceLock::new();
     static METAL: OnceLock<Vec<u8>> = OnceLock::new();
     static CONCRETE: OnceLock<Vec<u8>> = OnceLock::new();
+    static CLOTH: OnceLock<Vec<u8>> = OnceLock::new();
+    static DENIM: OnceLock<Vec<u8>> = OnceLock::new();
+    static LEATHER: OnceLock<Vec<u8>> = OnceLock::new();
+    static STEEL: OnceLock<Vec<u8>> = OnceLock::new();
+    static WOOD: OnceLock<Vec<u8>> = OnceLock::new();
     match kind {
         Material::Paper => PAPER.get_or_init(|| relief(paper)),
         Material::BrushedMetal => METAL.get_or_init(|| relief(brushed_metal)),
         Material::Concrete => CONCRETE.get_or_init(|| relief(concrete)),
+        Material::Cloth => CLOTH.get_or_init(|| relief(cloth)),
+        Material::Denim => DENIM.get_or_init(|| relief(denim)),
+        Material::Leather => LEATHER.get_or_init(|| relief(leather)),
+        Material::Steel => STEEL.get_or_init(|| relief(steel)),
+        Material::Wood => WOOD.get_or_init(|| relief(wood)),
     }
 }
 
@@ -174,7 +199,11 @@ fn hash(x: i64, y: i64, seed: u32) -> f32 {
 
 /// Smooth noise whose features are `cell` pixels across.
 fn blotch(x: usize, y: usize, cell: f32, seed: u32) -> f32 {
-    let (fx, fy) = (x as f32 / cell, y as f32 / cell);
+    smooth(x as f32 / cell, y as f32 / cell, seed)
+}
+
+/// Smooth noise at a point, its features one unit across.
+fn smooth(fx: f32, fy: f32, seed: u32) -> f32 {
     let (ix, iy) = (fx.floor(), fy.floor());
     let (tx, ty) = (fx - ix, fy - iy);
     let ease = |t: f32| t * t * (3.0 - 2.0 * t);
@@ -182,75 +211,4 @@ fn blotch(x: usize, y: usize, cell: f32, seed: u32) -> f32 {
     let top = at(0, 0) + (at(1, 0) - at(0, 0)) * ease(tx);
     let bottom = at(0, 1) + (at(1, 1) - at(0, 1)) * ease(tx);
     top + (bottom - top) * ease(ty)
-}
-
-/// Fine grain, soft blotches, and short pale or dark fibres lying at slants.
-fn paper(x: usize, y: usize) -> f32 {
-    let grain = hash(x as i64, y as i64, 1) - 0.5;
-    let soft = blotch(x, y, 48.0, 2) - 0.5;
-    let mottle = blotch(x, y, 7.0, 3) - 0.5;
-    // Fibres: each 16-pixel cell may hold one, a short line across it at its own slant.
-    let (cx, cy) = ((x / 16) as i64, (y / 16) as i64);
-    let fibre = if hash(cx, cy, 4) > 0.55 {
-        let slant = hash(cx, cy, 5) * 2.0 - 1.0;
-        let (lx, ly) = ((x % 16) as f32 - 8.0, (y % 16) as f32 - 8.0);
-        let off = (ly - lx * slant).abs();
-        if off < 0.7 && lx.abs() < 7.0 { (hash(cx, cy, 6) - 0.5) * 0.9 } else { 0.0 }
-    } else {
-        0.0
-    };
-    0.5 + grain * 0.28 + soft * 0.22 + mottle * 0.18 + fibre
-}
-
-/// Streaks along the panel (noise smeared sideways, each row its own strength) under a soft
-/// diagonal sheen.
-fn brushed_metal(x: usize, y: usize) -> f32 {
-    const SMEAR: i64 = 18;
-    let mut sum = 0.0;
-    for dx in -SMEAR..=SMEAR {
-        sum += hash(x as i64 + dx, y as i64, 7) - 0.5;
-    }
-    let streak = sum / (SMEAR as f32 * 0.7);
-    let row = hash(0, y as i64, 8) - 0.5;
-    let fine = hash(x as i64, y as i64, 9) - 0.5;
-    let sheen = ((x as f32 / 260.0 + y as f32 / 900.0) * std::f32::consts::PI).sin() * 0.5;
-    0.5 + streak * 0.30 + row * 0.12 + fine * 0.05 + sheen * 0.22
-}
-
-/// Poured concrete: broad stains, a sandy grain, scattered pits (small dark pockets with a
-/// pale lip) and, every 320 by 180 pixels, a seam where the shuttering met, with a hairline
-/// crack wandering down some of the vertical ones.
-fn concrete(x: usize, y: usize) -> f32 {
-    let stain = blotch(x, y, 140.0, 10) - 0.5;
-    let cloud = blotch(x, y, 34.0, 11) - 0.5;
-    let sand = hash(x as i64, y as i64, 12) - 0.5;
-    let fine = blotch(x, y, 3.0, 13) - 0.5;
-    // Pits: a pocket may sit in each 9-pixel cell, dark in the middle with a lighter rim.
-    let (cx, cy) = ((x / 9) as i64, (y / 9) as i64);
-    let pit = if hash(cx, cy, 14) > 0.93 {
-        let (dx, dy) = ((x % 9) as f32 - 3.0 - hash(cx, cy, 15) * 3.0, (y % 9) as f32 - 3.0 - hash(cx, cy, 16) * 3.0);
-        let d = (dx * dx + dy * dy).sqrt();
-        if d < 1.8 { -0.55 } else if d < 2.8 { 0.2 } else { 0.0 }
-    } else {
-        0.0
-    };
-    // Seams: a dark line with a pale edge beside it.
-    let seam = |at: usize, size: usize| -> f32 {
-        match at % size {
-            0 => -0.45,
-            1 => 0.18,
-            r if r == size - 1 => 0.12,
-            _ => 0.0,
-        }
-    };
-    let panel_cols = x / 320;
-    let crack = if hash(panel_cols as i64, 17, 17) > 0.45 {
-        // A crack down the seam's left, its x wandering with y.
-        let wander = ((blotch(0, y, 40.0, 18) - 0.5) * 22.0) as i64;
-        let line = (panel_cols * 320) as i64 + 160 + wander;
-        if (x as i64 - line).abs() == 0 && hash(y as i64 / 90, panel_cols as i64, 19) > 0.4 { -0.4 } else { 0.0 }
-    } else {
-        0.0
-    };
-    0.5 + stain * 0.30 + cloud * 0.22 + sand * 0.26 + fine * 0.14 + pit + seam(x, 320) + seam(y, 180) + crack
 }

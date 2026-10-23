@@ -63,6 +63,62 @@ pub(super) fn concrete() -> OverlayStyle {
     }
 }
 
+/// Woven cloth, in natural linen.
+pub(super) fn cloth() -> OverlayStyle {
+    OverlayStyle {
+        background: Paint::new("#b8ad94", 1.0),
+        items: Paint::new("#a39880", 0.9),
+        selected: Paint::new("#6a4a7a", 1.0),
+        ornament: Ornament { cloth: Some(Texture { opacity: 0.7 }), ..Ornament::default() },
+        ..OverlayStyle::default()
+    }
+}
+
+/// Denim, with orange stitching for the selected item.
+pub(super) fn denim() -> OverlayStyle {
+    OverlayStyle {
+        background: Paint::new("#34465e", 1.0),
+        items: Paint::new("#43577a", 0.9),
+        selected: Paint::new("#c8913a", 1.0),
+        ornament: Ornament { denim: Some(Texture { opacity: 0.8 }), ..Ornament::default() },
+        ..OverlayStyle::default()
+    }
+}
+
+/// Brown pebbled leather with bevelled buttons.
+pub(super) fn leather() -> OverlayStyle {
+    OverlayStyle {
+        background: Paint::new("#5a3422", 1.0),
+        items: Paint::new("#6e4430", 0.9),
+        selected: Paint::new("#b08a3a", 1.0),
+        ornament: Ornament { leather: Some(Texture { opacity: 0.6 }), bevel: Some(Bevel { depth: 0.4 }), ..Ornament::default() },
+        ..OverlayStyle::default()
+    }
+}
+
+/// Steel tread plate with bevelled buttons.
+pub(super) fn steel() -> OverlayStyle {
+    OverlayStyle {
+        background: Paint::new("#6f747a", 1.0),
+        items: Paint::new("#878c93", 0.95),
+        selected: Paint::new("#c0392b", 1.0),
+        corners: 0.1,
+        ornament: Ornament { steel: Some(Texture { opacity: 0.8 }), bevel: Some(Bevel { depth: 0.7 }), ..Ornament::default() },
+        ..OverlayStyle::default()
+    }
+}
+
+/// Wooden planks with bevelled buttons.
+pub(super) fn wood() -> OverlayStyle {
+    OverlayStyle {
+        background: Paint::new("#8a5a32", 1.0),
+        items: Paint::new("#9c6c40", 0.9),
+        selected: Paint::new("#2f5a3a", 1.0),
+        ornament: Ornament { wood: Some(Texture { opacity: 0.8 }), bevel: Some(Bevel { depth: 0.4 }), ..Ornament::default() },
+        ..OverlayStyle::default()
+    }
+}
+
 /// A menu style with most of what the typography and ornaments can do switched on.
 pub(super) fn ornate() -> OverlayStyle {
     let gold = "#c8a040";
@@ -120,6 +176,11 @@ pub(super) fn list_scene(name: &str) -> Option<OverlayStyle> {
         "menu-paper" => paper(),
         "menu-metal" => metal(),
         "menu-concrete" => concrete(),
+        "menu-cloth" => cloth(),
+        "menu-denim" => denim(),
+        "menu-leather" => leather(),
+        "menu-steel" => steel(),
+        "menu-wood" => wood(),
         _ => {
             let slug = name.strip_prefix("frame-")?;
             framed(FrameKind::ALL.into_iter().find(|k| k.to_string().to_lowercase().replace(' ', "-") == slug)?)

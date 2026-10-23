@@ -243,11 +243,16 @@ fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, style: &OverlayStyle, padd
             layers = layers.push_under(ornament::picture(picture, c.fade));
         }
         let ornaments = &style.ornament;
-        // Concrete goes under metal, and metal under paper, should they all be on.
+        // Each material goes under the ones before it, should several be on.
         for (material, t) in [
             (texture::Material::Paper, &ornaments.paper),
             (texture::Material::BrushedMetal, &ornaments.brushed_metal),
             (texture::Material::Concrete, &ornaments.concrete),
+            (texture::Material::Cloth, &ornaments.cloth),
+            (texture::Material::Denim, &ornaments.denim),
+            (texture::Material::Leather, &ornaments.leather),
+            (texture::Material::Steel, &ornaments.steel),
+            (texture::Material::Wood, &ornaments.wood),
         ] {
             if let Some(t) = t {
                 layers = layers.push_under(texture::layer(material, t, c.fade));
