@@ -105,6 +105,26 @@ pub(super) fn denim(x: usize, y: usize) -> f32 {
     weave(x, y, &Thread { across, along, shade: thread, slub }, 0.45)
 }
 
+/// Silk: smooth drapery with almost no grain, its folds lit from the top left, dim on the side
+/// turned away and with a narrow sheen along the side turned toward the light.
+pub(super) fn silk(x: usize, y: usize) -> f32 {
+    let (fx, fy) = (x as f32, y as f32);
+    // How steeply the cloth faces the light, -1 to 1.
+    let facing = ((drape(fx - 3.0, fy - 3.0) - drape(fx + 3.0, fy + 3.0)) * 7.0).clamp(-1.0, 1.0);
+    let sheen = (-((facing - 0.55) * 3.0).powi(2)).exp();
+    let fine = hash(x as i64, y as i64, 50) - 0.5;
+    0.5 + facing * 0.2 + sheen * 0.22 + fine * 0.02
+}
+
+/// How high draped silk stands at a point: two sets of folds, one hanging mostly downward and
+/// a broader one across it, both bent by slow noise so they flow rather than run straight.
+fn drape(x: f32, y: f32) -> f32 {
+    let warp = (smooth(x / 480.0, y / 480.0, 51) - 0.5) * 1.5 + (smooth(x / 200.0, y / 200.0, 52) - 0.5) * 0.25;
+    let hanging = ((x * 0.9 + y * 0.3) / 280.0 + warp) * std::f32::consts::TAU;
+    let across = ((y * 0.85 - x * 0.35) / 560.0 + warp * 0.6) * std::f32::consts::TAU;
+    hanging.sin() * 0.7 + across.sin() * 0.3
+}
+
 /// Where a point lies on the thread on top of a weave there, each 0 to 1.
 struct Thread {
     /// Across the thread.

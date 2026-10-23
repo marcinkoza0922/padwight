@@ -1,21 +1,24 @@
 //! The style editor's Filters group: a material under the panel's contents (paper, brushed
-//! metal, concrete, cloth, denim, leather, steel, wood) and the layers over them (scanlines, grain, pixel blocks, camo, a color wash). Each is
+//! metal, concrete, cloth, denim, silk, leather, steel, wood) and the layers over them (scanlines, grain, pixel blocks, camo, plaid, argyle, stripes, a color wash). Each is
 //! a button that turns it on and off, and each that's on gets its editor under its name.
 
 use std::rc::Rc;
 
 use super::{style_editor::{OnStyle, Slot, paint_row, stepped_slider}, *};
-use crate::config::{Camo, CamoScheme, Grain, Pixels, Scanlines, Texture, Tint};
+use crate::config::{
+    Argyle, Camo, CamoScheme, Grain, Pixels, Plaid, Scanlines, StripeDirection, Stripes, Texture, Tint, default_argyle_colors, default_plaid_colors, default_stripes_colors,
+};
 use iced::widget::{button, checkbox, column, row};
 
 /// The filters' buttons, by what they do, and the editors of those that are on.
 pub(super) fn filter_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a, Message> {
-    let materials: [Slot<Texture>; 8] = [
+    let materials: [Slot<Texture>; 9] = [
         material("Paper", |s| s.ornament.paper.as_ref(), |s, v| s.ornament.paper = v),
         material("Brushed metal", |s| s.ornament.brushed_metal.as_ref(), |s, v| s.ornament.brushed_metal = v),
         material("Concrete", |s| s.ornament.concrete.as_ref(), |s, v| s.ornament.concrete = v),
         material("Cloth", |s| s.ornament.cloth.as_ref(), |s, v| s.ornament.cloth = v),
         material("Denim", |s| s.ornament.denim.as_ref(), |s, v| s.ornament.denim = v),
+        material("Silk", |s| s.ornament.silk.as_ref(), |s, v| s.ornament.silk = v),
         material("Leather", |s| s.ornament.leather.as_ref(), |s, v| s.ornament.leather = v),
         material("Steel", |s| s.ornament.steel.as_ref(), |s, v| s.ornament.steel = v),
         material("Wood", |s| s.ornament.wood.as_ref(), |s, v| s.ornament.wood = v),
@@ -50,13 +53,60 @@ pub(super) fn filter_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> 
         style,
         on_change,
     );
+    let [plaid, argyle, stripes] = pattern_filters(style, on_change);
     let tint = filter(
         &Slot { label: "Color wash", get: |s| s.ornament.tint.as_ref(), put: |s, v| s.ornament.tint = v, start: |_| Tint { color: "#ffa040".into(), opacity: 0.12 } },
         |t, set| tint_rows(t, &set),
         style,
         on_change,
     );
-    grouped([("        Material", materials), ("        Screen", vec![scanlines, grain, pixels]), ("        Color", vec![camo, tint])])
+    grouped([("        Material", materials), ("        Screen", vec![scanlines, grain, pixels]), ("        Color", vec![camo, plaid, argyle, stripes, tint])])
+}
+
+/// The plaid's, argyle's and stripes' buttons and editors.
+fn pattern_filters<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> [Filter<'a>; 3] {
+    let plaid = filter(
+        &Slot {
+            label: "Plaid",
+            get: |s| s.ornament.plaid.as_ref(),
+            put: |s, v| s.ornament.plaid = v,
+            start: |_| Plaid { colors: default_plaid_colors(), opacity: 0.25, size: 80.0 },
+        },
+        |p, set| {
+            let mut rows = color_rows(&p.colors, ["Ground", "Bands", "Lines"], &patterned(p, &set, |p, colors| Plaid { colors, ..p.clone() }));
+            rows.extend(size_and_strength((24.0, 240.0), "Repeat", (p.size, p.opacity), &patterned(p, &set, |p, (size, opacity)| Plaid { size, opacity, ..p.clone() })));
+            rows
+        },
+        style,
+        on_change,
+    );
+    let argyle = filter(
+        &Slot {
+            label: "Argyle",
+            get: |s| s.ornament.argyle.as_ref(),
+            put: |s, v| s.ornament.argyle = v,
+            start: |_| Argyle { colors: default_argyle_colors(), opacity: 0.25, size: 40.0 },
+        },
+        |a, set| {
+            let mut rows = color_rows(&a.colors, ["Diamonds", "Between", "Lines"], &patterned(a, &set, |a, colors| Argyle { colors, ..a.clone() }));
+            rows.extend(size_and_strength((16.0, 160.0), "Diamond width", (a.size, a.opacity), &patterned(a, &set, |a, (size, opacity)| Argyle { size, opacity, ..a.clone() })));
+            rows
+        },
+        style,
+        on_change,
+    );
+    let stripes = filter(
+        &Slot {
+            label: "Stripes",
+            get: |s| s.ornament.stripes.as_ref(),
+            put: |s, v| s.ornament.stripes = v,
+            start: |_| Stripes { colors: default_stripes_colors(), direction: StripeDirection::Diagonal, opacity: 0.25, size: 16.0 },
+        },
+        |st, set| stripe_rows(st, &set),
+        style,
+        on_change,
+    );
+    [plaid, argyle, stripes]
 }
 
 /// A material's slot, starting at half strength.
@@ -131,6 +181,52 @@ fn camo_rows<'a>(camo: &Camo, set: &Rc<dyn Fn(Camo) -> Message + 'a>) -> Vec<Ele
     };
     let schemes = row![scheme("Woodland", CamoScheme::Woodland), scheme("Desert", CamoScheme::Desert), scheme("Urban", CamoScheme::Urban), scheme("Arctic", CamoScheme::Arctic)].spacing(4);
     vec![labeled("        Colors", schemes.into()), labeled("        Blotch size", size), labeled("        Strength", strength)]
+}
+
+/// A setter for one part of a pattern, `with` putting that part into a copy of it.
+fn patterned<'a, P: Clone + 'a, V: 'a>(p: &P, set: &Rc<dyn Fn(P) -> Message + 'a>, with: fn(&P, V) -> P) -> Rc<dyn Fn(V) -> Message + 'a> {
+    let (p, set) = (p.clone(), set.clone());
+    Rc::new(move |v| set(with(&p, v)))
+}
+
+/// A row of swatches for each of a pattern's three colors, under `labels`.
+fn color_rows<'a>(colors: &[String; 3], labels: [&'static str; 3], set: &Rc<dyn Fn([String; 3]) -> Message + 'a>) -> Vec<Element<'a, Message>> {
+    (0..3)
+        .map(|i| {
+            let shown = Paint::new(&colors[i], 1.0);
+            let (colors, set) = (colors.clone(), set.clone());
+            let on_paint: Rc<dyn Fn(Paint) -> Message + 'a> = Rc::new(move |p: Paint| {
+                let mut colors = colors.clone();
+                colors[i] = p.color;
+                set(colors)
+            });
+            labeled(format!("        {}", labels[i]), paint_row(&shown, false, &on_paint))
+        })
+        .collect()
+}
+
+/// A pattern's size (`range` pixels, under `label`) and strength.
+fn size_and_strength<'a>(range: (f32, f32), label: &'static str, (size, opacity): (f32, f32), set: &Rc<dyn Fn((f32, f32)) -> Message + 'a>) -> Vec<Element<'a, Message>> {
+    let resize = {
+        let set = set.clone();
+        stepped_slider(range.0..=range.1, size, format!("{size:.0} px"), move |v| set((v.round(), opacity)))
+    };
+    let set = set.clone();
+    let strength = percent_of(opacity, move |v| set((size, v)));
+    vec![labeled(format!("        {label}"), resize), labeled("        Strength", strength)]
+}
+
+/// The stripes' colors, which way they run, their width and strength.
+fn stripe_rows<'a>(st: &Stripes, set: &Rc<dyn Fn(Stripes) -> Message + 'a>) -> Vec<Element<'a, Message>> {
+    let mut rows = color_rows(&st.colors, ["Stripes", "Between", "Pinstripes"], &patterned(st, set, |st, colors| Stripes { colors, ..st.clone() }));
+    let way = |label: &'static str, direction: StripeDirection| {
+        let (s, set) = (st.clone(), set.clone());
+        button(text(label).size(13)).style(if st.direction == direction { button::primary } else { style::secondary }).on_press_with(move || set(Stripes { direction, ..s.clone() }))
+    };
+    let ways = row![way("Across", StripeDirection::Horizontal), way("Up and down", StripeDirection::Vertical), way("Slanted", StripeDirection::Diagonal)].spacing(4);
+    rows.push(labeled("        Direction", ways.into()));
+    rows.extend(size_and_strength((4.0, 120.0), "Stripe width", (st.size, st.opacity), &patterned(st, set, |st, (size, opacity)| Stripes { size, opacity, ..st.clone() })));
+    rows
 }
 
 /// The grain's strength, grain size and whether it flickers.

@@ -210,7 +210,8 @@ fn colors(style: &OverlayStyle, font: Font) -> Colors {
     }
 }
 
-/// The style's filters, as layers over the contents: grain, pixel blocks, camo and a tint.
+/// The style's filters, as layers over the contents: grain, pixel blocks, camo, plaid, argyle,
+/// stripes and a tint.
 fn filters<'a, M: 'a>(c: Colors, style: &OverlayStyle, s: f32) -> Vec<Element<'a, M>> {
     let ornaments = &style.ornament;
     let mut layers = Vec::new();
@@ -222,6 +223,15 @@ fn filters<'a, M: 'a>(c: Colors, style: &OverlayStyle, s: f32) -> Vec<Element<'a
         }
         if let Some(camo) = &ornaments.camo {
         layers.push(texture::camo(camo, s, c.fade));
+        }
+        if let Some(plaid) = &ornaments.plaid {
+        layers.push(texture::plaid(plaid, s, c.fade));
+        }
+        if let Some(argyle) = &ornaments.argyle {
+        layers.push(texture::argyle(argyle, s, c.fade));
+        }
+        if let Some(stripes) = &ornaments.stripes {
+        layers.push(texture::stripes(stripes, s, c.fade));
         }
         if let Some(tint) = &ornaments.tint {
         layers.push(ornament::tint(tint, c.fade));
@@ -250,6 +260,7 @@ fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, style: &OverlayStyle, padd
             (texture::Material::Concrete, &ornaments.concrete),
             (texture::Material::Cloth, &ornaments.cloth),
             (texture::Material::Denim, &ornaments.denim),
+            (texture::Material::Silk, &ornaments.silk),
             (texture::Material::Leather, &ornaments.leather),
             (texture::Material::Steel, &ornaments.steel),
             (texture::Material::Wood, &ornaments.wood),

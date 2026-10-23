@@ -1,13 +1,29 @@
 //! The sample styles the menu scenes are drawn in: textures, filters, ornaments and frames.
 
 use crate::config::{
-    Bevel, Camo, CamoScheme, Case, Frame, FrameKind, Gradient, Grain, Ornament, OverlayStyle, Paint, Pixels, Scanlines, Shade, Stroke, Texture, Tint, Typography,
-    Vignette,
+    Argyle, Bevel, Camo, CamoScheme, Case, Frame, FrameKind, Gradient, Grain, Ornament, OverlayStyle, Paint, Pixels, Plaid, Scanlines, Shade, StripeDirection, Stripes,
+    Stroke, Texture, Tint, Typography, Vignette, default_argyle_colors, default_plaid_colors, default_stripes_colors,
 };
 
 /// A panel under a woodland camo.
 pub(super) fn camouflaged() -> OverlayStyle {
     OverlayStyle { ornament: Ornament { camo: Some(Camo { scheme: CamoScheme::Woodland, opacity: 0.45, size: 60.0 }), ..Ornament::default() }, ..OverlayStyle::default() }
+}
+
+/// A panel under a red tartan.
+pub(super) fn plaid() -> OverlayStyle {
+    OverlayStyle { ornament: Ornament { plaid: Some(Plaid { colors: default_plaid_colors(), opacity: 0.45, size: 80.0 }), ..Ornament::default() }, ..OverlayStyle::default() }
+}
+
+/// A panel under a navy and camel argyle.
+pub(super) fn argyle() -> OverlayStyle {
+    OverlayStyle { ornament: Ornament { argyle: Some(Argyle { colors: default_argyle_colors(), opacity: 0.45, size: 40.0 }), ..Ornament::default() }, ..OverlayStyle::default() }
+}
+
+/// A panel under slanted navy and cream stripes.
+pub(super) fn striped() -> OverlayStyle {
+    let stripes = Stripes { colors: default_stripes_colors(), direction: StripeDirection::Diagonal, opacity: 0.45, size: 16.0 };
+    OverlayStyle { ornament: Ornament { stripes: Some(stripes), ..Ornament::default() }, ..OverlayStyle::default() }
 }
 
 /// A dark panel under every filter.
@@ -81,6 +97,17 @@ pub(super) fn denim() -> OverlayStyle {
         items: Paint::new("#43577a", 0.9),
         selected: Paint::new("#c8913a", 1.0),
         ornament: Ornament { denim: Some(Texture { opacity: 0.8 }), ..Ornament::default() },
+        ..OverlayStyle::default()
+    }
+}
+
+/// Crimson silk, with gold for the selected item.
+pub(super) fn silk() -> OverlayStyle {
+    OverlayStyle {
+        background: Paint::new("#7a1f2b", 1.0),
+        items: Paint::new("#8e2a37", 0.85),
+        selected: Paint::new("#c8a040", 1.0),
+        ornament: Ornament { silk: Some(Texture { opacity: 0.7 }), ..Ornament::default() },
         ..OverlayStyle::default()
     }
 }
@@ -173,11 +200,15 @@ pub(super) fn list_scene(name: &str) -> Option<OverlayStyle> {
     Some(match name {
         "menu-filters" => filtered(),
         "menu-camo" => camouflaged(),
+        "menu-plaid" => plaid(),
+        "menu-argyle" => argyle(),
+        "menu-stripes" => striped(),
         "menu-paper" => paper(),
         "menu-metal" => metal(),
         "menu-concrete" => concrete(),
         "menu-cloth" => cloth(),
         "menu-denim" => denim(),
+        "menu-silk" => silk(),
         "menu-leather" => leather(),
         "menu-steel" => steel(),
         "menu-wood" => wood(),

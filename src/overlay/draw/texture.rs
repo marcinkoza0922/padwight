@@ -1,5 +1,5 @@
 //! The procedural pictures that texture a panel: paper, brushed metal, concrete, cloth, denim,
-//! leather, steel tread plate and wood behind its contents,
+//! silk, leather, steel tread plate and wood behind its contents,
 //! and grain and pixel blocks over them. Each is translucent white and black, so it lightens
 //! and darkens whatever it sits on.
 
@@ -10,8 +10,10 @@ use iced::{ContentFit, Element, Length, widget::{image, responsive}};
 use crate::config::{Camo, CamoScheme, Grain, Pixels, Texture};
 
 mod materials;
+mod patterns;
 
-use materials::{brushed_metal, cloth, concrete, denim, leather, paper, steel, wood};
+use materials::{brushed_metal, cloth, concrete, denim, leather, paper, silk, steel, wood};
+pub use patterns::{argyle, plaid, stripes};
 
 /// What a texture looks like.
 #[derive(Debug, Clone, Copy)]
@@ -26,6 +28,8 @@ pub enum Material {
     Cloth,
     /// Twill: threads woven in diagonal ribs.
     Denim,
+    /// Smooth drapery: flowing folds with a soft sheen, and next to no grain.
+    Silk,
     /// Pebbled grain with creases between the pebbles and the odd wrinkle.
     Leather,
     /// Tread plate: raised lugs in a herringbone, on a mottled steel.
@@ -160,6 +164,7 @@ fn reliefs(kind: Material) -> &'static [u8] {
     static CONCRETE: OnceLock<Vec<u8>> = OnceLock::new();
     static CLOTH: OnceLock<Vec<u8>> = OnceLock::new();
     static DENIM: OnceLock<Vec<u8>> = OnceLock::new();
+    static SILK: OnceLock<Vec<u8>> = OnceLock::new();
     static LEATHER: OnceLock<Vec<u8>> = OnceLock::new();
     static STEEL: OnceLock<Vec<u8>> = OnceLock::new();
     static WOOD: OnceLock<Vec<u8>> = OnceLock::new();
@@ -169,6 +174,7 @@ fn reliefs(kind: Material) -> &'static [u8] {
         Material::Concrete => CONCRETE.get_or_init(|| relief(concrete)),
         Material::Cloth => CLOTH.get_or_init(|| relief(cloth)),
         Material::Denim => DENIM.get_or_init(|| relief(denim)),
+        Material::Silk => SILK.get_or_init(|| relief(silk)),
         Material::Leather => LEATHER.get_or_init(|| relief(leather)),
         Material::Steel => STEEL.get_or_init(|| relief(steel)),
         Material::Wood => WOOD.get_or_init(|| relief(wood)),

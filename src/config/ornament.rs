@@ -3,11 +3,11 @@
 use serde::{Deserialize, Serialize};
 
 use super::style::{black, opaque};
-use super::Stroke;
+use super::{Argyle, Plaid, Stripes, Stroke};
 
 /// The ornaments drawn over and around a panel: lines between items, a frame at its corners, a
-/// scanline screen, a vignette, filters (scanlines, grain, pixels, a tint), paper or brushed
-/// metal and bevelled buttons. Each is off unless set.
+/// scanline screen, a vignette, filters (scanlines, grain, pixels, camo, plaid, argyle,
+/// stripes, a tint), materials and bevelled buttons. Each is off unless set.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Ornament {
@@ -32,6 +32,15 @@ pub struct Ornament {
     /// A camouflage pattern over the panel.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub camo: Option<Camo>,
+    /// A plaid over the panel.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plaid: Option<Plaid>,
+    /// An argyle over the panel.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub argyle: Option<Argyle>,
+    /// Stripes over the panel.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stripes: Option<Stripes>,
     /// A wash of color over the panel.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tint: Option<Tint>,
@@ -50,6 +59,9 @@ pub struct Ornament {
     /// Denim twill over the panel's background.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub denim: Option<Texture>,
+    /// Lustrous silk over the panel's background.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub silk: Option<Texture>,
     /// Pebbled leather over the panel's background.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub leather: Option<Texture>,
@@ -246,7 +258,7 @@ pub enum ImageFit {
     Stretch,
 }
 
-/// A material (paper, brushed metal, concrete, cloth, denim, leather, steel or wood) drawn over the panel's background and under its
+/// A material (paper, brushed metal, concrete, cloth, denim, silk, leather, steel or wood) drawn over the panel's background and under its
 /// contents. It only lightens and darkens, so the background's color still shows through.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Texture {
