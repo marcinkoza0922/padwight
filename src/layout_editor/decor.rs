@@ -2,7 +2,7 @@
 //! outline, the selected item's glow, and the ornaments (dividers, a frame, scanlines and a
 //! vignette). Each is off until turned on, and starts as the settings window starts it.
 
-use crate::config::{Config, Frame, FrameKind, Gradient, OverlayStyle, Paint, Scanlines, Shade, Stroke, Vignette};
+use crate::config::{Config, FilterOn, Frame, FrameKind, Gradient, OverlayStyle, Paint, Scanlines, Shade, Stroke, Vignette};
 
 use super::{
     pages::Page,
@@ -67,7 +67,7 @@ impl Decor {
             Decor::Glow => s.glow = on.then(|| Shade::glow(&s.selected.color)),
             Decor::Dividers => s.ornament.dividers = on.then_some(Stroke { width: 1.0, ..Stroke::default() }),
             Decor::Frame => s.ornament.frame = on.then(|| Frame { kind: FrameKind::Brackets, size: 14.0, width: 2.0, color: "#ffffff".into(), opacity: 1.0 }),
-            Decor::Scanlines => s.ornament.scanlines = on.then(|| Scanlines { spacing: 4.0, opacity: 0.2, color: "#000000".into(), drift: false }),
+            Decor::Scanlines => s.ornament.scanlines = on.then(|| Scanlines { spacing: 4.0, opacity: 0.2, color: "#000000".into(), drift: false, on: FilterOn::Both }),
             Decor::Vignette => s.ornament.vignette = on.then(|| Vignette { color: "#000000".into(), opacity: 0.6, reach: 25.0 }),
         }
         true

@@ -442,7 +442,7 @@ mod tests {
         let drifting = OverlayStyle { gradient: Some(Gradient { drift: true, ..Gradient::default() }), ..OverlayStyle::default() };
         assert!(drifting.loops());
         let scanned = OverlayStyle {
-            ornament: Ornament { scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.2, color: black(), drift: true }), ..Ornament::default() },
+            ornament: Ornament { scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.2, color: black(), drift: true, on: crate::config::FilterOn::Both }), ..Ornament::default() },
             ..OverlayStyle::default()
         };
         assert!(scanned.loops());

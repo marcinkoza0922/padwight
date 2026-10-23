@@ -2,6 +2,7 @@
 //! `fit.rs`) and laid out where its position puts it.
 
 mod figure;
+mod filtered;
 mod frame;
 mod glyphs;
 mod info;
@@ -26,6 +27,7 @@ use info::info_cell;
 pub use log_panel::log_panel;
 
 use glyphs::{segment_element, state_icon};
+use filtered::item_box;
 use look::{Look, lit_cell_style, panel_style};
 pub use keyboard::keyboard_panel;
 pub use menus::menu_panel;
@@ -210,56 +212,24 @@ fn colors(style: &OverlayStyle, font: Font) -> Colors {
     }
 }
 
-/// The style's filters, as layers over the contents: grain, pixel blocks, camo and a tint.
-fn filters<'a, M: 'a>(c: Colors, style: &OverlayStyle, s: f32) -> Vec<Element<'a, M>> {
-    let ornaments = &style.ornament;
-    let mut layers = Vec::new();
-        if let Some(grain) = &ornaments.grain {
-        layers.push(texture::grain(grain, s, c.anim.clock, grain.animated && !style.lite.calm, c.fade));
-        }
-        if let Some(pixels) = &ornaments.pixels {
-        layers.push(texture::pixels(pixels, s, c.fade));
-        }
-        if let Some(camo) = &ornaments.camo {
-        layers.push(texture::camo(camo, s, c.fade));
-        }
-        if let Some(tint) = &ornaments.tint {
-        layers.push(ornament::tint(tint, c.fade));
-        }
-    layers
-}
-
 /// A panel's box: its colors and padding, at the size `fit` gives. The contents scroll, so a
 /// box held to its max length scrolls rather than spilling, and the box clips anything wider.
-/// The style's picture sits behind the contents and its ornaments over them, all the panel's
-/// size: the contents are the stack's base layer, which sets that size.
+/// The style's picture and its filters on the background sit behind the contents and its
+/// ornaments over them, all the panel's size: the contents are the stack's base layer, which
+/// sets that size.
 fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, style: &OverlayStyle, padding: impl Into<Padding>, fit: &Fit) -> Element<'a, M> {
     let height = if fit.height.is_some() { Length::Fill } else { Length::Shrink };
     let contents = scrollable(body).width(Length::Shrink).height(height);
     let mut layers = iced::widget::Stack::new().push(container(contents).padding(padding).align_x(Horizontal::Center));
+    for filter in filtered::filters(c, style, false, c.corners * look::PANEL_CORNER).into_iter().rev() {
+        layers = layers.push_under(filter);
+    }
     if !style.lite.plain {
         let s = style.scale.clamp(0.5, 2.0);
         if let Some(picture) = &style.background_image {
             layers = layers.push_under(ornament::picture(picture, c.fade));
         }
         let ornaments = &style.ornament;
-        // Concrete goes under metal, and metal under paper, should they all be on.
-        for (material, t) in [
-            (texture::Material::Paper, &ornaments.paper),
-            (texture::Material::BrushedMetal, &ornaments.brushed_metal),
-            (texture::Material::Concrete, &ornaments.concrete),
-        ] {
-            if let Some(t) = t {
-                layers = layers.push_under(texture::layer(material, t, c.fade));
-            }
-        }
-        if let Some(lines) = &ornaments.scanlines {
-            let drift = lines.drift && !style.lite.calm;
-            layers = layers.push(ornament::scanlines(lines, s, c.anim.clock, drift, c.fade));
-        }
-        for filter in filters(c, style, s) {
-            layers = layers.push(filter);
-        }
         if let Some(vignette) = &ornaments.vignette {
             for edge in ornament::vignette(vignette, c.fade) {
                 layers = layers.push(edge);
@@ -363,12 +333,11 @@ pub fn offer_panel<'a, M: 'a>(o: &OfferView, font: Font, glyphs: crate::info::Gl
     let c = colors(&o.style, font).with_glyphs(glyphs).faded(anim.opacity());
     let s = o.style.scale.clamp(0.5, 2.0);
     let cell = |label: String, lit: Colors, selected: bool| {
-        container(rich_text::<M>(&label, lit, 16.0 * s, lit.item_text))
-            .padding([8.0 * s, 16.0 * s])
-            .style(lit_cell_style(lit, selected, 36.0 * s))
+        let content = container(rich_text::<M>(&label, lit, 16.0 * s, lit.item_text)).padding([8.0 * s, 16.0 * s]);
+        item_box(content, lit_cell_style(lit, selected, 36.0 * s), c, &o.style, c.corners * 18.0 * s)
     };
     // What {confirm} answers is the default, so it has the selected look.
-    let answers = o.answers.iter().map(|(button, what)| cell(format!("{button}  {what}"), c, button == "{confirm}").into());
+    let answers = o.answers.iter().map(|(button, what)| cell(format!("{button}  {what}"), c, button == "{confirm}"));
     let body: Element<'a, M> = row(answers).spacing(10.0 * s).into();
     let contents = column![
         text(o.title.clone()).font(c.font).size(20.0 * s).color(c.background_text),

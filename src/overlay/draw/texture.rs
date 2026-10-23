@@ -1,12 +1,19 @@
-//! The procedural pictures that texture a panel: paper, brushed metal and concrete behind its contents,
-//! and grain and pixel blocks over them. Each is translucent white and black, so it lightens
-//! and darkens whatever it sits on.
+//! The procedural pictures that texture a panel or an item: paper, brushed metal, concrete,
+//! cloth, denim, silk, leather, steel tread plate and wood, scanlines, grain, pixel blocks and
+//! camo. The materials, grain and blocks are translucent white and black, so they lighten and
+//! darken whatever they sit on.
 
 use std::sync::{Mutex, OnceLock};
 
 use iced::{ContentFit, Element, Length, widget::{image, responsive}};
 
-use crate::config::{Camo, CamoScheme, Grain, Pixels, Texture};
+use crate::config::{Camo, CamoScheme, Grain, Paint, Pixels, Scanlines, Texture};
+
+mod materials;
+mod patterns;
+
+use materials::{brushed_metal, cloth, concrete, denim, leather, paper, silk, steel, wood};
+pub use patterns::{argyle, plaid, stripes};
 
 /// What a texture looks like.
 #[derive(Debug, Clone, Copy)]
@@ -17,42 +24,82 @@ pub enum Material {
     BrushedMetal,
     /// Coarse mottling, shuttering seams, pits and the odd hairline crack.
     Concrete,
+    /// Uneven threads woven over and under each other, like linen.
+    Cloth,
+    /// Twill: threads woven in diagonal ribs.
+    Denim,
+    /// Smooth drapery: flowing folds with a soft sheen, and next to no grain.
+    Silk,
+    /// Pebbled grain with creases between the pebbles and the odd wrinkle.
+    Leather,
+    /// Tread plate: raised lugs in a herringbone, on a mottled steel.
+    Steel,
+    /// Planks with wavy grain, fibres and the odd knot.
+    Wood,
 }
 
 const WIDTH: usize = 1280;
 const HEIGHT: usize = 720;
 
-/// A layer the size of the panel, cut at layout from pixels `build` makes for that size.
-/// `key` names the picture, so the last few are kept and a panel that holds its size doesn't
-/// rebuild its picture every frame.
-fn sized<'a, M: 'a>(key: [u32; 3], opacity: f32, build: impl Fn(usize, usize) -> Vec<u8> + 'a) -> Element<'a, M> {
+/// A layer the size of what it covers, cut at layout from pixels `build` makes for that size,
+/// and rounded `round` pixels at its corners. `key` names the picture, so the last few are kept
+/// and a panel that holds its size doesn't rebuild its picture every frame.
+fn sized<'a, M: 'a>(key: [u32; 3], round: f32, opacity: f32, build: impl Fn(usize, usize) -> Vec<u8> + 'a) -> Element<'a, M> {
     responsive(move |size| {
         let (w, h) = (size.width.max(1.0) as usize, size.height.max(1.0) as usize);
-        let handle = cached((key, w, h), || build(w, h));
+        let handle = cached((key, round.to_bits(), w, h), || rounded(build(w, h), w, h, round));
         image(handle).content_fit(ContentFit::Fill).width(Length::Fill).height(Length::Fill).opacity(opacity).into()
     })
     .into()
 }
 
-type Key = ([u32; 3], usize, usize);
+/// The pixels with what's outside corners `round` pixels round made clear, the edge softened.
+fn rounded(mut pixels: Vec<u8>, w: usize, h: usize, round: f32) -> Vec<u8> {
+    let r = round.min(w.min(h) as f32 / 2.0);
+    if r < 1.0 {
+        return pixels;
+    }
+    let reach = r.ceil() as usize;
+    for y in (0..reach).chain(h.saturating_sub(reach).max(reach)..h) {
+        for x in (0..reach).chain(w.saturating_sub(reach).max(reach)..w) {
+            // How far the pixel's middle lies outside the corner's circle.
+            let dx = (r - (x as f32 + 0.5)).max(x as f32 + 0.5 - (w as f32 - r));
+            let dy = (r - (y as f32 + 0.5)).max(y as f32 + 0.5 - (h as f32 - r));
+            if dx <= 0.0 || dy <= 0.0 {
+                continue;
+            }
+            let cover = (r + 0.5 - (dx * dx + dy * dy).sqrt()).clamp(0.0, 1.0);
+            let alpha = &mut pixels[(y * w + x) * 4 + 3];
+            *alpha = (f32::from(*alpha) * cover) as u8;
+        }
+    }
+    pixels
+}
 
+type Key = ([u32; 3], u32, usize, usize);
+
+/// The picture for `key`, built the first time. The most recently used few dozen are kept: a
+/// keyboard's keys come in several sizes, each with its own picture of every filter on it.
 fn cached(key: Key, build: impl FnOnce() -> Vec<u8>) -> image::Handle {
     static RECENT: Mutex<Vec<(Key, image::Handle)>> = Mutex::new(Vec::new());
     let mut recent = RECENT.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-    if let Some((_, handle)) = recent.iter().find(|(k, _)| *k == key) {
-        return handle.clone();
+    if let Some(at) = recent.iter().position(|(k, _)| *k == key) {
+        let hit = recent.remove(at);
+        let handle = hit.1.clone();
+        recent.push(hit);
+        return handle;
     }
-    let handle = image::Handle::from_rgba(key.1 as u32, key.2 as u32, build());
-    if recent.len() >= 16 {
+    let handle = image::Handle::from_rgba(key.2 as u32, key.3 as u32, build());
+    if recent.len() >= 48 {
         recent.remove(0);
     }
     recent.push((key, handle.clone()));
     handle
 }
 
-/// The material as a layer the size of the panel: the relief, repeated if the panel is bigger.
-pub fn layer<'a, M: 'a>(kind: Material, t: &Texture, fade: f32) -> Element<'a, M> {
-    sized([kind as u32, 0, 0], (t.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+/// The material as a layer the size of what it covers: the relief, repeated if that's bigger.
+pub fn layer<'a, M: 'a>(kind: Material, t: &Texture, round: f32, fade: f32) -> Element<'a, M> {
+    sized([kind as u32, 0, 0], round, (t.opacity * fade).clamp(0.0, 1.0), move |w, h| {
         let source = reliefs(kind);
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in 0..h {
@@ -66,12 +113,12 @@ pub fn layer<'a, M: 'a>(kind: Material, t: &Texture, fade: f32) -> Element<'a, M
     })
 }
 
-/// Noise in blocks `block` pixels across. Animated, it picks one of a few patterns by the
-/// clock, a dozen times a second.
-pub fn grain<'a, M: 'a>(g: &Grain, s: f32, clock: f32, animated: bool, fade: f32) -> Element<'a, M> {
+/// Noise in blocks `block` pixels across. Given a clock, it picks one of a few patterns by it,
+/// a dozen times a second.
+pub fn grain<'a, M: 'a>(g: &Grain, s: f32, clock: Option<f32>, round: f32, fade: f32) -> Element<'a, M> {
     let block = (g.size.clamp(1.0, 6.0) * s).round().max(1.0) as usize;
-    let frame = if animated { (clock * 12.0) as u32 % 4 } else { 0 };
-    sized([10, block as u32, frame], (g.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+    let frame = clock.map_or(0, |clock| (clock * 12.0) as u32 % 4);
+    sized([10, block as u32, frame], round, (g.opacity * fade).clamp(0.0, 1.0), move |w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in 0..h {
             for x in 0..w {
@@ -84,11 +131,33 @@ pub fn grain<'a, M: 'a>(g: &Grain, s: f32, clock: f32, animated: bool, fade: f32
     })
 }
 
+/// How far a scanline drifts per second, in pixels at scale 1.
+const DRIFT_SPEED: f32 = 14.0;
+
+/// Thin lines across, `spacing` apart. Given a clock, they drift down by it, a pixel at a time.
+pub fn scanlines<'a, M: 'a>(sc: &Scanlines, s: f32, clock: Option<f32>, round: f32, fade: f32) -> Element<'a, M> {
+    let gap = (sc.spacing.max(2.0) * s).round() as usize;
+    let thickness = (gap as f32 * 0.35).round().max(1.0) as usize;
+    let [r, g, b] = Paint::new(&sc.color, 1.0).rgb().unwrap_or([0, 0, 0]);
+    let shift = clock.map_or(0, |clock| (clock * DRIFT_SPEED * s) as usize % gap);
+    let color = u32::from_be_bytes([0, r, g, b]);
+    sized([16 | (shift as u32) << 8, gap as u32, color], round, (sc.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+        let mut pixels = Vec::with_capacity(w * h * 4);
+        for y in 0..h {
+            let on = (y + gap - shift) % gap < thickness;
+            for _ in 0..w {
+                pixels.extend_from_slice(&[r, g, b, if on { 255 } else { 0 }]);
+            }
+        }
+        pixels
+    })
+}
+
 /// Blocks `block` pixels across, each lightened or darkened at random, with a dark seam along
 /// two of its edges.
-pub fn pixels<'a, M: 'a>(p: &Pixels, s: f32, fade: f32) -> Element<'a, M> {
+pub fn pixels<'a, M: 'a>(p: &Pixels, s: f32, round: f32, fade: f32) -> Element<'a, M> {
     let block = (p.size.clamp(2.0, 24.0) * s).round().max(2.0) as usize;
-    sized([11, block as u32, 0], (p.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+    sized([11, block as u32, 0], round, (p.opacity * fade).clamp(0.0, 1.0), move |w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in 0..h {
             for x in 0..w {
@@ -107,7 +176,7 @@ pub fn pixels<'a, M: 'a>(p: &Pixels, s: f32, fade: f32) -> Element<'a, M> {
 
 /// Blotches of three colors on a base, `size` pixels across: each color shows where its own
 /// noise runs high, the later ones over the earlier.
-pub fn camo<'a, M: 'a>(c: &Camo, s: f32, fade: f32) -> Element<'a, M> {
+pub fn camo<'a, M: 'a>(c: &Camo, s: f32, round: f32, fade: f32) -> Element<'a, M> {
     let cell = (c.size.clamp(16.0, 200.0) * s).max(8.0);
     let scheme = c.scheme;
     let [base, a, b, dark] = match scheme {
@@ -116,7 +185,7 @@ pub fn camo<'a, M: 'a>(c: &Camo, s: f32, fade: f32) -> Element<'a, M> {
         CamoScheme::Urban => [[0x80, 0x84, 0x88], [0x5c, 0x60, 0x66], [0xa4, 0xa8, 0xac], [0x2e, 0x30, 0x34]],
         CamoScheme::Arctic => [[0xe8, 0xec, 0xf0], [0xc4, 0xd0, 0xdc], [0xf8, 0xf8, 0xfa], [0x98, 0xa8, 0xb8]],
     };
-    sized([12, cell as u32, scheme as u32], (c.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+    sized([12, cell as u32, scheme as u32], round, (c.opacity * fade).clamp(0.0, 1.0), move |w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in 0..h {
             for x in 0..w {
@@ -143,10 +212,22 @@ fn reliefs(kind: Material) -> &'static [u8] {
     static PAPER: OnceLock<Vec<u8>> = OnceLock::new();
     static METAL: OnceLock<Vec<u8>> = OnceLock::new();
     static CONCRETE: OnceLock<Vec<u8>> = OnceLock::new();
+    static CLOTH: OnceLock<Vec<u8>> = OnceLock::new();
+    static DENIM: OnceLock<Vec<u8>> = OnceLock::new();
+    static SILK: OnceLock<Vec<u8>> = OnceLock::new();
+    static LEATHER: OnceLock<Vec<u8>> = OnceLock::new();
+    static STEEL: OnceLock<Vec<u8>> = OnceLock::new();
+    static WOOD: OnceLock<Vec<u8>> = OnceLock::new();
     match kind {
         Material::Paper => PAPER.get_or_init(|| relief(paper)),
         Material::BrushedMetal => METAL.get_or_init(|| relief(brushed_metal)),
         Material::Concrete => CONCRETE.get_or_init(|| relief(concrete)),
+        Material::Cloth => CLOTH.get_or_init(|| relief(cloth)),
+        Material::Denim => DENIM.get_or_init(|| relief(denim)),
+        Material::Silk => SILK.get_or_init(|| relief(silk)),
+        Material::Leather => LEATHER.get_or_init(|| relief(leather)),
+        Material::Steel => STEEL.get_or_init(|| relief(steel)),
+        Material::Wood => WOOD.get_or_init(|| relief(wood)),
     }
 }
 
@@ -174,7 +255,11 @@ fn hash(x: i64, y: i64, seed: u32) -> f32 {
 
 /// Smooth noise whose features are `cell` pixels across.
 fn blotch(x: usize, y: usize, cell: f32, seed: u32) -> f32 {
-    let (fx, fy) = (x as f32 / cell, y as f32 / cell);
+    smooth(x as f32 / cell, y as f32 / cell, seed)
+}
+
+/// Smooth noise at a point, its features one unit across.
+fn smooth(fx: f32, fy: f32, seed: u32) -> f32 {
     let (ix, iy) = (fx.floor(), fy.floor());
     let (tx, ty) = (fx - ix, fy - iy);
     let ease = |t: f32| t * t * (3.0 - 2.0 * t);
@@ -182,75 +267,4 @@ fn blotch(x: usize, y: usize, cell: f32, seed: u32) -> f32 {
     let top = at(0, 0) + (at(1, 0) - at(0, 0)) * ease(tx);
     let bottom = at(0, 1) + (at(1, 1) - at(0, 1)) * ease(tx);
     top + (bottom - top) * ease(ty)
-}
-
-/// Fine grain, soft blotches, and short pale or dark fibres lying at slants.
-fn paper(x: usize, y: usize) -> f32 {
-    let grain = hash(x as i64, y as i64, 1) - 0.5;
-    let soft = blotch(x, y, 48.0, 2) - 0.5;
-    let mottle = blotch(x, y, 7.0, 3) - 0.5;
-    // Fibres: each 16-pixel cell may hold one, a short line across it at its own slant.
-    let (cx, cy) = ((x / 16) as i64, (y / 16) as i64);
-    let fibre = if hash(cx, cy, 4) > 0.55 {
-        let slant = hash(cx, cy, 5) * 2.0 - 1.0;
-        let (lx, ly) = ((x % 16) as f32 - 8.0, (y % 16) as f32 - 8.0);
-        let off = (ly - lx * slant).abs();
-        if off < 0.7 && lx.abs() < 7.0 { (hash(cx, cy, 6) - 0.5) * 0.9 } else { 0.0 }
-    } else {
-        0.0
-    };
-    0.5 + grain * 0.28 + soft * 0.22 + mottle * 0.18 + fibre
-}
-
-/// Streaks along the panel (noise smeared sideways, each row its own strength) under a soft
-/// diagonal sheen.
-fn brushed_metal(x: usize, y: usize) -> f32 {
-    const SMEAR: i64 = 18;
-    let mut sum = 0.0;
-    for dx in -SMEAR..=SMEAR {
-        sum += hash(x as i64 + dx, y as i64, 7) - 0.5;
-    }
-    let streak = sum / (SMEAR as f32 * 0.7);
-    let row = hash(0, y as i64, 8) - 0.5;
-    let fine = hash(x as i64, y as i64, 9) - 0.5;
-    let sheen = ((x as f32 / 260.0 + y as f32 / 900.0) * std::f32::consts::PI).sin() * 0.5;
-    0.5 + streak * 0.30 + row * 0.12 + fine * 0.05 + sheen * 0.22
-}
-
-/// Poured concrete: broad stains, a sandy grain, scattered pits (small dark pockets with a
-/// pale lip) and, every 320 by 180 pixels, a seam where the shuttering met, with a hairline
-/// crack wandering down some of the vertical ones.
-fn concrete(x: usize, y: usize) -> f32 {
-    let stain = blotch(x, y, 140.0, 10) - 0.5;
-    let cloud = blotch(x, y, 34.0, 11) - 0.5;
-    let sand = hash(x as i64, y as i64, 12) - 0.5;
-    let fine = blotch(x, y, 3.0, 13) - 0.5;
-    // Pits: a pocket may sit in each 9-pixel cell, dark in the middle with a lighter rim.
-    let (cx, cy) = ((x / 9) as i64, (y / 9) as i64);
-    let pit = if hash(cx, cy, 14) > 0.93 {
-        let (dx, dy) = ((x % 9) as f32 - 3.0 - hash(cx, cy, 15) * 3.0, (y % 9) as f32 - 3.0 - hash(cx, cy, 16) * 3.0);
-        let d = (dx * dx + dy * dy).sqrt();
-        if d < 1.8 { -0.55 } else if d < 2.8 { 0.2 } else { 0.0 }
-    } else {
-        0.0
-    };
-    // Seams: a dark line with a pale edge beside it.
-    let seam = |at: usize, size: usize| -> f32 {
-        match at % size {
-            0 => -0.45,
-            1 => 0.18,
-            r if r == size - 1 => 0.12,
-            _ => 0.0,
-        }
-    };
-    let panel_cols = x / 320;
-    let crack = if hash(panel_cols as i64, 17, 17) > 0.45 {
-        // A crack down the seam's left, its x wandering with y.
-        let wander = ((blotch(0, y, 40.0, 18) - 0.5) * 22.0) as i64;
-        let line = (panel_cols * 320) as i64 + 160 + wander;
-        if (x as i64 - line).abs() == 0 && hash(y as i64 / 90, panel_cols as i64, 19) > 0.4 { -0.4 } else { 0.0 }
-    } else {
-        0.0
-    };
-    0.5 + stain * 0.30 + cloud * 0.22 + sand * 0.26 + fine * 0.14 + pit + seam(x, 320) + seam(y, 180) + crack
 }
