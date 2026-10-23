@@ -40,8 +40,8 @@ impl App {
             dropdown(DEVICE_CHOICES, Some(DeviceChoice(t.device)), move |d: DeviceChoice| on(InputTracking { device: d.0, ..base.clone() }))
                 .width(200),
             help(
-                "Controllers are numbered from 0 in the order they connected; each keeps its number until it \
-                 disconnects. Every controller merges them all, by time."
+                "Controllers are numbered from 0 in the order they connected, and keep their number until they \
+                 disconnect. Every controller merges them all in time order."
                     .into(),
             ),
         ]

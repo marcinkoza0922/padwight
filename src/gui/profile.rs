@@ -5,9 +5,11 @@ use iced::widget::{column, row};
 use super::*;
 use crate::info::{Glyphs, button_name};
 use super::guide_tab::{self, GuideView};
-use crate::pad_widget::controller_drawing;
+use crate::pad_widget::{Callouts, controller_drawing};
 
 mod button_list;
+mod callouts;
+use callouts::{drawing_labels, drawing_tips};
 pub(super) use button_list::{button_rows, paddle_rows};
 use button_list::row_matches;
 
@@ -134,70 +136,6 @@ impl Ui<'_> {
     }
 }
 
-/// Labels for the controller drawing: every input that doesn't simply pass through. Guide's
-/// usual mapping is left out too: the engine ignores it (Guide is built in).
-/// A stick's mode in a word or two for the picture, or `None` while it's the stick it is.
-fn stick_mode(cfg: &StickConfig, s: Stick) -> Option<&'static str> {
-    Some(match cfg.action {
-        StickAction::Gamepad { stick, .. } if stick == s => return None,
-        StickAction::Gamepad { stick: Stick::Left, .. } => "Pad LS",
-        StickAction::Gamepad { stick: Stick::Right, .. } => "Pad RS",
-        StickAction::Disabled => "Stick off",
-        StickAction::Mouse { .. } => "Mouse",
-        StickAction::Scroll { .. } => "Scroll",
-        StickAction::Ring { .. } => "Ring",
-        StickAction::Flick { .. } => "Flick",
-    })
-}
-
-/// An action as its callout on the picture says it: the summary, shortened where the column is
-/// too narrow for it. A menu is its name alone, as the list below the picture marks it a menu.
-fn callout(action: &ButtonAction) -> String {
-    match action {
-        ButtonAction::GyroClutch => "Gyro clutch".into(),
-        ButtonAction::OpenMenu(name) => format!("“{name}”"),
-        _ => summarize(action),
-    }
-}
-
-pub(super) fn drawing_labels(p: &Profile) -> Vec<(pad_svg::Spot, String)> {
-    let mut labels = Vec::new();
-    for b in Button::ALL {
-        let usual = if b == Button::Guide { ButtonAction::guide_hold() } else { ButtonAction::Gamepad(b) };
-        let gestures = p.gestures(b).is_some();
-        // A stick's own mode shares its click's label, since both meet the picture at the stick.
-        let stick = match b {
-            Button::LeftStick => stick_mode(p.stick(Stick::Left), Stick::Left),
-            Button::RightStick => stick_mode(p.stick(Stick::Right), Stick::Right),
-            _ => None,
-        };
-        let click = (*p.button(b) != usual || gestures).then(|| {
-            let mut label = callout(p.button(b));
-            if gestures {
-                label.push_str(pad_svg::GESTURE_MARK);
-            }
-            label
-        });
-        let label = match (stick, click) {
-            (Some(stick), Some(click)) => format!("{stick} · {click}"),
-            (Some(stick), None) => stick.to_string(),
-            (None, Some(click)) => click,
-            (None, None) => continue,
-        };
-        labels.push((pad_svg::Spot::Button(b), label));
-    }
-    for t in [Trigger::Left, Trigger::Right] {
-        let label = match p.trigger(t) {
-            TriggerAction::Gamepad(out) if *out == t => continue,
-            TriggerAction::Gamepad(out) => format!("Pad {}", if *out == Trigger::Left { "LT" } else { "RT" }),
-            TriggerAction::Disabled => "Disabled".into(),
-            TriggerAction::Button { action, .. } => callout(action),
-        };
-        labels.push((pad_svg::Spot::Trigger(t), label));
-    }
-    labels
-}
-
 #[expect(clippy::too_many_lines, reason = "predates the size lints")]
 pub(super) fn view_profile<'a>(p: &'a Profile, ui: &Ui, tab: ProfileTab, guide: GuideView<'a>) -> Element<'a, Message> {
     let names = ui.names;
@@ -210,14 +148,13 @@ pub(super) fn view_profile<'a>(p: &'a Profile, ui: &Ui, tab: ProfileTab, guide: 
                 sections.push(section(
                 "Buttons",
                 Some(
-                    "Click a button's name to edit it. Add a double tap, triple tap or long press \
-                     with the \"+\" buttons under its actions. Buttons with gestures act once the gesture \
-                     is decided: a quick tap fires after the tap window; held past the tap window, the \
-                     button's own action presses \
-                     and holds until release (unless a long press is set, which takes over when held). \
-                     In the summaries, keys are gray, mouse buttons teal and controller buttons their \
-                     own glyphs, as the overlays draw them; the colored icon before a word such as \
-                     Menu or Toggle marks the kind of action."
+                    "Click a button's name to edit it, and add a double tap, triple tap or long press \
+                     with the \"+\" buttons under its actions. A button with gestures waits until the gesture \
+                     is clear: a quick tap fires after the tap window; held past it, the button's own action \
+                     holds until release (or the long press takes over, if set). \
+                     In the summaries, keys are gray, mouse buttons teal and controller buttons show their \
+                     glyphs, as on the overlays; the colored icon before a word such as Menu or Toggle marks \
+                     the kind of action."
                         .into(),
                 ),
                 buttons,
@@ -257,11 +194,10 @@ pub(super) fn view_profile<'a>(p: &'a Profile, ui: &Ui, tab: ProfileTab, guide: 
                 section(
                     "Sticks",
                     Some(
-                        "A stick's directions (Left Stick Up, …) act as buttons on top of the stick's mode. \
-                         They can't have actions of their own, but they can be used in combos \
-                         (e.g. LB + Right Stick Right), in macros, and as the output of other buttons. \
-                         They press at the stick's \"Directions press at\" threshold. For per-direction \
-                         actions, use a button ring."
+                        "A stick's directions (Left Stick Up, …) act as buttons on top of the stick's mode, \
+                         pressing at its \"Directions press at\" threshold. They have no actions of their own, \
+                         but work in combos (e.g. LB + Right Stick Right), in macros, and as other buttons' \
+                         output. For an action per direction, use a button ring."
                             .into(),
                     ),
                     sticks,
@@ -273,9 +209,9 @@ pub(super) fn view_profile<'a>(p: &'a Profile, ui: &Ui, tab: ProfileTab, guide: 
             let mut sections = vec![section(
                 if ui.layer.is_some() { "This layer's combos" } else { "Combos" },
                 Some(format!(
-                    "Buttons pressed together, within {} ms of each other, act as one input. A button that is part \
-                     of a combo waits that long before acting alone, unless it's set to Disabled: then it \
-                     works only as a modifier, with no time limit.",
+                    "Buttons pressed within {} ms of each other act as one input. A button in a combo waits \
+                     that long before acting alone, unless it's Disabled: then it's only a modifier, with no \
+                     time limit.",
                     p.combo_window_ms
                 )),
                 combo_rows(p, ui),
@@ -358,7 +294,7 @@ pub(super) fn base_combos<'a>(marks: LayerMarks<'_>) -> Element<'a, Message> {
     }
     section(
         "The profile's combos",
-        Some("They stay on while the layer is held, unless switched off here or replaced by a layer combo with the same buttons.".into()),
+        Some("They stay on while the layer is held, unless switched off here or replaced by a layer combo on the same buttons.".into()),
         rows,
     )
 }
@@ -416,9 +352,9 @@ pub(super) fn requirement_rows(p: &Profile, f: Feature) -> Vec<Element<'_, Messa
     let label = f.label();
     // The same explanation for every feature, behind an ⓘ rather than a paragraph under each box.
     let hint = format!(
-        "You decide this; it isn't detected. Tick it when the profile can't be played without {label} ({example}). \
-         Leave it unticked when it is only an extra on a scheme that works without it. Players whose controller has \
-         no {label} aren't offered the profile, and Guide skips it."
+        "This isn't detected: tick it if the profile can't be played without {label} ({example}), \
+         and leave it unticked if it's only an extra. Players whose controller has no {label} aren't \
+         offered the profile, and Guide skips it."
     );
     vec![
         row![checkbox(has).label(format!("Can't be played without {label}")).on_toggle(toggled), help(hint)]
@@ -839,15 +775,15 @@ impl App {
     /// label each face button shows. The bindings don't move.
     fn view_nintendo_layout(&self) -> Element<'_, Message> {
         let pad = self.picked_controller().and_then(|d| self.status.as_ref()?.controllers.iter().find(|c| c.id == d.id));
-        let note = "Swaps A with B and X with Y, to match prompts that a game draws in the Nintendo layout. On a \
-                    Nintendo pad the face buttons send the letter on their label, so the B button sends B. A face \
-                    button whose plain press is changed turns that off, and the buttons send their positions again. \
-                    On other pads only the labels change. A setup can set its own choice, which wins.";
+        let note = "Swaps A with B and X with Y, to match games that draw Nintendo-layout prompts. On a Nintendo \
+                    pad each face button then sends the letter on its label; remapping a face button's plain press \
+                    turns that off, and they send their positions again. On other pads only the labels change. A \
+                    setup's own choice overrides this.";
         let toggle = toggler(pad.is_some_and(|c| c.nintendo_layout)).label("Nintendo button layout");
         let toggle = if pad.is_some() { toggle.on_toggle(Message::SetNintendoLayout) } else { toggle };
         // It's the controller's setting, not the profile's, which the card's place on every profile doesn't say.
         let hint = pad.map_or_else(
-            || "A setting of each controller, the same in every profile. Pick a controller in the header to set it.".to_string(),
+            || "Set per controller, the same in every profile. Pick a controller in the header to change it.".to_string(),
             |c| format!("For {}, in every profile.", c.nickname_or_name()),
         );
         section("Button layout", Some(note.into()), vec![toggle.into(), text(hint).size(13).color(MUTED_COLOR).into()])
@@ -1044,15 +980,10 @@ impl App {
         }
         let pad = self.shown_pad();
         let labels = labels_from.map(drawing_labels).unwrap_or_default();
+        let tips = labels_from.map(drawing_tips).unwrap_or_default();
         let caption = match labels_from {
             Some(p) if labels.is_empty() => passthrough_caption(p, named, &self.live_caption()),
             _ => self.live_caption(),
-        };
-        // A trailing "+" on a callout is too short to explain itself.
-        let caption = if labels.iter().any(|(_, l)| l.ends_with(pad_svg::GESTURE_MARK)) {
-            format!("{caption}\nA blue “+” after a label: that button also does something on a double tap, triple tap or long press")
-        } else {
-            caption
         };
         column![
             title,
@@ -1064,7 +995,7 @@ impl App {
                     pad.model,
                     // The picture is the controller itself, so it keeps the controller's own labels.
                     Glyphs { family: pad.family, nintendo_layout: false },
-                    &labels,
+                    Callouts { labels: &labels, tips: &tips },
                     self.picture_opacity(),
                 ))
                 .direction(scrollable::Direction::Horizontal(scrollable::Scrollbar::default()))

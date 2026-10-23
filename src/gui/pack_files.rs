@@ -62,7 +62,7 @@ impl App {
         let assets = &self.game().assets;
         let font = self.preview_font();
         let mut rows: Vec<Element<'_, Message>> = vec![
-            text("Icons, sounds and fonts go in the pack when you export it, and work only in this setup. Use an icon as {icon:name} in any text, a font as {font:name}…{/font} or as the overlay font, and pick a sound for an overlay's cues under Sounds.")
+            text("Icons, sounds and fonts are exported with the pack and work only in this setup. Use an icon as {icon:name} in any text, a font as {font:name}…{/font} or as the overlay font, and a sound for an overlay's cues under Sounds.")
                 .size(13)
                 .color(MUTED_COLOR)
                 .into(),
@@ -118,7 +118,7 @@ impl App {
             .align_y(Alignment::Center)
             .into(),
         );
-        section("Pack files", Some("Your own icons, sound cues and fonts. Draw an icon that fits each menu item, and add a sound that suits the game, when none of the built-in ones do.".into()), rows)
+        section("Pack files", Some("Your own icons, sound cues and fonts, for when the built-in ones don't fit the game.".into()), rows)
     }
 }
 

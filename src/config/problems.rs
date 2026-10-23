@@ -140,7 +140,7 @@ pub fn action_problem(action: &ButtonAction, names: &Names) -> Option<String> {
                     && macro_ms > *every_ms
                 {
                     problem = Some(format!(
-                        "turbo of macro “{name}” presses every {every_ms} ms, but the macro takes {macro_ms} ms to play: raise the turbo's gap to at least {macro_ms} ms"
+                        "turbo of macro “{name}” presses every {every_ms} ms, but the macro takes {macro_ms} ms: raise the gap to at least {macro_ms} ms"
                     ));
                 }
             }

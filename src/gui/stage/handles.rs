@@ -24,16 +24,21 @@ const SLOP: f32 = 4.0;
 /// The outline's color: the stage's accent, which reads on light and dark games alike.
 const ACCENT: Color = Color::from_rgb(0.25, 0.65, 1.0);
 
+/// The flash's color: bright against a dark wallpaper and a black overlay both.
+const FLASH: Color = Color::from_rgb(1.0, 0.85, 0.2);
+
 pub struct Handles<'a, M> {
     content: Element<'a, M>,
     display: Size,
+    /// How strongly the panel is flashing, 0 to 1.
+    flash: f32,
     on_gesture: Box<dyn Fn(Gesture) -> M + 'a>,
     on_pick: Box<dyn Fn(Part) -> M + 'a>,
 }
 
 /// `content` with grips, on a display of `display`.
-pub fn handles<'a, M: 'a>(content: impl Into<Element<'a, M>>, display: Size, on_gesture: impl Fn(Gesture) -> M + 'a, on_pick: impl Fn(Part) -> M + 'a) -> Element<'a, M> {
-    Element::new(Handles { content: content.into(), display, on_gesture: Box::new(on_gesture), on_pick: Box::new(on_pick) })
+pub fn handles<'a, M: 'a>(content: impl Into<Element<'a, M>>, display: Size, flash: f32, on_gesture: impl Fn(Gesture) -> M + 'a, on_pick: impl Fn(Part) -> M + 'a) -> Element<'a, M> {
+    Element::new(Handles { content: content.into(), display, flash, on_gesture: Box::new(on_gesture), on_pick: Box::new(on_pick) })
 }
 
 #[derive(Default)]
@@ -155,6 +160,13 @@ impl<M> Widget<M, iced::Theme, iced::Renderer> for Handles<'_, M> {
                 renderer::Quad { bounds: outline, border: Border { color: ACCENT, width: 1.5, radius: 2.0.into() }, ..renderer::Quad::default() },
                 Background::Color(Color::TRANSPARENT),
             );
+            if self.flash > 0.0 {
+                let glow = Rectangle { x: b.x - 6.0, y: b.y - 6.0, width: b.width + 12.0, height: b.height + 12.0 };
+                renderer.fill_quad(
+                    renderer::Quad { bounds: glow, border: Border { color: Color { a: self.flash, ..FLASH }, width: 6.0, radius: 8.0.into() }, ..renderer::Quad::default() },
+                    Background::Color(Color { a: self.flash * 0.35, ..FLASH }),
+                );
+            }
             let (x0, x1, xm) = (b.x, b.x + b.width, b.x + b.width / 2.0);
             let (y0, y1, ym) = (b.y, b.y + b.height, b.y + b.height / 2.0);
             if let Some((_, part)) = tree.state.downcast_ref::<State>().hovered {
@@ -271,7 +283,7 @@ mod tests {
         use crate::overlay::draw::tag;
         use iced::widget::{column, space};
         let items = column![tag(space().width(200).height(50), Part::Item(0)), tag(space().width(200).height(50), Part::Item(1))];
-        let panel = handles(items, Size::new(1000.0, 1000.0), |g| Got::Moved(g.grip), Got::Picked);
+        let panel = handles(items, Size::new(1000.0, 1000.0), 0.0, |g| Got::Moved(g.grip), Got::Picked);
         let mut sim = iced_test::Simulator::with_size(iced::Settings::default(), Size::new(1000.0, 1000.0), panel);
         sim.point_at(at);
         let _ = sim.simulate([Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))]);

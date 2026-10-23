@@ -96,7 +96,13 @@ pub(super) struct Stage {
     around: Vec<StageTarget>,
     /// The item or cell last clicked on the overlay, open in the Content tab.
     picked: Option<Part>,
+    /// When the Flash button was pressed, while the overlay is still flashing.
+    flash: Option<Instant>,
 }
+
+/// How long the overlay flashes, and how many times it pulses in that.
+const FLASH_FOR: Duration = Duration::from_millis(1500);
+const FLASH_PULSES: f32 = 3.0;
 
 #[derive(Debug, Clone)]
 pub(super) enum StageMessage {
@@ -116,6 +122,9 @@ pub(super) enum StageMessage {
     /// Draws all the others around it, or none.
     AroundAll(bool),
     Pick(Part),
+    /// Makes the overlay flash, to find it against a busy or dark background.
+    Flash,
+    FlashTick(Instant),
     Dock,
     Fold,
     Key(window::Id, StageKey),
@@ -206,6 +215,16 @@ impl App {
                 }
             }
             StageMessage::Pick(part) => return self.pick(part),
+            StageMessage::Flash => {
+                if let Some(stage) = &mut self.stage {
+                    stage.flash = Some(Instant::now());
+                }
+            }
+            StageMessage::FlashTick(now) => {
+                if let Some(stage) = &mut self.stage {
+                    stage.flash = stage.flash.filter(|since| now.saturating_duration_since(*since) < FLASH_FOR);
+                }
+            }
             StageMessage::AroundAll(on) => {
                 let all = if on { self.stage.as_ref().map(|s| self.around_choices(s.target)).unwrap_or_default() } else { Vec::new() };
                 if let Some(stage) = &mut self.stage {
@@ -254,6 +273,7 @@ impl App {
             folded: false,
             around: self.default_around(),
             picked: None,
+            flash: None,
         });
         open.discard()
     }
@@ -329,7 +349,7 @@ impl App {
                 .and_then(|style| {
                     let fit = Fit::of(style, display);
                     let panel = self.stage_panel(stage.target, style, &fit, &Anim::still())?;
-                    let held = handles::handles(panel, display, |g| Message::Stage(StageMessage::Gesture(g)), |p| Message::Stage(StageMessage::Pick(p)));
+                    let held = handles::handles(panel, display, stage.flashing(), |g| Message::Stage(StageMessage::Gesture(g)), |p| Message::Stage(StageMessage::Pick(p)));
                     Some(crate::overlay::draw::place(held, style, &fit, &Anim::still()))
                 })
                 .unwrap_or_else(|| space().into());
@@ -345,6 +365,18 @@ impl App {
 }
 
 impl Stage {
+    pub(super) fn is_flashing(&self) -> bool {
+        self.flash.is_some()
+    }
+
+    /// How bright the flash is now, from 0 (not flashing) to 1: pulses that fade out.
+    fn flashing(&self) -> f32 {
+        let Some(since) = self.flash else { return 0.0 };
+        let t = since.elapsed().as_secs_f32() / FLASH_FOR.as_secs_f32();
+        if t >= 1.0 { return 0.0 }
+        (t * FLASH_PULSES * std::f32::consts::TAU).cos().mul_add(-0.5, 0.5) * (1.0 - t * 0.5)
+    }
+
     /// Takes one of the inspector's own settings.
     fn set(&mut self, message: &StageMessage) {
         match *message {

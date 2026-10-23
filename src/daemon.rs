@@ -814,7 +814,7 @@ impl Daemon {
                         crate::quit::force_quit(pid);
                         vec![format!("Force quit {game}")]
                     }
-                    None => vec!["Nothing to force quit".into(), "The desktop and this app are never ended.".into()],
+                    None => vec!["Nothing to force quit".into(), "The desktop and Padwight are never closed.".into()],
                 };
                 self.say(lines);
             }

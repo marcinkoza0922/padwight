@@ -1,7 +1,7 @@
 //! Which part of the drawing a point falls on, for the debug window's clickable controller.
 
 use super::{
-    BUMPER_HEIGHT, TRIGGER_HEIGHT, TRIGGER_REACH, face_positions,
+    BUMPER_ABOVE, BUMPER_HEIGHT, Spot, TRIGGER_HEIGHT, TRIGGER_REACH, face_positions,
     layout::{DpadKind, Dot, Layout},
 };
 use crate::{
@@ -32,6 +32,42 @@ pub fn hit(model: Option<PadModel>, x: f32, y: f32) -> Option<Part> {
                 .find(|(_, dot)| within_dot(*dot, x, y))
                 .map(|(b, _)| Part::Button(b))
         })
+}
+
+/// The box (left, top, width, height) `spot` covers on `model`'s drawing, in drawing
+/// coordinates without the label margin, for pointing at it. A bumper is the part of it that
+/// shows above the body. `None` for a button the drawing doesn't have (stick directions, paddles).
+pub fn area(model: Option<PadModel>, spot: Spot) -> Option<(f32, f32, f32, f32)> {
+    let l = Layout::of(model);
+    let around = |(x, y): (f32, f32), r: f32| (x - r, y - r, 2.0 * r, 2.0 * r);
+    let (lx, rx) = l.shoulders;
+    let w = l.shoulder_w;
+    let b = match spot {
+        Spot::Trigger(t) => {
+            let cx = if t == Trigger::Left { lx } else { rx };
+            return Some((cx - w * TRIGGER_REACH, l.trigger_top(), 2.0 * w * TRIGGER_REACH, TRIGGER_HEIGHT));
+        }
+        Spot::Button(b) => b,
+    };
+    let arm = l.dpad_reach * 18.0 / 26.0;
+    let (dx, dy) = l.dpad;
+    let dot = |(x, y, r): Dot| around((x, y), r + 3.0);
+    Some(match b {
+        Button::LeftBumper | Button::RightBumper => {
+            let cx = if b == Button::LeftBumper { lx } else { rx };
+            (cx - w / 2.0, l.bumper_top(), w, BUMPER_ABOVE)
+        }
+        Button::LeftStick => around(l.left_stick, l.stick_r),
+        Button::RightStick => around(l.right_stick, l.stick_r),
+        Button::DpadUp => around((dx, dy - arm), l.dpad_reach * 0.35),
+        Button::DpadDown => around((dx, dy + arm), l.dpad_reach * 0.35),
+        Button::DpadLeft => around((dx - arm, dy), l.dpad_reach * 0.35),
+        Button::DpadRight => around((dx + arm, dy), l.dpad_reach * 0.35),
+        Button::Select => dot(l.select),
+        Button::Start => dot(l.start),
+        Button::Guide => dot(l.guide),
+        _ => return face_positions(l).into_iter().find(|(f, _)| *f == b).map(|(_, c)| around(c, l.face_r)),
+    })
 }
 
 /// Where a stick sits when the pointer is at (`x`, `y`): the cap follows the pointer, up to the
@@ -181,6 +217,23 @@ mod tests {
             // The bars meet: there is no dead gap between the trigger and its bumper.
             assert!(matches!(at(lx, trigger_top + TRIGGER_HEIGHT), Some(Part::Trigger(Trigger::Left, _))), "{model:?}");
         }
+    }
+
+    #[test]
+    fn each_drawn_part_is_hit_inside_its_area() {
+        let part = |p: Part| match p {
+            Part::Button(b) => Some(b),
+            Part::Stick(Stick::Left) => Some(Button::LeftStick),
+            Part::Stick(Stick::Right) => Some(Button::RightStick),
+            Part::Trigger(..) => None,
+        };
+        for model in models() {
+            for b in Button::ALL {
+                let (x, y, w, h) = area(model, Spot::Button(b)).unwrap_or_else(|| panic!("{b:?} on {model:?}"));
+                assert_eq!(hit(model, x + w / 2.0, y + h / 2.0).and_then(part), Some(b), "{model:?}");
+            }
+        }
+        assert_eq!(area(None, Spot::Button(Button::LeftPaddle)), None, "paddles aren't drawn");
     }
 
     #[test]

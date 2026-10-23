@@ -67,7 +67,7 @@ impl SystemMenu {
         let then = if self.from_guide && how == Exit::Back { "go back to the Guide" } else { "close the menu" };
         OfferView {
             title: "Save your changes?".into(),
-            detail: "You changed settings that aren't saved yet.".into(),
+            detail: "You have unsaved changes.".into(),
             answers: [("{confirm}", "Save"), ("{west}", "Discard"), ("{back}", "Keep editing")]
                 .iter()
                 .map(|(b, t)| ((*b).into(), (*t).into()))
@@ -158,7 +158,7 @@ fn hold_prompt(hold: Hold, mut style: OverlayStyle) -> OfferView {
         ),
         Hold::RemappingOff => (
             "Remapping is off",
-            "It was turned off while you had changes here that aren't saved yet.",
+            "It was turned off while you had unsaved changes here.",
             vec![("{confirm}", "Save"), ("{west}", "Discard")],
             "Save or Discard to hand the controller back to the game.",
         ),

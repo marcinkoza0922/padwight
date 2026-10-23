@@ -175,7 +175,7 @@ impl App {
                 tabs,
                 body,
                 row![
-                    text("Each click adds the character to the end of your text. Emoji show in color where the system has an emoji font.").size(12).color(MUTED_COLOR).width(Length::Fill),
+                    text("Click a character to add it to the end of your text. Emoji show in color if the system has an emoji font.").size(12).color(MUTED_COLOR).width(Length::Fill),
                     space::horizontal(),
                     button(text("Done")).on_press(Message::CloseCharPicker),
                 ]

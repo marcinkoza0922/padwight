@@ -1,17 +1,31 @@
 # The settings window
 
-The left side lists the pages and your setups. The rest of the window shows the page you picked.
+The sidebar lists the pages and your setups. The rest of the window shows the page you picked.
 
-- **Overview**: your controller, drawn with the mapping of the profile in use on each button. **What's happening** shows your latest presses as your controller labels them, with what each did, beside the buttons Padwight sent to the game for them, and each profile switch with the rule or action that made it. It also lists the controllers Padwight has found, with Test rumble and Calibrate gyro.
-- **App settings**: two tabs. **General** has the window's appearance (Auto, Light or Dark), the Nintendo button layout, automatic switching, the default profile, and how the on-screen keyboard, numpad, media controls and in-game menu look. The Nintendo button layout swaps A with B and X with Y, to match prompts a game draws that way. On a Nintendo pad the face buttons send the letter on their label, so the B button sends B. Changing the plain press of any face button turns that off, and the buttons send their positions again. On other pads only the labels change. Setups can set their own choice on their Details tab, or follow this one. **Performance** has switches that turn things off in every overlay of every setup, for computers that struggle to draw them: **Motion** (off, overlays redraw only when something changes, the biggest saving with a graphics card), **Decorations** (shadows, outlines, gradients and glows; off is the biggest saving without a graphics card, in a virtual machine say), **Sounds** (off, the audio device isn't opened at all) and **Looping animations** (off, glows stop pulsing, and gradients and scanlines stop drifting, while the motion styles still play).
-- **Controller shortcuts** (the second tab of App settings): where the Guide overlay's opener, the Guide shortcuts and mouse mode's keys sit. They apply to every setup. See "Moving the shortcuts" in [The Guide button](guide-button.md).
+- **Overview**: your controller, labeled with what each button does in the profile in use. **What's happening** lists your latest presses, what Padwight sent to the game for each, and each profile switch with what caused it. **Controllers** lists the controllers Padwight has found, with **Calibrate gyro**, **Test rumble** and the rumble strength.
+- **App settings**, **General** tab: the window's appearance (Auto, Light or Dark), automatic switching and the default profile, the overlays' font, colors, motion and sounds, the **Performance** switches, and the look of the on-screen keyboard, numpad, media controls and in-game menu. **Search settings…** finds a card by name.
+- **App settings**, **Controller shortcuts** tab: what opens the Guide overlay, the Guide shortcuts and mouse mode's keys, for every setup. See [The Guide button](guide-button.md).
 - **Manual**: this guide.
-- **General**: the built-in setup for the desktop and plain gamepad use. Its profiles are used when no other setup matches.
-- **Setups**: your setups, one for each game, each with its own profiles. **+ Add setup** creates one.
-- **System check**: a button in the Help card on App settings, and a strip on the Overview when something is missing. It lists what Padwight needs from your system (access to `/dev/uinput`, to your controller and to its gyro), why each is needed, and for anything missing the commands that set it up, with a Copy button. **Check again** looks once more after you've run them. `padwight doctor` in a terminal says the same.
-- **Top bar**: the *Remapping* switch turns all remapping on or off. It reads off, and can't be turned on, while the daemon isn't running. *Active profile* switches the profile in use right away.
-- **Bottom bar**: changes are kept until you press **Save & apply**, which saves them and starts using them. **Revert** throws them away.
+- **General**: the built-in setup for the desktop and plain gamepad use. It's used when no other setup matches.
+- **Setups**: one for each game, each with its own profiles. **+ Add setup** adds one.
+- **Top bar**: the *Remapping* switch turns all remapping on or off (it stays off while the daemon isn't running). **Active profile** switches the profile in use right away: pick the setup, then its profile. With more than one controller, the first box picks which controller to set, or **All controllers**.
+- **Bottom bar**: changes wait until you press **Save & apply**. **Revert** throws them away.
 
-The first time the window opens, a short tour walks through it. To take it again, click **Take the tour** in the Help card on **App settings**.
+## Button layout
 
-> **Tip:** if the top bar says the daemon isn't running, you can still edit. Your changes are saved, and they take effect once the daemon starts.
+A profile's **Profiles** tab has a **Button layout** card with the **Nintendo button layout** switch. It swaps the labels of A and B, and of X and Y, to match games that draw Nintendo prompts. It belongs to a controller, not to the profile: pick the controller in the top bar first. On a Nintendo pad the face buttons then send the letter on their label; remapping a face button's plain press turns that off. A setup can make its own choice on its **Details** tab.
+
+## Performance
+
+These switches turn things off in every overlay, for computers that struggle to draw them:
+
+- **Motion**: off, overlays appear and vanish at once and redraw only when something changes. The biggest saving with a graphics card.
+- **Decorations**: shadows, outlines, gradients and glows. Off is the biggest saving without a graphics card, such as in a virtual machine.
+- **Sounds**: off, the audio device is never opened.
+- **Looping animations**: off, glows stop pulsing and gradients stop drifting. Motion styles still play.
+
+## Help
+
+The **Help** card on App settings has **Take the tour**, which walks through the window again, and **System check**, which also shows as a strip on the Overview when something is missing. It lists what Padwight needs from your system (access to `/dev/uinput`, your controller and its gyro), and for anything missing the commands that fix it, with a **Copy** button. `padwight doctor` in a terminal does the same.
+
+> **Tip:** you can edit while the daemon isn't running. Changes are saved and take effect once it starts.

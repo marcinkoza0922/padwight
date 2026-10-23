@@ -20,7 +20,7 @@ impl App {
         }
         section(
             "Overlay sounds",
-            Some("A faint sound as the cursor moves in an overlay, another when something is picked, and a softer one as it pops in and out. A setup's own sounds start as a copy of the ones on App settings. Any overlay can be turned off.".into()),
+            Some("Faint sounds as the cursor moves in an overlay, when something is picked, and as it opens and closes. A setup's own sounds start as a copy of App settings'. Any overlay can be silenced.".into()),
             rows,
         )
     }
@@ -35,7 +35,7 @@ impl App {
         }
         section(
             "Overlay motion",
-            Some(format!("How this setup's overlays move, while it is active. Each kind of overlay has its own style; a setup's own motion starts as a copy of the one on App settings. {}", motion_guide())),
+            Some(format!("How this setup's overlays move while it's active. Each kind of overlay has its own style, starting as a copy of App settings'. {}", motion_guide())),
             rows,
         )
     }
@@ -53,9 +53,9 @@ impl App {
         };
         section(
             "Controllers this setup supports",
-            Some("Tick a kind only if the game supports it explicitly. While this setup is active, the game sees a controller of that kind as that kind, with its own buttons and glyphs. Other controllers, and kinds left unticked, appear to the game as an Xbox controller.".into()),
+            Some("While this setup is active, the game sees a ticked kind as itself, with its own buttons and glyphs. Everything else appears as an Xbox controller.".into()),
             vec![
-                text("The game sees a controller as an Xbox one unless its kind is ticked here. Tick only kinds the game supports itself.").size(13).color(MUTED_COLOR).into(),
+                text("Tick only kinds the game supports itself.").size(13).color(MUTED_COLOR).into(),
                 toggle("DualShock 4", support.dualshock, |s, on| s.dualshock = on).into(),
                 toggle("DualSense", support.dualsense, |s, on| s.dualsense = on).into(),
                 toggle("Switch Pro Controller", support.switch_pro, |s, on| s.switch_pro = on).into(),
@@ -72,7 +72,7 @@ impl App {
         }
         section(
             "Button layout",
-            Some("Nintendo layout for this setup's glyphs. Without its own choice, each controller's setting on the Profiles tab applies.".into()),
+            Some("Nintendo layout for this setup's glyphs. Otherwise each controller's setting on the Profiles tab applies.".into()),
             rows,
         )
     }
@@ -127,7 +127,7 @@ impl App {
             self.status.iter().flat_map(|s| &s.recent_windows).filter(|w| w.exe != env!("CARGO_PKG_NAME")).collect();
         if !recent.is_empty() {
             let mut list = column![
-                text("Recently focused windows: \"+ Rule\" adds a rule for the profile you're editing on the Profiles tab").size(13).color(MUTED_COLOR)
+                text("Recently focused windows. \"+ Rule\" adds a rule for the profile open on the Profiles tab.").size(13).color(MUTED_COLOR)
             ]
             .spacing(6);
             for w in recent {
@@ -193,7 +193,7 @@ impl App {
         column![
             section(
                 "Setup",
-                Some("The setup's name, as the sidebar shows it. Deleting the setup removes its profiles, items and rules once you Save & apply.".into()),
+                Some("The name shown in the sidebar. Deleting the setup removes its profiles, items and rules on Save & apply.".into()),
                 vec![
                     row![
                         labeled("Name", field("Setup name", &game.name).on_input(Message::RenameGame).width(260).into()),
@@ -206,7 +206,7 @@ impl App {
             ),
             section(
                 "Auto-switch rules",
-                Some("A rule switches to its profile when a matching window has focus, or a matching program is running. Untick a rule to turn it off.".into()),
+                Some("A rule switches to its profile when a matching window has focus or a matching program is running. Untick a rule to turn it off.".into()),
                 vec![rules.into()],
             ),
             self.view_game_nintendo_layout(),
@@ -218,7 +218,7 @@ impl App {
             self.view_pack_files(),
             section(
                 "Pack",
-                Some("A pack is a setup saved as a .padpack file, to share or to keep. Export saves this setup as one.".into()),
+                Some("A pack is a setup saved as a .padpack file, to share or keep.".into()),
                 pack_rows,
             ),
         ]

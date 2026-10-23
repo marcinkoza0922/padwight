@@ -490,7 +490,7 @@ impl App {
         }
         let clashes: Vec<_> = pack::live_clashes(plan, choices).collect();
         if !clashes.is_empty() {
-            let mut list = column![text("Another setup already has a rule for the same window. By default this setup's rule takes over:").size(13)].spacing(4);
+            let mut list = column![text("Another setup has a rule for the same window. By default, this setup's rule takes over:").size(13)].spacing(4);
             for (c, clash) in clashes {
                 let rule = &p.rules[clash.rule];
                 let keep = choices.keep_mine.get(c).copied().unwrap_or(false);
@@ -526,11 +526,11 @@ impl App {
         }
         col = feature_notes(col, out);
         if g.rules.is_empty() {
-            col = col.push(note("It has no auto-switch rules, so it won't be selected automatically for anyone who imports it."));
+            col = col.push(note("It has no auto-switch rules, so it won't switch on automatically for anyone who imports it."));
         }
         if let Some(b) = info.based_on.as_ref().filter(|_| !library) {
             col = col.push(
-                note(format!("Based on {} {} by {}: it's exported as your own pack, crediting the original.", b.name, b.version, b.author)),
+                note(format!("Based on {} {} by {}: it's exported as your pack, crediting the original.", b.name, b.version, b.author)),
             );
         }
         let input = |label: &'static str, placeholder: &'static str, value: &'a str, field_kind: PackField, width: f32| {
@@ -580,7 +580,7 @@ impl App {
         container(
             column![
                 text("Save your changes?").size(22),
-                text("Your edits haven't been saved yet. Save them and apply them before closing, or discard them.").width(Length::Fill),
+                text("Your edits haven't been saved. Save and apply them before closing, or discard them.").width(Length::Fill),
                 error,
                 row![
                     space::horizontal(),
@@ -728,8 +728,8 @@ fn feature_notes<'a>(mut col: Column<'a, Message>, out: &pack::Export) -> Column
             note(format!("The {} needs {}: players without it aren't offered it.", f.place, f.feature.label()))
         } else {
             note(format!(
-                "The {} uses {} as an extra: it is marked as playable without it. If it isn't, tick \
-                 “Can't be played without {}” on its Gyro tab.",
+                "The {} uses {} as an extra, so it's marked as playable without it. If it isn't, tick \
+                 “Can't be played without {}” in that profile.",
                 f.place,
                 f.feature.label(),
                 f.feature.label(),
@@ -738,7 +738,7 @@ fn feature_notes<'a>(mut col: Column<'a, Message>, out: &pack::Export) -> Column
         col = col.push(line);
     }
     if !out.pack.profiles.iter().any(|p| p.usable_with(&[])) {
-        col = col.push(text("Every profile needs a feature beyond a plain controller, so players without it get nothing. Consider adding a profile that works without it.").size(13).color(ERROR_COLOR));
+        col = col.push(text("Every profile needs a feature beyond a plain controller, so players without it get nothing. Consider adding a profile that doesn't.").size(13).color(ERROR_COLOR));
     }
     col
 }

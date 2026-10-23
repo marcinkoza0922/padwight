@@ -54,7 +54,7 @@ pub(in crate::gui) fn paddle_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a
     if ui.layer.is_none() && ui.query.trim().is_empty() {
         if !ui.any_paddles {
             rows.push(
-                note("None of your managed controllers have back paddles. These mappings take effect once one is connected.").into(),
+                note("None of your managed controllers has back paddles. These mappings apply once one is connected.").into(),
             );
         }
         rows.extend(requirement_rows(p, Feature::BackPaddles));

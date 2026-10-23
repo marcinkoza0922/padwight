@@ -49,7 +49,7 @@ impl App {
             Some(
                 "A keyboard over everything, typed with the controller: D-pad or stick to move, A to \
                  press, X backspace (hold to keep deleting), Y space, Start enter, LB and RB move the text \
-                 cursor, hold LT for Shift, hold B or press Guide to close. Keys are labelled in your \
+                 cursor, hold LT for Shift, hold B or press Guide to close. Keys are labeled in your \
                  keyboard layout. Map \"On-screen keyboard\" to a button or gesture to open it from the controller."
                     .into(),
             ),

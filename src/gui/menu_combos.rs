@@ -40,8 +40,8 @@ pub(super) fn offer<'a>(p: &Profile, trigger: &[Button], action: &ButtonAction, 
     let add = button(text("+ Add menu combos").size(13)).style(style::secondary).padding([3, 10]).on_press_maybe((!taken).then(|| Message::AddMenuCombos(combos)));
     let hint = if taken { "Some of these combos already exist.".to_string() } else { format!("Adds {names}.") };
     let tip = help(
-        "Makes a combo for each item of this menu: this input plus the item's button (D-pad Up, a face button, or its quick-select button), doing what that item does. \
-         They are ordinary combos on the Combos tab, so you can edit or delete them. Unavailable once any of them exists."
+        "Makes a combo per menu item: this input plus the item's button (a D-pad direction, face button or quick-select button) does what the item does. \
+         They're ordinary combos on the Combos tab, so you can edit or delete them. Unavailable once any of them exists."
             .into(),
     );
     Some(row![add, tip, note(hint).size(12)].spacing(10).align_y(Alignment::Center).into())

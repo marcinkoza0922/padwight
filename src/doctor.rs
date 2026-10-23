@@ -161,8 +161,8 @@ pub fn check_permissions(roots: &Roots) -> Vec<Finding> {
 }
 
 fn check_uinput(roots: &Roots) -> Finding {
-    const WHY: &str = "padwight shows games a virtual gamepad, and sends your keys and clicks through a virtual keyboard and mouse. \
-The kernel makes virtual input devices only through /dev/uinput, so the daemon has to open it for writing.";
+    const WHY: &str = "padwight shows games a virtual gamepad, and sends keys and clicks through a virtual keyboard and mouse. \
+The kernel creates virtual input devices only through /dev/uinput, so the daemon must open it for writing.";
     match fs::OpenOptions::new().write(true).open(&roots.uinput) {
         Ok(_) => Finding::new(Level::Ok, "Virtual devices: /dev/uinput is writable", ""),
         Err(e) if e.kind() == ErrorKind::NotFound => {
@@ -188,16 +188,15 @@ fn uinput_denied(roots: &Roots, why: &str) -> Finding {
     let (note, fix) = if state == RuleState::Current {
         (
             format!(
-                "/dev/uinput exists, and {UINPUT_RULE_NAME} is installed, but it hasn't been applied to your session. \
-Apply it, then log out and back in."
+                "{UINPUT_RULE_NAME} is installed, but not yet applied to your session. Apply it, then log out and back in."
             ),
             RELOAD.to_owned(),
         )
     } else {
         (
             format!(
-                "/dev/uinput exists, but your user can't write to it. {UINPUT_RULE_NAME} tags it for systemd-logind's `uaccess`, \
-which gives access to the user at the machine and nobody else."
+                "Your user can't write to /dev/uinput. {UINPUT_RULE_NAME} tags it for systemd-logind's `uaccess`, \
+which gives access only to the user at the machine."
             ),
             install_rule(UINPUT_RULE_NAME, UINPUT_RULE),
         )
@@ -240,21 +239,20 @@ fn check_node(roots: &Roots, node: &Node) -> Option<Finding> {
 }
 
 fn gamepad_denied(node: &Node) -> Finding {
-    let detail = "padwight reads the controller's buttons and sticks from its /dev/input node, and takes the node exclusively so a game sees \
-only the virtual gamepad. systemd-logind normally gives the user at the machine access to joysticks. It doesn't over SSH, \
-in some containers, or on systems without it.";
+    let detail = "padwight reads the controller from its /dev/input node, and takes it exclusively so games see only the virtual \
+gamepad. systemd-logind normally gives the user at the machine access to joysticks, but not over SSH, in some containers, \
+or on systems without it.";
     Finding::new(Level::Problem, format!("Controller: no read access to {} ({})", node.name, node.event), detail)
         .fix("sudo usermod -aG input $USER\n# then log out and back in".to_owned())
 }
 
 fn motion_denied(roots: &Roots, node: &Node) -> Finding {
-    let why = "Gyro comes from a separate input node that the controller's driver creates, classed as an accelerometer. \
-systemd's rules cover joysticks but not accelerometers, so it stays root-only. The rule gives the user at the machine access \
-to the motion sensors of PlayStation and Nintendo controllers only, so a laptop's tilt sensor is untouched. \
-Without it, everything but gyro works.";
+    let why = "Gyro comes from a separate input node, classed as an accelerometer, which systemd's rules leave root-only. \
+The rule gives the user at the machine access to PlayStation and Nintendo controllers' motion sensors only, so a laptop's \
+tilt sensor is untouched. Without it, everything but gyro works.";
     let state = file_state(&roots.rule_dirs, MOTION_RULE_NAME, MOTION_RULE);
     let (note, fix) = if state == RuleState::Current {
-        ("The rule is installed, but hasn't been applied to this controller. Apply it, then unplug and reconnect the controller.", RELOAD.to_owned())
+        ("The rule is installed, but not yet applied to this controller. Apply it, then reconnect the controller.", RELOAD.to_owned())
     } else {
         ("The motion-sensor rule isn't installed.", install_rule(MOTION_RULE_NAME, MOTION_RULE))
     };
@@ -287,7 +285,7 @@ fn check_motion_rule(roots: &Roots, nodes: &[Node]) -> Finding {
                 Level::Note,
                 format!("Gyro: {MOTION_RULE_NAME} isn't installed"),
                 // The report's last line already points to `--explain`, as the window's dialog does.
-                format!("{needed} Those controllers' motion sensors are root-only without it."),
+                format!("{needed} Without it, their motion sensors are root-only."),
             )
             .fix(install_rule(MOTION_RULE_NAME, MOTION_RULE))
         }
@@ -316,8 +314,8 @@ fn check_hidraw_rule(roots: &Roots, nodes: &[Node]) -> Finding {
                 format!("Raw controller access: {HIDRAW_RULE_NAME} isn't installed"),
                 format!(
                     "{connected}Steam and SDL games read PlayStation and Switch controllers through their raw HID node, which padwight \
-can't take from them, so they see your presses as well as the virtual gamepad. The rule closes that node. Turn the controller \
-off and on after installing it."
+can't take, so they see your presses as well as the virtual gamepad. The rule closes that node. Turn the controller off and \
+on after installing it."
                 ),
             )
             .fix(install_rule(HIDRAW_RULE_NAME, HIDRAW_RULE))
@@ -359,7 +357,7 @@ fn daemon_down() -> Finding {
     let detail = if unit {
         "Start it now and at every login."
     } else {
-        "No padwight.service is installed for your user, so start it by hand, or install the unit (the install.sh in the release tarball does)."
+        "No padwight.service is installed for your user. Start it by hand, or install the unit (the release tarball's install.sh does)."
     };
     Finding::new(Level::Note, "Daemon: not running", detail).fix(fix.to_owned())
 }

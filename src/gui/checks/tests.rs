@@ -46,7 +46,7 @@ fn problems_are_found_inside_nested_actions_and_flag_their_section() {
         every_ms,
     };
     let long = Names { macros: vec!["Long".into()], macro_ms: [("Long".to_string(), 300)].into(), ..Names::default() };
-    assert!(action_problem(&turbo(200), &long).is_some_and(|p| p.contains("raise the turbo's gap")));
+    assert!(action_problem(&turbo(200), &long).is_some_and(|p| p.contains("raise the gap")));
     assert_eq!(action_problem(&turbo(300), &long), None);
 
     let mut p = Profile::passthrough("p");

@@ -30,6 +30,7 @@ pub const GESTURE_MARK: &str = " +";
 
 /// A mapping label's text and row; it sits in the left or right column.
 pub struct PlacedLabel {
+    pub spot: Spot,
     pub text: String,
     pub y: f32,
     pub right: bool,
@@ -87,7 +88,7 @@ pub fn place_labels(labels: &[(Spot, String)], model: Option<PadModel>) -> Vec<P
             .filter(|a| a.2 == right)
             .filter_map(|(spot, (ax, ay), _)| {
                 let label = text_for(*spot)?;
-                Some(PlacedLabel { text: fit_label(label), y: 0.0, right, anchor: (ax + MARGIN, *ay) })
+                Some(PlacedLabel { spot: *spot, text: fit_label(label), y: 0.0, right, anchor: (ax + MARGIN, *ay) })
             })
             .collect();
         let rows = column_rows(&column.iter().map(|l| l.anchor.1 - LABEL_HALF).collect::<Vec<_>>());

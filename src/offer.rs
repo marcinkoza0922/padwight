@@ -187,7 +187,7 @@ impl OfferSession {
             title,
             detail,
             answers: answers.iter().map(|(b, t)| ((*b).into(), (*t).into())).collect(),
-            hint: "Not now asks again the next time this game starts and you tap {guide} in it.".into(),
+            hint: "Not now asks again next time you start this game and tap {guide}.".into(),
             style: style.clone(),
         })
     }

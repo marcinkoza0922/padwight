@@ -11,10 +11,10 @@ const WIDTH: f32 = 720.0;
 /// Room the inspector keeps above and below its scrolling page, for its header, tabs and footer.
 const CHROME: f32 = 230.0;
 
-const HOW_TO: &str = "Drag the overlay to move it: it takes the nearest of the nine spots and grows from there. Drag an edge \
-                      or corner to resize it. With snapping on, the edges you move land on the grid, or back on the spot \
-                      itself; hold Alt to place it freely. The arrow keys nudge it (with Shift, 10 px). Click a menu's item \
-                      or an info overlay's cell to edit it. Esc closes this editor and Ctrl+S saves.";
+const HOW_TO: &str = "Drag the overlay to move it: it snaps to the nearest of nine spots and grows from there. Drag an \
+                      edge or corner to resize it. With snapping on, moved edges land on the grid or back on the spot; \
+                      hold Alt to place freely. Arrow keys nudge it (10 px with Shift). Click a menu item or info \
+                      overlay cell to edit it. Esc closes the editor; Ctrl+S saves.";
 
 impl App {
     pub(super) fn view_inspector<'a>(&'a self, stage: &'a Stage, display: iced::Size) -> Element<'a, Message> {
@@ -144,7 +144,10 @@ impl App {
             rows.push(labeled("Spot", text(format!("{} · moved {:.1}% across, {:.1}% down", style.position, style.x_offset, style.y_offset)).size(14).into()));
             rows.push(labeled("Size", row![text(size).size(14), fit].spacing(12).align_y(Alignment::Center).into()));
         }
-        rows.push(labeled("Around it", self.around_picker(stage)));
+        let flash = button(text("Flash").size(13)).style(style::secondary).on_press(Message::Stage(StageMessage::Flash));
+        let tip = container(text("Make the overlay flash, to spot it against a dark or busy background.").size(13)).padding(8).style(style::tooltip);
+        rows.push(labeled("Find it", tooltip(flash, tip, tooltip::Position::Top).into()));
+        rows.push(labeled("Also show", self.around_picker(stage)));
         rows.push(note(HOW_TO).into());
         column(rows).spacing(10).into()
     }

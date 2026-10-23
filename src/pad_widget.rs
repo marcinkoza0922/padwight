@@ -2,7 +2,7 @@
 
 use iced::{
     Color, Element,
-    widget::{container, pin, row, stack, svg, text},
+    widget::{container, pin, row, space, stack, svg, text, tooltip},
 };
 
 use crate::{
@@ -14,17 +14,27 @@ use crate::{
 /// The sign a [`pad_svg::GESTURE_MARK`] is drawn as.
 const GESTURE_SIGN: &str = "+";
 
+/// What the picture says beside and over its parts: a mapping label per part, and a tooltip for
+/// the parts that do more than a label can say.
+#[derive(Default, Clone, Copy)]
+pub struct Callouts<'a> {
+    pub labels: &'a [(Spot, String)],
+    pub tips: &'a [(Spot, String)],
+}
+
 /// The controller SVG with button letters and mapping-label pills placed over it. (iced's
 /// SVG renderer may not draw SVG text, so text is real widgets pinned at drawing
 /// coordinates; the drawing is shown at 1:1.) `opacity` dims the controller alone: the leader
-/// lines and labels stay at full strength.
+/// lines and labels stay at full strength. Pointing at a part with a tip, or at its label, shows
+/// the tip.
 pub fn controller_drawing<'a, M: 'a>(
     input: Option<&InputSnapshot>,
     model: Option<PadModel>,
     glyphs: Glyphs,
-    labels: &[(Spot, String)],
+    Callouts { labels, tips }: Callouts<'_>,
     opacity: f32,
 ) -> Element<'a, M> {
+    let tip_for = |spot: Spot| tips.iter().find(|(s, _)| *s == spot).map(|(_, t)| t.clone());
     let body = svg::Handle::from_memory(pad_svg::render(input, model, glyphs, &[]).into_bytes());
     let lines = svg::Handle::from_memory(pad_svg::leaders(labels, model).into_bytes());
     let mut layers: Vec<Element<'a, M>> = vec![
@@ -66,6 +76,7 @@ pub fn controller_drawing<'a, M: 'a>(
                 border: iced::Border { width: 1.0, radius: 5.0.into(), color: Color::from_rgb8(edge[0], edge[1], edge[2]) },
                 ..container::Style::default()
             });
+        let pill = with_tip(pill, tip_for(l.spot));
         // Each column is a box the width of the margin; pills hug its inner edge.
         let column = container(pill).width(pad_svg::LABEL_COLUMN);
         let (column, x) = if l.right {
@@ -75,5 +86,17 @@ pub fn controller_drawing<'a, M: 'a>(
         };
         layers.push(pin(column).x(x).y(l.y).into());
     }
+    for (spot, tip) in tips {
+        let Some((x, y, w, h)) = pad_svg::area(model, *spot) else { continue };
+        layers.push(pin(with_tip(space().width(w).height(h), Some(tip.clone()))).x(x + pad_svg::MARGIN).y(y).into());
+    }
     stack(layers).width(pad_svg::WIDTH).height(pad_svg::HEIGHT).into()
+}
+
+/// `content` with `tip` shown in a bubble while the pointer is on it.
+fn with_tip<'a, M: 'a>(content: impl Into<Element<'a, M>>, tip: Option<String>) -> Element<'a, M> {
+    match tip {
+        Some(tip) => tooltip(content, container(text(tip).size(13)).padding(8).style(crate::style::tooltip), tooltip::Position::Bottom).into(),
+        None => content.into(),
+    }
 }

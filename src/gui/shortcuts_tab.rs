@@ -126,8 +126,8 @@ impl App {
             row![
                 note("These apply to every setup and can't be changed per game."),
                 help(
-                    "A shortcut can sit on a button, a double tap, triple tap or long press of one, or a combo of \
-                     buttons. The Guide button belongs to the Guide overlay: it can't be given to anything else."
+                    "A shortcut can be a button, a double tap, triple tap or long press of one, or a combo. \
+                     The Guide button is reserved for the Guide overlay."
                         .into()
                 ),
             ]
@@ -138,7 +138,7 @@ impl App {
         let clashes = Shortcut::ALL.iter().filter(|s| !shortcuts.warnings(**s).is_empty()).count();
         if shortcuts.opener_off() {
             page = page.push(
-                text("⚠ Nothing opens the Guide overlay, so its menu, Notes and Mappings can't be reached, and neither can the Guide shortcuts or mouse mode.")
+                text("⚠ Nothing opens the Guide overlay, so its menu, Notes, Mappings, the Guide shortcuts and mouse mode are out of reach.")
                     .size(13)
                     .color(WARNING_COLOR),
             );
@@ -162,7 +162,7 @@ impl App {
         let mut rows = vec![self.shortcut_row(s)];
         let conflicts = self.opener_conflicts();
         if !conflicts.is_empty() {
-            rows.push(text("These setups already use that input in a profile, so it will do both. Move one of them:").size(13).color(WARNING_COLOR).into());
+            rows.push(text("These setups already use that input in a profile, so it will do both. Move one:").size(13).color(WARNING_COLOR).into());
             for (setup, profiles) in conflicts {
                 let detail: Vec<String> = profiles.into_iter().map(|(profile, why)| format!("{profile}: {why}")).collect();
                 rows.push(text(format!("⚠ {setup} — {}", detail.join(" "))).size(13).color(WARNING_COLOR).into());
@@ -171,12 +171,12 @@ impl App {
         section(
             Group::Opener.title(),
             Some(
-                "Tap it to open the Guide overlay, and tap it again to close it. Held as a button, it also turns on \
-                 the Guide mode while you press a shortcut. As a double tap, triple tap, long press or combo it opens \
-                 and closes the overlay, and the shortcuts are then pressed with the overlay open. It also ends mouse \
-                 mode and closes the panels it opened. The overlays' hints that say \"press Guide\" show it. Handy \
-                 for a controller without a Guide button, such as Start + Select. Guide still doesn't reach the game \
-                 or Steam when something else opens the overlay."
+                "Tap to open or close the Guide overlay. On a single button, holding it while pressing a shortcut \
+                 also works. As a double tap, triple tap, long press or combo, it only opens and closes the overlay, \
+                 and shortcuts are pressed while it's open. It also ends mouse mode and closes the panels it opened, \
+                 and overlay hints that say \"press Guide\" show it instead. Handy for a controller without a Guide \
+                 button, e.g. Start + Select. Guide still doesn't reach the game or Steam when something else opens \
+                 the overlay."
                     .into(),
             ),
             rows,
@@ -186,36 +186,34 @@ impl App {
     fn view_shortcut_group(&self, group: Group) -> Element<'_, Message> {
         let help_text = match group {
             Group::Guide => {
-                "Press these with Guide held, or alone with the overlay open. Anything else does nothing there, so it \
-                 never reaches the game. Fixed actions are also on the Buttons tab of any profile."
+                "Press these with Guide held, or alone with the overlay open. Other buttons do nothing there and \
+                 never reach the game. Fixed actions are also on every profile's Buttons tab."
             }
             Group::Media => {
-                "The buttons the media controls use for play or pause, the tracks, the player and mute. A button \
-                 another of these keys has trades places with the key's old one. A button none of them has takes \
-                 the key, and the one it left does nothing in the media controls. Back and the opener still close \
-                 them, and Close is what closes them as well as the opener. These keys take a press before the \
-                 menu buttons do, so a shared button does the key's job here."
+                "The buttons the media controls use for play or pause, tracks, player and mute. Picking a button \
+                 another key uses swaps the two; picking an unused one leaves the key's old button doing nothing \
+                 here. Close, Back and the opener close the controls. These keys win over the menu buttons when \
+                 they share one."
             }
             Group::Keyboard => {
                 "The buttons the on-screen keyboard uses for backspace, space, enter, moving the text cursor and \
-                 closing, with the same trading as the media controls. Press is the confirm button, and Close (East \
-                 unless moved) closes it when held. The keyboard's cursor and shift don't move."
+                 closing; they swap like the media controls'. Press is the confirm button, and holding Close (East \
+                 by default) closes it. The keyboard's cursor and Shift can't be moved."
             }
             Group::Numpad => {
-                "The buttons the on-screen numpad uses for backspace and enter, with the same trading as the media \
-                 controls. Close (East unless moved) closes the numpad when held. The numpad's cursor and its press \
-                 don't move."
+                "The buttons the on-screen numpad uses for backspace and enter; they swap like the media controls'. \
+                 Holding Close (East by default) closes it. The numpad's cursor and press can't be moved."
             }
             Group::Menu => {
-                "The buttons that choose and go back in the Guide overlay's menu, the keyboard, numpad, media controls, \
-                 the in-game menu, menus with a list, grid or carousel, and the library offer. The one you pick and \
-                 A (or B) trade places, so each still does what the other did. The D-pad and Guide aren't offered, \
-                 as the D-pad moves the menus. A menu that sets its own close button keeps it, and menus that read \
-                 the face buttons themselves (directional and button menus) aren't changed."
+                "The buttons that choose and go back in the Guide menu, keyboard, numpad, media controls, in-game \
+                 menu, list, grid and carousel menus, and the library offer. The one you pick swaps with A (or B). \
+                 The D-pad and Guide aren't offered, since the D-pad moves through menus. A menu with its own close \
+                 button keeps it, and directional and button menus, which use the face buttons themselves, aren't \
+                 changed."
             }
             _ => {
-                "The keys mouse mode gives the buttons. The sticks and triggers (move, scroll, click) stay where they are. \
-                 Other buttons do nothing in mouse mode, and neither do the gyro and touchpad unless you tick them below."
+                "The keys mouse mode puts on the buttons. The sticks and triggers (move, scroll, click) are fixed. \
+                 Other buttons do nothing in mouse mode, nor do the gyro and touchpad unless ticked below."
             }
         };
         let mut rows: Vec<_> = Shortcut::of(group).map(|s| if s.choices().is_some() { self.button_row(s) } else { self.shortcut_row(s) }).collect();
@@ -231,7 +229,7 @@ impl App {
     /// The trigger that hides the in-game editor while held, to show the overlay being edited.
     fn peek_trigger_row(&self) -> Element<'_, Message> {
         let pick = dropdown(crate::config::PeekTrigger::ALL, Some(self.config.peek_trigger), Message::SetPeekTrigger).width(190);
-        let help = text("While editing a menu or overlay in the in-game editor, hold this to hide the editor and see the overlay.").size(13).color(MUTED_COLOR);
+        let help = text("In the in-game editor, hold this to hide the editor and see the overlay underneath.").size(13).color(MUTED_COLOR);
         // The picker starts where the other rows' button pickers do, past their kind column.
         let line = row![space().width(KIND_WIDTH), pick].spacing(8).align_y(Alignment::Center);
         column![labeled_in(190.0, "Peek while editing", line.into()), help].spacing(2).into()
@@ -245,7 +243,7 @@ impl App {
                 checkbox(extras.gyro)
                     .label("Gyro moves the pointer")
                     .on_toggle(move |gyro| Message::SetMouseModeExtras(MouseModeExtras { gyro, ..extras })),
-                help("As the profile's gyro moves it. If the profile's gyro aims a stick or is off, at a default speed.".into()),
+                help("At the profile's gyro mouse speed, or a default speed if its gyro aims a stick or is off.".into()),
             ]
             .spacing(8)
             .align_y(Alignment::Center),

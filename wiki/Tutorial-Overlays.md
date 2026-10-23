@@ -1,31 +1,31 @@
 # Tutorial: a cheat sheet on screen, and the on-screen keyboard
 
-Padwight can draw on top of a game, even a fullscreen one, without taking keyboard focus. Your key presses still go to the game underneath. You'll make an info overlay (a cheat sheet with button pictures) and then use the on-screen keyboard.
+Padwight draws on top of a game, even a fullscreen one, without taking keyboard focus. You'll make an info overlay (a cheat sheet with button pictures), then use the on-screen keyboard.
 
-Overlays need a desktop that supports them: KDE Plasma, Sway, Hyprland or labwc. GNOME doesn't. See [On-screen keyboard, numpad and overlays](On-Screen-Keyboard-and-Numpad).
+Overlays need KDE Plasma, Sway, Hyprland or labwc; GNOME doesn't support them. See [On-screen keyboard, numpad and overlays](On-Screen-Keyboard-and-Numpad).
 
 ## 1. Make an info overlay
 
 ![The Info overlays tab: a cheat sheet with its name, heading, always-shown switch, three rows of cells and a preview](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/manual/info-tab.png "A cheat sheet with three rows.")
 
 1. Open the setup's **Info overlays** tab and press **+ New info overlay** (1). The new overlay opens.
-2. Give it a **Name** and a **Heading**, which is the title drawn above the grid.
-3. **Shown** (2) decides when it's on screen. Tick **Always, while this setup is active** for a permanent cheat sheet. Untick it to show the overlay only sometimes: map **Toggle on / off…** with **Show info overlay…** inside it to a button, and the Toggle can start on, to show the overlay at launch until dismissed.
-4. **Cells** (3) is the grid. Each row is a list of cells, and cells line up in columns. A cell is text, or a `{token}`: `{south}` draws the A button's picture as your controller labels it (Xbox, PlayStation or Nintendo glyphs, to match the controller in use), and the **Insert…** button opens the token picker: every token in groups, each with a preview (buttons are shown for Xbox, PlayStation and Nintendo controllers side by side), plus every icon and the text formatting tags (`{b}` bold, `{i}` italic, `{u}` underline, `{color:red}`, `{box}`), the live values such as the time, CPU load and current mode, the gyro's turning rates and the touchpad's position. Put a button picture in the first cell and what it does in the second.
+2. Give it a **Name** and a **Heading**, the title above the grid.
+3. **Shown** (2): tick **Always, while this setup is active** for a permanent cheat sheet. Untick it to show the overlay when the game starts (for as many seconds as you set), and with the **Info overlay…** action on a button: while it's held, or until pressed again if wrapped in **Toggle on / off…**.
+4. **Cells** (3) is the grid; cells line up in columns. A cell is text, or a `{token}`: `{south}` draws the A button as your controller labels it. **Insert…** opens the token picker, with every token and a preview of each: button glyphs, icons, formatting tags (`{b}` bold, `{i}` italic, `{color:red}`…) and live values such as the time, CPU load or current mode. Put a button in the first cell and what it does in the second.
 5. **+ Cell** adds a cell to a row and **+ Add row** adds a row.
-6. The **Preview** (4) under the cells shows the result as you type.
+6. The **Preview** (4) shows the result as you type.
 
 ![An info overlay on screen over a game](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/manual/info-overlay.png "An info overlay with live values and glyphs.")
 
-Under **Appearance**, each overlay can have its own position, size and colors. For a whole setup's look, use the Details tab.
+Under **Appearance**, or with **Edit on screen**, each overlay gets its own position, size and colors. For a whole setup's look, use the Details tab.
 
 ## 2. Show a log of your presses
 
-The **Log overlays** tab makes a small list of the buttons you pressed lately and what each did. It's useful while you check a mapping. It's made the same way as an info overlay, and shown with **Show log overlay…**.
+The **Log overlays** tab makes a small list of your latest presses and what each did, for checking a mapping. It's made like an info overlay, and shown with **Log overlay…**.
 
 ## 3. The on-screen keyboard
 
-Open the keyboard with a button set to **On-screen keyboard**, from the Overview page, or with Guide + X. Then:
+Open the keyboard with Guide + X, or a button set to **On-screen keyboard**. Then:
 
 ![The on-screen keyboard, with Shift on and the cursor on H](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/manual/keyboard-overlay.png "The on-screen keyboard.")
 
@@ -34,11 +34,11 @@ Open the keyboard with a button set to **On-screen keyboard**, from the Overview
 - **X** is Backspace, **Y** is Space, **Start** is Enter, **LB** and **RB** move the text cursor, and holding **LT** holds Shift.
 - **Hold B**, or press **Guide**, closes it.
 
-On the **App settings** page you can choose **Basic** keys (what typing into a game needs) or **Full** ones. The **numpad** (Guide + Y) is a small pad of digits for codes. **Media controls** (Guide + LB) drive the music or video player that's running.
+On **App settings** you can choose **Basic** or **Full** keys. The **numpad** (Guide + Y) is a pad of digits for codes, and **media controls** (Guide + LB) drive the music or video player that's running.
 
 ## 4. Make overlays fit the game
 
-On the setup's **Details** tab, a setup can have its own font, motion, sounds and colors for every overlay, so a fantasy game's menus can glow gold while a shooter's stay flat and square. If overlays make your computer stutter, the **Performance** card on **App settings** turns decorations, motion and sounds off everywhere.
+On its **Details** tab, a setup can have its own font, motion, sounds and colors for every overlay, so a fantasy game's menus can glow gold while a shooter's stay flat. If overlays make your computer stutter, the **Performance** card on **App settings** turns decorations, motion and sounds off everywhere.
 
 ## Where next
 

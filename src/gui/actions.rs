@@ -364,7 +364,7 @@ fn turbo_editor<'a>(
                 .align_y(Alignment::Center);
             if shown != every_ms {
                 line = line
-                    .push(text(format!("(raised to {shown} ms, because the macro takes that long to play)")).size(12).color(MUTED_COLOR));
+                    .push(text(format!("(raised to {shown} ms, the macro's length)")).size(12).color(MUTED_COLOR));
             }
             line.into()
         }
@@ -462,8 +462,8 @@ pub(super) fn action_value<'a>(
                     checkbox(start_on).label("On when the game starts").size(14).text_size(12).on_toggle(starting),
                     container(
                         text(
-                            "Switched on by itself the first time the game is focused after it starts, \
-                             e.g. a controls overlay that stays up until this is pressed."
+                            "Turns on the first time the game is focused after it starts, \
+                             e.g. a controls overlay that stays up until you press this."
                         )
                         .size(13)
                     )
