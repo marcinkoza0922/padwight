@@ -72,8 +72,8 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::in
             };
             let cap = container(text(keyboard::cap_label(key, v.board, shifted, v.caps)).font(c.font).size(if selected { label_size + 2.0 } else { label_size } * s).color(fg))
                 .center_x(width)
-                .center_y(unit)
-                .style(move |_| container::Style { background: Some(bg), border, shadow: glow, ..container::Style::default() });
+                .center_y(unit);
+            let cap = item_box(cap, move |_| container::Style { background: Some(bg), border, shadow: glow, ..container::Style::default() }, c, &v.style, round);
             line = line.push(transform(cap, anim.item_scale(cursor), iced::Vector::ZERO));
         }
         rows = rows.push(line);

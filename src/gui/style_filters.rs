@@ -1,12 +1,13 @@
-//! The style editor's Filters group: a material under the panel's contents (paper, brushed
-//! metal, concrete, cloth, denim, silk, leather, steel, wood) and the layers over them (scanlines, grain, pixel blocks, camo, plaid, argyle, stripes, a color wash). Each is
-//! a button that turns it on and off, and each that's on gets its editor under its name.
+//! The style editor's Filters group: the materials (paper, brushed metal, concrete, cloth,
+//! denim, silk, leather, steel, wood), the screens (scanlines, grain, pixel blocks) and the colors
+//! (camo, plaid, argyle, stripes, a color wash). Each is a button that turns it on and off, and
+//! each that's on gets its editor under its name, ending in what it covers.
 
 use std::rc::Rc;
 
 use super::{style_editor::{OnStyle, Slot, paint_row, stepped_slider}, *};
 use crate::config::{
-    Argyle, Camo, CamoScheme, Grain, Pixels, Plaid, Scanlines, StripeDirection, Stripes, Texture, Tint, default_argyle_colors, default_plaid_colors, default_stripes_colors,
+    Argyle, Camo, CamoScheme, Covers, FilterOn, Grain, Pixels, Plaid, Scanlines, StripeDirection, Stripes, Texture, Tint, default_argyle_colors, default_plaid_colors, default_stripes_colors,
 };
 use iced::widget::{button, checkbox, column, row};
 
@@ -29,33 +30,33 @@ pub(super) fn filter_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> 
             label: "Scanlines",
             get: |s| s.ornament.scanlines.as_ref(),
             put: |s, v| s.ornament.scanlines = v,
-            start: |_| Scanlines { spacing: 4.0, opacity: 0.2, color: "#000000".into(), drift: false },
+            start: |_| Scanlines { spacing: 4.0, opacity: 0.2, color: "#000000".into(), drift: false, on: FilterOn::Both },
         },
         |l, set| scanline_rows(l, &set),
         style,
         on_change,
     );
     let grain = filter(
-        &Slot { label: "Grain", get: |s| s.ornament.grain.as_ref(), put: |s, v| s.ornament.grain = v, start: |_| Grain { opacity: 0.15, size: 1.0, animated: false } },
+        &Slot { label: "Grain", get: |s| s.ornament.grain.as_ref(), put: |s, v| s.ornament.grain = v, start: |_| Grain { opacity: 0.15, size: 1.0, animated: false, on: FilterOn::Both } },
         |g, set| grain_rows(g, &set),
         style,
         on_change,
     );
     let pixels = filter(
-        &Slot { label: "Pixel blocks", get: |s| s.ornament.pixels.as_ref(), put: |s, v| s.ornament.pixels = v, start: |_| Pixels { size: 6.0, opacity: 0.25 } },
+        &Slot { label: "Pixel blocks", get: |s| s.ornament.pixels.as_ref(), put: |s, v| s.ornament.pixels = v, start: |_| Pixels { size: 6.0, opacity: 0.25, on: FilterOn::Both } },
         |p, set| pixel_rows(p, &set),
         style,
         on_change,
     );
     let camo = filter(
-        &Slot { label: "Camo", get: |s| s.ornament.camo.as_ref(), put: |s, v| s.ornament.camo = v, start: |_| Camo { scheme: CamoScheme::Woodland, opacity: 0.3, size: 60.0 } },
+        &Slot { label: "Camo", get: |s| s.ornament.camo.as_ref(), put: |s, v| s.ornament.camo = v, start: |_| Camo { scheme: CamoScheme::Woodland, opacity: 0.3, size: 60.0, on: FilterOn::Both } },
         |c, set| camo_rows(c, &set),
         style,
         on_change,
     );
     let [plaid, argyle, stripes] = pattern_filters(style, on_change);
     let tint = filter(
-        &Slot { label: "Color wash", get: |s| s.ornament.tint.as_ref(), put: |s, v| s.ornament.tint = v, start: |_| Tint { color: "#ffa040".into(), opacity: 0.12 } },
+        &Slot { label: "Color wash", get: |s| s.ornament.tint.as_ref(), put: |s, v| s.ornament.tint = v, start: |_| Tint { color: "#ffa040".into(), opacity: 0.12, on: FilterOn::Both } },
         |t, set| tint_rows(t, &set),
         style,
         on_change,
@@ -70,7 +71,7 @@ fn pattern_filters<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> [Filter
             label: "Plaid",
             get: |s| s.ornament.plaid.as_ref(),
             put: |s, v| s.ornament.plaid = v,
-            start: |_| Plaid { colors: default_plaid_colors(), opacity: 0.25, size: 80.0 },
+            start: |_| Plaid { colors: default_plaid_colors(), opacity: 0.25, size: 80.0, on: FilterOn::Both },
         },
         |p, set| {
             let mut rows = color_rows(&p.colors, ["Ground", "Bands", "Lines"], &patterned(p, &set, |p, colors| Plaid { colors, ..p.clone() }));
@@ -85,7 +86,7 @@ fn pattern_filters<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> [Filter
             label: "Argyle",
             get: |s| s.ornament.argyle.as_ref(),
             put: |s, v| s.ornament.argyle = v,
-            start: |_| Argyle { colors: default_argyle_colors(), opacity: 0.25, size: 40.0 },
+            start: |_| Argyle { colors: default_argyle_colors(), opacity: 0.25, size: 40.0, on: FilterOn::Both },
         },
         |a, set| {
             let mut rows = color_rows(&a.colors, ["Diamonds", "Between", "Lines"], &patterned(a, &set, |a, colors| Argyle { colors, ..a.clone() }));
@@ -100,7 +101,7 @@ fn pattern_filters<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> [Filter
             label: "Stripes",
             get: |s| s.ornament.stripes.as_ref(),
             put: |s, v| s.ornament.stripes = v,
-            start: |_| Stripes { colors: default_stripes_colors(), direction: StripeDirection::Diagonal, opacity: 0.25, size: 16.0 },
+            start: |_| Stripes { colors: default_stripes_colors(), direction: StripeDirection::Diagonal, opacity: 0.25, size: 16.0, on: FilterOn::Both },
         },
         |st, set| stripe_rows(st, &set),
         style,
@@ -111,7 +112,7 @@ fn pattern_filters<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> [Filter
 
 /// A material's slot, starting at half strength.
 fn material(label: &'static str, get: fn(&OverlayStyle) -> Option<&Texture>, put: fn(&mut OverlayStyle, Option<Texture>)) -> Slot<Texture> {
-    Slot { label, get, put, start: |_| Texture { opacity: 0.5 } }
+    Slot { label, get, put, start: |_| Texture::new(0.5) }
 }
 
 /// Each group's buttons on a row under its name, then the editors of the filters that are on.
@@ -126,7 +127,7 @@ fn grouped<'a>(groups: [(&'static str, Vec<Filter<'a>>); 3]) -> Element<'a, Mess
         }
         rows = rows.push(labeled(label, iced::widget::Row::with_children(buttons).spacing(4).wrap().vertical_spacing(4).into()));
     }
-    rows = rows.push(labeled("", note("A material lies under the panel's contents, the other filters over them: keep those faint.").into()));
+    rows = rows.push(labeled("", note("Each covers the panel's background, its items and keys, or both, always under the text.").into()));
     rows.extend(editors).into()
 }
 
@@ -138,7 +139,7 @@ struct Filter<'a> {
 
 /// The button that turns the filter in `slot` on and off, ticked while it's on, and while it's
 /// on, its rows from `editor` under its name.
-fn filter<'a, T: Clone + 'a>(
+fn filter<'a, T: Clone + Covers + 'a>(
     slot: &Slot<T>,
     editor: impl Fn(&T, Rc<dyn Fn(T) -> Message + 'a>) -> Vec<Element<'a, Message>>,
     style: &OverlayStyle,
@@ -155,14 +156,34 @@ fn filter<'a, T: Clone + 'a>(
     // Its name over a rule, in the editors' column, sets each filter's rows apart.
     let heading = row![text(slot.label).size(13).color(MUTED_COLOR), iced::widget::rule::horizontal(1)].spacing(8).align_y(Alignment::Center).width(Length::Fixed(540.0));
     let heading = container(heading).padding(iced::Padding::ZERO.top(6));
-    let editor = value.map(|v| column![labeled("", heading.into())].extend(editor(v, Rc::new(move |v| set(Some(v))))).spacing(6).into());
+    let editor = value.map(|v| {
+        let set: Rc<dyn Fn(T) -> Message + 'a> = Rc::new(move |v| set(Some(v)));
+        column![labeled("", heading.into())].extend(editor(v, set.clone())).push(covers_row(v, &set)).spacing(6).into()
+    });
     Filter { button, editor }
+}
+
+/// Whether the filter covers the background, the items and keys, or both.
+fn covers_row<'a, T: Clone + Covers + 'a>(filter: &T, set: &Rc<dyn Fn(T) -> Message + 'a>) -> Element<'a, Message> {
+    let choice = |on: FilterOn| {
+        let (f, set) = (filter.clone(), set.clone());
+        let look = if filter.on() == on { button::primary } else { style::secondary };
+        button(text(on.to_string()).size(13)).style(look).on_press_with(move || {
+            let mut f = f.clone();
+            f.set_on(on);
+            set(f)
+        })
+    };
+    labeled("        Covers", iced::widget::Row::with_children(FilterOn::ALL.map(|on| choice(on).into())).spacing(4).into())
 }
 
 /// The material's strength.
 fn texture_rows<'a>(texture: &Texture, set: &Rc<dyn Fn(Texture) -> Message + 'a>) -> Vec<Element<'a, Message>> {
     let set = set.clone();
-    vec![labeled("        Strength", percent_of(texture.opacity, move |v| set(Texture { opacity: v })))]
+    vec![labeled("        Strength", {
+        let t = texture.clone();
+        percent_of(texture.opacity, move |v| set(Texture { opacity: v, ..t.clone() }))
+    })]
 }
 
 /// The camo's colors, blotch size and strength.
@@ -287,8 +308,8 @@ fn scanline_rows<'a>(lines: &Scanlines, set: &Rc<dyn Fn(Scanlines) -> Message + 
 
 /// The wash's color and how strong it is.
 fn tint_rows<'a>(tint: &Tint, set: &Rc<dyn Fn(Tint) -> Message + 'a>) -> Vec<Element<'a, Message>> {
-    let set = set.clone();
-    let color = paint_row(&Paint::new(&tint.color, tint.opacity), true, &(Rc::new(move |p: Paint| set(Tint { color: p.color, opacity: p.opacity })) as Rc<dyn Fn(Paint) -> Message + 'a>));
+    let (t, set) = (tint.clone(), set.clone());
+    let color = paint_row(&Paint::new(&tint.color, tint.opacity), true, &(Rc::new(move |p: Paint| set(Tint { color: p.color, opacity: p.opacity, ..t.clone() })) as Rc<dyn Fn(Paint) -> Message + 'a>));
     vec![labeled("        Color", color)]
 }
 

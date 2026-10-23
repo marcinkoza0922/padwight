@@ -3,11 +3,11 @@
 use serde::{Deserialize, Serialize};
 
 use super::style::{black, opaque};
-use super::{Argyle, Plaid, Stripes, Stroke};
+use super::{Argyle, Camo, Grain, Pixels, Plaid, Scanlines, Stripes, Stroke, Texture, Tint};
 
 /// The ornaments drawn over and around a panel: lines between items, a frame at its corners, a
-/// scanline screen, a vignette, filters (scanlines, grain, pixels, camo, plaid, argyle,
-/// stripes, a tint), materials and bevelled buttons. Each is off unless set.
+/// vignette, filters (scanlines, grain, pixels, camo, plaid, argyle, stripes, a tint and the
+/// materials, each on the background, the items or both) and bevelled buttons. Each is off unless set.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Ornament {
@@ -17,58 +17,58 @@ pub struct Ornament {
     /// A mark at each of the panel's corners: brackets, a chamfer or an ornament.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub frame: Option<Frame>,
-    /// Thin lines across the panel, like a screen.
+    /// Thin lines across, like a screen.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scanlines: Option<Scanlines>,
     /// Darkens the panel's edges.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vignette: Option<Vignette>,
-    /// Film grain: noise over the panel, optionally flickering.
+    /// Film grain: noise, optionally flickering.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grain: Option<Grain>,
-    /// A mosaic of pixel blocks over the panel, like a low-resolution screen.
+    /// A mosaic of pixel blocks, like a low-resolution screen.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pixels: Option<Pixels>,
-    /// A camouflage pattern over the panel.
+    /// A camouflage pattern.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub camo: Option<Camo>,
-    /// A plaid over the panel.
+    /// A plaid.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plaid: Option<Plaid>,
-    /// An argyle over the panel.
+    /// An argyle.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub argyle: Option<Argyle>,
-    /// Stripes over the panel.
+    /// Stripes.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stripes: Option<Stripes>,
-    /// A wash of color over the panel.
+    /// A wash of color.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tint: Option<Tint>,
-    /// Paper over the panel's background.
+    /// Paper on the panel's background or items.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub paper: Option<Texture>,
-    /// Brushed metal over the panel's background.
+    /// Brushed metal on the panel's background or items.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub brushed_metal: Option<Texture>,
-    /// Concrete over the panel's background.
+    /// Concrete on the panel's background or items.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub concrete: Option<Texture>,
-    /// Woven cloth over the panel's background.
+    /// Woven cloth on the panel's background or items.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cloth: Option<Texture>,
-    /// Denim twill over the panel's background.
+    /// Denim twill on the panel's background or items.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub denim: Option<Texture>,
-    /// Lustrous silk over the panel's background.
+    /// Lustrous silk on the panel's background or items.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub silk: Option<Texture>,
-    /// Pebbled leather over the panel's background.
+    /// Pebbled leather on the panel's background or items.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub leather: Option<Texture>,
-    /// Steel tread plate over the panel's background.
+    /// Steel tread plate on the panel's background or items.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub steel: Option<Texture>,
-    /// Wooden planks over the panel's background.
+    /// Wooden planks on the panel's background or items.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wood: Option<Texture>,
     /// Makes the items (and keys) look like raised buttons.
@@ -192,28 +192,6 @@ pub(super) fn default_frame_color() -> String {
     "#ffffff".into()
 }
 
-/// Thin lines across the panel, `spacing` pixels apart at scale 1. With `drift` they slowly
-/// roll down the panel.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Scanlines {
-    #[serde(default = "default_scan_spacing")]
-    pub spacing: f32,
-    #[serde(default = "default_scan_opacity")]
-    pub opacity: f32,
-    #[serde(default = "black")]
-    pub color: String,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub drift: bool,
-}
-
-pub(super) fn default_scan_spacing() -> f32 {
-    4.0
-}
-
-pub(super) fn default_scan_opacity() -> f32 {
-    0.2
-}
-
 /// Darkens the panel's edges: `color` at `opacity` on each edge, fading out `reach` percent of
 /// the panel's size in from it.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -258,19 +236,6 @@ pub enum ImageFit {
     Stretch,
 }
 
-/// A material (paper, brushed metal, concrete, cloth, denim, silk, leather, steel or wood) drawn over the panel's background and under its
-/// contents. It only lightens and darkens, so the background's color still shows through.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Texture {
-    /// How strong the grain is, 0 to 1.
-    #[serde(default = "default_texture_opacity")]
-    pub opacity: f32,
-}
-
-pub(super) fn default_texture_opacity() -> f32 {
-    0.5
-}
-
 /// Gives items and keys depth: a lit top edge and a darker bottom under a drop shadow, with
 /// the selected one pressed in.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -282,93 +247,4 @@ pub struct Bevel {
 
 pub(super) fn default_bevel_depth() -> f32 {
     0.5
-}
-
-/// Film grain: noise in blocks `size` pixels across at scale 1, `opacity` strong. Animated, it
-/// reshuffles a dozen times a second.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Grain {
-    #[serde(default = "default_grain_opacity")]
-    pub opacity: f32,
-    #[serde(default = "default_grain_size")]
-    pub size: f32,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub animated: bool,
-}
-
-pub(super) fn default_grain_opacity() -> f32 {
-    0.15
-}
-
-pub(super) fn default_grain_size() -> f32 {
-    1.0
-}
-
-/// Blocks `size` pixels across at scale 1, each a little lighter or darker, with a dark seam
-/// between them.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Pixels {
-    #[serde(default = "default_pixels_size")]
-    pub size: f32,
-    #[serde(default = "default_pixels_opacity")]
-    pub opacity: f32,
-}
-
-pub(super) fn default_pixels_size() -> f32 {
-    6.0
-}
-
-pub(super) fn default_pixels_opacity() -> f32 {
-    0.25
-}
-
-/// A flat wash of `color` over the panel and what's on it.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Tint {
-    #[serde(default = "default_tint_color")]
-    pub color: String,
-    #[serde(default = "default_tint_opacity")]
-    pub opacity: f32,
-}
-
-pub(super) fn default_tint_color() -> String {
-    "#ffa040".into()
-}
-
-pub(super) fn default_tint_opacity() -> f32 {
-    0.12
-}
-
-/// The colors of a camouflage.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum CamoScheme {
-    /// Greens and browns.
-    #[default]
-    Woodland,
-    /// Sand, tan and brown.
-    Desert,
-    /// Greys.
-    Urban,
-    /// White and pale blue-grey.
-    Arctic,
-}
-
-/// A camouflage pattern of soft-edged blotches, `size` pixels across at scale 1.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Camo {
-    #[serde(default)]
-    pub scheme: CamoScheme,
-    #[serde(default = "default_camo_opacity")]
-    pub opacity: f32,
-    #[serde(default = "default_camo_size")]
-    pub size: f32,
-}
-
-pub(super) fn default_camo_opacity() -> f32 {
-    0.3
-}
-
-pub(super) fn default_camo_size() -> f32 {
-    60.0
 }

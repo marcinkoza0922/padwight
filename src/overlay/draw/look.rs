@@ -8,7 +8,7 @@ use super::Colors;
 use crate::config::{OverlayStyle, Shade, Stroke};
 
 /// Panels round to this radius at full corners; their size depends on their content.
-const PANEL_CORNER: f32 = 40.0;
+pub(super) const PANEL_CORNER: f32 = 40.0;
 
 /// What a style adds to its colors, ready to draw.
 #[derive(Clone, Copy)]

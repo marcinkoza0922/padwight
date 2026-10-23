@@ -285,11 +285,11 @@ fn shortcuts_demo(app: &mut App) {
 
 /// Turns on scanlines, paper and a color wash on menu `n`, so the Filters group shows its editors.
 fn filters_demo(app: &mut App, n: usize) -> Result<()> {
-    use crate::config::{Scanlines, Texture, Tint};
+    use crate::config::{FilterOn, Scanlines, Texture, Tint};
     let mut style = app.menus().get(n).with_context(|| format!("no menu {n}"))?.style.clone();
-    style.ornament.scanlines = Some(Scanlines { spacing: 4.0, opacity: 0.2, color: "#000000".into(), drift: false });
-    style.ornament.paper = Some(Texture { opacity: 0.5 });
-    style.ornament.tint = Some(Tint { color: "#ffa040".into(), opacity: 0.12 });
+    style.ornament.scanlines = Some(Scanlines { spacing: 4.0, opacity: 0.2, color: "#000000".into(), drift: false, on: FilterOn::Both });
+    style.ornament.paper = Some(Texture::new(0.5));
+    style.ornament.tint = Some(Tint { color: "#ffa040".into(), opacity: 0.12, on: FilterOn::Both });
     send(app, Message::SetMenuStyle(n, style));
     Ok(())
 }

@@ -222,10 +222,7 @@ fn radial_boxes<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
             size / 2.0 - radius * angle.cos(),
         );
         let (label, lit, selected) = item_cell(m, i, c, 15.0 * s);
-        let content = container(label)
-            .center_x(cell_w)
-            .center_y(cell_h)
-            .style(lit_cell_style(lit, selected, cell_h));
+        let content = item_box(container(label).center_x(cell_w).center_y(cell_h), lit_cell_style(lit, selected, cell_h), c, &m.style, c.corners * cell_h / 2.0);
         let content = super::tag::tag(content, Part::Item(i));
         layers.push(pin(content).x(x - cell_w / 2.0).y(y - cell_h / 2.0).into());
     }

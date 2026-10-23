@@ -1,28 +1,40 @@
 //! The sample styles the menu scenes are drawn in: textures, filters, ornaments and frames.
 
 use crate::config::{
-    Argyle, Bevel, Camo, CamoScheme, Case, Frame, FrameKind, Gradient, Grain, Ornament, OverlayStyle, Paint, Pixels, Plaid, Scanlines, Shade, StripeDirection, Stripes,
+    Argyle, Bevel, Camo, CamoScheme, Case, FilterOn, Frame, FrameKind, Gradient, Grain, Ornament, OverlayStyle, Paint, Pixels, Plaid, Scanlines, Shade, StripeDirection, Stripes,
     Stroke, Texture, Tint, Typography, Vignette, default_argyle_colors, default_plaid_colors, default_stripes_colors,
 };
 
 /// A panel under a woodland camo.
 pub(super) fn camouflaged() -> OverlayStyle {
-    OverlayStyle { ornament: Ornament { camo: Some(Camo { scheme: CamoScheme::Woodland, opacity: 0.45, size: 60.0 }), ..Ornament::default() }, ..OverlayStyle::default() }
+    OverlayStyle { ornament: Ornament { camo: Some(Camo { scheme: CamoScheme::Woodland, opacity: 0.45, size: 60.0, on: FilterOn::Both }), ..Ornament::default() }, ..OverlayStyle::default() }
 }
 
 /// A panel under a red tartan.
 pub(super) fn plaid() -> OverlayStyle {
-    OverlayStyle { ornament: Ornament { plaid: Some(Plaid { colors: default_plaid_colors(), opacity: 0.45, size: 80.0 }), ..Ornament::default() }, ..OverlayStyle::default() }
+    OverlayStyle { ornament: Ornament { plaid: Some(Plaid { colors: default_plaid_colors(), opacity: 0.45, size: 80.0, on: FilterOn::Both }), ..Ornament::default() }, ..OverlayStyle::default() }
 }
 
 /// A panel under a navy and camel argyle.
 pub(super) fn argyle() -> OverlayStyle {
-    OverlayStyle { ornament: Ornament { argyle: Some(Argyle { colors: default_argyle_colors(), opacity: 0.45, size: 40.0 }), ..Ornament::default() }, ..OverlayStyle::default() }
+    OverlayStyle { ornament: Ornament { argyle: Some(Argyle { colors: default_argyle_colors(), opacity: 0.45, size: 40.0, on: FilterOn::Both }), ..Ornament::default() }, ..OverlayStyle::default() }
 }
 
 /// A panel under slanted navy and cream stripes.
 pub(super) fn striped() -> OverlayStyle {
-    let stripes = Stripes { colors: default_stripes_colors(), direction: StripeDirection::Diagonal, opacity: 0.45, size: 16.0 };
+    let stripes = Stripes { colors: default_stripes_colors(), direction: StripeDirection::Diagonal, opacity: 0.45, size: 16.0, on: FilterOn::Both };
+    OverlayStyle { ornament: Ornament { stripes: Some(stripes), ..Ornament::default() }, ..OverlayStyle::default() }
+}
+
+/// Plaid on the items alone, and wood on the background alone.
+pub(super) fn plaid_items() -> OverlayStyle {
+    let plaid = Plaid { colors: default_plaid_colors(), opacity: 0.45, size: 80.0, on: FilterOn::Items };
+    OverlayStyle { ornament: Ornament { plaid: Some(plaid), wood: Some(Texture::new(0.8)), ..Ornament::default() }, ..OverlayStyle::default() }
+}
+
+/// Stripes on the background alone, under the items.
+pub(super) fn striped_background() -> OverlayStyle {
+    let stripes = Stripes { colors: default_stripes_colors(), direction: StripeDirection::Diagonal, opacity: 0.45, size: 16.0, on: FilterOn::Background };
     OverlayStyle { ornament: Ornament { stripes: Some(stripes), ..Ornament::default() }, ..OverlayStyle::default() }
 }
 
@@ -30,10 +42,10 @@ pub(super) fn striped() -> OverlayStyle {
 pub(super) fn filtered() -> OverlayStyle {
     OverlayStyle {
         ornament: Ornament {
-            scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.25, color: "#000000".into(), drift: false }),
-            grain: Some(Grain { opacity: 0.2, size: 1.0, animated: true }),
-            pixels: Some(Pixels { size: 6.0, opacity: 0.3 }),
-            tint: Some(Tint { color: "#40ff80".into(), opacity: 0.1 }),
+            scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.25, color: "#000000".into(), drift: false, on: FilterOn::Both }),
+            grain: Some(Grain { opacity: 0.2, size: 1.0, animated: true, on: FilterOn::Both }),
+            pixels: Some(Pixels { size: 6.0, opacity: 0.3, on: FilterOn::Both }),
+            tint: Some(Tint { color: "#40ff80".into(), opacity: 0.1, on: FilterOn::Both }),
             ..Ornament::default()
         },
         ..OverlayStyle::default()
@@ -47,7 +59,7 @@ pub(super) fn paper() -> OverlayStyle {
         items: Paint::new("#d6c6a0", 0.9),
         selected: Paint::new("#8a3b2a", 1.0),
         border: Some(Stroke { width: 2.0, color: "#6b5a3a".into(), opacity: 1.0 }),
-        ornament: Ornament { paper: Some(Texture { opacity: 0.6 }), ..Ornament::default() },
+        ornament: Ornament { paper: Some(Texture::new(0.6)), ..Ornament::default() },
         ..OverlayStyle::default()
     }
 }
@@ -60,7 +72,7 @@ pub(super) fn metal() -> OverlayStyle {
         selected: Paint::new("#2f5db0", 1.0),
         corners: 0.2,
         ornament: Ornament {
-            brushed_metal: Some(Texture { opacity: 0.7 }),
+            brushed_metal: Some(Texture::new(0.7)),
             bevel: Some(Bevel { depth: 0.8 }),
             ..Ornament::default()
         },
@@ -74,7 +86,7 @@ pub(super) fn concrete() -> OverlayStyle {
         background: Paint::new("#7b7b78", 1.0),
         items: Paint::new("#8f8f8b", 0.95),
         selected: Paint::new("#b5532a", 1.0),
-        ornament: Ornament { concrete: Some(Texture { opacity: 0.8 }), bevel: Some(Bevel { depth: 0.5 }), ..Ornament::default() },
+        ornament: Ornament { concrete: Some(Texture::new(0.8)), bevel: Some(Bevel { depth: 0.5 }), ..Ornament::default() },
         ..OverlayStyle::default()
     }
 }
@@ -85,7 +97,7 @@ pub(super) fn cloth() -> OverlayStyle {
         background: Paint::new("#b8ad94", 1.0),
         items: Paint::new("#a39880", 0.9),
         selected: Paint::new("#6a4a7a", 1.0),
-        ornament: Ornament { cloth: Some(Texture { opacity: 0.7 }), ..Ornament::default() },
+        ornament: Ornament { cloth: Some(Texture::new(0.7)), ..Ornament::default() },
         ..OverlayStyle::default()
     }
 }
@@ -96,7 +108,7 @@ pub(super) fn denim() -> OverlayStyle {
         background: Paint::new("#34465e", 1.0),
         items: Paint::new("#43577a", 0.9),
         selected: Paint::new("#c8913a", 1.0),
-        ornament: Ornament { denim: Some(Texture { opacity: 0.8 }), ..Ornament::default() },
+        ornament: Ornament { denim: Some(Texture::new(0.8)), ..Ornament::default() },
         ..OverlayStyle::default()
     }
 }
@@ -107,7 +119,7 @@ pub(super) fn silk() -> OverlayStyle {
         background: Paint::new("#7a1f2b", 1.0),
         items: Paint::new("#8e2a37", 0.85),
         selected: Paint::new("#c8a040", 1.0),
-        ornament: Ornament { silk: Some(Texture { opacity: 0.7 }), ..Ornament::default() },
+        ornament: Ornament { silk: Some(Texture::new(0.7)), ..Ornament::default() },
         ..OverlayStyle::default()
     }
 }
@@ -118,7 +130,7 @@ pub(super) fn leather() -> OverlayStyle {
         background: Paint::new("#5a3422", 1.0),
         items: Paint::new("#6e4430", 0.9),
         selected: Paint::new("#b08a3a", 1.0),
-        ornament: Ornament { leather: Some(Texture { opacity: 0.6 }), bevel: Some(Bevel { depth: 0.4 }), ..Ornament::default() },
+        ornament: Ornament { leather: Some(Texture::new(0.6)), bevel: Some(Bevel { depth: 0.4 }), ..Ornament::default() },
         ..OverlayStyle::default()
     }
 }
@@ -130,7 +142,7 @@ pub(super) fn steel() -> OverlayStyle {
         items: Paint::new("#878c93", 0.95),
         selected: Paint::new("#c0392b", 1.0),
         corners: 0.1,
-        ornament: Ornament { steel: Some(Texture { opacity: 0.8 }), bevel: Some(Bevel { depth: 0.7 }), ..Ornament::default() },
+        ornament: Ornament { steel: Some(Texture::new(0.8)), bevel: Some(Bevel { depth: 0.7 }), ..Ornament::default() },
         ..OverlayStyle::default()
     }
 }
@@ -141,7 +153,7 @@ pub(super) fn wood() -> OverlayStyle {
         background: Paint::new("#8a5a32", 1.0),
         items: Paint::new("#9c6c40", 0.9),
         selected: Paint::new("#2f5a3a", 1.0),
-        ornament: Ornament { wood: Some(Texture { opacity: 0.8 }), bevel: Some(Bevel { depth: 0.4 }), ..Ornament::default() },
+        ornament: Ornament { wood: Some(Texture::new(0.8)), bevel: Some(Bevel { depth: 0.4 }), ..Ornament::default() },
         ..OverlayStyle::default()
     }
 }
@@ -158,7 +170,7 @@ pub(super) fn ornate() -> OverlayStyle {
         ornament: Ornament {
             dividers: Some(Stroke { width: 1.0, color: gold.into(), opacity: 0.6 }),
             frame: Some(Frame { kind: FrameKind::Brackets, size: 16.0, width: 2.0, color: gold.into(), opacity: 1.0 }),
-            scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.35, color: "#000000".into(), drift: true }),
+            scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.35, color: "#000000".into(), drift: true, on: FilterOn::Both }),
             vignette: Some(Vignette { color: "#000000".into(), opacity: 0.6, reach: 25.0 }),
             ..Ornament::default()
         },
@@ -203,6 +215,8 @@ pub(super) fn list_scene(name: &str) -> Option<OverlayStyle> {
         "menu-plaid" => plaid(),
         "menu-argyle" => argyle(),
         "menu-stripes" => striped(),
+        "menu-plaid-items" => plaid_items(),
+        "menu-stripes-background" => striped_background(),
         "menu-paper" => paper(),
         "menu-metal" => metal(),
         "menu-concrete" => concrete(),

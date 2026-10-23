@@ -2,6 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use super::FilterOn;
+
 /// A plaid (a tartan): a ground crossed both ways by wide bands and thin lines, woven in a
 /// twill, the pattern repeating every `size` pixels at scale 1. `colors` are the ground, the
 /// bands and the lines.
@@ -13,6 +15,8 @@ pub struct Plaid {
     pub opacity: f32,
     #[serde(default = "default_plaid_size")]
     pub size: f32,
+    #[serde(default, skip_serializing_if = "FilterOn::is_both")]
+    pub on: FilterOn,
 }
 
 /// Argyle: diamonds `size` pixels wide at scale 1 in two alternating colors, with thin lines
@@ -25,6 +29,8 @@ pub struct Argyle {
     pub opacity: f32,
     #[serde(default = "default_argyle_size")]
     pub size: f32,
+    #[serde(default, skip_serializing_if = "FilterOn::is_both")]
+    pub on: FilterOn,
 }
 
 /// Stripes `size` pixels wide at scale 1 in two alternating colors, with a thin pinstripe in a
@@ -39,6 +45,8 @@ pub struct Stripes {
     pub opacity: f32,
     #[serde(default = "default_stripes_size")]
     pub size: f32,
+    #[serde(default, skip_serializing_if = "FilterOn::is_both")]
+    pub on: FilterOn,
 }
 
 /// Which way stripes run.

@@ -10,7 +10,7 @@ use crate::config::{Argyle, Plaid, StripeDirection, Stripes, default_argyle_colo
 /// A tartan: each thread is the ground, a band or a line by where it lies in the sett, and the
 /// twill shows the thread running down at some points and the one running across at the others,
 /// so where a band crosses the ground the two hatch together.
-pub fn plaid<'a, M: 'a>(p: &Plaid, s: f32, fade: f32) -> Element<'a, M> {
+pub fn plaid<'a, M: 'a>(p: &Plaid, s: f32, round: f32, fade: f32) -> Element<'a, M> {
     let sett = (p.size.clamp(24.0, 240.0) * s).max(12.0);
     let [ground, band, line] = rgb(&p.colors, default_plaid_colors);
     // A line is about two pixels wide, at its place in the sett.
@@ -25,7 +25,7 @@ pub fn plaid<'a, M: 'a>(p: &Plaid, s: f32, fade: f32) -> Element<'a, M> {
             ground
         }
     };
-    sized([13, sett as u32, key(&p.colors, 0)], (p.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+    sized([13, sett as u32, key(&p.colors, 0)], round, (p.opacity * fade).clamp(0.0, 1.0), move |w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in 0..h {
             for x in 0..w {
@@ -39,13 +39,13 @@ pub fn plaid<'a, M: 'a>(p: &Plaid, s: f32, fade: f32) -> Element<'a, M> {
 
 /// Diamonds a third taller than they're wide, the two colors alternating like a chequerboard,
 /// with a thin line along each diagonal through their middles.
-pub fn argyle<'a, M: 'a>(a: &Argyle, s: f32, fade: f32) -> Element<'a, M> {
+pub fn argyle<'a, M: 'a>(a: &Argyle, s: f32, round: f32, fade: f32) -> Element<'a, M> {
     let width = (a.size.clamp(16.0, 160.0) * s).max(8.0);
     let height = width * 1.4;
     let [first, second, line] = rgb(&a.colors, default_argyle_colors);
     // How far a line reaches either side of its middle, in the diagonals' units.
     let reach = 0.8 * (1.0 / (width * width) + 1.0 / (height * height)).sqrt();
-    sized([14, width as u32, key(&a.colors, 0)], (a.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+    sized([14, width as u32, key(&a.colors, 0)], round, (a.opacity * fade).clamp(0.0, 1.0), move |w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in 0..h {
             for x in 0..w {
@@ -67,12 +67,12 @@ pub fn argyle<'a, M: 'a>(a: &Argyle, s: f32, fade: f32) -> Element<'a, M> {
 }
 
 /// Stripes in two alternating colors, a pinstripe at each edge between them.
-pub fn stripes<'a, M: 'a>(st: &Stripes, s: f32, fade: f32) -> Element<'a, M> {
+pub fn stripes<'a, M: 'a>(st: &Stripes, s: f32, round: f32, fade: f32) -> Element<'a, M> {
     let band = (st.size.clamp(4.0, 120.0) * s).max(2.0);
     let direction = st.direction;
     let [first, second, pin] = rgb(&st.colors, default_stripes_colors);
     let half_pin = 0.8 * s.max(1.0);
-    sized([15, band as u32, key(&st.colors, direction as u32)], (st.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+    sized([15, band as u32, key(&st.colors, direction as u32)], round, (st.opacity * fade).clamp(0.0, 1.0), move |w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in 0..h {
             for x in 0..w {

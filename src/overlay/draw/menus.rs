@@ -117,7 +117,7 @@ fn directional<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
         match m.items.get(i).filter(|item| !item.label.is_empty()) {
             Some(_) => {
                 let (label, lit, selected) = item_cell(m, i, c, 16.0 * s);
-                c.moving(m, i, container(label).center_x(w).center_y(h).style(lit_cell_style(lit, selected, h)))
+                c.moving(m, i, item_box(container(label).center_x(w).center_y(h), lit_cell_style(lit, selected, h), c, &m.style, c.corners * h / 2.0))
             }
             None => space().width(w).height(h).into(),
         }
@@ -145,7 +145,7 @@ fn grid<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
         let Some(at) = layout.cells(i) else { continue };
         let (label, lit, selected) = item_cell(m, i, c, 16.0 * s);
         let (cw, ch) = (reach(at.columns, w), reach(at.rows, h));
-        let cell = container(label).center_x(cw).center_y(ch).padding([0.0, 6.0 * s]).style(lit_cell_style(lit, selected, h));
+        let cell = item_box(container(label).center_x(cw).center_y(ch).padding([0.0, 6.0 * s]), lit_cell_style(lit, selected, h), c, &m.style, c.corners * h / 2.0);
         let (x, y) = (at.column as f32 * (w + gap), at.row as f32 * (h + gap));
         cells = cells.push(column![space().height(y), row![space().width(x), c.moving(m, i, cell)]]);
     }
@@ -164,8 +164,10 @@ fn list<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
         let content = row![space().height(24.0 * s), content].align_y(Alignment::Center);
         let boxed = container(content).padding([10.0 * s, 14.0 * s]).width(Length::Fill);
         // A note has no box, so it doesn't look like something to pick.
-        let boxed = if m.items[i].tone == crate::menu::Tone::Note { boxed } else { boxed.style(lit_cell_style(lit, selected, 40.0 * s)) };
-        c.moving(m, i, boxed)
+        if m.items[i].tone == crate::menu::Tone::Note {
+            return c.moving(m, i, boxed);
+        }
+        c.moving(m, i, item_box(boxed, lit_cell_style(lit, selected, 40.0 * s), c, &m.style, c.corners * 20.0 * s))
     };
     let marker = |t: String| text(t).font(c.font).size(13.0 * s).color(c.muted);
     let columns = m.columns();
@@ -240,7 +242,7 @@ fn carousel<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
         line = line.push(c.moving(
             m,
             i,
-            container(label).center_x(if big { 170.0 } else { 120.0 } * s).center_y(height).style(lit_cell_style(lit, big, height)),
+            item_box(container(label).center_x(if big { 170.0 } else { 120.0 } * s).center_y(height), lit_cell_style(lit, big, height), c, &m.style, c.corners * height / 2.0),
         ));
     }
     line.push(arrow("▶")).into()
