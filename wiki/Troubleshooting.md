@@ -36,9 +36,19 @@ Install the motion-sensor udev rule. See [Installation](Installation#gyro).
 
 These need a compositor with layer-shell support: KDE Plasma, Sway, Hyprland and similar. GNOME doesn't have it.
 
+## An overlay or menu won't close
+
+B and the button that opened it close an overlay. If those don't work, for example because the controller is acting up, any of these closes every overlay and menu at once:
+
+- **Hold Guide** for 3 seconds. A countdown shows after the first second.
+- Choose **Close overlays** from the tray icon's menu.
+- Run `padwight close-overlays`. To use a keyboard key, bind this command to a key in your desktop's shortcut settings (in KDE: System Settings → Keyboard → Shortcuts → Add New → Command or Script).
+
+Overlays also close by themselves after 10 minutes with no input from any controller, and straight away when the controller driving them disconnects. If the in-game menu had unsaved changes, they're put aside: open the in-game menu again to carry on.
+
 ## The profile changed after a controller was unplugged or swapped
 
-A disconnect releases everything that controller was holding and closes any menu it had open. A toast names the controller that left or arrived.
+A disconnect releases everything that controller was holding and closes every overlay it was driving. A toast names the controller that left or arrived, and says if overlays closed.
 
 When the controller comes back, the profile you were on returns, unless you've changed it since. If the replacement controller lacks a feature the profile needs, such as gyro, the setup's first profile that doesn't need it takes over, or the default profile if none does. A toast says so.
 

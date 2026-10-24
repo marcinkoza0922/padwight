@@ -65,7 +65,6 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "busy" => OverlayFrame { info: vec![info_view()], logs: vec![log_view()], ..active(menu(MenuKind::Buttons)) },
         "unsaved" => active(unsaved()),
         "quick-styled" => active(quick_styled()),
-        "held-controller" => active(held(crate::system_menu::Hold::NoController)),
         "held-remapping" => active(held(crate::system_menu::Hold::RemappingOff)),
         "guide" => guide(0),
         "guide-mode" => guide(1),

@@ -14,6 +14,9 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
   `screenshots/motion/`; `--from/--until/--every` pick the strip's span, `--scene keyboard`, `--trace` prints numbers)
 - Which overlay cue plays, no display or speakers needed: `scripts/sound-trace.sh [config.toml]` (a `--debug` daemon
   logs each cue as a `sound:` line); `cargo run -q -- debug sound list|<kind>|<overlay>` plays cues to hear them
+- How loud and how grating cues are, no speakers needed: `python3 -I scripts/sound-audit.py [--level 60] path...`
+  (loudness in sone, sharpness, roughness; writes a listening page to `sound-previews/audit/`). Render the
+  kinds and default cues first with `PADWIGHT_PREVIEW_DIR=dir` and the ignored `sound::tests::render_previews`
 - Game detection, no controller needed: `cargo run -q -- debug focus [pid [class]]|processes`;
   `scripts/sandbox-pid.sh` runs a program in its own pid namespace (see
   `docs/development/code-review-plan.md`, which also tracks the review passes)

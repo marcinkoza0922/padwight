@@ -69,6 +69,8 @@ pub enum Request {
     ToggleNumpad,
     /// Show the menu with this name (items run on the most recently used controller).
     OpenMenu(String),
+    /// Close every overlay that has the controller, and every Guide overlay.
+    CloseOverlays,
     /// Keep the connection open; the daemon streams one `Option<OverlayView>` JSON line per
     /// change. `null` means nothing is shown (the resident overlay idles).
     WatchOverlay,

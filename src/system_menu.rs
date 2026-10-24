@@ -90,8 +90,6 @@ impl Eq for Typing {}
 /// Why the menu is on hold, drawn as a prompt over it until it carries on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Hold {
-    /// The controller driving it went away: the next controller to press a button takes over.
-    NoController,
     /// Remapping was turned off elsewhere (the tray) with changes not saved: the controller
     /// driving the menu is kept until Save or Discard.
     RemappingOff,

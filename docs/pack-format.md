@@ -634,7 +634,7 @@ The overlays are `keyboard` (the on-screen keyboard), `numpad`, `menu` (every me
 | `card` | A playing card flicked down on a table: a papery snap (sample). |
 | `carriage` | A typewriter carriage thrown back: a quick ratchet and a clunk at the stop (sample). |
 
-`volume` is 0–1, `pitch` is 0.5–2 (an octave either way) and `length` is 0.5–2 (half as long, or twice as long). All three are relative to the kind's own sound. A longer cue is the same sound played slower, not a longer tail. The recordings and samples (marked above) are CC0 files that come with the app: `pitch` plays them higher or lower, and `length` stretches or squeezes them without changing their pitch.
+`volume` is 0–1, `pitch` is 0.5–2 (an octave either way) and `length` is 0.5–2 (half as long, or twice as long). All three are relative to the kind's own sound. `volume` scales the sound's level, so 0.1 is −20 dB and 0.01 is −40 dB (the settings show it in dB, and −60 dB is off). Equal volumes aren't equally loud: a short click needs far more than a pop to be heard as well, and a swish of noise far less. `scripts/sound-audit.py` measures cues' loudness to balance them. A longer cue is the same sound played slower, not a longer tail. The recordings and samples (marked above) are CC0 files that come with the app: `pitch` plays them higher or lower, and `length` stretches or squeezes them without changing their pitch.
 
 Five effects change a cue after it's made, and all of them are off (0) unless set:
 

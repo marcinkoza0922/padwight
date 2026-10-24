@@ -38,6 +38,7 @@ use crate::{
 
 mod activity;
 mod auto_switch;
+mod close_all;
 mod first_pad;
 mod guide;
 mod in_game_menu;
@@ -494,6 +495,8 @@ struct Daemon {
     driving: Driving,
     /// When a held ForceQuit started counting, and whether it has already fired.
     quit_hold: Option<(Instant, bool)>,
+    /// The ways out of every overlay at once (see `close_all.rs`).
+    fallbacks: close_all::Fallbacks,
     /// The screen recorder's process, once running, and whether one is being started.
     recording: Option<u32>,
     recording_starting: bool,
@@ -572,9 +575,8 @@ impl Daemon {
     fn new(config: Config, kbm: VirtualKbm, injection: inject::Injection, tx: inbox::Tx) -> Self {
         crate::info::set_opener(crate::info::OpenerLabel::of(&config.shortcuts));
         crate::info::set_menu_keys(config.shortcuts.menu_keys());
-        let pack_fonts = config.active_game().assets.activate_headless();
         Daemon {
-            pack_fonts,
+            pack_fonts: config.active_game().assets.activate_headless(),
             scope: config.scope(),
             sounds: sound::Sounds::start(),
             config,
@@ -602,6 +604,7 @@ impl Daemon {
             active: None,
             driving: Driving::default(),
             quit_hold: None,
+            fallbacks: close_all::Fallbacks::default(),
             recording: None,
             recording_starting: false,
             offers: Offers::default(),
@@ -827,6 +830,7 @@ impl Daemon {
                 self.request(Request::SetEnabled(!self.config.enabled));
             }
             tray::Command::OpenSettings => self.open_settings(),
+            tray::Command::CloseOverlays => self.close_overlays_by_hand("from the tray"),
             tray::Command::Quit => {
                 log!("quit from the tray");
                 self.stop();
@@ -941,22 +945,21 @@ impl Daemon {
             dev.stop_threads();
             monitor::clear();
             log!("device gone: {} ({})", dev.name, dev.path.display());
-            self.forget_active(id);
+            let guide_up = dev.engine.guide_overlay_open();
+            let mut closed = self.forget_active(id);
             let mut out = Vec::new();
             dev.engine.release_all(false, &mut out);
             dev.dispatch(&mut self.kbm, out);
-            // A menu is run by the controller that opened it, and with no controller
-            // left nothing could close an overlay. The in-game menu waits for one instead.
-            let orphaned = match &self.active {
-                Some(Active::Menu { device, .. }) => *device == id || self.devices.is_empty(),
-                Some(Active::Settings(..)) => false,
-                Some(_) => self.devices.is_empty(),
-                None => false,
-            };
-            if orphaned {
-                self.close_overlay();
+            // With no controller left, nothing could close an overlay.
+            if self.devices.is_empty() {
+                closed = closed.or(self.close_all_overlays("no controller left"));
             }
-            self.say(vec![format!("{} disconnected", dev.name)]);
+            // Its Guide overlay went with it.
+            if guide_up {
+                closed = closed.or(Some(false));
+                self.check_info_changes();
+            }
+            self.say(close_all::disconnected_lines(&dev.name, closed));
         }
         self.keep_first_pad();
     }
@@ -1031,9 +1034,7 @@ impl Daemon {
         let logged = self.log_input(id, &events, Instant::now());
         let fires: Vec<bool> = events.iter().map(|ev| self.opener_fired(id, ev)).collect();
         let tapped = self.opener_tapped(&events, &fires);
-        if self.take_over_settings(id, &events) {
-            return;
-        }
+        self.note_activity(&events);
         if self.drives_overlay(id) {
             return self.overlay_input(id, events, &fires);
         }

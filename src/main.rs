@@ -72,6 +72,7 @@ commands:
   overlay-toggle   open or close the on-screen keyboard overlay
   numpad-toggle    open or close the on-screen numpad overlay
   menu <name>      show an on-screen menu
+  close-overlays   close every overlay and menu (bind it to a key for a way out)
   debug            virtual controller for development and tests (debug help)";
 
 #[expect(clippy::print_stdout, reason = "CLI output")]
@@ -97,6 +98,7 @@ fn main() -> Result<()> {
         ["overlay-toggle"] => send(&Request::ToggleOverlay),
         ["numpad-toggle"] => send(&Request::ToggleNumpad),
         ["menu", name] => send(&Request::OpenMenu(name.to_string())),
+        ["close-overlays"] => send(&Request::CloseOverlays),
         ["debug", rest @ ..] => debug::run(rest),
         ["-h" | "--help" | "help"] => {
             println!("{USAGE}");

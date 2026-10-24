@@ -80,7 +80,7 @@ install -Dm644 flatpak/io.github.marcinkoza0922.Padwight.svg ~/.local/share/icon
 install -Dm644 flatpak/io.github.marcinkoza0922.Padwight.desktop ~/.local/share/applications/io.github.marcinkoza0922.Padwight.desktop
 ```
 
-Controllers can be unplugged, reconnected or swapped while padwight runs, and it copes. A disconnect releases everything that controller was holding and closes a menu it had open. A toast names the controller that left or arrived. Your profile stays put, so reconnecting the same pad picks up where you left off.
+Controllers can be unplugged, reconnected or swapped while padwight runs, and it copes. A disconnect releases everything that controller was holding and closes every overlay it was driving (unsaved in-game menu changes are put aside until the menu opens again). A toast names the controller that left or arrived. Your profile stays put, so reconnecting the same pad picks up where you left off.
 
 If the pad that comes back (or replaces it) lacks something the active profile needs, such as gyro, the setup's first profile that doesn't need it takes over. If none does, the default profile takes over, and a toast tells you so. When a pad with the feature is connected again, your profile returns, unless you've changed it since. The switch only happens once the controllers have looked the same for two 2-second scans, so a motion sensor that appears a moment after its pad won't make the profile flicker.
 
@@ -322,15 +322,15 @@ Problems that would block saving (unknown keys, missing macros, incomplete combo
 
 ## CLI
 
-`padwight status | enable | disable | profile <name> | next-profile | reload | overlay-toggle | numpad-toggle | menu <name> | daemon`
+`padwight status | enable | disable | profile <name> | next-profile | reload | overlay-toggle | numpad-toggle | menu <name> | close-overlays | daemon`
 
-`profile <name>` looks in the active setup first, then General, then the first setup with a profile of that name. `menu <name>` opens one of the active setup's menus.
+`profile <name>` looks in the active setup first, then General, then the first setup with a profile of that name. `menu <name>` opens one of the active setup's menus. `close-overlays` closes every overlay and menu: bind it to a key in your desktop's shortcut settings for a keyboard way out.
 
 When `padwight daemon` runs in a terminal, it keeps a live status line showing each controller's input and what's being output.
 
 Opening the GUI starts the daemon in the background if it isn't already running. Its output goes to `~/.local/state/padwight/daemon.log`, and the daemon keeps running after the window closes. Stopping the daemon closes the window.
 
-Outside systemd (in a terminal, or from an autostart entry), the daemon also puts an icon in the system tray. Clicking it opens the settings window, and its menu has a Remapping switch, Open settings, and Quit. Under systemd, the unit manages the daemon, so no icon is shown. Desktops without a tray (such as GNOME without an extension) show no icon, and the daemon works fine without one. In a Flatpak, the tray needs the `org.kde.StatusNotifierWatcher` permission, which the manifest grants.
+Outside systemd (in a terminal, or from an autostart entry), the daemon also puts an icon in the system tray. Clicking it opens the settings window, and its menu has a Remapping switch, Open settings, Close overlays, and Quit. Under systemd, the unit manages the daemon, so no icon is shown. Desktops without a tray (such as GNOME without an extension) show no icon, and the daemon works fine without one. In a Flatpak, the tray needs the `org.kde.StatusNotifierWatcher` permission, which the manifest grants.
 
 ## Good to know
 

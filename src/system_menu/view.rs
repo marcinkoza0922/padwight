@@ -150,12 +150,6 @@ fn list_page(title: &str, items: Vec<ItemView>, cursor: usize, crumbs: Vec<Strin
 fn hold_prompt(hold: Hold, mut style: OverlayStyle) -> OfferView {
     style.background.opacity = 1.0;
     let (title, detail, answers, hint) = match hold {
-        Hold::NoController => (
-            "Controller disconnected",
-            "Reconnect it, or press a button on another controller, to carry on.",
-            Vec::new(),
-            "The menu waits where it was.",
-        ),
         Hold::RemappingOff => (
             "Remapping is off",
             "It was turned off while you had unsaved changes here.",

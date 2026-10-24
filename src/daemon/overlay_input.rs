@@ -61,17 +61,15 @@ impl Daemon {
         }
     }
 
-    /// Called when a device stops being managed; watchers fall back to "no controller".
-    pub(super) fn forget_active(&mut self, id: u64) {
+    /// Called when a device stops being managed; watchers fall back to "no controller". An
+    /// overlay it drove can't be driven any more, so every overlay closes: `None` when it drove
+    /// none, else whether the in-game menu's unsaved edits were put aside.
+    pub(super) fn forget_active(&mut self, id: u64) -> Option<bool> {
         if self.last_active == Some(id) {
             self.last_active = None;
             self.broadcast(None);
         }
-        // An overlay its controller left can't be driven any more. The in-game menu waits for
-        // another controller rather than lose its changes.
-        if self.active.is_some() && self.overlay_driver() == Some(id) && !self.settings_lost_controller() {
-            self.close_overlay();
-        }
+        self.close_overlays_of(id)
     }
 
     /// The controller the overlay on screen belongs to, if it has one yet.

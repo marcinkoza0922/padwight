@@ -72,6 +72,14 @@ impl Engine {
         }
     }
 
+    /// Makes the Guide press being held count as a chord, so letting go of it opens nothing:
+    /// a long hold of Guide closed every overlay, and its release isn't a tap.
+    pub fn forget_guide_tap(&mut self) {
+        if let Some(chorded) = self.guide_held.as_mut() {
+            *chorded = true;
+        }
+    }
+
     /// Turns the Guide overlay off and mouse mode on: the overlay's Mouse mode item.
     pub fn enter_mouse_mode(&mut self) {
         self.set_guide_open(false);

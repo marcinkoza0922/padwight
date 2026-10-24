@@ -278,20 +278,17 @@ fn stick_push_steps_once_until_let_go() {
 }
 
 #[test]
-fn on_hold_for_a_controller_the_menu_ignores_input_and_carries_on_where_it_was() {
+fn put_aside_while_asking_it_comes_back_where_the_changes_were_made() {
     let mut config = mouse_config();
     let mut menu = SystemMenu::new(&config).on_page(Page::Quick);
     menu.handle_now(press(Button::DpadDown), &mut config);
-    menu.hold(Hold::NoController);
-    let prompt = menu.view(&config).prompt.expect("the hold is drawn");
-    assert_eq!(prompt.title, "Controller disconnected");
-    for b in [Button::South, Button::East, Button::West, Button::DpadDown] {
-        assert_eq!(menu.handle_now(press(b), &mut config), None);
-    }
-    assert_eq!(menu.guide_pressed(&config), None, "Guide doesn't close it either");
-    menu.carry_on();
-    assert_eq!((menu.screen.clone(), menu.cursor), (Screen::Quick, 1));
-    assert!(menu.view(&config).prompt.is_none());
+    menu.handle_now(press(Button::DpadRight), &mut config);
+    menu.handle_now(press(Button::East), &mut config);
+    assert!(matches!(menu.screen, Screen::Confirm(..)));
+    menu.hold(Hold::RemappingOff);
+    menu.put_aside();
+    assert_eq!((menu.screen.clone(), menu.cursor, menu.on_hold()), (Screen::Quick, 1, None));
+    assert!(menu.unsaved(&config), "the changes are still the menu's to save");
 }
 
 #[test]

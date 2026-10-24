@@ -4,7 +4,7 @@ use iced::widget::{column, row};
 
 use super::*;
 use super::sound_picker::SoundTarget;
-use crate::sound::Feedback;
+use crate::sound::{Feedback, VOLUME_FLOOR_DB, decibels, volume_db};
 
 /// One overlay's sounds: on or off, and (when on and opened) its step, pick, open and close cues.
 pub(super) fn overlay_sounds<'a>(
@@ -69,6 +69,9 @@ pub(super) fn chosen(spec: &SoundSpec) -> SoundChoice {
 enum Unit {
     Percent,
     Decibels,
+    /// A volume in dB below full, whose bottom is silence: heard loudness follows dB, so a linear
+    /// slider would crowd every quiet cue into its first few steps.
+    Level,
 }
 
 /// One cue: its label, kind and preview, and a fold that holds every way to shape it: volume,
@@ -78,6 +81,8 @@ fn cue_row<'a>(label: &'static str, spec: SoundSpec, editing: bool, target: Soun
         let (step, shown) = match unit {
             Unit::Percent => (5.0_f32, format!("{value:.0}%")),
             Unit::Decibels => (1.0, format!("{value:+.0} dB")),
+            Unit::Level if value <= VOLUME_FLOOR_DB => (1.0, "Off".to_string()),
+            Unit::Level => (1.0, format!("{value:.0} dB")),
         };
         row![
             text(name).width(56),
@@ -107,7 +112,7 @@ fn cue_row<'a>(label: &'static str, spec: SoundSpec, editing: bool, target: Soun
         return inset(column![line]).into();
     }
     let shape = row![
-        knob("Volume", spec.volume * 100.0, 0.0..=100.0, Unit::Percent, |s, v| s.volume = v / 100.0),
+        knob("Volume", volume_db(spec.volume), VOLUME_FLOOR_DB..=0.0, Unit::Level, |s, v| s.volume = decibels(v)),
         knob("Pitch", spec.pitch * 100.0, 50.0..=200.0, Unit::Percent, |s, v| s.pitch = v / 100.0),
         knob("Length", spec.length * 100.0, 50.0..=200.0, Unit::Percent, |s, v| s.length = v / 100.0),
     ]

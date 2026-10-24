@@ -74,6 +74,13 @@ impl SystemMenu {
         }
     }
 
+    /// Readies the menu to be put aside with its unsaved changes, to come back later where they
+    /// were made: off hold, and back from the unsaved-changes question if it was asking.
+    pub fn put_aside(&mut self) {
+        self.carry_on();
+        self.keep_editing();
+    }
+
     /// Back from the unsaved-changes question to the screen it was asked on.
     pub(super) fn keep_editing(&mut self) {
         if let Screen::Confirm(left, cursor, _) = std::mem::replace(&mut self.screen, Screen::Main) {

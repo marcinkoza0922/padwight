@@ -123,6 +123,12 @@ impl Daemon {
     }
 
     pub(super) fn close_overlay(&mut self) {
+        self.close_overlay_with_cue(true);
+    }
+
+    /// Closes the overlay, sounding its close cue unless `cue` is false (when another overlay
+    /// opens in its place and sounds its own).
+    pub(super) fn close_overlay_with_cue(&mut self, cue: bool) {
         self.driving.owner = None;
         self.config.acting = None;
         let closing = self.active.as_ref().map(active_sound);
@@ -141,7 +147,7 @@ impl Daemon {
         // The overlay window goes back to idle (it stays running for next time).
         self.broadcast_overlay();
         self.resync_all();
-        if let Some(overlay) = closing {
+        if let Some(overlay) = closing.filter(|_| cue) {
             self.overlay_sound(overlay, Some(sound::Feedback::Close));
         }
     }

@@ -15,6 +15,8 @@ The overlay has four parts:
 
 Move the menu with the D-pad or the left stick (hold it to repeat), choose with **A**, and close it with **B**.
 
+Holding Guide for 3 seconds while any overlay or menu is up closes them all, as a way out when nothing else does (see [Troubleshooting](Troubleshooting#an-overlay-or-menu-wont-close)).
+
 ## Shortcuts
 
 Hold Guide and press one of these, or, with the overlay open, press it alone. Either way the overlay closes and the shortcut runs.
