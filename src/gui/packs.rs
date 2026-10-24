@@ -1,29 +1,40 @@
-//! Dialogs for games as packs: the library picker ("+ Add game"), the import preview,
-//! export, deleting a game, and copying items from another game.
+//! Dialogs for games as packs: the import preview, export, deleting a game, and copying items from another game.
 
 use std::path::PathBuf;
 
-use iced::widget::{Column, column, row};
+use iced::widget::{Column, column, combo_box, row};
 
 use super::*;
+use super::add_game::Picker as AddGamePicker;
 use crate::{
     config::PackInfo,
     pack::{Choices, Plan},
 };
 
 pub(super) enum Dialog {
-    AddGame { search: String, selected: Option<usize> },
+    AddGame(Box<AddGamePicker>),
     Import { plan: Box<Plan>, choices: Choices },
     /// Export of the game with this name, and what it would write (kept up to date as the
     /// details are edited, rather than worked out every frame).
-    Export { game: String, info: PackInfo, library: bool, preview: Box<pack::Export> },
+    Export { game: String, info: Box<PackInfo>, library: bool, preview: Box<pack::Export> },
     DeleteGame(String),
     /// Copy a macro, menu or info overlay from another game into the shown list.
-    Browse { kind: ItemKind, from: Option<BrowseSource>, open: Option<usize> },
+    Browse(Box<Browse>),
     /// The window is closing with edits that aren't saved.
     ConfirmQuit,
     /// What padwight needs from the system (`App::system_checks`).
     SystemCheck,
+}
+
+pub(super) struct Browse {
+    kind: ItemKind,
+    /// Every setup to copy from, the library's included: built once, as there may be thousands.
+    sources: combo_box::State<BrowseSource>,
+    from: Option<BrowseSource>,
+    /// What `from` holds, looked up (or parsed, for a library pack) when it was picked.
+    items: Option<Game>,
+    /// The item showing its preview.
+    open: Option<usize>,
 }
 
 /// Where "Copy from another game…" takes items from.
@@ -53,34 +64,14 @@ pub(super) enum PackField {
     MadeWith,
 }
 
-/// The library picker lists at most this many packs when nothing is searched for.
-const LIBRARY_LIST_HEIGHT: f32 = 380.0;
-
 impl App {
     #[expect(clippy::too_many_lines, clippy::cognitive_complexity, reason = "predates the size lints")]
     pub(super) fn update_packs(&mut self, message: Message) -> Task<Message> {
         match message {
-            Message::OpenAddGame => {
-                self.dialog = Some(Dialog::AddGame { search: String::new(), selected: None });
-                if self.installed.is_none() {
-                    return Task::perform(
-                        async { tokio::task::spawn_blocking(launchers::scan).await.unwrap_or_default() },
-                        Message::Installed,
-                    );
-                }
+            Message::OpenAddGame | Message::Installed(_) | Message::SetLibrarySearch(_) | Message::SelectLibrary(_) | Message::LibraryScrolled(_) => {
+                return self.update_add_game(message);
             }
-            Message::Installed(installed) => self.installed = Some(installed),
             Message::CloseDialog => self.dialog = None,
-            Message::SetLibrarySearch(text) => {
-                if let Some(Dialog::AddGame { search, .. }) = &mut self.dialog {
-                    *search = text;
-                }
-            }
-            Message::SelectLibrary(i) => {
-                if let Some(Dialog::AddGame { selected, .. }) = &mut self.dialog {
-                    *selected = Some(i);
-                }
-            }
             Message::AddEmptyGame(template) => {
                 let name = unique_name("New setup", |n| self.config.games.iter().any(|g| g.name == n));
                 let profile = template.make(template.base_name());
@@ -91,15 +82,15 @@ impl App {
                 self.message = Some(("Name the setup and add a rule for it, then Save & apply.".into(), false));
             }
             Message::PreviewLibrary(i) => {
-                if let Some(entry) = self.library.get(i) {
-                    let plan = pack::plan(&self.config, entry.pack.clone(), true);
+                if let Some(entry) = self.library.get(i).and_then(library::Listing::entry) {
+                    let plan = pack::plan(&self.config, entry.pack, true);
                     self.open_import(plan);
                 }
             }
             Message::UpdateFromLibrary(name) => {
-                let found = library::updates(&self.config, &self.library).into_iter().find(|(n, _)| *n == name).map(|(_, i)| i);
-                if let Some(i) = found {
-                    let plan = pack::plan(&self.config, self.library[i].pack.clone(), true);
+                let found = library::updates(&self.config, self.library).into_iter().find(|(n, _)| *n == name).map(|(_, i)| i);
+                if let Some(entry) = found.and_then(|i| self.library[i].entry()) {
+                    let plan = pack::plan(&self.config, entry.pack, true);
                     self.open_import(plan);
                 }
             }
@@ -139,7 +130,7 @@ impl App {
                     let info = pack::draft(self.game(), false);
                     let preview = Box::new(pack::export(self.game(), &info));
                     self.export_description = iced::widget::text_editor::Content::with_text(&info.description);
-                    self.dialog = Some(Dialog::Export { game: name, info, library: false, preview });
+                    self.dialog = Some(Dialog::Export { game: name, info: Box::new(info), library: false, preview });
                 }
             }
             Message::SetPackField(field, value) => {
@@ -167,7 +158,7 @@ impl App {
                 };
                 let fresh = self.config.game(Some(&game)).map(|g| pack::draft(g, on));
                 if let (Some(Dialog::Export { info, library, .. }), Some(fresh)) = (&mut self.dialog, fresh) {
-                    *info = PackInfo { description: info.description.clone(), made_with: info.made_with.clone(), ..fresh };
+                    **info = PackInfo { description: info.description.clone(), made_with: info.made_with.clone(), ..fresh };
                     *library = on;
                 }
                 self.refresh_export();
@@ -191,7 +182,7 @@ impl App {
                     && let Some(g) = self.config.game_mut(Some(&game))
                 {
                     // Remembered for the next export of this game.
-                    g.pack = info;
+                    g.pack = *info;
                 }
                 self.message = Some((format!("Exported to {path}. Save & apply to keep its details for next time."), false));
             }
@@ -211,25 +202,30 @@ impl App {
                     self.message = Some((format!("Deleted {name}. Save & apply to make it final."), false));
                 }
             }
-            Message::OpenBrowse(kind) => self.dialog = Some(Dialog::Browse { kind, from: None, open: None }),
+            Message::OpenBrowse(kind) => {
+                let sources = combo_box::State::new(self.browse_sources());
+                self.dialog = Some(Dialog::Browse(Box::new(Browse { kind, sources, from: None, items: None, open: None })));
+            }
             Message::BrowseFrom(source) => {
-                if let Some(Dialog::Browse { from, open, .. }) = &mut self.dialog {
-                    *from = Some(source);
-                    *open = None;
+                let items = self.browse_items(&source);
+                if let Some(Dialog::Browse(browse)) = &mut self.dialog {
+                    browse.from = Some(source);
+                    browse.items = items;
+                    browse.open = None;
                 }
             }
             Message::BrowseOpen(i) => {
-                if let Some(Dialog::Browse { open, .. }) = &mut self.dialog {
-                    *open = if *open == Some(i) { None } else { Some(i) };
+                if let Some(Dialog::Browse(browse)) = &mut self.dialog {
+                    browse.open = if browse.open == Some(i) { None } else { Some(i) };
                 }
             }
             Message::CopyItem(i) => {
-                let Some(Dialog::Browse { kind, from: Some(source), .. }) = &self.dialog else { return Task::none() };
-                let (kind, source) = (*kind, source.clone());
-                let Some(items) = self.browse_items(&source) else { return Task::none() };
-                let Some(root) = items.names(kind).get(i).map(std::string::ToString::to_string) else { return Task::none() };
-                self.dialog = None;
-                self.copy_items(&items, kind, &root, &source);
+                let Some(Dialog::Browse(browse)) = &self.dialog else { return Task::none() };
+                let Some(items) = &browse.items else { return Task::none() };
+                let Some(root) = items.names(browse.kind).get(i).map(std::string::ToString::to_string) else { return Task::none() };
+                let Some(Dialog::Browse(browse)) = self.dialog.take() else { return Task::none() };
+                let (Some(source), Some(items)) = (browse.from, browse.items) else { return Task::none() };
+                self.copy_items(&items, browse.kind, &root, &source);
             }
             _ => {}
         }
@@ -328,16 +324,28 @@ impl App {
         self.dialog = Some(Dialog::Import { plan: Box::new(plan), choices });
     }
 
+    /// The setups to copy from: the other setups, then the library's games not added yet.
+    fn browse_sources(&self) -> Vec<BrowseSource> {
+        let here = self.game_key().map(str::to_string);
+        let mut sources: Vec<BrowseSource> =
+            self.config.all_games().map(|(key, _)| key.map(str::to_string)).filter(|key| *key != here).map(BrowseSource::Game).collect();
+        let added: HashSet<&str> = self.config.games.iter().filter_map(|g| g.origin.as_ref()).map(|o| o.id.as_str()).collect();
+        sources.extend(
+            self.library.iter().enumerate().filter(|(_, l)| !added.contains(l.id.as_str())).map(|(i, l)| BrowseSource::Library(i, l.name.clone())),
+        );
+        sources
+    }
+
     /// A "Copy from" source, as a game.
     fn browse_items(&self, source: &BrowseSource) -> Option<Game> {
         match source {
             BrowseSource::Game(key) => self.config.game(key.as_deref()).cloned(),
-            BrowseSource::Library(i, _) => Some(self.library.get(*i)?.pack.to_game()),
+            BrowseSource::Library(i, _) => Some(self.library.get(*i)?.entry()?.pack.to_game()),
         }
     }
 
     /// Whether any connected controller has `f`: `None` with none connected.
-    fn pad_has(&self, f: pack::Feature) -> Option<bool> {
+    pub(super) fn pad_has(&self, f: pack::Feature) -> Option<bool> {
         let pads: Vec<_> = self.status.as_ref()?.devices.iter().filter(|d| !d.ignored).collect();
         (!pads.is_empty()).then(|| {
             pads.iter().any(|d| match f {
@@ -350,104 +358,15 @@ impl App {
 
     pub(super) fn view_dialog<'a>(&'a self, dialog: &'a Dialog) -> Element<'a, Message> {
         let body = match dialog {
-            Dialog::AddGame { search, selected } => self.view_add_game(search, *selected),
+            Dialog::AddGame(picker) => self.view_add_game(picker),
             Dialog::Import { plan, choices } => self.view_import(plan, choices),
             Dialog::Export { game, info, library, preview } => self.view_export(game, info, *library, preview),
             Dialog::DeleteGame(name) => self.view_delete(name),
-            Dialog::Browse { kind, from, open } => self.view_browse(*kind, from.as_ref(), *open),
+            Dialog::Browse(browse) => self.view_browse(browse),
             Dialog::ConfirmQuit => self.view_confirm_quit(),
             Dialog::SystemCheck => self.view_system_check(),
         };
         modal(body)
-    }
-
-    #[expect(clippy::too_many_lines, reason = "predates the size lints")]
-    fn view_add_game<'a>(&'a self, search: &str, selected: Option<usize>) -> Element<'a, Message> {
-        let query = search.trim().to_lowercase();
-        let added = |id: &str| self.config.games.iter().find(|g| g.origin.as_ref().is_some_and(|o| o.id == id));
-        let installed = |i: usize| self.installed.as_ref().map(|inst| inst.has(&self.library[i].pack.rules));
-        let mut order: Vec<usize> = (0..self.library.len())
-            .filter(|i| self.library[*i].pack.pack.name.to_lowercase().contains(&query))
-            .collect();
-        // The user's own games first.
-        order.sort_by_key(|i| !installed(*i).unwrap_or(false));
-        let any_installed = order.iter().any(|i| installed(*i) == Some(true));
-        // The first entry is shown until another is picked, so the details pane is never blank.
-        let selected = selected.filter(|i| order.contains(i)).or_else(|| order.first().copied());
-
-        let mut list = column![
-            row![
-                dropdown(Template::NEW, None::<Template>, Message::AddEmptyGame).placeholder("Empty setup from a template…").style(style::action_dropdown).width(300),
-                button(text("Import a file…")).style(style::secondary).on_press(Message::ImportFile),
-            ]
-            .spacing(8),
-            row![
-                text(match &self.installed {
-                    None => "Checking which games you have installed…",
-                    Some(_) if any_installed => "Built-in games, installed ones first:",
-                    Some(_) => "Built-in games:",
-                })
-                .size(13)
-                .color(MUTED_COLOR),
-                space::horizontal(),
-                tutorial_link("tutorial-first-setup.md"),
-            ]
-            .align_y(Alignment::Center),
-        ]
-        .spacing(8);
-        let mut entries = column![].spacing(4);
-        for (n, i) in order.iter().enumerate() {
-            // Where the installed games end, so the order says what it's sorted by.
-            if any_installed && installed(*i) != Some(true) && n > 0 && installed(order[n - 1]) == Some(true) {
-                entries = entries.push(text("Not installed").size(12).color(MUTED_COLOR));
-            }
-            let pack = &self.library[*i].pack;
-            let mut line = row![text(pack.pack.name.clone()).size(15).width(Length::Fill)].spacing(8).align_y(Alignment::Center);
-            for f in pack.required_by_all() {
-                line = line.push(text(f.label()).size(12).color(MUTED_COLOR));
-            }
-            if installed(*i) == Some(true) {
-                line = line.push(text("installed").size(12).color(style_accent()));
-            }
-            if added(&pack.pack.id).is_some() {
-                line = line.push(text("added").size(12).color(MUTED_COLOR));
-            }
-            entries = entries.push(
-                button(line).width(Length::Fill).padding([6, 10]).style(style::segment(selected == Some(*i))).on_press(Message::SelectLibrary(*i)),
-            );
-        }
-        if self.library.is_empty() {
-            entries = entries.push(text("The built-in library is empty in this build.").size(13).color(MUTED_COLOR));
-        } else if order.is_empty() {
-            entries = entries.push(text("No built-in game matches.").size(13).color(MUTED_COLOR));
-        }
-        // A gap on the right keeps the tags clear of the scrollbar.
-        list = list.push(scrollable(entries.padding(iced::Padding::ZERO.right(14))).height(LIBRARY_LIST_HEIGHT));
-
-        let mut details = column![].spacing(8).width(320);
-        // The main action sits at the bottom with Cancel, as in every dialog.
-        let mut action = None;
-        match selected.and_then(|i| self.library.get(i).map(|e| (i, e))) {
-            Some((i, entry)) => {
-                let p = &entry.pack;
-                details = details.push(text(p.pack.name.clone()).size(20)).push(pack_summary(p, |f| self.pad_has(f)));
-                action = Some(match added(&p.pack.id) {
-                    Some(g) => button(text("Open it")).on_press(Message::SelectPage(Page::Game(Some(g.name.clone())))),
-                    None => button(text("Preview & add…")).on_press(Message::PreviewLibrary(i)),
-                });
-            }
-            None => details = details.push(note("Pick a setup to see what's in it.")),
-        }
-
-        column![
-            text("Add a setup").size(22),
-            field("Search the library…", search).on_input(Message::SetLibrarySearch),
-            row![list.width(Length::Fill), rule::vertical(1), details].spacing(16),
-            row![space::horizontal(), button(text("Cancel")).style(style::secondary).on_press(Message::CloseDialog)].push(action).spacing(8),
-        ]
-        .spacing(12)
-        .width(820)
-        .into()
     }
 
     fn view_import<'a>(&'a self, plan: &'a Plan, choices: &'a Choices) -> Element<'a, Message> {
@@ -629,29 +548,18 @@ impl App {
     }
 
     #[expect(clippy::too_many_lines, reason = "predates the size lints")]
-    fn view_browse<'a>(&'a self, kind: ItemKind, from: Option<&BrowseSource>, open: Option<usize>) -> Element<'a, Message> {
-        let here = self.game_key().map(str::to_string);
-        let mut sources: Vec<BrowseSource> = self
-            .config
-            .all_games()
-            .map(|(key, _)| key.map(str::to_string))
-            .filter(|key| *key != here)
-            .map(BrowseSource::Game)
-            .collect();
-        let added = |id: &str| self.config.games.iter().any(|g| g.origin.as_ref().is_some_and(|o| o.id == id));
-        sources.extend(
-            self.library
-                .iter()
-                .enumerate()
-                .filter(|(_, e)| !added(&e.pack.pack.id))
-                .map(|(i, e)| BrowseSource::Library(i, e.pack.pack.name.clone())),
-        );
+    fn view_browse<'a>(&'a self, browse: &'a Browse) -> Element<'a, Message> {
+        let (kind, open) = (browse.kind, browse.open);
         let mut col = column![
             text(format!("Copy a {} from another setup", kind.noun())).size(22),
-            dropdown(sources, from.cloned(), Message::BrowseFrom).placeholder("Pick a setup…").style(style::action_dropdown).width(320),
+            combo_box(&browse.sources, "Search setups…", browse.from.as_ref(), Message::BrowseFrom)
+                .input_style(style::text_field)
+                .menu_style(style::dropdown_menu)
+                .padding([6, 10])
+                .width(320),
         ]
         .spacing(12);
-        if let Some(items) = from.and_then(|s| self.browse_items(s)) {
+        if let Some(items) = &browse.items {
             let mut list = column![].spacing(6);
             let count = items.names(kind).len();
             for i in 0..count {
@@ -744,7 +652,7 @@ fn feature_notes<'a>(mut col: Column<'a, Message>, out: &pack::Export) -> Column
 }
 
 /// A pack's description, contents, game IDs and controller needs, for the picker and preview.
-fn pack_summary<'a>(p: &pack::Pack, pad_has: impl Fn(pack::Feature) -> Option<bool>) -> Element<'a, Message> {
+pub(super) fn pack_summary<'a>(p: &pack::Pack, pad_has: impl Fn(pack::Feature) -> Option<bool>) -> Element<'a, Message> {
     let h = &p.pack;
     let mut col = column![].spacing(6);
     let mut by = Vec::new();
@@ -1019,15 +927,5 @@ mod tests {
             let _ = app.update(Message::SelectGameTab(GameTab::Info));
             let _ = app.view();
         }
-    }
-
-    #[test]
-    fn the_add_game_picker_and_page_changes_close_dialogs() {
-        let mut app = app();
-        let _ = app.update(Message::OpenAddGame);
-        let _ = app.update(Message::SetLibrarySearch("doo".into()));
-        assert!(matches!(&app.dialog, Some(Dialog::AddGame { search, .. }) if search == "doo"));
-        let _ = app.update(Message::SelectPage(Page::Settings));
-        assert!(app.dialog.is_none() && app.page == Page::Settings);
     }
 }

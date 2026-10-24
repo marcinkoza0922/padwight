@@ -50,7 +50,8 @@ fn per_input(profile: &Profile) -> f64 {
 #[test]
 #[ignore]
 fn engine_cost_per_input_for_every_library_profile() {
-    let profiles: Vec<(&Profile, String)> = crate::library::entries()
+    let entries = crate::library::entries();
+    let profiles: Vec<(&Profile, String)> = entries
         .iter()
         .flat_map(|e| e.pack.profiles.iter().map(move |p| (p, format!("{} / {}", e.pack.pack.name, p.name))))
         .collect();
@@ -87,10 +88,11 @@ fn memory_the_parsed_library_holds() {
     let before = rss_kb();
     let started = Instant::now();
     let packs = crate::library::listings().len();
-    eprintln!("library listings (the daemon's): {packs} packs in {:?}, resident memory {}", started.elapsed(), grown(before));
+    eprintln!("library listings (what the daemon and settings window keep): {packs} packs in {:?}, resident memory {}", started.elapsed(), grown(before));
     let (before, started) = (rss_kb(), Instant::now());
-    crate::library::entries();
-    eprintln!("library entries (the settings window's): parsed in {:?}, resident memory {}", started.elapsed(), grown(before));
+    let all = crate::library::entries();
+    eprintln!("every pack parsed: {:?}, resident memory {}", started.elapsed(), grown(before));
+    drop(all);
 }
 
 /// The settings window compares its config with the saved one every second: what that costs

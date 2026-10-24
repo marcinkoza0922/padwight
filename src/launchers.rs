@@ -2,7 +2,7 @@
 //! put the user's own games first. Games are matched through their auto-switch rules.
 
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     fs,
     path::{Path, PathBuf},
 };
@@ -24,8 +24,8 @@ pub struct Installed {
     /// File names (lowercase) found in installed games' folders, e.g. `eldenring.exe`.
     pub files: HashSet<String>,
     /// Full paths of the programs among them (`.exe` files, and on Linux files marked
-    /// executable), for rules that name a program's folder.
-    pub programs: Vec<String>,
+    /// executable), by lowercase file name, for rules that name a program's folder.
+    pub programs: HashMap<String, Vec<String>>,
     pub running: Vec<WindowInfo>,
 }
 
@@ -38,12 +38,17 @@ impl Installed {
                 && match r.kind {
                     RuleKind::SteamAppId => self.steam.contains(value),
                     RuleKind::Executable if crate::focus::names_folder(value) => {
-                        self.programs.iter().any(|p| crate::focus::path_ends_with(p, value))
+                        let paths = self.programs.get(&file_name(value));
+                        paths.is_some_and(|paths| paths.iter().any(|p| crate::focus::path_ends_with(p, value)))
                     }
                     RuleKind::Executable => self.files.contains(&value.to_lowercase()),
                     RuleKind::WindowClass => false,
                 }
         }) || rules.iter().any(|r| crate::focus::rule_matches_any(r, &self.running))
+    }
+
+    fn add_program(&mut self, path: String) {
+        self.programs.entry(file_name(&path)).or_default().push(path);
     }
 }
 
@@ -97,7 +102,7 @@ pub fn scan() -> Installed {
             if let Ok(text) = fs::read_to_string(entry.path()) {
                 for exe in parse_lutris(&text) {
                     found.files.insert(file_name(&exe));
-                    found.programs.push(exe);
+                    found.add_program(exe);
                 }
             }
         }
@@ -244,7 +249,7 @@ fn collect_files(dir: &Path, depth: usize, budget: &mut usize, out: &mut Install
         } else if kind.is_file() {
             let name = entry.file_name().to_string_lossy().to_lowercase();
             if is_program(&name, &entry) {
-                out.programs.push(entry.path().to_string_lossy().into_owned());
+                out.add_program(entry.path().to_string_lossy().into_owned());
             }
             out.files.insert(name);
         }
@@ -305,7 +310,7 @@ mod tests {
         let installed = Installed {
             steam: HashSet::from(["1245620".to_string()]),
             files: HashSet::from(["factorio".to_string()]),
-            programs: Vec::new(),
+            programs: HashMap::new(),
             running: vec![WindowInfo { exe: "Hades.exe".into(), ..WindowInfo::default() }],
         };
         let rule = |kind, value: &str| vec![Rule::new(kind, value, "P")];

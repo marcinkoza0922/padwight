@@ -271,7 +271,7 @@ impl App {
                 (false, note) => note.map(str::to_string),
             }
         };
-        let updates: Vec<&str> = library::updates(&self.config, &self.library).into_iter().map(|(name, _)| name).collect();
+        let updates: Vec<&str> = library::updates(&self.config, self.library).into_iter().map(|(name, _)| name).collect();
 
         let mut col = column![
             entry("Overview".into(), Page::Overview, None),

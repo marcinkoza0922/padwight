@@ -1,9 +1,10 @@
-//! The built-in game library: packs embedded from `packs/` at build time (see `build.rs`).
+//! The built-in game library: packs embedded from `packs/` at build time, each with its
+//! listing read there (see `build.rs`).
 
 use std::sync::LazyLock;
 
 use crate::{
-    config::{Config, Feature, Rule},
+    config::{Config, Feature, Rule, RuleKind},
     pack::{self, Pack},
 };
 
@@ -36,35 +37,44 @@ pub struct Entry {
     pub pack: Pack,
 }
 
-/// Every library pack, by name. Packs that don't parse are left out (tests keep that from
-/// happening). Parsed once: that takes about 70 ms, and they hold about 13 MB from then on, so
-/// the daemon keeps only [`listings`].
-pub fn entries() -> &'static [Entry] {
-    static ENTRIES: LazyLock<Vec<Entry>> = LazyLock::new(|| {
-        let mut all: Vec<Entry> = files::FILES
-            .iter()
-            .filter_map(|(file, text)| pack::parse(text).ok().map(|pack| Entry { file, pack }))
-            .collect();
-        all.sort_by_key(|e| e.pack.pack.name.to_lowercase());
-        all
-    });
-    &ENTRIES
+/// A pack's listing as `build.rs` reads it, in the binary: what a list of packs shows and what
+/// finding one for a window takes.
+struct Indexed {
+    /// Its place in `files::FILES`.
+    at: usize,
+    id: &'static str,
+    name: &'static str,
+    version: &'static str,
+    /// Kind, value, profile and whether it's on.
+    rules: &'static [(RuleKind, &'static str, &'static str, bool)],
+    /// What each of its profiles needs of the controller.
+    requires: &'static [&'static [Feature]],
 }
 
-/// What finding a library pack for a window takes, without the rest of the pack.
+/// What listing a library pack takes, without the rest of the pack.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Listing {
     pub file: &'static str,
     pub id: String,
+    pub name: String,
+    pub version: String,
     pub rules: Vec<Rule>,
     /// What each of its profiles needs of the controller.
     pub requires: Vec<Vec<Feature>>,
 }
 
 impl Listing {
+    #[cfg(test)]
     pub fn of(entry: &Entry) -> Self {
         let pack = &entry.pack;
-        Listing { file: entry.file, id: pack.pack.id.clone(), rules: pack.rules.clone(), requires: pack.profiles.iter().map(|p| p.requires.clone()).collect() }
+        Listing {
+            file: entry.file,
+            id: pack.pack.id.clone(),
+            name: pack.pack.name.clone(),
+            version: pack.pack.version.clone(),
+            rules: pack.rules.clone(),
+            requires: pack.profiles.iter().map(|p| p.requires.clone()).collect(),
+        }
     }
 
     /// Whether a controller with `have` can play one of its profiles.
@@ -72,49 +82,54 @@ impl Listing {
         self.requires.iter().any(|needs| needs.iter().all(|f| have.contains(f)))
     }
 
-    /// The whole pack, parsed again from the build.
+    /// The features every one of its profiles needs, so a player without them gets nothing.
+    pub fn required_by_all(&self) -> Vec<Feature> {
+        Feature::ALL.into_iter().filter(|f| !self.requires.is_empty() && self.requires.iter().all(|needs| needs.contains(f))).collect()
+    }
+
+    /// The whole pack, parsed from the build.
     pub fn entry(&self) -> Option<Entry> {
         let (file, text) = files::FILES.iter().find(|(file, _)| *file == self.file)?;
         pack::parse(text).ok().map(|pack| Entry { file, pack })
     }
 }
 
-/// Every library pack's [`Listing`], in the order of [`entries`]. Each pack is parsed and dropped
-/// in turn, so only the listings stay (a few hundred kB, against the whole library's 13 MB).
+/// Every library pack's [`Listing`], by name. They come from the build (see `build.rs`) rather
+/// than from parsing the packs, which takes about half a millisecond each; a pack is parsed
+/// only when it's opened ([`Listing::entry`]).
 pub fn listings() -> &'static [Listing] {
     static LISTINGS: LazyLock<Vec<Listing>> = LazyLock::new(|| {
-        let mut all: Vec<(String, Listing)> = files::FILES
+        files::INDEX
             .iter()
-            .filter_map(|(file, text)| {
-                let entry = Entry { file, pack: pack::parse(text).ok()? };
-                Some((entry.pack.pack.name.to_lowercase(), Listing::of(&entry)))
+            .map(|p| Listing {
+                file: files::FILES[p.at].0,
+                id: p.id.into(),
+                name: p.name.into(),
+                version: p.version.into(),
+                rules: p.rules.iter().map(|(kind, value, profile, enabled)| Rule { kind: *kind, value: (*value).into(), profile: (*profile).into(), enabled: *enabled }).collect(),
+                requires: p.requires.iter().map(|needs| needs.to_vec()).collect(),
             })
-            .collect();
-        all.sort_by(|a, b| a.0.cmp(&b.0));
-        let listings = all.into_iter().map(|(_, listing)| listing).collect();
-        // Parsing left megabytes freed but kept by the allocator, scattered under what stays.
-        #[cfg(all(target_os = "linux", target_env = "gnu"))]
-        // SAFETY: malloc_trim only hands free memory back to the system.
-        unsafe {
-            libc::malloc_trim(0)
-        };
-        listings
+            .collect()
     });
     &LISTINGS
 }
 
+/// Every library pack parsed, in the order of [`listings`]: slow, for tests and benchmarks.
+#[cfg(test)]
+pub fn entries() -> Vec<Entry> {
+    listings().iter().map(|l| l.entry().unwrap_or_else(|| panic!("{} doesn't parse", l.file))).collect()
+}
+
 /// Games added from the library that it now has a newer version of: (game name, index of
-/// the entry in `library`).
-pub fn updates<'a>(config: &'a Config, library: &[Entry]) -> Vec<(&'a str, usize)> {
+/// the listing in `library`).
+pub fn updates<'a>(config: &'a Config, library: &[Listing]) -> Vec<(&'a str, usize)> {
     config
         .games
         .iter()
         .filter_map(|g| {
             let origin = g.origin.as_ref().filter(|o| o.library)?;
-            let i = library.iter().position(|e| e.pack.pack.id == origin.id)?;
-            pack::compare_versions(&library[i].pack.pack.version, &origin.version)
-                .is_gt()
-                .then_some((g.name.as_str(), i))
+            let i = library.iter().position(|l| l.id == origin.id)?;
+            pack::compare_versions(&library[i].version, &origin.version).is_gt().then_some((g.name.as_str(), i))
         })
         .collect()
 }
@@ -168,25 +183,27 @@ mod tests {
             assert!(names.insert(pack.pack.name.to_lowercase()), "{file}: setup name used twice");
             assert_eq!(problems(&pack), Vec::<String>::new(), "{file}");
         }
-        assert_eq!(entries().len(), files::FILES.len());
+        assert_eq!(listings().len(), files::FILES.len(), "build.rs read every pack's listing");
     }
 
     /// The app's own packs add their icons, sounds and fonts to the built-in set (`assets/`) for
     /// every game, rather than carrying them, so every icon they name must be built in.
-    /// The settings window asks often: the packs are parsed once.
-    #[test]
-    fn the_library_is_parsed_once() {
-        assert!(std::ptr::eq(entries(), entries()));
-        assert!(std::ptr::eq(listings(), listings()));
-    }
-
-    /// The daemon finds packs by their listings, and parses the ones it offers again.
+    /// The listings `build.rs` writes are what parsing the packs gives, in order of name.
     #[test]
     fn each_listing_is_its_entry_and_parses_back_to_it() {
-        let listed: Vec<Listing> = entries().iter().map(Listing::of).collect();
+        let entries = entries();
+        let listed: Vec<Listing> = entries.iter().map(Listing::of).collect();
         assert_eq!(listings(), listed.as_slice());
-        for (listing, entry) in listings().iter().zip(entries()).step_by(17) {
-            assert_eq!(listing.entry().as_ref(), Some(entry));
+        assert!(listings().is_sorted_by_key(|l| l.name.to_lowercase()));
+    }
+
+    #[test]
+    fn a_feature_is_required_when_every_profile_needs_it() {
+        use crate::config::Feature::{Gyro, Touchpad};
+        let mut listing = listings()[0].clone();
+        for (requires, all) in [(vec![vec![Gyro], vec![Gyro, Touchpad]], vec![Gyro]), (vec![vec![Gyro], vec![]], vec![]), (vec![], vec![])] {
+            listing.requires = requires;
+            assert_eq!(listing.required_by_all(), all, "{:?}", listing.requires);
         }
     }
 
@@ -272,15 +289,16 @@ mod tests {
     #[test]
     fn newer_library_versions_are_offered_as_updates() {
         let game = Game::new("Doom", vec![Profile::passthrough("P")]);
-        let mut entry = Entry { file: "doom.padpack", pack: pack::export(&game, &pack::draft(&game, false)).pack };
+        let entry = Entry { file: "doom.padpack", pack: pack::export(&game, &pack::draft(&game, false)).pack };
         let mut config = Config::default();
         let plan = pack::plan(&config, entry.pack.clone(), true);
         pack::apply(&mut config, &plan, &pack::Choices::default());
-        assert!(updates(&config, std::slice::from_ref(&entry)).is_empty());
-        entry.pack.pack.version = "1.1".into();
-        assert_eq!(updates(&config, std::slice::from_ref(&entry)).len(), 1);
+        let mut listing = Listing::of(&entry);
+        assert!(updates(&config, std::slice::from_ref(&listing)).is_empty());
+        listing.version = "1.1".into();
+        assert_eq!(updates(&config, std::slice::from_ref(&listing)).len(), 1);
         config.games[0].origin.as_mut().unwrap().library = false;
-        assert!(updates(&config, &[entry]).is_empty(), "only library setups follow the library");
+        assert!(updates(&config, &[listing]).is_empty(), "only library setups follow the library");
     }
 
     #[test]
@@ -356,3 +374,4 @@ mod tests {
         assert!(checked > 500, "the sweep covers the packs ({checked} variants)");
     }
 }
+

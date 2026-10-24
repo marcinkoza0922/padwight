@@ -347,10 +347,6 @@ fn uses_paddles(buttons: &BTreeMap<Button, ButtonAction>, gestures: &BTreeMap<Bu
 }
 
 impl Pack {
-    /// The features every profile of the pack needs, so a player without them gets nothing.
-    pub fn required_by_all(&self) -> Vec<Feature> {
-        Feature::ALL.into_iter().filter(|f| !self.profiles.is_empty() && self.profiles.iter().all(|p| p.requires.contains(f))).collect()
-    }
 
     /// The names of the profiles that need `feature`.
     pub fn needing(&self, feature: Feature) -> Vec<&str> {

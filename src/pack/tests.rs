@@ -39,7 +39,6 @@ fn profiles_state_their_own_needs_and_old_packs_are_upgraded() {
     game.profiles.push(Profile::passthrough("Plain"));
     let out = export(game, &draft(game, false));
     assert_eq!(out.features, [FeatureUse { feature: Feature::Gyro, place: "profile “Play”".into(), required: true }]);
-    assert_eq!(out.pack.required_by_all(), []);
     assert_eq!(out.pack.needing(Feature::Gyro), ["Play"]);
     let back = parse(&out.pack.to_toml().unwrap()).unwrap();
     assert_eq!(back.profiles[0].requires, [Feature::Gyro]);
