@@ -101,6 +101,39 @@ impl App {
         )
     }
 
+    /// How controller input is scheduled, against a game that keeps the CPU busy.
+    fn view_input(&self) -> Element<'_, Message> {
+        section(
+            "Input",
+            Some(
+                "Padwight handles each press in a few microseconds, but while a game keeps every CPU busy, \
+                 a press can wait up to a millisecond or more for its turn."
+                    .into(),
+            ),
+            vec![
+                column![
+                    toggler(self.config.realtime_input).label("Real-time priority").on_toggle(Message::SetRealtimeInput),
+                    note(
+                        "Controller input goes ahead of everything else, so it is never kept waiting. Uses \
+                         rtkit on Linux, which most desktops have. Off, input still runs at raised priority."
+                    ),
+                ]
+                .spacing(2)
+                .into(),
+                column![
+                    toggler(self.config.fast_tick).label("1000 Hz continuous output").on_toggle(Message::SetFastTick),
+                    note(
+                        "A stick or touchpad moving the mouse, scrolling, turbo and macros update every \
+                         millisecond instead of every four: smoother, and quicker to start moving. Costs \
+                         more CPU while one of them is going."
+                    ),
+                ]
+                .spacing(2)
+                .into(),
+            ],
+        )
+    }
+
     pub(super) fn view_settings(&self) -> Element<'_, Message> {
         use shortcuts_tab::SettingsTab;
         let warned = !self.config.shortcuts.all_warnings().is_empty() || !self.opener_conflicts().is_empty();
@@ -137,6 +170,7 @@ impl App {
         // Each card with the words it can be found by, besides the ones it shows.
         let cards: Vec<(&str, Element<'_, Message>)> = vec![
             ("appearance theme light dark auto desktop colors", self.view_appearance()),
+            ("input latency lag delay priority real-time realtime rtkit cpu scheduling mouse stick rate hz polling smooth", self.view_input()),
             ("per-setup profiles switch automatically window rules no setup matches default profile", self.view_auto_switch()),
             ("overlay font typeface", self.view_font_card()),
             ("menu colors color-blind colorblind tint blue orange red", self.view_color_card()),

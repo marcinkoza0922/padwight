@@ -116,7 +116,7 @@ gamepad = "Select"
 gamepad = "Start"
 
 [general.profiles.buttons.Guide]
-layer = "Guide"
+mode = "Guide"
 
 [general.profiles.buttons.LeftStick]
 gamepad = "LeftStick"
@@ -206,7 +206,7 @@ keys = ["KEY_LEFTMETA"]
 keys = ["KEY_ENTER"]
 
 [general.profiles.buttons.Guide]
-layer = "Guide"
+mode = "Guide"
 
 [general.profiles.buttons.DpadUp]
 keys = ["KEY_UP"]

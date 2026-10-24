@@ -18,6 +18,7 @@
 #   PADWIGHT_HARNESS_CONFIG=<dir>   the config folder to copy (default scripts/harness/config:
 #                                   South holds a directional menu, East a radial one)
 #   PADWIGHT_HEADLESS_SIZE=1920x1080
+#   PADWIGHT_HARNESS_RELEASE=1      build and run the optimized binary (for measuring CPU use)
 #
 # Out: daemon.log, frames.log (`<ns> <frame json>` from the daemon), overlay.log (the overlay's
 # timing log, with `mark` lines), and any screenshots.
@@ -33,8 +34,13 @@ for tool in kwin_wayland dbus-run-session bwrap python3; do
 done
 
 cd "$root"
-cargo build --quiet --bin padwight
-bin="${CARGO_TARGET_DIR:-$root/target}/debug/padwight"
+if [ -n "${PADWIGHT_HARNESS_RELEASE:-}" ]; then
+    cargo build --quiet --release --bin padwight
+    bin="${CARGO_TARGET_DIR:-$root/target}/release/padwight"
+else
+    cargo build --quiet --bin padwight
+    bin="${CARGO_TARGET_DIR:-$root/target}/debug/padwight"
+fi
 
 home=$(mktemp -d "${TMPDIR:-/tmp}/padwight-harness.XXXXXX")
 trap 'rm -rf "$home"' EXIT
@@ -74,6 +80,8 @@ export WAYLAND_DISPLAY=$socket QT_QPA_PLATFORM=wayland
 export XDG_CONFIG_HOME=$home/config XDG_STATE_HOME=$home/state XDG_DATA_HOME=$home/data
 export XDG_RUNTIME_DIR=$home/run TMPDIR=$home/tmp PADWIGHT_NO_DAEMON=1
 export PADWIGHT_OVERLAY_TIMING=$out/overlay.log PADWIGHT_DEBUG_SOCKET=$home/run/debug.sock
+# For scenarios: the out dir and the binary.
+out=$out bin=$bin
 pad() { "$bin" debug --wait 5000 "\$@"; }
 mark() { echo "mark \$(date +%s%N) \$*" >>"$out/overlay.log"; }
 shot() { spectacle -b -n -f -o "$out/\$1.png" >/dev/null 2>&1; }

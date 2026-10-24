@@ -37,6 +37,7 @@ mod pack;
 mod pad_identity;
 mod pad_svg;
 mod pad_widget;
+mod priority;
 mod radial;
 mod quit;
 #[cfg_attr(windows, path = "record/windows.rs")]

@@ -1,21 +1,14 @@
 //! Touchpads of managed controllers. A controller's touchpad is its own input node: it is taken
-//! from the desktop together with the controller, and read on its own thread, so its click and
-//! finger movement reach the engine like the controller's buttons.
+//! from the desktop together with the controller, and read with it, so its click and finger
+//! movement reach the engine like the controller's buttons.
 
-use std::{
-    path::PathBuf,
-    sync::{atomic::AtomicBool, mpsc::Sender},
-    thread,
-};
+use std::path::PathBuf;
 
 use evdev::Device;
 
-use crate::{input::TouchNormalizer, monitor::log};
+use crate::monitor::log;
 
-use super::{
-    Daemon, Msg,
-    devices::{Grab, PairedNode, read_input},
-};
+use super::{Daemon, devices::PairedNode, readers::Reader};
 
 impl Daemon {
     /// Pairs managed controllers with their touchpads, and grabs and starts reading them.
@@ -39,18 +32,13 @@ impl Daemon {
                 log!("touchpad: cannot take {touch_name} from the desktop: {e}");
                 continue;
             }
-            log!("touchpad: using {touch_name} for {}", dev.name);
-            dev.grabs.extend(Grab::of(&touch, &touch_name));
-            let (stop, tx) = (dev.stop.clone(), self.tx.clone());
-            thread::spawn(move || read_touchpad(id, touch, &stop, &tx));
+            match Reader::touchpad(touch) {
+                Ok(reader) => {
+                    log!("touchpad: using {touch_name} for {}", dev.name);
+                    dev.readers.push(reader);
+                }
+                Err(e) => log!("touchpad: cannot read {touch_name}: {e}"),
+            }
         }
     }
-}
-
-/// Reads a touchpad until its controller goes away or the node does, then tells the daemon.
-fn read_touchpad(id: u64, mut dev: Device, stop: &AtomicBool, tx: &Sender<Msg>) {
-    let mut norm = TouchNormalizer::new(&dev);
-    read_input(id, &mut dev, stop, tx, |ev, out| norm.translate(ev, out));
-    // Dropping `dev` closes the fd, which also releases the grab.
-    let _ = tx.send(Msg::TouchpadGone { id });
 }

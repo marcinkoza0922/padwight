@@ -106,9 +106,19 @@ pub struct Output {
 impl Output {
     /// Opens the newest virtual pad the daemon made. Waits for it to appear.
     pub fn open() -> Self {
-        let path = crate::common::wait_for("the daemon's virtual pad", newest_virtual_pad);
-        let dev = Device::open(&path).expect("opening the virtual pad");
-        dev.set_nonblocking(true).expect("making the virtual pad non-blocking");
+        Self::open_newest("the daemon's virtual pad", is_virtual_pad)
+    }
+
+    /// Opens the newest virtual mouse the daemon made. Waits for it to appear.
+    pub fn open_mouse() -> Self {
+        let mouse = |path: &Path| Device::open(path).is_ok_and(|dev| dev.name() == Some(&format!("{VIRTUAL_PREFIX} Mouse")));
+        Self::open_newest("the daemon's virtual mouse", mouse)
+    }
+
+    fn open_newest(what: &str, is: fn(&Path) -> bool) -> Self {
+        let path = crate::common::wait_for(what, || newest_event_node(is));
+        let dev = Device::open(&path).unwrap_or_else(|e| panic!("opening {what}: {e}"));
+        dev.set_nonblocking(true).unwrap_or_else(|e| panic!("making {what} non-blocking: {e}"));
         Output { dev, events: 0, dropped: 0 }
     }
 
@@ -151,17 +161,18 @@ fn poll_readable(fd: RawFd, timeout: Duration) {
     unsafe { libc::poll(&mut pfd, 1, millis) };
 }
 
-/// The newest `event` node that is a virtual pad with a South button (not the keyboard or mouse).
-fn newest_virtual_pad() -> Option<PathBuf> {
+/// The newest `event` node that `is` accepts.
+fn newest_event_node(is: fn(&Path) -> bool) -> Option<PathBuf> {
     let number = |path: &Path| path.file_name()?.to_str()?.strip_prefix("event")?.parse::<u32>().ok();
     fs::read_dir("/dev/input")
         .ok()?
         .flatten()
         .map(|entry| entry.path())
-        .filter(|path| number(path).is_some() && is_virtual_pad(path))
+        .filter(|path| number(path).is_some() && is(path))
         .max_by_key(|path| number(path))
 }
 
+/// A virtual pad with a South button (not the keyboard or mouse).
 fn is_virtual_pad(path: &Path) -> bool {
     Device::open(path).is_ok_and(|dev| {
         dev.name().is_some_and(|name| name.starts_with(VIRTUAL_PREFIX))

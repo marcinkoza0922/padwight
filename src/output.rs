@@ -13,6 +13,8 @@ use crate::{
 #[cfg_attr(target_os = "linux", path = "output/uinput.rs")]
 #[cfg_attr(windows, path = "output/windows.rs")]
 mod device;
+#[cfg(target_os = "linux")]
+mod frames;
 
 pub use device::{VirtualKbm, VirtualPad};
 #[cfg(target_os = "linux")]
@@ -63,6 +65,17 @@ impl PressState {
         self.held.clear();
     }
 
+    /// The keys and buttons the kernel has been sent a press for.
+    fn sent(&self) -> &HashSet<KeyCode> {
+        &self.sent
+    }
+
+    /// Goes back to `sent` after writes that `sync` counted as made failed, so the next sync
+    /// makes them again.
+    fn restore_sent(&mut self, sent: HashSet<KeyCode>) {
+        self.sent = sent;
+    }
+
     /// Sends each key whose state differs from what was sent, in code order. Stops at the first
     /// failed write, and the rest stay pending for the next call.
     fn sync(&mut self, mut write: impl FnMut(KeyCode, bool) -> Result<()>) -> Result<()> {
@@ -107,7 +120,8 @@ pub fn test_turn(px: i32) {
         let mut sent = 0;
         for step in 1..=STEPS {
             let target = (i64::from(px) * i64::from(step) / i64::from(STEPS)) as i32;
-            if kbm.mouse_move(target - sent, 0).is_err() {
+            kbm.mouse_move(target - sent, 0);
+            if kbm.flush().is_err() {
                 return;
             }
             sent = target;

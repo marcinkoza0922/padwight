@@ -149,13 +149,12 @@ impl Daemon {
     pub(super) fn apply_keyboard(&mut self, actions: Vec<OverlayAction>) {
         for action in actions {
             match action {
-                OverlayAction::Key(k, pressed) => {
-                    if let Err(e) = self.kbm.key(k, pressed) {
-                        log!("output error: {e:#}");
-                    }
-                }
+                OverlayAction::Key(k, pressed) => self.kbm.key(k, pressed),
                 OverlayAction::Close => self.close_overlay(),
             }
+        }
+        if let Err(e) = self.kbm.flush() {
+            log!("output error: {e:#}");
         }
     }
 

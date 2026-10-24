@@ -1,5 +1,6 @@
 //! Input latency: from a South press on the controller to the daemon's virtual pad reporting it,
-//! with the controller idle and then under a 1 kHz stick flood, as a busy controller would be.
+//! with the controller idle, then under a 1 kHz stick flood, as a busy controller would be, then
+//! with every CPU kept busy by threads of normal priority, as a demanding game would.
 //!
 //! The test runs several sessions, each with a fresh daemon, so run-to-run variation shows up in
 //! the figures. The samples of all sessions are pooled for the distribution. Each suite run also
@@ -23,6 +24,9 @@ const WAIT: Duration = Duration::from_secs(2);
 const REPEATS: usize = 3;
 const NAME: &str = "Profile Controller";
 
+/// The conditions each session measures, in order, by their names in the results.
+const CONDITIONS: [&str; 3] = ["idle", "flood_1khz", "cpu_load"];
+
 /// The samples and counts of one condition in one session.
 #[derive(Default)]
 struct Condition {
@@ -32,6 +36,64 @@ struct Condition {
     reports_per_second: f64,
     output_events_per_second: f64,
     dropped_total: u64,
+    /// The daemon's own stages for every batch it took meanwhile (see [`Stages`]).
+    stages: Stages,
+}
+
+/// How long each batch of input spent at each stage inside the daemon, in nanoseconds, from its
+/// input timing log (`PADWIGHT_INPUT_TIMING`): the reader waking after the kernel stamped the
+/// event, the hand-over to the main loop, mapping and writing the output, and the bookkeeping
+/// after it.
+#[derive(Default)]
+struct Stages {
+    wake: Vec<u64>,
+    hand_over: Vec<u64>,
+    map_and_send: Vec<u64>,
+    after: Vec<u64>,
+}
+
+impl Stages {
+    /// The batches of the log at `path` whose kernel time stamp falls in `from..to`.
+    fn read(path: &std::path::Path, from: u64, to: u64) -> Self {
+        let text = std::fs::read_to_string(path).unwrap_or_default();
+        let numbers = |line: &str| line.split(' ').skip(1).filter_map(|n| n.parse::<u64>().ok()).collect::<Vec<_>>();
+        let mut read_at = std::collections::HashMap::new();
+        let mut stages = Stages::default();
+        for line in text.lines() {
+            let n = numbers(line);
+            match (line.split(' ').next(), n.as_slice()) {
+                (Some("read"), [kernel, read]) if (from..to).contains(kernel) => {
+                    stages.wake.push(read.saturating_sub(*kernel));
+                    read_at.insert(*kernel, *read);
+                }
+                (Some("input"), [kernel, received, sent, done]) if (from..to).contains(kernel) => {
+                    if let Some(read) = read_at.get(kernel) {
+                        stages.hand_over.push(received.saturating_sub(*read));
+                    }
+                    stages.map_and_send.push(sent.saturating_sub(*received));
+                    stages.after.push(done.saturating_sub(*sent));
+                }
+                _ => {}
+            }
+        }
+        stages
+    }
+
+    fn extend(&mut self, other: Stages) {
+        self.wake.extend(other.wake);
+        self.hand_over.extend(other.hand_over);
+        self.map_and_send.extend(other.map_and_send);
+        self.after.extend(other.after);
+    }
+
+    fn json(&self) -> Value {
+        json!({
+            "wake": latency_stats(self.wake.clone()),
+            "hand_over": latency_stats(self.hand_over.clone()),
+            "map_and_send": latency_stats(self.map_and_send.clone()),
+            "after": latency_stats(self.after.clone()),
+        })
+    }
 }
 
 #[test]
@@ -39,36 +101,30 @@ struct Condition {
 fn profile_input_latency() {
     let _serial = serial();
     let repeats = repeats();
-    let mut idle = Condition::default();
-    let mut flood = Condition::default();
+    let mut pooled: Vec<Condition> = CONDITIONS.iter().map(|_| Condition::default()).collect();
     let mut sessions = Vec::new();
     for repeat in 0..repeats {
-        let (i, f) = session(repeat);
-        sessions.push(json!({
-            "repeat": repeat,
-            "idle": summary(&i),
-            "flood_1khz": summary(&f),
-        }));
-        idle.samples_ns.extend(i.samples_ns);
-        idle.missed += i.missed;
-        flood.samples_ns.extend(f.samples_ns);
-        flood.missed += f.missed;
+        let measured = session(repeat);
+        let mut one = serde_json::Map::new();
+        one.insert("repeat".into(), json!(repeat));
+        for ((name, all), c) in CONDITIONS.iter().zip(&mut pooled).zip(measured) {
+            one.insert((*name).into(), summary(&c));
+            all.samples_ns.extend(c.samples_ns);
+            all.missed += c.missed;
+            all.stages.extend(c.stages);
+        }
+        sessions.push(Value::Object(one));
     }
-    let idle_json = condition_json(&idle);
-    let flood_json = condition_json(&flood);
-    append_history(repeats, &idle_json, &flood_json);
-
-    report(
-        "input_latency",
-        json!({
-            "what": "South press written to the uhid pad, to the kernel time stamp of BTN_SOUTH on the daemon's virtual pad",
-            "samples_per_condition_per_session": SAMPLES,
-            "sessions": repeats,
-            "idle": idle_json,
-            "flood_1khz": flood_json,
-            "per_session": sessions,
-        }),
-    );
+    let mut results = serde_json::Map::new();
+    results.insert("what".into(), json!("South press written to the uhid pad, to the kernel time stamp of BTN_SOUTH on the daemon's virtual pad"));
+    results.insert("samples_per_condition_per_session".into(), json!(SAMPLES));
+    results.insert("sessions".into(), json!(repeats));
+    for (name, c) in CONDITIONS.iter().zip(&pooled) {
+        results.insert((*name).into(), condition_json(c));
+    }
+    results.insert("per_session".into(), Value::Array(sessions));
+    append_history(repeats, &results);
+    report("input_latency", Value::Object(results));
 }
 
 /// Sessions per run: `PADWIGHT_LATENCY_REPEATS` if it is a positive number, else [`REPEATS`].
@@ -80,23 +136,69 @@ fn repeats() -> usize {
         .unwrap_or(REPEATS)
 }
 
-/// One session: a fresh daemon, the idle condition, then the flood condition.
-fn session(repeat: usize) -> (Condition, Condition) {
+/// One session: a fresh daemon, then each of [`CONDITIONS`].
+fn session(repeat: usize) -> Vec<Condition> {
     let root = temp_root();
     install_config(&root.join("config/padwight"), &default_config());
     // The pad exists before the daemon starts, as a controller plugged in first would.
     let mut pad = Pad::new(NAME);
-    let daemon = Running(padwight(&root, &["daemon"]).spawn().expect("starting the daemon"));
+    let timing = root.join("input-timing.log");
+    let daemon = Running(padwight(&root, &["daemon"]).env("PADWIGHT_INPUT_TIMING", &timing).spawn().expect("starting the daemon"));
     wait_managed(Instant::now(), &root.join("run"), NAME, TIMEOUT).expect("the daemon grabbed the pad");
     let mut out = Output::open();
     warm_up(&mut pad, &mut out);
 
-    let idle = measure(&mut pad, &mut out, false, seed(repeat, 0));
-    let flood = measure(&mut pad, &mut out, true, seed(repeat, 1));
+    let mut measured = Vec::new();
+    for (i, name) in CONDITIONS.iter().enumerate() {
+        let load = (*name == "cpu_load").then(CpuLoad::start);
+        let from = now_ns();
+        let mut c = measure(&mut pad, &mut out, *name == "flood_1khz", seed(repeat, i as u64));
+        c.stages = Stages::read(&timing, from, now_ns());
+        drop(load);
+        measured.push(c);
+    }
 
     drop(daemon);
+    // Kept beside the results: it says, among other things, how the input threads are scheduled.
+    let _ = std::fs::copy(root.join("daemon.log"), output_dir().join(format!("latency-daemon-{repeat}.log")));
+    let _ = std::fs::copy(&timing, output_dir().join(format!("latency-timing-{repeat}.log")));
     let _ = std::fs::remove_dir_all(&root);
-    (idle, flood)
+    measured
+}
+
+/// A thread per CPU spinning at normal priority, until dropped.
+struct CpuLoad {
+    stop: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    threads: Vec<std::thread::JoinHandle<()>>,
+}
+
+impl CpuLoad {
+    fn start() -> Self {
+        use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+        let stop = Arc::new(AtomicBool::new(false));
+        let cpus = std::thread::available_parallelism().map_or(4, std::num::NonZero::get);
+        let threads = (0..cpus)
+            .map(|_| {
+                let stop = stop.clone();
+                std::thread::spawn(move || {
+                    let mut x = 0u64;
+                    while !stop.load(Ordering::Relaxed) {
+                        x = std::hint::black_box(x.wrapping_mul(6364136223846793005).wrapping_add(1));
+                    }
+                })
+            })
+            .collect();
+        CpuLoad { stop, threads }
+    }
+}
+
+impl Drop for CpuLoad {
+    fn drop(&mut self) {
+        self.stop.store(true, std::sync::atomic::Ordering::Relaxed);
+        for t in self.threads.drain(..) {
+            let _ = t.join();
+        }
+    }
 }
 
 /// A different, non-zero generator seed for each session and condition.
@@ -160,6 +262,7 @@ fn condition_json(c: &Condition) -> Value {
         "reports_per_second": c.reports_per_second,
         "output_events_per_second": c.output_events_per_second,
         "dropped_output_events": c.dropped_total,
+        "daemon_stages": c.stages.json(),
     })
 }
 
@@ -171,16 +274,16 @@ fn summary(c: &Condition) -> Value {
 
 /// Appends one line to `history.jsonl` in the output directory: the pooled p50 and p99 of each
 /// condition, with the time and commit, so the trend across suite runs can be plotted.
-fn append_history(sessions: usize, idle: &Value, flood: &Value) {
-    let line = json!({
+fn append_history(sessions: usize, results: &serde_json::Map<String, Value>) {
+    let mut line = json!({
         "time": SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs()),
         "commit": super::support::commit(),
         "sessions": sessions,
-        "idle_p50_us": idle["latency"]["p50_us"],
-        "idle_p99_us": idle["latency"]["p99_us"],
-        "flood_p50_us": flood["latency"]["p50_us"],
-        "flood_p99_us": flood["latency"]["p99_us"],
     });
+    for (name, short) in CONDITIONS.iter().zip(["idle", "flood", "load"]) {
+        line[format!("{short}_p50_us")] = results[*name]["latency"]["p50_us"].clone();
+        line[format!("{short}_p99_us")] = results[*name]["latency"]["p99_us"].clone();
+    }
     let dir = output_dir();
     std::fs::create_dir_all(&dir).unwrap();
     let mut file = std::fs::OpenOptions::new().create(true).append(true).open(dir.join("history.jsonl")).unwrap();

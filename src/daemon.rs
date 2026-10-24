@@ -8,7 +8,7 @@ use std::{
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
-        mpsc::{self, Receiver, RecvTimeoutError, Sender},
+        mpsc::{Receiver, Sender},
     },
     thread,
     time::{Duration, Instant},
@@ -52,8 +52,11 @@ mod raw_readers;
 #[cfg_attr(target_os = "linux", path = "daemon/evdev.rs")]
 #[cfg_attr(windows, path = "daemon/xinput.rs")]
 mod devices;
+mod inbox;
 mod inject;
+mod input_timing;
 mod logs;
+mod main_loop;
 mod requests;
 mod serve;
 mod stop;
@@ -63,6 +66,8 @@ mod stop;
 mod os;
 #[cfg(target_os = "linux")]
 mod pads;
+#[cfg(target_os = "linux")]
+mod readers;
 
 /// Why a profile changed when someone picked it.
 const BY_HAND: &str = "Chosen by hand (GUI or command line)";
@@ -76,6 +81,8 @@ pub(crate) use os::{bind_socket_at, prepare_private_dir, stop_on_signals};
 use ipc::{UnixListener, UnixStream};
 
 const TICK: Duration = Duration::from_millis(4);
+/// The same with App settings → Input → 1000 Hz continuous output.
+const FAST_TICK: Duration = Duration::from_millis(1);
 /// How often a fading info overlay is redrawn.
 const FADE_FRAME: Duration = Duration::from_millis(33);
 /// How often info overlays with live values (time, CPU, …) update.
@@ -98,18 +105,17 @@ const GUIDE_TAP: Duration = Duration::from_millis(350);
 enum Msg {
     /// SIGTERM or SIGINT: end the daemon, once the settings window has dealt with unsaved edits.
     Stop,
-    Input { id: u64, events: Vec<InputEvent> },
+    /// A controller's input, from its reader thread. `stamp` is the kernel's time stamp of the
+    /// newest raw event in the batch, in nanoseconds since the Unix epoch, for the input timing
+    /// log (0 where there is none).
+    #[cfg_attr(target_os = "linux", expect(dead_code, reason = "the main loop reads Linux controllers itself (readers.rs)"))]
+    Input { id: u64, events: Vec<InputEvent>, stamp: u64 },
+    #[cfg_attr(target_os = "linux", expect(dead_code, reason = "the main loop reads Linux controllers itself (readers.rs)"))]
     Gone { id: u64 },
     Ipc { req: Request, reply: Sender<Response> },
     Watch(Sender<Option<InputSnapshot>>),
     WatchFeed(Option<String>, Sender<Option<Feeds>>),
     Focus(FocusEvent),
-    #[cfg_attr(not(target_os = "linux"), expect(dead_code, reason = "only evdev has motion-sensor and touchpad nodes"))]
-    Motion { id: u64, sample: MotionSample },
-    #[cfg_attr(not(target_os = "linux"), expect(dead_code, reason = "only evdev has motion-sensor and touchpad nodes"))]
-    MotionGone { id: u64 },
-    #[cfg_attr(not(target_os = "linux"), expect(dead_code, reason = "only evdev has motion-sensor and touchpad nodes"))]
-    TouchpadGone { id: u64 },
     WatchOverlay(Sender<OverlayFrame>),
     /// Something to say in a toast, from a background task (e.g. a screenshot finishing).
     Toast(Vec<String>),
@@ -160,9 +166,10 @@ struct Managed {
     motion: Option<PathBuf>,
     /// Touchpad node of this controller, once found (and taken from the desktop).
     touchpad: Option<PathBuf>,
-    /// The nodes it took from the desktop, let go of when it is dropped.
+    /// Its nodes (gamepad, touchpad, motion sensors), which the main loop reads. Dropping them
+    /// lets go of what was taken from the desktop.
     #[cfg(target_os = "linux")]
-    grabs: Vec<devices::Grab>,
+    readers: Vec<readers::Reader>,
     /// Has back paddles (see `input::has_paddles`).
     paddles: bool,
     motion_frame: MotionFrame,
@@ -530,7 +537,7 @@ struct Daemon {
     /// The settings window, opened from the tray; one at a time.
     settings_process: Option<std::process::Child>,
     tray: Option<TrayIcon>,
-    tx: Sender<Msg>,
+    tx: inbox::Tx,
     /// A stop was asked for and is waiting for the settings window's unsaved edits to be dealt with.
     stop_asked: bool,
     /// When the settings window last reported unsaved edits; `None` when it reported none.
@@ -562,7 +569,7 @@ fn log_path() -> PathBuf {
 }
 
 impl Daemon {
-    fn new(config: Config, kbm: VirtualKbm, injection: inject::Injection, tx: Sender<Msg>) -> Self {
+    fn new(config: Config, kbm: VirtualKbm, injection: inject::Injection, tx: inbox::Tx) -> Self {
         crate::info::set_opener(crate::info::OpenerLabel::of(&config.shortcuts));
         crate::info::set_menu_keys(config.shortcuts.menu_keys());
         let pack_fonts = config.active_game().assets.activate_headless();
@@ -630,14 +637,18 @@ impl Daemon {
 pub fn run(debug: bool) -> Result<()> {
     let config = Config::load()?;
     config.log_unreadable();
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = inbox::channel().context("making the main loop's wake-up")?;
     let stop = tx.clone();
     os::stop_on_signals(move || stop.send(Msg::Stop).is_ok())?;
     serve_ipc(tx.clone())?;
 
     let kbm = VirtualKbm::new().map_err(explain_kbm_failure)?;
+    crate::priority::set_realtime(config.realtime_input);
     let mut daemon = Daemon::new(config, kbm, inject::Injection::new(debug)?, tx);
     log!("padwight daemon started, socket at {}", ipc::socket_path().display());
+    // The library's listings take about 70 ms to build: built now, the first window that comes to
+    // the front finds them ready instead of holding up input while they are.
+    thread::spawn(|| crate::library::listings().len());
     daemon.start_services();
     daemon.scan();
     daemon.run(&rx);
@@ -661,7 +672,7 @@ fn explain_kbm_failure(e: anyhow::Error) -> anyhow::Error {
 }
 
 /// Binds the control socket and serves it on a thread.
-fn serve_ipc(tx: Sender<Msg>) -> Result<()> {
+fn serve_ipc(tx: inbox::Tx) -> Result<()> {
     let listener = bind_socket()?;
     thread::spawn(move || serve::ipc_server(&listener, &tx));
     Ok(())
@@ -673,121 +684,6 @@ fn bind_socket() -> Result<UnixListener> {
 }
 
 impl Daemon {
-    fn run(&mut self, rx: &Receiver<Msg>) {
-        let mut next_scan = Instant::now() + SCAN_INTERVAL;
-        let mut last_tick = Instant::now();
-        loop {
-            let ticking = self.needs_tick();
-            let mut timeout = if ticking {
-                TICK.saturating_sub(last_tick.elapsed())
-            } else {
-                next_scan.saturating_duration_since(Instant::now())
-            };
-            if let Some(deadline) = self.next_deadline() {
-                timeout = timeout.min(deadline.saturating_duration_since(Instant::now()));
-            }
-            match rx.recv_timeout(timeout) {
-                Ok(msg) => {
-                    self.handle(msg);
-                    while let Ok(msg) = rx.try_recv() {
-                        self.handle(msg);
-                    }
-                    self.sync_tray();
-                }
-                Err(RecvTimeoutError::Timeout) => {}
-                Err(RecvTimeoutError::Disconnected) => return,
-            }
-
-            self.run_timers();
-            self.finish_stop();
-            self.catch_up_on_focus();
-            let now = Instant::now();
-            if ticking {
-                let dt = now.duration_since(last_tick);
-                if dt >= TICK {
-                    // Clamp so a stall never turns into a huge cursor jump.
-                    self.tick(dt.min(Duration::from_millis(20)).as_secs_f32());
-                    last_tick = now;
-                }
-            } else {
-                last_tick = now;
-            }
-            if now >= next_scan {
-                self.scan();
-                // A release the kernel refused is sent again here, not only on the next key.
-                if let Err(e) = self.kbm.sync() {
-                    log!("output error: {e:#}");
-                }
-                self.ask_pending_pad();
-                next_scan = now + SCAN_INTERVAL;
-            }
-        }
-    }
-
-    fn next_deadline(&self) -> Option<Instant> {
-        let overlay = match &self.active {
-            Some(Active::Keyboard(k)) => k.next_deadline(),
-            Some(Active::Menu { session, .. }) => session.next_deadline(),
-            Some(Active::Media(m)) => m.next_deadline(),
-            Some(Active::Offer(o)) => o.next_deadline(),
-            Some(Active::Settings(m, _)) => m.next_deadline(),
-            Some(Active::NewPad(s, _)) => s.next_deadline(),
-            None => None,
-        };
-        self.devices
-            .values()
-            .filter_map(|d| d.engine.next_deadline())
-            .chain(overlay)
-            .chain(self.info_refresh)
-            .chain(self.info_fade)
-            .chain(self.log_redraw)
-            .chain(self.quit_hold.filter(|(_, done)| !done).map(|(since, _)| since + FORCE_QUIT_HOLD))
-            .chain(self.stop_deadline())
-            .min()
-    }
-
-    /// Fires combo members whose combo window has expired.
-    fn run_timers(&mut self) {
-        let now = Instant::now();
-        self.tick_overlays(now);
-        if self.config.active().is_none() {
-            return;
-        }
-        let mut requests = Vec::new();
-        let mut fired = Vec::new();
-        let mut guide_keys = Vec::new();
-        for (id, dev) in self.devices.iter_mut() {
-            if dev.engine.next_deadline().is_none_or(|d| d > now) {
-                continue;
-            }
-            fired.push(*id);
-            let Some(base) = self.config.profile_for(&dev.id) else { continue };
-            let mut out = Vec::new();
-            dev.engine.timers(layered(&dev.layered, base), now, &mut out);
-            let keys = dev.engine.take_guide_nav();
-            if !keys.is_empty() {
-                guide_keys.push((*id, keys));
-            }
-            if dev.refresh_layers(&self.config) {
-                dev.engine.resync(layered(&dev.layered, base), &mut out);
-            }
-            dev.dispatch(&mut self.kbm, out);
-            requests.push((*id, Requests::take(&mut dev.engine)));
-            dev.draw_status();
-        }
-        for (id, asked) in requests {
-            self.run_requests(id, asked);
-        }
-        for (id, keys) in guide_keys {
-            self.guide_keys(id, &keys);
-        }
-        // A gesture or combo window ran out: its action labels the press it came from.
-        if fired.into_iter().fold(false, |any, id| self.log_fired(id) | any) {
-            self.log_changed();
-        }
-        self.check_info_changes();
-    }
-
     /// Starts, cancels or completes the countdown of a ForceQuit action being held.
     fn update_force_quit(&mut self) {
         let held = self.devices.values().any(|d| d.engine.force_quit_held());
@@ -991,30 +887,10 @@ impl Daemon {
         }
     }
 
-    fn needs_tick(&self) -> bool {
-        self.devices.values().any(|d| self.config.profile_for(&d.id).is_some_and(|base| d.engine.needs_tick(layered(&d.layered, base))))
-    }
-
-    fn tick(&mut self, dt: f32) {
-        for dev in self.devices.values_mut() {
-            let Some(base) = self.config.profile_for(&dev.id) else { continue };
-            let mut out = Vec::new();
-            dev.engine.tick(layered(&dev.layered, base), dt, &mut out);
-            dev.dispatch(&mut self.kbm, out);
-            dev.out_view.end_tick(dt);
-        }
-        if self.last_draw.elapsed() >= STATUS_REDRAW
-            && let Some(dev) = self.last_active.and_then(|id| self.devices.get(&id))
-        {
-            dev.draw_status();
-            self.last_draw = Instant::now();
-        }
-    }
-
     fn handle(&mut self, msg: Msg) {
         match msg {
             Msg::Stop => self.stop(),
-            Msg::Input { id, events } => self.input(id, events),
+            Msg::Input { id, events, stamp } => self.input(id, events, stamp),
             Msg::Gone { id } => self.device_gone(id),
             Msg::Ipc { req, reply } => {
                 let _ = reply.send(self.request(req));
@@ -1043,20 +919,9 @@ impl Daemon {
                 let head = if ok { "Recording saved" } else { "Recording ended unexpectedly" };
                 self.say(vec![head.into(), path.display().to_string()]);
             }
-            Msg::Motion { id, sample } => self.motion(id, sample),
             Msg::WatchOverlay(watcher) => {
                 if watcher.send(self.overlay_frame()).is_ok() {
                     self.overlay_watchers.push(watcher);
-                }
-            }
-            Msg::MotionGone { id } => {
-                if let Some(dev) = self.devices.get_mut(&id) {
-                    dev.motion = None;
-                }
-            }
-            Msg::TouchpadGone { id } => {
-                if let Some(dev) = self.devices.get_mut(&id) {
-                    dev.touchpad = None;
                 }
             }
             Msg::Watch(watcher) => {
@@ -1157,11 +1022,12 @@ impl Daemon {
         self.watchers.retain(|w| w.send(snapshot.cloned()).is_ok());
     }
 
-    fn input(&mut self, id: u64, events: Vec<InputEvent>) {
+    fn input(&mut self, id: u64, events: Vec<InputEvent>, stamp: u64) {
         // A controller let go of has a reader still running for a moment.
         if !self.devices.contains_key(&id) {
             return;
         }
+        let received = input_timing::enabled().then(input_timing::now_ns);
         let logged = self.log_input(id, &events, Instant::now());
         let fires: Vec<bool> = events.iter().map(|ev| self.opener_fired(id, ev)).collect();
         let tapped = self.opener_tapped(&events, &fires);
@@ -1175,6 +1041,7 @@ impl Daemon {
         let Some(dev) = self.devices.get_mut(&id) else { return };
         let Some(base) = self.config.profile_for(&dev.id) else { return };
         dev.feed(&self.config, base, events, &mut self.kbm);
+        let sent = received.map(|_| input_timing::now_ns());
         if !dev.engine.needs_tick(layered(&dev.layered, base)) {
             dev.out_view.stop_motion();
         }
@@ -1200,6 +1067,10 @@ impl Daemon {
         self.check_info_changes();
         if tapped {
             self.offer_library_game(id);
+        }
+        if let (Some(received), Some(sent)) = (received, sent) {
+            let done = input_timing::now_ns();
+            input_timing::write(format_args!("input {stamp} {received} {sent} {done}"));
         }
     }
 
@@ -1270,6 +1141,7 @@ impl Daemon {
         self.scope = self.config.scope();
         self.pack_fonts = self.config.active_game().assets.activate_headless();
         rumble::set_strength(self.config.rumble_strength);
+        crate::priority::set_realtime(self.config.realtime_input);
         for dev in self.devices.values_mut() {
             dev.engine.set_macros(&self.scope.macros);
             dev.engine.set_menus(&self.scope.menus);
@@ -1472,16 +1344,23 @@ impl Daemon {
     /// of what the scan watches.
     fn scan(&mut self) {
         let known: HashSet<u64> = self.devices.keys().copied().collect();
+        // Each step, timed for the input timing log: the scan holds up input while it runs.
+        let mut step = input_timing::Steps::new("scan");
         self.refit_pads();
         self.keep_first_pad();
+        step.done("pads");
         self.scan_devices();
+        step.done("devices");
         #[cfg(target_os = "linux")]
         self.check_raw_readers(Instant::now());
+        step.done("raw_readers");
         self.check_overlay_process();
         self.check_recorded_game();
         self.scan_processes();
+        step.done("processes");
         self.announce_new_controllers(&known);
         self.settle_features();
+        step.done("rest");
     }
 
     /// Says which controllers were just connected (not at startup, when all of them are).
@@ -1571,7 +1450,7 @@ impl Daemon {
             motion: None,
             touchpad: None,
             #[cfg(target_os = "linux")]
-            grabs: Vec::new(),
+            readers: Vec::new(),
             paddles: false,
             motion_frame: MotionFrame::default(),
             gyro_bias: [0.0; 3],
@@ -1603,17 +1482,23 @@ fn layout_name(layout: Layout) -> &'static str {
     }
 }
 
+/// Sends `out` to the virtual devices: everything is queued, then each device is written once.
 fn dispatch(pad: &mut VirtualPad, view: &mut OutputView, kbm: &mut VirtualKbm, out: Vec<OutEvent>) {
+    if out.is_empty() {
+        return;
+    }
     for ev in out {
         view.apply(&ev);
-        let res = match ev {
+        match ev {
             OutEvent::PadButton(b, pressed) => pad.button(b, pressed),
             OutEvent::PadAxis(axis, v) => pad.axis(axis, v),
             OutEvent::Key(k, pressed) => kbm.key(k, pressed),
             OutEvent::MouseButton(b, pressed) => kbm.mouse_button(b, pressed),
             OutEvent::MouseMove(dx, dy) => kbm.mouse_move(dx, dy),
             OutEvent::Wheel { vertical, horizontal } => kbm.wheel(vertical, horizontal),
-        };
+        }
+    }
+    for res in [pad.flush(), kbm.flush()] {
         if let Err(e) = res {
             log!("output error: {e:#}");
         }

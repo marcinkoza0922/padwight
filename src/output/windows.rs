@@ -9,14 +9,13 @@ use std::sync::{
 
 use anyhow::{Result, bail};
 use vigem_client::{Client, TargetId, XButtons, XGamepad, Xbox360Wired};
-use windows::Win32::UI::Input::KeyboardAndMouse::{
-    INPUT, INPUT_0, INPUT_KEYBOARD, INPUT_MOUSE, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY, KEYEVENTF_KEYUP,
-    KEYEVENTF_SCANCODE, MOUSE_EVENT_FLAGS, MOUSEEVENTF_HWHEEL, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP,
-    MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_MOVE, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP,
-    MOUSEEVENTF_WHEEL, MOUSEEVENTF_XDOWN, MOUSEEVENTF_XUP, MOUSEINPUT, SendInput, VIRTUAL_KEY,
-};
+use windows::Win32::UI::Input::KeyboardAndMouse::{INPUT, MOUSEEVENTF_HWHEEL, MOUSEEVENTF_MOVE, MOUSEEVENTF_WHEEL};
 
 use super::{PressState, mouse_code, stick_raw};
+
+#[path = "windows/sendinput.rs"]
+mod sendinput;
+use sendinput::{key_input, mouse_button_input, mouse_input, send};
 use crate::{
     config::{Button, MouseButton},
     input::Axis,
@@ -60,6 +59,8 @@ pub struct VirtualPad {
     /// The XInput slot the virtual pad took.
     slot: Option<u32>,
     report: XGamepad,
+    /// Whether `report` changed since it was last sent (see `flush`).
+    dirty: bool,
     /// What the pad was asked to present as. ViGEmBus pads are always Xbox 360 pads here.
     identity: PadIdentity,
 }
@@ -80,7 +81,7 @@ impl VirtualPad {
                 if !NO_BUS.swap(true, Ordering::Relaxed) {
                     log!("{e:#}");
                 }
-                return Ok(VirtualPad { target: None, slot: None, report: XGamepad::default(), identity });
+                return Ok(VirtualPad { target: None, slot: None, report: XGamepad::default(), dirty: false, identity });
             }
         };
         let mut target = Xbox360Wired::new(client, TargetId::XBOX360_WIRED);
@@ -97,7 +98,7 @@ impl VirtualPad {
         if identity != PadIdentity::Xbox360 {
             log!("the game asked for a {identity:?} pad; Windows presents an Xbox 360 pad");
         }
-        Ok(VirtualPad { target: Some(Arc::new(Mutex::new(target))), slot, report: XGamepad::default(), identity })
+        Ok(VirtualPad { target: Some(Arc::new(Mutex::new(target))), slot, report: XGamepad::default(), dirty: false, identity })
     }
 
     /// The controller this pad was asked to present itself as.
@@ -110,14 +111,22 @@ impl VirtualPad {
         self.target.clone()
     }
 
-    fn send(&self) -> Result<()> {
+    /// Sends the report, if `button` or `axis` changed it, in one update to the driver.
+    pub fn flush(&mut self) -> Result<()> {
+        if !std::mem::take(&mut self.dirty) {
+            return Ok(());
+        }
         if let Some(target) = &self.target {
-            target.lock().unwrap_or_else(PoisonError::into_inner).update(&self.report)?;
+            let sent = target.lock().unwrap_or_else(PoisonError::into_inner).update(&self.report);
+            // Sent again next time, whatever else changes.
+            self.dirty = sent.is_err();
+            sent?;
         }
         Ok(())
     }
 
-    pub fn button(&mut self, b: Button, pressed: bool) -> Result<()> {
+    /// Changes a button in the report, sent by the next `flush`.
+    pub fn button(&mut self, b: Button, pressed: bool) {
         let bit = match b {
             Button::South => XButtons::A,
             Button::East => XButtons::B,
@@ -147,17 +156,18 @@ impl VirtualPad {
             | Button::LeftPaddle
             | Button::RightPaddle
             | Button::LeftPaddle2
-            | Button::RightPaddle2 => return Ok(()),
+            | Button::RightPaddle2 => return,
         };
         if pressed {
             self.report.buttons.raw |= bit;
         } else {
             self.report.buttons.raw &= !bit;
         }
-        self.send()
+        self.dirty = true;
     }
 
-    pub fn axis(&mut self, axis: Axis, value: f32) -> Result<()> {
+    /// Changes an axis in the report, sent by the next `flush`.
+    pub fn axis(&mut self, axis: Axis, value: f32) {
         // XInput's Y axes point up; the engine's point down.
         let stick = |v: f32| stick_raw(v) as i16;
         let trigger = |v: f32| (v.clamp(0.0, 1.0) * 255.0).round() as u8;
@@ -169,7 +179,7 @@ impl VirtualPad {
             Axis::LeftTrigger => self.report.left_trigger = trigger(value),
             Axis::RightTrigger => self.report.right_trigger = trigger(value),
         }
-        self.send()
+        self.dirty = true;
     }
 }
 
@@ -198,24 +208,31 @@ impl Drop for VirtualPad {
 }
 
 /// Shared virtual keyboard + mouse. Presses are reference counted (see `PressState`), and a
-/// press or release Windows refused is sent again by `sync`.
+/// press or release Windows refused is sent again by `sync`. Keys, buttons and motion are queued
+/// and sent by `flush`.
 pub struct VirtualKbm {
     press: PressState,
+    queued: Vec<INPUT>,
+    /// What Windows had been sent before the presses queued now, to go back to if sending them
+    /// fails, so `sync` sends them again.
+    confirmed: Option<std::collections::HashSet<KeyCode>>,
 }
 
 impl VirtualKbm {
     pub fn new() -> Result<Self> {
-        Ok(VirtualKbm { press: PressState::default() })
+        Ok(VirtualKbm { press: PressState::default(), queued: Vec::new(), confirmed: None })
     }
 
-    pub fn key(&mut self, code: KeyCode, pressed: bool) -> Result<()> {
+    /// Queues a press or release, for the next `flush`.
+    pub fn key(&mut self, code: KeyCode, pressed: bool) {
         self.press.press(code, pressed);
-        self.sync()
+        self.queue_changes();
     }
 
-    pub fn mouse_button(&mut self, b: MouseButton, pressed: bool) -> Result<()> {
+    /// Queues a press or release, for the next `flush`.
+    pub fn mouse_button(&mut self, b: MouseButton, pressed: bool) {
         self.press.press(mouse_code(b), pressed);
-        self.sync()
+        self.queue_changes();
     }
 
     /// Releases every key and button, including ones the on-screen keyboard holds.
@@ -224,159 +241,68 @@ impl VirtualKbm {
         self.sync()
     }
 
-    /// Brings Windows in line with what is held. Called after every key or button, and by the
-    /// daemon's periodic scan, so a release that failed is sent again even if nothing else is
-    /// pressed.
+    /// Brings Windows in line with what is held, at once. The daemon's periodic scan calls it, so
+    /// a release that failed is sent again even if nothing else is pressed.
     pub fn sync(&mut self) -> Result<()> {
-        self.press.sync(|code, down| match MouseButton::ALL.iter().find(|b| mouse_code(**b) == code) {
-            Some(b) => send(&[mouse_button_input(*b, down)]),
-            None => match key_input(code, down) {
-                Some(input) => send(&[input]),
-                None => Ok(()),
-            },
-        })
+        self.queue_changes();
+        self.flush()
     }
 
-    pub fn mouse_move(&mut self, dx: i32, dy: i32) -> Result<()> {
-        if dx == 0 && dy == 0 {
+    /// Sends everything queued in one `SendInput`, which Windows doesn't interleave with other
+    /// input. If it fails, the presses in it count as not sent, so the next `sync` sends them again.
+    pub fn flush(&mut self) -> Result<()> {
+        let confirmed = self.confirmed.take();
+        if self.queued.is_empty() {
             return Ok(());
         }
-        send(&[mouse_input(dx, dy, 0, MOUSEEVENTF_MOVE)])
+        let sent = send(&self.queued);
+        self.queued.clear();
+        if sent.is_err()
+            && let Some(before) = confirmed
+        {
+            self.press.restore_sent(before);
+        }
+        sent
     }
 
-    /// Takes hi-res units (120 per notch), which is what Windows counts in too.
-    pub fn wheel(&mut self, vertical: i32, horizontal: i32) -> Result<()> {
-        let mut inputs = Vec::with_capacity(2);
+    /// Queues each key whose state differs from what was sent (see `PressState::sync`).
+    fn queue_changes(&mut self) {
+        let Self { press, queued, confirmed } = self;
+        if confirmed.is_none() {
+            *confirmed = Some(press.sent().clone());
+        }
+        let done: Result<()> = press.sync(|code, down| {
+            match MouseButton::ALL.iter().find(|b| mouse_code(**b) == code) {
+                Some(b) => queued.push(mouse_button_input(*b, down)),
+                None => queued.extend(key_input(code, down)),
+            }
+            Ok(())
+        });
+        debug_assert!(done.is_ok(), "queueing never fails");
+    }
+
+    /// Queues motion, for the next `flush`.
+    pub fn mouse_move(&mut self, dx: i32, dy: i32) {
+        if dx != 0 || dy != 0 {
+            self.queued.push(mouse_input(dx, dy, 0, MOUSEEVENTF_MOVE));
+        }
+    }
+
+    /// Takes hi-res units (120 per notch), which is what Windows counts in too. Queued, for the
+    /// next `flush`.
+    pub fn wheel(&mut self, vertical: i32, horizontal: i32) {
         if vertical != 0 {
-            inputs.push(mouse_input(0, 0, vertical, MOUSEEVENTF_WHEEL));
+            self.queued.push(mouse_input(0, 0, vertical, MOUSEEVENTF_WHEEL));
         }
         if horizontal != 0 {
-            inputs.push(mouse_input(0, 0, horizontal, MOUSEEVENTF_HWHEEL));
+            self.queued.push(mouse_input(0, 0, horizontal, MOUSEEVENTF_HWHEEL));
         }
-        if inputs.is_empty() {
-            return Ok(());
-        }
-        send(&inputs)
-    }
-}
-
-fn send(inputs: &[INPUT]) -> Result<()> {
-    // SAFETY: `inputs` is a valid slice of initialized INPUT structures.
-    let sent = unsafe { SendInput(inputs, size_of::<INPUT>() as i32) };
-    if sent as usize != inputs.len() {
-        bail!("SendInput refused the input: {}", std::io::Error::last_os_error());
-    }
-    Ok(())
-}
-
-fn mouse_input(dx: i32, dy: i32, data: i32, flags: MOUSE_EVENT_FLAGS) -> INPUT {
-    INPUT {
-        r#type: INPUT_MOUSE,
-        Anonymous: INPUT_0 { mi: MOUSEINPUT { dx, dy, mouseData: data as u32, dwFlags: flags, time: 0, dwExtraInfo: 0 } },
-    }
-}
-
-fn mouse_button_input(b: MouseButton, down: bool) -> INPUT {
-    const XBUTTON1: i32 = 1;
-    const XBUTTON2: i32 = 2;
-    let pick = |on, off| if down { on } else { off };
-    let (flags, data) = match b {
-        MouseButton::Left => (pick(MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP), 0),
-        MouseButton::Right => (pick(MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP), 0),
-        MouseButton::Middle => (pick(MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP), 0),
-        MouseButton::Back => (pick(MOUSEEVENTF_XDOWN, MOUSEEVENTF_XUP), XBUTTON1),
-        MouseButton::Forward => (pick(MOUSEEVENTF_XDOWN, MOUSEEVENTF_XUP), XBUTTON2),
-    };
-    mouse_input(0, 0, data, flags)
-}
-
-/// How a key reaches Windows: by its scancode (with the E0 prefix, if `extended`), or by virtual
-/// key for the media and browser keys, which have no scancode every layout agrees on.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum WinKey {
-    Scan { code: u16, extended: bool },
-    Virtual(u16),
-}
-
-fn key_input(code: KeyCode, down: bool) -> Option<INPUT> {
-    let up = if down { KEYBD_EVENT_FLAGS(0) } else { KEYEVENTF_KEYUP };
-    let ki = match win_key(code)? {
-        WinKey::Scan { code, extended } => {
-            let ext = if extended { KEYEVENTF_EXTENDEDKEY } else { KEYBD_EVENT_FLAGS(0) };
-            KEYBDINPUT { wVk: VIRTUAL_KEY(0), wScan: code, dwFlags: KEYEVENTF_SCANCODE | ext | up, time: 0, dwExtraInfo: 0 }
-        }
-        WinKey::Virtual(vk) => KEYBDINPUT { wVk: VIRTUAL_KEY(vk), wScan: 0, dwFlags: up, time: 0, dwExtraInfo: 0 },
-    };
-    Some(INPUT { r#type: INPUT_KEYBOARD, Anonymous: INPUT_0 { ki } })
-}
-
-/// The Windows key for a Linux key code. Linux numbers the main block (Esc to F12) by the PC's
-/// set 1 scancodes, so those pass straight through; the rest are looked up.
-fn win_key(code: KeyCode) -> Option<WinKey> {
-    let scan = |code| Some(WinKey::Scan { code, extended: false });
-    let ext = |code| Some(WinKey::Scan { code, extended: true });
-    let vk = |vk| Some(WinKey::Virtual(vk));
-    match code.code() {
-        n @ 1..=88 if n != 84 => scan(n),
-        96 => ext(0x1c),  // KEY_KPENTER
-        97 => ext(0x1d),  // KEY_RIGHTCTRL
-        98 => ext(0x35),  // KEY_KPSLASH
-        99 => vk(0x2c),   // KEY_SYSRQ: VK_SNAPSHOT
-        100 => ext(0x38), // KEY_RIGHTALT
-        102 => ext(0x47), // KEY_HOME
-        103 => ext(0x48), // KEY_UP
-        104 => ext(0x49), // KEY_PAGEUP
-        105 => ext(0x4b), // KEY_LEFT
-        106 => ext(0x4d), // KEY_RIGHT
-        107 => ext(0x4f), // KEY_END
-        108 => ext(0x50), // KEY_DOWN
-        109 => ext(0x51), // KEY_PAGEDOWN
-        110 => ext(0x52), // KEY_INSERT
-        111 => ext(0x53), // KEY_DELETE
-        113 => vk(0xad),  // KEY_MUTE: VK_VOLUME_MUTE
-        114 => vk(0xae),  // KEY_VOLUMEDOWN
-        115 => vk(0xaf),  // KEY_VOLUMEUP
-        117 => scan(0x59), // KEY_KPEQUAL
-        119 => vk(0x13),  // KEY_PAUSE: VK_PAUSE
-        121 => scan(0x7e), // KEY_KPCOMMA
-        124 => scan(0x7d), // KEY_YEN
-        125 => ext(0x5b), // KEY_LEFTMETA
-        126 => ext(0x5c), // KEY_RIGHTMETA
-        127 => ext(0x5d), // KEY_COMPOSE: the menu key
-        140 => vk(0xb7),  // KEY_CALC: VK_LAUNCH_APP2
-        142 => vk(0x5f),  // KEY_SLEEP
-        155 => vk(0xb4),  // KEY_MAIL
-        158 => vk(0xa6),  // KEY_BACK: VK_BROWSER_BACK
-        159 => vk(0xa7),  // KEY_FORWARD
-        163 => vk(0xb0),  // KEY_NEXTSONG
-        164 => vk(0xb3),  // KEY_PLAYPAUSE
-        165 => vk(0xb1),  // KEY_PREVIOUSSONG
-        166 => vk(0xb2),  // KEY_STOPCD
-        172 => vk(0xac),  // KEY_HOMEPAGE
-        173 => vk(0xa8),  // KEY_REFRESH
-        n @ 183..=193 => scan(0x64 + (n - 183)), // KEY_F13..KEY_F23
-        194 => scan(0x76), // KEY_F24
-        207 => vk(0xfa),  // KEY_PLAY
-        217 => vk(0xaa),  // KEY_SEARCH: VK_BROWSER_SEARCH
-        _ => None,
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn main_block_keys_are_their_scancodes() {
-        assert_eq!(win_key(KeyCode::KEY_A), Some(WinKey::Scan { code: 0x1e, extended: false }));
-        assert_eq!(win_key(KeyCode::KEY_ESC), Some(WinKey::Scan { code: 0x01, extended: false }));
-        assert_eq!(win_key(KeyCode::KEY_F12), Some(WinKey::Scan { code: 0x58, extended: false }));
-        assert_eq!(win_key(KeyCode::KEY_UP), Some(WinKey::Scan { code: 0x48, extended: true }));
-        assert_eq!(win_key(KeyCode::KEY_RIGHTCTRL), Some(WinKey::Scan { code: 0x1d, extended: true }));
-        assert_eq!(win_key(KeyCode::KEY_F13), Some(WinKey::Scan { code: 0x64, extended: false }));
-        assert_eq!(win_key(KeyCode::KEY_PLAYPAUSE), Some(WinKey::Virtual(0xb3)));
-        assert_eq!(win_key(KeyCode::BTN_SOUTH), None);
-    }
 
     /// Sends real input, so it is opt-in: `cargo test sendinput -- --ignored`. F24 is on no
     /// keyboard, so nothing on the desktop reacts to it.
@@ -386,7 +312,8 @@ mod tests {
         use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_F24};
         let down = || unsafe { GetAsyncKeyState(i32::from(VK_F24.0)) } as u16 & 0x8000 != 0;
         let mut kbm = VirtualKbm::new().unwrap();
-        kbm.key(KeyCode::KEY_F24, true).unwrap();
+        kbm.key(KeyCode::KEY_F24, true);
+        kbm.flush().unwrap();
         assert!(down(), "Windows has F24 down");
         kbm.release_all().unwrap();
         assert!(!down(), "and up again");

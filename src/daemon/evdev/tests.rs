@@ -30,3 +30,17 @@ fn motion_sensors_pair_with_their_own_controller() {
     // Empty unique IDs (common over USB) never count as a match.
     assert!(!node("x", None, Some("")).matches(pad, &None, &Some(String::new())));
 }
+
+#[test]
+fn nodes_without_our_axes_are_not_opened() {
+    // Bitmaps as sysfs writes them: a pad and motion sensors (this machine's pad), a touchpad
+    // with its multi-touch axes, and a bitmap of two words with the axes in the lower one. Then
+    // an RGB controller (ABS_MISC only), a mouse, and a sound card's jack.
+    for abs in ["3003f", "3f", "260800000000003", "1 3"] {
+        assert!(has_our_axes(abs), "{abs}");
+    }
+    for abs in ["10000000000", "0", "0\n"] {
+        assert!(!has_our_axes(abs), "{abs}");
+    }
+    assert!(has_our_axes("unreadable"), "looked at when in doubt");
+}

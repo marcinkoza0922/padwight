@@ -591,6 +591,10 @@ enum Message {
     SetRumbleStrength(f32),
     /// Whether picking an overlay's item gives a faint pulse.
     SetPickRumble(bool),
+    /// Whether controller input runs in the real-time scheduling class.
+    SetRealtimeInput(bool),
+    /// Whether continuous output updates every millisecond rather than every four.
+    SetFastTick(bool),
     SetPeekTrigger(crate::config::PeekTrigger),
     /// The font of all overlays (`None`: the system's), or the shown game's own.
     SetOverlayFont(Option<String>),

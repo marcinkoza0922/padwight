@@ -11,6 +11,10 @@ fn entry(name: &str, exe: &str) -> Entry {
     Entry { file: "x.padpack", pack }
 }
 
+fn listings(library: &[Entry]) -> Vec<Listing> {
+    library.iter().map(Listing::of).collect()
+}
+
 fn window(exe: &str) -> WindowInfo {
     WindowInfo { exe: exe.into(), class: "game".into(), ..Default::default() }
 }
@@ -32,24 +36,24 @@ fn packs_naming_the_folder_beat_packs_sharing_the_program_name() {
     let library = vec![entry("Other", "gpp.exe"), entry("Sands", "Prince of Persia - The Sands of Time/gpp.exe")];
     let config = Config::default();
     let pop = WindowInfo { path: "/games/Prince of Persia - The Sands of Time/gpp.exe".into(), ..window("gpp.exe") };
-    assert_eq!(candidates(&config, &library, &pop, None), [1]);
+    assert_eq!(candidates(&config, &listings(&library), &pop, None), [1]);
     let other = WindowInfo { path: "/games/Something Else/gpp.exe".into(), ..window("gpp.exe") };
-    assert_eq!(candidates(&config, &library, &other, None), [0]);
+    assert_eq!(candidates(&config, &listings(&library), &other, None), [0]);
 }
 
 #[test]
 fn only_unknown_library_games_are_offered() {
     let library = vec![entry("Doom", "doom.exe"), entry("Doom Remix", "DOOM.EXE"), entry("Quake", "quake.exe")];
     let mut config = Config::default();
-    assert_eq!(candidates(&config, &library, &window("doom.exe"), None), [0, 1], "both packs fit");
-    assert!(candidates(&config, &library, &window("other.exe"), None).is_empty());
+    assert_eq!(candidates(&config, &listings(&library), &window("doom.exe"), None), [0, 1], "both packs fit");
+    assert!(candidates(&config, &listings(&library), &window("other.exe"), None).is_empty());
 
     config.declined_packs.push(library[1].pack.pack.id.clone());
-    assert_eq!(candidates(&config, &library, &window("doom.exe"), None), [0]);
+    assert_eq!(candidates(&config, &listings(&library), &window("doom.exe"), None), [0]);
 
     let plan = pack::plan(&config, library[0].pack.clone(), true);
     pack::apply(&mut config, &plan, &pack::Choices::default());
-    assert!(candidates(&config, &library, &window("doom.exe"), None).is_empty(), "a setup with rules is the config's");
+    assert!(candidates(&config, &listings(&library), &window("doom.exe"), None).is_empty(), "a setup with rules is the config's");
 }
 
 #[test]
@@ -108,9 +112,10 @@ fn profiles_the_controller_cannot_play_are_not_offered() {
     assert_eq!(press(&mut s, Button::South), Some(OfferOutcome::Add(0, Some(1))), "a lone fit is used without asking");
     let mut gyro_only = entry("Doom", "doom.exe");
     gyro_only.pack.profiles[0].requires = vec![Feature::Gyro];
-    assert!(candidates(&Config::default(), &[gyro_only.clone()], &window("doom.exe"), Some(&[])).is_empty());
-    assert_eq!(candidates(&Config::default(), &[gyro_only.clone()], &window("doom.exe"), Some(&[Feature::Gyro])), [0]);
-    assert_eq!(candidates(&Config::default(), &[gyro_only], &window("doom.exe"), None), [0]);
+    let gyro_only = [Listing::of(&gyro_only)];
+    assert!(candidates(&Config::default(), &gyro_only, &window("doom.exe"), Some(&[])).is_empty());
+    assert_eq!(candidates(&Config::default(), &gyro_only, &window("doom.exe"), Some(&[Feature::Gyro])), [0]);
+    assert_eq!(candidates(&Config::default(), &gyro_only, &window("doom.exe"), None), [0]);
 }
 
 #[test]

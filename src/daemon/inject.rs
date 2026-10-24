@@ -136,14 +136,14 @@ impl Daemon {
                 DebugEvent::Motion { gyro, ms } => {
                     // Motion goes in order with the buttons around it.
                     if !batch.is_empty() {
-                        self.input(id, std::mem::take(&mut batch));
+                        self.input(id, std::mem::take(&mut batch), 0);
                     }
                     self.motion(id, MotionSample { gyro, accel: [0.0; 3], dt: ms as f32 / 1000.0 });
                 }
             }
         }
         if !batch.is_empty() {
-            self.input(id, batch);
+            self.input(id, batch, 0);
         }
         Response::Ok
     }
