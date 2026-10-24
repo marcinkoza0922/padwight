@@ -100,21 +100,42 @@ pub fn scanlines<'a, M: 'a>(sc: &Scanlines, s: f32, clock: Option<f32>, round: f
     })
 }
 
+/// How many steps a shimmer takes a second, and how many it takes to come round again: each
+/// block goes up and down a whole number of times in that loop, so it repeats without a jump.
+const SHIMMER_RATE: f32 = 12.0;
+const SHIMMER_LOOP: u32 = 96;
+
 /// Blocks `block` pixels across, each lightened or darkened at random, with a dark seam along
-/// two of its edges.
-pub fn pixels<'a, M: 'a>(p: &Pixels, s: f32, round: f32, fade: f32) -> Element<'a, M> {
+/// two of its edges. Given a clock, each block brightens and dims by it, at its own pace and
+/// out of step with its neighbours.
+pub fn pixels<'a, M: 'a>(p: &Pixels, s: f32, clock: Option<f32>, round: f32, fade: f32) -> Element<'a, M> {
     let block = (p.size.clamp(2.0, 24.0) * s).round().max(2.0) as usize;
-    sized([11, block as u32, 0], round, (p.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
+    let frame = clock.map(|clock| (clock * SHIMMER_RATE) as u32 % SHIMMER_LOOP);
+    sized([11, block as u32, frame.map_or(0, |f| f + 1)], round, (p.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
+        let shade_of = |bx: usize, by: usize| {
+            let (bx, by) = (bx as i64, by as i64);
+            let mut v = (hash(bx, by, 30) - 0.5) * 1.2;
+            if let Some(frame) = frame {
+                let turns = 1.0 + (hash(bx, by, 31) * 3.0).floor().min(2.0);
+                let phase = hash(bx, by, 32) + turns * frame as f32 / SHIMMER_LOOP as f32;
+                v = (v + 0.45 * (phase * std::f32::consts::TAU).sin()).clamp(-1.0, 1.0);
+            }
+            let shade = if v > 0.0 { 255 } else { 0 };
+            [shade, shade, shade, (v.abs() * 255.0) as u8]
+        };
         let mut pixels = Vec::with_capacity(w * h * 4);
+        let mut shades = Vec::new();
         for y in y0..y0 + h {
+            // Each block's shade once a row of blocks, not once a pixel.
+            if y == y0 || y % block == 0 {
+                shades = (x0 / block..=(x0 + w) / block).map(|bx| shade_of(bx, y / block)).collect();
+            }
             for x in x0..x0 + w {
                 if x % block == block - 1 || y % block == block - 1 {
                     pixels.extend_from_slice(&[0, 0, 0, 200]);
-                    continue;
+                } else {
+                    pixels.extend_from_slice(&shades[x / block - x0 / block]);
                 }
-                let v = (hash((x / block) as i64, (y / block) as i64, 30) - 0.5) * 1.2;
-                let shade = if v > 0.0 { 255 } else { 0 };
-                pixels.extend_from_slice(&[shade, shade, shade, (v.abs() * 255.0) as u8]);
             }
         }
         pixels

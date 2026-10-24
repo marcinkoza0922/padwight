@@ -45,7 +45,7 @@ pub(super) fn filters<'a, M: 'a>(c: Colors, style: &OverlayStyle, items: bool, r
         layers.push(texture::grain(grain, s, moving(grain.animated), round, c.fade));
     }
     if let Some(pixels) = o.pixels.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::pixels(pixels, s, round, c.fade));
+        layers.push(texture::pixels(pixels, s, moving(pixels.shimmer), round, c.fade));
     }
     if let Some(camo) = o.camo.as_ref().filter(|p| covers(p.on)) {
         layers.push(texture::camo(camo, s, round, c.fade));

@@ -43,7 +43,7 @@ pub(super) fn filter_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> 
         on_change,
     );
     let pixels = filter(
-        &Slot { label: "Pixel blocks", get: |s| s.ornament.pixels.as_ref(), put: |s, v| s.ornament.pixels = v, start: |_| Pixels { size: 6.0, opacity: 0.25, on: FilterOn::Both } },
+        &Slot { label: "Pixel blocks", get: |s| s.ornament.pixels.as_ref(), put: |s, v| s.ornament.pixels = v, start: |_| Pixels { size: 6.0, opacity: 0.25, shimmer: false, on: FilterOn::Both } },
         |p, set| pixel_rows(p, &set),
         style,
         on_change,
@@ -267,7 +267,7 @@ fn grain_rows<'a>(grain: &Grain, set: &Rc<dyn Fn(Grain) -> Message + 'a>) -> Vec
     vec![labeled("        Strength", strength), labeled("        Size", size), labeled("", animated.into())]
 }
 
-/// The pixel blocks' size and strength.
+/// The pixel blocks' size, strength and whether they shimmer.
 fn pixel_rows<'a>(pixels: &Pixels, set: &Rc<dyn Fn(Pixels) -> Message + 'a>) -> Vec<Element<'a, Message>> {
     let size = {
         let (p, set) = (pixels.clone(), set.clone());
@@ -277,7 +277,11 @@ fn pixel_rows<'a>(pixels: &Pixels, set: &Rc<dyn Fn(Pixels) -> Message + 'a>) -> 
         let (p, set) = (pixels.clone(), set.clone());
         percent_of(pixels.opacity, move |v| set(Pixels { opacity: v, ..p.clone() }))
     };
-    vec![labeled("        Block size", size), labeled("        Strength", strength)]
+    let shimmer = {
+        let (p, set) = (pixels.clone(), set.clone());
+        checkbox(pixels.shimmer).label("Shimmer, each block on its own").on_toggle(move |on| set(Pixels { shimmer: on, ..p.clone() }))
+    };
+    vec![labeled("        Block size", size), labeled("        Strength", strength), labeled("", shimmer.into())]
 }
 
 /// The scanlines' spacing, opacity, color and whether they drift.

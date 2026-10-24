@@ -44,7 +44,7 @@ pub(super) fn filtered() -> OverlayStyle {
         ornament: Ornament {
             scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.25, color: "#000000".into(), drift: false, on: FilterOn::Both }),
             grain: Some(Grain { opacity: 0.2, size: 1.0, animated: true, on: FilterOn::Both }),
-            pixels: Some(Pixels { size: 6.0, opacity: 0.3, on: FilterOn::Both }),
+            pixels: Some(Pixels { size: 6.0, opacity: 0.3, shimmer: true, on: FilterOn::Both }),
             tint: Some(Tint { color: "#40ff80".into(), opacity: 0.1, on: FilterOn::Both }),
             ..Ornament::default()
         },

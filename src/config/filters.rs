@@ -145,13 +145,15 @@ fn default_grain_size() -> f32 {
 }
 
 /// Blocks `size` pixels across at scale 1, each a little lighter or darker, with a dark seam
-/// between them.
+/// between them. With `shimmer` each block slowly brightens and dims, out of step with the rest.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Pixels {
     #[serde(default = "default_pixels_size")]
     pub size: f32,
     #[serde(default = "default_pixels_opacity")]
     pub opacity: f32,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub shimmer: bool,
     #[serde(default, skip_serializing_if = "FilterOn::is_both")]
     pub on: FilterOn,
 }
