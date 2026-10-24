@@ -153,3 +153,18 @@ fn panels_are_drawn_around_it_in_the_look_this_setup_uses() {
     let choices = app.around_choices(StageTarget::Panel(Panel::Keyboard));
     assert!(!choices.iter().any(|t| matches!(t, StageTarget::Panel(Panel::Keyboard) | StageTarget::Setup(Panel::Keyboard))), "not itself in another look");
 }
+
+#[test]
+fn playing_animations_opens_the_overlay_in_its_motion_style() {
+    let mut app = open_on_a_menu();
+    let still = app.stage_anim(app.stage.as_ref().unwrap());
+    assert_eq!((still.clock, still.opacity()), (0.0, 1.0), "drawn still by default");
+    let _ = app.update(Message::Stage(StageMessage::Animate(true)));
+    let stage = app.stage.as_ref().unwrap();
+    assert!(stage.is_ticking(), "the window redraws while it moves");
+    let playing = app.stage_anim(stage);
+    assert!(playing.opacity() < 0.5, "the opening plays from the start");
+    let _ = app.view_stage();
+    let _ = app.update(Message::Stage(StageMessage::Animate(false)));
+    assert!(!app.stage.as_ref().unwrap().is_ticking());
+}

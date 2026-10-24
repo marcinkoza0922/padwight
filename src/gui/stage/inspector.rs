@@ -147,6 +147,12 @@ impl App {
         let flash = button(text("Flash").size(13)).style(style::secondary).on_press(Message::Stage(StageMessage::Flash));
         let tip = container(text("Make the overlay flash, to spot it against a dark or busy background.").size(13)).padding(8).style(style::tooltip);
         rows.push(labeled("Find it", tooltip(flash, tip, tooltip::Position::Top).into()));
+        let animate = checkbox(stage.animate).label("Play animations").on_toggle(|on| Message::Stage(StageMessage::Animate(on)));
+        let replay = button(text("Replay opening").size(13)).style(style::secondary).on_press_maybe(stage.animate.then_some(Message::Stage(StageMessage::Replay)));
+        let tip = container(text("Move it as it does in game: its motion style opens it, and drifting, pulsing glows and moving filters run.").size(13))
+            .padding(8)
+            .style(style::tooltip);
+        rows.push(labeled("Motion", tooltip(row![animate, replay].spacing(12).align_y(Alignment::Center), tip, tooltip::Position::Top).into()));
         rows.push(labeled("Also show", self.around_picker(stage)));
         rows.push(note(HOW_TO).into());
         column(rows).spacing(10).into()

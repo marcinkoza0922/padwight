@@ -922,8 +922,8 @@ impl App {
             iced::window::close_requests().map(Message::WindowCloseRequested),
             iced::window::close_events().map(|id| Message::Stage(StageMessage::Closed(id))),
             if self.stage.is_some() { iced::event::listen_with(stage::stage_keys) } else { Subscription::none() },
-            if self.stage.as_ref().is_some_and(stage::Stage::is_flashing) {
-                iced::time::every(Duration::from_millis(16)).map(|now| Message::Stage(StageMessage::FlashTick(now)))
+            if self.stage.as_ref().is_some_and(stage::Stage::is_ticking) {
+                iced::time::every(Duration::from_millis(16)).map(|now| Message::Stage(StageMessage::Tick(now)))
             } else {
                 Subscription::none()
             },

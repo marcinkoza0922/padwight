@@ -47,7 +47,7 @@ impl App {
     }
 
     pub(super) fn stage_context<'a>(&self, stage: &Stage, display: iced::Size) -> Element<'a, Message> {
-        let faint = Anim::faint(FAINT);
+        let faint = Anim { clock: stage.clock(), ..Anim::faint(FAINT) };
         let shown = self.shown_around(stage);
         let drawn = |t: StageTarget| {
             let style = self.stage_style(t)?;
