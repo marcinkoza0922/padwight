@@ -1,13 +1,14 @@
 //! The style editor's Filters group: the materials (paper, brushed metal, concrete, cloth,
 //! denim, silk, leather, steel, wood), the screens (scanlines, grain, pixel blocks) and the colors
-//! (camo, plaid, argyle, stripes, a color wash). Each is a button that turns it on and off, and
+//! (camo, plaid, argyle, stripes, a checkerboard, polka dots, a color wash). Each is a button that turns it on and off, and
 //! each that's on gets its editor under its name, ending in what it covers.
 
 use std::rc::Rc;
 
 use super::{style_editor::{OnStyle, Slot, paint_row, stepped_slider}, *};
 use crate::config::{
-    Argyle, Camo, CamoScheme, Covers, FilterOn, Grain, Pixels, Plaid, Scanlines, StripeDirection, Stripes, Texture, Tint, default_argyle_colors, default_plaid_colors, default_stripes_colors,
+    Argyle, Camo, CamoScheme, Checkerboard, Covers, FilterOn, Grain, Pixels, Plaid, PolkaDots, Scanlines, StripeDirection, Stripes, Texture, Tint, default_argyle_colors,
+    default_checkerboard_colors, default_plaid_colors, default_polka_dot_colors, default_stripes_colors,
 };
 use iced::widget::{button, checkbox, column, row};
 
@@ -43,7 +44,7 @@ pub(super) fn filter_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> 
         on_change,
     );
     let pixels = filter(
-        &Slot { label: "Pixel blocks", get: |s| s.ornament.pixels.as_ref(), put: |s, v| s.ornament.pixels = v, start: |_| Pixels { size: 6.0, opacity: 0.25, on: FilterOn::Both } },
+        &Slot { label: "Pixel blocks", get: |s| s.ornament.pixels.as_ref(), put: |s, v| s.ornament.pixels = v, start: |_| Pixels { size: 6.0, opacity: 0.25, shimmer: false, on: FilterOn::Both } },
         |p, set| pixel_rows(p, &set),
         style,
         on_change,
@@ -55,13 +56,14 @@ pub(super) fn filter_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> 
         on_change,
     );
     let [plaid, argyle, stripes] = pattern_filters(style, on_change);
+    let [checkerboard, polka_dots] = two_color_filters(style, on_change);
     let tint = filter(
         &Slot { label: "Color wash", get: |s| s.ornament.tint.as_ref(), put: |s, v| s.ornament.tint = v, start: |_| Tint { color: "#ffa040".into(), opacity: 0.12, on: FilterOn::Both } },
         |t, set| tint_rows(t, &set),
         style,
         on_change,
     );
-    grouped([("        Material", materials), ("        Screen", vec![scanlines, grain, pixels]), ("        Color", vec![camo, plaid, argyle, stripes, tint])])
+    grouped([("        Material", materials), ("        Screen", vec![scanlines, grain, pixels]), ("        Color", vec![camo, plaid, argyle, stripes, checkerboard, polka_dots, tint])])
 }
 
 /// The plaid's, argyle's and stripes' buttons and editors.
@@ -108,6 +110,41 @@ fn pattern_filters<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> [Filter
         on_change,
     );
     [plaid, argyle, stripes]
+}
+
+/// The checkerboard's and polka dots' buttons and editors.
+fn two_color_filters<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> [Filter<'a>; 2] {
+    let checkerboard = filter(
+        &Slot {
+            label: "Checkerboard",
+            get: |s| s.ornament.checkerboard.as_ref(),
+            put: |s, v| s.ornament.checkerboard = v,
+            start: |_| Checkerboard { colors: default_checkerboard_colors(), opacity: 0.25, size: 24.0, on: FilterOn::Both },
+        },
+        |c, set| {
+            let mut rows = color_rows(&c.colors, ["Squares", "Between"], &patterned(c, &set, |c, colors| Checkerboard { colors, ..c.clone() }));
+            rows.extend(size_and_strength((4.0, 160.0), "Square size", (c.size, c.opacity), &patterned(c, &set, |c, (size, opacity)| Checkerboard { size, opacity, ..c.clone() })));
+            rows
+        },
+        style,
+        on_change,
+    );
+    let polka_dots = filter(
+        &Slot {
+            label: "Polka dots",
+            get: |s| s.ornament.polka_dots.as_ref(),
+            put: |s, v| s.ornament.polka_dots = v,
+            start: |_| PolkaDots { colors: default_polka_dot_colors(), opacity: 0.25, size: 28.0, on: FilterOn::Both },
+        },
+        |d, set| {
+            let mut rows = color_rows(&d.colors, ["Ground", "Dots"], &patterned(d, &set, |d, colors| PolkaDots { colors, ..d.clone() }));
+            rows.extend(size_and_strength((8.0, 120.0), "Spacing", (d.size, d.opacity), &patterned(d, &set, |d, (size, opacity)| PolkaDots { size, opacity, ..d.clone() })));
+            rows
+        },
+        style,
+        on_change,
+    );
+    [checkerboard, polka_dots]
 }
 
 /// A material's slot, starting at half strength.
@@ -210,9 +247,9 @@ fn patterned<'a, P: Clone + 'a, V: 'a>(p: &P, set: &Rc<dyn Fn(P) -> Message + 'a
     Rc::new(move |v| set(with(&p, v)))
 }
 
-/// A row of swatches for each of a pattern's three colors, under `labels`.
-fn color_rows<'a>(colors: &[String; 3], labels: [&'static str; 3], set: &Rc<dyn Fn([String; 3]) -> Message + 'a>) -> Vec<Element<'a, Message>> {
-    (0..3)
+/// A row of swatches for each of a pattern's colors, under `labels`.
+fn color_rows<'a, const N: usize>(colors: &[String; N], labels: [&'static str; N], set: &Rc<dyn Fn([String; N]) -> Message + 'a>) -> Vec<Element<'a, Message>> {
+    (0..N)
         .map(|i| {
             let shown = Paint::new(&colors[i], 1.0);
             let (colors, set) = (colors.clone(), set.clone());
@@ -267,7 +304,7 @@ fn grain_rows<'a>(grain: &Grain, set: &Rc<dyn Fn(Grain) -> Message + 'a>) -> Vec
     vec![labeled("        Strength", strength), labeled("        Size", size), labeled("", animated.into())]
 }
 
-/// The pixel blocks' size and strength.
+/// The pixel blocks' size, strength and whether they shimmer.
 fn pixel_rows<'a>(pixels: &Pixels, set: &Rc<dyn Fn(Pixels) -> Message + 'a>) -> Vec<Element<'a, Message>> {
     let size = {
         let (p, set) = (pixels.clone(), set.clone());
@@ -277,7 +314,11 @@ fn pixel_rows<'a>(pixels: &Pixels, set: &Rc<dyn Fn(Pixels) -> Message + 'a>) -> 
         let (p, set) = (pixels.clone(), set.clone());
         percent_of(pixels.opacity, move |v| set(Pixels { opacity: v, ..p.clone() }))
     };
-    vec![labeled("        Block size", size), labeled("        Strength", strength)]
+    let shimmer = {
+        let (p, set) = (pixels.clone(), set.clone());
+        checkbox(pixels.shimmer).label("Shimmer, each block on its own").on_toggle(move |on| set(Pixels { shimmer: on, ..p.clone() }))
+    };
+    vec![labeled("        Block size", size), labeled("        Strength", strength), labeled("", shimmer.into())]
 }
 
 /// The scanlines' spacing, opacity, color and whether they drift.

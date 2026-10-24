@@ -1,4 +1,5 @@
-//! The patterned color filters over a panel: plaid, argyle and stripes.
+//! The patterned color filters over a panel: plaid, argyle, stripes, a checkerboard and polka
+//! dots.
 
 use serde::{Deserialize, Serialize};
 
@@ -49,6 +50,33 @@ pub struct Stripes {
     pub on: FilterOn,
 }
 
+/// A checkerboard: squares `size` pixels across at scale 1 in two alternating colors.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Checkerboard {
+    #[serde(default = "default_checkerboard_colors")]
+    pub colors: [String; 2],
+    #[serde(default = "default_pattern_opacity")]
+    pub opacity: f32,
+    #[serde(default = "default_checkerboard_size")]
+    pub size: f32,
+    #[serde(default, skip_serializing_if = "FilterOn::is_both")]
+    pub on: FilterOn,
+}
+
+/// Polka dots: round dots `size` pixels apart at scale 1, each row offset by half a step, on a
+/// ground. `colors` are the ground's and the dots'.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PolkaDots {
+    #[serde(default = "default_polka_dot_colors")]
+    pub colors: [String; 2],
+    #[serde(default = "default_pattern_opacity")]
+    pub opacity: f32,
+    #[serde(default = "default_polka_dot_size")]
+    pub size: f32,
+    #[serde(default, skip_serializing_if = "FilterOn::is_both")]
+    pub on: FilterOn,
+}
+
 /// Which way stripes run.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -81,6 +109,16 @@ pub fn default_stripes_colors() -> [String; 3] {
     colors("#1f3a5f", "#e8e2d0", "#b0202a")
 }
 
+/// Black and white squares.
+pub fn default_checkerboard_colors() -> [String; 2] {
+    ["#1a1a1a".into(), "#e8e2d0".into()]
+}
+
+/// White dots on red.
+pub fn default_polka_dot_colors() -> [String; 2] {
+    ["#b0202a".into(), "#f4efe4".into()]
+}
+
 pub(super) fn default_pattern_opacity() -> f32 {
     0.25
 }
@@ -95,4 +133,12 @@ pub(super) fn default_argyle_size() -> f32 {
 
 pub(super) fn default_stripes_size() -> f32 {
     16.0
+}
+
+pub(super) fn default_checkerboard_size() -> f32 {
+    24.0
+}
+
+pub(super) fn default_polka_dot_size() -> f32 {
+    28.0
 }

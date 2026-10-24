@@ -1,5 +1,6 @@
 //! The filters over a panel (scanlines, grain, pixel blocks, camo and a tint) and the
-//! materials, with what each covers. Plaid, argyle and stripes are in `patterns`.
+//! materials, with what each covers. Plaid, argyle, stripes, the checkerboard and
+//! polka dots are in `patterns`.
 
 use serde::{Deserialize, Serialize};
 
@@ -68,7 +69,7 @@ macro_rules! covers {
     )*};
 }
 
-covers!(Scanlines, Texture, Grain, Pixels, Tint, Camo, super::Plaid, super::Argyle, super::Stripes);
+covers!(Scanlines, Texture, Grain, Pixels, Tint, Camo, super::Plaid, super::Argyle, super::Stripes, super::Checkerboard, super::PolkaDots);
 
 /// A material's own default: the background alone.
 fn background() -> FilterOn {
@@ -145,13 +146,15 @@ fn default_grain_size() -> f32 {
 }
 
 /// Blocks `size` pixels across at scale 1, each a little lighter or darker, with a dark seam
-/// between them.
+/// between them. With `shimmer` each block slowly brightens and dims, out of step with the rest.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Pixels {
     #[serde(default = "default_pixels_size")]
     pub size: f32,
     #[serde(default = "default_pixels_opacity")]
     pub opacity: f32,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub shimmer: bool,
     #[serde(default, skip_serializing_if = "FilterOn::is_both")]
     pub on: FilterOn,
 }

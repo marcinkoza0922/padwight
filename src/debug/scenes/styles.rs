@@ -1,8 +1,9 @@
 //! The sample styles the menu scenes are drawn in: textures, filters, ornaments and frames.
 
 use crate::config::{
-    Argyle, Bevel, Camo, CamoScheme, Case, FilterOn, Frame, FrameKind, Gradient, Grain, Ornament, OverlayStyle, Paint, Pixels, Plaid, Scanlines, Shade, StripeDirection, Stripes,
-    Stroke, Texture, Tint, Typography, Vignette, default_argyle_colors, default_plaid_colors, default_stripes_colors,
+    Argyle, Bevel, Camo, CamoScheme, Case, Checkerboard, FilterOn, Frame, FrameKind, Gradient, Grain, Ornament, OverlayStyle, Paint, Pixels, Plaid, PolkaDots, Scanlines, Shade,
+    StripeDirection, Stripes, Stroke, Texture, Tint, Typography, Vignette, default_argyle_colors, default_checkerboard_colors, default_plaid_colors, default_polka_dot_colors,
+    default_stripes_colors,
 };
 
 /// A panel under a woodland camo.
@@ -26,6 +27,18 @@ pub(super) fn striped() -> OverlayStyle {
     OverlayStyle { ornament: Ornament { stripes: Some(stripes), ..Ornament::default() }, ..OverlayStyle::default() }
 }
 
+/// A panel under a black and cream checkerboard.
+pub(super) fn checkered() -> OverlayStyle {
+    let checks = Checkerboard { colors: default_checkerboard_colors(), opacity: 0.45, size: 24.0, on: FilterOn::Both };
+    OverlayStyle { ornament: Ornament { checkerboard: Some(checks), ..Ornament::default() }, ..OverlayStyle::default() }
+}
+
+/// A panel under white dots on red.
+pub(super) fn polka_dots() -> OverlayStyle {
+    let dots = PolkaDots { colors: default_polka_dot_colors(), opacity: 0.45, size: 28.0, on: FilterOn::Both };
+    OverlayStyle { ornament: Ornament { polka_dots: Some(dots), ..Ornament::default() }, ..OverlayStyle::default() }
+}
+
 /// Plaid on the items alone, and wood on the background alone.
 pub(super) fn plaid_items() -> OverlayStyle {
     let plaid = Plaid { colors: default_plaid_colors(), opacity: 0.45, size: 80.0, on: FilterOn::Items };
@@ -44,7 +57,7 @@ pub(super) fn filtered() -> OverlayStyle {
         ornament: Ornament {
             scanlines: Some(Scanlines { spacing: 4.0, opacity: 0.25, color: "#000000".into(), drift: false, on: FilterOn::Both }),
             grain: Some(Grain { opacity: 0.2, size: 1.0, animated: true, on: FilterOn::Both }),
-            pixels: Some(Pixels { size: 6.0, opacity: 0.3, on: FilterOn::Both }),
+            pixels: Some(Pixels { size: 6.0, opacity: 0.3, shimmer: true, on: FilterOn::Both }),
             tint: Some(Tint { color: "#40ff80".into(), opacity: 0.1, on: FilterOn::Both }),
             ..Ornament::default()
         },
@@ -215,6 +228,8 @@ pub(super) fn list_scene(name: &str) -> Option<OverlayStyle> {
         "menu-plaid" => plaid(),
         "menu-argyle" => argyle(),
         "menu-stripes" => striped(),
+        "menu-checkerboard" => checkered(),
+        "menu-polka-dots" => polka_dots(),
         "menu-plaid-items" => plaid_items(),
         "menu-stripes-background" => striped_background(),
         "menu-paper" => paper(),

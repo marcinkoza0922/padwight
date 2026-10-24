@@ -19,6 +19,7 @@ mod handles;
 mod inspector;
 mod panel;
 mod pick;
+mod playback;
 pub(super) mod snap;
 
 pub(super) use pick::{cell_field, item_field};
@@ -98,11 +99,11 @@ pub(super) struct Stage {
     picked: Option<Part>,
     /// When the Flash button was pressed, while the overlay is still flashing.
     flash: Option<Instant>,
+    /// Whether the overlay moves as it would in game: its motion style and looping effects.
+    animate: bool,
+    /// When its opening last started playing.
+    played: Instant,
 }
-
-/// How long the overlay flashes, and how many times it pulses in that.
-const FLASH_FOR: Duration = Duration::from_millis(1500);
-const FLASH_PULSES: f32 = 3.0;
 
 #[derive(Debug, Clone)]
 pub(super) enum StageMessage {
@@ -124,7 +125,12 @@ pub(super) enum StageMessage {
     Pick(Part),
     /// Makes the overlay flash, to find it against a busy or dark background.
     Flash,
-    FlashTick(Instant),
+    /// Plays the overlay's motion and looping effects, or draws it still.
+    Animate(bool),
+    /// Plays its opening again.
+    Replay,
+    /// A frame passes while it flashes or moves.
+    Tick(Instant),
     Dock,
     Fold,
     Key(window::Id, StageKey),
@@ -220,11 +226,7 @@ impl App {
                     stage.flash = Some(Instant::now());
                 }
             }
-            StageMessage::FlashTick(now) => {
-                if let Some(stage) = &mut self.stage {
-                    stage.flash = stage.flash.filter(|since| now.saturating_duration_since(*since) < FLASH_FOR);
-                }
-            }
+            StageMessage::Tick(now) => self.stage.iter_mut().for_each(|s| s.tick(now)),
             StageMessage::AroundAll(on) => {
                 let all = if on { self.stage.as_ref().map(|s| self.around_choices(s.target)).unwrap_or_default() } else { Vec::new() };
                 if let Some(stage) = &mut self.stage {
@@ -257,6 +259,7 @@ impl App {
             stage.game = game;
             stage.dock_left = dock_left;
             stage.picked = None;
+            stage.played = Instant::now();
             return window::gain_focus(stage.window);
         }
         let (window, open) = window::open(stage_window());
@@ -274,6 +277,8 @@ impl App {
             around: self.default_around(),
             picked: None,
             flash: None,
+            animate: false,
+            played: Instant::now(),
         });
         open.discard()
     }
@@ -348,9 +353,10 @@ impl App {
                 .stage_style(stage.target)
                 .and_then(|style| {
                     let fit = Fit::of(style, display);
-                    let panel = self.stage_panel(stage.target, style, &fit, &Anim::still())?;
+                    let anim = self.stage_anim(stage);
+                    let panel = self.stage_panel(stage.target, style, &fit, &anim)?;
                     let held = handles::handles(panel, display, stage.flashing(), |g| Message::Stage(StageMessage::Gesture(g)), |p| Message::Stage(StageMessage::Pick(p)));
-                    Some(crate::overlay::draw::place(held, style, &fit, &Anim::still()))
+                    Some(crate::overlay::draw::place(held, style, &fit, &anim))
                 })
                 .unwrap_or_else(|| space().into());
             let context = self.stage_context(stage, display);
@@ -365,18 +371,6 @@ impl App {
 }
 
 impl Stage {
-    pub(super) fn is_flashing(&self) -> bool {
-        self.flash.is_some()
-    }
-
-    /// How bright the flash is now, from 0 (not flashing) to 1: pulses that fade out.
-    fn flashing(&self) -> f32 {
-        let Some(since) = self.flash else { return 0.0 };
-        let t = since.elapsed().as_secs_f32() / FLASH_FOR.as_secs_f32();
-        if t >= 1.0 { return 0.0 }
-        (t * FLASH_PULSES * std::f32::consts::TAU).cos().mul_add(-0.5, 0.5) * (1.0 - t * 0.5)
-    }
-
     /// Takes one of the inspector's own settings.
     fn set(&mut self, message: &StageMessage) {
         match *message {
@@ -385,6 +379,11 @@ impl Stage {
             StageMessage::Step(step) => self.step = step,
             StageMessage::ShowGrid(on) => self.show_grid = on,
             StageMessage::Dim(on) => self.dim = on,
+            StageMessage::Animate(on) => {
+                self.animate = on;
+                self.played = Instant::now();
+            }
+            StageMessage::Replay => self.played = Instant::now(),
             StageMessage::Around(target, true) if !self.shows_around(target) => self.around.push(target),
             StageMessage::Around(target, false) => self.around.retain(|t| !context::same_overlay(*t, target)),
             StageMessage::Dock => self.dock_left = !self.dock_left,

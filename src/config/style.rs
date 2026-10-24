@@ -305,13 +305,14 @@ impl Default for OverlayStyle {
 
 impl OverlayStyle {
     /// Whether something in the style loops while the overlay is up: a glow that pulses, or a
-    /// gradient, scanlines or grain that drift or flicker. The overlay keeps redrawing for these unless the
+    /// gradient, scanlines, grain or pixel blocks that drift, flicker or shimmer. The overlay keeps redrawing for these unless the
     /// performance settings say nothing loops.
     pub fn loops(&self) -> bool {
         self.glow.as_ref().is_some_and(|g| g.pulse)
             || self.gradient.as_ref().is_some_and(|g| g.drift)
             || self.ornament.scanlines.as_ref().is_some_and(|s| s.drift)
             || self.ornament.grain.as_ref().is_some_and(|g| g.animated)
+            || self.ornament.pixels.as_ref().is_some_and(|p| p.shimmer)
     }
 
     /// The on-screen keyboard's default: along the bottom of the screen.

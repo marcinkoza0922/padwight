@@ -1,15 +1,17 @@
 //! The scenes `padwight debug overlay` can draw, by name.
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 68] = [
+pub const SCENES: [(&str, &str); 72] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
+    ("keyboard-plaid", "the full on-screen keyboard on wood, its keys under one red tartan"),
     ("numpad", "the on-screen numpad"),
     ("menu-list", "a list menu"),
     ("menu-buttons", "a menu with quick-select buttons"),
     ("menu-grid", "a three-column grid menu"),
     ("menu-radial", "a radial menu"),
     ("menu-radial-boxes", "a radial menu in boxes"),
+    ("menu-radial-plaid", "a radial menu on wood, its arcs under one red tartan"),
     ("menu-directional", "a D-pad directional menu"),
     ("menu-face", "a face-button directional menu"),
     ("menu-carousel", "a carousel menu"),
@@ -28,6 +30,8 @@ pub const SCENES: [(&str, &str); 68] = [
     ("menu-plaid", "a list menu under a red tartan filter"),
     ("menu-argyle", "a list menu under an argyle filter"),
     ("menu-stripes", "a list menu under a slanted stripes filter"),
+    ("menu-checkerboard", "a list menu under a checkerboard filter"),
+    ("menu-polka-dots", "a list menu under a polka dot filter"),
     ("menu-plaid-items", "a list menu on wood, its items under a red tartan filter"),
     ("menu-stripes-background", "a list menu whose background alone is under a stripes filter"),
     ("frame-art-deco", "a list menu in an art deco frame"),

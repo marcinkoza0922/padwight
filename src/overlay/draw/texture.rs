@@ -3,17 +3,20 @@
 //! camo. The materials, grain and blocks are translucent white and black, so they lighten and
 //! darken whatever they sit on.
 
-use std::sync::{Mutex, OnceLock};
+use std::sync::OnceLock;
 
-use iced::{ContentFit, Element, Length, widget::{image, responsive}};
+use iced::Element;
 
-use crate::config::{Camo, CamoScheme, Grain, Paint, Pixels, Scanlines, Texture};
+use crate::config::{Camo, CamoScheme, Grain, Paint, Pixels, Scanlines, Texture, Tint};
 
+mod anchored;
 mod materials;
 mod patterns;
 
+pub use anchored::{Shape, anchor};
+use anchored::sized;
 use materials::{brushed_metal, cloth, concrete, denim, leather, paper, silk, steel, wood};
-pub use patterns::{argyle, plaid, stripes};
+pub use patterns::{argyle, checkerboard, plaid, polka_dots, stripes};
 
 /// What a texture looks like.
 #[derive(Debug, Clone, Copy)]
@@ -41,70 +44,14 @@ pub enum Material {
 const WIDTH: usize = 1280;
 const HEIGHT: usize = 720;
 
-/// A layer the size of what it covers, cut at layout from pixels `build` makes for that size,
-/// and rounded `round` pixels at its corners. `key` names the picture, so the last few are kept
-/// and a panel that holds its size doesn't rebuild its picture every frame.
-fn sized<'a, M: 'a>(key: [u32; 3], round: f32, opacity: f32, build: impl Fn(usize, usize) -> Vec<u8> + 'a) -> Element<'a, M> {
-    responsive(move |size| {
-        let (w, h) = (size.width.max(1.0) as usize, size.height.max(1.0) as usize);
-        let handle = cached((key, round.to_bits(), w, h), || rounded(build(w, h), w, h, round));
-        image(handle).content_fit(ContentFit::Fill).width(Length::Fill).height(Length::Fill).opacity(opacity).into()
-    })
-    .into()
-}
-
-/// The pixels with what's outside corners `round` pixels round made clear, the edge softened.
-fn rounded(mut pixels: Vec<u8>, w: usize, h: usize, round: f32) -> Vec<u8> {
-    let r = round.min(w.min(h) as f32 / 2.0);
-    if r < 1.0 {
-        return pixels;
-    }
-    let reach = r.ceil() as usize;
-    for y in (0..reach).chain(h.saturating_sub(reach).max(reach)..h) {
-        for x in (0..reach).chain(w.saturating_sub(reach).max(reach)..w) {
-            // How far the pixel's middle lies outside the corner's circle.
-            let dx = (r - (x as f32 + 0.5)).max(x as f32 + 0.5 - (w as f32 - r));
-            let dy = (r - (y as f32 + 0.5)).max(y as f32 + 0.5 - (h as f32 - r));
-            if dx <= 0.0 || dy <= 0.0 {
-                continue;
-            }
-            let cover = (r + 0.5 - (dx * dx + dy * dy).sqrt()).clamp(0.0, 1.0);
-            let alpha = &mut pixels[(y * w + x) * 4 + 3];
-            *alpha = (f32::from(*alpha) * cover) as u8;
-        }
-    }
-    pixels
-}
-
-type Key = ([u32; 3], u32, usize, usize);
-
-/// The picture for `key`, built the first time. The most recently used few dozen are kept: a
-/// keyboard's keys come in several sizes, each with its own picture of every filter on it.
-fn cached(key: Key, build: impl FnOnce() -> Vec<u8>) -> image::Handle {
-    static RECENT: Mutex<Vec<(Key, image::Handle)>> = Mutex::new(Vec::new());
-    let mut recent = RECENT.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-    if let Some(at) = recent.iter().position(|(k, _)| *k == key) {
-        let hit = recent.remove(at);
-        let handle = hit.1.clone();
-        recent.push(hit);
-        return handle;
-    }
-    let handle = image::Handle::from_rgba(key.2 as u32, key.3 as u32, build());
-    if recent.len() >= 48 {
-        recent.remove(0);
-    }
-    recent.push((key, handle.clone()));
-    handle
-}
-
 /// The material as a layer the size of what it covers: the relief, repeated if that's bigger.
-pub fn layer<'a, M: 'a>(kind: Material, t: &Texture, round: f32, fade: f32) -> Element<'a, M> {
-    sized([kind as u32, 0, 0], round, (t.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+pub fn layer<'a, M: 'a>(kind: Material, t: &Texture, shape: Shape, fade: f32) -> Element<'a, M> {
+    sized([kind as u32, 0, 0], shape, (t.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
         let source = reliefs(kind);
         let mut pixels = Vec::with_capacity(w * h * 4);
-        for y in 0..h {
+        for y in y0..y0 + h {
             let row = (y % HEIGHT) * WIDTH * 4;
-            for x in 0..w {
+            for x in x0..x0 + w {
                 let at = row + (x % WIDTH) * 4;
                 pixels.extend_from_slice(&source[at..at + 4]);
             }
@@ -115,13 +62,13 @@ pub fn layer<'a, M: 'a>(kind: Material, t: &Texture, round: f32, fade: f32) -> E
 
 /// Noise in blocks `block` pixels across. Given a clock, it picks one of a few patterns by it,
 /// a dozen times a second.
-pub fn grain<'a, M: 'a>(g: &Grain, s: f32, clock: Option<f32>, round: f32, fade: f32) -> Element<'a, M> {
+pub fn grain<'a, M: 'a>(g: &Grain, s: f32, clock: Option<f32>, shape: Shape, fade: f32) -> Element<'a, M> {
     let block = (g.size.clamp(1.0, 6.0) * s).round().max(1.0) as usize;
     let frame = clock.map_or(0, |clock| (clock * 12.0) as u32 % 4);
-    sized([10, block as u32, frame], round, (g.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+    sized([10, block as u32, frame], shape, (g.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
-        for y in 0..h {
-            for x in 0..w {
+        for y in y0..y0 + h {
+            for x in x0..x0 + w {
                 let v = (hash((x / block) as i64, (y / block) as i64, 20 + frame) - 0.5) * 2.0;
                 let shade = if v > 0.0 { 255 } else { 0 };
                 pixels.extend_from_slice(&[shade, shade, shade, (v.abs() * 255.0) as u8]);
@@ -135,15 +82,15 @@ pub fn grain<'a, M: 'a>(g: &Grain, s: f32, clock: Option<f32>, round: f32, fade:
 const DRIFT_SPEED: f32 = 14.0;
 
 /// Thin lines across, `spacing` apart. Given a clock, they drift down by it, a pixel at a time.
-pub fn scanlines<'a, M: 'a>(sc: &Scanlines, s: f32, clock: Option<f32>, round: f32, fade: f32) -> Element<'a, M> {
+pub fn scanlines<'a, M: 'a>(sc: &Scanlines, s: f32, clock: Option<f32>, shape: Shape, fade: f32) -> Element<'a, M> {
     let gap = (sc.spacing.max(2.0) * s).round() as usize;
     let thickness = (gap as f32 * 0.35).round().max(1.0) as usize;
     let [r, g, b] = Paint::new(&sc.color, 1.0).rgb().unwrap_or([0, 0, 0]);
     let shift = clock.map_or(0, |clock| (clock * DRIFT_SPEED * s) as usize % gap);
     let color = u32::from_be_bytes([0, r, g, b]);
-    sized([16 | (shift as u32) << 8, gap as u32, color], round, (sc.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+    sized([16 | (shift as u32) << 8, gap as u32, color], shape, (sc.opacity * fade).clamp(0.0, 1.0), move |_, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
-        for y in 0..h {
+        for y in y0..y0 + h {
             let on = (y + gap - shift) % gap < thickness;
             for _ in 0..w {
                 pixels.extend_from_slice(&[r, g, b, if on { 255 } else { 0 }]);
@@ -153,21 +100,42 @@ pub fn scanlines<'a, M: 'a>(sc: &Scanlines, s: f32, clock: Option<f32>, round: f
     })
 }
 
+/// How many steps a shimmer takes a second, and how many it takes to come round again: each
+/// block goes up and down a whole number of times in that loop, so it repeats without a jump.
+const SHIMMER_RATE: f32 = 12.0;
+const SHIMMER_LOOP: u32 = 96;
+
 /// Blocks `block` pixels across, each lightened or darkened at random, with a dark seam along
-/// two of its edges.
-pub fn pixels<'a, M: 'a>(p: &Pixels, s: f32, round: f32, fade: f32) -> Element<'a, M> {
+/// two of its edges. Given a clock, each block brightens and dims by it, at its own pace and
+/// out of step with its neighbours.
+pub fn pixels<'a, M: 'a>(p: &Pixels, s: f32, clock: Option<f32>, shape: Shape, fade: f32) -> Element<'a, M> {
     let block = (p.size.clamp(2.0, 24.0) * s).round().max(2.0) as usize;
-    sized([11, block as u32, 0], round, (p.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+    let frame = clock.map(|clock| (clock * SHIMMER_RATE) as u32 % SHIMMER_LOOP);
+    sized([11, block as u32, frame.map_or(0, |f| f + 1)], shape, (p.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
+        let shade_of = |bx: usize, by: usize| {
+            let (bx, by) = (bx as i64, by as i64);
+            let mut v = (hash(bx, by, 30) - 0.5) * 1.2;
+            if let Some(frame) = frame {
+                let turns = 1.0 + (hash(bx, by, 31) * 3.0).floor().min(2.0);
+                let phase = hash(bx, by, 32) + turns * frame as f32 / SHIMMER_LOOP as f32;
+                v = (v + 0.45 * (phase * std::f32::consts::TAU).sin()).clamp(-1.0, 1.0);
+            }
+            let shade = if v > 0.0 { 255 } else { 0 };
+            [shade, shade, shade, (v.abs() * 255.0) as u8]
+        };
         let mut pixels = Vec::with_capacity(w * h * 4);
-        for y in 0..h {
-            for x in 0..w {
+        let mut shades = Vec::new();
+        for y in y0..y0 + h {
+            // Each block's shade once a row of blocks, not once a pixel.
+            if y == y0 || y % block == 0 {
+                shades = (x0 / block..=(x0 + w) / block).map(|bx| shade_of(bx, y / block)).collect();
+            }
+            for x in x0..x0 + w {
                 if x % block == block - 1 || y % block == block - 1 {
                     pixels.extend_from_slice(&[0, 0, 0, 200]);
-                    continue;
+                } else {
+                    pixels.extend_from_slice(&shades[x / block - x0 / block]);
                 }
-                let v = (hash((x / block) as i64, (y / block) as i64, 30) - 0.5) * 1.2;
-                let shade = if v > 0.0 { 255 } else { 0 };
-                pixels.extend_from_slice(&[shade, shade, shade, (v.abs() * 255.0) as u8]);
             }
         }
         pixels
@@ -176,7 +144,7 @@ pub fn pixels<'a, M: 'a>(p: &Pixels, s: f32, round: f32, fade: f32) -> Element<'
 
 /// Blotches of three colors on a base, `size` pixels across: each color shows where its own
 /// noise runs high, the later ones over the earlier.
-pub fn camo<'a, M: 'a>(c: &Camo, s: f32, round: f32, fade: f32) -> Element<'a, M> {
+pub fn camo<'a, M: 'a>(c: &Camo, s: f32, shape: Shape, fade: f32) -> Element<'a, M> {
     let cell = (c.size.clamp(16.0, 200.0) * s).max(8.0);
     let scheme = c.scheme;
     let [base, a, b, dark] = match scheme {
@@ -185,10 +153,10 @@ pub fn camo<'a, M: 'a>(c: &Camo, s: f32, round: f32, fade: f32) -> Element<'a, M
         CamoScheme::Urban => [[0x80, 0x84, 0x88], [0x5c, 0x60, 0x66], [0xa4, 0xa8, 0xac], [0x2e, 0x30, 0x34]],
         CamoScheme::Arctic => [[0xe8, 0xec, 0xf0], [0xc4, 0xd0, 0xdc], [0xf8, 0xf8, 0xfa], [0x98, 0xa8, 0xb8]],
     };
-    sized([12, cell as u32, scheme as u32], round, (c.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+    sized([12, cell as u32, scheme as u32], shape, (c.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
-        for y in 0..h {
-            for x in 0..w {
+        for y in y0..y0 + h {
+            for x in x0..x0 + w {
                 // Two octaves, so the blotches have ragged edges.
                 let noise = |seed: u32| blotch(x, y, cell, seed) * 0.75 + blotch(x, y, cell / 3.0, seed + 100) * 0.25;
                 let color = if noise(41) > 0.62 {
@@ -205,6 +173,12 @@ pub fn camo<'a, M: 'a>(c: &Camo, s: f32, round: f32, fade: f32) -> Element<'a, M
         }
         pixels
     })
+}
+
+/// A flat wash of the tint's color as a picture, for a shape a box's rounded corners can't draw.
+pub fn wash<'a, M: 'a>(t: &Tint, shape: Shape, fade: f32) -> Element<'a, M> {
+    let [r, g, b] = Paint::new(&t.color, 1.0).rgb().unwrap_or([0xff, 0xa0, 0x40]);
+    sized([19, 0, u32::from_be_bytes([0, r, g, b])], shape, (t.opacity * fade).clamp(0.0, 1.0), move |_, _, w, h| [r, g, b, 255].repeat(w * h))
 }
 
 /// The relief of each kind, as RGBA pixels, made on first use.
