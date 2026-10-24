@@ -250,7 +250,8 @@ impl Daemon {
 
     /// Closes the Guide + Start menu and puts the Guide overlay it was opened from back up.
     pub(super) fn return_to_guide(&mut self, device: u64) {
-        self.close_overlay();
+        // The Guide overlay sounds its own opening: no close cue to overlap it.
+        self.close_overlay_with_cue(false);
         if let Some(dev) = self.devices.get_mut(&device) {
             dev.engine.open_guide_overlay();
         }
