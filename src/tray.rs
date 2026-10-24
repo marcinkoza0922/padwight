@@ -14,6 +14,7 @@ use crate::icon;
 pub enum Command {
     ToggleEnabled,
     OpenSettings,
+    CloseOverlays,
     Quit,
 }
 
@@ -121,6 +122,12 @@ impl Tray for Padwight {
             StandardItem {
                 label: "Open settings".into(),
                 activate: Box::new(|tray: &mut Self| (tray.on_command)(Command::OpenSettings)),
+                ..Default::default()
+            }
+            .into(),
+            StandardItem {
+                label: "Close overlays".into(),
+                activate: Box::new(|tray: &mut Self| (tray.on_command)(Command::CloseOverlays)),
                 ..Default::default()
             }
             .into(),

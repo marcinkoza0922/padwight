@@ -1,7 +1,7 @@
 //! The scenes `padwight debug overlay` can draw, by name.
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 72] = [
+pub const SCENES: [(&str, &str); 71] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-plaid", "the full on-screen keyboard on wood, its keys under one red tartan"),
@@ -57,7 +57,6 @@ pub const SCENES: [(&str, &str); 72] = [
     ("busy", "an info overlay, an input log and a menu at once"),
     ("unsaved", "the question about unsaved changes, over Quick Settings"),
     ("quick-styled", "Quick Settings in forced capitals with wide letter spacing, its long rows wrapping"),
-    ("held-controller", "the in-game menu waiting for a controller after its own went away"),
     ("held-remapping", "the in-game menu asking to save once remapping is turned off from the tray"),
     ("guide", "the Guide overlay: its menu, Notes, and Mappings with a held layer's section"),
     ("guide-mode", "the Guide overlay turned to a mode that isn't on"),

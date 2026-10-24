@@ -32,6 +32,7 @@ use crate::icon;
 pub enum Command {
     ToggleEnabled,
     OpenSettings,
+    CloseOverlays,
     Quit,
 }
 
@@ -55,6 +56,7 @@ const UPDATE: u32 = WM_APP + 2;
 const ITEM_REMAPPING: usize = 1;
 const ITEM_SETTINGS: usize = 2;
 const ITEM_QUIT: usize = 3;
+const ITEM_CLOSE_OVERLAYS: usize = 4;
 
 /// A running tray icon. Dropping it removes it.
 pub struct TrayIcon {
@@ -212,6 +214,7 @@ fn menu(hwnd: HWND, enabled: bool) -> Option<Command> {
         let check = if enabled { MF_CHECKED } else { MF_UNCHECKED };
         let _ = AppendMenuW(menu, MF_STRING | check, ITEM_REMAPPING, w!("Remapping"));
         let _ = AppendMenuW(menu, MF_STRING, ITEM_SETTINGS, w!("Open settings"));
+        let _ = AppendMenuW(menu, MF_STRING, ITEM_CLOSE_OVERLAYS, w!("Close overlays"));
         let _ = AppendMenuW(menu, MF_SEPARATOR, 0, PCWSTR::null());
         let _ = AppendMenuW(menu, MF_STRING, ITEM_QUIT, w!("Quit"));
         let mut at = POINT::default();
@@ -223,6 +226,7 @@ fn menu(hwnd: HWND, enabled: bool) -> Option<Command> {
         match chosen {
             ITEM_REMAPPING => Some(Command::ToggleEnabled),
             ITEM_SETTINGS => Some(Command::OpenSettings),
+            ITEM_CLOSE_OVERLAYS => Some(Command::CloseOverlays),
             ITEM_QUIT => Some(Command::Quit),
             _ => None,
         }

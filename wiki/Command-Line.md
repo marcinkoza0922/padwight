@@ -14,6 +14,7 @@ Every command except `padwight` (which opens the settings window) and `padwight 
 | `padwight menu <name>` | Open a menu |
 | `padwight overlay-toggle` | Open or close the on-screen keyboard |
 | `padwight numpad-toggle` | Open or close the on-screen numpad |
+| `padwight close-overlays` | Close every overlay and menu. Bind it to a key in your desktop's shortcut settings to close them from the keyboard |
 
 ## Finding profiles and menus
 

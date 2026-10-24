@@ -24,6 +24,7 @@ impl Daemon {
             }
 
             self.run_timers();
+            self.check_fallbacks(Instant::now());
             self.finish_stop();
             self.catch_up_on_focus();
             let now = Instant::now();
@@ -87,6 +88,7 @@ impl Daemon {
             .chain(self.log_redraw)
             .chain(self.quit_hold.filter(|(_, done)| !done).map(|(since, _)| since + FORCE_QUIT_HOLD))
             .chain(self.stop_deadline())
+            .chain(self.fallback_deadline())
             .min()
     }
 

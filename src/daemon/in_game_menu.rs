@@ -18,7 +18,11 @@ impl Daemon {
         let paddles = self.devices.get(&device).is_some_and(|d| d.paddles);
         // The menu shows and edits the profile of the pad that opened it.
         self.config.acting = self.devices.get(&device).map(|d| d.id.clone()).filter(|id| !id.is_empty());
-        let menu = SystemMenu::new(&self.config).with_paddles(paddles).with_features(self.pad_features()).on_page(page);
+        // A menu closed with unsaved edits (its controller went away) comes back as it was.
+        let menu = match self.take_put_aside() {
+            Some(menu) => menu.with_paddles(paddles).with_features(self.pad_features()),
+            None => SystemMenu::new(&self.config).with_paddles(paddles).with_features(self.pad_features()).on_page(page),
+        };
         self.menu_live = crate::figures::Live::default();
         self.active = Some(Active::Settings(menu, device));
         self.broadcast_overlay();
@@ -158,42 +162,6 @@ impl Daemon {
         }
     }
 
-    /// The controller driving the in-game menu went away. The menu waits on hold for another
-    /// controller; with remapping off none can come, so it closes and its unsaved changes are
-    /// discarded. `false` when the menu isn't up.
-    pub(super) fn settings_lost_controller(&mut self) -> bool {
-        let Some(Active::Settings(menu, _)) = &mut self.active else { return false };
-        if !self.config.enabled {
-            self.discard_settings();
-            return true;
-        }
-        log!("the in-game menu's controller went away: it waits for another");
-        menu.hold(Hold::NoController);
-        self.broadcast_overlay();
-        true
-    }
-
-    /// A button pressed while the in-game menu waits for a controller makes that controller the
-    /// menu's. The press only takes it over. `true` when it did.
-    pub(super) fn take_over_settings(&mut self, id: u64, events: &[InputEvent]) -> bool {
-        let Some(Active::Settings(menu, device)) = &mut self.active else { return false };
-        if menu.on_hold() != Some(Hold::NoController) || !events.iter().any(|ev| matches!(ev, InputEvent::Button(_, true))) {
-            return false;
-        }
-        menu.carry_on();
-        *device = id;
-        // What its mappings hold is let go of, as for the controller that opened the menu.
-        if let Some(dev) = self.devices.get_mut(&id) {
-            log!("{} took over the in-game menu", dev.name);
-            let mut out = Vec::new();
-            dev.engine.release_all(true, &mut out);
-            dev.refresh_layers(&self.config);
-            dev.dispatch(&mut self.kbm, out);
-        }
-        self.broadcast_overlay();
-        true
-    }
-
     /// Remapping was turned on or off from the tray (or the command line), which is saved at
     /// once. The in-game menu, if up, closes, unless it has changes not saved: then it keeps its
     /// controller and asks to save them, or carries on if remapping comes back on. Returns the
@@ -205,11 +173,6 @@ impl Daemon {
         match hold {
             Some(Hold::RemappingOff) if enabled => menu.carry_on(),
             _ if enabled => return None,
-            // No controller drives it, and with remapping off none can come.
-            Some(Hold::NoController) => {
-                self.discard_settings();
-                return None;
-            }
             _ if unsaved => menu.hold(Hold::RemappingOff),
             _ => {
                 self.close_overlay();

@@ -150,6 +150,10 @@ impl Daemon {
                 self.open_menu(device, &name, Opener::default());
                 Response::Ok
             }
+            Request::CloseOverlays => {
+                self.close_overlays_by_hand("from the command line");
+                Response::Ok
+            }
             Request::WatchOverlay => Response::Error("WatchOverlay must be the only request".into()),
             Request::DebugAttach { .. }
             | Request::DebugInput { .. }
