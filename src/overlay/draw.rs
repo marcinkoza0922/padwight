@@ -216,7 +216,8 @@ fn colors(style: &OverlayStyle, font: Font) -> Colors {
 /// box held to its max length scrolls rather than spilling, and the box clips anything wider.
 /// The style's picture and its filters on the background sit behind the contents and its
 /// ornaments over them, all the panel's size: the contents are the stack's base layer, which
-/// sets that size.
+/// sets that size. Every filter in the panel, on its background or its items, is cut from one
+/// picture that starts at the panel's corner.
 fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, style: &OverlayStyle, padding: impl Into<Padding>, fit: &Fit) -> Element<'a, M> {
     let height = if fit.height.is_some() { Length::Fill } else { Length::Shrink };
     let contents = scrollable(body).width(Length::Shrink).height(height);
@@ -241,6 +242,8 @@ fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, style: &OverlayStyle, padd
             }
         }
     }
+    // Under everything, so the filters on the background and on the items all start where the panel does.
+    layers = layers.push_under(texture::anchor());
     let mut boxed = container(layers)
         .clip(true)
         .max_width(fit.max_width)

@@ -34,6 +34,7 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
     Ok(match name {
         "keyboard" => active(OverlayView::Keyboard(keyboard_view(Board::Basic))),
         "keyboard-full" => active(OverlayView::Keyboard(keyboard_view(Board::Full))),
+        "keyboard-plaid" => active(OverlayView::Keyboard(KeyboardView { style: styles::plaid_items(), ..keyboard_view(Board::Full) })),
         "numpad" => active(OverlayView::Keyboard(keyboard_view(Board::Numpad))),
         "menu-list" => active(menu(MenuKind::List)),
         "menu-buttons" => active(menu(MenuKind::Buttons)),

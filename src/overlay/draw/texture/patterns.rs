@@ -25,10 +25,10 @@ pub fn plaid<'a, M: 'a>(p: &Plaid, s: f32, round: f32, fade: f32) -> Element<'a,
             ground
         }
     };
-    sized([13, sett as u32, key(&p.colors, 0)], round, (p.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+    sized([13, sett as u32, key(&p.colors, 0)], round, (p.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
-        for y in 0..h {
-            for x in 0..w {
+        for y in y0..y0 + h {
+            for x in x0..x0 + w {
                 let color = if (x + y) / 2 % 2 == 0 { thread(x) } else { thread(y) };
                 pixels.extend_from_slice(&[color[0], color[1], color[2], 255]);
             }
@@ -45,10 +45,10 @@ pub fn argyle<'a, M: 'a>(a: &Argyle, s: f32, round: f32, fade: f32) -> Element<'
     let [first, second, line] = rgb(&a.colors, default_argyle_colors);
     // How far a line reaches either side of its middle, in the diagonals' units.
     let reach = 0.8 * (1.0 / (width * width) + 1.0 / (height * height)).sqrt();
-    sized([14, width as u32, key(&a.colors, 0)], round, (a.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+    sized([14, width as u32, key(&a.colors, 0)], round, (a.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
-        for y in 0..h {
-            for x in 0..w {
+        for y in y0..y0 + h {
+            for x in x0..x0 + w {
                 let (u, v) = (x as f32 / width, y as f32 / height);
                 let (down, up) = (u + v, u - v);
                 let on_line = |d: f32| (d.rem_euclid(1.0) - 0.5).abs() < reach;
@@ -72,10 +72,10 @@ pub fn stripes<'a, M: 'a>(st: &Stripes, s: f32, round: f32, fade: f32) -> Elemen
     let direction = st.direction;
     let [first, second, pin] = rgb(&st.colors, default_stripes_colors);
     let half_pin = 0.8 * s.max(1.0);
-    sized([15, band as u32, key(&st.colors, direction as u32)], round, (st.opacity * fade).clamp(0.0, 1.0), move |w, h| {
+    sized([15, band as u32, key(&st.colors, direction as u32)], round, (st.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
-        for y in 0..h {
-            for x in 0..w {
+        for y in y0..y0 + h {
+            for x in x0..x0 + w {
                 let at = match direction {
                     StripeDirection::Horizontal => y as f32,
                     StripeDirection::Vertical => x as f32,
