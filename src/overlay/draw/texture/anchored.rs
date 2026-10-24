@@ -43,17 +43,17 @@ type Build<'a> = Box<dyn Fn(usize, usize, usize, usize) -> Vec<u8> + 'a>;
 
 struct Anchored<'a> {
     key: [u32; 3],
-    round: f32,
+    shape: Shape,
     opacity: f32,
     build: Build<'a>,
 }
 
-/// A layer the size of what it covers, rounded `round` pixels at its corners, showing the part
+/// A layer the size of what it covers, cut to `shape`, showing the part
 /// of a picture that spans the panel (see `anchor`). `build(x, y, w, h)` makes the pixels of the
 /// `w` by `h` part whose top left corner is `x`, `y` pixels into the panel. `key` names the picture, so the
 /// parts drawn lately are kept and a layer that holds its place doesn't rebuild every frame.
-pub fn sized<'a, M: 'a>(key: [u32; 3], round: f32, opacity: f32, build: impl Fn(usize, usize, usize, usize) -> Vec<u8> + 'a) -> Element<'a, M> {
-    Element::new(Anchored { key, round, opacity, build: Box::new(build) })
+pub fn sized<'a, M: 'a>(key: [u32; 3], shape: Shape, opacity: f32, build: impl Fn(usize, usize, usize, usize) -> Vec<u8> + 'a) -> Element<'a, M> {
+    Element::new(Anchored { key, shape, opacity, build: Box::new(build) })
 }
 
 impl<M, T, R: image::Renderer<Handle = image::Handle>> Widget<M, T, R> for Anchored<'_> {
@@ -70,10 +70,61 @@ impl<M, T, R: image::Renderer<Handle = image::Handle>> Widget<M, T, R> for Ancho
         let (w, h) = (bounds.width.max(1.0) as usize, bounds.height.max(1.0) as usize);
         let origin = ORIGIN.get();
         let (x, y) = ((bounds.x - origin.x).round().max(0.0) as usize, (bounds.y - origin.y).round().max(0.0) as usize);
-        let handle = cached((self.key, self.round.to_bits(), [x, y, w, h]), || rounded((self.build)(x, y, w, h), w, h, self.round));
+        let handle = cached((self.key, self.shape.key(), [x, y, w, h]), || self.shape.cut((self.build)(x, y, w, h), w, h));
         let picture = image::Image { opacity: self.opacity, snap: true, ..image::Image::new(handle) };
         renderer.draw_image(picture, bounds, bounds);
     }
+}
+
+/// What a filter's layer is cut to.
+#[derive(Debug, Clone, Copy)]
+pub enum Shape {
+    /// A box with corners this many pixels round.
+    Rounded(f32),
+    /// A radial menu's wedge: the part of the ring between radii `inner` and `outer` around
+    /// `center` (from the layer's top left corner), from `start` to `end` degrees clockwise from
+    /// the top, less half of a `gap` pixels wide line along each edge, where the next wedge starts.
+    Arc { center: (f32, f32), inner: f32, outer: f32, start: f32, end: f32, gap: f32 },
+}
+
+impl Shape {
+    /// Tells the shapes apart in the kept pictures.
+    fn key(self) -> u64 {
+        let bits: Vec<u32> = match self {
+            Shape::Rounded(round) => vec![round.to_bits()],
+            Shape::Arc { center, inner, outer, start, end, gap } => [center.0, center.1, inner, outer, start, end, gap].map(f32::to_bits).to_vec(),
+        };
+        let mut hasher = std::hash::DefaultHasher::new();
+        std::hash::Hash::hash(&bits, &mut hasher);
+        std::hash::Hasher::finish(&hasher)
+    }
+
+    /// The `w` by `h` pixels with what's outside the shape made clear.
+    fn cut(self, pixels: Vec<u8>, w: usize, h: usize) -> Vec<u8> {
+        match self {
+            Shape::Rounded(round) => rounded(pixels, w, h, round),
+            Shape::Arc { .. } => arc(pixels, w, self),
+        }
+    }
+}
+
+/// The pixels with what's outside the wedge made clear, the edges softened.
+fn arc(mut pixels: Vec<u8>, w: usize, shape: Shape) -> Vec<u8> {
+    let Shape::Arc { center: (cx, cy), inner, outer, start, end, gap } = shape else { return pixels };
+    let span = end - start;
+    // How far a point `d` from the middle lies from an edge `degrees` round from it, either way.
+    let off_edge = |d: f32, degrees: f32| if degrees < 90.0 { d * degrees.to_radians().sin() } else { d };
+    for (i, alpha) in pixels.iter_mut().skip(3).step_by(4).enumerate() {
+        let (dx, dy) = ((i % w) as f32 + 0.5 - cx, (i / w) as f32 + 0.5 - cy);
+        let d = dx.hypot(dy);
+        let mut cover = (d - inner).min(outer - d) + 0.5;
+        if span < 360.0 {
+            let along = (dx.atan2(-dy).to_degrees() - start).rem_euclid(360.0);
+            cover = if along > span { 0.0 } else { cover.min(off_edge(d, along).min(off_edge(d, span - along)) - gap / 2.0 + 0.5) };
+        }
+        *alpha = (f32::from(*alpha) * cover.clamp(0.0, 1.0)) as u8;
+    }
+    pixels
 }
 
 /// The pixels with what's outside corners `round` pixels round made clear, the edge softened.
@@ -99,7 +150,7 @@ fn rounded(mut pixels: Vec<u8>, w: usize, h: usize, round: f32) -> Vec<u8> {
     pixels
 }
 
-type Key = ([u32; 3], u32, [usize; 4]);
+type Key = ([u32; 3], u64, [usize; 4]);
 
 /// How many bytes of pictures are kept: a panel's background or two, and every key of a full
 /// keyboard under several filters.

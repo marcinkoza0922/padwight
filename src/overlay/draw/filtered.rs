@@ -6,13 +6,16 @@ use iced::{
     widget::{Container, Stack, container, space},
 };
 
-use super::{Colors, ornament, texture};
+use super::{
+    Colors, ornament,
+    texture::{self, Shape},
+};
 use crate::config::{FilterOn, OverlayStyle};
 
 /// The style's filters that cover the background (or, with `items`, an item), as layers from
-/// the bottom up, rounded `round` pixels at the corners: the materials, then scanlines, grain,
-/// pixel blocks, camo, plaid, argyle, stripes, a checkerboard, polka dots and a tint.
-pub(super) fn filters<'a, M: 'a>(c: Colors, style: &OverlayStyle, items: bool, round: f32) -> Vec<Element<'a, M>> {
+/// the bottom up, cut to `shape`: the materials, then scanlines, grain, pixel blocks, camo,
+/// plaid, argyle, stripes, a checkerboard, polka dots and a tint.
+pub(super) fn filters<'a, M: 'a>(c: Colors, style: &OverlayStyle, items: bool, shape: Shape) -> Vec<Element<'a, M>> {
     let mut layers = Vec::new();
     if style.lite.plain {
         return layers;
@@ -35,38 +38,41 @@ pub(super) fn filters<'a, M: 'a>(c: Colors, style: &OverlayStyle, items: bool, r
         (texture::Material::Paper, &o.paper),
     ] {
         if let Some(t) = t.as_ref().filter(|t| covers(t.on)) {
-            layers.push(texture::layer(material, t, round, c.fade));
+            layers.push(texture::layer(material, t, shape, c.fade));
         }
     }
     if let Some(lines) = o.scanlines.as_ref().filter(|l| covers(l.on)) {
-        layers.push(texture::scanlines(lines, s, moving(lines.drift), round, c.fade));
+        layers.push(texture::scanlines(lines, s, moving(lines.drift), shape, c.fade));
     }
     if let Some(grain) = o.grain.as_ref().filter(|g| covers(g.on)) {
-        layers.push(texture::grain(grain, s, moving(grain.animated), round, c.fade));
+        layers.push(texture::grain(grain, s, moving(grain.animated), shape, c.fade));
     }
     if let Some(pixels) = o.pixels.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::pixels(pixels, s, moving(pixels.shimmer), round, c.fade));
+        layers.push(texture::pixels(pixels, s, moving(pixels.shimmer), shape, c.fade));
     }
     if let Some(camo) = o.camo.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::camo(camo, s, round, c.fade));
+        layers.push(texture::camo(camo, s, shape, c.fade));
     }
     if let Some(plaid) = o.plaid.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::plaid(plaid, s, round, c.fade));
+        layers.push(texture::plaid(plaid, s, shape, c.fade));
     }
     if let Some(argyle) = o.argyle.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::argyle(argyle, s, round, c.fade));
+        layers.push(texture::argyle(argyle, s, shape, c.fade));
     }
     if let Some(stripes) = o.stripes.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::stripes(stripes, s, round, c.fade));
+        layers.push(texture::stripes(stripes, s, shape, c.fade));
     }
     if let Some(checks) = o.checkerboard.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::checkerboard(checks, s, round, c.fade));
+        layers.push(texture::checkerboard(checks, s, shape, c.fade));
     }
     if let Some(dots) = o.polka_dots.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::polka_dots(dots, s, round, c.fade));
+        layers.push(texture::polka_dots(dots, s, shape, c.fade));
     }
     if let Some(tint) = o.tint.as_ref().filter(|p| covers(p.on)) {
-        layers.push(ornament::tint(tint, round, c.fade));
+        layers.push(match shape {
+            Shape::Rounded(round) => ornament::tint(tint, round, c.fade),
+            Shape::Arc { .. } => texture::wash(tint, shape, c.fade),
+        });
     }
     layers
 }
@@ -80,7 +86,7 @@ pub(super) fn item_box<'a, M: 'a>(
     style: &OverlayStyle,
     round: f32,
 ) -> Element<'a, M> {
-    let layers = filters(c, style, true, round);
+    let layers = filters(c, style, true, Shape::Rounded(round));
     if layers.is_empty() {
         return content.style(look).into();
     }

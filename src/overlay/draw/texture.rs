@@ -7,13 +7,13 @@ use std::sync::OnceLock;
 
 use iced::Element;
 
-use crate::config::{Camo, CamoScheme, Grain, Paint, Pixels, Scanlines, Texture};
+use crate::config::{Camo, CamoScheme, Grain, Paint, Pixels, Scanlines, Texture, Tint};
 
 mod anchored;
 mod materials;
 mod patterns;
 
-pub use anchored::anchor;
+pub use anchored::{Shape, anchor};
 use anchored::sized;
 use materials::{brushed_metal, cloth, concrete, denim, leather, paper, silk, steel, wood};
 pub use patterns::{argyle, checkerboard, plaid, polka_dots, stripes};
@@ -45,8 +45,8 @@ const WIDTH: usize = 1280;
 const HEIGHT: usize = 720;
 
 /// The material as a layer the size of what it covers: the relief, repeated if that's bigger.
-pub fn layer<'a, M: 'a>(kind: Material, t: &Texture, round: f32, fade: f32) -> Element<'a, M> {
-    sized([kind as u32, 0, 0], round, (t.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
+pub fn layer<'a, M: 'a>(kind: Material, t: &Texture, shape: Shape, fade: f32) -> Element<'a, M> {
+    sized([kind as u32, 0, 0], shape, (t.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
         let source = reliefs(kind);
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in y0..y0 + h {
@@ -62,10 +62,10 @@ pub fn layer<'a, M: 'a>(kind: Material, t: &Texture, round: f32, fade: f32) -> E
 
 /// Noise in blocks `block` pixels across. Given a clock, it picks one of a few patterns by it,
 /// a dozen times a second.
-pub fn grain<'a, M: 'a>(g: &Grain, s: f32, clock: Option<f32>, round: f32, fade: f32) -> Element<'a, M> {
+pub fn grain<'a, M: 'a>(g: &Grain, s: f32, clock: Option<f32>, shape: Shape, fade: f32) -> Element<'a, M> {
     let block = (g.size.clamp(1.0, 6.0) * s).round().max(1.0) as usize;
     let frame = clock.map_or(0, |clock| (clock * 12.0) as u32 % 4);
-    sized([10, block as u32, frame], round, (g.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
+    sized([10, block as u32, frame], shape, (g.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in y0..y0 + h {
             for x in x0..x0 + w {
@@ -82,13 +82,13 @@ pub fn grain<'a, M: 'a>(g: &Grain, s: f32, clock: Option<f32>, round: f32, fade:
 const DRIFT_SPEED: f32 = 14.0;
 
 /// Thin lines across, `spacing` apart. Given a clock, they drift down by it, a pixel at a time.
-pub fn scanlines<'a, M: 'a>(sc: &Scanlines, s: f32, clock: Option<f32>, round: f32, fade: f32) -> Element<'a, M> {
+pub fn scanlines<'a, M: 'a>(sc: &Scanlines, s: f32, clock: Option<f32>, shape: Shape, fade: f32) -> Element<'a, M> {
     let gap = (sc.spacing.max(2.0) * s).round() as usize;
     let thickness = (gap as f32 * 0.35).round().max(1.0) as usize;
     let [r, g, b] = Paint::new(&sc.color, 1.0).rgb().unwrap_or([0, 0, 0]);
     let shift = clock.map_or(0, |clock| (clock * DRIFT_SPEED * s) as usize % gap);
     let color = u32::from_be_bytes([0, r, g, b]);
-    sized([16 | (shift as u32) << 8, gap as u32, color], round, (sc.opacity * fade).clamp(0.0, 1.0), move |_, y0, w, h| {
+    sized([16 | (shift as u32) << 8, gap as u32, color], shape, (sc.opacity * fade).clamp(0.0, 1.0), move |_, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in y0..y0 + h {
             let on = (y + gap - shift) % gap < thickness;
@@ -108,10 +108,10 @@ const SHIMMER_LOOP: u32 = 96;
 /// Blocks `block` pixels across, each lightened or darkened at random, with a dark seam along
 /// two of its edges. Given a clock, each block brightens and dims by it, at its own pace and
 /// out of step with its neighbours.
-pub fn pixels<'a, M: 'a>(p: &Pixels, s: f32, clock: Option<f32>, round: f32, fade: f32) -> Element<'a, M> {
+pub fn pixels<'a, M: 'a>(p: &Pixels, s: f32, clock: Option<f32>, shape: Shape, fade: f32) -> Element<'a, M> {
     let block = (p.size.clamp(2.0, 24.0) * s).round().max(2.0) as usize;
     let frame = clock.map(|clock| (clock * SHIMMER_RATE) as u32 % SHIMMER_LOOP);
-    sized([11, block as u32, frame.map_or(0, |f| f + 1)], round, (p.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
+    sized([11, block as u32, frame.map_or(0, |f| f + 1)], shape, (p.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
         let shade_of = |bx: usize, by: usize| {
             let (bx, by) = (bx as i64, by as i64);
             let mut v = (hash(bx, by, 30) - 0.5) * 1.2;
@@ -144,7 +144,7 @@ pub fn pixels<'a, M: 'a>(p: &Pixels, s: f32, clock: Option<f32>, round: f32, fad
 
 /// Blotches of three colors on a base, `size` pixels across: each color shows where its own
 /// noise runs high, the later ones over the earlier.
-pub fn camo<'a, M: 'a>(c: &Camo, s: f32, round: f32, fade: f32) -> Element<'a, M> {
+pub fn camo<'a, M: 'a>(c: &Camo, s: f32, shape: Shape, fade: f32) -> Element<'a, M> {
     let cell = (c.size.clamp(16.0, 200.0) * s).max(8.0);
     let scheme = c.scheme;
     let [base, a, b, dark] = match scheme {
@@ -153,7 +153,7 @@ pub fn camo<'a, M: 'a>(c: &Camo, s: f32, round: f32, fade: f32) -> Element<'a, M
         CamoScheme::Urban => [[0x80, 0x84, 0x88], [0x5c, 0x60, 0x66], [0xa4, 0xa8, 0xac], [0x2e, 0x30, 0x34]],
         CamoScheme::Arctic => [[0xe8, 0xec, 0xf0], [0xc4, 0xd0, 0xdc], [0xf8, 0xf8, 0xfa], [0x98, 0xa8, 0xb8]],
     };
-    sized([12, cell as u32, scheme as u32], round, (c.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
+    sized([12, cell as u32, scheme as u32], shape, (c.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in y0..y0 + h {
             for x in x0..x0 + w {
@@ -173,6 +173,12 @@ pub fn camo<'a, M: 'a>(c: &Camo, s: f32, round: f32, fade: f32) -> Element<'a, M
         }
         pixels
     })
+}
+
+/// A flat wash of the tint's color as a picture, for a shape a box's rounded corners can't draw.
+pub fn wash<'a, M: 'a>(t: &Tint, shape: Shape, fade: f32) -> Element<'a, M> {
+    let [r, g, b] = Paint::new(&t.color, 1.0).rgb().unwrap_or([0xff, 0xa0, 0x40]);
+    sized([19, 0, u32::from_be_bytes([0, r, g, b])], shape, (t.opacity * fade).clamp(0.0, 1.0), move |_, _, w, h| [r, g, b, 255].repeat(w * h))
 }
 
 /// The relief of each kind, as RGBA pixels, made on first use.

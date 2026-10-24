@@ -41,6 +41,7 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "menu-grid" => active(menu(MenuKind::Grid { columns: 3 })),
         "menu-radial" => active(menu(MenuKind::Radial { stick: Stick::Right, boxes: false })),
         "menu-radial-boxes" => active(menu(MenuKind::Radial { stick: Stick::Right, boxes: true })),
+        "menu-radial-plaid" => active(menu_in(MenuKind::Radial { stick: Stick::Right, boxes: false }, styles::plaid_items(), false)),
         "menu-directional" => active(menu(MenuKind::Directional { cluster: Cluster::DPad })),
         "menu-face" => active(menu(MenuKind::Directional { cluster: Cluster::FaceButtons })),
         "menu-carousel" => active(menu(MenuKind::Carousel { controls: CarouselControls::Bumpers })),

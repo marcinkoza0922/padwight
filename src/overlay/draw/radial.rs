@@ -32,6 +32,9 @@ fn radial_arcs<'a, M: 'a>(m: &MenuView, solid: Colors, s: f32) -> Element<'a, M>
     };
     let (cell_w, cell_h) = (120.0 * s, 44.0 * s);
     let mut layers = vec![ring(m, solid, &shape)];
+    for i in 0..shape.arcs.len() {
+        layers.extend(arc_filters(m, c, &shape, i));
+    }
     for (i, &(start, end)) in shape.arcs.iter().enumerate() {
         // Each label sits in the middle of its arc.
         let (x, y) = point((start + end) / 2.0, (inner + outer) / 2.0);
@@ -122,6 +125,32 @@ fn ring<'a, M: 'a>(m: &MenuView, c: Colors, shape: &Ring) -> Element<'a, M> {
         .height(size)
         .opacity(c.anim.opacity())
         .into()
+}
+
+/// The style's filters on items over arc `i`, each cut to the arc, less the line between it
+/// and the next, in a layer just big enough to hold it. They fade in with their arc.
+fn arc_filters<'a, M: 'a>(m: &MenuView, c: Colors, shape: &Ring, i: usize) -> Vec<Element<'a, M>> {
+    let (start, end) = shape.arcs[i];
+    let size = shape.size();
+    let center = size / 2.0;
+    // The box around the arc: its corners and every quarter turn it passes, at both radii.
+    let quarters = (0..=4).map(|q| q as f32 * 90.0).filter(|&q| q > start && q < end);
+    let (mut x0, mut y0, mut x1, mut y1) = (size, size, 0.0_f32, 0.0_f32);
+    for degrees in [start, end].into_iter().chain(quarters) {
+        let (sin, cos) = degrees.to_radians().sin_cos();
+        for r in [shape.inner, shape.outer] {
+            let (x, y) = (center + sin * r, center - cos * r);
+            (x0, y0, x1, y1) = (x0.min(x), y0.min(y), x1.max(x), y1.max(y));
+        }
+    }
+    let (x0, y0) = (x0.floor().max(0.0), y0.floor().max(0.0));
+    let (w, h) = (x1.ceil().min(size) - x0, y1.ceil().min(size) - y0);
+    let gap = if shape.arcs.len() > 1 { 2.0 * shape.s } else { 0.0 };
+    let cut = texture::Shape::Arc { center: (center - x0, center - y0), inner: shape.inner, outer: shape.outer, start, end, gap };
+    filtered::filters(c.faded(c.anim.item_fade(i)), &m.style, true, cut)
+        .into_iter()
+        .map(|layer| pin(container(layer).width(w).height(h)).x(x0).y(y0).into())
+        .collect()
 }
 
 /// The outline of the arc from `start` to `end` degrees between two radii around `center`.

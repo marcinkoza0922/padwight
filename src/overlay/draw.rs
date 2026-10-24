@@ -222,7 +222,7 @@ fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, style: &OverlayStyle, padd
     let height = if fit.height.is_some() { Length::Fill } else { Length::Shrink };
     let contents = scrollable(body).width(Length::Shrink).height(height);
     let mut layers = iced::widget::Stack::new().push(container(contents).padding(padding).align_x(Horizontal::Center));
-    for filter in filtered::filters(c, style, false, c.corners * look::PANEL_CORNER).into_iter().rev() {
+    for filter in filtered::filters(c, style, false, texture::Shape::Rounded(c.corners * look::PANEL_CORNER)).into_iter().rev() {
         layers = layers.push_under(filter);
     }
     if !style.lite.plain {

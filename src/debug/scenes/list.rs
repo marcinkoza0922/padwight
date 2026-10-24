@@ -1,7 +1,7 @@
 //! The scenes `padwight debug overlay` can draw, by name.
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 71] = [
+pub const SCENES: [(&str, &str); 72] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-plaid", "the full on-screen keyboard on wood, its keys under one red tartan"),
@@ -11,6 +11,7 @@ pub const SCENES: [(&str, &str); 71] = [
     ("menu-grid", "a three-column grid menu"),
     ("menu-radial", "a radial menu"),
     ("menu-radial-boxes", "a radial menu in boxes"),
+    ("menu-radial-plaid", "a radial menu on wood, its arcs under one red tartan"),
     ("menu-directional", "a D-pad directional menu"),
     ("menu-face", "a face-button directional menu"),
     ("menu-carousel", "a carousel menu"),
