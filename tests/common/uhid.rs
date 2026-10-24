@@ -42,6 +42,9 @@ const UHID_EVENT_SIZE: usize = 4376;
 const UHID_CREATE2: u32 = 11;
 const UHID_INPUT2: u32 = 12;
 
+/// The unique id every test pad reports, which its controller id becomes.
+pub const TEST_UNIQ: &str = "padwight-test-pad";
+
 /// A gamepad made through the kernel's uhid, so it is a HID device like a real controller. The
 /// daemon ignores uinput devices (they count as its own), so a uinput stand-in won't be grabbed.
 pub struct HidPad {
@@ -57,6 +60,9 @@ impl HidPad {
         event[0..4].copy_from_slice(&UHID_CREATE2.to_le_bytes());
         // Packed `uhid_create2_req`, starting after the type: name[128], phys[64], uniq[64], then:
         event[4..4 + name.len()].copy_from_slice(name.as_bytes());
+        // A unique id of its own, so a real pad with the same vendor and product (ignored by
+        // `default_config`) doesn't take this one's id.
+        event[196..196 + TEST_UNIQ.len()].copy_from_slice(TEST_UNIQ.as_bytes());
         event[260..262].copy_from_slice(&(DESCRIPTOR.len() as u16).to_le_bytes()); // rd_size
         event[262..264].copy_from_slice(&0x0003u16.to_le_bytes()); // bus: USB
         event[264..268].copy_from_slice(&0x045eu32.to_le_bytes()); // vendor

@@ -23,6 +23,7 @@ mod common;
 
 mod gui;
 mod latency;
+mod mouse;
 mod overlay;
 mod resources;
 mod sound;

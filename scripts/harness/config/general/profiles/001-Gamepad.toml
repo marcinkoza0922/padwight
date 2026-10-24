@@ -29,7 +29,7 @@ gamepad = "Select"
 gamepad = "Start"
 
 [buttons.Guide]
-layer = "Guide"
+mode = "Guide"
 
 [buttons.LeftStick]
 gamepad = "LeftStick"

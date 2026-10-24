@@ -12,7 +12,7 @@ use crate::{
     focus,
     input::InputEvent,
     ipc::WindowInfo,
-    library::Entry,
+    library::{Entry, Listing},
 };
 
 /// An unanswered offer goes away by itself, so it can't hold the controller forever.
@@ -23,7 +23,7 @@ const IDLE_CLOSE: Duration = Duration::from_secs(30);
 /// of its profiles works with the controllers' features `have` (`None`: no controller to
 /// judge by). When packs share a program name, those whose rules name its folder win.
 /// Indexes into `library`.
-pub fn candidates(config: &Config, library: &[Entry], window: &WindowInfo, have: Option<&[Feature]>) -> Vec<usize> {
+pub fn candidates(config: &Config, library: &[Listing], window: &WindowInfo, have: Option<&[Feature]>) -> Vec<usize> {
     if focus::is_own_window(window) || focus::profile_for(config, window).is_some() {
         return Vec::new();
     }
@@ -31,13 +31,13 @@ pub fn candidates(config: &Config, library: &[Entry], window: &WindowInfo, have:
     let found: Vec<(usize, u8)> = library
         .iter()
         .enumerate()
-        .filter(|(_, e)| {
-            let id = &e.pack.pack.id;
+        .filter(|(_, listing)| {
+            let id = &listing.id;
             !config.declined_packs.contains(id)
                 && !config.games.iter().any(|g| g.origin.as_ref().is_some_and(|o| &o.id == id))
-                && e.pack.profiles.iter().any(|p| have.is_none_or(|h| p.usable_with(h)))
+                && have.is_none_or(|h| listing.usable_with(h))
         })
-        .filter_map(|(i, e)| Some((i, focus::match_specificity(&e.pack.rules, seen)?)))
+        .filter_map(|(i, listing)| Some((i, focus::match_specificity(&listing.rules, seen)?)))
         .collect();
     let closest = found.iter().map(|&(_, s)| s).max();
     found.into_iter().filter(|&(_, s)| Some(s) == closest).map(|(i, _)| i).collect()

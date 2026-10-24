@@ -10,7 +10,6 @@ use std::{
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
-        mpsc::Sender,
     },
     thread,
     time::Duration,
@@ -134,13 +133,14 @@ impl Daemon {
 
 /// Reads the controller in `slot` until `stop` is set or it disconnects, sending what changed to
 /// the controller `id`.
-fn read_slot(id: u64, slot: u32, stop: &AtomicBool, tx: &Sender<Msg>) {
+fn read_slot(id: u64, slot: u32, stop: &AtomicBool, tx: &super::inbox::Tx) {
     let mut norm = XInputNormalizer::default();
     let mut events = Vec::new();
     while !stop.load(Ordering::Relaxed) {
+        crate::priority::keep_up();
         let Some(state) = xinput::state(slot) else { break };
         norm.translate(&state, &mut events);
-        if !events.is_empty() && tx.send(Msg::Input { id, events: std::mem::take(&mut events) }).is_err() {
+        if !events.is_empty() && tx.send(Msg::Input { id, events: std::mem::take(&mut events), stamp: 0 }).is_err() {
             return;
         }
         thread::sleep(POLL);

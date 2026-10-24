@@ -3,7 +3,7 @@
 The sidebar lists the pages and your setups. The rest of the window shows the page you picked.
 
 - **Overview**: your controller, labeled with what each button does in the profile in use. **What's happening** lists your latest presses, what Padwight sent to the game for each, and each profile switch with what caused it. **Controllers** lists the controllers Padwight has found, with **Calibrate gyro**, **Test rumble** and the rumble strength.
-- **App settings**, **General** tab: the window's appearance (Auto, Light or Dark), automatic switching and the default profile, the overlays' font, colors, motion and sounds, the **Performance** switches, and the look of the on-screen keyboard, numpad, media controls and in-game menu. **Search settings…** finds a card by name.
+- **App settings**, **General** tab: the window's appearance (Auto, Light or Dark), automatic switching and the default profile, the overlays' font, colors, motion and sounds, the **Input** and **Performance** switches, and the look of the on-screen keyboard, numpad, media controls and in-game menu. **Search settings…** finds a card by name.
 - **App settings**, **Controller shortcuts** tab: what opens the Guide overlay, the Guide shortcuts and mouse mode's keys, for every setup. See [The Guide button](guide-button.md).
 - **Manual**: this guide.
 - **General**: the built-in setup for the desktop and plain gamepad use. It's used when no other setup matches.
@@ -14,6 +14,11 @@ The sidebar lists the pages and your setups. The rest of the window shows the pa
 ## Button layout
 
 A profile's **Profiles** tab has a **Button layout** card with the **Nintendo button layout** switch. It swaps the labels of A and B, and of X and Y, to match games that draw Nintendo prompts. It belongs to a controller, not to the profile: pick the controller in the top bar first. On a Nintendo pad the face buttons then send the letter on their label; remapping a face button's plain press turns that off. A setup can make its own choice on its **Details** tab.
+
+## Input
+
+- **Real-time priority**: controller input goes ahead of everything else on the computer, so a game keeping every CPU busy never keeps a press waiting. On Linux it asks rtkit, which most desktops have. Off, input still runs at raised priority.
+- **1000 Hz continuous output**: a stick or touchpad moving the mouse, scrolling, turbo and macros update every millisecond instead of every four. The mouse starts moving about 3 ms sooner and moves more smoothly, for a little more CPU while one of them is going.
 
 ## Performance
 

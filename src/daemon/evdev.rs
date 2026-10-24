@@ -1,29 +1,21 @@
-//! Controllers on Linux: finds gamepads in /dev/input, grabs them so nothing else sees them, pairs
-//! them with their motion-sensor and touchpad nodes, and reads each on its own thread.
+//! Controllers on Linux: finds gamepads in /dev/input, grabs them so nothing else sees them, and
+//! pairs them with their motion-sensor and touchpad nodes. The main loop reads them all
+//! (`readers.rs`).
 
 use std::{
     collections::{HashMap, HashSet},
-    io::ErrorKind,
-    os::{
-        fd::{AsFd, AsRawFd, OwnedFd},
-        unix::fs::MetadataExt,
-    },
+    os::unix::fs::MetadataExt,
     path::{Path, PathBuf},
-    sync::{
-        Arc,
-        atomic::{AtomicBool, Ordering},
-        mpsc::Sender,
-    },
-    thread,
+    sync::{Arc, atomic::AtomicBool},
 };
 
 use evdev::Device;
 
 pub(super) use super::pads::{FfSpec, virtual_pad_for};
-use super::{Daemon, Managed, Msg, SeenGamepad};
+use super::{Daemon, Managed, SeenGamepad, readers::Reader};
 use crate::controller_id::controller_id;
 use crate::{
-    input::{self, InputEvent, MotionFrame, MotionNormalizer, MotionSample, Normalizer},
+    input::{self, MotionFrame},
     monitor::log,
     output::VIRTUAL_PREFIX,
     pad_identity::PadIdentity,
@@ -32,38 +24,6 @@ use crate::{
 
 /// A device node identity; the inode changes when a node is recreated for a new device.
 pub(super) type NodeKey = (PathBuf, u64);
-
-/// How long a reader waits for input before it checks whether to stop.
-const POLL_TIMEOUT_MS: i32 = 200;
-
-/// EVIOCGRAB, which takes a node from everyone else (1) or lets go of it (0).
-const EVIOCGRAB: libc::Ioctl = libc::_IOW::<libc::c_int>(b'E' as u32, 0x90);
-
-/// A second handle on a node we grabbed. Dropping it lets go of the grab at once. The reader
-/// thread's own handle closes only when it next checks whether to stop, up to
-/// [`POLL_TIMEOUT_MS`] later, and until then a scan couldn't take the node again.
-pub(super) struct Grab(OwnedFd);
-
-impl Grab {
-    /// Call after `dev.grab()` succeeded. `None` if no file descriptor was left to copy it to.
-    pub(super) fn of(dev: &Device, name: &str) -> Option<Self> {
-        match dev.as_fd().try_clone_to_owned() {
-            Ok(fd) => Some(Grab(fd)),
-            Err(e) => {
-                log!("{name} is let go of only when its reader stops: {e}");
-                None
-            }
-        }
-    }
-}
-
-impl Drop for Grab {
-    fn drop(&mut self) {
-        // The grab belongs to the open file, which this copy shares with the reader's handle.
-        // SAFETY: the fd is open for as long as `self`, and EVIOCGRAB takes an int by value.
-        unsafe { libc::ioctl(self.0.as_raw_fd(), EVIOCGRAB, 0 as libc::c_int) };
-    }
-}
 
 /// The input nodes a scan found that aren't gamepads of their own.
 #[derive(Default)]
@@ -175,6 +135,10 @@ impl Daemon {
             {
                 continue;
             }
+            if !worth_opening(&path) {
+                self.nodes.skipped.insert(key);
+                continue;
+            }
             // Permission errors are not cached: udev may grant access a moment later.
             let Ok(dev) = Device::open(&path) else {
                 self.note_denied_sensor(key, &path);
@@ -222,16 +186,23 @@ impl Daemon {
         for (id, path, motion_name) in pairs {
             let Ok(motion_dev) = Device::open(&path) else { continue };
             let Some(dev) = self.devices.get_mut(&id) else { continue };
+            let reader = match Reader::motion(motion_dev) {
+                Ok(reader) => reader,
+                Err(e) => {
+                    log!("gyro: cannot read {motion_name}: {e}");
+                    continue;
+                }
+            };
             log!("gyro: using {motion_name} for {}", dev.name);
             dev.motion_frame = MotionFrame::of(&path);
             dev.motion = Some(path);
             dev.gyro_bias = self.config.gyro_calibration.get(&dev.id).copied().unwrap_or_default();
-            let (stop, tx) = (dev.stop.clone(), self.tx.clone());
-            thread::spawn(move || read_motion(id, motion_dev, &stop, &tx));
+            dev.readers.push(reader);
         }
     }
 
     fn manage(&mut self, path: PathBuf, name: String, pad_id: String, mut dev: Device) {
+        let xbox_labels = input::uses_xbox_labels(&path);
         let parent = hid_parent(&path);
         let family = crate::info::PadFamily::detect(dev.input_id().vendor(), &name);
         let model = crate::info::PadModel::detect(dev.input_id().vendor(), dev.input_id().product(), &name);
@@ -241,21 +212,21 @@ impl Daemon {
             log!("cannot grab {name} ({}): {e}", path.display());
             return;
         }
-        let grab = Grab::of(&dev, &name);
         let ff = FfSpec::of(&dev);
         let identity = PadIdentity::resolve(self.identity_override, model, self.active_support());
         let Some(new_pad) = self.pad_for_new(ff.as_ref(), identity, self.config.controller(&pad_id).and_then(|c| c.player)) else { return };
         let pad = new_pad.pad;
+        let reader = match Reader::pad(dev, xbox_labels) {
+            Ok(reader) => reader,
+            Err(e) => {
+                log!("cannot read {name} ({}): {e}", path.display());
+                return;
+            }
+        };
         log!("managing {name} ({})", path.display());
         let id = self.next_id;
         self.next_id += 1;
         let stop = Arc::new(AtomicBool::new(false));
-        {
-            let stop = stop.clone();
-            let tx = self.tx.clone();
-            let xbox_labels = input::uses_xbox_labels(&path);
-            thread::spawn(move || read_device(id, dev, xbox_labels, &stop, &tx));
-        }
         let rumble_stop = Arc::new(AtomicBool::new(false));
         // The kept pad advertises no rumble until it's rebuilt to fit (see `first_pad.rs`).
         if ff.is_some() && new_pad.refit_at.is_none() {
@@ -272,7 +243,7 @@ impl Daemon {
         managed.uniq = uniq;
         managed.id = pad_id;
         managed.paddles = paddles;
-        managed.grabs.extend(grab);
+        managed.readers.push(reader);
         self.add_managed(id, managed);
     }
 }
@@ -287,92 +258,33 @@ fn is_uinput(dev_path: &Path) -> bool {
         .unwrap_or(false)
 }
 
+/// Whether node `path` could be a gamepad, motion sensors or a touchpad, and isn't one of our own
+/// virtual devices, going by sysfs. Opening a node asks its driver for all it has, which takes
+/// some drivers tens of milliseconds (RGB controllers, sound cards' jacks), and the main loop
+/// reads no input meanwhile; sysfs answers without asking the driver. When it can't, the node is
+/// opened and looked at.
+fn worth_opening(path: &Path) -> bool {
+    let Some(node) = path.file_name() else { return true };
+    let device = Path::new("/sys/class/input").join(node).join("device");
+    if std::fs::read_to_string(device.join("name")).is_ok_and(|name| name.starts_with(VIRTUAL_PREFIX)) {
+        return false;
+    }
+    std::fs::read_to_string(device.join("capabilities/abs")).map_or(true, |abs| has_our_axes(&abs))
+}
+
+/// Whether sysfs's absolute-axis bitmap `abs` (hex words, the lowest last) has ABS_X to ABS_RZ
+/// (sticks, triggers, accelerometers and gyros) or ABS_MT_POSITION_X (touchpads): every node we
+/// use has one. True when it can't be read, so the node is looked at.
+fn has_our_axes(abs: &str) -> bool {
+    const AXES: u64 = 0x3f | 1 << 0x35;
+    abs.split_whitespace().last().and_then(|word| u64::from_str_radix(word, 16).ok()).is_none_or(|low| low & AXES != 0)
+}
+
 /// The HID device an input node belongs to; a controller's gamepad and motion-sensor nodes
 /// share it.
 fn hid_parent(dev_path: &Path) -> Option<PathBuf> {
     let node = dev_path.file_name()?;
     std::fs::canonicalize(Path::new("/sys/class/input").join(node).join("device/device")).ok()
-}
-
-fn read_motion(id: u64, mut dev: Device, stop: &AtomicBool, tx: &Sender<Msg>) {
-    let mut norm = MotionNormalizer::new(&dev);
-    if dev.set_nonblocking(true).is_err() {
-        let _ = tx.send(Msg::MotionGone { id });
-        return;
-    }
-    let mut pfd = libc::pollfd { fd: dev.as_raw_fd(), events: libc::POLLIN, revents: 0 };
-    while !stop.load(Ordering::Relaxed) {
-        // SAFETY: pfd points to a single valid pollfd for the duration of the call.
-        let n = unsafe { libc::poll(&mut pfd, 1, POLL_TIMEOUT_MS) };
-        if n < 0 && std::io::Error::last_os_error().kind() != ErrorKind::Interrupted {
-            break;
-        }
-        if n <= 0 {
-            continue;
-        }
-        if pfd.revents & (libc::POLLERR | libc::POLLHUP | libc::POLLNVAL) != 0 {
-            break;
-        }
-        let samples: Vec<MotionSample> = match dev.fetch_events() {
-            Ok(evs) => evs.filter_map(|ev| norm.translate(ev)).collect(),
-            Err(e) if e.kind() == ErrorKind::WouldBlock => continue,
-            Err(_) => break,
-        };
-        for sample in samples {
-            if tx.send(Msg::Motion { id, sample }).is_err() {
-                return;
-            }
-        }
-    }
-    let _ = tx.send(Msg::MotionGone { id });
-}
-
-fn read_device(id: u64, mut dev: Device, xbox_labels: bool, stop: &AtomicBool, tx: &Sender<Msg>) {
-    let mut norm = Normalizer::new(&dev, xbox_labels);
-    read_input(id, &mut dev, stop, tx, |ev, out| norm.translate(ev, out));
-    // Dropping `dev` closes the fd, which also releases the grab.
-    let _ = tx.send(Msg::Gone { id });
-}
-
-/// Reads raw events from `dev` until `stop` is set or the device goes away. `translate` turns
-/// each event into inputs, which go to the controller `id` one batch at a time.
-pub(super) fn read_input(
-    id: u64,
-    dev: &mut Device,
-    stop: &AtomicBool,
-    tx: &Sender<Msg>,
-    mut translate: impl FnMut(evdev::InputEvent, &mut Vec<InputEvent>),
-) {
-    if let Err(e) = dev.set_nonblocking(true) {
-        log!("set_nonblocking: {e}");
-        return;
-    }
-    let mut pfd = libc::pollfd { fd: dev.as_raw_fd(), events: libc::POLLIN, revents: 0 };
-    let mut events = Vec::new();
-    while !stop.load(Ordering::Relaxed) {
-        // SAFETY: pfd points to a single valid pollfd for the duration of the call.
-        let n = unsafe { libc::poll(&mut pfd, 1, POLL_TIMEOUT_MS) };
-        if n < 0 {
-            if std::io::Error::last_os_error().kind() == ErrorKind::Interrupted {
-                continue;
-            }
-            break;
-        }
-        if n == 0 {
-            continue;
-        }
-        if pfd.revents & (libc::POLLERR | libc::POLLHUP | libc::POLLNVAL) != 0 {
-            break;
-        }
-        match dev.fetch_events() {
-            Ok(evs) => evs.for_each(|ev| translate(ev, &mut events)),
-            Err(e) if e.kind() == ErrorKind::WouldBlock => {}
-            Err(_) => break,
-        }
-        if !events.is_empty() && tx.send(Msg::Input { id, events: std::mem::take(&mut events) }).is_err() {
-            return;
-        }
-    }
 }
 
 #[cfg(test)]

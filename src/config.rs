@@ -1860,6 +1860,15 @@ pub struct Config {
     /// How strongly the controllers rumble, as a share of what games ask for (0 to 1).
     #[serde(default = "full_rumble", skip_serializing_if = "is_full_rumble")]
     pub rumble_strength: f32,
+    /// The threads controller input passes through run in the real-time class (see `priority`),
+    /// so a game keeping every CPU busy doesn't delay presses.
+    #[serde(default = "yes", skip_serializing_if = "is_true")]
+    pub realtime_input: bool,
+    /// Continuous output (a stick or touchpad moving the mouse, scrolling, turbo, macros) updates
+    /// every millisecond instead of every four: smoother and about 3 ms quicker to start, for
+    /// about 0.8% more of a core while it runs.
+    #[serde(default = "yes", skip_serializing_if = "is_true")]
+    pub fast_tick: bool,
     /// The controller gives a faint pulse as an overlay's item is picked (a key, a menu item).
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub pick_rumble: bool,
@@ -1988,6 +1997,8 @@ impl Default for Config {
             keyboard_style: OverlayStyle::keyboard(),
             full_keyboard: false,
             rumble_strength: 1.0,
+            realtime_input: true,
+            fast_tick: true,
             pick_rumble: false,
             peek_trigger: PeekTrigger::default(),
             numpad_style: OverlayStyle::numpad(),

@@ -4,13 +4,18 @@
 use super::*;
 
 impl Daemon {
-    /// The library, and the entries in it that a Guide tap over `window` would offer.
-    pub(super) fn library_candidates(&self, window: &WindowInfo) -> (&'static [crate::library::Entry], Vec<usize>) {
-        let library = crate::library::entries();
+    /// The library packs a Guide tap over `window` would offer, parsed from the build: the daemon
+    /// keeps only the library's listings.
+    pub(super) fn library_candidates(&self, window: &WindowInfo) -> Vec<crate::library::Entry> {
+        let library = crate::library::listings();
         let have = self.pad_features();
-        let mut found = crate::offer::candidates(&self.config, library, window, have.as_deref());
-        found.retain(|&i| self.offers.declined.get(&library[i].pack.pack.id) != Some(&window.pid));
-        (library, found)
+        let found = crate::offer::candidates(&self.config, library, window, have.as_deref());
+        found
+            .into_iter()
+            .map(|i| &library[i])
+            .filter(|listing| self.offers.declined.get(&listing.id) != Some(&window.pid))
+            .filter_map(crate::library::Listing::entry)
+            .collect()
     }
 
     /// Says, once per run of a game, that tapping Guide adds the library's setup for the game
@@ -23,11 +28,11 @@ impl Daemon {
         if !self.offers.hinted.insert((window.pid, window.class.clone(), window.exe.clone())) {
             return;
         }
-        let (library, found) = self.library_candidates(window);
+        let found = self.library_candidates(window);
         let name = match found.as_slice() {
             [] => return,
-            [one] => library[*one].pack.pack.name.clone(),
-            [first, ..] if window.title.trim().is_empty() => library[*first].pack.pack.name.clone(),
+            [one] => one.pack.pack.name.clone(),
+            [first, ..] if window.title.trim().is_empty() => first.pack.pack.name.clone(),
             _ => window.title.trim().to_owned(),
         };
         log!("hinting that Guide adds the library setup for {}", describe(window));
@@ -41,17 +46,18 @@ impl Daemon {
             return;
         }
         let Some(window) = self.focused.clone() else { return };
-        let (library, found) = self.library_candidates(&window);
+        let found = self.library_candidates(&window);
         let have = self.pad_features();
         if found.is_empty() || !self.ensure_overlay_process() {
             return;
         }
         log!("offering library profiles for {}", describe(&window));
         self.release_mappings();
-        self.offers.shown = found.iter().map(|&i| library[i].clone()).collect();
+        let all: Vec<usize> = (0..found.len()).collect();
+        let session = OfferSession::new(&found, &all, have.as_deref(), Instant::now());
+        self.offers.shown = found;
         self.offers.shown_pid = window.pid;
         self.driving.owner = Some(by);
-        let session = OfferSession::new(library, &found, have.as_deref(), Instant::now());
         self.active = Some(Active::Offer(session));
         self.broadcast_overlay();
         self.overlay_sound(sound::SoundOverlay::Offer, Some(sound::Feedback::Open));

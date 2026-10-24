@@ -155,6 +155,8 @@ impl App {
             Message::SetFullKeyboard(full) => self.config.full_keyboard = full,
             Message::SetRumbleStrength(strength) => self.config.rumble_strength = strength,
             Message::SetPickRumble(on) => self.config.pick_rumble = on,
+            Message::SetRealtimeInput(on) => self.config.realtime_input = on,
+            Message::SetFastTick(on) => self.config.fast_tick = on,
             Message::SetPeekTrigger(t) => self.config.peek_trigger = t,
             Message::SetOverlayFont(font) => {
                 self.config.overlay_font = font;

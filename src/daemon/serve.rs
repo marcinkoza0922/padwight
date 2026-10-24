@@ -3,14 +3,14 @@
 
 use std::{
     io::{BufRead, BufReader, Write},
-    sync::mpsc::{self, Sender},
+    sync::mpsc,
     thread,
     time::Duration,
 };
 
 use anyhow::Result;
 
-use super::Msg;
+use super::{Msg, inbox::Tx};
 use crate::{
     ipc::{self, Request, Response, UnixListener, UnixStream},
     monitor::log,
@@ -23,7 +23,7 @@ const WATCH_INTERVAL: Duration = Duration::from_millis(16);
 /// don't pile up in the daemon. The GUI connects again when it can; the overlay is restarted.
 const WATCH_STALL: Duration = Duration::from_secs(10);
 
-pub(super) fn ipc_server(listener: &UnixListener, tx: &Sender<Msg>) {
+pub(super) fn ipc_server(listener: &UnixListener, tx: &Tx) {
     for conn in listener.incoming() {
         let Ok(conn) = conn else { continue };
         let tx = tx.clone();
@@ -36,7 +36,7 @@ pub(super) fn ipc_server(listener: &UnixListener, tx: &Sender<Msg>) {
     }
 }
 
-fn serve_client(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
+fn serve_client(mut conn: &UnixStream, tx: &Tx) -> Result<()> {
     conn.set_read_timeout(Some(Duration::from_secs(2)))?;
     conn.set_write_timeout(Some(WATCH_STALL))?;
     let mut line = String::new();
@@ -64,7 +64,7 @@ fn serve_client(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
 
 /// Streams overlay state to the (resident) overlay window until it goes away. An empty frame
 /// means nothing is shown; the window idles and keeps listening.
-fn watch_overlay(mut conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
+fn watch_overlay(mut conn: &UnixStream, tx: &Tx) -> Result<()> {
     let (view_tx, view_rx) = mpsc::channel::<OverlayFrame>();
     tx.send(Msg::WatchOverlay(view_tx))?;
     let mut icons_sent = None;
@@ -103,14 +103,14 @@ fn leave_out_icons_sent(frame: &mut OverlayFrame, sent: &mut Option<std::collect
 
 /// Streams snapshots to a client until it disconnects. Bursts are coalesced to the latest
 /// snapshot, so a fast-polling pad never floods the GUI.
-fn watch_input(conn: &UnixStream, tx: &Sender<Msg>) -> Result<()> {
+fn watch_input(conn: &UnixStream, tx: &Tx) -> Result<()> {
     let (snap_tx, snap_rx) = mpsc::channel();
     tx.send(Msg::Watch(snap_tx))?;
     stream_latest(conn, &snap_rx)
 }
 
 /// Streams the latest presses and what they did, like [`watch_input`].
-fn watch_feed(conn: &UnixStream, tx: &Sender<Msg>, pick: Option<String>) -> Result<()> {
+fn watch_feed(conn: &UnixStream, tx: &Tx, pick: Option<String>) -> Result<()> {
     let (feed_tx, feed_rx) = mpsc::channel();
     tx.send(Msg::WatchFeed(pick, feed_tx))?;
     stream_latest(conn, &feed_rx)
@@ -150,7 +150,7 @@ mod tests {
     #[test]
     fn a_request_the_event_loop_doesn_t_answer_gets_an_error_not_silence() {
         let (mut client, server) = UnixStream::pair().unwrap();
-        let (tx, rx) = mpsc::channel();
+        let (tx, rx) = super::super::inbox::channel().unwrap();
         client.write_all(b"\"Status\"\n").unwrap();
         // The event loop takes the request but never answers it.
         let held = thread::spawn(move || rx.recv().ok());
@@ -165,7 +165,7 @@ mod tests {
     #[test]
     fn the_overlay_is_sent_a_pack_s_icons_only_when_they_change() {
         let (client, server) = UnixStream::pair().unwrap();
-        let (tx, rx) = mpsc::channel();
+        let (tx, rx) = super::super::inbox::channel().unwrap();
         let streaming = thread::spawn(move || watch_overlay(&server, &tx).is_ok());
         let Ok(Msg::WatchOverlay(frames)) = rx.recv() else { panic!("no watcher") };
         let with = |icons: &[(&str, &str)]| OverlayFrame {

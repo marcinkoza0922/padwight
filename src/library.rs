@@ -3,7 +3,7 @@
 use std::sync::LazyLock;
 
 use crate::{
-    config::Config,
+    config::{Config, Feature, Rule},
     pack::{self, Pack},
 };
 
@@ -37,7 +37,8 @@ pub struct Entry {
 }
 
 /// Every library pack, by name. Packs that don't parse are left out (tests keep that from
-/// happening). Parsed once: that takes about 30 ms, and the daemon asks at each new window.
+/// happening). Parsed once: that takes about 70 ms, and they hold about 13 MB from then on, so
+/// the daemon keeps only [`listings`].
 pub fn entries() -> &'static [Entry] {
     static ENTRIES: LazyLock<Vec<Entry>> = LazyLock::new(|| {
         let mut all: Vec<Entry> = files::FILES
@@ -48,6 +49,58 @@ pub fn entries() -> &'static [Entry] {
         all
     });
     &ENTRIES
+}
+
+/// What finding a library pack for a window takes, without the rest of the pack.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Listing {
+    pub file: &'static str,
+    pub id: String,
+    pub rules: Vec<Rule>,
+    /// What each of its profiles needs of the controller.
+    pub requires: Vec<Vec<Feature>>,
+}
+
+impl Listing {
+    pub fn of(entry: &Entry) -> Self {
+        let pack = &entry.pack;
+        Listing { file: entry.file, id: pack.pack.id.clone(), rules: pack.rules.clone(), requires: pack.profiles.iter().map(|p| p.requires.clone()).collect() }
+    }
+
+    /// Whether a controller with `have` can play one of its profiles.
+    pub fn usable_with(&self, have: &[Feature]) -> bool {
+        self.requires.iter().any(|needs| needs.iter().all(|f| have.contains(f)))
+    }
+
+    /// The whole pack, parsed again from the build.
+    pub fn entry(&self) -> Option<Entry> {
+        let (file, text) = files::FILES.iter().find(|(file, _)| *file == self.file)?;
+        pack::parse(text).ok().map(|pack| Entry { file, pack })
+    }
+}
+
+/// Every library pack's [`Listing`], in the order of [`entries`]. Each pack is parsed and dropped
+/// in turn, so only the listings stay (a few hundred kB, against the whole library's 13 MB).
+pub fn listings() -> &'static [Listing] {
+    static LISTINGS: LazyLock<Vec<Listing>> = LazyLock::new(|| {
+        let mut all: Vec<(String, Listing)> = files::FILES
+            .iter()
+            .filter_map(|(file, text)| {
+                let entry = Entry { file, pack: pack::parse(text).ok()? };
+                Some((entry.pack.pack.name.to_lowercase(), Listing::of(&entry)))
+            })
+            .collect();
+        all.sort_by(|a, b| a.0.cmp(&b.0));
+        let listings = all.into_iter().map(|(_, listing)| listing).collect();
+        // Parsing left megabytes freed but kept by the allocator, scattered under what stays.
+        #[cfg(all(target_os = "linux", target_env = "gnu"))]
+        // SAFETY: malloc_trim only hands free memory back to the system.
+        unsafe {
+            libc::malloc_trim(0)
+        };
+        listings
+    });
+    &LISTINGS
 }
 
 /// Games added from the library that it now has a newer version of: (game name, index of
@@ -120,10 +173,21 @@ mod tests {
 
     /// The app's own packs add their icons, sounds and fonts to the built-in set (`assets/`) for
     /// every game, rather than carrying them, so every icon they name must be built in.
-    /// The daemon asks at each new window, on its own thread: the packs are parsed once.
+    /// The settings window asks often: the packs are parsed once.
     #[test]
     fn the_library_is_parsed_once() {
         assert!(std::ptr::eq(entries(), entries()));
+        assert!(std::ptr::eq(listings(), listings()));
+    }
+
+    /// The daemon finds packs by their listings, and parses the ones it offers again.
+    #[test]
+    fn each_listing_is_its_entry_and_parses_back_to_it() {
+        let listed: Vec<Listing> = entries().iter().map(Listing::of).collect();
+        assert_eq!(listings(), listed.as_slice());
+        for (listing, entry) in listings().iter().zip(entries()).step_by(17) {
+            assert_eq!(listing.entry().as_ref(), Some(entry));
+        }
     }
 
     #[test]

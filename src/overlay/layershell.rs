@@ -82,6 +82,7 @@ fn update(state: &mut Overlay, message: Message) -> Task<Message> {
             return resize(was_shown, state.shown());
         }
         Message::Tick => {
+            timing_log(&format!("tick {}", unix_ns()));
             let was_shown = state.shown();
             state.prune(Instant::now());
             return resize(was_shown, state.shown());

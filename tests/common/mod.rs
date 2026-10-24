@@ -81,12 +81,13 @@ fn write_items(dir: &Path, items: Option<&toml::Value>) {
 /// The default config with every real gamepad on this machine ignored, so a daemon started by a
 /// test never grabs the user's controller. The test's own controllers are not on the list.
 pub fn default_config() -> String {
-    let ignored: Vec<String> = real_gamepads().iter().map(|name| format!("{name:?}")).collect();
+    let ignored: Vec<String> = real_gamepads().iter().map(|id| format!("{id:?}")).collect();
     DEFAULT_CONFIG.replace("ignored_devices = []", &format!("ignored_devices = [{}]", ignored.join(", ")))
 }
 
-/// Names of the gamepads the daemon would take, other than the test's own and the daemon's virtual
-/// devices. Found with the same rule the daemon uses.
+/// Controller ids (`uniq`, else `vendor:product`, as the daemon keys `ignored_devices`) of the
+/// gamepads the daemon would take, other than the test's own and the daemon's virtual devices.
+/// Found with the same rule the daemon uses.
 #[cfg(target_os = "linux")]
 fn real_gamepads() -> Vec<String> {
     let Ok(entries) = fs::read_dir("/dev/input") else { return Vec::new() };
@@ -100,9 +101,11 @@ fn real_gamepads() -> Vec<String> {
             let gamepad = keys.contains(evdev::KeyCode::BTN_SOUTH)
                 && axes.contains(evdev::AbsoluteAxisCode::ABS_X)
                 && axes.contains(evdev::AbsoluteAxisCode::ABS_Y);
-            let name = dev.name()?.to_string();
-            let ours = name.starts_with("Padwight Virtual") || name.starts_with("Test Controller");
-            (gamepad && !ours).then_some(name)
+            let name = dev.name()?;
+            let ours = name.starts_with("Padwight Virtual") || dev.unique_name() == Some(uhid::TEST_UNIQ);
+            let id = dev.input_id();
+            let uniq = dev.unique_name().map(str::trim).filter(|u| !u.is_empty());
+            (gamepad && !ours).then(|| uniq.map_or_else(|| format!("{:04x}:{:04x}", id.vendor(), id.product()), str::to_string))
         })
         .collect();
     names.sort();

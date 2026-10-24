@@ -177,7 +177,8 @@ fn a_pad_presents_the_identity_it_was_given() {
         assert_eq!(dev.name(), Some(format!("{VIRTUAL_PREFIX} {}", identity.name()).as_str()), "{identity:?}");
         // Button::North is the top button. The xpad driver's labels put the top button at BTN_WEST.
         let want = if identity.xpad_labels() { KeyCode::BTN_WEST } else { KeyCode::BTN_NORTH };
-        pad.button(Button::North, true).unwrap();
+        pad.button(Button::North, true);
+        pad.flush().unwrap();
         let pressed: Vec<u16> = dev.fetch_events().unwrap().filter(|e| e.event_type() == EventType::KEY && e.value() == 1).map(|e| e.code()).collect();
         assert_eq!(pressed, vec![want.0], "{identity:?}");
     }

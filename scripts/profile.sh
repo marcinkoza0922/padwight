@@ -13,6 +13,8 @@
 #
 # Usage: scripts/profile.sh [test filter, default: profile_]
 #   scripts/profile.sh profile_input_latency   runs one test
+# PADWIGHT_PROFILE_OUT=dir writes the results there instead, and PADWIGHT_PROFILE_VOLUME=name
+# builds in another volume, so two checkouts (before and after a change) don't share a build.
 set -eu
 
 filter=${1:-profile_}
@@ -25,8 +27,12 @@ for dev in /dev/uinput /dev/uhid; do
     fi
 done
 
-mkdir -p "$root/target/profile"
+out=${PADWIGHT_PROFILE_OUT:-$root/target/profile}
+volume=${PADWIGHT_PROFILE_VOLUME:-padwight-profile-target}
+mkdir -p "$out"
 
+# SYS_NICE lets the daemon lower its input threads' nice level itself, as rtkit does for it on a
+# desktop (there is no system bus in the container).
 # Build output and the cargo registry live in named volumes, so the container doesn't write
 # root-owned files into the checkout. Only the results come back, and they are given to this user.
 status=0
@@ -34,10 +40,11 @@ docker run --rm \
     --device /dev/uinput \
     --device /dev/uhid \
     --device-cgroup-rule 'c 13:* rwm' \
+    --cap-add SYS_NICE \
     -v /dev/input:/dev/input \
     -v "$root":/src \
-    -v "$root/target/profile":/out \
-    -v padwight-profile-target:/target \
+    -v "$out":/out \
+    -v "$volume":/target \
     -v padwight-profile-cargo:/usr/local/cargo/registry \
     -e CARGO_TARGET_DIR=/target \
     -e PADWIGHT_PROFILE_DIR=/out \
@@ -50,5 +57,5 @@ docker run --rm \
         chown -R $(id -u):$(id -g) /out; exit \$status" || status=$?
 
 # The charts are made even when a test failed, from whatever results were written.
-python3 "$root/scripts/plot_profile.py" "$root/target/profile"
+python3 "$root/scripts/plot_profile.py" "$out"
 exit $status

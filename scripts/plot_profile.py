@@ -2,7 +2,8 @@
 """Charts and an HTML report for the results of the profiling suite (tests/profile).
 
 Reads the JSON files in a results directory (default: target/profile in the checkout) and writes:
-  charts/latency.png    input latency, cumulative distribution, idle and under a 1 kHz flood
+  charts/latency.png    input latency, cumulative distribution, idle, under a 1 kHz flood and
+                        with every CPU busy
   charts/startup.png    daemon start-up, cold and warm, to socket and to the pad being grabbed
   charts/gui.png        settings-window start-up, one dot per run
   charts/resources.png  daemon CPU and memory, idle and under flood; settings window while up
@@ -24,9 +25,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 # Light-mode values from the validated default palette (dataviz skill, references/palette.md):
-# categorical slots 1 (blue) and 2 (orange), which pass the CVD and contrast checks for two series.
+# categorical slots 1 (blue), 2 (orange) and 3 (aqua), in that order.
 BLUE = "#2a78d6"
 ORANGE = "#eb6834"
+# Slot 3 (aqua), for the third latency condition. Below 3:1 on the surface, so the legend labels
+# it and the report gives the table beside the chart.
+AQUA = "#1baf7a"
 INK = "#0b0b0b"
 INK_SECONDARY = "#52514e"
 SURFACE = "#fcfcfb"
@@ -65,12 +69,16 @@ def ms(value):
     return f"{value:.1f} ms"
 
 
+# Each latency condition: its key in the results, its label, and its color.
+CONDITIONS = [("idle", "Idle", BLUE), ("flood_1khz", "1 kHz stick flood", ORANGE), ("cpu_load", "All CPUs busy", AQUA)]
+
+
 def latency_chart(data, out):
-    if not any((data.get(k) or {}).get("samples_us") for k in ("idle", "flood_1khz")):
+    if not any((data.get(k) or {}).get("samples_us") for k, _, _ in CONDITIONS):
         return False
     fig, (ax,) = figure()
     handles = []
-    for key, label, color in [("idle", "Idle", BLUE), ("flood_1khz", "1 kHz stick flood", ORANGE)]:
+    for key, label, color in CONDITIONS:
         condition = data.get(key)
         if not condition or not condition.get("samples_us"):
             continue
@@ -97,7 +105,7 @@ def latency_chart(data, out):
 
 def latency_table(data):
     rows = [["Condition", "Samples", "Missed", "p50 µs", "p90 µs", "p99 µs", "max µs", "Reports/s", "Output events/s"]]
-    for key, label in [("idle", "Idle"), ("flood_1khz", "1 kHz stick flood")]:
+    for key, label, _ in CONDITIONS:
         c = data.get(key)
         if not c:
             continue
@@ -119,9 +127,12 @@ def load_history(results):
 def trend_chart(history, out):
     fig, (ax,) = figure(width=8.0, height=4.0)
     x = list(range(1, len(history) + 1))
-    for key, label, color in [("idle", "Idle", BLUE), ("flood", "1 kHz stick flood", ORANGE)]:
-        p99 = [run[f"{key}_p99_us"] for run in history]
-        p50 = [run[f"{key}_p50_us"] for run in history]
+    for key, label, color in [("idle", "Idle", BLUE), ("flood", "1 kHz stick flood", ORANGE), ("load", "All CPUs busy", AQUA)]:
+        # Older runs measured no CPU load: they have a gap there.
+        p99 = [run.get(f"{key}_p99_us") for run in history]
+        p50 = [run.get(f"{key}_p50_us") for run in history]
+        if all(v is None for v in p99):
+            continue
         ax.plot(x, p99, color=color, marker="o", linewidth=2, label=f"{label}: p99")
         ax.plot(x, p50, color=color, marker="o", linewidth=1, linestyle="--", alpha=0.8, label=f"{label}: p50")
     ax.set_xticks(x)
@@ -136,20 +147,23 @@ def trend_chart(history, out):
 
 
 def trend_table(history):
-    rows = [["Run", "Commit", "Sessions", "Idle p50 µs", "Idle p99 µs", "Flood p50 µs", "Flood p99 µs"]]
+    rows = [["Run", "Commit", "Sessions", "Idle p50 µs", "Idle p99 µs", "Flood p50 µs", "Flood p99 µs", "Load p50 µs", "Load p99 µs"]]
+    us = lambda v: "-" if v is None else f"{v:.0f}"
     for i, run in enumerate(history, 1):
-        rows.append([i, run.get("commit") or "-", run.get("sessions", "-"),
-                     f"{run['idle_p50_us']:.0f}", f"{run['idle_p99_us']:.0f}",
-                     f"{run['flood_p50_us']:.0f}", f"{run['flood_p99_us']:.0f}"])
+        rows.append([i, run.get("commit") or "-", run.get("sessions", "-")]
+                    + [us(run.get(f"{k}_{p}_us")) for k in ("idle", "flood", "load") for p in ("p50", "p99")])
     return rows
 
 
 def sessions_table(data):
-    rows = [["Session", "Idle p50 µs", "Idle p99 µs", "Idle missed", "Flood p50 µs", "Flood p99 µs", "Flood missed"]]
+    present = [(key, label) for key, label, _ in CONDITIONS if any(key in s for s in data.get("per_session", []))]
+    rows = [["Session"] + [f"{label} {what}" for _, label in present for what in ("p50 µs", "p99 µs", "missed")]]
     for session in data.get("per_session", []):
-        i, f = session["idle"], session["flood_1khz"]
-        rows.append([session["repeat"] + 1, f"{i['p50_us']:.0f}", f"{i['p99_us']:.0f}", i["missed"],
-                     f"{f['p50_us']:.0f}", f"{f['p99_us']:.0f}", f["missed"]])
+        row = [session["repeat"] + 1]
+        for key, _ in present:
+            c = session.get(key)
+            row += [f"{c['p50_us']:.0f}", f"{c['p99_us']:.0f}", c["missed"]] if c else ["-", "-", "-"]
+        rows.append(row)
     return rows
 
 

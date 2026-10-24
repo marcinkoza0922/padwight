@@ -7,12 +7,12 @@ use std::{
 
 use anyhow::Result;
 use evdev::{
-    AbsInfo, AbsoluteAxisCode as Abs, AttributeSet, AttributeSetRef, BusType, EventType,
-    FFEffectCode, InputEvent, InputId, KeyCode, RelativeAxisCode as Rel, UinputAbsSetup,
+    AbsInfo, AbsoluteAxisCode as Abs, AttributeSet, AttributeSetRef, BusType, FFEffectCode,
+    InputId, KeyCode, RelativeAxisCode as Rel, UinputAbsSetup,
     uinput::VirtualDevice,
 };
 
-use super::{PressState, mouse_code, stick_raw};
+use super::{PressState, frames::Frames, mouse_code, stick_raw};
 use crate::{
     config::{Button, MouseButton},
     input::Axis,
@@ -27,6 +27,8 @@ pub struct VirtualPad {
     dev: Arc<Mutex<VirtualDevice>>,
     dpad: HashSet<Button>,
     identity: PadIdentity,
+    /// What `button` and `axis` queued, written by `flush`.
+    frames: Frames,
 }
 
 /// Force-feedback support to advertise, copied from the physical controller.
@@ -85,7 +87,7 @@ impl VirtualPad {
         if let Some(ff) = ff {
             builder = builder.with_ff(ff.effects)?.with_ff_effects_max(ff.max_effects);
         }
-        Ok(VirtualPad { dev: Arc::new(Mutex::new(builder.build()?)), dpad: HashSet::new(), identity })
+        Ok(VirtualPad { dev: Arc::new(Mutex::new(builder.build()?)), dpad: HashSet::new(), identity, frames: Frames::default() })
     }
 
     /// The controller this pad presents itself as.
@@ -97,13 +99,14 @@ impl VirtualPad {
         self.dev.clone()
     }
 
-    fn emit(&self, events: &[InputEvent]) -> Result<()> {
-        let mut dev = self.dev.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-        dev.emit(events)?;
-        Ok(())
+    /// Writes what `button` and `axis` queued, in one go.
+    pub fn flush(&mut self) -> Result<()> {
+        let dev = self.dev.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        Ok(self.frames.flush(&*dev)?)
     }
 
-    pub fn button(&mut self, b: Button, pressed: bool) -> Result<()> {
+    /// Queues a press or release, for the next `flush`.
+    pub fn button(&mut self, b: Button, pressed: bool) {
         let code = match b {
             Button::South => KeyCode::BTN_SOUTH,
             Button::East => KeyCode::BTN_EAST,
@@ -133,9 +136,9 @@ impl VirtualPad {
             | Button::LeftPaddle
             | Button::RightPaddle
             | Button::LeftPaddle2
-            | Button::RightPaddle2 => return Ok(()),
+            | Button::RightPaddle2 => return,
         };
-        self.emit(&[key_event(code, pressed)])
+        self.frames.key(code, pressed);
     }
 
     /// The xpad driver's labels are swapped (its BTN_X is the west button), and the other pads
@@ -148,7 +151,7 @@ impl VirtualPad {
         if self.identity.xpad_labels() { KeyCode::BTN_NORTH } else { KeyCode::BTN_WEST }
     }
 
-    fn dpad(&mut self, b: Button, pressed: bool) -> Result<()> {
+    fn dpad(&mut self, b: Button, pressed: bool) {
         if pressed {
             self.dpad.insert(b);
         } else {
@@ -157,10 +160,12 @@ impl VirtualPad {
         let axis = |neg, pos| self.dpad.contains(&pos) as i32 - self.dpad.contains(&neg) as i32;
         let x = axis(Button::DpadLeft, Button::DpadRight);
         let y = axis(Button::DpadUp, Button::DpadDown);
-        self.emit(&[abs_event(Abs::ABS_HAT0X, x), abs_event(Abs::ABS_HAT0Y, y)])
+        self.frames.abs(Abs::ABS_HAT0X, x);
+        self.frames.abs(Abs::ABS_HAT0Y, y);
     }
 
-    pub fn axis(&mut self, axis: Axis, value: f32) -> Result<()> {
+    /// Queues an axis's new position, for the next `flush`.
+    pub fn axis(&mut self, axis: Axis, value: f32) {
         let (code, raw) = match axis {
             Axis::LeftX => (Abs::ABS_X, stick_raw(value)),
             Axis::LeftY => (Abs::ABS_Y, stick_raw(value)),
@@ -169,18 +174,24 @@ impl VirtualPad {
             Axis::LeftTrigger => (Abs::ABS_Z, (value.clamp(0.0, 1.0) * 255.0).round() as i32),
             Axis::RightTrigger => (Abs::ABS_RZ, (value.clamp(0.0, 1.0) * 255.0).round() as i32),
         };
-        self.emit(&[abs_event(code, raw)])
+        self.frames.abs(code, raw);
     }
 }
 
 /// Shared virtual keyboard + mouse. Presses are reference counted (see `PressState`), and a
-/// press or release the kernel refused is sent again by `sync`.
+/// press or release the kernel refused is sent again by `sync`. Keys, buttons and motion are
+/// queued and written by `flush`.
 pub struct VirtualKbm {
     keyboard: VirtualDevice,
     mouse: VirtualDevice,
     press: PressState,
     /// Hi-res wheel units not yet emitted as whole REL_WHEEL notches.
     wheel_acc: (i32, i32),
+    keyboard_frames: Frames,
+    mouse_frames: Frames,
+    /// What the kernel had been sent before the presses queued now, to go back to if writing
+    /// them fails, so `sync` sends them again.
+    confirmed: Option<HashSet<KeyCode>>,
 }
 
 impl VirtualKbm {
@@ -211,17 +222,27 @@ impl VirtualKbm {
             .with_relative_axes(&rel)?
             .build()?;
 
-        Ok(VirtualKbm { keyboard, mouse, press: PressState::default(), wheel_acc: (0, 0) })
+        Ok(VirtualKbm {
+            keyboard,
+            mouse,
+            press: PressState::default(),
+            wheel_acc: (0, 0),
+            keyboard_frames: Frames::default(),
+            mouse_frames: Frames::default(),
+            confirmed: None,
+        })
     }
 
-    pub fn key(&mut self, code: KeyCode, pressed: bool) -> Result<()> {
+    /// Queues a press or release, for the next `flush`.
+    pub fn key(&mut self, code: KeyCode, pressed: bool) {
         self.press.press(code, pressed);
-        self.sync()
+        self.queue_changes();
     }
 
-    pub fn mouse_button(&mut self, b: MouseButton, pressed: bool) -> Result<()> {
+    /// Queues a press or release, for the next `flush`.
+    pub fn mouse_button(&mut self, b: MouseButton, pressed: bool) {
         self.press.press(mouse_code(b), pressed);
-        self.sync()
+        self.queue_changes();
     }
 
     /// Releases every key and button, including ones the on-screen keyboard holds.
@@ -230,15 +251,40 @@ impl VirtualKbm {
         self.sync()
     }
 
-    /// Brings the kernel in line with what is held. Called after every key or button, and by the
-    /// daemon's periodic scan, so a release that failed is sent again even if nothing else is
-    /// pressed.
+    /// Brings the kernel in line with what is held, at once. The daemon's periodic scan calls it,
+    /// so a release that failed is sent again even if nothing else is pressed.
     pub fn sync(&mut self) -> Result<()> {
-        let Self { press, keyboard, mouse, .. } = self;
-        press.sync(|code, down| {
-            let dev = if MouseButton::ALL.iter().any(|b| mouse_code(*b) == code) { &mut *mouse } else { &mut *keyboard };
-            Ok(dev.emit(&[key_event(code, down)])?)
-        })
+        self.queue_changes();
+        self.flush()
+    }
+
+    /// Writes everything queued, the keyboard's and the mouse's each in one go. If a write fails,
+    /// the presses in it count as not sent, so the next `sync` sends them again.
+    pub fn flush(&mut self) -> Result<()> {
+        let keyboard = self.keyboard_frames.flush(&self.keyboard);
+        let mouse = self.mouse_frames.flush(&self.mouse);
+        let confirmed = self.confirmed.take();
+        if (keyboard.is_err() || mouse.is_err())
+            && let Some(sent) = confirmed
+        {
+            self.press.restore_sent(sent);
+        }
+        keyboard?;
+        Ok(mouse?)
+    }
+
+    /// Queues each key whose state differs from what was sent (see `PressState::sync`).
+    fn queue_changes(&mut self) {
+        let Self { press, keyboard_frames, mouse_frames, confirmed, .. } = self;
+        if confirmed.is_none() {
+            *confirmed = Some(press.sent().clone());
+        }
+        let queued: Result<()> = press.sync(|code, down| {
+            let frames = if MouseButton::ALL.iter().any(|b| mouse_code(*b) == code) { &mut *mouse_frames } else { &mut *keyboard_frames };
+            frames.key(code, down);
+            Ok(())
+        });
+        debug_assert!(queued.is_ok(), "queueing never fails");
     }
 
     /// The event nodes of the keyboard and the mouse, for tests that read what the kernel got.
@@ -248,56 +294,24 @@ impl VirtualKbm {
         (node(&mut self.keyboard), node(&mut self.mouse))
     }
 
-    pub fn mouse_move(&mut self, dx: i32, dy: i32) -> Result<()> {
-        let mut events = Vec::with_capacity(2);
-        if dx != 0 {
-            events.push(rel_event(Rel::REL_X, dx));
-        }
-        if dy != 0 {
-            events.push(rel_event(Rel::REL_Y, dy));
-        }
-        if !events.is_empty() {
-            self.mouse.emit(&events)?;
-        }
-        Ok(())
+    /// Queues motion, for the next `flush`.
+    pub fn mouse_move(&mut self, dx: i32, dy: i32) {
+        self.mouse_frames.rel(Rel::REL_X, dx);
+        self.mouse_frames.rel(Rel::REL_Y, dy);
     }
 
-    /// Takes hi-res units (120 per notch) and also emits legacy notches for older clients.
-    pub fn wheel(&mut self, vertical: i32, horizontal: i32) -> Result<()> {
+    /// Takes hi-res units (120 per notch) and also emits legacy notches for older clients. Queued,
+    /// for the next `flush`.
+    pub fn wheel(&mut self, vertical: i32, horizontal: i32) {
         self.wheel_acc.0 += vertical;
         self.wheel_acc.1 += horizontal;
         let notches = (self.wheel_acc.0 / 120, self.wheel_acc.1 / 120);
         self.wheel_acc.0 -= notches.0 * 120;
         self.wheel_acc.1 -= notches.1 * 120;
 
-        let mut events = Vec::with_capacity(4);
-        if vertical != 0 {
-            events.push(rel_event(Rel::REL_WHEEL_HI_RES, vertical));
-        }
-        if horizontal != 0 {
-            events.push(rel_event(Rel::REL_HWHEEL_HI_RES, horizontal));
-        }
-        if notches.0 != 0 {
-            events.push(rel_event(Rel::REL_WHEEL, notches.0));
-        }
-        if notches.1 != 0 {
-            events.push(rel_event(Rel::REL_HWHEEL, notches.1));
-        }
-        if !events.is_empty() {
-            self.mouse.emit(&events)?;
-        }
-        Ok(())
+        self.mouse_frames.rel(Rel::REL_WHEEL_HI_RES, vertical);
+        self.mouse_frames.rel(Rel::REL_HWHEEL_HI_RES, horizontal);
+        self.mouse_frames.rel(Rel::REL_WHEEL, notches.0);
+        self.mouse_frames.rel(Rel::REL_HWHEEL, notches.1);
     }
-}
-
-fn key_event(code: KeyCode, pressed: bool) -> InputEvent {
-    InputEvent::new(EventType::KEY.0, code.0, pressed as i32)
-}
-
-fn abs_event(code: Abs, value: i32) -> InputEvent {
-    InputEvent::new(EventType::ABSOLUTE.0, code.0, value)
-}
-
-fn rel_event(code: Rel, value: i32) -> InputEvent {
-    InputEvent::new(EventType::RELATIVE.0, code.0, value)
 }

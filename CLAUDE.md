@@ -17,6 +17,10 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
 - Game detection, no controller needed: `cargo run -q -- debug focus [pid [class]]|processes`;
   `scripts/sandbox-pid.sh` runs a program in its own pid namespace (see
   `docs/development/code-review-plan.md`, which also tracks the review passes)
+- Input latency, CPU and memory (Docker, uhid pad): `scripts/profile.sh [filter]`
+  (`PADWIGHT_PROFILE_OUT=dir`); a daemon with `PADWIGHT_INPUT_TIMING=file` logs each input's stages
+- Overlay CPU and memory on a headless KWin: `PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh
+  scripts/harness/resources.sh <out>` (`gui-idle.sh` for the settings window)
 - Long files: `scripts/long-files.sh` (lists files over 400 lines; split them when you work in them)
 
 Filter tests to the module you touched (e.g. `engine::`) unless the change is broad.
