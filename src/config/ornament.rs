@@ -3,11 +3,12 @@
 use serde::{Deserialize, Serialize};
 
 use super::style::{black, opaque};
-use super::{Argyle, Camo, Grain, Pixels, Plaid, Scanlines, Stripes, Stroke, Texture, Tint};
+use super::{Argyle, Camo, Checkerboard, Grain, Pixels, Plaid, PolkaDots, Scanlines, Stripes, Stroke, Texture, Tint};
 
 /// The ornaments drawn over and around a panel: lines between items, a frame at its corners, a
-/// vignette, filters (scanlines, grain, pixels, camo, plaid, argyle, stripes, a tint and the
-/// materials, each on the background, the items or both) and bevelled buttons. Each is off unless set.
+/// vignette, filters (scanlines, grain, pixels, camo, plaid, argyle, stripes, a checkerboard,
+/// polka dots, a tint and the materials, each on the background, the items or both) and
+/// bevelled buttons. Each is off unless set.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Ornament {
@@ -41,6 +42,12 @@ pub struct Ornament {
     /// Stripes.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stripes: Option<Stripes>,
+    /// A checkerboard.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub checkerboard: Option<Checkerboard>,
+    /// Polka dots.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub polka_dots: Option<PolkaDots>,
     /// A wash of color.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tint: Option<Tint>,

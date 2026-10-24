@@ -16,7 +16,7 @@ mod patterns;
 pub use anchored::anchor;
 use anchored::sized;
 use materials::{brushed_metal, cloth, concrete, denim, leather, paper, silk, steel, wood};
-pub use patterns::{argyle, plaid, stripes};
+pub use patterns::{argyle, checkerboard, plaid, polka_dots, stripes};
 
 /// What a texture looks like.
 #[derive(Debug, Clone, Copy)]

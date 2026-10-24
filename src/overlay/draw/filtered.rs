@@ -11,7 +11,7 @@ use crate::config::{FilterOn, OverlayStyle};
 
 /// The style's filters that cover the background (or, with `items`, an item), as layers from
 /// the bottom up, rounded `round` pixels at the corners: the materials, then scanlines, grain,
-/// pixel blocks, camo, plaid, argyle, stripes and a tint.
+/// pixel blocks, camo, plaid, argyle, stripes, a checkerboard, polka dots and a tint.
 pub(super) fn filters<'a, M: 'a>(c: Colors, style: &OverlayStyle, items: bool, round: f32) -> Vec<Element<'a, M>> {
     let mut layers = Vec::new();
     if style.lite.plain {
@@ -58,6 +58,12 @@ pub(super) fn filters<'a, M: 'a>(c: Colors, style: &OverlayStyle, items: bool, r
     }
     if let Some(stripes) = o.stripes.as_ref().filter(|p| covers(p.on)) {
         layers.push(texture::stripes(stripes, s, round, c.fade));
+    }
+    if let Some(checks) = o.checkerboard.as_ref().filter(|p| covers(p.on)) {
+        layers.push(texture::checkerboard(checks, s, round, c.fade));
+    }
+    if let Some(dots) = o.polka_dots.as_ref().filter(|p| covers(p.on)) {
+        layers.push(texture::polka_dots(dots, s, round, c.fade));
     }
     if let Some(tint) = o.tint.as_ref().filter(|p| covers(p.on)) {
         layers.push(ornament::tint(tint, round, c.fade));
