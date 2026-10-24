@@ -53,10 +53,18 @@ fn overlay_sounds_default_on_and_load_from_nothing() {
     for overlay in SoundOverlay::ALL {
         let sounds = set.get(overlay);
         assert!(sounds.enabled, "{overlay:?}");
-        assert!(sounds.step.volume < sounds.pick.volume, "steps are fainter than picks");
-        assert!(sounds.open.volume < sounds.step.volume, "popping in is fainter than a step");
-        assert!(sounds.close.volume < sounds.step.volume, "popping out is fainter than a step");
     }
+}
+
+#[test]
+fn a_volume_goes_to_decibels_and_back() {
+    for db in [0.0, -6.0, -18.0, -43.0, -59.0] {
+        assert!((volume_db(decibels(db)) - db).abs() < 1e-3, "{db}");
+    }
+    assert_eq!(decibels(VOLUME_FLOOR_DB), 0.0, "the bottom is silence");
+    assert_eq!(volume_db(0.0), VOLUME_FLOOR_DB);
+    assert_eq!(volume_db(1e-9), VOLUME_FLOOR_DB, "too faint to set is the bottom");
+    assert!((decibels(-6.0) - 0.501).abs() < 1e-3);
 }
 
 #[test]
@@ -158,27 +166,39 @@ fn effects_load_and_save_only_when_set() {
     assert!(!saved.contains("echo") && !saved.contains("reverb"), "{saved}");
 }
 
-/// Writes every kind to `sound-previews/<kind>.wav`, to listen to while tuning them.
+/// Writes every kind to `sound-previews/<kind>.wav`, and each overlay's default cues as they are
+/// set to `sound-previews/default/<overlay>-<feedback>.wav`, to listen to while tuning them
+/// (`PADWIGHT_PREVIEW_DIR` writes them elsewhere).
 #[test]
 #[ignore]
 fn render_previews() {
-    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("sound-previews");
-    std::fs::create_dir_all(&dir).unwrap();
+    let dir = std::env::var_os("PADWIGHT_PREVIEW_DIR").map_or_else(|| std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("sound-previews"), Into::into);
+    std::fs::create_dir_all(dir.join("default")).unwrap();
     for kind in SoundKind::ALL {
-        let samples = SoundSpec::new(kind, 0.8, 1.0).samples();
-        let data: Vec<u8> = samples.iter().flat_map(|s| ((s * i16::MAX as f32) as i16).to_le_bytes()).collect();
-        let mut wav = Vec::new();
-        wav.extend_from_slice(b"RIFF");
-        wav.extend_from_slice(&(36 + data.len() as u32).to_le_bytes());
-        wav.extend_from_slice(b"WAVEfmt ");
-        for field in [16_u32.to_le_bytes(), [1, 0, 1, 0], RATE.to_le_bytes(), (RATE * 2).to_le_bytes(), [2, 0, 16, 0]] {
-            wav.extend_from_slice(&field);
-        }
-        wav.extend_from_slice(b"data");
-        wav.extend_from_slice(&(data.len() as u32).to_le_bytes());
-        wav.extend_from_slice(&data);
-        std::fs::write(dir.join(format!("{}.wav", kind.label().to_lowercase())), wav).unwrap();
+        write_wav(&dir.join(format!("{}.wav", kind.label().to_lowercase())), &SoundSpec::new(kind, 0.8, 1.0).samples());
     }
+    let set = SoundSet::default();
+    for overlay in SoundOverlay::ALL {
+        let sounds = set.get(overlay);
+        for (name, spec) in [("step", sounds.step), ("pick", sounds.pick), ("open", sounds.open), ("close", sounds.close), ("mode", sounds.mode)] {
+            write_wav(&dir.join(format!("default/{}-{name}.wav", overlay.key())), &spec.samples());
+        }
+    }
+}
+
+fn write_wav(path: &std::path::Path, samples: &[f32]) {
+    let data: Vec<u8> = samples.iter().flat_map(|s| ((s * i16::MAX as f32) as i16).to_le_bytes()).collect();
+    let mut wav = Vec::new();
+    wav.extend_from_slice(b"RIFF");
+    wav.extend_from_slice(&(36 + data.len() as u32).to_le_bytes());
+    wav.extend_from_slice(b"WAVEfmt ");
+    for field in [16_u32.to_le_bytes(), [1, 0, 1, 0], RATE.to_le_bytes(), (RATE * 2).to_le_bytes(), [2, 0, 16, 0]] {
+        wav.extend_from_slice(&field);
+    }
+    wav.extend_from_slice(b"data");
+    wav.extend_from_slice(&(data.len() as u32).to_le_bytes());
+    wav.extend_from_slice(&data);
+    std::fs::write(path, wav).unwrap();
 }
 
 #[test]

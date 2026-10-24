@@ -130,16 +130,20 @@ pub struct OverlaySounds {
     pub mode: SoundSpec,
 }
 
+/// The default cues are balanced by loudness, not by volume: a short click needs far more volume than
+/// a pop to sound as loud, and noise far less. Each overlay's step, pick, open, close and mode sit at
+/// about 2, 5, 2.5, 2 and 3 sone (`scripts/sound-audit.py` measures them), the same in every overlay.
 impl Default for OverlaySounds {
     fn default() -> Self {
         OverlaySounds {
             enabled: true,
-            step: SoundSpec::new(SoundKind::Click, 0.12, 1.2),
-            pick: SoundSpec::new(SoundKind::Pop, 0.3, 1.0),
-            // Quieter than a step, so an overlay coming or going is noticed without pulling focus.
-            open: SoundSpec::new(SoundKind::Pop, 0.05, 1.3),
-            close: SoundSpec::new(SoundKind::Pop, 0.04, 0.8),
-            mode: SoundSpec::new(SoundKind::Swish, 0.08, 1.0),
+            step: SoundSpec::new(SoundKind::Click, decibels(-18.0), 1.2),
+            pick: SoundSpec::new(SoundKind::Pop, decibels(-22.0), 1.0),
+            // About as loud as a step, so an overlay coming or going is noticed without pulling focus.
+            open: SoundSpec::new(SoundKind::Pop, decibels(-35.0), 1.3),
+            close: SoundSpec::new(SoundKind::Pop, decibels(-34.0), 0.8),
+            // Noise sounds far louder than its level: at a step's volume it would drown the menu.
+            mode: SoundSpec::new(SoundKind::Swish, decibels(-43.0), 1.0),
         }
     }
 }
@@ -150,14 +154,27 @@ impl OverlaySounds {
     pub fn guide() -> Self {
         OverlaySounds {
             enabled: true,
-            step: SoundSpec::new(SoundKind::Pulse, 0.1, 1.0),
-            pick: SoundSpec { length: 0.8, ..SoundSpec::new(SoundKind::Glass, 0.2, 0.8) },
-            open: SoundSpec::new(SoundKind::Rise, 0.07, 1.0),
-            close: SoundSpec::new(SoundKind::Fall, 0.06, 1.0),
+            step: SoundSpec::new(SoundKind::Pulse, decibels(-42.0), 1.0),
+            pick: SoundSpec { length: 0.8, ..SoundSpec::new(SoundKind::Glass, decibels(-28.0), 0.8) },
+            open: SoundSpec::new(SoundKind::Rise, decibels(-41.0), 1.0),
+            close: SoundSpec::new(SoundKind::Fall, decibels(-44.0), 1.0),
             // A mode switch is a change of state rather than a cursor step, so it's a breath, not a tick.
-            mode: SoundSpec { length: 0.8, ..SoundSpec::new(SoundKind::Swish, 0.08, 1.0) },
+            mode: SoundSpec { length: 0.8, ..SoundSpec::new(SoundKind::Swish, decibels(-44.0), 1.0) },
         }
     }
+}
+
+/// The quietest level a volume is set in, in dB: below it a cue is silent.
+pub const VOLUME_FLOOR_DB: f32 = -60.0;
+
+/// A volume (0..=1) from a level in dB below full; at [`VOLUME_FLOOR_DB`] or below, silence.
+pub fn decibels(db: f32) -> f32 {
+    if db <= VOLUME_FLOOR_DB { 0.0 } else { 10_f32.powf(db.min(0.0) / 20.0) }
+}
+
+/// The level of a volume in dB below full, down to [`VOLUME_FLOOR_DB`] for silence.
+pub fn volume_db(volume: f32) -> f32 {
+    if volume <= 0.0 { VOLUME_FLOOR_DB } else { (20.0 * volume.min(1.0).log10()).max(VOLUME_FLOOR_DB) }
 }
 
 /// The overlays that have a cursor to sound.
