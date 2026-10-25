@@ -1,0 +1,528 @@
+format = 20
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "adcff78c-7d24-4741-877a-c4efe907816d"
+name = "The Witcher"
+version = "1.0"
+author = "Padwight"
+description = "The Witcher on an Xbox-style pad, for the game's mouse and keyboard controls. The left stick runs, the right stick moves the pointer, RT or A attacks and uses and LT casts the sign. X and Y draw the steel and silver swords, B puts them away and the d-pad picks the strong, fast or group style. Hold LB to choose a sign, hold RB with the d-pad for the camera. Select lists the hero page, journal and map; Start is the menu, double tap it to quick save and hold it to quick load. Overlays in steel grey with a blood-red pick."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "20900"
+profile = "The Witcher"
+
+[[rules]]
+kind = "executable"
+value = "witcher.exe"
+profile = "The Witcher"
+
+[[profiles]]
+name = "The Witcher"
+combos = [
+    {buttons = ["RightBumper", "DpadUp"], action = {keys = ["KEY_F1"]}},
+    {buttons = ["RightBumper", "DpadRight"], action = {keys = ["KEY_F2"]}},
+    {buttons = ["RightBumper", "DpadDown"], action = {keys = ["KEY_F3"]}},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_TAB"] }
+West = { keys = ["KEY_Q"] }
+North = { keys = ["KEY_E"] }
+LeftBumper = { open_menu = "Signs" }
+RightBumper = { open_menu = "Camera" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_Z"] }
+DpadLeft = { keys = ["KEY_X"] }
+DpadRight = { keys = ["KEY_C"] }
+DpadDown = { keys = ["KEY_I"] }
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F5"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F9"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The game has no controller support, so this plays it with the mouse and keys, for the over-the-shoulder camera and the two high ones alike. The left stick {ls} runs, the right stick {rs} moves the pointer (and the view, behind the shoulder). {rt} or {south} clicks: attack the enemy under the pointer, talk, open, pick up; click again on the beat to chain the combo. {lt} casts the chosen sign.
+{west} draws the {b}steel sword{/b} for people, {north} the {b}silver sword{/b} for monsters, {east} puts them away. The {dpad} picks the style: {up} strong, {left} fast, {right} group. {down} is the inventory.
+Hold {lb} and point the right stick {rs} to choose a sign. Hold {rb} with {up}, {right} or {down} for the camera: high, low or over the shoulder.
+{select} lists the hero page, inventory, journal and map. {start} is the menu; double tap it to {color:green}quick save{/color}, hold it to quick load.
+The keys are the game's defaults as a fan wiki and the Steam forum list them (Q and E swords, Z X C styles, 1 to 5 signs, F1 to F3 cameras), not read from an install: if one doesn't answer, check Options, Controls. Dodging is a double tap of a direction, which the stick can't do; there's no key for it.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Run" }
+"stick:Right" = { text = "Pointer / look" }
+"trigger:Right" = { text = "Attack / use" }
+"trigger:Left" = { text = "Cast the sign" }
+"button:South" = { text = "Click" }
+"button:East" = { text = "Put the sword away" }
+"button:West" = { text = "{icon:sword} Steel sword" }
+"button:North" = { text = "{icon:moon} Silver sword" }
+"button:LeftBumper" = { text = "Hold: {icon:flame} signs" }
+"button:RightBumper" = { text = "Hold + {dpad}: camera" }
+"button:Select" = { text = "{icon:book} Hero, journal, map" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"button:DpadUp" = { text = "{icon:fist} Strong style" }
+"button:DpadLeft" = { text = "{icon:fast} Fast style" }
+"button:DpadRight" = { text = "{icon:sword-cross} Group style" }
+"button:DpadDown" = { text = "{icon:bag} Inventory" }
+"combo:button:RightBumper+button:DpadUp" = { text = "High camera" }
+"combo:button:RightBumper+button:DpadRight" = { text = "Low camera" }
+"combo:button:RightBumper+button:DpadDown" = { text = "Over the shoulder" }
+
+[[menus]]
+name = "Signs"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:waves} Aard"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:shield} Quen"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:trap} Yrden"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:flame} Igni"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:brain} Axii"
+action = { keys = ["KEY_5"] }
+
+[menus.style]
+corners = 0.12
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0e0d0c"
+opacity = 0.93
+
+[menus.style.items]
+color = "#1f1c19"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#9e2a22"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8c8478"
+opacity = 0.75
+
+[menus.style.gradient]
+color = "#171512"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3a352f"
+
+[menus.style.glow]
+color = "#c9c2b4"
+opacity = 0.35
+blur = 14
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 8, width = 1, color = "#8c8478"}
+vignette = {color = "#000000", opacity = 0.5, reach = 25}
+
+[[menus]]
+name = "Camera"
+
+[menus.kind.directional]
+cluster = "DPad"
+
+[[menus.items]]
+label = "{icon:eye} High"
+action = { keys = ["KEY_F1"] }
+
+[[menus.items]]
+label = "{icon:eye} Low"
+action = { keys = ["KEY_F2"] }
+
+[[menus.items]]
+label = "{icon:person} Shoulder"
+action = { keys = ["KEY_F3"] }
+
+[menus.style]
+corners = 0.12
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0e0d0c"
+opacity = 0.93
+
+[menus.style.items]
+color = "#1f1c19"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#9e2a22"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8c8478"
+opacity = 0.75
+
+[menus.style.gradient]
+color = "#171512"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3a352f"
+
+[menus.style.glow]
+color = "#c9c2b4"
+opacity = 0.35
+blur = 14
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 8, width = 1, color = "#8c8478"}
+vignette = {color = "#000000", opacity = 0.5, reach = 25}
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:person} Hero"
+action = { keys = ["KEY_H"] }
+
+[[menus.items]]
+label = "{icon:bag} Inventory"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "{icon:scroll} Journal"
+action = { keys = ["KEY_J"] }
+
+[[menus.items]]
+label = "{icon:map} Map"
+action = { keys = ["KEY_M"] }
+
+[menus.style]
+corners = 0.12
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0e0d0c"
+opacity = 0.93
+
+[menus.style.items]
+color = "#1f1c19"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#9e2a22"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8c8478"
+opacity = 0.75
+
+[menus.style.gradient]
+color = "#171512"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3a352f"
+
+[menus.style.glow]
+color = "#c9c2b4"
+opacity = 0.35
+blur = 14
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 8, width = 1, color = "#8c8478"}
+vignette = {color = "#000000", opacity = 0.5, reach = 25}
+
+[keyboard_style]
+corners = 0.12
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0e0d0c"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#1f1c19"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#9e2a22"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8c8478"
+opacity = 0.75
+
+[keyboard_style.gradient]
+color = "#171512"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3a352f"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.12
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0e0d0c"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#1f1c19"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#9e2a22"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8c8478"
+opacity = 0.75
+
+[numpad_style.gradient]
+color = "#171512"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3a352f"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[media_style]
+corners = 0.12
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0e0d0c"
+opacity = 0.93
+
+[media_style.items]
+color = "#1f1c19"
+opacity = 0.95
+
+[media_style.selected]
+color = "#9e2a22"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8c8478"
+opacity = 0.75
+
+[media_style.gradient]
+color = "#171512"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3a352f"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.12
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0e0d0c"
+opacity = 0.93
+
+[menu_style.items]
+color = "#1f1c19"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#9e2a22"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8c8478"
+opacity = 0.75
+
+[menu_style.gradient]
+color = "#171512"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3a352f"
+
+[menu_style.glow]
+color = "#c9c2b4"
+opacity = 0.35
+blur = 14
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 8, width = 1, color = "#8c8478"}
+vignette = {color = "#000000", opacity = 0.5, reach = 25}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "wood", volume = 0.08, pitch = 0.9}
+pick = {kind = "shing", volume = 0.12}
+open = {kind = "page", volume = 0.07, pitch = 0.9}
+close = {kind = "page", volume = 0.05, pitch = 0.8}
+
+[sounds.numpad]
+step = {kind = "wood", volume = 0.07, pitch = 0.9}
+pick = {kind = "latch", volume = 0.12}
+
+[sounds.keyboard]
+step = {kind = "wood", volume = 0.07, pitch = 0.9}
+pick = {kind = "keys", volume = 0.16}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}

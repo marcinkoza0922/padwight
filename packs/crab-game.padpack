@@ -1,0 +1,540 @@
+format = 20
+macros = []
+overlay_font = "Comfortaa"
+
+[pack]
+id = "1c3061a9-323b-42c4-947d-2dff9d26ebed"
+name = "Crab Game"
+version = "1.0"
+author = "Padwight"
+description = "Crab Game on an Xbox-style pad, for the game's default keys. A picks up and uses things and, held, sprints, B jumps, X is push-to-talk, Y drops your item, RT punches or uses what you hold and LT is the right mouse button. L3 toggles crouch, D-pad up opens chat and Select holds the player list. The game has no controller support. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "1782210"
+profile = "Crab Game"
+
+[[rules]]
+kind = "executable"
+value = "Crab Game.exe"
+profile = "Crab Game"
+[[profiles]]
+name = "Crab Game"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 250
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_V"] }
+North = { keys = ["KEY_Q"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_T"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 3500.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and closes the other screens.
+{south} picks up and uses things; hold {south} to sprint. {east} jumps, and {l3} toggles crouch. {rt} punches, swings or shoots what you're holding, {lt} is the right mouse button, and {north} drops your item.
+Hold {west} to talk on proximity voice chat. {up} opens the text chat: type with the on-screen keyboard ({guide} + {west}), then press Enter. Hold {select} for the player list.
+These keys are written from memory and not checked in the game (sprint, crouch, drop, voice and chat especially); compare them with the game's Settings → Controls and change the buttons here to match. The gyro's full turn is a guess, not measured: turn in place and adjust it until a full turn of the controller turns you around once.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "{icon:fist} Punch / use item" }
+"trigger:Left" = { text = "Right click" }
+"button:South" = { text = "{icon:hand} Pick up · interact" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "{icon:microphone} Voice (hold)" }
+"button:North" = { text = "{icon:drop-item} Drop item" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:DpadUp" = { text = "{icon:messages} Chat" }
+"button:Select" = { text = "{icon:people} Players" }
+"button:Start" = { text = "Menu" }
+
+[[profiles]]
+name = "Crab Game + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 250
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_V"] }
+North = { keys = ["KEY_Q"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_T"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 3500.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 8000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+{start} (Escape) opens the game's menu and closes the other screens.
+{south} picks up and uses things; hold {south} to sprint. {east} jumps, and {l3} toggles crouch. {rt} punches, swings or shoots what you're holding, {lt} is the right mouse button, and {north} drops your item.
+Hold {west} to talk on proximity voice chat. {up} opens the text chat: type with the on-screen keyboard ({guide} + {west}), then press Enter. Hold {select} for the player list.
+These keys are written from memory and not checked in the game (sprint, crouch, drop, voice and chat especially); compare them with the game's Settings → Controls and change the buttons here to match. The gyro's full turn is a guess, not measured: turn in place and adjust it until a full turn of the controller turns you around once.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "{icon:fist} Punch / use item" }
+"trigger:Left" = { text = "Right click" }
+"button:South" = { text = "{icon:hand} Pick up · interact" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "{icon:microphone} Voice (hold)" }
+"button:North" = { text = "{icon:drop-item} Drop item" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:DpadUp" = { text = "{icon:messages} Chat" }
+"button:Select" = { text = "{icon:people} Players" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles]]
+name = "Crab Game + Flick stick"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 250
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_V"] }
+North = { keys = ["KEY_Q"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_T"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 8000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+{start} (Escape) opens the game's menu and closes the other screens.
+{south} picks up and uses things; hold {south} to sprint. {east} jumps, and {l3} toggles crouch. {rt} punches, swings or shoots what you're holding, {lt} is the right mouse button, and {north} drops your item.
+Hold {west} to talk on proximity voice chat. {up} opens the text chat: type with the on-screen keyboard ({guide} + {west}), then press Enter. Hold {select} for the player list.
+These keys are written from memory and not checked in the game (sprint, crouch, drop, voice and chat especially); compare them with the game's Settings → Controls and change the buttons here to match. The gyro's full turn is a guess, not measured: turn in place and adjust it until a full turn of the controller turns you around once.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "{icon:fist} Punch / use item" }
+"trigger:Left" = { text = "Right click" }
+"button:South" = { text = "{icon:hand} Pick up · interact" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "{icon:microphone} Voice (hold)" }
+"button:North" = { text = "{icon:drop-item} Drop item" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:DpadUp" = { text = "{icon:messages} Chat" }
+"button:Select" = { text = "{icon:people} Players" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[keyboard_style]
+corners = 0.45
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1c1a2b"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#2c2942"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#ff5a4a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#ff8a6e"
+opacity = 0.5
+
+[keyboard_style.gradient]
+color = "#232038"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#45405f"
+
+[keyboard_style.type]
+case = "none"
+letter_spacing = 0
+
+[numpad_style]
+corners = 0.45
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1c1a2b"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#2c2942"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#ff5a4a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#ff8a6e"
+opacity = 0.5
+
+[numpad_style.gradient]
+color = "#232038"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#45405f"
+
+[numpad_style.type]
+case = "none"
+letter_spacing = 0
+
+[media_style]
+corners = 0.45
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1c1a2b"
+opacity = 0.92
+
+[media_style.items]
+color = "#2c2942"
+opacity = 0.95
+
+[media_style.selected]
+color = "#ff5a4a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#ff8a6e"
+opacity = 0.5
+
+[media_style.gradient]
+color = "#232038"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#45405f"
+
+[media_style.type]
+case = "none"
+letter_spacing = 0
+
+[menu_style]
+corners = 0.45
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1c1a2b"
+opacity = 0.92
+
+[menu_style.items]
+color = "#2c2942"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#ff5a4a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#ff8a6e"
+opacity = 0.5
+
+[menu_style.gradient]
+color = "#232038"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#45405f"
+
+[menu_style.glow]
+color = "#ff6a52"
+opacity = 0.3
+blur = 20
+
+[menu_style.type]
+case = "none"
+letter_spacing = 0
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "pop", volume = 0.08, pitch = 1.2}
+pick = {kind = "boing", volume = 0.15}
+open = {kind = "pop", volume = 0.1}
+close = {kind = "swish", volume = 0.03, pitch = 1.4}
+
+[sounds.guide]
+open = {kind = "pop", volume = 0.1}
+
+[sounds.keyboard]
+step = {kind = "pop", volume = 0.08, pitch = 1.2}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "pop", volume = 0.08, pitch = 1.2}
+pick = {kind = "blip", volume = 0.15}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

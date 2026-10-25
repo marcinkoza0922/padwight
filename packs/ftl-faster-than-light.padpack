@@ -1,0 +1,838 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "e6db16f4-2729-4693-b317-a0ffd534b118"
+name = "FTL: Faster Than Light"
+version = "1.0"
+author = "Padwight"
+description = "FTL: Faster Than Light on an Xbox-style pad. The right stick moves the pointer and RT or A clicks to select crew, target rooms and power systems; LT or B right-clicks to move crew. X pauses. Hold LB to power systems, RB for weapons and drones, L3 for the cloak, teleporter and hacking, and the D-pad left for the crew. Overlays in the ship's grey panels and amber highlights. The \"FTL + Gyro\" profile also moves the pointer by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "212680"
+profile = "FTL: Faster Than Light"
+
+[[rules]]
+kind = "executable"
+value = "FTLGame.exe"
+profile = "FTL: Faster Than Light"
+
+[[rules]]
+kind = "executable"
+value = "FTL.amd64"
+profile = "FTL: Faster Than Light"
+
+[[rules]]
+kind = "executable"
+value = "FTL.x86"
+profile = "FTL: Faster Than Light"
+
+[[profiles]]
+name = "FTL: Faster Than Light"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {mouse = "Right"}
+West = {keys = ["KEY_SPACE"]}
+North = {keys = ["KEY_J"]}
+LeftBumper = {open_menu = "Systems"}
+RightBumper = {open_menu = "Weapons"}
+LeftStick = {open_menu = "Ship abilities"}
+RightStick = {keys = ["KEY_V"]}
+Select = {open_menu = "Ship"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {keys = ["KEY_Z"]}
+DpadDown = {keys = ["KEY_X"]}
+DpadLeft = {open_menu = "Crew"}
+DpadRight = {keys = ["KEY_ENTER"]}
+
+[profiles.gestures.DpadRight.long_press]
+keys = ["KEY_SLASH"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer and the left stick {ls} moves it slowly. {rt} or {south} clicks: select crew, target a room, power a system. {lt} or {east} right-clicks: send the selected crew to a room, take a bar of power off a system, put a weapon back.
+{west} pauses and unpauses (Space). Pause often: every order works while the game is paused.
+Hold {lb} for the systems and aim {rs} at one to give it a bar of power. Hold {rb} for the weapons and drones, and {l3} for the cloak, teleporter, hacking, mind control, battery and lockdown. {r3} turns autofire on and off.
+Hold {left} to pick a crew member, or all of them. {right} sends everyone back to their saved stations; hold {right} to save where they stand now.
+{up} opens every door and {down} closes them, to vent a fire or a boarding party.
+{north} opens the star map to jump. {select} lists the upgrades, cargo and star map. {start} is the menu, and closes any screen.
+The keys are the game's defaults, read from its settings.ini. To take power off with a key, the game uses Shift and the system's key, unchecked; right-clicking the system's bar does the same.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:crosshair} Click (select, target)"}
+"trigger:Left" = {text = "Right-click (move crew)"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Right-click"}
+"button:West" = {text = "{icon:pause} {b}Pause{/b}"}
+"button:North" = {text = "{icon:rocket} Jump (star map)"}
+"button:LeftBumper" = {text = "Hold: {icon:bolt} power systems"}
+"button:RightBumper" = {text = "Hold: {icon:attack} weapons, drones"}
+"button:LeftStick" = {text = "Hold: ship abilities"}
+"button:RightStick" = {text = "Autofire on / off"}
+"button:Select" = {text = "{icon:wrench} Upgrades, cargo"}
+"button:Start" = {text = "Menu"}
+"button:DpadUp" = {text = "{icon:gate} Open all doors"}
+"button:DpadDown" = {text = "Close all doors"}
+"button:DpadLeft" = {text = "Hold: {icon:people} pick crew"}
+"button:DpadRight" = {text = "Crew to stations"}
+"gesture:button:DpadRight:long_press" = {text = "{icon:save} Save stations"}
+
+
+[[profiles]]
+name = "FTL + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {mouse = "Right"}
+West = {keys = ["KEY_SPACE"]}
+North = {keys = ["KEY_J"]}
+LeftBumper = {open_menu = "Systems"}
+RightBumper = {open_menu = "Weapons"}
+LeftStick = {open_menu = "Ship abilities"}
+RightStick = {keys = ["KEY_V"]}
+Select = {open_menu = "Ship"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {keys = ["KEY_Z"]}
+DpadDown = {keys = ["KEY_X"]}
+DpadLeft = {open_menu = "Crew"}
+DpadRight = {keys = ["KEY_ENTER"]}
+
+[profiles.gestures.DpadRight.long_press]
+keys = ["KEY_SLASH"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer and the left stick {ls} moves it slowly. {rt} or {south} clicks: select crew, target a room, power a system. {lt} or {east} right-clicks: send the selected crew to a room, take a bar of power off a system, put a weapon back.
+{west} pauses and unpauses (Space). Pause often: every order works while the game is paused.
+Hold {lb} for the systems and aim {rs} at one to give it a bar of power. Hold {rb} for the weapons and drones, and {l3} for the cloak, teleporter, hacking, mind control, battery and lockdown. {r3} turns autofire on and off.
+Hold {left} to pick a crew member, or all of them. {right} sends everyone back to their saved stations; hold {right} to save where they stand now.
+{up} opens every door and {down} closes them, to vent a fire or a boarding party.
+{north} opens the star map to jump. {select} lists the upgrades, cargo and star map. {start} is the menu, and closes any screen.
+The keys are the game's defaults, read from its settings.ini. To take power off with a key, the game uses Shift and the system's key, unchecked; right-clicking the system's bar does the same.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:crosshair} Click (select, target)"}
+"trigger:Left" = {text = "Right-click (move crew)"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Right-click"}
+"button:West" = {text = "{icon:pause} {b}Pause{/b}"}
+"button:North" = {text = "{icon:rocket} Jump (star map)"}
+"button:LeftBumper" = {text = "Hold: {icon:bolt} power systems"}
+"button:RightBumper" = {text = "Hold: {icon:attack} weapons, drones"}
+"button:LeftStick" = {text = "Hold: ship abilities"}
+"button:RightStick" = {text = "Autofire on / off"}
+"button:Select" = {text = "{icon:wrench} Upgrades, cargo"}
+"button:Start" = {text = "Menu"}
+"button:DpadUp" = {text = "{icon:gate} Open all doors"}
+"button:DpadDown" = {text = "Close all doors"}
+"button:DpadLeft" = {text = "Hold: {icon:people} pick crew"}
+"button:DpadRight" = {text = "Crew to stations"}
+"gesture:button:DpadRight:long_press" = {text = "{icon:save} Save stations"}
+"combo:button:Select+button:Start" = {text = "Pause gyro (hold)"}
+
+
+[[menus]]
+name = "Systems"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:shield} Shields {box}A{/box}"
+action = {keys = ["KEY_A"]}
+
+[[menus.items]]
+label = "{icon:rocket} Engines {box}S{/box}"
+action = {keys = ["KEY_S"]}
+
+[[menus.items]]
+label = "{icon:medkit} Medbay {box}D{/box}"
+action = {keys = ["KEY_D"]}
+
+[[menus.items]]
+label = "{icon:waves} Oxygen {box}F{/box}"
+action = {keys = ["KEY_F"]}
+
+[[menus.items]]
+label = "{icon:attack} Weapons {box}W{/box}"
+action = {keys = ["KEY_W"]}
+
+[[menus.items]]
+label = "{icon:chip} Drones {box}E{/box}"
+action = {keys = ["KEY_E"]}
+
+[[menus.items]]
+label = "{icon:move} Teleporter {box}G{/box}"
+action = {keys = ["KEY_G"]}
+
+[[menus.items]]
+label = "{icon:eye} Cloaking {box}H{/box}"
+action = {keys = ["KEY_H"]}
+
+[[menus.items]]
+label = "{icon:tech} Hacking {box}L{/box}"
+action = {keys = ["KEY_L"]}
+
+[[menus.items]]
+label = "{icon:brain} Mind control {box}K{/box}"
+action = {keys = ["KEY_K"]}
+
+[[menus.items]]
+label = "{icon:bomb} Artillery {box}Y{/box}"
+action = {keys = ["KEY_Y"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1d2226"
+opacity = 0.93
+
+[menus.style.items]
+color = "#3a4248"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#f0c23c"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#d4d9dc"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#121518"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#7d878d"
+
+[menus.style.glow]
+color = "#ffd75a"
+opacity = 0.45
+blur = 14
+
+[menus.style.type]
+letter_spacing = 1
+case = "upper"
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#d4d9dc"}
+scanlines = {spacing = 3, opacity = 0.08, color = "#000000", drift = false}
+
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:attack} Weapon 1 {box}1{/box}"
+action = {keys = ["KEY_1"]}
+
+[[menus.items]]
+label = "{icon:attack} Weapon 2 {box}2{/box}"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:attack} Weapon 3 {box}3{/box}"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:attack} Weapon 4 {box}4{/box}"
+action = {keys = ["KEY_4"]}
+
+[[menus.items]]
+label = "{icon:chip} Drone 1 {box}5{/box}"
+action = {keys = ["KEY_5"]}
+
+[[menus.items]]
+label = "{icon:chip} Drone 2 {box}6{/box}"
+action = {keys = ["KEY_6"]}
+
+[[menus.items]]
+label = "{icon:chip} Drone 3 {box}7{/box}"
+action = {keys = ["KEY_7"]}
+
+[[menus.items]]
+label = "{icon:automate} Autofire {box}V{/box}"
+action = {keys = ["KEY_V"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1d2226"
+opacity = 0.93
+
+[menus.style.items]
+color = "#3a4248"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#f0c23c"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#d4d9dc"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#121518"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#7d878d"
+
+[menus.style.glow]
+color = "#ffd75a"
+opacity = 0.45
+blur = 14
+
+[menus.style.type]
+letter_spacing = 1
+case = "upper"
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#d4d9dc"}
+scanlines = {spacing = 3, opacity = 0.08, color = "#000000", drift = false}
+
+
+[[menus]]
+name = "Ship abilities"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:eye} Cloak {box}C{/box}"
+action = {keys = ["KEY_C"]}
+
+[[menus.items]]
+label = "{icon:move} Send crew {box}T{/box}"
+action = {keys = ["KEY_T"]}
+
+[[menus.items]]
+label = "{icon:load-in} Bring crew back {box}R{/box}"
+action = {keys = ["KEY_R"]}
+
+[[menus.items]]
+label = "{icon:tech} Hack {box}N{/box}"
+action = {keys = ["KEY_N"]}
+
+[[menus.items]]
+label = "{icon:brain} Mind control {box}M{/box}"
+action = {keys = ["KEY_M"]}
+
+[[menus.items]]
+label = "{icon:bolt} Battery {box}B{/box}"
+action = {keys = ["KEY_B"]}
+
+[[menus.items]]
+label = "{icon:crystal} Lockdown {box}P{/box}"
+action = {keys = ["KEY_P"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1d2226"
+opacity = 0.93
+
+[menus.style.items]
+color = "#3a4248"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#f0c23c"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#d4d9dc"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#121518"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#7d878d"
+
+[menus.style.glow]
+color = "#ffd75a"
+opacity = 0.45
+blur = 14
+
+[menus.style.type]
+letter_spacing = 1
+case = "upper"
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#d4d9dc"}
+scanlines = {spacing = 3, opacity = 0.08, color = "#000000", drift = false}
+
+
+[[menus]]
+name = "Crew"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:person} Crew 1 {box}F1{/box}"
+action = {keys = ["KEY_F1"]}
+
+[[menus.items]]
+label = "{icon:person} Crew 2 {box}F2{/box}"
+action = {keys = ["KEY_F2"]}
+
+[[menus.items]]
+label = "{icon:person} Crew 3 {box}F3{/box}"
+action = {keys = ["KEY_F3"]}
+
+[[menus.items]]
+label = "{icon:person} Crew 4 {box}F4{/box}"
+action = {keys = ["KEY_F4"]}
+
+[[menus.items]]
+label = "{icon:person} Crew 5 {box}F5{/box}"
+action = {keys = ["KEY_F5"]}
+
+[[menus.items]]
+label = "{icon:person} Crew 6 {box}F6{/box}"
+action = {keys = ["KEY_F6"]}
+
+[[menus.items]]
+label = "{icon:person} Crew 7 {box}F7{/box}"
+action = {keys = ["KEY_F7"]}
+
+[[menus.items]]
+label = "{icon:person} Crew 8 {box}F8{/box}"
+action = {keys = ["KEY_F8"]}
+
+[[menus.items]]
+label = "{icon:people} {b}All crew{/b} {box}Q{/box}"
+action = {keys = ["KEY_Q"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1d2226"
+opacity = 0.93
+
+[menus.style.items]
+color = "#3a4248"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#f0c23c"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#d4d9dc"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#121518"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#7d878d"
+
+[menus.style.glow]
+color = "#ffd75a"
+opacity = 0.45
+blur = 14
+
+[menus.style.type]
+letter_spacing = 1
+case = "upper"
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#d4d9dc"}
+scanlines = {spacing = 3, opacity = 0.08, color = "#000000", drift = false}
+
+
+[[menus]]
+name = "Ship"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:map} Star map (jump) {box}J{/box}"
+action = {keys = ["KEY_J"]}
+
+[[menus.items]]
+label = "{icon:wrench} Ship upgrades {box}U{/box}"
+action = {keys = ["KEY_U"]}
+
+[[menus.items]]
+label = "{icon:storage} Cargo {box}I{/box}"
+action = {keys = ["KEY_I"]}
+
+[[menus.items]]
+label = "{icon:save} Save crew stations {box}/{/box}"
+action = {keys = ["KEY_SLASH"]}
+
+[[menus.items]]
+label = "{icon:gear} Options {box}O{/box}"
+action = {keys = ["KEY_O"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1d2226"
+opacity = 0.93
+
+[menus.style.items]
+color = "#3a4248"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#f0c23c"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#d4d9dc"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#121518"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#7d878d"
+
+[menus.style.glow]
+color = "#ffd75a"
+opacity = 0.45
+blur = 14
+
+[menus.style.type]
+letter_spacing = 1
+case = "upper"
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#d4d9dc"}
+scanlines = {spacing = 3, opacity = 0.08, color = "#000000", drift = false}
+
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1d2226"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#3a4248"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#f0c23c"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#d4d9dc"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#121518"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#7d878d"
+
+[keyboard_style.type]
+letter_spacing = 1
+case = "upper"
+
+[keyboard_style.ornament]
+frame = {kind = "chamfer", size = 10, width = 2, color = "#d4d9dc"}
+
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1d2226"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#3a4248"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#f0c23c"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#d4d9dc"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#121518"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#7d878d"
+
+[numpad_style.type]
+letter_spacing = 1
+case = "upper"
+
+[numpad_style.ornament]
+frame = {kind = "chamfer", size = 10, width = 2, color = "#d4d9dc"}
+
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1d2226"
+opacity = 0.93
+
+[media_style.items]
+color = "#3a4248"
+opacity = 0.95
+
+[media_style.selected]
+color = "#f0c23c"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#d4d9dc"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#121518"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#7d878d"
+
+[media_style.type]
+letter_spacing = 1
+case = "upper"
+
+[media_style.ornament]
+frame = {kind = "chamfer", size = 10, width = 2, color = "#d4d9dc"}
+
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1d2226"
+opacity = 0.93
+
+[menu_style.items]
+color = "#3a4248"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#f0c23c"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#d4d9dc"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#121518"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#7d878d"
+
+[menu_style.glow]
+color = "#ffd75a"
+opacity = 0.45
+blur = 14
+
+[menu_style.type]
+letter_spacing = 1
+case = "upper"
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#d4d9dc"}
+scanlines = {spacing = 3, opacity = 0.08, color = "#000000", drift = false}
+
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "blip", volume = 0.06, pitch = 0.8}
+pick = {kind = "switch", volume = 0.14}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.07, pitch = 1.0}
+pick = {kind = "blip", volume = 0.08, pitch = 1.1}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.07, pitch = 1.0}
+pick = {kind = "blip", volume = 0.08, pitch = 1.1}
+
+[sounds.media]
+pick = {kind = "switch", volume = 0.12}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

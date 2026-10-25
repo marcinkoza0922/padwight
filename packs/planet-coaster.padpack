@@ -1,0 +1,531 @@
+format = 20
+macros = []
+overlay_font = "Comfortaa"
+
+[pack]
+id = "c41f7e92-2d5b-4b8a-8e36-71a0d9c5e2b7"
+name = "Planet Coaster"
+version = "1.0"
+author = "Padwight"
+description = "Planet Coaster on an Xbox-style pad, for the game's default keys. The left stick pans the camera and the right stick moves the pointer; RT and A click, hold LT to turn the camera. Hold LB with the D-pad for the move tools. X rotates, hold Y for height and RB for Ctrl, L3 switches angle snap, and the D-pad zooms and turns. Rounded overlays in the park's night blue, a family with Planet Zoo."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "493340"
+profile = "Planet Coaster"
+
+[[rules]]
+kind = "executable"
+value = "PlanetCoaster.exe"
+profile = "Planet Coaster"
+
+[[profiles]]
+name = "Planet Coaster"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_Z"]}
+North = {keys = ["KEY_LEFTSHIFT"]}
+LeftBumper = {open_menu = "Tools"}
+RightBumper = {keys = ["KEY_LEFTCTRL"]}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_SPACE"]}
+RightStick = {keys = ["KEY_TAB"]}
+DpadUp = {keys = ["KEY_PAGEUP"]}
+DpadDown = {keys = ["KEY_PAGEDOWN"]}
+DpadLeft = {keys = ["KEY_Q"]}
+DpadRight = {keys = ["KEY_E"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Middle"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer and the left stick {ls} pans the camera. {rt} or {south} clicks; hold {lt} and move the right stick {rs} to turn and tilt the camera. {up} and {down} zoom, {left} and {right} turn the camera.
+Hold {lb} and press the {dpad} for the move tools: up moves, right is the advanced move, down deletes and left switches the freelook camera.
+{west} turns what you're placing a quarter; hold it and move the pointer to turn it freely. Hold {north} and move the pointer up or down to change its height, {r3} resets it. Hold {rb} for Ctrl. {l3} switches angle snap.
+{east} cancels and deselects, {start} is the menu. The park's screens and build categories have no keys we could confirm: point at them on the toolbar.
+Keys are the game's defaults from its v1.0 keybind list and players' notes, not read from an install; the move tools, delete and freelook are assumed to match Planet Zoo's. If one is off, check Settings → Controls. The Console Edition's rebuilt interface can't be copied, so this follows the PC keys. Naming a ride or the park: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan the camera"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click"}
+"trigger:Left" = {text = "Hold: turn the camera"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Cancel / deselect"}
+"button:West" = {text = "{icon:rotate} Rotate (hold: freely)"}
+"button:North" = {text = "{icon:height} Hold: height"}
+"button:LeftBumper" = {text = "Hold + {dpad}: move tools"}
+"button:RightBumper" = {text = "Hold: Ctrl"}
+"button:Start" = {text = "Menu"}
+"button:LeftStick" = {text = "{icon:grid} Angle snap on / off"}
+"button:RightStick" = {text = "{icon:height} Reset height"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Turn the camera"
+
+
+[[profiles]]
+name = "Planet Coaster + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_Z"]}
+North = {keys = ["KEY_LEFTSHIFT"]}
+LeftBumper = {open_menu = "Tools"}
+RightBumper = {keys = ["KEY_LEFTCTRL"]}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_SPACE"]}
+RightStick = {keys = ["KEY_TAB"]}
+DpadUp = {keys = ["KEY_PAGEUP"]}
+DpadDown = {keys = ["KEY_PAGEDOWN"]}
+DpadLeft = {keys = ["KEY_Q"]}
+DpadRight = {keys = ["KEY_E"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Middle"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer and the left stick {ls} pans the camera. {rt} or {south} clicks; hold {lt} and move the right stick {rs} to turn and tilt the camera. {up} and {down} zoom, {left} and {right} turn the camera.
+Hold {lb} and press the {dpad} for the move tools: up moves, right is the advanced move, down deletes and left switches the freelook camera.
+{west} turns what you're placing a quarter; hold it and move the pointer to turn it freely. Hold {north} and move the pointer up or down to change its height, {r3} resets it. Hold {rb} for Ctrl. {l3} switches angle snap.
+{east} cancels and deselects, {start} is the menu. The park's screens and build categories have no keys we could confirm: point at them on the toolbar.
+Keys are the game's defaults from its v1.0 keybind list and players' notes, not read from an install; the move tools, delete and freelook are assumed to match Planet Zoo's. If one is off, check Settings → Controls. The Console Edition's rebuilt interface can't be copied, so this follows the PC keys. Naming a ride or the park: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan the camera"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click"}
+"trigger:Left" = {text = "Hold: turn the camera"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Cancel / deselect"}
+"button:West" = {text = "{icon:rotate} Rotate (hold: freely)"}
+"button:North" = {text = "{icon:height} Hold: height"}
+"button:LeftBumper" = {text = "Hold + {dpad}: move tools"}
+"button:RightBumper" = {text = "Hold: Ctrl"}
+"button:Start" = {text = "Menu"}
+"button:LeftStick" = {text = "{icon:grid} Angle snap on / off"}
+"button:RightStick" = {text = "{icon:height} Reset height"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Turn the camera"
+
+[[menus]]
+name = "Tools"
+
+[menus.kind.directional]
+cluster = "DPad"
+
+[[menus.items]]
+label = "{icon:move} {b}Move{/b}"
+action = {keys = ["KEY_M"]}
+
+[[menus.items]]
+label = "{icon:rotate} Adv. move"
+action = {keys = ["KEY_X"]}
+
+[[menus.items]]
+label = "{icon:trash} {color:red}Delete{/color}"
+action = {keys = ["KEY_DELETE"]}
+
+[[menus.items]]
+label = "{icon:camera} Freelook"
+action = {keys = ["KEY_T"]}
+
+[menus.style]
+corners = 0.6
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#101c33"
+opacity = 0.93
+
+[menus.style.items]
+color = "#1d3256"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2fb4f0"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#2fb4f0"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#0a1224"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#35507c"
+
+[menus.style.glow]
+color = "#7fd6ff"
+opacity = 0.55
+blur = 18
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#35507c", opacity = 0.8}
+
+
+[keyboard_style]
+corners = 0.6
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#101c33"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#1d3256"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#2fb4f0"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#2fb4f0"
+opacity = 0.7
+
+[keyboard_style.gradient]
+color = "#0a1224"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#35507c"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+
+[numpad_style]
+corners = 0.6
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#101c33"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#1d3256"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#2fb4f0"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#2fb4f0"
+opacity = 0.7
+
+[numpad_style.gradient]
+color = "#0a1224"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#35507c"
+
+[numpad_style.type]
+letter_spacing = 0
+
+
+[media_style]
+corners = 0.6
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#101c33"
+opacity = 0.93
+
+[media_style.items]
+color = "#1d3256"
+opacity = 0.95
+
+[media_style.selected]
+color = "#2fb4f0"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#2fb4f0"
+opacity = 0.7
+
+[media_style.gradient]
+color = "#0a1224"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#35507c"
+
+[media_style.type]
+letter_spacing = 0
+
+
+[menu_style]
+corners = 0.6
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#101c33"
+opacity = 0.93
+
+[menu_style.items]
+color = "#1d3256"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#2fb4f0"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#2fb4f0"
+opacity = 0.7
+
+[menu_style.gradient]
+color = "#0a1224"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#35507c"
+
+[menu_style.glow]
+color = "#7fd6ff"
+opacity = 0.55
+blur = 18
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#35507c", opacity = 0.8}
+
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "marimba", volume = 0.14, pitch = 1.2}
+open = {kind = "pop", volume = 0.06, pitch = 1.1}
+close = {kind = "pop", volume = 0.048, pitch = 0.88}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "marimba", volume = 0.14, pitch = 1.2}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "keys", volume = 0.2}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.28, length_ms = 35}
+open = {strength = 0.06, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.19, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.19, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.19, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.19, length_ms = 60}

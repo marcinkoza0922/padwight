@@ -1,0 +1,533 @@
+format = 20
+macros = []
+overlay_font = "Inter"
+
+[pack]
+id = "5e9a2b17-0c84-4d3f-b6e1-2a7f8c4d9e05"
+name = "Prison Architect"
+version = "1.0"
+author = "Padwight"
+description = "Prison Architect on an Xbox-style pad. The left stick pans the prison and the right stick moves the pointer; RT and A click and drag, LT right-clicks to cancel. X rotates, Y pauses, hold RB with the D-pad for the speed, and the D-pad zooms. Overlays in grey concrete with jumpsuit orange."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "233450"
+profile = "Prison Architect"
+
+[[rules]]
+kind = "executable"
+value = "Prison Architect.exe"
+profile = "Prison Architect"
+
+[[rules]]
+kind = "executable"
+value = "Prison Architect64.exe"
+profile = "Prison Architect"
+
+[[rules]]
+kind = "executable"
+value = "PrisonArchitect"
+profile = "Prison Architect"
+
+[[rules]]
+kind = "executable"
+value = "PrisonArchitect.x86_64"
+profile = "Prison Architect"
+
+[[profiles]]
+name = "Prison Architect"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_R"]}
+North = {keys = ["KEY_SPACE"]}
+RightBumper = {open_menu = "Speed"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer and the left stick {ls} pans the prison. {rt} or {south} clicks; hold it and drag to lay out walls, rooms and zones. {lt} right-clicks to cancel what's in hand.
+{west} rotates the object you're placing. {north} pauses. Hold {rb} and press the {dpad} for the speed: left normal, up fast, right fastest, down pause. {up} and {down} zoom.
+{east} and {start} close windows and open the menu. Every other tool (foundations, rooms, deployment, staff, reports, intelligence) is on the toolbar: point at it.
+Panning, zoom and R to rotate are the game's defaults; pause on Space and the speeds on 1 to 3 are a guess, not read from an install. The game can't rebind them, so if they don't answer, use the clock's buttons. The console editions had their own interface, which this doesn't copy. Naming a prison or a prisoner: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click / drag"}
+"trigger:Left" = {text = "Right-click (cancel)"}
+"button:South" = {text = "Click / drag"}
+"button:East" = {text = "Close"}
+"button:West" = {text = "{icon:rotate} Rotate"}
+"button:North" = {text = "{icon:pause} Pause"}
+"button:RightBumper" = {text = "Hold + {dpad}: speed"}
+"button:Start" = {text = "Menu"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+
+[[profiles]]
+name = "Prison Architect + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_R"]}
+North = {keys = ["KEY_SPACE"]}
+RightBumper = {open_menu = "Speed"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer and the left stick {ls} pans the prison. {rt} or {south} clicks; hold it and drag to lay out walls, rooms and zones. {lt} right-clicks to cancel what's in hand.
+{west} rotates the object you're placing. {north} pauses. Hold {rb} and press the {dpad} for the speed: left normal, up fast, right fastest, down pause. {up} and {down} zoom.
+{east} and {start} close windows and open the menu. Every other tool (foundations, rooms, deployment, staff, reports, intelligence) is on the toolbar: point at it.
+Panning, zoom and R to rotate are the game's defaults; pause on Space and the speeds on 1 to 3 are a guess, not read from an install. The game can't rebind them, so if they don't answer, use the clock's buttons. The console editions had their own interface, which this doesn't copy. Naming a prison or a prisoner: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click / drag"}
+"trigger:Left" = {text = "Right-click (cancel)"}
+"button:South" = {text = "Click / drag"}
+"button:East" = {text = "Close"}
+"button:West" = {text = "{icon:rotate} Rotate"}
+"button:North" = {text = "{icon:pause} Pause"}
+"button:RightBumper" = {text = "Hold + {dpad}: speed"}
+"button:Start" = {text = "Menu"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[menus]]
+name = "Speed"
+
+[menus.kind.directional]
+cluster = "DPad"
+
+[[menus.items]]
+label = "{icon:speed2} Fast"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:speed3} Fastest"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:pause} {b}Pause{/b}"
+action = {keys = ["KEY_SPACE"]}
+
+[[menus.items]]
+label = "{icon:speed1} Normal"
+action = {keys = ["KEY_1"]}
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#25282c"
+opacity = 0.94
+
+[menus.style.items]
+color = "#3b3f45"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#f07f1e"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#f07f1e"
+opacity = 0.75
+
+[menus.style.gradient]
+color = "#1a1c1f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#565b62"
+
+[menus.style.glow]
+color = "#ff9a3c"
+opacity = 0.55
+blur = 14
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+concrete = {opacity = 0.25}
+dividers = {width = 1, color = "#565b62", opacity = 0.8}
+
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#25282c"
+opacity = 0.94
+
+[keyboard_style.items]
+color = "#3b3f45"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#f07f1e"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#f07f1e"
+opacity = 0.75
+
+[keyboard_style.gradient]
+color = "#1a1c1f"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#565b62"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+[keyboard_style.ornament]
+concrete = {opacity = 0.25}
+
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#25282c"
+opacity = 0.94
+
+[numpad_style.items]
+color = "#3b3f45"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#f07f1e"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#f07f1e"
+opacity = 0.75
+
+[numpad_style.gradient]
+color = "#1a1c1f"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#565b62"
+
+[numpad_style.type]
+letter_spacing = 0
+
+[numpad_style.ornament]
+concrete = {opacity = 0.25}
+
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#25282c"
+opacity = 0.94
+
+[media_style.items]
+color = "#3b3f45"
+opacity = 0.95
+
+[media_style.selected]
+color = "#f07f1e"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#f07f1e"
+opacity = 0.75
+
+[media_style.gradient]
+color = "#1a1c1f"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#565b62"
+
+[media_style.type]
+letter_spacing = 0
+
+[media_style.ornament]
+concrete = {opacity = 0.25}
+
+
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#25282c"
+opacity = 0.94
+
+[menu_style.items]
+color = "#3b3f45"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#f07f1e"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#f07f1e"
+opacity = 0.75
+
+[menu_style.gradient]
+color = "#1a1c1f"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#565b62"
+
+[menu_style.glow]
+color = "#ff9a3c"
+opacity = 0.55
+blur = 14
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+concrete = {opacity = 0.25}
+dividers = {width = 1, color = "#565b62", opacity = 0.8}
+
+
+[motion]
+keyboard = "subtle"
+numpad = "subtle"
+menu = "subtle"
+media = "subtle"
+offer = "subtle"
+info = "subtle"
+log = "subtle"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "latch", volume = 0.1}
+open = {kind = "swish", volume = 0.03, pitch = 0.8}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "latch", volume = 0.1}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "typewriter", volume = 0.15}
+
+[sounds.media]
+pick = {kind = "latch", volume = 0.1}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.28, length_ms = 35}
+open = {strength = 0.06, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.19, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.19, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.19, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.19, length_ms = 60}

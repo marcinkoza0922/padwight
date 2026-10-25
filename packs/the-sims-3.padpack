@@ -1,0 +1,700 @@
+format = 20
+macros = []
+overlay_font = "Comfortaa"
+
+[pack]
+id = "539b76b8-054b-4277-ac60-fc0ffb28759e"
+name = "The Sims 3"
+version = "1.0"
+author = "Padwight"
+description = "The Sims 3 on an Xbox-style pad, for the PC game's keys. The left stick moves the camera and the right stick the pointer; RT and A click, LT right-clicks. Hold RB with the D-pad for the speed, hold LB for the hand tool, undo, redo and captures, Select for Live, Buy and Build mode. The D-pad zooms, changes floors and turns objects. Overlays in the game's sky blue and white with a plumbob-green glow."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "47890"
+profile = "The Sims 3"
+
+[[rules]]
+kind = "executable"
+value = "TS3W.exe"
+profile = "The Sims 3"
+
+[[rules]]
+kind = "executable"
+value = "TS3.exe"
+profile = "The Sims 3"
+
+[[profiles]]
+name = "The Sims 3"
+combos = [
+    {buttons = ["RightBumper", "DpadUp"], action = {keys = ["KEY_2"]}},
+    {buttons = ["RightBumper", "DpadRight"], action = {keys = ["KEY_3"]}},
+    {buttons = ["RightBumper", "DpadDown"], action = {keys = ["KEY_0"]}},
+    {buttons = ["RightBumper", "DpadLeft"], action = {keys = ["KEY_1"]}},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_DELETE"]}
+North = {keys = ["KEY_TAB"]}
+LeftBumper = {open_menu = "Tools"}
+RightBumper = {open_menu = "Speed"}
+Select = {open_menu = "Modes"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_0"]}
+RightStick = {keys = ["KEY_LEFTALT"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_COMMA"]}
+DpadRight = {keys = ["KEY_DOT"]}
+
+[profiles.gestures.DpadUp.long_press]
+keys = ["KEY_PAGEUP"]
+
+[profiles.gestures.DpadDown.long_press]
+keys = ["KEY_PAGEDOWN"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The PC game has no controller support (the console editions were rebuilt around a pad, so this follows the PC keys). The right stick {rs} moves the pointer and the left stick {ls} moves the camera. {rt} or {south} clicks a Sim or an object for its pie menu; hold {lt} and move the pointer to turn the camera.
+Hold {rb} and press the {dpad} for the speed: left normal, up fast, right ultra, down pause. Click {l3} to pause too.
+{select} lists Live, Buy and Build mode, the camera mode and the cheat console. Hold {lb} for the hand tool, undo, redo, a screenshot and a video.
+In Build and Buy, {left} and {right} turn the object in hand, hold {r3} to place it freely, {west} {color:red}deletes{/color} it. {up} and {down} zoom; hold them to go up or down a floor. {north} switches the camera mode.
+The Sims 3 can't remap its keys, and these are its remembered defaults (much as in The Sims 4), not checked on an install. Typing a name or a cheat: {guide} + {west} opens the on-screen keyboard. Media controls: {guide} + {lb}.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move the camera" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Click" }
+"trigger:Left" = { text = "Right-click (hold: turn camera)" }
+"button:South" = { text = "Click" }
+"button:East" = { text = "Cancel / close" }
+"button:West" = { text = "{icon:trash} {color:red}Delete{/color}" }
+"button:North" = { text = "{icon:camera} Camera mode" }
+"button:LeftBumper" = { text = "Hold: {icon:hand} tools" }
+"button:RightBumper" = { text = "Hold + {dpad}: speed" }
+"button:Select" = { text = "Modes" }
+"button:Start" = { text = "Menu" }
+"button:LeftStick" = { text = "{icon:pause} Pause" }
+"button:RightStick" = { text = "Hold: free placement" }
+"gesture:button:DpadUp:long_press" = { text = "Floor up" }
+"gesture:button:DpadDown:long_press" = { text = "Floor down" }
+"button:DpadUp" = { text = "Zoom in" }
+"button:DpadDown" = { text = "Zoom out" }
+"combo:button:RightBumper+button:DpadUp" = { text = "{icon:speed2} Fast" }
+"combo:button:RightBumper+button:DpadRight" = { text = "{icon:speed3} Ultra" }
+"combo:button:RightBumper+button:DpadDown" = { text = "{icon:pause} Pause" }
+"combo:button:RightBumper+button:DpadLeft" = { text = "{icon:speed1} Normal" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "{icon:rotate} Turn the object"
+
+[[profiles]]
+name = "The Sims 3 + Gyro"
+combos = [
+    {buttons = ["RightBumper", "DpadUp"], action = {keys = ["KEY_2"]}},
+    {buttons = ["RightBumper", "DpadRight"], action = {keys = ["KEY_3"]}},
+    {buttons = ["RightBumper", "DpadDown"], action = {keys = ["KEY_0"]}},
+    {buttons = ["RightBumper", "DpadLeft"], action = {keys = ["KEY_1"]}},
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_DELETE"]}
+North = {keys = ["KEY_TAB"]}
+LeftBumper = {open_menu = "Tools"}
+RightBumper = {open_menu = "Speed"}
+Select = {open_menu = "Modes"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_0"]}
+RightStick = {keys = ["KEY_LEFTALT"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_COMMA"]}
+DpadRight = {keys = ["KEY_DOT"]}
+
+[profiles.gestures.DpadUp.long_press]
+keys = ["KEY_PAGEUP"]
+
+[profiles.gestures.DpadDown.long_press]
+keys = ["KEY_PAGEDOWN"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The PC game has no controller support (the console editions were rebuilt around a pad, so this follows the PC keys). The right stick {rs} moves the pointer and the left stick {ls} moves the camera. {rt} or {south} clicks a Sim or an object for its pie menu; hold {lt} and move the pointer to turn the camera.
+Hold {rb} and press the {dpad} for the speed: left normal, up fast, right ultra, down pause. Click {l3} to pause too.
+{select} lists Live, Buy and Build mode, the camera mode and the cheat console. Hold {lb} for the hand tool, undo, redo, a screenshot and a video.
+In Build and Buy, {left} and {right} turn the object in hand, hold {r3} to place it freely, {west} {color:red}deletes{/color} it. {up} and {down} zoom; hold them to go up or down a floor. {north} switches the camera mode.
+The Sims 3 can't remap its keys, and these are its remembered defaults (much as in The Sims 4), not checked on an install. Typing a name or a cheat: {guide} + {west} opens the on-screen keyboard. Media controls: {guide} + {lb}.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move the camera" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Click" }
+"trigger:Left" = { text = "Right-click (hold: turn camera)" }
+"button:South" = { text = "Click" }
+"button:East" = { text = "Cancel / close" }
+"button:West" = { text = "{icon:trash} {color:red}Delete{/color}" }
+"button:North" = { text = "{icon:camera} Camera mode" }
+"button:LeftBumper" = { text = "Hold: {icon:hand} tools" }
+"button:RightBumper" = { text = "Hold + {dpad}: speed" }
+"button:Select" = { text = "Modes" }
+"button:Start" = { text = "Menu" }
+"button:LeftStick" = { text = "{icon:pause} Pause" }
+"button:RightStick" = { text = "Hold: free placement" }
+"gesture:button:DpadUp:long_press" = { text = "Floor up" }
+"gesture:button:DpadDown:long_press" = { text = "Floor down" }
+"button:DpadUp" = { text = "Zoom in" }
+"button:DpadDown" = { text = "Zoom out" }
+"combo:button:RightBumper+button:DpadUp" = { text = "{icon:speed2} Fast" }
+"combo:button:RightBumper+button:DpadRight" = { text = "{icon:speed3} Ultra" }
+"combo:button:RightBumper+button:DpadDown" = { text = "{icon:pause} Pause" }
+"combo:button:RightBumper+button:DpadLeft" = { text = "{icon:speed1} Normal" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "{icon:rotate} Turn the object"
+
+[[menus]]
+name = "Speed"
+
+[menus.kind.directional]
+cluster = "DPad"
+
+[[menus.items]]
+label = "{icon:speed2} Fast"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:speed3} Ultra"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:pause} Pause"
+action = { keys = ["KEY_0"] }
+
+[[menus.items]]
+label = "{icon:speed1} Normal"
+action = { keys = ["KEY_1"] }
+
+[menus.style]
+corners = 0.55
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#eef4fb"
+opacity = 0.95
+
+[menus.style.items]
+color = "#ffffff"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2a6fc9"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8db6e6"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#d6e5f5"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#c2d6ee"
+
+[menus.style.glow]
+color = "#72d93a"
+opacity = 0.6
+blur = 16
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#c2d6ee", opacity = 0.9}
+
+[[menus]]
+name = "Modes"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:person} Live mode"
+action = { keys = ["KEY_F1"] }
+
+[[menus.items]]
+label = "{icon:shop} Buy mode"
+action = { keys = ["KEY_F2"] }
+
+[[menus.items]]
+label = "{icon:hammer} Build mode"
+action = { keys = ["KEY_F3"] }
+
+[[menus.items]]
+label = "{icon:camera} Camera mode"
+action = { keys = ["KEY_TAB"] }
+
+[[menus.items]]
+label = "{icon:chip} Cheat console"
+action = { keys = ["KEY_LEFTCTRL", "KEY_LEFTSHIFT", "KEY_C"] }
+
+[menus.style]
+corners = 0.55
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#eef4fb"
+opacity = 0.95
+
+[menus.style.items]
+color = "#ffffff"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2a6fc9"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8db6e6"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#d6e5f5"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#c2d6ee"
+
+[menus.style.glow]
+color = "#72d93a"
+opacity = 0.6
+blur = 16
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#c2d6ee", opacity = 0.9}
+
+[[menus]]
+name = "Tools"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:hand} Hand"
+action = { keys = ["KEY_H"] }
+
+[[menus.items]]
+label = "{icon:rotate-left} Undo"
+action = { keys = ["KEY_LEFTCTRL", "KEY_Z"] }
+
+[[menus.items]]
+label = "{icon:rotate} Redo"
+action = { keys = ["KEY_LEFTCTRL", "KEY_Y"] }
+
+[[menus.items]]
+label = "{icon:camera} Screenshot"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "{icon:cassette} Video"
+action = { keys = ["KEY_V"] }
+
+[menus.style]
+corners = 0.55
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#eef4fb"
+opacity = 0.95
+
+[menus.style.items]
+color = "#ffffff"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2a6fc9"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8db6e6"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#d6e5f5"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#c2d6ee"
+
+[menus.style.glow]
+color = "#72d93a"
+opacity = 0.6
+blur = 16
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#c2d6ee", opacity = 0.9}
+
+[keyboard_style]
+corners = 0.55
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#eef4fb"
+opacity = 0.95
+
+[keyboard_style.items]
+color = "#ffffff"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#2a6fc9"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8db6e6"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#d6e5f5"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#c2d6ee"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+[numpad_style]
+corners = 0.55
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#eef4fb"
+opacity = 0.95
+
+[numpad_style.items]
+color = "#ffffff"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#2a6fc9"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8db6e6"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#d6e5f5"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#c2d6ee"
+
+[numpad_style.type]
+letter_spacing = 0
+
+[media_style]
+corners = 0.55
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#eef4fb"
+opacity = 0.95
+
+[media_style.items]
+color = "#ffffff"
+opacity = 0.95
+
+[media_style.selected]
+color = "#2a6fc9"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8db6e6"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#d6e5f5"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#c2d6ee"
+
+[media_style.type]
+letter_spacing = 0
+
+[menu_style]
+corners = 0.55
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#eef4fb"
+opacity = 0.95
+
+[menu_style.items]
+color = "#ffffff"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#2a6fc9"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8db6e6"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#d6e5f5"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#c2d6ee"
+
+[menu_style.glow]
+color = "#72d93a"
+opacity = 0.6
+blur = 16
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#c2d6ee", opacity = 0.9}
+
+[motion]
+keyboard = "dreamy"
+numpad = "dreamy"
+menu = "dreamy"
+media = "dreamy"
+offer = "dreamy"
+info = "dreamy"
+log = "dreamy"
+
+[sounds.menu]
+step = {kind = "rollover", volume = 0.1}
+pick = {kind = "confirm", volume = 0.08}
+open = {kind = "pop", volume = 0.06, pitch = 1.2}
+
+[sounds.keyboard]
+step = {kind = "rollover", volume = 0.08}
+pick = {kind = "select", volume = 0.12}
+
+[sounds.numpad]
+step = {kind = "rollover", volume = 0.08}
+pick = {kind = "select", volume = 0.12}
+
+[sounds.media]
+pick = {kind = "select", volume = 0.12}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+open = {strength = 0.06, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}
