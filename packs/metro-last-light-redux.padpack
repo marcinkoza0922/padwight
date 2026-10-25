@@ -20,6 +20,11 @@ kind = "executable"
 value = "Metro Last Light Redux/MetroLL.exe"
 profile = "Metro: Last Light Redux"
 
+[[rules]]
+kind = "executable"
+value = "Metro Last Light Redux/metro.exe"
+profile = "Metro: Last Light Redux"
+
 [[profiles]]
 name = "Metro: Last Light Redux"
 combos = []

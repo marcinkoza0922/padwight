@@ -20,6 +20,11 @@ kind = "steam_app_id"
 value = "13530"
 profile = "Prince of Persia: The Two Thrones"
 
+[[rules]]
+kind = "executable"
+value = "Prince of Persia Two Thrones/PrinceOfPersia.exe"
+profile = "Prince of Persia: The Two Thrones"
+
 [[profiles]]
 name = "Prince of Persia: The Two Thrones"
 combos = []

@@ -21,6 +21,11 @@ value = "RE3_MERCE.exe"
 profile = "Resident Evil 3: Nemesis"
 
 
+[[rules]]
+kind = "steam_app_id"
+value = "4249120"
+profile = "Resident Evil 3: Nemesis"
+
 [[profiles]]
 name = "Resident Evil 3: Nemesis"
 combos = []

@@ -10,6 +10,10 @@ author = "Padwight"
 description = "Clair Obscur: Expedition 33 on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and the game's Controls options set the buttons. Padwight adds the Guide overlay on top, with the media controls and the on-screen keyboard, in the gold and midnight of Belle Époque Lumière."
 made_with = "Xbox controller"
 
+[controllers]
+dualshock = true
+dualsense = true
+
 [[rules]]
 kind = "executable"
 value = "SandFallGOG-Win64-Shipping.exe"
@@ -23,6 +27,11 @@ profile = "Expedition 33"
 [[rules]]
 kind = "steam_app_id"
 value = "1903340"
+profile = "Expedition 33"
+
+[[rules]]
+kind = "executable"
+value = "SandFall-WinGDK-Shipping.exe"
 profile = "Expedition 33"
 
 [[profiles]]

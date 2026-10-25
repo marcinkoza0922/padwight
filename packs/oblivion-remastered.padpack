@@ -10,6 +10,10 @@ author = "Padwight"
 description = "The Elder Scrolls IV: Oblivion Remastered (2025) on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard and the media controls, in the colors of Cyrodiil."
 made_with = "Xbox controller"
 
+[controllers]
+dualshock = true
+dualsense = true
+
 [[rules]]
 kind = "executable"
 value = "OblivionRemastered-Win64-Shipping.exe"
@@ -18,6 +22,11 @@ profile = "The Elder Scrolls IV: Oblivion Remastered"
 [[rules]]
 kind = "steam_app_id"
 value = "2623190"
+profile = "The Elder Scrolls IV: Oblivion Remastered"
+
+[[rules]]
+kind = "executable"
+value = "OblivionRemastered-WinGDK-Shipping.exe"
 profile = "The Elder Scrolls IV: Oblivion Remastered"
 
 [[profiles]]

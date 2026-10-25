@@ -20,6 +20,11 @@ kind = "executable"
 value = "Parkitect.exe"
 profile = "Parkitect"
 
+[[rules]]
+kind = "steam_app_id"
+value = "453090"
+profile = "Parkitect"
+
 [[profiles]]
 name = "Parkitect"
 combos = []

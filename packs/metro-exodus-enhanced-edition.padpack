@@ -10,9 +10,18 @@ author = "Padwight"
 description = "Metro Exodus Enhanced Edition (2021) on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and you set the buttons in the game's Controls options. Padwight adds the Guide overlay on top, in rust and tunnel-lamp amber. Gyro and flick stick profiles are included to try; they move the mouse beside the pad."
 made_with = "Xbox controller"
 
+[controllers]
+dualshock = true
+dualsense = true
+
 [[rules]]
 kind = "steam_app_id"
 value = "1449560"
+profile = "Metro Exodus Enhanced Edition"
+
+[[rules]]
+kind = "executable"
+value = "Metro Exodus Enhanced Edition/MetroExodus.exe"
 profile = "Metro Exodus Enhanced Edition"
 
 [[profiles]]

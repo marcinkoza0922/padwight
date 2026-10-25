@@ -15,6 +15,11 @@ kind = "executable"
 value = "Against the Storm.exe"
 profile = "Against the Storm"
 
+[[rules]]
+kind = "steam_app_id"
+value = "1336490"
+profile = "Against the Storm"
+
 [[profiles]]
 name = "Against the Storm"
 combos = []

@@ -17,7 +17,7 @@ profile = "Metro 2033 Redux"
 
 [[rules]]
 kind = "executable"
-value = "metro.exe"
+value = "Metro 2033 Redux/metro.exe"
 profile = "Metro 2033 Redux"
 
 [[profiles]]

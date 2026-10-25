@@ -20,6 +20,11 @@ kind = "steam_app_id"
 value = "231430"
 profile = "Company of Heroes 2"
 
+[[rules]]
+kind = "executable"
+value = "RelicCoH2.exe"
+profile = "Company of Heroes 2"
+
 [[profiles]]
 name = "Company of Heroes 2"
 combos = []

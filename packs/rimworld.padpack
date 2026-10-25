@@ -25,6 +25,11 @@ kind = "steam_app_id"
 value = "294100"
 profile = "RimWorld"
 
+[[rules]]
+kind = "executable"
+value = "RimWorldWin.exe"
+profile = "RimWorld"
+
 [[profiles]]
 name = "RimWorld"
 combos = [

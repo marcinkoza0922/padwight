@@ -15,6 +15,11 @@ kind = "executable"
 value = "BOF4.exe"
 profile = "Breath of Fire IV"
 
+[[rules]]
+kind = "steam_app_id"
+value = "4249150"
+profile = "Breath of Fire IV"
+
 [[profiles]]
 name = "Breath of Fire IV"
 combos = []

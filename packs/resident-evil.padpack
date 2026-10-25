@@ -16,6 +16,11 @@ value = "ResidentEvil.exe"
 profile = "Resident Evil"
 
 
+[[rules]]
+kind = "steam_app_id"
+value = "4249100"
+profile = "Resident Evil"
+
 [[profiles]]
 name = "Resident Evil"
 combos = []

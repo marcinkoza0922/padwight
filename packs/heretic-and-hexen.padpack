@@ -15,6 +15,11 @@ kind = "steam_app_id"
 value = "3286930"
 profile = "Heretic + Hexen"
 
+[[rules]]
+kind = "executable"
+value = "Heretic + Hexen/heretic.exe"
+profile = "Heretic + Hexen"
+
 [[profiles]]
 name = "Heretic + Hexen"
 combos = []

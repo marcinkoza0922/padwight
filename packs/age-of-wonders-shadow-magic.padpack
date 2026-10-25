@@ -15,6 +15,11 @@ kind = "executable"
 value = "AoWSM.exe"
 profile = "Age of Wonders: Shadow Magic"
 
+[[rules]]
+kind = "steam_app_id"
+value = "61520"
+profile = "Age of Wonders: Shadow Magic"
+
 [[profiles]]
 name = "Age of Wonders: Shadow Magic"
 combos = []

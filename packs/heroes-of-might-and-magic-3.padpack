@@ -30,6 +30,11 @@ kind = "executable"
 value = "h3hota HD.exe"
 profile = "Heroes of Might and Magic III"
 
+[[rules]]
+kind = "steam_app_id"
+value = "4921760"
+profile = "Heroes of Might and Magic III"
+
 [[profiles]]
 name = "Heroes of Might and Magic III"
 combos = []
