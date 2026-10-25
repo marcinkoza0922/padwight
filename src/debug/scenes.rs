@@ -143,6 +143,9 @@ fn guide(shown: usize) -> OverlayFrame {
     p.set_button(Button::West, keys("KEY_R"));
     p.set_button(Button::North, ButtonAction::Mode("Driving".into()));
     p.set_button(Button::LeftBumper, ButtonAction::Layer("Hotkeys".into()));
+    // Each gesture's badge, beside the face buttons it would otherwise be mistaken for.
+    let gestures = crate::config::Gestures { double_tap: Some(keys("KEY_E")), triple_tap: Some(keys("KEY_Q")), long_press: Some(keys("KEY_TAB")) };
+    p.gestures.insert(Button::West, gestures);
     // A glyph leading a long note, and one before the last words, show how a note wraps around glyphs.
     p.guide.notes = "{start} backs out of every in-game screen, from the inventory to the keypads and computers.\nHold {lb} for the hotkeys.\nThe driving mode turns the face buttons into pedals, and the bumpers {lb} {rb} into the gears and the lights.".into();
     let mut driving = Mode::new("Driving");
