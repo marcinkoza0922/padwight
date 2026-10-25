@@ -44,7 +44,7 @@ B and the button that opened it close an overlay. If those don't work, for examp
 - Choose **Close overlays** from the tray icon's menu.
 - Run `padwight close-overlays`. To use a keyboard key, bind this command to a key in your desktop's shortcut settings (in KDE: System Settings → Keyboard → Shortcuts → Add New → Command or Script).
 
-Overlays also close by themselves after 10 minutes with no input from any controller, and straight away when the controller driving them disconnects. If the in-game menu had unsaved changes, they're put aside: open the in-game menu again to carry on.
+Overlays also close by themselves when focus moves to another window, after 10 minutes with no input from any controller, and straight away when the controller driving them disconnects. If the in-game menu had unsaved changes, they're put aside: open the in-game menu again to carry on.
 
 ## The profile changed after a controller was unplugged or swapped
 

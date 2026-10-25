@@ -36,7 +36,7 @@ Changes take effect straight away, but they aren't written to the config file un
 
 - **Closing** the menu with unsaved changes asks: **Save and close**, **Discard and close**, or **Keep editing**.
 - **Discard** puts back the settings as they were when the menu opened, including any game it made.
-- If the menu closes some other way while it has unsaved changes (the controller disconnects, or every overlay is closed at once: see [Troubleshooting](Troubleshooting#an-overlay-or-menu-wont-close)), the changes are put aside and the settings go back to how they were saved. Open the in-game menu again to get the changes back where you left them. They're kept until the daemon restarts, and dropped if the settings are changed some other way in the meantime. A toast says which happened.
+- If the menu closes some other way while it has unsaved changes (the controller disconnects, focus moves to another window, or every overlay is closed at once: see [Troubleshooting](Troubleshooting#an-overlay-or-menu-wont-close)), the changes are put aside and the settings go back to how they were saved. Open the in-game menu again to get the changes back where you left them. They're kept until the daemon restarts, and dropped if the settings are changed some other way in the meantime. A toast says which happened.
 
 ## Switch Profile
 
