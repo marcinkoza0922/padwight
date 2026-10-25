@@ -61,6 +61,7 @@ profile = "Deus Ex"       # must be a profile of this pack
 ```
 
 - `executable`: the program's file name. For Wine/Proton games this is the Windows `.exe`.
+  A value with folders in it (`Game Dev Tycoon/nw.exe`) matches the end of the program's path instead, whole folder names only, for a program whose name other games share. It wins over a rule naming only the file.
 - `steam_app_id`: the Steam App ID, as a string.
 - `window_class`: the window's class.
 - `enabled = false` turns a rule off without deleting it. It is written only when false.

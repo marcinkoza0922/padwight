@@ -7,7 +7,7 @@ Conventions for choosing where actions go when setting up a game's controller bi
 Before writing or changing a pack, check the local references in `pcgamingwiki/` (not tracked; its `README.md` has the lookups):
 
 - **`games.tsv` and the article in `pages/`**: Steam app ids, release date, engine, and the Input section's native controller facts (XInput, DualShock/DualSense, Nintendo, Steam Input), which the rules below depend on.
-- **`executables.tsv`**: executable names from Discord's game-detection list, joined to the wiki by Steam app id. Names are lowercased; executable rules match without case, so any case works. Use the file name only, not a leading folder such as `control/`.
+- **`executables.tsv`**: executable names from Discord's game-detection list, joined to the wiki by Steam app id. Names are lowercased; executable rules match without case, so any case works. Use the file name only, not a leading folder such as `control/`, unless the name is one other games share (an engine's or runtime's generic `nw.exe`, `game.exe`, `xrEngine.exe`): then keep the game's install folder in front of it (`game dev tycoon/nw.exe`), so the rule picks out this game only.
 
 These are community data, so they're a starting point, not proof. Say in the commit what came from them and what was checked on an install.
 

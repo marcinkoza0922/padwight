@@ -15,6 +15,11 @@ kind = "steam_app_id"
 value = "239820"
 profile = "Game Dev Tycoon"
 
+[[rules]]
+kind = "executable"
+value = "Game Dev Tycoon/nw.exe"
+profile = "Game Dev Tycoon"
+
 [[profiles]]
 name = "Game Dev Tycoon"
 combos = []
@@ -69,7 +74,7 @@ notes = '''The game is played with the mouse alone. The right stick {rs} moves t
 {south} or {rt} clicks; hold either and move the pointer to drag the development focus sliders, then let go.
 {north} opens the on-screen keyboard to type the name of a game or a company, the same keyboard as {guide} + {west}. {up} and {down} scroll lists such as topics and reviews.
 {start} sends Escape, which should close a dialog or open the menu; that is a guess. {east} and {lt} right-click, which the game hardly uses.
-The game has no key settings. Only the Steam app id rule finds the game: its Windows executable is NW.js's generic nw.exe, which other games share, so it isn't used as a rule.'''
+The game has no key settings. Its Windows executable is NW.js's generic nw.exe, which other games share, so the executable rule names the install folder too (Game Dev Tycoon/nw.exe); a copy installed under another folder name is found only through Steam.'''
 
 [profiles.guide.edits]
 "stick:Left" = {text = "Fine pointer"}
@@ -145,7 +150,7 @@ The game is played with the mouse alone. The right stick {rs} moves the pointer 
 {south} or {rt} clicks; hold either and move the pointer to drag the development focus sliders, then let go.
 {north} opens the on-screen keyboard to type the name of a game or a company, the same keyboard as {guide} + {west}. {up} and {down} scroll lists such as topics and reviews.
 {start} sends Escape, which should close a dialog or open the menu; that is a guess. {east} and {lt} right-click, which the game hardly uses.
-The game has no key settings. Only the Steam app id rule finds the game: its Windows executable is NW.js's generic nw.exe, which other games share, so it isn't used as a rule.'''
+The game has no key settings. Its Windows executable is NW.js's generic nw.exe, which other games share, so the executable rule names the install folder too (Game Dev Tycoon/nw.exe); a copy installed under another folder name is found only through Steam.'''
 
 [profiles.guide.edits]
 "stick:Left" = {text = "Fine pointer"}
