@@ -24,6 +24,8 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
   (`PADWIGHT_PROFILE_OUT=dir`); a daemon with `PADWIGHT_INPUT_TIMING=file` logs each input's stages
 - Overlay CPU and memory on a headless KWin: `PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh
   scripts/harness/resources.sh <out>` (`gui-idle.sh` for the settings window)
+- Game facts (Steam ids, executables, controller support, config paths): local PCGamingWiki snapshot and
+  Discord's detectable-games list in `pcgamingwiki/`, see its `README.md`; never read `games.jsonl` whole
 - Long files: `scripts/long-files.sh` (lists files over 400 lines; split them when you work in them)
 
 Filter tests to the module you touched (e.g. `engine::`) unless the change is broad.
@@ -37,4 +39,7 @@ A hook runs `cargo check` after each edit to a `.rs` file and reports only failu
   `#[expect(..., reason = "...")]` only where the lint is wrong for that code.
   Functions marked "predates the size lints" are a baseline: shrink them when you touch them.
 - Don't open `Cargo.lock` or anything under `target/`.
+- Creating or updating a setup pack: look the game up in `pcgamingwiki/` first (`games.tsv`, `executables.tsv`,
+  the article's Input section) for its Steam app ids, executable names, release date and native controller
+  support, before guessing or searching the web. Follow `docs/development/game-setup-guidelines.md`.
 - Never send screenshots to /tmp; they should always go into an untracked directory in the repository directory
