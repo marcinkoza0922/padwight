@@ -255,9 +255,8 @@ fn held(why: crate::system_menu::Hold) -> OverlayView {
 
 /// The offer as the daemon makes it, for the library's Deus Ex pack.
 fn offer() -> OverlayView {
-    let library = crate::library::entries();
-    let deus_ex = library.iter().position(|e| e.pack.pack.name == "Deus Ex").expect("the library has Deus Ex");
-    crate::offer::OfferSession::new(library, &[deus_ex], None, Instant::now()).view(&OverlayStyle::default())
+    let deus_ex = crate::library::listings().iter().find(|l| l.name == "Deus Ex").and_then(crate::library::Listing::entry).expect("the library has Deus Ex");
+    crate::offer::OfferSession::new(&[deus_ex], &[0], None, Instant::now()).view(&OverlayStyle::default())
 }
 
 /// An info overlay with nothing written in it yet, as its preview shows it.

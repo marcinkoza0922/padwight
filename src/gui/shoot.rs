@@ -93,7 +93,7 @@ fn new_app(dark: bool) -> App {
         ..Default::default()
     });
     // The library list says "Built-in games", not that it's still looking for installed ones.
-    send(&mut app, Message::Installed(crate::launchers::Installed::default()));
+    send(&mut app, Message::Installed(Vec::new()));
     app
 }
 
@@ -128,7 +128,7 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
     match step {
         "library" => {
             let name = arg()?;
-            let entry = app.library.iter().find(|e| e.pack.pack.name.eq_ignore_ascii_case(name)).with_context(|| format!("no library pack {name:?}"))?;
+            let entry = app.library.iter().find(|l| l.name.eq_ignore_ascii_case(name)).and_then(library::Listing::entry).with_context(|| format!("no library pack {name:?}"))?;
             let game = entry.pack.to_game();
             app.config.games.push(game);
             app.saved = app.config.clone();

@@ -41,6 +41,7 @@ use crate::{
 };
 
 mod action_picker;
+mod add_game;
 mod actions;
 mod activity;
 mod chars;
@@ -292,9 +293,10 @@ struct App {
     /// Input groups listing their own inputs, by overlay kind, overlay and group.
     open_input_groups: HashSet<(ItemKind, usize, usize)>,
     /// The built-in game library.
-    library: Vec<library::Entry>,
-    /// Installed and running games, once looked up for the library picker.
-    installed: Option<launchers::Installed>,
+    library: &'static [library::Listing],
+    /// Whether each library game is installed or running, once looked up for the library
+    /// picker.
+    installed: Option<Vec<bool>>,
     /// Games and profiles renamed since the last save. The daemon still reports the active
     /// profile by its old name until then.
     renames: Vec<Rename>,
@@ -668,7 +670,9 @@ enum Message {
     SetLibrarySearch(String),
     /// Library entry to show details of (index in `App::library`).
     SelectLibrary(usize),
-    Installed(launchers::Installed),
+    Installed(Vec<bool>),
+    /// The library picker's list scrolled to this offset.
+    LibraryScrolled(f32),
     AddEmptyGame(Template),
     /// Preview adding the library entry at this index.
     PreviewLibrary(usize),
@@ -789,7 +793,7 @@ impl App {
             open_logs: HashSet::new(),
             open_log_appearance: HashSet::new(),
             open_input_groups: HashSet::new(),
-            library: library::entries().to_vec(),
+            library: library::listings(),
             installed: None,
             renames: Vec::new(),
             edited: Vec::new(),

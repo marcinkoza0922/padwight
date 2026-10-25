@@ -37,7 +37,7 @@ pub(super) fn offer<'a>(p: &Profile, trigger: &[Button], action: &ButtonAction, 
     }
     let taken = combos.iter().any(|c| p.combos.iter().any(|e| crate::config::combo_key(&e.buttons) == crate::config::combo_key(&c.buttons)));
     let names = combos.iter().map(|c| c.buttons.iter().map(|b| short_button(*b)).collect::<Vec<_>>().join(" + ")).collect::<Vec<_>>().join(", ");
-    let add = button(text("+ Add menu combos").size(13)).style(style::secondary).padding([3, 10]).on_press_maybe((!taken).then(|| Message::AddMenuCombos(combos)));
+    let add = button(text("+ Add menu combos").size(13)).style(style::secondary).padding([3, 10]).on_press_maybe((!taken).then_some(Message::AddMenuCombos(combos)));
     let hint = if taken { "Some of these combos already exist.".to_string() } else { format!("Adds {names}.") };
     let tip = help(
         "Makes a combo per menu item: this input plus the item's button (a D-pad direction, face button or quick-select button) does what the item does. \

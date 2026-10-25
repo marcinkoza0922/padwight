@@ -164,11 +164,11 @@ impl App {
             if !self.edited.is_empty() {
                 pack_rows.push(text(format!("Changed since: {}.", self.edited.join(", "))).size(13).color(MUTED_COLOR).into());
             }
-            let update = library::updates(&self.config, &self.library).into_iter().find(|(n, _)| *n == game.name);
+            let update = library::updates(&self.config, self.library).into_iter().find(|(n, _)| *n == game.name);
             if let Some(entry) = update.map(|(_, i)| &self.library[i]) {
                 pack_rows.push(
                     row![
-                        text(format!("The library has version {}.", entry.pack.pack.version)).color(style_accent()),
+                        text(format!("The library has version {}.", entry.version)).color(style_accent()),
                         button(text("Update…").size(13)).on_press(Message::UpdateFromLibrary(game.name.clone())),
                     ]
                     .spacing(10)

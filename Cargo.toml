@@ -90,5 +90,9 @@ dbg_macro = "warn"
 print_stdout = "warn"
 print_stderr = "warn"
 
+[build-dependencies]
+# Reads each library pack's listing at build time (`build.rs`).
+toml = "1.1.6"
+
 [dev-dependencies]
 iced_test = "0.14"

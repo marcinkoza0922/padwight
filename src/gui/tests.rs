@@ -101,7 +101,7 @@ fn every_page_tab_and_dialog_builds() {
     let text = pack::export(app.game(), &pack::draft(app.game(), false)).pack.to_toml().unwrap();
     let dialogs = [
         Message::OpenAddGame,
-        Message::Installed(launchers::Installed::default()),
+        Message::Installed(Vec::new()),
         Message::PackFileRead(Some(Ok(text))),
         Message::OpenExport,
         Message::AskDeleteGame,
