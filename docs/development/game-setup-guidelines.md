@@ -2,6 +2,15 @@
 
 Conventions for choosing where actions go when setting up a game's controller bindings, for pack authors and the built-in library. They're defaults, not rules: a game's own conventions or a clearer layout win.
 
+## Look the game up first
+
+Before writing or changing a pack, check the local references in `pcgamingwiki/` (not tracked; its `README.md` has the lookups):
+
+- **`games.tsv` and the article in `pages/`**: Steam app ids, release date, engine, and the Input section's native controller facts (XInput, DualShock/DualSense, Nintendo, Steam Input), which the rules below depend on.
+- **`executables.tsv`**: executable names from Discord's game-detection list, joined to the wiki by Steam app id. Names are lowercased; executable rules match without case, so any case works. Use the file name only, not a leading folder such as `control/`.
+
+These are community data, so they're a starting point, not proof. Say in the commit what came from them and what was checked on an install.
+
 ## Games with native controller support
 
 - If the game is known to have **native XInput support**, even if it's imperfect, **don't change or add to its control scheme**. This program can't do better than a native scheme, so leave the bindings alone. Shooters are the exception: they still get gyro and flick stick profiles (see [Shooters](#shooters)).
