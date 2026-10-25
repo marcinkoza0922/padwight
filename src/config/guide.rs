@@ -174,20 +174,17 @@ impl RowShape {
         }
     }
 
-    /// What follows the glyphs of a row: the mark of a gesture, which says how it's done, as a
-    /// badge (`{gesture:…}`) that reads apart from the text of the row.
-    pub fn mark(self) -> &'static str {
-        match self {
-            RowShape::Input | RowShape::Merged | RowShape::Combo => "",
-            RowShape::Gesture(GestureKind::DoubleTap) => " {gesture:double}",
-            RowShape::Gesture(GestureKind::TripleTap) => " {gesture:triple}",
-            RowShape::Gesture(GestureKind::LongPress) => " {gesture:hold}",
-        }
-    }
-
-    /// The glyphs of a row, given each input's glyph (`parts`, in the row's order), joined and marked.
+    /// The glyphs of a row, given each input's glyph (`parts`, in the row's order), joined and
+    /// marked with how a gesture is done (`{gesture:…}`), in words the way games print it: "Hold"
+    /// before the glyphs, a tap count after them.
     pub fn join(self, parts: &[String]) -> String {
-        format!("{}{}", parts.join(self.separator()), self.mark())
+        let glyphs = parts.join(self.separator());
+        match self {
+            RowShape::Input | RowShape::Merged | RowShape::Combo => glyphs,
+            RowShape::Gesture(GestureKind::DoubleTap) => format!("{glyphs} {{gesture:double}}"),
+            RowShape::Gesture(GestureKind::TripleTap) => format!("{glyphs} {{gesture:triple}}"),
+            RowShape::Gesture(GestureKind::LongPress) => format!("{{gesture:hold}} {glyphs}"),
+        }
     }
 }
 

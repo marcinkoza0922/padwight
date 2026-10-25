@@ -290,8 +290,8 @@ pub enum Token {
     /// token itself sets: `{current_input_device_N}` for one controller, then optionally
     /// `:gap_ms:stay_ms`.
     CurrentInput { device: Option<u8>, gap_ms: Option<u64>, stay_ms: Option<u64> },
-    /// A gesture's badge: `{gesture:double}` (blue ×2), `{gesture:triple}` (red ×3) or
-    /// `{gesture:hold}` (a yellow box), as a row's mark says how it's done.
+    /// How a gesture is done, in words: `{gesture:double}` (×2), `{gesture:triple}` (×3) or
+    /// `{gesture:hold}` (Hold), as a row's mark says.
     Gesture(GestureKind),
 }
 
@@ -542,7 +542,7 @@ fn opaque() -> f32 {
     1.0
 }
 
-/// The colors of the face buttons and of the gesture badges, which share them.
+/// The colors of the face buttons.
 const GREEN: [u8; 3] = [0x3c, 0xa0, 0x3c];
 const RED: [u8; 3] = [0xc8, 0x3c, 0x3c];
 const BLUE: [u8; 3] = [0x2f, 0x6c, 0xc8];
@@ -610,17 +610,18 @@ pub fn is_live(overlay: &InfoOverlay) -> bool {
     overlay.rows.iter().flatten().any(|cell| parse(cell).iter().any(|p| matches!(p, Err(Token::Stat(_) | Token::Gauge { .. } | Token::Gyro(_) | Token::Trackpad))))
 }
 
-pub fn glyph(label: &str, fill: Option<[u8; 3]>, round: bool) -> Segment {
-    Segment::Glyph { label: label.to_string(), fill, round }
+/// A gesture in words, written as plain text beside the button's glyph so it doesn't read as
+/// another button.
+pub fn gesture_word(kind: GestureKind) -> &'static str {
+    match kind {
+        GestureKind::DoubleTap => "×2",
+        GestureKind::TripleTap => "×3",
+        GestureKind::LongPress => "Hold",
+    }
 }
 
-/// A gesture's badge: a blue ×2 or a red ×3 in a circle, and "hold" in a yellow rounded box.
-pub fn gesture_glyph(kind: GestureKind) -> Segment {
-    match kind {
-        GestureKind::DoubleTap => glyph("×2", Some(BLUE), true),
-        GestureKind::TripleTap => glyph("×3", Some(RED), true),
-        GestureKind::LongPress => glyph("hold", Some(YELLOW), false),
-    }
+pub fn glyph(label: &str, fill: Option<[u8; 3]>, round: bool) -> Segment {
+    Segment::Glyph { label: label.to_string(), fill, round }
 }
 
 /// A keyboard key as a keycap: its label, in a slate color that tells it from a controller's.
@@ -684,7 +685,7 @@ pub fn glyph_text(text: &str, glyphs: Glyphs) -> Vec<Segment> {
             Err(Token::Key(code)) => key_glyph(code),
             Err(Token::Mouse(m)) => mouse_glyph(m),
             Err(Token::Trigger(t)) => trigger_glyph(t, family),
-            Err(Token::Gesture(kind)) => gesture_glyph(kind),
+            Err(Token::Gesture(kind)) => Segment::Text(gesture_word(kind).into()),
             Err(Token::Stick(Stick::Left)) => glyph("LS", None, true),
             Err(Token::Stick(Stick::Right)) => glyph("RS", None, true),
             Err(Token::DpadArms(lit)) => Segment::Dpad(lit),
@@ -920,7 +921,7 @@ fn cell_segments(input: &CurrentInput, cell: &str, live: &Live) -> Vec<Segment> 
             Err(Token::Key(code)) => key_glyph(code),
             Err(Token::Mouse(m)) => mouse_glyph(m),
             Err(Token::Trigger(t)) => trigger_glyph(t, live.family),
-            Err(Token::Gesture(kind)) => gesture_glyph(kind),
+            Err(Token::Gesture(kind)) => Segment::Text(gesture_word(kind).into()),
             Err(Token::Stick(Stick::Left)) => glyph("LS", None, true),
             Err(Token::Stick(Stick::Right)) => glyph("RS", None, true),
             Err(Token::DpadArms(lit)) => Segment::Dpad(lit),

@@ -59,8 +59,16 @@ impl Daemon {
                     self.scan_target = None;
                 }
             }
-            FocusEvent::Focused(window) => self.window_focused(&window),
-            FocusEvent::Unfocused => self.window_unfocused(),
+            FocusEvent::Focused(window) => {
+                if !focus::is_own_window(&window) {
+                    self.close_overlays_on_focus(Some(&window));
+                }
+                self.window_focused(&window);
+            }
+            FocusEvent::Unfocused => {
+                self.close_overlays_on_focus(None);
+                self.window_unfocused();
+            }
         }
     }
 

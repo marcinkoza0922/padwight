@@ -10,7 +10,7 @@ use iced::{
 };
 
 use crate::{
-    config::{Button, GestureKind, MouseButton, OverlayStyle, Trigger},
+    config::{Button, GestureKind, MouseButton, OverlayStyle, RowShape, Trigger},
     info::{self, Charge, FormFactor, Icon, InfoView, PadFamily, Segment},
     keyboard,
     motion::Anim,
@@ -123,10 +123,11 @@ fn buttons(family: PadFamily, swapped: bool) -> InfoView {
     sheet(&format!("{family}{layout}"), rows)
 }
 
-/// The gesture badges a row's mark draws: `{gesture:…}`.
+/// How a row's mark writes each gesture beside its button: `{gesture:…}`.
 fn gestures() -> InfoView {
+    let glyphs = info::Glyphs { family: PadFamily::Xbox, nintendo_layout: false };
     let rows = [("Double tap", GestureKind::DoubleTap), ("Triple tap", GestureKind::TripleTap), ("Long press", GestureKind::LongPress)]
-        .map(|(name, kind)| (name.to_string(), vec![info::gesture_glyph(kind)]))
+        .map(|(name, kind)| (name.to_string(), info::glyph_text(&RowShape::Gesture(kind).join(&["{west}".into()]), glyphs)))
         .to_vec();
     sheet("Gestures", rows)
 }

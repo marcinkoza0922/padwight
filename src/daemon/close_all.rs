@@ -1,6 +1,7 @@
 //! Ways out of every overlay at once, for when the usual ones (B, the opener) don't get there:
 //! `padwight close-overlays` (which a desktop shortcut can run), the tray, holding Guide, ten
-//! minutes without input, and the controller driving them going away. The in-game menu's
+//! minutes without input, focus moving to another window, and the controller driving them going
+//! away. The in-game menu's
 //! unsaved edits are put aside rather than lost, and come back when it next opens.
 
 use super::*;
@@ -73,6 +74,14 @@ impl Daemon {
     /// else whether the in-game menu's edits were put aside.
     pub(super) fn close_overlays_of(&mut self, id: u64) -> Option<bool> {
         (self.active.is_some() && self.overlay_driver() == Some(id)).then(|| self.close_all_overlays("its controller went away")).flatten()
+    }
+
+    /// Focus moved to `to` (`None`: to no window): overlays up over the window that had it close.
+    /// The same window reported again moves nothing.
+    pub(super) fn close_overlays_on_focus(&mut self, to: Option<&WindowInfo>) {
+        if focus_moved(self.focused.as_ref(), to) && self.close_all_overlays("focus moved to another window") == Some(true) {
+            self.say(closed_lines("Overlays closed", true));
+        }
     }
 
     /// Notes input from a controller: overlays left up only close once none has come for a while.
@@ -191,6 +200,14 @@ impl Daemon {
     }
 }
 
+/// Whether focus going from `was` to `now` moves it to another window, or to or from none.
+fn focus_moved(was: Option<&WindowInfo>, now: Option<&WindowInfo>) -> bool {
+    match (was, now) {
+        (Some(was), Some(now)) => was.pid != now.pid || was.class != now.class,
+        (was, now) => was.is_some() != now.is_some(),
+    }
+}
+
 /// A toast's lines: `head`, and a word about the edits put aside if there were any.
 fn closed_lines(head: &str, put_aside: bool) -> Vec<String> {
     std::iter::once(head.to_string()).chain(put_aside.then(|| PUT_ASIDE.to_string())).collect()
@@ -202,5 +219,23 @@ pub(super) fn disconnected_lines(name: &str, closed: Option<bool>) -> Vec<String
     match closed {
         Some(put_aside) => closed_lines(&format!("{name} disconnected: overlays closed"), put_aside),
         None => vec![format!("{name} disconnected")],
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn focus_moves_only_to_another_window() {
+        let window = |pid, class: &str| WindowInfo { pid, class: class.into(), ..WindowInfo::default() };
+        let game = window(7, "game");
+        let retitled = WindowInfo { title: "Paused".into(), ..game.clone() };
+        assert!(!focus_moved(Some(&game), Some(&retitled)), "the same window again");
+        assert!(!focus_moved(None, None));
+        assert!(focus_moved(Some(&game), Some(&window(8, "game"))));
+        assert!(focus_moved(Some(&game), Some(&window(7, "launcher"))));
+        assert!(focus_moved(Some(&game), None));
+        assert!(focus_moved(None, Some(&game)));
     }
 }
