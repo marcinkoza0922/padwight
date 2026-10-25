@@ -260,7 +260,9 @@ mod tests {
         use crate::config::{GyroMode, StickAction};
         let shooters = ["deus-ex", "fear", "max-payne", "max-payne-2", "thief-gold", "thief-2", "system-shock-2", "counter-strike-2",
             "unturned", "scp-secret-laboratory", "insurgency", "repo", "rust", "raft", "scrap-mechanic",
-            "call-of-duty-modern-warfare-2", "stalker-shadow-of-chernobyl", "stalker-call-of-pripyat", "crab-game"];
+            "call-of-duty-modern-warfare-2", "stalker-shadow-of-chernobyl", "stalker-call-of-pripyat", "crab-game",
+            "call-of-duty-4-modern-warfare", "call-of-duty-world-at-war", "call-of-duty-modern-warfare-3", "stalker-clear-sky",
+            "star-wars-republic-commando", "payday-the-heist", "deceit", "totally-accurate-battlegrounds", "mass-effect"];
         for file in shooters {
             let text = files::FILES.iter().find(|(f, _)| *f == format!("{file}.padpack")).map(|(_, t)| t).unwrap();
             let pack = pack::parse(text).unwrap();

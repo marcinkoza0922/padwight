@@ -1,0 +1,377 @@
+format = 20
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "8f3d2a71-0c6e-4b59-a2d8-5e1f9c7b4a36"
+name = "Cookie Clicker"
+version = "1.0"
+author = "Padwight"
+description = "Cookie Clicker (the 2021 Steam release) on an Xbox-style pad. The game takes only the mouse, so the right stick moves the pointer and the left stick nudges it; A or RT clicks the big cookie, an upgrade or a building, and holding X clicks fifteen times a second. Hold LB or RB to buy ten or a hundred at once. The D-pad scrolls the store, a double tap of Start saves. Overlays in the store's wood and the night sky behind the cookie. The \"Cookie Clicker + Gyro\" profile also moves the pointer by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "1454400"
+profile = "Cookie Clicker"
+
+[[rules]]
+kind = "executable"
+value = "Cookie Clicker.exe"
+profile = "Cookie Clicker"
+
+[[profiles]]
+name = "Cookie Clicker"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {turbo = {action = {mouse = "Left"}, rate = 15.0}}
+LeftBumper = {keys = ["KEY_LEFTCTRL"]}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTCTRL", "KEY_S"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The game is played with the mouse. The right stick {rs} moves the pointer and the left stick {ls} moves it slowly, onto a golden cookie or a small upgrade icon.
+{south} or {rt} clicks: the big cookie, a golden cookie, an upgrade, a building in the store. Hold {west} to click fifteen times a second while you keep the pointer on the big cookie. The game counts very fast clicking as an autoclicker for one achievement, so let go of it if that matters to you.
+Hold {lb} (Ctrl) and click a building to buy ten, or {rb} (Shift) for a hundred; the store's own Buy and Sell buttons do the same. {up} and {down} scroll the store and the stats.
+{east} closes a prompt (Escape). {start} does the same, and a double tap of {start} saves (Ctrl+S); the game also saves itself every minute. Naming your bakery needs typing: {guide} + {west} opens the on-screen keyboard. {lt} right-clicks, which the game hardly uses.
+The keys are remembered from the web version and unchecked on an install; the game has no key settings.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:cookie} {b}Click{/b}"}
+"trigger:Left" = {text = "Right-click"}
+"button:South" = {text = "{icon:cookie} {b}Click{/b}"}
+"button:West" = {text = "{icon:fast} Rapid click (hold)"}
+"button:East" = {text = "{icon:cancel} Close"}
+"button:LeftBumper" = {text = "{icon:coin} Buy 10 (hold)"}
+"button:RightBumper" = {text = "{icon:money-bag} Buy 100 (hold)"}
+"button:Start" = {text = "Close · {icon:save} {b}save{/b} (double tap)"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Scroll store"
+
+[[profiles]]
+name = "Cookie Clicker + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {turbo = {action = {mouse = "Left"}, rate = 15.0}}
+LeftBumper = {keys = ["KEY_LEFTCTRL"]}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_LEFTCTRL", "KEY_S"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The game is played with the mouse. The right stick {rs} moves the pointer and the left stick {ls} moves it slowly, onto a golden cookie or a small upgrade icon.
+{south} or {rt} clicks: the big cookie, a golden cookie, an upgrade, a building in the store. Hold {west} to click fifteen times a second while you keep the pointer on the big cookie. The game counts very fast clicking as an autoclicker for one achievement, so let go of it if that matters to you.
+Hold {lb} (Ctrl) and click a building to buy ten, or {rb} (Shift) for a hundred; the store's own Buy and Sell buttons do the same. {up} and {down} scroll the store and the stats.
+{east} closes a prompt (Escape). {start} does the same, and a double tap of {start} saves (Ctrl+S); the game also saves itself every minute. Naming your bakery needs typing: {guide} + {west} opens the on-screen keyboard. {lt} right-clicks, which the game hardly uses.
+The keys are remembered from the web version and unchecked on an install; the game has no key settings.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:cookie} {b}Click{/b}"}
+"trigger:Left" = {text = "Right-click"}
+"button:South" = {text = "{icon:cookie} {b}Click{/b}"}
+"button:West" = {text = "{icon:fast} Rapid click (hold)"}
+"button:East" = {text = "{icon:cancel} Close"}
+"button:LeftBumper" = {text = "{icon:coin} Buy 10 (hold)"}
+"button:RightBumper" = {text = "{icon:money-bag} Buy 100 (hold)"}
+"button:Start" = {text = "Close · {icon:save} {b}save{/b} (double tap)"}
+"combo:button:Select+button:Start" = {text = "Pause gyro (hold)"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Scroll store"
+
+[keyboard_style]
+corners = 0.2
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1d2838"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#6b4628"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#f2c66d"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 3
+color = "#9a6a3c"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#121a26"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#8a5a32"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+[keyboard_style.ornament]
+wood = { opacity = 0.35, on = "items" }
+
+[numpad_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1d2838"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#6b4628"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#f2c66d"
+opacity = 1.0
+
+[numpad_style.border]
+width = 3
+color = "#9a6a3c"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#121a26"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#8a5a32"
+
+[numpad_style.type]
+letter_spacing = 0
+
+[numpad_style.ornament]
+wood = { opacity = 0.35, on = "items" }
+
+[media_style]
+corners = 0.2
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1d2838"
+opacity = 0.93
+
+[media_style.items]
+color = "#6b4628"
+opacity = 0.95
+
+[media_style.selected]
+color = "#f2c66d"
+opacity = 1.0
+
+[media_style.border]
+width = 3
+color = "#9a6a3c"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#121a26"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#8a5a32"
+
+[media_style.type]
+letter_spacing = 0
+
+[media_style.ornament]
+wood = { opacity = 0.35, on = "items" }
+
+[menu_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1d2838"
+opacity = 0.93
+
+[menu_style.items]
+color = "#6b4628"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#f2c66d"
+opacity = 1.0
+
+[menu_style.border]
+width = 3
+color = "#9a6a3c"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#121a26"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#8a5a32"
+
+[menu_style.glow]
+color = "#f2c66d"
+opacity = 0.35
+blur = 12
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+wood = { opacity = 0.35, on = "items" }
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "knock", volume = 0.08, pitch = 1.1}
+pick = {kind = "crunch", volume = 0.12, pitch = 1.0}
+
+[sounds.keyboard]
+step = {kind = "knock", volume = 0.07, pitch = 1.2}
+pick = {kind = "wood", volume = 0.14}
+
+[sounds.numpad]
+step = {kind = "knock", volume = 0.07, pitch = 1.2}
+pick = {kind = "wood", volume = 0.14}
+
+[sounds.media]
+pick = {kind = "coin", volume = 0.08, pitch = 1.0}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

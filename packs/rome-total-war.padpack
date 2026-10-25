@@ -1,0 +1,948 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "3f005fcc-35b3-4f5d-9cd8-17a406d80342"
+name = "Rome: Total War"
+version = "1.0"
+author = "Padwight"
+description = "Rome: Total War (Steam, Windows, with Barbarian Invasion and Alexander) on an Xbox-style pad, for the default keys. The campaign map and battles get their own schemes: hold Select to switch. Both: the right stick moves the cursor, RT left-clicks, LT right-clicks, the left stick moves the camera (arrow keys), the d-pad zooms and rotates. Campaign: A clicks, hold Y to end the turn, Select lists saving and loading. Battle: A halts, X runs, Y fires at will, L3 groups, R3 pauses, hold LB for control groups 1-10 (LB + RB sets one), RB adds to the selection. Start is the game menu; double tap it to quick save, hold to quick load. The \"+ Gyro\" profile also moves the cursor by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "rometw.exe"
+profile = "Rome: Total War"
+
+[[rules]]
+kind = "executable"
+value = "rometw-bi.exe"
+profile = "Rome: Total War"
+
+[[rules]]
+kind = "executable"
+value = "rometw-alx.exe"
+profile = "Rome: Total War"
+
+[[rules]]
+kind = "executable"
+value = "testappa.exe"
+profile = "Rome: Total War"
+
+[[rules]]
+kind = "steam_app_id"
+value = "4760"
+profile = "Rome: Total War"
+
+[[rules]]
+kind = "steam_app_id"
+value = "4770"
+profile = "Rome: Total War"
+
+[[profiles]]
+name = "Rome: Total War"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+Select = {open_menu = "Campaign"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_Q"]}
+DpadRight = {keys = ["KEY_E"]}
+
+[profiles.gestures.North]
+long_press = {keys = ["KEY_ENTER"]}
+
+[profiles.gestures.Select]
+long_press = {open_menu = "Campaign or battle"}
+
+[profiles.gestures.Start]
+double_tap = {keys = ["KEY_LEFTCTRL", "KEY_S"]}
+long_press = {keys = ["KEY_LEFTCTRL", "KEY_L"]}
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_LEFT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_LEFT"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The campaign map and battles play very differently, so this setup has a scheme for each. Hold {select} to pick Campaign map or Battle with {lb} {rb} and {confirm}: switch when a battle starts and when it ends. The scheme in use shows at the top of the screen.
+Both: the right stick {rs} moves the cursor, {rt} selects (left click, hold to drag a box) and {lt} moves and attacks (right click; drag it to set the line's width). The left stick {ls} moves the camera (arrow keys), {up} {down} zoom and {left} {right} rotate it. {east} closes a panel or deselects, {start} is the game menu; double tap {start} to quick save, hold it to quick load.
+Campaign map: {south} is a left click as well. Hold {north} to end the turn. {select} lists the end turn, saving and loading.
+Battle: {south} halts, {west} toggles running, {north} toggles fire at will, {l3} groups the selected units and {r3} pauses. Hold {lb} for the control groups and aim the right stick {rs}; hold {lb} and {rb} together to set one instead. {rb} is Ctrl: hold it to add units to the selection. {select} lists pause, select all and the other orders.
+Rome: Total War has no tactical map, so {r3} pauses instead. Formations and special abilities are on the unit card: click them.
+The keys are the defaults as best known, not checked on an install: the arrow-key camera, Q and E for rotating it, Enter for ending the turn and P for pausing most of all. rometw.exe and the Alexander one (testappa.exe) come from Discord's game list; RomeTW-BI.exe (Barbarian Invasion) and RomeTW-ALX.exe are guesses. Rome: Total War has no Linux build (Feral's port is for macOS), so it runs through Proton. If a key does nothing, look in Options, Controls and set it to the key in this setup.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move the camera" }
+"stick:Right" = { text = "Cursor" }
+"trigger:Right" = { text = "Left click (select, drag a box)" }
+"trigger:Left" = { text = "Right click (move, attack; drag to form up)" }
+"button:South" = { text = "Left click · battle: {icon:stop} Halt" }
+"button:East" = { text = "Close / deselect" }
+"button:Select" = { text = "Campaign list · battle orders" }
+"button:Start" = { text = "Game menu" }
+"gesture:button:North:long_press" = { text = "{icon:hourglass} End turn (campaign)" }
+"gesture:button:Select:long_press" = { text = "{icon:map} Campaign map / {icon:sword-cross} Battle" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate the camera"
+
+[[profiles.guide.custom]]
+inputs = ["button:West"]
+text = "Battle: {icon:footprints} Run"
+
+[[profiles.guide.custom]]
+inputs = ["button:North"]
+text = "Battle: {icon:ranged} Fire at will"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper"]
+text = "Battle, hold: control groups"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Battle: set a control group"
+
+[[profiles.guide.custom]]
+inputs = ["button:RightBumper"]
+text = "Battle: Ctrl (add to selection)"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftStick"]
+text = "Battle: {icon:formation} Group units"
+
+[[profiles.guide.custom]]
+inputs = ["button:RightStick"]
+text = "Battle: {icon:pause} Pause"
+
+[[profiles]]
+name = "Rome: Total War + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+Select = {open_menu = "Campaign"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_Q"]}
+DpadRight = {keys = ["KEY_E"]}
+
+[profiles.gestures.North]
+long_press = {keys = ["KEY_ENTER"]}
+
+[profiles.gestures.Select]
+long_press = {open_menu = "Campaign or battle"}
+
+[profiles.gestures.Start]
+double_tap = {keys = ["KEY_LEFTCTRL", "KEY_S"]}
+long_press = {keys = ["KEY_LEFTCTRL", "KEY_L"]}
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_LEFT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_LEFT"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''This is the gyro variant: tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}. Hold {select} and {start} together to pause the gyro while you reposition the controller.
+The campaign map and battles play very differently, so this setup has a scheme for each. Hold {select} to pick Campaign map or Battle with {lb} {rb} and {confirm}: switch when a battle starts and when it ends. The scheme in use shows at the top of the screen.
+Both: the right stick {rs} moves the cursor, {rt} selects (left click, hold to drag a box) and {lt} moves and attacks (right click; drag it to set the line's width). The left stick {ls} moves the camera (arrow keys), {up} {down} zoom and {left} {right} rotate it. {east} closes a panel or deselects, {start} is the game menu; double tap {start} to quick save, hold it to quick load.
+Campaign map: {south} is a left click as well. Hold {north} to end the turn. {select} lists the end turn, saving and loading.
+Battle: {south} halts, {west} toggles running, {north} toggles fire at will, {l3} groups the selected units and {r3} pauses. Hold {lb} for the control groups and aim the right stick {rs}; hold {lb} and {rb} together to set one instead. {rb} is Ctrl: hold it to add units to the selection. {select} lists pause, select all and the other orders.
+Rome: Total War has no tactical map, so {r3} pauses instead. Formations and special abilities are on the unit card: click them.
+The keys are the defaults as best known, not checked on an install: the arrow-key camera, Q and E for rotating it, Enter for ending the turn and P for pausing most of all. rometw.exe and the Alexander one (testappa.exe) come from Discord's game list; RomeTW-BI.exe (Barbarian Invasion) and RomeTW-ALX.exe are guesses. Rome: Total War has no Linux build (Feral's port is for macOS), so it runs through Proton. If a key does nothing, look in Options, Controls and set it to the key in this setup.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move the camera" }
+"stick:Right" = { text = "Cursor" }
+"trigger:Right" = { text = "Left click (select, drag a box)" }
+"trigger:Left" = { text = "Right click (move, attack; drag to form up)" }
+"button:South" = { text = "Left click · battle: {icon:stop} Halt" }
+"button:East" = { text = "Close / deselect" }
+"button:Select" = { text = "Campaign list · battle orders" }
+"button:Start" = { text = "Game menu" }
+"gesture:button:North:long_press" = { text = "{icon:hourglass} End turn (campaign)" }
+"gesture:button:Select:long_press" = { text = "{icon:map} Campaign map / {icon:sword-cross} Battle" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate the camera"
+
+[[profiles.guide.custom]]
+inputs = ["button:West"]
+text = "Battle: {icon:footprints} Run"
+
+[[profiles.guide.custom]]
+inputs = ["button:North"]
+text = "Battle: {icon:ranged} Fire at will"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper"]
+text = "Battle, hold: control groups"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Battle: set a control group"
+
+[[profiles.guide.custom]]
+inputs = ["button:RightBumper"]
+text = "Battle: Ctrl (add to selection)"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftStick"]
+text = "Battle: {icon:formation} Group units"
+
+[[profiles.guide.custom]]
+inputs = ["button:RightStick"]
+text = "Battle: {icon:pause} Pause"
+
+[[menus]]
+name = "Campaign or battle"
+
+[menus.kind.carousel]
+controls = "Bumpers"
+
+[[menus.items]]
+label = "{icon:map} Campaign map"
+action = {multi = [{mode = "Battle"}, {mode = "Campaign map"}]}
+
+[[menus.items]]
+label = "{icon:sword-cross} Battle"
+action = {multi = [{mode = "Campaign map"}, {mode = "Battle"}]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1a0e0b"
+opacity = 0.92
+
+[menus.style.items]
+color = "#331812"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#9a2a1e"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#d1aa52"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#120907"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5e3524"
+
+[menus.style.glow]
+color = "#f0c868"
+opacity = 0.55
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "greek_key", size = 36, width = 1, color = "#d1aa52"}
+paper = {opacity = 0.22}
+dividers = {width = 1, color = "#d1aa52", opacity = 0.35}
+
+[[menus]]
+name = "Campaign"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:hourglass} End turn"
+action = {keys = ["KEY_ENTER"]}
+
+[[menus.items]]
+label = "{icon:save} {color:green}Quick save{/color}"
+action = {keys = ["KEY_LEFTCTRL", "KEY_S"]}
+
+[[menus.items]]
+label = "{icon:load} Quick load"
+action = {keys = ["KEY_LEFTCTRL", "KEY_L"]}
+
+[[menus.items]]
+label = "{icon:gear} Game menu"
+action = {keys = ["KEY_ESC"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1a0e0b"
+opacity = 0.92
+
+[menus.style.items]
+color = "#331812"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#9a2a1e"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#d1aa52"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#120907"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5e3524"
+
+[menus.style.glow]
+color = "#f0c868"
+opacity = 0.55
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "greek_key", size = 36, width = 1, color = "#d1aa52"}
+paper = {opacity = 0.22}
+dividers = {width = 1, color = "#d1aa52", opacity = 0.35}
+
+[[menus]]
+name = "Battle orders"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:pause} Pause"
+action = {keys = ["KEY_P"]}
+
+[[menus.items]]
+label = "{icon:people} Select all"
+action = {keys = ["KEY_LEFTCTRL", "KEY_A"]}
+
+[[menus.items]]
+label = "{icon:formation} Group units"
+action = {keys = ["KEY_G"]}
+
+[[menus.items]]
+label = "{icon:stop} Halt"
+action = {keys = ["KEY_BACKSPACE"]}
+
+[[menus.items]]
+label = "{icon:footprints} Run"
+action = {keys = ["KEY_R"]}
+
+[[menus.items]]
+label = "{icon:ranged} Fire at will"
+action = {keys = ["KEY_F"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1a0e0b"
+opacity = 0.92
+
+[menus.style.items]
+color = "#331812"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#9a2a1e"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#d1aa52"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#120907"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5e3524"
+
+[menus.style.glow]
+color = "#f0c868"
+opacity = 0.55
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "greek_key", size = 36, width = 1, color = "#d1aa52"}
+paper = {opacity = 0.22}
+dividers = {width = 1, color = "#d1aa52", opacity = 0.35}
+
+[[menus]]
+name = "Groups"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:people} Group 1"
+action = {keys = ["KEY_1"]}
+
+[[menus.items]]
+label = "{icon:people} Group 2"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:people} Group 3"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:people} Group 4"
+action = {keys = ["KEY_4"]}
+
+[[menus.items]]
+label = "{icon:people} Group 5"
+action = {keys = ["KEY_5"]}
+
+[[menus.items]]
+label = "{icon:people} Group 6"
+action = {keys = ["KEY_6"]}
+
+[[menus.items]]
+label = "{icon:people} Group 7"
+action = {keys = ["KEY_7"]}
+
+[[menus.items]]
+label = "{icon:people} Group 8"
+action = {keys = ["KEY_8"]}
+
+[[menus.items]]
+label = "{icon:people} Group 9"
+action = {keys = ["KEY_9"]}
+
+[[menus.items]]
+label = "{icon:people} Group 10"
+action = {keys = ["KEY_0"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1a0e0b"
+opacity = 0.92
+
+[menus.style.items]
+color = "#331812"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#9a2a1e"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#d1aa52"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#120907"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5e3524"
+
+[menus.style.glow]
+color = "#f0c868"
+opacity = 0.55
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "greek_key", size = 36, width = 1, color = "#d1aa52"}
+paper = {opacity = 0.22}
+dividers = {width = 1, color = "#d1aa52", opacity = 0.35}
+
+[[menus]]
+name = "Set group"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:flag} Set 1"
+action = {keys = ["KEY_LEFTCTRL", "KEY_1"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 2"
+action = {keys = ["KEY_LEFTCTRL", "KEY_2"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 3"
+action = {keys = ["KEY_LEFTCTRL", "KEY_3"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 4"
+action = {keys = ["KEY_LEFTCTRL", "KEY_4"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 5"
+action = {keys = ["KEY_LEFTCTRL", "KEY_5"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 6"
+action = {keys = ["KEY_LEFTCTRL", "KEY_6"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 7"
+action = {keys = ["KEY_LEFTCTRL", "KEY_7"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 8"
+action = {keys = ["KEY_LEFTCTRL", "KEY_8"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 9"
+action = {keys = ["KEY_LEFTCTRL", "KEY_9"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 10"
+action = {keys = ["KEY_LEFTCTRL", "KEY_0"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1a0e0b"
+opacity = 0.92
+
+[menus.style.items]
+color = "#331812"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#9a2a1e"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#d1aa52"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#120907"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5e3524"
+
+[menus.style.glow]
+color = "#f0c868"
+opacity = 0.55
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "greek_key", size = 36, width = 1, color = "#d1aa52"}
+paper = {opacity = 0.22}
+dividers = {width = 1, color = "#d1aa52", opacity = 0.35}
+
+[[modes]]
+name = "Campaign map"
+indicator = "name"
+
+[modes.indicator_style]
+position = "top_center"
+scale = 0.7
+
+[modes.indicator_style.background]
+color = "#1a0e0b"
+opacity = 0.75
+
+[modes.indicator_style.items]
+color = "#331812"
+opacity = 0.95
+
+[modes.indicator_style.selected]
+color = "#9a2a1e"
+opacity = 1.0
+
+[[modes]]
+name = "Battle"
+indicator = "name"
+combos = [{buttons = ["LeftBumper", "RightBumper"], action = {open_menu = "Set group"}}]
+
+[modes.indicator_style]
+position = "top_center"
+scale = 0.7
+
+[modes.indicator_style.background]
+color = "#1a0e0b"
+opacity = 0.75
+
+[modes.indicator_style.items]
+color = "#331812"
+opacity = 0.95
+
+[modes.indicator_style.selected]
+color = "#9a2a1e"
+opacity = 1.0
+
+[modes.buttons]
+South = {keys = ["KEY_BACKSPACE"]}
+West = {keys = ["KEY_R"]}
+North = {keys = ["KEY_F"]}
+LeftBumper = {open_menu = "Groups"}
+RightBumper = {keys = ["KEY_LEFTCTRL"]}
+LeftStick = {keys = ["KEY_G"]}
+RightStick = {keys = ["KEY_P"]}
+Select = {open_menu = "Battle orders"}
+
+[modes.gestures.North]
+long_press = {keys = ["KEY_F"]}
+
+[modes.gestures.Select]
+long_press = {open_menu = "Campaign or battle"}
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1a0e0b"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#331812"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#9a2a1e"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#d1aa52"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#120907"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5e3524"
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1a0e0b"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#331812"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#9a2a1e"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#d1aa52"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#120907"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5e3524"
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1a0e0b"
+opacity = 0.92
+
+[media_style.items]
+color = "#331812"
+opacity = 0.95
+
+[media_style.selected]
+color = "#9a2a1e"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#d1aa52"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#120907"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5e3524"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1a0e0b"
+opacity = 0.92
+
+[menu_style.items]
+color = "#331812"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#9a2a1e"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#d1aa52"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#120907"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5e3524"
+
+[menu_style.glow]
+color = "#f0c868"
+opacity = 0.55
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "greek_key", size = 36, width = 1, color = "#d1aa52"}
+paper = {opacity = 0.22}
+dividers = {width = 1, color = "#d1aa52", opacity = 0.35}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.08, pitch = 0.7}
+pick = {kind = "clank", volume = 0.13, pitch = 0.9}
+open = {kind = "page", volume = 0.06, pitch = 0.9}
+close = {kind = "page", volume = 0.04, pitch = 0.7}
+
+[sounds.keyboard]
+step = {kind = "wood", volume = 0.07, pitch = 1.0}
+pick = {kind = "clank", volume = 0.14, pitch = 0.9}
+
+[sounds.numpad]
+step = {kind = "wood", volume = 0.07, pitch = 1.0}
+pick = {kind = "clank", volume = 0.14, pitch = 0.9}
+
+[rumble.menu]
+step = {strength = 0.11, length_ms = 18}
+pick = {strength = 0.41, length_ms = 35}
+open = {strength = 0.09, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.27, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.27, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.27, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.27, length_ms = 60}

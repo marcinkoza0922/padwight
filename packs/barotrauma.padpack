@@ -1,0 +1,653 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "5a9c1e47-83b2-4d6f-a015-e2c7b8f39d14"
+name = "Barotrauma"
+version = "1.0"
+author = "Padwight"
+description = "Barotrauma on an Xbox-style pad, for the game's default keys. The left stick walks and a full push runs, the right stick moves the cursor you aim and work with; RT uses and fires, LT aims. A interacts, B grabs, X opens health, Y the crew and missions list, LB the command interface. Hold RB for the hotbar. Select lists chat, radio and the rest. Overlays in the sub's dark steel with an amber highlight. The \"Barotrauma + Gyro\" profile also moves the cursor by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "602960"
+profile = "Barotrauma"
+
+[[rules]]
+kind = "executable"
+value = "Barotrauma.exe"
+profile = "Barotrauma"
+
+[[rules]]
+kind = "executable"
+value = "Barotrauma"
+profile = "Barotrauma"
+
+[[profiles]]
+name = "Barotrauma"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_E"]}
+East = {keys = ["KEY_G"]}
+West = {keys = ["KEY_H"]}
+North = {keys = ["KEY_TAB"]}
+LeftBumper = {keys = ["KEY_Q"]}
+RightBumper = {open_menu = "Hotbar"}
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = {mouse = "Middle"}
+Select = {open_menu = "Crew and chat"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_Z"]}
+DpadRight = {keys = ["KEY_X"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.3
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.zones]]
+min = 0.85
+max = 1.0
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1700.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the cursor, which is where you aim, and what you point at is what you use. {rt} uses the item in your hands: fire, weld, repair, cut. {lt} aims a weapon or tool.
+{ls} walks, climbs ladders and swims; a full push runs (Shift). Click {l3} to crouch, and again to stand.
+{south} interacts with what you point at (E): doors, terminals, the helm, a crewmate. {east} grabs and drags a body (G). {west} opens the health screen (H), {north} the crew and missions list (Tab).
+{lb} opens the command interface to give orders (Q), and clicking {r3} gives a quick order for what you point at (middle mouse). Hold {rb} for the hotbar and pick a slot with {rs}; {up} and {down} turn the wheel.
+{left} and {right} switch to the previous and next crewmate in single player. {select} lists chat, radio chat and ragdoll. {start} opens the menu (Escape).
+Chat needs typing: {guide} + {west} opens the on-screen keyboard.
+The keys are remembered defaults, unchecked on an install; the command interface, grab and crew-switch keys are the least sure. If one doesn't answer, check Settings → Controls and change the pack to match.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Walk · {b}full push runs{/b}"}
+"stick:Right" = {text = "Cursor · aim"}
+"trigger:Right" = {text = "{icon:crosshair} {b}Use · fire{/b}"}
+"trigger:Left" = {text = "Aim"}
+"button:South" = {text = "{icon:hand} {b}Interact{/b}"}
+"button:East" = {text = "Grab · drag"}
+"button:West" = {text = "{icon:medkit} Health"}
+"button:North" = {text = "{icon:people} Crew · missions"}
+"button:LeftBumper" = {text = "{icon:messages} Command"}
+"button:RightBumper" = {text = "Hotbar (hold)"}
+"button:LeftStick" = {text = "Crouch (toggle)"}
+"button:RightStick" = {text = "Quick order"}
+"button:Select" = {text = "Chat, radio, more"}
+"button:Start" = {text = "{icon:pause} Menu"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Wheel"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "{icon:person} Switch crewmate"
+
+[[profiles]]
+name = "Barotrauma + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_E"]}
+East = {keys = ["KEY_G"]}
+West = {keys = ["KEY_H"]}
+North = {keys = ["KEY_TAB"]}
+LeftBumper = {keys = ["KEY_Q"]}
+RightBumper = {open_menu = "Hotbar"}
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = {mouse = "Middle"}
+Select = {open_menu = "Crew and chat"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_Z"]}
+DpadRight = {keys = ["KEY_X"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.3
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.zones]]
+min = 0.85
+max = 1.0
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1700.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the cursor, which is where you aim, and what you point at is what you use. {rt} uses the item in your hands: fire, weld, repair, cut. {lt} aims a weapon or tool.
+{ls} walks, climbs ladders and swims; a full push runs (Shift). Click {l3} to crouch, and again to stand.
+{south} interacts with what you point at (E): doors, terminals, the helm, a crewmate. {east} grabs and drags a body (G). {west} opens the health screen (H), {north} the crew and missions list (Tab).
+{lb} opens the command interface to give orders (Q), and clicking {r3} gives a quick order for what you point at (middle mouse). Hold {rb} for the hotbar and pick a slot with {rs}; {up} and {down} turn the wheel.
+{left} and {right} switch to the previous and next crewmate in single player. {select} lists chat, radio chat and ragdoll. {start} opens the menu (Escape).
+Chat needs typing: {guide} + {west} opens the on-screen keyboard.
+The keys are remembered defaults, unchecked on an install; the command interface, grab and crew-switch keys are the least sure. If one doesn't answer, check Settings → Controls and change the pack to match.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Walk · {b}full push runs{/b}"}
+"stick:Right" = {text = "Cursor · aim"}
+"trigger:Right" = {text = "{icon:crosshair} {b}Use · fire{/b}"}
+"trigger:Left" = {text = "Aim"}
+"button:South" = {text = "{icon:hand} {b}Interact{/b}"}
+"button:East" = {text = "Grab · drag"}
+"button:West" = {text = "{icon:medkit} Health"}
+"button:North" = {text = "{icon:people} Crew · missions"}
+"button:LeftBumper" = {text = "{icon:messages} Command"}
+"button:RightBumper" = {text = "Hotbar (hold)"}
+"button:LeftStick" = {text = "Crouch (toggle)"}
+"button:RightStick" = {text = "Quick order"}
+"button:Select" = {text = "Chat, radio, more"}
+"button:Start" = {text = "{icon:pause} Menu"}
+"combo:button:Select+button:Start" = {text = "Pause gyro (hold)"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Wheel"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "{icon:person} Switch crewmate"
+
+[[menus]]
+name = "Hotbar"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Slot 1 {color:#7fc4b6}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "Slot 2 {color:#7fc4b6}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "Slot 3 {color:#7fc4b6}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "Slot 4 {color:#7fc4b6}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "Slot 5 {color:#7fc4b6}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "Slot 6 {color:#7fc4b6}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "Slot 7 {color:#7fc4b6}7{/color}"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "Slot 8 {color:#7fc4b6}8{/color}"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "Slot 9 {color:#7fc4b6}9{/color}"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "Slot 10 {color:#7fc4b6}0{/color}"
+action = { keys = ["KEY_0"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#121819"
+opacity = 0.93
+
+[menus.style.items]
+color = "#1f2a2a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#d58a33"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#4d6863"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#0b0f10"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3b504c"
+
+[menus.style.glow]
+color = "#d58a33"
+opacity = 0.35
+blur = 12
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+brushed_metal = { opacity = 0.25, on = "background" }
+
+
+[[menus]]
+name = "Crew and chat"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:people} Crew and missions {box}Tab{/box}"
+action = {keys = ["KEY_TAB"]}
+
+[[menus.items]]
+label = "{icon:medkit} Health {box}H{/box}"
+action = {keys = ["KEY_H"]}
+
+[[menus.items]]
+label = "{icon:messages} Chat {box}T{/box}"
+action = {keys = ["KEY_T"]}
+
+[[menus.items]]
+label = "{icon:radio} Radio chat {box}R{/box}"
+action = {keys = ["KEY_R"]}
+
+[[menus.items]]
+label = "{icon:person} Ragdoll {box}Space{/box}"
+action = {keys = ["KEY_SPACE"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#121819"
+opacity = 0.93
+
+[menus.style.items]
+color = "#1f2a2a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#d58a33"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#4d6863"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#0b0f10"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3b504c"
+
+[menus.style.glow]
+color = "#d58a33"
+opacity = 0.35
+blur = 12
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#4d6863", opacity = 0.6}
+frame = {kind = "riveted", size = 36, width = 2, color = "#4d6863"}
+brushed_metal = { opacity = 0.25, on = "background" }
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#121819"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#1f2a2a"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#d58a33"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#4d6863"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#0b0f10"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3b504c"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[keyboard_style.ornament]
+brushed_metal = { opacity = 0.2, on = "background" }
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#121819"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#1f2a2a"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#d58a33"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#4d6863"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#0b0f10"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3b504c"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[numpad_style.ornament]
+brushed_metal = { opacity = 0.2, on = "background" }
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#121819"
+opacity = 0.93
+
+[media_style.items]
+color = "#1f2a2a"
+opacity = 0.95
+
+[media_style.selected]
+color = "#d58a33"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#4d6863"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#0b0f10"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3b504c"
+
+[media_style.type]
+letter_spacing = 1
+
+[media_style.ornament]
+brushed_metal = { opacity = 0.2, on = "background" }
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#121819"
+opacity = 0.93
+
+[menu_style.items]
+color = "#1f2a2a"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#d58a33"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#4d6863"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#0b0f10"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3b504c"
+
+[menu_style.glow]
+color = "#d58a33"
+opacity = 0.35
+blur = 12
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "riveted", size = 36, width = 2, color = "#4d6863"}
+brushed_metal = { opacity = 0.25, on = "background" }
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.07, pitch = 0.8}
+pick = {kind = "glass", volume = 0.12, pitch = 0.7, echo = 0.35}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.06, pitch = 0.9}
+pick = {kind = "keys", volume = 0.1}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.06, pitch = 0.9}
+pick = {kind = "keys", volume = 0.1}
+
+[sounds.media]
+pick = {kind = "latch", volume = 0.18, pitch = 1.0}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

@@ -1,0 +1,821 @@
+format = 20
+macros = []
+overlay_font = "Titillium Web"
+
+[pack]
+id = "71d4c9a2-0b6e-4f38-b2a7-5c8e3f1d6a90"
+name = "Command & Conquer: Red Alert 3"
+version = "1.0"
+author = "Padwight"
+description = "Command & Conquer: Red Alert 3 on an Xbox-style pad, for the default keys. The PC version has no controller support, so the layout borrows the Xbox 360 edition's ideas (X uses the special ability, the build tabs and unit commands in quick menus) on the PC keys. The right stick moves the cursor, RT left-clicks to select and order, LT right-clicks to deselect, the left stick scrolls the map. A selects every unit on screen, X fires the special ability, Y jumps to the last alert, B stops. The d-pad zooms, selects the same type and steps through the build tabs. Hold LB for control groups 1-10 (LB + RB sets one), R3 for unit commands. Select lists chat and the menu; hold it for the Menus mode. Start is the menu. The \"+ Gyro\" profile also moves the cursor by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "RA3.exe"
+profile = "Command & Conquer: Red Alert 3"
+
+[[rules]]
+kind = "executable"
+value = "ra3_1.12.game"
+profile = "Command & Conquer: Red Alert 3"
+
+[[rules]]
+kind = "steam_app_id"
+value = "17480"
+profile = "Command & Conquer: Red Alert 3"
+
+[[profiles]]
+name = "Command & Conquer: Red Alert 3"
+combos = [{buttons = ["LeftBumper", "RightBumper"], action = {open_menu = "Set group"}}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_Q"]}
+West = {keys = ["KEY_F"]}
+North = {keys = ["KEY_SPACE"]}
+East = {keys = ["KEY_S"]}
+LeftBumper = {open_menu = "Groups"}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+Select = {open_menu = "Game"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_LEFTCTRL"]}
+RightStick = {open_menu = "Commands"}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_W"]}
+DpadRight = {keys = ["KEY_TAB"]}
+
+[profiles.gestures.Select]
+long_press = {mode = "Menus"}
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_LEFT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_LEFT"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the cursor. {rt} is the left click: it selects, places structures and gives orders, and a drag boxes units. {lt} is the right click: it deselects, and a drag pans the camera. The left stick {ls} scrolls the map, and {up} {down} zoom.
+{south} selects every unit on screen (press it twice for the whole map), {left} every unit of the selected type. {west} fires the selected units' special ability, as X did on the Xbox 360. {north} jumps to the last alert and {east} stops.
+{right} steps through the build tabs on the sidebar; click a unit or structure there with {rt}. Sell and repair are the buttons above the sidebar.
+Hold {lb} for the control groups and aim the right stick {rs} at one: release to select it. Hold {lb} and {rb} together to put the selection in a group instead (Ctrl + number).
+{rb} is Shift, to add to the selection. Hold {l3} (Ctrl) while clicking with {rt} to force-fire.
+Click {r3} for the unit commands (attack-move, reverse, scatter, stop), aimed with the right stick {rs}.
+{select} lists chat and the menu. Hold {select} for the Menus mode (the main menu, the co-commander and lobby screens) and hold it again to come back. {start} (Esc) is the menu, and pauses a campaign or skirmish.
+The keys are the game's defaults as best remembered, not checked on an install: the build tabs (Tab), select same type (W), the special ability (F) and the unit commands are the likeliest to differ. If a key does nothing, look in Options, Key Mappings. The game's process may be ra3_1.12.game rather than RA3.exe, which only launches it. Guide + {west} opens the on-screen keyboard for chat.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the map" }
+"stick:Right" = { text = "Cursor" }
+"trigger:Right" = { text = "Left click (select, order)" }
+"trigger:Left" = { text = "Right click (deselect, pan)" }
+"button:South" = { text = "{icon:people} All units on screen" }
+"button:West" = { text = "{icon:bolt} Special ability" }
+"button:North" = { text = "{icon:bell} Last alert" }
+"button:East" = { text = "{icon:stop} Stop" }
+"button:RightBumper" = { text = "Shift (add to selection)" }
+"button:LeftBumper" = { text = "Hold: control groups" }
+"button:LeftStick" = { text = "Hold: force-fire (Ctrl)" }
+"button:RightStick" = { text = "Unit commands" }
+"button:DpadLeft" = { text = "{icon:copy} Same type" }
+"button:DpadRight" = { text = "{icon:layers} Next build tab" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Select:long_press" = { text = "Menus mode on / off" }
+"button:Select" = { text = "Chat, menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Set a control group"
+
+[[profiles]]
+name = "Command & Conquer: Red Alert 3 + Gyro"
+combos = [{buttons = ["LeftBumper", "RightBumper"], action = {open_menu = "Set group"}}, {buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_Q"]}
+West = {keys = ["KEY_F"]}
+North = {keys = ["KEY_SPACE"]}
+East = {keys = ["KEY_S"]}
+LeftBumper = {open_menu = "Groups"}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+Select = {open_menu = "Game"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_LEFTCTRL"]}
+RightStick = {open_menu = "Commands"}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_W"]}
+DpadRight = {keys = ["KEY_TAB"]}
+
+[profiles.gestures.Select]
+long_press = {mode = "Menus"}
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_LEFT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_LEFT"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''This is the gyro variant: tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}. Hold {select} and {start} together to pause the gyro while you reposition the controller.
+The right stick {rs} moves the cursor. {rt} is the left click: it selects, places structures and gives orders, and a drag boxes units. {lt} is the right click: it deselects, and a drag pans the camera. The left stick {ls} scrolls the map, and {up} {down} zoom.
+{south} selects every unit on screen (press it twice for the whole map), {left} every unit of the selected type. {west} fires the selected units' special ability, as X did on the Xbox 360. {north} jumps to the last alert and {east} stops.
+{right} steps through the build tabs on the sidebar; click a unit or structure there with {rt}. Sell and repair are the buttons above the sidebar.
+Hold {lb} for the control groups and aim the right stick {rs} at one: release to select it. Hold {lb} and {rb} together to put the selection in a group instead (Ctrl + number).
+{rb} is Shift, to add to the selection. Hold {l3} (Ctrl) while clicking with {rt} to force-fire.
+Click {r3} for the unit commands (attack-move, reverse, scatter, stop), aimed with the right stick {rs}.
+{select} lists chat and the menu. Hold {select} for the Menus mode (the main menu, the co-commander and lobby screens) and hold it again to come back. {start} (Esc) is the menu, and pauses a campaign or skirmish.
+The keys are the game's defaults as best remembered, not checked on an install: the build tabs (Tab), select same type (W), the special ability (F) and the unit commands are the likeliest to differ. If a key does nothing, look in Options, Key Mappings. The game's process may be ra3_1.12.game rather than RA3.exe, which only launches it. Guide + {west} opens the on-screen keyboard for chat.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the map" }
+"stick:Right" = { text = "Cursor" }
+"trigger:Right" = { text = "Left click (select, order)" }
+"trigger:Left" = { text = "Right click (deselect, pan)" }
+"button:South" = { text = "{icon:people} All units on screen" }
+"button:West" = { text = "{icon:bolt} Special ability" }
+"button:North" = { text = "{icon:bell} Last alert" }
+"button:East" = { text = "{icon:stop} Stop" }
+"button:RightBumper" = { text = "Shift (add to selection)" }
+"button:LeftBumper" = { text = "Hold: control groups" }
+"button:LeftStick" = { text = "Hold: force-fire (Ctrl)" }
+"button:RightStick" = { text = "Unit commands" }
+"button:DpadLeft" = { text = "{icon:copy} Same type" }
+"button:DpadRight" = { text = "{icon:layers} Next build tab" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Select:long_press" = { text = "Menus mode on / off" }
+"button:Select" = { text = "Chat, menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Set a control group"
+
+[[menus]]
+name = "Groups"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:people} Group 1"
+action = {keys = ["KEY_1"]}
+
+[[menus.items]]
+label = "{icon:people} Group 2"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:people} Group 3"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:people} Group 4"
+action = {keys = ["KEY_4"]}
+
+[[menus.items]]
+label = "{icon:people} Group 5"
+action = {keys = ["KEY_5"]}
+
+[[menus.items]]
+label = "{icon:people} Group 6"
+action = {keys = ["KEY_6"]}
+
+[[menus.items]]
+label = "{icon:people} Group 7"
+action = {keys = ["KEY_7"]}
+
+[[menus.items]]
+label = "{icon:people} Group 8"
+action = {keys = ["KEY_8"]}
+
+[[menus.items]]
+label = "{icon:people} Group 9"
+action = {keys = ["KEY_9"]}
+
+[[menus.items]]
+label = "{icon:people} Group 10"
+action = {keys = ["KEY_0"]}
+
+[menus.style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#120b0b"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2c1515"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c3261c"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#e0473a"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#1c0f0f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5e2621"
+
+[menus.style.glow]
+color = "#ff6b55"
+opacity = 0.55
+blur = 16
+
+[menus.style.type]
+letter_spacing = 2
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#e0473a"}
+brushed_metal = {opacity = 0.2}
+dividers = {width = 1, color = "#e0473a", opacity = 0.4}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[[menus]]
+name = "Set group"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:flag} Set 1"
+action = {keys = ["KEY_LEFTCTRL", "KEY_1"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 2"
+action = {keys = ["KEY_LEFTCTRL", "KEY_2"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 3"
+action = {keys = ["KEY_LEFTCTRL", "KEY_3"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 4"
+action = {keys = ["KEY_LEFTCTRL", "KEY_4"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 5"
+action = {keys = ["KEY_LEFTCTRL", "KEY_5"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 6"
+action = {keys = ["KEY_LEFTCTRL", "KEY_6"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 7"
+action = {keys = ["KEY_LEFTCTRL", "KEY_7"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 8"
+action = {keys = ["KEY_LEFTCTRL", "KEY_8"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 9"
+action = {keys = ["KEY_LEFTCTRL", "KEY_9"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 10"
+action = {keys = ["KEY_LEFTCTRL", "KEY_0"]}
+
+[menus.style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#120b0b"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2c1515"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c3261c"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#e0473a"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#1c0f0f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5e2621"
+
+[menus.style.glow]
+color = "#ff6b55"
+opacity = 0.55
+blur = 16
+
+[menus.style.type]
+letter_spacing = 2
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#e0473a"}
+brushed_metal = {opacity = 0.2}
+dividers = {width = 1, color = "#e0473a", opacity = 0.4}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[[menus]]
+name = "Commands"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:crosshair} Attack-move"
+action = {keys = ["KEY_A"]}
+
+[[menus.items]]
+label = "{icon:rotate-left} Reverse move"
+action = {keys = ["KEY_D"]}
+
+[[menus.items]]
+label = "{icon:split} Scatter"
+action = {keys = ["KEY_X"]}
+
+[[menus.items]]
+label = "{icon:stop} Stop"
+action = {keys = ["KEY_S"]}
+
+[[menus.items]]
+label = "{icon:bolt} Special ability"
+action = {keys = ["KEY_F"]}
+
+[menus.style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#120b0b"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2c1515"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c3261c"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#e0473a"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#1c0f0f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5e2621"
+
+[menus.style.glow]
+color = "#ff6b55"
+opacity = 0.55
+blur = 16
+
+[menus.style.type]
+letter_spacing = 2
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#e0473a"}
+brushed_metal = {opacity = 0.2}
+dividers = {width = 1, color = "#e0473a", opacity = 0.4}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[[menus]]
+name = "Game"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:messages} Chat"
+action = {keys = ["KEY_ENTER"]}
+
+[[menus.items]]
+label = "{icon:bell} Last alert"
+action = {keys = ["KEY_SPACE"]}
+
+[[menus.items]]
+label = "{icon:people} All units on screen"
+action = {keys = ["KEY_Q"]}
+
+[[menus.items]]
+label = "{icon:gear} Menu"
+action = {keys = ["KEY_ESC"]}
+
+[menus.style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#120b0b"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2c1515"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c3261c"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#e0473a"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#1c0f0f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5e2621"
+
+[menus.style.glow]
+color = "#ff6b55"
+opacity = 0.55
+blur = 16
+
+[menus.style.type]
+letter_spacing = 2
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#e0473a"}
+brushed_metal = {opacity = 0.2}
+dividers = {width = 1, color = "#e0473a", opacity = 0.4}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[[modes]]
+name = "Menus"
+indicator = "name"
+swallow_unbound = true
+
+[modes.indicator_style]
+position = "top_center"
+scale = 0.7
+
+[modes.indicator_style.background]
+color = "#120b0b"
+opacity = 0.75
+
+[modes.indicator_style.items]
+color = "#2c1515"
+opacity = 0.95
+
+[modes.indicator_style.selected]
+color = "#c3261c"
+opacity = 1.0
+
+[modes.buttons]
+Select = "toggle_overlay"
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+North = {keys = ["KEY_ENTER"]}
+West = {mouse = "Right"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {keys = ["KEY_UP"]}
+DpadDown = {keys = ["KEY_DOWN"]}
+DpadLeft = {keys = ["KEY_LEFT"]}
+DpadRight = {keys = ["KEY_RIGHT"]}
+
+[modes.gestures.Select.long_press]
+mode = "Menus"
+
+[modes.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.5
+
+[modes.left_stick.action.scroll]
+speed = 12.0
+
+[keyboard_style]
+corners = 0.06
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#120b0b"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#2c1515"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c3261c"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#e0473a"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#1c0f0f"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5e2621"
+
+[numpad_style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#120b0b"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#2c1515"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c3261c"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#e0473a"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#1c0f0f"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5e2621"
+
+[media_style]
+corners = 0.06
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#120b0b"
+opacity = 0.92
+
+[media_style.items]
+color = "#2c1515"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c3261c"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#e0473a"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#1c0f0f"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5e2621"
+
+[media_style.type]
+letter_spacing = 2
+
+[menu_style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#120b0b"
+opacity = 0.92
+
+[menu_style.items]
+color = "#2c1515"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c3261c"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#e0473a"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#1c0f0f"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5e2621"
+
+[menu_style.glow]
+color = "#ff6b55"
+opacity = 0.55
+blur = 16
+
+[menu_style.type]
+letter_spacing = 2
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#e0473a"}
+brushed_metal = {opacity = 0.2}
+dividers = {width = 1, color = "#e0473a", opacity = 0.4}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.1, pitch = 0.9}
+pick = {kind = "switch", volume = 0.2}
+open = {kind = "radio", volume = 0.025, pitch = 1.1, length = 0.6}
+close = {kind = "swish", volume = 0.025, pitch = 0.7}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.09, pitch = 1.0}
+pick = {kind = "keys", volume = 0.18}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.09, pitch = 1.0}
+pick = {kind = "keys", volume = 0.18}
+
+[rumble.menu]
+step = {strength = 0.11, length_ms = 18}
+pick = {strength = 0.41, length_ms = 35}
+open = {strength = 0.09, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.27, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.27, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.27, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.27, length_ms = 60}

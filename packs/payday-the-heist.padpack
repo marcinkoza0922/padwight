@@ -1,0 +1,602 @@
+format = 20
+macros = []
+overlay_font = "Titillium Web"
+
+[pack]
+id = "840510e7-d54b-4677-a0db-72e5464d15da"
+name = "Payday: The Heist"
+version = "1.0"
+author = "Padwight"
+description = "Payday: The Heist on an Xbox-style pad, modelled on the PlayStation 3 release, for the PC game's default keys. A jumps, B crouches, X reloads and, held, interacts, Y switches weapons, RT fires and LT aims down the sights. RB shouts at civilians and guards, LB places your equipment, L3 sprints and R3 is melee. Select holds the objectives and D-pad up opens the chat. The game has no controller support. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "24240"
+profile = "Payday: The Heist"
+
+[[rules]]
+kind = "executable"
+value = "payday_win32_release.exe"
+profile = "Payday: The Heist"
+[[profiles]]
+name = "Payday: The Heist"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_SPACE"] }
+East = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { keys = ["KEY_G"] }
+RightBumper = { keys = ["KEY_F"] }
+LeftStick = { keys = ["KEY_LEFTSHIFT"] }
+RightStick = { keys = ["KEY_V"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_T"] }
+DpadLeft = { keys = ["KEY_1"] }
+DpadRight = { keys = ["KEY_2"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_F"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 3500.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu. Heists have no saves.
+The buttons are modelled on the PlayStation 3 release's layout. {south} jumps and {east} toggles crouch. {west} reloads, and holding {west} interacts: drill, carry, open, pick up, and hold over a downed crew member to help them up. {north} switches weapons, and {left} and {right} pick the primary and secondary one.
+{rb} shouts: point at civilians to make them get down and at guards to make them surrender, or mark a special enemy. {lb} places your equipment (ammo bag, medic bag, trip mines). {r3} is melee and {l3} sprints while held.
+Hold {lt} to aim down the sights; the right stick turns more finely while it's held. Leave aiming on hold in the game's options.
+Hold {select} for the objectives and stats. {up} opens the chat: type with the on-screen keyboard ({guide} + {west}) and press Enter.
+The PC release has no controller support of its own; the DAHM mod adds one. If you use DAHM's controller mode, don't use this setup at the same time, or the two would fight.
+These are the game's default PC keys, written from memory and not checked in the game (melee, equipment, sprint, crouch and chat especially), and the PS3 layout they follow is from memory too. Compare them with Options → Controls and change the buttons here to match. The executable rule's name comes from Discord's game list and isn't checked. The gyro's full turn is a guess, not measured: turn in place and adjust it until a full turn of the controller turns you around once.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Crouch (toggle)" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "{icon:hand} Interact (hold)" }
+"button:North" = { text = "{icon:rifle} Switch weapon" }
+"button:LeftBumper" = { text = "{icon:bag} Equipment" }
+"button:RightBumper" = { text = "{icon:microphone} Shout · mark" }
+"button:LeftStick" = { text = "Sprint (hold)" }
+"button:RightStick" = { text = "{icon:fist} Melee" }
+"button:DpadUp" = { text = "{icon:messages} Chat" }
+"button:Select" = { text = "Objectives · stats" }
+"button:Start" = { text = "Menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "{icon:rifle} Primary / {icon:pistol} secondary"
+
+[[profiles]]
+name = "Payday: The Heist + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_SPACE"] }
+East = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { keys = ["KEY_G"] }
+RightBumper = { keys = ["KEY_F"] }
+LeftStick = { keys = ["KEY_LEFTSHIFT"] }
+RightStick = { keys = ["KEY_V"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_T"] }
+DpadLeft = { keys = ["KEY_1"] }
+DpadRight = { keys = ["KEY_2"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_F"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 3500.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 8000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+{start} (Escape) opens the game's menu. Heists have no saves.
+The buttons are modelled on the PlayStation 3 release's layout. {south} jumps and {east} toggles crouch. {west} reloads, and holding {west} interacts: drill, carry, open, pick up, and hold over a downed crew member to help them up. {north} switches weapons, and {left} and {right} pick the primary and secondary one.
+{rb} shouts: point at civilians to make them get down and at guards to make them surrender, or mark a special enemy. {lb} places your equipment (ammo bag, medic bag, trip mines). {r3} is melee and {l3} sprints while held.
+Hold {lt} to aim down the sights; the right stick turns more finely while it's held. Leave aiming on hold in the game's options.
+Hold {select} for the objectives and stats. {up} opens the chat: type with the on-screen keyboard ({guide} + {west}) and press Enter.
+The PC release has no controller support of its own; the DAHM mod adds one. If you use DAHM's controller mode, don't use this setup at the same time, or the two would fight.
+These are the game's default PC keys, written from memory and not checked in the game (melee, equipment, sprint, crouch and chat especially), and the PS3 layout they follow is from memory too. Compare them with Options → Controls and change the buttons here to match. The executable rule's name comes from Discord's game list and isn't checked. The gyro's full turn is a guess, not measured: turn in place and adjust it until a full turn of the controller turns you around once.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Crouch (toggle)" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "{icon:hand} Interact (hold)" }
+"button:North" = { text = "{icon:rifle} Switch weapon" }
+"button:LeftBumper" = { text = "{icon:bag} Equipment" }
+"button:RightBumper" = { text = "{icon:microphone} Shout · mark" }
+"button:LeftStick" = { text = "Sprint (hold)" }
+"button:RightStick" = { text = "{icon:fist} Melee" }
+"button:DpadUp" = { text = "{icon:messages} Chat" }
+"button:Select" = { text = "Objectives · stats" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "{icon:rifle} Primary / {icon:pistol} secondary"
+
+[[profiles]]
+name = "Payday: The Heist + Flick stick"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_SPACE"] }
+East = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { keys = ["KEY_G"] }
+RightBumper = { keys = ["KEY_F"] }
+LeftStick = { keys = ["KEY_LEFTSHIFT"] }
+RightStick = { keys = ["KEY_V"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_T"] }
+DpadLeft = { keys = ["KEY_1"] }
+DpadRight = { keys = ["KEY_2"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_F"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 8000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+{start} (Escape) opens the game's menu. Heists have no saves.
+The buttons are modelled on the PlayStation 3 release's layout. {south} jumps and {east} toggles crouch. {west} reloads, and holding {west} interacts: drill, carry, open, pick up, and hold over a downed crew member to help them up. {north} switches weapons, and {left} and {right} pick the primary and secondary one.
+{rb} shouts: point at civilians to make them get down and at guards to make them surrender, or mark a special enemy. {lb} places your equipment (ammo bag, medic bag, trip mines). {r3} is melee and {l3} sprints while held.
+Hold {lt} to aim down the sights; the right stick turns more finely while it's held. Leave aiming on hold in the game's options.
+Hold {select} for the objectives and stats. {up} opens the chat: type with the on-screen keyboard ({guide} + {west}) and press Enter.
+The PC release has no controller support of its own; the DAHM mod adds one. If you use DAHM's controller mode, don't use this setup at the same time, or the two would fight.
+These are the game's default PC keys, written from memory and not checked in the game (melee, equipment, sprint, crouch and chat especially), and the PS3 layout they follow is from memory too. Compare them with Options → Controls and change the buttons here to match. The executable rule's name comes from Discord's game list and isn't checked. The gyro's full turn is a guess, not measured: turn in place and adjust it until a full turn of the controller turns you around once.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Crouch (toggle)" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "{icon:hand} Interact (hold)" }
+"button:North" = { text = "{icon:rifle} Switch weapon" }
+"button:LeftBumper" = { text = "{icon:bag} Equipment" }
+"button:RightBumper" = { text = "{icon:microphone} Shout · mark" }
+"button:LeftStick" = { text = "Sprint (hold)" }
+"button:RightStick" = { text = "{icon:fist} Melee" }
+"button:DpadUp" = { text = "{icon:messages} Chat" }
+"button:Select" = { text = "Objectives · stats" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "{icon:rifle} Primary / {icon:pistol} secondary"
+
+[[layers]]
+name = "Aim"
+indicator = "off"
+
+[layers.right_stick]
+deadzone = 0.08
+curve = 2.8
+key_threshold = 0.5
+
+[layers.right_stick.action.mouse]
+speed = 3500.0
+accel = 0.0
+
+[keyboard_style]
+corners = 0.08
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0c0d10"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#1b1d23"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#3f7fc4"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#9fb8d6"
+opacity = 0.5
+
+[keyboard_style.gradient]
+color = "#14161b"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#343844"
+
+[keyboard_style.type]
+case = "upper"
+letter_spacing = 2
+
+[numpad_style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0c0d10"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#1b1d23"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#3f7fc4"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#9fb8d6"
+opacity = 0.5
+
+[numpad_style.gradient]
+color = "#14161b"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#343844"
+
+[numpad_style.type]
+case = "upper"
+letter_spacing = 2
+
+[media_style]
+corners = 0.08
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0c0d10"
+opacity = 0.92
+
+[media_style.items]
+color = "#1b1d23"
+opacity = 0.95
+
+[media_style.selected]
+color = "#3f7fc4"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#9fb8d6"
+opacity = 0.5
+
+[media_style.gradient]
+color = "#14161b"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#343844"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0c0d10"
+opacity = 0.92
+
+[menu_style.items]
+color = "#1b1d23"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#3f7fc4"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#9fb8d6"
+opacity = 0.5
+
+[menu_style.gradient]
+color = "#14161b"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#343844"
+
+[menu_style.glow]
+color = "#5f9be0"
+opacity = 0.25
+blur = 20
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#c8d4e3"}
+vignette = {color = "#000000", opacity = 0.45, reach = 26}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.08, pitch = 1.0}
+pick = {kind = "casing", volume = 0.25}
+open = {kind = "latch", volume = 0.15}
+close = {kind = "swish", volume = 0.03, pitch = 1.3}
+
+[sounds.guide]
+open = {kind = "latch", volume = 0.15}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.08, pitch = 1.0}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.08, pitch = 1.0}
+pick = {kind = "beep", volume = 0.15, pitch = 1.0}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}
