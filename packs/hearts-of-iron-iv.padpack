@@ -1,0 +1,775 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "ec43f527-523f-4ea6-b6a9-fb2359740268"
+name = "Hearts of Iron IV"
+version = "1.0"
+author = "Padwight"
+description = "Hearts of Iron IV (Steam, Linux or Windows build) on an Xbox-style pad. The right stick moves the pointer, the left stick pans the map, RT or A left-clicks, LT right-clicks to move divisions. Y pauses, the d-pad zooms and changes the speed. Hold LB for the map modes, hold RB for the battle plans and army orders. Select lists the top bar screens (government, research, production, logistics...). X holds Shift for waypoints. Click L3 to jump to the capital, R3 to search. The \"+ Gyro\" profile also moves the pointer by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "hoi4"
+profile = "Hearts of Iron IV"
+
+[[rules]]
+kind = "executable"
+value = "hoi4.exe"
+profile = "Hearts of Iron IV"
+
+[[rules]]
+kind = "steam_app_id"
+value = "394360"
+profile = "Hearts of Iron IV"
+
+[[profiles]]
+name = "Hearts of Iron IV"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_LEFTSHIFT"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { open_menu = "Map modes" }
+RightBumper = { open_menu = "Orders" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_BACKSPACE"] }
+RightStick = { keys = ["KEY_F"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_KPMINUS"] }
+DpadRight = { keys = ["KEY_KPPLUS"] }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer: {rt} or {south} is a left click, {lt} a right click. The left stick {ls} pans the map.
+{north} pauses and unpauses; the {leftright} d-pad slows the game down and speeds it up, and {updown} zooms.
+Hold {west} for Shift while you click, to add to a selection or queue orders.
+Hold {lb} for the map modes and {rb} for the battle plans and orders, aimed or moved through and picked with {south}.
+{select} lists the screens (tap it, pick with {south}, {east} closes the list). {east} or {start} is Escape: it closes the open window, and on the map opens the game menu.
+Hold {guide} and press {west} for the on-screen keyboard (save names, searches).
+With divisions selected, the {rb} orders draw front lines, offensive lines, spearheads and fallback lines: pick one, then click on the map with {rt}. The navy and air force reuse the same letters for their own missions; use the keyboard ({guide} + {west}) for those.
+Click {l3} to jump to the capital and {r3} to search. Hearts of Iron IV has no controller support on PC, so the controller works through these keys. It has no quick save: save from the game menu.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"stick:Left" = { text = "Pan the map" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (move, attack)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close window" }
+"button:West" = { text = "Hold: Shift (add, queue)" }
+"button:North" = { text = "{icon:pause} Pause" }
+"button:LeftBumper" = { text = "Hold: {icon:map} map modes" }
+"button:RightBumper" = { text = "Hold: battle plans and orders" }
+"button:Select" = { text = "Screens" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "{icon:home} Jump to the capital" }
+"button:RightStick" = { text = "{icon:search} Search" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "{icon:speed1} Slower / faster {icon:speed3}"
+
+[[profiles]]
+name = "Hearts of Iron IV + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_LEFTSHIFT"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { open_menu = "Map modes" }
+RightBumper = { open_menu = "Orders" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_BACKSPACE"] }
+RightStick = { keys = ["KEY_F"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_KPMINUS"] }
+DpadRight = { keys = ["KEY_KPPLUS"] }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Hearts of Iron IV + Gyro: tilting the controller moves the cursor too, as a fine pointer next to the right stick {rs}. Hold {select} and {start} together to pause the gyro while you reposition the controller.
+The right stick {rs} moves the pointer: {rt} or {south} is a left click, {lt} a right click. The left stick {ls} pans the map.
+{north} pauses and unpauses; the {leftright} d-pad slows the game down and speeds it up, and {updown} zooms.
+Hold {west} for Shift while you click, to add to a selection or queue orders.
+Hold {lb} for the map modes and {rb} for the battle plans and orders, aimed or moved through and picked with {south}.
+{select} lists the screens (tap it, pick with {south}, {east} closes the list). {east} or {start} is Escape: it closes the open window, and on the map opens the game menu.
+Hold {guide} and press {west} for the on-screen keyboard (save names, searches).
+With divisions selected, the {rb} orders draw front lines, offensive lines, spearheads and fallback lines: pick one, then click on the map with {rt}. The navy and air force reuse the same letters for their own missions; use the keyboard ({guide} + {west}) for those.
+Click {l3} to jump to the capital and {r3} to search. Hearts of Iron IV has no controller support on PC, so the controller works through these keys. It has no quick save: save from the game menu.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"stick:Left" = { text = "Pan the map" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (move, attack)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close window" }
+"button:West" = { text = "Hold: Shift (add, queue)" }
+"button:North" = { text = "{icon:pause} Pause" }
+"button:LeftBumper" = { text = "Hold: {icon:map} map modes" }
+"button:RightBumper" = { text = "Hold: battle plans and orders" }
+"button:Select" = { text = "Screens" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "{icon:home} Jump to the capital" }
+"button:RightStick" = { text = "{icon:search} Search" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "{icon:speed1} Slower / faster {icon:speed3}"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[[menus]]
+name = "Map modes"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:flag} Default"
+action = { keys = ["KEY_F1"] }
+
+[[menus.items]]
+label = "{icon:anchor} Strategic navy"
+action = { keys = ["KEY_F2"] }
+
+[[menus.items]]
+label = "{icon:plane} Strategic air"
+action = { keys = ["KEY_F3"] }
+
+[[menus.items]]
+label = "{icon:box} Supply"
+action = { keys = ["KEY_F4"] }
+
+[[menus.items]]
+label = "{icon:terrain} Terrain"
+action = { keys = ["KEY_F5"] }
+
+[[menus.items]]
+label = "{icon:fist} Resistance"
+action = { keys = ["KEY_F6"] }
+
+[[menus.items]]
+label = "{icon:handshake} Compliance"
+action = { keys = ["KEY_F7"] }
+
+[[menus.items]]
+label = "{icon:gem} Resources"
+action = { keys = ["KEY_F8"] }
+
+[[menus.items]]
+label = "{icon:rail} Infrastructure"
+action = { keys = ["KEY_F9"] }
+
+[[menus.items]]
+label = "{icon:people} Factions"
+action = { keys = ["KEY_F10"] }
+
+[[menus.items]]
+label = "{icon:grid} All map modes"
+action = { keys = ["KEY_LEFTCTRL", "KEY_F1"] }
+
+[menus.style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1c2019"
+opacity = 0.94
+
+[menus.style.items]
+color = "#2b3125"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#a08a44"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#b9a265"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#252a1f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#46503a"
+
+[menus.style.glow]
+color = "#e0c878"
+opacity = 0.35
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#b9a265", opacity = 0.45}
+frame = {kind = "riveted", size = 32, width = 2, color = "#b9a265"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+concrete = {opacity = 0.25}
+
+[[menus]]
+name = "Screens"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:palace} Government"
+action = { keys = ["KEY_Q"] }
+
+[[menus.items]]
+label = "{icon:scroll} Decisions"
+action = { keys = ["KEY_LEFTSHIFT", "KEY_Q"] }
+
+[[menus.items]]
+label = "{icon:research} Research"
+action = { keys = ["KEY_W"] }
+
+[[menus.items]]
+label = "{icon:money} International market"
+action = { keys = ["KEY_E"] }
+
+[[menus.items]]
+label = "{icon:badge} Officer corps"
+action = { keys = ["KEY_LEFTSHIFT", "KEY_E"] }
+
+[[menus.items]]
+label = "{icon:trade} Trade"
+action = { keys = ["KEY_R"] }
+
+[[menus.items]]
+label = "{icon:hammer} Construction"
+action = { keys = ["KEY_T"] }
+
+[[menus.items]]
+label = "{icon:factory} Production"
+action = { keys = ["KEY_Y"] }
+
+[[menus.items]]
+label = "{icon:people} Recruit & deploy"
+action = { keys = ["KEY_U"] }
+
+[[menus.items]]
+label = "{icon:train} Logistics"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "{icon:spy} Intelligence agency"
+action = { keys = ["KEY_LEFTSHIFT", "KEY_W"] }
+
+[menus.style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1c2019"
+opacity = 0.94
+
+[menus.style.items]
+color = "#2b3125"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#a08a44"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#b9a265"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#252a1f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#46503a"
+
+[menus.style.glow]
+color = "#e0c878"
+opacity = 0.35
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#b9a265", opacity = 0.45}
+frame = {kind = "riveted", size = 32, width = 2, color = "#b9a265"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+concrete = {opacity = 0.25}
+
+[[menus]]
+name = "Orders"
+
+[menus.kind.grid]
+columns = 4
+
+[[menus.items]]
+label = "{icon:path} Front line"
+action = { keys = ["KEY_Z"] }
+span = {columns = 2, rows = 1}
+
+[[menus.items]]
+label = "{icon:path} Front line"
+action = { keys = ["KEY_Z"] }
+
+[[menus.items]]
+label = "{icon:attack} Offensive line"
+action = { keys = ["KEY_X"] }
+span = {columns = 2, rows = 1}
+
+[[menus.items]]
+label = "{icon:attack} Offensive line"
+action = { keys = ["KEY_X"] }
+
+[[menus.items]]
+label = "{icon:arrow} Spearhead"
+action = { keys = ["KEY_LEFTSHIFT", "KEY_X"] }
+
+[[menus.items]]
+label = "{icon:rotate-left} Fallback line"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "{icon:shield} Garrison area"
+action = { keys = ["KEY_V"] }
+
+[[menus.items]]
+label = "{icon:stop} Hold"
+action = { keys = ["KEY_H"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Exercise"
+action = { keys = ["KEY_K"] }
+
+[[menus.items]]
+label = "{icon:rail} Strategic redeploy"
+action = { keys = ["KEY_B"] }
+
+[[menus.items]]
+label = "{icon:split} Select half"
+action = { keys = ["KEY_S"] }
+
+[[menus.items]]
+label = "{icon:trash} {color:red}Delete order{/color}"
+action = { keys = ["KEY_DELETE"] }
+
+[[menus.items]]
+label = "{icon:people} Divisions"
+action = { keys = ["KEY_O"] }
+
+[[menus.items]]
+label = "{icon:anchor} Navy"
+action = { keys = ["KEY_P"] }
+
+[[menus.items]]
+label = "{icon:plane} Air force"
+action = { keys = ["KEY_L"] }
+
+[[menus.items]]
+label = "{icon:flag} Unit counters"
+action = { keys = ["KEY_M"] }
+
+[menus.style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1c2019"
+opacity = 0.94
+
+[menus.style.items]
+color = "#2b3125"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#a08a44"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#b9a265"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#252a1f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#46503a"
+
+[menus.style.glow]
+color = "#e0c878"
+opacity = 0.35
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#b9a265", opacity = 0.45}
+frame = {kind = "riveted", size = 32, width = 2, color = "#b9a265"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+concrete = {opacity = 0.25}
+
+[keyboard_style]
+corners = 0.08
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1c2019"
+opacity = 0.94
+
+[keyboard_style.items]
+color = "#2b3125"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#a08a44"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#b9a265"
+opacity = 0.9
+
+[keyboard_style.gradient]
+color = "#252a1f"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#46503a"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1c2019"
+opacity = 0.94
+
+[numpad_style.items]
+color = "#2b3125"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#a08a44"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#b9a265"
+opacity = 0.9
+
+[numpad_style.gradient]
+color = "#252a1f"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#46503a"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[media_style]
+corners = 0.08
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1c2019"
+opacity = 0.94
+
+[media_style.items]
+color = "#2b3125"
+opacity = 0.95
+
+[media_style.selected]
+color = "#a08a44"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#b9a265"
+opacity = 0.9
+
+[media_style.gradient]
+color = "#252a1f"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#46503a"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1c2019"
+opacity = 0.94
+
+[menu_style.items]
+color = "#2b3125"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#a08a44"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#b9a265"
+opacity = 0.9
+
+[menu_style.gradient]
+color = "#252a1f"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#46503a"
+
+[menu_style.glow]
+color = "#e0c878"
+opacity = 0.35
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#b9a265", opacity = 0.45}
+frame = {kind = "riveted", size = 32, width = 2, color = "#b9a265"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+concrete = {opacity = 0.25}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "switch", volume = 0.22}
+open = {kind = "swish", volume = 0.03, pitch = 0.8}
+close = {kind = "swish", volume = 0.025, pitch = 0.7}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "switch", volume = 0.22}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "typewriter", volume = 0.18, length = 0.6}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.2, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.2, length_ms = 60}

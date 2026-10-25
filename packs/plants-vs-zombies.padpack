@@ -1,0 +1,363 @@
+format = 20
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "dfeb2fc4-7fe7-4e9f-97f2-c751c503df24"
+name = "Plants vs. Zombies"
+version = "1.0"
+author = "Padwight"
+description = "Plants vs. Zombies on an Xbox-style pad. The game takes only the mouse, so the right stick moves the pointer and the left stick nudges it; RT and A click to pick and plant, LT and B right-click to put a packet back. Hold X and sweep to gather sun. Start is the menu."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "3590"
+profile = "Plants vs. Zombies"
+
+[[rules]]
+kind = "executable"
+value = "PlantsVsZombies.exe"
+profile = "Plants vs. Zombies"
+
+[[rules]]
+kind = "executable"
+value = "popcapgame1.exe"
+profile = "Plants vs. Zombies"
+
+[[profiles]]
+name = "Plants vs. Zombies"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {mouse = "Right"}
+West = {turbo = {action = {mouse = "Left"}, rate = 12.0}}
+Start = {keys = ["KEY_ESC"]}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The game is played with the mouse alone. The right stick {rs} moves the pointer and the left stick {ls} moves it slowly, for a precise tile.
+{rt} or {south} clicks: pick a seed packet, then click the lawn to plant it. {lt} or {east} right-clicks to put the packet or the shovel back.
+Hold {west} and sweep the pointer over the lawn to click again and again, gathering sun and coins as you pass.
+{start} opens the menu and pauses. Typing your name: {guide} + {west} opens the on-screen keyboard. Media controls: {guide} + {lb}.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:plant} Click (plant)"}
+"trigger:Left" = {text = "Right-click (put back)"}
+"button:South" = {text = "{icon:plant} Click"}
+"button:East" = {text = "Put back"}
+"button:West" = {text = "Hold: {icon:sun} gather sun"}
+"button:Start" = {text = "{icon:pause} Menu"}
+
+
+[[profiles]]
+name = "Plants vs. Zombies + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {mouse = "Right"}
+West = {turbo = {action = {mouse = "Left"}, rate = 12.0}}
+Start = {keys = ["KEY_ESC"]}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The game is played with the mouse alone. The right stick {rs} moves the pointer and the left stick {ls} moves it slowly, for a precise tile.
+{rt} or {south} clicks: pick a seed packet, then click the lawn to plant it. {lt} or {east} right-clicks to put the packet or the shovel back.
+Hold {west} and sweep the pointer over the lawn to click again and again, gathering sun and coins as you pass.
+{start} opens the menu and pauses. Typing your name: {guide} + {west} opens the on-screen keyboard. Media controls: {guide} + {lb}.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:plant} Click (plant)"}
+"trigger:Left" = {text = "Right-click (put back)"}
+"button:South" = {text = "{icon:plant} Click"}
+"button:East" = {text = "Put back"}
+"button:West" = {text = "Hold: {icon:sun} gather sun"}
+"button:Start" = {text = "{icon:pause} Menu"}
+
+
+[keyboard_style]
+corners = 0.3
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#4a2f1a"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#e6d29a"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#7ccf3c"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#c8a35a"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#38230f"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 2
+color = "#8a6a3a"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+[keyboard_style.ornament]
+wood = {opacity = 0.45}
+bevel = {depth = 0.35}
+
+
+[numpad_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#4a2f1a"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#e6d29a"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#7ccf3c"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#c8a35a"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#38230f"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 2
+color = "#8a6a3a"
+
+[numpad_style.type]
+letter_spacing = 0
+
+[numpad_style.ornament]
+wood = {opacity = 0.45}
+bevel = {depth = 0.35}
+
+
+[media_style]
+corners = 0.3
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#4a2f1a"
+opacity = 0.93
+
+[media_style.items]
+color = "#e6d29a"
+opacity = 0.95
+
+[media_style.selected]
+color = "#7ccf3c"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#c8a35a"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#38230f"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 2
+color = "#8a6a3a"
+
+[media_style.type]
+letter_spacing = 0
+
+[media_style.ornament]
+wood = {opacity = 0.45}
+bevel = {depth = 0.35}
+
+
+[menu_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#4a2f1a"
+opacity = 0.93
+
+[menu_style.items]
+color = "#e6d29a"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#7ccf3c"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#c8a35a"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#38230f"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 2
+color = "#8a6a3a"
+
+[menu_style.glow]
+color = "#d8ff7a"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+wood = {opacity = 0.45}
+bevel = {depth = 0.4}
+
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "pluck", volume = 0.08, pitch = 1.1}
+pick = {kind = "thud", volume = 0.25, pitch = 1.2}
+
+[sounds.keyboard]
+step = {kind = "wood", volume = 0.07, pitch = 1.2}
+pick = {kind = "pluck", volume = 0.1}
+
+[sounds.numpad]
+step = {kind = "wood", volume = 0.07, pitch = 1.2}
+pick = {kind = "pluck", volume = 0.1}
+
+[sounds.media]
+pick = {kind = "pluck", volume = 0.1}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

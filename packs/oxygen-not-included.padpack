@@ -1,0 +1,875 @@
+format = 20
+macros = []
+overlay_font = "Titillium Web"
+
+[pack]
+id = "6decf402-895c-497d-9f58-63a3f1223bf1"
+name = "Oxygen Not Included"
+version = "1.0"
+author = "Padwight"
+description = "Oxygen Not Included on an Xbox-style pad, for the game's default keys. The left stick pans the asteroid and the right stick moves the pointer; RT and A click, LT right-clicks. Hold LB for the build categories, RB for the overlays and X for the tools (tap X to dig). Y rotates, L3 pauses, the D-pad zooms and sets the speed, and Select lists the screens."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "457140"
+profile = "Oxygen Not Included"
+
+[[rules]]
+kind = "executable"
+value = "OxygenNotIncluded.exe"
+profile = "Oxygen Not Included"
+
+[[rules]]
+kind = "executable"
+value = "OxygenNotIncluded"
+profile = "Oxygen Not Included"
+
+[[profiles]]
+name = "Oxygen Not Included"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_G"]}
+North = {keys = ["KEY_O"]}
+LeftBumper = {open_menu = "Build"}
+RightBumper = {open_menu = "Overlays"}
+Select = {open_menu = "Screens"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_SPACE"]}
+RightStick = {keys = ["KEY_H"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_KPMINUS"]}
+DpadRight = {keys = ["KEY_KPPLUS"]}
+
+[profiles.gestures.West.long_press]
+open_menu = "Tools"
+
+[profiles.gestures.North.long_press]
+keys = ["KEY_B"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer and the left stick {ls} pans the asteroid. {rt} or {south} clicks and drags; {lt} right-clicks to put the tool down.
+Hold {lb} for the build categories and {rb} for the overlays, aiming with the right stick {rs}. {west} picks the dig tool; hold it for every tool (cancel, deconstruct, prioritize, sweep, mop and more), aiming with the left stick {ls}.
+{north} rotates the building in hand; hold it to copy the one under the pointer. Click {l3} to pause, {left} and {right} slow down and speed up. {up} and {down} zoom, {r3} returns the camera to the Printing Pod.
+{select} lists the screens: vitals, consumables, schedule, priorities, skills, research, reports, database and starmap. {east} closes them.
+Keys are the game's defaults, read from memory rather than an install: if one is off, check Options → Controls. Naming a duplicant: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click / drag"}
+"trigger:Left" = {text = "Right-click (drop tool)"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Close"}
+"button:West" = {text = "{icon:pick} Dig"}
+"gesture:button:West:long_press" = {text = "Hold: tools"}
+"button:North" = {text = "{icon:rotate} Rotate"}
+"gesture:button:North:long_press" = {text = "Copy building"}
+"button:LeftBumper" = {text = "Hold: {icon:hammer} build"}
+"button:RightBumper" = {text = "Hold: {icon:layers} overlays"}
+"button:Select" = {text = "Screens"}
+"button:Start" = {text = "Menu"}
+"button:LeftStick" = {text = "{icon:pause} Pause"}
+"button:RightStick" = {text = "{icon:home} Printing Pod"}
+"button:DpadLeft" = {text = "{icon:speed1} Slower"}
+"button:DpadRight" = {text = "{icon:speed3} Faster"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+
+[[profiles]]
+name = "Oxygen Not Included + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_G"]}
+North = {keys = ["KEY_O"]}
+LeftBumper = {open_menu = "Build"}
+RightBumper = {open_menu = "Overlays"}
+Select = {open_menu = "Screens"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_SPACE"]}
+RightStick = {keys = ["KEY_H"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_KPMINUS"]}
+DpadRight = {keys = ["KEY_KPPLUS"]}
+
+[profiles.gestures.West.long_press]
+open_menu = "Tools"
+
+[profiles.gestures.North.long_press]
+keys = ["KEY_B"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer and the left stick {ls} pans the asteroid. {rt} or {south} clicks and drags; {lt} right-clicks to put the tool down.
+Hold {lb} for the build categories and {rb} for the overlays, aiming with the right stick {rs}. {west} picks the dig tool; hold it for every tool (cancel, deconstruct, prioritize, sweep, mop and more), aiming with the left stick {ls}.
+{north} rotates the building in hand; hold it to copy the one under the pointer. Click {l3} to pause, {left} and {right} slow down and speed up. {up} and {down} zoom, {r3} returns the camera to the Printing Pod.
+{select} lists the screens: vitals, consumables, schedule, priorities, skills, research, reports, database and starmap. {east} closes them.
+Keys are the game's defaults, read from memory rather than an install: if one is off, check Options → Controls. Naming a duplicant: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click / drag"}
+"trigger:Left" = {text = "Right-click (drop tool)"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Close"}
+"button:West" = {text = "{icon:pick} Dig"}
+"gesture:button:West:long_press" = {text = "Hold: tools"}
+"button:North" = {text = "{icon:rotate} Rotate"}
+"gesture:button:North:long_press" = {text = "Copy building"}
+"button:LeftBumper" = {text = "Hold: {icon:hammer} build"}
+"button:RightBumper" = {text = "Hold: {icon:layers} overlays"}
+"button:Select" = {text = "Screens"}
+"button:Start" = {text = "Menu"}
+"button:LeftStick" = {text = "{icon:pause} Pause"}
+"button:RightStick" = {text = "{icon:home} Printing Pod"}
+"button:DpadLeft" = {text = "{icon:speed1} Slower"}
+"button:DpadRight" = {text = "{icon:speed3} Faster"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+
+[[menus]]
+name = "Build"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:home} Base"
+action = {keys = ["KEY_1"]}
+
+[[menus.items]]
+label = "{icon:cloud} Oxygen"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:bolt} Power"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:wheat} Food"
+action = {keys = ["KEY_4"]}
+
+[[menus.items]]
+label = "{icon:drop} Plumbing"
+action = {keys = ["KEY_5"]}
+
+[[menus.items]]
+label = "{icon:pipe} Ventilation"
+action = {keys = ["KEY_6"]}
+
+[[menus.items]]
+label = "{icon:factory} Refinement"
+action = {keys = ["KEY_7"]}
+
+[[menus.items]]
+label = "{icon:medkit} Medicine"
+action = {keys = ["KEY_8"]}
+
+[[menus.items]]
+label = "{icon:sleep} Furniture"
+action = {keys = ["KEY_9"]}
+
+[[menus.items]]
+label = "{icon:research} Stations"
+action = {keys = ["KEY_0"]}
+
+[[menus.items]]
+label = "{icon:thermometer} Utilities"
+action = {keys = ["KEY_MINUS"]}
+
+[[menus.items]]
+label = "{icon:chip} Automation"
+action = {keys = ["KEY_EQUAL"]}
+
+[[menus.items]]
+label = "{icon:rail} Shipping"
+action = {keys = ["KEY_LEFTSHIFT", "KEY_1"]}
+
+[[menus.items]]
+label = "{icon:rocket} Rocketry"
+action = {keys = ["KEY_LEFTSHIFT", "KEY_2"]}
+
+[menus.style]
+corners = 0.2
+position = "center"
+scale = 0.85
+
+[menus.style.background]
+color = "#2b2740"
+opacity = 0.93
+
+[menus.style.items]
+color = "#454066"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#e2457e"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8d84c4"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#211e33"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5d5788"
+
+[menus.style.glow]
+color = "#ff7aa8"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#5d5788", opacity = 0.8}
+
+
+[[menus]]
+name = "Overlays"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:cloud} Oxygen"
+action = {keys = ["KEY_F1"]}
+
+[[menus.items]]
+label = "{icon:bolt} Power"
+action = {keys = ["KEY_F2"]}
+
+[[menus.items]]
+label = "{icon:thermometer} Temperature"
+action = {keys = ["KEY_F3"]}
+
+[[menus.items]]
+label = "{icon:gem} Materials"
+action = {keys = ["KEY_F4"]}
+
+[[menus.items]]
+label = "{icon:bulb} Light"
+action = {keys = ["KEY_F5"]}
+
+[[menus.items]]
+label = "{icon:drop} Plumbing"
+action = {keys = ["KEY_F6"]}
+
+[[menus.items]]
+label = "{icon:pipe} Ventilation"
+action = {keys = ["KEY_F7"]}
+
+[[menus.items]]
+label = "{icon:star} Decor"
+action = {keys = ["KEY_F8"]}
+
+[[menus.items]]
+label = "{icon:germ} Germs"
+action = {keys = ["KEY_F9"]}
+
+[[menus.items]]
+label = "{icon:plant} Farming"
+action = {keys = ["KEY_F10"]}
+
+[[menus.items]]
+label = "{icon:home} Rooms"
+action = {keys = ["KEY_F11"]}
+
+[[menus.items]]
+label = "{icon:shield} Exosuits"
+action = {keys = ["KEY_LEFTSHIFT", "KEY_F1"]}
+
+[[menus.items]]
+label = "{icon:chip} Automation"
+action = {keys = ["KEY_LEFTSHIFT", "KEY_F2"]}
+
+[[menus.items]]
+label = "{icon:rail} Conveyor"
+action = {keys = ["KEY_LEFTSHIFT", "KEY_F3"]}
+
+[[menus.items]]
+label = "{icon:radiation} Radiation"
+action = {keys = ["KEY_LEFTSHIFT", "KEY_F4"]}
+
+[menus.style]
+corners = 0.2
+position = "center"
+scale = 0.85
+
+[menus.style.background]
+color = "#2b2740"
+opacity = 0.93
+
+[menus.style.items]
+color = "#454066"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#e2457e"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8d84c4"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#211e33"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5d5788"
+
+[menus.style.glow]
+color = "#ff7aa8"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#5d5788", opacity = 0.8}
+
+
+[[menus]]
+name = "Tools"
+
+[menus.kind.radial]
+stick = "Left"
+
+[[menus.items]]
+label = "{icon:pick} Dig"
+action = {keys = ["KEY_G"]}
+
+[[menus.items]]
+label = "{icon:cancel} Cancel"
+action = {keys = ["KEY_C"]}
+
+[[menus.items]]
+label = "{icon:trash} {color:red}Deconstruct{/color}"
+action = {keys = ["KEY_X"]}
+
+[[menus.items]]
+label = "{icon:flag} Prioritize"
+action = {keys = ["KEY_P"]}
+
+[[menus.items]]
+label = "{icon:germ} Disinfect"
+action = {keys = ["KEY_I"]}
+
+[[menus.items]]
+label = "{icon:broom} Sweep"
+action = {keys = ["KEY_K"]}
+
+[[menus.items]]
+label = "{icon:drop} Mop"
+action = {keys = ["KEY_M"]}
+
+[[menus.items]]
+label = "{icon:attack} Attack"
+action = {keys = ["KEY_T"]}
+
+[[menus.items]]
+label = "{icon:rope} Wrangle"
+action = {keys = ["KEY_N"]}
+
+[[menus.items]]
+label = "{icon:wheat} Harvest"
+action = {keys = ["KEY_Y"]}
+
+[menus.style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#2b2740"
+opacity = 0.93
+
+[menus.style.items]
+color = "#454066"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#e2457e"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8d84c4"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#211e33"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5d5788"
+
+[menus.style.glow]
+color = "#ff7aa8"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#5d5788", opacity = 0.8}
+
+
+[[menus]]
+name = "Screens"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:heart} Vitals"
+action = {keys = ["KEY_V"]}
+
+[[menus.items]]
+label = "{icon:wheat} Consumables"
+action = {keys = ["KEY_F"]}
+
+[[menus.items]]
+label = "{icon:clock} Schedule"
+action = {keys = ["KEY_DOT"]}
+
+[[menus.items]]
+label = "{icon:chart} Priorities"
+action = {keys = ["KEY_L"]}
+
+[[menus.items]]
+label = "{icon:badge} Skills"
+action = {keys = ["KEY_J"]}
+
+[[menus.items]]
+label = "{icon:research} Research"
+action = {keys = ["KEY_R"]}
+
+[[menus.items]]
+label = "{icon:scroll} Reports"
+action = {keys = ["KEY_E"]}
+
+[[menus.items]]
+label = "{icon:book} Database"
+action = {keys = ["KEY_U"]}
+
+[[menus.items]]
+label = "{icon:rocket} Starmap"
+action = {keys = ["KEY_Z"]}
+
+[menus.style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#2b2740"
+opacity = 0.93
+
+[menus.style.items]
+color = "#454066"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#e2457e"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8d84c4"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#211e33"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5d5788"
+
+[menus.style.glow]
+color = "#ff7aa8"
+opacity = 0.6
+blur = 18
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#5d5788", opacity = 0.8}
+
+
+[keyboard_style]
+corners = 0.2
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#2b2740"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#454066"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#e2457e"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8d84c4"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#211e33"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5d5788"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+
+[numpad_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#2b2740"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#454066"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#e2457e"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8d84c4"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#211e33"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5d5788"
+
+[numpad_style.type]
+letter_spacing = 0
+
+
+[media_style]
+corners = 0.2
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#2b2740"
+opacity = 0.93
+
+[media_style.items]
+color = "#454066"
+opacity = 0.95
+
+[media_style.selected]
+color = "#e2457e"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8d84c4"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#211e33"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5d5788"
+
+[media_style.type]
+letter_spacing = 0
+
+
+[menu_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#2b2740"
+opacity = 0.93
+
+[menu_style.items]
+color = "#454066"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#e2457e"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8d84c4"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#211e33"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5d5788"
+
+[menu_style.glow]
+color = "#ff7aa8"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#5d5788", opacity = 0.8}
+
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "drop", volume = 0.07, pitch = 1.3}
+pick = {kind = "blip", volume = 0.08}
+open = {kind = "pop", volume = 0.06}
+
+[sounds.keyboard]
+step = {kind = "drop", volume = 0.06, pitch = 1.4}
+pick = {kind = "keys", volume = 0.18}
+
+[sounds.numpad]
+step = {kind = "drop", volume = 0.06, pitch = 1.4}
+pick = {kind = "keys", volume = 0.18}
+
+[sounds.media]
+pick = {kind = "blip", volume = 0.08}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

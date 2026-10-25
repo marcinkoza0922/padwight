@@ -1,0 +1,757 @@
+format = 20
+macros = []
+overlay_font = "Titillium Web"
+
+[pack]
+id = "f527be7e-cdd9-44b6-b40b-db06415c5c95"
+name = "Stellaris"
+version = "1.0"
+author = "Padwight"
+description = "Stellaris (Steam, Linux or Windows build) on an Xbox-style pad. The right stick moves the pointer, the left stick pans the camera, RT or A left-clicks, LT right-clicks to send fleets. Y pauses (hold it to step one day), the d-pad zooms and changes the speed. Hold LB for the map modes, hold RB for the fleet orders. Select lists the screens on F1 to F10 and the outliner. Click R3 for the galaxy map, L3 for the home system. The \"+ Gyro\" profile also moves the pointer by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "stellaris"
+profile = "Stellaris"
+
+[[rules]]
+kind = "executable"
+value = "stellaris.exe"
+profile = "Stellaris"
+
+[[rules]]
+kind = "steam_app_id"
+value = "281990"
+profile = "Stellaris"
+
+[[profiles]]
+name = "Stellaris"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_LEFTSHIFT"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { open_menu = "Map modes" }
+RightBumper = { open_menu = "Fleet orders" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_BACKSPACE"] }
+RightStick = { keys = ["KEY_M"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_KPMINUS"] }
+DpadRight = { keys = ["KEY_KPPLUS"] }
+
+[profiles.gestures.North.long_press]
+keys = ["KEY_DOT"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer: {rt} or {south} is a left click, {lt} a right click. The left stick {ls} pans the map.
+{north} pauses and unpauses; the {leftright} d-pad slows the game down and speeds it up, and {updown} zooms.
+Hold {west} for Shift while you click, to add to a selection or queue orders.
+Hold {lb} for the map modes and {rb} for the fleet orders, aimed or moved through and picked with {south}.
+{select} lists the screens (tap it, pick with {south}, {east} closes the list). {east} or {start} is Escape: it closes the open window, and on the map opens the game menu.
+Hold {guide} and press {west} for the on-screen keyboard (save names, searches).
+Hold {north} while paused to step one day. With a fleet selected, the {rb} orders act on it; hold {west} as you right-click with {lt} to queue a move.
+Click {r3} to open or close the galaxy map and {l3} to go to the home system. The F1 to F10 screens follow the game's navigation menu, which you can rearrange in the game; the names in the {select} list are its usual order.
+Stellaris has no controller support on PC, so the controller works through these keys. It has no quick save: save from the game menu.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"stick:Left" = { text = "Pan the camera" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (move, rotate)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close window" }
+"button:West" = { text = "Hold: Shift (add, queue)" }
+"button:North" = { text = "{icon:pause} Pause" }
+"button:LeftBumper" = { text = "Hold: {icon:map} map modes" }
+"button:RightBumper" = { text = "Hold: fleet orders" }
+"button:Select" = { text = "Screens" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "{icon:home} Home system" }
+"button:RightStick" = { text = "{icon:map} Galaxy map" }
+"gesture:button:North:long_press" = { text = "Next day (while paused)" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "{icon:speed1} Slower / faster {icon:speed3}"
+
+[[profiles]]
+name = "Stellaris + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_LEFTSHIFT"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { open_menu = "Map modes" }
+RightBumper = { open_menu = "Fleet orders" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_BACKSPACE"] }
+RightStick = { keys = ["KEY_M"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_KPMINUS"] }
+DpadRight = { keys = ["KEY_KPPLUS"] }
+
+[profiles.gestures.North.long_press]
+keys = ["KEY_DOT"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Stellaris + Gyro: tilting the controller moves the cursor too, as a fine pointer next to the right stick {rs}. Hold {select} and {start} together to pause the gyro while you reposition the controller.
+The right stick {rs} moves the pointer: {rt} or {south} is a left click, {lt} a right click. The left stick {ls} pans the map.
+{north} pauses and unpauses; the {leftright} d-pad slows the game down and speeds it up, and {updown} zooms.
+Hold {west} for Shift while you click, to add to a selection or queue orders.
+Hold {lb} for the map modes and {rb} for the fleet orders, aimed or moved through and picked with {south}.
+{select} lists the screens (tap it, pick with {south}, {east} closes the list). {east} or {start} is Escape: it closes the open window, and on the map opens the game menu.
+Hold {guide} and press {west} for the on-screen keyboard (save names, searches).
+Hold {north} while paused to step one day. With a fleet selected, the {rb} orders act on it; hold {west} as you right-click with {lt} to queue a move.
+Click {r3} to open or close the galaxy map and {l3} to go to the home system. The F1 to F10 screens follow the game's navigation menu, which you can rearrange in the game; the names in the {select} list are its usual order.
+Stellaris has no controller support on PC, so the controller works through these keys. It has no quick save: save from the game menu.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"stick:Left" = { text = "Pan the camera" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (move, rotate)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close window" }
+"button:West" = { text = "Hold: Shift (add, queue)" }
+"button:North" = { text = "{icon:pause} Pause" }
+"button:LeftBumper" = { text = "Hold: {icon:map} map modes" }
+"button:RightBumper" = { text = "Hold: fleet orders" }
+"button:Select" = { text = "Screens" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "{icon:home} Home system" }
+"button:RightStick" = { text = "{icon:map} Galaxy map" }
+"gesture:button:North:long_press" = { text = "Next day (while paused)" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "{icon:speed1} Slower / faster {icon:speed3}"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[[menus]]
+name = "Map modes"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:flag} Empires"
+action = { keys = ["KEY_LEFTCTRL", "KEY_Z"] }
+
+[[menus.items]]
+label = "{icon:handshake} Diplomatic"
+action = { keys = ["KEY_LEFTCTRL", "KEY_X"] }
+
+[[menus.items]]
+label = "{icon:heart} Opinion"
+action = { keys = ["KEY_LEFTCTRL", "KEY_C"] }
+
+[[menus.items]]
+label = "{icon:brain} AI attitude"
+action = { keys = ["KEY_LEFTCTRL", "KEY_V"] }
+
+[[menus.items]]
+label = "{icon:people} Neighbors"
+action = { keys = ["KEY_LEFTCTRL", "KEY_B"] }
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#08131f"
+opacity = 0.94
+
+[menus.style.items]
+color = "#10263a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2a9fc4"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#5fd4f0"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#0d1d30"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#1f4c66"
+
+[menus.style.glow]
+color = "#6fe4ff"
+opacity = 0.6
+blur = 16
+
+[menus.style.type]
+letter_spacing = 2
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#5fd4f0", opacity = 0.45}
+frame = {kind = "chamfer", size = 14, width = 2, color = "#5fd4f0"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[[menus]]
+name = "Screens"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:palace} Government {color:gray}F1{/color}"
+action = { keys = ["KEY_F1"] }
+
+[[menus.items]]
+label = "{icon:book} Situation log {color:gray}F2{/color}"
+action = { keys = ["KEY_F2"] }
+
+[[menus.items]]
+label = "{icon:money} Market {color:gray}F3{/color}"
+action = { keys = ["KEY_F3"] }
+
+[[menus.items]]
+label = "{icon:handshake} Contacts {color:gray}F4{/color}"
+action = { keys = ["KEY_F4"] }
+
+[[menus.items]]
+label = "{icon:research} Technology {color:gray}F5{/color}"
+action = { keys = ["KEY_F5"] }
+
+[[menus.items]]
+label = "{icon:planet} Planets {color:gray}F6{/color}"
+action = { keys = ["KEY_F6"] }
+
+[[menus.items]]
+label = "{icon:people} Species {color:gray}F7{/color}"
+action = { keys = ["KEY_F7"] }
+
+[[menus.items]]
+label = "{icon:star} Traditions {color:gray}F8{/color}"
+action = { keys = ["KEY_F8"] }
+
+[[menus.items]]
+label = "{icon:scroll} Policies {color:gray}F9{/color}"
+action = { keys = ["KEY_F9"] }
+
+[[menus.items]]
+label = "{icon:civics} Edicts {color:gray}F10{/color}"
+action = { keys = ["KEY_F10"] }
+
+[[menus.items]]
+label = "{icon:layers} Outliner"
+action = { keys = ["KEY_O"] }
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#08131f"
+opacity = 0.94
+
+[menus.style.items]
+color = "#10263a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2a9fc4"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#5fd4f0"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#0d1d30"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#1f4c66"
+
+[menus.style.glow]
+color = "#6fe4ff"
+opacity = 0.6
+blur = 16
+
+[menus.style.type]
+letter_spacing = 2
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#5fd4f0", opacity = 0.45}
+frame = {kind = "chamfer", size = 14, width = 2, color = "#5fd4f0"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[[menus]]
+name = "Fleet orders"
+
+[menus.kind.grid]
+columns = 4
+
+[[menus.items]]
+label = "{icon:move} Move"
+action = { keys = ["KEY_C"] }
+span = {columns = 2, rows = 1}
+
+[[menus.items]]
+label = "{icon:move} Move"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "{icon:attack} Attack target"
+action = { keys = ["KEY_X"] }
+span = {columns = 2, rows = 1}
+
+[[menus.items]]
+label = "{icon:attack} Attack target"
+action = { keys = ["KEY_X"] }
+
+[[menus.items]]
+label = "{icon:stop} Stop"
+action = { keys = ["KEY_H"] }
+
+[[menus.items]]
+label = "{icon:home} Return"
+action = { keys = ["KEY_B"] }
+
+[[menus.items]]
+label = "{icon:merge} Merge"
+action = { keys = ["KEY_G"] }
+
+[[menus.items]]
+label = "{icon:split} Split fleet"
+action = { keys = ["KEY_V"] }
+
+[[menus.items]]
+label = "{icon:rotate} Patrol"
+action = { keys = ["KEY_P"] }
+
+[[menus.items]]
+label = "{icon:rocket} Jump"
+action = { keys = ["KEY_J"] }
+
+[[menus.items]]
+label = "{icon:shield} Fleet stance"
+action = { keys = ["KEY_T"] }
+
+[[menus.items]]
+label = "{icon:eye} Go to"
+action = { keys = ["KEY_Q"] }
+
+[[menus.items]]
+label = "{icon:search} Find system"
+action = { keys = ["KEY_F"] }
+
+[[menus.items]]
+label = "{icon:arrow} Next system"
+action = { keys = ["KEY_TAB"] }
+
+[[menus.items]]
+label = "{icon:compass} Reset camera"
+action = { keys = ["KEY_R"] }
+
+[[menus.items]]
+label = "{icon:trash} {color:red}Disband{/color}"
+action = { keys = ["KEY_DELETE"] }
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#08131f"
+opacity = 0.94
+
+[menus.style.items]
+color = "#10263a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2a9fc4"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#5fd4f0"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#0d1d30"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#1f4c66"
+
+[menus.style.glow]
+color = "#6fe4ff"
+opacity = 0.6
+blur = 16
+
+[menus.style.type]
+letter_spacing = 2
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#5fd4f0", opacity = 0.45}
+frame = {kind = "chamfer", size = 14, width = 2, color = "#5fd4f0"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#08131f"
+opacity = 0.94
+
+[keyboard_style.items]
+color = "#10263a"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#2a9fc4"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#5fd4f0"
+opacity = 0.9
+
+[keyboard_style.gradient]
+color = "#0d1d30"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#1f4c66"
+
+[keyboard_style.type]
+letter_spacing = 2
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#08131f"
+opacity = 0.94
+
+[numpad_style.items]
+color = "#10263a"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#2a9fc4"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#5fd4f0"
+opacity = 0.9
+
+[numpad_style.gradient]
+color = "#0d1d30"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#1f4c66"
+
+[numpad_style.type]
+letter_spacing = 2
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#08131f"
+opacity = 0.94
+
+[media_style.items]
+color = "#10263a"
+opacity = 0.95
+
+[media_style.selected]
+color = "#2a9fc4"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#5fd4f0"
+opacity = 0.9
+
+[media_style.gradient]
+color = "#0d1d30"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#1f4c66"
+
+[media_style.type]
+letter_spacing = 2
+
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#08131f"
+opacity = 0.94
+
+[menu_style.items]
+color = "#10263a"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#2a9fc4"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#5fd4f0"
+opacity = 0.9
+
+[menu_style.gradient]
+color = "#0d1d30"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#1f4c66"
+
+[menu_style.glow]
+color = "#6fe4ff"
+opacity = 0.6
+blur = 16
+
+[menu_style.type]
+letter_spacing = 2
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#5fd4f0", opacity = 0.45}
+frame = {kind = "chamfer", size = 14, width = 2, color = "#5fd4f0"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[motion]
+keyboard = "dreamy"
+numpad = "dreamy"
+menu = "dreamy"
+media = "dreamy"
+offer = "dreamy"
+info = "dreamy"
+log = "dreamy"
+
+[sounds.menu]
+step = {kind = "blip", volume = 0.05, pitch = 0.8}
+pick = {kind = "glass", volume = 0.1, pitch = 1.1}
+open = {kind = "rise", volume = 0.05}
+close = {kind = "fall", volume = 0.04}
+
+[sounds.numpad]
+step = {kind = "blip", volume = 0.05, pitch = 0.8}
+pick = {kind = "glass", volume = 0.1, pitch = 1.1}
+
+[sounds.keyboard]
+step = {kind = "blip", volume = 0.05, pitch = 0.8}
+pick = {kind = "blip", volume = 0.06, pitch = 1.1}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.2, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.2, length_ms = 60}

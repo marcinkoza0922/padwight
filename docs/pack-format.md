@@ -306,6 +306,8 @@ Menu kinds (`menus.kind`):
 | Carousel | `[menus.kind.carousel] controls = "Bumpers"` | Cycles with `Bumpers`, `Triggers`, `DPad`, `LeftStick` or `RightStick`. |
 | Grid | `[menus.kind.grid] columns = 4` | Up to 6 columns and 6 rows. |
 
+A grid item's `span = {columns = 2, rows = 1}` merges it over the cells to its right and below. Item `i` sits in cell `i` (left to right, then down), and the items whose cells it covers are hidden until it's split again, so a pack fills them with copies of the merged item. The grid has as many cells as items, so a span can't reach past the last item.
+
 A menu item's `action` can be `open_menu = "Name"`, which opens a submenu. Radial menus can't open submenus. `style` also has `items` and `selected` paints, as in the example above. `corners` (0–1, default 0.4) sets how round boxes, keys and panels are: 0 is square and 1 is a circle wherever the shape allows.
 
 ### Decorations
