@@ -109,9 +109,9 @@ action = { mouse = "Left" }
 [profiles.guide]
 notes = '''The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
 The left stick {ls} scrolls the map with the arrow keys; moving the pointer to the screen edge scrolls it too.
-{y} selects the next party and the d-pad {dpad_left} / {dpad_right} steps back and forth through them. {x} marks the selected party done for the turn, and holding it puts it on guard.
+{north} selects the next party and the d-pad {left} / {right} steps back and forth through them. {west} marks the selected party done for the turn, and holding it puts it on guard.
 {rb} jumps to the next event, such as a finished spell or a party with orders; hold it to end the turn. {rs} centers the view on the selected party and {ls} click toggles the magic domain.
-The d-pad {dpad_up} / {dpad_down} zooms; hold {dpad_down} to return to 100%.
+The d-pad {up} / {down} zooms; hold {down} to return to 100%.
 {east} is Escape. Age of Wonders has quick save on F2 and load on F3: double tap {start} to save, hold it to load.'''
 
 [profiles.guide.edits]
@@ -236,9 +236,9 @@ action = { mouse = "Left" }
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
 The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
 The left stick {ls} scrolls the map with the arrow keys; moving the pointer to the screen edge scrolls it too.
-{y} selects the next party and the d-pad {dpad_left} / {dpad_right} steps back and forth through them. {x} marks the selected party done for the turn, and holding it puts it on guard.
+{north} selects the next party and the d-pad {left} / {right} steps back and forth through them. {west} marks the selected party done for the turn, and holding it puts it on guard.
 {rb} jumps to the next event, such as a finished spell or a party with orders; hold it to end the turn. {rs} centers the view on the selected party and {ls} click toggles the magic domain.
-The d-pad {dpad_up} / {dpad_down} zooms; hold {dpad_down} to return to 100%.
+The d-pad {up} / {down} zooms; hold {down} to return to 100%.
 {east} is Escape. Age of Wonders has quick save on F2 and load on F3: double tap {start} to save, hold it to load.'''
 
 [profiles.guide.edits]

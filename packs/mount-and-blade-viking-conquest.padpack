@@ -116,8 +116,8 @@ action = { mouse = "Left" }
 
 [profiles.guide]
 notes = '''Aim your swings with the right stick {rs}: the way you move the mouse as you attack picks the direction, so push it up for an overhead, sideways for a slash or swing, and hold it still for a thrust. {rt} attacks and {lt} blocks, in the direction you are looking.
-Hold {lb} for the orders ring and pick with the right stick. In a field battle the order menus are on F1 to F6 and the groups on the number keys: open Groups on {dpad_up} to choose who you are ordering, then the order. {dpad_down} shows the order view.
-Hold {rb} for the weapons ring (the four item slots, drop weapon, change mode). {dpad_left} and {dpad_right} scroll to the next weapon and shield; {north} changes the weapon mode (one or two hands, arrows).
+Hold {lb} for the orders ring and pick with the right stick. In a field battle the order menus are on F1 to F6 and the groups on the number keys: open Groups on {up} to choose who you are ordering, then the order. {down} shows the order view.
+Hold {rb} for the weapons ring (the four item slots, drop weapon, change mode). {left} and {right} scroll to the next weapon and shield; {north} changes the weapon mode (one or two hands, arrows).
 {l3} toggles crouch. {r3} is the first and third person view. {east} jumps, {west} kicks and {south} uses.
 {select} lists the character, inventory, party, quest and log windows, plus Retreat (Tab, which leaves the battle). Hold {select} to switch to the Map mode, and again to switch back.
 {start} is Escape: it opens the menu and backs out of every screen. A double tap of {start} quick saves.

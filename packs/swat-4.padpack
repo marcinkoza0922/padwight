@@ -115,8 +115,8 @@ action = { mouse = "Left" }
 notes = '''{rb} holds the right mouse button, which opens the graphical command menu; steer it with the right stick {rs}, and click with {rt} to give the order. If you switched to Classic commands in the options, the number keys pick the order instead.
 {east} is the quick command: it gives the order for whatever you are looking at (open, clear, restrain).
 Hold {lb} for the gear ring, aiming with the right stick; double tap {lb} for the tools (toolkit, optiwand, door wedge). Slot 1 is the primary weapon, slot 2 the sidearm, then the grenades, the pepper spray and the tools. The handcuffs are on the ring too.
-{l3} toggles crouch, and it stays on until you click it again. {dpad_down} holds Shift, the game's walk and run key.
-{dpad_up} cycles the command group between Red, Blue and both.
+{l3} toggles crouch, and it stays on until you click it again. {down} holds Shift, the game's walk and run key.
+{up} cycles the command group between Red, Blue and both.
 {select} lists the viewports (Red, Blue and sniper), the objectives and the score. {start} (Escape) opens the menu and backs out of every screen.
 SWAT 4 has no quick save.'''
 
@@ -247,8 +247,8 @@ notes = '''Hold {select} and {start} together to pause the gyro while you reposi
 {rb} holds the right mouse button, which opens the graphical command menu; steer it with the right stick {rs}, and click with {rt} to give the order. If you switched to Classic commands in the options, the number keys pick the order instead.
 {east} is the quick command: it gives the order for whatever you are looking at (open, clear, restrain).
 Hold {lb} for the gear ring, aiming with the right stick; double tap {lb} for the tools (toolkit, optiwand, door wedge). Slot 1 is the primary weapon, slot 2 the sidearm, then the grenades, the pepper spray and the tools. The handcuffs are on the ring too.
-{l3} toggles crouch, and it stays on until you click it again. {dpad_down} holds Shift, the game's walk and run key.
-{dpad_up} cycles the command group between Red, Blue and both.
+{l3} toggles crouch, and it stays on until you click it again. {down} holds Shift, the game's walk and run key.
+{up} cycles the command group between Red, Blue and both.
 {select} lists the viewports (Red, Blue and sniper), the objectives and the score. {start} (Escape) opens the menu and backs out of every screen.
 SWAT 4 has no quick save.'''
 
@@ -385,8 +385,8 @@ notes = '''Hold {select} and {start} together to pause the gyro while you reposi
 {rb} holds the right mouse button, which opens the graphical command menu; steer it with the right stick {rs}, and click with {rt} to give the order. If you switched to Classic commands in the options, the number keys pick the order instead.
 {east} is the quick command: it gives the order for whatever you are looking at (open, clear, restrain).
 Hold {lb} for the gear ring, aiming with the right stick; double tap {lb} for the tools (toolkit, optiwand, door wedge). Slot 1 is the primary weapon, slot 2 the sidearm, then the grenades, the pepper spray and the tools. The handcuffs are on the ring too.
-{l3} toggles crouch, and it stays on until you click it again. {dpad_down} holds Shift, the game's walk and run key.
-{dpad_up} cycles the command group between Red, Blue and both.
+{l3} toggles crouch, and it stays on until you click it again. {down} holds Shift, the game's walk and run key.
+{up} cycles the command group between Red, Blue and both.
 {select} lists the viewports (Red, Blue and sniper), the objectives and the score. {start} (Escape) opens the menu and backs out of every screen.
 SWAT 4 has no quick save.'''
 

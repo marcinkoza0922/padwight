@@ -123,9 +123,9 @@ action = { mouse = "Left" }
 [profiles.guide]
 notes = '''{start} (Escape) opens the game's menu and backs out of every screen in it.
 {lt} holds the suit key (V). {rt} fires, {rb} toggles zoom, {lb} sprints, {l3} toggles crouch and {r3} is T, the special key.
-Hold {dr} to open the suit menu, then turn the right stick {rs} toward Armor, Speed, Strength or Cloak and let go to pick it.
-{x} reloads, and holding {x} uses. {a} jumps, {b} goes prone, {y} throws a grenade.
-{dl} switches weapon; hold {dl} to go back one. {du} changes the fire mode and {dd} opens the weapon attachments.
+Hold {right} to open the suit menu, then turn the right stick {rs} toward Armor, Speed, Strength or Cloak and let go to pick it.
+{west} reloads, and holding {west} uses. {south} jumps, {east} goes prone, {north} throws a grenade.
+{left} switches weapon; hold {left} to go back one. {up} changes the fire mode and {down} opens the weapon attachments.
 Tap {select} for a list of the map, objectives, night vision, binoculars and gravity boots.
 Quick save is a double tap of {start}, and quick load is a long press of {start}.
 Crysis has no controller support of its own; the keys follow the game's default controls.'''
@@ -265,9 +265,9 @@ sensitivity = 22.0
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
 {start} (Escape) opens the game's menu and backs out of every screen in it.
 {lt} holds the suit key (V). {rt} fires, {rb} toggles zoom, {lb} sprints, {l3} toggles crouch and {r3} is T, the special key.
-Hold {dr} to open the suit menu, then turn the right stick {rs} toward Armor, Speed, Strength or Cloak and let go to pick it.
-{x} reloads, and holding {x} uses. {a} jumps, {b} goes prone, {y} throws a grenade.
-{dl} switches weapon; hold {dl} to go back one. {du} changes the fire mode and {dd} opens the weapon attachments.
+Hold {right} to open the suit menu, then turn the right stick {rs} toward Armor, Speed, Strength or Cloak and let go to pick it.
+{west} reloads, and holding {west} uses. {south} jumps, {east} goes prone, {north} throws a grenade.
+{left} switches weapon; hold {left} to go back one. {up} changes the fire mode and {down} opens the weapon attachments.
 Tap {select} for a list of the map, objectives, night vision, binoculars and gravity boots.
 Quick save is a double tap of {start}, and quick load is a long press of {start}.
 Crysis has no controller support of its own; the keys follow the game's default controls.'''
@@ -413,9 +413,9 @@ sensitivity = 22.0
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
 {start} (Escape) opens the game's menu and backs out of every screen in it.
 {lt} holds the suit key (V). {rt} fires, {rb} toggles zoom, {lb} sprints, {l3} toggles crouch and {r3} is T, the special key.
-Hold {dr} to open the suit menu, then turn the right stick {rs} toward Armor, Speed, Strength or Cloak and let go to pick it.
-{x} reloads, and holding {x} uses. {a} jumps, {b} goes prone, {y} throws a grenade.
-{dl} switches weapon; hold {dl} to go back one. {du} changes the fire mode and {dd} opens the weapon attachments.
+Hold {right} to open the suit menu, then turn the right stick {rs} toward Armor, Speed, Strength or Cloak and let go to pick it.
+{west} reloads, and holding {west} uses. {south} jumps, {east} goes prone, {north} throws a grenade.
+{left} switches weapon; hold {left} to go back one. {up} changes the fire mode and {down} opens the weapon attachments.
 Tap {select} for a list of the map, objectives, night vision, binoculars and gravity boots.
 Quick save is a double tap of {start}, and quick load is a long press of {start}.
 Crysis has no controller support of its own; the keys follow the game's default controls.'''

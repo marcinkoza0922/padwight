@@ -114,7 +114,7 @@ action = { mouse = "Left" }
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
 {start} (Escape) opens the game's menu and backs out of every screen in it.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} cycles to the next weapon; {y} draws the knife.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} cycles to the next weapon; {north} draws the knife.
 {l3} toggles crouch, and it stays on until you click it again.
 {lt} is the alternate fire, which is the scope on a sniper rifle. The right stick turns more slowly while it is held.
 Quick save is a double tap of {start}, and quick load is a long press of {start}.
@@ -245,7 +245,7 @@ sensitivity = 15.0
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
 {start} (Escape) opens the game's menu and backs out of every screen in it.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} cycles to the next weapon; {y} draws the knife.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} cycles to the next weapon; {north} draws the knife.
 {l3} toggles crouch, and it stays on until you click it again.
 {lt} is the alternate fire, which is the scope on a sniper rifle. The right stick turns more slowly while it is held.
 Quick save is a double tap of {start}, and quick load is a long press of {start}.
@@ -382,7 +382,7 @@ sensitivity = 22.0
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
 {start} (Escape) opens the game's menu and backs out of every screen in it.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} cycles to the next weapon; {y} draws the knife.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} cycles to the next weapon; {north} draws the knife.
 {l3} toggles crouch, and it stays on until you click it again.
 {lt} is the alternate fire, which is the scope on a sniper rifle. The right stick turns more slowly while it is held.
 Quick save is a double tap of {start}, and quick load is a long press of {start}.

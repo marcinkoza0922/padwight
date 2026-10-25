@@ -124,8 +124,8 @@ action = { mouse = "Left" }
 
 [profiles.guide]
 notes = '''{start} (Escape) opens the game's menu and backs out of every screen in it.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one.
-{a} uses things and talks to terminals, {b} jumps, {x} reloads and {l3} toggles crouch. {lt} is the flashlight. A light push of the left stick {ls} walks.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {north} to the previous one.
+{south} uses things and talks to terminals, {east} jumps, {west} reloads and {l3} toggles crouch. {lt} is the flashlight. A light push of the left stick {ls} walks.
 {select} (Tab) opens your PDA. Quick save is a double tap of {start}, and quick load is a long press of {start}.
 These are Doom 3's default keys, written from memory and not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.'''
 
@@ -255,8 +255,8 @@ sensitivity = 15.0
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
 {start} (Escape) opens the game's menu and backs out of every screen in it.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one.
-{a} uses things and talks to terminals, {b} jumps, {x} reloads and {l3} toggles crouch. {lt} is the flashlight. A light push of the left stick {ls} walks.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {north} to the previous one.
+{south} uses things and talks to terminals, {east} jumps, {west} reloads and {l3} toggles crouch. {lt} is the flashlight. A light push of the left stick {ls} walks.
 {select} (Tab) opens your PDA. Quick save is a double tap of {start}, and quick load is a long press of {start}.
 These are Doom 3's default keys, written from memory and not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.'''
 
@@ -393,8 +393,8 @@ sensitivity = 22.0
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
 Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming.
 {start} (Escape) opens the game's menu and backs out of every screen in it.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one.
-{a} uses things and talks to terminals, {b} jumps, {x} reloads and {l3} toggles crouch. {lt} is the flashlight. A light push of the left stick {ls} walks.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {north} to the previous one.
+{south} uses things and talks to terminals, {east} jumps, {west} reloads and {l3} toggles crouch. {lt} is the flashlight. A light push of the left stick {ls} walks.
 {select} (Tab) opens your PDA. Quick save is a double tap of {start}, and quick load is a long press of {start}.
 These are Doom 3's default keys, written from memory and not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.'''
 

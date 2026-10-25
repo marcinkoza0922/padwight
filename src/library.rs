@@ -218,6 +218,26 @@ mod tests {
         }
     }
 
+    /// A misspelled token (`{a}` for `{south}`) is drawn as its text, and `{b}` is bold, not B.
+    #[test]
+    fn library_packs_write_only_known_tokens() {
+        let word = |c: char| c.is_ascii_alphanumeric() || "_/:#.-".contains(c);
+        let mut unknown = BTreeSet::new();
+        for (file, text) in files::FILES {
+            for rest in text.split('{').skip(1) {
+                let Some((inner, _)) = rest.split_once('}') else { continue };
+                if inner.is_empty() || !inner.chars().all(word) {
+                    continue;
+                }
+                let token = format!("{{{inner}}}");
+                if crate::info::parse(&token) == [Ok(token.clone())] {
+                    unknown.insert(format!("{file}: {token}"));
+                }
+            }
+        }
+        assert_eq!(unknown, BTreeSet::new(), "these aren't tokens");
+    }
+
     #[test]
     fn library_packs_dont_share_executable_names() {
         // Two packs matching the same program would both be offered for either game: a shared
