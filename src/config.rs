@@ -58,7 +58,7 @@ pub use style::*;
 pub use typography::*;
 pub use assets::*;
 use style::{default_keyboard_style, default_media_style, default_menu_style, default_numpad_style};
-pub use region::MouseRegion;
+pub use region::{MouseRegion, RegionShape};
 pub use touchpad::*;
 
 /// Normalized gamepad button, following the Linux gamepad spec (Documentation/input/gamepad.rst).

@@ -386,6 +386,8 @@ mod tests {
         assert_eq!(menu, TouchpadMotion::Menu { menu: "M".into(), choose: TouchChoose::Click, overlay: true });
         let region: TouchpadMotion = toml::from_str::<TouchpadConfig>("[motion.region]\nwidth = 1.0").unwrap().motion;
         assert_eq!(region, TouchpadMotion::Region { region: MouseRegion { width: 1.0, ..MouseRegion::default() } });
+        let rect: TouchpadMotion = toml::from_str::<TouchpadConfig>("[motion.region]\nshape = \"rectangle\"").unwrap().motion;
+        assert_eq!(rect, TouchpadMotion::Region { region: MouseRegion { shape: super::super::RegionShape::Rectangle, ..MouseRegion::default() } });
     }
 
     #[test]

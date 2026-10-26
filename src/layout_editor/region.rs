@@ -1,9 +1,9 @@
-//! A mouse region's rows in Edit Controls, shared by the stick and touchpad pages: where the
-//! region's middle is on the desktop, how big it is, and two ready-made regions.
+//! A mouse region's rows in Edit Controls, shared by the stick and touchpad pages: its shape,
+//! where its middle is on the desktop, how big it is, and two ready-made places.
 
-use crate::config::{Config, MouseRegion};
+use crate::config::{Config, MouseRegion, RegionShape};
 
-use super::rows::{Act, Number, Row, set};
+use super::rows::{Act, Number, Row, cycle, set};
 
 const ACROSS: Number = Number::new(5.0, (0.0, 100.0), 0, "% from the left");
 const DOWN: Number = Number::new(5.0, (0.0, 100.0), 0, "% from the top");
@@ -20,9 +20,22 @@ where
     };
     let preset = |label: &str, to: MouseRegion| {
         let change = change.clone();
-        Row::apply(label, move |c| Act::changed_if(change(c, &mut |r| set(r, to))))
+        Row::apply(label, move |c| Act::changed_if(change(c, &mut |r| {
+            let to = r.placed_as(to);
+            set(r, to)
+        })))
+    };
+    let shape = {
+        let change = change.clone();
+        Row::step(format!("Shape: {}", region.shape), move |c, dir| {
+            change(c, &mut |r| {
+                let next = cycle(&RegionShape::ALL, r.shape, dir);
+                set(&mut r.shape, next)
+            })
+        })
     };
     vec![
+        shape,
         field("Middle", region.x, &ACROSS, |r| &mut r.x),
         field("Middle", region.y, &DOWN, |r| &mut r.y),
         field("Width", region.width, &SIZE, |r| &mut r.width),

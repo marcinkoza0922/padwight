@@ -12,7 +12,7 @@ The pad (or each half of a split pad) has a box like a stick's, with its mode on
   - **Two-finger scroll**: move two fingers together to scroll.
   - **Keep gliding after a flick**: flick and lift your finger, and the pointer keeps sliding and slows to a stop, like a trackball. Touching the pad stops it.
 - **Gamepad stick**: your finger pushes a virtual stick (picked beside the mode), on top of the real one. Without **Center where the finger lands**, the middle of the pad is center and its edges a full push. With it, center is wherever your finger lands, and **Full push at** away from there is a full push. **Deadzone** ignores small pushes.
-- **Mouse region**: the pad is laid over a rectangle of your desktop (the whole desktop to start with), and the pointer goes straight to the spot under your finger, as on a drawing tablet. Lifting your finger leaves the pointer there. Set the rectangle as for a stick's mouse region.
+- **Mouse region**: the pad is laid over a part of your desktop (the whole desktop, as a rectangle, to start with), and the pointer goes straight to the spot under your finger, as on a drawing tablet. Lifting your finger leaves the pointer there. Set the region as for a stick's mouse region; with a *Circle*, a finger outside it puts the pointer on its edge.
 - **Menu zones**: the pad is divided into the items of one of your [menus](menus.md). While a finger is on the pad, the menu shows with the item under your finger picked. The game still gets your other input.
 - **Swipes**: a quick stroke up, down, left or right runs that direction's action. **Swipe length** is how far the stroke must go.
 

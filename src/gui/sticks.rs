@@ -26,7 +26,7 @@ pub(super) fn stick_summary(cfg: &StickConfig) -> String {
         StickAction::Scroll { speed, .. } => format!("scroll, {speed:.0} notches/s"),
         StickAction::Ring { sectors, .. } => format!("button ring, {sectors} sectors"),
         StickAction::Flick { full_turn_px, .. } => format!("flick stick, {full_turn_px:.0} px/turn"),
-        StickAction::Region { region } => format!("mouse region, {:.0}% × {:.0}%", region.width * 100.0, region.height * 100.0),
+        StickAction::Region { region } => format!("mouse region, {} {:.0}% × {:.0}%", region.shape.to_string().to_lowercase(), region.width * 100.0, region.height * 100.0),
     };
     format!("{mode}{}", zones_note(cfg.zones.len()))
 }
@@ -212,7 +212,7 @@ fn visualizers<'a>(cfg: &StickConfig, live: Option<(f32, f32)>, probe: f32) -> O
         _ => {}
     }
     if let StickAction::Region { region } = cfg.action {
-        let pointer = live.map(|pos| region.point(crate::engine::stick::region::circle_to_square(crate::engine::apply_deadzone(pos.0, pos.1, cfg.dead()))));
+        let pointer = live.map(|pos| crate::engine::stick::region::stick_point(&region, crate::engine::apply_deadzone(pos.0, pos.1, cfg.dead())));
         pics.push(region_figure(&region, pointer));
     }
     pics.extend(deadzone_graph::figures(cfg.dead(), live));

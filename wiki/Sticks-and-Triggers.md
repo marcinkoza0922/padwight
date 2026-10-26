@@ -45,7 +45,7 @@ Pushing the stick out turns the camera to that direction at once, spread over ab
 
 ## Mouse region
 
-The stick points at a spot in a rectangle of the desktop and the pointer goes there: the stick's middle is the rectangle's middle and a full push its edge. Letting go puts the pointer back in the middle. The rectangle's middle and size are shares of the whole desktop (all monitors together). The touchpad has a mouse region mode too, where the pointer goes to the spot under your finger.
+The stick points at a spot in a part of the desktop and the pointer goes there: the stick's middle is the region's middle and a full push its edge. The region is a circle by default, and becomes an ellipse when its width and height differ; a rectangle instead reaches its corners with a full push into a diagonal. Letting go puts the pointer back in the middle. The region's middle and size are shares of the whole desktop (all monitors together). The touchpad has a mouse region mode too, where the pointer goes to the spot under your finger.
 
 ## Triggers
 

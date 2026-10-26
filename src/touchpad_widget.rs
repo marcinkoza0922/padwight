@@ -10,7 +10,7 @@ use iced::{
 };
 
 use crate::{
-    config::{Menu, TouchSide, TouchpadConfig, TouchpadMotion},
+    config::{Menu, RegionShape, TouchSide, TouchpadConfig, TouchpadMotion},
     menu::{ItemShape, TOUCH_CENTER_RADIUS, item_at, item_shapes},
 };
 
@@ -158,14 +158,7 @@ impl PadPicture<'_> {
                 let _ = write!(s, r#"<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{EDGE}" stroke-width="2"{dash}/>"#);
                 let _ = write!(s, r#"<path d="M {} {cy} H {} M {cx} {} V {}" stroke="{EDGE}"/>"#, cx - 8.0, cx + 8.0, cy - 8.0, cy + 8.0);
             }
-            TouchpadMotion::Region { .. } => {
-                // A corner bracket in each corner: the side's edges are the region's.
-                for (u, v) in [(0.0_f32, 0.0_f32), (1.0, 0.0), (0.0, 1.0), (1.0, 1.0)] {
-                    let (x, y) = area.at((0.08 + u * 0.84, 0.12 + v * 0.76));
-                    let (dx, dy) = (if u == 0.0 { 12.0 } else { -12.0 }, if v == 0.0 { 12.0 } else { -12.0 });
-                    let _ = write!(s, r#"<path d="M {x} {} V {y} H {}" fill="none" stroke="{EDGE}" stroke-width="2"/>"#, y + dy, x + dx);
-                }
-            }
+            TouchpadMotion::Region { region } => draw_region(s, area, region.shape),
             TouchpadMotion::Swipe { .. } => {
                 // An arrowhead at each edge, pointing out.
                 let (cx, cy) = area.polar(0.0, 0.0);
@@ -248,6 +241,21 @@ pub fn touchpad_picture<'a, M: 'a>(picture: &PadPicture<'_>) -> Element<'a, M> {
     let mut layers: Vec<Element<'a, M>> = vec![svg(body).width(w).height(h).into()];
     layers.extend(picture.labels());
     stack(layers).width(w).height(h).into()
+}
+
+/// A mouse region side: an ellipse filling it for a circle, or a bracket in each corner for a
+/// rectangle, whose corners are the side's.
+fn draw_region(s: &mut String, area: &Area<'_>, shape: RegionShape) {
+    if shape == RegionShape::Circle {
+        let ((x0, y0), (x1, y1)) = (area.at((0.08, 0.12)), area.at((0.92, 0.88)));
+        let _ = write!(s, r#"<ellipse cx="{}" cy="{}" rx="{}" ry="{}" fill="none" stroke="{EDGE}" stroke-width="2"/>"#, (x0 + x1) / 2.0, (y0 + y1) / 2.0, (x1 - x0) / 2.0, (y1 - y0) / 2.0);
+        return;
+    }
+    for (u, v) in [(0.0_f32, 0.0_f32), (1.0, 0.0), (0.0, 1.0), (1.0, 1.0)] {
+        let (x, y) = area.at((0.08 + u * 0.84, 0.12 + v * 0.76));
+        let (dx, dy) = (if u == 0.0 { 12.0 } else { -12.0 }, if v == 0.0 { 12.0 } else { -12.0 });
+        let _ = write!(s, r#"<path d="M {x} {} V {y} H {}" fill="none" stroke="{EDGE}" stroke-width="2"/>"#, y + dy, x + dx);
+    }
 }
 
 #[cfg(test)]

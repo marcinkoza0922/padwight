@@ -1,7 +1,7 @@
 //! Mouse-region sticks: the stick's position puts the pointer in a place on the desktop.
 
 use super::super::*;
-use crate::config::StickConfig;
+use crate::config::{MouseRegion, RegionShape, StickConfig};
 
 impl Engine {
     /// Puts the pointer where a mouse-region stick points. Back at rest, the stick puts it in the
@@ -18,16 +18,24 @@ impl Engine {
             }
             return;
         }
-        let at = region.point(circle_to_square(pos));
+        let at = stick_point(region, pos);
         if self.stick_region.insert(s, at) != Some(at) {
             out.push(OutEvent::MouseTo(at.0, at.1));
         }
     }
 }
 
-/// Stretches a stick position in the unit circle out to the square around it, so that pushing
-/// the stick all the way into a diagonal reaches the region's corner.
-pub(crate) fn circle_to_square((x, y): (f32, f32)) -> (f32, f32) {
+/// Where a stick at `pos` puts the pointer in `region`, as shares of the desktop. A circle takes
+/// the stick's position as it is; a rectangle stretches it out to the square around the stick's
+/// circle, so that pushing all the way into a diagonal reaches a corner.
+pub(crate) fn stick_point(region: &MouseRegion, pos: (f32, f32)) -> (f32, f32) {
+    match region.shape {
+        RegionShape::Circle => region.point(pos),
+        RegionShape::Rectangle => region.point(circle_to_square(pos)),
+    }
+}
+
+fn circle_to_square((x, y): (f32, f32)) -> (f32, f32) {
     let longer = x.abs().max(y.abs());
     if longer == 0.0 {
         return (0.0, 0.0);
@@ -39,7 +47,6 @@ pub(crate) fn circle_to_square((x, y): (f32, f32)) -> (f32, f32) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::MouseRegion;
 
     fn push(e: &mut Engine, p: &Profile, x: f32, y: f32) -> Vec<OutEvent> {
         let mut out = Vec::new();
@@ -55,7 +62,8 @@ mod tests {
     #[test]
     fn the_stick_places_the_pointer_and_letting_go_puts_it_in_the_middle_once() {
         let mut p = Profile::passthrough("p");
-        p.right_stick = StickConfig::new(StickAction::Region { region: MouseRegion { x: 0.5, y: 0.5, width: 0.5, height: 0.5 } }, 0.0, 1.0);
+        let region = MouseRegion { shape: RegionShape::Rectangle, ..MouseRegion::default() };
+        p.right_stick = StickConfig::new(StickAction::Region { region }, 0.0, 1.0);
         let mut e = Engine::default();
         assert_eq!(placed(&push(&mut e, &p, 0.0, 0.0)), None, "a stick at rest leaves the pointer alone");
         assert_eq!(placed(&push(&mut e, &p, 1.0, 0.0)), Some((0.75, 0.5)));
@@ -63,6 +71,17 @@ mod tests {
         assert!((diagonal.0 - 0.75).abs() < 1e-4 && (diagonal.1 - 0.25).abs() < 1e-4, "a full diagonal reaches the corner: {diagonal:?}");
         assert_eq!(placed(&push(&mut e, &p, 0.0, 0.0)), Some((0.5, 0.5)));
         assert_eq!(placed(&push(&mut e, &p, 0.0, 0.0)), None, "only once");
+    }
+
+    #[test]
+    fn a_circle_follows_the_stick_and_a_diagonal_stays_on_its_edge() {
+        let mut p = Profile::passthrough("p");
+        p.right_stick = StickConfig::new(StickAction::Region { region: MouseRegion::default() }, 0.0, 1.0);
+        let mut e = Engine::default();
+        assert_eq!(placed(&push(&mut e, &p, 1.0, 0.0)), Some((0.75, 0.5)));
+        let d = std::f32::consts::FRAC_1_SQRT_2;
+        let diagonal = placed(&push(&mut e, &p, d, -d)).unwrap();
+        assert!((diagonal.0 - (0.5 + 0.25 * d)).abs() < 1e-4 && (diagonal.1 - (0.5 - 0.25 * d)).abs() < 1e-4, "{diagonal:?}");
     }
 
     #[test]
