@@ -12,6 +12,7 @@ mod item;
 pub mod layout;
 mod log;
 mod look;
+mod media;
 mod op;
 mod panel;
 pub mod raster;
@@ -33,6 +34,7 @@ pub use op::{File, Fit, Markup, Op, PatternRef, RunKey, Svg, balanced, bounds, d
 pub use info::{column_widths, info_panel};
 pub use item::{Item, item};
 pub use log::{RELEASED, log_panel, shorten};
+pub use media::{media, offer};
 pub use panel::framed;
 pub use rich::{Setting, info_cell, line, plain, rich};
 pub use style::Style;
