@@ -11,7 +11,7 @@ use wayland_client::{
         wl_registry::{self, WlRegistry},
         wl_shm::{self, WlShm},
         wl_shm_pool::WlShmPool,
-        wl_surface::WlSurface,
+        wl_surface::{self, WlSurface},
     },
 };
 use wayland_protocols::wp::{
@@ -79,8 +79,9 @@ impl Dispatch<WlShm, ()> for Window {
 impl Dispatch<WpFractionalScaleV1, ()> for Window {
     fn event(window: &mut Window, _: &WpFractionalScaleV1, event: wp_fractional_scale_v1::Event, _: &(), _: &Connection, _: &QueueHandle<Window>) {
         if let wp_fractional_scale_v1::Event::PreferredScale { scale } = event {
-            window.scale120 = Some(scale);
             timing_log(&format!("scale {} {scale}/120", unix_ns()));
+            let changed = window.scale.set_fractional(scale);
+            window.scale_changed(changed);
         }
     }
 }
@@ -89,8 +90,17 @@ impl Dispatch<WlRegistry, GlobalListContents> for Window {
     fn event(_: &mut Window, _: &WlRegistry, _: wl_registry::Event, _: &GlobalListContents, _: &Connection, _: &QueueHandle<Window>) {}
 }
 
-// Enter, leave and the preferred buffer scale: step 5.4 reads them.
-delegate_noop!(Window: ignore WlSurface);
+impl Dispatch<WlSurface, ()> for Window {
+    fn event(window: &mut Window, _: &WlSurface, event: wl_surface::Event, _: &(), _: &Connection, _: &QueueHandle<Window>) {
+        // Version 6; the whole-number scale for compositors without wp_fractional_scale_v1.
+        if let wl_surface::Event::PreferredBufferScale { factor } = event {
+            timing_log(&format!("scale {} buffer {factor}", unix_ns()));
+            let changed = window.scale.set_integer(factor);
+            window.scale_changed(changed);
+        }
+    }
+}
+
 delegate_noop!(Window: WlCompositor);
 delegate_noop!(Window: WlShmPool);
 delegate_noop!(Window: WlRegion);

@@ -85,6 +85,11 @@ impl Sizing {
         self.acked == Some(size)
     }
 
+    /// Whether the 1×1 buffer of the hidden surface is the one on.
+    pub(super) fn is_blank(&self) -> bool {
+        self.attached == Some((1, 1))
+    }
+
     /// The overlay wants to show (or hide): asks for the screen (or the corner) when that
     /// differs from what was asked last.
     pub(super) fn want(&mut self, shown: bool) -> Commit {

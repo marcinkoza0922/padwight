@@ -29,6 +29,7 @@ use wayland_protocols_wlr::layer_shell::v1::client::{
 use super::{
     picture::Screen,
     pacing::Pacer,
+    scale::{Mode, Scale},
     shm::{Formats, Pool, rgba_to_argb},
     sizing::{Commit, Sizing, Target},
     slots::Layout,
@@ -44,12 +45,13 @@ pub(super) struct Window {
     pub(super) formats: Formats,
     pub(super) surface: WlSurface,
     pub(super) layer: ZwlrLayerSurfaceV1,
-    /// Kept for step 5.4, which draws at the scale they give.
-    pub(super) _fractional: Option<WpFractionalScaleV1>,
-    pub(super) _viewport: Option<WpViewport>,
-    /// The preferred scale from wp_fractional_scale_v1, in 120ths. Drawing is at scale 1 until
-    /// step 5.4.
-    pub(super) scale120: Option<u32>,
+    /// Kept alive: it is what sends the preferred scale.
+    _fractional: Option<WpFractionalScaleV1>,
+    viewport: Option<WpViewport>,
+    /// The scale the compositor prefers; buffers are made at it.
+    pub(super) scale: Scale,
+    /// The scale changed since the last commit: what is on needs drawing again at the new one.
+    pub(super) rescaled: bool,
     pub(super) sizing: Sizing,
     /// What the last configure asks to commit, for the loop to do.
     pub(super) todo: Commit,
@@ -100,8 +102,9 @@ impl Window {
             surface,
             layer,
             _fractional: fractional,
-            _viewport: viewport,
-            scale120: None,
+            scale: Scale::new(viewport.is_some()),
+            viewport,
+            rescaled: false,
             sizing: Sizing::new(),
             todo: Commit::Nothing,
             pool: None,
@@ -155,13 +158,15 @@ impl Window {
     /// commits it with a frame callback asked for. Skipped while the compositor holds every
     /// buffer, and drawn again once one is released.
     pub(super) fn draw(&mut self, screen: &mut dyn Screen, overlay: &Overlay, now: Instant, qh: &QueueHandle<Window>) -> Result<()> {
-        let Some((w, h)) = self.sizing.screen() else { return Ok(()) };
+        let Some(logical) = self.sizing.screen() else { return Ok(()) };
+        let (w, h) = self.scale.device(logical);
+        let factor = self.scale.factor();
         let started = Instant::now();
-        self.commit((w, h), Why::Draw, qh, |pixels, format| {
+        self.commit(logical, Why::Draw, qh, |pixels, format| {
             // Drawn straight into the buffer, which holds an older frame (its lease's age);
             // until step 4.3 the whole screen is drawn over it.
             let mut direct = PixmapMut::from_bytes(pixels, w, h).expect("a buffer is as big as its size");
-            screen.draw(overlay, now, 1.0, &mut direct);
+            screen.draw(overlay, now, factor, &mut direct);
             if format == wl_shm::Format::Argb8888 {
                 // Without ABGR8888 (KWin lacks it), swapped into ARGB8888's order in place,
                 // rather than drawn into a canvas of its own and converted: one screen less of
@@ -172,21 +177,59 @@ impl Window {
         })
     }
 
+    /// The scale has changed: puts what is on again at the new one, at once. A screen is drawn;
+    /// the 1×1 buffer of the hidden surface is made again (a buffer scale must divide the
+    /// buffer's size, so the old one can't stay on).
+    pub(super) fn rescale(&mut self, screen: &mut dyn Screen, overlay: &Overlay, now: Instant, qh: &QueueHandle<Window>) -> Result<()> {
+        if !std::mem::take(&mut self.rescaled) {
+            return Ok(());
+        }
+        if self.sizing.screen().is_some() {
+            self.draw(screen, overlay, now, qh)
+        } else if self.sizing.target() == Target::Corner && self.sizing.is_blank() {
+            self.blank(qh)
+        } else {
+            Ok(())
+        }
+    }
+
+    /// The compositor's preferred scale was heard; a change is drawn at the next look.
+    pub(super) fn scale_changed(&mut self, changed: bool) {
+        if changed {
+            self.rescaled = true;
+            self.pacer.changed();
+        }
+    }
+
     /// Whether a frame could be drawn now: false while the compositor holds every buffer.
     pub(super) fn can_draw(&self) -> bool {
         self.pool.as_ref().is_none_or(|p| p.slots.any_free())
     }
 
+    /// Tells the compositor how the next buffer maps onto a surface of `logical` size.
+    fn put_on_scale(&self, (w, h): (u32, u32)) {
+        let (scale, dest) = match self.scale.mode() {
+            Mode::Viewport => (1, (w as i32, h as i32)),
+            Mode::Buffer(n) => (n as i32, (-1, -1)),
+        };
+        self.surface.set_buffer_scale(scale);
+        if let Some(viewport) = &self.viewport {
+            viewport.set_destination(dest.0, dest.1);
+        }
+    }
+
     /// Fills a free `w`×`h` buffer with `fill`, attaches it, damages it all and commits. Makes
     /// a new pool when the size or format has changed; with every buffer held, commits nothing.
-    fn commit(&mut self, (w, h): (u32, u32), why: Why, qh: &QueueHandle<Window>, fill: impl FnOnce(&mut [u8], wl_shm::Format)) -> Result<()> {
-        if !self.sizing.may_attach((w, h)) {
+    fn commit(&mut self, logical: (u32, u32), why: Why, qh: &QueueHandle<Window>, fill: impl FnOnce(&mut [u8], wl_shm::Format)) -> Result<()> {
+        let (w, h) = logical;
+        if !self.sizing.may_attach(logical) {
             // Sizing hands out only sizes it may attach at; this is a bug, not the compositor's.
             timing_log(&format!("commit-refused {} {w}x{h} {why:?}", unix_ns()));
             debug_assert!(false, "a {w}x{h} buffer would go on at the wrong size");
             return Ok(());
         }
-        let (layout, format) = (Layout { width: w, height: h }, self.formats.format());
+        let (dw, dh) = self.scale.device(logical);
+        let (layout, format) = (Layout { width: dw, height: dh }, self.formats.format());
         // A pool for another size or format is kept until the new one's buffer is committed.
         let old = match self.pool.take() {
             Some(pool) if pool.fits(layout, format) => {
@@ -196,7 +239,7 @@ impl Window {
             old => {
                 self.pools += 1;
                 self.pool = Some(Pool::new(&self.shm, self.pools, layout, format, qh).context("the screen's buffers")?);
-                timing_log(&format!("pool {} {w}x{h} {format:?}", unix_ns()));
+                timing_log(&format!("pool {} {dw}x{dh} {format:?}", unix_ns()));
                 old
             }
         };
@@ -213,6 +256,7 @@ impl Window {
         };
         fill(pool.pixels(lease), format);
         pool.attach(lease, &self.surface);
+        self.put_on_scale(logical);
         if let Why::Draw = why {
             // Asked for before the commit, which it belongs to.
             let id = self.pacer.drawn(Instant::now());
@@ -220,9 +264,15 @@ impl Window {
         }
         self.surface.commit();
         drop(old);
-        self.sizing.attached((w, h));
+        self.sizing.attached(logical);
         let now = unix_ns();
-        timing_log(&format!("commit {now} {w}x{h} {why:?} {:?} slot {} age {}", self.sizing.target(), lease.slot, lease.age));
+        timing_log(&format!(
+            "commit {now} {w}x{h} {why:?} {:?} slot {} age {} buffer {dw}x{dh} {:?}",
+            self.sizing.target(),
+            lease.slot,
+            lease.age,
+            self.scale.mode()
+        ));
         if let Why::Draw = why {
             timing_log(&format!("present {now}"));
         }
