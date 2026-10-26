@@ -10,6 +10,8 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
 - Overlay screenshots, no display needed: `cargo run -q -- debug overlay all glyphs` (PNGs in
   `screenshots/overlay/`; `debug overlay list` names the scenes, `live` captures a running daemon's overlay,
   and a `.padpack` path draws that pack's menus, keyboard, numpad and info overlays in its own look)
+- Old vs new overlay renderer: `cargo run -q -- debug overlay compare all|<scene>` (iced | new | difference PNGs and
+  a score in `screenshots/compare/`, worst first; scenes the new renderer can't draw yet are listed as not ported)
 - Motion styles, no display needed: `cargo run -q -- debug motion <style>|all` (animated PNG + frame strip in
   `screenshots/motion/`; `--from/--until/--every` pick the strip's span, `--scene keyboard`, `--trace` prints numbers)
 - Which overlay cue plays, no display or speakers needed: `scripts/sound-trace.sh [config.toml]` (a `--debug` daemon

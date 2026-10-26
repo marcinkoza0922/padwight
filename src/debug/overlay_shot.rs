@@ -31,17 +31,20 @@ Drawing the overlay without a display (no compositor or overlay window needed):
            --wait <ms> (default 3000, for live)   --json (print the frame instead of drawing)
 ";
 
-struct Options {
-    out: PathBuf,
-    size: Size,
-    scale: f32,
-    background: [u8; 3],
-    wait: Duration,
-    json: bool,
+pub(super) struct Options {
+    pub out: PathBuf,
+    pub size: Size,
+    pub scale: f32,
+    pub background: [u8; 3],
+    pub wait: Duration,
+    pub json: bool,
 }
 
 #[expect(clippy::print_stdout, reason = "CLI output")]
 pub fn run(args: &[&str]) -> Result<()> {
+    if let ["compare", rest @ ..] = args {
+        return super::overlay_compare::run(rest);
+    }
     if args == ["list"] {
         for (name, about) in scenes::SCENES {
             println!("{name:<20}{about}");
@@ -60,8 +63,7 @@ pub fn run(args: &[&str]) -> Result<()> {
             println!("{}", path.display());
             continue;
         }
-        let frames = if target.ends_with(".padpack") { super::pack_scenes::frames(Path::new(&target))? } else { vec![load(&target, options.wait)?] };
-        for (name, frame) in frames {
+        for (name, frame) in frames_of(&target, &options)? {
             if options.json {
                 println!("{}", serde_json::to_string_pretty(&frame)?);
                 continue;
@@ -76,10 +78,20 @@ pub fn run(args: &[&str]) -> Result<()> {
     Ok(())
 }
 
+/// The named frames `target` stands for: one, or each of a pack's.
+pub(super) fn frames_of(target: &str, options: &Options) -> Result<Vec<(String, OverlayFrame)>> {
+    if target.ends_with(".padpack") { super::pack_scenes::frames(Path::new(target)) } else { Ok(vec![load(target, options.wait)?]) }
+}
+
 /// What to draw, with `all` spelled out, and the options.
 fn parse(args: &[&str]) -> Result<(Vec<String>, Options)> {
+    parse_in(args, "screenshots/overlay")
+}
+
+/// `parse`, with `out` the folder the pictures go to unless `--out` says otherwise.
+pub(super) fn parse_in(args: &[&str], out: &str) -> Result<(Vec<String>, Options)> {
     let mut options = Options {
-        out: PathBuf::from("screenshots/overlay"),
+        out: PathBuf::from(out),
         size: Size::new(1920.0, 1080.0),
         scale: 1.0,
         background: [0x3c, 0x46, 0x50],
