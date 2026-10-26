@@ -174,7 +174,7 @@ pub fn rich(t: &str, style: &Style, size: f32, color: Rgba) -> Node {
         _ => line(
             &segments,
             style,
-            Setting { size, color, scale: size / 17.0, gap: size * 0.3, opacity: style.anim.opacity(), typed: true, trim: true },
+            Setting { size, color, scale: size / 17.0, gap: size * 0.3, opacity: 1.0, typed: true, trim: true },
         ),
     }
 }

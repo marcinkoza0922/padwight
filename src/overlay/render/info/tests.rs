@@ -14,7 +14,7 @@ fn view(rows: Vec<Vec<Vec<Segment>>>, title: Option<Vec<Segment>>) -> InfoView {
 }
 
 fn laid(view: &InfoView, fit: &Fit) -> (Point, Vec<Op>) {
-    info_panel(view, None, fit, &Anim::still()).ops(Point::ZERO, 2000.0)
+    info_panel(view, None, fit).ops(Point::ZERO, 2000.0)
 }
 
 fn size(view: &InfoView, fit: &Fit) -> Point {
@@ -68,7 +68,7 @@ fn a_cell_wraps_when_the_panel_is_held_to_its_max_width() {
 #[test]
 fn the_panel_and_its_table_are_exported() {
     let v = view(vec![vec![text("a")]], None);
-    let node = crate::overlay::render::info_panel(&v, None, &Fit::contents(), &Anim::still());
+    let node = crate::overlay::render::info_panel(&v, None, &Fit::contents());
     assert_eq!(node.ops(Point::ZERO, 2000.0).0, size(&v, &Fit::contents()));
     assert_eq!(crate::overlay::render::column_widths(&[vec![1.0f32]], 100.0, 0.0, |w| *w), [1.0]);
 }
@@ -83,11 +83,13 @@ fn padding_scales_with_the_style() {
 }
 
 #[test]
-fn a_faded_out_panel_draws_invisible_text() {
+fn a_fading_panel_is_drawn_at_full_strength() {
     let mut v = view(vec![vec![text("a")]], None);
-    v.opacity = 0.0;
-    let (_, ops) = laid(&v, &Fit::contents());
-    assert!(ops.iter().all(|op| !matches!(op, Op::Text { color, .. } if color.a > 0.0)));
+    let (_, solid) = laid(&v, &Fit::contents());
+    // The screen fades its picture, so the list is the same however faded it is.
+    v.opacity = 0.3;
+    assert_eq!(laid(&v, &Fit::contents()).1, solid);
+    assert!(solid.iter().any(|op| matches!(op, Op::Text { color, .. } if color.a >= 1.0)));
 }
 
 /// Draws every info scene with the new renderer, to look at beside
@@ -102,7 +104,7 @@ fn every_info_scene_drawn_as_an_info_panel() {
             crate::icons::set_pack_icons(icons);
         }
         for (i, v) in frame.info.iter().enumerate() {
-            let panel = info_panel(v, None, &Fit::contents(), &Anim::still());
+            let panel = info_panel(v, None, &Fit::contents());
             let tag = if i == 0 { String::new() } else { format!("-{i}") };
             sample::save(&format!("info-{name}{tag}"), &sample::draw(&panel, 1000.0, 1.0));
             drawn += 1;

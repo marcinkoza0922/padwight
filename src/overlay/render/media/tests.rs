@@ -31,14 +31,14 @@ fn offer_view() -> OfferView {
 #[test]
 fn the_media_panel_is_560_wide_with_its_padding() {
     let view = MediaView::sample(OverlayStyle::default());
-    let (size, _) = laid(&media(&view, None, Glyphs::default(), &Fit::contents(), &Anim::still()));
+    let (size, _) = laid(&media(&view, None, Glyphs::default(), &Fit::contents()));
     assert_eq!(size.x, 560.0 + 2.0 * 18.0);
 }
 
 #[test]
 fn the_progress_bar_fills_the_share_of_the_track_that_has_played() {
     let view = MediaView::sample(OverlayStyle::default());
-    let (_, ops) = laid(&media(&view, None, Glyphs::default(), &Fit::contents(), &Anim::still()));
+    let (_, ops) = laid(&media(&view, None, Glyphs::default(), &Fit::contents()));
     let fill = filled(&ops, Rgba::from_rgb8(88, 101, 242));
     assert_eq!(fill.len(), 1);
     let progress = view.position_ms as f32 / view.length_ms as f32;
@@ -48,21 +48,21 @@ fn the_progress_bar_fills_the_share_of_the_track_that_has_played() {
 #[test]
 fn without_a_player_there_is_no_bar() {
     let view = MediaView { player: None, ..MediaView::sample(OverlayStyle::default()) };
-    let (_, ops) = laid(&media(&view, None, Glyphs::default(), &Fit::contents(), &Anim::still()));
+    let (_, ops) = laid(&media(&view, None, Glyphs::default(), &Fit::contents()));
     assert!(filled(&ops, Rgba::from_rgb8(88, 101, 242)).is_empty());
     assert!(ops.iter().any(|op| matches!(op, Op::Text { .. })));
 }
 
 #[test]
 fn the_offer_is_520_of_detail_wide_with_its_padding() {
-    let (size, _) = laid(&offer(&offer_view(), None, Glyphs::default(), &Fit::contents(), &Anim::still()));
+    let (size, _) = laid(&offer(&offer_view(), None, Glyphs::default(), &Fit::contents()));
     assert_eq!(size.x, 520.0 + 2.0 * 22.0);
 }
 
 #[test]
 fn each_answer_is_an_item_box_and_only_the_confirm_answer_is_selected() {
     let view = offer_view();
-    let (_, ops) = laid(&offer(&view, None, Glyphs::default(), &Fit::contents(), &Anim::still()));
+    let (_, ops) = laid(&offer(&view, None, Glyphs::default(), &Fit::contents()));
     // One box for each answer, filled with the items' color.
     let item = render::Style::of(&view.style, None).item;
     let boxes: Vec<Option<_>> = ops
@@ -86,8 +86,8 @@ fn the_media_and_offer_scenes_drawn_as_panels() {
         let Some(view) = scenes::frame(name).unwrap().active else { continue };
         let fit = Fit::contents();
         let panel = match view {
-            OverlayView::Media(m) => render::media(&m, None, Glyphs::default(), &fit, &Anim::still()),
-            OverlayView::Offer(o) => render::offer(&o, None, Glyphs::default(), &fit, &Anim::still()),
+            OverlayView::Media(m) => render::media(&m, None, Glyphs::default(), &fit),
+            OverlayView::Offer(o) => render::offer(&o, None, Glyphs::default(), &fit),
             _ => continue,
         };
         sample::save(&format!("{name}-{name}"), &sample::draw(&panel, 1000.0, 1.0));

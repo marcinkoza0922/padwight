@@ -8,15 +8,15 @@
 mod tests;
 
 use super::{Align, Node, Style, info_cell};
-use crate::{info::{InfoView, Segment}, motion::Anim, overlay::fit::Fit};
+use crate::{info::{InfoView, Segment}, overlay::fit::Fit};
 
-/// The panel for `view`, in `font`, held to `fit`, as `anim` has it.
-pub fn info_panel(view: &InfoView, font: Option<&'static str>, fit: &Fit, anim: &Anim) -> Node {
-    let opacity = view.opacity * anim.opacity();
-    let style = Style::of(&view.style, font).faded(opacity);
+/// The panel for `view`, in `font`, held to `fit`, at full strength: its fade (`view.opacity`
+/// and its animation's) is the screen's to apply to its picture.
+pub fn info_panel(view: &InfoView, font: Option<&'static str>, fit: &Fit) -> Node {
+    let style = Style::of(&view.style, font);
     let s = view.style.scale.clamp(0.5, 2.0);
     let (pad_x, pad_y) = (16.0 * s, 12.0 * s);
-    let cell = |segments: &[Segment]| info_cell(segments, &style, s, opacity);
+    let cell = |segments: &[Segment]| info_cell(segments, &style, s, 1.0);
     // Cells are padded by half the gap between columns on each side.
     let room = fit.width.unwrap_or(fit.max_width) - 2.0 * pad_x;
     let mut widths = column_widths(&view.rows, room, 20.0 * s, |c| cell(c).measure(f32::INFINITY).x);
