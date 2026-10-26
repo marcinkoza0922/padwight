@@ -13,7 +13,7 @@ use crate::{
 };
 
 /// How bright a let-go input is next to a held one.
-const RELEASED: f32 = 0.55;
+pub const RELEASED: f32 = 0.55;
 /// Labels longer than this are cut short, so one long macro name doesn't stretch the line.
 const LABEL_CHARS: usize = 22;
 

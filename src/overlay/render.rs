@@ -32,7 +32,7 @@ pub use look::{Look, Outline, PANEL_CORNER, Shadow};
 pub use op::{File, Fit, Markup, Op, PatternRef, RunKey, Svg, balanced, bounds, digest};
 pub use info::{column_widths, info_panel};
 pub use item::{Item, item};
-pub use log::{log_panel, shorten};
+pub use log::{RELEASED, log_panel, shorten};
 pub use panel::framed;
 pub use rich::{Setting, info_cell, line, plain, rich};
 pub use style::Style;
