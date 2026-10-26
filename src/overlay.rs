@@ -257,7 +257,7 @@ pub use controller::{OverlayAction, OverlayController};
 #[cfg(windows)]
 mod windows;
 
-pub use ui::{film, snapshot};
+pub use ui::{film, snapshot, snapshot_iced};
 
 /// The procedural pictures behind panel filters, free of any drawing library.
 pub mod art;

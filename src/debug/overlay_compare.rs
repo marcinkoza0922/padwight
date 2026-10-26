@@ -152,7 +152,7 @@ pub fn run(args: &[&str]) -> Result<()> {
         for (name, frame) in shot::frames_of(&target, &options)? {
             let new = draw_new(&frame, options.size, options.scale, background);
             let outcome = if new.is_some() {
-                compare(&name, &overlay::snapshot(frame, options.size, options.scale, background)?, new, &options.out)?
+                compare(&name, &overlay::snapshot_iced(frame, options.size, options.scale, background)?, new, &options.out)?
             } else {
                 Outcome::NotPorted
             };
