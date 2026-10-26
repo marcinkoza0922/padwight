@@ -15,6 +15,11 @@ kind = "executable"
 value = "SC3U.exe"
 profile = "SimCity 3000"
 
+[[rules]]
+kind = "steam_app_id"
+value = "2741560"
+profile = "SimCity 3000"
+
 [[profiles]]
 name = "SimCity 3000"
 combos = []

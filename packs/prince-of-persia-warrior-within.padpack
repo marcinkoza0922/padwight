@@ -20,6 +20,11 @@ kind = "steam_app_id"
 value = "13500"
 profile = "Prince of Persia: Warrior Within"
 
+[[rules]]
+kind = "executable"
+value = "Prince of Persia The Warrior Within/PrinceOfPersia.exe"
+profile = "Prince of Persia: Warrior Within"
+
 [[profiles]]
 name = "Prince of Persia: Warrior Within"
 combos = []

@@ -10,9 +10,18 @@ author = "Padwight"
 description = "Cuphead on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and the game's Controls options set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard for text and the media controls, in 1930s cartoon ink and cream."
 made_with = "Xbox controller"
 
+[controllers]
+dualshock = true
+switch_pro = true
+
 [[rules]]
 kind = "executable"
 value = "Cuphead.exe"
+profile = "Cuphead"
+
+[[rules]]
+kind = "steam_app_id"
+value = "268910"
 profile = "Cuphead"
 
 [[profiles]]

@@ -20,6 +20,11 @@ kind = "executable"
 value = "DOOM64.exe"
 profile = "Doom 64"
 
+[[rules]]
+kind = "executable"
+value = "DOOM64_x64.exe"
+profile = "Doom 64"
+
 [[profiles]]
 name = "Doom 64"
 combos = []

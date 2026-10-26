@@ -10,6 +10,9 @@ author = "Padwight"
 description = "Wolfenstein II: The New Colossus (2017) on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and you set the buttons in the game's Controls options. Padwight adds the Guide overlay on top, in American red and navy blue. Gyro and flick stick profiles are included to try; they move the mouse beside the pad."
 made_with = "Xbox controller"
 
+[controllers]
+dualshock = true
+
 [[rules]]
 kind = "steam_app_id"
 value = "612880"
@@ -18,6 +21,11 @@ profile = "Wolfenstein II: The New Colossus"
 [[rules]]
 kind = "executable"
 value = "BJ2_x64vk.exe"
+profile = "Wolfenstein II: The New Colossus"
+
+[[rules]]
+kind = "executable"
+value = "NewColossus_x64vk.exe"
 profile = "Wolfenstein II: The New Colossus"
 
 [[profiles]]

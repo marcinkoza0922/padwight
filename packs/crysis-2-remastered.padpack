@@ -15,6 +15,11 @@ kind = "steam_app_id"
 value = "2096600"
 profile = "Crysis 2 Remastered"
 
+[[rules]]
+kind = "executable"
+value = "Crysis2Remastered.exe"
+profile = "Crysis 2 Remastered"
+
 [[profiles]]
 name = "Crysis 2 Remastered"
 combos = []

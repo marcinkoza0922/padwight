@@ -13,6 +13,7 @@ made_with = "Xbox controller"
 [controllers]
 dualshock = true
 dualsense = true
+switch_pro = true
 
 [[rules]]
 kind = "steam_app_id"

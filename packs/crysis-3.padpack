@@ -15,6 +15,11 @@ kind = "executable"
 value = "Crysis3.exe"
 profile = "Crysis 3"
 
+[[rules]]
+kind = "steam_app_id"
+value = "1282690"
+profile = "Crysis 3"
+
 [[profiles]]
 name = "Crysis 3"
 combos = []

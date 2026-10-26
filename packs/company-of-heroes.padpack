@@ -20,6 +20,11 @@ kind = "steam_app_id"
 value = "228200"
 profile = "Company of Heroes"
 
+[[rules]]
+kind = "steam_app_id"
+value = "4560"
+profile = "Company of Heroes"
+
 [[profiles]]
 name = "Company of Heroes"
 combos = []

@@ -15,6 +15,11 @@ kind = "executable"
 value = "RCT.EXE"
 profile = "RollerCoaster Tycoon"
 
+[[rules]]
+kind = "steam_app_id"
+value = "285310"
+profile = "RollerCoaster Tycoon"
+
 [[profiles]]
 name = "RollerCoaster Tycoon"
 combos = []
