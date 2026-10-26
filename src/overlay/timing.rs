@@ -2,7 +2,8 @@
 
 /// Profiling only. When `PADWIGHT_OVERLAY_TIMING` names a file, each received frame, each build
 /// of the overlay's widgets and each animation tick is appended to it, as `recv <ns> <what>`,
-/// `built <ns> <build ns> <width>x<height>`, `tick <ns>` and `present <ns>`.
+/// `built <ns> <build ns> <width>x<height>`, `tick <ns>` and `present <ns>` (and with
+/// `PADWIGHT_OVERLAY=native`, the surface's `surface`, `configure` and `commit` lines: `wayland.rs`).
 /// Unset, this does nothing; the file is opened per call, so it is only for measuring.
 pub(super) fn timing_log(entry: &str) {
     use std::io::Write;
