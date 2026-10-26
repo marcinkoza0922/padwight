@@ -30,11 +30,11 @@ pub fn menu_style(m: &MenuView, font: Option<&'static str>, anim: Anim, glyphs: 
 }
 
 /// A menu's panel, or `None` for a radial menu. `solid` is `menu_style`; the menu is dimmed in it
-/// when a question is asked over it, and fades with its animation.
+/// when a question is asked over it. Its fade is the screen's, applied to its picture.
 pub fn menu_panel(m: &MenuView, solid: &Style, fit: &Fit) -> Option<Node> {
     let s = m.style.scale.clamp(0.5, 2.0);
     let dim = if m.prompt.is_some() { UNDER_PROMPT } else { 1.0 };
-    let style = solid.faded(solid.anim.opacity() * dim);
+    let style = solid.faded(dim);
     let body = match m.kind {
         MenuKind::Radial { .. } => return None,
         MenuKind::Directional { .. } => kinds::directional(m, &style, s),

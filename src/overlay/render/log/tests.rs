@@ -22,7 +22,7 @@ fn view(lines: Vec<Vec<LogCell>>) -> LogView {
 }
 
 fn laid(v: &LogView, fit: &Fit) -> (Point, Vec<Op>) {
-    log_panel(v, None, fit, &Anim::still()).ops(Point::ZERO, 2000.0)
+    log_panel(v, None, fit).ops(Point::ZERO, 2000.0)
 }
 
 /// The alphas of the texts drawn.
@@ -90,7 +90,7 @@ fn a_line_wraps_when_the_panel_is_held_to_its_max_width() {
 #[test]
 fn the_panel_is_exported() {
     let v = view(vec![vec![cell(None, None, true, 1)]]);
-    let node = crate::overlay::render::log_panel(&v, None, &Fit::contents(), &Anim::still());
+    let node = crate::overlay::render::log_panel(&v, None, &Fit::contents());
     assert_eq!(node.ops(Point::ZERO, 2000.0).0, laid(&v, &Fit::contents()).0);
     assert_eq!(crate::overlay::render::shorten("a"), "a");
 }
@@ -112,7 +112,7 @@ fn every_log_scene_drawn_as_a_log_panel() {
     for (name, _) in scenes::SCENES {
         let frame = scenes::frame(name).unwrap();
         for (i, v) in frame.logs.iter().enumerate() {
-            let panel = log_panel(v, None, &Fit::contents(), &Anim::still());
+            let panel = log_panel(v, None, &Fit::contents());
             let tag = if i == 0 { String::new() } else { format!("-{i}") };
             sample::save(&format!("log-{name}{tag}"), &sample::draw(&panel, 1000.0, 1.0));
             drawn += 1;

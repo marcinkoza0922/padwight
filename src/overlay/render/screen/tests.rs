@@ -82,19 +82,40 @@ fn a_prompt_is_drawn_over_its_menu() {
 }
 
 #[test]
-fn a_panel_zooms_as_a_layer_about_its_center() {
+fn a_panel_fades_and_zooms_as_a_layer_about_its_center() {
     let frame = scenes::frame("menu-list").unwrap();
     let mut shown = Shown::settled(&frame);
-    let mut anim = Anim::still();
+    let mut anim = Anim::faint(0.5);
     anim.feel.zoom = 0.5;
-    anim.feel.open = 1.0;
-    anim.timing.opened = 0.0;
     shown.panels[0].1 = anim;
     let ops = screen_ops(&frame, &shown, DISPLAY);
     let layers: Vec<_> = ops.iter().filter_map(|op| if let Op::Layer(l) = op { Some(*l) } else { None }).collect();
     assert_eq!(layers.len(), 1);
-    assert!(layers[0].scale < 1.0);
+    assert!(matches!(ops.first(), Some(Op::Layer(_))) && matches!(ops.last(), Some(Op::Unlayer)), "the panel is the whole list");
+    assert!(layers[0].scale < 1.0 && (layers[0].opacity - 0.5).abs() < 1e-4, "{:?}", layers[0]);
     assert!((layers[0].about.x - 960.0).abs() < 40.0);
+}
+
+#[test]
+fn every_panel_is_a_layer_of_its_own() {
+    let frame = scenes::frame("guide").unwrap();
+    let ops = screen_ops(&frame, &Shown::settled(&frame), DISPLAY);
+    // Notes, the menu and Mappings: three layers at the top level, side by side.
+    let mut depth = 0;
+    let mut top = Vec::new();
+    for op in &ops {
+        match op {
+            Op::Layer(_) | Op::Clip { .. } if depth == 0 => {
+                assert!(matches!(op, Op::Layer(_)), "only panels at the top level");
+                top.push(op);
+                depth += 1;
+            }
+            Op::Layer(_) | Op::Clip { .. } => depth += 1,
+            Op::Unlayer | Op::Unclip => depth -= 1,
+            _ => assert!(depth > 0, "nothing drawn outside a panel: {op:?}"),
+        }
+    }
+    assert!(top.len() >= 3, "{}", top.len());
 }
 
 #[test]

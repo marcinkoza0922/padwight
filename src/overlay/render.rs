@@ -45,8 +45,8 @@ pub use keyboard::{GAP, KEYBOARD_PADDING, UNIT, keyboard_body_width};
 pub use menus::{UNDER_PROMPT, frame as menu_frame, menu_panel, menu_style};
 pub use panel::framed;
 pub use place::{EDGE_MARGIN, Margins, margins};
-#[expect(unused_imports, reason = "drawn by overlay::snapshot and film from step 4.4")]
-pub use screen::{Shown, screen_ops};
+#[expect(unused_imports, reason = "the Wayland window draws with Screen from step 5.x, snapshot and film from step 4.4")]
+pub use screen::{Display, Screen, Shown, screen_ops};
 pub use screen::screen;
 pub use radial::radial;
 pub use rich::{Setting, info_cell, line, plain, rich};

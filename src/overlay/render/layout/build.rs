@@ -184,4 +184,11 @@ impl Node {
         self.effect.about = Some(at);
         self
     }
+
+    /// Drawn as a layer even when it isn't faded, scaled or moved, so the screen can tell where
+    /// it starts and ends (each panel is a picture of its own).
+    pub fn layered(mut self) -> Node {
+        self.effect.always = true;
+        self
+    }
 }

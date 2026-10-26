@@ -15,15 +15,14 @@ use crate::{
     config::OverlayStyle,
     info::Glyphs,
     media::{self, MediaView},
-    motion::Anim,
     offer::OfferView,
     overlay::fit::Fit,
 };
 
 /// The media controls, drawn as the overlay shows them: `font` is the family (`None` for the
-/// default), `glyphs` the controller in use, and `anim` how far the panel has faded in or out.
-pub fn media(view: &MediaView, font: Option<&'static str>, glyphs: Glyphs, fit: &Fit, anim: &Anim) -> Node {
-    let style = panel_style(&view.style, font, glyphs, anim);
+/// default), and `glyphs` the controller in use, at full strength (the screen fades its picture).
+pub fn media(view: &MediaView, font: Option<&'static str>, glyphs: Glyphs, fit: &Fit) -> Node {
+    let style = panel_style(&view.style, font, glyphs);
     let s = view.style.scale.clamp(0.5, 2.0);
     let width = 560.0 * s;
     let body = match &view.player {
@@ -70,8 +69,8 @@ fn now_playing(view: &MediaView, player: &str, style: &Style, s: f32, width: f32
 
 /// The offer to add a library game: the question, what the pack is, its answers as boxes in a
 /// row, and the hint. `{confirm}`'s answer is the default, so it has the selected look.
-pub fn offer(view: &OfferView, font: Option<&'static str>, glyphs: Glyphs, fit: &Fit, anim: &Anim) -> Node {
-    let style = panel_style(&view.style, font, glyphs, anim);
+pub fn offer(view: &OfferView, font: Option<&'static str>, glyphs: Glyphs, fit: &Fit) -> Node {
+    let style = panel_style(&view.style, font, glyphs);
     let s = view.style.scale.clamp(0.5, 2.0);
     let answers = view.answers.iter().map(|(button, what)| answer(&format!("{button}  {what}"), &style, &view.style, button == "{confirm}", s));
     let detail = Node::text(Spec { family: style.font, align: TextAlign::Center, ..Spec::new(view.detail.clone(), 14.0 * s) }, style.muted).width(520.0 * s);
@@ -92,7 +91,8 @@ fn answer(text: &str, style: &Style, config: &OverlayStyle, selected: bool, s: f
     super::item(body, style, &Item { selected, ..Item::REST }, config, style.corners * 18.0 * s)
 }
 
-/// The panel's colors: the overlay's style with its glyphs, faded as the panel is.
-fn panel_style(config: &OverlayStyle, font: Option<&'static str>, glyphs: Glyphs, anim: &Anim) -> Style {
-    Style::of(config, font).with_glyphs(glyphs).faded(anim.opacity())
+/// The panel's colors: the overlay's style with its glyphs, at full strength (the screen fades
+/// the panel's picture).
+fn panel_style(config: &OverlayStyle, font: Option<&'static str>, glyphs: Glyphs) -> Style {
+    Style::of(config, font).with_glyphs(glyphs)
 }

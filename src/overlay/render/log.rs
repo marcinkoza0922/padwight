@@ -8,7 +8,6 @@ use super::{Align, Node, Rgba, Style, info_cell, text::Spec};
 use crate::{
     info::Segment,
     inputlog::{LogCell, LogView},
-    motion::Anim,
     overlay::fit::Fit,
 };
 
@@ -17,16 +16,17 @@ pub const RELEASED: f32 = 0.55;
 /// Labels longer than this are cut short, so one long macro name doesn't stretch the line.
 const LABEL_CHARS: usize = 22;
 
-/// The panel for `view`, in `font`, held to `fit`, as `anim` has it. A log with no lines is nothing.
-pub fn log_panel(view: &LogView, font: Option<&'static str>, fit: &Fit, anim: &Anim) -> Node {
+/// The panel for `view`, in `font`, held to `fit`, at full strength: its fade (`view.opacity`
+/// and its animation's) is the screen's to apply to its picture. A line fading out fades in the
+/// list. A log with no lines is nothing.
+pub fn log_panel(view: &LogView, font: Option<&'static str>, fit: &Fit) -> Node {
     if view.lines.is_empty() {
         return Node::space();
     }
-    let opacity = view.opacity * anim.opacity();
-    let style = Style::of(&view.style, font).faded(opacity);
+    let style = Style::of(&view.style, font);
     let s = view.style.scale.clamp(0.5, 2.0);
     let lines = view.lines.iter().map(|line| {
-        let cells = line.cells.iter().map(|cell| log_cell(cell, style.faded(line.opacity), s, view, opacity * line.opacity));
+        let cells = line.cells.iter().map(|cell| log_cell(cell, style.faded(line.opacity), s, view, line.opacity));
         Node::wrap(cells).spacing(12.0 * s).line_spacing(4.0 * s).align_y(Align::Start)
     });
     let body = Node::column(lines).spacing(8.0 * s);

@@ -149,14 +149,16 @@ struct Effect {
     scale: f32,
     shift: Point,
     about: Option<Point>,
+    /// A layer even when it changes nothing (see `Node::layered`).
+    always: bool,
 }
 
 impl Effect {
-    const NONE: Effect = Effect { opacity: 1.0, scale: 1.0, shift: Point::ZERO, about: None };
+    const NONE: Effect = Effect { opacity: 1.0, scale: 1.0, shift: Point::ZERO, about: None, always: false };
 
     /// The layer to draw a node in `rect` as, or `None` when it is drawn as it is.
     fn layer(&self, rect: Rect) -> Option<Layer> {
-        if self.opacity == 1.0 && self.scale == 1.0 && self.shift == Point::ZERO {
+        if !self.always && self.opacity == 1.0 && self.scale == 1.0 && self.shift == Point::ZERO {
             return None;
         }
         let about = self.about.map_or(rect.center(), |p| Point::new(rect.x + p.x, rect.y + p.y));
