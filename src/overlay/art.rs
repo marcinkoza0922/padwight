@@ -6,6 +6,8 @@ use std::sync::OnceLock;
 use crate::config::Texture;
 
 mod filters;
+pub mod frame;
+pub mod icons;
 mod grains;
 mod materials;
 mod patterns;
