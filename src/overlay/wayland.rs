@@ -28,6 +28,7 @@ mod events;
 mod feed;
 mod pacing;
 mod picture;
+mod scale;
 mod shm;
 mod sizing;
 mod slots;
@@ -84,6 +85,8 @@ fn step(window: &mut Window, screen: &mut dyn Screen, overlay: &Overlay, now: In
         _ => {}
     }
     // A configure answers the request it came for; one asked since then waits for its own.
+    // The first thing after a change of scale; a configure or draw that follows draws again.
+    window.rescale(screen, overlay, now, qh)?;
     match todo {
         Commit::Blank if window.sizing.target() == Target::Corner => window.blank(qh)?,
         // The first frame at a new size goes at once, callback or not: nothing of ours is on
