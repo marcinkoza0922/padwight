@@ -1,7 +1,8 @@
 //! The layer surface: binding the globals, making the surface, and every commit made to it.
 //! Each commit goes through here, so the rule that a buffer only goes on at the size last acked
 //! is checked in one place (`Sizing::attached`), as is the rule that a frame is drawn only into
-//! a buffer the compositor has released (`Slots::check_free`), and each is logged.
+//! a buffer the compositor has released (`Slots::check_free`), and each is logged. Each frame
+//! drawn asks for a frame callback in its own commit (`Pacer`).
 
 use std::time::Instant;
 
@@ -27,6 +28,7 @@ use wayland_protocols_wlr::layer_shell::v1::client::{
 
 use super::{
     picture::Screen,
+    pacing::Pacer,
     shm::{Formats, Pool, rgba_to_argb},
     sizing::{Commit, Sizing, Target},
     slots::Layout,
@@ -55,8 +57,8 @@ pub(super) struct Window {
     pub(super) pool: Option<Pool>,
     /// The number the last pool made got, so a release meant for an older pool is passed over.
     pools: u64,
-    /// A frame was skipped because the compositor held every buffer: draw it on a release.
-    pub(super) redraw: bool,
+    /// When to draw: on frame callbacks while anything moves.
+    pub(super) pacer: Pacer,
     /// The compositor closed the surface.
     pub(super) closed: bool,
 }
@@ -104,7 +106,7 @@ impl Window {
             todo: Commit::Nothing,
             pool: None,
             pools: 0,
-            redraw: false,
+            pacer: Pacer::default(),
             closed: false,
         };
         window.ask(Target::Corner);
@@ -133,6 +135,7 @@ impl Window {
     /// Asks for the corner; clears what's on screen in the same commit, if anything is.
     pub(super) fn shrink(&mut self, clear: Option<(u32, u32)>, qh: &QueueHandle<Window>) -> Result<()> {
         self.ask(Target::Corner);
+        self.pacer.hidden();
         match clear {
             Some(size) => self.commit(size, Why::Clear, qh, |pixels, _| pixels.fill(0)),
             None => {
@@ -148,17 +151,17 @@ impl Window {
         self.commit((1, 1), Why::Blank, qh, |pixels, _| pixels.fill(0))
     }
 
-    /// Draws the screen at its configured size, as it is now, and commits it. Skipped while
-    /// the compositor holds every buffer, with `redraw` set to draw it on a release.
-    pub(super) fn draw(&mut self, screen: &mut dyn Screen, overlay: &Overlay, qh: &QueueHandle<Window>) -> Result<()> {
+    /// Draws the screen at its configured size, as it is at `now` (the animation clock), and
+    /// commits it with a frame callback asked for. Skipped while the compositor holds every
+    /// buffer, and drawn again once one is released.
+    pub(super) fn draw(&mut self, screen: &mut dyn Screen, overlay: &Overlay, now: Instant, qh: &QueueHandle<Window>) -> Result<()> {
         let Some((w, h)) = self.sizing.screen() else { return Ok(()) };
-        self.redraw = false;
         let started = Instant::now();
         self.commit((w, h), Why::Draw, qh, |pixels, format| {
             // Drawn straight into the buffer, which holds an older frame (its lease's age);
             // until step 4.3 the whole screen is drawn over it.
             let mut direct = PixmapMut::from_bytes(pixels, w, h).expect("a buffer is as big as its size");
-            screen.draw(overlay, started, 1.0, &mut direct);
+            screen.draw(overlay, now, 1.0, &mut direct);
             if format == wl_shm::Format::Argb8888 {
                 // Without ABGR8888 (KWin lacks it), swapped into ARGB8888's order in place,
                 // rather than drawn into a canvas of its own and converted: one screen less of
@@ -201,7 +204,7 @@ impl Window {
         let Some(lease) = pool.slots.lease() else {
             timing_log(&format!("commit-skipped {} {w}x{h} {why:?} held {}", unix_ns(), pool.slots.held()));
             match why {
-                Why::Draw => self.redraw = true,
+                Why::Draw => self.pacer.skipped(),
                 // A shrink's request still has to go: without the clear buffer, the last frame
                 // stays on until the compositor answers it.
                 Why::Clear | Why::Blank => self.surface.commit(),
@@ -210,6 +213,11 @@ impl Window {
         };
         fill(pool.pixels(lease), format);
         pool.attach(lease, &self.surface);
+        if let Why::Draw = why {
+            // Asked for before the commit, which it belongs to.
+            let id = self.pacer.drawn(Instant::now());
+            self.surface.frame(qh, id);
+        }
         self.surface.commit();
         drop(old);
         self.sizing.attached((w, h));

@@ -5,6 +5,7 @@ use wayland_client::{
     globals::GlobalListContents,
     protocol::{
         wl_buffer::{self, WlBuffer},
+        wl_callback::{self, WlCallback},
         wl_compositor::WlCompositor,
         wl_region::WlRegion,
         wl_registry::{self, WlRegistry},
@@ -50,6 +51,16 @@ impl Dispatch<WlBuffer, BufferId> for Window {
             && let Some(pool) = window.pool.as_mut().filter(|p| p.id == id.pool)
         {
             pool.slots.released(id.slot);
+        }
+    }
+}
+
+impl Dispatch<WlCallback, u64> for Window {
+    fn event(window: &mut Window, _: &WlCallback, event: wl_callback::Event, id: &u64, _: &Connection, _: &QueueHandle<Window>) {
+        if let wl_callback::Event::Done { callback_data } = event {
+            // The compositor's time is in milliseconds, from a clock of its own choosing.
+            let current = window.pacer.done(*id);
+            timing_log(&format!("callback {} {callback_data} {}", unix_ns(), if current { "current" } else { "stale" }));
         }
     }
 }
