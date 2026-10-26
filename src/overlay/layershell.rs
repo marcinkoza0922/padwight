@@ -15,7 +15,7 @@ use iced_layershell::{
 
 use super::{
     OverlayFrame,
-    timing::{timing_log, unix_ns},
+    timing::{present_log, timing_enabled, timing_log, unix_ns},
     ui::{Overlay, layers},
 };
 use crate::ipc::{self, Request};
@@ -105,7 +105,17 @@ fn resize(was_shown: bool, shown: bool) -> Task<Message> {
 }
 
 fn subscription(state: &Overlay) -> Subscription<Message> {
-    let watch = Subscription::run(watch);
+    let mut watch = Subscription::run(watch);
+    if timing_enabled() {
+        // Logs each redraw, to see when frames are shown; makes no messages.
+        let redraws = iced::event::listen_raw(|event, _, _| {
+            if let iced::Event::Window(iced::window::Event::RedrawRequested(at)) = event {
+                present_log(at);
+            }
+            None
+        });
+        watch = Subscription::batch([watch, redraws]);
+    }
     if state.busy(Instant::now()) {
         Subscription::batch([watch, iced::time::every(Duration::from_millis(16)).map(|_| Message::Tick)])
     } else {
