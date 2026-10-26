@@ -1,0 +1,742 @@
+format = 20
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "e3b17c58-4f2a-4d96-8c0b-7a5e21d9f364"
+name = "Stronghold Crusader"
+version = "1.0"
+author = "Padwight"
+description = "Stronghold Crusader (HD and Extreme) on an Xbox-style pad, for the default keys. The game has no controller support, so the pad drives the mouse and the game's hotkeys. The right stick moves the cursor, RT left-clicks to select and give orders, LT right-clicks to deselect and cancel, the left stick scrolls the map. A, X and Y jump to the Keep, the Barracks and the Granary, R3 to the Market; the d-pad zooms, flattens the land and rotates the view. Hold LB for unit groups 1-9 (LB + RB sets one). Select lists pause and game speed; hold it for the Menus mode. Start is the menu. The \"+ Gyro\" profile also moves the cursor by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Stronghold Crusader.exe"
+profile = "Stronghold Crusader"
+
+[[rules]]
+kind = "executable"
+value = "Stronghold_Crusader_Extreme.exe"
+profile = "Stronghold Crusader"
+
+[[rules]]
+kind = "steam_app_id"
+value = "40970"
+profile = "Stronghold Crusader"
+
+[[profiles]]
+name = "Stronghold Crusader"
+combos = [{buttons = ["LeftBumper", "RightBumper"], action = {open_menu = "Set group"}}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_H"]}
+West = {keys = ["KEY_B"]}
+North = {keys = ["KEY_G"]}
+East = {keys = ["KEY_ESC"]}
+LeftBumper = {open_menu = "Groups"}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+Select = {open_menu = "Game"}
+Start = {keys = ["KEY_ESC"]}
+RightStick = {keys = ["KEY_M"]}
+DpadUp = {keys = ["KEY_Z"]}
+DpadDown = {keys = ["KEY_SPACE"]}
+DpadLeft = {keys = ["KEY_COMMA"]}
+DpadRight = {keys = ["KEY_DOT"]}
+
+[profiles.gestures.Select]
+long_press = {mode = "Menus"}
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_LEFT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_LEFT"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the cursor. {rt} is the left click: it selects, places buildings and gives orders, and a drag boxes troops. {lt} is the right click: it deselects and cancels. The left stick {ls} scrolls the map.
+{south} jumps to the Keep, {west} to the Barracks, {north} to the Granary and {r3} to the Market.
+{up} zooms in and out, {down} flattens the land to see behind walls, and {left} {right} rotate the view.
+Hold {lb} for the unit groups and aim the right stick {rs} at one: release to select it. Hold {lb} and {rb} together to put the selection in a group instead (Ctrl + number). {rb} is Shift, to add to the selection.
+{select} lists pause and game speed. Hold {select} for the Menus mode (the main menu, mission briefings, the map editor) and hold it again to come back. {start} (Esc) is the menu; {east} closes a panel.
+The keys are the game's defaults as best remembered, not checked on an install: rotate (, .), zoom (Z), flatten (Space), the building jumps and the group keys are the likeliest to differ, and Crusader can't remap them. The executable names for Steam's HD and Extreme HD are from Discord's list. Guide + {west} opens the on-screen keyboard to name a castle or chat.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the map" }
+"stick:Right" = { text = "Cursor" }
+"trigger:Right" = { text = "Left click (select, build, order)" }
+"trigger:Left" = { text = "Right click (deselect, cancel)" }
+"button:South" = { text = "{icon:castle} Keep" }
+"button:West" = { text = "{icon:sword-cross} Barracks" }
+"button:North" = { text = "{icon:wheat} Granary" }
+"button:East" = { text = "Close" }
+"button:RightBumper" = { text = "Shift (add to selection)" }
+"button:LeftBumper" = { text = "Hold: unit groups" }
+"button:RightStick" = { text = "{icon:shop} Market" }
+"button:DpadUp" = { text = "{icon:search} Zoom" }
+"button:DpadDown" = { text = "{icon:terrain} Flatten the land" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Select:long_press" = { text = "Menus mode on / off" }
+"button:Select" = { text = "Pause, speed" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate the view"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Set a control group"
+
+[[profiles]]
+name = "Stronghold Crusader + Gyro"
+combos = [{buttons = ["LeftBumper", "RightBumper"], action = {open_menu = "Set group"}}, {buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_H"]}
+West = {keys = ["KEY_B"]}
+North = {keys = ["KEY_G"]}
+East = {keys = ["KEY_ESC"]}
+LeftBumper = {open_menu = "Groups"}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+Select = {open_menu = "Game"}
+Start = {keys = ["KEY_ESC"]}
+RightStick = {keys = ["KEY_M"]}
+DpadUp = {keys = ["KEY_Z"]}
+DpadDown = {keys = ["KEY_SPACE"]}
+DpadLeft = {keys = ["KEY_COMMA"]}
+DpadRight = {keys = ["KEY_DOT"]}
+
+[profiles.gestures.Select]
+long_press = {mode = "Menus"}
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_LEFT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_LEFT"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''This is the gyro variant: tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}. Hold {select} and {start} together to pause the gyro while you reposition the controller.
+The right stick {rs} moves the cursor. {rt} is the left click: it selects, places buildings and gives orders, and a drag boxes troops. {lt} is the right click: it deselects and cancels. The left stick {ls} scrolls the map.
+{south} jumps to the Keep, {west} to the Barracks, {north} to the Granary and {r3} to the Market.
+{up} zooms in and out, {down} flattens the land to see behind walls, and {left} {right} rotate the view.
+Hold {lb} for the unit groups and aim the right stick {rs} at one: release to select it. Hold {lb} and {rb} together to put the selection in a group instead (Ctrl + number). {rb} is Shift, to add to the selection.
+{select} lists pause and game speed. Hold {select} for the Menus mode (the main menu, mission briefings, the map editor) and hold it again to come back. {start} (Esc) is the menu; {east} closes a panel.
+The keys are the game's defaults as best remembered, not checked on an install: rotate (, .), zoom (Z), flatten (Space), the building jumps and the group keys are the likeliest to differ, and Crusader can't remap them. The executable names for Steam's HD and Extreme HD are from Discord's list. Guide + {west} opens the on-screen keyboard to name a castle or chat.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the map" }
+"stick:Right" = { text = "Cursor" }
+"trigger:Right" = { text = "Left click (select, build, order)" }
+"trigger:Left" = { text = "Right click (deselect, cancel)" }
+"button:South" = { text = "{icon:castle} Keep" }
+"button:West" = { text = "{icon:sword-cross} Barracks" }
+"button:North" = { text = "{icon:wheat} Granary" }
+"button:East" = { text = "Close" }
+"button:RightBumper" = { text = "Shift (add to selection)" }
+"button:LeftBumper" = { text = "Hold: unit groups" }
+"button:RightStick" = { text = "{icon:shop} Market" }
+"button:DpadUp" = { text = "{icon:search} Zoom" }
+"button:DpadDown" = { text = "{icon:terrain} Flatten the land" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Select:long_press" = { text = "Menus mode on / off" }
+"button:Select" = { text = "Pause, speed" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate the view"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Set a control group"
+
+[[menus]]
+name = "Groups"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:people} Group 1"
+action = {keys = ["KEY_1"]}
+
+[[menus.items]]
+label = "{icon:people} Group 2"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:people} Group 3"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:people} Group 4"
+action = {keys = ["KEY_4"]}
+
+[[menus.items]]
+label = "{icon:people} Group 5"
+action = {keys = ["KEY_5"]}
+
+[[menus.items]]
+label = "{icon:people} Group 6"
+action = {keys = ["KEY_6"]}
+
+[[menus.items]]
+label = "{icon:people} Group 7"
+action = {keys = ["KEY_7"]}
+
+[[menus.items]]
+label = "{icon:people} Group 8"
+action = {keys = ["KEY_8"]}
+
+[[menus.items]]
+label = "{icon:people} Group 9"
+action = {keys = ["KEY_9"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1b1a17"
+opacity = 0.92
+
+[menus.style.items]
+color = "#38342d"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#8e2a1f"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#bfb08c"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#26241f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5c564b"
+
+[menus.style.glow]
+color = "#e0cfa2"
+opacity = 0.55
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "gothic", size = 40, width = 1, color = "#bfb08c"}
+concrete = {opacity = 0.3}
+dividers = {width = 1, color = "#bfb08c", opacity = 0.4}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[[menus]]
+name = "Set group"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:flag} Set 1"
+action = {keys = ["KEY_LEFTCTRL", "KEY_1"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 2"
+action = {keys = ["KEY_LEFTCTRL", "KEY_2"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 3"
+action = {keys = ["KEY_LEFTCTRL", "KEY_3"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 4"
+action = {keys = ["KEY_LEFTCTRL", "KEY_4"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 5"
+action = {keys = ["KEY_LEFTCTRL", "KEY_5"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 6"
+action = {keys = ["KEY_LEFTCTRL", "KEY_6"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 7"
+action = {keys = ["KEY_LEFTCTRL", "KEY_7"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 8"
+action = {keys = ["KEY_LEFTCTRL", "KEY_8"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 9"
+action = {keys = ["KEY_LEFTCTRL", "KEY_9"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1b1a17"
+opacity = 0.92
+
+[menus.style.items]
+color = "#38342d"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#8e2a1f"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#bfb08c"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#26241f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5c564b"
+
+[menus.style.glow]
+color = "#e0cfa2"
+opacity = 0.55
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "gothic", size = 40, width = 1, color = "#bfb08c"}
+concrete = {opacity = 0.3}
+dividers = {width = 1, color = "#bfb08c", opacity = 0.4}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[[menus]]
+name = "Game"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:pause} Pause"
+action = {keys = ["KEY_P"]}
+
+[[menus.items]]
+label = "{icon:fast} Faster"
+action = {keys = ["KEY_KPPLUS"]}
+
+[[menus.items]]
+label = "{icon:speed1} Slower"
+action = {keys = ["KEY_KPMINUS"]}
+
+[[menus.items]]
+label = "{icon:shop} Market"
+action = {keys = ["KEY_M"]}
+
+[[menus.items]]
+label = "{icon:messages} Chat"
+action = {keys = ["KEY_ENTER"]}
+
+[[menus.items]]
+label = "{icon:gear} Menu"
+action = {keys = ["KEY_ESC"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1b1a17"
+opacity = 0.92
+
+[menus.style.items]
+color = "#38342d"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#8e2a1f"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#bfb08c"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#26241f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5c564b"
+
+[menus.style.glow]
+color = "#e0cfa2"
+opacity = 0.55
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "gothic", size = 40, width = 1, color = "#bfb08c"}
+concrete = {opacity = 0.3}
+dividers = {width = 1, color = "#bfb08c", opacity = 0.4}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[[modes]]
+name = "Menus"
+indicator = "name"
+swallow_unbound = true
+
+[modes.indicator_style]
+position = "top_center"
+scale = 0.7
+
+[modes.indicator_style.background]
+color = "#1b1a17"
+opacity = 0.75
+
+[modes.indicator_style.items]
+color = "#38342d"
+opacity = 0.95
+
+[modes.indicator_style.selected]
+color = "#8e2a1f"
+opacity = 1.0
+
+[modes.buttons]
+Select = "toggle_overlay"
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+North = {keys = ["KEY_ENTER"]}
+West = {mouse = "Right"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {keys = ["KEY_UP"]}
+DpadDown = {keys = ["KEY_DOWN"]}
+DpadLeft = {keys = ["KEY_LEFT"]}
+DpadRight = {keys = ["KEY_RIGHT"]}
+
+[modes.gestures.Select.long_press]
+mode = "Menus"
+
+[modes.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.5
+
+[modes.left_stick.action.scroll]
+speed = 12.0
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1b1a17"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#38342d"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#8e2a1f"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#bfb08c"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#26241f"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5c564b"
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1b1a17"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#38342d"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#8e2a1f"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#bfb08c"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#26241f"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5c564b"
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1b1a17"
+opacity = 0.92
+
+[media_style.items]
+color = "#38342d"
+opacity = 0.95
+
+[media_style.selected]
+color = "#8e2a1f"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#bfb08c"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#26241f"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5c564b"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1b1a17"
+opacity = 0.92
+
+[menu_style.items]
+color = "#38342d"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#8e2a1f"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#bfb08c"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#26241f"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5c564b"
+
+[menu_style.glow]
+color = "#e0cfa2"
+opacity = 0.55
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "gothic", size = 40, width = 1, color = "#bfb08c"}
+concrete = {opacity = 0.3}
+dividers = {width = 1, color = "#bfb08c", opacity = 0.4}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "knock", volume = 0.07, pitch = 0.9}
+pick = {kind = "clank", volume = 0.14, pitch = 0.9}
+open = {kind = "page", volume = 0.05, pitch = 0.8}
+close = {kind = "page", volume = 0.035, pitch = 0.6}
+
+[sounds.keyboard]
+step = {kind = "knock", volume = 0.06, pitch = 1.0}
+pick = {kind = "wood", volume = 0.16, pitch = 0.85}
+
+[sounds.numpad]
+step = {kind = "knock", volume = 0.06, pitch = 1.0}
+pick = {kind = "wood", volume = 0.16, pitch = 0.85}
+
+[rumble.menu]
+step = {strength = 0.11, length_ms = 18}
+pick = {strength = 0.41, length_ms = 35}
+open = {strength = 0.09, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.27, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.27, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.27, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.27, length_ms = 60}

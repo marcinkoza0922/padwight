@@ -1,0 +1,354 @@
+format = 20
+macros = []
+overlay_font = "Titillium Web"
+
+[pack]
+id = "c41e8b93-27d5-4f0a-b6e2-91a7d3f05c28"
+name = "Game Dev Tycoon"
+version = "1.0"
+author = "Padwight"
+description = "Game Dev Tycoon on an Xbox-style pad. The game takes only the mouse, so the right stick moves the pointer and the left stick nudges it; A or RT clicks and holds to drag the development sliders, Y opens the on-screen keyboard to name your games. The D-pad scrolls. Start is the menu. Overlays in the game's light office panels with an orange highlight. The \"Game Dev Tycoon + Gyro\" profile also moves the pointer by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "239820"
+profile = "Game Dev Tycoon"
+
+[[rules]]
+kind = "executable"
+value = "Game Dev Tycoon/nw.exe"
+profile = "Game Dev Tycoon"
+
+[[profiles]]
+name = "Game Dev Tycoon"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {mouse = "Right"}
+North = "toggle_overlay"
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The game is played with the mouse alone. The right stick {rs} moves the pointer and the left stick {ls} moves it slowly. Click the office floor or your desk to open the action menu (Develop New Game, Research, Train).
+{south} or {rt} clicks; hold either and move the pointer to drag the development focus sliders, then let go.
+{north} opens the on-screen keyboard to type the name of a game or a company, the same keyboard as {guide} + {west}. {up} and {down} scroll lists such as topics and reviews.
+{start} sends Escape, which should close a dialog or open the menu; that is a guess. {east} and {lt} right-click, which the game hardly uses.
+The game has no key settings. Its Windows executable is NW.js's generic nw.exe, which other games share, so the executable rule names the install folder too (Game Dev Tycoon/nw.exe); a copy installed under another folder name is found only through Steam.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:hand} {b}Click{/b} · hold to drag"}
+"trigger:Left" = {text = "Right-click"}
+"button:South" = {text = "Click · hold to drag"}
+"button:East" = {text = "Right-click"}
+"button:North" = {text = "{b}Keyboard{/b} (name a game)"}
+"button:Start" = {text = "{icon:pause} Menu"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Scroll"
+
+[[profiles]]
+name = "Game Dev Tycoon + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {mouse = "Right"}
+North = "toggle_overlay"
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The game is played with the mouse alone. The right stick {rs} moves the pointer and the left stick {ls} moves it slowly. Click the office floor or your desk to open the action menu (Develop New Game, Research, Train).
+{south} or {rt} clicks; hold either and move the pointer to drag the development focus sliders, then let go.
+{north} opens the on-screen keyboard to type the name of a game or a company, the same keyboard as {guide} + {west}. {up} and {down} scroll lists such as topics and reviews.
+{start} sends Escape, which should close a dialog or open the menu; that is a guess. {east} and {lt} right-click, which the game hardly uses.
+The game has no key settings. Its Windows executable is NW.js's generic nw.exe, which other games share, so the executable rule names the install folder too (Game Dev Tycoon/nw.exe); a copy installed under another folder name is found only through Steam.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:hand} {b}Click{/b} · hold to drag"}
+"trigger:Left" = {text = "Right-click"}
+"button:South" = {text = "Click · hold to drag"}
+"button:East" = {text = "Right-click"}
+"button:North" = {text = "{b}Keyboard{/b} (name a game)"}
+"button:Start" = {text = "{icon:pause} Menu"}
+"combo:button:Select+button:Start" = {text = "Pause gyro (hold)"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Scroll"
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#eef1f4"
+opacity = 0.95
+
+[keyboard_style.items]
+color = "#ffffff"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#f39c32"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#b9c2cc"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#dce2e8"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#c9d0d8"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#eef1f4"
+opacity = 0.95
+
+[numpad_style.items]
+color = "#ffffff"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#f39c32"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#b9c2cc"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#dce2e8"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#c9d0d8"
+
+[numpad_style.type]
+letter_spacing = 0
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#eef1f4"
+opacity = 0.95
+
+[media_style.items]
+color = "#ffffff"
+opacity = 0.95
+
+[media_style.selected]
+color = "#f39c32"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#b9c2cc"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#dce2e8"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#c9d0d8"
+
+[media_style.type]
+letter_spacing = 0
+
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#eef1f4"
+opacity = 0.95
+
+[menu_style.items]
+color = "#ffffff"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#f39c32"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#b9c2cc"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#dce2e8"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#c9d0d8"
+
+[menu_style.glow]
+color = "#f39c32"
+opacity = 0.35
+blur = 12
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#b9c2cc", opacity = 0.6}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.07, pitch = 1.0}
+pick = {kind = "confirm", volume = 0.12, pitch = 1.0}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.06, pitch = 1.1}
+pick = {kind = "keys", volume = 0.1}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.06, pitch = 1.1}
+pick = {kind = "keys", volume = 0.1}
+
+[sounds.media]
+pick = {kind = "pop", volume = 0.12, pitch = 1.0}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

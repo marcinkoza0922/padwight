@@ -1,0 +1,541 @@
+format = 20
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "0dac69bc-4b77-45ba-ba97-5bde081b28db"
+name = "Banished"
+version = "1.0"
+author = "Padwight"
+description = "Banished (Steam, Windows) on an Xbox-style pad, for the default keys. The right stick moves the cursor, RT or A left-clicks, LT right-clicks, the left stick moves the camera, the d-pad zooms and rotates the view. Y pauses (hold to resume), L3 and R3 slow down and speed up, LB and RB turn a building, X switches the house design. Select lists the toolbar's menus: housing, roads, storage, services, food, resources, removal and the reports. The \"+ Gyro\" profile also moves the cursor by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "application-steam-x64.exe"
+profile = "Banished"
+
+[[rules]]
+kind = "executable"
+value = "application-steam-x32.exe"
+profile = "Banished"
+
+[[rules]]
+kind = "steam_app_id"
+value = "242920"
+profile = "Banished"
+
+
+[[profiles]]
+name = "Banished"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_F"]}
+North = {keys = ["KEY_2"]}
+LeftBumper = {keys = ["KEY_T"]}
+RightBumper = {keys = ["KEY_R"]}
+Select = {open_menu = "Toolbar"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_1"]}
+RightStick = {keys = ["KEY_4"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_Q"]}
+DpadRight = {keys = ["KEY_E"]}
+
+[profiles.gestures.North.long_press]
+keys = ["KEY_3"]
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the cursor: {rt} or {south} picks and places (left click, hold and drag for fields, roads and stockpiles), and {lt} is a right click (cancels what you're placing). The left stick {ls} moves the camera (WASD), {up} {down} zoom and {left} {right} rotate the view.
+{north} pauses; hold {north} to resume. Click {l3} to slow the town down and {r3} to speed it up.
+While placing a building, {lb} and {rb} turn it, and {west} switches between the house designs.
+{select} lists the toolbar's menus: speed, tools and reports, housing, roads, storage and trade, town services, food, resources and removal (tap it, pick with {south}). Each opens the game's own menu, where you pick with the cursor. {east} closes a window; {start} is the options menu.
+Banished has no controller support, so the controller works through these keys. It has no quick save: save from the options menu. The camera's tilt (Page Up and Page Down) isn't on the pad; hold {guide} and press {west} for the on-screen keyboard to use it, or to name a save.
+The keys come from the Banished wiki's controls list, not checked on an install: 1 to 4 for the speeds most of all (some players say Space pauses and + and - change the speed in newer versions). If a key does nothing, look in the input settings and set it to the key in this setup. The Linux and GOG executable names are not covered: only the Steam one, Application-steam-x64.exe, is from Discord's list (the 32-bit Application-steam-x32.exe is a guess).'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move the camera" }
+"stick:Right" = { text = "Cursor" }
+"trigger:Right" = { text = "Left click (place, drag)" }
+"trigger:Left" = { text = "Right click (cancel)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close window" }
+"button:West" = { text = "{icon:home} House design" }
+"button:North" = { text = "{icon:pause} Pause" }
+"gesture:button:North:long_press" = { text = "{icon:speed1} Resume" }
+"button:LeftBumper" = { text = "{icon:rotate-left} Turn building" }
+"button:RightBumper" = { text = "Turn building {icon:rotate}" }
+"button:Select" = { text = "Toolbar menus" }
+"button:Start" = { text = "Options menu" }
+"button:LeftStick" = { text = "{icon:speed1} Slower" }
+"button:RightStick" = { text = "{icon:speed3} Faster" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate the view"
+
+[[profiles]]
+name = "Banished + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_F"]}
+North = {keys = ["KEY_2"]}
+LeftBumper = {keys = ["KEY_T"]}
+RightBumper = {keys = ["KEY_R"]}
+Select = {open_menu = "Toolbar"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_1"]}
+RightStick = {keys = ["KEY_4"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_Q"]}
+DpadRight = {keys = ["KEY_E"]}
+
+[profiles.gestures.North.long_press]
+keys = ["KEY_3"]
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Banished + Gyro: tilting the controller moves the cursor too, as a fine pointer next to the right stick {rs}. Hold {select} and {start} together to pause the gyro while you reposition the controller.
+The right stick {rs} moves the cursor: {rt} or {south} picks and places (left click, hold and drag for fields, roads and stockpiles), and {lt} is a right click (cancels what you're placing). The left stick {ls} moves the camera (WASD), {up} {down} zoom and {left} {right} rotate the view.
+{north} pauses; hold {north} to resume. Click {l3} to slow the town down and {r3} to speed it up.
+While placing a building, {lb} and {rb} turn it, and {west} switches between the house designs.
+{select} lists the toolbar's menus: speed, tools and reports, housing, roads, storage and trade, town services, food, resources and removal (tap it, pick with {south}). Each opens the game's own menu, where you pick with the cursor. {east} closes a window; {start} is the options menu.
+Banished has no controller support, so the controller works through these keys. It has no quick save: save from the options menu. The camera's tilt (Page Up and Page Down) isn't on the pad; hold {guide} and press {west} for the on-screen keyboard to use it, or to name a save.
+The keys come from the Banished wiki's controls list, not checked on an install: 1 to 4 for the speeds most of all (some players say Space pauses and + and - change the speed in newer versions). If a key does nothing, look in the input settings and set it to the key in this setup. The Linux and GOG executable names are not covered: only the Steam one, Application-steam-x64.exe, is from Discord's list (the 32-bit Application-steam-x32.exe is a guess).'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move the camera" }
+"stick:Right" = { text = "Cursor" }
+"trigger:Right" = { text = "Left click (place, drag)" }
+"trigger:Left" = { text = "Right click (cancel)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close window" }
+"button:West" = { text = "{icon:home} House design" }
+"button:North" = { text = "{icon:pause} Pause" }
+"gesture:button:North:long_press" = { text = "{icon:speed1} Resume" }
+"button:LeftBumper" = { text = "{icon:rotate-left} Turn building" }
+"button:RightBumper" = { text = "Turn building {icon:rotate}" }
+"button:Select" = { text = "Toolbar menus" }
+"button:Start" = { text = "Options menu" }
+"button:LeftStick" = { text = "{icon:speed1} Slower" }
+"button:RightStick" = { text = "{icon:speed3} Faster" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate the view"
+
+[[menus]]
+name = "Toolbar"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:clock} Speed"
+action = {keys = ["KEY_F1"]}
+
+[[menus.items]]
+label = "{icon:chart} Tools and reports"
+action = {keys = ["KEY_F2"]}
+
+[[menus.items]]
+label = "{icon:cottage} Housing"
+action = {keys = ["KEY_F3"]}
+
+[[menus.items]]
+label = "{icon:road} Roads and bridges"
+action = {keys = ["KEY_F4"]}
+
+[[menus.items]]
+label = "{icon:storage} Storage, markets, trade"
+action = {keys = ["KEY_F5"]}
+
+[[menus.items]]
+label = "{icon:hospital} Town services"
+action = {keys = ["KEY_F6"]}
+
+[[menus.items]]
+label = "{icon:wheat} Food"
+action = {keys = ["KEY_F7"]}
+
+[[menus.items]]
+label = "{icon:axe} Resources"
+action = {keys = ["KEY_F8"]}
+
+[[menus.items]]
+label = "{icon:trash} {color:red}Removal{/color}"
+action = {keys = ["KEY_F9"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1d1911"
+opacity = 0.94
+
+[menus.style.items]
+color = "#2d2619"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#6c8a38"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#b0905a"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#14110b"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4c4030"
+
+[menus.style.glow]
+color = "#cfe08e"
+opacity = 0.4
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#b0905a", opacity = 0.4}
+frame = {kind = "brackets", size = 14, width = 2, color = "#b0905a"}
+vignette = {color = "#000000", opacity = 0.3, reach = 20}
+wood = {opacity = 0.3}
+
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1d1911"
+opacity = 0.94
+
+[keyboard_style.items]
+color = "#2d2619"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#6c8a38"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#b0905a"
+opacity = 0.9
+
+[keyboard_style.gradient]
+color = "#14110b"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4c4030"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1d1911"
+opacity = 0.94
+
+[numpad_style.items]
+color = "#2d2619"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#6c8a38"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#b0905a"
+opacity = 0.9
+
+[numpad_style.gradient]
+color = "#14110b"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4c4030"
+
+[numpad_style.type]
+letter_spacing = 1
+
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1d1911"
+opacity = 0.94
+
+[media_style.items]
+color = "#2d2619"
+opacity = 0.95
+
+[media_style.selected]
+color = "#6c8a38"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#b0905a"
+opacity = 0.9
+
+[media_style.gradient]
+color = "#14110b"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4c4030"
+
+[media_style.type]
+letter_spacing = 1
+
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1d1911"
+opacity = 0.94
+
+[menu_style.items]
+color = "#2d2619"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#6c8a38"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#b0905a"
+opacity = 0.9
+
+[menu_style.gradient]
+color = "#14110b"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4c4030"
+
+[menu_style.glow]
+color = "#cfe08e"
+opacity = 0.4
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#b0905a", opacity = 0.4}
+frame = {kind = "brackets", size = 14, width = 2, color = "#b0905a"}
+vignette = {color = "#000000", opacity = 0.3, reach = 20}
+wood = {opacity = 0.3}
+
+
+[motion]
+keyboard = "subtle"
+numpad = "subtle"
+menu = "subtle"
+media = "subtle"
+offer = "subtle"
+info = "subtle"
+log = "subtle"
+
+[sounds.menu]
+step = {kind = "knock", volume = 0.07, pitch = 0.9}
+pick = {kind = "wood", volume = 0.15}
+open = {kind = "page", volume = 0.06}
+close = {kind = "page", volume = 0.05, pitch = 0.9}
+
+[sounds.keyboard]
+step = {kind = "knock", volume = 0.06, pitch = 1.0}
+pick = {kind = "wood", volume = 0.12, pitch = 1.2}
+
+[sounds.numpad]
+step = {kind = "knock", volume = 0.06, pitch = 1.0}
+pick = {kind = "wood", volume = 0.12, pitch = 1.2}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.2, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.2, length_ms = 60}

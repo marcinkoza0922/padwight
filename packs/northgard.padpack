@@ -1,0 +1,605 @@
+format = 20
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "85995b52-16d8-4e09-9c85-d05c4d0d5e34"
+name = "Northgard"
+version = "1.0"
+author = "Padwight"
+description = "Northgard (Steam, Linux or Windows build) on an Xbox-style pad, for the default keys. The PC version has no controller support, so the layout borrows the console edition's radial selection on the PC keys. The right stick moves the cursor, RT or A left-clicks, LT right-clicks to move and order, the left stick moves the camera. X opens build mode, Y jumps to the latest notification, the d-pad zooms, cycles the selection and rotates a building. Hold LB to select idle workers, residents or scouts; RB is Ctrl for orders. Select lists the Folklore, victory and world screens. The \"+ Gyro\" profile also moves the cursor by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Northgard"
+profile = "Northgard"
+
+[[rules]]
+kind = "executable"
+value = "Northgard.exe"
+profile = "Northgard"
+
+[[rules]]
+kind = "steam_app_id"
+value = "466560"
+profile = "Northgard"
+
+[[profiles]]
+name = "Northgard"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_B"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { open_menu = "Select units" }
+RightBumper = { keys = ["KEY_LEFTCTRL"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_BACKSPACE"] }
+RightStick = { keys = ["KEY_LEFTALT"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_TAB"] }
+DpadRight = { keys = ["KEY_F"] }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the cursor: {rt} or {south} selects (left click), and {lt} moves, gathers, explores or attacks (right click). The left stick {ls} moves the camera, and {updown} zooms.
+{west} opens build mode: pick a building with {south}, rotate it with {right}, place it with {south}, and cancel with {lt} or {east}.
+{north} jumps to the latest notification, {left} cycles through the selection, and {l3} goes back to the Town Hall.
+Hold {lb} and aim the right stick {rs} to select every idle worker, every resident or every scout, mark the squad or hold the units in place: release to pick.
+Hold {rb} for Ctrl while you right-click, to give a unit its special order. Hold {r3} for Alt and click to ping the map for your team.
+{select} lists the Folklore, the victory requirements, the world information, the minimap mode and chat. {start} (Esc) is the game menu; {east} cancels and closes.
+Northgard came out on Switch, PlayStation 4 and Xbox One with its own radial interface, which the PC game doesn't have, so only the radial selection is borrowed. The keys are the defaults as listed by a third-party guide, not checked on an install: if one does nothing, look in Options, Controls, where they can be rebound. Hold {guide} and press {west} for the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Cursor" }
+"stick:Left" = { text = "Move the camera" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (move, order)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Cancel / close" }
+"button:West" = { text = "{icon:hammer} Build mode" }
+"button:North" = { text = "{icon:bell} Latest notification" }
+"button:LeftBumper" = { text = "Hold: select units" }
+"button:RightBumper" = { text = "Hold: Ctrl (special order)" }
+"button:Select" = { text = "Screens and chat" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "{icon:home} Town Hall" }
+"button:RightStick" = { text = "Hold: Alt (ping)" }
+"button:DpadLeft" = { text = "Cycle the selection" }
+"button:DpadRight" = { text = "{icon:rotate} Rotate building" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles]]
+name = "Northgard + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_B"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { open_menu = "Select units" }
+RightBumper = { keys = ["KEY_LEFTCTRL"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_BACKSPACE"] }
+RightStick = { keys = ["KEY_LEFTALT"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_TAB"] }
+DpadRight = { keys = ["KEY_F"] }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Northgard + Gyro: tilting the controller moves the cursor too, as a fine pointer next to the right stick {rs}. Hold {select} and {start} together to pause the gyro while you reposition the controller.
+The right stick {rs} moves the cursor: {rt} or {south} selects (left click), and {lt} moves, gathers, explores or attacks (right click). The left stick {ls} moves the camera, and {updown} zooms.
+{west} opens build mode: pick a building with {south}, rotate it with {right}, place it with {south}, and cancel with {lt} or {east}.
+{north} jumps to the latest notification, {left} cycles through the selection, and {l3} goes back to the Town Hall.
+Hold {lb} and aim the right stick {rs} to select every idle worker, every resident or every scout, mark the squad or hold the units in place: release to pick.
+Hold {rb} for Ctrl while you right-click, to give a unit its special order. Hold {r3} for Alt and click to ping the map for your team.
+{select} lists the Folklore, the victory requirements, the world information, the minimap mode and chat. {start} (Esc) is the game menu; {east} cancels and closes.
+Northgard came out on Switch, PlayStation 4 and Xbox One with its own radial interface, which the PC game doesn't have, so only the radial selection is borrowed. The keys are the defaults as listed by a third-party guide, not checked on an install: if one does nothing, look in Options, Controls, where they can be rebound. Hold {guide} and press {west} for the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Cursor" }
+"stick:Left" = { text = "Move the camera" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (move, order)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Cancel / close" }
+"button:West" = { text = "{icon:hammer} Build mode" }
+"button:North" = { text = "{icon:bell} Latest notification" }
+"button:LeftBumper" = { text = "Hold: select units" }
+"button:RightBumper" = { text = "Hold: Ctrl (special order)" }
+"button:Select" = { text = "Screens and chat" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "{icon:home} Town Hall" }
+"button:RightStick" = { text = "Hold: Alt (ping)" }
+"button:DpadLeft" = { text = "Cycle the selection" }
+"button:DpadRight" = { text = "{icon:rotate} Rotate building" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[[menus]]
+name = "Select units"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:sleep} Idle units"
+action = { keys = ["KEY_U"] }
+
+[[menus.items]]
+label = "{icon:people} Residents"
+action = { keys = ["KEY_G"] }
+
+[[menus.items]]
+label = "{icon:footprints} Scouts"
+action = { keys = ["KEY_H"] }
+
+[[menus.items]]
+label = "{icon:arrow} Next in selection"
+action = { keys = ["KEY_TAB"] }
+
+[[menus.items]]
+label = "{icon:flag} Mark the squad"
+action = { keys = ["KEY_E"] }
+
+[[menus.items]]
+label = "{icon:fortify} Hold position"
+action = { keys = ["KEY_P"] }
+
+[menus.style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#141a1f"
+opacity = 0.93
+
+[menus.style.items]
+color = "#222c33"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c9a15a"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#b89a62"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#0c1014"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3b4a52"
+
+[menus.style.glow]
+color = "#e6cf94"
+opacity = 0.4
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#b89a62", opacity = 0.4}
+frame = {kind = "runic", size = 40, width = 1, color = "#b89a62"}
+vignette = {color = "#000000", opacity = 0.3, reach = 20}
+
+[[menus]]
+name = "Screens"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:book} Folklore"
+action = { keys = ["KEY_L"] }
+
+[[menus.items]]
+label = "{icon:trophy} Victory"
+action = { keys = ["KEY_V"] }
+
+[[menus.items]]
+label = "{icon:globe} World information"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "{icon:map} Minimap mode"
+action = { keys = ["KEY_T"] }
+
+[[menus.items]]
+label = "{icon:messages} Chat"
+action = { keys = ["KEY_ENTER"] }
+
+[menus.style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#141a1f"
+opacity = 0.93
+
+[menus.style.items]
+color = "#222c33"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c9a15a"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#b89a62"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#0c1014"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3b4a52"
+
+[menus.style.glow]
+color = "#e6cf94"
+opacity = 0.4
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#b89a62", opacity = 0.4}
+frame = {kind = "runic", size = 40, width = 1, color = "#b89a62"}
+vignette = {color = "#000000", opacity = 0.3, reach = 20}
+
+[keyboard_style]
+corners = 0.05
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#141a1f"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#222c33"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c9a15a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#b89a62"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#0c1014"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3b4a52"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#141a1f"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#222c33"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c9a15a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#b89a62"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#0c1014"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3b4a52"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[media_style]
+corners = 0.05
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#141a1f"
+opacity = 0.93
+
+[media_style.items]
+color = "#222c33"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c9a15a"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#b89a62"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#0c1014"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3b4a52"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#141a1f"
+opacity = 0.93
+
+[menu_style.items]
+color = "#222c33"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c9a15a"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#b89a62"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#0c1014"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3b4a52"
+
+[menu_style.glow]
+color = "#e6cf94"
+opacity = 0.4
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#b89a62", opacity = 0.4}
+frame = {kind = "runic", size = 40, width = 1, color = "#b89a62"}
+vignette = {color = "#000000", opacity = 0.3, reach = 20}
+
+[motion]
+keyboard = "brutal"
+numpad = "brutal"
+menu = "brutal"
+media = "brutal"
+offer = "brutal"
+info = "brutal"
+log = "brutal"
+
+[sounds.menu]
+step = {kind = "knock", volume = 0.08, pitch = 0.9}
+pick = {kind = "wood", volume = 0.14, pitch = 0.9}
+open = {kind = "swish", volume = 0.04, pitch = 0.8}
+close = {kind = "swish", volume = 0.03, pitch = 0.7}
+
+[sounds.numpad]
+step = {kind = "knock", volume = 0.07, pitch = 0.9}
+pick = {kind = "wood", volume = 0.14, pitch = 0.9}
+
+[sounds.keyboard]
+step = {kind = "knock", volume = 0.07, pitch = 0.9}
+pick = {kind = "wood", volume = 0.14, pitch = 0.9}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.2, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.2, length_ms = 60}

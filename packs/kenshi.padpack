@@ -1,0 +1,616 @@
+format = 20
+macros = []
+overlay_font = "Cantarell"
+
+[pack]
+id = "8f9b73e4-9b77-4e4e-b823-0ca35b37f6b1"
+name = "Kenshi"
+version = "1.0"
+author = "Padwight"
+description = "Kenshi on an Xbox-style pad, for the game's default keys. The right stick moves the pointer and the left stick pans the camera; RT or A clicks and LT right-clicks to give orders. B closes windows, hold X to turn the camera with the pointer, hold Y and press the D-pad for the speed, L3 pauses, R3 holds Shift to queue. The bumpers turn the camera, the D-pad zooms, Select lists the screens. The \"Kenshi + Gyro\" profile also moves the pointer by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "kenshi_x64.exe"
+profile = "Kenshi"
+
+[[rules]]
+kind = "steam_app_id"
+value = "233860"
+profile = "Kenshi"
+
+[[profiles]]
+name = "Kenshi"
+combos = [
+    {buttons = ["North", "DpadLeft"], action = { keys = ["KEY_F2"] }},
+    {buttons = ["North", "DpadUp"], action = { keys = ["KEY_F3"] }},
+    {buttons = ["North", "DpadRight"], action = { keys = ["KEY_F4"] }},
+    {buttons = ["North", "DpadDown"], action = { keys = ["KEY_SPACE"] }},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { mouse = "Middle" }
+North = { open_menu = "Speed" }
+LeftBumper = { keys = ["KEY_Q"] }
+RightBumper = { keys = ["KEY_E"] }
+LeftStick = { keys = ["KEY_SPACE"] }
+RightStick = { keys = ["KEY_LEFTSHIFT"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer and the left stick {ls} pans the camera. {rt} or {south} clicks to select; {lt} right-clicks to move, attack, pick up and talk.
+Hold {west} and move the pointer to turn the camera, or turn it with {lb} and {rb}. {up} and {down} zoom.
+Click {l3} to pause. Hold {north} and press the {dpad} for the speed: left normal, up fast, right faster, down pause.
+Hold {r3} while you click to add to the selection or queue orders. {east} closes windows and {start} is the menu.
+{select} lists the inventory, character, map, build and research screens. Naming a character or a town: {guide} + {west} opens the on-screen keyboard.
+The speed and screen keys are inferred from the game's defaults; if one doesn't answer, check Options → Controls.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Pan the camera" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Click (select)" }
+"trigger:Left" = { text = "Right-click (orders)" }
+"button:South" = { text = "Click" }
+"button:East" = { text = "Close / cancel" }
+"button:West" = { text = "Turn camera (hold)" }
+"button:North" = { text = "Hold: speed" }
+"button:LeftStick" = { text = "{icon:pause} Pause" }
+"button:RightStick" = { text = "Add / queue (hold)" }
+"button:Select" = { text = "{icon:map} Screens" }
+"button:Start" = { text = "Menu" }
+"combo:button:North+button:DpadLeft" = { text = "{icon:speed1} Normal" }
+"combo:button:North+button:DpadUp" = { text = "{icon:speed2} Fast" }
+"combo:button:North+button:DpadRight" = { text = "{icon:speed3} Faster" }
+"combo:button:North+button:DpadDown" = { text = "{icon:pause} Pause" }
+
+[[profiles.guide.merged]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Turn camera left / right"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles]]
+name = "Kenshi + Gyro"
+combos = [
+    {buttons = ["North", "DpadLeft"], action = { keys = ["KEY_F2"] }},
+    {buttons = ["North", "DpadUp"], action = { keys = ["KEY_F3"] }},
+    {buttons = ["North", "DpadRight"], action = { keys = ["KEY_F4"] }},
+    {buttons = ["North", "DpadDown"], action = { keys = ["KEY_SPACE"] }},
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { mouse = "Middle" }
+North = { open_menu = "Speed" }
+LeftBumper = { keys = ["KEY_Q"] }
+RightBumper = { keys = ["KEY_E"] }
+LeftStick = { keys = ["KEY_SPACE"] }
+RightStick = { keys = ["KEY_LEFTSHIFT"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer and the left stick {ls} pans the camera. {rt} or {south} clicks to select; {lt} right-clicks to move, attack, pick up and talk.
+Hold {west} and move the pointer to turn the camera, or turn it with {lb} and {rb}. {up} and {down} zoom.
+Click {l3} to pause. Hold {north} and press the {dpad} for the speed: left normal, up fast, right faster, down pause.
+Hold {r3} while you click to add to the selection or queue orders. {east} closes windows and {start} is the menu.
+{select} lists the inventory, character, map, build and research screens. Naming a character or a town: {guide} + {west} opens the on-screen keyboard.
+The speed and screen keys are inferred from the game's defaults; if one doesn't answer, check Options → Controls.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Pan the camera" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Click (select)" }
+"trigger:Left" = { text = "Right-click (orders)" }
+"button:South" = { text = "Click" }
+"button:East" = { text = "Close / cancel" }
+"button:West" = { text = "Turn camera (hold)" }
+"button:North" = { text = "Hold: speed" }
+"button:LeftStick" = { text = "{icon:pause} Pause" }
+"button:RightStick" = { text = "Add / queue (hold)" }
+"button:Select" = { text = "{icon:map} Screens" }
+"button:Start" = { text = "Menu" }
+"combo:button:North+button:DpadLeft" = { text = "{icon:speed1} Normal" }
+"combo:button:North+button:DpadUp" = { text = "{icon:speed2} Fast" }
+"combo:button:North+button:DpadRight" = { text = "{icon:speed3} Faster" }
+"combo:button:North+button:DpadDown" = { text = "{icon:pause} Pause" }
+
+[[profiles.guide.merged]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Turn camera left / right"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[menus]]
+name = "Speed"
+
+[menus.kind.directional]
+cluster = "DPad"
+
+[[menus.items]]
+label = "{icon:speed2} Fast"
+action = { keys = ["KEY_F3"] }
+
+[[menus.items]]
+label = "{icon:speed3} Faster"
+action = { keys = ["KEY_F4"] }
+
+[[menus.items]]
+label = "{icon:pause} {b}Pause{/b}"
+action = { keys = ["KEY_SPACE"] }
+
+[[menus.items]]
+label = "{icon:speed1} Normal"
+action = { keys = ["KEY_F2"] }
+
+[menus.style]
+corners = 0.04
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#2a241b"
+opacity = 0.93
+
+[menus.style.items]
+color = "#3d3528"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#d4b274"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#6e5c40"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#1e1a13"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#544733"
+
+[menus.style.glow]
+color = "#e0b878"
+opacity = 0.35
+blur = 16
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+paper = {opacity = 0.3}
+dividers = {width = 1, color = "#544733", opacity = 0.8}
+vignette = {color = "#120e08", opacity = 0.4, reach = 25}
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:bag} {b}Inventory{/b}"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "{icon:person} Character"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "{icon:map} Map"
+action = { keys = ["KEY_M"] }
+
+[[menus.items]]
+label = "{icon:hammer} Build"
+action = { keys = ["KEY_B"] }
+
+[[menus.items]]
+label = "{icon:research} Research"
+action = { keys = ["KEY_R"] }
+
+[menus.style]
+corners = 0.04
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#2a241b"
+opacity = 0.93
+
+[menus.style.items]
+color = "#3d3528"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#d4b274"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#6e5c40"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#1e1a13"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#544733"
+
+[menus.style.glow]
+color = "#e0b878"
+opacity = 0.35
+blur = 16
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+paper = {opacity = 0.3}
+dividers = {width = 1, color = "#544733", opacity = 0.8}
+vignette = {color = "#120e08", opacity = 0.4, reach = 25}
+
+[keyboard_style]
+corners = 0.04
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#2a241b"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#3d3528"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#d4b274"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#6e5c40"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#1e1a13"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#544733"
+
+[keyboard_style.ornament]
+paper = {opacity = 0.3}
+
+[numpad_style]
+corners = 0.04
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#2a241b"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#3d3528"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#d4b274"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#6e5c40"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#1e1a13"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#544733"
+
+[numpad_style.ornament]
+paper = {opacity = 0.3}
+
+[media_style]
+corners = 0.04
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#2a241b"
+opacity = 0.93
+
+[media_style.items]
+color = "#3d3528"
+opacity = 0.95
+
+[media_style.selected]
+color = "#d4b274"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#6e5c40"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#1e1a13"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#544733"
+
+[media_style.type]
+letter_spacing = 0
+
+[menu_style]
+corners = 0.04
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#2a241b"
+opacity = 0.93
+
+[menu_style.items]
+color = "#3d3528"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#d4b274"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#6e5c40"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#1e1a13"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#544733"
+
+[menu_style.glow]
+color = "#e0b878"
+opacity = 0.35
+blur = 16
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+paper = {opacity = 0.3}
+dividers = {width = 1, color = "#544733", opacity = 0.8}
+vignette = {color = "#120e08", opacity = 0.4, reach = 25}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "wood", volume = 0.09, pitch = 0.9, length = 0.8}
+pick = {kind = "shing", volume = 0.12, pitch = 0.9}
+open = {kind = "sand", volume = 0.05, length = 0.6}
+close = {kind = "sand", volume = 0.04, length = 0.5}
+
+[sounds.keyboard]
+step = {kind = "wood", volume = 0.07}
+pick = {kind = "keys", volume = 0.22}
+
+[sounds.numpad]
+step = {kind = "wood", volume = 0.07}
+pick = {kind = "knock", volume = 0.2}
+
+[sounds.guide]
+pick = {kind = "wood", volume = 0.12}
+
+[rumble.menu]
+step = {strength = 0.13, length_ms = 18}
+pick = {strength = 0.5, length_ms = 35}
+open = {strength = 0.11, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.09, length_ms = 14}
+pick = {strength = 0.33, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.09, length_ms = 14}
+pick = {strength = 0.33, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.33, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.33, length_ms = 60}

@@ -1,0 +1,688 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "67acc600-e443-491e-9ae1-d0a7477ba0b4"
+name = "They Are Billions"
+version = "1.0"
+author = "Padwight"
+description = "They Are Billions (Steam, Windows) on an Xbox-style pad, for the default keys. The right stick moves the cursor, RT or A left-clicks, LT right-clicks to move and attack, the left stick scrolls the map. Y pauses, X shows the health bars, the d-pad zooms, rotates a building and shows the grid. Hold LB for control groups 1-9 (LB + RB sets one), RB is Shift and L3 is Ctrl for selecting. Select lists pause and the game menu. The \"+ Gyro\" profile also moves the cursor by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "theyarebillions.exe"
+profile = "They Are Billions"
+
+[[rules]]
+kind = "steam_app_id"
+value = "644930"
+profile = "They Are Billions"
+
+
+[[profiles]]
+name = "They Are Billions"
+combos = [{buttons = ["LeftBumper", "RightBumper"], action = {open_menu = "Set group"}}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_LEFTALT"]}
+North = {keys = ["KEY_SPACE"]}
+LeftBumper = {open_menu = "Groups"}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+Select = {open_menu = "Colony"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_LEFTCTRL"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_TAB"]}
+DpadRight = {keys = ["KEY_E"]}
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the cursor: {rt} or {south} selects and places (left click, hold to drag a box), and {lt} moves and attacks (right click). The left stick {ls} scrolls the map (WASD), and {up} {down} zoom.
+{north} pauses and unpauses: you can still give orders and place buildings while paused, so pause often.
+Hold {lb} for the control groups and aim the right stick {rs} at one: release to select it. Hold {lb} and {rb} together to put the selection in a group instead (Ctrl + number).
+{rb} is Shift: hold it to add to the selection, or click a unit to select every one of its kind on screen. Hold {l3} (Ctrl) and click a unit to select every one of its kind on the map.
+Hold {west} (Alt) to show every unit's and building's health bar. {left} rotates the building or gate being placed (Tab), and {right} shows the building grid (E).
+{select} lists pause, the building grid, rotating and the game menu. {east} cancels and closes; {start} is the game menu.
+They Are Billions saves only when you leave a game, so there is no quick save. The PS4 and Xbox One release had a pad scheme, but no layout for it was found, so this one is built on the PC keys.
+The keys are from players' lists, not checked on an install: Alt for the health bars, Tab for rotating and E for the grid most of all. The groups are 1 to 9 here; if a key does nothing, look in Options, Controls (the Custom keyboard layout lets you set each key). The building and unit commands are on the bottom panel: click them.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the map" }
+"stick:Right" = { text = "Cursor" }
+"trigger:Right" = { text = "Left click (select, place, drag a box)" }
+"trigger:Left" = { text = "Right click (move, attack)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Cancel / close" }
+"button:West" = { text = "Hold: {icon:heart} health bars" }
+"button:North" = { text = "{icon:pause} Pause" }
+"button:LeftBumper" = { text = "Hold: control groups" }
+"button:RightBumper" = { text = "Shift (add, all on screen)" }
+"button:Select" = { text = "Pause, grid, menu" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "Ctrl (all of a kind on the map)" }
+"button:DpadLeft" = { text = "{icon:rotate} Rotate building" }
+"button:DpadRight" = { text = "{icon:grid} Building grid" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Set a control group"
+
+[[profiles]]
+name = "They Are Billions + Gyro"
+combos = [{buttons = ["LeftBumper", "RightBumper"], action = {open_menu = "Set group"}}, {buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_LEFTALT"]}
+North = {keys = ["KEY_SPACE"]}
+LeftBumper = {open_menu = "Groups"}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+Select = {open_menu = "Colony"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_LEFTCTRL"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_TAB"]}
+DpadRight = {keys = ["KEY_E"]}
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''They Are Billions + Gyro: tilting the controller moves the cursor too, as a fine pointer next to the right stick {rs}. Hold {select} and {start} together to pause the gyro while you reposition the controller.
+The right stick {rs} moves the cursor: {rt} or {south} selects and places (left click, hold to drag a box), and {lt} moves and attacks (right click). The left stick {ls} scrolls the map (WASD), and {up} {down} zoom.
+{north} pauses and unpauses: you can still give orders and place buildings while paused, so pause often.
+Hold {lb} for the control groups and aim the right stick {rs} at one: release to select it. Hold {lb} and {rb} together to put the selection in a group instead (Ctrl + number).
+{rb} is Shift: hold it to add to the selection, or click a unit to select every one of its kind on screen. Hold {l3} (Ctrl) and click a unit to select every one of its kind on the map.
+Hold {west} (Alt) to show every unit's and building's health bar. {left} rotates the building or gate being placed (Tab), and {right} shows the building grid (E).
+{select} lists pause, the building grid, rotating and the game menu. {east} cancels and closes; {start} is the game menu.
+They Are Billions saves only when you leave a game, so there is no quick save. The PS4 and Xbox One release had a pad scheme, but no layout for it was found, so this one is built on the PC keys.
+The keys are from players' lists, not checked on an install: Alt for the health bars, Tab for rotating and E for the grid most of all. The groups are 1 to 9 here; if a key does nothing, look in Options, Controls (the Custom keyboard layout lets you set each key). The building and unit commands are on the bottom panel: click them.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the map" }
+"stick:Right" = { text = "Cursor" }
+"trigger:Right" = { text = "Left click (select, place, drag a box)" }
+"trigger:Left" = { text = "Right click (move, attack)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Cancel / close" }
+"button:West" = { text = "Hold: {icon:heart} health bars" }
+"button:North" = { text = "{icon:pause} Pause" }
+"button:LeftBumper" = { text = "Hold: control groups" }
+"button:RightBumper" = { text = "Shift (add, all on screen)" }
+"button:Select" = { text = "Pause, grid, menu" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "Ctrl (all of a kind on the map)" }
+"button:DpadLeft" = { text = "{icon:rotate} Rotate building" }
+"button:DpadRight" = { text = "{icon:grid} Building grid" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Set a control group"
+
+[[menus]]
+name = "Groups"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:people} Group 1"
+action = {keys = ["KEY_1"]}
+
+[[menus.items]]
+label = "{icon:people} Group 2"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:people} Group 3"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:people} Group 4"
+action = {keys = ["KEY_4"]}
+
+[[menus.items]]
+label = "{icon:people} Group 5"
+action = {keys = ["KEY_5"]}
+
+[[menus.items]]
+label = "{icon:people} Group 6"
+action = {keys = ["KEY_6"]}
+
+[[menus.items]]
+label = "{icon:people} Group 7"
+action = {keys = ["KEY_7"]}
+
+[[menus.items]]
+label = "{icon:people} Group 8"
+action = {keys = ["KEY_8"]}
+
+[[menus.items]]
+label = "{icon:people} Group 9"
+action = {keys = ["KEY_9"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1a1613"
+opacity = 0.94
+
+[menus.style.items]
+color = "#2a241e"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c2662a"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#9c8660"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#110e0b"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4a3f32"
+
+[menus.style.glow]
+color = "#f2a050"
+opacity = 0.4
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#9c8660", opacity = 0.4}
+frame = {kind = "riveted", size = 32, width = 2, color = "#9c8660"}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+brushed_metal = {opacity = 0.25}
+
+
+[[menus]]
+name = "Set group"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:flag} Set 1"
+action = {keys = ["KEY_LEFTCTRL", "KEY_1"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 2"
+action = {keys = ["KEY_LEFTCTRL", "KEY_2"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 3"
+action = {keys = ["KEY_LEFTCTRL", "KEY_3"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 4"
+action = {keys = ["KEY_LEFTCTRL", "KEY_4"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 5"
+action = {keys = ["KEY_LEFTCTRL", "KEY_5"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 6"
+action = {keys = ["KEY_LEFTCTRL", "KEY_6"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 7"
+action = {keys = ["KEY_LEFTCTRL", "KEY_7"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 8"
+action = {keys = ["KEY_LEFTCTRL", "KEY_8"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 9"
+action = {keys = ["KEY_LEFTCTRL", "KEY_9"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1a1613"
+opacity = 0.94
+
+[menus.style.items]
+color = "#2a241e"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c2662a"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#9c8660"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#110e0b"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4a3f32"
+
+[menus.style.glow]
+color = "#f2a050"
+opacity = 0.4
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#9c8660", opacity = 0.4}
+frame = {kind = "riveted", size = 32, width = 2, color = "#9c8660"}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+brushed_metal = {opacity = 0.25}
+
+
+[[menus]]
+name = "Colony"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:pause} Pause"
+action = {keys = ["KEY_SPACE"]}
+
+[[menus.items]]
+label = "{icon:grid} Building grid"
+action = {keys = ["KEY_E"]}
+
+[[menus.items]]
+label = "{icon:rotate} Rotate building"
+action = {keys = ["KEY_TAB"]}
+
+[[menus.items]]
+label = "{icon:gear} Game menu"
+action = {keys = ["KEY_ESC"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1a1613"
+opacity = 0.94
+
+[menus.style.items]
+color = "#2a241e"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c2662a"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#9c8660"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#110e0b"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4a3f32"
+
+[menus.style.glow]
+color = "#f2a050"
+opacity = 0.4
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#9c8660", opacity = 0.4}
+frame = {kind = "riveted", size = 32, width = 2, color = "#9c8660"}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+brushed_metal = {opacity = 0.25}
+
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1a1613"
+opacity = 0.94
+
+[keyboard_style.items]
+color = "#2a241e"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c2662a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#9c8660"
+opacity = 0.9
+
+[keyboard_style.gradient]
+color = "#110e0b"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4a3f32"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1a1613"
+opacity = 0.94
+
+[numpad_style.items]
+color = "#2a241e"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c2662a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#9c8660"
+opacity = 0.9
+
+[numpad_style.gradient]
+color = "#110e0b"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4a3f32"
+
+[numpad_style.type]
+letter_spacing = 1
+
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1a1613"
+opacity = 0.94
+
+[media_style.items]
+color = "#2a241e"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c2662a"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#9c8660"
+opacity = 0.9
+
+[media_style.gradient]
+color = "#110e0b"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4a3f32"
+
+[media_style.type]
+letter_spacing = 1
+
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1a1613"
+opacity = 0.94
+
+[menu_style.items]
+color = "#2a241e"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c2662a"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#9c8660"
+opacity = 0.9
+
+[menu_style.gradient]
+color = "#110e0b"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4a3f32"
+
+[menu_style.glow]
+color = "#f2a050"
+opacity = 0.4
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#9c8660", opacity = 0.4}
+frame = {kind = "riveted", size = 32, width = 2, color = "#9c8660"}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+brushed_metal = {opacity = 0.25}
+
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.08, pitch = 0.7}
+pick = {kind = "clank", volume = 0.12, pitch = 0.8}
+open = {kind = "latch", volume = 0.08}
+close = {kind = "latch", volume = 0.06, pitch = 0.8}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.07, pitch = 0.8}
+pick = {kind = "clank", volume = 0.12, pitch = 0.9}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.07, pitch = 0.8}
+pick = {kind = "clank", volume = 0.12, pitch = 0.9}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 18}
+pick = {strength = 0.39, length_ms = 35}
+open = {strength = 0.09, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 14}
+pick = {strength = 0.26, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 14}
+pick = {strength = 0.26, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.26, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.26, length_ms = 60}

@@ -1,0 +1,682 @@
+format = 20
+macros = []
+overlay_font = "Orbitron"
+
+[pack]
+id = "59307ba7-5686-472a-bc30-330d219e8816"
+name = "Star Wars: Republic Commando"
+version = "1.0"
+author = "Padwight"
+description = "Star Wars: Republic Commando (2005) on an Xbox-style pad, laid out like the Xbox release, for the PC game's default keys. A uses and sends squadmates to markers, B is melee, X reloads, Y jumps, RT fires and LT throws a grenade. LB and RB step through grenade types and visor modes, L3 crouches and R3 zooms. The D-pad picks the blaster, its sniper and anti-armor attachments and the pistol, and holding Select puts the squad orders on the D-pad. Start pauses; double tap it to quick save, hold it to quick load. The game came out before XInput and has no usable controller support. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "6000"
+profile = "Star Wars: Republic Commando"
+
+[[rules]]
+kind = "executable"
+value = "swrepubliccommando.exe"
+profile = "Star Wars: Republic Commando"
+[[profiles]]
+name = "Star Wars: Republic Commando"
+combos = [
+    {buttons = ["Select", "DpadUp"], action = {keys = ["KEY_F1"]}},
+    {buttons = ["Select", "DpadRight"], action = {keys = ["KEY_F2"]}},
+    {buttons = ["Select", "DpadDown"], action = {keys = ["KEY_F3"]}},
+    {buttons = ["Select", "DpadLeft"], action = {keys = ["KEY_F4"]}},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_F"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { keys = ["KEY_G"] }
+RightBumper = { keys = ["KEY_V"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { keys = ["KEY_Z"] }
+Select = { open_menu = "Squad" }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_2"] }
+DpadDown = { keys = ["KEY_1"] }
+DpadLeft = { keys = ["KEY_3"] }
+DpadRight = { keys = ["KEY_4"] }
+
+[profiles.gestures.DpadUp]
+long_press = { keys = ["KEY_5"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F5"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 9600.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) pauses and backs out of the game's menus. Double tap {start} to quick save (F5) and hold it to quick load (F9).
+The buttons follow the Xbox release's layout. {south} uses: open doors, pick up, heal at bacta dispensers, and point at a squad marker to send a squadmate to it. Hold it to do the maneuver yourself or to revive a downed squadmate. {east} is melee (the wrist blade), {west} reloads and {north} jumps. {l3} toggles crouch and {r3} zooms in.
+{rt} fires and {lt} throws your grenade; {lb} steps through the grenade types and {rb} through the visor modes.
+The D-pad picks your weapon: {up} the DC-17m blaster, {left} its sniper attachment, {right} its anti-armor attachment and {down} the pistol. Hold {up} for the weapon you've picked up.
+Hold {select} and press the D-pad for squad orders: {up} search and destroy, {right} form up, {down} secure position and {left} cancel maneuvers. Pressing {select} together with a D-pad direction sends the order at once. On the Xbox you held A for these; here A stays Use, so holding it still revives.
+The game has a mouse-only menu and a gamepad mode you can only switch on by editing User.ini; don't turn that on with this setup, or the two would fight. In the menus, {guide} + {rs} moves the mouse.
+These are the game's default PC keys, written from memory and not checked in the game (melee, zoom, the grenade and visor keys, the squad order keys and the quick save and load keys especially). Compare them with Options → Controls and change the buttons here to match. The executable rule's name comes from Discord's game list and isn't checked. The gyro's real-world turn assumes Unreal Engine 2's 65536 units a turn at a mouse sensitivity of 3; it is worked out, not measured: set the full turn to 65536 divided by MouseSensitivity in User.ini.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:grenade} Throw grenade" }
+"button:South" = { text = "{icon:hand} Use · squad marker" }
+"button:East" = { text = "{icon:dagger} Melee" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Jump" }
+"button:LeftBumper" = { text = "{icon:grenade} Grenade type" }
+"button:RightBumper" = { text = "{icon:eye} Visor mode" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:scope} Zoom" }
+"button:DpadUp" = { text = "{icon:rifle} Blaster" }
+"gesture:button:DpadUp:long_press" = { text = "Picked-up weapon" }
+"button:DpadLeft" = { text = "{icon:crosshair} Sniper" }
+"button:DpadRight" = { text = "{icon:rocket} Anti-armor" }
+"button:DpadDown" = { text = "{icon:pistol} Pistol" }
+"button:Select" = { text = "{icon:people} Hold: squad orders" }
+"button:Start" = { text = "Pause" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles]]
+name = "Star Wars: Republic Commando + Gyro"
+combos = [
+    {buttons = ["Select", "DpadUp"], action = {keys = ["KEY_F1"]}},
+    {buttons = ["Select", "DpadRight"], action = {keys = ["KEY_F2"]}},
+    {buttons = ["Select", "DpadDown"], action = {keys = ["KEY_F3"]}},
+    {buttons = ["Select", "DpadLeft"], action = {keys = ["KEY_F4"]}},
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_F"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { keys = ["KEY_G"] }
+RightBumper = { keys = ["KEY_V"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { keys = ["KEY_Z"] }
+Select = { open_menu = "Squad" }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_2"] }
+DpadDown = { keys = ["KEY_1"] }
+DpadLeft = { keys = ["KEY_3"] }
+DpadRight = { keys = ["KEY_4"] }
+
+[profiles.gestures.DpadUp]
+long_press = { keys = ["KEY_5"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F5"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.gestures.LeftStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 9600.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 21845.3
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Press {lb} and {rb} together to switch the gyro off or on, and hold {l3} to recenter it.
+{start} (Escape) pauses and backs out of the game's menus. Double tap {start} to quick save (F5) and hold it to quick load (F9).
+The buttons follow the Xbox release's layout. {south} uses: open doors, pick up, heal at bacta dispensers, and point at a squad marker to send a squadmate to it. Hold it to do the maneuver yourself or to revive a downed squadmate. {east} is melee (the wrist blade), {west} reloads and {north} jumps. {l3} toggles crouch and {r3} zooms in.
+{rt} fires and {lt} throws your grenade; {lb} steps through the grenade types and {rb} through the visor modes.
+The D-pad picks your weapon: {up} the DC-17m blaster, {left} its sniper attachment, {right} its anti-armor attachment and {down} the pistol. Hold {up} for the weapon you've picked up.
+Hold {select} and press the D-pad for squad orders: {up} search and destroy, {right} form up, {down} secure position and {left} cancel maneuvers. Pressing {select} together with a D-pad direction sends the order at once. On the Xbox you held A for these; here A stays Use, so holding it still revives.
+The game has a mouse-only menu and a gamepad mode you can only switch on by editing User.ini; don't turn that on with this setup, or the two would fight. In the menus, {guide} + {rs} moves the mouse.
+These are the game's default PC keys, written from memory and not checked in the game (melee, zoom, the grenade and visor keys, the squad order keys and the quick save and load keys especially). Compare them with Options → Controls and change the buttons here to match. The executable rule's name comes from Discord's game list and isn't checked. The gyro's real-world turn assumes Unreal Engine 2's 65536 units a turn at a mouse sensitivity of 3; it is worked out, not measured: set the full turn to 65536 divided by MouseSensitivity in User.ini.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:grenade} Throw grenade" }
+"button:South" = { text = "{icon:hand} Use · squad marker" }
+"button:East" = { text = "{icon:dagger} Melee" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Jump" }
+"button:LeftBumper" = { text = "{icon:grenade} Grenade type" }
+"button:RightBumper" = { text = "{icon:eye} Visor mode" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:scope} Zoom" }
+"button:DpadUp" = { text = "{icon:rifle} Blaster" }
+"gesture:button:DpadUp:long_press" = { text = "Picked-up weapon" }
+"button:DpadLeft" = { text = "{icon:crosshair} Sniper" }
+"button:DpadRight" = { text = "{icon:rocket} Anti-armor" }
+"button:DpadDown" = { text = "{icon:pistol} Pistol" }
+"button:Select" = { text = "{icon:people} Hold: squad orders" }
+"button:Start" = { text = "Pause" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles]]
+name = "Star Wars: Republic Commando + Flick stick"
+combos = [
+    {buttons = ["Select", "DpadUp"], action = {keys = ["KEY_F1"]}},
+    {buttons = ["Select", "DpadRight"], action = {keys = ["KEY_F2"]}},
+    {buttons = ["Select", "DpadDown"], action = {keys = ["KEY_F3"]}},
+    {buttons = ["Select", "DpadLeft"], action = {keys = ["KEY_F4"]}},
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_F"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { keys = ["KEY_G"] }
+RightBumper = { keys = ["KEY_V"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { keys = ["KEY_Z"] }
+Select = { open_menu = "Squad" }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_2"] }
+DpadDown = { keys = ["KEY_1"] }
+DpadLeft = { keys = ["KEY_3"] }
+DpadRight = { keys = ["KEY_4"] }
+
+[profiles.gestures.DpadUp]
+long_press = { keys = ["KEY_5"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F5"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.gestures.LeftStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 21845.3
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 21845.3
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Press {lb} and {rb} together to switch the gyro off or on, and hold {l3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+{start} (Escape) pauses and backs out of the game's menus. Double tap {start} to quick save (F5) and hold it to quick load (F9).
+The buttons follow the Xbox release's layout. {south} uses: open doors, pick up, heal at bacta dispensers, and point at a squad marker to send a squadmate to it. Hold it to do the maneuver yourself or to revive a downed squadmate. {east} is melee (the wrist blade), {west} reloads and {north} jumps. {l3} toggles crouch and {r3} zooms in.
+{rt} fires and {lt} throws your grenade; {lb} steps through the grenade types and {rb} through the visor modes.
+The D-pad picks your weapon: {up} the DC-17m blaster, {left} its sniper attachment, {right} its anti-armor attachment and {down} the pistol. Hold {up} for the weapon you've picked up.
+Hold {select} and press the D-pad for squad orders: {up} search and destroy, {right} form up, {down} secure position and {left} cancel maneuvers. Pressing {select} together with a D-pad direction sends the order at once. On the Xbox you held A for these; here A stays Use, so holding it still revives.
+The game has a mouse-only menu and a gamepad mode you can only switch on by editing User.ini; don't turn that on with this setup, or the two would fight. In the menus, {guide} + {rs} moves the mouse.
+These are the game's default PC keys, written from memory and not checked in the game (melee, zoom, the grenade and visor keys, the squad order keys and the quick save and load keys especially). Compare them with Options → Controls and change the buttons here to match. The executable rule's name comes from Discord's game list and isn't checked. The gyro's real-world turn assumes Unreal Engine 2's 65536 units a turn at a mouse sensitivity of 3; it is worked out, not measured: set the full turn to 65536 divided by MouseSensitivity in User.ini.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:grenade} Throw grenade" }
+"button:South" = { text = "{icon:hand} Use · squad marker" }
+"button:East" = { text = "{icon:dagger} Melee" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Jump" }
+"button:LeftBumper" = { text = "{icon:grenade} Grenade type" }
+"button:RightBumper" = { text = "{icon:eye} Visor mode" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:scope} Zoom" }
+"button:DpadUp" = { text = "{icon:rifle} Blaster" }
+"gesture:button:DpadUp:long_press" = { text = "Picked-up weapon" }
+"button:DpadLeft" = { text = "{icon:crosshair} Sniper" }
+"button:DpadRight" = { text = "{icon:rocket} Anti-armor" }
+"button:DpadDown" = { text = "{icon:pistol} Pistol" }
+"button:Select" = { text = "{icon:people} Hold: squad orders" }
+"button:Start" = { text = "Pause" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
+
+[[menus]]
+name = "Squad"
+
+[menus.kind.directional]
+cluster = "DPad"
+
+[[menus.items]]
+label = "{icon:attack} Search · destroy"
+action = { keys = ["KEY_F1"] }
+
+[[menus.items]]
+label = "{icon:rally} Form up"
+action = { keys = ["KEY_F2"] }
+
+[[menus.items]]
+label = "{icon:fortify} Secure"
+action = { keys = ["KEY_F3"] }
+
+[[menus.items]]
+label = "{icon:cancel} {color:gray}Cancel{/color}"
+action = { keys = ["KEY_F4"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0d1115"
+opacity = 0.92
+
+[menus.style.items]
+color = "#1a222a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c8702a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#e09a50"
+opacity = 0.5
+
+[menus.style.gradient]
+color = "#141a20"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#34404c"
+
+[menus.style.glow]
+color = "#e09a50"
+opacity = 0.25
+blur = 20
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "brackets", size = 14, width = 2, color = "#e09a50"}
+scanlines = {spacing = 4, opacity = 0.12, color = "#000000", drift = false}
+vignette = {color = "#000000", opacity = 0.45, reach = 26}
+
+[keyboard_style]
+corners = 0.1
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0d1115"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#1a222a"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c8702a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#e09a50"
+opacity = 0.5
+
+[keyboard_style.gradient]
+color = "#141a20"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#34404c"
+
+[keyboard_style.type]
+case = "upper"
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0d1115"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#1a222a"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c8702a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#e09a50"
+opacity = 0.5
+
+[numpad_style.gradient]
+color = "#141a20"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#34404c"
+
+[numpad_style.type]
+case = "upper"
+letter_spacing = 1
+
+[media_style]
+corners = 0.1
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0d1115"
+opacity = 0.92
+
+[media_style.items]
+color = "#1a222a"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c8702a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#e09a50"
+opacity = 0.5
+
+[media_style.gradient]
+color = "#141a20"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#34404c"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0d1115"
+opacity = 0.92
+
+[menu_style.items]
+color = "#1a222a"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c8702a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#e09a50"
+opacity = 0.5
+
+[menu_style.gradient]
+color = "#141a20"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#34404c"
+
+[menu_style.glow]
+color = "#e09a50"
+opacity = 0.25
+blur = 20
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "brackets", size = 14, width = 2, color = "#e09a50"}
+scanlines = {spacing = 4, opacity = 0.12, color = "#000000", drift = false}
+vignette = {color = "#000000", opacity = 0.45, reach = 26}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.08, pitch = 1.1}
+pick = {kind = "beep", volume = 0.15, pitch = 0.9}
+open = {kind = "radio", volume = 0.08}
+close = {kind = "swish", volume = 0.03, pitch = 1.3}
+
+[sounds.guide]
+open = {kind = "radio", volume = 0.08}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.08, pitch = 1.1}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.08, pitch = 1.1}
+pick = {kind = "beep", volume = 0.15, pitch = 1.1}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

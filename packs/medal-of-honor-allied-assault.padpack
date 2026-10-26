@@ -1,0 +1,701 @@
+format = 20
+macros = []
+overlay_font = "Special Elite"
+
+[pack]
+id = "3829a380-15c9-400a-bb55-cd956f272f01"
+name = "Medal of Honor: Allied Assault"
+version = "1.0"
+author = "Padwight"
+description = "Medal of Honor: Allied Assault (2002) and its Spearhead and Breakthrough expansions on an Xbox-style pad, for the game's default keys. A uses, B jumps, X reloads, Y switches weapons, RT fires and LT is the secondary attack: the rifle butt, or the scope on a sniper rifle. RB picks the grenade, L3 toggles crouch, R3 is the binoculars and a light push of the left stick walks. Hold LB for the weapon ring, the D-pad leans and holsters, and Start is the menu; double tap it to quick save, hold it to quick load. The game has no controller support. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "MOHAA.exe"
+profile = "Medal of Honor: Allied Assault"
+
+[[rules]]
+kind = "executable"
+value = "moh_spearhead.exe"
+profile = "Medal of Honor: Allied Assault"
+
+[[rules]]
+kind = "executable"
+value = "moh_breakthrough.exe"
+profile = "Medal of Honor: Allied Assault"
+
+[[profiles]]
+name = "Medal of Honor: Allied Assault"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_5"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_7"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { keys = ["KEY_Q"] }
+DpadLeft = { keys = ["KEY_Z"] }
+DpadRight = { keys = ["KEY_C"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F5"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1150.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and backs out of it. Double tap {start} to quick save (F5) and hold it to quick load (F9).
+{south} uses: doors, mounted guns, levers. {east} jumps, {west} reloads and {north} switches to the next weapon; {up} goes back to the previous one. A light push of the left stick {ls} walks quietly, and {l3} toggles crouch.
+{lt} is the secondary attack: a rifle butt or pistol whip with most weapons, and the scope on a sniper rifle, which it puts up and takes down again. {rb} picks the grenade; throw it with {rt}.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}: pistol, rifle, submachine gun, machine gun, grenade, heavy weapon, binoculars and holster. {r3} brings out the binoculars or your papers, and {down} holsters the weapon.
+{left} and {right} lean. In the base game leaning works only in multiplayer; Spearhead and Breakthrough lean everywhere.
+{select} (Tab) shows the objectives, or the scores in multiplayer. Multiplayer chat needs typing: open the on-screen keyboard with {guide} + {west} and press T (all) or Y (team).
+OpenMoHAA, the open-source engine for the game, uses its own executable names; add a rule for it on the Details tab to use this setup there.
+These are the game's default keys from community lists and memory, not checked in the game (walk, quick save and quick load, and the leans, which are Spearhead's Z and C, especially). Compare them with Options → Controls and change the buttons here to match. The game isn't on Steam; the executable names are remembered from the GOG War Chest install and not checked. The gyro's real-world turn assumes the id Tech 3 turn of 0.022 degrees a count and a mouse sensitivity of 5, worked out, not measured; set the full turn to 16364 divided by your sensitivity.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push: walk" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Secondary · scope" }
+"button:South" = { text = "{icon:hand} Use" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:rifle} Next weapon" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "{icon:grenade} Grenade" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:binoculars} Binoculars · papers" }
+"button:DpadUp" = { text = "Previous weapon" }
+"button:DpadDown" = { text = "{icon:holster} Holster" }
+"button:Select" = { text = "Objectives · scores" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles]]
+name = "Medal of Honor: Allied Assault + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_5"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_7"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { keys = ["KEY_Q"] }
+DpadLeft = { keys = ["KEY_Z"] }
+DpadRight = { keys = ["KEY_C"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F5"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1150.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 3272.7
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Press {lb} and {rb} together to switch the gyro off or on, and hold {r3} to recenter it.
+{start} (Escape) opens the game's menu and backs out of it. Double tap {start} to quick save (F5) and hold it to quick load (F9).
+{south} uses: doors, mounted guns, levers. {east} jumps, {west} reloads and {north} switches to the next weapon; {up} goes back to the previous one. A light push of the left stick {ls} walks quietly, and {l3} toggles crouch.
+{lt} is the secondary attack: a rifle butt or pistol whip with most weapons, and the scope on a sniper rifle, which it puts up and takes down again. {rb} picks the grenade; throw it with {rt}.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}: pistol, rifle, submachine gun, machine gun, grenade, heavy weapon, binoculars and holster. {r3} brings out the binoculars or your papers, and {down} holsters the weapon.
+{left} and {right} lean. In the base game leaning works only in multiplayer; Spearhead and Breakthrough lean everywhere.
+{select} (Tab) shows the objectives, or the scores in multiplayer. Multiplayer chat needs typing: open the on-screen keyboard with {guide} + {west} and press T (all) or Y (team).
+OpenMoHAA, the open-source engine for the game, uses its own executable names; add a rule for it on the Details tab to use this setup there.
+These are the game's default keys from community lists and memory, not checked in the game (walk, quick save and quick load, and the leans, which are Spearhead's Z and C, especially). Compare them with Options → Controls and change the buttons here to match. The game isn't on Steam; the executable names are remembered from the GOG War Chest install and not checked. The gyro's real-world turn assumes the id Tech 3 turn of 0.022 degrees a count and a mouse sensitivity of 5, worked out, not measured; set the full turn to 16364 divided by your sensitivity.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push: walk" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Secondary · scope" }
+"button:South" = { text = "{icon:hand} Use" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:rifle} Next weapon" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "{icon:grenade} Grenade" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:binoculars} Binoculars · papers" }
+"button:DpadUp" = { text = "Previous weapon" }
+"button:DpadDown" = { text = "{icon:holster} Holster" }
+"button:Select" = { text = "Objectives · scores" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles]]
+name = "Medal of Honor: Allied Assault + Flick stick"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_5"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_7"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { keys = ["KEY_Q"] }
+DpadLeft = { keys = ["KEY_Z"] }
+DpadRight = { keys = ["KEY_C"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F5"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 3272.7
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 3272.7
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Press {lb} and {rb} together to switch the gyro off or on, and hold {r3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+{start} (Escape) opens the game's menu and backs out of it. Double tap {start} to quick save (F5) and hold it to quick load (F9).
+{south} uses: doors, mounted guns, levers. {east} jumps, {west} reloads and {north} switches to the next weapon; {up} goes back to the previous one. A light push of the left stick {ls} walks quietly, and {l3} toggles crouch.
+{lt} is the secondary attack: a rifle butt or pistol whip with most weapons, and the scope on a sniper rifle, which it puts up and takes down again. {rb} picks the grenade; throw it with {rt}.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}: pistol, rifle, submachine gun, machine gun, grenade, heavy weapon, binoculars and holster. {r3} brings out the binoculars or your papers, and {down} holsters the weapon.
+{left} and {right} lean. In the base game leaning works only in multiplayer; Spearhead and Breakthrough lean everywhere.
+{select} (Tab) shows the objectives, or the scores in multiplayer. Multiplayer chat needs typing: open the on-screen keyboard with {guide} + {west} and press T (all) or Y (team).
+OpenMoHAA, the open-source engine for the game, uses its own executable names; add a rule for it on the Details tab to use this setup there.
+These are the game's default keys from community lists and memory, not checked in the game (walk, quick save and quick load, and the leans, which are Spearhead's Z and C, especially). Compare them with Options → Controls and change the buttons here to match. The game isn't on Steam; the executable names are remembered from the GOG War Chest install and not checked. The gyro's real-world turn assumes the id Tech 3 turn of 0.022 degrees a count and a mouse sensitivity of 5, worked out, not measured; set the full turn to 16364 divided by your sensitivity.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push: walk" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Secondary · scope" }
+"button:South" = { text = "{icon:hand} Use" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:rifle} Next weapon" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "{icon:grenade} Grenade" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:binoculars} Binoculars · papers" }
+"button:DpadUp" = { text = "Previous weapon" }
+"button:DpadDown" = { text = "{icon:holster} Holster" }
+"button:Select" = { text = "Objectives · scores" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:pistol} Pistol {color:#c8ad66}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:rifle} Rifle {color:#c8ad66}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Submachine gun {color:#c8ad66}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Machine gun {color:#c8ad66}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:grenade} Grenade {color:#c8ad66}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:rocket} Heavy weapon {color:#c8ad66}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:binoculars} Binoculars · papers {color:#c8ad66}7{/color}"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:holster} Holster {color:#c8ad66}Q{/color}"
+action = { keys = ["KEY_Q"] }
+
+[menus.style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#181a10"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2a2d1d"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#9c8443"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c8ad66"
+opacity = 0.5
+
+[menus.style.gradient]
+color = "#20231a"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#474a30"
+
+[menus.style.glow]
+color = "#c8ad66"
+opacity = 0.25
+blur = 20
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#c8ad66"}
+vignette = {color = "#000000", opacity = 0.5, reach = 28}
+
+[keyboard_style]
+corners = 0.05
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#181a10"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#2a2d1d"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#9c8443"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#c8ad66"
+opacity = 0.5
+
+[keyboard_style.gradient]
+color = "#20231a"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#474a30"
+
+[keyboard_style.type]
+case = "upper"
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#181a10"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#2a2d1d"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#9c8443"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#c8ad66"
+opacity = 0.5
+
+[numpad_style.gradient]
+color = "#20231a"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#474a30"
+
+[numpad_style.type]
+case = "upper"
+letter_spacing = 1
+
+[media_style]
+corners = 0.05
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#181a10"
+opacity = 0.92
+
+[media_style.items]
+color = "#2a2d1d"
+opacity = 0.95
+
+[media_style.selected]
+color = "#9c8443"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#c8ad66"
+opacity = 0.5
+
+[media_style.gradient]
+color = "#20231a"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#474a30"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#181a10"
+opacity = 0.92
+
+[menu_style.items]
+color = "#2a2d1d"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#9c8443"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#c8ad66"
+opacity = 0.5
+
+[menu_style.gradient]
+color = "#20231a"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#474a30"
+
+[menu_style.glow]
+color = "#c8ad66"
+opacity = 0.25
+blur = 20
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#c8ad66"}
+vignette = {color = "#000000", opacity = 0.5, reach = 28}
+
+[motion]
+keyboard = "stagger"
+numpad = "stagger"
+menu = "stagger"
+media = "stagger"
+offer = "stagger"
+info = "stagger"
+log = "stagger"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "casing", volume = 0.25}
+open = {kind = "radio", volume = 0.08}
+close = {kind = "swish", volume = 0.03, pitch = 0.8}
+
+[sounds.guide]
+open = {kind = "radio", volume = 0.08}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "typewriter", volume = 0.24, pitch = 0.95}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "typewriter", volume = 0.24, pitch = 0.95}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

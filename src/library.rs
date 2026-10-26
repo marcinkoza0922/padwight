@@ -218,6 +218,26 @@ mod tests {
         }
     }
 
+    /// A misspelled token (`{a}` for `{south}`) is drawn as its text, and `{b}` is bold, not B.
+    #[test]
+    fn library_packs_write_only_known_tokens() {
+        let word = |c: char| c.is_ascii_alphanumeric() || "_/:#.-".contains(c);
+        let mut unknown = BTreeSet::new();
+        for (file, text) in files::FILES {
+            for rest in text.split('{').skip(1) {
+                let Some((inner, _)) = rest.split_once('}') else { continue };
+                if inner.is_empty() || !inner.chars().all(word) {
+                    continue;
+                }
+                let token = format!("{{{inner}}}");
+                if crate::info::parse(&token) == [Ok(token.clone())] {
+                    unknown.insert(format!("{file}: {token}"));
+                }
+            }
+        }
+        assert_eq!(unknown, BTreeSet::new(), "these aren't tokens");
+    }
+
     #[test]
     fn library_packs_dont_share_executable_names() {
         // Two packs matching the same program would both be offered for either game: a shared
@@ -238,8 +258,15 @@ mod tests {
     #[test]
     fn shooters_offer_plain_gyro_and_flick_stick_profiles() {
         use crate::config::{GyroMode, StickAction};
-        for file in ["deus-ex", "fear", "max-payne", "max-payne-2", "thief-gold", "thief-2", "system-shock-2"] {
-            let text = files::FILES.iter().find(|(f, _)| f.contains(file)).map(|(_, t)| t).unwrap();
+        let shooters = ["deus-ex", "fear", "max-payne", "max-payne-2", "thief-gold", "thief-2", "system-shock-2", "counter-strike-2",
+            "unturned", "scp-secret-laboratory", "insurgency", "repo", "rust", "raft", "scrap-mechanic",
+            "call-of-duty-modern-warfare-2", "stalker-shadow-of-chernobyl", "stalker-call-of-pripyat", "crab-game",
+            "call-of-duty-4-modern-warfare", "call-of-duty-world-at-war", "call-of-duty-modern-warfare-3", "stalker-clear-sky",
+            "star-wars-republic-commando", "payday-the-heist", "deceit", "totally-accurate-battlegrounds", "mass-effect",
+            "call-of-duty-2", "rising-storm-2-vietnam", "gray-zone-warfare", "quake-champions", "far-cry",
+            "medal-of-honor-allied-assault", "dark-messiah-of-might-and-magic", "fear-2-project-origin"];
+        for file in shooters {
+            let text = files::FILES.iter().find(|(f, _)| *f == format!("{file}.padpack")).map(|(_, t)| t).unwrap();
             let pack = pack::parse(text).unwrap();
             let flick = |p: &Profile| [&p.left_stick, &p.right_stick].iter().any(|s| matches!(s.action, StickAction::Flick { .. }));
             let gyro = |p: &Profile| p.gyro.mode != GyroMode::Off;

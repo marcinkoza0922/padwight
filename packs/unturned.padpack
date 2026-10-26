@@ -1,0 +1,678 @@
+format = 20
+macros = []
+overlay_font = "Comfortaa"
+
+[pack]
+id = "c1c5f55b-844a-4d5f-8773-b95e5b9cbb8c"
+name = "Unturned"
+version = "1.0"
+author = "Padwight"
+description = "Unturned on an Xbox-style pad, for the game's default keys. A interacts and, held, sprints; B jumps, X reloads, RT uses or fires what you hold and LT aims. L3 toggles crouch and a long press goes prone. Hold LB for the hotbar ring, RB changes fire mode and Y opens gestures. The D-pad leans and switches the tactical light and night vision. Select opens the dashboard with your inventory, crafting, skills and map. The game has no controller support. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "304930"
+profile = "Unturned"
+
+[[rules]]
+kind = "executable"
+value = "Unturned.exe"
+profile = "Unturned"
+
+[[rules]]
+kind = "executable"
+value = "Unturned_BE.exe"
+profile = "Unturned"
+
+[[rules]]
+kind = "executable"
+value = "Unturned.x86_64"
+profile = "Unturned"
+
+[[profiles]]
+name = "Unturned"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_C"] }
+LeftBumper = { open_menu = "Hotbar" }
+RightBumper = { keys = ["KEY_V"] }
+LeftStick = { toggle = { action = { keys = ["KEY_X"] } } }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_T"] }
+DpadDown = { keys = ["KEY_N"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.LeftStick]
+long_press = { keys = ["KEY_Z"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 3500.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and closes the dashboard and other screens.
+Hold {lt} to aim. The right stick turns more finely while it's held.
+{south} picks up, opens and drives; hold {south} to sprint while you move. {east} jumps, {west} reloads, {rt} uses or fires what's in your hands.
+{l3} toggles crouch, and a long press of {l3} goes prone. Unturned has no walk key, so the left stick moves at one speed.
+Hold {lb} for the hotbar ring, aiming with the right stick {rs}. {rb} changes fire mode, {north} opens gestures, {left} and {right} lean, {up} switches a gun's light or laser and {down} night vision.
+{select} (Tab) opens the dashboard: inventory, crafting, skills, map, quests and players. Typing a sign or chat: {guide} + {west} opens the on-screen keyboard.
+Servers: many servers run BattlEye. The pad reaches the game as an ordinary keyboard and mouse, so it isn't flagged, but don't add rapid-fire macros on a server. The world saves itself, so there's no quick save.
+These keys are written from memory and not checked in the game (crouch, prone, fire mode, gestures and the tactical and night vision keys especially). Compare them with the game's Options → Controls and change the buttons here to match. The gyro's real-world turn is a guess; adjust it in Quick settings until a full turn of the controller turns you all the way round.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Use / fire" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "Interact" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Gestures" }
+"button:LeftBumper" = { text = "Hold: hotbar" }
+"button:RightBumper" = { text = "Fire mode" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"gesture:button:LeftStick:long_press" = { text = "Prone" }
+"button:DpadUp" = { text = "{icon:flashlight} Light / laser" }
+"button:DpadDown" = { text = "{icon:eye} Night vision" }
+"button:Select" = { text = "{icon:bag} Dashboard" }
+"button:Start" = { text = "Menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles]]
+name = "Unturned + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_C"] }
+LeftBumper = { open_menu = "Hotbar" }
+RightBumper = { keys = ["KEY_V"] }
+LeftStick = { toggle = { action = { keys = ["KEY_X"] } } }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_T"] }
+DpadDown = { keys = ["KEY_N"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.LeftStick]
+long_press = { keys = ["KEY_Z"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 3500.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 8000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+{start} (Escape) opens the game's menu and closes the dashboard and other screens.
+Hold {lt} to aim. The right stick turns more finely while it's held.
+{south} picks up, opens and drives; hold {south} to sprint while you move. {east} jumps, {west} reloads, {rt} uses or fires what's in your hands.
+{l3} toggles crouch, and a long press of {l3} goes prone. Unturned has no walk key, so the left stick moves at one speed.
+Hold {lb} for the hotbar ring, aiming with the right stick {rs}. {rb} changes fire mode, {north} opens gestures, {left} and {right} lean, {up} switches a gun's light or laser and {down} night vision.
+{select} (Tab) opens the dashboard: inventory, crafting, skills, map, quests and players. Typing a sign or chat: {guide} + {west} opens the on-screen keyboard.
+Servers: many servers run BattlEye. The pad reaches the game as an ordinary keyboard and mouse, so it isn't flagged, but don't add rapid-fire macros on a server. The world saves itself, so there's no quick save.
+These keys are written from memory and not checked in the game (crouch, prone, fire mode, gestures and the tactical and night vision keys especially). Compare them with the game's Options → Controls and change the buttons here to match. The gyro's real-world turn is a guess; adjust it in Quick settings until a full turn of the controller turns you all the way round.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Use / fire" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "Interact" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Gestures" }
+"button:LeftBumper" = { text = "Hold: hotbar" }
+"button:RightBumper" = { text = "Fire mode" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"gesture:button:LeftStick:long_press" = { text = "Prone" }
+"button:DpadUp" = { text = "{icon:flashlight} Light / laser" }
+"button:DpadDown" = { text = "{icon:eye} Night vision" }
+"button:Select" = { text = "{icon:bag} Dashboard" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles]]
+name = "Unturned + Flick stick"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_C"] }
+LeftBumper = { open_menu = "Hotbar" }
+RightBumper = { keys = ["KEY_V"] }
+LeftStick = { toggle = { action = { keys = ["KEY_X"] } } }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_T"] }
+DpadDown = { keys = ["KEY_N"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.LeftStick]
+long_press = { keys = ["KEY_Z"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 8000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+{start} (Escape) opens the game's menu and closes the dashboard and other screens.
+{south} picks up, opens and drives; hold {south} to sprint while you move. {east} jumps, {west} reloads, {rt} uses or fires what's in your hands.
+{l3} toggles crouch, and a long press of {l3} goes prone. Unturned has no walk key, so the left stick moves at one speed.
+Hold {lb} for the hotbar ring, aiming with the right stick {rs}. {rb} changes fire mode, {north} opens gestures, {left} and {right} lean, {up} switches a gun's light or laser and {down} night vision.
+{select} (Tab) opens the dashboard: inventory, crafting, skills, map, quests and players. Typing a sign or chat: {guide} + {west} opens the on-screen keyboard.
+Servers: many servers run BattlEye. The pad reaches the game as an ordinary keyboard and mouse, so it isn't flagged, but don't add rapid-fire macros on a server. The world saves itself, so there's no quick save.
+These keys are written from memory and not checked in the game (crouch, prone, fire mode, gestures and the tactical and night vision keys especially). Compare them with the game's Options → Controls and change the buttons here to match. The gyro's real-world turn is a guess; adjust it in Quick settings until a full turn of the controller turns you all the way round.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Use / fire" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "Interact" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Gestures" }
+"button:LeftBumper" = { text = "Hold: hotbar" }
+"button:RightBumper" = { text = "Fire mode" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"gesture:button:LeftStick:long_press" = { text = "Prone" }
+"button:DpadUp" = { text = "{icon:flashlight} Light / laser" }
+"button:DpadDown" = { text = "{icon:eye} Night vision" }
+"button:Select" = { text = "{icon:bag} Dashboard" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[layers]]
+name = "Aim"
+indicator = "off"
+
+[layers.right_stick]
+deadzone = 0.08
+curve = 2.8
+key_threshold = 0.5
+
+[layers.right_stick.action.mouse]
+speed = 3500.0
+accel = 0.0
+
+[[menus]]
+name = "Hotbar"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:rifle} Primary {color:#93a596}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:pistol} Sidearm {color:#93a596}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:bag} Slot {color:#93a596}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:bag} Slot {color:#93a596}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:bag} Slot {color:#93a596}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:bag} Slot {color:#93a596}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:bag} Slot {color:#93a596}7{/color}"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:bag} Slot {color:#93a596}8{/color}"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "{icon:bag} Slot {color:#93a596}9{/color}"
+action = { keys = ["KEY_9"] }
+
+[menus.style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#18201b"
+opacity = 0.88
+
+[menus.style.items]
+color = "#26322a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#6f9f3a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8cc04a"
+opacity = 0.4
+
+[menus.style.gradient]
+color = "#1e2a22"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3a4a3e"
+
+[menus.style.glow]
+color = "#8cc04a"
+opacity = 0.25
+blur = 20
+
+[keyboard_style]
+corners = 0.5
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#18201b"
+opacity = 0.88
+
+[keyboard_style.items]
+color = "#26322a"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#6f9f3a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8cc04a"
+opacity = 0.4
+
+[keyboard_style.gradient]
+color = "#1e2a22"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3a4a3e"
+
+[numpad_style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#18201b"
+opacity = 0.88
+
+[numpad_style.items]
+color = "#26322a"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#6f9f3a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8cc04a"
+opacity = 0.4
+
+[numpad_style.gradient]
+color = "#1e2a22"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3a4a3e"
+
+[media_style]
+corners = 0.5
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#18201b"
+opacity = 0.88
+
+[media_style.items]
+color = "#26322a"
+opacity = 0.95
+
+[media_style.selected]
+color = "#6f9f3a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8cc04a"
+opacity = 0.4
+
+[media_style.gradient]
+color = "#1e2a22"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3a4a3e"
+
+[menu_style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#18201b"
+opacity = 0.88
+
+[menu_style.items]
+color = "#26322a"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#6f9f3a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8cc04a"
+opacity = 0.4
+
+[menu_style.gradient]
+color = "#1e2a22"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3a4a3e"
+
+[menu_style.glow]
+color = "#8cc04a"
+opacity = 0.25
+blur = 20
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "wood", volume = 0.1, pitch = 1.1}
+pick = {kind = "knock", volume = 0.25}
+open = {kind = "pop", volume = 0.12, pitch = 0.9}
+close = {kind = "swish", volume = 0.03}
+
+[sounds.keyboard]
+step = {kind = "wood", volume = 0.08, pitch = 1.2}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "wood", volume = 0.08, pitch = 1.2}
+pick = {kind = "knock", volume = 0.2}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

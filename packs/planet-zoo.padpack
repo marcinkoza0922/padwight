@@ -1,0 +1,714 @@
+format = 20
+macros = []
+overlay_font = "Comfortaa"
+
+[pack]
+id = "8b0d3c3e-6a41-4e1f-9a2e-3f7c5d1b9a64"
+name = "Planet Zoo"
+version = "1.0"
+author = "Padwight"
+description = "Planet Zoo on an Xbox-style pad, for the game's default keys. The left stick pans the camera and the right stick moves the pointer; RT and A click, hold LT to turn the camera. Hold LB for the build categories and Select for the zoo dashboard. X rotates, hold Y for height and RB for Ctrl, L3 switches angle snap and R3 pauses. Rounded overlays in the zoo's leaf green."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "703080"
+profile = "Planet Zoo"
+
+[[rules]]
+kind = "executable"
+value = "PlanetZoo.exe"
+profile = "Planet Zoo"
+
+[[profiles]]
+name = "Planet Zoo"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_Z"]}
+North = {keys = ["KEY_LEFTSHIFT"]}
+LeftBumper = {open_menu = "Build"}
+RightBumper = {keys = ["KEY_LEFTCTRL"]}
+Select = {open_menu = "Zoo"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_SPACE"]}
+RightStick = {keys = ["KEY_P"]}
+DpadUp = {keys = ["KEY_PAGEUP"]}
+DpadDown = {keys = ["KEY_PAGEDOWN"]}
+DpadLeft = {keys = ["KEY_LEFTCTRL", "KEY_Z"]}
+DpadRight = {keys = ["KEY_LEFTCTRL", "KEY_Y"]}
+
+[profiles.gestures.Start]
+double_tap = {keys = ["KEY_F5"]}
+long_press = {keys = ["KEY_F9"]}
+
+[profiles.gestures.RightStick]
+long_press = {keys = ["KEY_O"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Middle"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer and the left stick {ls} pans the camera. {rt} or {south} clicks; hold {lt} and move the right stick {rs} to turn and tilt the camera. {up} and {down} zoom.
+Hold {lb} for the build categories, aiming with the right stick {rs}. {select} holds the zoo dashboard: management, trading, heat maps, the move and copy tools, brush and path sizes, freelook, save and load.
+{west} turns what you're placing a quarter; hold it and move the pointer to turn it freely. Hold {north} and move the pointer up or down to change its height, tap it to reset. Hold {rb} for Ctrl: lock to the surface's axes, select several pieces, invert a terrain brush, or place a path without joins.
+{l3} switches angle snap. {r3} pauses; hold it to change the speed. {left} and {right} undo and redo. {east} cancels and deselects, {start} is the menu: double tap it for the save menu, hold it for the load menu.
+Keys are the game's defaults from a community list, not read from an install: if one is off, check Settings → Controls. Naming an animal or a guest attraction: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan the camera"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click"}
+"trigger:Left" = {text = "Hold: turn the camera"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Cancel / deselect"}
+"button:West" = {text = "{icon:rotate} Rotate (hold: freely)"}
+"button:North" = {text = "{icon:height} Hold: height (tap: reset)"}
+"button:LeftBumper" = {text = "Hold: build"}
+"button:RightBumper" = {text = "Hold: Ctrl"}
+"button:Select" = {text = "Zoo dashboard"}
+"button:Start" = {text = "Menu"}
+"gesture:button:Start:double_tap" = {text = "{icon:save} Save menu"}
+"gesture:button:Start:long_press" = {text = "{icon:load} Load menu"}
+"button:LeftStick" = {text = "{icon:grid} Angle snap on / off"}
+"button:RightStick" = {text = "{icon:pause} Pause"}
+"gesture:button:RightStick:long_press" = {text = "{icon:speed2} Change speed"}
+"button:DpadLeft" = {text = "{icon:rotate-left} Undo"}
+"button:DpadRight" = {text = "{icon:rotate} Redo"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+
+[[profiles]]
+name = "Planet Zoo + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_Z"]}
+North = {keys = ["KEY_LEFTSHIFT"]}
+LeftBumper = {open_menu = "Build"}
+RightBumper = {keys = ["KEY_LEFTCTRL"]}
+Select = {open_menu = "Zoo"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_SPACE"]}
+RightStick = {keys = ["KEY_P"]}
+DpadUp = {keys = ["KEY_PAGEUP"]}
+DpadDown = {keys = ["KEY_PAGEDOWN"]}
+DpadLeft = {keys = ["KEY_LEFTCTRL", "KEY_Z"]}
+DpadRight = {keys = ["KEY_LEFTCTRL", "KEY_Y"]}
+
+[profiles.gestures.Start]
+double_tap = {keys = ["KEY_F5"]}
+long_press = {keys = ["KEY_F9"]}
+
+[profiles.gestures.RightStick]
+long_press = {keys = ["KEY_O"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Middle"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer and the left stick {ls} pans the camera. {rt} or {south} clicks; hold {lt} and move the right stick {rs} to turn and tilt the camera. {up} and {down} zoom.
+Hold {lb} for the build categories, aiming with the right stick {rs}. {select} holds the zoo dashboard: management, trading, heat maps, the move and copy tools, brush and path sizes, freelook, save and load.
+{west} turns what you're placing a quarter; hold it and move the pointer to turn it freely. Hold {north} and move the pointer up or down to change its height, tap it to reset. Hold {rb} for Ctrl: lock to the surface's axes, select several pieces, invert a terrain brush, or place a path without joins.
+{l3} switches angle snap. {r3} pauses; hold it to change the speed. {left} and {right} undo and redo. {east} cancels and deselects, {start} is the menu: double tap it for the save menu, hold it for the load menu.
+Keys are the game's defaults from a community list, not read from an install: if one is off, check Settings → Controls. Naming an animal or a guest attraction: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan the camera"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click"}
+"trigger:Left" = {text = "Hold: turn the camera"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Cancel / deselect"}
+"button:West" = {text = "{icon:rotate} Rotate (hold: freely)"}
+"button:North" = {text = "{icon:height} Hold: height (tap: reset)"}
+"button:LeftBumper" = {text = "Hold: build"}
+"button:RightBumper" = {text = "Hold: Ctrl"}
+"button:Select" = {text = "Zoo dashboard"}
+"button:Start" = {text = "Menu"}
+"gesture:button:Start:double_tap" = {text = "{icon:save} Save menu"}
+"gesture:button:Start:long_press" = {text = "{icon:load} Load menu"}
+"button:LeftStick" = {text = "{icon:grid} Angle snap on / off"}
+"button:RightStick" = {text = "{icon:pause} Pause"}
+"gesture:button:RightStick:long_press" = {text = "{icon:speed2} Change speed"}
+"button:DpadLeft" = {text = "{icon:rotate-left} Undo"}
+"button:DpadRight" = {text = "{icon:rotate} Redo"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[menus]]
+name = "Build"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:paw} {b}Habitat{/b}"
+action = {keys = ["KEY_4"]}
+
+[[menus.items]]
+label = "{icon:gate} Barriers"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:tree} Nature"
+action = {keys = ["KEY_5"]}
+
+[[menus.items]]
+label = "{icon:shop} Facilities"
+action = {keys = ["KEY_6"]}
+
+[[menus.items]]
+label = "{icon:hammer} Construction"
+action = {keys = ["KEY_7"]}
+
+[[menus.items]]
+label = "{icon:artwork} Blueprints"
+action = {keys = ["KEY_8"]}
+
+[[menus.items]]
+label = "{icon:path} Paths"
+action = {keys = ["KEY_9"]}
+
+[[menus.items]]
+label = "{icon:terrain} Terrain"
+action = {keys = ["KEY_0"]}
+
+[menus.style]
+corners = 0.6
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#12261b"
+opacity = 0.93
+
+[menus.style.items]
+color = "#23412e"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#8cc63f"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8cc63f"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#0b1a12"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3c6247"
+
+[menus.style.glow]
+color = "#b6e36a"
+opacity = 0.55
+blur = 18
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#3c6247", opacity = 0.8}
+
+
+[[menus]]
+name = "Zoo"
+keep_open = true
+
+[menus.kind.grid]
+columns = 4
+
+[[menus.items]]
+label = "{icon:chart} {b}Zoo management{/b}"
+action = {keys = ["KEY_1"]}
+span = {columns = 2, rows = 1}
+
+[[menus.items]]
+label = "{icon:chart} {b}Zoo management{/b}"
+action = {keys = ["KEY_1"]}
+
+[[menus.items]]
+label = "{icon:paw} Animal trading"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:trade} Exhibit trading"
+action = {keys = ["KEY_F2"]}
+
+[[menus.items]]
+label = "{icon:thermometer} Heat maps"
+action = {keys = ["KEY_H"]}
+
+[[menus.items]]
+label = "{icon:grid} Multi-select"
+action = {keys = ["KEY_I"]}
+
+[[menus.items]]
+label = "{icon:layers} Group edit"
+action = {keys = ["KEY_R"]}
+
+[[menus.items]]
+label = "{icon:eye} Hide the interface"
+action = {keys = ["KEY_G"]}
+
+[[menus.items]]
+label = "{icon:move} Move"
+action = {keys = ["KEY_M"]}
+
+[[menus.items]]
+label = "{icon:rotate} Advanced move"
+action = {keys = ["KEY_X"]}
+
+[[menus.items]]
+label = "{icon:copy} Duplicate"
+action = {keys = ["KEY_LEFTCTRL", "KEY_D"]}
+
+[[menus.items]]
+label = "{icon:trash} {color:red}Delete{/color}"
+action = {keys = ["KEY_DELETE"]}
+
+[[menus.items]]
+label = "{icon:height} Align to surface"
+action = {keys = ["KEY_V"]}
+
+[[menus.items]]
+label = "{icon:terrain} Flatten terrain"
+action = {keys = ["KEY_K"]}
+
+[[menus.items]]
+label = "{icon:camera} Freelook"
+action = {keys = ["KEY_T"]}
+
+[[menus.items]]
+label = "{icon:flashlight} Torch"
+action = {keys = ["KEY_L"]}
+
+[[menus.items]]
+label = "Smaller brush / path ["
+action = {keys = ["KEY_LEFTBRACE"]}
+
+[[menus.items]]
+label = "Bigger brush / path ]"
+action = {keys = ["KEY_RIGHTBRACE"]}
+
+[[menus.items]]
+label = "Less intensity / length −"
+action = {keys = ["KEY_MINUS"]}
+
+[[menus.items]]
+label = "More intensity / length ="
+action = {keys = ["KEY_EQUAL"]}
+
+[[menus.items]]
+label = "{icon:book} Controls help"
+action = {keys = ["KEY_F1"]}
+
+[[menus.items]]
+label = "{icon:speed2} Change speed"
+action = {keys = ["KEY_O"]}
+
+[[menus.items]]
+label = "{icon:save} Save"
+action = {keys = ["KEY_F5"]}
+
+[[menus.items]]
+label = "{icon:load} Load"
+action = {keys = ["KEY_F9"]}
+
+[menus.style]
+corners = 0.6
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#12261b"
+opacity = 0.93
+
+[menus.style.items]
+color = "#23412e"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#8cc63f"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8cc63f"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#0b1a12"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3c6247"
+
+[menus.style.glow]
+color = "#b6e36a"
+opacity = 0.55
+blur = 18
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#3c6247", opacity = 0.8}
+
+
+[keyboard_style]
+corners = 0.6
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#12261b"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#23412e"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#8cc63f"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8cc63f"
+opacity = 0.7
+
+[keyboard_style.gradient]
+color = "#0b1a12"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3c6247"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+
+[numpad_style]
+corners = 0.6
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#12261b"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#23412e"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#8cc63f"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8cc63f"
+opacity = 0.7
+
+[numpad_style.gradient]
+color = "#0b1a12"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3c6247"
+
+[numpad_style.type]
+letter_spacing = 0
+
+
+[media_style]
+corners = 0.6
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#12261b"
+opacity = 0.93
+
+[media_style.items]
+color = "#23412e"
+opacity = 0.95
+
+[media_style.selected]
+color = "#8cc63f"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8cc63f"
+opacity = 0.7
+
+[media_style.gradient]
+color = "#0b1a12"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3c6247"
+
+[media_style.type]
+letter_spacing = 0
+
+
+[menu_style]
+corners = 0.6
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#12261b"
+opacity = 0.93
+
+[menu_style.items]
+color = "#23412e"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#8cc63f"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8cc63f"
+opacity = 0.7
+
+[menu_style.gradient]
+color = "#0b1a12"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3c6247"
+
+[menu_style.glow]
+color = "#b6e36a"
+opacity = 0.55
+blur = 18
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#3c6247", opacity = 0.8}
+
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 1.05}
+pick = {kind = "marimba", volume = 0.14, pitch = 1.05}
+open = {kind = "pop", volume = 0.06, pitch = 1.1}
+close = {kind = "pop", volume = 0.048, pitch = 0.88}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 1.05}
+pick = {kind = "marimba", volume = 0.14, pitch = 1.05}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 1.05}
+pick = {kind = "keys", volume = 0.2}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.28, length_ms = 35}
+open = {strength = 0.06, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.19, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.19, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.19, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.19, length_ms = 60}

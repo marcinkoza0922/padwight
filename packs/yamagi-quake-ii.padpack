@@ -118,8 +118,8 @@ action = { mouse = "Left" }
 
 [profiles.guide]
 notes = '''{start} (Escape) opens the game's menu and backs out of every screen in it. In the menu the d-pad {dpad} up and down move the cursor and {r3} (Enter) picks.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one. {x} picks the Super Shotgun and {b} the Railgun.
-{a} jumps, and {l3} toggles crouch. Hold {lt} to run; if the port's Always Run is on, it walks instead.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {north} to the previous one. {west} picks the Super Shotgun and {east} the Railgun.
+{south} jumps, and {l3} toggles crouch. Hold {lt} to run; if the port's Always Run is on, it walks instead.
 {select} (Tab) opens the inventory: the d-pad {dpad} left and right scroll the items and {r3} (Enter) uses the one shown. A long press of {select} shows your mission objectives (F1).
 Quick save is a double tap of {start} (F6), and quick load is a long press of {start} (F9).
 These are Quake II's classic keys, written from memory and not checked in the game. The ports don't all bind W, A, S and D, so bind them to forward, left, back and right in the Controls options, and turn on mouse look. Menu sliders need the mouse, since the d-pad left and right scroll the inventory. If a button does nothing, compare the Controls screen with the keys here.'''
@@ -251,8 +251,8 @@ sensitivity = 15.0
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
 {start} (Escape) opens the game's menu and backs out of every screen in it. In the menu the d-pad {dpad} up and down move the cursor and {r3} (Enter) picks.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one. {x} picks the Super Shotgun and {b} the Railgun.
-{a} jumps, and {l3} toggles crouch. Hold {lt} to run; if the port's Always Run is on, it walks instead.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {north} to the previous one. {west} picks the Super Shotgun and {east} the Railgun.
+{south} jumps, and {l3} toggles crouch. Hold {lt} to run; if the port's Always Run is on, it walks instead.
 {select} (Tab) opens the inventory: the d-pad {dpad} left and right scroll the items and {r3} (Enter) uses the one shown. A long press of {select} shows your mission objectives (F1).
 Quick save is a double tap of {start} (F6), and quick load is a long press of {start} (F9).
 These are Quake II's classic keys, written from memory and not checked in the game. The ports don't all bind W, A, S and D, so bind them to forward, left, back and right in the Controls options, and turn on mouse look. Menu sliders need the mouse, since the d-pad left and right scroll the inventory. If a button does nothing, compare the Controls screen with the keys here.'''
@@ -391,8 +391,8 @@ sensitivity = 22.0
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
 Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming.
 {start} (Escape) opens the game's menu and backs out of every screen in it. In the menu the d-pad {dpad} up and down move the cursor and {r3} (Enter) picks.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one. {x} picks the Super Shotgun and {b} the Railgun.
-{a} jumps, and {l3} toggles crouch. Hold {lt} to run; if the port's Always Run is on, it walks instead.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {north} to the previous one. {west} picks the Super Shotgun and {east} the Railgun.
+{south} jumps, and {l3} toggles crouch. Hold {lt} to run; if the port's Always Run is on, it walks instead.
 {select} (Tab) opens the inventory: the d-pad {dpad} left and right scroll the items and {r3} (Enter) uses the one shown. A long press of {select} shows your mission objectives (F1).
 Quick save is a double tap of {start} (F6), and quick load is a long press of {start} (F9).
 These are Quake II's classic keys, written from memory and not checked in the game. The ports don't all bind W, A, S and D, so bind them to forward, left, back and right in the Controls options, and turn on mouse look. Menu sliders need the mouse, since the d-pad left and right scroll the inventory. If a button does nothing, compare the Controls screen with the keys here.'''

@@ -1,0 +1,751 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "a7c3e5d1-94b2-4f60-8d1a-6e2b0f7c3a98"
+name = "Dyson Sphere Program"
+version = "1.0"
+author = "Padwight"
+description = "Dyson Sphere Program on an Xbox-style pad, for the game's default keys. The left stick walks the mecha and the right stick moves the pointer; RT and A click, LT right-clicks to walk and mine, hold R3 to turn the camera. Hold LB and RB for the build bar, Select for the panels. X rotates, Y jumps and flies, B sinks. Overlays in the mecha's holographic blue."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "1366540"
+profile = "Dyson Sphere Program"
+
+[[rules]]
+kind = "executable"
+value = "DSPGAME.exe"
+profile = "Dyson Sphere Program"
+
+[[profiles]]
+name = "Dyson Sphere Program"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_LEFTALT"]}
+West = {keys = ["KEY_R"]}
+North = {keys = ["KEY_SPACE"]}
+LeftBumper = {open_menu = "Categories"}
+RightBumper = {open_menu = "Slots"}
+Select = {open_menu = "Panels"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_LEFTSHIFT"]}
+RightStick = {mouse = "Middle"}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_B"]}
+DpadRight = {keys = ["KEY_X"]}
+
+[profiles.gestures.DpadRight]
+long_press = {keys = ["KEY_U"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The left stick {ls} walks the mecha and the right stick {rs} moves the pointer. {rt} or {south} clicks to build and take; {lt} right-clicks to walk to a spot, mine a vein or drop what's in hand. Hold {r3} and move the right stick {rs} to turn the camera; {up} and {down} zoom.
+{north} jumps; double tap it to take off and hold it to climb, {east} to sink. Hold {l3} for Shift: queue several orders, copy a building with {south}, speed up in flight.
+Hold {lb} for the build categories (F1 to F10) and {rb} for the slots in the open one (1 to 0), aiming with the right stick {rs}. {west} rotates the building in hand. {left} enters construction mode, {right} demolition; hold {right} for upgrade mode.
+{select} lists the panels: inventory, replicator, mecha, tech tree, statistics, starmap, planet view, Dyson sphere, and the warp and cursor lock for sailing. {start} closes panels and opens the menu.
+Panel, movement and build keys come from a community list; the F-key categories, the number-key slots and upgrade on U are from memory. None were read from an install: check Settings → Control if one is off. Naming a station or a blueprint: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Walk"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click / build"}
+"trigger:Left" = {text = "Walk to / mine / drop"}
+"button:South" = {text = "Click / build"}
+"button:East" = {text = "Fly down"}
+"button:West" = {text = "{icon:rotate} Rotate building"}
+"button:North" = {text = "Jump / fly up"}
+"button:LeftBumper" = {text = "Hold: build categories"}
+"button:RightBumper" = {text = "Hold: build slots"}
+"button:Select" = {text = "Panels"}
+"button:Start" = {text = "Close / menu"}
+"button:LeftStick" = {text = "Hold: Shift"}
+"button:RightStick" = {text = "Hold: turn the camera"}
+"button:DpadLeft" = {text = "{icon:hammer} Construction mode"}
+"button:DpadRight" = {text = "{icon:trash} {color:red}Demolish{/color}"}
+"gesture:button:DpadRight:long_press" = {text = "{icon:upgrade} Upgrade mode"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+
+[[profiles]]
+name = "Dyson Sphere Program + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_LEFTALT"]}
+West = {keys = ["KEY_R"]}
+North = {keys = ["KEY_SPACE"]}
+LeftBumper = {open_menu = "Categories"}
+RightBumper = {open_menu = "Slots"}
+Select = {open_menu = "Panels"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {keys = ["KEY_LEFTSHIFT"]}
+RightStick = {mouse = "Middle"}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_B"]}
+DpadRight = {keys = ["KEY_X"]}
+
+[profiles.gestures.DpadRight]
+long_press = {keys = ["KEY_U"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The left stick {ls} walks the mecha and the right stick {rs} moves the pointer. {rt} or {south} clicks to build and take; {lt} right-clicks to walk to a spot, mine a vein or drop what's in hand. Hold {r3} and move the right stick {rs} to turn the camera; {up} and {down} zoom.
+{north} jumps; double tap it to take off and hold it to climb, {east} to sink. Hold {l3} for Shift: queue several orders, copy a building with {south}, speed up in flight.
+Hold {lb} for the build categories (F1 to F10) and {rb} for the slots in the open one (1 to 0), aiming with the right stick {rs}. {west} rotates the building in hand. {left} enters construction mode, {right} demolition; hold {right} for upgrade mode.
+{select} lists the panels: inventory, replicator, mecha, tech tree, statistics, starmap, planet view, Dyson sphere, and the warp and cursor lock for sailing. {start} closes panels and opens the menu.
+Panel, movement and build keys come from a community list; the F-key categories, the number-key slots and upgrade on U are from memory. None were read from an install: check Settings → Control if one is off. Naming a station or a blueprint: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Walk"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click / build"}
+"trigger:Left" = {text = "Walk to / mine / drop"}
+"button:South" = {text = "Click / build"}
+"button:East" = {text = "Fly down"}
+"button:West" = {text = "{icon:rotate} Rotate building"}
+"button:North" = {text = "Jump / fly up"}
+"button:LeftBumper" = {text = "Hold: build categories"}
+"button:RightBumper" = {text = "Hold: build slots"}
+"button:Select" = {text = "Panels"}
+"button:Start" = {text = "Close / menu"}
+"button:LeftStick" = {text = "Hold: Shift"}
+"button:RightStick" = {text = "Hold: turn the camera"}
+"button:DpadLeft" = {text = "{icon:hammer} Construction mode"}
+"button:DpadRight" = {text = "{icon:trash} {color:red}Demolish{/color}"}
+"gesture:button:DpadRight:long_press" = {text = "{icon:upgrade} Upgrade mode"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[menus]]
+name = "Categories"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Category {b}F1{/b}"
+action = {keys = ["KEY_F1"]}
+
+[[menus.items]]
+label = "Category {b}F2{/b}"
+action = {keys = ["KEY_F2"]}
+
+[[menus.items]]
+label = "Category {b}F3{/b}"
+action = {keys = ["KEY_F3"]}
+
+[[menus.items]]
+label = "Category {b}F4{/b}"
+action = {keys = ["KEY_F4"]}
+
+[[menus.items]]
+label = "Category {b}F5{/b}"
+action = {keys = ["KEY_F5"]}
+
+[[menus.items]]
+label = "Category {b}F6{/b}"
+action = {keys = ["KEY_F6"]}
+
+[[menus.items]]
+label = "Category {b}F7{/b}"
+action = {keys = ["KEY_F7"]}
+
+[[menus.items]]
+label = "Category {b}F8{/b}"
+action = {keys = ["KEY_F8"]}
+
+[[menus.items]]
+label = "Category {b}F9{/b}"
+action = {keys = ["KEY_F9"]}
+
+[[menus.items]]
+label = "Category {b}F10{/b}"
+action = {keys = ["KEY_F10"]}
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0a1520"
+opacity = 0.9
+
+[menus.style.items]
+color = "#13293b"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2b9fd8"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#5fcfff"
+opacity = 0.6
+
+[menus.style.gradient]
+color = "#06101a"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#24506e"
+
+[menus.style.glow]
+color = "#5fcfff"
+opacity = 0.55
+blur = 20
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "brackets", size = 14, width = 2, color = "#5fcfff"}
+dividers = {width = 1, color = "#24506e", opacity = 0.8}
+
+
+[[menus]]
+name = "Slots"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Slot {b}1{/b}"
+action = {keys = ["KEY_1"]}
+
+[[menus.items]]
+label = "Slot {b}2{/b}"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "Slot {b}3{/b}"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "Slot {b}4{/b}"
+action = {keys = ["KEY_4"]}
+
+[[menus.items]]
+label = "Slot {b}5{/b}"
+action = {keys = ["KEY_5"]}
+
+[[menus.items]]
+label = "Slot {b}6{/b}"
+action = {keys = ["KEY_6"]}
+
+[[menus.items]]
+label = "Slot {b}7{/b}"
+action = {keys = ["KEY_7"]}
+
+[[menus.items]]
+label = "Slot {b}8{/b}"
+action = {keys = ["KEY_8"]}
+
+[[menus.items]]
+label = "Slot {b}9{/b}"
+action = {keys = ["KEY_9"]}
+
+[[menus.items]]
+label = "Slot {b}0{/b}"
+action = {keys = ["KEY_0"]}
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0a1520"
+opacity = 0.9
+
+[menus.style.items]
+color = "#13293b"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2b9fd8"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#5fcfff"
+opacity = 0.6
+
+[menus.style.gradient]
+color = "#06101a"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#24506e"
+
+[menus.style.glow]
+color = "#5fcfff"
+opacity = 0.55
+blur = 20
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "brackets", size = 14, width = 2, color = "#5fcfff"}
+dividers = {width = 1, color = "#24506e", opacity = 0.8}
+
+
+[[menus]]
+name = "Panels"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:bag} {b}Inventory{/b}"
+action = {keys = ["KEY_E"]}
+
+[[menus.items]]
+label = "{icon:factory} Replicator"
+action = {keys = ["KEY_F"]}
+
+[[menus.items]]
+label = "{icon:person} Mecha"
+action = {keys = ["KEY_C"]}
+
+[[menus.items]]
+label = "{icon:research} Tech tree"
+action = {keys = ["KEY_T"]}
+
+[[menus.items]]
+label = "{icon:chart} Statistics"
+action = {keys = ["KEY_P"]}
+
+[[menus.items]]
+label = "{icon:star} Starmap"
+action = {keys = ["KEY_V"]}
+
+[[menus.items]]
+label = "{icon:globe} Planet view"
+action = {keys = ["KEY_M"]}
+
+[[menus.items]]
+label = "{icon:sun} Dyson sphere"
+action = {keys = ["KEY_Y"]}
+
+[[menus.items]]
+label = "{icon:book} Guidebook"
+action = {keys = ["KEY_G"]}
+
+[[menus.items]]
+label = "{icon:rocket} Warp"
+action = {keys = ["KEY_CAPSLOCK"]}
+
+[[menus.items]]
+label = "{icon:crosshair} Lock the cursor (sailing)"
+action = {keys = ["KEY_TAB"]}
+
+[[menus.items]]
+label = "{icon:eye} Hide the interface"
+action = {keys = ["KEY_F11"]}
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0a1520"
+opacity = 0.9
+
+[menus.style.items]
+color = "#13293b"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#2b9fd8"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#5fcfff"
+opacity = 0.6
+
+[menus.style.gradient]
+color = "#06101a"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#24506e"
+
+[menus.style.glow]
+color = "#5fcfff"
+opacity = 0.55
+blur = 20
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "brackets", size = 14, width = 2, color = "#5fcfff"}
+dividers = {width = 1, color = "#24506e", opacity = 0.8}
+
+
+[keyboard_style]
+corners = 0.1
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0a1520"
+opacity = 0.9
+
+[keyboard_style.items]
+color = "#13293b"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#2b9fd8"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#5fcfff"
+opacity = 0.6
+
+[keyboard_style.gradient]
+color = "#06101a"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#24506e"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+
+[numpad_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0a1520"
+opacity = 0.9
+
+[numpad_style.items]
+color = "#13293b"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#2b9fd8"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#5fcfff"
+opacity = 0.6
+
+[numpad_style.gradient]
+color = "#06101a"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#24506e"
+
+[numpad_style.type]
+letter_spacing = 1
+
+
+[media_style]
+corners = 0.1
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0a1520"
+opacity = 0.9
+
+[media_style.items]
+color = "#13293b"
+opacity = 0.95
+
+[media_style.selected]
+color = "#2b9fd8"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#5fcfff"
+opacity = 0.6
+
+[media_style.gradient]
+color = "#06101a"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#24506e"
+
+[media_style.type]
+letter_spacing = 1
+
+
+[menu_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0a1520"
+opacity = 0.9
+
+[menu_style.items]
+color = "#13293b"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#2b9fd8"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#5fcfff"
+opacity = 0.6
+
+[menu_style.gradient]
+color = "#06101a"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#24506e"
+
+[menu_style.glow]
+color = "#5fcfff"
+opacity = 0.55
+blur = 20
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "brackets", size = 14, width = 2, color = "#5fcfff"}
+dividers = {width = 1, color = "#24506e", opacity = 0.8}
+
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.06, pitch = 1.4}
+pick = {kind = "glass", volume = 0.08, pitch = 1.1}
+open = {kind = "rise", volume = 0.04}
+close = {kind = "fall", volume = 0.035}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.06, pitch = 1.4}
+pick = {kind = "glass", volume = 0.08, pitch = 1.1}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.06, pitch = 1.4}
+pick = {kind = "keys", volume = 0.2}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.28, length_ms = 35}
+open = {strength = 0.06, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.19, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.19, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.19, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.19, length_ms = 60}

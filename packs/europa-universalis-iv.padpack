@@ -1,0 +1,794 @@
+format = 20
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "dff4fd5a-a848-4d93-a9ac-cb05b02b9563"
+name = "Europa Universalis IV"
+version = "1.0"
+author = "Padwight"
+description = "Europa Universalis IV (Steam, GOG or Epic, Linux or Windows build) on an Xbox-style pad. The right stick moves the pointer, the left stick pans the map, RT or A left-clicks, LT right-clicks to move armies and fleets. Y pauses, the d-pad zooms and changes the speed. Hold LB for the map modes, hold RB for the army orders and the build mode. Select lists the country view tabs, the ledger and the other screens. Click L3 for your country, R3 to find a province or country. The \"+ Gyro\" profile also moves the pointer by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "eu4"
+profile = "Europa Universalis IV"
+
+[[rules]]
+kind = "executable"
+value = "eu4.exe"
+profile = "Europa Universalis IV"
+
+[[rules]]
+kind = "steam_app_id"
+value = "236850"
+profile = "Europa Universalis IV"
+
+[[profiles]]
+name = "Europa Universalis IV"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_LEFTSHIFT"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { open_menu = "Map modes" }
+RightBumper = { open_menu = "Army orders" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_F1"] }
+RightStick = { keys = ["KEY_F"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_KPMINUS"] }
+DpadRight = { keys = ["KEY_KPPLUS"] }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer: {rt} or {south} is a left click, {lt} a right click. The left stick {ls} pans the map.
+{north} pauses and unpauses; the {leftright} d-pad slows the game down and speeds it up, and {updown} zooms.
+Hold {west} for Shift while you click, to add to a selection or queue orders.
+Hold {lb} for the map modes and {rb} for the army orders and the build mode, aimed or moved through and picked with {south}.
+{select} lists the screens (tap it, pick with {south}, {east} closes the list). {east} or {start} is Escape: it closes the open window, and on the map opens the game menu.
+Hold {guide} and press {west} for the on-screen keyboard (save names, searches).
+The {select} screens are the country view's tabs (the same as clicking your shield, then a tab), the ledger, the great powers and the current age.
+With an army selected, the {rb} orders merge, split, consolidate, force march and drill it. Build mode opens the macro builder. Popups take their answer from {south} on the button, or {rb} then Accept or Decline.
+Click {l3} for your country and {r3} to find a province or country. Europa Universalis IV has no controller support, so the controller works through these keys. It has no quick save: save from the game menu.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"stick:Left" = { text = "Pan the map" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (move armies)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close window" }
+"button:West" = { text = "Hold: Shift (add, queue)" }
+"button:North" = { text = "{icon:pause} Pause" }
+"button:LeftBumper" = { text = "Hold: {icon:map} map modes" }
+"button:RightBumper" = { text = "Hold: army orders and the build mode" }
+"button:Select" = { text = "Screens" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "{icon:flag} Your country" }
+"button:RightStick" = { text = "{icon:search} Find" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "{icon:speed1} Slower / faster {icon:speed3}"
+
+[[profiles]]
+name = "Europa Universalis IV + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_LEFTSHIFT"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { open_menu = "Map modes" }
+RightBumper = { open_menu = "Army orders" }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_F1"] }
+RightStick = { keys = ["KEY_F"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_KPMINUS"] }
+DpadRight = { keys = ["KEY_KPPLUS"] }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Europa Universalis IV + Gyro: tilting the controller moves the cursor too, as a fine pointer next to the right stick {rs}. Hold {select} and {start} together to pause the gyro while you reposition the controller.
+The right stick {rs} moves the pointer: {rt} or {south} is a left click, {lt} a right click. The left stick {ls} pans the map.
+{north} pauses and unpauses; the {leftright} d-pad slows the game down and speeds it up, and {updown} zooms.
+Hold {west} for Shift while you click, to add to a selection or queue orders.
+Hold {lb} for the map modes and {rb} for the army orders and the build mode, aimed or moved through and picked with {south}.
+{select} lists the screens (tap it, pick with {south}, {east} closes the list). {east} or {start} is Escape: it closes the open window, and on the map opens the game menu.
+Hold {guide} and press {west} for the on-screen keyboard (save names, searches).
+The {select} screens are the country view's tabs (the same as clicking your shield, then a tab), the ledger, the great powers and the current age.
+With an army selected, the {rb} orders merge, split, consolidate, force march and drill it. Build mode opens the macro builder. Popups take their answer from {south} on the button, or {rb} then Accept or Decline.
+Click {l3} for your country and {r3} to find a province or country. Europa Universalis IV has no controller support, so the controller works through these keys. It has no quick save: save from the game menu.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"stick:Left" = { text = "Pan the map" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click (move armies)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Close window" }
+"button:West" = { text = "Hold: Shift (add, queue)" }
+"button:North" = { text = "{icon:pause} Pause" }
+"button:LeftBumper" = { text = "Hold: {icon:map} map modes" }
+"button:RightBumper" = { text = "Hold: army orders and the build mode" }
+"button:Select" = { text = "Screens" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "{icon:flag} Your country" }
+"button:RightStick" = { text = "{icon:search} Find" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "{icon:speed1} Slower / faster {icon:speed3}"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[[menus]]
+name = "Map modes"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:flag} Political"
+action = { keys = ["KEY_W"] }
+
+[[menus.items]]
+label = "{icon:terrain} Terrain"
+action = { keys = ["KEY_Q"] }
+
+[[menus.items]]
+label = "{icon:trade} Trade"
+action = { keys = ["KEY_E"] }
+
+[[menus.items]]
+label = "{icon:religion} Religion"
+action = { keys = ["KEY_R"] }
+
+[[menus.items]]
+label = "{icon:crown} Empire"
+action = { keys = ["KEY_T"] }
+
+[[menus.items]]
+label = "{icon:handshake} Diplomatic"
+action = { keys = ["KEY_Y"] }
+
+[[menus.items]]
+label = "{icon:coin} Economy"
+action = { keys = ["KEY_U"] }
+
+[[menus.items]]
+label = "{icon:region} Region"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "{icon:palette} Culture"
+action = { keys = ["KEY_O"] }
+
+[[menus.items]]
+label = "{icon:people} Players"
+action = { keys = ["KEY_P"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#261c13"
+opacity = 0.94
+
+[menus.style.items]
+color = "#3a2c1d"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#caa04c"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#d2ad5e"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#1d150e"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5c4628"
+
+[menus.style.glow]
+color = "#f0cf7a"
+opacity = 0.4
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#d2ad5e", opacity = 0.45}
+frame = {kind = "baroque", size = 40, width = 1, color = "#d2ad5e"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+wood = {opacity = 0.3}
+
+[[menus]]
+name = "Screens"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:advisor} Court"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:palace} Government"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:handshake} Diplomacy"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:money} Economy"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:trade} Trade"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:research} Technology"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:great-person} Ideas"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:flag} Missions"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "{icon:scroll} Decisions"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "{icon:wellbeing} Stability & expansion"
+action = { keys = ["KEY_0"] }
+
+[[menus.items]]
+label = "{icon:religion} Religion"
+action = { keys = ["KEY_COMMA"] }
+
+[[menus.items]]
+label = "{icon:sword-cross} Military"
+action = { keys = ["KEY_DOT"] }
+
+[[menus.items]]
+label = "{icon:crown} Subjects"
+action = { keys = ["KEY_APOSTROPHE"] }
+
+[[menus.items]]
+label = "{icon:people} Estates"
+action = { keys = ["KEY_K"] }
+
+[[menus.items]]
+label = "{icon:book} Ledger"
+action = { keys = ["KEY_L"] }
+
+[[menus.items]]
+label = "{icon:trophy} Great powers"
+action = { keys = ["KEY_LEFTSHIFT", "KEY_G"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#261c13"
+opacity = 0.94
+
+[menus.style.items]
+color = "#3a2c1d"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#caa04c"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#d2ad5e"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#1d150e"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5c4628"
+
+[menus.style.glow]
+color = "#f0cf7a"
+opacity = 0.4
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#d2ad5e", opacity = 0.45}
+frame = {kind = "baroque", size = 40, width = 1, color = "#d2ad5e"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+wood = {opacity = 0.3}
+
+[[menus]]
+name = "Army orders"
+
+[menus.kind.grid]
+columns = 4
+
+[[menus.items]]
+label = "{icon:merge} Merge"
+action = { keys = ["KEY_G"] }
+span = {columns = 2, rows = 1}
+
+[[menus.items]]
+label = "{icon:merge} Merge"
+action = { keys = ["KEY_G"] }
+
+[[menus.items]]
+label = "{icon:split} Detach / attach"
+action = { keys = ["KEY_H"] }
+span = {columns = 2, rows = 1}
+
+[[menus.items]]
+label = "{icon:split} Detach / attach"
+action = { keys = ["KEY_H"] }
+
+[[menus.items]]
+label = "{icon:people} Consolidate"
+action = { keys = ["KEY_K"] }
+
+[[menus.items]]
+label = "{icon:footprints} Forced march"
+action = { keys = ["KEY_M"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Drill"
+action = { keys = ["KEY_J"] }
+
+[[menus.items]]
+label = "{icon:fortify} Siege view"
+action = { keys = ["KEY_V"] }
+
+[[menus.items]]
+label = "Previous unit"
+action = { keys = ["KEY_PAGEDOWN"] }
+
+[[menus.items]]
+label = "{icon:arrow} Next unit"
+action = { keys = ["KEY_PAGEUP"] }
+
+[[menus.items]]
+label = "{icon:search} Find"
+action = { keys = ["KEY_F"] }
+
+[[menus.items]]
+label = "{icon:hourglass} Current age"
+action = { keys = ["KEY_LEFTSHIFT", "KEY_A"] }
+
+[[menus.items]]
+label = "{icon:hammer} Build mode"
+action = { keys = ["KEY_B"] }
+span = {columns = 2, rows = 1}
+
+[[menus.items]]
+label = "{icon:hammer} Build mode"
+action = { keys = ["KEY_B"] }
+
+[[menus.items]]
+label = "{color:green}Accept popup{/color}"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "Decline popup"
+action = { keys = ["KEY_Z"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#261c13"
+opacity = 0.94
+
+[menus.style.items]
+color = "#3a2c1d"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#caa04c"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#d2ad5e"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#1d150e"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5c4628"
+
+[menus.style.glow]
+color = "#f0cf7a"
+opacity = 0.4
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#d2ad5e", opacity = 0.45}
+frame = {kind = "baroque", size = 40, width = 1, color = "#d2ad5e"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+wood = {opacity = 0.3}
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#261c13"
+opacity = 0.94
+
+[keyboard_style.items]
+color = "#3a2c1d"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#caa04c"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#d2ad5e"
+opacity = 0.9
+
+[keyboard_style.gradient]
+color = "#1d150e"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5c4628"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#261c13"
+opacity = 0.94
+
+[numpad_style.items]
+color = "#3a2c1d"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#caa04c"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#d2ad5e"
+opacity = 0.9
+
+[numpad_style.gradient]
+color = "#1d150e"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5c4628"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#261c13"
+opacity = 0.94
+
+[media_style.items]
+color = "#3a2c1d"
+opacity = 0.95
+
+[media_style.selected]
+color = "#caa04c"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#d2ad5e"
+opacity = 0.9
+
+[media_style.gradient]
+color = "#1d150e"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5c4628"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#261c13"
+opacity = 0.94
+
+[menu_style.items]
+color = "#3a2c1d"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#caa04c"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#d2ad5e"
+opacity = 0.9
+
+[menu_style.gradient]
+color = "#1d150e"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5c4628"
+
+[menu_style.glow]
+color = "#f0cf7a"
+opacity = 0.4
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#d2ad5e", opacity = 0.45}
+frame = {kind = "baroque", size = 40, width = 1, color = "#d2ad5e"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+wood = {opacity = 0.3}
+
+[motion]
+keyboard = "stagger"
+numpad = "stagger"
+menu = "stagger"
+media = "stagger"
+offer = "stagger"
+info = "stagger"
+log = "stagger"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 0.8}
+pick = {kind = "wood", volume = 0.16}
+open = {kind = "page", volume = 0.06}
+close = {kind = "page", volume = 0.05, pitch = 0.9}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 0.8}
+pick = {kind = "wood", volume = 0.16}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 0.8}
+pick = {kind = "wood", volume = 0.12, pitch = 1.2}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.2, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.2, length_ms = 60}

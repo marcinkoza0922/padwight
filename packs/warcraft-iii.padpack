@@ -4,7 +4,7 @@ overlay_font = "Cinzel"
 
 [pack]
 id = "2234cfca-7ef0-43b1-93fb-97aabcaf8488"
-name = "Warcraft III"
+name = "Warcraft III: Reign of Chaos"
 version = "1.0"
 author = "Padwight"
 description = "Warcraft III on an Xbox-style pad, for the default hotkeys. The right stick moves the cursor, RT left-clicks, LT right-clicks, the left stick scrolls the map. Face buttons are Attack / Cancel / Stop / Hold, the d-pad is Move / Patrol / Basic and Advanced structures, RB is Shift (queue). Hold LB for control groups 1-8 (also hold RB in there to assign the group instead). R3 opens a radial menu of hero keys, idle workers, learn skill and town hall. Select jumps to the last alert, Start is the game menu. Hold Select for the Menus mode (clicks, Enter, arrows) and again to come back. Hero abilities and unit spells aren't mapped: click their cards."

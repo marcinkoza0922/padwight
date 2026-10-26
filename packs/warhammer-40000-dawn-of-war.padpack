@@ -1,0 +1,842 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "a85e46db-b540-4bb9-a89a-ea12f37e316a"
+name = "Warhammer 40,000: Dawn of War"
+version = "1.0"
+author = "Padwight"
+description = "Warhammer 40,000: Dawn of War (2004, Game of the Year and Winter Assault) on an Xbox-style pad, for the default hotkeys. The PC game has no controller support, so the layout is built on its keys: the right stick moves the cursor, RT left-clicks, LT right-clicks, the left stick scrolls the map, the d-pad zooms and finds builders and idle troops. A attack-moves, X stops, Y reinforces. Hold LB for control groups 1-10 (LB + RB sets one), R3 for unit commands. Select lists pause, chat and events; hold it for the Menus mode. Start is the game menu. The \"+ Gyro\" profile also moves the cursor by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Dawn of War Gold/W40k.exe"
+profile = "Warhammer 40,000: Dawn of War"
+
+[[rules]]
+kind = "executable"
+value = "Dawn of War Gold/W40kWA.exe"
+profile = "Warhammer 40,000: Dawn of War"
+
+[[rules]]
+kind = "steam_app_id"
+value = "4570"
+profile = "Warhammer 40,000: Dawn of War"
+
+[[rules]]
+kind = "steam_app_id"
+value = "9310"
+profile = "Warhammer 40,000: Dawn of War"
+
+[[profiles]]
+name = "Warhammer 40,000: Dawn of War"
+combos = [{buttons = ["LeftBumper", "RightBumper"], action = {open_menu = "Set group"}}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_A"]}
+West = {keys = ["KEY_Q"]}
+North = {keys = ["KEY_R"]}
+East = {keys = ["KEY_ESC"]}
+LeftBumper = {open_menu = "Groups"}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+Select = {open_menu = "Game"}
+Start = {keys = ["KEY_F10"]}
+LeftStick = {keys = ["KEY_TAB"]}
+RightStick = {open_menu = "Commands"}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_DOT"]}
+DpadRight = {keys = ["KEY_COMMA"]}
+
+[profiles.gestures.Select]
+long_press = {mode = "Menus"}
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_LEFT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_LEFT"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the cursor: {rt} selects (left click, hold to drag a box), and {lt} moves, attacks or captures a point (right click). The left stick {ls} scrolls the map, and {up} {down} zoom.
+{south} is attack move (then click the target with {rt}), {west} stops and {north} reinforces the selected squad. {left} jumps to the next builder, {right} to idle military. Click {l3} for the next unit type in the selection.
+Hold {lb} for the control groups and aim the right stick {rs} at one: release to select it. Hold {lb} and {rb} together to put the selection in a group instead (Ctrl + number).
+{rb} is Shift: hold it to queue orders or add to the selection. Abilities, stances and wargear are the buttons on the taskbar: click them with {rt}.
+Click {r3} for the other unit commands (move, melee, attack ground, build, attach, unload, repair, leader, scuttle), aimed with the right stick {rs}.
+{select} lists pause, chat and the next event. Hold {select} for the Menus mode (the main menu, the army painter, the lobbies) and hold it again to come back. {start} (F10) is the game menu; {east} cancels.
+The keys can't be changed in the game. They're the defaults as listed for the Definitive Edition, which keeps the original's keys, not checked on this version: the commands on {r3} and next builder and idle military are the likeliest to differ. Guide + {west} opens the on-screen keyboard for chat.
+The executable rules carry the Steam folder (Dawn of War Gold), since the Definitive Edition also runs a W40k.exe; the Winter Assault name W40kWA.exe is from memory. The Steam app ids find it from any folder.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the map" }
+"stick:Right" = { text = "Cursor" }
+"trigger:Right" = { text = "Left click (select, drag a box)" }
+"trigger:Left" = { text = "Right click (move, attack, capture)" }
+"button:South" = { text = "{icon:sword} Attack move" }
+"button:West" = { text = "{icon:stop} Stop" }
+"button:North" = { text = "{icon:reinforce} Reinforce" }
+"button:East" = { text = "Cancel" }
+"button:RightBumper" = { text = "Shift (queue, add)" }
+"button:LeftBumper" = { text = "Hold: control groups" }
+"button:LeftStick" = { text = "Next unit in selection" }
+"button:RightStick" = { text = "Unit commands" }
+"button:DpadLeft" = { text = "{icon:hammer} Next builder" }
+"button:DpadRight" = { text = "{icon:sleep} Idle military" }
+"button:Select" = { text = "Pause, chat, events" }
+"button:Start" = { text = "Game menu" }
+"gesture:button:Select:long_press" = { text = "Menus mode on / off" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Set a control group"
+
+[[profiles]]
+name = "Warhammer 40,000: Dawn of War + Gyro"
+combos = [{buttons = ["LeftBumper", "RightBumper"], action = {open_menu = "Set group"}}, {buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_A"]}
+West = {keys = ["KEY_Q"]}
+North = {keys = ["KEY_R"]}
+East = {keys = ["KEY_ESC"]}
+LeftBumper = {open_menu = "Groups"}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+Select = {open_menu = "Game"}
+Start = {keys = ["KEY_F10"]}
+LeftStick = {keys = ["KEY_TAB"]}
+RightStick = {open_menu = "Commands"}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_DOT"]}
+DpadRight = {keys = ["KEY_COMMA"]}
+
+[profiles.gestures.Select]
+long_press = {mode = "Menus"}
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.45
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.45
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_LEFT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_LEFT"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.6
+key_threshold = 0.25
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.25
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''This is the gyro variant: tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}. Hold {select} and {start} together to pause the gyro while you reposition the controller.
+The right stick {rs} moves the cursor: {rt} selects (left click, hold to drag a box), and {lt} moves, attacks or captures a point (right click). The left stick {ls} scrolls the map, and {up} {down} zoom.
+{south} is attack move (then click the target with {rt}), {west} stops and {north} reinforces the selected squad. {left} jumps to the next builder, {right} to idle military. Click {l3} for the next unit type in the selection.
+Hold {lb} for the control groups and aim the right stick {rs} at one: release to select it. Hold {lb} and {rb} together to put the selection in a group instead (Ctrl + number).
+{rb} is Shift: hold it to queue orders or add to the selection. Abilities, stances and wargear are the buttons on the taskbar: click them with {rt}.
+Click {r3} for the other unit commands (move, melee, attack ground, build, attach, unload, repair, leader, scuttle), aimed with the right stick {rs}.
+{select} lists pause, chat and the next event. Hold {select} for the Menus mode (the main menu, the army painter, the lobbies) and hold it again to come back. {start} (F10) is the game menu; {east} cancels.
+The keys can't be changed in the game. They're the defaults as listed for the Definitive Edition, which keeps the original's keys, not checked on this version: the commands on {r3} and next builder and idle military are the likeliest to differ. Guide + {west} opens the on-screen keyboard for chat.
+The executable rules carry the Steam folder (Dawn of War Gold), since the Definitive Edition also runs a W40k.exe; the Winter Assault name W40kWA.exe is from memory. The Steam app ids find it from any folder.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Scroll the map" }
+"stick:Right" = { text = "Cursor" }
+"trigger:Right" = { text = "Left click (select, drag a box)" }
+"trigger:Left" = { text = "Right click (move, attack, capture)" }
+"button:South" = { text = "{icon:sword} Attack move" }
+"button:West" = { text = "{icon:stop} Stop" }
+"button:North" = { text = "{icon:reinforce} Reinforce" }
+"button:East" = { text = "Cancel" }
+"button:RightBumper" = { text = "Shift (queue, add)" }
+"button:LeftBumper" = { text = "Hold: control groups" }
+"button:LeftStick" = { text = "Next unit in selection" }
+"button:RightStick" = { text = "Unit commands" }
+"button:DpadLeft" = { text = "{icon:hammer} Next builder" }
+"button:DpadRight" = { text = "{icon:sleep} Idle military" }
+"button:Select" = { text = "Pause, chat, events" }
+"button:Start" = { text = "Game menu" }
+"gesture:button:Select:long_press" = { text = "Menus mode on / off" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Set a control group"
+
+[[menus]]
+name = "Groups"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:people} Group 1"
+action = {keys = ["KEY_1"]}
+
+[[menus.items]]
+label = "{icon:people} Group 2"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:people} Group 3"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:people} Group 4"
+action = {keys = ["KEY_4"]}
+
+[[menus.items]]
+label = "{icon:people} Group 5"
+action = {keys = ["KEY_5"]}
+
+[[menus.items]]
+label = "{icon:people} Group 6"
+action = {keys = ["KEY_6"]}
+
+[[menus.items]]
+label = "{icon:people} Group 7"
+action = {keys = ["KEY_7"]}
+
+[[menus.items]]
+label = "{icon:people} Group 8"
+action = {keys = ["KEY_8"]}
+
+[[menus.items]]
+label = "{icon:people} Group 9"
+action = {keys = ["KEY_9"]}
+
+[[menus.items]]
+label = "{icon:people} Group 10"
+action = {keys = ["KEY_0"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#140e0c"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2e211b"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#7d1a17"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b8913f"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#1f1612"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5a4326"
+
+[menus.style.glow]
+color = "#d9482f"
+opacity = 0.5
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "gothic", size = 44, width = 1, color = "#b8913f"}
+dividers = {width = 1, color = "#b8913f", opacity = 0.4}
+brushed_metal = {opacity = 0.2}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[[menus]]
+name = "Set group"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:flag} Set 1"
+action = {keys = ["KEY_LEFTCTRL", "KEY_1"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 2"
+action = {keys = ["KEY_LEFTCTRL", "KEY_2"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 3"
+action = {keys = ["KEY_LEFTCTRL", "KEY_3"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 4"
+action = {keys = ["KEY_LEFTCTRL", "KEY_4"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 5"
+action = {keys = ["KEY_LEFTCTRL", "KEY_5"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 6"
+action = {keys = ["KEY_LEFTCTRL", "KEY_6"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 7"
+action = {keys = ["KEY_LEFTCTRL", "KEY_7"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 8"
+action = {keys = ["KEY_LEFTCTRL", "KEY_8"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 9"
+action = {keys = ["KEY_LEFTCTRL", "KEY_9"]}
+
+[[menus.items]]
+label = "{icon:flag} Set 10"
+action = {keys = ["KEY_LEFTCTRL", "KEY_0"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#140e0c"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2e211b"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#7d1a17"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b8913f"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#1f1612"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5a4326"
+
+[menus.style.glow]
+color = "#d9482f"
+opacity = 0.5
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "gothic", size = 44, width = 1, color = "#b8913f"}
+dividers = {width = 1, color = "#b8913f", opacity = 0.4}
+brushed_metal = {opacity = 0.2}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[[menus]]
+name = "Commands"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:move} Move"
+action = {keys = ["KEY_V"]}
+
+[[menus.items]]
+label = "{icon:fist} Melee attack"
+action = {keys = ["KEY_Z"]}
+
+[[menus.items]]
+label = "{icon:crosshair} Attack ground"
+action = {keys = ["KEY_G"]}
+
+[[menus.items]]
+label = "{icon:hammer} Build"
+action = {keys = ["KEY_B"]}
+
+[[menus.items]]
+label = "{icon:merge} Attach / detach"
+action = {keys = ["KEY_T"]}
+
+[[menus.items]]
+label = "{icon:unload} Unload"
+action = {keys = ["KEY_N"]}
+
+[[menus.items]]
+label = "{icon:wrench} Repair"
+action = {keys = ["KEY_E"]}
+
+[[menus.items]]
+label = "{icon:crown} Leader"
+action = {keys = ["KEY_L"]}
+
+[[menus.items]]
+label = "{icon:trash} {color:red}Scuttle{/color}"
+action = {keys = ["KEY_DELETE"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#140e0c"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2e211b"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#7d1a17"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b8913f"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#1f1612"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5a4326"
+
+[menus.style.glow]
+color = "#d9482f"
+opacity = 0.5
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "gothic", size = 44, width = 1, color = "#b8913f"}
+dividers = {width = 1, color = "#b8913f", opacity = 0.4}
+brushed_metal = {opacity = 0.2}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[[menus]]
+name = "Game"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:pause} Pause"
+action = {keys = ["KEY_PAUSE"]}
+
+[[menus.items]]
+label = "{icon:messages} Chat"
+action = {keys = ["KEY_ENTER"]}
+
+[[menus.items]]
+label = "{icon:bell} Next event"
+action = {keys = ["KEY_SPACE"]}
+
+[[menus.items]]
+label = "{icon:gear} Game menu"
+action = {keys = ["KEY_F10"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#140e0c"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2e211b"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#7d1a17"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b8913f"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#1f1612"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5a4326"
+
+[menus.style.glow]
+color = "#d9482f"
+opacity = 0.5
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "gothic", size = 44, width = 1, color = "#b8913f"}
+dividers = {width = 1, color = "#b8913f", opacity = 0.4}
+brushed_metal = {opacity = 0.2}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[[modes]]
+name = "Menus"
+indicator = "name"
+swallow_unbound = true
+
+[modes.indicator_style]
+position = "top_center"
+scale = 0.7
+
+[modes.indicator_style.background]
+color = "#140e0c"
+opacity = 0.75
+
+[modes.indicator_style.items]
+color = "#2e211b"
+opacity = 0.95
+
+[modes.indicator_style.selected]
+color = "#7d1a17"
+opacity = 1.0
+
+[modes.buttons]
+Select = "toggle_overlay"
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+North = {keys = ["KEY_ENTER"]}
+West = {mouse = "Right"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {keys = ["KEY_UP"]}
+DpadDown = {keys = ["KEY_DOWN"]}
+DpadLeft = {keys = ["KEY_LEFT"]}
+DpadRight = {keys = ["KEY_RIGHT"]}
+
+[modes.gestures.Select.long_press]
+mode = "Menus"
+
+[modes.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.5
+
+[modes.left_stick.action.scroll]
+speed = 12.0
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#140e0c"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#2e211b"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#7d1a17"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#b8913f"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#1f1612"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5a4326"
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#140e0c"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#2e211b"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#7d1a17"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#b8913f"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#1f1612"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5a4326"
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#140e0c"
+opacity = 0.92
+
+[media_style.items]
+color = "#2e211b"
+opacity = 0.95
+
+[media_style.selected]
+color = "#7d1a17"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#b8913f"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#1f1612"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5a4326"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#140e0c"
+opacity = 0.92
+
+[menu_style.items]
+color = "#2e211b"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#7d1a17"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#b8913f"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#1f1612"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5a4326"
+
+[menu_style.glow]
+color = "#d9482f"
+opacity = 0.5
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "gothic", size = 44, width = 1, color = "#b8913f"}
+dividers = {width = 1, color = "#b8913f", opacity = 0.4}
+brushed_metal = {opacity = 0.2}
+vignette = {color = "#000000", opacity = 0.4, reach = 20}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "clank", volume = 0.12, pitch = 0.8}
+open = {kind = "clank", volume = 0.25, pitch = 0.7}
+close = {kind = "swish", volume = 0.04, pitch = 0.6}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "clank", volume = 0.1}
+
+[rumble.menu]
+step = {strength = 0.11, length_ms = 18}
+pick = {strength = 0.41, length_ms = 35}
+open = {strength = 0.09, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.27, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.07, length_ms = 14}
+pick = {strength = 0.27, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.27, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.27, length_ms = 60}

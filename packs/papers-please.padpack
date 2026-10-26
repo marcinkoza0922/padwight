@@ -1,0 +1,363 @@
+format = 20
+macros = []
+overlay_font = "Silkscreen"
+
+[pack]
+id = "f5f6e70d-7395-4da6-a09d-30d01673d5ba"
+name = "Papers, Please"
+version = "1.0"
+author = "Padwight"
+description = "Papers, Please on an Xbox-style pad. The game takes only the mouse, so the right stick moves the pointer and the left stick nudges it; hold RT or A to drag documents and stamps, Y toggles inspection mode. Start is the menu. Overlays in booth brown, document paper and stamp red. The \"Papers, Please + Gyro\" profile also moves the pointer by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "239030"
+profile = "Papers, Please"
+
+[[rules]]
+kind = "executable"
+value = "PapersPlease.exe"
+profile = "Papers, Please"
+
+[[rules]]
+kind = "executable"
+value = "PapersPlease.x86_64"
+profile = "Papers, Please"
+
+[[profiles]]
+name = "Papers, Please"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {mouse = "Right"}
+North = {keys = ["KEY_TAB"]}
+Start = {keys = ["KEY_ESC"]}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The game is played with the mouse alone. The right stick {rs} moves the pointer and the left stick {ls} moves it slowly, for a small line of text on a document.
+Hold {rt} or {south} to drag: hand papers across the desk, pull out the stamp tray, slide documents back to the entrant. Let go to drop. A quick press clicks: the loudspeaker, the shutter, a stamp.
+{north} toggles inspection mode (Tab), where you click two lines that don't match to question the entrant. The key is from memory and unchecked; if it doesn't answer, click the inspect button at the bottom right of the desk.
+{lt} or {east} right-clicks. {start} opens the menu.
+The game has no key settings, and the Vita release was played by touch, so there was no console layout to copy. The Linux executable name is a guess.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:hand} Click · {b}hold to drag{/b}"}
+"trigger:Left" = {text = "Right-click"}
+"button:South" = {text = "Click · hold to drag"}
+"button:East" = {text = "Right-click"}
+"button:North" = {text = "{icon:search} {b}Inspect{/b}"}
+"button:Start" = {text = "{icon:pause} Menu"}
+
+
+[[profiles]]
+name = "Papers, Please + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {mouse = "Right"}
+North = {keys = ["KEY_TAB"]}
+Start = {keys = ["KEY_ESC"]}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The game is played with the mouse alone. The right stick {rs} moves the pointer and the left stick {ls} moves it slowly, for a small line of text on a document.
+Hold {rt} or {south} to drag: hand papers across the desk, pull out the stamp tray, slide documents back to the entrant. Let go to drop. A quick press clicks: the loudspeaker, the shutter, a stamp.
+{north} toggles inspection mode (Tab), where you click two lines that don't match to question the entrant. The key is from memory and unchecked; if it doesn't answer, click the inspect button at the bottom right of the desk.
+{lt} or {east} right-clicks. {start} opens the menu.
+The game has no key settings, and the Vita release was played by touch, so there was no console layout to copy. The Linux executable name is a guess.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:hand} Click · {b}hold to drag{/b}"}
+"trigger:Left" = {text = "Right-click"}
+"button:South" = {text = "Click · hold to drag"}
+"button:East" = {text = "Right-click"}
+"button:North" = {text = "{icon:search} {b}Inspect{/b}"}
+"button:Start" = {text = "{icon:pause} Menu"}
+"combo:button:Select+button:Start" = {text = "Pause gyro (hold)"}
+
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#2a2320"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#cbbd98"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#a3322a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#6e5f4f"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#1a1513"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#7a6a52"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[keyboard_style.ornament]
+paper = {opacity = 0.35, on = "items"}
+
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#2a2320"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#cbbd98"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#a3322a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#6e5f4f"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#1a1513"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#7a6a52"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[numpad_style.ornament]
+paper = {opacity = 0.35, on = "items"}
+
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#2a2320"
+opacity = 0.93
+
+[media_style.items]
+color = "#cbbd98"
+opacity = 0.95
+
+[media_style.selected]
+color = "#a3322a"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#6e5f4f"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#1a1513"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#7a6a52"
+
+[media_style.type]
+letter_spacing = 1
+
+[media_style.ornament]
+paper = {opacity = 0.35, on = "items"}
+
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#2a2320"
+opacity = 0.93
+
+[menu_style.items]
+color = "#cbbd98"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#a3322a"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#6e5f4f"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#1a1513"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#7a6a52"
+
+[menu_style.glow]
+color = "#d0453a"
+opacity = 0.35
+blur = 12
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+paper = {opacity = 0.4, on = "items"}
+frame = {kind = "brackets", size = 10, width = 2, color = "#a3322a"}
+
+
+[motion]
+keyboard = "retro"
+numpad = "retro"
+menu = "retro"
+media = "retro"
+offer = "retro"
+info = "retro"
+log = "retro"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 0.9}
+pick = {kind = "thud", volume = 0.28, pitch = 0.8}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.06, pitch = 1.0}
+pick = {kind = "typewriter", volume = 0.12}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.06, pitch = 1.0}
+pick = {kind = "typewriter", volume = 0.12}
+
+[sounds.media]
+pick = {kind = "thud", volume = 0.22, pitch = 0.9}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

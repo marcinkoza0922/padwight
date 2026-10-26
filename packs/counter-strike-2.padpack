@@ -1,0 +1,753 @@
+format = 20
+macros = []
+overlay_font = "Titillium Web"
+
+[pack]
+id = "14c16b7a-f56b-43c2-bda4-68bcac2da99b"
+name = "Counter-Strike 2"
+version = "1.0"
+author = "Padwight"
+description = "Counter-Strike 2 on an Xbox-style pad, for the game's default keys. A uses and defuses, B jumps, X reloads, Y takes out grenades, RT fires and LT is the scope or alternate fire. A light push of the left stick walks quietly, L3 toggles crouch and R3 pings. Hold LB for the weapon ring, RB switches to your last weapon (hold it to talk), the D-pad opens the buy menu, holds the scoreboard and cycles weapons, and Select lists chat, the radio and the team menu. The game has no controller support. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "730"
+profile = "Counter-Strike 2"
+
+[[rules]]
+kind = "executable"
+value = "cs2"
+profile = "Counter-Strike 2"
+
+[[rules]]
+kind = "executable"
+value = "cs2.exe"
+profile = "Counter-Strike 2"
+
+[[profiles]]
+name = "Counter-Strike 2"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_4"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_Q"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { mouse = "Middle" }
+Select = { open_menu = "Comms" }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_B"] }
+DpadDown = { keys = ["KEY_TAB"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.RightBumper]
+long_press = { keys = ["KEY_K"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 5800.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and closes the buy menu and other screens.
+{south} uses and, held, defuses the bomb. {east} jumps, {west} reloads, {north} takes out your grenades (press again to cycle them). A light push of the left stick {ls} walks quietly (Shift), and {l3} toggles crouch.
+{lt} is the right mouse button: it steps through a sniper's zoom levels, or the knife's and pistols' alternate attack. The game toggles the scope, so there's no slower aim while it's held.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to your last weapon; hold {rb} for voice chat (K). {left} and {right} step through weapons.
+{up} opens the buy menu, and hold {down} for the scoreboard. {select} opens a list for team and all chat, the radio, inspecting or dropping your weapon and picking a team. {r3} pings where you look.
+Chat needs typing: pick it from {select}, then {guide} + {west} opens the on-screen keyboard.
+Valve's servers and anti-cheat: the pad reaches the game as an ordinary keyboard and mouse, which VAC allows. Valve kicks players whose inputs are automated (snap tap, one press doing several moves), so this setup has no macros. If a match ever kicks you for it, take the walk zone off the left stick.
+These are the game's default keys, written from memory and not checked in the game. If you rebound keys in Settings, change the buttons here to match. The gyro's real-world turn assumes the game's default sensitivity of 1.25; set the full turn to 16364 divided by your sensitivity.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push: walk" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Scope / alt fire" }
+"button:South" = { text = "Use · hold: defuse" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:grenade} Grenades" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Last weapon" }
+"gesture:button:RightBumper:long_press" = { text = "{icon:microphone} Voice" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Ping" }
+"button:DpadUp" = { text = "{icon:money} Buy menu" }
+"button:DpadDown" = { text = "Scoreboard" }
+"button:Select" = { text = "{icon:radio} Comms" }
+"button:Start" = { text = "Menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next weapon"
+
+[[profiles]]
+name = "Counter-Strike 2 + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_4"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_Q"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { mouse = "Middle" }
+Select = { open_menu = "Comms" }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_B"] }
+DpadDown = { keys = ["KEY_TAB"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.RightBumper]
+long_press = { keys = ["KEY_K"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 5800.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 13091.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+{start} (Escape) opens the game's menu and closes the buy menu and other screens.
+{south} uses and, held, defuses the bomb. {east} jumps, {west} reloads, {north} takes out your grenades (press again to cycle them). A light push of the left stick {ls} walks quietly (Shift), and {l3} toggles crouch.
+{lt} is the right mouse button: it steps through a sniper's zoom levels, or the knife's and pistols' alternate attack. The game toggles the scope, so there's no slower aim while it's held.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to your last weapon; hold {rb} for voice chat (K). {left} and {right} step through weapons.
+{up} opens the buy menu, and hold {down} for the scoreboard. {select} opens a list for team and all chat, the radio, inspecting or dropping your weapon and picking a team. {r3} pings where you look.
+Chat needs typing: pick it from {select}, then {guide} + {west} opens the on-screen keyboard.
+Valve's servers and anti-cheat: the pad reaches the game as an ordinary keyboard and mouse, which VAC allows. Valve kicks players whose inputs are automated (snap tap, one press doing several moves), so this setup has no macros. If a match ever kicks you for it, take the walk zone off the left stick.
+These are the game's default keys, written from memory and not checked in the game. If you rebound keys in Settings, change the buttons here to match. The gyro's real-world turn assumes the game's default sensitivity of 1.25; set the full turn to 16364 divided by your sensitivity.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push: walk" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Scope / alt fire" }
+"button:South" = { text = "Use · hold: defuse" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:grenade} Grenades" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Last weapon" }
+"gesture:button:RightBumper:long_press" = { text = "{icon:microphone} Voice" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Ping" }
+"button:DpadUp" = { text = "{icon:money} Buy menu" }
+"button:DpadDown" = { text = "Scoreboard" }
+"button:Select" = { text = "{icon:radio} Comms" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next weapon"
+
+[[profiles]]
+name = "Counter-Strike 2 + Flick stick"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_4"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_Q"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { mouse = "Middle" }
+Select = { open_menu = "Comms" }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_B"] }
+DpadDown = { keys = ["KEY_TAB"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.RightBumper]
+long_press = { keys = ["KEY_K"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 13091.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 13091.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+{start} (Escape) opens the game's menu and closes the buy menu and other screens.
+{south} uses and, held, defuses the bomb. {east} jumps, {west} reloads, {north} takes out your grenades (press again to cycle them). A light push of the left stick {ls} walks quietly (Shift), and {l3} toggles crouch.
+{lt} is the right mouse button: it steps through a sniper's zoom levels, or the knife's and pistols' alternate attack. The game toggles the scope, so there's no slower aim while it's held.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to your last weapon; hold {rb} for voice chat (K). {left} and {right} step through weapons.
+{up} opens the buy menu, and hold {down} for the scoreboard. {select} opens a list for team and all chat, the radio, inspecting or dropping your weapon and picking a team. {r3} pings where you look.
+Chat needs typing: pick it from {select}, then {guide} + {west} opens the on-screen keyboard.
+Valve's servers and anti-cheat: the pad reaches the game as an ordinary keyboard and mouse, which VAC allows. Valve kicks players whose inputs are automated (snap tap, one press doing several moves), so this setup has no macros. If a match ever kicks you for it, take the walk zone off the left stick.
+These are the game's default keys, written from memory and not checked in the game. If you rebound keys in Settings, change the buttons here to match. The gyro's real-world turn assumes the game's default sensitivity of 1.25; set the full turn to 16364 divided by your sensitivity.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push: walk" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Scope / alt fire" }
+"button:South" = { text = "Use · hold: defuse" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:grenade} Grenades" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "Last weapon" }
+"gesture:button:RightBumper:long_press" = { text = "{icon:microphone} Voice" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "Ping" }
+"button:DpadUp" = { text = "{icon:money} Buy menu" }
+"button:DpadDown" = { text = "Scoreboard" }
+"button:Select" = { text = "{icon:radio} Comms" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next weapon"
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:rifle} Primary {color:#8b96a3}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:pistol} Pistol {color:#8b96a3}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:dagger} Knife {color:#8b96a3}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:grenade} Grenades {color:#8b96a3}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:bomb} {color:orange}C4{/color} {color:#8b96a3}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:eye} Inspect"
+action = { keys = ["KEY_F"] }
+
+[[menus.items]]
+label = "{icon:drop-item} {color:gray}Drop{/color}"
+action = { keys = ["KEY_G"] }
+
+[menus.style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#101317"
+opacity = 0.9
+
+[menus.style.items]
+color = "#1d2229"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#d69a35"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#e8b04a"
+opacity = 0.45
+
+[menus.style.gradient]
+color = "#161b21"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#353d47"
+
+[menus.style.glow]
+color = "#e8b04a"
+opacity = 0.3
+blur = 20
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[[menus]]
+name = "Comms"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:messages} Team chat"
+action = { keys = ["KEY_U"] }
+
+[[menus.items]]
+label = "{icon:messages} All chat"
+action = { keys = ["KEY_Y"] }
+
+[[menus.items]]
+label = "{icon:radio} Radio"
+action = { keys = ["KEY_Z"] }
+
+[[menus.items]]
+label = "{icon:eye} Inspect weapon"
+action = { keys = ["KEY_F"] }
+
+[[menus.items]]
+label = "{icon:drop-item} Drop weapon"
+action = { keys = ["KEY_G"] }
+
+[[menus.items]]
+label = "{icon:people} Choose team"
+action = { keys = ["KEY_M"] }
+
+[menus.style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#101317"
+opacity = 0.9
+
+[menus.style.items]
+color = "#1d2229"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#d69a35"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#e8b04a"
+opacity = 0.45
+
+[menus.style.gradient]
+color = "#161b21"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#353d47"
+
+[menus.style.glow]
+color = "#e8b04a"
+opacity = 0.3
+blur = 20
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[keyboard_style]
+corners = 0.2
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#101317"
+opacity = 0.9
+
+[keyboard_style.items]
+color = "#1d2229"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#d69a35"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#e8b04a"
+opacity = 0.45
+
+[keyboard_style.gradient]
+color = "#161b21"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#353d47"
+
+[keyboard_style.type]
+case = "upper"
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#101317"
+opacity = 0.9
+
+[numpad_style.items]
+color = "#1d2229"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#d69a35"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#e8b04a"
+opacity = 0.45
+
+[numpad_style.gradient]
+color = "#161b21"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#353d47"
+
+[numpad_style.type]
+case = "upper"
+letter_spacing = 1
+
+[media_style]
+corners = 0.2
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#101317"
+opacity = 0.9
+
+[media_style.items]
+color = "#1d2229"
+opacity = 0.95
+
+[media_style.selected]
+color = "#d69a35"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#e8b04a"
+opacity = 0.45
+
+[media_style.gradient]
+color = "#161b21"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#353d47"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#101317"
+opacity = 0.9
+
+[menu_style.items]
+color = "#1d2229"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#d69a35"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#e8b04a"
+opacity = 0.45
+
+[menu_style.gradient]
+color = "#161b21"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#353d47"
+
+[menu_style.glow]
+color = "#e8b04a"
+opacity = 0.3
+blur = 20
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 1
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.08, pitch = 1.2}
+pick = {kind = "casing", volume = 0.25}
+open = {kind = "latch", volume = 0.15}
+close = {kind = "swish", volume = 0.03, pitch = 1.4}
+
+[sounds.guide]
+open = {kind = "radio", volume = 0.1}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.08, pitch = 1.2}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.08, pitch = 1.2}
+pick = {kind = "beep", volume = 0.15, pitch = 1.1}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

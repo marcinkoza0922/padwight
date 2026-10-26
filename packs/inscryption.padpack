@@ -1,0 +1,461 @@
+format = 20
+macros = []
+overlay_font = "Special Elite"
+
+[pack]
+id = "1beb61b8-44ef-464a-91b4-e1bdea6f9ace"
+name = "Inscryption"
+version = "1.0"
+author = "Padwight"
+description = "Inscryption on an Xbox-style pad. The right stick moves the pointer and RT or A clicks to play cards and ring the bell; LT or B right-clicks. The left stick and the D-pad look around the cabin and walk. A third profile passes the controller through for a build that reads it. Overlays in candlelit wood and shadow."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "1092790"
+profile = "Inscryption"
+
+[[rules]]
+kind = "executable"
+value = "Inscryption.exe"
+profile = "Inscryption"
+
+[[rules]]
+kind = "executable"
+value = "Inscryption.x86_64"
+profile = "Inscryption"
+
+[[profiles]]
+name = "Inscryption"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {mouse = "Right"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {keys = ["KEY_UP"]}
+DpadDown = {keys = ["KEY_DOWN"]}
+DpadLeft = {keys = ["KEY_LEFT"]}
+DpadRight = {keys = ["KEY_RIGHT"]}
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.5
+
+[profiles.left_stick.action.ring]
+sectors = 4
+start_angle = 0.0
+inner_radius = 0.4
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer; {rt} or {south} clicks to pick up a card, play it, ring the bell and use what is on the table. {lt} or {east} right-clicks.
+The left stick {ls} presses W, A, S and D: look up and down and around the cabin, and walk in the other acts. The {dpad} presses the arrow keys, which do the same.
+{start} opens the pause menu, which also closes it.
+If your copy of the game reads the controller itself (the console update brought pad support to some builds), pick the Inscryption (game's own pad support) profile, which passes the controller through. Media controls: {guide} + {lb}.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Look / walk (WASD)"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:candle} Click"}
+"trigger:Left" = {text = "Right-click"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Right-click"}
+"button:Start" = {text = "Pause menu"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown", "button:DpadLeft", "button:DpadRight"]
+text = "Arrow keys (look)"
+
+
+[[profiles]]
+name = "Inscryption + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {mouse = "Right"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {keys = ["KEY_UP"]}
+DpadDown = {keys = ["KEY_DOWN"]}
+DpadLeft = {keys = ["KEY_LEFT"]}
+DpadRight = {keys = ["KEY_RIGHT"]}
+
+[profiles.left_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.5
+
+[profiles.left_stick.action.ring]
+sectors = 4
+start_angle = 0.0
+inner_radius = 0.4
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer; {rt} or {south} clicks to pick up a card, play it, ring the bell and use what is on the table. {lt} or {east} right-clicks.
+The left stick {ls} presses W, A, S and D: look up and down and around the cabin, and walk in the other acts. The {dpad} presses the arrow keys, which do the same.
+{start} opens the pause menu, which also closes it.
+If your copy of the game reads the controller itself (the console update brought pad support to some builds), pick the Inscryption (game's own pad support) profile, which passes the controller through. Media controls: {guide} + {lb}.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Look / walk (WASD)"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:candle} Click"}
+"trigger:Left" = {text = "Right-click"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Right-click"}
+"button:Start" = {text = "Pause menu"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown", "button:DpadLeft", "button:DpadRight"]
+text = "Arrow keys (look)"
+
+
+[[profiles]]
+name = "Inscryption (game's own pad support)"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The controller goes to the game as it is, for a build of Inscryption that reads a gamepad itself. If the game ignores the pad, switch back to the Inscryption profile, which plays it with the mouse and keys.
+{guide} still works over the game: {guide} + {lb} opens the media controls.'''
+
+[keyboard_style]
+corners = 0.08
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#140e0a"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#3a2b20"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c98d3a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#6b5437"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#0a0705"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4a3a2a"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[keyboard_style.ornament]
+wood = {opacity = 0.3}
+vignette = {color = "#000000", opacity = 0.5, reach = 25}
+
+
+[numpad_style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#140e0a"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#3a2b20"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c98d3a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#6b5437"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#0a0705"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4a3a2a"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[numpad_style.ornament]
+wood = {opacity = 0.3}
+vignette = {color = "#000000", opacity = 0.5, reach = 25}
+
+
+[media_style]
+corners = 0.08
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#140e0a"
+opacity = 0.93
+
+[media_style.items]
+color = "#3a2b20"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c98d3a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#6b5437"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#0a0705"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4a3a2a"
+
+[media_style.type]
+letter_spacing = 1
+
+[media_style.ornament]
+wood = {opacity = 0.3}
+vignette = {color = "#000000", opacity = 0.5, reach = 25}
+
+
+[menu_style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#140e0a"
+opacity = 0.93
+
+[menu_style.items]
+color = "#3a2b20"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c98d3a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#6b5437"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#0a0705"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4a3a2a"
+
+[menu_style.glow]
+color = "#ffb04a"
+opacity = 0.6
+blur = 24
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+wood = {opacity = 0.35}
+vignette = {color = "#000000", opacity = 0.65, reach = 30}
+grain = {opacity = 0.12, size = 1, animated = false}
+
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "card", volume = 0.08, pitch = 0.9}
+pick = {kind = "wood", volume = 0.12, pitch = 0.8, reverb = 0.15}
+
+[sounds.keyboard]
+step = {kind = "card", volume = 0.07, pitch = 1.0}
+pick = {kind = "typewriter", volume = 0.12}
+
+[sounds.numpad]
+step = {kind = "card", volume = 0.07, pitch = 1.0}
+pick = {kind = "typewriter", volume = 0.12}
+
+[sounds.media]
+pick = {kind = "card", volume = 0.1}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

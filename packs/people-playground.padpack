@@ -1,0 +1,524 @@
+format = 20
+macros = []
+overlay_font = "Inter"
+
+[pack]
+id = "1e25413a-9b2d-4df3-be9c-f8bcfe73d01c"
+name = "People Playground"
+version = "1.0"
+author = "Padwight"
+description = "People Playground on an Xbox-style pad. The right stick moves the pointer; hold RT or A to grab and drag, LT or B right-clicks. The left stick pans the camera and the D-pad zooms, undoes and deletes. LB and RB turn what you hold, X activates it, Y pauses time. Select lists copy and paste. Overlays in the game's plain dark panels. The \"People Playground + Gyro\" profile also moves the pointer by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "1118200"
+profile = "People Playground"
+
+[[rules]]
+kind = "executable"
+value = "People Playground.exe"
+profile = "People Playground"
+
+[[profiles]]
+name = "People Playground"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {mouse = "Right"}
+West = {keys = ["KEY_F"]}
+North = {keys = ["KEY_SPACE"]}
+LeftBumper = {keys = ["KEY_Q"]}
+RightBumper = {keys = ["KEY_E"]}
+LeftStick = {mouse = "Middle"}
+Select = {open_menu = "Edit"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_LEFTCTRL", "KEY_Z"]}
+DpadRight = {keys = ["KEY_DELETE"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.3
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer. Hold {rt} or {south} to grab a thing and drag it; let go to drop it. {lt} or {east} right-clicks, for a thing's context menu.
+The left stick {ls} pans the camera (WASD); click {l3} and move the pointer to drag the view instead. {up} and {down} zoom (the wheel).
+While dragging, hold {lb} or {rb} to turn the thing (Q and E). {west} activates what is under the pointer (F): fire a gun, start an engine.
+{north} pauses time (Space). {left} undoes (Ctrl+Z) and {right} deletes the selection. {select} lists copy, paste, undo and delete.
+{start} opens the menu. Naming a save needs typing: {guide} + {west} opens the on-screen keyboard.
+The keys are remembered defaults, unchecked on an install; the game lets you change them in its settings, so if one doesn't answer, check there.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan camera (WASD)"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:hand} Grab · drag"}
+"trigger:Left" = {text = "Right-click (context)"}
+"button:South" = {text = "Grab · drag"}
+"button:East" = {text = "Right-click"}
+"button:West" = {text = "{icon:bolt} {b}Activate{/b}"}
+"button:North" = {text = "{icon:pause} Pause time"}
+"button:LeftStick" = {text = "Drag the view"}
+"button:Select" = {text = "Copy, paste, undo"}
+"button:Start" = {text = "Menu"}
+"button:DpadLeft" = {text = "{icon:rotate-left} Undo"}
+"button:DpadRight" = {text = "{icon:trash} {color:red}Delete{/color}"}
+
+[[profiles.guide.merged]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "{icon:rotate} Turn held thing"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "{icon:search} Zoom"
+
+
+[[profiles]]
+name = "People Playground + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {mouse = "Right"}
+West = {keys = ["KEY_F"]}
+North = {keys = ["KEY_SPACE"]}
+LeftBumper = {keys = ["KEY_Q"]}
+RightBumper = {keys = ["KEY_E"]}
+LeftStick = {mouse = "Middle"}
+Select = {open_menu = "Edit"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_LEFTCTRL", "KEY_Z"]}
+DpadRight = {keys = ["KEY_DELETE"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.3
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer. Hold {rt} or {south} to grab a thing and drag it; let go to drop it. {lt} or {east} right-clicks, for a thing's context menu.
+The left stick {ls} pans the camera (WASD); click {l3} and move the pointer to drag the view instead. {up} and {down} zoom (the wheel).
+While dragging, hold {lb} or {rb} to turn the thing (Q and E). {west} activates what is under the pointer (F): fire a gun, start an engine.
+{north} pauses time (Space). {left} undoes (Ctrl+Z) and {right} deletes the selection. {select} lists copy, paste, undo and delete.
+{start} opens the menu. Naming a save needs typing: {guide} + {west} opens the on-screen keyboard.
+The keys are remembered defaults, unchecked on an install; the game lets you change them in its settings, so if one doesn't answer, check there.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan camera (WASD)"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:hand} Grab · drag"}
+"trigger:Left" = {text = "Right-click (context)"}
+"button:South" = {text = "Grab · drag"}
+"button:East" = {text = "Right-click"}
+"button:West" = {text = "{icon:bolt} {b}Activate{/b}"}
+"button:North" = {text = "{icon:pause} Pause time"}
+"button:LeftStick" = {text = "Drag the view"}
+"button:Select" = {text = "Copy, paste, undo"}
+"button:Start" = {text = "Menu"}
+"button:DpadLeft" = {text = "{icon:rotate-left} Undo"}
+"button:DpadRight" = {text = "{icon:trash} {color:red}Delete{/color}"}
+"combo:button:Select+button:Start" = {text = "Pause gyro (hold)"}
+
+[[profiles.guide.merged]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "{icon:rotate} Turn held thing"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "{icon:search} Zoom"
+
+
+[[menus]]
+name = "Edit"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:box} Copy {box}Ctrl+C{/box}"
+action = {keys = ["KEY_LEFTCTRL", "KEY_C"]}
+
+[[menus.items]]
+label = "{icon:load-in} Paste {box}Ctrl+V{/box}"
+action = {keys = ["KEY_LEFTCTRL", "KEY_V"]}
+
+[[menus.items]]
+label = "{icon:rotate-left} Undo {box}Ctrl+Z{/box}"
+action = {keys = ["KEY_LEFTCTRL", "KEY_Z"]}
+
+[[menus.items]]
+label = "{icon:trash} {color:red}Delete selection{/color}"
+action = {keys = ["KEY_DELETE"]}
+
+[menus.style]
+corners = 0.12
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1c1f24"
+opacity = 0.93
+
+[menus.style.items]
+color = "#2e333a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#e8e8e8"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#5b636d"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#14161a"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#454c55"
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#5b636d", opacity = 0.5}
+
+
+[keyboard_style]
+corners = 0.12
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1c1f24"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#2e333a"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#e8e8e8"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#5b636d"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#14161a"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#454c55"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+
+[numpad_style]
+corners = 0.12
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1c1f24"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#2e333a"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#e8e8e8"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#5b636d"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#14161a"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#454c55"
+
+[numpad_style.type]
+letter_spacing = 0
+
+
+[media_style]
+corners = 0.12
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1c1f24"
+opacity = 0.93
+
+[media_style.items]
+color = "#2e333a"
+opacity = 0.95
+
+[media_style.selected]
+color = "#e8e8e8"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#5b636d"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#14161a"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#454c55"
+
+[media_style.type]
+letter_spacing = 0
+
+
+[menu_style]
+corners = 0.12
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1c1f24"
+opacity = 0.93
+
+[menu_style.items]
+color = "#2e333a"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#e8e8e8"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#5b636d"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#14161a"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#454c55"
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#5b636d", opacity = 0.5}
+
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.07, pitch = 1.0}
+pick = {kind = "thud", volume = 0.22, pitch = 1.1}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.06, pitch = 1.1}
+pick = {kind = "keys", volume = 0.1}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.06, pitch = 1.1}
+pick = {kind = "keys", volume = 0.1}
+
+[sounds.media]
+pick = {kind = "thud", volume = 0.18, pitch = 1.1}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

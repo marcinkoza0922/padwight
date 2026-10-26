@@ -115,8 +115,8 @@ action = { mouse = "Left" }
 
 [profiles.guide]
 notes = '''{start} (Escape) opens the game's menu and backs out of every screen in it.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one.
-{a} uses doors and switches, {x} reloads in mods that have it, {b} jumps in mods and maps that allow it, and {l3} toggles crouch.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {north} to the previous one.
+{south} uses doors and switches, {west} reloads in mods that have it, {east} jumps in mods and maps that allow it, and {l3} toggles crouch.
 {lt} is the alternate fire, or aim down sights in mods that use it. The right stick turns more slowly while it is held. {r3} is the zoom key.
 The d-pad {dpad} sends the arrow keys, for the menus, the automap and the console's history.
 Quick save is a double tap of {start}, and quick load is a long press of {start}.
@@ -246,8 +246,8 @@ sensitivity = 15.0
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
 {start} (Escape) opens the game's menu and backs out of every screen in it.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one.
-{a} uses doors and switches, {x} reloads in mods that have it, {b} jumps in mods and maps that allow it, and {l3} toggles crouch.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {north} to the previous one.
+{south} uses doors and switches, {west} reloads in mods that have it, {east} jumps in mods and maps that allow it, and {l3} toggles crouch.
 {lt} is the alternate fire, or aim down sights in mods that use it. The right stick turns more slowly while it is held. {r3} is the zoom key.
 The d-pad {dpad} sends the arrow keys, for the menus, the automap and the console's history.
 Quick save is a double tap of {start}, and quick load is a long press of {start}.
@@ -384,8 +384,8 @@ sensitivity = 22.0
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
 Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming.
 {start} (Escape) opens the game's menu and backs out of every screen in it.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one.
-{a} uses doors and switches, {x} reloads in mods that have it, {b} jumps in mods and maps that allow it, and {l3} toggles crouch.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {north} to the previous one.
+{south} uses doors and switches, {west} reloads in mods that have it, {east} jumps in mods and maps that allow it, and {l3} toggles crouch.
 {lt} is the alternate fire, or aim down sights in mods that use it. The right stick turns more slowly while it is held. {r3} is the zoom key.
 The d-pad {dpad} sends the arrow keys, for the menus, the automap and the console's history.
 Quick save is a double tap of {start}, and quick load is a long press of {start}.

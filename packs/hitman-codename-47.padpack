@@ -110,7 +110,7 @@ noise_threshold = 1.0
 
 [profiles.guide]
 notes = '''Hitman: Codename 47's keys here are the defaults from the Blood Money manual, not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.
-{a} carries out the action (hold it for the action list); {x} picks up an item (hold it for the list); {b} drops an item (hold it to throw). {y} reloads.
+{south} carries out the action (hold it for the action list); {west} picks up an item (hold it for the list); {east} drops an item (hold it to throw). {north} reloads.
 {rt} fires. {lt} is the right mouse button: tap it to holster or draw the weapon, hold it for the inventory and let go on the item you want. {lb} and {rb} scroll through actions, items and the map.
 {l3} toggles crouch and sneak. A light push on the left stick {ls} walks; push it all the way to run. Click {r3} for the sniper scope and binoculars.
 The D-pad is the arrow keys, which the game's menus need. {select} is the map and {start} the menu.'''
@@ -228,7 +228,7 @@ sensitivity = 15.0
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
 Hitman: Codename 47's keys here are the defaults from the Blood Money manual, not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.
-{a} carries out the action (hold it for the action list); {x} picks up an item (hold it for the list); {b} drops an item (hold it to throw). {y} reloads.
+{south} carries out the action (hold it for the action list); {west} picks up an item (hold it for the list); {east} drops an item (hold it to throw). {north} reloads.
 {rt} fires. {lt} is the right mouse button: tap it to holster or draw the weapon, hold it for the inventory and let go on the item you want. {lb} and {rb} scroll through actions, items and the map.
 {l3} toggles crouch and sneak. A light push on the left stick {ls} walks; push it all the way to run. Click {r3} for the sniper scope and binoculars.
 The D-pad is the arrow keys, which the game's menus need. {select} is the map and {start} the menu.'''
@@ -352,7 +352,7 @@ sensitivity = 22.0
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming.
 Hitman: Codename 47's keys here are the defaults from the Blood Money manual, not checked in the game. If a button does nothing, compare the game's Controls screen with the keys here.
-{a} carries out the action (hold it for the action list); {x} picks up an item (hold it for the list); {b} drops an item (hold it to throw). {y} reloads.
+{south} carries out the action (hold it for the action list); {west} picks up an item (hold it for the list); {east} drops an item (hold it to throw). {north} reloads.
 {rt} fires. {lt} is the right mouse button: tap it to holster or draw the weapon, hold it for the inventory and let go on the item you want. {lb} and {rb} scroll through actions, items and the map.
 {l3} toggles crouch and sneak. A light push on the left stick {ls} walks; push it all the way to run. Click {r3} for the sniper scope and binoculars.
 The D-pad is the arrow keys, which the game's menus need. {select} is the map and {start} the menu.'''

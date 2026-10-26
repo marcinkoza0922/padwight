@@ -1,0 +1,405 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "6a2f9d4e-18c7-4b03-a5e2-c94d7f1b8e20"
+name = "Pathfinder: Kingmaker"
+version = "1.0"
+author = "Padwight"
+description = "Pathfinder: Kingmaker on an Xbox-style pad, for the game's mouse and keyboard controls. The right stick moves the pointer, the left stick pans the camera, RT or A left-clicks and LT right-clicks. B pauses, R3 switches turn-based mode as on the console edition, hold X to highlight what you can use and Y is the inventory. LB and RB turn the camera and the D-pad zooms. Select lists the character sheet, spellbook, journal, map and formation. Start is the menu and backs out of every screen; double tap it to quick save, hold it to quick load. Overlays in forest green and old gold."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "640820"
+profile = "Pathfinder: Kingmaker"
+
+[[rules]]
+kind = "executable"
+value = "Kingmaker.exe"
+profile = "Pathfinder: Kingmaker"
+
+[[rules]]
+kind = "executable"
+value = "Kingmaker.x86_64"
+profile = "Pathfinder: Kingmaker"
+
+[[profiles]]
+name = "Pathfinder: Kingmaker"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_TAB"] }
+North = { keys = ["KEY_I"] }
+LeftBumper = { keys = ["KEY_Q"] }
+RightBumper = { keys = ["KEY_E"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+RightStick = { keys = ["KEY_R"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_J"] }
+DpadRight = { keys = ["KEY_M"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F5"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The PC game has no controller support (the 2020 Definitive Edition's pad interface came to the PS4 and Xbox One only), so this plays the PC game with the pointer. The right stick {rs} moves it; {rt} or {south} is a left click (move, attack, use, talk) and {lt} a right click (cancel, inspect). Drag with {rt} held to box-select the party.
+{east} pauses and unpauses, which is how real-time fights are played: pause, give orders, unpause. {r3} switches to turn-based mode and back, as clicking the right stick does on the console edition. Hold {west} to highlight doors, loot and people you can use.
+The left stick {ls} pans the camera, {lb} and {rb} turn it and {up} and {down} zoom (and scroll lists). {north} opens the inventory, {left} the journal and {right} the map; {select} lists the screens, including the character sheet, spellbook and formation. Pick party members by clicking their portraits.
+{start} (Escape) closes every screen and opens the menu in play; double tap it to {color:green}quick save{/color} and hold it to quick load. Naming a hero or a kingdom: {guide} + {west} opens the on-screen keyboard.
+The keys are the game's defaults as remembered, not checked on an install: WASD to pan, Q and E to turn the camera, Space to pause, Tab to highlight, I, C, B, J, M and F for the screens, R for turn-based mode (added with the Enhanced Plus Edition), F5 and F9 to save and load. If one doesn't answer, check Options, Controls and change the buttons here to match. The Windows executable is from Discord's list; the Linux one (Kingmaker.x86_64) is a guess. The Steam app id is the wiki's.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Pan the camera" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Click: move, attack, use" }
+"trigger:Left" = { text = "Right click (cancel)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "{icon:pause} {b}Pause{/b}" }
+"button:West" = { text = "{icon:eye} Hold: highlight" }
+"button:North" = { text = "{icon:bag} Inventory" }
+"button:LeftBumper" = { text = "{icon:rotate-left} Turn camera" }
+"button:RightBumper" = { text = "{icon:rotate} Turn camera" }
+"button:RightStick" = { text = "{icon:hourglass} Turn-based mode" }
+"button:Select" = { text = "{icon:book} Character, spells, formation" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"button:DpadLeft" = { text = "{icon:scroll} Journal" }
+"button:DpadRight" = { text = "{icon:map} Map" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom · scroll lists"
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:bag} Inventory"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "{icon:person} Character sheet"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "{icon:book} Spellbook"
+action = { keys = ["KEY_B"] }
+
+[[menus.items]]
+label = "{icon:scroll} Journal"
+action = { keys = ["KEY_J"] }
+
+[[menus.items]]
+label = "{icon:map} Map"
+action = { keys = ["KEY_M"] }
+
+[[menus.items]]
+label = "{icon:formation} Formation"
+action = { keys = ["KEY_F"] }
+
+[menus.style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0f140f"
+opacity = 0.93
+
+[menus.style.items]
+color = "#1f2a1d"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#8a6a24"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b08d3e"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#0a0d09"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3a4a32"
+
+[menus.style.glow]
+color = "#d9b45a"
+opacity = 0.45
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#b08d3e"}
+paper = {opacity = 0.15}
+vignette = {color = "#000000", opacity = 0.45, reach = 25}
+
+[keyboard_style]
+corners = 0.08
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0f140f"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#1f2a1d"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#8a6a24"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#b08d3e"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#0a0d09"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3a4a32"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[keyboard_style.ornament]
+paper = {opacity = 0.12}
+
+[numpad_style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0f140f"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#1f2a1d"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#8a6a24"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#b08d3e"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#0a0d09"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3a4a32"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[numpad_style.ornament]
+paper = {opacity = 0.12}
+
+[media_style]
+corners = 0.08
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0f140f"
+opacity = 0.93
+
+[media_style.items]
+color = "#1f2a1d"
+opacity = 0.95
+
+[media_style.selected]
+color = "#8a6a24"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#b08d3e"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#0a0d09"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3a4a32"
+
+[media_style.type]
+letter_spacing = 1
+
+[media_style.ornament]
+paper = {opacity = 0.12}
+
+[menu_style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0f140f"
+opacity = 0.93
+
+[menu_style.items]
+color = "#1f2a1d"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#8a6a24"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#b08d3e"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#0a0d09"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3a4a32"
+
+[menu_style.glow]
+color = "#d9b45a"
+opacity = 0.45
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#b08d3e"}
+paper = {opacity = 0.15}
+vignette = {color = "#000000", opacity = 0.45, reach = 25}
+
+[motion]
+keyboard = "stagger"
+numpad = "stagger"
+menu = "stagger"
+media = "stagger"
+offer = "stagger"
+info = "stagger"
+log = "stagger"
+
+[sounds.menu]
+step = {kind = "pluck", volume = 0.1, pitch = 1.0}
+pick = {kind = "clank", volume = 0.12, pitch = 1.1}
+open = {kind = "page", volume = 0.08}
+close = {kind = "page", volume = 0.06, pitch = 0.8}
+
+[sounds.numpad]
+step = {kind = "pluck", volume = 0.08, pitch = 1.0}
+pick = {kind = "latch", volume = 0.1}
+
+[sounds.keyboard]
+step = {kind = "pluck", volume = 0.08, pitch = 1.0}
+pick = {kind = "keys", volume = 0.15}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}

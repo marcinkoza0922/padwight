@@ -1,0 +1,437 @@
+format = 20
+macros = []
+overlay_font = "Special Elite"
+
+[pack]
+id = "ed821094-bb8b-45f7-a4fa-3a75fd404ce5"
+name = "The Binding of Isaac"
+version = "1.0"
+author = "Padwight"
+description = "The original Flash Binding of Isaac on an Xbox-style pad, laid out like Rebirth: the left stick walks, the right stick or the face buttons cry tears, RT uses the active item, LT drops a bomb and RB takes a pill or uses a card. Start pauses. A second profile passes the controller through for the IsaacRecomp port, which reads it. Overlays in torn basement paper and blood red."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "113200"
+profile = "The Binding of Isaac"
+
+[[rules]]
+kind = "executable"
+value = "Isaac.exe"
+profile = "The Binding of Isaac"
+
+[[rules]]
+kind = "executable"
+value = "binding_of_isaac.exe"
+profile = "The Binding of Isaac"
+
+[[rules]]
+kind = "executable"
+value = "isaac"
+profile = "The Binding of Isaac"
+
+[[rules]]
+kind = "executable"
+value = "IsaacRecomp.exe"
+profile = "The Binding of Isaac (game's own pad support)"
+
+[[profiles]]
+name = "The Binding of Isaac"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+North = {keys = ["KEY_UP"]}
+South = {keys = ["KEY_DOWN"]}
+West = {keys = ["KEY_LEFT"]}
+East = {keys = ["KEY_RIGHT"]}
+RightBumper = {keys = ["KEY_Q"]}
+Select = {keys = ["KEY_ENTER"]}
+Start = {keys = ["KEY_P"]}
+DpadUp = {keys = ["KEY_UP"]}
+DpadDown = {keys = ["KEY_DOWN"]}
+DpadLeft = {keys = ["KEY_LEFT"]}
+DpadRight = {keys = ["KEY_RIGHT"]}
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_ESC"]
+
+[profiles.gestures.Select.long_press]
+keys = ["KEY_F"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.3
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.2
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action.ring]
+sectors = 4
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.right_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.right_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.right_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.right_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = {keys = ["KEY_E"]}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {keys = ["KEY_SPACE"]}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The layout follows the pad scheme of the later Rebirth, so it feels the same.
+The left stick {ls} walks (WASD). Cry tears with the right stick {rs}, the face buttons or the {dpad}: they press the arrow keys, so {north} fires up, {south} down, {west} left and {east} right. Tears go one way at a time.
+{rt} uses your active item (Space), {lt} drops a bomb (E) and {rb} takes your pill or uses your card (Q).
+{start} pauses (P); hold {start} for Escape. {select} presses Enter, and holding it toggles full screen (F), which the game only takes on the title and pause screens. The arrows move through the menus.
+The keys are the game's remembered defaults, unchecked on an install, as is the Linux executable name. The Flash game has no key settings.
+The IsaacRecomp port reads a controller itself; for it the pack picks the game's own pad support profile, which passes the controller through.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Walk (WASD)"}
+"stick:Right" = {text = "{icon:drop} Cry tears"}
+"trigger:Right" = {text = "{icon:star} {b}Active item{/b}"}
+"trigger:Left" = {text = "{icon:bomb} Bomb"}
+"button:RightBumper" = {text = "{icon:pill} Pill / card"}
+"button:Select" = {text = "Enter"}
+"gesture:button:Select:long_press" = {text = "Full screen"}
+"button:Start" = {text = "{icon:pause} Pause"}
+"gesture:button:Start:long_press" = {text = "Escape"}
+
+[[profiles.guide.merged]]
+inputs = ["button:North", "button:East", "button:South", "button:West"]
+text = "{icon:drop} Tears up, right, down, left"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown", "button:DpadLeft", "button:DpadRight"]
+text = "Tears (arrow keys)"
+
+
+[[profiles]]
+name = "The Binding of Isaac (game's own pad support)"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The controller goes to the game as it is, for the IsaacRecomp port, which reads a gamepad through SDL. If the game ignores the pad, switch back to The Binding of Isaac profile, which plays it with the keys.
+{guide} still works over the game: {guide} + {lb} opens the media controls.'''
+
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#d6c39c"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#c2a97c"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#7a1d16"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 3
+color = "#4a3426"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#b2956a"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 2
+color = "#5c4332"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+[keyboard_style.ornament]
+paper = {opacity = 0.55}
+vignette = {color = "#3a2414", opacity = 0.35, reach = 20}
+
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#d6c39c"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#c2a97c"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#7a1d16"
+opacity = 1.0
+
+[numpad_style.border]
+width = 3
+color = "#4a3426"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#b2956a"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 2
+color = "#5c4332"
+
+[numpad_style.type]
+letter_spacing = 0
+
+[numpad_style.ornament]
+paper = {opacity = 0.55}
+vignette = {color = "#3a2414", opacity = 0.35, reach = 20}
+
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#d6c39c"
+opacity = 0.93
+
+[media_style.items]
+color = "#c2a97c"
+opacity = 0.95
+
+[media_style.selected]
+color = "#7a1d16"
+opacity = 1.0
+
+[media_style.border]
+width = 3
+color = "#4a3426"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#b2956a"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 2
+color = "#5c4332"
+
+[media_style.type]
+letter_spacing = 0
+
+[media_style.ornament]
+paper = {opacity = 0.55}
+vignette = {color = "#3a2414", opacity = 0.35, reach = 20}
+
+
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#d6c39c"
+opacity = 0.93
+
+[menu_style.items]
+color = "#c2a97c"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#7a1d16"
+opacity = 1.0
+
+[menu_style.border]
+width = 3
+color = "#4a3426"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#b2956a"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 2
+color = "#5c4332"
+
+[menu_style.glow]
+color = "#b0281e"
+opacity = 0.35
+blur = 14
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+paper = {opacity = 0.6}
+vignette = {color = "#3a2414", opacity = 0.4, reach = 22}
+
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "page", volume = 0.05, pitch = 1.3, length = 0.5}
+pick = {kind = "drop", volume = 0.14, pitch = 0.8}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.06, pitch = 0.9}
+pick = {kind = "drop", volume = 0.1}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.06, pitch = 0.9}
+pick = {kind = "drop", volume = 0.1}
+
+[sounds.media]
+pick = {kind = "drop", volume = 0.1}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

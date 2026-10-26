@@ -1,0 +1,826 @@
+format = 20
+macros = []
+overlay_font = "Titillium Web"
+
+[pack]
+id = "d65e0acd-38c2-466c-a846-c99c08e4c246"
+name = "Scrap Mechanic"
+version = "1.0"
+author = "Padwight"
+description = "Scrap Mechanic on an Xbox-style pad, for the game's default keys. RT uses the tool in hand, LT is its right-click and aims, X uses and sits, A jumps, B crouches (toggle), Y opens the inventory, RB rotates a part, L3 sprints (toggle), R3 reloads. Hold LB for the hotbar, which is also a seat's controls. Hold Select for the Driving mode: RT forward, LT back, the left stick steers. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "ScrapMechanic.exe"
+profile = "Scrap Mechanic"
+
+[[rules]]
+kind = "steam_app_id"
+value = "387990"
+profile = "Scrap Mechanic"
+
+[[profiles]]
+name = "Scrap Mechanic"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_SPACE"] }
+East = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+West = { keys = ["KEY_E"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Hotbar" }
+RightBumper = { keys = ["KEY_Q"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTSHIFT"] } } }
+RightStick = { keys = ["KEY_R"] }
+DpadUp = { keys = ["KEY_M"] }
+DpadDown = { keys = ["KEY_ENTER"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.Select]
+long_press = { mode = "Driving" }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 2400.0
+accel = 0.4
+y_scale = 0.75
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{rt} uses the tool in hand: place a part, swing the hammer, paint, connect, fire the spud gun. {lt} is its right-click (aim, erase, the lift's options); holding it also slows the right stick for aiming.
+{west} uses and sits down, {south} jumps, {east} crouches (a toggle), {l3} sprints (a toggle). {rb} rotates the part you're placing, {r3} reloads.
+Hold {lb} for the hotbar and pick a slot with the right stick {rs}; {left} and {right} step through it. In a seat, the hotbar slots are the seat's controls.
+{north} opens the inventory and crafting, where the right stick {rs} moves the cursor and {rt} clicks. {up} is the map, {down} chat.
+Hold {select} for the Driving mode once you sit in a seat: {rt} drives forward, {lt} back, {ls} steers. Hold {select} again to get back on your feet. {select} also lists the screens.
+Naming a creation or chatting: {guide} + {west} opens the on-screen keyboard. The rotate, reload and map keys are inferred; check Options → Controls if one doesn't answer.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look / cursor" }
+"trigger:Right" = { text = "{icon:wrench} Use tool / place" }
+"trigger:Left" = { text = "{icon:crosshair} Aim / right-click" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Crouch (toggle)" }
+"button:West" = { text = "{icon:hand} Use / sit" }
+"button:North" = { text = "{icon:bag} Inventory, crafting" }
+"button:LeftBumper" = { text = "Hold: hotbar" }
+"button:RightBumper" = { text = "{icon:rotate} Rotate part" }
+"button:LeftStick" = { text = "Sprint (toggle)" }
+"button:RightStick" = { text = "Reload" }
+"button:DpadUp" = { text = "{icon:map} Map" }
+"button:DpadDown" = { text = "{icon:messages} Chat" }
+"button:Select" = { text = "Screens" }
+"gesture:button:Select:long_press" = { text = "{icon:car} Driving mode" }
+"button:Start" = { text = "Menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next hotbar slot"
+
+[[profiles]]
+name = "Scrap Mechanic + Gyro"
+combos = [
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_clutch"},
+    {buttons = ["Select", "Start"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_SPACE"] }
+East = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+West = { keys = ["KEY_E"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Hotbar" }
+RightBumper = { keys = ["KEY_Q"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTSHIFT"] } } }
+RightStick = { keys = ["KEY_R"] }
+DpadUp = { keys = ["KEY_M"] }
+DpadDown = { keys = ["KEY_ENTER"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.Select]
+long_press = { mode = "Driving" }
+
+[profiles.gestures.LeftStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 2400.0
+accel = 0.4
+y_scale = 0.75
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 28.0
+
+[profiles.guide]
+notes = '''Gyro aims like the mouse. Hold {lb} and {rb} together to pause it while you reposition the controller, press {select} and {start} together to switch it off or on, and hold {l3} to recenter.
+{rt} uses the tool in hand: place a part, swing the hammer, paint, connect, fire the spud gun. {lt} is its right-click (aim, erase, the lift's options); holding it also slows the right stick for aiming.
+{west} uses and sits down, {south} jumps, {east} crouches (a toggle), {l3} sprints (a toggle). {rb} rotates the part you're placing, {r3} reloads.
+Hold {lb} for the hotbar and pick a slot with the right stick {rs}; {left} and {right} step through it. In a seat, the hotbar slots are the seat's controls.
+{north} opens the inventory and crafting, where the right stick {rs} moves the cursor and {rt} clicks. {up} is the map, {down} chat.
+Hold {select} for the Driving mode once you sit in a seat: {rt} drives forward, {lt} back, {ls} steers. Hold {select} again to get back on your feet. {select} also lists the screens.
+Naming a creation or chatting: {guide} + {west} opens the on-screen keyboard. The rotate, reload and map keys are inferred; check Options → Controls if one doesn't answer.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look / cursor" }
+"trigger:Right" = { text = "{icon:wrench} Use tool / place" }
+"trigger:Left" = { text = "{icon:crosshair} Aim / right-click" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Crouch (toggle)" }
+"button:West" = { text = "{icon:hand} Use / sit" }
+"button:North" = { text = "{icon:bag} Inventory, crafting" }
+"button:LeftBumper" = { text = "Hold: hotbar" }
+"button:RightBumper" = { text = "{icon:rotate} Rotate part" }
+"button:LeftStick" = { text = "Sprint (toggle)" }
+"button:RightStick" = { text = "Reload" }
+"button:DpadUp" = { text = "{icon:map} Map" }
+"button:DpadDown" = { text = "{icon:messages} Chat" }
+"button:Select" = { text = "Screens" }
+"gesture:button:Select:long_press" = { text = "{icon:car} Driving mode" }
+"button:Start" = { text = "Menu" }
+"combo:button:LeftBumper+button:RightBumper" = { text = "Pause gyro (hold)" }
+"combo:button:Select+button:Start" = { text = "Gyro on / off" }
+"gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next hotbar slot"
+
+[[profiles]]
+name = "Scrap Mechanic + Flick stick"
+combos = [
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_clutch"},
+    {buttons = ["Select", "Start"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+South = { keys = ["KEY_SPACE"] }
+East = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+West = { keys = ["KEY_E"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Hotbar" }
+RightBumper = { keys = ["KEY_Q"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTSHIFT"] } } }
+RightStick = { keys = ["KEY_R"] }
+DpadUp = { keys = ["KEY_M"] }
+DpadDown = { keys = ["KEY_ENTER"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.Select]
+long_press = { mode = "Driving" }
+
+[profiles.gestures.LeftStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''The right stick {rs} is a flick stick: push it to turn that way at once, then rotate it to keep turning. Gyro aims up, down and finely.
+Gyro aims like the mouse. Hold {lb} and {rb} together to pause it while you reposition the controller, press {select} and {start} together to switch it off or on, and hold {l3} to recenter.
+{rt} uses the tool in hand: place a part, swing the hammer, paint, connect, fire the spud gun. {lt} is its right-click (aim, erase, the lift's options); holding it also slows the right stick for aiming.
+{west} uses and sits down, {south} jumps, {east} crouches (a toggle), {l3} sprints (a toggle). {rb} rotates the part you're placing, {r3} reloads.
+Hold {lb} for the hotbar and pick a slot with the right stick {rs}; {left} and {right} step through it. In a seat, the hotbar slots are the seat's controls.
+{north} opens the inventory and crafting, where the right stick {rs} moves the cursor and {rt} clicks. {up} is the map, {down} chat.
+Hold {select} for the Driving mode once you sit in a seat: {rt} drives forward, {lt} back, {ls} steers. Hold {select} again to get back on your feet. {select} also lists the screens.
+Naming a creation or chatting: {guide} + {west} opens the on-screen keyboard. The rotate, reload and map keys are inferred; check Options → Controls if one doesn't answer.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look / cursor" }
+"trigger:Right" = { text = "{icon:wrench} Use tool / place" }
+"trigger:Left" = { text = "{icon:crosshair} Aim / right-click" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Crouch (toggle)" }
+"button:West" = { text = "{icon:hand} Use / sit" }
+"button:North" = { text = "{icon:bag} Inventory, crafting" }
+"button:LeftBumper" = { text = "Hold: hotbar" }
+"button:RightBumper" = { text = "{icon:rotate} Rotate part" }
+"button:LeftStick" = { text = "Sprint (toggle)" }
+"button:RightStick" = { text = "Reload" }
+"button:DpadUp" = { text = "{icon:map} Map" }
+"button:DpadDown" = { text = "{icon:messages} Chat" }
+"button:Select" = { text = "Screens" }
+"gesture:button:Select:long_press" = { text = "{icon:car} Driving mode" }
+"button:Start" = { text = "Menu" }
+"combo:button:LeftBumper+button:RightBumper" = { text = "Pause gyro (hold)" }
+"combo:button:Select+button:Start" = { text = "Gyro on / off" }
+"gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next hotbar slot"
+
+[[layers]]
+name = "Aim"
+indicator = "off"
+
+[layers.right_stick]
+deadzone = 0.1
+curve = 2.6
+key_threshold = 0.5
+
+[layers.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+y_scale = 0.75
+
+[[modes]]
+name = "Driving"
+indicator = "name"
+
+[modes.indicator_style]
+position = "top_center"
+scale = 0.7
+
+[modes.indicator_style.background]
+color = "#25272c"
+opacity = 0.75
+
+[modes.indicator_style.items]
+color = "#393c44"
+opacity = 0.95
+
+[modes.indicator_style.selected]
+color = "#f39a1d"
+opacity = 1.0
+
+[modes.gestures.Select]
+long_press = { mode = "Driving" }
+
+[modes.left_trigger.action.button]
+threshold = 0.2
+action = { keys = ["KEY_S"] }
+
+[modes.right_trigger.action.button]
+threshold = 0.2
+action = { keys = ["KEY_W"] }
+
+[[menus]]
+name = "Hotbar"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Slot 1 {color:#f39a1d}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "Slot 2 {color:#f39a1d}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "Slot 3 {color:#f39a1d}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "Slot 4 {color:#f39a1d}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "Slot 5 {color:#f39a1d}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "Slot 6 {color:#f39a1d}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "Slot 7 {color:#f39a1d}7{/color}"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "Slot 8 {color:#f39a1d}8{/color}"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "Slot 9 {color:#f39a1d}9{/color}"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "Slot 10 {color:#f39a1d}0{/color}"
+action = { keys = ["KEY_0"] }
+
+[menus.style]
+corners = 0.25
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#25272c"
+opacity = 0.93
+
+[menus.style.items]
+color = "#393c44"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#f39a1d"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#f3c11d"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#1b1c20"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#50545e"
+
+[menus.style.glow]
+color = "#ffc35a"
+opacity = 0.45
+blur = 16
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[menus.style.ornament]
+bevel = {depth = 0.5}
+stripes = {colors = ["#25272c", "#f3c11d", "#25272c"], direction = "diagonal", opacity = 0.06, size = 18, on = "background"}
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:bag} Inventory"
+action = { keys = ["KEY_TAB"] }
+
+[[menus.items]]
+label = "{icon:map} Map"
+action = { keys = ["KEY_M"] }
+
+[[menus.items]]
+label = "{icon:messages} Chat"
+action = { keys = ["KEY_ENTER"] }
+
+[[menus.items]]
+label = "{icon:car} Driving mode"
+action = { mode = "Driving" }
+
+[menus.style]
+corners = 0.25
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#25272c"
+opacity = 0.93
+
+[menus.style.items]
+color = "#393c44"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#f39a1d"
+opacity = 1.0
+
+[menus.style.border]
+width = 2
+color = "#f3c11d"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#1b1c20"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#50545e"
+
+[menus.style.glow]
+color = "#ffc35a"
+opacity = 0.45
+blur = 16
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[menus.style.ornament]
+bevel = {depth = 0.5}
+stripes = {colors = ["#25272c", "#f3c11d", "#25272c"], direction = "diagonal", opacity = 0.06, size = 18, on = "background"}
+
+[keyboard_style]
+corners = 0.25
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#25272c"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#393c44"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#f39a1d"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#f3c11d"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#1b1c20"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#50545e"
+
+[keyboard_style.ornament]
+bevel = {depth = 0.5}
+
+[numpad_style]
+corners = 0.25
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#25272c"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#393c44"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#f39a1d"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#f3c11d"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#1b1c20"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#50545e"
+
+[numpad_style.ornament]
+bevel = {depth = 0.5}
+
+[media_style]
+corners = 0.25
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#25272c"
+opacity = 0.93
+
+[media_style.items]
+color = "#393c44"
+opacity = 0.95
+
+[media_style.selected]
+color = "#f39a1d"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#f3c11d"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#1b1c20"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#50545e"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style]
+corners = 0.25
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#25272c"
+opacity = 0.93
+
+[menu_style.items]
+color = "#393c44"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#f39a1d"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#f3c11d"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#1b1c20"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#50545e"
+
+[menu_style.glow]
+color = "#ffc35a"
+opacity = 0.45
+blur = 16
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style.ornament]
+bevel = {depth = 0.5}
+stripes = {colors = ["#25272c", "#f3c11d", "#25272c"], direction = "diagonal", opacity = 0.06, size = 18, on = "background"}
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.1, pitch = 0.9}
+pick = {kind = "clank", volume = 0.2, pitch = 1.1}
+open = {kind = "switch", volume = 0.08}
+close = {kind = "switch", volume = 0.06, pitch = 0.85}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.08}
+pick = {kind = "keys", volume = 0.25}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.08}
+pick = {kind = "clank", volume = 0.15, pitch = 1.3}
+
+[sounds.guide]
+pick = {kind = "clank", volume = 0.15, pitch = 1.1}
+
+[rumble.menu]
+step = {strength = 0.13, length_ms = 18}
+pick = {strength = 0.5, length_ms = 35}
+open = {strength = 0.11, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.09, length_ms = 14}
+pick = {strength = 0.33, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.09, length_ms = 14}
+pick = {strength = 0.33, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.33, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.33, length_ms = 60}

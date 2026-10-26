@@ -61,6 +61,7 @@ profile = "Deus Ex"       # must be a profile of this pack
 ```
 
 - `executable`: the program's file name. For Wine/Proton games this is the Windows `.exe`.
+  A value with folders in it (`Game Dev Tycoon/nw.exe`) matches the end of the program's path instead, whole folder names only, for a program whose name other games share. It wins over a rule naming only the file.
 - `steam_app_id`: the Steam App ID, as a string.
 - `window_class`: the window's class.
 - `enabled = false` turns a rule off without deleting it. It is written only when false.
@@ -305,6 +306,8 @@ Menu kinds (`menus.kind`):
 | Button | `kind = "buttons"` | A list whose items can also be picked with their own `button`. |
 | Carousel | `[menus.kind.carousel] controls = "Bumpers"` | Cycles with `Bumpers`, `Triggers`, `DPad`, `LeftStick` or `RightStick`. |
 | Grid | `[menus.kind.grid] columns = 4` | Up to 6 columns and 6 rows. |
+
+A grid item's `span = {columns = 2, rows = 1}` merges it over the cells to its right and below. Item `i` sits in cell `i` (left to right, then down), and the items whose cells it covers are hidden until it's split again, so a pack fills them with copies of the merged item. The grid has as many cells as items, so a span can't reach past the last item.
 
 A menu item's `action` can be `open_menu = "Name"`, which opens a submenu. Radial menus can't open submenus. `style` also has `items` and `selected` paints, as in the example above. `corners` (0–1, default 0.4) sets how round boxes, keys and panels are: 0 is square and 1 is a circle wherever the shape allows.
 

@@ -1,0 +1,762 @@
+format = 20
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "07f5ee18-fe91-4940-8e90-0aa7c2a88866"
+name = "Raft"
+version = "1.0"
+author = "Padwight"
+description = "Raft on an Xbox-style pad, for the game's default keys. X interacts, A jumps and swims up, B crouches and dives (hold), Y opens the inventory, RT uses the item in hand, LT right-clicks (the hammer's build menu), RB rotates a piece, L3 sprints (toggle). Hold LB for the hotbar; the D-pad steps through it, removes a piece and drops the item. Select lists the notebook and chat. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "Raft.exe"
+profile = "Raft"
+
+[[rules]]
+kind = "steam_app_id"
+value = "648800"
+profile = "Raft"
+
+[[profiles]]
+name = "Raft"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_SPACE"] }
+East = { keys = ["KEY_LEFTCTRL"] }
+West = { keys = ["KEY_E"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Hotbar" }
+RightBumper = { keys = ["KEY_R"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTSHIFT"] } } }
+DpadUp = { keys = ["KEY_X"] }
+DpadDown = { keys = ["KEY_Q"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 2400.0
+accel = 0.4
+y_scale = 0.75
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{west} interacts: pick up debris, use the sail, anchor and wheel, sleep. {south} jumps and swims up, hold {east} to crouch and to dive.
+{rt} uses what's in your hand (hook, spear, rod, hammer); {lt} is the right-click, such as the hammer's build menu. Pick a piece with the right stick {rs}.
+Building: {rb} rotates the piece, {up} removes the one you're looking at.
+Hold {lb} for the hotbar and pick a slot with the right stick {rs}; {left} and {right} step through it. {down} drops the item in hand.
+{north} opens the inventory, where the right stick {rs} moves the cursor and {rt} clicks. {l3} sprints (a toggle).
+{select} lists the inventory, the notebook and chat. Naming a save or chatting: {guide} + {west} opens the on-screen keyboard.
+The remove, drop and notebook keys are inferred: if they don't answer, check them in the game's Settings → Controls.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move / swim" }
+"stick:Right" = { text = "Look / cursor" }
+"trigger:Right" = { text = "{icon:hand} Use item (left click)" }
+"trigger:Left" = { text = "Right click · build menu" }
+"button:South" = { text = "Jump / swim up" }
+"button:East" = { text = "Crouch / dive (hold)" }
+"button:West" = { text = "Interact" }
+"button:North" = { text = "{icon:bag} Inventory" }
+"button:LeftBumper" = { text = "Hold: hotbar" }
+"button:RightBumper" = { text = "{icon:rotate} Rotate piece" }
+"button:LeftStick" = { text = "Sprint (toggle)" }
+"button:DpadUp" = { text = "{icon:hammer} Remove piece" }
+"button:DpadDown" = { text = "{icon:drop-item} Drop item" }
+"button:Select" = { text = "{icon:book} Notebook, chat" }
+"button:Start" = { text = "Menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next hotbar slot"
+
+[[profiles]]
+name = "Raft + Gyro"
+combos = [
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_clutch"},
+    {buttons = ["Select", "Start"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_SPACE"] }
+East = { keys = ["KEY_LEFTCTRL"] }
+West = { keys = ["KEY_E"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Hotbar" }
+RightBumper = { keys = ["KEY_R"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTSHIFT"] } } }
+DpadUp = { keys = ["KEY_X"] }
+DpadDown = { keys = ["KEY_Q"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.LeftStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 2400.0
+accel = 0.4
+y_scale = 0.75
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 28.0
+
+[profiles.guide]
+notes = '''Gyro aims like the mouse. Hold {lb} and {rb} together to pause it while you reposition the controller, press {select} and {start} together to switch it off or on, and hold {l3} to recenter.
+{west} interacts: pick up debris, use the sail, anchor and wheel, sleep. {south} jumps and swims up, hold {east} to crouch and to dive.
+{rt} uses what's in your hand (hook, spear, rod, hammer); {lt} is the right-click, such as the hammer's build menu. Pick a piece with the right stick {rs}.
+Building: {rb} rotates the piece, {up} removes the one you're looking at.
+Hold {lb} for the hotbar and pick a slot with the right stick {rs}; {left} and {right} step through it. {down} drops the item in hand.
+{north} opens the inventory, where the right stick {rs} moves the cursor and {rt} clicks. {l3} sprints (a toggle).
+{select} lists the inventory, the notebook and chat. Naming a save or chatting: {guide} + {west} opens the on-screen keyboard.
+The remove, drop and notebook keys are inferred: if they don't answer, check them in the game's Settings → Controls.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move / swim" }
+"stick:Right" = { text = "Look / cursor" }
+"trigger:Right" = { text = "{icon:hand} Use item (left click)" }
+"trigger:Left" = { text = "Right click · build menu" }
+"button:South" = { text = "Jump / swim up" }
+"button:East" = { text = "Crouch / dive (hold)" }
+"button:West" = { text = "Interact" }
+"button:North" = { text = "{icon:bag} Inventory" }
+"button:LeftBumper" = { text = "Hold: hotbar" }
+"button:RightBumper" = { text = "{icon:rotate} Rotate piece" }
+"button:LeftStick" = { text = "Sprint (toggle)" }
+"button:DpadUp" = { text = "{icon:hammer} Remove piece" }
+"button:DpadDown" = { text = "{icon:drop-item} Drop item" }
+"button:Select" = { text = "{icon:book} Notebook, chat" }
+"button:Start" = { text = "Menu" }
+"combo:button:LeftBumper+button:RightBumper" = { text = "Pause gyro (hold)" }
+"combo:button:Select+button:Start" = { text = "Gyro on / off" }
+"gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next hotbar slot"
+
+[[profiles]]
+name = "Raft + Flick stick"
+combos = [
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_clutch"},
+    {buttons = ["Select", "Start"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+South = { keys = ["KEY_SPACE"] }
+East = { keys = ["KEY_LEFTCTRL"] }
+West = { keys = ["KEY_E"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Hotbar" }
+RightBumper = { keys = ["KEY_R"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTSHIFT"] } } }
+DpadUp = { keys = ["KEY_X"] }
+DpadDown = { keys = ["KEY_Q"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.LeftStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''The right stick {rs} is a flick stick: push it to turn that way at once, then rotate it to keep turning. Gyro aims up, down and finely.
+Gyro aims like the mouse. Hold {lb} and {rb} together to pause it while you reposition the controller, press {select} and {start} together to switch it off or on, and hold {l3} to recenter.
+{west} interacts: pick up debris, use the sail, anchor and wheel, sleep. {south} jumps and swims up, hold {east} to crouch and to dive.
+{rt} uses what's in your hand (hook, spear, rod, hammer); {lt} is the right-click, such as the hammer's build menu. Pick a piece with the right stick {rs}.
+Building: {rb} rotates the piece, {up} removes the one you're looking at.
+Hold {lb} for the hotbar and pick a slot with the right stick {rs}; {left} and {right} step through it. {down} drops the item in hand.
+{north} opens the inventory, where the right stick {rs} moves the cursor and {rt} clicks. {l3} sprints (a toggle).
+{select} lists the inventory, the notebook and chat. Naming a save or chatting: {guide} + {west} opens the on-screen keyboard.
+The remove, drop and notebook keys are inferred: if they don't answer, check them in the game's Settings → Controls.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move / swim" }
+"stick:Right" = { text = "Look / cursor" }
+"trigger:Right" = { text = "{icon:hand} Use item (left click)" }
+"trigger:Left" = { text = "Right click · build menu" }
+"button:South" = { text = "Jump / swim up" }
+"button:East" = { text = "Crouch / dive (hold)" }
+"button:West" = { text = "Interact" }
+"button:North" = { text = "{icon:bag} Inventory" }
+"button:LeftBumper" = { text = "Hold: hotbar" }
+"button:RightBumper" = { text = "{icon:rotate} Rotate piece" }
+"button:LeftStick" = { text = "Sprint (toggle)" }
+"button:DpadUp" = { text = "{icon:hammer} Remove piece" }
+"button:DpadDown" = { text = "{icon:drop-item} Drop item" }
+"button:Select" = { text = "{icon:book} Notebook, chat" }
+"button:Start" = { text = "Menu" }
+"combo:button:LeftBumper+button:RightBumper" = { text = "Pause gyro (hold)" }
+"combo:button:Select+button:Start" = { text = "Gyro on / off" }
+"gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next hotbar slot"
+
+[[menus]]
+name = "Hotbar"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Slot 1 {color:#e0b25c}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "Slot 2 {color:#e0b25c}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "Slot 3 {color:#e0b25c}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "Slot 4 {color:#e0b25c}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "Slot 5 {color:#e0b25c}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "Slot 6 {color:#e0b25c}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "Slot 7 {color:#e0b25c}7{/color}"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "Slot 8 {color:#e0b25c}8{/color}"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "Slot 9 {color:#e0b25c}9{/color}"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "Slot 10 {color:#e0b25c}0{/color}"
+action = { keys = ["KEY_0"] }
+
+[menus.style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0e2a33"
+opacity = 0.93
+
+[menus.style.items]
+color = "#1b4350"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#e0b25c"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c49a5a"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#0a1f27"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2c5c6a"
+
+[menus.style.glow]
+color = "#ffd88a"
+opacity = 0.45
+blur = 16
+
+[menus.style.type]
+letter_spacing = 0
+size = 1.05
+
+[menus.style.ornament]
+wood = {opacity = 0.35}
+dividers = {width = 1, color = "#2c5c6a", opacity = 0.8}
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:bag} Inventory"
+action = { keys = ["KEY_TAB"] }
+
+[[menus.items]]
+label = "{icon:book} Notebook"
+action = { keys = ["KEY_N"] }
+
+[[menus.items]]
+label = "{icon:messages} Chat"
+action = { keys = ["KEY_ENTER"] }
+
+[menus.style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0e2a33"
+opacity = 0.93
+
+[menus.style.items]
+color = "#1b4350"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#e0b25c"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c49a5a"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#0a1f27"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2c5c6a"
+
+[menus.style.glow]
+color = "#ffd88a"
+opacity = 0.45
+blur = 16
+
+[menus.style.type]
+letter_spacing = 0
+size = 1.05
+
+[menus.style.ornament]
+wood = {opacity = 0.35}
+dividers = {width = 1, color = "#2c5c6a", opacity = 0.8}
+
+[keyboard_style]
+corners = 0.3
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0e2a33"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#1b4350"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#e0b25c"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#c49a5a"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#0a1f27"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#2c5c6a"
+
+[keyboard_style.ornament]
+wood = {opacity = 0.3}
+
+[numpad_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0e2a33"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#1b4350"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#e0b25c"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#c49a5a"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#0a1f27"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#2c5c6a"
+
+[numpad_style.ornament]
+wood = {opacity = 0.3}
+
+[media_style]
+corners = 0.3
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0e2a33"
+opacity = 0.93
+
+[media_style.items]
+color = "#1b4350"
+opacity = 0.95
+
+[media_style.selected]
+color = "#e0b25c"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#c49a5a"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#0a1f27"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#2c5c6a"
+
+[media_style.type]
+letter_spacing = 0
+size = 1.05
+
+[menu_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0e2a33"
+opacity = 0.93
+
+[menu_style.items]
+color = "#1b4350"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#e0b25c"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#c49a5a"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#0a1f27"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#2c5c6a"
+
+[menu_style.glow]
+color = "#ffd88a"
+opacity = 0.45
+blur = 16
+
+[menu_style.type]
+letter_spacing = 0
+size = 1.05
+
+[menu_style.ornament]
+wood = {opacity = 0.35}
+dividers = {width = 1, color = "#2c5c6a", opacity = 0.8}
+
+[motion]
+keyboard = "dreamy"
+numpad = "dreamy"
+menu = "dreamy"
+media = "dreamy"
+offer = "dreamy"
+info = "dreamy"
+log = "dreamy"
+
+[sounds.menu]
+step = {kind = "wood", volume = 0.1, pitch = 1.1, length = 0.7}
+pick = {kind = "drop", volume = 0.2, pitch = 0.9}
+open = {kind = "swish", volume = 0.04}
+close = {kind = "swish", volume = 0.03, length = 1.2}
+
+[sounds.keyboard]
+step = {kind = "wood", volume = 0.08, pitch = 1.2, length = 0.6}
+pick = {kind = "knock", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "wood", volume = 0.08, pitch = 1.2, length = 0.6}
+pick = {kind = "knock", volume = 0.2}
+
+[sounds.guide]
+pick = {kind = "drop", volume = 0.15}
+
+[rumble.menu]
+step = {strength = 0.13, length_ms = 18}
+pick = {strength = 0.5, length_ms = 35}
+open = {strength = 0.11, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.09, length_ms = 14}
+pick = {strength = 0.33, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.09, length_ms = 14}
+pick = {strength = 0.33, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.33, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.33, length_ms = 60}

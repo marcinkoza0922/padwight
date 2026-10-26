@@ -1,0 +1,839 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "eebe16e6-6ecb-4384-b008-d4e068ec5058"
+name = "Rust"
+version = "1.0"
+author = "Padwight"
+description = "Rust on an Xbox-style pad, for the game's default keys. A jumps, B crouches (toggle), X uses (hold: options), Y opens the inventory (hold: crafting), RT attacks, LT aims, RB reloads, L3 sprints (toggle), R3 holds free look. Hold LB for the belt, the D-pad steps through it and holds the flashlight and voice. Select lists the map, chat and console; hold it for the Flying mode. Gyro and flick stick profiles are included to try. Rust uses Easy Anti-Cheat: the official servers don't run under Proton."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "RustClient.exe"
+profile = "Rust"
+
+[[rules]]
+kind = "steam_app_id"
+value = "252490"
+profile = "Rust"
+
+[[profiles]]
+name = "Rust"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_SPACE"] }
+East = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+West = { keys = ["KEY_E"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Belt" }
+RightBumper = { keys = ["KEY_R"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTSHIFT"] } } }
+RightStick = { keys = ["KEY_LEFTALT"] }
+DpadUp = { keys = ["KEY_F"] }
+DpadDown = { keys = ["KEY_V"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_Q"] }
+
+[profiles.gestures.Select]
+long_press = { mode = "Flying" }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 2600.0
+accel = 0.5
+y_scale = 0.75
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Rust uses Easy Anti-Cheat. The pad reaches the game as an ordinary keyboard and mouse, but the official servers don't run under Proton, and some community servers ban macros: this pack has none.
+{west} uses and picks up; hold it for the options on a door, box or sleeping bag. {south} jumps, {east} crouches (a toggle) and {l3} sprints (a toggle).
+{rt} attacks and {lt} aims or blocks; holding {lt} also slows the right stick for aiming. {rb} reloads.
+Hold {lb} for the belt and pick a slot with the right stick {rs}. Pick the slot in your hand again to put it away. {left} and {right} step through the belt.
+{north} opens the inventory; hold it for the crafting menu. In both, the right stick {rs} moves the cursor and {rt} clicks.
+{up} is the flashlight or laser, hold {down} to talk. Hold {r3} to look around while running.
+{select} lists the map, crafting, chat and the console. Hold {select} for the Flying mode (minicopter, scrap heli): {rt} climbs and {lt} drops. Hold {select} again to land back on foot.
+Chat and the console need typing: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look / cursor" }
+"trigger:Right" = { text = "{icon:axe} Attack / use tool" }
+"trigger:Left" = { text = "{icon:crosshair} Aim / block" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Crouch (toggle)" }
+"button:West" = { text = "{icon:hand} Use · hold: options" }
+"button:North" = { text = "{icon:bag} Inventory" }
+"gesture:button:North:long_press" = { text = "{icon:hammer} Crafting" }
+"button:LeftBumper" = { text = "Hold: belt" }
+"button:RightBumper" = { text = "Reload" }
+"button:LeftStick" = { text = "Sprint (toggle)" }
+"button:RightStick" = { text = "Free look (hold)" }
+"button:DpadUp" = { text = "{icon:flashlight} Flashlight / laser" }
+"button:DpadDown" = { text = "{icon:microphone} Voice (hold)" }
+"button:Select" = { text = "{icon:map} Map, chat, console" }
+"gesture:button:Select:long_press" = { text = "{icon:helicopter} Flying mode" }
+"button:Start" = { text = "Menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next belt slot"
+
+[[profiles]]
+name = "Rust + Gyro"
+combos = [
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_clutch"},
+    {buttons = ["Select", "Start"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_SPACE"] }
+East = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+West = { keys = ["KEY_E"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Belt" }
+RightBumper = { keys = ["KEY_R"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTSHIFT"] } } }
+RightStick = { keys = ["KEY_LEFTALT"] }
+DpadUp = { keys = ["KEY_F"] }
+DpadDown = { keys = ["KEY_V"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_Q"] }
+
+[profiles.gestures.Select]
+long_press = { mode = "Flying" }
+
+[profiles.gestures.LeftStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 2600.0
+accel = 0.5
+y_scale = 0.75
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 30.0
+
+[profiles.guide]
+notes = '''Gyro aims like the mouse. Hold {lb} and {rb} together to pause it while you reposition the controller, press {select} and {start} together to switch it off or on, and hold {l3} to recenter.
+Rust uses Easy Anti-Cheat. The pad reaches the game as an ordinary keyboard and mouse, but the official servers don't run under Proton, and some community servers ban macros: this pack has none.
+{west} uses and picks up; hold it for the options on a door, box or sleeping bag. {south} jumps, {east} crouches (a toggle) and {l3} sprints (a toggle).
+{rt} attacks and {lt} aims or blocks; holding {lt} also slows the right stick for aiming. {rb} reloads.
+Hold {lb} for the belt and pick a slot with the right stick {rs}. Pick the slot in your hand again to put it away. {left} and {right} step through the belt.
+{north} opens the inventory; hold it for the crafting menu. In both, the right stick {rs} moves the cursor and {rt} clicks.
+{up} is the flashlight or laser, hold {down} to talk. Hold {r3} to look around while running.
+{select} lists the map, crafting, chat and the console. Hold {select} for the Flying mode (minicopter, scrap heli): {rt} climbs and {lt} drops. Hold {select} again to land back on foot.
+Chat and the console need typing: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look / cursor" }
+"trigger:Right" = { text = "{icon:axe} Attack / use tool" }
+"trigger:Left" = { text = "{icon:crosshair} Aim / block" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Crouch (toggle)" }
+"button:West" = { text = "{icon:hand} Use · hold: options" }
+"button:North" = { text = "{icon:bag} Inventory" }
+"gesture:button:North:long_press" = { text = "{icon:hammer} Crafting" }
+"button:LeftBumper" = { text = "Hold: belt" }
+"button:RightBumper" = { text = "Reload" }
+"button:LeftStick" = { text = "Sprint (toggle)" }
+"button:RightStick" = { text = "Free look (hold)" }
+"button:DpadUp" = { text = "{icon:flashlight} Flashlight / laser" }
+"button:DpadDown" = { text = "{icon:microphone} Voice (hold)" }
+"button:Select" = { text = "{icon:map} Map, chat, console" }
+"gesture:button:Select:long_press" = { text = "{icon:helicopter} Flying mode" }
+"button:Start" = { text = "Menu" }
+"combo:button:LeftBumper+button:RightBumper" = { text = "Pause gyro (hold)" }
+"combo:button:Select+button:Start" = { text = "Gyro on / off" }
+"gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next belt slot"
+
+[[profiles]]
+name = "Rust + Flick stick"
+combos = [
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_clutch"},
+    {buttons = ["Select", "Start"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+South = { keys = ["KEY_SPACE"] }
+East = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+West = { keys = ["KEY_E"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Belt" }
+RightBumper = { keys = ["KEY_R"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTSHIFT"] } } }
+RightStick = { keys = ["KEY_LEFTALT"] }
+DpadUp = { keys = ["KEY_F"] }
+DpadDown = { keys = ["KEY_V"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_Q"] }
+
+[profiles.gestures.Select]
+long_press = { mode = "Flying" }
+
+[profiles.gestures.LeftStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 22.0
+
+[profiles.guide]
+notes = '''The right stick {rs} is a flick stick: push it to turn that way at once, then rotate it to keep turning. Gyro aims up, down and finely.
+Gyro aims like the mouse. Hold {lb} and {rb} together to pause it while you reposition the controller, press {select} and {start} together to switch it off or on, and hold {l3} to recenter.
+Rust uses Easy Anti-Cheat. The pad reaches the game as an ordinary keyboard and mouse, but the official servers don't run under Proton, and some community servers ban macros: this pack has none.
+{west} uses and picks up; hold it for the options on a door, box or sleeping bag. {south} jumps, {east} crouches (a toggle) and {l3} sprints (a toggle).
+{rt} attacks and {lt} aims or blocks; holding {lt} also slows the right stick for aiming. {rb} reloads.
+Hold {lb} for the belt and pick a slot with the right stick {rs}. Pick the slot in your hand again to put it away. {left} and {right} step through the belt.
+{north} opens the inventory; hold it for the crafting menu. In both, the right stick {rs} moves the cursor and {rt} clicks.
+{up} is the flashlight or laser, hold {down} to talk. Hold {r3} to look around while running.
+{select} lists the map, crafting, chat and the console. Hold {select} for the Flying mode (minicopter, scrap heli): {rt} climbs and {lt} drops. Hold {select} again to land back on foot.
+Chat and the console need typing: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look / cursor" }
+"trigger:Right" = { text = "{icon:axe} Attack / use tool" }
+"trigger:Left" = { text = "{icon:crosshair} Aim / block" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Crouch (toggle)" }
+"button:West" = { text = "{icon:hand} Use · hold: options" }
+"button:North" = { text = "{icon:bag} Inventory" }
+"gesture:button:North:long_press" = { text = "{icon:hammer} Crafting" }
+"button:LeftBumper" = { text = "Hold: belt" }
+"button:RightBumper" = { text = "Reload" }
+"button:LeftStick" = { text = "Sprint (toggle)" }
+"button:RightStick" = { text = "Free look (hold)" }
+"button:DpadUp" = { text = "{icon:flashlight} Flashlight / laser" }
+"button:DpadDown" = { text = "{icon:microphone} Voice (hold)" }
+"button:Select" = { text = "{icon:map} Map, chat, console" }
+"gesture:button:Select:long_press" = { text = "{icon:helicopter} Flying mode" }
+"button:Start" = { text = "Menu" }
+"combo:button:LeftBumper+button:RightBumper" = { text = "Pause gyro (hold)" }
+"combo:button:Select+button:Start" = { text = "Gyro on / off" }
+"gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next belt slot"
+
+[[layers]]
+name = "Aim"
+indicator = "off"
+
+[layers.right_stick]
+deadzone = 0.1
+curve = 2.6
+key_threshold = 0.5
+
+[layers.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+y_scale = 0.75
+
+[[modes]]
+name = "Flying"
+indicator = "name"
+
+[modes.indicator_style]
+position = "top_center"
+scale = 0.7
+
+[modes.indicator_style.background]
+color = "#1c1915"
+opacity = 0.75
+
+[modes.indicator_style.items]
+color = "#332b23"
+opacity = 0.95
+
+[modes.indicator_style.selected]
+color = "#cd412b"
+opacity = 1.0
+
+[modes.gestures.Select]
+long_press = { mode = "Flying" }
+
+[modes.left_trigger.action.button]
+threshold = 0.2
+action = { keys = ["KEY_LEFTCTRL"] }
+
+[modes.right_trigger.action.button]
+threshold = 0.2
+action = { keys = ["KEY_SPACE"] }
+
+[[menus]]
+name = "Belt"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Slot 1 {color:#cd412b}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "Slot 2 {color:#cd412b}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "Slot 3 {color:#cd412b}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "Slot 4 {color:#cd412b}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "Slot 5 {color:#cd412b}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "Slot 6 {color:#cd412b}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[menus.style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1c1915"
+opacity = 0.93
+
+[menus.style.items]
+color = "#332b23"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#cd412b"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#7a3a24"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#141210"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4c3b2c"
+
+[menus.style.glow]
+color = "#ff6a3d"
+opacity = 0.5
+blur = 16
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "riveted", size = 36, width = 2, color = "#7a3a24"}
+concrete = {opacity = 0.35}
+vignette = {color = "#000000", opacity = 0.45, reach = 22}
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:map} Map"
+action = { keys = ["KEY_G"] }
+
+[[menus.items]]
+label = "{icon:bag} Inventory"
+action = { keys = ["KEY_TAB"] }
+
+[[menus.items]]
+label = "{icon:hammer} Crafting"
+action = { keys = ["KEY_Q"] }
+
+[[menus.items]]
+label = "{icon:messages} Chat"
+action = { keys = ["KEY_ENTER"] }
+
+[[menus.items]]
+label = "{icon:helicopter} Flying mode"
+action = { mode = "Flying" }
+
+[[menus.items]]
+label = "{icon:tech} Console {color:gray}F1{/color}"
+action = { keys = ["KEY_F1"] }
+
+[menus.style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1c1915"
+opacity = 0.93
+
+[menus.style.items]
+color = "#332b23"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#cd412b"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#7a3a24"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#141210"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4c3b2c"
+
+[menus.style.glow]
+color = "#ff6a3d"
+opacity = 0.5
+blur = 16
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "riveted", size = 36, width = 2, color = "#7a3a24"}
+concrete = {opacity = 0.35}
+vignette = {color = "#000000", opacity = 0.45, reach = 22}
+
+[keyboard_style]
+corners = 0.06
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1c1915"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#332b23"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#cd412b"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#7a3a24"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#141210"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4c3b2c"
+
+[keyboard_style.ornament]
+concrete = {opacity = 0.3}
+
+[numpad_style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1c1915"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#332b23"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#cd412b"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#7a3a24"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#141210"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4c3b2c"
+
+[numpad_style.ornament]
+concrete = {opacity = 0.3}
+
+[media_style]
+corners = 0.06
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1c1915"
+opacity = 0.93
+
+[media_style.items]
+color = "#332b23"
+opacity = 0.95
+
+[media_style.selected]
+color = "#cd412b"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#7a3a24"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#141210"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4c3b2c"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1c1915"
+opacity = 0.93
+
+[menu_style.items]
+color = "#332b23"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#cd412b"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#7a3a24"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#141210"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4c3b2c"
+
+[menu_style.glow]
+color = "#ff6a3d"
+opacity = 0.5
+blur = 16
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "riveted", size = 36, width = 2, color = "#7a3a24"}
+concrete = {opacity = 0.35}
+vignette = {color = "#000000", opacity = 0.45, reach = 22}
+
+[motion]
+keyboard = "brutal"
+numpad = "brutal"
+menu = "brutal"
+media = "brutal"
+offer = "brutal"
+info = "brutal"
+log = "brutal"
+
+[sounds.menu]
+step = {kind = "tin", volume = 0.08, pitch = 0.8, length = 0.7}
+pick = {kind = "clank", volume = 0.2}
+open = {kind = "latch", volume = 0.08}
+close = {kind = "latch", volume = 0.06, pitch = 0.8}
+
+[sounds.keyboard]
+step = {kind = "tin", volume = 0.07, pitch = 0.9, length = 0.6}
+pick = {kind = "keys", volume = 0.25}
+
+[sounds.numpad]
+step = {kind = "tin", volume = 0.07, pitch = 0.9, length = 0.6}
+pick = {kind = "clank", volume = 0.15, pitch = 1.2}
+
+[sounds.guide]
+pick = {kind = "clank", volume = 0.15}
+
+[rumble.menu]
+step = {strength = 0.13, length_ms = 18}
+pick = {strength = 0.5, length_ms = 35}
+open = {strength = 0.11, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.09, length_ms = 14}
+pick = {strength = 0.33, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.09, length_ms = 14}
+pick = {strength = 0.33, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.33, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.33, length_ms = 60}

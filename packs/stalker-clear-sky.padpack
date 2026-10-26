@@ -1,0 +1,764 @@
+format = 20
+macros = []
+overlay_font = "Special Elite"
+
+[pack]
+id = "917e9821-7223-4219-b98f-9eb961317d7d"
+name = "S.T.A.L.K.E.R.: Clear Sky"
+version = "1.0"
+author = "Padwight"
+description = "S.T.A.L.K.E.R.: Clear Sky on an Xbox-style pad, for the game's default keys. A uses and, held, sprints, B jumps, X reloads (hold it for ammo type), Y is the flashlight (hold it for night vision), RT fires and LT aims. A light push of the left stick walks, L3 toggles crouch and R3 switches to the attachment. Hold LB for the weapon ring, RB takes out a grenade, the D-pad leans and steps through weapons, and Select opens the inventory (hold it for the PDA). Start is the menu; double tap it to quick save, hold it to quick load. The game has no controller support. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "20510"
+profile = "S.T.A.L.K.E.R.: Clear Sky"
+
+[[rules]]
+kind = "executable"
+value = "STALKER Clear Sky/bin/xrEngine.exe"
+profile = "S.T.A.L.K.E.R.: Clear Sky"
+
+[[rules]]
+kind = "executable"
+value = "Stalker Clear Sky/xrEngine.exe"
+profile = "S.T.A.L.K.E.R.: Clear Sky"
+[[profiles]]
+name = "S.T.A.L.K.E.R.: Clear Sky"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_L"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_4"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_V"] }
+Select = { keys = ["KEY_I"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_X"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_Y"] }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_N"] }
+
+[profiles.gestures.Select]
+long_press = { keys = ["KEY_P"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F6"] }
+long_press = { keys = ["KEY_F7"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1150.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and closes the inventory, the PDA and dialogs. Double tap {start} to quick save (F6) and hold it to quick load (F7).
+{south} uses, talks and picks up; hold {south} to sprint (X). {east} jumps, {west} reloads and a long press of {west} changes ammo type. {north} switches the flashlight, and a long press of {north} night vision (with a suit that has it). A light push of the left stick {ls} walks quietly, and {l3} toggles crouch.
+Hold {lt} to aim down the sights; the game aims only while the right mouse button is held. The right stick turns more finely while it's held.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}: knife, pistol, rifle, grenades, binoculars, bolt and drop. {up} and {down} step through the weapon slots, and {left} and {right} lean. {r3} switches to the grenade launcher or other attachment.
+{rb} takes out a grenade (press again to change type); throw it with {rt}. {select} opens the inventory, and a long press of {select} the PDA.
+In the inventory, trading, the PDA and dialogs the right stick moves the pointer, {rt} clicks and {lt} right-clicks (use, drop and the like). Throw bolts at shimmering air to find anomalies. Technicians upgrade weapons and suits from a menu, played with the pointer.
+The game reads the keyboard in exclusive mode, so other programs don't see its keys; that doesn't stop the pad, which reaches it as a keyboard and mouse. OpenXRay, the open-source engine that runs the game natively on Linux, has gamepad support of its own; this setup is for the original game. The 2025 Enhanced Edition has native controller support and isn't covered here.
+These are the game's default keys, taken to be the same as Shadow of Chernobyl's, written from memory and not checked in the game (sprint, ammo type and attachment especially). Compare them with Options → Controls and change the buttons here to match. The Steam app id is from PCGamingWiki; the executable's folder names are from Discord's detection list and aren't checked on an install. The gyro's real-world turn assumes the default mouse sensitivity of 0.12 and is worked out, not measured; set the full turn to 314 divided by your sensitivity.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push: walk" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "{icon:hand} Use · talk" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Ammo type" }
+"button:North" = { text = "{icon:flashlight} Flashlight" }
+"gesture:button:North:long_press" = { text = "{icon:eye} Night vision" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "{icon:grenade} Grenade" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:rocket} Attachment" }
+"button:Select" = { text = "{icon:bag} Inventory" }
+"gesture:button:Select:long_press" = { text = "{icon:pda} PDA" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next weapon"
+
+[[profiles]]
+name = "S.T.A.L.K.E.R.: Clear Sky + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_L"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_4"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_V"] }
+Select = { keys = ["KEY_I"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_X"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_Y"] }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_N"] }
+
+[profiles.gestures.Select]
+long_press = { keys = ["KEY_P"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F6"] }
+long_press = { keys = ["KEY_F7"] }
+
+[profiles.gestures.LeftStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1150.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 2618.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Press {lb} and {rb} together to switch the gyro off or on, and hold {l3} to recenter it.
+{start} (Escape) opens the game's menu and closes the inventory, the PDA and dialogs. Double tap {start} to quick save (F6) and hold it to quick load (F7).
+{south} uses, talks and picks up; hold {south} to sprint (X). {east} jumps, {west} reloads and a long press of {west} changes ammo type. {north} switches the flashlight, and a long press of {north} night vision (with a suit that has it). A light push of the left stick {ls} walks quietly, and {l3} toggles crouch.
+Hold {lt} to aim down the sights; the game aims only while the right mouse button is held. The right stick turns more finely while it's held.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}: knife, pistol, rifle, grenades, binoculars, bolt and drop. {up} and {down} step through the weapon slots, and {left} and {right} lean. {r3} switches to the grenade launcher or other attachment.
+{rb} takes out a grenade (press again to change type); throw it with {rt}. {select} opens the inventory, and a long press of {select} the PDA.
+In the inventory, trading, the PDA and dialogs the right stick moves the pointer, {rt} clicks and {lt} right-clicks (use, drop and the like). Throw bolts at shimmering air to find anomalies. Technicians upgrade weapons and suits from a menu, played with the pointer.
+The game reads the keyboard in exclusive mode, so other programs don't see its keys; that doesn't stop the pad, which reaches it as a keyboard and mouse. OpenXRay, the open-source engine that runs the game natively on Linux, has gamepad support of its own; this setup is for the original game. The 2025 Enhanced Edition has native controller support and isn't covered here.
+These are the game's default keys, taken to be the same as Shadow of Chernobyl's, written from memory and not checked in the game (sprint, ammo type and attachment especially). Compare them with Options → Controls and change the buttons here to match. The Steam app id is from PCGamingWiki; the executable's folder names are from Discord's detection list and aren't checked on an install. The gyro's real-world turn assumes the default mouse sensitivity of 0.12 and is worked out, not measured; set the full turn to 314 divided by your sensitivity.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push: walk" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "{icon:hand} Use · talk" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Ammo type" }
+"button:North" = { text = "{icon:flashlight} Flashlight" }
+"gesture:button:North:long_press" = { text = "{icon:eye} Night vision" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "{icon:grenade} Grenade" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:rocket} Attachment" }
+"button:Select" = { text = "{icon:bag} Inventory" }
+"gesture:button:Select:long_press" = { text = "{icon:pda} PDA" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next weapon"
+
+[[profiles]]
+name = "S.T.A.L.K.E.R.: Clear Sky + Flick stick"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_L"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_4"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_V"] }
+Select = { keys = ["KEY_I"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_X"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_Y"] }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_N"] }
+
+[profiles.gestures.Select]
+long_press = { keys = ["KEY_P"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F6"] }
+long_press = { keys = ["KEY_F7"] }
+
+[profiles.gestures.LeftStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 2618.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 2618.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Press {lb} and {rb} together to switch the gyro off or on, and hold {l3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+{start} (Escape) opens the game's menu and closes the inventory, the PDA and dialogs. Double tap {start} to quick save (F6) and hold it to quick load (F7).
+{south} uses, talks and picks up; hold {south} to sprint (X). {east} jumps, {west} reloads and a long press of {west} changes ammo type. {north} switches the flashlight, and a long press of {north} night vision (with a suit that has it). A light push of the left stick {ls} walks quietly, and {l3} toggles crouch.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}: knife, pistol, rifle, grenades, binoculars, bolt and drop. {up} and {down} step through the weapon slots, and {left} and {right} lean. {r3} switches to the grenade launcher or other attachment.
+{rb} takes out a grenade (press again to change type); throw it with {rt}. {select} opens the inventory, and a long press of {select} the PDA.
+In the inventory, trading, the PDA and dialogs the right stick moves the pointer, {rt} clicks and {lt} right-clicks (use, drop and the like). Throw bolts at shimmering air to find anomalies. Technicians upgrade weapons and suits from a menu, played with the pointer.
+The game reads the keyboard in exclusive mode, so other programs don't see its keys; that doesn't stop the pad, which reaches it as a keyboard and mouse. OpenXRay, the open-source engine that runs the game natively on Linux, has gamepad support of its own; this setup is for the original game. The 2025 Enhanced Edition has native controller support and isn't covered here.
+These are the game's default keys, taken to be the same as Shadow of Chernobyl's, written from memory and not checked in the game (sprint, ammo type and attachment especially). Compare them with Options → Controls and change the buttons here to match. The Steam app id is from PCGamingWiki; the executable's folder names are from Discord's detection list and aren't checked on an install. The gyro's real-world turn assumes the default mouse sensitivity of 0.12 and is worked out, not measured; set the full turn to 314 divided by your sensitivity.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push: walk" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "{icon:hand} Use · talk" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Ammo type" }
+"button:North" = { text = "{icon:flashlight} Flashlight" }
+"gesture:button:North:long_press" = { text = "{icon:eye} Night vision" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "{icon:grenade} Grenade" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:rocket} Attachment" }
+"button:Select" = { text = "{icon:bag} Inventory" }
+"gesture:button:Select:long_press" = { text = "{icon:pda} PDA" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next weapon"
+
+[[layers]]
+name = "Aim"
+indicator = "off"
+
+[layers.right_stick]
+deadzone = 0.08
+curve = 2.8
+key_threshold = 0.5
+
+[layers.right_stick.action.mouse]
+speed = 1150.0
+accel = 0.0
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:dagger} Knife {color:#9a937a}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:pistol} Pistol {color:#9a937a}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:rifle} Rifle {color:#9a937a}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:grenade} Grenade {color:#9a937a}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:binoculars} Binoculars {color:#9a937a}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:nut} Bolt {color:#9a937a}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:drop-item} {color:gray}Drop{/color}"
+action = { keys = ["KEY_G"] }
+
+[menus.style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#13130f"
+opacity = 0.92
+
+[menus.style.items]
+color = "#24231a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#a88a3e"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#c9a95a"
+opacity = 0.5
+
+[menus.style.gradient]
+color = "#1b1a14"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4a4532"
+
+[menus.style.glow]
+color = "#c9a95a"
+opacity = 0.2
+blur = 20
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#c9a95a"}
+concrete = {opacity = 0.35}
+vignette = {color = "#000000", opacity = 0.55, reach = 28}
+
+[keyboard_style]
+corners = 0.05
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#13130f"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#24231a"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#a88a3e"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#c9a95a"
+opacity = 0.5
+
+[keyboard_style.gradient]
+color = "#1b1a14"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4a4532"
+
+[keyboard_style.type]
+case = "upper"
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#13130f"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#24231a"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#a88a3e"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#c9a95a"
+opacity = 0.5
+
+[numpad_style.gradient]
+color = "#1b1a14"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4a4532"
+
+[numpad_style.type]
+case = "upper"
+letter_spacing = 1
+
+[media_style]
+corners = 0.05
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#13130f"
+opacity = 0.92
+
+[media_style.items]
+color = "#24231a"
+opacity = 0.95
+
+[media_style.selected]
+color = "#a88a3e"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#c9a95a"
+opacity = 0.5
+
+[media_style.gradient]
+color = "#1b1a14"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4a4532"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#13130f"
+opacity = 0.92
+
+[menu_style.items]
+color = "#24231a"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#a88a3e"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#c9a95a"
+opacity = 0.5
+
+[menu_style.gradient]
+color = "#1b1a14"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4a4532"
+
+[menu_style.glow]
+color = "#c9a95a"
+opacity = 0.2
+blur = 20
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 12, width = 2, color = "#c9a95a"}
+concrete = {opacity = 0.35}
+vignette = {color = "#000000", opacity = 0.55, reach = 28}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "geiger", volume = 0.1}
+pick = {kind = "latch", volume = 0.25}
+open = {kind = "radio", volume = 0.08}
+close = {kind = "swish", volume = 0.03, pitch = 0.7}
+
+[sounds.guide]
+open = {kind = "radio", volume = 0.08}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "beep", volume = 0.12, pitch = 0.8}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

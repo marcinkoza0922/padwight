@@ -119,9 +119,9 @@ threshold = 0.3
 action = { mouse = "Left" }
 
 [profiles.guide]
-notes = '''{start} (Escape) opens the game's menu and backs out of every screen in it. In the menu the d-pad {dpad} moves the cursor and {a} picks.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one. {x} picks the Super Shotgun, {b} the Rocket Launcher and {r3} the Axe.
-{a} jumps, and swims up in water. Hold {lt} to run; if the port's Always Run is on, it walks instead. {l3} centres the view.
+notes = '''{start} (Escape) opens the game's menu and backs out of every screen in it. In the menu the d-pad {dpad} moves the cursor and {south} picks.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {north} to the previous one. {west} picks the Super Shotgun, {east} the Rocket Launcher and {r3} the Axe.
+{south} jumps, and swims up in water. Hold {lt} to run; if the port's Always Run is on, it walks instead. {l3} centres the view.
 Quake has no use key, reload or crouch: doors open as you walk into them and buttons by being shot or touched.
 Hold {select} (Tab) for the scoreboard.
 Quick save is a double tap of {start} (F6), and quick load is a long press of {start} (F9).
@@ -249,9 +249,9 @@ sensitivity = 15.0
 
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
-{start} (Escape) opens the game's menu and backs out of every screen in it. In the menu the d-pad {dpad} moves the cursor and {a} picks.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one. {x} picks the Super Shotgun, {b} the Rocket Launcher and {r3} the Axe.
-{a} jumps, and swims up in water. Hold {lt} to run; if the port's Always Run is on, it walks instead. {l3} centres the view.
+{start} (Escape) opens the game's menu and backs out of every screen in it. In the menu the d-pad {dpad} moves the cursor and {south} picks.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {north} to the previous one. {west} picks the Super Shotgun, {east} the Rocket Launcher and {r3} the Axe.
+{south} jumps, and swims up in water. Hold {lt} to run; if the port's Always Run is on, it walks instead. {l3} centres the view.
 Quake has no use key, reload or crouch: doors open as you walk into them and buttons by being shot or touched.
 Hold {select} (Tab) for the scoreboard.
 Quick save is a double tap of {start} (F6), and quick load is a long press of {start} (F9).
@@ -386,9 +386,9 @@ sensitivity = 22.0
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
 Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming.
-{start} (Escape) opens the game's menu and backs out of every screen in it. In the menu the d-pad {dpad} moves the cursor and {a} picks.
-Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {y} to the previous one. {x} picks the Super Shotgun, {b} the Rocket Launcher and {r3} the Axe.
-{a} jumps, and swims up in water. Hold {lt} to run; if the port's Always Run is on, it walks instead. {l3} centres the view.
+{start} (Escape) opens the game's menu and backs out of every screen in it. In the menu the d-pad {dpad} moves the cursor and {south} picks.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}. {rb} switches to the next weapon and {north} to the previous one. {west} picks the Super Shotgun, {east} the Rocket Launcher and {r3} the Axe.
+{south} jumps, and swims up in water. Hold {lt} to run; if the port's Always Run is on, it walks instead. {l3} centres the view.
 Quake has no use key, reload or crouch: doors open as you walk into them and buttons by being shot or touched.
 Hold {select} (Tab) for the scoreboard.
 Quick save is a double tap of {start} (F6), and quick load is a long press of {start} (F9).

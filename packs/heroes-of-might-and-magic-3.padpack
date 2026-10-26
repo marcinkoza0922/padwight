@@ -115,8 +115,8 @@ action = { mouse = "Left" }
 notes = '''The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
 Moving a hero is two clicks, as with a mouse: the first shows the route, the second walks it. The left stick {ls} moves the hero one step with the arrow keys, and in a town it switches to the previous or next town. The d-pad scrolls the map; so does moving the pointer to the screen edge.
 {west} is Enter: it confirms dialogs and centers the map on the hero. {east} is Escape and cancels them; on the map it asks whether to quit, so answer No.
-{y} selects the next hero, {rb} ends the turn (confirm with {west}), {rs} casts a spell. Hold {lb} for hero orders, picking with the right stick.
-Click {ls} to switch to Battle and back. In Battle {y} waits, {x} defends, {rb} picks the next creature, {rs} casts and {lb} opens the combat commands.
+{north} selects the next hero, {rb} ends the turn (confirm with {west}), {rs} casts a spell. Hold {lb} for hero orders, picking with the right stick.
+Click {ls} to switch to Battle and back. In Battle {north} waits, {west} defends, {rb} picks the next creature, {rs} casts and {lb} opens the combat commands.
 Heroes III has no quick save: {start} opens the system options, where S saves and L loads.'''
 
 [profiles.guide.edits]
@@ -222,8 +222,8 @@ notes = '''Hold {select} and {start} together to pause the gyro while you reposi
 The right stick moves the mouse pointer; {rt} or {south} is a left click and {lt} a right click. Hold {guide} and press {west} for the on-screen keyboard when the game asks for a name.
 Moving a hero is two clicks, as with a mouse: the first shows the route, the second walks it. The left stick {ls} moves the hero one step with the arrow keys, and in a town it switches to the previous or next town. The d-pad scrolls the map; so does moving the pointer to the screen edge.
 {west} is Enter: it confirms dialogs and centers the map on the hero. {east} is Escape and cancels them; on the map it asks whether to quit, so answer No.
-{y} selects the next hero, {rb} ends the turn (confirm with {west}), {rs} casts a spell. Hold {lb} for hero orders, picking with the right stick.
-Click {ls} to switch to Battle and back. In Battle {y} waits, {x} defends, {rb} picks the next creature, {rs} casts and {lb} opens the combat commands.
+{north} selects the next hero, {rb} ends the turn (confirm with {west}), {rs} casts a spell. Hold {lb} for hero orders, picking with the right stick.
+Click {ls} to switch to Battle and back. In Battle {north} waits, {west} defends, {rb} picks the next creature, {rs} casts and {lb} opens the combat commands.
 Heroes III has no quick save: {start} opens the system options, where S saves and L loads.'''
 
 [profiles.guide.edits]

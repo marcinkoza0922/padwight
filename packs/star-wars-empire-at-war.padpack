@@ -1,0 +1,834 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "1273c144-ccb4-4dcf-91f0-6f5fa8ed921d"
+name = "Star Wars: Empire at War"
+version = "1.0"
+author = "Padwight"
+description = "Star Wars: Empire at War and Forces of Corruption (Steam Gold Pack) on an Xbox-style pad, for the default keys. The right stick moves the cursor, RT or A left-clicks, LT right-clicks to move and attack, the left stick scrolls the camera. Y is attack, X stop, the d-pad zooms and steps through your units. Hold LB for control groups 1-10 (LB + RB sets one), RB for the unit orders. Select lists the overview, holocron, planet information and chat. Start is the game menu; double-tap it to quick save, hold it to quick load. The \"+ Gyro\" profile also moves the cursor by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "StarWarsG.exe"
+profile = "Star Wars: Empire at War"
+
+[[rules]]
+kind = "executable"
+value = "sweaw.exe"
+profile = "Star Wars: Empire at War"
+
+[[rules]]
+kind = "executable"
+value = "swfoc.exe"
+profile = "Star Wars: Empire at War"
+
+[[rules]]
+kind = "steam_app_id"
+value = "32470"
+profile = "Star Wars: Empire at War"
+
+[[profiles]]
+name = "Star Wars: Empire at War"
+combos = [{buttons = ["LeftBumper", "RightBumper"], action = {open_menu = "Set group"}}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_S"] }
+North = { keys = ["KEY_A"] }
+LeftBumper = { open_menu = "Groups" }
+RightBumper = { open_menu = "Orders" }
+Select = { open_menu = "Interface" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_LEFTCTRL", "KEY_A"] }
+RightStick = { keys = ["KEY_END"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_D"] }
+DpadRight = { keys = ["KEY_F"] }
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F6"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F5"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the cursor: {rt} or {south} selects (left click, hold to drag a box), and {lt} moves or attacks (right click). The left stick {ls} scrolls the camera, {updown} zooms and {r3} resets the camera.
+{north} is attack and {west} stop: press attack, then pick the target with {rt}. {left} and {right} step to the previous and next unit; {l3} selects every unit.
+Hold {lb} for the control groups and aim the right stick {rs} at one: release to select it. Hold {lb} and {rb} together to put the selection in a group instead (Ctrl + number).
+Hold {rb} for the unit orders (guard, move, waypoint, retreat, reinforce, the units of one type, the superweapon), aimed with the right stick {rs}. A unit's own abilities are on its buttons at the bottom of the screen: click them with {rt}.
+{select} lists the tactical overview, the mission holocron, planet information, the player list, chat and the cinematic camera.
+{start} (Esc) is the game menu. Double-tap {start} to quick save and hold it to quick load. {east} cancels and closes.
+The game has no controller support of its own, so the controller works through these keys. They're the defaults as remembered by a community FAQ, not checked on an install: if one does nothing, look in Options, Controls. Hold {guide} and press {west} for the on-screen keyboard (chat, save names).'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Cursor" }
+"stick:Left" = { text = "Scroll the camera" }
+"trigger:Right" = { text = "Left click (select, drag a box)" }
+"trigger:Left" = { text = "Right click (move, attack)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Cancel / close" }
+"button:West" = { text = "{icon:stop} Stop" }
+"button:North" = { text = "{icon:crosshair} Attack" }
+"button:LeftBumper" = { text = "Hold: control groups" }
+"button:RightBumper" = { text = "Hold: unit orders" }
+"button:Select" = { text = "Interface" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "{icon:people} Select all units" }
+"button:RightStick" = { text = "Reset camera" }
+"button:DpadLeft" = { text = "Previous unit" }
+"button:DpadRight" = { text = "Next unit" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Set a control group"
+
+[[profiles]]
+name = "Star Wars: Empire at War + Gyro"
+combos = [{buttons = ["LeftBumper", "RightBumper"], action = {open_menu = "Set group"}}, {buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_S"] }
+North = { keys = ["KEY_A"] }
+LeftBumper = { open_menu = "Groups" }
+RightBumper = { open_menu = "Orders" }
+Select = { open_menu = "Interface" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_LEFTCTRL", "KEY_A"] }
+RightStick = { keys = ["KEY_END"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_D"] }
+DpadRight = { keys = ["KEY_F"] }
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F6"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F5"]
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Star Wars: Empire at War + Gyro: tilting the controller moves the cursor too, as a fine pointer next to the right stick {rs}. Hold {select} and {start} together to pause the gyro while you reposition the controller.
+The right stick {rs} moves the cursor: {rt} or {south} selects (left click, hold to drag a box), and {lt} moves or attacks (right click). The left stick {ls} scrolls the camera, {updown} zooms and {r3} resets the camera.
+{north} is attack and {west} stop: press attack, then pick the target with {rt}. {left} and {right} step to the previous and next unit; {l3} selects every unit.
+Hold {lb} for the control groups and aim the right stick {rs} at one: release to select it. Hold {lb} and {rb} together to put the selection in a group instead (Ctrl + number).
+Hold {rb} for the unit orders (guard, move, waypoint, retreat, reinforce, the units of one type, the superweapon), aimed with the right stick {rs}. A unit's own abilities are on its buttons at the bottom of the screen: click them with {rt}.
+{select} lists the tactical overview, the mission holocron, planet information, the player list, chat and the cinematic camera.
+{start} (Esc) is the game menu. Double-tap {start} to quick save and hold it to quick load. {east} cancels and closes.
+The game has no controller support of its own, so the controller works through these keys. They're the defaults as remembered by a community FAQ, not checked on an install: if one does nothing, look in Options, Controls. Hold {guide} and press {west} for the on-screen keyboard (chat, save names).'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Cursor" }
+"stick:Left" = { text = "Scroll the camera" }
+"trigger:Right" = { text = "Left click (select, drag a box)" }
+"trigger:Left" = { text = "Right click (move, attack)" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Cancel / close" }
+"button:West" = { text = "{icon:stop} Stop" }
+"button:North" = { text = "{icon:crosshair} Attack" }
+"button:LeftBumper" = { text = "Hold: control groups" }
+"button:RightBumper" = { text = "Hold: unit orders" }
+"button:Select" = { text = "Interface" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "{icon:people} Select all units" }
+"button:RightStick" = { text = "Reset camera" }
+"button:DpadLeft" = { text = "Previous unit" }
+"button:DpadRight" = { text = "Next unit" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.custom]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "Set a control group"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[[menus]]
+name = "Groups"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:people} Group 1"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:people} Group 2"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:people} Group 3"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:people} Group 4"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:people} Group 5"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:people} Group 6"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:people} Group 7"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:people} Group 8"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "{icon:people} Group 9"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "{icon:people} Group 10"
+action = { keys = ["KEY_0"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[menus.style.items]
+color = "#182433"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#3584bd"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#6fb6e6"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#081018"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2a3c52"
+
+[menus.style.glow]
+color = "#8fd0ff"
+opacity = 0.5
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+case = "upper"
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#6fb6e6", opacity = 0.35}
+frame = {kind = "chamfer", size = 12, width = 2, color = "#6fb6e6"}
+vignette = {color = "#000000", opacity = 0.3, reach = 20}
+
+[[menus]]
+name = "Set group"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:flag} Set 1"
+action = { keys = ["KEY_LEFTCTRL", "KEY_1"] }
+
+[[menus.items]]
+label = "{icon:flag} Set 2"
+action = { keys = ["KEY_LEFTCTRL", "KEY_2"] }
+
+[[menus.items]]
+label = "{icon:flag} Set 3"
+action = { keys = ["KEY_LEFTCTRL", "KEY_3"] }
+
+[[menus.items]]
+label = "{icon:flag} Set 4"
+action = { keys = ["KEY_LEFTCTRL", "KEY_4"] }
+
+[[menus.items]]
+label = "{icon:flag} Set 5"
+action = { keys = ["KEY_LEFTCTRL", "KEY_5"] }
+
+[[menus.items]]
+label = "{icon:flag} Set 6"
+action = { keys = ["KEY_LEFTCTRL", "KEY_6"] }
+
+[[menus.items]]
+label = "{icon:flag} Set 7"
+action = { keys = ["KEY_LEFTCTRL", "KEY_7"] }
+
+[[menus.items]]
+label = "{icon:flag} Set 8"
+action = { keys = ["KEY_LEFTCTRL", "KEY_8"] }
+
+[[menus.items]]
+label = "{icon:flag} Set 9"
+action = { keys = ["KEY_LEFTCTRL", "KEY_9"] }
+
+[[menus.items]]
+label = "{icon:flag} Set 10"
+action = { keys = ["KEY_LEFTCTRL", "KEY_0"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[menus.style.items]
+color = "#182433"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#3584bd"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#6fb6e6"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#081018"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2a3c52"
+
+[menus.style.glow]
+color = "#8fd0ff"
+opacity = 0.5
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+case = "upper"
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#6fb6e6", opacity = 0.35}
+frame = {kind = "chamfer", size = 12, width = 2, color = "#6fb6e6"}
+vignette = {color = "#000000", opacity = 0.3, reach = 20}
+
+[[menus]]
+name = "Orders"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:shield} Guard"
+action = { keys = ["KEY_G"] }
+
+[[menus.items]]
+label = "{icon:move} Move"
+action = { keys = ["KEY_M"] }
+
+[[menus.items]]
+label = "{icon:path} Waypoint"
+action = { keys = ["KEY_W"] }
+
+[[menus.items]]
+label = "{icon:arrow} Retreat"
+action = { keys = ["KEY_E"] }
+
+[[menus.items]]
+label = "{icon:upgrade} Reinforce"
+action = { keys = ["KEY_R"] }
+
+[[menus.items]]
+label = "{icon:people} Same type nearby"
+action = { keys = ["KEY_LEFTCTRL", "KEY_Q"] }
+
+[[menus.items]]
+label = "{icon:planet} {color:red}Superweapon{/color}"
+action = { keys = ["KEY_LEFTCTRL", "KEY_W"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[menus.style.items]
+color = "#182433"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#3584bd"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#6fb6e6"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#081018"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2a3c52"
+
+[menus.style.glow]
+color = "#8fd0ff"
+opacity = 0.5
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+case = "upper"
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#6fb6e6", opacity = 0.35}
+frame = {kind = "chamfer", size = 12, width = 2, color = "#6fb6e6"}
+vignette = {color = "#000000", opacity = 0.3, reach = 20}
+
+[[menus]]
+name = "Interface"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:map} Tactical overview"
+action = { keys = ["KEY_INSERT"] }
+
+[[menus.items]]
+label = "{icon:scroll} Mission holocron"
+action = { keys = ["KEY_TAB"] }
+
+[[menus.items]]
+label = "{icon:planet} Planet information"
+action = { keys = ["KEY_CAPSLOCK"] }
+
+[[menus.items]]
+label = "{icon:people} Player list"
+action = { keys = ["KEY_P"] }
+
+[[menus.items]]
+label = "{icon:messages} Chat"
+action = { keys = ["KEY_ENTER"] }
+
+[[menus.items]]
+label = "{icon:camera} Cinematic camera"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "{icon:radio} Droid advisor on / off"
+action = { keys = ["KEY_KPMINUS"] }
+
+[menus.style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[menus.style.items]
+color = "#182433"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#3584bd"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#6fb6e6"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#081018"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2a3c52"
+
+[menus.style.glow]
+color = "#8fd0ff"
+opacity = 0.5
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+case = "upper"
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#6fb6e6", opacity = 0.35}
+frame = {kind = "chamfer", size = 12, width = 2, color = "#6fb6e6"}
+vignette = {color = "#000000", opacity = 0.3, reach = 20}
+
+[keyboard_style]
+corners = 0.1
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#182433"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#3584bd"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#6fb6e6"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#081018"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#2a3c52"
+
+[keyboard_style.type]
+letter_spacing = 1
+case = "upper"
+
+[numpad_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#182433"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#3584bd"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#6fb6e6"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#081018"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#2a3c52"
+
+[numpad_style.type]
+letter_spacing = 1
+case = "upper"
+
+[media_style]
+corners = 0.1
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[media_style.items]
+color = "#182433"
+opacity = 0.95
+
+[media_style.selected]
+color = "#3584bd"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#6fb6e6"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#081018"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#2a3c52"
+
+[media_style.type]
+letter_spacing = 1
+case = "upper"
+
+[menu_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0d141c"
+opacity = 0.92
+
+[menu_style.items]
+color = "#182433"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#3584bd"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#6fb6e6"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#081018"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#2a3c52"
+
+[menu_style.glow]
+color = "#8fd0ff"
+opacity = 0.5
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+case = "upper"
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#6fb6e6", opacity = 0.35}
+frame = {kind = "chamfer", size = 12, width = 2, color = "#6fb6e6"}
+vignette = {color = "#000000", opacity = 0.3, reach = 20}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "beep", volume = 0.04, pitch = 0.9}
+open = {kind = "rise", volume = 0.04}
+close = {kind = "fall", volume = 0.035}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.06, pitch = 1.2}
+pick = {kind = "beep", volume = 0.04, pitch = 0.9}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.06, pitch = 1.2}
+pick = {kind = "beep", volume = 0.04, pitch = 0.9}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.2, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.2, length_ms = 60}

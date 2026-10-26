@@ -1,0 +1,584 @@
+format = 20
+macros = []
+overlay_font = "Special Elite"
+
+[pack]
+id = "1849b2b5-41b1-4ce8-a3a7-c94f28ba707d"
+name = "Deceit"
+version = "1.0"
+author = "Padwight"
+description = "Deceit (2017) on an Xbox-style pad, for the game's default keys. A picks up and uses and, held, sprints, B jumps, X reloads, Y is the flashlight, RT fires and LT aims. LB transforms when you're infected, L3 toggles crouch, the D-pad steps through your items and holds voice chat, and Select holds the player list. The game has no controller support. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "466240"
+profile = "Deceit"
+
+[[rules]]
+kind = "executable"
+value = "deceit.exe"
+profile = "Deceit"
+[[profiles]]
+name = "Deceit"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 250
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_F"] }
+LeftBumper = { keys = ["KEY_Q"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_V"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 3500.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and closes the other screens.
+{south} picks up, uses and drinks blood bags or pours them; hold {south} to sprint. {east} jumps and {l3} toggles crouch. {west} reloads and {north} switches the flashlight on and off.
+{rt} fires or attacks, and {lt} aims; the right stick turns more finely while it's held. {left} and {right} step through what you carry.
+Infected: {lb} transforms when the lights go out. Hold {select} for the player list, and hold {up} to talk on voice chat if you use push-to-talk. Text chat needs typing: open the on-screen keyboard with {guide} + {west}.
+These keys are written from memory and not checked in the game (transform, flashlight, voice and the item keys especially); compare them with Options → Controls and change the buttons here to match. The executable rule's name comes from Discord's game list and isn't checked. Deceit uses Easy Anti-Cheat, which sees the pad as an ordinary keyboard and mouse. The gyro's full turn is a guess, not measured: turn in place and adjust it until a full turn of the controller turns you around once.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire · attack" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "{icon:hand} Use · pick up" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:flashlight} Flashlight" }
+"button:LeftBumper" = { text = "{icon:skull} {color:red}Transform{/color}" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:DpadUp" = { text = "{icon:microphone} Voice (hold)" }
+"button:Select" = { text = "{icon:people} Players" }
+"button:Start" = { text = "Menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next item"
+
+[[profiles]]
+name = "Deceit + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 250
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_F"] }
+LeftBumper = { keys = ["KEY_Q"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_V"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 3500.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 8000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+{start} (Escape) opens the game's menu and closes the other screens.
+{south} picks up, uses and drinks blood bags or pours them; hold {south} to sprint. {east} jumps and {l3} toggles crouch. {west} reloads and {north} switches the flashlight on and off.
+{rt} fires or attacks, and {lt} aims; the right stick turns more finely while it's held. {left} and {right} step through what you carry.
+Infected: {lb} transforms when the lights go out. Hold {select} for the player list, and hold {up} to talk on voice chat if you use push-to-talk. Text chat needs typing: open the on-screen keyboard with {guide} + {west}.
+These keys are written from memory and not checked in the game (transform, flashlight, voice and the item keys especially); compare them with Options → Controls and change the buttons here to match. The executable rule's name comes from Discord's game list and isn't checked. Deceit uses Easy Anti-Cheat, which sees the pad as an ordinary keyboard and mouse. The gyro's full turn is a guess, not measured: turn in place and adjust it until a full turn of the controller turns you around once.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire · attack" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "{icon:hand} Use · pick up" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:flashlight} Flashlight" }
+"button:LeftBumper" = { text = "{icon:skull} {color:red}Transform{/color}" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:DpadUp" = { text = "{icon:microphone} Voice (hold)" }
+"button:Select" = { text = "{icon:people} Players" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next item"
+
+[[profiles]]
+name = "Deceit + Flick stick"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 250
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_F"] }
+LeftBumper = { keys = ["KEY_Q"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_V"] }
+DpadLeft = { wheel = "Up" }
+DpadRight = { wheel = "Down" }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 8000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+{start} (Escape) opens the game's menu and closes the other screens.
+{south} picks up, uses and drinks blood bags or pours them; hold {south} to sprint. {east} jumps and {l3} toggles crouch. {west} reloads and {north} switches the flashlight on and off.
+{rt} fires or attacks, and {lt} aims; the right stick turns more finely while it's held. {left} and {right} step through what you carry.
+Infected: {lb} transforms when the lights go out. Hold {select} for the player list, and hold {up} to talk on voice chat if you use push-to-talk. Text chat needs typing: open the on-screen keyboard with {guide} + {west}.
+These keys are written from memory and not checked in the game (transform, flashlight, voice and the item keys especially); compare them with Options → Controls and change the buttons here to match. The executable rule's name comes from Discord's game list and isn't checked. Deceit uses Easy Anti-Cheat, which sees the pad as an ordinary keyboard and mouse. The gyro's full turn is a guess, not measured: turn in place and adjust it until a full turn of the controller turns you around once.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire · attack" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "{icon:hand} Use · pick up" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "{icon:flashlight} Flashlight" }
+"button:LeftBumper" = { text = "{icon:skull} {color:red}Transform{/color}" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:DpadUp" = { text = "{icon:microphone} Voice (hold)" }
+"button:Select" = { text = "{icon:people} Players" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next item"
+
+[[layers]]
+name = "Aim"
+indicator = "off"
+
+[layers.right_stick]
+deadzone = 0.08
+curve = 2.8
+key_threshold = 0.5
+
+[layers.right_stick.action.mouse]
+speed = 3500.0
+accel = 0.0
+
+[keyboard_style]
+corners = 0.06
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0b0909"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#1c1313"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#8e1d1d"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#b8403a"
+opacity = 0.5
+
+[keyboard_style.gradient]
+color = "#140e0e"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3d2626"
+
+[keyboard_style.type]
+case = "upper"
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0b0909"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#1c1313"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#8e1d1d"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#b8403a"
+opacity = 0.5
+
+[numpad_style.gradient]
+color = "#140e0e"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3d2626"
+
+[numpad_style.type]
+case = "upper"
+letter_spacing = 1
+
+[media_style]
+corners = 0.06
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0b0909"
+opacity = 0.92
+
+[media_style.items]
+color = "#1c1313"
+opacity = 0.95
+
+[media_style.selected]
+color = "#8e1d1d"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#b8403a"
+opacity = 0.5
+
+[media_style.gradient]
+color = "#140e0e"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3d2626"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0b0909"
+opacity = 0.92
+
+[menu_style.items]
+color = "#1c1313"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#8e1d1d"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#b8403a"
+opacity = 0.5
+
+[menu_style.gradient]
+color = "#140e0e"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3d2626"
+
+[menu_style.glow]
+color = "#c0302a"
+opacity = 0.3
+blur = 20
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style.ornament]
+grain = {opacity = 0.12, size = 1, animated = false}
+vignette = {color = "#000000", opacity = 0.6, reach = 30}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "heartbeat", volume = 0.25}
+open = {kind = "swish", volume = 0.04, pitch = 0.7}
+close = {kind = "swish", volume = 0.03, pitch = 0.6}
+
+[sounds.guide]
+open = {kind = "swish", volume = 0.04, pitch = 0.7}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "typewriter", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "knock", volume = 0.15}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

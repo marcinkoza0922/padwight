@@ -141,9 +141,9 @@ threshold = 0.3
 action = { keys = ["KEY_LEFTCTRL"] }
 
 [profiles.guide]
-notes = '''Final Doom runs as DOS Doom: the left stick walks and strafes, the right stick turns, {rt} is the Ctrl key (fire) and {a} uses doors and switches (Space).
-{lb} opens the weapon ring, aiming with the right stick {rs}. {x} holds Alt, which turns the stick's sideways push into a strafe in DOS Doom.
-{l3} toggles Shift, which is run. {start} (Escape) opens the game's menu, {b} is Enter in it, and the d-pad {dpad} moves the menu cursor.
+notes = '''Final Doom runs as DOS Doom: the left stick walks and strafes, the right stick turns, {rt} is the Ctrl key (fire) and {south} uses doors and switches (Space).
+{lb} opens the weapon ring, aiming with the right stick {rs}. {west} holds Alt, which turns the stick's sideways push into a strafe in DOS Doom.
+{l3} toggles Shift, which is run. {start} (Escape) opens the game's menu, {east} is Enter in it, and the d-pad {dpad} moves the menu cursor.
 {select} (Tab) shows the automap.
 These are DOS Doom's default keys, written from memory and not checked in the game. If a button does nothing, compare the game's controls screen with the keys here.'''
 

@@ -1,0 +1,555 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "3f29e80c-c44f-4cbd-8ea7-59f4511d7fba"
+name = "Frostpunk"
+version = "1.0"
+author = "Padwight"
+description = "Frostpunk on an Xbox-style pad. The left stick moves the camera and the right stick the pointer; RT and A click, LT right-clicks to cancel. X pauses, hold Y with the D-pad for the speed, the bumpers turn the camera and the D-pad zooms. Overlays in riveted iron with a frost rim and the generator's orange glow."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "323190"
+profile = "Frostpunk"
+
+[[rules]]
+kind = "executable"
+value = "Frostpunk.exe"
+profile = "Frostpunk"
+
+[[profiles]]
+name = "Frostpunk"
+combos = [
+    {buttons = ["North", "DpadUp"], action = {keys = ["KEY_2"]}},
+    {buttons = ["North", "DpadRight"], action = {keys = ["KEY_3"]}},
+    {buttons = ["North", "DpadDown"], action = {keys = ["KEY_SPACE"]}},
+    {buttons = ["North", "DpadLeft"], action = {keys = ["KEY_1"]}},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_SPACE"]}
+North = {open_menu = "Speed"}
+LeftBumper = {keys = ["KEY_Q"]}
+RightBumper = {keys = ["KEY_E"]}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer and the left stick {ls} moves the camera around the generator. {rt} or {south} clicks; {lt} right-clicks to drop the building in hand and close a panel.
+{west} pauses and resumes. Hold {north} and press the {dpad} for the speed: left normal, up fast, right fastest, down pause.
+{lb} and {rb} turn the camera around the city, {up} and {down} zoom. {east} and {start} close windows and open the menu.
+The speed keys 1 to 3 are a guess at the defaults, not read from an install: check Options → Controls if they don't answer. Media controls for the long nights: {guide} + {lb}.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move the camera"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click"}
+"trigger:Left" = {text = "Right-click (cancel)"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Close"}
+"button:West" = {text = "{icon:pause} Pause"}
+"button:North" = {text = "Hold: speed"}
+"button:Start" = {text = "Menu"}
+"combo:button:North+button:DpadUp" = {text = "{icon:speed2} Fast"}
+"combo:button:North+button:DpadRight" = {text = "{icon:speed3} Fastest"}
+"combo:button:North+button:DpadDown" = {text = "{icon:pause} Pause"}
+"combo:button:North+button:DpadLeft" = {text = "{icon:speed1} Normal"}
+
+[[profiles.guide.merged]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "{icon:rotate} Turn the camera"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+
+[[profiles]]
+name = "Frostpunk + Gyro"
+combos = [
+    {buttons = ["North", "DpadUp"], action = {keys = ["KEY_2"]}},
+    {buttons = ["North", "DpadRight"], action = {keys = ["KEY_3"]}},
+    {buttons = ["North", "DpadDown"], action = {keys = ["KEY_SPACE"]}},
+    {buttons = ["North", "DpadLeft"], action = {keys = ["KEY_1"]}},
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_SPACE"]}
+North = {open_menu = "Speed"}
+LeftBumper = {keys = ["KEY_Q"]}
+RightBumper = {keys = ["KEY_E"]}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer and the left stick {ls} moves the camera around the generator. {rt} or {south} clicks; {lt} right-clicks to drop the building in hand and close a panel.
+{west} pauses and resumes. Hold {north} and press the {dpad} for the speed: left normal, up fast, right fastest, down pause.
+{lb} and {rb} turn the camera around the city, {up} and {down} zoom. {east} and {start} close windows and open the menu.
+The speed keys 1 to 3 are a guess at the defaults, not read from an install: check Options → Controls if they don't answer. Media controls for the long nights: {guide} + {lb}.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move the camera"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click"}
+"trigger:Left" = {text = "Right-click (cancel)"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Close"}
+"button:West" = {text = "{icon:pause} Pause"}
+"button:North" = {text = "Hold: speed"}
+"button:Start" = {text = "Menu"}
+"combo:button:North+button:DpadUp" = {text = "{icon:speed2} Fast"}
+"combo:button:North+button:DpadRight" = {text = "{icon:speed3} Fastest"}
+"combo:button:North+button:DpadDown" = {text = "{icon:pause} Pause"}
+"combo:button:North+button:DpadLeft" = {text = "{icon:speed1} Normal"}
+
+[[profiles.guide.merged]]
+inputs = ["button:LeftBumper", "button:RightBumper"]
+text = "{icon:rotate} Turn the camera"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+
+[[menus]]
+name = "Speed"
+
+[menus.kind.directional]
+cluster = "DPad"
+
+[[menus.items]]
+label = "{icon:speed2} Fast"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:speed3} Fastest"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:pause} Pause"
+action = {keys = ["KEY_SPACE"]}
+
+[[menus.items]]
+label = "{icon:speed1} Normal"
+action = {keys = ["KEY_1"]}
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#14181d"
+opacity = 0.93
+
+[menus.style.items]
+color = "#2a3038"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#e8892b"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#9fb8c8"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#0c0f12"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4a5562"
+
+[menus.style.glow]
+color = "#ffb347"
+opacity = 0.6
+blur = 22
+
+[menus.style.type]
+letter_spacing = 2
+case = "upper"
+
+[menus.style.ornament]
+steel = {opacity = 0.18}
+frame = {kind = "riveted", size = 36, width = 2, color = "#7f8d99"}
+vignette = {color = "#9fc4e0", opacity = 0.18, reach = 18}
+dividers = {width = 1, color = "#4a5562", opacity = 0.8}
+
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#14181d"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#2a3038"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#e8892b"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#9fb8c8"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#0c0f12"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4a5562"
+
+[keyboard_style.type]
+letter_spacing = 2
+case = "upper"
+
+[keyboard_style.ornament]
+steel = {opacity = 0.2}
+vignette = {color = "#9fc4e0", opacity = 0.15, reach = 15}
+
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#14181d"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#2a3038"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#e8892b"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#9fb8c8"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#0c0f12"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4a5562"
+
+[numpad_style.type]
+letter_spacing = 2
+case = "upper"
+
+[numpad_style.ornament]
+steel = {opacity = 0.2}
+vignette = {color = "#9fc4e0", opacity = 0.15, reach = 15}
+
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#14181d"
+opacity = 0.93
+
+[media_style.items]
+color = "#2a3038"
+opacity = 0.95
+
+[media_style.selected]
+color = "#e8892b"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#9fb8c8"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#0c0f12"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4a5562"
+
+[media_style.type]
+letter_spacing = 2
+case = "upper"
+
+[media_style.ornament]
+steel = {opacity = 0.2}
+vignette = {color = "#9fc4e0", opacity = 0.15, reach = 15}
+
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#14181d"
+opacity = 0.93
+
+[menu_style.items]
+color = "#2a3038"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#e8892b"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#9fb8c8"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#0c0f12"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4a5562"
+
+[menu_style.glow]
+color = "#ffb347"
+opacity = 0.6
+blur = 22
+
+[menu_style.type]
+letter_spacing = 2
+case = "upper"
+
+[menu_style.ornament]
+steel = {opacity = 0.18}
+frame = {kind = "riveted", size = 36, width = 2, color = "#7f8d99"}
+vignette = {color = "#9fc4e0", opacity = 0.18, reach = 18}
+dividers = {width = 1, color = "#4a5562", opacity = 0.8}
+
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "latch", volume = 0.07, pitch = 0.9}
+pick = {kind = "plate", volume = 0.08, pitch = 0.8, reverb = 0.2}
+open = {kind = "swish", volume = 0.03, pitch = 0.7}
+
+[sounds.keyboard]
+step = {kind = "latch", volume = 0.06, pitch = 1.0}
+pick = {kind = "clank", volume = 0.1}
+
+[sounds.numpad]
+step = {kind = "latch", volume = 0.06, pitch = 1.0}
+pick = {kind = "clank", volume = 0.1}
+
+[sounds.media]
+pick = {kind = "clank", volume = 0.1}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

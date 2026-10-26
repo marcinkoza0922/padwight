@@ -1,0 +1,534 @@
+format = 20
+macros = []
+overlay_font = "Comfortaa"
+
+[pack]
+id = "bc84a015-6038-4108-a7d7-26381ead0a51"
+name = "Spore"
+version = "1.0"
+author = "Padwight"
+description = "Spore on an Xbox-style pad, one scheme for every stage and editor, on the game's mouse and keyboard controls. The left stick moves, the right stick moves the pointer, RT or A clicks and LT right-clicks. B jumps, hold Y to turn the camera and the d-pad zooms, undoes and redoes. Hold RB for the 1 to 0 abilities and tools. Overlays in deep space blue with a cyan pick and a green glow."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "17390"
+profile = "Spore"
+
+[[rules]]
+kind = "steam_app_id"
+value = "17440"
+profile = "Spore"
+
+[[rules]]
+kind = "steam_app_id"
+value = "24720"
+profile = "Spore"
+
+[[rules]]
+kind = "executable"
+value = "SporeApp.exe"
+profile = "Spore"
+
+[[profiles]]
+name = "Spore"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_DELETE"] }
+North = { mouse = "Middle" }
+RightBumper = { open_menu = "Abilities" }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_LEFTCTRL", "KEY_Z"] }
+DpadRight = { keys = ["KEY_LEFTCTRL", "KEY_Y"] }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The game has no controller support, so this plays it with the mouse and keys, one scheme for every stage and editor. The right stick {rs} moves the pointer and the left stick {ls} swims, walks or flies (W A S D). {rt} or {south} clicks: move there, eat, attack, socialize, pick a part; {lt} right-clicks, and in the editors holding it and moving the pointer turns the creature.
+{east} jumps (Space). Hold {north} (the middle button) and move the pointer to turn the camera; {up} and {down} zoom. Hold {rb} and point the right stick {rs} for the 1 to 0 keys: abilities in the creature and tribal stages, tools in space.
+In the editors {left} undoes and {right} redoes, {west} {color:red}deletes{/color} the part in hand. {start} is the menu and backs out. Naming a creature or a planet: {guide} + {west} opens the on-screen keyboard.
+Spore can't remap its keys, and these are its remembered defaults, not checked on an install: Space for jump, the middle button for the camera and Delete in the editors most of all.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move (W A S D)" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Click" }
+"trigger:Left" = { text = "Right click" }
+"button:South" = { text = "Click" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "{icon:trash} {color:red}Delete part{/color}" }
+"button:North" = { text = "Hold: {icon:rotate} turn the camera" }
+"button:RightBumper" = { text = "Hold: {icon:star} abilities 1 to 0" }
+"button:Start" = { text = "Menu / back out" }
+"button:DpadUp" = { text = "Zoom in" }
+"button:DpadDown" = { text = "Zoom out" }
+"button:DpadLeft" = { text = "{icon:rotate-left} Undo" }
+"button:DpadRight" = { text = "{icon:rotate} Redo" }
+
+[[profiles]]
+name = "Spore + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_DELETE"] }
+North = { mouse = "Middle" }
+RightBumper = { open_menu = "Abilities" }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_LEFTCTRL", "KEY_Z"] }
+DpadRight = { keys = ["KEY_LEFTCTRL", "KEY_Y"] }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The game has no controller support, so this plays it with the mouse and keys, one scheme for every stage and editor. The right stick {rs} moves the pointer and the left stick {ls} swims, walks or flies (W A S D). {rt} or {south} clicks: move there, eat, attack, socialize, pick a part; {lt} right-clicks, and in the editors holding it and moving the pointer turns the creature.
+{east} jumps (Space). Hold {north} (the middle button) and move the pointer to turn the camera; {up} and {down} zoom. Hold {rb} and point the right stick {rs} for the 1 to 0 keys: abilities in the creature and tribal stages, tools in space.
+In the editors {left} undoes and {right} redoes, {west} {color:red}deletes{/color} the part in hand. {start} is the menu and backs out. Naming a creature or a planet: {guide} + {west} opens the on-screen keyboard.
+Spore can't remap its keys, and these are its remembered defaults, not checked on an install: Space for jump, the middle button for the camera and Delete in the editors most of all.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move (W A S D)" }
+"stick:Right" = { text = "Pointer" }
+"trigger:Right" = { text = "Click" }
+"trigger:Left" = { text = "Right click" }
+"button:South" = { text = "Click" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "{icon:trash} {color:red}Delete part{/color}" }
+"button:North" = { text = "Hold: {icon:rotate} turn the camera" }
+"button:RightBumper" = { text = "Hold: {icon:star} abilities 1 to 0" }
+"button:Start" = { text = "Menu / back out" }
+"button:DpadUp" = { text = "Zoom in" }
+"button:DpadDown" = { text = "Zoom out" }
+"button:DpadLeft" = { text = "{icon:rotate-left} Undo" }
+"button:DpadRight" = { text = "{icon:rotate} Redo" }
+
+[[menus]]
+name = "Abilities"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:star} Slot 1"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:star} Slot 2"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:star} Slot 3"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:star} Slot 4"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:star} Slot 5"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:star} Slot 6"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:star} Slot 7"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:star} Slot 8"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "{icon:star} Slot 9"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "{icon:star} Slot 0"
+action = { keys = ["KEY_0"] }
+
+[menus.style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#141c2b"
+opacity = 0.9
+
+[menus.style.items]
+color = "#223047"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#4fc3e8"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#6fa8c8"
+opacity = 0.7
+
+[menus.style.gradient]
+color = "#1b2638"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#33476a"
+
+[menus.style.glow]
+color = "#8be04e"
+opacity = 0.5
+blur = 18
+
+[menus.style.type]
+letter_spacing = 0
+
+[keyboard_style]
+corners = 0.5
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#141c2b"
+opacity = 0.9
+
+[keyboard_style.items]
+color = "#223047"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#4fc3e8"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#6fa8c8"
+opacity = 0.7
+
+[keyboard_style.gradient]
+color = "#1b2638"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#33476a"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+[numpad_style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#141c2b"
+opacity = 0.9
+
+[numpad_style.items]
+color = "#223047"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#4fc3e8"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#6fa8c8"
+opacity = 0.7
+
+[numpad_style.gradient]
+color = "#1b2638"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#33476a"
+
+[numpad_style.type]
+letter_spacing = 0
+
+[media_style]
+corners = 0.5
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#141c2b"
+opacity = 0.9
+
+[media_style.items]
+color = "#223047"
+opacity = 0.95
+
+[media_style.selected]
+color = "#4fc3e8"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#6fa8c8"
+opacity = 0.7
+
+[media_style.gradient]
+color = "#1b2638"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#33476a"
+
+[media_style.type]
+letter_spacing = 0
+
+[menu_style]
+corners = 0.5
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#141c2b"
+opacity = 0.9
+
+[menu_style.items]
+color = "#223047"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#4fc3e8"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#6fa8c8"
+opacity = 0.7
+
+[menu_style.gradient]
+color = "#1b2638"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#33476a"
+
+[menu_style.glow]
+color = "#8be04e"
+opacity = 0.5
+blur = 18
+
+[menu_style.type]
+letter_spacing = 0
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "drop", volume = 0.07, pitch = 1.2}
+pick = {kind = "boing", volume = 0.08}
+open = {kind = "rise", volume = 0.05}
+close = {kind = "fall", volume = 0.04}
+
+[sounds.keyboard]
+step = {kind = "drop", volume = 0.06, pitch = 1.3}
+pick = {kind = "pop", volume = 0.1}
+
+[sounds.numpad]
+step = {kind = "drop", volume = 0.06, pitch = 1.3}
+pick = {kind = "pop", volume = 0.1}
+
+[sounds.media]
+pick = {kind = "pop", volume = 0.1}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.26, length_ms = 35}
+open = {strength = 0.06, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.18, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.18, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.18, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.18, length_ms = 60}
