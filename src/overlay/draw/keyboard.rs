@@ -11,10 +11,10 @@ use super::*;
 use crate::{keyboard, overlay::{FIELD_LEGEND, KEYBOARD_LEGEND, NUMPAD_LEGEND}};
 
 /// The space the keyboard's padding takes inside its box, at scale 1.
-const KEYBOARD_PADDING: f32 = 16.0;
+pub(in crate::overlay) const KEYBOARD_PADDING: f32 = 16.0;
 
 /// The width of a keyboard's body at scale 1: the legend's or the keys', whichever is wider.
-fn keyboard_body_width(board: crate::keyboard::Board) -> f32 {
+pub(in crate::overlay) fn keyboard_body_width(board: crate::keyboard::Board) -> f32 {
     if board == crate::keyboard::Board::Numpad {
         // Numpad keys are fewer, so bigger; its body has a floor of 230 at any scale.
         (board.units_wide() * (UNIT * 1.5 + GAP)).max(230.0)
