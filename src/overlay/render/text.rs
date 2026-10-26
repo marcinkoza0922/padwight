@@ -2,13 +2,23 @@
 //! `RunKey`, then drawn wherever an `Op::Text` puts it. Layout calls `shape` to measure, the
 //! rasterizer calls `draw`.
 //!
-//! The bodies here are placeholders until shaping lands (step 2.2): `shape` guesses a size from
-//! the character count and `draw` draws nothing. Don't write tests against their numbers.
+//! Each thread has its own cosmic-text font system (the bundled fonts, the game's and the
+//! installed ones), its shaped runs and its rasterized glyphs (`engine`). Runs are shaped as iced
+//! shapes them (`set`) and drawn as iced tiny-skia draws them (`paint`), so the two renderers
+//! agree on sizes, baselines and weight.
+
+use std::hash::{Hash, Hasher};
 
 use tiny_skia::{Mask, PixmapMut, Transform};
 
-use super::{Point, Rect, Rgba, RunKey};
+use super::{Point, Rect, Rgba, RunKey, geom::hash_floats};
 use crate::config::Case;
+
+mod engine;
+mod paint;
+mod set;
+#[cfg(test)]
+mod tests;
 
 /// Lines are this many times the font size apart, as in iced.
 pub const LINE_HEIGHT: f32 = 1.3;
@@ -58,6 +68,20 @@ impl Spec {
             align: Align::Start,
         }
     }
+
+    /// The key the run is cached under.
+    pub fn key(&self) -> RunKey {
+        RunKey::of(self)
+    }
+}
+
+/// Equal specs hash equal, as with the ops (see `geom`).
+impl Hash for Spec {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        (&self.text, self.family, self.bold, self.italic, self.underline, std::mem::discriminant(&self.case), self.align).hash(state);
+        self.width.is_some().hash(state);
+        hash_floats(state, &[self.size, self.spacing, self.width.unwrap_or(0.0)]);
+    }
 }
 
 /// A shaped run, as layout needs it.
@@ -68,17 +92,13 @@ pub struct Shaped {
     /// its lines times `LINE_HEIGHT` tall.
     pub size: Point,
     /// Where its glyphs can draw, relative to the box's top-left. It may reach past the box.
+    /// Empty (at the top-left) when nothing draws, as for blank text.
     pub ink: Rect,
 }
 
 /// Shapes a run, or finds it in the cache.
 pub fn shape(spec: &Spec) -> Shaped {
-    let chars = spec.text.chars().count() as f32;
-    let w = chars * (spec.size * 0.55 + spec.spacing);
-    let w = spec.width.map_or(w, |max| w.min(max));
-    let size = Point::new(w, spec.size * LINE_HEIGHT);
-    let pad = spec.size * 0.25;
-    Shaped { run: RunKey(0), size, ink: Rect::new(0.0, 0.0, size.x, size.y).outset(pad) }
+    engine::with(|engine| engine.shape(spec))
 }
 
 /// Where text is drawn: `pixmap`'s pixels, cut by `mask` when there is one. `transform` maps
@@ -90,7 +110,8 @@ pub struct Canvas<'a> {
 }
 
 /// Draws a shaped run with its box's top-left at `at` (logical pixels, sub-pixel), in `color`,
-/// with glyphs drawn at the scale the canvas's transform gives.
+/// with glyphs drawn at the scale the canvas's transform gives. A run this thread hasn't shaped
+/// (or has since dropped from its cache) draws nothing.
 pub fn draw(run: RunKey, at: Point, color: Rgba, canvas: &mut Canvas) {
-    let _ = (run, at, color, canvas);
+    engine::with(|engine| engine.draw(run, at, color, canvas));
 }

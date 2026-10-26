@@ -5,7 +5,10 @@ use std::{
     borrow::Cow,
     collections::{BTreeMap, HashMap},
     path::PathBuf,
-    sync::{Mutex, OnceLock, RwLock},
+    sync::{
+        Mutex, OnceLock, RwLock,
+        atomic::{AtomicU64, Ordering},
+    },
 };
 
 use iced::{Font, advanced::graphics::text::font_system};
@@ -56,6 +59,10 @@ static LOADED: Mutex<Option<HashMap<u64, Loaded>>> = Mutex::new(None);
 
 type Loaded = (&'static str, std::sync::Arc<[u8]>);
 
+/// Goes up each time a file is added to [`LOADED`], so a renderer knows when to load [`files`]
+/// again.
+static VERSION: AtomicU64 = AtomicU64::new(0);
+
 /// The most a font file may be, in bytes.
 pub const MAX_FONT_BYTES: usize = 1024 * 1024;
 
@@ -89,6 +96,7 @@ pub fn load(bytes: &[u8]) -> Result<&'static str, String> {
     let family: &'static str = Box::leak(family.into_boxed_str());
     font_system().write().unwrap_or_else(std::sync::PoisonError::into_inner).load_font(bytes.to_vec().into());
     loaded.insert(key, (family, bytes.into()));
+    VERSION.fetch_add(1, Ordering::Release);
     Ok(family)
 }
 
@@ -109,6 +117,13 @@ pub fn files() -> Vec<Cow<'static, [u8]>> {
     others.sort_by_key(|(key, _)| **key);
     let others = others.into_iter().map(|(_, (_, bytes))| Cow::Owned(bytes.to_vec()));
     BUNDLED.iter().map(|b| Cow::Borrowed(b.bytes)).chain(others).collect()
+}
+
+/// Changes whenever [`files`] would list more: read it before [`files`], and load them again
+/// once it moves on.
+#[cfg_attr(not(test), expect(dead_code, reason = "for the cosmic-text renderer, which loads these into its own font system"))]
+pub fn version() -> u64 {
+    VERSION.load(Ordering::Acquire)
 }
 
 /// Makes these the fonts `{font:name}` and the font settings can name besides the others: the
