@@ -168,10 +168,10 @@ of the module touched.
 
 | # | Step | Model | Done when |
 |---|---|---|---|
-| 1.1 | Move the texture generators (`draw/texture/materials.rs`, the pixel code in `patterns.rs` and `texture.rs`, `hash`/`smooth`/`blotch`, and `Shape::cut`) to a new `overlay/art/` module. Each returns a `Pattern { key, opacity, build }`, and `draw/texture` turns that into an iced element. | Sonnet | `debug overlay all` screenshots match the ones from before the move, pixel for pixel. |
-| 1.2 | Move the choice and order of a style's filters (`filtered::filters`) into `art` as a list of `Filter`s (pattern, or tint). `draw/filtered.rs` maps that list to elements. | Sonnet | Same as 1.1. |
-| 1.3 | Move the frame marks' SVG (`frame::markup` and its designs) and the SVGs for info icons and play states into `art`, taking colors as `[u8; 3]` and an alpha. Thin wrappers stay for iced callers. | Haiku | Same as 1.1, and the `frame` tests pass. |
-| 1.4 | `font.rs`: resolve a font setting to a family name without iced (`family(name) -> Option<&'static str>`). Keep a list of the font files loaded, so each renderer can load them into its own font system. Read a file's family with fontdb, not iced's font system. `resolve` stays for iced. | Sonnet | The `font::` tests pass, and the GUI still draws a pack's fonts. |
+| 1.1 | Move the texture generators (`draw/texture/materials.rs`, the pixel code in `patterns.rs` and `texture.rs`, `hash`/`smooth`/`blotch`, and `Shape::cut`) to a new `overlay/art/` module. Each returns a `Pattern { key, opacity, build }`, and `draw/texture` turns that into an iced element. | done | `art::Pattern` and one function per generator; `draw/texture.rs` has `layer` and `wash`. |
+| 1.2 | Move the choice and order of a style's filters (`filtered::filters`) into `art` as a list of `Filter`s (pattern, or tint). `draw/filtered.rs` maps that list to elements. | done | `art::filters(style, items, clock) -> Vec<Filter>`, bottom up. |
+| 1.3 | Move the frame marks' SVG (`frame::markup` and its designs) and the SVGs for info icons and play states into `art`, taking colors as `[u8; 3]` and an alpha. Thin wrappers stay for iced callers. | done | `art::frame::markup`, `art::icons::{info_svg, play_state_svg}`. |
+| 1.4 | `font.rs`: resolve a font setting to a family name without iced (`family(name) -> Option<&'static str>`). Keep a list of the font files loaded, so each renderer can load them into its own font system. Read a file's family with fontdb, not iced's font system. `resolve` stays for iced. | done | `font::family` and `font::files`; families read with fontdb. |
 
 ### Phase 2: the renderer's core (`overlay/render/`)
 
