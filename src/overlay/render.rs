@@ -2,6 +2,7 @@
 //! geometry and the display list, the layout tree that emits it, and the rasterizer that draws it.
 
 mod color;
+mod figure;
 mod fill;
 mod geom;
 pub mod layout;
@@ -16,6 +17,7 @@ pub mod text;
 mod typeset;
 
 pub use color::{Rgba, blend, paint, text_on};
+pub use figure::{figure, touchpad};
 pub use fill::{Cap, Fill, Join, Linear, Rule, Stop, Stroke};
 pub use geom::{Corners, Layer, Path, Point, Rect, Seg};
 pub use layout::{Align, Length, Node, Padding, Painter, Pin};
