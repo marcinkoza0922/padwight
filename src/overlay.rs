@@ -224,6 +224,10 @@ impl crate::motion::Tracked for OverlayView {
 /// state the daemon streams, and exiting when the daemon hides it.
 #[cfg(target_os = "linux")]
 pub fn run() -> anyhow::Result<()> {
+    // The overlay's own surface and renderer, while they're being built (overlay-renderer-plan.md).
+    if std::env::var_os("PADWIGHT_OVERLAY").is_some_and(|v| v == "native") {
+        return wayland::run();
+    }
     // iced_layershell unwraps when the compositor has no layer-shell (GNOME): report that
     // as an error instead of a panic and backtrace.
     std::panic::set_hook(Box::new(|_| {}));
@@ -245,6 +249,8 @@ pub fn run() -> anyhow::Result<()> {
 
 #[cfg(target_os = "linux")]
 mod layershell;
+#[cfg(target_os = "linux")]
+mod wayland;
 mod controller;
 mod ui;
 pub use controller::{OverlayAction, OverlayController};

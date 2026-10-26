@@ -45,6 +45,16 @@ impl Overlay {
         self.frame.loops() || self.panels.busy(now, motion) || self.info.busy(now, motion) || self.logs.busy(now, motion)
     }
 
+    /// The opacity of the most opaque thing shown at `now`: 0 when nothing is.
+    #[cfg(target_os = "linux")]
+    pub(super) fn strongest(&self, now: Instant) -> f32 {
+        let motion = &self.frame.motion;
+        let panels = self.panels.shown(now, motion).map(|(_, a)| a.opacity());
+        let info = self.info.shown(now, motion).map(|(_, a)| a.opacity());
+        let logs = self.logs.shown(now, motion).map(|(_, a)| a.opacity());
+        panels.chain(info).chain(logs).fold(0.0, f32::max)
+    }
+
     /// Drops what has finished closing.
     pub(super) fn prune(&mut self, now: Instant) {
         let motion = &self.frame.motion;
