@@ -8,7 +8,7 @@ use anyhow::{Result, bail};
 use iced::Color;
 
 use super::overlay_shot as shot;
-use crate::{overlay, overlay::OverlayFrame, snapshot::Image};
+use crate::{overlay, overlay::{OverlayFrame, render::Rgba}, snapshot::Image};
 
 pub const USAGE: &str = "
   overlay compare <what>... [options]
@@ -32,13 +32,10 @@ const GUTTER_COLOR: [u8; 4] = [0x80, 0x00, 0x80, 0xff];
 /// at `scale`, as `overlay::snapshot` does for iced; `None` while it can't draw something in
 /// the frame.
 ///
-/// This is where the port steps hook in: as 3.1-3.9 (the panels) and 4.1 (`render/screen.rs`,
-/// placing them) land, draw the frame's panels here and return the picture, converted to a
-/// `snapshot::Image` (unpremultiplied RGBA over the opaque background). Return `None` for
-/// frames with any panel not yet ported; the report lists those as not ported.
+/// The whole screen is `render::screen` (step 4.1); `None` only when the picture can't be made.
 fn draw_new(frame: &OverlayFrame, size: iced::Size, scale: f32, background: Color) -> Option<Image> {
-    let _ = (frame, size, scale, background);
-    None
+    let background = Rgba { r: background.r, g: background.g, b: background.b, a: 1.0 };
+    overlay::render::screen(frame, overlay::render::Point::new(size.width, size.height), scale, background)
 }
 
 /// How far apart two same-sized pictures are.

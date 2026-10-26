@@ -17,9 +17,11 @@ mod media;
 mod menus;
 mod op;
 mod panel;
+pub mod place;
 mod radial;
 pub mod raster;
 mod rich;
+mod screen;
 #[cfg(test)]
 mod sample;
 mod style;
@@ -38,11 +40,14 @@ pub use info::{column_widths, info_panel};
 pub use item::{Item, item};
 pub use log::{RELEASED, log_panel, shorten};
 pub use media::{media, offer};
-#[expect(unused_imports, reason = "drawn by the screen from step 4.1")]
-pub use keyboard::{keyboard_panel, scale as keyboard_scale};
+pub use keyboard::keyboard_panel;
 pub use keyboard::{GAP, KEYBOARD_PADDING, UNIT, keyboard_body_width};
 pub use menus::{UNDER_PROMPT, frame as menu_frame, menu_panel, menu_style};
 pub use panel::framed;
+pub use place::{EDGE_MARGIN, Margins, margins};
+#[expect(unused_imports, reason = "drawn by overlay::snapshot and film from step 4.4")]
+pub use screen::{Shown, screen_ops};
+pub use screen::screen;
 pub use radial::radial;
 pub use rich::{Setting, info_cell, line, plain, rich};
 pub use style::Style;

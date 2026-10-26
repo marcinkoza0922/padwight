@@ -60,7 +60,7 @@ use crate::{
 };
 
 /// Distance from the screen edge for edge and corner positions.
-pub const EDGE_MARGIN: f32 = 40.0;
+pub use crate::overlay::render::EDGE_MARGIN;
 
 /// What a menu is drawn with besides its own style: the controller in use (for its button
 /// glyphs), the color-blind tints, and how the menu is moving.
