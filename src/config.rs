@@ -980,15 +980,20 @@ impl StickAction {
     /// diagonals press both of theirs (e.g. W and D).
     pub fn directions(up: &str, down: &str, left: &str, right: &str) -> Self {
         let key = |k: &str| ButtonAction::Keys(vec![k.to_string()]);
-        let both = |a: &str, b: &str| ButtonAction::Multi(vec![key(a), key(b)]);
+        Self::directions_of(&key(up), &key(down), &key(left), &key(right))
+    }
+
+    /// Like `directions`, with any action for each of the four directions.
+    pub fn directions_of(up: &ButtonAction, down: &ButtonAction, left: &ButtonAction, right: &ButtonAction) -> Self {
+        let both = |a: &ButtonAction, b: &ButtonAction| ButtonAction::Multi(vec![a.clone(), b.clone()]);
         let actions = vec![
-            key(up),
+            up.clone(),
             both(up, right),
-            key(right),
+            right.clone(),
             both(down, right),
-            key(down),
+            down.clone(),
             both(down, left),
-            key(left),
+            left.clone(),
             both(up, left),
         ];
         StickAction::Ring {
@@ -1015,6 +1020,12 @@ impl StickAction {
 
     pub fn arrows() -> Self {
         Self::directions("KEY_UP", "KEY_DOWN", "KEY_LEFT", "KEY_RIGHT")
+    }
+
+    /// The stick presses the virtual pad's D-pad.
+    pub fn dpad() -> Self {
+        let pad = |b: Button| ButtonAction::Gamepad(b);
+        Self::directions_of(&pad(Button::DpadUp), &pad(Button::DpadDown), &pad(Button::DpadLeft), &pad(Button::DpadRight))
     }
 }
 
