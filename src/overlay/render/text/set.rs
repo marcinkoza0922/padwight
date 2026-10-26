@@ -39,26 +39,17 @@ impl Run {
         }
         let text = spec.case.apply(&spec.text);
         let spacing = if spec.spacing.is_finite() { spec.spacing.max(0.0) } else { 0.0 };
-        let mut buffer = Buffer::new(fonts, Metrics::new(size, size * LINE_HEIGHT));
-        buffer.set_wrap(fonts, Wrap::Word);
-        buffer.set_size(fonts, spec.width.filter(|w| w.is_finite()).map(|w| w.max(0.0)), None);
-        // Iced's `Shaping::Auto`, except that iced underlines through rich text, which it always
-        // shapes in full (kerning included).
-        let shaping = if text.is_ascii() && !spec.underline { Shaping::Basic } else { Shaping::Advanced };
-        buffer.set_text(fonts, &text, &attrs(&spec, spacing), shaping, None);
-        buffer.shape_until_scroll(fonts, false);
-
-        let mut lines = Vec::new();
-        let mut widths = Vec::new();
-        let mut height: f32 = 0.0;
-        for run in buffer.layout_runs() {
-            let mut placed = run.glyphs.to_vec();
-            let taken = if spacing > 0.0 { unspace(&mut placed, run.text, spacing) } else { 0.0 };
-            widths.push(run.line_w - taken);
-            let underline = spec.underline.then(|| underline(&placed, run.line_top, run.line_height, size)).flatten();
-            lines.push(Line { glyphs: placed, baseline: run.line_y, underline });
-            height = height.max(run.line_top + run.line_height);
+        // The spacing after each word's last letter is taken back (`unspace`), so a line that
+        // fits once it is gone must not wrap for it: a run measured as wide as its line is
+        // shaped again at that width. A text that still wraps leaves room for the last word's.
+        let words = text.split_whitespace().count().max(1) as f32;
+        let wide = spec.width.is_some_and(f32::is_finite) && spacing > 0.0;
+        let mut shaped = laid(fonts, &spec, &text, spacing, if wide { spacing * words } else { 0.0 });
+        let one_line = shaped.0.len() <= 1 && shaped.1.iter().all(|w| spec.width.is_some_and(|max| *w <= max + 0.01));
+        if wide && !one_line {
+            shaped = laid(fonts, &spec, &text, spacing, spacing);
         }
+        let (mut lines, widths, height) = shaped;
         let widest = widths.iter().copied().fold(0.0, f32::max);
         let width = match (spec.align, spec.width) {
             (Align::Center | Align::End, Some(w)) if w.is_finite() => w.max(0.0),
@@ -94,6 +85,32 @@ fn attrs(spec: &Spec, spacing: f32) -> Attrs<'static> {
         attrs = attrs.font_features(features);
     }
     attrs
+}
+
+/// The lines of `text` shaped for `spec` (wrapped `pad` pixels wider than its width), the width
+/// each ends up with, and the run's height.
+fn laid(fonts: &mut FontSystem, spec: &Spec, text: &str, spacing: f32, pad: f32) -> (Vec<Line>, Vec<f32>, f32) {
+    let size = spec.size;
+    let mut buffer = Buffer::new(fonts, Metrics::new(size, size * LINE_HEIGHT));
+    buffer.set_wrap(fonts, Wrap::Word);
+    buffer.set_size(fonts, spec.width.filter(|w| w.is_finite()).map(|w| w.max(0.0) + pad), None);
+    // Iced's `Shaping::Auto`, except that iced underlines through rich text, which it always
+    // shapes in full (kerning included).
+    let shaping = if text.is_ascii() && !spec.underline { Shaping::Basic } else { Shaping::Advanced };
+    buffer.set_text(fonts, text, &attrs(spec, spacing), shaping, None);
+    buffer.shape_until_scroll(fonts, false);
+    let mut lines = Vec::new();
+    let mut widths = Vec::new();
+    let mut height: f32 = 0.0;
+    for run in buffer.layout_runs() {
+        let mut placed = run.glyphs.to_vec();
+        let taken = if spacing > 0.0 { unspace(&mut placed, run.text, spacing) } else { 0.0 };
+        widths.push(run.line_w - taken);
+        let underline = spec.underline.then(|| underline(&placed, run.line_top, run.line_height, size)).flatten();
+        lines.push(Line { glyphs: placed, baseline: run.line_y, underline });
+        height = height.max(run.line_top + run.line_height);
+    }
+    (lines, widths, height)
 }
 
 /// Takes the letter spacing cosmic-text puts after every glyph back off the last letter of each
