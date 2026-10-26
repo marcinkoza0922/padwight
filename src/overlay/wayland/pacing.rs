@@ -18,12 +18,6 @@ use std::time::{Duration, Instant};
 
 /// How long an unanswered callback is waited for before drawing without it.
 pub(super) const FALLBACK: Duration = Duration::from_millis(100);
-/// How often the loop looks for frames from the daemon while something is shown, and while
-/// hidden. The channel the reading thread sends on can't wake `poll`, so for now the loop wakes
-/// on its own to look; step 5.5's eventfd removes both.
-const CHANNEL_SHOWN: Duration = Duration::from_millis(16);
-const CHANNEL_HIDDEN: Duration = Duration::from_millis(50);
-
 /// The callback asked for with the last frame drawn.
 #[derive(Debug, Clone, Copy)]
 struct Pending {
@@ -98,19 +92,15 @@ impl Pacer {
     }
 
     /// How long the loop may sleep at `now` before it has to look again: while something waits
-    /// to be drawn, no longer than until the fallback is due (a callback or a buffer release
-    /// wakes it sooner). Otherwise only the daemon's channel needs looking at; after step 5.5
-    /// nothing does, and a still or hidden overlay sleeps until something comes.
-    pub(super) fn timeout(&self, now: Instant, shown: bool) -> Duration {
-        if !shown {
-            return CHANNEL_HIDDEN;
-        }
-        self.fallback_in(now).map_or(CHANNEL_SHOWN, |f| f.min(CHANNEL_SHOWN))
+    /// to be drawn, no longer than until the fallback is due (a callback, a buffer release or a
+    /// frame from the daemon wakes it sooner). Otherwise, and while hidden, nothing needs looking
+    /// at: it sleeps until something comes.
+    pub(super) fn timeout(&self, now: Instant, shown: bool) -> Option<Duration> {
+        if shown { self.fallback_in(now) } else { None }
     }
 
-    /// How long until the fallback is due, while something waits to be drawn: what `timeout`
-    /// becomes once the channel can wake the loop. Without a callback outstanding, what is
-    /// waited for is a released buffer or the configure.
+    /// How long until the fallback is due, while something waits to be drawn. Without a callback
+    /// outstanding, what is waited for is a released buffer or the configure.
     fn fallback_in(&self, now: Instant) -> Option<Duration> {
         let waiting = self.dirty || self.moving;
         waiting.then(|| self.pending.map_or(FALLBACK, |p| (p.asked + FALLBACK).saturating_duration_since(now)))
@@ -165,7 +155,7 @@ mod tests {
         assert!(!p.due(t + 16 * MS), "the callback came, but nothing changed");
         assert!(!p.due(t + 10_000 * MS), "not even after a long while");
         assert_eq!(p.fallback_in(t + 16 * MS), None, "nothing to wake for");
-        assert_eq!(p.timeout(t + 16 * MS, true), CHANNEL_SHOWN, "only the channel, until step 5.5");
+        assert_eq!(p.timeout(t + 16 * MS, true), None, "a still overlay sleeps until something comes");
     }
 
     #[test]
@@ -190,6 +180,7 @@ mod tests {
         p.moving(true);
         let lost = p.drawn(t);
         assert_eq!(p.fallback_in(t + 40 * MS), Some(60 * MS));
+        assert_eq!(p.timeout(t + 40 * MS, true), Some(60 * MS), "no longer than until the fallback");
         assert!(!p.due(t + FALLBACK - MS));
         assert!(p.due(t + FALLBACK), "fades and closing go on without it");
         let next = p.drawn(t + FALLBACK);
@@ -221,9 +212,9 @@ mod tests {
         p.hidden();
         assert!(!p.due(t + FALLBACK));
         assert_eq!(p.fallback_in(t), None);
-        assert_eq!(p.timeout(t, false), CHANNEL_HIDDEN);
-        // A frame from the daemon while hidden draws nothing and wakes nothing either.
+        assert_eq!(p.timeout(t, false), None);
+        // A frame from the daemon while hidden draws nothing and wakes nothing either: it sleeps.
         p.changed();
-        assert_eq!(p.timeout(t, false), CHANNEL_HIDDEN);
+        assert_eq!(p.timeout(t, false), None);
     }
 }
