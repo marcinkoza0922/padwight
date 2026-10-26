@@ -1,11 +1,12 @@
 //! The overlay's own renderer, free of iced: colors and the style resolved for drawing, the
-//! geometry and the display list, as the rasterizer and layout (later steps) read them.
+//! geometry and the display list, and the rasterizer that draws it (layout is a later step).
 
 mod color;
 mod fill;
 mod geom;
 mod look;
 mod op;
+pub mod raster;
 mod style;
 pub mod text;
 mod typeset;
