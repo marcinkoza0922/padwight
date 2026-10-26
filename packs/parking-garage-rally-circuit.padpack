@@ -20,6 +20,11 @@ kind = "executable"
 value = "garagerally.exe"
 profile = "Parking Garage Rally Circuit"
 
+[[rules]]
+kind = "steam_app_id"
+value = "2737300"
+profile = "Parking Garage Rally Circuit"
+
 [[profiles]]
 name = "Parking Garage Rally Circuit"
 combos = []

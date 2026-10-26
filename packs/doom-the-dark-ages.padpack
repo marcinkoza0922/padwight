@@ -10,9 +10,17 @@ author = "Padwight"
 description = "Doom: The Dark Ages (2025) on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and you set the buttons in the game's controls. Padwight adds the Guide overlay on top, in worn gold on dark iron. Gyro and flick stick profiles are included to try; they move the mouse beside the pad."
 made_with = "Xbox controller"
 
+[controllers]
+dualsense = true
+
 [[rules]]
 kind = "steam_app_id"
 value = "3017860"
+profile = "Doom: The Dark Ages"
+
+[[rules]]
+kind = "executable"
+value = "DOOMTheDarkAges.exe"
 profile = "Doom: The Dark Ages"
 
 [[profiles]]

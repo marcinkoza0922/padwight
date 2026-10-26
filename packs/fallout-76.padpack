@@ -10,6 +10,9 @@ author = "Padwight"
 description = "Fallout 76 (2018) on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard and the media controls, in the Pip-Boy yellow of Appalachia."
 made_with = "Xbox controller"
 
+[controllers]
+dualshock = true
+
 [[rules]]
 kind = "executable"
 value = "Fallout76.exe"

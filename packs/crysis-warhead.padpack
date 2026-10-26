@@ -7,7 +7,7 @@ id = "63da1ed8-d43d-424c-a40c-3aa4870a8ea6"
 name = "Crysis Warhead"
 version = "1.0"
 author = "Padwight"
-description = "Crysis Warhead on an Xbox-style pad, modeled on the game's own controller table: A jumps, B goes prone, X reloads (hold to use), Y throws a grenade, RT fires, LB sprints, RB toggles zoom, L3 toggles crouch and LT is the suit key. Hold D-pad right for the suit menu and pick with the right stick. Start is the menu; double tap it to quick save, hold to quick load. Select lists the map, objectives and gadgets. Gyro and flick stick profiles are included to try."
+description = "Crysis Warhead on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched to the game's own layout. Padwight adds the Guide overlay on top. Gyro and flick stick profiles are included to try; they move the mouse beside the pad."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -28,129 +28,55 @@ tap_window_ms = 250
 long_press_ms = 500
 
 [profiles.buttons]
-South = { keys = ["KEY_SPACE"] }
-East = { keys = ["KEY_Z"] }
-West = { keys = ["KEY_R"] }
-North = { keys = ["KEY_G"] }
-LeftBumper = { keys = ["KEY_LEFTSHIFT"] }
-RightBumper = { toggle = { action = { mouse = "Right" } } }
-LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
-RightStick = { keys = ["KEY_T"] }
-Select = { open_menu = "Screens" }
-Start = { keys = ["KEY_ESC"] }
-Guide = { mode = "Guide" }
-DpadUp = { keys = ["KEY_X"] }
-DpadDown = { keys = ["KEY_C"] }
-DpadLeft = { wheel = "Up" }
-DpadRight = { multi = [{ layer = "Suit menu" }, { mouse = "Middle" }] }
-
-[profiles.gestures.West.long_press]
-keys = ["KEY_F"]
-
-[profiles.gestures.DpadLeft.long_press]
-wheel = "Down"
-
-[profiles.gestures.Start.double_tap]
-keys = ["KEY_F5"]
-
-[profiles.gestures.Start.long_press]
-keys = ["KEY_F9"]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
 
 [profiles.left_stick]
-deadzone = 0.12
+deadzone = 0.05
 curve = 1.0
-key_threshold = 0.25
+key_threshold = 0.3
 
-[profiles.left_stick.action.ring]
-sectors = 8
-start_angle = 0.0
-inner_radius = 0.25
-hysteresis = 0.1
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_W"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [
-    { keys = ["KEY_W"] },
-    { keys = ["KEY_D"] },
-]
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_D"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [
-    { keys = ["KEY_S"] },
-    { keys = ["KEY_D"] },
-]
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_S"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [
-    { keys = ["KEY_S"] },
-    { keys = ["KEY_A"] },
-]
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_A"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [
-    { keys = ["KEY_W"] },
-    { keys = ["KEY_A"] },
-]
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
 
 [profiles.right_stick]
-deadzone = 0.1
-curve = 1.8
-key_threshold = 0.5
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
 
-[profiles.right_stick.action.mouse]
-speed = 1100.0
-accel = 0.2
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
 
-[profiles.left_trigger.action.button]
-threshold = 0.4
-action = { keys = ["KEY_V"] }
+[profiles.left_trigger]
+action = {gamepad = "Left"}
 
-[profiles.right_trigger.action.button]
-threshold = 0.3
-action = { mouse = "Left" }
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
 
 [profiles.guide]
-notes = '''{start} (Escape) opens the game's menu and backs out of every screen in it.
-{lt} holds the suit key (V). {rt} fires, {rb} toggles zoom, {lb} sprints, {l3} toggles crouch and {r3} is T, the special key.
-Hold {right} to open the suit menu, then turn the right stick {rs} toward Armor, Speed, Strength or Cloak and let go to pick it.
-{west} reloads, and holding {west} uses. {south} jumps, {east} goes prone, {north} throws a grenade.
-{left} switches weapon; hold {left} to go back one. {up} changes the fire mode and {down} opens the weapon attachments.
-Tap {select} for a list of the map, objectives, night vision, binoculars and gravity boots.
-Quick save is a double tap of {start}, and quick load is a long press of {start}.
-Crysis has no controller support of its own; the keys follow the game's default controls.'''
-
-[profiles.guide.edits]
-"stick:Left" = { text = "Move" }
-"stick:Right" = { text = "Look" }
-"trigger:Right" = { text = "Fire" }
-"trigger:Left" = { text = "Suit key" }
-"button:South" = { text = "Jump" }
-"button:East" = { text = "Prone" }
-"button:West" = { text = "Reload · hold: use" }
-"button:North" = { text = "{icon:grenade} Throw grenade" }
-"button:LeftBumper" = { text = "Sprint" }
-"button:RightBumper" = { text = "{icon:scope} Zoom (toggle)" }
-"button:LeftStick" = { text = "Crouch (toggle)" }
-"button:RightStick" = { text = "Special" }
-"button:DpadUp" = { text = "Fire mode" }
-"button:DpadDown" = { text = "Weapon attachments" }
-"button:DpadLeft" = { text = "Next weapon · hold: previous" }
-"button:DpadRight" = { text = "Hold: suit menu" }
-"button:Select" = { text = "Screens" }
-"button:Start" = { text = "Menu / back out" }
-"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
-"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+notes = '''Crysis Warhead has its own controller support, so the controller goes to the game as it is. Its buttons are fixed: the game has no option to move them.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
 
 [[profiles]]
 name = "Crysis Warhead + Gyro"
@@ -160,97 +86,43 @@ tap_window_ms = 250
 long_press_ms = 500
 
 [profiles.buttons]
-South = { keys = ["KEY_SPACE"] }
-East = { keys = ["KEY_Z"] }
-West = { keys = ["KEY_R"] }
-North = { keys = ["KEY_G"] }
-LeftBumper = { keys = ["KEY_LEFTSHIFT"] }
-RightBumper = { toggle = { action = { mouse = "Right" } } }
-LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
-RightStick = { keys = ["KEY_T"] }
-Select = { open_menu = "Screens" }
-Start = { keys = ["KEY_ESC"] }
-Guide = { mode = "Guide" }
-DpadUp = { keys = ["KEY_X"] }
-DpadDown = { keys = ["KEY_C"] }
-DpadLeft = { wheel = "Up" }
-DpadRight = { multi = [{ layer = "Suit menu" }, { mouse = "Middle" }] }
-
-[profiles.gestures.West.long_press]
-keys = ["KEY_F"]
-
-[profiles.gestures.DpadLeft.long_press]
-wheel = "Down"
-
-[profiles.gestures.Start.double_tap]
-keys = ["KEY_F5"]
-
-[profiles.gestures.Start.long_press]
-keys = ["KEY_F9"]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
 
 [profiles.left_stick]
-deadzone = 0.12
+deadzone = 0.05
 curve = 1.0
-key_threshold = 0.25
+key_threshold = 0.3
 
-[profiles.left_stick.action.ring]
-sectors = 8
-start_angle = 0.0
-inner_radius = 0.25
-hysteresis = 0.1
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_W"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [
-    { keys = ["KEY_W"] },
-    { keys = ["KEY_D"] },
-]
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_D"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [
-    { keys = ["KEY_S"] },
-    { keys = ["KEY_D"] },
-]
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_S"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [
-    { keys = ["KEY_S"] },
-    { keys = ["KEY_A"] },
-]
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_A"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [
-    { keys = ["KEY_W"] },
-    { keys = ["KEY_A"] },
-]
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
 
 [profiles.right_stick]
-deadzone = 0.1
-curve = 1.8
-key_threshold = 0.5
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
 
-[profiles.right_stick.action.mouse]
-speed = 1100.0
-accel = 0.2
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
 
-[profiles.left_trigger.action.button]
-threshold = 0.4
-action = { keys = ["KEY_V"] }
+[profiles.left_trigger]
+action = {gamepad = "Left"}
 
-[profiles.right_trigger.action.button]
-threshold = 0.3
-action = { mouse = "Left" }
+[profiles.right_trigger]
+action = {gamepad = "Right"}
 
 [profiles.gyro]
 horizontal = "player_space"
@@ -262,37 +134,10 @@ noise_threshold = 1.0
 sensitivity = 22.0
 
 [profiles.guide]
-notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
-{start} (Escape) opens the game's menu and backs out of every screen in it.
-{lt} holds the suit key (V). {rt} fires, {rb} toggles zoom, {lb} sprints, {l3} toggles crouch and {r3} is T, the special key.
-Hold {right} to open the suit menu, then turn the right stick {rs} toward Armor, Speed, Strength or Cloak and let go to pick it.
-{west} reloads, and holding {west} uses. {south} jumps, {east} goes prone, {north} throws a grenade.
-{left} switches weapon; hold {left} to go back one. {up} changes the fire mode and {down} opens the weapon attachments.
-Tap {select} for a list of the map, objectives, night vision, binoculars and gravity boots.
-Quick save is a double tap of {start}, and quick load is a long press of {start}.
-Crysis has no controller support of its own; the keys follow the game's default controls.'''
-
-[profiles.guide.edits]
-"stick:Left" = { text = "Move" }
-"stick:Right" = { text = "Look" }
-"trigger:Right" = { text = "Fire" }
-"trigger:Left" = { text = "Suit key" }
-"button:South" = { text = "Jump" }
-"button:East" = { text = "Prone" }
-"button:West" = { text = "Reload · hold: use" }
-"button:North" = { text = "{icon:grenade} Throw grenade" }
-"button:LeftBumper" = { text = "Sprint" }
-"button:RightBumper" = { text = "{icon:scope} Zoom (toggle)" }
-"button:LeftStick" = { text = "Crouch (toggle)" }
-"button:RightStick" = { text = "Special" }
-"button:DpadUp" = { text = "Fire mode" }
-"button:DpadDown" = { text = "Weapon attachments" }
-"button:DpadLeft" = { text = "Next weapon · hold: previous" }
-"button:DpadRight" = { text = "Hold: suit menu" }
-"button:Select" = { text = "Screens" }
-"button:Start" = { text = "Menu / back out" }
-"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
-"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. The gyro moves the mouse, which the game reads beside the pad.
+Crysis Warhead has its own controller support, so the controller goes to the game as it is. Its buttons are fixed: the game has no option to move them.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
 
 [[profiles]]
 name = "Crysis Warhead + Flick stick"
@@ -303,80 +148,29 @@ long_press_ms = 500
 requires = ["gyro"]
 
 [profiles.buttons]
-South = { keys = ["KEY_SPACE"] }
-East = { keys = ["KEY_Z"] }
-West = { keys = ["KEY_R"] }
-North = { keys = ["KEY_G"] }
-LeftBumper = { keys = ["KEY_LEFTSHIFT"] }
-RightBumper = { toggle = { action = { mouse = "Right" } } }
-LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
-RightStick = { keys = ["KEY_T"] }
-Select = { open_menu = "Screens" }
-Start = { keys = ["KEY_ESC"] }
-Guide = { mode = "Guide" }
-DpadUp = { keys = ["KEY_X"] }
-DpadDown = { keys = ["KEY_C"] }
-DpadLeft = { wheel = "Up" }
-DpadRight = { multi = [{ layer = "Suit menu" }, { mouse = "Middle" }] }
-
-[profiles.gestures.West.long_press]
-keys = ["KEY_F"]
-
-[profiles.gestures.DpadLeft.long_press]
-wheel = "Down"
-
-[profiles.gestures.Start.double_tap]
-keys = ["KEY_F5"]
-
-[profiles.gestures.Start.long_press]
-keys = ["KEY_F9"]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
 
 [profiles.left_stick]
-deadzone = 0.12
+deadzone = 0.05
 curve = 1.0
-key_threshold = 0.25
+key_threshold = 0.3
 
-[profiles.left_stick.action.ring]
-sectors = 8
-start_angle = 0.0
-inner_radius = 0.25
-hysteresis = 0.1
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_W"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [
-    { keys = ["KEY_W"] },
-    { keys = ["KEY_D"] },
-]
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_D"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [
-    { keys = ["KEY_S"] },
-    { keys = ["KEY_D"] },
-]
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_S"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [
-    { keys = ["KEY_S"] },
-    { keys = ["KEY_A"] },
-]
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_A"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [
-    { keys = ["KEY_W"] },
-    { keys = ["KEY_A"] },
-]
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
 
 [profiles.right_stick]
 deadzone = 0.1
@@ -392,13 +186,11 @@ forward_deadzone = 0.0
 vertical = "off"
 vertical_speed = 1200.0
 
-[profiles.left_trigger.action.button]
-threshold = 0.4
-action = { keys = ["KEY_V"] }
+[profiles.left_trigger]
+action = {gamepad = "Left"}
 
-[profiles.right_trigger.action.button]
-threshold = 0.3
-action = { mouse = "Left" }
+[profiles.right_trigger]
+action = {gamepad = "Right"}
 
 [profiles.gyro]
 horizontal = "player_space"
@@ -410,125 +202,10 @@ noise_threshold = 1.0
 sensitivity = 22.0
 
 [profiles.guide]
-notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller.
-{start} (Escape) opens the game's menu and backs out of every screen in it.
-{lt} holds the suit key (V). {rt} fires, {rb} toggles zoom, {lb} sprints, {l3} toggles crouch and {r3} is T, the special key.
-Hold {right} to open the suit menu, then turn the right stick {rs} toward Armor, Speed, Strength or Cloak and let go to pick it.
-{west} reloads, and holding {west} uses. {south} jumps, {east} goes prone, {north} throws a grenade.
-{left} switches weapon; hold {left} to go back one. {up} changes the fire mode and {down} opens the weapon attachments.
-Tap {select} for a list of the map, objectives, night vision, binoculars and gravity boots.
-Quick save is a double tap of {start}, and quick load is a long press of {start}.
-Crysis has no controller support of its own; the keys follow the game's default controls.'''
-
-[profiles.guide.edits]
-"stick:Left" = { text = "Move" }
-"stick:Right" = { text = "Look" }
-"trigger:Right" = { text = "Fire" }
-"trigger:Left" = { text = "Suit key" }
-"button:South" = { text = "Jump" }
-"button:East" = { text = "Prone" }
-"button:West" = { text = "Reload · hold: use" }
-"button:North" = { text = "{icon:grenade} Throw grenade" }
-"button:LeftBumper" = { text = "Sprint" }
-"button:RightBumper" = { text = "{icon:scope} Zoom (toggle)" }
-"button:LeftStick" = { text = "Crouch (toggle)" }
-"button:RightStick" = { text = "Special" }
-"button:DpadUp" = { text = "Fire mode" }
-"button:DpadDown" = { text = "Weapon attachments" }
-"button:DpadLeft" = { text = "Next weapon · hold: previous" }
-"button:DpadRight" = { text = "Hold: suit menu" }
-"button:Select" = { text = "Screens" }
-"button:Start" = { text = "Menu / back out" }
-"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
-"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
-
-[[layers]]
-name = "Suit menu"
-indicator = "off"
-
-[layers.right_stick]
-deadzone = 0.1
-curve = 1.5
-key_threshold = 0.5
-
-[layers.right_stick.action.mouse]
-speed = 600.0
-accel = 0.0
-
-[[menus]]
-name = "Screens"
-kind = "list"
-
-[[menus.items]]
-label = "{icon:map} Map"
-action = { keys = ["KEY_M"] }
-
-[[menus.items]]
-label = "{icon:pda} Objectives"
-action = { keys = ["KEY_O"] }
-
-[[menus.items]]
-label = "{icon:eye} Night vision"
-action = { keys = ["KEY_I"] }
-
-[[menus.items]]
-label = "{icon:scope} Binoculars"
-action = { keys = ["KEY_B"] }
-
-[[menus.items]]
-label = "{icon:upgrade} Gravity boots"
-action = { keys = ["KEY_N"] }
-
-[[menus.items]]
-label = "{icon:drop-item} {color:gray}Drop item{/color}"
-action = { keys = ["KEY_J"] }
-
-[menus.style]
-corners = 0.15
-position = "center"
-scale = 1.0
-
-[menus.style.background]
-color = "#0a131a"
-opacity = 0.92
-
-[menus.style.items]
-color = "#16252f"
-opacity = 0.95
-
-[menus.style.selected]
-color = "#ff9a3c"
-opacity = 1.0
-
-[menus.style.border]
-width = 1
-color = "#ff9a3c"
-opacity = 0.6
-
-[menus.style.gradient]
-color = "#101f29"
-opacity = 1.0
-angle = 180
-
-[menus.style.item_border]
-width = 1
-color = "#2c4452"
-
-
-[menus.style.glow]
-color = "#ff9a3c"
-opacity = 0.4
-blur = 20
-pulse = true
-
-[menus.style.type]
-case = "upper"
-letter_spacing = 2
-
-[menus.style.ornament]
-frame = {kind = "chamfer", size = 14, width = 2, color = "#ff9a3c"}
-scanlines = {spacing = 4, opacity = 0.1, color = "#000000"}
-vignette = {color = "#000000", opacity = 0.55, reach = 28}
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming. Both move the mouse, which the game reads beside the pad.
+Crysis Warhead has its own controller support, so the controller goes to the game as it is. Its buttons are fixed: the game has no option to move them.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
 
 [keyboard_style]
 corners = 0.15

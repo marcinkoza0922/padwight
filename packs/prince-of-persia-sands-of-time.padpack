@@ -25,6 +25,11 @@ kind = "steam_app_id"
 value = "13600"
 profile = "Prince of Persia: The Sands of Time"
 
+[[rules]]
+kind = "executable"
+value = "Prince of Persia The Sands of Time/PrinceOfPersia.exe"
+profile = "Prince of Persia: The Sands of Time"
+
 [[profiles]]
 name = "Prince of Persia: The Sands of Time"
 combos = []

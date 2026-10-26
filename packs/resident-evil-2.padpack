@@ -21,6 +21,11 @@ value = "ClaireU.exe"
 profile = "Resident Evil 2"
 
 
+[[rules]]
+kind = "steam_app_id"
+value = "4249110"
+profile = "Resident Evil 2"
+
 [[profiles]]
 name = "Resident Evil 2"
 combos = []

@@ -27,7 +27,12 @@ profile = "Icewind Dale"
 
 [[rules]]
 kind = "steam_app_id"
-value = "321890"
+value = "321800"
+profile = "Icewind Dale"
+
+[[rules]]
+kind = "executable"
+value = "Icewind.exe"
 profile = "Icewind Dale"
 
 [[profiles]]

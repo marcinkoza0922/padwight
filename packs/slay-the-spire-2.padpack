@@ -25,6 +25,11 @@ kind = "executable"
 value = "SlayTheSpire2"
 profile = "Slay the Spire 2"
 
+[[rules]]
+kind = "executable"
+value = "SlayTheSpire2.exe"
+profile = "Slay the Spire 2"
+
 [[profiles]]
 name = "Slay the Spire 2"
 combos = []

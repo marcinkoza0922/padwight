@@ -20,6 +20,11 @@ kind = "steam_app_id"
 value = "238210"
 profile = "System Shock 2"
 
+[[rules]]
+kind = "executable"
+value = "Shock2.exe"
+profile = "System Shock 2"
+
 [[profiles]]
 name = "System Shock 2"
 combos = []

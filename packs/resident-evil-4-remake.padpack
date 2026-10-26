@@ -10,6 +10,10 @@ author = "Padwight"
 description = "Resident Evil 4 (the 2023 remake, Steam) on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and the game's Controls options, where the buttons and the sticks can be changed set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard and the media controls, typed out in typewriter ink."
 made_with = "Xbox controller"
 
+[controllers]
+dualshock = true
+dualsense = true
+
 [[rules]]
 kind = "executable"
 value = "re4.exe"
