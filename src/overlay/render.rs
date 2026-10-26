@@ -16,6 +16,7 @@ mod look;
 mod media;
 mod op;
 mod panel;
+mod radial;
 pub mod raster;
 mod rich;
 #[cfg(test)]
@@ -40,6 +41,7 @@ pub use media::{media, offer};
 pub use keyboard::{keyboard_panel, scale as keyboard_scale};
 pub use keyboard::{GAP, KEYBOARD_PADDING, UNIT, keyboard_body_width};
 pub use panel::framed;
+pub use radial::radial;
 pub use rich::{Setting, info_cell, line, plain, rich};
 pub use style::Style;
 pub use typeset::Type;
