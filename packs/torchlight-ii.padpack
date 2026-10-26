@@ -5,9 +5,9 @@ overlay_font = "Kreon"
 [pack]
 id = "aef6f26f-6be8-4efb-9203-a3fd039fefc6"
 name = "Torchlight II"
-version = "1.0"
+version = "1.1"
 author = "Padwight"
-description = "Torchlight II on an Xbox-style pad, for the PC game's mouse and keys with the skills on the face buttons, as the console versions have them. The left stick sweeps the pointer and, pushed all the way, walks there; the right stick aims finely. A left-clicks and LT casts the right-click skill. X, Y and B are skills 1 to 3; hold RT for 4 to 0. LB and RB drink health and mana potions. The D-pad shows the map, swaps weapons and zooms. Select lists the character, inventory, skills, pet and quests; Start is the menu. Overlays in leather brown with a torch-orange pick."
+description = "Torchlight II on an Xbox-style pad, for the PC game's mouse and keys with the skills on the face buttons, as the console versions have them. The left stick walks the hero the way it's pushed, clicking around them; the right stick is the pointer. A left-clicks and LT casts the right-click skill. X, Y and B are skills 1 to 3; hold RT for 4 to 0. LB and RB drink health and mana potions. The D-pad shows the map, swaps weapons and zooms. Select lists the character, inventory, skills, pet and quests; Start is the menu. Overlays in leather brown with a torch-orange pick."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -55,12 +55,15 @@ deadzone = 0.15
 curve = 1.5
 key_threshold = 0.5
 
-[profiles.left_stick.action.mouse]
-speed = 1700.0
-accel = 0.2
+[profiles.left_stick.action.region]
+x = 0.5
+y = 0.5
+width = 0.34
+height = 0.6
+shape = "circle"
 
 [[profiles.left_stick.zones]]
-min = 0.85
+min = 0.0
 max = 1.0
 action = { mouse = "Left" }
 
@@ -70,7 +73,7 @@ curve = 1.8
 key_threshold = 0.5
 
 [profiles.right_stick.action.mouse]
-speed = 900.0
+speed = 1300.0
 accel = 0.3
 
 [profiles.left_trigger.action.button]
@@ -82,15 +85,15 @@ threshold = 0.3
 action = { layer = "More skills" }
 
 [profiles.guide]
-notes = '''Neither stick can walk the hero directly, because the game moves only by clicking: the left stick {ls} sweeps the pointer quickly, and a full push also holds the left mouse button, so the hero walks toward the pointer and attacks what's under it. Push it toward where you want to go and keep it there. The right stick {rs} moves the pointer slowly, for aiming and the inventory.
+notes = '''The game moves only by clicking, so the left stick {ls} clicks for you: pushing it puts the pointer in a circle around the hero, in the direction pushed, and holds the left mouse button, so the hero walks that way and attacks or picks up what the pointer lands on. A light push clicks close by, a full push a short walk away. Letting go stops and puts the pointer back on the hero. The right stick {rs} is an ordinary pointer, for aiming skills, the inventory and the menus. The circle assumes a 16:9 screen with the hero in its middle, and one monitor: with more, the pointer lands across all of them.
 {south} left-clicks: walk, attack, pick up, talk. {lt} casts the skill on the right mouse button. {west} {north} {east} cast skills 1 to 3; hold {rt} for 4 to 6 on the same buttons and 7 to 0 on {up} {right} {down} {left}. {lb} drinks the best health potion, {rb} the best mana potion.
 Click {l3} to stand still and attack in place (Shift, toggled; click again to walk). Hold {r3} to show the items on the ground. {up} shows the map over the game, {down} swaps the weapon sets, {left} and {right} zoom.
 {select} lists the character sheet, inventory, skills, the pet's inventory and the quest log. {start} is the menu and closes the open windows; the game saves on its own. Naming the hero: {guide} + {west} opens the on-screen keyboard.
 The game has no controller support (Runic only shipped a Steam Controller setup), and the console versions are a separate port. The keys are the PC game's defaults as remembered, not checked on an install: Z and X for the potions, Tab for the map, W to swap weapons, Shift to stand still, Alt for the items, C I S P Q for the screens. If one doesn't answer, check Options, Controls and change the buttons here to match. The Linux executable name is a guess.'''
 
 [profiles.guide.edits]
-"stick:Left" = { text = "Pointer · full push: walk" }
-"stick:Right" = { text = "Pointer (fine)" }
+"stick:Left" = { text = "Walk · attack" }
+"stick:Right" = { text = "Pointer" }
 "trigger:Right" = { text = "Hold: skills 4 to 0" }
 "trigger:Left" = { text = "Right-click skill" }
 "button:South" = { text = "Click: walk · attack · use" }
