@@ -261,6 +261,10 @@ pub mod draw;
 #[cfg(test)]
 mod fade_frames;
 pub mod fit;
+/// The overlay's own renderer, free of iced.
+#[expect(dead_code, reason = "built up step by step; nothing draws with it yet")]
+#[cfg_attr(not(test), expect(unused_imports, reason = "built up step by step; nothing draws with it yet"))]
+pub mod render;
 mod timing;
 
 #[cfg(test)]
