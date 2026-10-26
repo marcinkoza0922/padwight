@@ -253,6 +253,8 @@ mod windows;
 
 pub use ui::{film, snapshot};
 
+/// The procedural pictures behind panel filters, free of any drawing library.
+pub mod art;
 /// Drawing for overlays, generic over the message type so the settings GUI can show the
 /// same thing as a live preview.
 pub mod draw;

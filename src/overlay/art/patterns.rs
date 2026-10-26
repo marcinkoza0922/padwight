@@ -1,11 +1,9 @@
-//! The patterned color filters: plaid, argyle, stripes, a checkerboard and polka dots, each
-//! solid colors over the panel.
+//! The patterned filters: plaid, argyle, stripes, a checkerboard and polka dots, each solid
+//! colors over the panel.
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use iced::Element;
-
-use super::{Shape, sized};
+use super::Pattern;
 use crate::config::{
     Argyle, Checkerboard, Plaid, PolkaDots, StripeDirection, Stripes, default_argyle_colors, default_checkerboard_colors, default_plaid_colors, default_polka_dot_colors,
     default_stripes_colors, parse_hex,
@@ -14,7 +12,7 @@ use crate::config::{
 /// A tartan: each thread is the ground, a band or a line by where it lies in the sett, and the
 /// twill shows the thread running down at some points and the one running across at the others,
 /// so where a band crosses the ground the two hatch together.
-pub fn plaid<'a, M: 'a>(p: &Plaid, s: f32, shape: Shape, fade: f32) -> Element<'a, M> {
+pub fn plaid(p: &Plaid, s: f32) -> Pattern {
     let sett = (p.size.clamp(24.0, 240.0) * s).max(12.0);
     let [ground, band, line] = rgb(&p.colors, default_plaid_colors);
     // A line is about two pixels wide, at its place in the sett.
@@ -29,7 +27,7 @@ pub fn plaid<'a, M: 'a>(p: &Plaid, s: f32, shape: Shape, fade: f32) -> Element<'
             ground
         }
     };
-    sized([13, sett as u32, key(&p.colors, 0)], shape, (p.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
+    Pattern::new([13, sett as u32, key(&p.colors, 0)], p.opacity, move |x0, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in y0..y0 + h {
             for x in x0..x0 + w {
@@ -43,13 +41,13 @@ pub fn plaid<'a, M: 'a>(p: &Plaid, s: f32, shape: Shape, fade: f32) -> Element<'
 
 /// Diamonds a third taller than they're wide, the two colors alternating like a chequerboard,
 /// with a thin line along each diagonal through their middles.
-pub fn argyle<'a, M: 'a>(a: &Argyle, s: f32, shape: Shape, fade: f32) -> Element<'a, M> {
+pub fn argyle(a: &Argyle, s: f32) -> Pattern {
     let width = (a.size.clamp(16.0, 160.0) * s).max(8.0);
     let height = width * 1.4;
     let [first, second, line] = rgb(&a.colors, default_argyle_colors);
     // How far a line reaches either side of its middle, in the diagonals' units.
     let reach = 0.8 * (1.0 / (width * width) + 1.0 / (height * height)).sqrt();
-    sized([14, width as u32, key(&a.colors, 0)], shape, (a.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
+    Pattern::new([14, width as u32, key(&a.colors, 0)], a.opacity, move |x0, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in y0..y0 + h {
             for x in x0..x0 + w {
@@ -71,12 +69,12 @@ pub fn argyle<'a, M: 'a>(a: &Argyle, s: f32, shape: Shape, fade: f32) -> Element
 }
 
 /// Stripes in two alternating colors, a pinstripe at each edge between them.
-pub fn stripes<'a, M: 'a>(st: &Stripes, s: f32, shape: Shape, fade: f32) -> Element<'a, M> {
+pub fn stripes(st: &Stripes, s: f32) -> Pattern {
     let band = (st.size.clamp(4.0, 120.0) * s).max(2.0);
     let direction = st.direction;
     let [first, second, pin] = rgb(&st.colors, default_stripes_colors);
     let half_pin = 0.8 * s.max(1.0);
-    sized([15, band as u32, key(&st.colors, direction as u32)], shape, (st.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
+    Pattern::new([15, band as u32, key(&st.colors, direction as u32)], st.opacity, move |x0, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in y0..y0 + h {
             for x in x0..x0 + w {
@@ -101,10 +99,10 @@ pub fn stripes<'a, M: 'a>(st: &Stripes, s: f32, shape: Shape, fade: f32) -> Elem
 }
 
 /// Squares in two alternating colors.
-pub fn checkerboard<'a, M: 'a>(c: &Checkerboard, s: f32, shape: Shape, fade: f32) -> Element<'a, M> {
+pub fn checkerboard(c: &Checkerboard, s: f32) -> Pattern {
     let side = (c.size.clamp(4.0, 160.0) * s).max(2.0);
     let [first, second] = rgb(&c.colors, default_checkerboard_colors);
-    sized([17, side as u32, key(&c.colors, 0)], shape, (c.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
+    Pattern::new([17, side as u32, key(&c.colors, 0)], c.opacity, move |x0, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in y0..y0 + h {
             for x in x0..x0 + w {
@@ -118,11 +116,11 @@ pub fn checkerboard<'a, M: 'a>(c: &Checkerboard, s: f32, shape: Shape, fade: f32
 
 /// Round dots on a ground, each row of them offset by half a step from the one above, their
 /// edges smoothed over a pixel.
-pub fn polka_dots<'a, M: 'a>(d: &PolkaDots, s: f32, shape: Shape, fade: f32) -> Element<'a, M> {
+pub fn polka_dots(d: &PolkaDots, s: f32) -> Pattern {
     let step = (d.size.clamp(8.0, 120.0) * s).max(4.0);
     let [ground, dot] = rgb(&d.colors, default_polka_dot_colors);
     let radius = step * 0.3;
-    sized([18, step as u32, key(&d.colors, 0)], shape, (d.opacity * fade).clamp(0.0, 1.0), move |x0, y0, w, h| {
+    Pattern::new([18, step as u32, key(&d.colors, 0)], d.opacity, move |x0, y0, w, h| {
         let mut pixels = Vec::with_capacity(w * h * 4);
         for y in y0..y0 + h {
             for x in x0..x0 + w {
