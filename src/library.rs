@@ -149,6 +149,7 @@ pub fn problems(pack: &Pack) -> Vec<String> {
     actions.extend(game.layers.iter().flat_map(|l| l.actions()));
     actions.extend(game.menus.iter().flat_map(|m| m.items.iter().map(|i| &i.action)));
     actions.extend(game.macros.iter().flat_map(|m| m.steps.iter().filter_map(crate::config::MacroStep::action)));
+    actions.extend(game.cycles.iter().flat_map(|c| &c.steps));
     let mut keys: Vec<&String> = actions.into_iter().flat_map(|a| a.key_names()).collect();
     for s in game.profiles.iter().flat_map(|p| [&p.left_stick, &p.right_stick]) {
         keys.extend(s.action.ring_actions().iter().flat_map(|a| a.key_names()));

@@ -1145,6 +1145,7 @@ impl Daemon {
         crate::priority::set_realtime(self.config.realtime_input);
         for dev in self.devices.values_mut() {
             dev.engine.set_macros(&self.scope.macros);
+            dev.engine.set_cycles(&self.scope.cycles);
             dev.engine.set_menus(&self.scope.menus);
             dev.engine.set_opener(self.config.shortcuts.engine_opener());
             dev.opener_watch.set(self.config.shortcuts.opener());
@@ -1424,6 +1425,7 @@ impl Daemon {
     fn new_managed(&mut self, path: PathBuf, name: String, pad: Option<VirtualPad>, stop: Arc<AtomicBool>) -> Managed {
         let mut engine = Engine::default();
         engine.set_macros(&self.scope.macros);
+        engine.set_cycles(&self.scope.cycles);
         engine.set_menus(&self.scope.menus);
         engine.set_opener(self.config.shortcuts.engine_opener());
         engine.set_menu_keys(self.config.shortcuts.menu_keys());

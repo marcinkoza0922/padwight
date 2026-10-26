@@ -210,6 +210,13 @@ impl App {
             }
             return;
         }
+        if let KeyField::Action { target: Target::CycleStep(c, s), path } = &field {
+            let step = self.game_mut().cycles.get_mut(*c).and_then(|c| c.steps.get_mut(*s));
+            if let Some(action) = step.and_then(|a| action_at(a, path)) {
+                *action = ButtonAction::Keys(keys);
+            }
+            return;
+        }
         let Some(p) = self.profile_mut() else { return };
         match field {
             KeyField::Action { target, path } => {
@@ -226,7 +233,7 @@ impl App {
                     Target::RingSector(st, i) => p.stick_mut(st).action.ring_actions_mut().get_mut(i),
                     Target::Touch(slot) => p.touchpad.slot_mut(slot),
                     // Handled above, outside any profile.
-                    Target::MacroStep(..) | Target::MenuItem(..) | Target::StickAdvanced(_) | Target::GyroAdvanced => None,
+                    Target::MacroStep(..) | Target::CycleStep(..) | Target::MenuItem(..) | Target::StickAdvanced(_) | Target::GyroAdvanced => None,
                 };
                 if let Some(action) = root.and_then(|a| action_at(a, &path)) {
                     *action = ButtonAction::Keys(keys);

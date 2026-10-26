@@ -37,6 +37,7 @@ pub(super) enum ActionKind {
     Toggle,
     Turbo,
     Macro,
+    Cycle,
     Menu,
     Info,
     Log,
@@ -68,6 +69,7 @@ impl fmt::Display for ActionKind {
             ActionKind::GyroRecenter => "Recenter gyro",
             ActionKind::Toggle => "Toggle on / off…",
             ActionKind::Macro => "Macro…",
+            ActionKind::Cycle => "Cycle…",
             ActionKind::Menu => "Open menu…",
             ActionKind::Info => "Info overlay…",
             ActionKind::Log => "Log overlay…",
@@ -80,7 +82,7 @@ impl fmt::Display for ActionKind {
 }
 
 /// Every kind, for a top-level action.
-pub(super) const ACTION_KINDS: [ActionKind; 27] = [
+pub(super) const ACTION_KINDS: [ActionKind; 28] = [
     ActionKind::Disabled,
     ActionKind::Gamepad,
     ActionKind::PadTrigger,
@@ -102,6 +104,7 @@ pub(super) const ACTION_KINDS: [ActionKind; 27] = [
     ActionKind::Toggle,
     ActionKind::Turbo,
     ActionKind::Macro,
+    ActionKind::Cycle,
     ActionKind::Menu,
     ActionKind::Info,
     ActionKind::Log,
@@ -123,6 +126,7 @@ pub(super) const RADIAL_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::Numpad,
     ActionKind::Toggle,
     ActionKind::Macro,
+    ActionKind::Cycle,
     ActionKind::Mode,
     ActionKind::Multiple,
 ];
@@ -143,6 +147,7 @@ pub(super) const MENU_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::GyroRecenter,
     ActionKind::Toggle,
     ActionKind::Macro,
+    ActionKind::Cycle,
     ActionKind::Menu,
     // A menu item is a tap: it can't hold a layer, but it can switch modes.
     ActionKind::Mode,
@@ -166,6 +171,7 @@ pub(super) const NO_SUBMENU_ITEM_KINDS: &[ActionKind] = &[
     ActionKind::GyroRecenter,
     ActionKind::Toggle,
     ActionKind::Macro,
+    ActionKind::Cycle,
     ActionKind::Mode,
     ActionKind::Multiple,
 ];
@@ -173,6 +179,18 @@ pub(super) const NO_SUBMENU_ITEM_KINDS: &[ActionKind] = &[
 /// What a macro step can press: plain outputs only.
 pub(super) const MACRO_STEP_KINDS: &[ActionKind] =
     &[ActionKind::Keys, ActionKind::Mouse, ActionKind::Wheel, ActionKind::Gamepad];
+
+/// What a cycle's step can press: inputs, macros, or several inputs at once.
+pub(super) const CYCLE_STEP_KINDS: &[ActionKind] = &[
+    ActionKind::Gamepad,
+    ActionKind::PadTrigger,
+    ActionKind::PadStick,
+    ActionKind::Keys,
+    ActionKind::Mouse,
+    ActionKind::Wheel,
+    ActionKind::Macro,
+    ActionKind::Multiple,
+];
 
 /// Entries of a Multiple list.
 pub(super) const MULTI_ENTRY_KINDS: &[ActionKind] = &[
@@ -272,6 +290,7 @@ pub(super) fn action_kind(action: &ButtonAction) -> ActionKind {
         ButtonAction::Toggle(_) => ActionKind::Toggle,
         ButtonAction::Turbo { .. } => ActionKind::Turbo,
         ButtonAction::Macro { .. } => ActionKind::Macro,
+        ButtonAction::Cycle { .. } => ActionKind::Cycle,
         ButtonAction::OpenMenu(_) => ActionKind::Menu,
         ButtonAction::ShowInfo(_) => ActionKind::Info,
         ButtonAction::ShowLog(_) => ActionKind::Log,
@@ -318,6 +337,7 @@ pub(super) fn new_action(k: ActionKind, default_button: Button, current: &Button
             every_ms: 0,
         },
         ActionKind::Macro => ButtonAction::Macro { name: names.macros.first().cloned().unwrap_or_default(), repeat: false },
+        ActionKind::Cycle => ButtonAction::Cycle { name: names.cycles.first().cloned().unwrap_or_default(), back: false },
         ActionKind::Menu => ButtonAction::OpenMenu(names.menus.first().cloned().unwrap_or_default()),
         ActionKind::Info => ButtonAction::ShowInfo(names.infos.first().cloned().unwrap_or_default()),
         ActionKind::Log => ButtonAction::ShowLog(names.logs.first().cloned().unwrap_or_default()),
@@ -325,6 +345,33 @@ pub(super) fn new_action(k: ActionKind, default_button: Button, current: &Button
         ActionKind::Layer => ButtonAction::Layer(names.layers.first().cloned().unwrap_or_else(|| NEW_LAYER.into())),
         ActionKind::Mode => ButtonAction::Mode(switchable_modes(names).first().cloned().unwrap_or_else(|| NEW_MODE.into())),
     }
+}
+
+/// A Cycle's cycle and direction.
+fn cycle_value<'a>(name: &str, back: bool, on_change: OnAction<'a>, names: &Names) -> Element<'a, Message> {
+    if names.cycles.is_empty() {
+        return tab_link("No cycles yet.", "Create one on the Cycles tab", GameTab::Cycles, "");
+    }
+    let pick = {
+        let on_change = on_change.clone();
+        dropdown(names.cycles.clone(), Some(name.to_string()), move |n| on_change(ButtonAction::Cycle { name: n, back })).width(VALUE_WIDTH)
+    };
+    let missing = !names.cycles.iter().any(|n| n == name);
+    let name = name.to_string();
+    let goto = goto_button(ItemKind::Cycle, &name, !missing);
+    let backward = tooltip(
+        checkbox(back).label("Step back").on_toggle(move |b| on_change(ButtonAction::Cycle { name: name.clone(), back: b })),
+        container(text("Presses the step before the last one pressed, for a second button that goes the other way.").size(13))
+            .padding(8)
+            .max_width(320.0)
+            .style(style::tooltip),
+        tooltip::Position::Top,
+    );
+    let mut line = row![pick, backward].spacing(12).align_y(Alignment::Center);
+    if missing {
+        line = line.push(text("missing cycle").size(12).color(ERROR_COLOR));
+    }
+    line.push(goto).into()
 }
 
 /// The modes an action can switch to: the game's, and mouse mode. The Guide mode belongs to the
@@ -510,6 +557,7 @@ pub(super) fn action_value<'a>(
             }
             line.push(goto).into()
         }
+        ButtonAction::Cycle { name, back } => cycle_value(name, *back, on_change, names),
         ButtonAction::Disabled
         | ButtonAction::Screenshot
         | ButtonAction::ToggleRecording

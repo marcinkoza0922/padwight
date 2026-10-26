@@ -17,7 +17,7 @@ use icons::icon;
 const GROUPS: [(&str, &[ActionKind]); 6] = [
     ("Press", &[ActionKind::Keys, ActionKind::Mouse, ActionKind::Wheel, ActionKind::Gamepad, ActionKind::PadTrigger, ActionKind::PadStick, ActionKind::Disabled]),
     ("Change how it presses", &[ActionKind::Toggle, ActionKind::Turbo, ActionKind::Multiple, ActionKind::Macro]),
-    ("Open or switch", &[ActionKind::Menu, ActionKind::Layer, ActionKind::Mode]),
+    ("Open or switch", &[ActionKind::Menu, ActionKind::Layer, ActionKind::Mode, ActionKind::Cycle]),
     ("On screen", &[ActionKind::Overlay, ActionKind::Numpad, ActionKind::QuickSettings, ActionKind::Media, ActionKind::Info, ActionKind::Log]),
     ("Gyro", &[ActionKind::GyroToggle, ActionKind::GyroClutch, ActionKind::GyroHold, ActionKind::GyroRecenter]),
     ("System", &[ActionKind::Screenshot, ActionKind::Recording, ActionKind::ForceQuit]),
@@ -186,6 +186,7 @@ impl ActionKind {
             ActionKind::Turbo => "Repeats another action quickly while held.",
             ActionKind::Multiple => "Presses several outputs together.",
             ActionKind::Macro => "Plays a sequence of presses from the Macros tab.",
+            ActionKind::Cycle => "Steps through a list from the Cycles tab, one per press.",
             ActionKind::Menu => "Opens a menu to pick from.",
             ActionKind::Layer => "Changes other buttons while held.",
             ActionKind::Mode => "Switches to another set of mappings.",

@@ -12,12 +12,12 @@ raw = "https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/image
 # The wiki's page for each manual chapter; chapters it has none for link into the repository instead.
 pages = {
     "buttons.md": "Buttons-and-Actions", "sticks.md": "Sticks-and-Triggers", "gyro.md": "Gyro", "modes.md": "Modes",
-    "layers.md": "Layers", "macros.md": "Macros", "menus.md": "Menus", "overlays.md": "On-Screen-Keyboard-and-Numpad",
+    "layers.md": "Layers", "macros.md": "Macros", "cycles.md": "Cycles", "menus.md": "Menus", "overlays.md": "On-Screen-Keyboard-and-Numpad",
     "guide-button.md": "Guide-Button", "in-game-menu.md": "In-Game-Menu", "sharing.md": "Packs-and-the-Library",
     "setups.md": "Games-and-Profiles", "troubleshooting.md": "Troubleshooting",
 }
 # Tutorial files and their wiki page names (the Deus Ex one keeps the name it always had).
-ORDER = ["first-setup", "buttons", "sticks", "gyro", "touchpad", "modes", "layers", "macros", "menus", "overlays", "guide", "sharing", "deus-ex"]
+ORDER = ["first-setup", "buttons", "sticks", "gyro", "touchpad", "modes", "layers", "macros", "cycles", "menus", "overlays", "guide", "sharing", "deus-ex"]
 files = sorted((root / "docs/manual").glob("tutorial-*.md"), key=lambda f: ORDER.index(f.stem.removeprefix("tutorial-")))
 tutorials = {f.name: "Tutorial-" + "-".join(w.capitalize() for w in f.stem.removeprefix("tutorial-").split("-")) for f in files}
 tutorials["tutorial-deus-ex.md"] = "Tutorial-Deus-Ex-Pack"

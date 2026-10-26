@@ -7,7 +7,7 @@ id = "eab999a4-c909-43e5-83d3-f1b292474d72"
 name = "Parkitect"
 version = "1.2"
 author = "Padwight"
-description = "Parkitect on an Xbox-style pad, for the game's default keys. The left stick moves the camera, the right stick the pointer; RT and A click, LT deletes. Hold LB for the build tools and RB with the d-pad for the game speed, Select for the view toggles. X rotates what you're placing (hold: pipette), hold Y to change height, hold L3 or R3 to snap. The d-pad zooms and turns the camera. Start is the menu; double tap it to quick save."
+description = "Parkitect on an Xbox-style pad, for the game's default keys. The left stick moves the camera, the right stick the pointer; RT and A click, LT deletes. RB steps through the game speeds (hold it with the d-pad for one). Hold LB for the build tools, Select for the view toggles. X rotates what you're placing (hold: pipette), hold Y to change height, hold L3 or R3 to snap. The d-pad zooms and turns the camera. Start is the menu; double tap it to quick save."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -39,7 +39,7 @@ East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_SPACE"]}
 North = {keys = ["KEY_LEFTSHIFT"]}
 LeftBumper = {open_menu = "Build"}
-RightBumper = {open_menu = "Speed"}
+RightBumper = {cycle = {name = "Game speed"}}
 Select = {open_menu = "View"}
 Start = {keys = ["KEY_ESC"]}
 LeftStick = {keys = ["KEY_LEFTALT"]}
@@ -48,6 +48,9 @@ DpadUp = {keys = ["KEY_PAGEUP"]}
 DpadDown = {keys = ["KEY_PAGEDOWN"]}
 DpadLeft = {keys = ["KEY_Q"]}
 DpadRight = {keys = ["KEY_E"]}
+
+[profiles.gestures.RightBumper.long_press]
+open_menu = "Speed"
 
 [profiles.gestures.Start]
 double_tap = {keys = ["KEY_O"]}
@@ -134,7 +137,7 @@ noise_threshold = 1.0
 
 [profiles.guide]
 notes = '''The right stick {rs} moves the pointer and the left stick {ls} moves the camera. {rt} or {south} clicks, {lt} right-clicks to delete what's under the pointer.
-Hold {lb} for the build tools, aiming with the right stick {rs}. Hold {rb} and press the {dpad} for the game speed: left is normal, up fast, right fastest, and down pauses.
+Hold {lb} for the build tools, aiming with the right stick {rs}. Tap {rb} for the next speed: fast, fastest, then normal again. Press {rb} with the {dpad} for one speed (left is normal, up fast, right fastest, and down pauses); hold {rb} to see them.
 {west} rotates what you're placing; hold it to pick up the look of an object already placed. Hold {north} and move the pointer to change height.
 Hold {l3} to snap to the grid and {r3} to snap to height while you place.
 {up} and {down} zoom, and holding them grows or shrinks the object. {left} and {right} turn the camera.
@@ -152,7 +155,8 @@ Naming a ride or a park: {guide} + {west} opens the on-screen keyboard.'''
 "gesture:button:West:long_press" = {text = "Pipette (pick up a placed object)"}
 "button:North" = {text = "Hold: change height"}
 "button:LeftBumper" = {text = "Hold: build"}
-"button:RightBumper" = {text = "Hold + {dpad}: game speed"}
+"button:RightBumper" = {text = "{icon:speed2} Next speed"}
+"gesture:button:RightBumper:long_press" = {text = "Hold: speed menu"}
 "button:Select" = {text = "View and screens"}
 "button:LeftStick" = {text = "Hold: snap to grid"}
 "button:RightStick" = {text = "Hold: snap to height"}
@@ -183,7 +187,7 @@ East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_SPACE"]}
 North = {keys = ["KEY_LEFTSHIFT"]}
 LeftBumper = {open_menu = "Build"}
-RightBumper = {open_menu = "Speed"}
+RightBumper = {cycle = {name = "Game speed"}}
 Select = {open_menu = "View"}
 Start = {keys = ["KEY_ESC"]}
 LeftStick = {keys = ["KEY_LEFTALT"]}
@@ -192,6 +196,9 @@ DpadUp = {keys = ["KEY_PAGEUP"]}
 DpadDown = {keys = ["KEY_PAGEDOWN"]}
 DpadLeft = {keys = ["KEY_Q"]}
 DpadRight = {keys = ["KEY_E"]}
+
+[profiles.gestures.RightBumper.long_press]
+open_menu = "Speed"
 
 [profiles.gestures.Start]
 double_tap = {keys = ["KEY_O"]}
@@ -272,7 +279,7 @@ action = {mouse = "Left"}
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
 The right stick {rs} moves the pointer and the left stick {ls} moves the camera. {rt} or {south} clicks, {lt} right-clicks to delete what's under the pointer.
-Hold {lb} for the build tools, aiming with the right stick {rs}. Hold {rb} and press the {dpad} for the game speed: left is normal, up fast, right fastest, and down pauses.
+Hold {lb} for the build tools, aiming with the right stick {rs}. Tap {rb} for the next speed: fast, fastest, then normal again. Press {rb} with the {dpad} for one speed (left is normal, up fast, right fastest, and down pauses); hold {rb} to see them.
 {west} rotates what you're placing; hold it to pick up the look of an object already placed. Hold {north} and move the pointer to change height.
 Hold {l3} to snap to the grid and {r3} to snap to height while you place.
 {up} and {down} zoom, and holding them grows or shrinks the object. {left} and {right} turn the camera.
@@ -290,7 +297,8 @@ Naming a ride or a park: {guide} + {west} opens the on-screen keyboard.'''
 "gesture:button:West:long_press" = {text = "Pipette (pick up a placed object)"}
 "button:North" = {text = "Hold: change height"}
 "button:LeftBumper" = {text = "Hold: build"}
-"button:RightBumper" = {text = "Hold + {dpad}: game speed"}
+"button:RightBumper" = {text = "{icon:speed2} Next speed"}
+"gesture:button:RightBumper:long_press" = {text = "Hold: speed menu"}
 "button:Select" = {text = "View and screens"}
 "button:LeftStick" = {text = "Hold: snap to grid"}
 "button:RightStick" = {text = "Hold: snap to height"}
@@ -313,6 +321,14 @@ noise_threshold = 1.0
 
 [profiles.gyro.mode.mouse]
 sensitivity = 20.0
+
+[[cycles]]
+name = "Game speed"
+steps = [
+    {keys = ["KEY_2"]},
+    {keys = ["KEY_3"]},
+    {keys = ["KEY_1"]},
+]
 
 [[menus]]
 name = "Build"

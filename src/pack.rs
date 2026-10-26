@@ -10,7 +10,7 @@ use crate::{motion::MotionSet, pad_identity::ControllerSupport};
 use crate::sound::SoundSet;
 use crate::config::{
     RumbleSet,
-    Button, ButtonAction, Combo, Config, Game, Gestures, GyroMode, Indicator, InfoOverlay, ItemKind, Layer, LogOverlay, Macro, Mode,
+    Button, ButtonAction, Combo, Config, Cycle, Game, Gestures, GyroMode, Indicator, InfoOverlay, ItemKind, Layer, LogOverlay, Macro, Mode,
     Menu, MacroStep, Origin, OverlayStyle, PackAssets, PackInfo, PackRef, Profile, Rule, free_name,
 };
 
@@ -44,6 +44,8 @@ pub struct Pack {
     pub profiles: Vec<Profile>,
     #[serde(default)]
     pub macros: Vec<Macro>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cycles: Vec<Cycle>,
     #[serde(default)]
     pub menus: Vec<Menu>,
     #[serde(default)]
@@ -142,6 +144,7 @@ impl Pack {
             rules: self.rules.clone(),
             profiles: self.profiles.clone(),
             macros: self.macros.clone(),
+            cycles: self.cycles.clone(),
             menus: self.menus.clone(),
             info: self.info_overlays.clone(),
             logs: self.log_overlays.clone(),
@@ -240,9 +243,9 @@ pub fn new_id() -> String {
     format!("{}-{}-{}-{}-{}", &hex[..8], &hex[8..12], &hex[12..16], &hex[16..20], &hex[20..])
 }
 
-/// Every (kind, name) reference in these profiles, menus, macros and layers (or modes), nested
-/// ones included, and the info overlays layers use as their indicator.
-fn references(profiles: &[Profile], menus: &[Menu], macros: &[Macro], layers: &[&Layer]) -> BTreeSet<(ItemKind, String)> {
+/// Every (kind, name) reference in these profiles, menus, macros, cycles and layers (or modes),
+/// nested ones included, and the info overlays layers use as their indicator.
+fn references(profiles: &[Profile], menus: &[Menu], macros: &[Macro], cycles: &[Cycle], layers: &[&Layer]) -> BTreeSet<(ItemKind, String)> {
     let mut refs = BTreeSet::new();
     let mut visit = |a: &ButtonAction| {
         a.walk(&mut |a| {
@@ -262,6 +265,9 @@ fn references(profiles: &[Profile], menus: &[Menu], macros: &[Macro], layers: &[
     for m in macros {
         m.steps.iter().filter_map(MacroStep::action).for_each(&mut visit);
     }
+    for c in cycles {
+        c.steps.iter().for_each(&mut visit);
+    }
     for l in layers {
         l.actions().into_iter().for_each(&mut visit);
     }
@@ -278,7 +284,7 @@ fn references(profiles: &[Profile], menus: &[Menu], macros: &[Macro], layers: &[
 /// Every (kind, name) a game's own items refer to. Built-in modes always resolve, so they're left out.
 pub(crate) fn game_references(g: &Game) -> BTreeSet<(ItemKind, String)> {
     let shifts: Vec<&Layer> = g.layers.iter().chain(&g.modes).collect();
-    references(&g.profiles, &g.menus, &g.macros, &shifts)
+    references(&g.profiles, &g.menus, &g.macros, &g.cycles, &shifts)
         .into_iter()
         .filter(|(kind, name)| !(*kind == ItemKind::Mode && crate::config::built_in_mode(name).is_some()))
         .collect()
@@ -296,10 +302,11 @@ pub fn dependencies(source: &Game, kind: ItemKind, name: &str, resolves: impl Fn
     while i < needed.len() {
         let (k, n) = needed[i].clone();
         let refs = match k {
-            ItemKind::Macro => source.macros.iter().find(|m| m.name == n).map(|m| references(&[], &[], std::slice::from_ref(m), &[])),
-            ItemKind::Menu => source.menus.iter().find(|m| m.name == n).map(|m| references(&[], std::slice::from_ref(m), &[], &[])),
-            ItemKind::Layer => source.layers.iter().find(|l| l.name == n).map(|l| references(&[], &[], &[], &[l])),
-            ItemKind::Mode => source.mode_named(&n).map(|l| references(&[], &[], &[], &[l])),
+            ItemKind::Macro => source.macros.iter().find(|m| m.name == n).map(|m| references(&[], &[], std::slice::from_ref(m), &[], &[])),
+            ItemKind::Cycle => source.cycles.iter().find(|c| c.name == n).map(|c| references(&[], &[], &[], std::slice::from_ref(c), &[])),
+            ItemKind::Menu => source.menus.iter().find(|m| m.name == n).map(|m| references(&[], std::slice::from_ref(m), &[], &[], &[])),
+            ItemKind::Layer => source.layers.iter().find(|l| l.name == n).map(|l| references(&[], &[], &[], &[], &[l])),
+            ItemKind::Mode => source.mode_named(&n).map(|l| references(&[], &[], &[], &[], &[l])),
             ItemKind::Info | ItemKind::Log => None,
         };
         for (rk, rn) in refs.unwrap_or_default() {
@@ -415,6 +422,7 @@ pub fn export(game: &Game, info: &PackInfo) -> Export {
         rules: pack_game.rules.iter().map(|r| Rule { enabled: true, ..r.clone() }).collect(),
         profiles: pack_game.profiles,
         macros: pack_game.macros,
+        cycles: pack_game.cycles,
         menus: pack_game.menus,
         info_overlays: pack_game.info,
         log_overlays: pack_game.logs,
@@ -457,6 +465,9 @@ pub fn item_hashes(game: &Game) -> BTreeMap<String, String> {
     }
     for m in &game.macros {
         hashes.insert(format!("macro:{}", m.name), hash(m));
+    }
+    for c in &game.cycles {
+        hashes.insert(format!("cycle:{}", c.name), hash(c));
     }
     for m in &game.menus {
         hashes.insert(format!("menu:{}", m.name), hash(m));

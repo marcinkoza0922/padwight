@@ -1,5 +1,5 @@
 //! The action page, where any slot's action is chosen, and the pickers it opens: a gamepad
-//! button, keys, one of the game's modes, layers, macros, menus or overlays, and the actions of a
+//! button, keys, one of the game's modes, layers, macros, cycles, menus or overlays, and the actions of a
 //! Multi. A Toggle or Turbo keeps what it wraps on a page of its own, reached from the top row.
 
 use crate::{
@@ -14,25 +14,27 @@ use super::{
     rows::{Act, Nav, Number, Row, set},
 };
 
-/// What a picker lists from the game: its modes, layers, macros, menus or overlays.
+/// What a picker lists from the game: its modes, layers, macros, cycles, menus or overlays.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Picker {
     Mode,
     Layer,
     Macro,
+    Cycle,
     Menu,
     Info,
     Log,
 }
 
 impl Picker {
-    pub const ALL: [Picker; 6] = [Picker::Mode, Picker::Layer, Picker::Macro, Picker::Menu, Picker::Info, Picker::Log];
+    pub const ALL: [Picker; 7] = [Picker::Mode, Picker::Layer, Picker::Macro, Picker::Cycle, Picker::Menu, Picker::Info, Picker::Log];
 
     fn label(self) -> &'static str {
         match self {
             Picker::Mode => "Switch mode",
             Picker::Layer => "Hold layer",
             Picker::Macro => "Macro",
+            Picker::Cycle => "Cycle",
             Picker::Menu => "Open menu",
             Picker::Info => "Info overlay",
             Picker::Log => "Log overlay",
@@ -44,6 +46,7 @@ impl Picker {
             Picker::Mode => "mode",
             Picker::Layer => "layer",
             Picker::Macro => "macro",
+            Picker::Cycle => "cycle",
             Picker::Menu => "menu",
             Picker::Info => "info overlay",
             Picker::Log => "log overlay",
@@ -55,6 +58,7 @@ impl Picker {
             Picker::Mode => Keyword::Mode,
             Picker::Layer => Keyword::Layer,
             Picker::Macro => Keyword::Macro,
+            Picker::Cycle => Keyword::Cycle,
             Picker::Menu => Keyword::Menu,
             Picker::Info => Keyword::Info,
             Picker::Log => Keyword::Log,
@@ -66,6 +70,7 @@ impl Picker {
             Picker::Mode => ButtonAction::Mode(name.into()),
             Picker::Layer => ButtonAction::Layer(name.into()),
             Picker::Macro => ButtonAction::Macro { name: name.into(), repeat: false },
+            Picker::Cycle => ButtonAction::Cycle { name: name.into(), back: false },
             Picker::Menu => ButtonAction::OpenMenu(name.into()),
             Picker::Info => ButtonAction::ShowInfo(name.into()),
             Picker::Log => ButtonAction::ShowLog(name.into()),
@@ -79,6 +84,7 @@ impl Picker {
             Picker::Mode => game.modes.iter().map(|l| l.name.clone()).chain([crate::config::MOUSE_MODE.to_string()]).collect(),
             Picker::Layer => game.layers.iter().map(|l| l.name.clone()).collect(),
             Picker::Macro => game.macros.iter().map(|m| m.name.clone()).collect(),
+            Picker::Cycle => game.cycles.iter().map(|c| c.name.clone()).collect(),
             Picker::Menu => game.menus.iter().map(|m| m.name.clone()).collect(),
             Picker::Info => game.info.iter().map(|i| i.name.clone()).collect(),
             Picker::Log => game.logs.iter().map(|l| l.name.clone()).collect(),
@@ -206,6 +212,12 @@ fn wrapper_rows(at: ActionAt, current: &ButtonAction) -> Vec<Row> {
                 _ => false,
             })
         })],
+        ButtonAction::Cycle { back, .. } => vec![Row::toggle("Steps back", *back, move |c, on| {
+            edit(c, at, |a| match a {
+                ButtonAction::Cycle { back, .. } => set(back, on),
+                _ => false,
+            })
+        })],
         _ => Vec::new(),
     }
 }
@@ -214,13 +226,16 @@ fn wrapper_rows(at: ActionAt, current: &ButtonAction) -> Vec<Row> {
 fn wrap_rows(at: ActionAt, current: Option<&ButtonAction>, item: bool) -> Vec<Row> {
     let mut rows = Vec::new();
     // A menu is put away with its close button, never toggled. A layer that stays on is a mode,
-    // and a mode switch already switches back when pressed again.
-    let toggleable = !matches!(current, None | Some(ButtonAction::Toggle(_) | ButtonAction::OpenMenu(_) | ButtonAction::Layer(_) | ButtonAction::Mode(_)));
+    // and a mode switch already switches back when pressed again, as a cycle moves on.
+    let toggleable = !matches!(
+        current,
+        None | Some(ButtonAction::Toggle(_) | ButtonAction::OpenMenu(_) | ButtonAction::Layer(_) | ButtonAction::Mode(_) | ButtonAction::Cycle { .. })
+    );
     if toggleable {
         rows.push(Row::apply("Make it a toggle", move |c| wrap(c, at, |a| ButtonAction::Toggle(Toggled { action: Box::new(a), start_on: false }))).keyword(Some(Keyword::Toggle)));
     }
     // A turbo in a menu item would stop at once.
-    if !item && !matches!(current, None | Some(ButtonAction::Turbo { .. })) {
+    if !item && !matches!(current, None | Some(ButtonAction::Turbo { .. } | ButtonAction::Cycle { .. })) {
         rows.push(Row::apply(format!("Make it turbo ({TURBO_RATE:.0} a second)"), move |c| wrap(c, at, |a| ButtonAction::Turbo { action: Box::new(a), rate: TURBO_RATE, every_ms: 0 })).keyword(Some(Keyword::Turbo)));
     }
     rows

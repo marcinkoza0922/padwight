@@ -7,7 +7,7 @@ id = "d1e7a3c5-29b8-4f6e-8a04-5b3c9e2f71d6"
 name = "Two Point Hospital"
 version = "1.0"
 author = "Padwight"
-description = "Two Point Hospital on an Xbox-style pad. The left stick pans the hospital and the right stick moves the pointer; RT and A click and drag, LT right-clicks to cancel. X rotates what you're placing, Y pauses, hold RB with the D-pad for the speed, the D-pad turns the camera and zooms. A gyro variant tilts the pointer. Overlays in hospital teal and mint."
+description = "Two Point Hospital on an Xbox-style pad. The left stick pans the hospital and the right stick moves the pointer; RT and A click and drag, LT right-clicks to cancel. X rotates what you're placing, Y pauses, RB steps through the speeds (hold it with the D-pad for one), the D-pad turns the camera and zooms. A gyro variant tilts the pointer. Overlays in hospital teal and mint."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -38,12 +38,15 @@ South = {mouse = "Left"}
 East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_R"]}
 North = {keys = ["KEY_SPACE"]}
-RightBumper = {open_menu = "Speed"}
+RightBumper = {cycle = {name = "Game speed"}}
 Start = {keys = ["KEY_ESC"]}
 DpadUp = {wheel = "Up"}
 DpadDown = {wheel = "Down"}
 DpadLeft = {keys = ["KEY_Q"]}
 DpadRight = {keys = ["KEY_E"]}
+
+[profiles.gestures.RightBumper.long_press]
+open_menu = "Speed"
 
 [profiles.left_stick]
 deadzone = 0.15
@@ -106,7 +109,7 @@ noise_threshold = 1.0
 
 [profiles.guide]
 notes = '''The right stick {rs} moves the pointer and the left stick {ls} pans the hospital. {rt} or {south} clicks; hold it and drag to mark out a room. {lt} right-clicks to cancel what's in hand or back out of a window.
-{west} rotates the object you're placing. {north} pauses. Hold {rb} and press the {dpad} for the speed: left normal, up fast, right fastest, down pause. {left} and {right} turn the camera, {up} and {down} zoom.
+{west} rotates the object you're placing. {north} pauses. Tap {rb} for the next speed: fast, fastest, then normal again. Press {rb} with the {dpad} for one speed (left normal, up fast, right fastest, down pause); hold {rb} to see them. {left} and {right} turn the camera, {up} and {down} zoom.
 {east} and {start} close windows and open the menu. Rooms, staff, the hospital overview and the objectives are on the toolbar along the bottom: point at them.
 The PC game has no controller support, so this plays it with the pointer. The console Jumbo Edition built its own pad interface, which can't be copied; the PC keys stay. Panning on WASD, the camera on Q and E and zoom on the wheel are the game's defaults as remembered; rotate on R, pause on Space and the speeds on 1 to 3 are a guess, not read from an install. If one doesn't answer, check Options, Controls (the game can rebind them) and change the buttons here to match. The Windows executable is from Discord's list; the Linux one (TPH.x86_64) is a guess. Naming a hospital or staff: {guide} + {west} opens the on-screen keyboard.'''
 
@@ -119,7 +122,8 @@ The PC game has no controller support, so this plays it with the pointer. The co
 "button:East" = {text = "Close"}
 "button:West" = {text = "{icon:rotate} Rotate object"}
 "button:North" = {text = "{icon:pause} Pause"}
-"button:RightBumper" = {text = "Hold + {dpad}: speed"}
+"button:RightBumper" = {text = "{icon:speed2} Next speed"}
+"gesture:button:RightBumper:long_press" = {text = "Hold: speed menu"}
 "button:Start" = {text = "Menu"}
 "button:DpadLeft" = {text = "{icon:rotate-left} Turn camera"}
 "button:DpadRight" = {text = "{icon:rotate} Turn camera"}
@@ -145,12 +149,15 @@ South = {mouse = "Left"}
 East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_R"]}
 North = {keys = ["KEY_SPACE"]}
-RightBumper = {open_menu = "Speed"}
+RightBumper = {cycle = {name = "Game speed"}}
 Start = {keys = ["KEY_ESC"]}
 DpadUp = {wheel = "Up"}
 DpadDown = {wheel = "Down"}
 DpadLeft = {keys = ["KEY_Q"]}
 DpadRight = {keys = ["KEY_E"]}
+
+[profiles.gestures.RightBumper.long_press]
+open_menu = "Speed"
 
 [profiles.left_stick]
 deadzone = 0.15
@@ -216,7 +223,7 @@ sensitivity = 20.0
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
 The right stick {rs} moves the pointer and the left stick {ls} pans the hospital. {rt} or {south} clicks; hold it and drag to mark out a room. {lt} right-clicks to cancel what's in hand or back out of a window.
-{west} rotates the object you're placing. {north} pauses. Hold {rb} and press the {dpad} for the speed: left normal, up fast, right fastest, down pause. {left} and {right} turn the camera, {up} and {down} zoom.
+{west} rotates the object you're placing. {north} pauses. Tap {rb} for the next speed: fast, fastest, then normal again. Press {rb} with the {dpad} for one speed (left normal, up fast, right fastest, down pause); hold {rb} to see them. {left} and {right} turn the camera, {up} and {down} zoom.
 {east} and {start} close windows and open the menu. Rooms, staff, the hospital overview and the objectives are on the toolbar along the bottom: point at them.
 The PC game has no controller support, so this plays it with the pointer. The console Jumbo Edition built its own pad interface, which can't be copied; the PC keys stay. Panning on WASD, the camera on Q and E and zoom on the wheel are the game's defaults as remembered; rotate on R, pause on Space and the speeds on 1 to 3 are a guess, not read from an install. If one doesn't answer, check Options, Controls (the game can rebind them) and change the buttons here to match. The Windows executable is from Discord's list; the Linux one (TPH.x86_64) is a guess. Naming a hospital or staff: {guide} + {west} opens the on-screen keyboard.'''
 
@@ -229,7 +236,8 @@ The PC game has no controller support, so this plays it with the pointer. The co
 "button:East" = {text = "Close"}
 "button:West" = {text = "{icon:rotate} Rotate object"}
 "button:North" = {text = "{icon:pause} Pause"}
-"button:RightBumper" = {text = "Hold + {dpad}: speed"}
+"button:RightBumper" = {text = "{icon:speed2} Next speed"}
+"gesture:button:RightBumper:long_press" = {text = "Hold: speed menu"}
 "button:Start" = {text = "Menu"}
 "button:DpadLeft" = {text = "{icon:rotate-left} Turn camera"}
 "button:DpadRight" = {text = "{icon:rotate} Turn camera"}
@@ -237,6 +245,14 @@ The PC game has no controller support, so this plays it with the pointer. The co
 [[profiles.guide.merged]]
 inputs = ["button:DpadUp", "button:DpadDown"]
 text = "Zoom in / out"
+
+[[cycles]]
+name = "Game speed"
+steps = [
+    {keys = ["KEY_2"]},
+    {keys = ["KEY_3"]},
+    {keys = ["KEY_1"]},
+]
 
 [[menus]]
 name = "Speed"

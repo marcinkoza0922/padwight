@@ -17,6 +17,7 @@ impl Config {
         let mut game = Game::new(&name, vec![profile]);
         game.rules = vec![crate::focus::rule_for_window(self, window, profile_name.clone())];
         game.macros.clone_from(&self.general.macros);
+        game.cycles.clone_from(&self.general.cycles);
         game.menus.clone_from(&self.general.menus);
         game.info.clone_from(&self.general.info);
         game.logs.clone_from(&self.general.logs);

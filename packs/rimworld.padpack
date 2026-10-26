@@ -7,7 +7,7 @@ id = "0a2be8f4-520a-5816-898c-ed82d2ab4271"
 name = "RimWorld"
 version = "1.0"
 author = "Padwight"
-description = "RimWorld on an Xbox-style pad, for the game's default keys. The right stick moves the pointer and the left stick pans the map; RT or A clicks and LT right-clicks. B cancels, X drafts (hold: the orders), hold Y and press the D-pad for the speed, L3 pauses. The bumpers rotate, the D-pad zooms and steps through the colonists, and Select lists the tabs."
+description = "RimWorld on an Xbox-style pad, for the game's default keys. The right stick moves the pointer and the left stick pans the map; RT or A clicks and LT right-clicks. B cancels, X drafts (hold: the orders), Y steps through the speeds (hold it and press the D-pad for one), L3 pauses. The bumpers rotate, the D-pad zooms and steps through the colonists, and Select lists the tabs."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -47,7 +47,7 @@ Guide = {mode = "Guide"}
 South = {mouse = "Left"}
 East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_R"]}
-North = {open_menu = "Speed"}
+North = {cycle = {name = "Game speed"}}
 LeftBumper = {keys = ["KEY_Q"]}
 RightBumper = {keys = ["KEY_E"]}
 LeftStick = {keys = ["KEY_SPACE"]}
@@ -58,6 +58,9 @@ DpadLeft = {keys = ["KEY_COMMA"]}
 DpadRight = {keys = ["KEY_DOT"]}
 Select = {open_menu = "Tabs"}
 Start = {keys = ["KEY_ESC"]}
+
+[profiles.gestures.North.long_press]
+open_menu = "Speed"
 
 [profiles.gestures.West.long_press]
 open_menu = "Orders"
@@ -136,7 +139,7 @@ noise_threshold = 1.0
 [profiles.guide]
 notes = '''The right stick {rs} moves the pointer and the left stick {ls} pans the map. {rt} or {south} clicks to select and place; {lt} right-clicks to give orders and drop the tool in hand.
 {east} cancels and closes windows. Click {l3} to pause.
-Hold {north} and press the {dpad} for the speed: left normal, up fast, right superfast, down pause.
+Tap {north} for the next speed: fast, superfast, then normal again. Press {north} with the {dpad} for one speed (left normal, up fast, right superfast, down pause); hold {north} to see them.
 {west} drafts and undrafts the selected colonists. Hold {west} for the orders (deconstruct, cancel, forbid, power, room stats, beauty, search), picking with the right stick {rs}.
 {lb} and {rb} rotate what you're placing. {up} and {down} zoom, {left} and {right} step through the colonists.
 Hold {r3} while clicking to queue orders or to take 100 at a time.
@@ -151,7 +154,8 @@ Hold {r3} while clicking to queue orders or to take 100 at a time.
 "button:East" = {text = "Cancel / close"}
 "button:West" = {text = "{icon:sword-cross} Draft"}
 "gesture:button:West:long_press" = {text = "Hold: orders"}
-"button:North" = {text = "Hold: speed"}
+"button:North" = {text = "{icon:speed2} Next speed"}
+"gesture:button:North:long_press" = {text = "Hold: speed menu"}
 "button:LeftStick" = {text = "{icon:pause} Pause"}
 "button:RightStick" = {text = "Queue / ×100 (hold)"}
 "button:Select" = {text = "Tabs"}
@@ -193,7 +197,7 @@ Guide = {mode = "Guide"}
 South = {mouse = "Left"}
 East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_R"]}
-North = {open_menu = "Speed"}
+North = {cycle = {name = "Game speed"}}
 LeftBumper = {keys = ["KEY_Q"]}
 RightBumper = {keys = ["KEY_E"]}
 LeftStick = {keys = ["KEY_SPACE"]}
@@ -204,6 +208,9 @@ DpadLeft = {keys = ["KEY_COMMA"]}
 DpadRight = {keys = ["KEY_DOT"]}
 Select = {open_menu = "Tabs"}
 Start = {keys = ["KEY_ESC"]}
+
+[profiles.gestures.North.long_press]
+open_menu = "Speed"
 
 [profiles.gestures.West.long_press]
 open_menu = "Orders"
@@ -276,7 +283,7 @@ action = {mouse = "Left"}
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the cursor, as a fine pointer next to the right stick {rs}.
 The right stick {rs} moves the pointer and the left stick {ls} pans the map. {rt} or {south} clicks to select and place; {lt} right-clicks to give orders and drop the tool in hand.
 {east} cancels and closes windows. Click {l3} to pause.
-Hold {north} and press the {dpad} for the speed: left normal, up fast, right superfast, down pause.
+Tap {north} for the next speed: fast, superfast, then normal again. Press {north} with the {dpad} for one speed (left normal, up fast, right superfast, down pause); hold {north} to see them.
 {west} drafts and undrafts the selected colonists. Hold {west} for the orders (deconstruct, cancel, forbid, power, room stats, beauty, search), picking with the right stick {rs}.
 {lb} and {rb} rotate what you're placing. {up} and {down} zoom, {left} and {right} step through the colonists.
 Hold {r3} while clicking to queue orders or to take 100 at a time.
@@ -291,7 +298,8 @@ Hold {r3} while clicking to queue orders or to take 100 at a time.
 "button:East" = {text = "Cancel / close"}
 "button:West" = {text = "{icon:sword-cross} Draft"}
 "gesture:button:West:long_press" = {text = "Hold: orders"}
-"button:North" = {text = "Hold: speed"}
+"button:North" = {text = "{icon:speed2} Next speed"}
+"gesture:button:North:long_press" = {text = "Hold: speed menu"}
 "button:LeftStick" = {text = "{icon:pause} Pause"}
 "button:RightStick" = {text = "Queue / ×100 (hold)"}
 "button:Select" = {text = "Tabs"}
@@ -321,6 +329,14 @@ noise_threshold = 1.0
 
 [profiles.gyro.mode.mouse]
 sensitivity = 20.0
+
+[[cycles]]
+name = "Game speed"
+steps = [
+    {keys = ["KEY_2"]},
+    {keys = ["KEY_3"]},
+    {keys = ["KEY_1"]},
+]
 
 [[menus]]
 name = "Speed"

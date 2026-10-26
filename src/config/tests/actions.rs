@@ -225,3 +225,45 @@ fn pad_pushes_read_as_full_unless_an_amount_is_given() {
     assert_eq!(toml::from_str::<std::collections::BTreeMap<String, ButtonAction>>(&text).unwrap()["x"], stick);
     assert_eq!(crate::config::stick_vector(90.0, 1.0), (1.0, 0.0));
 }
+
+#[test]
+fn cycles_follow_renames_of_themselves_and_the_macros_in_their_steps() {
+    let mut game = Game::new("Anno", vec![Profile::passthrough("Pad")]);
+    game.macros.push(Macro { name: "Fast".into(), steps: vec![] });
+    game.cycles.push(Cycle { name: "Speed".into(), steps: vec![ButtonAction::Macro { name: "Fast".into(), repeat: false }, ButtonAction::Keys(vec!["KEY_1".into()])] });
+    game.profiles[0].set_button(Button::North, ButtonAction::Cycle { name: "Speed".into(), back: false });
+    game.rename_item(ItemKind::Macro, "Fast", "Faster");
+    game.rename_refs(ItemKind::Macro, "Fast", "Faster");
+    assert_eq!(game.cycles[0].steps[0], ButtonAction::Macro { name: "Faster".into(), repeat: false });
+    game.rename_item(ItemKind::Cycle, "Speed", "Game speed");
+    game.rename_refs(ItemKind::Cycle, "Speed", "Game speed");
+    assert_eq!(game.profiles[0].button(Button::North), &ButtonAction::Cycle { name: "Game speed".into(), back: false });
+    assert_eq!(game.names(ItemKind::Cycle), ["Game speed"]);
+    assert!(crate::pack::game_references(&game).contains(&(ItemKind::Macro, "Faster".into())), "a cycle's steps count as references");
+}
+
+#[test]
+fn a_cycle_action_writes_back_only_when_it_steps_back() {
+    let mut config = Config::default();
+    config.general.profiles[0].set_button(Button::RightBumper, ButtonAction::Cycle { name: "Speed".into(), back: false });
+    config.general.profiles[0].set_button(Button::LeftBumper, ButtonAction::Cycle { name: "Speed".into(), back: true });
+    config.general.cycles.push(Cycle { name: "Speed".into(), steps: vec![ButtonAction::Keys(vec!["KEY_1".into()])] });
+    let text = toml::to_string_pretty(&config).unwrap();
+    assert_eq!(text.matches("back = true").count(), 1, "{text}");
+    assert!(!text.contains("back = false"), "{text}");
+    let back: Config = toml::from_str(&text).unwrap();
+    assert_eq!(back, config);
+}
+
+#[test]
+fn saving_refuses_a_cycle_step_that_isnt_an_input_and_a_missing_cycle() {
+    let mut config = Config::default();
+    config.general.cycles.push(Cycle { name: "Speed".into(), steps: vec![ButtonAction::GyroToggle] });
+    let problem = crate::config::problems::game_problem(&config, &config.general);
+    assert_eq!(problem.as_deref(), Some("Cycle “Speed”: a step can only press inputs or play macros."));
+    config.general.cycles[0].steps[0] = ButtonAction::Multi(vec![ButtonAction::Keys(vec!["KEY_1".into()]), ButtonAction::Gamepad(Button::South)]);
+    assert_eq!(crate::config::problems::game_problem(&config, &config.general), None);
+    config.general.profiles[0].set_button(Button::North, ButtonAction::Cycle { name: "Gone".into(), back: false });
+    let problem = crate::config::problems::game_problem(&config, &config.general).unwrap();
+    assert!(problem.contains("missing cycle “Gone”"), "{problem}");
+}

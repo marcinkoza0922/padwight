@@ -349,6 +349,9 @@ pub enum ButtonAction {
     },
     /// Plays the macro named `name`: once per press, or looping while held if `repeat`.
     Macro { name: String, #[serde(default)] repeat: bool },
+    /// Presses the next step of the cycle named `name` (the one before, if `back`), holding it
+    /// while held. After the last step it starts over at the first.
+    Cycle { name: String, #[serde(default, skip_serializing_if = "std::ops::Not::not")] back: bool },
     /// Opens or closes the on-screen overlay (keyboard). While it is open the controller
     /// drives the overlay; holding East closes it.
     ToggleOverlay,
@@ -450,6 +453,33 @@ impl Macro {
     /// How long one play of the macro takes, in milliseconds.
     pub fn duration_ms(&self) -> u64 {
         self.steps.iter().map(MacroStep::duration_ms).sum()
+    }
+}
+
+/// A named list of steps that one input steps through, a step per press, starting over after the
+/// last: for a game's states that rule each other out (game speeds, stances). Usable by every
+/// profile of its game.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Cycle {
+    pub name: String,
+    /// What each step presses: an input, a macro, or several of those at once (see
+    /// [`fits_cycle`]).
+    pub steps: Vec<ButtonAction>,
+}
+
+/// Whether `action` can be a cycle's step: a plain input, a macro, or several of those at once.
+pub fn fits_cycle(action: &ButtonAction) -> bool {
+    match action {
+        ButtonAction::Disabled
+        | ButtonAction::Gamepad(_)
+        | ButtonAction::PadTrigger { .. }
+        | ButtonAction::PadStick { .. }
+        | ButtonAction::Keys(_)
+        | ButtonAction::Mouse(_)
+        | ButtonAction::Wheel(_)
+        | ButtonAction::Macro { .. } => true,
+        ButtonAction::Multi(list) => list.iter().all(|a| fits_cycle(a) && !matches!(a, ButtonAction::Multi(_))),
+        _ => false,
     }
 }
 
@@ -1592,6 +1622,9 @@ pub struct Game {
     /// Mapped with `ButtonAction::Macro`.
     #[serde(default)]
     pub macros: Vec<Macro>,
+    /// Stepped through with `ButtonAction::Cycle`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cycles: Vec<Cycle>,
     /// Opened with `ButtonAction::OpenMenu`.
     #[serde(default)]
     pub menus: Vec<Menu>,
@@ -1658,6 +1691,7 @@ impl Game {
             rules: Vec::new(),
             profiles,
             macros: Vec::new(),
+            cycles: Vec::new(),
             menus: Vec::new(),
             info: Vec::new(),
             logs: Vec::new(),
@@ -1693,12 +1727,16 @@ impl Game {
     pub fn rename_refs(&mut self, kind: ItemKind, old: &str, new: &str) {
         rename_in(&mut self.profiles, &mut self.menus, &mut self.macros, &mut self.layers, kind, old, new);
         rename_in(&mut [], &mut [], &mut [], &mut self.modes, kind, old, new);
+        for step in self.cycles.iter_mut().flat_map(|c| &mut c.steps) {
+            rename_action(step, kind, old, new);
+        }
     }
 
     /// The names of its items of one kind.
     pub fn names(&self, kind: ItemKind) -> Vec<&str> {
         match kind {
             ItemKind::Macro => self.macros.iter().map(|m| m.name.as_str()).collect(),
+            ItemKind::Cycle => self.cycles.iter().map(|c| c.name.as_str()).collect(),
             ItemKind::Menu => self.menus.iter().map(|m| m.name.as_str()).collect(),
             ItemKind::Info => self.info.iter().map(|o| o.name.as_str()).collect(),
             ItemKind::Log => self.logs.iter().map(|o| o.name.as_str()).collect(),
@@ -1713,6 +1751,7 @@ impl Game {
         let new = new.to_string();
         match kind {
             ItemKind::Macro => self.macros.iter_mut().filter(|m| m.name == old).for_each(|m| m.name = new.clone()),
+            ItemKind::Cycle => self.cycles.iter_mut().filter(|c| c.name == old).for_each(|c| c.name = new.clone()),
             ItemKind::Menu => self.menus.iter_mut().filter(|m| m.name == old).for_each(|m| m.name = new.clone()),
             ItemKind::Info => self.info.iter_mut().filter(|o| o.name == old).for_each(|o| o.name = new.clone()),
             ItemKind::Log => self.logs.iter_mut().filter(|o| o.name == old).for_each(|o| o.name = new.clone()),
@@ -1740,6 +1779,7 @@ pub fn free_name(base: &str, taken: impl Fn(&str) -> bool) -> String {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ItemKind {
     Macro,
+    Cycle,
     Menu,
     Info,
     Log,
@@ -1748,11 +1788,12 @@ pub enum ItemKind {
 }
 
 impl ItemKind {
-    pub const ALL: [ItemKind; 6] = [ItemKind::Macro, ItemKind::Menu, ItemKind::Info, ItemKind::Log, ItemKind::Layer, ItemKind::Mode];
+    pub const ALL: [ItemKind; 7] = [ItemKind::Macro, ItemKind::Cycle, ItemKind::Menu, ItemKind::Info, ItemKind::Log, ItemKind::Layer, ItemKind::Mode];
 
     pub fn noun(self) -> &'static str {
         match self {
             ItemKind::Macro => "macro",
+            ItemKind::Cycle => "cycle",
             ItemKind::Menu => "menu",
             ItemKind::Info => "info overlay",
             ItemKind::Log => "log overlay",
@@ -1765,6 +1806,7 @@ impl ItemKind {
     pub fn name_in(self, action: &ButtonAction) -> Option<&String> {
         match (self, action) {
             (ItemKind::Macro, ButtonAction::Macro { name, .. })
+            | (ItemKind::Cycle, ButtonAction::Cycle { name, .. })
             | (ItemKind::Menu, ButtonAction::OpenMenu(name))
             | (ItemKind::Info, ButtonAction::ShowInfo(name))
             | (ItemKind::Log, ButtonAction::ShowLog(name))
@@ -1777,6 +1819,7 @@ impl ItemKind {
     fn name_in_mut(self, action: &mut ButtonAction) -> Option<&mut String> {
         match (self, action) {
             (ItemKind::Macro, ButtonAction::Macro { name, .. })
+            | (ItemKind::Cycle, ButtonAction::Cycle { name, .. })
             | (ItemKind::Menu, ButtonAction::OpenMenu(name))
             | (ItemKind::Info, ButtonAction::ShowInfo(name))
             | (ItemKind::Log, ButtonAction::ShowLog(name))
@@ -1797,15 +1840,7 @@ fn rename_in(
     old: &str,
     new: &str,
 ) {
-    let mut follow = |a: &mut ButtonAction| {
-        a.walk_mut(&mut |a| {
-            if let Some(name) = kind.name_in_mut(a)
-                && name == old
-            {
-                *name = new.to_string();
-            }
-        })
-    };
+    let mut follow = |a: &mut ButtonAction| rename_action(a, kind, old, new);
     for p in profiles.iter_mut() {
         p.actions_mut().into_iter().for_each(&mut follow);
     }
@@ -1837,10 +1872,22 @@ fn rename_in(
     }
 }
 
+/// Points `action`, and every action nested in it, at `new` where it refers to the `kind` item `old`.
+fn rename_action(action: &mut ButtonAction, kind: ItemKind, old: &str, new: &str) {
+    action.walk_mut(&mut |a| {
+        if let Some(name) = kind.name_in_mut(a)
+            && name == old
+        {
+            *name = new.to_string();
+        }
+    })
+}
+
 /// What the active profile can use: its game's items.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Scope {
     pub macros: Vec<Macro>,
+    pub cycles: Vec<Cycle>,
     pub menus: Vec<Menu>,
     pub info: Vec<InfoOverlay>,
     pub logs: Vec<LogOverlay>,
@@ -1865,6 +1912,7 @@ impl Scope {
 #[derive(Debug, Clone, Default)]
 pub struct ScopeRef<'a> {
     pub macros: Vec<&'a Macro>,
+    pub cycles: Vec<&'a Cycle>,
     pub menus: Vec<&'a Menu>,
     pub info: Vec<&'a InfoOverlay>,
     pub logs: Vec<&'a LogOverlay>,
@@ -1876,6 +1924,7 @@ impl ScopeRef<'_> {
     pub fn names(&self, kind: ItemKind) -> Vec<&str> {
         match kind {
             ItemKind::Macro => self.macros.iter().map(|m| m.name.as_str()).collect(),
+            ItemKind::Cycle => self.cycles.iter().map(|c| c.name.as_str()).collect(),
             ItemKind::Menu => self.menus.iter().map(|m| m.name.as_str()).collect(),
             ItemKind::Info => self.info.iter().map(|o| o.name.as_str()).collect(),
             ItemKind::Log => self.logs.iter().map(|o| o.name.as_str()).collect(),
@@ -2356,6 +2405,7 @@ impl Config {
         let s = self.scope_of(self.active_game());
         Scope {
             macros: s.macros.into_iter().cloned().collect(),
+            cycles: s.cycles.into_iter().cloned().collect(),
             menus: s.menus.into_iter().cloned().collect(),
             info: s.info.into_iter().cloned().collect(),
             logs: s.logs.into_iter().cloned().collect(),
@@ -2389,6 +2439,7 @@ impl Config {
     pub fn scope_of<'a>(&'a self, game: &'a Game) -> ScopeRef<'a> {
         ScopeRef {
             macros: game.macros.iter().collect(),
+            cycles: game.cycles.iter().collect(),
             menus: game.menus.iter().collect(),
             info: game.info.iter().collect(),
             logs: game.logs.iter().collect(),

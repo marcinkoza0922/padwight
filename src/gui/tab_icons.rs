@@ -111,6 +111,7 @@ impl GameTab {
             GameTab::Modes => keyword_icon::svg_in(Keyword::Mode, INK),
             GameTab::Layers => keyword_icon::svg_in(Keyword::Layer, INK),
             GameTab::Macros => keyword_icon::svg_in(Keyword::Macro, INK),
+            GameTab::Cycles => keyword_icon::svg_in(Keyword::Cycle, INK),
             GameTab::Menus => keyword_icon::svg_in(Keyword::Menu, INK),
             GameTab::Info => keyword_icon::svg_in(Keyword::Info, INK),
             GameTab::Logs => keyword_icon::svg_in(Keyword::Log, INK),

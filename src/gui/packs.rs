@@ -243,6 +243,7 @@ impl App {
         for (k, n) in &needed {
             match k {
                 ItemKind::Macro => copy.macros.extend(items.macros.iter().find(|m| &m.name == n).cloned()),
+                ItemKind::Cycle => copy.cycles.extend(items.cycles.iter().find(|c| &c.name == n).cloned()),
                 ItemKind::Menu => copy.menus.extend(items.menus.iter().find(|m| &m.name == n).cloned()),
                 ItemKind::Info => copy.info.extend(items.info.iter().find(|o| &o.name == n).cloned()),
                 ItemKind::Log => copy.logs.extend(items.logs.iter().find(|o| &o.name == n).cloned()),
@@ -271,27 +272,33 @@ impl App {
             }
         }
         // Copies go first, the one asked for at the top of its list, opened.
-        let (macros, menus, info, logs) = (copy.macros.len(), copy.menus.len(), copy.info.len(), copy.logs.len());
+        let (macros, cycles, menus, info, logs) = (copy.macros.len(), copy.cycles.len(), copy.menus.len(), copy.info.len(), copy.logs.len());
         let order = |list_kind: ItemKind, n: &str| !(list_kind == kind && n == renamed_root);
         copy.macros.sort_by_key(|m| order(ItemKind::Macro, &m.name));
+        copy.cycles.sort_by_key(|c| order(ItemKind::Cycle, &c.name));
         copy.menus.sort_by_key(|m| order(ItemKind::Menu, &m.name));
         copy.info.sort_by_key(|o| order(ItemKind::Info, &o.name));
         copy.logs.sort_by_key(|o| order(ItemKind::Log, &o.name));
         copy.layers.sort_by_key(|l| order(ItemKind::Layer, &l.name));
         copy.modes.sort_by_key(|l| order(ItemKind::Mode, &l.name));
         self.macros_mut().splice(0..0, copy.macros);
+        self.game_mut().cycles.splice(0..0, copy.cycles);
         self.menus_mut().splice(0..0, copy.menus);
         self.infos_mut().splice(0..0, copy.info);
         self.logs_mut().splice(0..0, copy.logs);
         self.game_mut().layers.splice(0..0, copy.layers);
         self.game_mut().modes.splice(0..0, copy.modes);
         self.move_open_cards(ItemKind::Macro, open_cards::after_inserting(macros));
+        self.move_open_cards(ItemKind::Cycle, open_cards::after_inserting(cycles));
         self.move_open_cards(ItemKind::Menu, open_cards::after_inserting(menus));
         self.move_open_cards(ItemKind::Info, open_cards::after_inserting(info));
         self.move_open_cards(ItemKind::Log, open_cards::after_inserting(logs));
         match kind {
             ItemKind::Macro => {
                 self.open_macros.insert(0);
+            }
+            ItemKind::Cycle => {
+                self.open_cycles.insert(0);
             }
             ItemKind::Menu => {
                 self.open_menus.insert(0);
@@ -529,6 +536,7 @@ impl App {
             [
                 list("Profiles", g.profiles.iter().map(|p| &p.name).collect()),
                 list("Macros", g.macros.iter().map(|m| &m.name).collect()),
+                list("Cycles", g.cycles.iter().map(|c| &c.name).collect()),
                 list("Menus", g.menus.iter().map(|m| &m.name).collect()),
                 list("Info overlays", g.info.iter().map(|o| &o.name).collect()),
                 list("Rules", rules.iter().collect()),
@@ -568,6 +576,11 @@ impl App {
                         let m = &items.macros[i];
                         let steps: Vec<String> = m.steps.iter().map(step_summary).collect();
                         (m.name.clone(), format!("{} steps", m.steps.len()), Some(text(steps.join(" · ")).size(13).into()))
+                    }
+                    ItemKind::Cycle => {
+                        let c = &items.cycles[i];
+                        let steps: Vec<String> = c.steps.iter().map(ButtonAction::summary).collect();
+                        (c.name.clone(), format!("{} steps", c.steps.len()), Some(text(steps.join(" → ")).size(13).into()))
                     }
                     ItemKind::Menu => {
                         let m = &items.menus[i];

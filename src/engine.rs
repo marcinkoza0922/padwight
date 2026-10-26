@@ -12,13 +12,14 @@ use crate::config::{Deadzone, DeadzoneShape};
 
 use crate::{
     config::{
-        Analog, Button, ButtonAction, GUIDE_MODE, GestureKind, MOUSE_MODE, GuideOpener, OPEN_GUIDE, Macro, MacroStep, Menu, Profile, Stick, StickAction, SwipeDirection, Toggled, TouchSide,
+        Analog, Button, ButtonAction, Cycle, GUIDE_MODE, GestureKind, MOUSE_MODE, GuideOpener, OPEN_GUIDE, Macro, MacroStep, Menu, Profile, Stick, StickAction, SwipeDirection, Toggled, TouchSide,
         Trigger, TriggerAction,
     },
     input::{Axis, InputEvent},
     output::OutEvent,
 };
 
+mod cycles;
 mod flick;
 mod guide;
 mod macros;
@@ -203,6 +204,12 @@ pub struct Engine {
     /// How long each macro takes to play, in milliseconds, by name.
     macro_ms: HashMap<String, u64>,
     macros_running: HashMap<StateId, MacroRun>,
+    /// Each cycle's steps, by name (see [`Engine::set_cycles`]).
+    cycle_defs: HashMap<String, Vec<ButtonAction>>,
+    /// The step of each cycle pressed last, by name; none until its first press.
+    cycle_at: HashMap<String, usize>,
+    /// The step each held Cycle action pressed, released with it.
+    cycle_held: HashMap<StateId, ButtonAction>,
     /// Virtual-pad stick positions set by macro steps, added to physical and gyro input.
     macro_sticks: HashMap<Stick, (f32, f32)>,
     /// Stick-direction virtual buttons currently pressed by stick movement.
@@ -879,6 +886,7 @@ impl Engine {
                 self.macros_running.insert(id.clone(), run);
                 self.advance_macro(&id, 0.0, out);
             }
+            ButtonAction::Cycle { name, back } => self.cycle((src.clone(), slot), (name, *back), pressed, out),
         }
     }
 
@@ -1087,6 +1095,7 @@ impl Engine {
         for ((src, slot), inner) in toggled {
             self.emit(&src, &inner, false, slot + 1, out);
         }
+        self.release_cycles(out);
         for id in self.macros_running.keys().cloned().collect::<Vec<_>>() {
             self.stop_macro(&id, out);
         }
@@ -1186,7 +1195,7 @@ fn start_on_toggles<'a>(action: &'a ButtonAction, slot: usize, found: &mut Vec<(
 fn stateful_nodes(action: &ButtonAction) -> usize {
     match action {
         ButtonAction::Toggle(Toggled { action: inner, .. }) | ButtonAction::Turbo { action: inner, .. } => 1 + stateful_nodes(inner),
-        ButtonAction::Macro { .. } => 1,
+        ButtonAction::Macro { .. } | ButtonAction::Cycle { .. } => 1,
         ButtonAction::Multi(actions) => actions.iter().map(stateful_nodes).sum(),
         _ => 0,
     }
@@ -1276,3 +1285,5 @@ fn take_whole(acc: &mut (f32, f32), dx: f32, dy: f32) -> (i32, i32) {
 mod tests;
 #[cfg(test)]
 mod edge_tests;
+#[cfg(test)]
+mod cycle_tests;

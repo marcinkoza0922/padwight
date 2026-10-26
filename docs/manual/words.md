@@ -1,6 +1,6 @@
 # Words used in this app
 
-- **Controller setup** (setup): everything Padwight keeps for one game: its profiles, modes, layers, macros, menus and overlays, and the rules that pick it. See [Controller setups](setups.md). General is a setup too.
+- **Controller setup** (setup): everything Padwight keeps for one game: its profiles, modes, layers, macros, cycles, menus and overlays, and the rules that pick it. See [Controller setups](setups.md). General is a setup too.
 - **Profile**: a complete set of mappings. Each setup can have several, and you switch between them.
 - **Action**: what a button or stick does: a key, a mouse click, a gamepad button, a macro, and so on.
 - **Toggle**: press once to hold an action down, and press again to let it go.
@@ -11,6 +11,7 @@
 - **Mode**: another control scheme inside a game, such as driving, that you switch to and stay in. See [Modes](modes.md).
 - **Layer**: a second set of mappings that applies while you hold a button, on top of the mode you're in. See [Layers](layers.md).
 - **Macro**: a saved sequence of presses, holds and waits, played with one press. See [Macros](macros.md).
+- **Cycle**: a list of inputs one button steps through, one per press, starting over after the last, for states like game speeds. See [Cycles](cycles.md).
 - **Menu**: a list or ring of choices that opens on screen while you hold a button. See [On-screen menus](menus.md).
 - **Info overlay**: text and button pictures drawn on screen, such as a cheat sheet.
 - **Log overlay**: a small on-screen list of the buttons you pressed lately, and what each one did.

@@ -324,7 +324,7 @@ impl App {
         title = title.push(help(if general {
             "Profiles for no particular game, such as the desktop or a plain gamepad.".into()
         } else {
-            "This game's profiles and the modes, layers, macros, menus and overlays they share. Rules on the \
+            "This game's profiles and the modes, layers, macros, cycles, menus and overlays they share. Rules on the \
              Details tab switch to it when the game has focus."
                 .into()
         }));
@@ -336,6 +336,7 @@ impl App {
             GameTab::Modes => modes_problem(game, &names).is_some(),
             GameTab::Layers => layers_problem(game, &names).is_some(),
             GameTab::Macros => macros_have_problem(self.macros(), &names),
+            GameTab::Cycles => self.cycles_have_problem(&names),
             GameTab::Menus => menus_have_problem(self.menus(), &reachable, &names),
             GameTab::Info => info_has_problem(self.infos()),
             GameTab::Logs => self.logs_have_problem(),
@@ -356,6 +357,7 @@ impl App {
             GameTab::Modes => self.view_layers(layers::Shift::Mode, &names),
             GameTab::Layers => self.view_layers(layers::Shift::Layer, &names),
             GameTab::Macros => self.view_macros(&names),
+            GameTab::Cycles => self.view_cycles(&names),
             GameTab::Menus => self.view_menus(&names, &reachable),
             GameTab::Info => self.view_infos(),
             GameTab::Logs => self.view_logs(),

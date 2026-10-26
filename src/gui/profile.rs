@@ -596,7 +596,7 @@ impl App {
                                 *a = action;
                             }
                         }
-                        Target::MacroStep(..) | Target::MenuItem(..) | Target::StickAdvanced(_) | Target::GyroAdvanced => {}
+                        Target::MacroStep(..) | Target::CycleStep(..) | Target::MenuItem(..) | Target::StickAdvanced(_) | Target::GyroAdvanced => {}
                     }
                 }
             }

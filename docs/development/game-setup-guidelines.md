@@ -56,6 +56,7 @@ Classic PC games often come in more than one version: the original, a modern rem
 - **Jump** should be assigned to **A** or **B**. If the game has a *Use* action, Use goes on **A** and Jump goes on **B**.
 - **Touchpad** actions should generally be mouse-style. Not every controller has a touchpad, so don't rely on it. Even on a DualShock it's a niche tool, so don't build the scheme around it.
 - **Crouch** should almost always be a **toggle**. It should favour **left stick click**. If **B** is free, it may be preferred there instead.
+- **Prone**, where the game has it, should be a **long press of the crouch button**, not a third step after crouch: going prone is the odd one out, and a long press reaches it from standing or crouching in one go. A **cycle** of stand, crouch and prone (below) is the alternative for a game with a key for each stance and no spare long press.
 - **Zoom / aim**, if not on the right mouse button, should be on **right stick press** or **D-pad Up**.
 - **Mirrored** actions, such as switching to the next or previous item, or rotating the camera, should typically be on **D-pad Left/Right** or the **shoulder buttons**.
 - **Lean** can go on **D-pad Left/Right**. An acceptable alternative is a layer on a face button or shoulder button, where the **left stick** acts as the lean while the layer is held.
@@ -84,6 +85,7 @@ This covers every game played with a pointer on a map or a board: real-time and 
 - **Ship a gyro variant** next to the plain profile, so the player can try a tilt-controlled cursor. Copy the plain profile and add `requires = ["gyro"]`, gyro-to-mouse at 1x to start, and a Select + Start chord for the clutch, like the [StarCraft pack](../../packs/starcraft.padpack) ("Gameplay + Gyro"). The gyro is a fine pointer next to the right stick, which keeps moving the cursor, so no button changes. Name it `<Game> + Gyro` and say so at the top of its notes.
 - **A game with native controller support is exempt.** Its scheme is a passthrough (Factorio, Against the Storm), and a gyro-driven mouse would fight it.
 - **The rules point to the plain profile.** Gyro is an extra and is never the default.
+- **Game speed** with a key per speed (1, 2, 3) goes on a **cycle** over the faster speeds and normal, forward and back on a mirrored pair, and **pause** stays on its own button: it's reached from any speed and back again, which a cycle can't do in one press. A game with keys that raise and lower the speed needs no cycle: put those keys on the mirrored pair directly.
 
 ## Hotkeys and menus
 
@@ -95,6 +97,7 @@ This covers every game played with a pointer on a map or a board: real-time and 
   - **List menu** for separate keys for in-game screens such as Map, Inventory, or Stats. Put the list on **Select** (see *System buttons*). This is the main exception to the directional menu rule.
   - **Grid menu as a dashboard** for a game with many loosely organized hotkeys. Use **cell merges** to give more important actions more space, so their weight matches how often they're used.
 - If there is a **holster** or **put away** action, assign it to the same input that took the item out, with a **long press**. For example, if a shoulder button brings up a radial menu to take items out, a long press of that shoulder button holsters them.
+- **Cycles** suit mutually exclusive states the player steps through often, when the game has a **separate key for each state**: game speeds on 1, 2 and 3, stances on their own keys, fire modes. One button steps forward through them; a second, with **Step back** ticked, goes the other way, so put the pair on **mirrored** buttons (the **shoulder buttons** or **D-pad Left/Right**). List the state the game starts in **last**, so the first press moves on from it: normal, fast, fastest is written fast, fastest, normal. Don't make a cycle of a game key that already steps through the states (a single "speed up" key, a fire-mode key), map that key instead, and don't use one for states the game changes by itself often, where the cycle would fall out of step. A cycle is quicker than a carousel when the states are few and the order is natural (speeds); a carousel suits more states, or ones picked by name. Say in the notes which button steps which way and that the cycle starts over when the game starts.
 - Whatever is on the **right mouse button** should go on the **left trigger**. The exception is when the right mouse button is a *Use* action, in which case **A** or **X** is preferred.
 - **In-game menus** in PC games without controller support usually only work with the mouse. Some accept the arrow keys. Supporting arrow keys is often hard without a separate profile or mode, which can be unintuitive, but it may still be an acceptable option.
 
@@ -102,6 +105,7 @@ This covers every game played with a pointer on a map or a board: real-time and 
 
 - **Profiles should not intermingle with each other.** Each profile should be a complete, self-contained scheme.
 - **Macros** are generally left to the user. Don't add them to a pack unless the game clearly needs one.
+- **Cycles** belong in a pack where the game has a key per state and a button to spare for stepping through them (see [Hotkeys and menus](#hotkeys-and-menus)), most often game speed. Name a cycle for what it switches (*Game speed*, *Stance*).
 - **Notes** are important. Use them for anything a player wouldn't guess from the layout. For example, in Deus Ex, Escape exits menus, including in-game menus such as robot recharging or keypads. Escape is also the system menu toggle, which is often bound to **Start**. So Start is how you exit in-game menus, and the note should say so.
 - **Custom configs** go in the config folder. Don't add them to the guidelines or to packs for personal preferences.
 - If a game needs a different control scheme for different in-game contexts (vehicles, minigames, the game's own menus), use **modes** instead of profiles. Only one mode is on at a time, so the player can't stack incompatible schemes and lose the way back.

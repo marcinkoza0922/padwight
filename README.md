@@ -13,7 +13,7 @@ Here's how it's put together:
 
 - **daemon**: grabs physical gamepads (evdev) so nothing else sees them, runs the active profile, and emits through virtual uinput devices (an Xbox 360-style pad plus a keyboard and a mouse).
 - **gui**: edits profiles and talks to the daemon over `$XDG_RUNTIME_DIR/padwight.sock`.
-- **config**: `~/.config/padwight/`. `config.toml` holds the app settings. Each setup is a folder under `setups/` (General is `general/`), with a `setup.toml` and one file per profile, mode, layer, macro, menu, overlay and log. To move a setup to another machine, copy its folder. The daemon is the only writer while it runs, so after editing by hand, run `padwight reload`.
+- **config**: `~/.config/padwight/`. `config.toml` holds the app settings. Each setup is a folder under `setups/` (General is `general/`), with a `setup.toml` and one file per profile, mode, layer, macro, cycle, menu, overlay and log. To move a setup to another machine, copy its folder. The daemon is the only writer while it runs, so after editing by hand, run `padwight reload`.
 
 That is Linux. On Windows the same pieces read controllers through XInput and send through ViGEmBus and `SendInput`; see [Windows](#windows).
 
@@ -35,9 +35,9 @@ For developers, in [docs/development/](docs/development/):
 
 ## Setups
 
-Everything is organized into setups: one controller setup per game. Each game keeps its own bindings and switches to them when you start it. A setup holds its own profiles, macros, menus, info overlays, and the auto-switch rules that activate it. All of its profiles can use all of its items. **General** is a built-in setup with no rules, for the desktop and a plain gamepad. Names only need to be unique within a setup. To reuse items from another setup, use **Copy from another setup…** on its Modes, Layers, Macros, Menus or Info overlays tab.
+Everything is organized into setups: one controller setup per game. Each game keeps its own bindings and switches to them when you start it. A setup holds its own profiles, macros, cycles, menus, info overlays, and the auto-switch rules that activate it. All of its profiles can use all of its items. **General** is a built-in setup with no rules, for the desktop and a plain gamepad. Names only need to be unique within a setup. To reuse items from another setup, use **Copy from another setup…** on its Modes, Layers, Macros, Cycles, Menus or Info overlays tab.
 
-The sidebar lists General and your setups (with a search). Each setup's page has eight tabs: **Profiles**, **Modes**, **Layers**, **Macros**, **Menus**, **Info overlays**, **Log overlays** and **Details** (name, rules, export, delete). On every tab except Profiles and Details, "Copy from another setup…" previews another setup's items (or one from the library) and copies the ones you want in, so you can adapt them.
+The sidebar lists General and your setups (with a search). Each setup's page has nine tabs: **Profiles**, **Modes**, **Layers**, **Macros**, **Cycles**, **Menus**, **Info overlays**, **Log overlays** and **Details** (name, rules, export, delete). On every tab except Profiles and Details, "Copy from another setup…" previews another setup's items (or one from the library) and copies the ones you want in, so you can adapt them.
 
 ## Packs and the library
 
@@ -209,6 +209,12 @@ Map a macro with the "Macro…" action, and pick how it plays:
 - **Repeat while held**: loops until you let go, then stops at once.
 
 Each pass of a macro releases anything it still holds when it ends. Wrap a repeating macro in a Toggle to loop it hands-free. Renaming a macro updates its mappings, and profile switches stop any macros that are running.
+
+## Cycles
+
+A setup's Cycles tab holds named lists of steps that one button steps through, a step per press, starting over after the last: for a game's states that rule each other out, such as game speeds or stances. Each step presses a key or key combo, a mouse button, the scroll wheel, a gamepad button, trigger or stick, a macro, or several inputs at once, and stays pressed while the button is held.
+
+Map a cycle with the "Cycle…" action. "Step back" presses the step before instead, so two buttons can go both ways through one cycle. The first press presses the first step, so list the state the game starts in last. Every cycle goes back to its start when the game starts. The strategy and life-sim packs with a speed menu step through the speeds on a tap of that button, and open the menu on a long press.
 
 ## Mouse and keyboard from the couch
 

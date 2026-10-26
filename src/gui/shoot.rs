@@ -25,7 +25,7 @@ Drawing the settings window without a display or a daemon (for the manual's scre
          open <button>           open that button's row (South, LeftBumper, ...)
          actions <button>        open the dialog that picks that button's action
          outputs <button>        open the dialog that picks the controller button it presses
-         expand                  open every row               macro|menu|info <n>  open that card
+         expand                  open every row               macro|cycle|menu|info <n>  open that card
          appearance <n>          open menu n's Appearance     filters-demo <n>  turn on a few of menu n's filters
          dialog <add|export|system|system-demo>     open a dialog                close  close it
          stage <menu:n|info:n|log:n|keyboard|numpad|media|in-game-menu>  open the on-screen editor
@@ -172,6 +172,7 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
         "outputs" => open_outputs(app, button_named(arg()?)?)?,
         "expand" => send(app, Message::ExpandAll(true)),
         "macro" => send(app, Message::ToggleMacro(arg()?.parse()?)),
+        "cycle" => send(app, Message::ToggleCycle(arg()?.parse()?)),
         "menu" => send(app, Message::ToggleMenu(arg()?.parse()?)),
         "info" => send(app, Message::ToggleInfo(arg()?.parse()?)),
         "appearance" => send(app, Message::ToggleAppearance(Some(arg()?.parse()?))),
@@ -304,6 +305,7 @@ fn tab_word(tab: GameTab) -> &'static str {
         GameTab::Modes => "modes",
         GameTab::Layers => "layers",
         GameTab::Macros => "macros",
+        GameTab::Cycles => "cycles",
         GameTab::Menus => "menus",
         GameTab::Info => "info",
         GameTab::Logs => "logs",

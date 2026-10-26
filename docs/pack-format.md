@@ -23,6 +23,7 @@ made_with = "Xbox controller"
 [[rules]]                        # auto-switch rules (see Rules)
 [[profiles]]                     # required, at least one
 [[macros]]                       # optional
+[[cycles]]                       # optional
 [[menus]]                        # optional
 [[info_overlays]]                # optional
 [[modes]]                        # optional
@@ -100,6 +101,7 @@ A button's value is an **action**. Each form is one TOML key:
 | `toggle` | `[profiles.buttons.LeftStick.toggle]` `keys = ["KEY_X"]` | First press holds the inner action, next press releases it. |
 | `turbo` | `turbo = { action = { keys = ["KEY_F"] }, rate = 10.0 }` | Repeats the inner action 2–30 times a second while held. |
 | `macro` | `macro = { name = "QCF", repeat = false }` | Plays a macro. `repeat = true` loops while held. |
+| `cycle` | `cycle = { name = "Game speed" }` | Presses the cycle's next step, held while the input is. `back = true` presses the step before instead. Can't be inside `toggle` or `turbo`. |
 | `layer` | `layer = "Hotkeys"` | Holds a layer on while the input is held. Can't be inside `toggle`, or in a menu item. |
 | `mode` | `mode = "Driving"` | Switches to a mode, or back to the default mode if that mode is on. `"Mouse mode"` names the built-in mouse mode. |
 | `"gyro_toggle"`, `"gyro_clutch"`, `"gyro_hold"`, `"gyro_recenter"` | | Switch gyro on or off, turn it off while held, turn it on while held, or recenter it. |
@@ -490,6 +492,22 @@ steps = [
 
 Steps: `tap` (press, hold `hold_ms`, release), `press` (keep held until a matching `release` or the macro's end), `release`, `wait` (milliseconds), and `stick` (move a virtual stick to `x`, `y` in −1..1, y positive down; it recenters when the macro ends). Macros are referenced from buttons with `macro = { name = "…" }`.
 
+## Cycles
+
+```toml
+[[cycles]]
+name = "Game speed"
+steps = [
+    { keys = ["KEY_2"] },
+    { keys = ["KEY_3"] },
+    { keys = ["KEY_1"] },
+]
+```
+
+A cycle switches between a game's states that rule each other out, from one input. Each press of a `cycle` action presses its next step and holds it while the input is held; after the last step it starts over at the first. The first press presses the first step, so list the state the game starts in last. `cycle = { name = "…", back = true }` on another input goes the other way, from the same place. Every cycle goes back to its start when the game starts.
+
+A step is an action that presses inputs: `keys`, `mouse`, `wheel`, `gamepad`, `pad_trigger`, `pad_stick`, a `macro`, or a `multi` of those. Use it with keys that set a state directly (a key per speed, a key per stance): a game key that already steps through the states needs no cycle, and the two could drift apart.
+
 ## Info overlays
 
 ```toml
@@ -733,7 +751,7 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
 ## Versioning
 
 - `format` is an integer. The app writes `20` and reads up to `20`. A pack with a newer `format` is refused with "update the app to import it". Older formats are upgraded when read.
-- A pack is refused if its setup couldn't be saved in the app: a missing macro, menu or overlay that something refers to, two items or profiles of one name, two combos of the same buttons, an unknown key and the like. A setup folder in the config that breaks these rules is left out when the config loads, and kept on disk to be fixed.
+- A pack is refused if its setup couldn't be saved in the app: a missing macro, cycle, menu or overlay that something refers to, two items or profiles of one name, two combos of the same buttons, an unknown key and the like. A setup folder in the config that breaks these rules is left out when the config loads, and kept on disk to be fixed.
 - Format history:
   - 2 added layers.
   - 3 added toggles that start on.
@@ -758,4 +776,4 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
 
 ## Checks
 
-The repository's test suite parses every file in `packs/` and checks it: the format, unique IDs and names, no dangling references (macros, menus, info overlays, modes, layers, profiles), that each rule points at an existing profile, and that a plain pad can play at least one profile. A pack you add to `packs/` is checked the same way, and it is embedded in the next build.
+The repository's test suite parses every file in `packs/` and checks it: the format, unique IDs and names, no dangling references (macros, cycles, menus, info overlays, modes, layers, profiles), that each rule points at an existing profile, and that a plain pad can play at least one profile. A pack you add to `packs/` is checked the same way, and it is embedded in the next build.

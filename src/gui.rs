@@ -47,6 +47,7 @@ mod activity;
 mod chars;
 mod controllers;
 mod checks;
+mod cycles;
 mod font_menu;
 mod games;
 mod goto;
@@ -272,6 +273,8 @@ struct App {
     found: Option<Button>,
     /// Macros whose cards are open, by index in the shown list.
     open_macros: HashSet<usize>,
+    /// Cycles shown open on the Cycles tab, by position.
+    open_cycles: HashSet<usize>,
     /// Menus (by index) whose card is open.
     open_menus: HashSet<usize>,
     /// Appearance editors that are open: a menu's, or the keyboard's (`None`).
@@ -348,6 +351,7 @@ enum GameTab {
     Modes,
     Layers,
     Macros,
+    Cycles,
     Menus,
     Info,
     Logs,
@@ -355,11 +359,12 @@ enum GameTab {
 }
 
 impl GameTab {
-    const ALL: [GameTab; 8] = [
+    const ALL: [GameTab; 9] = [
         GameTab::Profiles,
         GameTab::Modes,
         GameTab::Layers,
         GameTab::Macros,
+        GameTab::Cycles,
         GameTab::Menus,
         GameTab::Info,
         GameTab::Logs,
@@ -374,6 +379,7 @@ impl fmt::Display for GameTab {
             GameTab::Modes => "Modes",
             GameTab::Layers => "Layers",
             GameTab::Macros => "Macros",
+            GameTab::Cycles => "Cycles",
             GameTab::Menus => "Menus",
             GameTab::Info => "Info overlays",
             GameTab::Logs => "Log overlays",
@@ -412,6 +418,8 @@ enum Target {
     Zone(Analog, usize),
     /// Step `.1` of macro `.0` (in the shown list), not part of any profile.
     MacroStep(usize, usize),
+    /// Step `.1` of cycle `.0` (in the shown list), likewise.
+    CycleStep(usize, usize),
     /// Item `.1` of menu `.0` (in the shown list).
     MenuItem(usize, usize),
     /// A stick's "Advanced" fold.
@@ -584,6 +592,14 @@ enum Message {
     MoveMacroStep(usize, usize, bool),
     RemoveMacroStep(usize, usize),
     InsertMotion(usize, Motion),
+    ToggleCycle(usize),
+    NewCycle,
+    DeleteCycle(usize),
+    RenameCycle(usize, String),
+    AddCycleStep(usize),
+    /// Step `.1` of cycle `.0`, up a place if `.2`, else down.
+    MoveCycleStep(usize, usize, bool),
+    RemoveCycleStep(usize, usize),
     ToggleMenu(usize),
     ToggleAppearance(Option<usize>),
     NewMenu(MenuKindTag),
@@ -785,7 +801,7 @@ impl App {
             gyro_trail: gyro_graph::Trail::default(),
             finding: false,
             found: None,
-            open_macros: HashSet::new(),
+            open_macros: HashSet::new(), open_cycles: HashSet::new(),
             open_menus: HashSet::new(),
             open_appearance: HashSet::new(),
             numpad_appearance: false,
@@ -1021,6 +1037,7 @@ impl App {
     /// Forgets per-page state when another page or list is shown.
     fn reset_page_state(&mut self) {
         self.open_macros.clear();
+        self.open_cycles.clear();
         self.open_menus.clear();
         self.open_infos.clear();
         self.open_info_appearance.clear();

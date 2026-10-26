@@ -45,6 +45,7 @@ pub enum Keyword {
     Toggle,
     Turbo,
     Macro,
+    Cycle,
     Menu,
     Info,
     Log,
@@ -58,6 +59,7 @@ impl Keyword {
             Keyword::Toggle => "Toggle",
             Keyword::Turbo => "Turbo",
             Keyword::Macro => "Macro",
+            Keyword::Cycle => "Cycle",
             Keyword::Menu => "Menu",
             Keyword::Info => "Info",
             Keyword::Log => "Log",
@@ -204,8 +206,8 @@ impl ButtonAction {
                 pieces.push(text(&format!(" ({rate:.0}/s)")));
                 pieces
             }
-            ButtonAction::Macro { name, repeat: true } => vec![keyword(Keyword::Macro), text(&format!(" “{name}” (repeat)"))],
-            ButtonAction::Macro { name, .. } => vec![keyword(Keyword::Macro), text(&format!(" “{name}”"))],
+            ButtonAction::Macro { name, repeat } => vec![keyword(Keyword::Macro), text(&format!(" “{name}”{}", if *repeat { " (repeat)" } else { "" }))],
+            ButtonAction::Cycle { name, back } => vec![keyword(Keyword::Cycle), text(&format!(" “{name}”{}", if *back { " (back)" } else { "" }))],
             ButtonAction::Layer(name) => vec![keyword(Keyword::Layer), text(&format!(" “{name}”"))],
             ButtonAction::Mode(name) => vec![keyword(Keyword::Mode), text(&format!(" “{name}”"))],
         }

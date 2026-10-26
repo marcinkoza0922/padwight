@@ -7,7 +7,7 @@ id = "5da0f454-aeee-4621-a8d6-504ceec68400"
 name = "Timberborn"
 version = "1.2"
 author = "Padwight"
-description = "Timberborn on an Xbox-style pad, for the game's default keys. The left stick moves the camera, the right stick the pointer; RT and A click, LT drops the tool. LB and RB step through the tools (hold: toolbar groups), X rotates (hold: the other way), R3 flips, L3 pauses, and holding Y with the d-pad sets the speed. The d-pad zooms and turns the camera (hold: layers and 90° turns). Select lists the settlement panels; Start is the menu."
+description = "Timberborn on an Xbox-style pad, for the game's default keys. The left stick moves the camera, the right stick the pointer; RT and A click, LT drops the tool. LB and RB step through the tools (hold: toolbar groups), X rotates (hold: the other way), R3 flips, L3 pauses, and Y steps through the speeds (hold it with the d-pad for one). The d-pad zooms and turns the camera (hold: layers and 90° turns). Select lists the settlement panels; Start is the menu."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -32,7 +32,7 @@ Guide = {mode = "Guide"}
 South = {mouse = "Left"}
 East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_R"]}
-North = {open_menu = "Speed"}
+North = {cycle = {name = "Game speed"}}
 LeftBumper = {multi = [{keys = ["KEY_LEFTSHIFT"]}, {wheel = "Up"}]}
 RightBumper = {multi = [{keys = ["KEY_LEFTSHIFT"]}, {wheel = "Down"}]}
 Select = {open_menu = "Settlement"}
@@ -43,6 +43,9 @@ DpadUp = {keys = ["KEY_PAGEDOWN"]}
 DpadDown = {keys = ["KEY_PAGEUP"]}
 DpadLeft = {keys = ["KEY_Q"]}
 DpadRight = {keys = ["KEY_E"]}
+
+[profiles.gestures.North.long_press]
+open_menu = "Speed"
 
 [profiles.gestures.West]
 long_press = {keys = ["KEY_LEFTSHIFT", "KEY_R"]}
@@ -140,7 +143,7 @@ noise_threshold = 1.0
 notes = '''The right stick {rs} moves the pointer and the left stick {ls} the camera. {rt} or {south} clicks; {lt} right-clicks, which drops the tool in hand.
 {lb} and {rb} step through the tools of the open toolbar group. Hold them to move to the previous or next group.
 {west} rotates what you're placing; hold it to turn the other way. {r3} flips it where it can be flipped.
-Click {l3} to pause. Hold {north} and press the {dpad} for the speed: left is normal, up fast, right fastest, and down pauses.
+Click {l3} to pause. Tap {north} for the next speed: fast, fastest, then normal again. Press {north} with the {dpad} for one speed (left is normal, up fast, right fastest, and down pauses); hold {north} to see them.
 {up} and {down} zoom. Hold them to show a higher or lower layer of the map. {left} and {right} turn the camera; hold them to turn it 90°.
 {select} lists the settlement panels (F1 to F10), the wellbeing box and batch control.
 Naming a district or a beaver: {guide} + {west} opens the on-screen keyboard.'''
@@ -154,7 +157,8 @@ Naming a district or a beaver: {guide} + {west} opens the on-screen keyboard.'''
 "button:East" = {text = "Cancel / close"}
 "button:West" = {text = "{icon:rotate} Rotate"}
 "gesture:button:West:long_press" = {text = "{icon:rotate-left} Rotate the other way"}
-"button:North" = {text = "Hold + {dpad}: game speed"}
+"button:North" = {text = "{icon:speed2} Next speed"}
+"gesture:button:North:long_press" = {text = "Hold: speed menu"}
 "button:LeftBumper" = {text = "Previous tool"}
 "button:RightBumper" = {text = "Next tool"}
 "gesture:button:LeftBumper:long_press" = {text = "Previous toolbar group"}
@@ -188,7 +192,7 @@ Guide = {mode = "Guide"}
 South = {mouse = "Left"}
 East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_R"]}
-North = {open_menu = "Speed"}
+North = {cycle = {name = "Game speed"}}
 LeftBumper = {multi = [{keys = ["KEY_LEFTSHIFT"]}, {wheel = "Up"}]}
 RightBumper = {multi = [{keys = ["KEY_LEFTSHIFT"]}, {wheel = "Down"}]}
 Select = {open_menu = "Settlement"}
@@ -199,6 +203,9 @@ DpadUp = {keys = ["KEY_PAGEDOWN"]}
 DpadDown = {keys = ["KEY_PAGEUP"]}
 DpadLeft = {keys = ["KEY_Q"]}
 DpadRight = {keys = ["KEY_E"]}
+
+[profiles.gestures.North.long_press]
+open_menu = "Speed"
 
 [profiles.gestures.West]
 long_press = {keys = ["KEY_LEFTSHIFT", "KEY_R"]}
@@ -290,7 +297,7 @@ notes = '''Hold {select} and {start} together to pause the gyro while you reposi
 The right stick {rs} moves the pointer and the left stick {ls} the camera. {rt} or {south} clicks; {lt} right-clicks, which drops the tool in hand.
 {lb} and {rb} step through the tools of the open toolbar group. Hold them to move to the previous or next group.
 {west} rotates what you're placing; hold it to turn the other way. {r3} flips it where it can be flipped.
-Click {l3} to pause. Hold {north} and press the {dpad} for the speed: left is normal, up fast, right fastest, and down pauses.
+Click {l3} to pause. Tap {north} for the next speed: fast, fastest, then normal again. Press {north} with the {dpad} for one speed (left is normal, up fast, right fastest, and down pauses); hold {north} to see them.
 {up} and {down} zoom. Hold them to show a higher or lower layer of the map. {left} and {right} turn the camera; hold them to turn it 90°.
 {select} lists the settlement panels (F1 to F10), the wellbeing box and batch control.
 Naming a district or a beaver: {guide} + {west} opens the on-screen keyboard.'''
@@ -304,7 +311,8 @@ Naming a district or a beaver: {guide} + {west} opens the on-screen keyboard.'''
 "button:East" = {text = "Cancel / close"}
 "button:West" = {text = "{icon:rotate} Rotate"}
 "gesture:button:West:long_press" = {text = "{icon:rotate-left} Rotate the other way"}
-"button:North" = {text = "Hold + {dpad}: game speed"}
+"button:North" = {text = "{icon:speed2} Next speed"}
+"gesture:button:North:long_press" = {text = "Hold: speed menu"}
 "button:LeftBumper" = {text = "Previous tool"}
 "button:RightBumper" = {text = "Next tool"}
 "gesture:button:LeftBumper:long_press" = {text = "Previous toolbar group"}
@@ -332,6 +340,14 @@ noise_threshold = 1.0
 
 [profiles.gyro.mode.mouse]
 sensitivity = 20.0
+
+[[cycles]]
+name = "Game speed"
+steps = [
+    {keys = ["KEY_2"]},
+    {keys = ["KEY_3"]},
+    {keys = ["KEY_1"]},
+]
 
 [[menus]]
 name = "Speed"
