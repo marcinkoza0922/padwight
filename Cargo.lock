@@ -2856,6 +2856,7 @@ dependencies = [
  "cosmic-text",
  "dirs",
  "evdev",
+ "fontdb",
  "iced",
  "iced_layershell",
  "iced_runtime",

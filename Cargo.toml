@@ -10,6 +10,8 @@ iced = { version = "0.14", features = ["svg", "image-without-codecs", "tokio", "
 # Offscreen drawing for overlay snapshots (snapshot.rs). Both are already in the lock file
 # through iced, so the vendored Flatpak sources don't change.
 iced_runtime = "0.14"
+# Reads a font file's family name without a renderer (font.rs); same version iced already locks.
+fontdb = "0.23"
 png = "0.17"
 # Decodes the background pictures (PNG and JPEG only, so no AVIF or other codecs come along).
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }

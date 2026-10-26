@@ -2,7 +2,8 @@
 //! family named by its name.
 
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    borrow::Cow,
+    collections::{BTreeMap, HashMap},
     path::PathBuf,
     sync::{Mutex, OnceLock, RwLock},
 };
@@ -49,9 +50,11 @@ static PACK: RwLock<BTreeMap<String, &'static str>> = RwLock::new(BTreeMap::new(
 /// What the game in use's font assets were last set from, so setting them again is free.
 static PACK_SOURCE: Mutex<Option<BTreeMap<String, String>>> = Mutex::new(None);
 
-/// The family of each font file loaded so far, by a hash of its bytes: loading one twice
-/// would only add the same faces again.
-static LOADED: Mutex<Option<HashMap<u64, &'static str>>> = Mutex::new(None);
+/// Each font file loaded so far, by a hash of its bytes: its family and its bytes. Loading one
+/// twice would only add the same faces again.
+static LOADED: Mutex<Option<HashMap<u64, Loaded>>> = Mutex::new(None);
+
+type Loaded = (&'static str, std::sync::Arc<[u8]>);
 
 /// The most a font file may be, in bytes.
 pub const MAX_FONT_BYTES: usize = 1024 * 1024;
@@ -79,17 +82,33 @@ pub fn load(bytes: &[u8]) -> Result<&'static str, String> {
     let key = hash(bytes);
     let mut loaded = LOADED.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
     let loaded = loaded.get_or_insert_with(HashMap::new);
-    if let Some(family) = loaded.get(&key) {
+    if let Some((family, _)) = loaded.get(&key) {
         return Ok(family);
     }
-    let mut system = font_system().write().unwrap_or_else(std::sync::PoisonError::into_inner);
-    let before: HashSet<_> = system.raw().db().faces().map(|f| f.id).collect();
-    system.load_font(bytes.to_vec().into());
-    let family = system.raw().db().faces().filter(|f| !before.contains(&f.id)).find_map(|f| f.families.first().map(|(name, _)| name.clone()));
-    let family = family.ok_or("not a font file (TrueType or OpenType)")?;
+    let family = family_of(bytes).ok_or("not a font file (TrueType or OpenType)")?;
     let family: &'static str = Box::leak(family.into_boxed_str());
-    loaded.insert(key, family);
+    font_system().write().unwrap_or_else(std::sync::PoisonError::into_inner).load_font(bytes.to_vec().into());
+    loaded.insert(key, (family, bytes.into()));
     Ok(family)
+}
+
+/// The family name a font file draws as, read without any renderer.
+fn family_of(bytes: &[u8]) -> Option<String> {
+    let mut db = fontdb::Database::new();
+    db.load_font_data(bytes.to_vec());
+    db.faces().find_map(|f| f.families.first().map(|(name, _)| name.clone()))
+}
+
+/// Every font file a renderer should load to draw what [`family`] names: the bundled fonts, then
+/// the other files loaded so far (a game's). Each renderer loads them into its own font system.
+#[cfg_attr(not(test), expect(dead_code, reason = "for the cosmic-text renderer, which loads these into its own font system"))]
+pub fn files() -> Vec<Cow<'static, [u8]>> {
+    let bundled: Vec<u64> = BUNDLED.iter().map(|b| hash(b.bytes)).collect();
+    let loaded = LOADED.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    let mut others: Vec<_> = loaded.iter().flatten().filter(|(key, _)| !bundled.contains(key)).collect();
+    others.sort_by_key(|(key, _)| **key);
+    let others = others.into_iter().map(|(_, (_, bytes))| Cow::Owned(bytes.to_vec()));
+    BUNDLED.iter().map(|b| Cow::Borrowed(b.bytes)).chain(others).collect()
 }
 
 /// Makes these the fonts `{font:name}` and the font settings can name besides the others: the
@@ -161,20 +180,25 @@ pub fn pack_names() -> Vec<String> {
     PACK.read().map(|p| p.keys().cloned().collect()).unwrap_or_default()
 }
 
-/// The iced font for a setting; `None` is the system default.
-pub fn resolve(name: Option<&str>) -> Font {
-    let Some(name) = name.map(str::trim).filter(|n| !n.is_empty()) else { return Font::DEFAULT };
+/// The family a font setting draws as; `None` is the system default. A game's font gives its
+/// file's own family, a bundled one its name, and any other name is taken as an installed family.
+pub fn family(name: Option<&str>) -> Option<&'static str> {
+    let name = name.map(str::trim).filter(|n| !n.is_empty())?;
     if let Some(family) = PACK.read().ok().and_then(|p| p.get(name).copied()) {
-        return Font::with_name(family);
+        return Some(family);
     }
     if let Some(b) = BUNDLED.iter().find(|b| b.name == name) {
-        return Font::with_name(b.name);
+        return Some(b.name);
     }
-    // iced wants a `'static` name; a pack can name any family, so keep each one only once.
+    // A `'static` name is handier; a pack can name any family, so keep each one only once.
     static OTHER: OnceLock<Mutex<HashMap<String, &'static str>>> = OnceLock::new();
     let mut known = OTHER.get_or_init(Mutex::default).lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-    let leaked = *known.entry(name.to_string()).or_insert_with(|| Box::leak(name.to_string().into_boxed_str()));
-    Font::with_name(leaked)
+    Some(*known.entry(name.to_string()).or_insert_with(|| Box::leak(name.to_string().into_boxed_str())))
+}
+
+/// The iced font for a setting; `None` is the system default.
+pub fn resolve(name: Option<&str>) -> Font {
+    family(name).map_or(Font::DEFAULT, Font::with_name)
 }
 
 #[cfg(test)]
@@ -187,6 +211,38 @@ mod tests {
         assert_eq!(resolve(Some("  ")), Font::DEFAULT);
         assert_eq!(resolve(Some("Inter")), Font::with_name("Inter"));
         assert_eq!(resolve(Some("Fira Sans")), resolve(Some("Fira Sans")));
+    }
+
+    #[test]
+    fn family_names_what_a_setting_draws_as() {
+        assert_eq!(family(None), None);
+        assert_eq!(family(Some("  ")), None);
+        assert_eq!(family(Some(" Inter ")), Some("Inter"));
+        assert_eq!(family(Some("Fira Sans")), Some("Fira Sans"));
+        let bangers = BUNDLED.iter().find(|b| b.name == "Bangers").unwrap().bytes;
+        let mut assets = crate::config::PackAssets::default();
+        assets.add_font("Marquee", bangers).unwrap();
+        assets.activate();
+        assert_eq!(family(Some("Marquee")), Some("Bangers"));
+    }
+
+    #[test]
+    fn the_loaded_files_are_the_bundled_ones_then_a_game_s() {
+        assert_eq!(files().len(), BUNDLED.len());
+        assert!(files().iter().zip(&BUNDLED).all(|(f, b)| f.as_ref() == b.bytes));
+        load(BUNDLED[0].bytes).unwrap();
+        assert_eq!(files().len(), BUNDLED.len(), "a bundled file loaded is not listed twice");
+        let path = std::env::temp_dir().join(format!("padwight-font-list-{}.font", std::process::id()));
+        let bytes = std::fs::read("assets/fonts/Kreon-Regular.ttf").unwrap();
+        assert_eq!(family_of(&bytes).as_deref(), Some("Kreon"));
+        assert!(family_of(b"hello").is_none());
+        let mut odd = bytes.clone();
+        odd.extend_from_slice(b"x");
+        std::fs::write(&path, &odd).unwrap();
+        set_pack_font_files(&BTreeMap::from([("Face".to_string(), path.clone())]));
+        assert_eq!(files().len(), BUNDLED.len() + 1);
+        assert_eq!(files().last().unwrap().as_ref(), odd.as_slice());
+        let _ = std::fs::remove_file(&path);
     }
 
     #[test]
