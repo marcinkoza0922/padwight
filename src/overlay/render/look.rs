@@ -1,7 +1,9 @@
 //! A style's decorations (outlines, shadows, the selected item's glow, the background's
 //! gradient), resolved once per panel into colors sized for its scale.
 
-use super::{Rgba, blend, paint};
+use std::hash::{Hash, Hasher};
+
+use super::{Rgba, blend, geom::hash_floats, paint};
 use crate::config::{OverlayStyle, Shade, Stroke};
 
 /// Panels round to this radius at full corners; their size depends on their content.
@@ -20,6 +22,20 @@ pub struct Shadow {
     pub color: Rgba,
     pub offset: (f32, f32),
     pub blur: f32,
+}
+
+impl Hash for Outline {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        hash_floats(state, &[self.width]);
+        self.color.hash(state);
+    }
+}
+
+impl Hash for Shadow {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        hash_floats(state, &[self.offset.0, self.offset.1, self.blur]);
+        self.color.hash(state);
+    }
 }
 
 /// What a style adds to its colors, ready to draw.

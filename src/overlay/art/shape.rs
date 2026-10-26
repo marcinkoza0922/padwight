@@ -1,7 +1,7 @@
 //! The outlines a filter's picture is cut to.
 
 /// What a filter's layer is cut to.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Shape {
     /// A box with corners this many pixels round.
     Rounded(f32),

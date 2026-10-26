@@ -1,6 +1,9 @@
 //! Colors: straight (not premultiplied) RGBA in 0 to 1, as iced's `Color` holds them, so the
 //! same maths gives the same values.
 
+use std::hash::{Hash, Hasher};
+
+use super::geom::hash_floats;
 use crate::config::Paint;
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -38,6 +41,12 @@ impl Rgba {
     pub fn to_u8(self) -> [u8; 4] {
         let byte = |v: f32| (v.clamp(0.0, 1.0) * 255.0).round() as u8;
         [byte(self.r), byte(self.g), byte(self.b), byte(self.a)]
+    }
+}
+
+impl Hash for Rgba {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        hash_floats(state, &[self.r, self.g, self.b, self.a]);
     }
 }
 
