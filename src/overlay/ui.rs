@@ -69,6 +69,12 @@ impl Overlay {
         }
     }
 
+    #[cfg(windows)]
+    /// The ops that draw the screen at `now`, on a display of `display` logical pixels.
+    pub(super) fn screen_ops(&self, now: Instant, display: crate::overlay::render::Point) -> Vec<crate::overlay::render::Op> {
+        crate::overlay::render::screen_ops(&self.frame, &self.showing(now), display)
+    }
+
     /// Drops what has finished closing.
     pub(super) fn prune(&mut self, now: Instant) {
         let motion = &self.frame.motion;
