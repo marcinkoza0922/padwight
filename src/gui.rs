@@ -60,6 +60,7 @@ mod overlay_cards;
 mod items;
 mod menu_combos;
 mod motion_demo;
+mod mouse_region;
 mod menu_grid;
 #[cfg(test)]
 mod menu_suite;

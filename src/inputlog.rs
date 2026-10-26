@@ -272,7 +272,7 @@ impl InputLog {
                 true
             }
             OutEvent::PadButton(b, pressed) => self.event(InputEvent::Button(b, pressed), Thresholds::default(), now),
-            OutEvent::PadAxis(..) | OutEvent::MouseMove(..) => false,
+            OutEvent::PadAxis(..) | OutEvent::MouseMove(..) | OutEvent::MouseTo(..) => false,
         }
     }
 

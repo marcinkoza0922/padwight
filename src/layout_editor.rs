@@ -23,6 +23,7 @@ mod named;
 mod owner;
 mod pages;
 mod pictures;
+mod region;
 mod rows;
 mod sticks;
 mod style;

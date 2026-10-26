@@ -27,6 +27,7 @@ mod summary;
 mod typography;
 mod assets;
 pub use summary::{Keyword, Piece};
+mod region;
 mod touchpad;
 mod window_game;
 mod menus;
@@ -57,6 +58,7 @@ pub use style::*;
 pub use typography::*;
 pub use assets::*;
 use style::{default_keyboard_style, default_media_style, default_menu_style, default_numpad_style};
+pub use region::MouseRegion;
 pub use touchpad::*;
 
 /// Normalized gamepad button, following the Linux gamepad spec (Documentation/input/gamepad.rst).
@@ -768,6 +770,12 @@ pub enum StickAction {
         /// Pixels/second at full deflection, when `vertical` is `look`.
         #[serde(default = "default_vertical_speed")]
         vertical_speed: f32,
+    },
+    /// Mouse region: the stick's position is the pointer's place in `region`, the stick's center
+    /// its middle and the stick's edge its edge. Letting go puts the pointer back in the middle.
+    Region {
+        #[serde(flatten)]
+        region: MouseRegion,
     },
 }
 

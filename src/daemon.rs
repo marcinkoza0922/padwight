@@ -1496,6 +1496,7 @@ fn dispatch(pad: &mut VirtualPad, view: &mut OutputView, kbm: &mut VirtualKbm, o
             OutEvent::Key(k, pressed) => kbm.key(k, pressed),
             OutEvent::MouseButton(b, pressed) => kbm.mouse_button(b, pressed),
             OutEvent::MouseMove(dx, dy) => kbm.mouse_move(dx, dy),
+            OutEvent::MouseTo(x, y) => kbm.mouse_to(x, y),
             OutEvent::Wheel { vertical, horizontal } => kbm.wheel(vertical, horizontal),
         }
     }

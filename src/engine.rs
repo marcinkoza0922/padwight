@@ -174,6 +174,8 @@ pub struct Engine {
     stick_smooth: HashMap<Stick, (f32, f32)>,
     /// Seconds each mouse stick has been held at full deflection, for acceleration.
     stick_ramp: HashMap<Stick, f32>,
+    /// Where each stick in mouse-region mode last put the pointer, while it is pushed.
+    stick_region: HashMap<Stick, (f32, f32)>,
     /// The ring sector each stick in ring mode is pointing into.
     ring_sector: HashMap<Stick, usize>,
     /// Flick progress of each stick in flick mode.
@@ -1072,6 +1074,7 @@ impl Engine {
         self.stick_smooth.clear();
         self.stick_ramp.clear();
         self.ring_sector.clear();
+        self.stick_region.clear();
         self.flick.clear();
         self.wheel_held.clear();
         self.wheel_acc = (0.0, 0.0);

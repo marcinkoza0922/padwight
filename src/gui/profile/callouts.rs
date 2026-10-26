@@ -14,6 +14,7 @@ fn stick_mode(cfg: &StickConfig, s: Stick) -> Option<&'static str> {
         StickAction::Scroll { .. } => "Scroll",
         StickAction::Ring { .. } => "Ring",
         StickAction::Flick { .. } => "Flick",
+        StickAction::Region { .. } => "Region",
     })
 }
 

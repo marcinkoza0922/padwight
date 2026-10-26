@@ -5,7 +5,7 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use super::{ButtonAction, MouseButton, SpeedCurve, Stick};
+use super::{ButtonAction, MouseButton, MouseRegion, SpeedCurve, Stick};
 
 /// Default pointer speed: pixels the pointer moves when a finger crosses the whole pad.
 pub const DEFAULT_TOUCHPAD_SPEED: f32 = 1200.0;
@@ -118,6 +118,12 @@ pub enum TouchpadMotion {
     /// middle of the pad (or half) is center and its edges are full deflection. Pushes smaller
     /// than `deadzone` (0..1) are ignored.
     Joystick { stick: Stick, relative: bool, radius: f32, deadzone: f32 },
+    /// Mouse region: the pad (or half) is laid over `region`, and the pointer goes where the
+    /// finger is. Lifting the finger leaves the pointer where it is.
+    Region {
+        #[serde(flatten)]
+        region: MouseRegion,
+    },
     /// The pad is divided into the items of `menu`, laid out as the menu is drawn: a radial menu
     /// by angle from the middle, a grid by cells, a list by rows. Touching shows the menu (unless
     /// `overlay` is off) with the item under the finger picked.
@@ -370,6 +376,7 @@ mod tests {
         for (left, right) in [
             (TouchpadMotion::Menu { menu: "Build".into(), choose: TouchChoose::Lift, overlay: false }, swipe.clone()),
             (TouchpadMotion::Joystick { stick: Stick::Left, relative: true, radius: 0.2, deadzone: 0.1 }, TouchpadMotion::mouse(900.0)),
+            (TouchpadMotion::Region { region: MouseRegion { x: 0.25, ..MouseRegion::FULL } }, TouchpadMotion::Region { region: MouseRegion::default() }),
         ] {
             let cfg = TouchpadConfig { motion: left, click: ButtonAction::Disabled, right: Some(TouchRegion { motion: right, click: ButtonAction::Mouse(MouseButton::Right) }) };
             let back: TouchpadConfig = toml::from_str(&toml::to_string(&cfg).unwrap()).unwrap();
@@ -377,6 +384,8 @@ mod tests {
         }
         let menu: TouchpadMotion = toml::from_str::<TouchpadConfig>("[motion.menu]\nmenu = \"M\"").unwrap().motion;
         assert_eq!(menu, TouchpadMotion::Menu { menu: "M".into(), choose: TouchChoose::Click, overlay: true });
+        let region: TouchpadMotion = toml::from_str::<TouchpadConfig>("[motion.region]\nwidth = 1.0").unwrap().motion;
+        assert_eq!(region, TouchpadMotion::Region { region: MouseRegion { width: 1.0, ..MouseRegion::default() } });
     }
 
     #[test]

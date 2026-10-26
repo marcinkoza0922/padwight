@@ -59,6 +59,7 @@ fn mapped_inputs(profile: &Profile) -> Vec<(GuideInput, Vec<Piece>)> {
             StickAction::Disabled | StickAction::Gamepad { .. } => continue,
             StickAction::Mouse { .. } => "Move the mouse",
             StickAction::Scroll { .. } => "Scroll",
+            StickAction::Region { .. } => "Point",
             _ => "Remapped",
         };
         inputs.push((GuideInput::Stick(s), vec![Piece::Text(text.to_string())]));

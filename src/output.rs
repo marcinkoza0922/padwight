@@ -30,6 +30,8 @@ pub enum OutEvent {
     Key(KeyCode, bool),
     MouseButton(MouseButton, bool),
     MouseMove(i32, i32),
+    /// Puts the pointer at a place, given as shares (0..1) of the whole desktop.
+    MouseTo(f32, f32),
     /// High-resolution wheel units (120 = one notch).
     Wheel { vertical: i32, horizontal: i32 },
 }

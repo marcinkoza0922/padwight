@@ -8,7 +8,8 @@ Each stick can output to one of:
 - the mouse pointer,
 - the scroll wheel,
 - a [button ring](#button-rings) (use its WASD or Arrows preset for direction keys),
-- a [flick stick](#flick-stick).
+- a [flick stick](#flick-stick),
+- a [mouse region](#mouse-region).
 
 Stick settings:
 
@@ -41,6 +42,10 @@ Pushing the stick out turns the camera to that direction at once, spread over ab
 - **Turn size**: the mouse pixels one full turn takes in the game. Set it so a full turn matches the game's own sensitivity. **Test turn** moves the mouse one turn after 3 seconds, so you can check the result.
 - Only one stick per profile can be a flick stick.
 - **Advanced**: flick time, turning smoothing, a dead angle straight ahead, and optional looking up and down.
+
+## Mouse region
+
+The stick points at a spot in a rectangle of the desktop and the pointer goes there: the stick's middle is the rectangle's middle and a full push its edge. Letting go puts the pointer back in the middle. The rectangle's middle and size are shares of the whole desktop (all monitors together). The touchpad has a mouse region mode too, where the pointer goes to the spot under your finger.
 
 ## Triggers
 

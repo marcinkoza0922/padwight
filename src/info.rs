@@ -95,6 +95,7 @@ fn layer_entries(layer: &Layer) -> Vec<(String, String)> {
         let label = match &stick.action {
             StickAction::Mouse { .. } => "Move the mouse",
             StickAction::Scroll { .. } => "Scroll",
+            StickAction::Region { .. } => "Point",
             _ => "Remapped",
         };
         entries.push((format!("{{{token}}}"), label.into()));

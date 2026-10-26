@@ -158,6 +158,14 @@ impl PadPicture<'_> {
                 let _ = write!(s, r#"<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{EDGE}" stroke-width="2"{dash}/>"#);
                 let _ = write!(s, r#"<path d="M {} {cy} H {} M {cx} {} V {}" stroke="{EDGE}"/>"#, cx - 8.0, cx + 8.0, cy - 8.0, cy + 8.0);
             }
+            TouchpadMotion::Region { .. } => {
+                // A corner bracket in each corner: the side's edges are the region's.
+                for (u, v) in [(0.0_f32, 0.0_f32), (1.0, 0.0), (0.0, 1.0), (1.0, 1.0)] {
+                    let (x, y) = area.at((0.08 + u * 0.84, 0.12 + v * 0.76));
+                    let (dx, dy) = (if u == 0.0 { 12.0 } else { -12.0 }, if v == 0.0 { 12.0 } else { -12.0 });
+                    let _ = write!(s, r#"<path d="M {x} {} V {y} H {}" fill="none" stroke="{EDGE}" stroke-width="2"/>"#, y + dy, x + dx);
+                }
+            }
             TouchpadMotion::Swipe { .. } => {
                 // An arrowhead at each edge, pointing out.
                 let (cx, cy) = area.polar(0.0, 0.0);
@@ -221,6 +229,7 @@ impl PadPicture<'_> {
                         TouchpadMotion::Joystick { stick, relative, .. } => {
                             format!("{stick}{}", if *relative { "\ncenters where you touch" } else { "" })
                         }
+                        TouchpadMotion::Region { .. } => "Mouse region".to_string(),
                         TouchpadMotion::Menu { .. } | TouchpadMotion::Swipe { .. } => String::new(),
                     };
                     let side = if self.areas().len() > 1 { if area.side == TouchSide::Left { "Left half: " } else { "Right half: " } } else { "" };
@@ -257,6 +266,7 @@ mod tests {
             TouchpadMotion::Off,
             TouchpadMotion::mouse(1000.0),
             TouchpadMotion::Joystick { stick: Stick::Left, relative: true, radius: 0.2, deadzone: 0.1 },
+            TouchpadMotion::Region { region: crate::config::MouseRegion::FULL },
             TouchpadMotion::Menu { menu: "Ring".into(), choose: TouchChoose::Click, overlay: true },
             TouchpadMotion::Menu { menu: "Missing".into(), choose: TouchChoose::Click, overlay: true },
             TouchpadMotion::Swipe { up: ButtonAction::Keys(vec!["KEY_W".into()]), down: ButtonAction::Disabled, left: ButtonAction::Disabled, right: ButtonAction::Disabled, distance: 0.2 },
