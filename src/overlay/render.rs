@@ -8,6 +8,8 @@ pub mod layout;
 mod look;
 mod op;
 pub mod raster;
+#[cfg(test)]
+mod sample;
 mod style;
 pub mod text;
 mod typeset;
