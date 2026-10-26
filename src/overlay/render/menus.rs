@@ -93,7 +93,7 @@ pub(super) fn cell(m: &MenuView, i: usize, style: &Style, size: f32) -> Cell {
     state.selected = state.selected && !note;
     // A list's rows are as wide as the list, so their arrows line up at the right.
     let fills = matches!(m.kind, MenuKind::List | MenuKind::Buttons);
-    let label = item_text(&colors, view, &toned_label(&colors, view), size, fills);
+    let label = item_text(&colors, view, size, fills);
     Cell { label, colors, state, note }
 }
 
@@ -109,8 +109,8 @@ impl Cell {
 }
 
 /// An item's glyphs, its label, and a ▸ for submenus, at the row's right end when it `fills` one.
-/// A text badge (a stick's LS, say) is drawn as a small tag.
-fn item_text(style: &Style, view: &ItemView, text: &str, size: f32, fills: bool) -> Node {
+/// A text badge (a stick's LS, say) is drawn as a small tag. Radial menus label their items so too.
+pub(super) fn item_text(style: &Style, view: &ItemView, size: f32, fills: bool) -> Node {
     // Glyphs, badges and icons fade in and out with the label.
     let fade = style.item_text.a;
     let mut parts: Vec<Node> = Vec::new();
@@ -126,7 +126,7 @@ fn item_text(style: &Style, view: &ItemView, text: &str, size: f32, fills: bool)
     if let Some(k) = view.keyword {
         parts.push(picture(crate::keyword_icon::svg(k), size, fade));
     }
-    parts.push(rich(text, style, size, style.item_text));
+    parts.push(rich(&toned_label(style, view), style, size, style.item_text));
     if view.submenu {
         if fills {
             parts.push(Node::space().width(Length::Fill));

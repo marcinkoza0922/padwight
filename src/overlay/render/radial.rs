@@ -53,7 +53,7 @@ fn arcs(m: &MenuView, style: &Style, s: f32) -> Node {
         // Each label sits in the middle of its arc.
         let (x, y) = ring.point((start + end) / 2.0, (ring.inner + ring.outer) / 2.0);
         let colors = label::colors(m, i, style, &states[i], states[i].fade);
-        let body = Node::container(label::content(&m.items[i], &colors, 15.0 * s)).center_x(cell.0).center_y(cell.1);
+        let body = Node::container(super::menus::item_text(&colors, &m.items[i], 15.0 * s, false)).center_x(cell.0).center_y(cell.1);
         node = node.pin(Pin::At(Point::new(x - cell.0 / 2.0, y - cell.1 / 2.0)), body);
     }
     center(node, m, style, (ring.hub, size), false)
@@ -166,7 +166,7 @@ fn boxes(m: &MenuView, style: &Style, s: f32) -> Node {
         let state = Item { selected: label::selected(m, i), scale: 1.0, shift: 0.0, ..state(m, i, style) };
         let state = if it.tone == crate::menu::Tone::Note { Item { fade: state.fade, ..Item::REST } } else { state };
         let colors = label::colors(m, i, style, &state, 1.0);
-        let body = Node::container(label::content(it, &colors, 15.0 * s)).center_x(cell_w).center_y(cell_h);
+        let body = Node::container(super::menus::item_text(&colors, it, 15.0 * s, false)).center_x(cell_w).center_y(cell_h);
         let cell = item(body, &colors, &state, &m.style, style.corners * cell_h / 2.0);
         node = node.pin(Pin::At(Point::new(x - cell_w / 2.0, y - cell_h / 2.0)), cell);
     }
