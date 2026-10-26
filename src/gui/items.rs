@@ -590,7 +590,7 @@ impl App {
                     m.steps.remove(i);
                 }
             }
-            other => return self.update_logs(other),
+            other => return self.update_cycles(other),
         }
         Task::none()
     }
@@ -605,6 +605,7 @@ impl App {
     pub(super) fn name_clash(&self, kind: ItemKind, index: Option<usize>, name: &str) -> Option<String> {
         let list: Vec<&String> = match kind {
             ItemKind::Macro => self.macros().iter().map(|m| &m.name).collect(),
+            ItemKind::Cycle => self.cycle_names(),
             ItemKind::Menu => self.menus().iter().map(|m| &m.name).collect(),
             ItemKind::Info => self.infos().iter().map(|o| &o.name).collect(),
             ItemKind::Log => self.log_names(),

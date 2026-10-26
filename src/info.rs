@@ -95,6 +95,7 @@ fn layer_entries(layer: &Layer) -> Vec<(String, String)> {
         let label = match &stick.action {
             StickAction::Mouse { .. } => "Move the mouse",
             StickAction::Scroll { .. } => "Scroll",
+            StickAction::Region { .. } => "Point",
             _ => "Remapped",
         };
         entries.push((format!("{{{token}}}"), label.into()));
@@ -290,8 +291,9 @@ pub enum Token {
     /// token itself sets: `{current_input_device_N}` for one controller, then optionally
     /// `:gap_ms:stay_ms`.
     CurrentInput { device: Option<u8>, gap_ms: Option<u64>, stay_ms: Option<u64> },
-    /// How a gesture is done, in words: `{gesture:double}` (×2), `{gesture:triple}` (×3) or
-    /// `{gesture:hold}` (Hold), as a row's mark says.
+    /// How a gesture is done, in words: `{gesture:double}` (×2), `{gesture:triple}` (×3),
+    /// `{gesture:hold}` (Hold), `{gesture:press}` (Press) or `{gesture:release}` (Release), as a
+    /// row's mark says.
     Gesture(GestureKind),
 }
 
@@ -301,6 +303,8 @@ fn gesture_kind(name: &str) -> Option<GestureKind> {
         "double" => Some(GestureKind::DoubleTap),
         "triple" => Some(GestureKind::TripleTap),
         "hold" => Some(GestureKind::LongPress),
+        "press" => Some(GestureKind::OnPress),
+        "release" => Some(GestureKind::OnRelease),
         _ => None,
     }
 }
@@ -617,6 +621,8 @@ pub fn gesture_word(kind: GestureKind) -> &'static str {
         GestureKind::DoubleTap => "×2",
         GestureKind::TripleTap => "×3",
         GestureKind::LongPress => "Hold",
+        GestureKind::OnPress => "Press",
+        GestureKind::OnRelease => "Release",
     }
 }
 

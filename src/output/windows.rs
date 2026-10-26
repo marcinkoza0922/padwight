@@ -9,7 +9,7 @@ use std::sync::{
 
 use anyhow::{Result, bail};
 use vigem_client::{Client, TargetId, XButtons, XGamepad, Xbox360Wired};
-use windows::Win32::UI::Input::KeyboardAndMouse::{INPUT, MOUSEEVENTF_HWHEEL, MOUSEEVENTF_MOVE, MOUSEEVENTF_WHEEL};
+use windows::Win32::UI::Input::KeyboardAndMouse::{INPUT, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_HWHEEL, MOUSEEVENTF_MOVE, MOUSEEVENTF_VIRTUALDESK, MOUSEEVENTF_WHEEL};
 
 use super::{PressState, mouse_code, stick_raw};
 
@@ -286,6 +286,14 @@ impl VirtualKbm {
         if dx != 0 || dy != 0 {
             self.queued.push(mouse_input(dx, dy, 0, MOUSEEVENTF_MOVE));
         }
+    }
+
+    /// Queues putting the pointer at `(x, y)`, shares (0..1) of the whole desktop, for the next
+    /// `flush`.
+    pub fn mouse_to(&mut self, x: f32, y: f32) {
+        // Absolute moves run from 0 to 65535 across the virtual desktop, every monitor together.
+        let raw = |v: f32| (v.clamp(0.0, 1.0) * 65535.0).round() as i32;
+        self.queued.push(mouse_input(raw(x), raw(y), 0, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK));
     }
 
     /// Takes hi-res units (120 per notch), which is what Windows counts in too. Queued, for the

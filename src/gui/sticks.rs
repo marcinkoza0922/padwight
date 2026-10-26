@@ -1,5 +1,5 @@
 //! Sticks on the Sticks & triggers tab: each stick's mode (gamepad, mouse, scroll, button ring,
-//! flick stick) and its settings.
+//! flick stick, mouse region) and its settings.
 //!
 //! Each stick sits in a box of its own (see `device_box`), in the same order whatever its mode:
 //! the mode and its output options on the header line, then the settings, an "Advanced" fold
@@ -8,7 +8,8 @@
 use iced::widget::{Column, column, row};
 
 use super::*;
-use crate::config::{DeadzoneShape, FlickVertical};
+use super::mouse_region::{region_figure, region_rows};
+use crate::config::{DeadzoneShape, FlickVertical, MouseRegion};
 
 mod mouse;
 use mouse::{mouse_advanced, mouse_rows};
@@ -25,6 +26,7 @@ pub(super) fn stick_summary(cfg: &StickConfig) -> String {
         StickAction::Scroll { speed, .. } => format!("scroll, {speed:.0} notches/s"),
         StickAction::Ring { sectors, .. } => format!("button ring, {sectors} sectors"),
         StickAction::Flick { full_turn_px, .. } => format!("flick stick, {full_turn_px:.0} px/turn"),
+        StickAction::Region { region } => format!("mouse region, {} {:.0}% × {:.0}%", region.shape.to_string().to_lowercase(), region.width * 100.0, region.height * 100.0),
     };
     format!("{mode}{}", zones_note(cfg.zones.len()))
 }
@@ -37,6 +39,7 @@ pub(super) enum StickKind {
     Scroll,
     Ring,
     Flick,
+    Region,
 }
 
 impl fmt::Display for StickKind {
@@ -48,6 +51,7 @@ impl fmt::Display for StickKind {
             StickKind::Scroll => "Scroll wheel",
             StickKind::Ring => "Button ring",
             StickKind::Flick => "Flick stick",
+            StickKind::Region => "Mouse region",
         })
     }
 }
@@ -77,6 +81,7 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
         }
         StickAction::Ring { .. } => rows = ring_settings(rows, cfg, with),
         StickAction::Flick { .. } => rows = flick_rows(rows, cfg, with),
+        StickAction::Region { region } => rows = region_rows(rows, *region, move |region| with(StickAction::Region { region })),
         StickAction::Gamepad { .. } | StickAction::Disabled => {}
     }
     // A mouse stick's curve is part of its response, with the preset.
@@ -160,8 +165,9 @@ fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message
         StickAction::Scroll { .. } => StickKind::Scroll,
         StickAction::Ring { .. } => StickKind::Ring,
         StickAction::Flick { .. } => StickKind::Flick,
+        StickAction::Region { .. } => StickKind::Region,
     };
-    let kinds = [StickKind::Disabled, StickKind::Gamepad, StickKind::Mouse, StickKind::Scroll, StickKind::Ring, StickKind::Flick];
+    let kinds = [StickKind::Disabled, StickKind::Gamepad, StickKind::Mouse, StickKind::Scroll, StickKind::Ring, StickKind::Flick, StickKind::Region];
     let pick = move |k| {
         with(match k {
             StickKind::Disabled => StickAction::Disabled,
@@ -170,6 +176,7 @@ fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message
             StickKind::Scroll => StickAction::Scroll { speed: 15.0, invert_y: false },
             StickKind::Ring => StickAction::ring(8),
             StickKind::Flick => StickAction::flick(),
+            StickKind::Region => StickAction::Region { region: MouseRegion::default() },
         })
     };
     let invert = |on: bool, set: Box<dyn Fn(bool) -> Message + 'a>| checkbox(on).label("Invert Y").on_toggle(set).into();
@@ -196,13 +203,17 @@ fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message
 }
 
 /// The stick's pictures in a panel of their own, centered in one row that wraps when the window
-/// is narrow: the ring, the deadzone, and a mouse stick's speed.
+/// is narrow: the ring, the deadzone, a mouse stick's speed, and a mouse region on the desktop.
 fn visualizers<'a>(cfg: &StickConfig, live: Option<(f32, f32)>, probe: f32) -> Option<Element<'a, Message>> {
     let mut pics = Vec::new();
     match cfg.action {
         StickAction::Disabled => return None,
         StickAction::Ring { sectors, start_angle, inner_radius, .. } => pics.push(super::ring_preview::view(sectors, start_angle, inner_radius, live)),
         _ => {}
+    }
+    if let StickAction::Region { region } = cfg.action {
+        let pointer = live.map(|pos| crate::engine::stick::region::stick_point(&region, crate::engine::apply_deadzone(pos.0, pos.1, cfg.dead())));
+        pics.push(region_figure(&region, pointer));
     }
     pics.extend(deadzone_graph::figures(cfg.dead(), live));
     if let StickAction::Mouse { speed, response, .. } = cfg.action {

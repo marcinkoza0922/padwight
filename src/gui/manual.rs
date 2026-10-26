@@ -21,6 +21,7 @@ const CHAPTERS: &[(&str, &str)] = &[
     ("modes.md", include_str!("../../docs/manual/modes.md")),
     ("layers.md", include_str!("../../docs/manual/layers.md")),
     ("macros.md", include_str!("../../docs/manual/macros.md")),
+    ("cycles.md", include_str!("../../docs/manual/cycles.md")),
     ("menus.md", include_str!("../../docs/manual/menus.md")),
     ("overlays.md", include_str!("../../docs/manual/overlays.md")),
     ("guide-button.md", include_str!("../../docs/manual/guide-button.md")),
@@ -34,6 +35,7 @@ const CHAPTERS: &[(&str, &str)] = &[
     ("tutorial-modes.md", include_str!("../../docs/manual/tutorial-modes.md")),
     ("tutorial-layers.md", include_str!("../../docs/manual/tutorial-layers.md")),
     ("tutorial-macros.md", include_str!("../../docs/manual/tutorial-macros.md")),
+    ("tutorial-cycles.md", include_str!("../../docs/manual/tutorial-cycles.md")),
     ("tutorial-menus.md", include_str!("../../docs/manual/tutorial-menus.md")),
     ("tutorial-overlays.md", include_str!("../../docs/manual/tutorial-overlays.md")),
     ("tutorial-guide.md", include_str!("../../docs/manual/tutorial-guide.md")),
@@ -275,8 +277,8 @@ mod tests {
     fn tutorial_links_from_panels_resolve() {
         for file in [
             "tutorial-first-setup.md", "tutorial-buttons.md", "tutorial-sticks.md", "tutorial-gyro.md", "tutorial-touchpad.md",
-            "tutorial-modes.md", "tutorial-layers.md", "tutorial-macros.md", "tutorial-menus.md", "tutorial-overlays.md",
-            "tutorial-guide.md", "tutorial-sharing.md",
+            "tutorial-modes.md", "tutorial-layers.md", "tutorial-macros.md", "tutorial-cycles.md", "tutorial-menus.md",
+            "tutorial-overlays.md", "tutorial-guide.md", "tutorial-sharing.md",
         ] {
             assert!(chapter_of(file).is_some(), "no chapter {file}");
         }

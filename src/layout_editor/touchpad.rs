@@ -2,7 +2,7 @@
 //! pad), each kind's settings, and what clicking it does.
 
 use crate::config::{
-    ButtonAction, Config, CurvePreset, DEFAULT_SWIPE_DISTANCE, DEFAULT_TOUCHPAD_SPEED, SpeedCurve, Stick, SwipeDirection, TOUCHPAD_CURVE_SCALE, TouchChoose, TouchRegion,
+    ButtonAction, Config, CurvePreset, DEFAULT_SWIPE_DISTANCE, DEFAULT_TOUCHPAD_SPEED, MouseRegion, SpeedCurve, Stick, SwipeDirection, TOUCHPAD_CURVE_SCALE, TouchChoose, TouchRegion,
     TouchSide, TouchSlot, TouchpadConfig, TouchpadMotion,
 };
 
@@ -20,11 +20,12 @@ enum Kind {
     Off,
     Mouse,
     Joystick,
+    Region,
     Menu,
     Swipe,
 }
 
-const KINDS: [Kind; 5] = [Kind::Off, Kind::Mouse, Kind::Joystick, Kind::Menu, Kind::Swipe];
+const KINDS: [Kind; 6] = [Kind::Off, Kind::Mouse, Kind::Joystick, Kind::Region, Kind::Menu, Kind::Swipe];
 
 impl Kind {
     fn of(motion: &TouchpadMotion) -> Kind {
@@ -32,6 +33,7 @@ impl Kind {
             TouchpadMotion::Off => Kind::Off,
             TouchpadMotion::Mouse { .. } => Kind::Mouse,
             TouchpadMotion::Joystick { .. } => Kind::Joystick,
+            TouchpadMotion::Region { .. } => Kind::Region,
             TouchpadMotion::Menu { .. } => Kind::Menu,
             TouchpadMotion::Swipe { .. } => Kind::Swipe,
         }
@@ -42,6 +44,7 @@ impl Kind {
             Kind::Off => "Off",
             Kind::Mouse => "Mouse pointer",
             Kind::Joystick => "Gamepad stick",
+            Kind::Region => "Mouse region",
             Kind::Menu => "Menu zones",
             Kind::Swipe => "Swipes",
         }
@@ -53,6 +56,7 @@ impl Kind {
             Kind::Off => TouchpadMotion::Off,
             Kind::Mouse => TouchpadMotion::mouse(DEFAULT_TOUCHPAD_SPEED),
             Kind::Joystick => TouchpadMotion::Joystick { stick: Stick::Right, relative: true, radius: 0.2, deadzone: 0.1 },
+            Kind::Region => TouchpadMotion::Region { region: MouseRegion::FULL },
             Kind::Menu => TouchpadMotion::Menu { menu: first_menu.unwrap_or_default(), choose: TouchChoose::Click, overlay: true },
             Kind::Swipe => TouchpadMotion::Swipe {
                 up: ButtonAction::Disabled,
@@ -139,6 +143,12 @@ fn motion_rows(config: &Config, owner: Owner, side: TouchSide, m: &TouchpadMotio
         TouchpadMotion::Off => Vec::new(),
         TouchpadMotion::Mouse { speed, curve, tap, scroll, inertia } => mouse_rows((owner, side), *speed, curve, (*tap, *scroll, *inertia)),
         &TouchpadMotion::Joystick { stick, relative, radius, deadzone } => joystick_rows((owner, side), stick, relative, (radius, deadzone)),
+        TouchpadMotion::Region { region } => super::region::region_rows(*region, move |c, change| {
+            motion(c, owner, side, |m| match m {
+                TouchpadMotion::Region { region } => change(region),
+                _ => false,
+            })
+        }),
         TouchpadMotion::Menu { menu, choose, overlay } => menu_rows(config, (owner, side), menu, *choose, *overlay),
         TouchpadMotion::Swipe { distance, .. } => swipe_rows((owner, side), m, *distance),
     }

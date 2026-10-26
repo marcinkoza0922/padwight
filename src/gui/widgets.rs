@@ -275,6 +275,7 @@ pub(super) fn tutorial_link<'a>(file: &'static str) -> Element<'a, Message> {
 fn item_tutorial(kind: ItemKind) -> &'static str {
     match kind {
         ItemKind::Macro => "tutorial-macros.md",
+        ItemKind::Cycle => "tutorial-cycles.md",
         ItemKind::Menu => "tutorial-menus.md",
         ItemKind::Info | ItemKind::Log => "tutorial-overlays.md",
         ItemKind::Layer => "tutorial-layers.md",

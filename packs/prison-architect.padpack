@@ -7,7 +7,7 @@ id = "5e9a2b17-0c84-4d3f-b6e1-2a7f8c4d9e05"
 name = "Prison Architect"
 version = "1.0"
 author = "Padwight"
-description = "Prison Architect on an Xbox-style pad. The left stick pans the prison and the right stick moves the pointer; RT and A click and drag, LT right-clicks to cancel. X rotates, Y pauses, hold RB with the D-pad for the speed, and the D-pad zooms. Overlays in grey concrete with jumpsuit orange."
+description = "Prison Architect on an Xbox-style pad. The left stick pans the prison and the right stick moves the pointer; RT and A click and drag, LT right-clicks to cancel. X rotates, Y pauses, RB steps through the speeds (hold it with the D-pad for one), and the D-pad zooms. Overlays in grey concrete with jumpsuit orange."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -48,10 +48,13 @@ South = {mouse = "Left"}
 East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_R"]}
 North = {keys = ["KEY_SPACE"]}
-RightBumper = {open_menu = "Speed"}
+RightBumper = {cycle = {name = "Game speed"}}
 Start = {keys = ["KEY_ESC"]}
 DpadUp = {wheel = "Up"}
 DpadDown = {wheel = "Down"}
+
+[profiles.gestures.RightBumper.long_press]
+open_menu = "Speed"
 
 [profiles.left_stick]
 deadzone = 0.15
@@ -126,7 +129,7 @@ noise_threshold = 1.0
 
 [profiles.guide]
 notes = '''The right stick {rs} moves the pointer and the left stick {ls} pans the prison. {rt} or {south} clicks; hold it and drag to lay out walls, rooms and zones. {lt} right-clicks to cancel what's in hand.
-{west} rotates the object you're placing. {north} pauses. Hold {rb} and press the {dpad} for the speed: left normal, up fast, right fastest, down pause. {up} and {down} zoom.
+{west} rotates the object you're placing. {north} pauses. Tap {rb} for the next speed: fast, fastest, then normal again. Press {rb} with the {dpad} for one speed (left normal, up fast, right fastest, down pause); hold {rb} to see them. {up} and {down} zoom.
 {east} and {start} close windows and open the menu. Every other tool (foundations, rooms, deployment, staff, reports, intelligence) is on the toolbar: point at it.
 Panning, zoom and R to rotate are the game's defaults; pause on Space and the speeds on 1 to 3 are a guess, not read from an install. The game can't rebind them, so if they don't answer, use the clock's buttons. The console editions had their own interface, which this doesn't copy. Naming a prison or a prisoner: {guide} + {west} opens the on-screen keyboard.'''
 
@@ -139,7 +142,8 @@ Panning, zoom and R to rotate are the game's defaults; pause on Space and the sp
 "button:East" = {text = "Close"}
 "button:West" = {text = "{icon:rotate} Rotate"}
 "button:North" = {text = "{icon:pause} Pause"}
-"button:RightBumper" = {text = "Hold + {dpad}: speed"}
+"button:RightBumper" = {text = "{icon:speed2} Next speed"}
+"gesture:button:RightBumper:long_press" = {text = "Hold: speed menu"}
 "button:Start" = {text = "Menu"}
 
 [[profiles.guide.merged]]
@@ -163,10 +167,13 @@ South = {mouse = "Left"}
 East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_R"]}
 North = {keys = ["KEY_SPACE"]}
-RightBumper = {open_menu = "Speed"}
+RightBumper = {cycle = {name = "Game speed"}}
 Start = {keys = ["KEY_ESC"]}
 DpadUp = {wheel = "Up"}
 DpadDown = {wheel = "Down"}
+
+[profiles.gestures.RightBumper.long_press]
+open_menu = "Speed"
 
 [profiles.left_stick]
 deadzone = 0.15
@@ -244,7 +251,7 @@ sensitivity = 20.0
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
 The right stick {rs} moves the pointer and the left stick {ls} pans the prison. {rt} or {south} clicks; hold it and drag to lay out walls, rooms and zones. {lt} right-clicks to cancel what's in hand.
-{west} rotates the object you're placing. {north} pauses. Hold {rb} and press the {dpad} for the speed: left normal, up fast, right fastest, down pause. {up} and {down} zoom.
+{west} rotates the object you're placing. {north} pauses. Tap {rb} for the next speed: fast, fastest, then normal again. Press {rb} with the {dpad} for one speed (left normal, up fast, right fastest, down pause); hold {rb} to see them. {up} and {down} zoom.
 {east} and {start} close windows and open the menu. Every other tool (foundations, rooms, deployment, staff, reports, intelligence) is on the toolbar: point at it.
 Panning, zoom and R to rotate are the game's defaults; pause on Space and the speeds on 1 to 3 are a guess, not read from an install. The game can't rebind them, so if they don't answer, use the clock's buttons. The console editions had their own interface, which this doesn't copy. Naming a prison or a prisoner: {guide} + {west} opens the on-screen keyboard.'''
 
@@ -257,12 +264,21 @@ Panning, zoom and R to rotate are the game's defaults; pause on Space and the sp
 "button:East" = {text = "Close"}
 "button:West" = {text = "{icon:rotate} Rotate"}
 "button:North" = {text = "{icon:pause} Pause"}
-"button:RightBumper" = {text = "Hold + {dpad}: speed"}
+"button:RightBumper" = {text = "{icon:speed2} Next speed"}
+"gesture:button:RightBumper:long_press" = {text = "Hold: speed menu"}
 "button:Start" = {text = "Menu"}
 
 [[profiles.guide.merged]]
 inputs = ["button:DpadUp", "button:DpadDown"]
 text = "Zoom in / out"
+
+[[cycles]]
+name = "Game speed"
+steps = [
+    {keys = ["KEY_2"]},
+    {keys = ["KEY_3"]},
+    {keys = ["KEY_1"]},
+]
 
 [[menus]]
 name = "Speed"

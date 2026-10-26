@@ -1,4 +1,4 @@
-//! "Go to" buttons: from an action that names a macro, menu, overlay, layer or mode to that item's
+//! "Go to" buttons: from an action that names a macro, cycle, menu, overlay, layer or mode to that item's
 //! card on its own tab.
 
 use super::*;
@@ -10,6 +10,7 @@ impl App {
         let game = self.game();
         let (tab, index) = match kind {
             ItemKind::Macro => (GameTab::Macros, game.macros.iter().position(|m| m.name == name)),
+            ItemKind::Cycle => (GameTab::Cycles, game.cycles.iter().position(|c| c.name == name)),
             ItemKind::Menu => (GameTab::Menus, game.menus.iter().position(|m| m.name == name)),
             ItemKind::Info => (GameTab::Info, game.info.iter().position(|o| o.name == name)),
             ItemKind::Log => (GameTab::Logs, game.logs.iter().position(|o| o.name == name)),
@@ -22,6 +23,9 @@ impl App {
         match kind {
             ItemKind::Macro => {
                 self.open_macros.insert(i);
+            }
+            ItemKind::Cycle => {
+                self.open_cycles.insert(i);
             }
             ItemKind::Menu => {
                 self.open_menus.insert(i);

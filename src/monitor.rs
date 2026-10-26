@@ -235,6 +235,8 @@ impl OutputView {
                 self.tick_motion.0 += dx;
                 self.tick_motion.1 += dy;
             }
+            // A placed pointer has no speed to show.
+            OutEvent::MouseTo(..) => {}
             OutEvent::Wheel { vertical, horizontal } => {
                 self.tick_scroll.0 += horizontal;
                 self.tick_scroll.1 += vertical;

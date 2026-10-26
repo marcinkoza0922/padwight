@@ -34,6 +34,8 @@ fn a_config_is_saved_as_folders_and_loads_back_unchanged() {
     let mut config = Config::default();
     config.games.push(Game::new("Doom", vec![Profile::passthrough("Gamepad"), Profile::desktop("Desktop")]));
     config.games.push(Game::new("Hades", vec![Profile::passthrough("Gamepad")]));
+    let speed = crate::config::Cycle { name: "Game speed".into(), steps: vec![crate::config::ButtonAction::Keys(vec!["KEY_2".into()])] };
+    config.games[0].cycles.push(speed);
     config.save_to(&path).unwrap();
 
     // App settings stay in one file, with no setups in it.
@@ -45,6 +47,7 @@ fn a_config_is_saved_as_folders_and_loads_back_unchanged() {
     assert!(dir.join("setups/001-Doom/setup.toml").is_file());
     assert!(dir.join("setups/001-Doom/profiles/002-Desktop.toml").is_file());
     assert!(dir.join("setups/002-Hades/profiles/001-Gamepad.toml").is_file());
+    assert!(dir.join("setups/001-Doom/cycles/001-Game speed.toml").is_file());
 
     let loaded = Config::load_from(&path).unwrap();
     assert_eq!(loaded, config);

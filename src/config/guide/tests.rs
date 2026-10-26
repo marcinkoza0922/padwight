@@ -265,3 +265,19 @@ fn split_gives_the_inputs_back_their_own_rows() {
     p.guide.split(0);
     assert!(editable_rows(&p).iter().any(|r| r.key == input_key(btn(Button::DpadLeft))));
 }
+
+#[test]
+fn a_toggle_held_by_on_press_and_on_release_reads_as_the_inputs_own_row() {
+    let mut p = profile();
+    let click = ButtonAction::Keys(vec!["KEY_Z".into()]);
+    p.set_button(Button::North, ButtonAction::Disabled);
+    p.gestures.insert(Button::North, Gestures { on_press: Some(click.clone()), on_release: Some(click), ..Default::default() });
+    p.gestures.insert(Button::West, Gestures { on_release: Some(ButtonAction::Keys(vec!["KEY_G".into()])), ..Default::default() });
+    let rows = mapping_rows(&p);
+    let north: Vec<_> = rows.iter().filter(|r| r.inputs == [btn(Button::North)]).collect();
+    assert_eq!(north.len(), 1, "no rows of their own");
+    assert_eq!((north[0].text.as_str(), north[0].shape), ("{keyboard:z}", RowShape::Input));
+    let west = rows.iter().find(|r| r.inputs == [btn(Button::West)] && r.shape == RowShape::Gesture(GestureKind::OnRelease)).unwrap();
+    assert_eq!(west.text, "{keyboard:g}");
+    assert_eq!(RowShape::Gesture(GestureKind::OnRelease).join(&["A".into()]), "{gesture:release} A");
+}

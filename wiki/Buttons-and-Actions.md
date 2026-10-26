@@ -36,11 +36,15 @@ Each button can have gestures:
 
 - **double tap**,
 - **triple tap**,
-- **long press**.
+- **long press**,
+- **on press**, tapped once as the button goes down,
+- **on release**, tapped once as it's let go.
 
 The final tap of a sequence fires on press and holds, so "double-tap and hold" works.
 
 A quick tap on a button with gestures fires once the gesture is decided. If you hold the button past the tap window, its own action presses right away and is held until release. A long press set on the button replaces that behaviour.
+
+On press and on release don't wait: they fire beside the button's own action, with no delay. A trigger acting as a button has them too. Set both to the same key to turn a game's toggle into a hold, such as a toggled aim down sights on the left trigger, and give the trigger's own action a layer with a finer aim.
 
 ## Zones
 

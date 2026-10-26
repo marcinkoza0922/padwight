@@ -106,7 +106,11 @@ accel = 0.2
 
 [profiles.left_trigger.action.button]
 threshold = 0.4
-action = { mouse = "Right" }
+action = { layer = "Zoom" }
+
+[profiles.left_trigger.gestures]
+on_press = { mouse = "Right" }
+on_release = { mouse = "Right" }
 
 [profiles.right_trigger.action.button]
 threshold = 0.3
@@ -115,7 +119,7 @@ action = { mouse = "Left" }
 [profiles.guide]
 notes = '''{start} (Escape) opens the game's menu and backs out of it.
 {south} uses: doors, ladders, mounted guns, and getting into and out of vehicles, which drive with the left stick and steer and aim with the right. Hold {south} to sprint. {east} jumps, {west} reloads and a long press of {west} changes the fire mode. {north} throws a grenade, and a long press of {north} picks the next grenade type.
-{lt} zooms in with a scope or the iron sights and out again; on a scoped rifle {up} and {down} change the zoom. Otherwise {up} and {down} step through your weapons, and {left} and {right} lean.
+Hold {lt} to zoom in with a scope or the iron sights, and let go to zoom out. The game's zoom is a toggle, so {lt} clicks it on the pull and again on letting go; if the game ever drops the zoom itself and they get out of step, tap {lt} once. The right stick turns more finely while it's held. On a scoped rifle {up} and {down} change the zoom. Otherwise {up} and {down} step through your weapons, and {left} and {right} lean.
 {l3} crouches and a long press of {l3} goes prone; press it again to stand. {r3} raises the binoculars, which also tag enemies, and {rb} switches the flashlight. Hold {lb} for the weapon ring, aiming with the right stick {rs}.
 {select} (Tab) shows the objectives, or the scores in multiplayer. Multiplayer chat needs typing: open the on-screen keyboard with {guide} + {west}.
 The game saves at checkpoints only. To get quick save (F5) and quick load (F9), which a double tap and a long press of {start} press, add a playercfg.lua to the game folder holding the two lines PCGamingWiki gives: Input:BindCommandToKey("\\save_game","F5",1); and the same with \\load_game and F9.
@@ -243,7 +247,11 @@ accel = 0.2
 
 [profiles.left_trigger.action.button]
 threshold = 0.4
-action = { mouse = "Right" }
+action = { layer = "Zoom" }
+
+[profiles.left_trigger.gestures]
+on_press = { mouse = "Right" }
+on_release = { mouse = "Right" }
 
 [profiles.right_trigger.action.button]
 threshold = 0.3
@@ -263,7 +271,7 @@ sensitivity = 1.0
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Press {lb} and {rb} together to switch the gyro off or on, and hold {r3} to recenter it.
 {start} (Escape) opens the game's menu and backs out of it.
 {south} uses: doors, ladders, mounted guns, and getting into and out of vehicles, which drive with the left stick and steer and aim with the right. Hold {south} to sprint. {east} jumps, {west} reloads and a long press of {west} changes the fire mode. {north} throws a grenade, and a long press of {north} picks the next grenade type.
-{lt} zooms in with a scope or the iron sights and out again; on a scoped rifle {up} and {down} change the zoom. Otherwise {up} and {down} step through your weapons, and {left} and {right} lean.
+Hold {lt} to zoom in with a scope or the iron sights, and let go to zoom out. The game's zoom is a toggle, so {lt} clicks it on the pull and again on letting go; if the game ever drops the zoom itself and they get out of step, tap {lt} once. The right stick turns more finely while it's held. On a scoped rifle {up} and {down} change the zoom. Otherwise {up} and {down} step through your weapons, and {left} and {right} lean.
 {l3} crouches and a long press of {l3} goes prone; press it again to stand. {r3} raises the binoculars, which also tag enemies, and {rb} switches the flashlight. Hold {lb} for the weapon ring, aiming with the right stick {rs}.
 {select} (Tab) shows the objectives, or the scores in multiplayer. Multiplayer chat needs typing: open the on-screen keyboard with {guide} + {west}.
 The game saves at checkpoints only. To get quick save (F5) and quick load (F9), which a double tap and a long press of {start} press, add a playercfg.lua to the game folder holding the two lines PCGamingWiki gives: Input:BindCommandToKey("\\save_game","F5",1); and the same with \\load_game and F9.
@@ -398,7 +406,11 @@ vertical_speed = 1200.0
 
 [profiles.left_trigger.action.button]
 threshold = 0.4
-action = { mouse = "Right" }
+action = "disabled"
+
+[profiles.left_trigger.gestures]
+on_press = { mouse = "Right" }
+on_release = { mouse = "Right" }
 
 [profiles.right_trigger.action.button]
 threshold = 0.3
@@ -419,7 +431,7 @@ notes = '''Hold {select} and {start} together to pause the gyro while you reposi
 Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
 {start} (Escape) opens the game's menu and backs out of it.
 {south} uses: doors, ladders, mounted guns, and getting into and out of vehicles, which drive with the left stick and steer and aim with the right. Hold {south} to sprint. {east} jumps, {west} reloads and a long press of {west} changes the fire mode. {north} throws a grenade, and a long press of {north} picks the next grenade type.
-{lt} zooms in with a scope or the iron sights and out again; on a scoped rifle {up} and {down} change the zoom. Otherwise {up} and {down} step through your weapons, and {left} and {right} lean.
+Hold {lt} to zoom in with a scope or the iron sights, and let go to zoom out. The game's zoom is a toggle, so {lt} clicks it on the pull and again on letting go; if the game ever drops the zoom itself and they get out of step, tap {lt} once. On a scoped rifle {up} and {down} change the zoom. Otherwise {up} and {down} step through your weapons, and {left} and {right} lean.
 {l3} crouches and a long press of {l3} goes prone; press it again to stand. {r3} raises the binoculars, which also tag enemies, and {rb} switches the flashlight. Hold {lb} for the weapon ring, aiming with the right stick {rs}.
 {select} (Tab) shows the objectives, or the scores in multiplayer. Multiplayer chat needs typing: open the on-screen keyboard with {guide} + {west}.
 The game saves at checkpoints only. To get quick save (F5) and quick load (F9), which a double tap and a long press of {start} press, add a playercfg.lua to the game folder holding the two lines PCGamingWiki gives: Input:BindCommandToKey("\\save_game","F5",1); and the same with \\load_game and F9.
@@ -455,6 +467,19 @@ text = "Lean"
 [[profiles.guide.merged]]
 inputs = ["button:DpadUp", "button:DpadDown"]
 text = "Previous / next weapon · zoom"
+
+[[layers]]
+name = "Zoom"
+indicator = "off"
+
+[layers.right_stick]
+deadzone = 0.08
+curve = 2.8
+key_threshold = 0.5
+
+[layers.right_stick.action.mouse]
+speed = 1150.0
+accel = 0.0
 
 [[menus]]
 name = "Weapons"

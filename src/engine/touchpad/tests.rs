@@ -177,6 +177,17 @@ fn an_absolute_joystick_centers_on_the_middle_and_ignores_its_deadzone() {
     assert!(out.contains(&OutEvent::PadAxis(Axis::RightY, -1.0)), "{out:?}");
 }
 
+#[test]
+fn a_mouse_region_puts_the_pointer_under_the_finger_on_its_half() {
+    let region = TouchpadMotion::Region { region: crate::config::MouseRegion::FULL };
+    let p = profile(TouchpadConfig { right: Some(TouchRegion { motion: region, click: ButtonAction::Disabled }), ..pad(TouchpadMotion::Off) });
+    let mut f = Finger::on(&p);
+    assert!(f.touch(0, 0.2, 0.5).iter().all(|ev| !matches!(ev, OutEvent::MouseTo(..))), "the left half is off");
+    assert_eq!(f.touch(1, 0.75, 0.25), [OutEvent::MouseTo(0.5, 0.25)]);
+    assert_eq!(f.touch(1, 1.0, 1.0), [OutEvent::MouseTo(1.0, 1.0)]);
+    assert!(f.lift(1).is_empty(), "lifting leaves the pointer where it is");
+}
+
 fn grid_menu() -> Menu {
     let items = ["A", "B", "C", "D"].map(|k| MenuItem::new(k, key(&format!("KEY_{k}")))).to_vec();
     Menu { name: "Grid".into(), kind: MenuKind::Grid { columns: 2 }, items, cancel: None, no_cancel: false, keep_open: false, start: 0, style: OverlayStyle::default() }

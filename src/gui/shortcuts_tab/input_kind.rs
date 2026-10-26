@@ -23,6 +23,8 @@ impl InputKind {
                 Some(GestureKind::DoubleTap) => InputKind::DoubleTap,
                 Some(GestureKind::TripleTap) => InputKind::TripleTap,
                 Some(GestureKind::LongPress) => InputKind::LongPress,
+                // Not offered for shortcuts: they act on the press like a plain button.
+                Some(GestureKind::OnPress | GestureKind::OnRelease) => InputKind::Button,
                 None if i.is_combo() => InputKind::Combo,
                 None => InputKind::Button,
             },

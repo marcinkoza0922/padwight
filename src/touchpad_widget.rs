@@ -10,7 +10,7 @@ use iced::{
 };
 
 use crate::{
-    config::{Menu, TouchSide, TouchpadConfig, TouchpadMotion},
+    config::{Menu, RegionShape, TouchSide, TouchpadConfig, TouchpadMotion},
     menu::{ItemShape, TOUCH_CENTER_RADIUS, item_at, item_shapes},
 };
 
@@ -158,6 +158,7 @@ impl PadPicture<'_> {
                 let _ = write!(s, r#"<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{EDGE}" stroke-width="2"{dash}/>"#);
                 let _ = write!(s, r#"<path d="M {} {cy} H {} M {cx} {} V {}" stroke="{EDGE}"/>"#, cx - 8.0, cx + 8.0, cy - 8.0, cy + 8.0);
             }
+            TouchpadMotion::Region { region } => draw_region(s, area, region.shape),
             TouchpadMotion::Swipe { .. } => {
                 // An arrowhead at each edge, pointing out.
                 let (cx, cy) = area.polar(0.0, 0.0);
@@ -221,6 +222,7 @@ impl PadPicture<'_> {
                         TouchpadMotion::Joystick { stick, relative, .. } => {
                             format!("{stick}{}", if *relative { "\ncenters where you touch" } else { "" })
                         }
+                        TouchpadMotion::Region { .. } => "Mouse region".to_string(),
                         TouchpadMotion::Menu { .. } | TouchpadMotion::Swipe { .. } => String::new(),
                     };
                     let side = if self.areas().len() > 1 { if area.side == TouchSide::Left { "Left half: " } else { "Right half: " } } else { "" };
@@ -241,6 +243,21 @@ pub fn touchpad_picture<'a, M: 'a>(picture: &PadPicture<'_>) -> Element<'a, M> {
     stack(layers).width(w).height(h).into()
 }
 
+/// A mouse region side: an ellipse filling it for a circle, or a bracket in each corner for a
+/// rectangle, whose corners are the side's.
+fn draw_region(s: &mut String, area: &Area<'_>, shape: RegionShape) {
+    if shape == RegionShape::Circle {
+        let ((x0, y0), (x1, y1)) = (area.at((0.08, 0.12)), area.at((0.92, 0.88)));
+        let _ = write!(s, r#"<ellipse cx="{}" cy="{}" rx="{}" ry="{}" fill="none" stroke="{EDGE}" stroke-width="2"/>"#, (x0 + x1) / 2.0, (y0 + y1) / 2.0, (x1 - x0) / 2.0, (y1 - y0) / 2.0);
+        return;
+    }
+    for (u, v) in [(0.0_f32, 0.0_f32), (1.0, 0.0), (0.0, 1.0), (1.0, 1.0)] {
+        let (x, y) = area.at((0.08 + u * 0.84, 0.12 + v * 0.76));
+        let (dx, dy) = (if u == 0.0 { 12.0 } else { -12.0 }, if v == 0.0 { 12.0 } else { -12.0 });
+        let _ = write!(s, r#"<path d="M {x} {} V {y} H {}" fill="none" stroke="{EDGE}" stroke-width="2"/>"#, y + dy, x + dx);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -257,6 +274,7 @@ mod tests {
             TouchpadMotion::Off,
             TouchpadMotion::mouse(1000.0),
             TouchpadMotion::Joystick { stick: Stick::Left, relative: true, radius: 0.2, deadzone: 0.1 },
+            TouchpadMotion::Region { region: crate::config::MouseRegion::FULL },
             TouchpadMotion::Menu { menu: "Ring".into(), choose: TouchChoose::Click, overlay: true },
             TouchpadMotion::Menu { menu: "Missing".into(), choose: TouchChoose::Click, overlay: true },
             TouchpadMotion::Swipe { up: ButtonAction::Keys(vec!["KEY_W".into()]), down: ButtonAction::Disabled, left: ButtonAction::Disabled, right: ButtonAction::Disabled, distance: 0.2 },

@@ -19,7 +19,7 @@ use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use anyhow::{Context, Result};
 use serde::{Serialize, de::DeserializeOwned};
 
-use super::{Config, Game, InfoOverlay, ItemKind, Layer, LogOverlay, Macro, Menu, Profile, free_name};
+use super::{Config, Cycle, Game, InfoOverlay, ItemKind, Layer, LogOverlay, Macro, Menu, Profile, free_name};
 
 mod unreadable;
 pub use unreadable::Unreadable;
@@ -34,7 +34,7 @@ const SHARED: &str = "shared";
 /// The keys of `config.toml` that live in the folders instead.
 const APP_KEYS: [&str; 3] = ["general", "setups", "unreadable"];
 /// The keys of a setup that live in its subfolders instead.
-const SETUP_KEYS: [&str; 7] = ["profiles", "macros", "menus", "info_overlays", "log_overlays", "layers", "modes"];
+const SETUP_KEYS: [&str; 8] = ["profiles", "macros", "cycles", "menus", "info_overlays", "log_overlays", "layers", "modes"];
 
 /// An item that is saved as a file named after it.
 trait Named {
@@ -51,7 +51,7 @@ macro_rules! named {
     };
 }
 
-named!(Profile, Layer, Macro, Menu, InfoOverlay, LogOverlay);
+named!(Profile, Layer, Macro, Cycle, Menu, InfoOverlay, LogOverlay);
 
 /// The folder that holds `config.toml`, and with it the setups.
 pub fn root_of(path: &Path) -> &Path {
@@ -136,7 +136,7 @@ fn copy_item(to: &mut Game, from: &Game, kind: ItemKind, name: &str, new: &str) 
         ItemKind::Menu => to.menus.extend(from.menus.iter().find(|m| m.name == name).map(|m| Menu { name: new.into(), ..m.clone() })),
         ItemKind::Info => to.info.extend(from.info.iter().find(|o| o.name == name).map(|o| InfoOverlay { name: new.into(), ..o.clone() })),
         ItemKind::Log => to.logs.extend(from.logs.iter().find(|o| o.name == name).map(|o| LogOverlay { name: new.into(), ..o.clone() })),
-        ItemKind::Layer | ItemKind::Mode => {}
+        ItemKind::Cycle | ItemKind::Layer | ItemKind::Mode => {}
     }
 }
 
@@ -225,6 +225,7 @@ fn write_setup(dir: &Path, game: &Game) -> Result<()> {
     write_items(&dir.join("layers"), &game.layers)?;
     write_items(&dir.join("modes"), &game.modes)?;
     write_items(&dir.join("macros"), &game.macros)?;
+    write_items(&dir.join("cycles"), &game.cycles)?;
     write_items(&dir.join("menus"), &game.menus)?;
     write_items(&dir.join("info"), &game.info)?;
     write_items(&dir.join("logs"), &game.logs)?;
@@ -257,6 +258,7 @@ impl Reading<'_> {
         game.layers = self.items(&dir.join("layers"))?;
         game.modes = self.items(&dir.join("modes"))?;
         game.macros = self.items(&dir.join("macros"))?;
+        game.cycles = self.items(&dir.join("cycles"))?;
         game.menus = self.items(&dir.join("menus"))?;
         game.info = self.items(&dir.join("info"))?;
         game.logs = self.items(&dir.join("logs"))?;

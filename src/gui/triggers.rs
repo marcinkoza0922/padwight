@@ -3,6 +3,8 @@
 
 use iced::widget::{column, row};
 
+use crate::config::{Gestures, TriggerConfig};
+
 use super::*;
 
 /// A trigger's action in a few words.
@@ -12,7 +14,11 @@ pub(super) fn trigger_summary(cfg: &crate::config::TriggerConfig) -> String {
         TriggerAction::Gamepad(t) => format!("pad {t}"),
         TriggerAction::Button { action, .. } => summarize(action),
     };
-    format!("{action}{}", zones_note(cfg.zones.len()))
+    let edges: String = match &cfg.action {
+        TriggerAction::Button { .. } => GestureKind::EDGES.into_iter().filter(|k| cfg.gestures.get(*k).is_some()).map(|k| format!(" + {}", k.to_string().to_lowercase())).collect(),
+        _ => String::new(),
+    };
+    format!("{action}{edges}{}", zones_note(cfg.zones.len()))
 }
 
 /// " + 2 zones", or nothing.
@@ -22,6 +28,36 @@ pub(super) fn zones_note(n: usize) -> String {
         1 => " + 1 zone".into(),
         n => format!(" + {n} zones"),
     }
+}
+
+/// A button-acting trigger's On press and On release, each with a ✕, then the buttons that add
+/// the ones not set, like a button's gestures.
+fn edge_rows<'a>(t: Trigger, gestures: &'a Gestures, default_button: Button, names: &Names) -> Vec<Element<'a, Message>> {
+    let mut rows = Vec::new();
+    for kind in GestureKind::EDGES {
+        let Some(action) = gestures.get(kind) else { continue };
+        let target = Target::TriggerGesture(t, kind);
+        rows.push(labeled(
+            format!("    {kind}"),
+            fill_x(
+                row![
+                    action_editor(action, default_button, &ACTION_KINDS, set_action(target), KeyField::root(target), names),
+                    button(text("✕").size(13)).style(style::secondary).on_press(Message::RemoveTriggerGesture(t, kind)),
+                ]
+                .spacing(8)
+                .align_y(Alignment::Start),
+            ),
+        ));
+    }
+    let adds: Vec<Element<'a, Message>> = GestureKind::EDGES
+        .into_iter()
+        .filter(|k| gestures.get(*k).is_none())
+        .map(|k| button(text(format!("+ {k}")).size(13)).style(style::secondary).padding([3, 10]).on_press(Message::AddTriggerGesture(t, k)).into())
+        .collect();
+    if !adds.is_empty() {
+        rows.push(labeled("", row(adds).spacing(6).into()));
+    }
+    rows
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -107,13 +143,8 @@ impl fmt::Display for TriggerChoice {
 }
 
 #[expect(clippy::too_many_lines, reason = "predates the size lints")]
-pub(super) fn trigger_editor<'a>(
-    t: Trigger,
-    action: &'a TriggerAction,
-    zones: &'a [Zone],
-    analog: bool,
-    names: &Names,
-) -> Element<'a, Message> {
+pub(super) fn trigger_editor<'a>(t: Trigger, cfg: &'a TriggerConfig, analog: bool, names: &Names) -> Element<'a, Message> {
+    let (action, zones) = (&cfg.action, cfg.zones.as_slice());
     let choice = match action {
         TriggerAction::Disabled => TriggerChoice::Action(ActionKind::Disabled),
         TriggerAction::Gamepad(out) => TriggerChoice::Analog(*out),
@@ -161,6 +192,9 @@ pub(super) fn trigger_editor<'a>(
                     Message::SetTrigger(t, TriggerAction::Button { action: inner.clone(), threshold: v })
                 }),
             ));
+        }
+        for row in edge_rows(t, &cfg.gestures, default_button, names) {
+            rows = rows.push(row);
         }
     } else {
         rows = rows.push(line);

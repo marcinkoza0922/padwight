@@ -284,6 +284,7 @@ pub(super) fn slot_title(config: &Config, slot: Slot) -> String {
         Slot::Gesture(owner, b, kind) => in_owner(config, owner, &format!("{} {}", b.short_name(), gesture_name(kind).to_lowercase())),
         Slot::Combo(owner, i) => in_owner(config, owner, &format!("Combo {}", i + 1)),
         Slot::Trigger(owner, t) => in_owner(config, owner, &format!("{} press", trigger_name(t))),
+        Slot::TriggerGesture(owner, t, kind) => in_owner(config, owner, &format!("{} {}", trigger_name(t), gesture_name(kind).to_lowercase())),
         Slot::Zone(owner, a, i) => in_owner(config, owner, &format!("{} zone {}", analog_name(a), i + 1)),
         Slot::Ring(owner, s, i) => in_owner(config, owner, &format!("{} ring sector {}", stick_name(s), i + 1)),
         Slot::Touch(owner, t) => in_owner(config, owner, &inputs::touch_slot_name(t)),
@@ -297,6 +298,8 @@ pub(super) fn gesture_name(kind: GestureKind) -> &'static str {
         GestureKind::DoubleTap => "Double tap",
         GestureKind::TripleTap => "Triple tap",
         GestureKind::LongPress => "Long press",
+        GestureKind::OnPress => "On press",
+        GestureKind::OnRelease => "On release",
     }
 }
 

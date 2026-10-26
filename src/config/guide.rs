@@ -78,7 +78,7 @@ impl<'de> Deserialize<'de> for GuideInput {
 pub enum RowId {
     /// An input's own row (its action).
     Input(GuideInput),
-    /// A gesture a button has, such as its double tap.
+    /// A gesture an input has, such as a button's double tap.
     Gesture(GuideInput, GestureKind),
     /// A combo, by its buttons in a fixed order.
     Combo(Vec<GuideInput>),
@@ -99,7 +99,7 @@ impl RowId {
     fn from_key(key: &str) -> Option<Self> {
         if let Some(rest) = key.strip_prefix("gesture:") {
             let (input, kind) = rest.rsplit_once(':')?;
-            let kind = [GestureKind::DoubleTap, GestureKind::TripleTap, GestureKind::LongPress].into_iter().find(|k| gesture_name(*k) == kind)?;
+            let kind = GestureKind::ALL.into_iter().find(|k| gesture_name(*k) == kind)?;
             return GuideInput::from_key(input).map(|i| RowId::Gesture(i, kind));
         }
         if let Some(rest) = key.strip_prefix("combo:") {
@@ -115,6 +115,8 @@ fn gesture_name(kind: GestureKind) -> &'static str {
         GestureKind::DoubleTap => "double_tap",
         GestureKind::TripleTap => "triple_tap",
         GestureKind::LongPress => "long_press",
+        GestureKind::OnPress => "on_press",
+        GestureKind::OnRelease => "on_release",
     }
 }
 
@@ -160,7 +162,7 @@ pub enum RowShape {
     Merged,
     /// A combo's buttons pressed together: "A + B".
     Combo,
-    /// A gesture on one button: "A ×2", "A ×3" or "A hold".
+    /// A gesture on one input: "A ×2", "A ×3", "Hold A", "Press A" or "Release A".
     Gesture(GestureKind),
 }
 
@@ -175,8 +177,8 @@ impl RowShape {
     }
 
     /// The glyphs of a row, given each input's glyph (`parts`, in the row's order), joined and
-    /// marked with how a gesture is done (`{gesture:…}`), in words the way games print it: "Hold"
-    /// before the glyphs, a tap count after them.
+    /// marked with how a gesture is done (`{gesture:…}`), in words the way games print it: "Hold",
+    /// "Press" or "Release" before the glyphs, a tap count after them.
     pub fn join(self, parts: &[String]) -> String {
         let glyphs = parts.join(self.separator());
         match self {
@@ -184,6 +186,8 @@ impl RowShape {
             RowShape::Gesture(GestureKind::DoubleTap) => format!("{glyphs} {{gesture:double}}"),
             RowShape::Gesture(GestureKind::TripleTap) => format!("{glyphs} {{gesture:triple}}"),
             RowShape::Gesture(GestureKind::LongPress) => format!("{{gesture:hold}} {glyphs}"),
+            RowShape::Gesture(GestureKind::OnPress) => format!("{{gesture:press}} {glyphs}"),
+            RowShape::Gesture(GestureKind::OnRelease) => format!("{{gesture:release}} {glyphs}"),
         }
     }
 }

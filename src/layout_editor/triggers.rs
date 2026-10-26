@@ -2,14 +2,14 @@
 //! it leaves to the profile.
 
 use crate::{
-    config::{Analog, ButtonAction, Config, Trigger, TriggerAction, Zone},
+    config::{Analog, ButtonAction, Config, GestureKind, Trigger, TriggerAction, Zone},
     menu::Tone,
 };
 
 use super::{
     action::{ActionAt, Slot},
     owner::{self, Owner, Part, set_override, trigger_mut, zones_mut},
-    pages::{Page, trigger_name},
+    pages::{Page, gesture_name, trigger_name},
     rows::{Act, Nav, Number, Row, counted, set},
 };
 
@@ -76,6 +76,11 @@ pub(super) fn trigger_rows(config: &Config, owner: Owner, t: Trigger) -> Vec<Row
         }
         TriggerAction::Button { action, threshold } => {
             rows.push(Row::open(format!("Press: {}", action.summary()), Page::Action(ActionAt::new(Slot::Trigger(owner, t)))).keyword(action.keyword()));
+            for kind in GestureKind::EDGES {
+                let action = cfg.gestures.get(kind);
+                let label = format!("{}: {}", gesture_name(kind), action.map_or("not set".into(), ButtonAction::summary));
+                rows.push(Row::open(label, Page::Action(ActionAt::new(Slot::TriggerGesture(owner, t, kind)))));
+            }
             rows.push(PRESS_AT.row("Press at", *threshold, move |c, v| {
                 trigger_mut(c, owner, t).is_some_and(|cfg| match &mut cfg.action {
                     TriggerAction::Button { threshold, .. } => set(threshold, v),

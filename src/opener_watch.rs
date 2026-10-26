@@ -111,6 +111,8 @@ impl Watch {
                 self.up_at = Some(now);
                 false
             }
+            GestureKind::OnPress => down,
+            GestureKind::OnRelease => !down,
         }
     }
 }

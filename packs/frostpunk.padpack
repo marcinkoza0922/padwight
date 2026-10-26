@@ -7,7 +7,7 @@ id = "3f29e80c-c44f-4cbd-8ea7-59f4511d7fba"
 name = "Frostpunk"
 version = "1.0"
 author = "Padwight"
-description = "Frostpunk on an Xbox-style pad. The left stick moves the camera and the right stick the pointer; RT and A click, LT right-clicks to cancel. X pauses, hold Y with the D-pad for the speed, the bumpers turn the camera and the D-pad zooms. Overlays in riveted iron with a frost rim and the generator's orange glow."
+description = "Frostpunk on an Xbox-style pad. The left stick moves the camera and the right stick the pointer; RT and A click, LT right-clicks to cancel. X pauses, Y steps through the speeds (hold it with the D-pad for one), the bumpers turn the camera and the D-pad zooms. Overlays in riveted iron with a frost rim and the generator's orange glow."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -37,12 +37,15 @@ Guide = {mode = "Guide"}
 South = {mouse = "Left"}
 East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_SPACE"]}
-North = {open_menu = "Speed"}
+North = {cycle = {name = "Game speed"}}
 LeftBumper = {keys = ["KEY_Q"]}
 RightBumper = {keys = ["KEY_E"]}
 Start = {keys = ["KEY_ESC"]}
 DpadUp = {wheel = "Up"}
 DpadDown = {wheel = "Down"}
+
+[profiles.gestures.North.long_press]
+open_menu = "Speed"
 
 [profiles.left_stick]
 deadzone = 0.15
@@ -117,7 +120,7 @@ noise_threshold = 1.0
 
 [profiles.guide]
 notes = '''The right stick {rs} moves the pointer and the left stick {ls} moves the camera around the generator. {rt} or {south} clicks; {lt} right-clicks to drop the building in hand and close a panel.
-{west} pauses and resumes. Hold {north} and press the {dpad} for the speed: left normal, up fast, right fastest, down pause.
+{west} pauses and resumes. Tap {north} for the next speed: fast, fastest, then normal again. Press {north} with the {dpad} for one speed (left normal, up fast, right fastest, down pause); hold {north} to see them.
 {lb} and {rb} turn the camera around the city, {up} and {down} zoom. {east} and {start} close windows and open the menu.
 The speed keys 1 to 3 are a guess at the defaults, not read from an install: check Options → Controls if they don't answer. Media controls for the long nights: {guide} + {lb}.'''
 
@@ -129,7 +132,8 @@ The speed keys 1 to 3 are a guess at the defaults, not read from an install: che
 "button:South" = {text = "Click"}
 "button:East" = {text = "Close"}
 "button:West" = {text = "{icon:pause} Pause"}
-"button:North" = {text = "Hold: speed"}
+"button:North" = {text = "{icon:speed2} Next speed"}
+"gesture:button:North:long_press" = {text = "Hold: speed menu"}
 "button:Start" = {text = "Menu"}
 "combo:button:North+button:DpadUp" = {text = "{icon:speed2} Fast"}
 "combo:button:North+button:DpadRight" = {text = "{icon:speed3} Fastest"}
@@ -164,12 +168,15 @@ Guide = {mode = "Guide"}
 South = {mouse = "Left"}
 East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_SPACE"]}
-North = {open_menu = "Speed"}
+North = {cycle = {name = "Game speed"}}
 LeftBumper = {keys = ["KEY_Q"]}
 RightBumper = {keys = ["KEY_E"]}
 Start = {keys = ["KEY_ESC"]}
 DpadUp = {wheel = "Up"}
 DpadDown = {wheel = "Down"}
+
+[profiles.gestures.North.long_press]
+open_menu = "Speed"
 
 [profiles.left_stick]
 deadzone = 0.15
@@ -247,7 +254,7 @@ sensitivity = 20.0
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
 The right stick {rs} moves the pointer and the left stick {ls} moves the camera around the generator. {rt} or {south} clicks; {lt} right-clicks to drop the building in hand and close a panel.
-{west} pauses and resumes. Hold {north} and press the {dpad} for the speed: left normal, up fast, right fastest, down pause.
+{west} pauses and resumes. Tap {north} for the next speed: fast, fastest, then normal again. Press {north} with the {dpad} for one speed (left normal, up fast, right fastest, down pause); hold {north} to see them.
 {lb} and {rb} turn the camera around the city, {up} and {down} zoom. {east} and {start} close windows and open the menu.
 The speed keys 1 to 3 are a guess at the defaults, not read from an install: check Options → Controls if they don't answer. Media controls for the long nights: {guide} + {lb}.'''
 
@@ -259,7 +266,8 @@ The speed keys 1 to 3 are a guess at the defaults, not read from an install: che
 "button:South" = {text = "Click"}
 "button:East" = {text = "Close"}
 "button:West" = {text = "{icon:pause} Pause"}
-"button:North" = {text = "Hold: speed"}
+"button:North" = {text = "{icon:speed2} Next speed"}
+"gesture:button:North:long_press" = {text = "Hold: speed menu"}
 "button:Start" = {text = "Menu"}
 "combo:button:North+button:DpadUp" = {text = "{icon:speed2} Fast"}
 "combo:button:North+button:DpadRight" = {text = "{icon:speed3} Fastest"}
@@ -274,6 +282,14 @@ text = "{icon:rotate} Turn the camera"
 inputs = ["button:DpadUp", "button:DpadDown"]
 text = "Zoom in / out"
 
+
+[[cycles]]
+name = "Game speed"
+steps = [
+    {keys = ["KEY_2"]},
+    {keys = ["KEY_3"]},
+    {keys = ["KEY_1"]},
+]
 
 [[menus]]
 name = "Speed"

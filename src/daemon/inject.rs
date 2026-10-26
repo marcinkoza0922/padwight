@@ -26,7 +26,7 @@ pub(super) fn record(recorded: &mut Vec<String>, out: &[OutEvent]) {
 }
 
 /// One output event in words: `key KEY_A down`, `pad South up`, `pad-axis LeftX 0.50`,
-/// `mouse Left down`, `mouse-move 3 -2`, `wheel 120 0` (vertical, horizontal; 120 is a notch).
+/// `mouse Left down`, `mouse-move 3 -2`, `mouse-to 0.50 0.25`, `wheel 120 0` (vertical, horizontal; 120 is a notch).
 fn describe(ev: &OutEvent) -> String {
     let state = |down: &bool| if *down { "down" } else { "up" };
     match ev {
@@ -35,6 +35,7 @@ fn describe(ev: &OutEvent) -> String {
         OutEvent::Key(k, down) => format!("key {k:?} {}", state(down)),
         OutEvent::MouseButton(b, down) => format!("mouse {b:?} {}", state(down)),
         OutEvent::MouseMove(dx, dy) => format!("mouse-move {dx} {dy}"),
+        OutEvent::MouseTo(x, y) => format!("mouse-to {x:.2} {y:.2}"),
         OutEvent::Wheel { vertical, horizontal } => format!("wheel {vertical} {horizontal}"),
     }
 }

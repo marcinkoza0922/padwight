@@ -43,7 +43,7 @@ Everything the daemon knows about the desktop comes from focus trackers (see bel
 
 1. **Input.** `input/linux.rs` reads each physical pad's evdev node and turns raw events into normalized buttons (following the Linux gamepad spec), sticks in −1..1, and triggers in 0..1. Touchpads have their own node (`input/linux/touchpad.rs`) and reach the engine like buttons.
 2. **Daemon.** `daemon.rs` grabs the physical devices so nothing else sees them, keeps one `engine` state per controller, and decides who gets each event: an open menu (`menu.rs`), the on-screen keyboard or numpad (`overlay.rs`), a library-game offer (`offer.rs`), or the mapping engine. On Linux its main loop reads the controllers' nodes itself (`daemon/readers.rs`): it `ppoll`s them together with an eventfd that every message from the daemon's other threads rings (`daemon/inbox.rs`), so a press wakes one thread, not a reader thread and then the loop. On Windows a thread per XInput slot sends the loop its input. The input threads run at raised priority, in the real-time class unless App settings → Input says not to (`priority.rs`).
-3. **Engine.** `engine.rs` turns normalized input into output for the active profile: buttons, gestures (double/triple tap, long press), combos, toggles, turbo, macros, layers, and zones. `engine/stick.rs` handles the sticks' continuous output (mouse, scroll, rings), `engine/flick.rs` the flick stick, and `engine/touchpad.rs` the touchpad.
+3. **Engine.** `engine.rs` turns normalized input into output for the active profile: buttons, gestures (double/triple tap, long press), combos, toggles, turbo, macros, cycles (`engine/cycles.rs`), layers, and zones. `engine/stick.rs` handles the sticks' continuous output (mouse, scroll, rings), `engine/flick.rs` the flick stick, and `engine/touchpad.rs` the touchpad.
 4. **Output.** `output.rs` writes to virtual uinput devices: a pad (an Xbox 360-style one, or another controller a game supports, see `pad_identity.rs`), a keyboard and a mouse. What one batch of input maps to is queued and each device is written once (`output/frames.rs`): axes and mouse motion merge into one report, keys keep a report each, so a stick moving on both axes reaches the game as one move. On Windows the pad's report goes to ViGEmBus once and the keyboard and mouse in one `SendInput`. Each physical controller's pad is rebuilt when the active game changes its identity. `rumble.rs` mirrors force-feedback uploads from games back to the physical pad.
 5. **Focus.** `focus/` finds the focused window and its game, and the daemon picks the profile from the game's rules (see [Focus tracking](#focus-tracking)).
 
@@ -162,7 +162,7 @@ Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000
 | `gui/profile.rs` | The profile editor (buttons, sticks and triggers, combos, gyro) and the controller drawing. Shared with the Layers tab. `gui/touchpad.rs` is its Touchpad tab. |
 | `gui/actions.rs` | The action editor, including nested Multi, Toggle and Turbo. |
 | `gui/layers.rs` | The Layers tab. |
-| `gui/items.rs` | Macros, menus and info overlays: cards and editors. |
+| `gui/items.rs` | Macros, menus and info overlays: cards and editors. `gui/cycles.rs` is the Cycles tab. |
 | `gui/games.rs` | Sidebar, a game's page and Details, Settings, controller list. |
 | `gui/packs.rs` | Library picker, import preview, export, delete, copy-from-another-game. |
 | `gui/checks.rs` | What "Save & apply" checks before writing: names, references, and rules. |
@@ -185,7 +185,7 @@ A pack is a game in a file: TOML in the same shapes as the config, extension `.p
 
 - `FORMAT` is the version this build writes. Newer formats are refused with a message; older formats are upgraded on load. Bump it only for breaking shape changes, and document what changed in the comment above it.
 - `parse` is strict (`deny_unknown_fields` on the top level). A malformed pack fails with the line and error, never half-imports.
-- `check` rejects dangling references (macros, menus, info overlays, layers, profiles named by rules).
+- `check` rejects dangling references (macros, cycles, menus, info overlays, layers, profiles named by rules).
 - `export` lists references to missing items, and keeps the pack ID on re-export.
 - `plan` and `apply` do an import: they report name clashes and rule clashes, and `apply` writes the chosen result into the config.
 

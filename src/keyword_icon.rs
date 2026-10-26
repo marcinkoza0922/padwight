@@ -9,6 +9,7 @@ pub fn color(k: Keyword) -> [u8; 3] {
         Keyword::Toggle => [0x2a, 0x9d, 0x8f],
         Keyword::Turbo => [0xe7, 0x6f, 0x20],
         Keyword::Macro => [0x8e, 0x5b, 0xd6],
+        Keyword::Cycle => [0xb8, 0x5c, 0x38],
         Keyword::Menu => [0xd6, 0x45, 0x7a],
         Keyword::Layer => [0xb0, 0x85, 0x10],
         Keyword::Mode => [0x5a, 0x8f, 0x1e],
@@ -41,6 +42,11 @@ pub fn svg_in(k: Keyword, [r, g, b]: [u8; 3]) -> String {
             "<circle cx='4.5' cy='6' r='1.8' fill='{c}'/><circle cx='4.5' cy='12' r='1.8' fill='{c}'/><circle cx='4.5' cy='18' r='1.8' fill='{c}'/>\
              <path d='M9 6H20 M9 12H20 M9 18H20' stroke='{c}' stroke-width='2' stroke-linecap='round'/>"
         ),
+        // An arrow coming round to where it started.
+        Keyword::Cycle => format!(
+            "<path d='M20 12A8 8 0 1 1 12 4C14.2 4 16.4 4.9 18 6.4L20 8.5 M20 4V8.5H15.5' fill='none' stroke='{c}' stroke-width='2.2' \
+             stroke-linecap='round' stroke-linejoin='round'/>"
+        ),
         // Stacked sheets.
         Keyword::Layer => format!(
             "<path d='M12 3 21 8 12 13 3 8Z M3 12.5 12 17.5 21 12.5 M3 16.5 12 21.5 21 16.5' fill='none' stroke='{c}' stroke-width='2' stroke-linejoin='round'/>"
@@ -70,7 +76,7 @@ mod tests {
 
     #[test]
     fn every_keyword_has_an_svg_in_its_color() {
-        for k in [Keyword::Toggle, Keyword::Turbo, Keyword::Macro, Keyword::Menu, Keyword::Layer, Keyword::Mode, Keyword::Info, Keyword::Log] {
+        for k in [Keyword::Toggle, Keyword::Turbo, Keyword::Macro, Keyword::Cycle, Keyword::Menu, Keyword::Layer, Keyword::Mode, Keyword::Info, Keyword::Log] {
             let svg = svg(k);
             assert!(svg.starts_with("<svg") && svg.ends_with("</svg>"));
             let [r, g, b] = color(k);

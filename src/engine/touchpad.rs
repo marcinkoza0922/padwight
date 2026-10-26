@@ -1,7 +1,7 @@
 //! Touchpad input. Each finger is followed from where it lands to where it lifts, on the side of
 //! the pad it landed on (a split pad has two). What a side does with its fingers is its mode:
-//! mouse (with tap to click, two-finger scrolling and gliding), a virtual stick, a menu laid out
-//! on the pad, or swipes. The click runs the side's click action, or chooses the menu item under
+//! mouse (with tap to click, two-finger scrolling and gliding), a virtual stick, a mouse region,
+//! a menu laid out on the pad, or swipes. The click runs the side's click action, or chooses the menu item under
 //! the finger.
 
 use std::{
@@ -261,7 +261,7 @@ impl Engine {
                     self.tap(&Source::TouchSwipe(side, dir), action, out);
                 }
             }
-            TouchpadMotion::Joystick { .. } | TouchpadMotion::Menu { .. } | TouchpadMotion::Off => {}
+            TouchpadMotion::Joystick { .. } | TouchpadMotion::Region { .. } | TouchpadMotion::Menu { .. } | TouchpadMotion::Off => {}
         }
         // The next finger on the side takes over, or the side lets go.
         match self.touch.primary(side).and_then(|n| self.touch.fingers.get(&n).copied()) {
@@ -294,6 +294,11 @@ impl Engine {
                     self.emit_pad_stick(old, out);
                 }
                 self.emit_pad_stick(*stick, out);
+            }
+            TouchpadMotion::Region { region } => {
+                let ((x, y), _) = local(cfg, side, f.at, f.height);
+                let (x, y) = region.point(((x - 0.5) * 2.0, (y - 0.5) * 2.0));
+                out.push(OutEvent::MouseTo(x, y));
             }
             TouchpadMotion::Menu { menu, .. } => {
                 let (pos, height) = local(cfg, side, f.at, f.height);

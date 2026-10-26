@@ -136,6 +136,8 @@ pub(super) fn row_glyphs<'a>(inputs: &[GuideInput], shape: RowShape, family: Pad
             GestureKind::DoubleTap => "Double tap",
             GestureKind::TripleTap => "Triple tap",
             GestureKind::LongPress => "Hold",
+            GestureKind::OnPress => "On press",
+            GestureKind::OnRelease => "On release",
         };
         items.push(text(name).size(13).color(MUTED_COLOR).wrapping(text::Wrapping::None).into());
     }

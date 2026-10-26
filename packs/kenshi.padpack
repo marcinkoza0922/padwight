@@ -7,7 +7,7 @@ id = "8f9b73e4-9b77-4e4e-b823-0ca35b37f6b1"
 name = "Kenshi"
 version = "1.0"
 author = "Padwight"
-description = "Kenshi on an Xbox-style pad, for the game's default keys. The right stick moves the pointer and the left stick pans the camera; RT or A clicks and LT right-clicks to give orders. B closes windows, hold X to turn the camera with the pointer, hold Y and press the D-pad for the speed, L3 pauses, R3 holds Shift to queue. The bumpers turn the camera, the D-pad zooms, Select lists the screens. The \"Kenshi + Gyro\" profile also moves the pointer by tilting the controller."
+description = "Kenshi on an Xbox-style pad, for the game's default keys. The right stick moves the pointer and the left stick pans the camera; RT or A clicks and LT right-clicks to give orders. B closes windows, hold X to turn the camera with the pointer, Y steps through the speeds (hold it and press the D-pad for one), L3 pauses, R3 holds Shift to queue. The bumpers turn the camera, the D-pad zooms, Select lists the screens. The \"Kenshi + Gyro\" profile also moves the pointer by tilting the controller."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -36,7 +36,7 @@ long_press_ms = 500
 South = { mouse = "Left" }
 East = { keys = ["KEY_ESC"] }
 West = { mouse = "Middle" }
-North = { open_menu = "Speed" }
+North = { cycle = { name = "Game speed" } }
 LeftBumper = { keys = ["KEY_Q"] }
 RightBumper = { keys = ["KEY_E"] }
 LeftStick = { keys = ["KEY_SPACE"] }
@@ -46,6 +46,9 @@ DpadDown = { wheel = "Down" }
 Select = { open_menu = "Screens" }
 Start = { keys = ["KEY_ESC"] }
 Guide = { mode = "Guide" }
+
+[profiles.gestures.North.long_press]
+open_menu = "Speed"
 
 [profiles.left_stick]
 deadzone = 0.15
@@ -121,7 +124,7 @@ noise_threshold = 1.0
 [profiles.guide]
 notes = '''The right stick {rs} moves the pointer and the left stick {ls} pans the camera. {rt} or {south} clicks to select; {lt} right-clicks to move, attack, pick up and talk.
 Hold {west} and move the pointer to turn the camera, or turn it with {lb} and {rb}. {up} and {down} zoom.
-Click {l3} to pause. Hold {north} and press the {dpad} for the speed: left normal, up fast, right faster, down pause.
+Click {l3} to pause. Tap {north} for the next speed: fast, faster, then normal again. Press {north} with the {dpad} for one speed (left normal, up fast, right faster, down pause); hold {north} to see them.
 Hold {r3} while you click to add to the selection or queue orders. {east} closes windows and {start} is the menu.
 {select} lists the inventory, character, map, build and research screens. Naming a character or a town: {guide} + {west} opens the on-screen keyboard.
 The speed and screen keys are inferred from the game's defaults; if one doesn't answer, check Options → Controls.'''
@@ -134,7 +137,8 @@ The speed and screen keys are inferred from the game's defaults; if one doesn't 
 "button:South" = { text = "Click" }
 "button:East" = { text = "Close / cancel" }
 "button:West" = { text = "Turn camera (hold)" }
-"button:North" = { text = "Hold: speed" }
+"button:North" = { text = "{icon:speed2} Next speed" }
+"gesture:button:North:long_press" = { text = "Hold: speed menu" }
 "button:LeftStick" = { text = "{icon:pause} Pause" }
 "button:RightStick" = { text = "Add / queue (hold)" }
 "button:Select" = { text = "{icon:map} Screens" }
@@ -170,7 +174,7 @@ requires = ["gyro"]
 South = { mouse = "Left" }
 East = { keys = ["KEY_ESC"] }
 West = { mouse = "Middle" }
-North = { open_menu = "Speed" }
+North = { cycle = { name = "Game speed" } }
 LeftBumper = { keys = ["KEY_Q"] }
 RightBumper = { keys = ["KEY_E"] }
 LeftStick = { keys = ["KEY_SPACE"] }
@@ -180,6 +184,9 @@ DpadDown = { wheel = "Down" }
 Select = { open_menu = "Screens" }
 Start = { keys = ["KEY_ESC"] }
 Guide = { mode = "Guide" }
+
+[profiles.gestures.North.long_press]
+open_menu = "Speed"
 
 [profiles.left_stick]
 deadzone = 0.15
@@ -258,7 +265,7 @@ sensitivity = 20.0
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
 The right stick {rs} moves the pointer and the left stick {ls} pans the camera. {rt} or {south} clicks to select; {lt} right-clicks to move, attack, pick up and talk.
 Hold {west} and move the pointer to turn the camera, or turn it with {lb} and {rb}. {up} and {down} zoom.
-Click {l3} to pause. Hold {north} and press the {dpad} for the speed: left normal, up fast, right faster, down pause.
+Click {l3} to pause. Tap {north} for the next speed: fast, faster, then normal again. Press {north} with the {dpad} for one speed (left normal, up fast, right faster, down pause); hold {north} to see them.
 Hold {r3} while you click to add to the selection or queue orders. {east} closes windows and {start} is the menu.
 {select} lists the inventory, character, map, build and research screens. Naming a character or a town: {guide} + {west} opens the on-screen keyboard.
 The speed and screen keys are inferred from the game's defaults; if one doesn't answer, check Options → Controls.'''
@@ -271,7 +278,8 @@ The speed and screen keys are inferred from the game's defaults; if one doesn't 
 "button:South" = { text = "Click" }
 "button:East" = { text = "Close / cancel" }
 "button:West" = { text = "Turn camera (hold)" }
-"button:North" = { text = "Hold: speed" }
+"button:North" = { text = "{icon:speed2} Next speed" }
+"gesture:button:North:long_press" = { text = "Hold: speed menu" }
 "button:LeftStick" = { text = "{icon:pause} Pause" }
 "button:RightStick" = { text = "Add / queue (hold)" }
 "button:Select" = { text = "{icon:map} Screens" }
@@ -288,6 +296,14 @@ text = "Turn camera left / right"
 [[profiles.guide.merged]]
 inputs = ["button:DpadUp", "button:DpadDown"]
 text = "Zoom in / out"
+
+[[cycles]]
+name = "Game speed"
+steps = [
+    {keys = ["KEY_F3"]},
+    {keys = ["KEY_F4"]},
+    {keys = ["KEY_F2"]},
+]
 
 [[menus]]
 name = "Speed"

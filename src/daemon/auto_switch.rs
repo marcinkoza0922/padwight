@@ -134,6 +134,7 @@ impl Daemon {
             let mut out = Vec::new();
             // A toggle starting "Next profile" would be odd; it isn't followed.
             dev.engine.start_toggles(layered(&dev.layered, base), &self.scope.menus, &mut out);
+            dev.engine.reset_cycles();
             if dev.refresh_layers(&self.config) {
                 dev.engine.resync(layered(&dev.layered, base), &mut out);
             }

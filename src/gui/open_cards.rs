@@ -6,12 +6,12 @@ use super::*;
 /// What the open cards refer to: the shown game's item names and the edited profile's combos.
 /// Taken before the config is replaced wholesale (Undo, Revert), to find each item again after.
 pub(super) struct Shown {
-    items: [Vec<String>; 4],
+    items: [Vec<String>; 5],
     combos: Vec<Vec<Button>>,
 }
 
 /// The lists whose cards are kept by position, in `Shown::items` order.
-const LISTS: [ItemKind; 4] = [ItemKind::Macro, ItemKind::Menu, ItemKind::Info, ItemKind::Log];
+const LISTS: [ItemKind; 5] = [ItemKind::Macro, ItemKind::Cycle, ItemKind::Menu, ItemKind::Info, ItemKind::Log];
 
 /// Where an item went after item `i` was removed: later items move up one place.
 pub(super) fn after_removing(i: usize) -> impl Fn(usize) -> Option<usize> {
@@ -43,6 +43,7 @@ impl App {
         let game = self.game();
         match kind {
             ItemKind::Macro => game.macros.iter().map(|m| m.name.clone()).collect(),
+            ItemKind::Cycle => game.cycles.iter().map(|c| c.name.clone()).collect(),
             ItemKind::Menu => game.menus.iter().map(|m| m.name.clone()).collect(),
             ItemKind::Info => game.info.iter().map(|o| o.name.clone()).collect(),
             ItemKind::Log => game.logs.iter().map(|o| o.name.clone()).collect(),
@@ -61,6 +62,7 @@ impl App {
     pub(super) fn move_open_cards(&mut self, kind: ItemKind, to: impl Fn(usize) -> Option<usize>) {
         match kind {
             ItemKind::Macro => self.open_macros = moved(&self.open_macros, &to),
+            ItemKind::Cycle => self.open_cycles = moved(&self.open_cycles, &to),
             ItemKind::Menu => {
                 self.open_menus = moved(&self.open_menus, &to);
                 // `None` is the keyboard's, which isn't in the list.

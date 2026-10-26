@@ -12,7 +12,7 @@ Each button has a row. Click its name to open it.
 2. A closed row shows the button's glyph and what it does. Gestures are listed under it: in the picture (2), X (West) types Semicolon, and Apostrophe on a long press.
 3. The **Tap window** and **Long press after** sliders under the list set the timing for every button in the profile. Leave them for now.
 
-The action dialog groups every kind, each with a line on what it does: **Press** (keys, mouse, scroll wheel, gamepad buttons, triggers and sticks, Disabled), **Change how it presses** (Toggle, Turbo, Several at once, Macro), **Open or switch** (menus, layers, modes), **On screen** (keyboard, numpad, Quick Settings, media controls, info and log overlays), **Gyro** and **System**. Cancel, or a click beside the dialog, leaves the action as it was.
+The action dialog groups every kind, each with a line on what it does: **Press** (keys, mouse, scroll wheel, gamepad buttons, triggers and sticks, Disabled), **Change how it presses** (Toggle, Turbo, Several at once, Macro), **Open or switch** (menus, layers, modes, cycles), **On screen** (keyboard, numpad, Quick Settings, media controls, info and log overlays), **Gyro** and **System**. Cancel, or a click beside the dialog, leaves the action as it was.
 
 ## 2. Give the same button a second job
 

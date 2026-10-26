@@ -6,6 +6,8 @@ use std::borrow::Cow;
 
 use crate::config::{MouseResponse, StickConfig};
 
+pub(crate) mod region;
+
 /// Deflection above which a mouse stick counts as fully pushed, for the outer boost and acceleration.
 pub(crate) const OUTER_EDGE: f32 = 0.9;
 /// A smoothed stick this close to rest snaps to it.
@@ -76,6 +78,7 @@ impl Engine {
             self.emit_pad_stick(*stick, out);
         }
         self.update_ring(cfg, s, (x, y), out);
+        self.update_region(cfg, s, (x, y), out);
         self.zones(profile, Analog::Stick(s), x.hypot(y).min(1.0), out);
     }
 

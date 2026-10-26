@@ -1,8 +1,8 @@
 //! The stick pages of Edit Controls: what a stick does (a gamepad stick, the mouse, the wheel,
-//! a ring of buttons, a flick stick) with each kind's settings, its deadzone and zones, and a
+//! a ring of buttons, a flick stick, a mouse region) with each kind's settings, its deadzone and zones, and a
 //! ring's sectors.
 
-use crate::config::{Analog, ButtonAction, Config, CurvePreset, DeadzoneShape, FlickVertical, MouseResponse, Stick, StickAction, StickConfig};
+use crate::config::{Analog, ButtonAction, Config, CurvePreset, DeadzoneShape, FlickVertical, MouseRegion, MouseResponse, Stick, StickAction, StickConfig};
 
 use super::{
     action::{ActionAt, Slot},
@@ -20,9 +20,10 @@ enum Kind {
     Scroll,
     Ring,
     Flick,
+    Region,
 }
 
-const KINDS: [Kind; 6] = [Kind::Disabled, Kind::Gamepad, Kind::Mouse, Kind::Scroll, Kind::Ring, Kind::Flick];
+const KINDS: [Kind; 7] = [Kind::Disabled, Kind::Gamepad, Kind::Mouse, Kind::Scroll, Kind::Ring, Kind::Flick, Kind::Region];
 
 impl Kind {
     fn of(action: &StickAction) -> Kind {
@@ -33,6 +34,7 @@ impl Kind {
             StickAction::Scroll { .. } => Kind::Scroll,
             StickAction::Ring { .. } => Kind::Ring,
             StickAction::Flick { .. } => Kind::Flick,
+            StickAction::Region { .. } => Kind::Region,
         }
     }
 
@@ -44,6 +46,7 @@ impl Kind {
             Kind::Scroll => "Scroll wheel",
             Kind::Ring => "Button ring",
             Kind::Flick => "Flick stick",
+            Kind::Region => "Mouse region",
         }
     }
 
@@ -56,6 +59,7 @@ impl Kind {
             Kind::Scroll => StickAction::Scroll { speed: 15.0, invert_y: false },
             Kind::Ring => StickAction::ring(8),
             Kind::Flick => StickAction::flick(),
+            Kind::Region => StickAction::Region { region: MouseRegion::default() },
         }
     }
 }
@@ -134,6 +138,12 @@ pub(super) fn stick_rows(config: &Config, owner: Owner, s: Stick) -> Vec<Row> {
         ],
         StickAction::Ring { sectors, start_angle, inner_radius, hysteresis, .. } => ring_settings((owner, s), *sectors, (*start_angle, *inner_radius, *hysteresis)),
         StickAction::Flick { .. } => flick_rows(owner, s, &cfg.action),
+        StickAction::Region { region } => super::region::region_rows(*region, move |c, change| {
+            stick_mut(c, owner, s).is_some_and(|cfg| match &mut cfg.action {
+                StickAction::Region { region } => change(region),
+                _ => false,
+            })
+        }),
     });
     rows.push(num((owner, s), "Deadzone", cfg.deadzone, &DEADZONE, |c, v| set(&mut c.deadzone, v)));
     rows.push(Row::step(format!("Deadzone shape: {}", cfg.deadzone_shape), move |c, dir| {

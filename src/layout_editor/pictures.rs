@@ -65,7 +65,7 @@ fn about(page: Page) -> Option<About> {
         Page::Log(i) | Page::Tracking(Tracked::Log(i)) | Page::TrackGroup(Tracked::Log(i), _) => About::Log(i),
         Page::Action(at) | Page::Pad(at) | Page::KeyGroups(at) | Page::Keys(at, _) | Page::Pick(at, _) | Page::Multi(at) => match at.slot {
             Slot::Ring(o, s, _) | Slot::Zone(o, Analog::Stick(s), _) => About::Stick(o, s),
-            Slot::Trigger(o, t) | Slot::Zone(o, Analog::Trigger(t), _) => About::Trigger(o, t),
+            Slot::Trigger(o, t) | Slot::TriggerGesture(o, t, _) | Slot::Zone(o, Analog::Trigger(t), _) => About::Trigger(o, t),
             Slot::Touch(o, _) => About::Touchpad(o),
             Slot::MenuItem(m, i) => About::Menu(m, Some(i)),
             _ => return None,

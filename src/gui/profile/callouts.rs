@@ -14,6 +14,7 @@ fn stick_mode(cfg: &StickConfig, s: Stick) -> Option<&'static str> {
         StickAction::Scroll { .. } => "Scroll",
         StickAction::Ring { .. } => "Ring",
         StickAction::Flick { .. } => "Flick",
+        StickAction::Region { .. } => "Region",
     })
 }
 
@@ -68,7 +69,8 @@ pub(super) fn drawing_labels(p: &Profile) -> Vec<(pad_svg::Spot, String)> {
 }
 
 /// The whole of what each button with a gesture or in a combo does, for the tooltip on its part
-/// of the picture: its press, each gesture, then each combo it's part of.
+/// of the picture: its press, each gesture, then each combo it's part of. A trigger with an On
+/// press or On release gets one too.
 pub(super) fn drawing_tips(p: &Profile) -> Vec<(pad_svg::Spot, String)> {
     let mut tips = Vec::new();
     for b in Button::ALL {
@@ -90,6 +92,12 @@ pub(super) fn drawing_tips(p: &Profile) -> Vec<(pad_svg::Spot, String)> {
         }
         let lines = std::iter::once(format!("Press: {}", summarize(p.button(b)))).chain(gestures).chain(combos);
         tips.push((pad_svg::Spot::Button(b), lines.collect::<Vec<_>>().join("\n")));
+    }
+    for t in [Trigger::Left, Trigger::Right] {
+        let (TriggerAction::Button { action, .. }, Some(g)) = (p.trigger(t), p.trigger_gestures(t)) else { continue };
+        let edges = GestureKind::EDGES.into_iter().filter_map(|k| g.get(k).map(|a| format!("{k}: {}", summarize(a))));
+        let lines = std::iter::once(format!("Press: {}", summarize(action))).chain(edges);
+        tips.push((pad_svg::Spot::Trigger(t), lines.collect::<Vec<_>>().join("\n")));
     }
     tips
 }

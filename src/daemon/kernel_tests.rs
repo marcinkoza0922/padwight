@@ -184,6 +184,18 @@ fn a_pad_presents_the_identity_it_was_given() {
     }
 }
 
+#[test]
+#[ignore]
+fn a_placed_pointer_reaches_the_kernel_as_absolute_axes() {
+    let mut kbm = VirtualKbm::new().unwrap();
+    let mut pad = VirtualPad::new(None).unwrap();
+    let mut dev = open_when_granted(&kbm.pointer_node());
+    assert_eq!(dev.name(), Some(format!("{VIRTUAL_PREFIX} Pointer").as_str()));
+    super::dispatch(&mut pad, &mut OutputView::default(), &mut kbm, vec![OutEvent::MouseTo(0.25, 0.75)]);
+    let abs: Vec<(u16, i32)> = dev.fetch_events().unwrap().filter(|e| e.event_type() == EventType::ABSOLUTE).map(|e| (e.code(), e.value())).collect();
+    assert_eq!(abs, [(evdev::AbsoluteAxisCode::ABS_X.0, 16384), (evdev::AbsoluteAxisCode::ABS_Y.0, 49151)]);
+}
+
 /// Opens an event node once udev has granted access to it, which takes a moment.
 fn open_when_granted(node: &std::path::Path) -> Device {
     let start = Instant::now();

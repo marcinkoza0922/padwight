@@ -9,6 +9,7 @@ pub(super) fn icon<'a>(k: ActionKind, size: f32) -> Element<'a, Message> {
         ActionKind::Toggle => Some(Keyword::Toggle),
         ActionKind::Turbo => Some(Keyword::Turbo),
         ActionKind::Macro => Some(Keyword::Macro),
+        ActionKind::Cycle => Some(Keyword::Cycle),
         ActionKind::Menu => Some(Keyword::Menu),
         ActionKind::Info => Some(Keyword::Info),
         ActionKind::Log => Some(Keyword::Log),

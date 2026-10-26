@@ -1,4 +1,5 @@
-//! The virtual uinput devices: a pad, a keyboard and a mouse the kernel shows to every program.
+//! The virtual uinput devices: a pad, a keyboard, a mouse, and a pointer that is put in places
+//! (for mouse regions), which the kernel shows to every program.
 
 use std::{
     collections::HashSet,
@@ -178,17 +179,24 @@ impl VirtualPad {
     }
 }
 
+/// The absolute pointer's axes run from 0 to this, across the whole desktop.
+const POINTER_MAX: i32 = 65535;
+
 /// Shared virtual keyboard + mouse. Presses are reference counted (see `PressState`), and a
 /// press or release the kernel refused is sent again by `sync`. Keys, buttons and motion are
 /// queued and written by `flush`.
 pub struct VirtualKbm {
     keyboard: VirtualDevice,
     mouse: VirtualDevice,
+    /// Absolute axes, for putting the pointer in a place. It has a left button only so the desktop
+    /// takes it for a mouse (as a virtual machine's tablet is); the mouse sends the clicks.
+    pointer: VirtualDevice,
     press: PressState,
     /// Hi-res wheel units not yet emitted as whole REL_WHEEL notches.
     wheel_acc: (i32, i32),
     keyboard_frames: Frames,
     mouse_frames: Frames,
+    pointer_frames: Frames,
     /// What the kernel had been sent before the presses queued now, to go back to if writing
     /// them fails, so `sync` sends them again.
     confirmed: Option<HashSet<KeyCode>>,
@@ -222,13 +230,26 @@ impl VirtualKbm {
             .with_relative_axes(&rel)?
             .build()?;
 
+        let mut left = AttributeSet::<KeyCode>::new();
+        left.insert(KeyCode::BTN_LEFT);
+        let span = AbsInfo::new(0, 0, POINTER_MAX, 0, 0, 0);
+        let pointer = VirtualDevice::builder()?
+            .name(&format!("{VIRTUAL_PREFIX} Pointer"))
+            .input_id(InputId::new(BusType::BUS_VIRTUAL, 0x1209, 0x0003, 1))
+            .with_keys(&left)?
+            .with_absolute_axis(&UinputAbsSetup::new(Abs::ABS_X, span))?
+            .with_absolute_axis(&UinputAbsSetup::new(Abs::ABS_Y, span))?
+            .build()?;
+
         Ok(VirtualKbm {
             keyboard,
             mouse,
+            pointer,
             press: PressState::default(),
             wheel_acc: (0, 0),
             keyboard_frames: Frames::default(),
             mouse_frames: Frames::default(),
+            pointer_frames: Frames::default(),
             confirmed: None,
         })
     }
@@ -263,6 +284,7 @@ impl VirtualKbm {
     pub fn flush(&mut self) -> Result<()> {
         let keyboard = self.keyboard_frames.flush(&self.keyboard);
         let mouse = self.mouse_frames.flush(&self.mouse);
+        let pointer = self.pointer_frames.flush(&self.pointer);
         let confirmed = self.confirmed.take();
         if (keyboard.is_err() || mouse.is_err())
             && let Some(sent) = confirmed
@@ -270,7 +292,8 @@ impl VirtualKbm {
             self.press.restore_sent(sent);
         }
         keyboard?;
-        Ok(mouse?)
+        mouse?;
+        Ok(pointer?)
     }
 
     /// Queues each key whose state differs from what was sent (see `PressState::sync`).
@@ -294,10 +317,24 @@ impl VirtualKbm {
         (node(&mut self.keyboard), node(&mut self.mouse))
     }
 
+    /// The absolute pointer's event node, for tests that read what the kernel got.
+    #[cfg(test)]
+    pub(crate) fn pointer_node(&mut self) -> std::path::PathBuf {
+        self.pointer.enumerate_dev_nodes_blocking().unwrap().flatten().next().unwrap()
+    }
+
     /// Queues motion, for the next `flush`.
     pub fn mouse_move(&mut self, dx: i32, dy: i32) {
         self.mouse_frames.rel(Rel::REL_X, dx);
         self.mouse_frames.rel(Rel::REL_Y, dy);
+    }
+
+    /// Queues putting the pointer at `(x, y)`, shares (0..1) of the whole desktop, for the next
+    /// `flush`.
+    pub fn mouse_to(&mut self, x: f32, y: f32) {
+        let raw = |v: f32| (v.clamp(0.0, 1.0) * POINTER_MAX as f32).round() as i32;
+        self.pointer_frames.abs(Abs::ABS_X, raw(x));
+        self.pointer_frames.abs(Abs::ABS_Y, raw(y));
     }
 
     /// Takes hi-res units (120 per notch) and also emits legacy notches for older clients. Queued,

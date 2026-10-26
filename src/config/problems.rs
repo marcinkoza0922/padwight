@@ -44,6 +44,7 @@ pub fn item_problem(menu: &Menu, action: &ButtonAction, menus: &[&Menu], names: 
 #[derive(Debug, Clone, Default)]
 pub struct Names {
     pub macros: Vec<String>,
+    pub cycles: Vec<String>,
     pub menus: Vec<String>,
     /// Info overlays an action can show: not those set to always show.
     pub infos: Vec<String>,
@@ -71,6 +72,7 @@ impl Names {
         Names {
             macro_ms: scope.macros.iter().map(|m| (m.name.clone(), m.duration_ms())).collect(),
             macros: list(ItemKind::Macro),
+            cycles: list(ItemKind::Cycle),
             menus: list(ItemKind::Menu),
             infos: infos(false),
             always_infos: infos(true),
@@ -91,6 +93,7 @@ impl Names {
     pub fn list(&self, kind: ItemKind) -> &[String] {
         match kind {
             ItemKind::Macro => &self.macros,
+            ItemKind::Cycle => &self.cycles,
             ItemKind::Menu => &self.menus,
             ItemKind::Info => &self.infos,
             ItemKind::Log => &self.logs,
@@ -113,6 +116,7 @@ fn toggle_problem(inner: &ButtonAction) -> Option<&'static str> {
         ButtonAction::OpenMenu(_) => Some("a menu can't be toggled: its close button puts it away"),
         ButtonAction::Layer(_) => Some("a layer can't be toggled: to keep one on, make it a mode and switch to it"),
         ButtonAction::Mode(_) => Some("a mode switch can't be toggled: pressing it again already switches back"),
+        ButtonAction::Cycle { .. } => Some("a cycle can't be toggled: each press already moves it on"),
         _ => None,
     }
 }
@@ -132,6 +136,9 @@ pub fn action_problem(action: &ButtonAction, names: &Names) -> Option<String> {
             }
             ButtonAction::Macro { name, .. } if !names.macros.contains(name) => {
                 problem = Some(format!("missing macro “{name}”"));
+            }
+            ButtonAction::Cycle { name, .. } if !names.cycles.contains(name) => {
+                problem = Some(format!("missing cycle “{name}”"));
             }
             // A macro that grew longer than the turbo's gap would overlap its own presses.
             ButtonAction::Turbo { action, every_ms, .. } => {
@@ -242,6 +249,32 @@ pub fn items_problem(macros: &[Macro], menus: &[Menu], info: &[InfoOverlay], nam
     None
 }
 
+/// What's wrong with a cycle's step, if anything: one that isn't an input, a macro or several
+/// of those at once, or what's wrong with its action.
+pub fn cycle_step_problem(step: &ButtonAction, names: &Names) -> Option<String> {
+    if !crate::config::fits_cycle(step) {
+        return Some("a step can only press inputs or play macros".into());
+    }
+    action_problem(step, names)
+}
+
+/// The first thing saving would reject in a list of cycles: empty or repeated names, and steps
+/// that can't be.
+pub fn cycles_problem(cycles: &[Cycle], names: &Names) -> Option<String> {
+    for (i, c) in cycles.iter().enumerate() {
+        if c.name.trim().is_empty() {
+            return Some("A cycle needs a name.".into());
+        }
+        if cycles[..i].iter().any(|o| o.name == c.name) {
+            return Some(format!("Two cycles are named “{}”.", c.name));
+        }
+        if let Some(problem) = c.steps.iter().find_map(|s| cycle_step_problem(s, names)) {
+            return Some(format!("Cycle “{}”: {problem}.", c.name));
+        }
+    }
+    None
+}
+
 /// The first thing saving would reject in a list of log overlays: empty or repeated names.
 pub fn logs_problem(logs: &[LogOverlay]) -> Option<String> {
     for (i, o) in logs.iter().enumerate() {
@@ -265,7 +298,7 @@ pub fn game_problem(config: &Config, g: &Game) -> Option<String> {
     if let Some(problem) = items_problem(&g.macros, &g.menus, &g.info, &names, &reachable) {
         return Some(problem);
     }
-    if let Some(problem) = logs_problem(&g.logs) {
+    if let Some(problem) = logs_problem(&g.logs).or_else(|| cycles_problem(&g.cycles, &names)) {
         return Some(problem);
     }
     for (i, p) in g.profiles.iter().enumerate() {

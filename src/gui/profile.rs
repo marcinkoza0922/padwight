@@ -187,7 +187,7 @@ pub(super) fn view_profile<'a>(p: &'a Profile, ui: &Ui, tab: ProfileTab, guide: 
                 let base = ui.layer.map_or(p, |m| m.base);
                 let base = if t == Trigger::Left { &base.left_trigger } else { &base.right_trigger };
                 triggers.extend(layer_part(ui, LayerPart::Trigger(t), t.to_string(), trigger_summary(base), || {
-                    vec![trigger_editor(t, p.trigger(t), p.zones(Analog::Trigger(t)), ui.analog_triggers, names)]
+                    vec![trigger_editor(t, p.trigger_config(t), ui.analog_triggers, names)]
                 }));
             }
             vec![
@@ -578,6 +578,9 @@ impl App {
                         Target::Gesture(b, kind) => {
                             *p.gestures.entry(b).or_default().slot(kind) = Some(action);
                         }
+                        Target::TriggerGesture(t, kind) => {
+                            *p.trigger_config_mut(t).gestures.slot(kind) = Some(action);
+                        }
                         Target::Zone(a, i) => {
                             if let Some(z) = p.zones_mut(a).get_mut(i) {
                                 z.action = action;
@@ -593,7 +596,7 @@ impl App {
                                 *a = action;
                             }
                         }
-                        Target::MacroStep(..) | Target::MenuItem(..) | Target::StickAdvanced(_) | Target::GyroAdvanced => {}
+                        Target::MacroStep(..) | Target::CycleStep(..) | Target::MenuItem(..) | Target::StickAdvanced(_) | Target::GyroAdvanced => {}
                     }
                 }
             }
@@ -613,6 +616,19 @@ impl App {
                     if g.is_empty() {
                         p.gestures.remove(&b);
                     }
+                }
+            }
+            Message::AddTriggerGesture(t, kind) => {
+                if let Some(p) = self.profile_mut() {
+                    let slot = p.trigger_config_mut(t).gestures.slot(kind);
+                    if slot.is_none() {
+                        *slot = Some(ButtonAction::Keys(Vec::new()));
+                    }
+                }
+            }
+            Message::RemoveTriggerGesture(t, kind) => {
+                if let Some(p) = self.profile_mut() {
+                    *p.trigger_config_mut(t).gestures.slot(kind) = None;
                 }
             }
             Message::AddZone(a, preset) => {

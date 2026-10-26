@@ -23,6 +23,7 @@ made_with = "Xbox controller"
 [[rules]]                        # auto-switch rules (see Rules)
 [[profiles]]                     # required, at least one
 [[macros]]                       # optional
+[[cycles]]                       # optional
 [[menus]]                        # optional
 [[info_overlays]]                # optional
 [[modes]]                        # optional
@@ -100,6 +101,7 @@ A button's value is an **action**. Each form is one TOML key:
 | `toggle` | `[profiles.buttons.LeftStick.toggle]` `keys = ["KEY_X"]` | First press holds the inner action, next press releases it. |
 | `turbo` | `turbo = { action = { keys = ["KEY_F"] }, rate = 10.0 }` | Repeats the inner action 2–30 times a second while held. |
 | `macro` | `macro = { name = "QCF", repeat = false }` | Plays a macro. `repeat = true` loops while held. |
+| `cycle` | `cycle = { name = "Game speed" }` | Presses the cycle's next step, held while the input is. `back = true` presses the step before instead. Can't be inside `toggle` or `turbo`. |
 | `layer` | `layer = "Hotkeys"` | Holds a layer on while the input is held. Can't be inside `toggle`, or in a menu item. |
 | `mode` | `mode = "Driving"` | Switches to a mode, or back to the default mode if that mode is on. `"Mouse mode"` names the built-in mouse mode. |
 | `"gyro_toggle"`, `"gyro_clutch"`, `"gyro_hold"`, `"gyro_recenter"` | | Switch gyro on or off, turn it off while held, turn it on while held, or recenter it. |
@@ -123,7 +125,7 @@ buttons = ["LeftBumper", "RightBumper"]
 action = { keys = ["KEY_LEFTALT", "KEY_TAB"] }
 ```
 
-- Gesture kinds: `double_tap`, `triple_tap`, `long_press`.
+- Gesture kinds: `double_tap`, `triple_tap`, `long_press`, `on_press`, `on_release`. `on_press` and `on_release` tap their action once as the button goes down and once as it's let go, beside its own action and without waiting on the other gestures. The same key on both makes a game's toggle a hold.
 - A combo needs at least two buttons, and no two combos in a profile, layer or mode can have the same buttons: to do several things, give one combo a `multi` action. Members wait `combo_window_ms` for the rest of the combo before acting alone. A member whose own action is `"disabled"` works as a modifier with no time limit.
 
 Key names are evdev names (`KEY_A`, `KEY_LEFTSHIFT`, `KEY_KPPLUS`, `KEY_RIGHTBRACE`, `KEY_APOSTROPHE`, …). The keyboard overlay in the app lists them.
@@ -159,6 +161,7 @@ The `action` table picks what the stick does:
 | `keys` | the table above | Direction keys (WASD, arrows). |
 | `ring` | `ring = { sectors = 8, start_angle = 0.0, inner_radius = …, hysteresis = …, actions = [...] }` | The stick's angle picks one of `sectors` slices, and that slice's action is held. |
 | `flick` | `flick = { full_turn_px = 8000.0, flick_threshold = 0.9, flick_time_ms = 100, rotate_smoothing_ms = 0, forward_deadzone = 0.0, vertical = "off", vertical_speed = 1200.0 }` | Flick stick for turning the camera. `vertical = "look"` adds up and down. |
+| `region` | `region = { x = 0.5, y = 0.5, width = 0.5, height = 0.5, shape = "circle" }` | Mouse region: the stick's position puts the pointer at the matching spot in a part of the desktop (all monitors together). `x` and `y` are its middle and `width` and `height` its size, each a share (0..1) of the desktop; missing ones take these defaults. `shape = "circle"` fills the width and height, so it is an ellipse when they differ on screen, and a full push in any direction reaches its edge; with `"rectangle"`, a full push into a diagonal reaches a corner. Letting go puts the pointer back in the middle. |
 
 **Zones** hold an extra action while the stick is within part of its travel:
 
@@ -177,6 +180,18 @@ Triggers take zones too, under `[[profiles.left_trigger.zones]]`. The app hides 
 [profiles.right_trigger.action.button]
 threshold = 0.3                  # pull (0.0–1.0) that counts as pressed
 action = { mouse = "Left" }      # any action a button can have
+```
+
+A trigger acting as a button takes `on_press` and `on_release` too (no other gestures), here turning a game's toggled aim into a hold while the trigger holds a finer-aim layer:
+
+```toml
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { layer = "Zoom" }
+
+[profiles.left_trigger.gestures]
+on_press = { mouse = "Right" }
+on_release = { mouse = "Right" }
 ```
 
 Or pass the trigger through as an analog axis: `[profiles.right_trigger.action] gamepad = "Right"` (`"Left"` or `"Right"`), or `"disabled"`.
@@ -230,7 +245,7 @@ DualShock 4 and DualSense touchpads. Left out, the pad works as a laptop trackpa
 [profiles.touchpad]
 click = "disabled"                  # what pressing the pad does, like any button
 
-[profiles.touchpad.motion.menu]     # or: "off", mouse = {...}, joystick = {...}, swipe = {...}
+[profiles.touchpad.motion.menu]     # or: "off", mouse = {...}, joystick = {...}, region = {...}, swipe = {...}
 menu = "Build"                      # the menu the pad is divided into
 choose = "click"                    # or "lift"
 overlay = true                      # show the menu while a finger is on the pad
@@ -249,6 +264,7 @@ inertia = true                      # a flick keeps gliding
   - `"off"`.
   - `mouse = { speed, curve, tap, scroll, inertia }`. `curve` is as for gyro, in pad widths/second; `tap`, `scroll` and `inertia` default to off.
   - `joystick = { stick, relative, radius, deadzone }`: the finger pushes a virtual stick. With `relative`, center is where the finger lands and `radius` pad widths from there is full; otherwise the middle of the pad (or half) is center and its edges are full. Pushes under `deadzone` (0..1) are ignored.
+  - `region = { x, y, width, height, shape }`: mouse region. The pad (or half) is laid over a part of the desktop, as for a stick's `region`, and the pointer goes where the finger is. With `shape = "circle"` (the default), a finger outside the circle, such as in a corner of the pad, puts the pointer on its edge; the settings window starts a pad on `"rectangle"`. Lifting the finger leaves the pointer where it is.
   - `menu = { menu, choose, overlay }`: the pad is divided into the menu's items as the menu is drawn (a radial menu by direction from the middle, a grid by cells, a list by rows, a carousel from left to right). `choose = "click"` holds the item under the finger while the pad is clicked; `"lift"` taps it when the finger lifts (a click still works). `overlay = false` hides the menu.
   - `swipe = { up, down, left, right, distance }`: a quick stroke at least `distance` pad widths long (default 0.2) taps the action for its direction. Each direction is optional.
 - `click`: any action. In menu mode it's what a click does with the finger off the items. With a split pad, a click runs the click of the half the first finger is on.
@@ -475,6 +491,22 @@ steps = [
 ```
 
 Steps: `tap` (press, hold `hold_ms`, release), `press` (keep held until a matching `release` or the macro's end), `release`, `wait` (milliseconds), and `stick` (move a virtual stick to `x`, `y` in −1..1, y positive down; it recenters when the macro ends). Macros are referenced from buttons with `macro = { name = "…" }`.
+
+## Cycles
+
+```toml
+[[cycles]]
+name = "Game speed"
+steps = [
+    { keys = ["KEY_2"] },
+    { keys = ["KEY_3"] },
+    { keys = ["KEY_1"] },
+]
+```
+
+A cycle switches between a game's states that rule each other out, from one input. Each press of a `cycle` action presses its next step and holds it while the input is held; after the last step it starts over at the first. The first press presses the first step, so list the state the game starts in last. `cycle = { name = "…", back = true }` on another input goes the other way, from the same place. Every cycle goes back to its start when the game starts.
+
+A step is an action that presses inputs: `keys`, `mouse`, `wheel`, `gamepad`, `pad_trigger`, `pad_stick`, a `macro`, or a `multi` of those. Use it with keys that set a state directly (a key per speed, a key per stance): a game key that already steps through the states needs no cycle, and the two could drift apart.
 
 ## Info overlays
 
@@ -719,7 +751,7 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
 ## Versioning
 
 - `format` is an integer. The app writes `20` and reads up to `20`. A pack with a newer `format` is refused with "update the app to import it". Older formats are upgraded when read.
-- A pack is refused if its setup couldn't be saved in the app: a missing macro, menu or overlay that something refers to, two items or profiles of one name, two combos of the same buttons, an unknown key and the like. A setup folder in the config that breaks these rules is left out when the config loads, and kept on disk to be fixed.
+- A pack is refused if its setup couldn't be saved in the app: a missing macro, cycle, menu or overlay that something refers to, two items or profiles of one name, two combos of the same buttons, an unknown key and the like. A setup folder in the config that breaks these rules is left out when the config loads, and kept on disk to be fixed.
 - Format history:
   - 2 added layers.
   - 3 added toggles that start on.
@@ -744,4 +776,4 @@ The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the med
 
 ## Checks
 
-The repository's test suite parses every file in `packs/` and checks it: the format, unique IDs and names, no dangling references (macros, menus, info overlays, modes, layers, profiles), that each rule points at an existing profile, and that a plain pad can play at least one profile. A pack you add to `packs/` is checked the same way, and it is embedded in the next build.
+The repository's test suite parses every file in `packs/` and checks it: the format, unique IDs and names, no dangling references (macros, cycles, menus, info overlays, modes, layers, profiles), that each rule points at an existing profile, and that a plain pad can play at least one profile. A pack you add to `packs/` is checked the same way, and it is embedded in the next build.

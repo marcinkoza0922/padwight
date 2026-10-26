@@ -128,6 +128,8 @@ fn bad_target(p: &Profile, names: &Names) -> Option<Target> {
     for t in [Trigger::Left, Trigger::Right] {
         if let TriggerAction::Button { action, .. } = p.trigger(t) {
             all.push((Target::Trigger(t), action));
+            let gestures = &p.trigger_config(t).gestures;
+            all.extend(GestureKind::EDGES.into_iter().filter_map(|k| gestures.get(k).map(|a| (Target::TriggerGesture(t, k), a))));
         }
     }
     all.extend(p.combos.iter().enumerate().map(|(i, c)| (Target::Combo(i), &c.action)));

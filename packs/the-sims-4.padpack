@@ -7,7 +7,7 @@ id = "84761895-4cf5-486f-bbd9-6e7326eac93d"
 name = "The Sims 4"
 version = "1.0"
 author = "Padwight"
-description = "The Sims 4 on an Xbox-style pad, for the PC game's keys. The left stick moves the camera and the right stick the pointer; RT and A click, LT right-clicks. Hold RB with the D-pad for the speed, hold LB for the build tools, Select for Live, Buy and Build mode. The D-pad zooms, changes floors and turns objects. Overlays in the game's white and blue with a plumbob-green glow."
+description = "The Sims 4 on an Xbox-style pad, for the PC game's keys. The left stick moves the camera and the right stick the pointer; RT and A click, LT right-clicks. RB steps through the speeds (hold it with the D-pad for one), hold LB for the build tools, Select for Live, Buy and Build mode. The D-pad zooms, changes floors and turns objects. Overlays in the game's white and blue with a plumbob-green glow."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -49,7 +49,7 @@ East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_DELETE"]}
 North = {keys = ["KEY_TAB"]}
 LeftBumper = {open_menu = "Tools"}
-RightBumper = {open_menu = "Speed"}
+RightBumper = {cycle = {name = "Game speed"}}
 Select = {open_menu = "Modes"}
 Start = {keys = ["KEY_ESC"]}
 LeftStick = {keys = ["KEY_0"]}
@@ -58,6 +58,9 @@ DpadUp = {wheel = "Up"}
 DpadDown = {wheel = "Down"}
 DpadLeft = {keys = ["KEY_COMMA"]}
 DpadRight = {keys = ["KEY_DOT"]}
+
+[profiles.gestures.RightBumper.long_press]
+open_menu = "Speed"
 
 [profiles.gestures.DpadUp.long_press]
 keys = ["KEY_PAGEUP"]
@@ -138,7 +141,7 @@ noise_threshold = 1.0
 
 [profiles.guide]
 notes = '''The PC game has no controller support (the console editions did), so this plays it with the mouse and keys. The right stick {rs} moves the pointer and the left stick {ls} moves the camera. {rt} or {south} clicks a Sim or an object for its pie menu; hold {lt} and move the pointer to turn the camera.
-Hold {rb} and press the {dpad} for the speed: left normal, up fast, right ultra, down pause. Click {l3} to pause too.
+Tap {rb} for the next speed: fast, ultra, then normal again. Press {rb} with the {dpad} for one speed (left normal, up fast, right ultra, down pause); hold {rb} to see them. Click {l3} to pause too.
 {select} lists Live, Buy and Build mode, the camera mode and the cheat console. Hold {lb} for the build tools: hand, eyedropper, sledgehammer, design tool, undo, redo and a screenshot.
 In Build and Buy, {left} and {right} turn the object in hand, hold {r3} to place it freely, {west} {color:red}deletes{/color} it. {up} and {down} zoom; hold them to go up or down a floor. {north} switches the camera mode.
 Typing a name or a cheat: {guide} + {west} opens the on-screen keyboard. Media controls: {guide} + {lb}.'''
@@ -153,7 +156,8 @@ Typing a name or a cheat: {guide} + {west} opens the on-screen keyboard. Media c
 "button:West" = {text = "{icon:trash} {color:red}Delete{/color}"}
 "button:North" = {text = "{icon:camera} Camera mode"}
 "button:LeftBumper" = {text = "Hold: {icon:hammer} tools"}
-"button:RightBumper" = {text = "Hold + {dpad}: speed"}
+"button:RightBumper" = {text = "{icon:speed2} Next speed"}
+"gesture:button:RightBumper:long_press" = {text = "Hold: speed menu"}
 "button:Select" = {text = "Modes"}
 "button:Start" = {text = "Menu"}
 "button:LeftStick" = {text = "{icon:pause} Pause"}
@@ -193,7 +197,7 @@ East = {keys = ["KEY_ESC"]}
 West = {keys = ["KEY_DELETE"]}
 North = {keys = ["KEY_TAB"]}
 LeftBumper = {open_menu = "Tools"}
-RightBumper = {open_menu = "Speed"}
+RightBumper = {cycle = {name = "Game speed"}}
 Select = {open_menu = "Modes"}
 Start = {keys = ["KEY_ESC"]}
 LeftStick = {keys = ["KEY_0"]}
@@ -202,6 +206,9 @@ DpadUp = {wheel = "Up"}
 DpadDown = {wheel = "Down"}
 DpadLeft = {keys = ["KEY_COMMA"]}
 DpadRight = {keys = ["KEY_DOT"]}
+
+[profiles.gestures.RightBumper.long_press]
+open_menu = "Speed"
 
 [profiles.gestures.DpadUp.long_press]
 keys = ["KEY_PAGEUP"]
@@ -285,7 +292,7 @@ sensitivity = 20.0
 [profiles.guide]
 notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
 The PC game has no controller support (the console editions did), so this plays it with the mouse and keys. The right stick {rs} moves the pointer and the left stick {ls} moves the camera. {rt} or {south} clicks a Sim or an object for its pie menu; hold {lt} and move the pointer to turn the camera.
-Hold {rb} and press the {dpad} for the speed: left normal, up fast, right ultra, down pause. Click {l3} to pause too.
+Tap {rb} for the next speed: fast, ultra, then normal again. Press {rb} with the {dpad} for one speed (left normal, up fast, right ultra, down pause); hold {rb} to see them. Click {l3} to pause too.
 {select} lists Live, Buy and Build mode, the camera mode and the cheat console. Hold {lb} for the build tools: hand, eyedropper, sledgehammer, design tool, undo, redo and a screenshot.
 In Build and Buy, {left} and {right} turn the object in hand, hold {r3} to place it freely, {west} {color:red}deletes{/color} it. {up} and {down} zoom; hold them to go up or down a floor. {north} switches the camera mode.
 Typing a name or a cheat: {guide} + {west} opens the on-screen keyboard. Media controls: {guide} + {lb}.'''
@@ -300,7 +307,8 @@ Typing a name or a cheat: {guide} + {west} opens the on-screen keyboard. Media c
 "button:West" = {text = "{icon:trash} {color:red}Delete{/color}"}
 "button:North" = {text = "{icon:camera} Camera mode"}
 "button:LeftBumper" = {text = "Hold: {icon:hammer} tools"}
-"button:RightBumper" = {text = "Hold + {dpad}: speed"}
+"button:RightBumper" = {text = "{icon:speed2} Next speed"}
+"gesture:button:RightBumper:long_press" = {text = "Hold: speed menu"}
 "button:Select" = {text = "Modes"}
 "button:Start" = {text = "Menu"}
 "button:LeftStick" = {text = "{icon:pause} Pause"}
@@ -318,6 +326,14 @@ Typing a name or a cheat: {guide} + {west} opens the on-screen keyboard. Media c
 inputs = ["button:DpadLeft", "button:DpadRight"]
 text = "{icon:rotate} Turn the object"
 
+
+[[cycles]]
+name = "Game speed"
+steps = [
+    {keys = ["KEY_2"]},
+    {keys = ["KEY_3"]},
+    {keys = ["KEY_1"]},
+]
 
 [[menus]]
 name = "Speed"

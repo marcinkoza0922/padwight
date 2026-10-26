@@ -1,13 +1,14 @@
-//! The profile's Touchpad tab: what fingers on the pad do (mouse, a stick, a menu laid out on
-//! the pad, or swipes), on the whole pad or on each half of a split one, what the click does,
+//! The profile's Touchpad tab: what fingers on the pad do (mouse, a stick, a mouse region, a menu
+//! laid out on the pad, or swipes), on the whole pad or on each half of a split one, what the click does,
 //! and a picture of the pad with the fingers on it. Each side sits in a box laid out as a stick's
 //! (see `device_box`).
 
 use iced::widget::{Column, column};
 
 use super::*;
+use super::mouse_region::{region_figure, region_rows};
 use crate::{
-    config::{CurvePreset, SpeedCurve, SwipeDirection, TouchChoose, TouchRegion, TouchSide, TouchSlot, TouchpadConfig, TouchpadMotion},
+    config::{CurvePreset, MouseRegion, SpeedCurve, SwipeDirection, TouchChoose, TouchRegion, TouchSide, TouchSlot, TouchpadConfig, TouchpadMotion},
     touchpad_widget::{PadPicture, touchpad_picture},
 };
 
@@ -18,18 +19,20 @@ pub(super) enum TouchModeKind {
     Off,
     Mouse,
     Joystick,
+    Region,
     Menu,
     Swipe,
 }
 
 impl TouchModeKind {
-    const ALL: [TouchModeKind; 5] = [TouchModeKind::Off, TouchModeKind::Mouse, TouchModeKind::Joystick, TouchModeKind::Menu, TouchModeKind::Swipe];
+    const ALL: [TouchModeKind; 6] = [TouchModeKind::Off, TouchModeKind::Mouse, TouchModeKind::Joystick, TouchModeKind::Region, TouchModeKind::Menu, TouchModeKind::Swipe];
 
     fn of(motion: &TouchpadMotion) -> Self {
         match motion {
             TouchpadMotion::Off => TouchModeKind::Off,
             TouchpadMotion::Mouse { .. } => TouchModeKind::Mouse,
             TouchpadMotion::Joystick { .. } => TouchModeKind::Joystick,
+            TouchpadMotion::Region { .. } => TouchModeKind::Region,
             TouchpadMotion::Menu { .. } => TouchModeKind::Menu,
             TouchpadMotion::Swipe { .. } => TouchModeKind::Swipe,
         }
@@ -41,6 +44,7 @@ impl TouchModeKind {
             TouchModeKind::Off => TouchpadMotion::Off,
             TouchModeKind::Mouse => TouchpadMotion::mouse(crate::config::DEFAULT_TOUCHPAD_SPEED),
             TouchModeKind::Joystick => TouchpadMotion::Joystick { stick: Stick::Right, relative: true, radius: 0.2, deadzone: 0.1 },
+            TouchModeKind::Region => TouchpadMotion::Region { region: MouseRegion::FULL },
             TouchModeKind::Menu => TouchpadMotion::Menu { menu: menus.first().cloned().unwrap_or_default(), choose: TouchChoose::Click, overlay: true },
             TouchModeKind::Swipe => TouchpadMotion::Swipe {
                 up: ButtonAction::Disabled,
@@ -59,6 +63,7 @@ impl fmt::Display for TouchModeKind {
             TouchModeKind::Off => "Off",
             TouchModeKind::Mouse => "Mouse pointer",
             TouchModeKind::Joystick => "Gamepad stick",
+            TouchModeKind::Region => "Mouse region",
             TouchModeKind::Menu => "Menu zones",
             TouchModeKind::Swipe => "Swipes",
         })
@@ -71,6 +76,7 @@ pub(super) fn touchpad_summary(cfg: &TouchpadConfig) -> String {
         TouchpadMotion::Off => "off".to_string(),
         TouchpadMotion::Mouse { .. } => "mouse".to_string(),
         TouchpadMotion::Joystick { stick, .. } => stick.to_string().to_lowercase(),
+        TouchpadMotion::Region { .. } => "mouse region".to_string(),
         TouchpadMotion::Menu { menu, .. } => format!("menu “{menu}”"),
         TouchpadMotion::Swipe { .. } => "swipes".to_string(),
     };
@@ -123,7 +129,25 @@ fn pictures<'a>(p: &'a Profile, ui: &Ui) -> Element<'a, Message> {
         width: PAD_WIDTH,
     };
     let why = if ui.any_touchpad { "Where each side's job is on the pad. Fingers on the controller's touchpad show up here." } else { "Where each side's job is on the pad. Connect a controller with a touchpad to see fingers on it." };
-    visualizer_panel(vec![figure("Pad (live)", touchpad_picture(&picture), None, PAD_WIDTH)], Some(why), None)
+    let mut pics = vec![figure("Pad (live)", touchpad_picture(&picture), None, PAD_WIDTH)];
+    pics.extend(p.touchpad.sides().iter().filter_map(|&side| match p.touchpad.motion(side) {
+        TouchpadMotion::Region { region } => Some(region_figure(region, region_pointer(&p.touchpad, side, region, picture.touches))),
+        _ => None,
+    }));
+    visualizer_panel(pics, Some(why), None)
+}
+
+/// Where the first finger on `side` puts the pointer in its mouse region, as shares of the desktop.
+fn region_pointer(cfg: &TouchpadConfig, side: TouchSide, region: &MouseRegion, touches: &[(f32, f32)]) -> Option<(f32, f32)> {
+    let split = cfg.right.is_some();
+    let on_side = |x: f32| !split || (x >= 0.5) == (side == TouchSide::Right);
+    let &(x, y) = touches.iter().find(|(x, _)| on_side(*x))?;
+    let x = match (split, side) {
+        (false, _) => x,
+        (true, TouchSide::Left) => x * 2.0,
+        (true, TouchSide::Right) => x * 2.0 - 1.0,
+    };
+    Some(region.point(((x - 0.5) * 2.0, (y - 0.5) * 2.0)))
 }
 
 /// The width of the pad's picture: wide enough for a split pad's menu labels, and no wider, as it
@@ -176,6 +200,7 @@ fn side_rows<'a>(rows: Column<'a, Message>, cfg: &'a TouchpadConfig, side: Touch
         TouchpadMotion::Off => rows,
         TouchpadMotion::Mouse { speed, curve, tap, scroll, inertia } => mouse_rows(rows, (*speed, *curve, *tap, *scroll, *inertia), set),
         TouchpadMotion::Joystick { stick, relative, radius, deadzone } => joystick_rows(rows, (*stick, *relative, *radius, *deadzone), set),
+        TouchpadMotion::Region { region } => region_rows(rows, *region, move |region| set(TouchpadMotion::Region { region })),
         TouchpadMotion::Menu { menu, choose, overlay } => menu_rows(rows, (menu, *choose, *overlay), names, set),
         TouchpadMotion::Swipe { distance, .. } => {
             let mut rows = rows.push(box_row("Swipe length", slider_editor(0.1..=0.6, *distance, 0.01, "pad widths", move |v| {

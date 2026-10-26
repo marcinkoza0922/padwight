@@ -118,6 +118,8 @@ fn multi_and_combos_roundtrip_through_toml() {
             double_tap: Some(ButtonAction::Keys(vec!["KEY_F5".into()])),
             triple_tap: None,
             long_press: Some(ButtonAction::Screenshot),
+            on_press: Some(ButtonAction::Keys(vec!["KEY_Z".into()])),
+            on_release: None,
         },
     );
     let back: Config = toml::from_str(&toml::to_string_pretty(&config).unwrap()).unwrap();
