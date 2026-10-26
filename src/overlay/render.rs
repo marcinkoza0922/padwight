@@ -12,6 +12,7 @@ pub mod layout;
 mod look;
 mod op;
 mod panel;
+mod radial;
 pub mod raster;
 mod rich;
 #[cfg(test)]
@@ -30,6 +31,7 @@ pub use look::{Look, Outline, PANEL_CORNER, Shadow};
 pub use op::{File, Fit, Markup, Op, PatternRef, RunKey, Svg, balanced, bounds, digest};
 pub use item::{Item, item};
 pub use panel::framed;
+pub use radial::radial;
 pub use rich::{Setting, info_cell, line, plain, rich};
 pub use style::Style;
 pub use typeset::Type;

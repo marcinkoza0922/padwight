@@ -7,7 +7,11 @@ use iced::{
 };
 
 use super::*;
-use crate::{config::MenuKind, menu::MenuView};
+use crate::{
+    config::MenuKind,
+    menu::MenuView,
+    radial::{CELL, HUB, Ring},
+};
 
 /// `c` is at full strength: the menu's fade is applied here.
 pub(super) fn radial<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
@@ -21,46 +25,22 @@ pub(super) fn radial<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, 
 fn radial_arcs<'a, M: 'a>(m: &MenuView, solid: Colors, s: f32) -> Element<'a, M> {
     let c = solid.faded(solid.anim.opacity());
     let weights: Vec<f32> = m.items.iter().map(|item| item.weight).collect();
-    let arcs = crate::radial::arcs(&weights);
-    let hub = 48.0 * s;
-    let inner = hub / 2.0 + 6.0 * s;
-    let shape = Ring { inner, outer: arc_outer_radius(&arcs, inner, s), hub, s, arcs };
-    let (inner, outer, size, center) = (shape.inner, shape.outer, shape.size(), shape.size() / 2.0);
-    let point = |degrees: f32, r: f32| {
-        let (sin, cos) = degrees.to_radians().sin_cos();
-        (center + sin * r, center - cos * r)
-    };
-    let (cell_w, cell_h) = (120.0 * s, 44.0 * s);
+    let shape = Ring::new(&weights, s);
+    let (inner, outer, size, hub) = (shape.inner, shape.outer, shape.size(), shape.hub);
+    let (cell_w, cell_h) = (CELL.0 * s, CELL.1 * s);
     let mut layers = vec![ring(m, solid, &shape)];
     for i in 0..shape.arcs.len() {
         layers.extend(arc_filters(m, c, &shape, i));
     }
     for (i, &(start, end)) in shape.arcs.iter().enumerate() {
         // Each label sits in the middle of its arc.
-        let (x, y) = point((start + end) / 2.0, (inner + outer) / 2.0);
+        let (x, y) = shape.point((start + end) / 2.0, (inner + outer) / 2.0);
         let (label, _, _) = item_cell(m, i, c, 15.0 * s);
         let content = super::tag::tag(container(label).center_x(cell_w).center_y(cell_h), Part::Item(i));
         layers.push(pin(content).x(x - cell_w / 2.0).y(y - cell_h / 2.0).into());
     }
     layers.push(radial_hub(m, c, s, (hub, size), false));
     stack(layers).width(size).height(size).into()
-}
-
-/// Where a radial menu's arcs go: their angles, the radii between which they're drawn, and the
-/// hub's size, at scale `s`.
-struct Ring {
-    arcs: Vec<(f32, f32)>,
-    inner: f32,
-    outer: f32,
-    hub: f32,
-    s: f32,
-}
-
-impl Ring {
-    /// The width and height of the square it's drawn in.
-    fn size(&self) -> f32 {
-        2.0 * self.outer + 16.0 * self.s
-    }
 }
 
 /// The ring as one picture: the panel's color under it, every arc in the items' color, the lit ones blended toward the
@@ -131,20 +111,8 @@ fn ring<'a, M: 'a>(m: &MenuView, c: Colors, shape: &Ring) -> Element<'a, M> {
 /// and the next, in a layer just big enough to hold it. They fade in with their arc.
 fn arc_filters<'a, M: 'a>(m: &MenuView, c: Colors, shape: &Ring, i: usize) -> Vec<Element<'a, M>> {
     let (start, end) = shape.arcs[i];
-    let size = shape.size();
-    let center = size / 2.0;
-    // The box around the arc: its corners and every quarter turn it passes, at both radii.
-    let quarters = (0..=4).map(|q| q as f32 * 90.0).filter(|&q| q > start && q < end);
-    let (mut x0, mut y0, mut x1, mut y1) = (size, size, 0.0_f32, 0.0_f32);
-    for degrees in [start, end].into_iter().chain(quarters) {
-        let (sin, cos) = degrees.to_radians().sin_cos();
-        for r in [shape.inner, shape.outer] {
-            let (x, y) = (center + sin * r, center - cos * r);
-            (x0, y0, x1, y1) = (x0.min(x), y0.min(y), x1.max(x), y1.max(y));
-        }
-    }
-    let (x0, y0) = (x0.floor().max(0.0), y0.floor().max(0.0));
-    let (w, h) = (x1.ceil().min(size) - x0, y1.ceil().min(size) - y0);
+    let center = shape.size() / 2.0;
+    let (x0, y0, w, h) = shape.arc_box(i);
     let gap = if shape.arcs.len() > 1 { 2.0 * shape.s } else { 0.0 };
     let cut = texture::Shape::Arc { center: (center - x0, center - y0), inner: shape.inner, outer: shape.outer, start, end, gap };
     filtered::filters(c.faded(c.anim.item_fade(i)), &m.style, true, cut)
@@ -208,24 +176,6 @@ fn radial_hub<'a, M: 'a>(m: &MenuView, c: Colors, s: f32, (hub, size): (f32, f32
     stack![center, placed].width(size).height(size).into()
 }
 
-/// How far the arcs reach: far enough that the middle of each arc has room for its label,
-/// up to a limit for very many items.
-fn arc_outer_radius(arcs: &[(f32, f32)], inner: f32, s: f32) -> f32 {
-    let label = 120.0 * s;
-    let fits = |outer: f32| {
-        let mid = (inner + outer) / 2.0;
-        arcs.len() < 2
-            || arcs
-                .iter()
-                .all(|&(a, b)| 2.0 * mid * ((b - a).to_radians() / 2.0).sin() >= label)
-    };
-    let mut outer = 170.0 * s;
-    while !fits(outer) && outer < 420.0 * s {
-        outer += 4.0 * s;
-    }
-    outer
-}
-
 /// `#rrggbb` for an SVG attribute.
 fn hex(c: Color) -> String {
     format!(
@@ -238,10 +188,9 @@ fn hex(c: Color) -> String {
 
 /// The menu as boxes at equal angles around a hub.
 fn radial_boxes<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
-    let (cell_w, cell_h) = (120.0 * s, 44.0 * s);
+    let (cell_w, cell_h) = (CELL.0 * s, CELL.1 * s);
     let n = m.items.len().max(1) as f32;
-    let radius = radial_radius(m.items.len(), 120.0, 44.0) * s;
-    let size = 2.0 * radius + 120.0 * s;
+    let (size, radius) = crate::radial::box_square(m.items.len(), s);
     let mut layers: Vec<Element<'a, M>> = vec![space().width(size).height(size).into()];
     for i in 0..m.items.len() {
         // First item at the top, then clockwise.
@@ -255,25 +204,6 @@ fn radial_boxes<'a, M: 'a>(m: &MenuView, c: Colors, s: f32) -> Element<'a, M> {
         let content = super::tag::tag(content, Part::Item(i));
         layers.push(pin(content).x(x - cell_w / 2.0).y(y - cell_h / 2.0).into());
     }
-    layers.push(radial_hub(m, c, s, (48.0 * s, size), true));
+    layers.push(radial_hub(m, c, s, (HUB * s, size), true));
     stack(layers).width(size).height(size).into()
-}
-
-/// The smallest ring (at least 150) on which neighbouring `w`×`h` cells don't touch.
-fn radial_radius(n: usize, w: f32, h: f32) -> f32 {
-    let gap = 8.0;
-    let step = TAU / n.max(1) as f32;
-    let overlaps = |r: f32| {
-        (0..n).any(|i| {
-            let (a, b) = (i as f32 * step, (i + 1) as f32 * step);
-            let dx = (r * a.sin() - r * b.sin()).abs();
-            let dy = (r * a.cos() - r * b.cos()).abs();
-            n > 1 && dx < w + gap && dy < h + gap
-        })
-    };
-    let mut r = 150.0;
-    while overlaps(r) && r < 600.0 {
-        r += 5.0;
-    }
-    r
 }
