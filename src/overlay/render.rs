@@ -7,6 +7,7 @@ mod geom;
 mod look;
 mod op;
 mod style;
+pub mod text;
 mod typeset;
 
 pub use color::{Rgba, blend, paint, text_on};
