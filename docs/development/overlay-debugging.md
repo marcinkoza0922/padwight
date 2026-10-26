@@ -12,6 +12,11 @@ controller. They answer two kinds of question:
 
 - **Stills:** how does a screen look, start to finish? Use the
   [screenshot and preview tools](#screenshots-and-previews).
+- **Old against new:** does the overlay's own renderer (`overlay/render`) draw a scene like iced
+  does? `padwight debug overlay compare all` writes iced | new | difference (times 8) to
+  `screenshots/compare/` and lists the scenes worst first by the share of pixels that differ by
+  more than 8 levels, then the mean and largest difference. Scenes the new renderer can't draw
+  yet are listed as not ported; panels hook in at `draw_new` in `src/debug/overlay_compare.rs`.
 
 All output goes under `screenshots/`, which git ignores.
 

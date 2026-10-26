@@ -13,6 +13,7 @@ mod bridge;
 mod focus;
 mod glyphs;
 mod motion_shot;
+mod overlay_compare;
 mod overlay_shot;
 mod pack_scenes;
 mod pad;
@@ -62,7 +63,7 @@ Without a session:
 ";
 
 fn usage() -> String {
-    format!("{USAGE}{}{}{}{}{}\nWith a session:\n{}", focus::USAGE, sound::USAGE, overlay_shot::USAGE, motion_shot::USAGE, crate::gui::shoot::USAGE, protocol::COMMANDS)
+    format!("{USAGE}{}{}{}{}{}{}\nWith a session:\n{}", focus::USAGE, sound::USAGE, overlay_shot::USAGE, overlay_compare::USAGE, motion_shot::USAGE, crate::gui::shoot::USAGE, protocol::COMMANDS)
 }
 
 #[expect(clippy::print_stdout, reason = "CLI output")]
