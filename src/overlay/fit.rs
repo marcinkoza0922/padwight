@@ -25,16 +25,21 @@ impl Fit {
     }
 
     pub fn of(style: &OverlayStyle, display: Size) -> Self {
+        Fit::within(style, display.width, display.height)
+    }
+
+    /// `of`, for a display `width` by `height` pixels (no iced needed).
+    pub fn within(style: &OverlayStyle, width: f32, height: f32) -> Self {
         let across = |pct: f32, of: f32| (pct / 100.0 * of).max(0.0);
-        let max_width = across(style.max_width, display.width);
-        let max_height = across(style.max_height, display.height);
+        let max_width = across(style.max_width, width);
+        let max_height = across(style.max_height, height);
         Fit {
-            width: style.width.map(|w| across(w, display.width).min(max_width)),
-            height: style.height.map(|h| across(h, display.height).min(max_height)),
+            width: style.width.map(|w| across(w, width).min(max_width)),
+            height: style.height.map(|h| across(h, height).min(max_height)),
             max_width,
             max_height,
-            x: style.x_offset / 100.0 * display.width,
-            y: style.y_offset / 100.0 * display.height,
+            x: style.x_offset / 100.0 * width,
+            y: style.y_offset / 100.0 * height,
         }
     }
 }

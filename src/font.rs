@@ -109,7 +109,6 @@ fn family_of(bytes: &[u8]) -> Option<String> {
 
 /// Every font file a renderer should load to draw what [`family`] names: the bundled fonts, then
 /// the other files loaded so far (a game's). Each renderer loads them into its own font system.
-#[cfg_attr(not(test), expect(dead_code, reason = "for the cosmic-text renderer, which loads these into its own font system"))]
 pub fn files() -> Vec<Cow<'static, [u8]>> {
     let bundled: Vec<u64> = BUNDLED.iter().map(|b| hash(b.bytes)).collect();
     let loaded = LOADED.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
@@ -121,7 +120,6 @@ pub fn files() -> Vec<Cow<'static, [u8]>> {
 
 /// Changes whenever [`files`] would list more: read it before [`files`], and load them again
 /// once it moves on.
-#[cfg_attr(not(test), expect(dead_code, reason = "for the cosmic-text renderer, which loads these into its own font system"))]
 pub fn version() -> u64 {
     VERSION.load(Ordering::Acquire)
 }

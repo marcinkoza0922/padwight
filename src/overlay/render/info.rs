@@ -19,7 +19,12 @@ pub fn info_panel(view: &InfoView, font: Option<&'static str>, fit: &Fit, anim: 
     let cell = |segments: &[Segment]| info_cell(segments, &style, s, opacity);
     // Cells are padded by half the gap between columns on each side.
     let room = fit.width.unwrap_or(fit.max_width) - 2.0 * pad_x;
-    let widths = column_widths(&view.rows, room, 20.0 * s, |c| cell(c).measure(f32::INFINITY).x);
+    let mut widths = column_widths(&view.rows, room, 20.0 * s, |c| cell(c).measure(f32::INFINITY).x);
+    // A column held narrower than its cells is only as wide as its widest wrapped line, as in iced.
+    for (j, w) in widths.iter_mut().enumerate() {
+        let wrapped = view.rows.iter().filter_map(|r| r.get(j)).map(|c| cell(c).measure(*w).x).fold(0.0, f32::max);
+        *w = w.min(wrapped.ceil());
+    }
     let rows = view.rows.iter().map(|row| {
         let cells = widths.iter().enumerate().map(|(j, w)| {
             let inner = row.get(j).map_or_else(Node::space, |c| cell(c));
