@@ -3,6 +3,7 @@
 
 mod anchor;
 mod color;
+mod figure;
 mod fill;
 mod geom;
 mod glyphs;
@@ -20,6 +21,7 @@ pub mod text;
 mod typeset;
 
 pub use color::{Rgba, blend, paint, text_on};
+pub use figure::{figure, touchpad};
 pub use fill::{Cap, Fill, Join, Linear, Rule, Stop, Stroke};
 pub use glyphs::{bar_of, dpad, glyph, icon_svg, segment, state_icon};
 pub use geom::{Corners, Layer, Path, Point, Rect, Seg};

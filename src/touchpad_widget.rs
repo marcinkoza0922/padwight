@@ -18,8 +18,23 @@ const PANEL: &str = "#1d2026";
 const EDGE: &str = "#3a3f48";
 const ZONE: [&str; 2] = ["#262a31", "#2d323a"];
 const ACCENT: &str = "#4ea1ff";
-const LABEL: Color = Color::from_rgb(0.79, 0.82, 0.85);
+const LABEL: Color = Color::from_rgb(LABEL_RGB[0], LABEL_RGB[1], LABEL_RGB[2]);
 const PICKED: Color = Color::WHITE;
+
+/// The labels' text size.
+pub const LABEL_SIZE: f32 = 11.0;
+/// The labels' colors (red, green, blue), plain and for a picked item.
+pub const LABEL_RGB: [f32; 3] = [0.79, 0.82, 0.85];
+
+/// One label over the drawing: its text, whether a finger is on it, where its box is and how
+/// big. The text is centered in the box, wrapped to it and cut off at it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Label {
+    pub text: String,
+    pub picked: bool,
+    pub at: (f32, f32),
+    pub size: (f32, f32),
+}
 
 /// What to draw.
 pub struct PadPicture<'a> {
@@ -57,7 +72,7 @@ impl Area<'_> {
 }
 
 impl PadPicture<'_> {
-    fn size(&self) -> (f32, f32) {
+    pub fn size(&self) -> (f32, f32) {
         (self.width, self.width * self.height)
     }
 
@@ -94,7 +109,7 @@ impl PadPicture<'_> {
             .collect()
     }
 
-    fn svg(&self) -> String {
+    pub fn svg(&self) -> String {
         let (w, h) = self.size();
         let mut s = format!(r#"<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}"><defs>"#);
         for (i, a) in self.areas().iter().enumerate() {
@@ -174,13 +189,10 @@ impl PadPicture<'_> {
         }
     }
 
-    /// The labels pinned over the drawing: a menu's items where they lie, or what the side does.
-    fn labels<'a, M: 'a>(&self) -> Vec<Element<'a, M>> {
+    /// The labels over the drawing: a menu's items where they lie, or what the side does.
+    pub fn labels(&self) -> Vec<Label> {
         let mut pins = Vec::new();
-        let label = |content: String, picked: bool, (x, y): (f32, f32), (w, h): (f32, f32)| -> Element<'a, M> {
-            let t = text(content).size(11).color(if picked { PICKED } else { LABEL }).wrapping(text::Wrapping::WordOrGlyph).center();
-            pin(container(t).center_x(w.max(1.0)).center_y(h.max(1.0)).clip(true)).x(x).y(y).into()
-        };
+        let label = |text: String, picked: bool, at: (f32, f32), size: (f32, f32)| Label { text, picked, at, size };
         for area in self.areas() {
             let middle = (area.x + 4.0, 0.0);
             let whole = (area.w - 8.0, area.h);
@@ -239,7 +251,10 @@ pub fn touchpad_picture<'a, M: 'a>(picture: &PadPicture<'_>) -> Element<'a, M> {
     let (w, h) = picture.size();
     let body = svg::Handle::from_memory(picture.svg().into_bytes());
     let mut layers: Vec<Element<'a, M>> = vec![svg(body).width(w).height(h).into()];
-    layers.extend(picture.labels());
+    layers.extend(picture.labels().into_iter().map(|l| {
+        let t = text(l.text).size(LABEL_SIZE).color(if l.picked { PICKED } else { LABEL }).wrapping(text::Wrapping::WordOrGlyph).center();
+        pin(container(t).center_x(l.size.0.max(1.0)).center_y(l.size.1.max(1.0)).clip(true)).x(l.at.0).y(l.at.1).into()
+    }));
     stack(layers).width(w).height(h).into()
 }
 
