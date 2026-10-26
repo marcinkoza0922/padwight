@@ -5,11 +5,13 @@ use std::sync::OnceLock;
 
 use crate::config::Texture;
 
+mod filters;
 mod grains;
 mod materials;
 mod patterns;
 mod shape;
 
+pub use filters::{Filter, Tint, filters};
 pub use grains::{camo, grain, pixels, scanlines, wash};
 use materials::{brushed_metal, cloth, concrete, denim, leather, paper, silk, steel, wood};
 pub use patterns::{argyle, checkerboard, plaid, polka_dots, stripes};

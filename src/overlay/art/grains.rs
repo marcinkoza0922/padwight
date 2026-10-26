@@ -1,7 +1,7 @@
 //! The translucent and noisy filters: grain, scanlines, pixel blocks and camo, and a flat wash.
 
-use super::{Pattern, blotch, hash};
-use crate::config::{Camo, CamoScheme, Grain, Paint, Pixels, Scanlines, Tint};
+use super::{Pattern, Tint, blotch, hash};
+use crate::config::{Camo, CamoScheme, Grain, Paint, Pixels, Scanlines};
 
 /// Noise in blocks `block` pixels across. Given a clock, it picks one of a few patterns by it,
 /// a dozen times a second.
@@ -120,6 +120,6 @@ pub fn camo(c: &Camo, s: f32) -> Pattern {
 
 /// A flat wash of the tint's color as a picture, for a shape a box's rounded corners can't draw.
 pub fn wash(t: &Tint) -> Pattern {
-    let [r, g, b] = Paint::new(&t.color, 1.0).rgb().unwrap_or([0xff, 0xa0, 0x40]);
+    let [r, g, b] = t.rgb;
     Pattern::new([19, 0, u32::from_be_bytes([0, r, g, b])], t.opacity, move |_, _, w, h| [r, g, b, 255].repeat(w * h))
 }
