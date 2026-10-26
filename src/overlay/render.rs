@@ -4,11 +4,13 @@
 mod color;
 mod fill;
 mod geom;
+mod glyphs;
 pub mod layout;
 mod look;
 mod op;
 mod panel;
 pub mod raster;
+mod rich;
 #[cfg(test)]
 mod sample;
 mod style;
@@ -17,10 +19,12 @@ mod typeset;
 
 pub use color::{Rgba, blend, paint, text_on};
 pub use fill::{Cap, Fill, Join, Linear, Rule, Stop, Stroke};
+pub use glyphs::{bar_of, dpad, glyph, icon_svg, segment, state_icon};
 pub use geom::{Corners, Layer, Path, Point, Rect, Seg};
 pub use layout::{Align, Length, Node, Padding, Painter, Pin};
 pub use look::{Look, Outline, PANEL_CORNER, Shadow};
 pub use op::{File, Fit, Markup, Op, PatternRef, RunKey, Svg, balanced, bounds, digest};
 pub use panel::framed;
+pub use rich::{Setting, info_cell, line, plain, rich};
 pub use style::Style;
 pub use typeset::Type;
