@@ -58,6 +58,8 @@ enum Source {
     Combo(Vec<Button>),
     /// A held double/triple-tap or long-press action.
     Gesture(Button),
+    /// An input's On press or On release (the input is a `Button` or `Trigger` source).
+    Edge(Box<Source>, GestureKind),
     /// A ring sector of a stick that is active.
     RingSector(Stick, usize),
     /// An analog zone (index into the stick's or trigger's zone list) that is active.
@@ -85,6 +87,7 @@ impl Source {
             Source::Combo(members) => FiredFrom::Combo(members.clone()),
             Source::Trigger(t) | Source::Zone(Analog::Trigger(t), _) => FiredFrom::Trigger(*t),
             Source::Zone(Analog::Stick(s), _) | Source::RingSector(s, _) => FiredFrom::Stick(*s),
+            Source::Edge(input, _) => return input.fired_from(),
             Source::MenuItem(..) => return None,
         })
     }
@@ -94,6 +97,7 @@ impl Source {
             Source::Button(b) | Source::Gesture(b) => Opener { buttons: vec![*b], ..Opener::default() },
             Source::Combo(members) => Opener { buttons: members.clone(), ..Opener::default() },
             Source::Trigger(t) => Opener { trigger: Some(*t), ..Opener::default() },
+            Source::Edge(input, _) => input.opener(),
             _ => Opener::default(),
         }
     }
@@ -132,6 +136,8 @@ pub struct Engine {
     held: HashMap<Source, ButtonAction>,
     members: HashMap<Button, ComboMember>,
     gestures: HashMap<Button, GestureState>,
+    /// The On release of each input held down, as it was when pressed, tapped when let go.
+    on_release: HashMap<Source, ButtonAction>,
     /// Virtual-pad stick each physical stick feeds in gamepad mode, so it can be recentered
     /// when a layer gives the stick another mode.
     pad_feeds: HashMap<Stick, Stick>,
@@ -562,7 +568,8 @@ impl Engine {
     /// button has gestures, otherwise presses/releases its action directly.
     #[expect(clippy::too_many_arguments, reason = "predates the size lints")]
     fn solo(&mut self, profile: &Profile, b: Button, pressed: bool, now: Instant, out: &mut Vec<OutEvent>) {
-        let Some(gestures) = profile.gestures(b) else {
+        self.edges(&Source::Button(b), profile.gestures(b), pressed, out);
+        let Some(gestures) = profile.gestures(b).filter(|g| g.timed()) else {
             // Gestures may have been removed mid-sequence; a release still has to land.
             if !pressed {
                 match self.gestures.remove(&b) {
@@ -614,6 +621,24 @@ impl Engine {
                 Some(GestureState::Down { taps, .. }) => self.tap_sequence(profile, b, taps, out),
                 _ => {}
             }
+        }
+    }
+
+    /// Taps an input's On press as it goes down, and as it's let go the On release it had then.
+    /// Neither waits on the input's other gestures.
+    fn edges(&mut self, input: &Source, gestures: Option<&crate::config::Gestures>, pressed: bool, out: &mut Vec<OutEvent>) {
+        if !pressed {
+            if let Some(action) = self.on_release.remove(input) {
+                self.tap(&Source::Edge(Box::new(input.clone()), GestureKind::OnRelease), &action, out);
+            }
+            return;
+        }
+        let Some(g) = gestures else { return };
+        if let Some(action) = &g.on_release {
+            self.on_release.insert(input.clone(), action.clone());
+        }
+        if let Some(action) = &g.on_press {
+            self.tap(&Source::Edge(Box::new(input.clone()), GestureKind::OnPress), action, out);
         }
     }
 
@@ -869,7 +894,13 @@ impl Engine {
         let mut inputs: Vec<(Source, &ButtonAction)> = Vec::new();
         inputs.extend(profile.buttons.iter().map(|(b, a)| (Source::Button(*b), a)));
         for (b, g) in &profile.gestures {
-            inputs.extend(GestureKind::ALL.into_iter().filter_map(|k| g.get(k)).map(|a| (Source::Gesture(*b), a)));
+            inputs.extend(GestureKind::TIMED.into_iter().filter_map(|k| g.get(k)).map(|a| (Source::Gesture(*b), a)));
+        }
+        fn edges<'a>(input: &Source, g: &'a crate::config::Gestures) -> Vec<(Source, &'a ButtonAction)> {
+            GestureKind::EDGES.into_iter().filter_map(|k| g.get(k).map(|a| (Source::Edge(Box::new(input.clone()), k), a))).collect()
+        }
+        for (b, g) in &profile.gestures {
+            inputs.extend(edges(&Source::Button(*b), g));
         }
         for c in &profile.combos {
             let mut id = c.buttons.clone();
@@ -880,6 +911,7 @@ impl Engine {
         for t in [Trigger::Left, Trigger::Right] {
             if let TriggerAction::Button { action, .. } = profile.trigger(t) {
                 inputs.push((Source::Trigger(t), action));
+                inputs.extend(edges(&Source::Trigger(t), &profile.trigger_config(t).gestures));
             }
         }
         for &side in profile.touchpad.sides() {
@@ -933,6 +965,7 @@ impl Engine {
         {
             self.trigger_release.remove(&t);
             self.digital(&src, &ButtonAction::Disabled, false, out);
+            self.edges(&src, None, false, out);
         }
         match action {
             TriggerAction::Disabled => {}
@@ -945,6 +978,7 @@ impl Engine {
                 if !self.trigger_release.contains_key(&t) && analog_pressed(value, *threshold, false, TRIGGER_HYSTERESIS) {
                     self.trigger_release.insert(t, *threshold);
                     self.digital(&src, action, true, out);
+                    self.edges(&src, profile.trigger_gestures(t), true, out);
                 }
             }
         }
@@ -1041,6 +1075,12 @@ impl Engine {
         let held: Vec<_> = self.held.drain().collect();
         for (src, action) in held {
             self.emit(&src, &action, false, 0, out);
+        }
+        // Inputs still down get their On release now, so a game's toggle their press turned on
+        // goes back off; letting go of them later does nothing.
+        let releases: Vec<_> = self.on_release.drain().collect();
+        for (input, action) in releases {
+            self.tap(&Source::Edge(Box::new(input), GestureKind::OnRelease), &action, out);
         }
         // Toggled-on actions are released too (this also stops toggled turbos).
         let toggled: Vec<_> = self.toggled.drain().collect();
@@ -1234,3 +1274,5 @@ fn take_whole(acc: &mut (f32, f32), dx: f32, dy: f32) -> (i32, i32) {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod edge_tests;

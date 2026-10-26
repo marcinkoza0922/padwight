@@ -407,6 +407,8 @@ enum Target {
     Trigger(Trigger),
     Combo(usize),
     Gesture(Button, GestureKind),
+    /// A trigger's On press or On release.
+    TriggerGesture(Trigger, GestureKind),
     Zone(Analog, usize),
     /// Step `.1` of macro `.0` (in the shown list), not part of any profile.
     MacroStep(usize, usize),
@@ -511,6 +513,8 @@ enum Message {
     SetComboWindow(f32),
     AddGesture(Button, GestureKind),
     RemoveGesture(Button, GestureKind),
+    AddTriggerGesture(Trigger, GestureKind),
+    RemoveTriggerGesture(Trigger, GestureKind),
     SetTapWindow(f32),
     SetLongPress(f32),
     AddZone(Analog, ZonePreset),
@@ -1311,7 +1315,7 @@ impl App {
                 self.profile_tab = ProfileTab::Combos;
                 Task::none()
             }
-            Target::Trigger(_) | Target::Zone(..) | Target::RingSector(..) => {
+            Target::Trigger(_) | Target::TriggerGesture(..) | Target::Zone(..) | Target::RingSector(..) => {
                 self.profile_tab = ProfileTab::Sticks;
                 Task::none()
             }

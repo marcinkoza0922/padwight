@@ -707,6 +707,7 @@ fn gesture_profile() -> Profile {
             double_tap: Some(ButtonAction::Keys(vec!["KEY_2".into()])),
             triple_tap: Some(ButtonAction::Keys(vec!["KEY_3".into()])),
             long_press: Some(ButtonAction::Keys(vec!["KEY_L".into()])),
+            ..Default::default()
         },
     );
     p

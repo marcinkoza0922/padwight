@@ -125,6 +125,7 @@ fn title_for(target: Target, family: crate::info::PadFamily) -> String {
         Target::Button(b) => format!("Action for {}", name(b)),
         Target::Trigger(t) => format!("Action for {t}"),
         Target::Gesture(b, g) => format!("{g} action for {}", name(b)),
+        Target::TriggerGesture(t, g) => format!("{g} action for {t}"),
         Target::RingSector(stick, i) => format!("Action for sector {} of the {stick} ring", i + 1),
         Target::Combo(i) => format!("Action for combo {}", i + 1),
         _ => "Choose an action".into(),

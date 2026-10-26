@@ -123,7 +123,7 @@ buttons = ["LeftBumper", "RightBumper"]
 action = { keys = ["KEY_LEFTALT", "KEY_TAB"] }
 ```
 
-- Gesture kinds: `double_tap`, `triple_tap`, `long_press`.
+- Gesture kinds: `double_tap`, `triple_tap`, `long_press`, `on_press`, `on_release`. `on_press` and `on_release` tap their action once as the button goes down and once as it's let go, beside its own action and without waiting on the other gestures. The same key on both makes a game's toggle a hold.
 - A combo needs at least two buttons, and no two combos in a profile, layer or mode can have the same buttons: to do several things, give one combo a `multi` action. Members wait `combo_window_ms` for the rest of the combo before acting alone. A member whose own action is `"disabled"` works as a modifier with no time limit.
 
 Key names are evdev names (`KEY_A`, `KEY_LEFTSHIFT`, `KEY_KPPLUS`, `KEY_RIGHTBRACE`, `KEY_APOSTROPHE`, …). The keyboard overlay in the app lists them.
@@ -178,6 +178,18 @@ Triggers take zones too, under `[[profiles.left_trigger.zones]]`. The app hides 
 [profiles.right_trigger.action.button]
 threshold = 0.3                  # pull (0.0–1.0) that counts as pressed
 action = { mouse = "Left" }      # any action a button can have
+```
+
+A trigger acting as a button takes `on_press` and `on_release` too (no other gestures), here turning a game's toggled aim into a hold while the trigger holds a finer-aim layer:
+
+```toml
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { layer = "Zoom" }
+
+[profiles.left_trigger.gestures]
+on_press = { mouse = "Right" }
+on_release = { mouse = "Right" }
 ```
 
 Or pass the trigger through as an analog axis: `[profiles.right_trigger.action] gamepad = "Right"` (`"Left"` or `"Right"`), or `"disabled"`.

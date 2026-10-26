@@ -14,6 +14,8 @@ pub enum Slot {
     Combo(Owner, usize),
     /// A trigger pulled past its press point.
     Trigger(Owner, Trigger),
+    /// A button-acting trigger's On press or On release.
+    TriggerGesture(Owner, Trigger, GestureKind),
     /// A stick's or trigger's zone.
     Zone(Owner, Analog, usize),
     /// A sector of a stick's ring.
@@ -30,7 +32,7 @@ impl Slot {
     /// Whether it can be left unset (a gesture, or a button a mode or layer leaves alone),
     /// rather than doing nothing.
     pub fn unsettable(self) -> bool {
-        matches!(self, Slot::Gesture(..) | Slot::Button(Owner::Shift(..), _))
+        matches!(self, Slot::Gesture(..) | Slot::TriggerGesture(..) | Slot::Button(Owner::Shift(..), _))
     }
 }
 
@@ -85,6 +87,7 @@ pub fn slot_action(config: &Config, slot: Slot) -> Option<ButtonAction> {
             TriggerAction::Button { action, .. } => Some(action.clone()),
             _ => None,
         },
+        Slot::TriggerGesture(o, t, kind) => owner::trigger(config, o, t)?.gestures.get(kind).cloned(),
         Slot::Zone(o, a, i) => owner::zones(config, o, a).get(i).map(|z| z.action.clone()),
         Slot::Ring(o, s, i) => owner::stick(config, o, s)?.action.ring_actions().get(i).cloned(),
         Slot::Touch(o, t) => owner::touchpad(config, o)?.slot(t).cloned(),
@@ -110,6 +113,10 @@ pub fn set_slot_action(config: &mut Config, slot: Slot, action: Option<ButtonAct
                 gestures.remove(&b);
             }
         }
+        Slot::TriggerGesture(o, t, kind) => {
+            let Some(cfg) = owner::trigger_mut(config, o, t) else { return false };
+            *cfg.gestures.slot(kind) = action;
+        }
         Slot::MenuItem(m, i) => {
             let Some(item) = game_mut(config).and_then(|g| g.menus.get_mut(m)).and_then(|menu| menu.items.get_mut(i)) else { return false };
             let action = action.unwrap_or(ButtonAction::Disabled);
@@ -130,7 +137,7 @@ pub fn set_slot_action(config: &mut Config, slot: Slot, action: Option<ButtonAct
 /// The action-holding place of a slot that always has one.
 fn slot_mut(config: &mut Config, slot: Slot) -> Option<&mut ButtonAction> {
     match slot {
-        Slot::Button(..) | Slot::Gesture(..) => None,
+        Slot::Button(..) | Slot::Gesture(..) | Slot::TriggerGesture(..) => None,
         Slot::Combo(o, i) => owner::combos_mut(config, o)?.get_mut(i).map(|c| &mut c.action),
         Slot::Trigger(o, t) => match &mut owner::trigger_mut(config, o, t)?.action {
             TriggerAction::Button { action, .. } => Some(action),

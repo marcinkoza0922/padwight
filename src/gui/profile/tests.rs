@@ -180,3 +180,21 @@ fn the_pictures_tips_list_a_buttons_press_gestures_and_combos() {
     assert_eq!(tip(Button::LeftBumper).unwrap(), ["Press", "LB + A"], "a combo alone earns a tip");
     assert_eq!(tip(Button::East), None, "a button that does one thing needs none");
 }
+
+#[test]
+fn a_triggers_on_press_and_on_release_are_added_and_tipped() {
+    use crate::config::{GestureKind, Trigger, TriggerAction};
+    let mut app = app();
+    let _ = app.update(Message::SetTrigger(Trigger::Left, TriggerAction::Button { action: ButtonAction::Layer("Aim".into()), threshold: 0.4 }));
+    for kind in GestureKind::EDGES {
+        let _ = app.update(Message::AddTriggerGesture(Trigger::Left, kind));
+        let _ = app.update(Message::SetAction(Target::TriggerGesture(Trigger::Left, kind), ButtonAction::Mouse(crate::config::MouseButton::Right)));
+    }
+    let p = app.profile().unwrap().clone();
+    assert_eq!(p.left_trigger.gestures.on_release, Some(ButtonAction::Mouse(crate::config::MouseButton::Right)));
+    let tips = drawing_tips(&p);
+    let (_, tip) = tips.iter().find(|(s, _)| *s == pad_svg::Spot::Trigger(Trigger::Left)).unwrap();
+    assert_eq!(tip.lines().map(|l| l.split(':').next().unwrap()).collect::<Vec<_>>(), ["Press", "On press", "On release"]);
+    let _ = app.update(Message::RemoveTriggerGesture(Trigger::Left, GestureKind::OnPress));
+    assert_eq!(app.profile().unwrap().left_trigger.gestures.on_press, None);
+}

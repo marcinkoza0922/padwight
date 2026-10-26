@@ -306,13 +306,14 @@ impl Layer {
     /// Every action it sets: buttons, gestures, combos, triggers and zones.
     pub fn actions(&self) -> Vec<&ButtonAction> {
         let mut all: Vec<&ButtonAction> = self.buttons.values().collect();
-        all.extend(self.gestures.values().flat_map(|g| GestureKind::ALL.into_iter().filter_map(|k| g.get(k))));
+        all.extend(self.gestures.values().flat_map(Gestures::actions));
         all.extend(self.combos.iter().map(|c| &c.action));
         for t in [&self.left_trigger, &self.right_trigger].into_iter().flatten() {
             if let TriggerAction::Button { action, .. } = &t.action {
                 all.push(action);
             }
             all.extend(t.zones.iter().map(|z| &z.action));
+            all.extend(t.gestures.actions());
         }
         for s in [&self.left_stick, &self.right_stick].into_iter().flatten() {
             all.extend(s.zones.iter().map(|z| &z.action));
@@ -325,7 +326,7 @@ impl Layer {
     pub fn actions_mut(&mut self) -> Vec<&mut ButtonAction> {
         let mut all: Vec<&mut ButtonAction> = self.buttons.values_mut().collect();
         for g in self.gestures.values_mut() {
-            all.extend([&mut g.double_tap, &mut g.triple_tap, &mut g.long_press].into_iter().filter_map(|s| s.as_mut()));
+            all.extend(g.slots_mut());
         }
         all.extend(self.combos.iter_mut().map(|c| &mut c.action));
         for t in [&mut self.left_trigger, &mut self.right_trigger].into_iter().flatten() {
@@ -333,6 +334,7 @@ impl Layer {
                 all.push(action);
             }
             all.extend(t.zones.iter_mut().map(|z| &mut z.action));
+            all.extend(t.gestures.slots_mut());
         }
         for s in [&mut self.left_stick, &mut self.right_stick].into_iter().flatten() {
             all.extend(s.zones.iter_mut().map(|z| &mut z.action));

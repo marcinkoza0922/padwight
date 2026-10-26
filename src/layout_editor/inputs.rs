@@ -22,7 +22,7 @@ pub(super) fn button_rows(cx: &Cx, owner: Owner) -> Vec<Row> {
         .collect()
 }
 
-/// A button's double tap, triple tap and long press.
+/// A button's double tap, triple tap, long press, On press and On release.
 pub(super) fn gesture_rows(config: &Config, owner: Owner, b: Button) -> Vec<Row> {
     GestureKind::ALL
         .iter()

@@ -50,7 +50,7 @@ Each stick direction (Left Stick Up, and so on) can have its own action and can 
 
 ## Triggers
 
-A trigger can pass its pull on as an analog value, for games that read how far it's pressed, or work as a button that fires once the pull passes a threshold.
+A trigger can pass its pull on as an analog value, for games that read how far it's pressed, or work as a button that fires once the pull passes a threshold. As a button, it can also have an *On press* and an *On release*, actions tapped once as the pull passes the threshold and once as it's let go (see [Buttons and actions](buttons.md)).
 
 ## Zones
 

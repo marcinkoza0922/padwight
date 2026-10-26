@@ -2,7 +2,7 @@
 //! the Guide settings' edits.
 
 use super::super::summary::{Piece, guide_text, plain_text};
-use super::super::{Button, ButtonAction, GestureKind, Profile, Stick, StickAction, Trigger, TriggerAction, combo_key};
+use super::super::{Button, ButtonAction, GestureKind, Gestures, Profile, Stick, StickAction, Trigger, TriggerAction, combo_key};
 use super::{GuideInput, GuideSettings, RowId, RowShape};
 
 /// One line of the Mappings overlay: the inputs it names, and the text after them.
@@ -39,19 +39,36 @@ pub struct EditableRow {
     pub hidden: bool,
 }
 
+/// The action an On press and an On release both tap, which makes a game's toggle a hold: it
+/// reads as one thing the input does, so it has no rows of its own.
+fn held_toggle(gestures: Option<&Gestures>) -> Option<&ButtonAction> {
+    let g = gestures?;
+    g.on_press.as_ref().filter(|a| g.on_release.as_ref() == Some(*a) && **a != ButtonAction::Disabled)
+}
+
 /// Every input the profile maps, with its default text in pieces, in order: buttons, then
 /// triggers, then sticks. Guide itself, disabled inputs and plain pass-through buttons, triggers and
-/// sticks aren't listed.
+/// sticks aren't listed. An input that does nothing itself but hold a toggle (see [`held_toggle`])
+/// says what the toggle does.
 fn mapped_inputs(profile: &Profile) -> Vec<(GuideInput, Vec<Piece>)> {
     let mut inputs = Vec::new();
-    for (b, action) in &profile.buttons {
-        if *b != Button::Guide && *action != ButtonAction::Disabled && *action != ButtonAction::Gamepad(*b) {
-            inputs.push((GuideInput::Button(*b), action.pieces()));
+    let own = |action: &ButtonAction, gestures: Option<&Gestures>| match held_toggle(gestures) {
+        Some(toggle) if *action == ButtonAction::Disabled => toggle.pieces(),
+        _ => action.pieces(),
+    };
+    let buttons = profile.buttons.keys().chain(profile.gestures.keys().filter(|b| !profile.buttons.contains_key(b)));
+    let mut buttons: Vec<Button> = buttons.copied().collect();
+    buttons.sort();
+    for b in buttons {
+        let (action, gestures) = (profile.button(b), profile.gestures(b));
+        let shown = *action != ButtonAction::Disabled || held_toggle(gestures).is_some();
+        if b != Button::Guide && shown && *action != ButtonAction::Gamepad(b) {
+            inputs.push((GuideInput::Button(b), own(action, gestures)));
         }
     }
     for t in [Trigger::Left, Trigger::Right] {
         if let TriggerAction::Button { action, .. } = profile.trigger(t) {
-            inputs.push((GuideInput::Trigger(t), action.pieces()));
+            inputs.push((GuideInput::Trigger(t), own(action, Some(&profile.trigger_config(t).gestures))));
         }
     }
     for s in [Stick::Left, Stick::Right] {
@@ -93,13 +110,18 @@ pub fn editable_rows(profile: &Profile) -> Vec<EditableRow> {
         }
         rows.push(row(settings, RowId::Input(*input), vec![*input], pieces, RowShape::Input));
     }
-    for (button, gestures) in &profile.gestures {
-        if *button == Button::Guide {
-            continue;
-        }
+    let triggers = [Trigger::Left, Trigger::Right]
+        .into_iter()
+        .filter(|t| matches!(profile.trigger(*t), TriggerAction::Button { .. }))
+        .map(|t| (GuideInput::Trigger(t), &profile.trigger_config(t).gestures));
+    let buttons = profile.gestures.iter().filter(|(b, _)| **b != Button::Guide).map(|(b, g)| (GuideInput::Button(*b), g));
+    for (input, gestures) in buttons.chain(triggers) {
+        let folded = held_toggle(Some(gestures)).is_some();
         for kind in GestureKind::ALL {
+            if folded && GestureKind::EDGES.contains(&kind) {
+                continue;
+            }
             if let Some(action) = gestures.get(kind).filter(|a| **a != ButtonAction::Disabled) {
-                let input = GuideInput::Button(*button);
                 rows.push(row(settings, RowId::Gesture(input, kind), vec![input], &action.pieces(), RowShape::Gesture(kind)));
             }
         }

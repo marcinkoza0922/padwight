@@ -636,10 +636,18 @@ pub enum GestureKind {
     DoubleTap,
     TripleTap,
     LongPress,
+    /// Taps its action once as the input goes down, beside the input's own action.
+    OnPress,
+    /// Taps its action once as the input is let go, beside the input's own action.
+    OnRelease,
 }
 
 impl GestureKind {
-    pub const ALL: [GestureKind; 3] = [GestureKind::DoubleTap, GestureKind::TripleTap, GestureKind::LongPress];
+    pub const ALL: [GestureKind; 5] = [GestureKind::DoubleTap, GestureKind::TripleTap, GestureKind::LongPress, GestureKind::OnPress, GestureKind::OnRelease];
+    /// The kinds a trigger has: it can't be tapped or held apart from its pull.
+    pub const EDGES: [GestureKind; 2] = [GestureKind::OnPress, GestureKind::OnRelease];
+    /// The kinds that tell presses apart, holding the input's own action back to decide.
+    pub const TIMED: [GestureKind; 3] = [GestureKind::DoubleTap, GestureKind::TripleTap, GestureKind::LongPress];
 }
 
 impl fmt::Display for GestureKind {
@@ -648,11 +656,14 @@ impl fmt::Display for GestureKind {
             GestureKind::DoubleTap => "Double tap",
             GestureKind::TripleTap => "Triple tap",
             GestureKind::LongPress => "Long press",
+            GestureKind::OnPress => "On press",
+            GestureKind::OnRelease => "On release",
         })
     }
 }
 
-/// Extra actions for one button beyond its normal (single press) action.
+/// Extra actions for one input beyond its normal (single press) action. A trigger has only
+/// `on_press` and `on_release`.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct Gestures {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -661,6 +672,13 @@ pub struct Gestures {
     pub triple_tap: Option<ButtonAction>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub long_press: Option<ButtonAction>,
+    /// Tapped as the input goes down, without waiting on the other gestures. With `on_release`
+    /// it turns a game's toggle into a hold: both tap the same key.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub on_press: Option<ButtonAction>,
+    /// Tapped as the input is let go.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub on_release: Option<ButtonAction>,
 }
 
 impl Gestures {
@@ -669,6 +687,8 @@ impl Gestures {
             GestureKind::DoubleTap => self.double_tap.as_ref(),
             GestureKind::TripleTap => self.triple_tap.as_ref(),
             GestureKind::LongPress => self.long_press.as_ref(),
+            GestureKind::OnPress => self.on_press.as_ref(),
+            GestureKind::OnRelease => self.on_release.as_ref(),
         }
     }
 
@@ -677,11 +697,26 @@ impl Gestures {
             GestureKind::DoubleTap => &mut self.double_tap,
             GestureKind::TripleTap => &mut self.triple_tap,
             GestureKind::LongPress => &mut self.long_press,
+            GestureKind::OnPress => &mut self.on_press,
+            GestureKind::OnRelease => &mut self.on_release,
         }
     }
 
     pub fn is_empty(&self) -> bool {
         GestureKind::ALL.iter().all(|k| self.get(*k).is_none())
+    }
+
+    /// Whether any gesture holds the input's own action back to tell presses apart.
+    pub fn timed(&self) -> bool {
+        GestureKind::TIMED.iter().any(|k| self.get(*k).is_some())
+    }
+
+    pub fn slots_mut(&mut self) -> impl Iterator<Item = &mut ButtonAction> {
+        [&mut self.double_tap, &mut self.triple_tap, &mut self.long_press, &mut self.on_press, &mut self.on_release].into_iter().filter_map(Option::as_mut)
+    }
+
+    pub fn actions(&self) -> impl Iterator<Item = &ButtonAction> {
+        GestureKind::ALL.into_iter().filter_map(|k| self.get(k))
     }
 
     /// Most presses in a tap sequence that mean something (1 = no multi-tap gestures).
@@ -1086,11 +1121,14 @@ pub struct TriggerConfig {
     pub action: TriggerAction,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub zones: Vec<Zone>,
+    /// On press and On release, while the trigger acts as a button.
+    #[serde(default, skip_serializing_if = "Gestures::is_empty")]
+    pub gestures: Gestures,
 }
 
 impl From<TriggerAction> for TriggerConfig {
     fn from(action: TriggerAction) -> Self {
-        TriggerConfig { action, zones: Vec::new() }
+        TriggerConfig { action, zones: Vec::new(), gestures: Gestures::default() }
     }
 }
 
@@ -1102,6 +1140,8 @@ enum TriggerConfigRepr {
         action: TriggerAction,
         #[serde(default)]
         zones: Vec<Zone>,
+        #[serde(default)]
+        gestures: Gestures,
     },
     Legacy(TriggerAction),
 }
@@ -1109,7 +1149,7 @@ enum TriggerConfigRepr {
 impl From<TriggerConfigRepr> for TriggerConfig {
     fn from(repr: TriggerConfigRepr) -> Self {
         match repr {
-            TriggerConfigRepr::Full { action, zones } => TriggerConfig { action, zones },
+            TriggerConfigRepr::Full { action, zones, gestures } => TriggerConfig { action, zones, gestures },
             TriggerConfigRepr::Legacy(action) => action.into(),
         }
     }
@@ -1229,13 +1269,14 @@ impl Profile {
     /// Every top-level action in the profile: buttons, gestures, combos, triggers and zones.
     pub fn actions(&self) -> Vec<&ButtonAction> {
         let mut all: Vec<&ButtonAction> = self.buttons.values().collect();
-        all.extend(self.gestures.values().flat_map(|g| GestureKind::ALL.into_iter().filter_map(|k| g.get(k))));
+        all.extend(self.gestures.values().flat_map(Gestures::actions));
         all.extend(self.combos.iter().map(|c| &c.action));
         for t in [&self.left_trigger, &self.right_trigger] {
             if let TriggerAction::Button { action, .. } = &t.action {
                 all.push(action);
             }
             all.extend(t.zones.iter().map(|z| &z.action));
+            all.extend(t.gestures.actions());
         }
         all.extend(self.left_stick.zones.iter().chain(&self.right_stick.zones).map(|z| &z.action));
         all.extend(self.touchpad.actions());
@@ -1246,7 +1287,7 @@ impl Profile {
     pub fn actions_mut(&mut self) -> Vec<&mut ButtonAction> {
         let mut all: Vec<&mut ButtonAction> = self.buttons.values_mut().collect();
         for g in self.gestures.values_mut() {
-            all.extend([&mut g.double_tap, &mut g.triple_tap, &mut g.long_press].into_iter().filter_map(|s| s.as_mut()));
+            all.extend(g.slots_mut());
         }
         all.extend(self.combos.iter_mut().map(|c| &mut c.action));
         for t in [&mut self.left_trigger, &mut self.right_trigger] {
@@ -1254,6 +1295,7 @@ impl Profile {
                 all.push(action);
             }
             all.extend(t.zones.iter_mut().map(|z| &mut z.action));
+            all.extend(t.gestures.slots_mut());
         }
         for stick in [&mut self.left_stick, &mut self.right_stick] {
             all.extend(stick.zones.iter_mut().map(|z| &mut z.action));
@@ -1290,6 +1332,26 @@ impl Profile {
             Trigger::Left => &self.left_trigger.action,
             Trigger::Right => &self.right_trigger.action,
         }
+    }
+
+    pub fn trigger_config(&self, t: Trigger) -> &TriggerConfig {
+        match t {
+            Trigger::Left => &self.left_trigger,
+            Trigger::Right => &self.right_trigger,
+        }
+    }
+
+    pub fn trigger_config_mut(&mut self, t: Trigger) -> &mut TriggerConfig {
+        match t {
+            Trigger::Left => &mut self.left_trigger,
+            Trigger::Right => &mut self.right_trigger,
+        }
+    }
+
+    /// The trigger's On press and On release, if it acts as a button and has either set.
+    pub fn trigger_gestures(&self, t: Trigger) -> Option<&Gestures> {
+        let c = self.trigger_config(t);
+        (matches!(c.action, TriggerAction::Button { .. }) && !c.gestures.is_empty()).then_some(&c.gestures)
     }
 
     pub fn trigger_mut(&mut self, t: Trigger) -> &mut TriggerAction {
