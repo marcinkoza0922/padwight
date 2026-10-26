@@ -19,7 +19,7 @@ mod pack_scenes;
 mod pad;
 mod protocol;
 mod server;
-mod scenes;
+pub(crate) mod scenes;
 mod sound;
 mod sound_panel;
 mod window;
