@@ -15,6 +15,10 @@ png = "0.17"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 # Rasterizes the app icon for the tray and window (iced already pulls it in).
 resvg = "0.45"
+# The overlay's own renderer (overlay/render): shapes text, and draws everything on the CPU.
+# Both are already in the lock file through iced, so the vendored Flatpak sources don't change.
+cosmic-text = "0.15"
+tiny-skia = "0.11"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 tokio = { version = "1.53.2", features = ["io-util", "net", "rt", "time"] }
@@ -32,6 +36,8 @@ zbus = "5"
 # iced_layershell, so the vendored Flatpak sources don't change.
 wayland-client = "0.31"
 wayland-protocols-wlr = "0.3"
+# The overlay's window (overlay/wayland.rs): fractional scaling and the viewporter.
+wayland-protocols = { version = "0.32", features = ["client", "staging"] }
 # StatusNotifierItem tray icon.
 ksni = { version = "0.3.6", features = ["blocking"] }
 # iced_layershell's devtools (iced_exdevtools 0.19.1) don't build against winit-core
