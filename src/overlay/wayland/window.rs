@@ -1,15 +1,20 @@
 //! The layer surface: binding the globals, making the surface, and every commit made to it.
 //! Each commit goes through here, so the rule that a buffer only goes on at the size last acked
-//! is checked in one place (`Sizing::attached`), and each is logged.
+//! is checked in one place (`Sizing::attached`), as is the rule that a frame is drawn only into
+//! a buffer the compositor has released (`Slots::check_free`), and each is logged.
 
 use std::time::Instant;
 
 use anyhow::{Context, Result, anyhow};
-use tiny_skia::Pixmap;
+use tiny_skia::PixmapMut;
 use wayland_client::{
     QueueHandle,
     globals::GlobalList,
-    protocol::{wl_buffer::WlBuffer, wl_compositor::WlCompositor, wl_shm::WlShm, wl_surface::WlSurface},
+    protocol::{
+        wl_compositor::WlCompositor,
+        wl_shm::{self, WlShm},
+        wl_surface::WlSurface,
+    },
 };
 use wayland_protocols::wp::{
     fractional_scale::v1::client::{wp_fractional_scale_manager_v1::WpFractionalScaleManagerV1, wp_fractional_scale_v1::WpFractionalScaleV1},
@@ -22,8 +27,9 @@ use wayland_protocols_wlr::layer_shell::v1::client::{
 
 use super::{
     picture::Screen,
-    shm::{self, Formats},
+    shm::{Formats, Pool, rgba_to_argb},
     sizing::{Commit, Sizing, Target},
+    slots::Layout,
 };
 use crate::overlay::{
     timing::{timing_log, unix_ns},
@@ -45,12 +51,14 @@ pub(super) struct Window {
     pub(super) sizing: Sizing,
     /// What the last configure asks to commit, for the loop to do.
     pub(super) todo: Commit,
-    /// Buffers committed and not yet released by the compositor.
-    pub(super) held: Vec<WlBuffer>,
+    /// The buffers, at the size last committed: the screen's while shown, 1×1 while hidden.
+    pub(super) pool: Option<Pool>,
+    /// The number the last pool made got, so a release meant for an older pool is passed over.
+    pools: u64,
+    /// A frame was skipped because the compositor held every buffer: draw it on a release.
+    pub(super) redraw: bool,
     /// The compositor closed the surface.
     pub(super) closed: bool,
-    /// The screen drawn last, kept to draw the next into.
-    canvas: Option<Pixmap>,
 }
 
 /// Why a buffer is committed, for the log.
@@ -94,9 +102,10 @@ impl Window {
             scale120: None,
             sizing: Sizing::new(),
             todo: Commit::Nothing,
-            held: Vec::new(),
+            pool: None,
+            pools: 0,
+            redraw: false,
             closed: false,
-            canvas: None,
         };
         window.ask(Target::Corner);
         window.surface.commit();
@@ -125,10 +134,7 @@ impl Window {
     pub(super) fn shrink(&mut self, clear: Option<(u32, u32)>, qh: &QueueHandle<Window>) -> Result<()> {
         self.ask(Target::Corner);
         match clear {
-            Some((w, h)) => {
-                let pixels = vec![0; w as usize * h as usize * 4];
-                self.commit((w, h), &pixels, Why::Clear, qh)
-            }
+            Some(size) => self.commit(size, Why::Clear, qh, |pixels, _| pixels.fill(0)),
             None => {
                 self.surface.commit();
                 Ok(())
@@ -136,48 +142,79 @@ impl Window {
         }
     }
 
-    /// Puts a clear 1×1 buffer on: the surface while hidden.
+    /// Puts a clear 1×1 buffer on: the surface while hidden. The screen's pool goes with it,
+    /// so hidden, the overlay keeps only a few bytes of buffers.
     pub(super) fn blank(&mut self, qh: &QueueHandle<Window>) -> Result<()> {
-        self.commit((1, 1), &[0; 4], Why::Blank, qh)
+        self.commit((1, 1), Why::Blank, qh, |pixels, _| pixels.fill(0))
     }
 
-    /// Draws the screen at its configured size, as it is now, and commits it.
+    /// Draws the screen at its configured size, as it is now, and commits it. Skipped while
+    /// the compositor holds every buffer, with `redraw` set to draw it on a release.
     pub(super) fn draw(&mut self, screen: &mut dyn Screen, overlay: &Overlay, qh: &QueueHandle<Window>) -> Result<()> {
         let Some((w, h)) = self.sizing.screen() else { return Ok(()) };
+        self.redraw = false;
         let started = Instant::now();
-        let now = started;
-        let mut canvas = match self.canvas.take() {
-            Some(c) if (c.width(), c.height()) == (w, h) => c,
-            _ => Pixmap::new(w, h).context("the screen's picture")?,
-        };
-        screen.draw(overlay, now, 1.0, &mut canvas.as_mut());
-        timing_log(&format!("built {} {} {w}x{h}", unix_ns(), started.elapsed().as_nanos()));
-        let committed = self.commit((w, h), canvas.data(), Why::Draw, qh);
-        self.canvas = Some(canvas);
-        committed
+        self.commit((w, h), Why::Draw, qh, |pixels, format| {
+            // Drawn straight into the buffer, which holds an older frame (its lease's age);
+            // until step 4.3 the whole screen is drawn over it.
+            let mut direct = PixmapMut::from_bytes(pixels, w, h).expect("a buffer is as big as its size");
+            screen.draw(overlay, started, 1.0, &mut direct);
+            if format == wl_shm::Format::Argb8888 {
+                // Without ABGR8888 (KWin lacks it), swapped into ARGB8888's order in place,
+                // rather than drawn into a canvas of its own and converted: one screen less of
+                // memory, and the same pass over the pixels.
+                rgba_to_argb(pixels);
+            }
+            timing_log(&format!("built {} {} {w}x{h}", unix_ns(), started.elapsed().as_nanos()));
+        })
     }
 
-    /// Lets go of the screen's picture, while hidden.
-    pub(super) fn forget(&mut self) {
-        self.canvas = None;
+    /// Whether a frame could be drawn now: false while the compositor holds every buffer.
+    pub(super) fn can_draw(&self) -> bool {
+        self.pool.as_ref().is_none_or(|p| p.slots.any_free())
     }
 
-    /// Attaches `pixels` as a `w`×`h` buffer, damages it all and commits.
-    fn commit(&mut self, (w, h): (u32, u32), pixels: &[u8], why: Why, qh: &QueueHandle<Window>) -> Result<()> {
+    /// Fills a free `w`×`h` buffer with `fill`, attaches it, damages it all and commits. Makes
+    /// a new pool when the size or format has changed; with every buffer held, commits nothing.
+    fn commit(&mut self, (w, h): (u32, u32), why: Why, qh: &QueueHandle<Window>, fill: impl FnOnce(&mut [u8], wl_shm::Format)) -> Result<()> {
         if !self.sizing.may_attach((w, h)) {
             // Sizing hands out only sizes it may attach at; this is a bug, not the compositor's.
             timing_log(&format!("commit-refused {} {w}x{h} {why:?}", unix_ns()));
             debug_assert!(false, "a {w}x{h} buffer would go on at the wrong size");
             return Ok(());
         }
-        let buffer = shm::buffer(&self.shm, self.formats, (w, h), pixels, qh)?;
-        self.surface.attach(Some(&buffer), 0, 0);
-        self.surface.damage_buffer(0, 0, w as i32, h as i32);
+        let (layout, format) = (Layout { width: w, height: h }, self.formats.format());
+        // A pool for another size or format is kept until the new one's buffer is committed.
+        let old = match self.pool.take() {
+            Some(pool) if pool.fits(layout, format) => {
+                self.pool = Some(pool);
+                None
+            }
+            old => {
+                self.pools += 1;
+                self.pool = Some(Pool::new(&self.shm, self.pools, layout, format, qh).context("the screen's buffers")?);
+                timing_log(&format!("pool {} {w}x{h} {format:?}", unix_ns()));
+                old
+            }
+        };
+        let pool = self.pool.as_mut().expect("there is a pool: made above if not before");
+        let Some(lease) = pool.slots.lease() else {
+            timing_log(&format!("commit-skipped {} {w}x{h} {why:?} held {}", unix_ns(), pool.slots.held()));
+            match why {
+                Why::Draw => self.redraw = true,
+                // A shrink's request still has to go: without the clear buffer, the last frame
+                // stays on until the compositor answers it.
+                Why::Clear | Why::Blank => self.surface.commit(),
+            }
+            return Ok(());
+        };
+        fill(pool.pixels(lease), format);
+        pool.attach(lease, &self.surface);
         self.surface.commit();
+        drop(old);
         self.sizing.attached((w, h));
-        self.held.push(buffer);
         let now = unix_ns();
-        timing_log(&format!("commit {now} {w}x{h} {why:?} {:?}", self.sizing.target()));
+        timing_log(&format!("commit {now} {w}x{h} {why:?} {:?} slot {} age {}", self.sizing.target(), lease.slot, lease.age));
         if let Why::Draw = why {
             timing_log(&format!("present {now}"));
         }

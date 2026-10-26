@@ -13,8 +13,9 @@ use crate::overlay::{
 /// Draws the screen.
 pub(super) trait Screen {
     /// Draws what `overlay` shows at `now` onto `canvas`, the whole surface in device pixels,
-    /// premultiplied RGBA, at `scale` device pixels to a logical one. The canvas may hold an
-    /// earlier screen: what isn't drawn over has to be cleared.
+    /// premultiplied RGBA, at `scale` device pixels to a logical one. The canvas is a reused
+    /// buffer holding an earlier screen, possibly with red and blue swapped (ARGB8888): every
+    /// pixel has to be cleared or drawn over, and none read before that.
     fn draw(&mut self, overlay: &Overlay, now: Instant, scale: f32, canvas: &mut PixmapMut<'_>);
 }
 

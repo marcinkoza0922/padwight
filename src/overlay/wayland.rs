@@ -2,10 +2,10 @@
 //! CPU. Chosen with `PADWIGHT_OVERLAY=native` while it is being built; `layershell.rs` stays
 //! the default until it can replace it.
 //!
-//! For now (step 5.1) the loop wakes on a short timer to take frames from the daemon and to
-//! animate, and each frame goes out in a new buffer. Later steps bring a buffer pool (5.2),
-//! drawing on frame callbacks (5.3), the scale (5.4) and an eventfd the reading thread wakes
-//! the loop with (5.5).
+//! For now the loop wakes on a short timer to take frames from the daemon and to animate.
+//! Frames go into a pool of up to three reused shared-memory buffers (`shm.rs`, `slots.rs`).
+//! Later steps bring drawing on frame callbacks (5.3), the scale (5.4) and an eventfd the
+//! reading thread wakes the loop with (5.5).
 //!
 //! In the harness: `PADWIGHT_HARNESS_RELEASE=1 PADWIGHT_OVERLAY=native scripts/overlay-harness.sh
 //! scripts/harness/pacing.sh <out>`. Besides the usual lines, the timing log has `surface <ns> ask
@@ -31,6 +31,7 @@ mod events;
 mod picture;
 mod shm;
 mod sizing;
+mod slots;
 mod window;
 
 use picture::{Screen, TestPicture};
@@ -88,17 +89,16 @@ fn step(window: &mut Window, screen: &mut dyn Screen, overlay: &Overlay, changed
     let todo = std::mem::replace(&mut window.todo, Commit::Nothing);
     match window.sizing.want(overlay.shown()) {
         Commit::Grow => window.grow(),
-        Commit::Shrink { clear } => {
-            window.shrink(clear, qh)?;
-            window.forget();
-        }
+        // The screen's buffers are let go of once the 1×1 one is on (`Window::blank`).
+        Commit::Shrink { clear } => window.shrink(clear, qh)?,
         _ => {}
     }
     // A configure answers the request it came for; one asked since then waits for its own.
     match todo {
         Commit::Blank if window.sizing.target() == Target::Corner => window.blank(qh)?,
         Commit::Draw(_) => window.draw(screen, overlay, qh)?,
-        _ if changed && overlay.shown() => window.draw(screen, overlay, qh)?,
+        // A frame skipped while every buffer was held goes out once one is released.
+        _ if (changed || (window.redraw && window.can_draw())) && overlay.shown() => window.draw(screen, overlay, qh)?,
         _ => {}
     }
     Ok(())

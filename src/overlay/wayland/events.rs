@@ -1,7 +1,7 @@
 //! The protocol's events, dispatched to the `Window`.
 
 use wayland_client::{
-    Connection, Dispatch, Proxy, QueueHandle, WEnum, delegate_noop,
+    Connection, Dispatch, QueueHandle, WEnum, delegate_noop,
     globals::GlobalListContents,
     protocol::{
         wl_buffer::{self, WlBuffer},
@@ -25,7 +25,7 @@ use wayland_protocols_wlr::layer_shell::v1::client::{
     zwlr_layer_surface_v1::{self, ZwlrLayerSurfaceV1},
 };
 
-use super::window::Window;
+use super::{shm::BufferId, window::Window};
 use crate::overlay::timing::{timing_log, unix_ns};
 
 impl Dispatch<ZwlrLayerSurfaceV1, ()> for Window {
@@ -44,19 +44,23 @@ impl Dispatch<ZwlrLayerSurfaceV1, ()> for Window {
     }
 }
 
-impl Dispatch<WlBuffer, ()> for Window {
-    fn event(window: &mut Window, buffer: &WlBuffer, event: wl_buffer::Event, _: &(), _: &Connection, _: &QueueHandle<Window>) {
-        if let wl_buffer::Event::Release = event {
-            window.held.retain(|b| b.id() != buffer.id());
-            buffer.destroy();
+impl Dispatch<WlBuffer, BufferId> for Window {
+    fn event(window: &mut Window, _: &WlBuffer, event: wl_buffer::Event, id: &BufferId, _: &Connection, _: &QueueHandle<Window>) {
+        if let wl_buffer::Event::Release = event
+            && let Some(pool) = window.pool.as_mut().filter(|p| p.id == id.pool)
+        {
+            pool.slots.released(id.slot);
         }
     }
 }
 
 impl Dispatch<WlShm, ()> for Window {
     fn event(window: &mut Window, _: &WlShm, event: wl_shm::Event, _: &(), _: &Connection, _: &QueueHandle<Window>) {
-        if let wl_shm::Event::Format { format: WEnum::Value(format) } = event {
-            window.formats.offered(format);
+        if let wl_shm::Event::Format { format } = event {
+            timing_log(&format!("shm-format {} {format:?}", unix_ns()));
+            if let WEnum::Value(format) = format {
+                window.formats.offered(format);
+            }
         }
     }
 }
