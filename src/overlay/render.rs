@@ -9,6 +9,7 @@ mod geom;
 mod glyphs;
 mod info;
 mod item;
+mod keyboard;
 pub mod layout;
 mod log;
 mod look;
@@ -35,6 +36,9 @@ pub use info::{column_widths, info_panel};
 pub use item::{Item, item};
 pub use log::{RELEASED, log_panel, shorten};
 pub use media::{media, offer};
+#[expect(unused_imports, reason = "drawn by the screen from step 4.1")]
+pub use keyboard::{keyboard_panel, scale as keyboard_scale};
+pub use keyboard::{GAP, KEYBOARD_PADDING, UNIT, keyboard_body_width};
 pub use panel::framed;
 pub use rich::{Setting, info_cell, line, plain, rich};
 pub use style::Style;

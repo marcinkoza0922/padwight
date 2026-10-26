@@ -56,10 +56,8 @@ use crate::{
     menu::MenuView,
     motion::Anim,
     offer::OfferView,
+    overlay::render::{GAP, UNIT},
 };
-
-const UNIT: f32 = 46.0;
-const GAP: f32 = 4.0;
 
 /// Distance from the screen edge for edge and corner positions.
 pub const EDGE_MARGIN: f32 = 40.0;
