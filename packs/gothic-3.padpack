@@ -1,0 +1,488 @@
+format = 20
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "b84c1e07-5a3d-4f29-8c6e-71e9d2f0a3b5"
+name = "Gothic 3"
+version = "1.0"
+author = "Padwight"
+description = "Gothic 3 (2006) on an Xbox-style pad, for the game's keys and mouse. The left stick walks (a light push walks slowly), the right stick turns and looks. RT attacks (hold it for a power blow) and A uses, talks and picks up, both the left mouse button; LT parries. B jumps, X draws and puts away the weapon, Y opens the inventory and L3 sneaks. Hold LB for the ten quick slots. Select lists the character, log and spellbook; Start is the menu, double tap it to quick save and hold it to quick load. Overlays in dark leather and old brass, the same as the Gothic II setup."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "39500"
+profile = "Gothic 3"
+
+[[rules]]
+kind = "executable"
+value = "Gothic3.exe"
+profile = "Gothic 3"
+
+[[profiles]]
+name = "Gothic 3"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_LEFTALT"] }
+West = { keys = ["KEY_SPACE"] }
+North = { keys = ["KEY_I"] }
+LeftBumper = { open_menu = "Quick slots" }
+RightBumper = { keys = ["KEY_ENTER"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F5"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The game has no controller support, so this plays it with the keys and mouse. The left stick {ls} walks and steps sideways (WASD), and a light push walks slowly (Shift held, the game's walk key as remembered; if a light push runs instead, the game has it the other way round). The right stick {rs} turns the hero and the camera.
+{b}Fighting{/b}: {rt} strikes (the left mouse button); hold it for a heavy blow. {lt} parries and blocks (the right mouse button). With a bow or a spell drawn, {lt} aims and {rt} shoots or casts. {west} draws and puts away the weapon in hand.
+{south} is the same left click out of a fight: talk, open, pick up, use. {east} jumps and climbs, {l3} sneaks (a toggle here, Ctrl). {left} and {right} turn on the spot (Q and E), {up} and {down} turn the mouse wheel to step through lists and zoom the camera.
+Hold {lb} and point the right stick to use quick slot 1 to 0: fill the slots by dragging weapons, spells and potions onto the bar in the inventory. {north} opens the inventory; {select} lists the inventory, character, log and spellbook.
+The inventory and trading take the pointer: the right stick moves it, {rt} clicks and {lt} right-clicks. Some items equip only with Enter while the pointer is on them: that's {rb}. {start} is the menu and backs out of every screen; double tap it to {color:green}quick save{/color}, hold it to quick load.
+The keys are the game's defaults as listed by a community page and remembered, not checked on an install: WASD to move, Q and E to turn, Shift to walk or run, Ctrl to sneak, Alt to jump, Space for the weapon, I, C, L and B for the screens, 1 to 0 for the quick slots, F5 and F9 to save and load. The documents and map keys weren't found, so they aren't bound: use the map from the inventory. If one doesn't answer, check Options, Controls and change the buttons here to match. The executable (Gothic3.exe) is from Discord's list, the Steam app id is the wiki's. The Community Patch keeps these keys.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Walk · light push: slow" }
+"stick:Right" = { text = "Turn · look" }
+"trigger:Right" = { text = "{icon:sword} Strike · hold: heavy blow" }
+"trigger:Left" = { text = "{icon:shield} Parry · aim" }
+"button:South" = { text = "{icon:hand} Use · talk · pick up" }
+"button:East" = { text = "Jump · climb" }
+"button:West" = { text = "{icon:holster} Draw / put away" }
+"button:North" = { text = "{icon:bag} Inventory" }
+"button:LeftBumper" = { text = "Hold: quick slots 1 to 0" }
+"button:RightBumper" = { text = "Enter (equip)" }
+"button:Select" = { text = "{icon:scroll} Character, log, spells" }
+"button:Start" = { text = "Menu · back" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"button:LeftStick" = { text = "{icon:footprints} Sneak" }
+"button:DpadLeft" = { text = "{icon:rotate-left} Turn left" }
+"button:DpadRight" = { text = "{icon:rotate} Turn right" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Scroll · zoom"
+
+[[menus]]
+name = "Quick slots"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:crystal} Slot 1"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 2"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 3"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 4"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 5"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 6"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 7"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 8"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 9"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 0"
+action = { keys = ["KEY_0"] }
+
+[menus.style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#16100a"
+opacity = 0.93
+
+[menus.style.items]
+color = "#2a1f14"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#7a5420"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8f6f3c"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#100b06"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#45331f"
+
+[menus.style.glow]
+color = "#c08a3a"
+opacity = 0.4
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#8f6f3c"}
+paper = {opacity = 0.2}
+vignette = {color = "#000000", opacity = 0.55, reach = 25}
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:bag} Inventory"
+action = { keys = ["KEY_I"] }
+
+[[menus.items]]
+label = "{icon:person} Character"
+action = { keys = ["KEY_C"] }
+
+[[menus.items]]
+label = "{icon:scroll} Log"
+action = { keys = ["KEY_L"] }
+
+[[menus.items]]
+label = "{icon:book} Spellbook"
+action = { keys = ["KEY_B"] }
+
+[menus.style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#16100a"
+opacity = 0.93
+
+[menus.style.items]
+color = "#2a1f14"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#7a5420"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8f6f3c"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#100b06"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#45331f"
+
+[menus.style.glow]
+color = "#c08a3a"
+opacity = 0.4
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#8f6f3c"}
+paper = {opacity = 0.2}
+vignette = {color = "#000000", opacity = 0.55, reach = 25}
+
+[keyboard_style]
+corners = 0.06
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#16100a"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#2a1f14"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#7a5420"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8f6f3c"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#100b06"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#45331f"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[keyboard_style.ornament]
+paper = {opacity = 0.18}
+
+[numpad_style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#16100a"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#2a1f14"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#7a5420"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8f6f3c"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#100b06"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#45331f"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[numpad_style.ornament]
+paper = {opacity = 0.18}
+
+[media_style]
+corners = 0.06
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#16100a"
+opacity = 0.93
+
+[media_style.items]
+color = "#2a1f14"
+opacity = 0.95
+
+[media_style.selected]
+color = "#7a5420"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8f6f3c"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#100b06"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#45331f"
+
+[media_style.type]
+letter_spacing = 1
+
+[media_style.ornament]
+paper = {opacity = 0.18}
+
+[menu_style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#16100a"
+opacity = 0.93
+
+[menu_style.items]
+color = "#2a1f14"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#7a5420"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8f6f3c"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#100b06"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#45331f"
+
+[menu_style.glow]
+color = "#c08a3a"
+opacity = 0.4
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#8f6f3c"}
+paper = {opacity = 0.2}
+vignette = {color = "#000000", opacity = 0.55, reach = 25}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "wood", volume = 0.08, pitch = 0.9}
+pick = {kind = "clank", volume = 0.1, pitch = 0.9}
+open = {kind = "page", volume = 0.07, pitch = 0.85}
+close = {kind = "page", volume = 0.05, pitch = 0.75}
+
+[sounds.numpad]
+step = {kind = "wood", volume = 0.07, pitch = 0.9}
+pick = {kind = "latch", volume = 0.12}
+
+[sounds.keyboard]
+step = {kind = "wood", volume = 0.07, pitch = 0.9}
+pick = {kind = "keys", volume = 0.16}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}

@@ -1,0 +1,473 @@
+format = 20
+macros = []
+overlay_font = "Comfortaa"
+
+[pack]
+id = "d1e7a3c5-29b8-4f6e-8a04-5b3c9e2f71d6"
+name = "Two Point Hospital"
+version = "1.0"
+author = "Padwight"
+description = "Two Point Hospital on an Xbox-style pad. The left stick pans the hospital and the right stick moves the pointer; RT and A click and drag, LT right-clicks to cancel. X rotates what you're placing, Y pauses, hold RB with the D-pad for the speed, the D-pad turns the camera and zooms. A gyro variant tilts the pointer. Overlays in hospital teal and mint."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "535930"
+profile = "Two Point Hospital"
+
+[[rules]]
+kind = "executable"
+value = "TPH.exe"
+profile = "Two Point Hospital"
+
+[[rules]]
+kind = "executable"
+value = "TPH.x86_64"
+profile = "Two Point Hospital"
+
+[[profiles]]
+name = "Two Point Hospital"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_R"]}
+North = {keys = ["KEY_SPACE"]}
+RightBumper = {open_menu = "Speed"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_Q"]}
+DpadRight = {keys = ["KEY_E"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer and the left stick {ls} pans the hospital. {rt} or {south} clicks; hold it and drag to mark out a room. {lt} right-clicks to cancel what's in hand or back out of a window.
+{west} rotates the object you're placing. {north} pauses. Hold {rb} and press the {dpad} for the speed: left normal, up fast, right fastest, down pause. {left} and {right} turn the camera, {up} and {down} zoom.
+{east} and {start} close windows and open the menu. Rooms, staff, the hospital overview and the objectives are on the toolbar along the bottom: point at them.
+The PC game has no controller support, so this plays it with the pointer. The console Jumbo Edition built its own pad interface, which can't be copied; the PC keys stay. Panning on WASD, the camera on Q and E and zoom on the wheel are the game's defaults as remembered; rotate on R, pause on Space and the speeds on 1 to 3 are a guess, not read from an install. If one doesn't answer, check Options, Controls (the game can rebind them) and change the buttons here to match. The Windows executable is from Discord's list; the Linux one (TPH.x86_64) is a guess. Naming a hospital or staff: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click / drag"}
+"trigger:Left" = {text = "Right-click (cancel)"}
+"button:South" = {text = "Click / drag"}
+"button:East" = {text = "Close"}
+"button:West" = {text = "{icon:rotate} Rotate object"}
+"button:North" = {text = "{icon:pause} Pause"}
+"button:RightBumper" = {text = "Hold + {dpad}: speed"}
+"button:Start" = {text = "Menu"}
+"button:DpadLeft" = {text = "{icon:rotate-left} Turn camera"}
+"button:DpadRight" = {text = "{icon:rotate} Turn camera"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+
+[[profiles]]
+name = "Two Point Hospital + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_R"]}
+North = {keys = ["KEY_SPACE"]}
+RightBumper = {open_menu = "Speed"}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_Q"]}
+DpadRight = {keys = ["KEY_E"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer and the left stick {ls} pans the hospital. {rt} or {south} clicks; hold it and drag to mark out a room. {lt} right-clicks to cancel what's in hand or back out of a window.
+{west} rotates the object you're placing. {north} pauses. Hold {rb} and press the {dpad} for the speed: left normal, up fast, right fastest, down pause. {left} and {right} turn the camera, {up} and {down} zoom.
+{east} and {start} close windows and open the menu. Rooms, staff, the hospital overview and the objectives are on the toolbar along the bottom: point at them.
+The PC game has no controller support, so this plays it with the pointer. The console Jumbo Edition built its own pad interface, which can't be copied; the PC keys stay. Panning on WASD, the camera on Q and E and zoom on the wheel are the game's defaults as remembered; rotate on R, pause on Space and the speeds on 1 to 3 are a guess, not read from an install. If one doesn't answer, check Options, Controls (the game can rebind them) and change the buttons here to match. The Windows executable is from Discord's list; the Linux one (TPH.x86_64) is a guess. Naming a hospital or staff: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click / drag"}
+"trigger:Left" = {text = "Right-click (cancel)"}
+"button:South" = {text = "Click / drag"}
+"button:East" = {text = "Close"}
+"button:West" = {text = "{icon:rotate} Rotate object"}
+"button:North" = {text = "{icon:pause} Pause"}
+"button:RightBumper" = {text = "Hold + {dpad}: speed"}
+"button:Start" = {text = "Menu"}
+"button:DpadLeft" = {text = "{icon:rotate-left} Turn camera"}
+"button:DpadRight" = {text = "{icon:rotate} Turn camera"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[menus]]
+name = "Speed"
+
+[menus.kind.directional]
+cluster = "DPad"
+
+[[menus.items]]
+label = "{icon:speed2} Fast"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:speed3} Fastest"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:pause} {b}Pause{/b}"
+action = {keys = ["KEY_SPACE"]}
+
+[[menus.items]]
+label = "{icon:speed1} Normal"
+action = {keys = ["KEY_1"]}
+
+[menus.style]
+corners = 0.18
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0f3a3a"
+opacity = 0.93
+
+[menus.style.items]
+color = "#17504f"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#7ccf4a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#5fd0c0"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#0b2c2c"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2c6e6a"
+
+[menus.style.glow]
+color = "#9ef0d8"
+opacity = 0.45
+blur = 16
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#2c6e6a", opacity = 0.8}
+
+[keyboard_style]
+corners = 0.18
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0f3a3a"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#17504f"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#7ccf4a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#5fd0c0"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#0b2c2c"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#2c6e6a"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+[numpad_style]
+corners = 0.18
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0f3a3a"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#17504f"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#7ccf4a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#5fd0c0"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#0b2c2c"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#2c6e6a"
+
+[numpad_style.type]
+letter_spacing = 0
+
+[media_style]
+corners = 0.18
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0f3a3a"
+opacity = 0.93
+
+[media_style.items]
+color = "#17504f"
+opacity = 0.95
+
+[media_style.selected]
+color = "#7ccf4a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#5fd0c0"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#0b2c2c"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#2c6e6a"
+
+[media_style.type]
+letter_spacing = 0
+
+[menu_style]
+corners = 0.18
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0f3a3a"
+opacity = 0.93
+
+[menu_style.items]
+color = "#17504f"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#7ccf4a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#5fd0c0"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#0b2c2c"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#2c6e6a"
+
+[menu_style.glow]
+color = "#9ef0d8"
+opacity = 0.45
+blur = 16
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#2c6e6a", opacity = 0.8}
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "marimba", volume = 0.07, pitch = 1.1}
+pick = {kind = "chime", volume = 0.08}
+open = {kind = "pop", volume = 0.06}
+close = {kind = "pop", volume = 0.05, pitch = 0.8}
+
+[sounds.numpad]
+step = {kind = "marimba", volume = 0.06, pitch = 1.1}
+pick = {kind = "pop", volume = 0.08}
+
+[sounds.keyboard]
+step = {kind = "marimba", volume = 0.06, pitch = 1.1}
+pick = {kind = "keys", volume = 0.14}
+
+[sounds.media]
+pick = {kind = "pop", volume = 0.08}

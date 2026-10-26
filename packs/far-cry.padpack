@@ -1,0 +1,728 @@
+format = 20
+macros = []
+overlay_font = "Titillium Web"
+
+[pack]
+id = "f9a42a99-8385-4065-924c-02c25991faa1"
+name = "Far Cry"
+version = "1.0"
+author = "Padwight"
+description = "Far Cry (2004) on an Xbox-style pad, for the game's default keys. A uses and, held, sprints, B jumps, X reloads (hold it for fire mode), Y throws a grenade (hold it for the next grenade type), RT fires and LT zooms. L3 crouches (hold it to go prone), R3 is the binoculars, RB the flashlight. Hold LB for the weapon ring, the D-pad leans and steps through weapons, and Start is the menu; double tap it to quick save, hold it to quick load, once the game has those keys. The game has no controller support. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "13520"
+profile = "Far Cry"
+
+[[rules]]
+kind = "executable"
+value = "FarCry.exe"
+profile = "Far Cry"
+
+[[profiles]]
+name = "Far Cry"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_G"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_L"] }
+LeftStick = { keys = ["KEY_C"] }
+RightStick = { keys = ["KEY_B"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_X"] }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_H"] }
+
+[profiles.gestures.LeftStick]
+long_press = { keys = ["KEY_Z"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F5"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1150.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and backs out of it.
+{south} uses: doors, ladders, mounted guns, and getting into and out of vehicles, which drive with the left stick and steer and aim with the right. Hold {south} to sprint. {east} jumps, {west} reloads and a long press of {west} changes the fire mode. {north} throws a grenade, and a long press of {north} picks the next grenade type.
+{lt} zooms in with a scope or the iron sights and out again; on a scoped rifle {up} and {down} change the zoom. Otherwise {up} and {down} step through your weapons, and {left} and {right} lean.
+{l3} crouches and a long press of {l3} goes prone; press it again to stand. {r3} raises the binoculars, which also tag enemies, and {rb} switches the flashlight. Hold {lb} for the weapon ring, aiming with the right stick {rs}.
+{select} (Tab) shows the objectives, or the scores in multiplayer. Multiplayer chat needs typing: open the on-screen keyboard with {guide} + {west}.
+The game saves at checkpoints only. To get quick save (F5) and quick load (F9), which a double tap and a long press of {start} press, add a playercfg.lua to the game folder holding the two lines PCGamingWiki gives: Input:BindCommandToKey("\\save_game","F5",1); and the same with \\load_game and F9.
+These are the game's default keys written from memory and not checked in the game (use, fire mode, prone, grenade type, flashlight and Tab especially); the binoculars on B come from a fan wiki. Crouch and prone are pressed, not held, as the game is remembered to toggle them; if your crouch only lasts while the key is down, set the game's crouch to toggle. Compare them with Options → Controls and change the buttons here to match. The Steam app id is from PCGamingWiki; the executable name is from Discord's game list. The gyro's full turn of 8000 is a guess, not worked out; if a turn of the controller doesn't turn the view as far, change it in the gyro settings.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Zoom" }
+"button:South" = { text = "{icon:hand} Use · vehicles" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Fire mode" }
+"button:North" = { text = "{icon:grenade} Throw grenade" }
+"gesture:button:North:long_press" = { text = "Grenade type" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "{icon:flashlight} Flashlight" }
+"button:LeftStick" = { text = "Crouch" }
+"gesture:button:LeftStick:long_press" = { text = "Prone" }
+"button:RightStick" = { text = "{icon:binoculars} Binoculars" }
+"button:Select" = { text = "Objectives · scores" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next weapon · zoom"
+
+[[profiles]]
+name = "Far Cry + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_G"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_L"] }
+LeftStick = { keys = ["KEY_C"] }
+RightStick = { keys = ["KEY_B"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_X"] }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_H"] }
+
+[profiles.gestures.LeftStick]
+long_press = { keys = ["KEY_Z"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F5"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1150.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 8000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Press {lb} and {rb} together to switch the gyro off or on, and hold {r3} to recenter it.
+{start} (Escape) opens the game's menu and backs out of it.
+{south} uses: doors, ladders, mounted guns, and getting into and out of vehicles, which drive with the left stick and steer and aim with the right. Hold {south} to sprint. {east} jumps, {west} reloads and a long press of {west} changes the fire mode. {north} throws a grenade, and a long press of {north} picks the next grenade type.
+{lt} zooms in with a scope or the iron sights and out again; on a scoped rifle {up} and {down} change the zoom. Otherwise {up} and {down} step through your weapons, and {left} and {right} lean.
+{l3} crouches and a long press of {l3} goes prone; press it again to stand. {r3} raises the binoculars, which also tag enemies, and {rb} switches the flashlight. Hold {lb} for the weapon ring, aiming with the right stick {rs}.
+{select} (Tab) shows the objectives, or the scores in multiplayer. Multiplayer chat needs typing: open the on-screen keyboard with {guide} + {west}.
+The game saves at checkpoints only. To get quick save (F5) and quick load (F9), which a double tap and a long press of {start} press, add a playercfg.lua to the game folder holding the two lines PCGamingWiki gives: Input:BindCommandToKey("\\save_game","F5",1); and the same with \\load_game and F9.
+These are the game's default keys written from memory and not checked in the game (use, fire mode, prone, grenade type, flashlight and Tab especially); the binoculars on B come from a fan wiki. Crouch and prone are pressed, not held, as the game is remembered to toggle them; if your crouch only lasts while the key is down, set the game's crouch to toggle. Compare them with Options → Controls and change the buttons here to match. The Steam app id is from PCGamingWiki; the executable name is from Discord's game list. The gyro's full turn of 8000 is a guess, not worked out; if a turn of the controller doesn't turn the view as far, change it in the gyro settings.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Zoom" }
+"button:South" = { text = "{icon:hand} Use · vehicles" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Fire mode" }
+"button:North" = { text = "{icon:grenade} Throw grenade" }
+"gesture:button:North:long_press" = { text = "Grenade type" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "{icon:flashlight} Flashlight" }
+"button:LeftStick" = { text = "Crouch" }
+"gesture:button:LeftStick:long_press" = { text = "Prone" }
+"button:RightStick" = { text = "{icon:binoculars} Binoculars" }
+"button:Select" = { text = "Objectives · scores" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next weapon · zoom"
+
+[[profiles]]
+name = "Far Cry + Flick stick"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_G"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_L"] }
+LeftStick = { keys = ["KEY_C"] }
+RightStick = { keys = ["KEY_B"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_X"] }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_H"] }
+
+[profiles.gestures.LeftStick]
+long_press = { keys = ["KEY_Z"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F5"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 8000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Press {lb} and {rb} together to switch the gyro off or on, and hold {r3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+{start} (Escape) opens the game's menu and backs out of it.
+{south} uses: doors, ladders, mounted guns, and getting into and out of vehicles, which drive with the left stick and steer and aim with the right. Hold {south} to sprint. {east} jumps, {west} reloads and a long press of {west} changes the fire mode. {north} throws a grenade, and a long press of {north} picks the next grenade type.
+{lt} zooms in with a scope or the iron sights and out again; on a scoped rifle {up} and {down} change the zoom. Otherwise {up} and {down} step through your weapons, and {left} and {right} lean.
+{l3} crouches and a long press of {l3} goes prone; press it again to stand. {r3} raises the binoculars, which also tag enemies, and {rb} switches the flashlight. Hold {lb} for the weapon ring, aiming with the right stick {rs}.
+{select} (Tab) shows the objectives, or the scores in multiplayer. Multiplayer chat needs typing: open the on-screen keyboard with {guide} + {west}.
+The game saves at checkpoints only. To get quick save (F5) and quick load (F9), which a double tap and a long press of {start} press, add a playercfg.lua to the game folder holding the two lines PCGamingWiki gives: Input:BindCommandToKey("\\save_game","F5",1); and the same with \\load_game and F9.
+These are the game's default keys written from memory and not checked in the game (use, fire mode, prone, grenade type, flashlight and Tab especially); the binoculars on B come from a fan wiki. Crouch and prone are pressed, not held, as the game is remembered to toggle them; if your crouch only lasts while the key is down, set the game's crouch to toggle. Compare them with Options → Controls and change the buttons here to match. The Steam app id is from PCGamingWiki; the executable name is from Discord's game list. The gyro's full turn of 8000 is a guess, not worked out; if a turn of the controller doesn't turn the view as far, change it in the gyro settings.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Zoom" }
+"button:South" = { text = "{icon:hand} Use · vehicles" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Fire mode" }
+"button:North" = { text = "{icon:grenade} Throw grenade" }
+"gesture:button:North:long_press" = { text = "Grenade type" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "{icon:flashlight} Flashlight" }
+"button:LeftStick" = { text = "Crouch" }
+"gesture:button:LeftStick:long_press" = { text = "Prone" }
+"button:RightStick" = { text = "{icon:binoculars} Binoculars" }
+"button:Select" = { text = "Objectives · scores" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next weapon · zoom"
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 1 {color:#e0b04f}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 2 {color:#e0b04f}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 3 {color:#e0b04f}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 4 {color:#e0b04f}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:grenade} Grenade type {color:#e0b04f}H{/color}"
+action = { keys = ["KEY_H"] }
+
+[[menus.items]]
+label = "{icon:binoculars} Binoculars {color:#e0b04f}B{/color}"
+action = { keys = ["KEY_B"] }
+
+[[menus.items]]
+label = "{icon:flashlight} Flashlight {color:#e0b04f}L{/color}"
+action = { keys = ["KEY_L"] }
+
+[menus.style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0c1716"
+opacity = 0.92
+
+[menus.style.items]
+color = "#18292a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#d39a35"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#e0b04f"
+opacity = 0.5
+
+[menus.style.gradient]
+color = "#112120"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#2c4644"
+
+[menus.style.glow]
+color = "#e0b04f"
+opacity = 0.25
+blur = 20
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+frame = {kind = "brackets", size = 14, width = 2, color = "#e0b04f"}
+vignette = {color = "#000000", opacity = 0.45, reach = 26}
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0c1716"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#18292a"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#d39a35"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#e0b04f"
+opacity = 0.5
+
+[keyboard_style.gradient]
+color = "#112120"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#2c4644"
+
+[keyboard_style.type]
+case = "upper"
+letter_spacing = 2
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0c1716"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#18292a"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#d39a35"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#e0b04f"
+opacity = 0.5
+
+[numpad_style.gradient]
+color = "#112120"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#2c4644"
+
+[numpad_style.type]
+case = "upper"
+letter_spacing = 2
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0c1716"
+opacity = 0.92
+
+[media_style.items]
+color = "#18292a"
+opacity = 0.95
+
+[media_style.selected]
+color = "#d39a35"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#e0b04f"
+opacity = 0.5
+
+[media_style.gradient]
+color = "#112120"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#2c4644"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0c1716"
+opacity = 0.92
+
+[menu_style.items]
+color = "#18292a"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#d39a35"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#e0b04f"
+opacity = 0.5
+
+[menu_style.gradient]
+color = "#112120"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#2c4644"
+
+[menu_style.glow]
+color = "#e0b04f"
+opacity = 0.25
+blur = 20
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+frame = {kind = "brackets", size = 14, width = 2, color = "#e0b04f"}
+vignette = {color = "#000000", opacity = 0.45, reach = 26}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.08, pitch = 1.0}
+pick = {kind = "casing", volume = 0.25}
+open = {kind = "radio", volume = 0.08}
+close = {kind = "swish", volume = 0.03, pitch = 1.2}
+
+[sounds.guide]
+open = {kind = "radio", volume = 0.08}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.08, pitch = 1.0}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.08, pitch = 1.0}
+pick = {kind = "beep", volume = 0.15, pitch = 1.0}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

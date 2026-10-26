@@ -1,0 +1,397 @@
+format = 20
+macros = []
+overlay_font = "VT323"
+
+[pack]
+id = "aaddd5b1-2c9e-5bf6-ba1f-a5b6bcf529fb"
+name = "Ultimate Custom Night"
+version = "1.0"
+author = "Padwight"
+description = "Ultimate Custom Night on an Xbox-style pad. The right stick moves the pointer and looks around the office, A or RT clicks; the bumpers shut the doors, Y and B the vents, LT raises the monitor and X holds the flashlight. The D-pad and Select pick the power tools, R3 turns them all off and L3 toggles the fan. Overlays in the green of the camera monitor. The \"Ultimate Custom Night + Gyro\" profile also moves the pointer by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "871720"
+profile = "Ultimate Custom Night"
+
+[[rules]]
+kind = "executable"
+value = "Ultimate Custom Night.exe"
+profile = "Ultimate Custom Night"
+
+[[profiles]]
+name = "Ultimate Custom Night"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+North = {keys = ["KEY_W"]}
+East = {keys = ["KEY_F"]}
+West = {keys = ["KEY_Z"]}
+LeftBumper = {keys = ["KEY_A"]}
+RightBumper = {keys = ["KEY_D"]}
+LeftStick = {keys = ["KEY_SPACE"]}
+RightStick = {keys = ["KEY_X"]}
+Select = {keys = ["KEY_5"]}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {keys = ["KEY_1"]}
+DpadRight = {keys = ["KEY_2"]}
+DpadDown = {keys = ["KEY_3"]}
+DpadLeft = {keys = ["KEY_4"]}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {keys = ["KEY_S"]}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The office is played with the mouse: the right stick {rs} moves the pointer, and pushing it to the screen's edge looks left and right; the left stick {ls} moves it slowly. {south} or {rt} clicks. The Freddy mask has no key: flick the pointer over its bar at the bottom left.
+{lb} and {rb} shut the left and right doors (A, D), {north} the front vent (W) and {east} the side vent (F). {lt} raises and lowers the monitor (S). Hold {west} for the flashlight (Z).
+The D-pad picks a power tool: {up} power generator, {right} silent ventilation, {down} heater, {left} power A/C (1 to 4); {select} is the global music box (5) and {r3} switches them all off (X). {l3} turns the desk fan on and off (Space).
+{start} is Escape; hold it to leave the night. The game also came out on PlayStation 4, Xbox One and Switch, but their button layout couldn't be looked up, so this is built on the PC keys, which come from community guides and are unchecked on an install.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer · look"}
+"trigger:Right" = {text = "{b}Click{/b}"}
+"trigger:Left" = {text = "{icon:camera} {b}Monitor{/b}"}
+"button:South" = {text = "{b}Click{/b}"}
+"button:North" = {text = "{icon:fan} Front vent"}
+"button:East" = {text = "{icon:fan} Side vent"}
+"button:West" = {text = "{icon:flashlight} Flashlight (hold)"}
+"button:LeftBumper" = {text = "{icon:door} Left door"}
+"button:RightBumper" = {text = "{icon:door} Right door"}
+"button:LeftStick" = {text = "{icon:fan} Desk fan"}
+"button:RightStick" = {text = "{color:red}{icon:stop} All off{/color}"}
+"button:DpadUp" = {text = "{icon:bolt} Generator"}
+"button:DpadRight" = {text = "{icon:sound} Silent vent"}
+"button:DpadDown" = {text = "{icon:thermometer} Heater"}
+"button:DpadLeft" = {text = "{icon:bolt} Power A/C"}
+"button:Select" = {text = "{icon:bell} Music box"}
+"button:Start" = {text = "Escape · hold to quit"}
+
+[[profiles]]
+name = "Ultimate Custom Night + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+North = {keys = ["KEY_W"]}
+East = {keys = ["KEY_F"]}
+West = {keys = ["KEY_Z"]}
+LeftBumper = {keys = ["KEY_A"]}
+RightBumper = {keys = ["KEY_D"]}
+LeftStick = {keys = ["KEY_SPACE"]}
+RightStick = {keys = ["KEY_X"]}
+Select = {keys = ["KEY_5"]}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {keys = ["KEY_1"]}
+DpadRight = {keys = ["KEY_2"]}
+DpadDown = {keys = ["KEY_3"]}
+DpadLeft = {keys = ["KEY_4"]}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {keys = ["KEY_S"]}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The office is played with the mouse: the right stick {rs} moves the pointer, and pushing it to the screen's edge looks left and right; the left stick {ls} moves it slowly. {south} or {rt} clicks. The Freddy mask has no key: flick the pointer over its bar at the bottom left.
+{lb} and {rb} shut the left and right doors (A, D), {north} the front vent (W) and {east} the side vent (F). {lt} raises and lowers the monitor (S). Hold {west} for the flashlight (Z).
+The D-pad picks a power tool: {up} power generator, {right} silent ventilation, {down} heater, {left} power A/C (1 to 4); {select} is the global music box (5) and {r3} switches them all off (X). {l3} turns the desk fan on and off (Space).
+{start} is Escape; hold it to leave the night. The game also came out on PlayStation 4, Xbox One and Switch, but their button layout couldn't be looked up, so this is built on the PC keys, which come from community guides and are unchecked on an install.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer · look"}
+"trigger:Right" = {text = "{b}Click{/b}"}
+"trigger:Left" = {text = "{icon:camera} {b}Monitor{/b}"}
+"button:South" = {text = "{b}Click{/b}"}
+"button:North" = {text = "{icon:fan} Front vent"}
+"button:East" = {text = "{icon:fan} Side vent"}
+"button:West" = {text = "{icon:flashlight} Flashlight (hold)"}
+"button:LeftBumper" = {text = "{icon:door} Left door"}
+"button:RightBumper" = {text = "{icon:door} Right door"}
+"button:LeftStick" = {text = "{icon:fan} Desk fan"}
+"button:RightStick" = {text = "{color:red}{icon:stop} All off{/color}"}
+"button:DpadUp" = {text = "{icon:bolt} Generator"}
+"button:DpadRight" = {text = "{icon:sound} Silent vent"}
+"button:DpadDown" = {text = "{icon:thermometer} Heater"}
+"button:DpadLeft" = {text = "{icon:bolt} Power A/C"}
+"button:Select" = {text = "{icon:bell} Music box"}
+"button:Start" = {text = "Escape · hold to quit"}
+"combo:button:Select+button:Start" = {text = "Pause gyro (hold)"}
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#070a08"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#122016"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#b8d84a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#3c5a34"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#020302"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#2c4228"
+
+[keyboard_style.type]
+letter_spacing = 1
+case = "upper"
+
+[keyboard_style.ornament]
+scanlines = { spacing = 3, opacity = 0.18, color = "#000000", drift = false }
+grain = { opacity = 0.1, size = 1, animated = false }
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#070a08"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#122016"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#b8d84a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#3c5a34"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#020302"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#2c4228"
+
+[numpad_style.type]
+letter_spacing = 1
+case = "upper"
+
+[numpad_style.ornament]
+scanlines = { spacing = 3, opacity = 0.18, color = "#000000", drift = false }
+grain = { opacity = 0.1, size = 1, animated = false }
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#070a08"
+opacity = 0.93
+
+[media_style.items]
+color = "#122016"
+opacity = 0.95
+
+[media_style.selected]
+color = "#b8d84a"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#3c5a34"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#020302"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#2c4228"
+
+[media_style.type]
+letter_spacing = 1
+case = "upper"
+
+[media_style.ornament]
+scanlines = { spacing = 3, opacity = 0.18, color = "#000000", drift = false }
+grain = { opacity = 0.1, size = 1, animated = false }
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#070a08"
+opacity = 0.93
+
+[menu_style.items]
+color = "#122016"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#b8d84a"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#3c5a34"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#020302"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#2c4228"
+
+[menu_style.glow]
+color = "#b8d84a"
+opacity = 0.35
+blur = 12
+
+[menu_style.type]
+letter_spacing = 1
+case = "upper"
+
+[menu_style.ornament]
+scanlines = { spacing = 3, opacity = 0.18, color = "#000000", drift = false }
+grain = { opacity = 0.1, size = 1, animated = false }
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.08}
+pick = {kind = "switch", volume = 0.12}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.07}
+pick = {kind = "beep", volume = 0.05, pitch = 0.9}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.07}
+pick = {kind = "beep", volume = 0.05, pitch = 0.9}
+
+[sounds.media]
+pick = {kind = "radio", volume = 0.05}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

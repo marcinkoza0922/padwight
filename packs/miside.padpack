@@ -1,0 +1,315 @@
+format = 20
+macros = []
+overlay_font = "Comfortaa"
+
+[pack]
+id = "75ba70aa-2b12-557f-a394-07b9716f941d"
+name = "MiSide"
+version = "1.0"
+author = "Padwight"
+description = "MiSide on an Xbox-style pad. The game has no controller support, so the left stick walks, the right stick looks, A or RT clicks to interact and, held, runs; X is E, B is Space and L3 toggles crouch. The D-pad gives the arrow keys for the minigames on Mita's console. Overlays in Mita's blue and red on a dark room."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "2527500"
+profile = "MiSide"
+
+[[rules]]
+kind = "executable"
+value = "MiSideFull.exe"
+profile = "MiSide"
+
+[[profiles]]
+name = "MiSide"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_SPACE"]}
+West = {keys = ["KEY_E"]}
+LeftStick = {toggle = {action = {keys = ["KEY_LEFTCTRL"]}}}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {keys = ["KEY_UP"]}
+DpadDown = {keys = ["KEY_DOWN"]}
+DpadLeft = {keys = ["KEY_LEFT"]}
+DpadRight = {keys = ["KEY_RIGHT"]}
+
+[profiles.gestures.South]
+long_press = {keys = ["KEY_LEFTSHIFT"]}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 2600.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''MiSide has no controller support and no key settings, so the pad plays its keyboard and mouse. The left stick {ls} walks (WASD) and the right stick {rs} looks around.
+{south} or {rt} clicks, which is how you pick things up, open doors and choose answers when the game shows the mouse prompt. Hold {south} to run (Shift). {west} presses E for the prompts that ask for a key, {east} is Space and {l3} toggles crouch (Ctrl). {lt} is the right mouse button.
+The minigames on Mita's console use the arrow keys or WASD: the D-pad {dpad} gives the arrows and the left stick gives WASD. {start} opens the menu (Escape).
+The keys are from memory and unchecked on an install: whether interacting is the left click or E, and run, crouch and Space especially. The game has no key settings, so if one of them is wrong, change the button here.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Walk"}
+"stick:Right" = {text = "Look"}
+"trigger:Right" = {text = "{icon:hand} {b}Interact{/b}"}
+"trigger:Left" = {text = "Right click"}
+"button:South" = {text = "{icon:hand} {b}Interact{/b}"}
+"gesture:button:South:long_press" = {text = "{icon:footprints} Run (hold)"}
+"button:West" = {text = "Use (E)"}
+"button:East" = {text = "Space"}
+"button:LeftStick" = {text = "Crouch (toggle)"}
+"button:Start" = {text = "{icon:pause} Menu"}
+
+[keyboard_style]
+corners = 0.35
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#16121f"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#2b2140"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#e0405a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 2
+color = "#6fa8ff"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#0d0b14"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4a3a66"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[keyboard_style.ornament]
+tint = { color = "#ff7fa8", opacity = 0.06, on = "items" }
+
+[numpad_style]
+corners = 0.35
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#16121f"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#2b2140"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#e0405a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 2
+color = "#6fa8ff"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#0d0b14"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4a3a66"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[numpad_style.ornament]
+tint = { color = "#ff7fa8", opacity = 0.06, on = "items" }
+
+[media_style]
+corners = 0.35
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#16121f"
+opacity = 0.93
+
+[media_style.items]
+color = "#2b2140"
+opacity = 0.95
+
+[media_style.selected]
+color = "#e0405a"
+opacity = 1.0
+
+[media_style.border]
+width = 2
+color = "#6fa8ff"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#0d0b14"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4a3a66"
+
+[media_style.type]
+letter_spacing = 1
+
+[media_style.ornament]
+tint = { color = "#ff7fa8", opacity = 0.06, on = "items" }
+
+[menu_style]
+corners = 0.35
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#16121f"
+opacity = 0.93
+
+[menu_style.items]
+color = "#2b2140"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#e0405a"
+opacity = 1.0
+
+[menu_style.border]
+width = 2
+color = "#6fa8ff"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#0d0b14"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4a3a66"
+
+[menu_style.glow]
+color = "#e0405a"
+opacity = 0.35
+blur = 12
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+tint = { color = "#ff7fa8", opacity = 0.06, on = "items" }
+
+[motion]
+keyboard = "dreamy"
+numpad = "dreamy"
+menu = "dreamy"
+media = "dreamy"
+offer = "dreamy"
+info = "dreamy"
+log = "dreamy"
+
+[sounds.menu]
+step = {kind = "rollover", volume = 0.08}
+pick = {kind = "chime", volume = 0.08, pitch = 1.1}
+
+[sounds.keyboard]
+step = {kind = "rollover", volume = 0.07}
+pick = {kind = "pop", volume = 0.12, pitch = 1.1}
+
+[sounds.numpad]
+step = {kind = "rollover", volume = 0.07}
+pick = {kind = "pop", volume = 0.12, pitch = 1.1}
+
+[sounds.media]
+pick = {kind = "glitch", volume = 0.06}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

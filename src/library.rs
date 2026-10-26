@@ -262,7 +262,9 @@ mod tests {
             "unturned", "scp-secret-laboratory", "insurgency", "repo", "rust", "raft", "scrap-mechanic",
             "call-of-duty-modern-warfare-2", "stalker-shadow-of-chernobyl", "stalker-call-of-pripyat", "crab-game",
             "call-of-duty-4-modern-warfare", "call-of-duty-world-at-war", "call-of-duty-modern-warfare-3", "stalker-clear-sky",
-            "star-wars-republic-commando", "payday-the-heist", "deceit", "totally-accurate-battlegrounds", "mass-effect"];
+            "star-wars-republic-commando", "payday-the-heist", "deceit", "totally-accurate-battlegrounds", "mass-effect",
+            "call-of-duty-2", "rising-storm-2-vietnam", "gray-zone-warfare", "quake-champions", "far-cry",
+            "medal-of-honor-allied-assault", "dark-messiah-of-might-and-magic", "fear-2-project-origin"];
         for file in shooters {
             let text = files::FILES.iter().find(|(f, _)| *f == format!("{file}.padpack")).map(|(_, t)| t).unwrap();
             let pack = pack::parse(text).unwrap();

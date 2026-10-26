@@ -1,0 +1,466 @@
+format = 20
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "221f7053-1c84-5606-91c2-46217ccc4e47"
+name = "Clicker Heroes"
+version = "1.0"
+author = "Padwight"
+description = "Clicker Heroes on an Xbox-style pad. The game takes the mouse, so the right stick moves the pointer and the left stick nudges it; A or RT clicks the monster or a hero, and holding X clicks fifteen times a second. Hold LB, RB or both to level heroes by 10, 25 or 100, Y buys every upgrade, and holding LT opens the nine skills on a wheel. Overlays in the game's night-blue sky, wood and gold. The \"Clicker Heroes + Gyro\" profile also moves the pointer by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "363970"
+profile = "Clicker Heroes"
+
+[[rules]]
+kind = "executable"
+value = "Clicker Heroes.exe"
+profile = "Clicker Heroes"
+
+[[profiles]]
+name = "Clicker Heroes"
+combos = [
+    {buttons = ["LeftBumper", "RightBumper"], action = {keys = ["KEY_LEFTCTRL"]}},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {turbo = {action = {mouse = "Left"}, rate = 15.0}}
+North = {keys = ["KEY_Q"]}
+LeftBumper = {keys = ["KEY_Z"]}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+Select = {keys = ["KEY_A"]}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {open_menu = "Skills"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+mode = "off"
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The game is played with the mouse. The right stick {rs} moves the pointer and the left stick {ls} moves it slowly. {south} or {rt} clicks: the monster, a hero's level-up button, an upgrade. Hold {west} to click fifteen times a second on the monster.
+Hold {lb} (Z) and click a hero to level them ten times, {rb} (Shift) for twenty-five, and both together (Ctrl) for a hundred. {north} buys every upgrade you can afford (Q). {up} and {down} scroll the hero list.
+Hold {lt} and aim {rs} at a skill to use it (keys 1 to 9). {select} toggles progression mode (A). {east} and {start} close a window (Escape).
+The game came out on PlayStation 4 and Xbox One too, with its own interface, but its button layout couldn't be looked up, so this is built on the PC keys. The keys are remembered and unchecked on an install; the game has no key settings.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:sword} {b}Click{/b}"}
+"trigger:Left" = {text = "{icon:bolt} Skills (hold)"}
+"button:South" = {text = "{icon:sword} {b}Click{/b}"}
+"button:West" = {text = "{icon:fast} Rapid click (hold)"}
+"button:North" = {text = "{icon:upgrade} Buy upgrades"}
+"button:East" = {text = "{icon:cancel} Close"}
+"button:LeftBumper" = {text = "{icon:coin} ×10 (hold)"}
+"button:RightBumper" = {text = "{icon:money} ×25 (hold)"}
+"combo:button:LeftBumper+button:RightBumper" = {text = "{icon:money-bag} ×100 (hold both)"}
+"button:Select" = {text = "{icon:arrow} Progression mode"}
+"button:Start" = {text = "Close"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Scroll heroes"
+
+[[profiles]]
+name = "Clicker Heroes + Gyro"
+combos = [
+    {buttons = ["LeftBumper", "RightBumper"], action = {keys = ["KEY_LEFTCTRL"]}},
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+West = {turbo = {action = {mouse = "Left"}, rate = 15.0}}
+North = {keys = ["KEY_Q"]}
+LeftBumper = {keys = ["KEY_Z"]}
+RightBumper = {keys = ["KEY_LEFTSHIFT"]}
+Select = {keys = ["KEY_A"]}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.6
+key_threshold = 0.5
+
+[profiles.left_stick.action.mouse]
+speed = 500.0
+accel = 0.0
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {open_menu = "Skills"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The game is played with the mouse. The right stick {rs} moves the pointer and the left stick {ls} moves it slowly. {south} or {rt} clicks: the monster, a hero's level-up button, an upgrade. Hold {west} to click fifteen times a second on the monster.
+Hold {lb} (Z) and click a hero to level them ten times, {rb} (Shift) for twenty-five, and both together (Ctrl) for a hundred. {north} buys every upgrade you can afford (Q). {up} and {down} scroll the hero list.
+Hold {lt} and aim {rs} at a skill to use it (keys 1 to 9). {select} toggles progression mode (A). {east} and {start} close a window (Escape).
+The game came out on PlayStation 4 and Xbox One too, with its own interface, but its button layout couldn't be looked up, so this is built on the PC keys. The keys are remembered and unchecked on an install; the game has no key settings.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Fine pointer"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "{icon:sword} {b}Click{/b}"}
+"trigger:Left" = {text = "{icon:bolt} Skills (hold)"}
+"button:South" = {text = "{icon:sword} {b}Click{/b}"}
+"button:West" = {text = "{icon:fast} Rapid click (hold)"}
+"button:North" = {text = "{icon:upgrade} Buy upgrades"}
+"button:East" = {text = "{icon:cancel} Close"}
+"button:LeftBumper" = {text = "{icon:coin} ×10 (hold)"}
+"button:RightBumper" = {text = "{icon:money} ×25 (hold)"}
+"combo:button:LeftBumper+button:RightBumper" = {text = "{icon:money-bag} ×100 (hold both)"}
+"button:Select" = {text = "{icon:arrow} Progression mode"}
+"button:Start" = {text = "Close"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Scroll heroes"
+"combo:button:Select+button:Start" = {text = "Pause gyro (hold)"}
+
+[[menus]]
+name = "Skills"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:fast} Clickstorm"
+action = {keys = ["KEY_1"]}
+
+[[menus.items]]
+label = "{icon:upgrade} Powersurge"
+action = {keys = ["KEY_2"]}
+
+[[menus.items]]
+label = "{icon:star} Lucky Strikes"
+action = {keys = ["KEY_3"]}
+
+[[menus.items]]
+label = "{icon:search} Metal Detector"
+action = {keys = ["KEY_4"]}
+
+[[menus.items]]
+label = "{icon:coin} Golden Clicks"
+action = {keys = ["KEY_5"]}
+
+[[menus.items]]
+label = "{icon:skull} Dark Ritual"
+action = {keys = ["KEY_6"]}
+
+[[menus.items]]
+label = "{icon:hand} Super Clicks"
+action = {keys = ["KEY_7"]}
+
+[[menus.items]]
+label = "{icon:bolt} Energize"
+action = {keys = ["KEY_8"]}
+
+[[menus.items]]
+label = "{icon:rotate} Reload"
+action = {keys = ["KEY_9"]}
+
+[menus.style]
+corners = 0.25
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#1f2a44"
+opacity = 0.93
+
+[menus.style.items]
+color = "#6a4423"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#f4c542"
+opacity = 1.0
+
+[menus.style.border]
+width = 3
+color = "#c99a3c"
+opacity = 0.85
+
+[menus.style.gradient]
+color = "#121a2e"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#9a6a34"
+
+[menus.style.glow]
+color = "#f4c542"
+opacity = 0.35
+blur = 12
+
+[menus.style.type]
+letter_spacing = 0
+
+[menus.style.ornament]
+leather = { opacity = 0.3, on = "items" }
+
+[keyboard_style]
+corners = 0.25
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1f2a44"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#6a4423"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#f4c542"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 3
+color = "#c99a3c"
+opacity = 0.85
+
+[keyboard_style.gradient]
+color = "#121a2e"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#9a6a34"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+[keyboard_style.ornament]
+leather = { opacity = 0.3, on = "items" }
+
+[numpad_style]
+corners = 0.25
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1f2a44"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#6a4423"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#f4c542"
+opacity = 1.0
+
+[numpad_style.border]
+width = 3
+color = "#c99a3c"
+opacity = 0.85
+
+[numpad_style.gradient]
+color = "#121a2e"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#9a6a34"
+
+[numpad_style.type]
+letter_spacing = 0
+
+[numpad_style.ornament]
+leather = { opacity = 0.3, on = "items" }
+
+[media_style]
+corners = 0.25
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1f2a44"
+opacity = 0.93
+
+[media_style.items]
+color = "#6a4423"
+opacity = 0.95
+
+[media_style.selected]
+color = "#f4c542"
+opacity = 1.0
+
+[media_style.border]
+width = 3
+color = "#c99a3c"
+opacity = 0.85
+
+[media_style.gradient]
+color = "#121a2e"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#9a6a34"
+
+[media_style.type]
+letter_spacing = 0
+
+[media_style.ornament]
+leather = { opacity = 0.3, on = "items" }
+
+[menu_style]
+corners = 0.25
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1f2a44"
+opacity = 0.93
+
+[menu_style.items]
+color = "#6a4423"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#f4c542"
+opacity = 1.0
+
+[menu_style.border]
+width = 3
+color = "#c99a3c"
+opacity = 0.85
+
+[menu_style.gradient]
+color = "#121a2e"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#9a6a34"
+
+[menu_style.glow]
+color = "#f4c542"
+opacity = 0.35
+blur = 12
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+leather = { opacity = 0.3, on = "items" }
+
+[motion]
+keyboard = "playful"
+numpad = "playful"
+menu = "playful"
+media = "playful"
+offer = "playful"
+info = "playful"
+log = "playful"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.08}
+pick = {kind = "coin", volume = 0.08}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 1.1}
+pick = {kind = "clink", volume = 0.08}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 1.1}
+pick = {kind = "clink", volume = 0.08}
+
+[sounds.media]
+pick = {kind = "coin", volume = 0.07}
+
+[rumble.menu]
+step = {strength = 0.07, length_ms = 18}
+pick = {strength = 0.25, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.05, length_ms = 14}
+pick = {strength = 0.17, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.17, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.17, length_ms = 60}

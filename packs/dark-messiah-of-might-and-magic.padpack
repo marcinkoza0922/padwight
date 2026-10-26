@@ -1,0 +1,721 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "e79734c1-1f3d-4309-8cef-e74a5379d1ad"
+name = "Dark Messiah of Might and Magic"
+version = "1.0"
+author = "Padwight"
+description = "Dark Messiah of Might and Magic (2006) on an Xbox-style pad, for the game's default keys. RT attacks (hold it for a power attack) and LT parries, A uses and grabs and, held, sprints, B jumps, X kicks and Y is the special ability. A light push of the left stick walks, L3 toggles crouch and R3 zooms with a bow. Hold LB for the belt ring, the D-pad leans and steps through the belt, and Select is the inventory (hold it for the objectives). Start is the menu; double tap it to quick save, hold it to quick load. The game has no controller support. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "2100"
+profile = "Dark Messiah of Might and Magic"
+
+[[rules]]
+kind = "executable"
+value = "Dark Messiah Might and Magic Single Player/mm.exe"
+profile = "Dark Messiah of Might and Magic"
+
+[[profiles]]
+name = "Dark Messiah of Might and Magic"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_F"] }
+North = { keys = ["KEY_V"] }
+LeftBumper = { open_menu = "Belt" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_R"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Z"] }
+DpadRight = { keys = ["KEY_X"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.Select]
+long_press = { keys = ["KEY_O"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F6"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTALT"] }
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and backs out of it. Double tap {start} to quick save (F6) and hold it to quick load (F9).
+{rt} attacks; hold it to wind up a power attack, and with a spell readied it casts. {lt} parries with your weapon or shield. {west} kicks: into spikes, off ledges and into fires.
+{south} uses, talks, and picks up and carries things; {rt} throws what you carry. Hold {south} to sprint. {east} jumps, and a light push of the left stick {ls} walks quietly. {l3} toggles crouch, for sneaking. {north} uses your special ability once the adrenaline bar is full.
+Hold {lb} for the belt ring, aiming with the right stick {rs}: its nine slots hold weapons, spells and potions, which you place there in the inventory. {up} and {down} step through the belt, and {left} and {right} lean. Hold {r3} to zoom while drawing a bow.
+{select} (Tab) opens the inventory, and a long press of {select} the objectives (O). In the inventory the right stick moves the pointer and {rt} clicks.
+{rb} is free. The Xbox 360 edition (Elements) is a rebuilt game with its own controls, so this scheme is built on the PC keys.
+The keys are the game's defaults from a fan-made controls list and not checked in the game (the special ability, bow zoom, walk and quick load especially). Steam and retail copies have been reported to install a French AZERTY keymap; if moving forward is on Z in the game's options, reset the keys to the defaults there. Compare them with Options → Keyboard and change the buttons here to match. The Steam app id is from PCGamingWiki and the executable from Discord's game list; the multiplayer app (2130) isn't matched. The gyro's real-world turn assumes Source's turn of 0.022 degrees a count and a mouse sensitivity of 3, worked out, not measured; set the full turn to 16364 divided by your sensitivity.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push: walk" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "{icon:sword} Attack · cast" }
+"trigger:Left" = { text = "{icon:shield} Parry" }
+"button:South" = { text = "{icon:hand} Use · grab" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Kick" }
+"button:North" = { text = "{icon:flame} Special ability" }
+"button:LeftBumper" = { text = "Hold: belt" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:bow} Bow zoom" }
+"button:Select" = { text = "{icon:bag} Inventory" }
+"gesture:button:Select:long_press" = { text = "{icon:scroll} Objectives" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next belt item"
+
+[[profiles]]
+name = "Dark Messiah of Might and Magic + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_F"] }
+North = { keys = ["KEY_V"] }
+LeftBumper = { open_menu = "Belt" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_R"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Z"] }
+DpadRight = { keys = ["KEY_X"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.Select]
+long_press = { keys = ["KEY_O"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F6"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.gestures.LeftStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTALT"] }
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 5454.5
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Press {lb} and {rb} together to switch the gyro off or on, and hold {l3} to recenter it.
+{start} (Escape) opens the game's menu and backs out of it. Double tap {start} to quick save (F6) and hold it to quick load (F9).
+{rt} attacks; hold it to wind up a power attack, and with a spell readied it casts. {lt} parries with your weapon or shield. {west} kicks: into spikes, off ledges and into fires.
+{south} uses, talks, and picks up and carries things; {rt} throws what you carry. Hold {south} to sprint. {east} jumps, and a light push of the left stick {ls} walks quietly. {l3} toggles crouch, for sneaking. {north} uses your special ability once the adrenaline bar is full.
+Hold {lb} for the belt ring, aiming with the right stick {rs}: its nine slots hold weapons, spells and potions, which you place there in the inventory. {up} and {down} step through the belt, and {left} and {right} lean. Hold {r3} to zoom while drawing a bow.
+{select} (Tab) opens the inventory, and a long press of {select} the objectives (O). In the inventory the right stick moves the pointer and {rt} clicks.
+{rb} is free. The Xbox 360 edition (Elements) is a rebuilt game with its own controls, so this scheme is built on the PC keys.
+The keys are the game's defaults from a fan-made controls list and not checked in the game (the special ability, bow zoom, walk and quick load especially). Steam and retail copies have been reported to install a French AZERTY keymap; if moving forward is on Z in the game's options, reset the keys to the defaults there. Compare them with Options → Keyboard and change the buttons here to match. The Steam app id is from PCGamingWiki and the executable from Discord's game list; the multiplayer app (2130) isn't matched. The gyro's real-world turn assumes Source's turn of 0.022 degrees a count and a mouse sensitivity of 3, worked out, not measured; set the full turn to 16364 divided by your sensitivity.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push: walk" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "{icon:sword} Attack · cast" }
+"trigger:Left" = { text = "{icon:shield} Parry" }
+"button:South" = { text = "{icon:hand} Use · grab" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Kick" }
+"button:North" = { text = "{icon:flame} Special ability" }
+"button:LeftBumper" = { text = "Hold: belt" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:bow} Bow zoom" }
+"button:Select" = { text = "{icon:bag} Inventory" }
+"gesture:button:Select:long_press" = { text = "{icon:scroll} Objectives" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next belt item"
+
+[[profiles]]
+name = "Dark Messiah of Might and Magic + Flick stick"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_F"] }
+North = { keys = ["KEY_V"] }
+LeftBumper = { open_menu = "Belt" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_R"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Z"] }
+DpadRight = { keys = ["KEY_X"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.Select]
+long_press = { keys = ["KEY_O"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F6"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.gestures.LeftStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTALT"] }
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 5454.5
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 5454.5
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Press {lb} and {rb} together to switch the gyro off or on, and hold {l3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+{start} (Escape) opens the game's menu and backs out of it. Double tap {start} to quick save (F6) and hold it to quick load (F9).
+{rt} attacks; hold it to wind up a power attack, and with a spell readied it casts. {lt} parries with your weapon or shield. {west} kicks: into spikes, off ledges and into fires.
+{south} uses, talks, and picks up and carries things; {rt} throws what you carry. Hold {south} to sprint. {east} jumps, and a light push of the left stick {ls} walks quietly. {l3} toggles crouch, for sneaking. {north} uses your special ability once the adrenaline bar is full.
+Hold {lb} for the belt ring, aiming with the right stick {rs}: its nine slots hold weapons, spells and potions, which you place there in the inventory. {up} and {down} step through the belt, and {left} and {right} lean. Hold {r3} to zoom while drawing a bow.
+{select} (Tab) opens the inventory, and a long press of {select} the objectives (O). In the inventory the right stick moves the pointer and {rt} clicks.
+{rb} is free. The Xbox 360 edition (Elements) is a rebuilt game with its own controls, so this scheme is built on the PC keys.
+The keys are the game's defaults from a fan-made controls list and not checked in the game (the special ability, bow zoom, walk and quick load especially). Steam and retail copies have been reported to install a French AZERTY keymap; if moving forward is on Z in the game's options, reset the keys to the defaults there. Compare them with Options → Keyboard and change the buttons here to match. The Steam app id is from PCGamingWiki and the executable from Discord's game list; the multiplayer app (2130) isn't matched. The gyro's real-world turn assumes Source's turn of 0.022 degrees a count and a mouse sensitivity of 3, worked out, not measured; set the full turn to 16364 divided by your sensitivity.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push: walk" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "{icon:sword} Attack · cast" }
+"trigger:Left" = { text = "{icon:shield} Parry" }
+"button:South" = { text = "{icon:hand} Use · grab" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Kick" }
+"button:North" = { text = "{icon:flame} Special ability" }
+"button:LeftBumper" = { text = "Hold: belt" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:bow} Bow zoom" }
+"button:Select" = { text = "{icon:bag} Inventory" }
+"gesture:button:Select:long_press" = { text = "{icon:scroll} Objectives" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Previous / next belt item"
+
+[[menus]]
+name = "Belt"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:sword} Belt 1"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:sword} Belt 2"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:bow} Belt 3"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:flame} Belt 4"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:flame} Belt 5"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:flame} Belt 6"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:potion} Belt 7"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:potion} Belt 8"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "{icon:potion} Belt 9"
+action = { keys = ["KEY_9"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#140d0b"
+opacity = 0.92
+
+[menus.style.items]
+color = "#2a1a15"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#8e2a1a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#b8893e"
+opacity = 0.5
+
+[menus.style.gradient]
+color = "#1c120f"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#4a3020"
+
+[menus.style.glow]
+color = "#b8893e"
+opacity = 0.25
+blur = 20
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "gothic", size = 36, width = 2, color = "#b8893e"}
+vignette = {color = "#000000", opacity = 0.55, reach = 28}
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#140d0b"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#2a1a15"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#8e2a1a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#b8893e"
+opacity = 0.5
+
+[keyboard_style.gradient]
+color = "#1c120f"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4a3020"
+
+[keyboard_style.type]
+case = "upper"
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#140d0b"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#2a1a15"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#8e2a1a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#b8893e"
+opacity = 0.5
+
+[numpad_style.gradient]
+color = "#1c120f"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4a3020"
+
+[numpad_style.type]
+case = "upper"
+letter_spacing = 1
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#140d0b"
+opacity = 0.92
+
+[media_style.items]
+color = "#2a1a15"
+opacity = 0.95
+
+[media_style.selected]
+color = "#8e2a1a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#b8893e"
+opacity = 0.5
+
+[media_style.gradient]
+color = "#1c120f"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4a3020"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#140d0b"
+opacity = 0.92
+
+[menu_style.items]
+color = "#2a1a15"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#8e2a1a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#b8893e"
+opacity = 0.5
+
+[menu_style.gradient]
+color = "#1c120f"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4a3020"
+
+[menu_style.glow]
+color = "#b8893e"
+opacity = 0.25
+blur = 20
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "gothic", size = 36, width = 2, color = "#b8893e"}
+vignette = {color = "#000000", opacity = 0.55, reach = 28}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "knock", volume = 0.07, pitch = 0.9}
+pick = {kind = "shing", volume = 0.2}
+open = {kind = "swish", volume = 0.04, pitch = 0.8}
+close = {kind = "swish", volume = 0.03, pitch = 0.6}
+
+[sounds.guide]
+open = {kind = "swish", volume = 0.04, pitch = 0.8}
+
+[sounds.keyboard]
+step = {kind = "knock", volume = 0.07, pitch = 0.9}
+pick = {kind = "clank", volume = 0.15}
+
+[sounds.numpad]
+step = {kind = "knock", volume = 0.07, pitch = 0.9}
+pick = {kind = "clank", volume = 0.15}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

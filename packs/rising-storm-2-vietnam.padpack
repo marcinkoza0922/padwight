@@ -1,0 +1,714 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "315b4c26-d210-4fcd-bb5b-028787ce1d68"
+name = "Rising Storm 2: Vietnam"
+version = "1.0"
+author = "Padwight"
+description = "Rising Storm 2: Vietnam on an Xbox-style pad, for the game's default keys. A uses and, held, sprints, B jumps and vaults, X reloads (hold it for the fire mode), Y switches weapons (hold it to fix the bayonet), RT fires and LT aims down the sights. L3 crouches (hold it to go prone), R3 is melee, the D-pad leans and opens the map, and LB holds a weapon ring. Select holds the scoreboard. The game has no controller support. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "418460"
+profile = "Rising Storm 2: Vietnam"
+
+[[rules]]
+kind = "executable"
+value = "VNGame.exe"
+profile = "Rising Storm 2: Vietnam"
+
+[[profiles]]
+name = "Rising Storm 2: Vietnam"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_3"] }
+LeftStick = { keys = ["KEY_C"] }
+RightStick = { keys = ["KEY_V"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_M"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_X"] }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_B"] }
+
+[profiles.gestures.LeftStick]
+long_press = { keys = ["KEY_Z"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1150.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and backs out of its screens. Matches are online only, so there's no saving.
+{south} uses: resupply ammo, pick up weapons, man a gun or a radio. Hold {south} to sprint, and while aiming hold it to hold your breath. {east} jumps and vaults over cover. {west} reloads and a long press of {west} switches the fire mode. {north} switches to the next weapon and a long press of {north} fixes or removes the bayonet.
+Hold {lt} to aim down the sights; set iron sights to hold in the game's options. The right stick turns more finely while it's held.
+{l3} crouches and a long press of {l3} goes prone; both stay until you press again. {r3} is a melee strike with the rifle butt or bayonet.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}: primary, sidearm, grenades, explosives and equipment. {rb} takes out grenades straight away; throw with {rt}.
+{left} and {right} lean while held. {up} opens the overhead map, and holding {select} shows the scoreboard.
+Chat and squad orders need typing or the game's own keys: open the on-screen keyboard with {guide} + {west}. Voice chat is a held key; bind it to a spare button if you need it.
+The game uses Easy Anti-Cheat; the pad reaches it as an ordinary keyboard and mouse.
+These are the game's default keys, written from memory and not checked in the game (fire mode, bayonet, prone, melee, the map and the weapon slots especially). Compare them with Options → Controls and change the buttons here to match. The executable name comes from Discord's detection list. The gyro's real-world turn of 8000 pixels at the default mouse sensitivity is guessed, not measured.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "{icon:hand} Use" }
+"gesture:button:South:long_press" = { text = "Sprint · hold breath" }
+"button:East" = { text = "Jump · vault" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Fire mode" }
+"button:North" = { text = "{icon:rifle} Next weapon" }
+"gesture:button:North:long_press" = { text = "{icon:dagger} Bayonet" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "{icon:grenade} Grenades" }
+"button:LeftStick" = { text = "Crouch" }
+"gesture:button:LeftStick:long_press" = { text = "Prone" }
+"button:RightStick" = { text = "{icon:fist} Melee" }
+"button:DpadUp" = { text = "{icon:map} Map" }
+"button:Select" = { text = "Scoreboard" }
+"button:Start" = { text = "Menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles]]
+name = "Rising Storm 2: Vietnam + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_3"] }
+LeftStick = { keys = ["KEY_C"] }
+RightStick = { keys = ["KEY_V"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_M"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_X"] }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_B"] }
+
+[profiles.gestures.LeftStick]
+long_press = { keys = ["KEY_Z"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1150.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 8000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+{start} (Escape) opens the game's menu and backs out of its screens. Matches are online only, so there's no saving.
+{south} uses: resupply ammo, pick up weapons, man a gun or a radio. Hold {south} to sprint, and while aiming hold it to hold your breath. {east} jumps and vaults over cover. {west} reloads and a long press of {west} switches the fire mode. {north} switches to the next weapon and a long press of {north} fixes or removes the bayonet.
+Hold {lt} to aim down the sights; set iron sights to hold in the game's options. The right stick turns more finely while it's held.
+{l3} crouches and a long press of {l3} goes prone; both stay until you press again. {r3} is a melee strike with the rifle butt or bayonet.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}: primary, sidearm, grenades, explosives and equipment. {rb} takes out grenades straight away; throw with {rt}.
+{left} and {right} lean while held. {up} opens the overhead map, and holding {select} shows the scoreboard.
+Chat and squad orders need typing or the game's own keys: open the on-screen keyboard with {guide} + {west}. Voice chat is a held key; bind it to a spare button if you need it.
+The game uses Easy Anti-Cheat; the pad reaches it as an ordinary keyboard and mouse.
+These are the game's default keys, written from memory and not checked in the game (fire mode, bayonet, prone, melee, the map and the weapon slots especially). Compare them with Options → Controls and change the buttons here to match. The executable name comes from Discord's detection list. The gyro's real-world turn of 8000 pixels at the default mouse sensitivity is guessed, not measured.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "{icon:hand} Use" }
+"gesture:button:South:long_press" = { text = "Sprint · hold breath" }
+"button:East" = { text = "Jump · vault" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Fire mode" }
+"button:North" = { text = "{icon:rifle} Next weapon" }
+"gesture:button:North:long_press" = { text = "{icon:dagger} Bayonet" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "{icon:grenade} Grenades" }
+"button:LeftStick" = { text = "Crouch" }
+"gesture:button:LeftStick:long_press" = { text = "Prone" }
+"button:RightStick" = { text = "{icon:fist} Melee" }
+"button:DpadUp" = { text = "{icon:map} Map" }
+"button:Select" = { text = "Scoreboard" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[profiles]]
+name = "Rising Storm 2: Vietnam + Flick stick"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_F"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { wheel = "Down" }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_3"] }
+LeftStick = { keys = ["KEY_C"] }
+RightStick = { keys = ["KEY_V"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_M"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_X"] }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_B"] }
+
+[profiles.gestures.LeftStick]
+long_press = { keys = ["KEY_Z"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 8000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 8000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+{start} (Escape) opens the game's menu and backs out of its screens. Matches are online only, so there's no saving.
+{south} uses: resupply ammo, pick up weapons, man a gun or a radio. Hold {south} to sprint, and while aiming hold it to hold your breath. {east} jumps and vaults over cover. {west} reloads and a long press of {west} switches the fire mode. {north} switches to the next weapon and a long press of {north} fixes or removes the bayonet.
+{l3} crouches and a long press of {l3} goes prone; both stay until you press again. {r3} is a melee strike with the rifle butt or bayonet.
+Hold {lb} for the weapon ring, aiming with the right stick {rs}: primary, sidearm, grenades, explosives and equipment. {rb} takes out grenades straight away; throw with {rt}.
+{left} and {right} lean while held. {up} opens the overhead map, and holding {select} shows the scoreboard.
+Chat and squad orders need typing or the game's own keys: open the on-screen keyboard with {guide} + {west}. Voice chat is a held key; bind it to a spare button if you need it.
+The game uses Easy Anti-Cheat; the pad reaches it as an ordinary keyboard and mouse.
+These are the game's default keys, written from memory and not checked in the game (fire mode, bayonet, prone, melee, the map and the weapon slots especially). Compare them with Options → Controls and change the buttons here to match. The executable name comes from Discord's detection list. The gyro's real-world turn of 8000 pixels at the default mouse sensitivity is guessed, not measured.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Aim" }
+"button:South" = { text = "{icon:hand} Use" }
+"gesture:button:South:long_press" = { text = "Sprint · hold breath" }
+"button:East" = { text = "Jump · vault" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Fire mode" }
+"button:North" = { text = "{icon:rifle} Next weapon" }
+"gesture:button:North:long_press" = { text = "{icon:dagger} Bayonet" }
+"button:LeftBumper" = { text = "Hold: weapons" }
+"button:RightBumper" = { text = "{icon:grenade} Grenades" }
+"button:LeftStick" = { text = "Crouch" }
+"gesture:button:LeftStick:long_press" = { text = "Prone" }
+"button:RightStick" = { text = "{icon:fist} Melee" }
+"button:DpadUp" = { text = "{icon:map} Map" }
+"button:Select" = { text = "Scoreboard" }
+"button:Start" = { text = "Menu" }
+"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Lean"
+
+[[layers]]
+name = "Aim"
+indicator = "off"
+
+[layers.right_stick]
+deadzone = 0.08
+curve = 2.8
+key_threshold = 0.5
+
+[layers.right_stick.action.mouse]
+speed = 1150.0
+accel = 0.0
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:rifle} Primary {color:#8a9a72}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:pistol} Sidearm {color:#8a9a72}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:grenade} Grenade {color:#8a9a72}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:bomb} Explosive {color:#8a9a72}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:wrench} Equipment {color:#8a9a72}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[menus.style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#10140e"
+opacity = 0.9
+
+[menus.style.items]
+color = "#1d2419"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#6f8a3a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#a8c060"
+opacity = 0.45
+
+[menus.style.gradient]
+color = "#151b12"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#33402c"
+
+[menus.style.glow]
+color = "#a8c060"
+opacity = 0.25
+blur = 20
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 14, width = 2, color = "#a8c060"}
+vignette = {color = "#000000", opacity = 0.45, reach = 26}
+
+[keyboard_style]
+corners = 0.08
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#10140e"
+opacity = 0.9
+
+[keyboard_style.items]
+color = "#1d2419"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#6f8a3a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#a8c060"
+opacity = 0.45
+
+[keyboard_style.gradient]
+color = "#151b12"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#33402c"
+
+[keyboard_style.type]
+case = "upper"
+letter_spacing = 2
+
+[numpad_style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#10140e"
+opacity = 0.9
+
+[numpad_style.items]
+color = "#1d2419"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#6f8a3a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#a8c060"
+opacity = 0.45
+
+[numpad_style.gradient]
+color = "#151b12"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#33402c"
+
+[numpad_style.type]
+case = "upper"
+letter_spacing = 2
+
+[media_style]
+corners = 0.08
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#10140e"
+opacity = 0.9
+
+[media_style.items]
+color = "#1d2419"
+opacity = 0.95
+
+[media_style.selected]
+color = "#6f8a3a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#a8c060"
+opacity = 0.45
+
+[media_style.gradient]
+color = "#151b12"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#33402c"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.08
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#10140e"
+opacity = 0.9
+
+[menu_style.items]
+color = "#1d2419"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#6f8a3a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#a8c060"
+opacity = 0.45
+
+[menu_style.gradient]
+color = "#151b12"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#33402c"
+
+[menu_style.glow]
+color = "#a8c060"
+opacity = 0.25
+blur = 20
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 14, width = 2, color = "#a8c060"}
+vignette = {color = "#000000", opacity = 0.45, reach = 26}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.08, pitch = 1.1}
+pick = {kind = "casing", volume = 0.25}
+open = {kind = "radio", volume = 0.08}
+close = {kind = "swish", volume = 0.03, pitch = 1.3}
+
+[sounds.guide]
+open = {kind = "radio", volume = 0.1}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.08, pitch = 1.1}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.08, pitch = 1.1}
+pick = {kind = "beep", volume = 0.15, pitch = 1.1}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

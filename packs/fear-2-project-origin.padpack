@@ -1,0 +1,708 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "cddd0daa-7b6c-4ba5-9858-8758a9cbc88a"
+name = "F.E.A.R. 2: Project Origin"
+version = "1.0"
+author = "Padwight"
+description = "F.E.A.R. 2: Project Origin (2009) and its Reborn expansion on an Xbox-style pad, for the game's default keys, laid out like the F.E.A.R. setup. A uses and, held, sprints, B jumps, X reloads (hold it for fire mode), Y throws a grenade (hold it for the next grenade type), L3 toggles crouch, R3 is melee, and LT zooms. Hold LB for the weapon and grenade ring, aiming with the right stick. RB is slow-mo, D-pad up and down are the flashlight and med kit, and left and right step through weapons. Start is the menu. The game has no controller support. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "16450"
+profile = "F.E.A.R. 2: Project Origin"
+
+[[rules]]
+kind = "executable"
+value = "FEAR2.exe"
+profile = "F.E.A.R. 2: Project Origin"
+
+[[profiles]]
+name = "F.E.A.R. 2: Project Origin"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_G"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_LEFTCTRL"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { mouse = "Right" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_F"] }
+DpadDown = { keys = ["KEY_Z"] }
+DpadLeft = { wheel = "Down" }
+DpadRight = { wheel = "Up" }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTALT"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_B"] }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_X"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { keys = ["KEY_LEFTSHIFT"] }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and backs out of it. The game saves at checkpoints; it has no quick save.
+{south} uses: doors, switches, pick-ups and turrets. Hold {south} to sprint. {east} jumps, {west} reloads and a long press of {west} changes the fire mode. {north} throws a grenade, and a long press of {north} picks the next grenade type.
+Hold {lt} to zoom. The right stick turns more slowly while it is held.
+{rb} is slow-mo (reflex time). {l3} toggles crouch, and it stays on until you click it again. {r3} is melee; tap {east} and then {r3} for a jump kick.
+Hold {lb} for the weapon and grenade ring, aiming with the right stick {rs}. {left} and {right} step through your weapons. {up} switches the flashlight and {down} uses a med kit.
+In the powered armor sections the same buttons drive the suit and fire its weapons. {select} (Tab) shows the players in multiplayer; chat needs typing: open the on-screen keyboard with {guide} + {west} and press T (all) or Y (team).
+The mouse can feel smoothed and too fast; PCGamingWiki points to the FEAR 2 Mouse Fix for raw input. These are the game's default keys from a fan-made controls list and not checked in the game (fire mode, grenade type and sprint especially). The game also came out on the Xbox 360 and PlayStation 3; that layout isn't checked here, so the scheme follows the F.E.A.R. setup instead. Compare the keys with Options → Controls and change the buttons here to match. The Steam app id is from PCGamingWiki and the executable from Discord's game list. The gyro's full turn of 6000 is a guess, not worked out; if a turn of the controller doesn't turn the view as far, change it in the gyro settings.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Zoom" }
+"button:South" = { text = "{icon:hand} Use" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Fire mode" }
+"button:North" = { text = "{icon:grenade} Throw grenade" }
+"gesture:button:North:long_press" = { text = "Grenade type" }
+"button:LeftBumper" = { text = "Hold: weapons, grenades" }
+"button:RightBumper" = { text = "{icon:hourglass} Slow-mo" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:fist} Melee" }
+"button:DpadUp" = { text = "{icon:flashlight} Flashlight" }
+"button:DpadDown" = { text = "{icon:medkit} Med kit" }
+"button:Select" = { text = "Players (multiplayer)" }
+"button:Start" = { text = "Menu" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next weapon"
+
+[[profiles]]
+name = "F.E.A.R. 2: Project Origin + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_G"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_LEFTCTRL"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { mouse = "Right" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_F"] }
+DpadDown = { keys = ["KEY_Z"] }
+DpadLeft = { wheel = "Down" }
+DpadRight = { wheel = "Up" }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTALT"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_B"] }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_X"] }
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { keys = ["KEY_LEFTSHIFT"] }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 6000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Press {lb} and {rb} together to switch the gyro off or on, and hold {r3} to recenter it.
+{start} (Escape) opens the game's menu and backs out of it. The game saves at checkpoints; it has no quick save.
+{south} uses: doors, switches, pick-ups and turrets. Hold {south} to sprint. {east} jumps, {west} reloads and a long press of {west} changes the fire mode. {north} throws a grenade, and a long press of {north} picks the next grenade type.
+Hold {lt} to zoom. The right stick turns more slowly while it is held.
+{rb} is slow-mo (reflex time). {l3} toggles crouch, and it stays on until you click it again. {r3} is melee; tap {east} and then {r3} for a jump kick.
+Hold {lb} for the weapon and grenade ring, aiming with the right stick {rs}. {left} and {right} step through your weapons. {up} switches the flashlight and {down} uses a med kit.
+In the powered armor sections the same buttons drive the suit and fire its weapons. {select} (Tab) shows the players in multiplayer; chat needs typing: open the on-screen keyboard with {guide} + {west} and press T (all) or Y (team).
+The mouse can feel smoothed and too fast; PCGamingWiki points to the FEAR 2 Mouse Fix for raw input. These are the game's default keys from a fan-made controls list and not checked in the game (fire mode, grenade type and sprint especially). The game also came out on the Xbox 360 and PlayStation 3; that layout isn't checked here, so the scheme follows the F.E.A.R. setup instead. Compare the keys with Options → Controls and change the buttons here to match. The Steam app id is from PCGamingWiki and the executable from Discord's game list. The gyro's full turn of 6000 is a guess, not worked out; if a turn of the controller doesn't turn the view as far, change it in the gyro settings.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Zoom" }
+"button:South" = { text = "{icon:hand} Use" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Fire mode" }
+"button:North" = { text = "{icon:grenade} Throw grenade" }
+"gesture:button:North:long_press" = { text = "Grenade type" }
+"button:LeftBumper" = { text = "Hold: weapons, grenades" }
+"button:RightBumper" = { text = "{icon:hourglass} Slow-mo" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:fist} Melee" }
+"button:DpadUp" = { text = "{icon:flashlight} Flashlight" }
+"button:DpadDown" = { text = "{icon:medkit} Med kit" }
+"button:Select" = { text = "Players (multiplayer)" }
+"button:Start" = { text = "Menu" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next weapon"
+
+[[profiles]]
+name = "F.E.A.R. 2: Project Origin + Flick stick"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+    {buttons = ["LeftBumper", "RightBumper"], action = "gyro_toggle"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_G"] }
+LeftBumper = { open_menu = "Weapons" }
+RightBumper = { keys = ["KEY_LEFTCTRL"] }
+LeftStick = { toggle = { action = { keys = ["KEY_C"] } } }
+RightStick = { mouse = "Right" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_F"] }
+DpadDown = { keys = ["KEY_Z"] }
+DpadLeft = { wheel = "Down" }
+DpadRight = { wheel = "Up" }
+
+[profiles.gestures.South]
+long_press = { keys = ["KEY_LEFTALT"] }
+
+[profiles.gestures.West]
+long_press = { keys = ["KEY_B"] }
+
+[profiles.gestures.North]
+long_press = { keys = ["KEY_X"] }
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 6000.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 6000.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Press {lb} and {rb} together to switch the gyro off or on, and hold {r3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+{start} (Escape) opens the game's menu and backs out of it. The game saves at checkpoints; it has no quick save.
+{south} uses: doors, switches, pick-ups and turrets. Hold {south} to sprint. {east} jumps, {west} reloads and a long press of {west} changes the fire mode. {north} throws a grenade, and a long press of {north} picks the next grenade type.
+{rb} is slow-mo (reflex time). {l3} toggles crouch, and it stays on until you click it again. {r3} is melee; tap {east} and then {r3} for a jump kick.
+Hold {lb} for the weapon and grenade ring, aiming with the right stick {rs}. {left} and {right} step through your weapons. {up} switches the flashlight and {down} uses a med kit.
+In the powered armor sections the same buttons drive the suit and fire its weapons. {select} (Tab) shows the players in multiplayer; chat needs typing: open the on-screen keyboard with {guide} + {west} and press T (all) or Y (team).
+The mouse can feel smoothed and too fast; PCGamingWiki points to the FEAR 2 Mouse Fix for raw input. These are the game's default keys from a fan-made controls list and not checked in the game (fire mode, grenade type and sprint especially). The game also came out on the Xbox 360 and PlayStation 3; that layout isn't checked here, so the scheme follows the F.E.A.R. setup instead. Compare the keys with Options → Controls and change the buttons here to match. The Steam app id is from PCGamingWiki and the executable from Discord's game list. The gyro's full turn of 6000 is a guess, not worked out; if a turn of the controller doesn't turn the view as far, change it in the gyro settings.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "{icon:scope} Zoom" }
+"button:South" = { text = "{icon:hand} Use" }
+"gesture:button:South:long_press" = { text = "Sprint (hold)" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"gesture:button:West:long_press" = { text = "Fire mode" }
+"button:North" = { text = "{icon:grenade} Throw grenade" }
+"gesture:button:North:long_press" = { text = "Grenade type" }
+"button:LeftBumper" = { text = "Hold: weapons, grenades" }
+"button:RightBumper" = { text = "{icon:hourglass} Slow-mo" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:fist} Melee" }
+"button:DpadUp" = { text = "{icon:flashlight} Flashlight" }
+"button:DpadDown" = { text = "{icon:medkit} Med kit" }
+"button:Select" = { text = "Players (multiplayer)" }
+"button:Start" = { text = "Menu" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Previous / next weapon"
+
+[[layers]]
+name = "Aim"
+indicator = "off"
+
+[layers.right_stick]
+deadzone = 0.08
+curve = 2.8
+key_threshold = 0.5
+
+[layers.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.0
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 1 {color:#8ea486}1{/color}"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 2 {color:#8ea486}2{/color}"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 3 {color:#8ea486}3{/color}"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 4 {color:#8ea486}4{/color}"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:grenade} Grenade 1 {color:#8ea486}5{/color}"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:grenade} Grenade 2 {color:#8ea486}6{/color}"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:grenade} Grenade 3 {color:#8ea486}7{/color}"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:grenade} Grenade 4 {color:#8ea486}8{/color}"
+action = { keys = ["KEY_8"] }
+
+[menus.style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#111a14"
+opacity = 0.92
+
+[menus.style.items]
+color = "#25332a"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#7d9a72"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#7d9a72"
+opacity = 0.5
+
+[menus.style.gradient]
+color = "#1a261d"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3d5140"
+
+[menus.style.glow]
+color = "#7d9a72"
+opacity = 0.25
+blur = 20
+
+[menus.style.type]
+case = "upper"
+letter_spacing = 2
+
+[menus.style.ornament]
+scanlines = {spacing = 4, opacity = 0.12, color = "#000000"}
+vignette = {color = "#000000", opacity = 0.6, reach = 30}
+
+[keyboard_style]
+corners = 0.3
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#111a14"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#25332a"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#7d9a72"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#7d9a72"
+opacity = 0.5
+
+[keyboard_style.gradient]
+color = "#1a261d"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3d5140"
+
+[keyboard_style.type]
+case = "upper"
+letter_spacing = 2
+
+[numpad_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#111a14"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#25332a"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#7d9a72"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#7d9a72"
+opacity = 0.5
+
+[numpad_style.gradient]
+color = "#1a261d"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3d5140"
+
+[numpad_style.type]
+case = "upper"
+letter_spacing = 2
+
+[media_style]
+corners = 0.3
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#111a14"
+opacity = 0.92
+
+[media_style.items]
+color = "#25332a"
+opacity = 0.95
+
+[media_style.selected]
+color = "#7d9a72"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#7d9a72"
+opacity = 0.5
+
+[media_style.gradient]
+color = "#1a261d"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3d5140"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.3
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#111a14"
+opacity = 0.92
+
+[menu_style.items]
+color = "#25332a"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#7d9a72"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#7d9a72"
+opacity = 0.5
+
+[menu_style.gradient]
+color = "#1a261d"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3d5140"
+
+[menu_style.glow]
+color = "#7d9a72"
+opacity = 0.25
+blur = 20
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+scanlines = {spacing = 4, opacity = 0.12, color = "#000000"}
+vignette = {color = "#000000", opacity = 0.6, reach = 30}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "thud", volume = 0.3, pitch = 0.7, reverb = 0.3}
+open = {kind = "heartbeat", volume = 0.35}
+close = {kind = "swish", volume = 0.03, pitch = 0.6, length = 1.5}
+
+[sounds.guide]
+open = {kind = "heartbeat", volume = 0.3}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "beep", volume = 0.15, pitch = 0.7}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.08, pitch = 0.8}
+pick = {kind = "keys", volume = 0.25}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

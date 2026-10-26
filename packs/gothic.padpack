@@ -1,0 +1,514 @@
+format = 20
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "3f6d2a91-7c4e-4b8a-9e15-d2b0c7a4e861"
+name = "Gothic"
+version = "1.0"
+author = "Padwight"
+description = "Gothic (2001) on an Xbox-style pad, for the game's keys with mouse control on. The left stick walks and steps aside, the right stick turns. A is the action key, B jumps, X draws the weapon and Y opens the inventory. Hold RT and push the left stick to strike, as Ctrl and the arrows do, and LT parries. Hold LB for the weapon and spell slots. The D-pad and RB (Enter) work the keyboard-only menus and dialogues. Select lists the character, log and map; Start is the menu, double tap it to quick save and hold it to quick load. Overlays in dark leather and old brass, the same as the Gothic II setup."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "65540"
+profile = "Gothic"
+
+[[rules]]
+kind = "executable"
+value = "Gothic.exe"
+profile = "Gothic"
+
+[[rules]]
+kind = "executable"
+value = "GothicMod.exe"
+profile = "Gothic"
+
+[[profiles]]
+name = "Gothic"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_LEFTCTRL"] }
+East = { keys = ["KEY_LEFTALT"] }
+West = { keys = ["KEY_SPACE"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { open_menu = "Weapons and spells" }
+RightBumper = { keys = ["KEY_ENTER"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_A"] }
+DpadUp = { keys = ["KEY_UP"] }
+DpadDown = { keys = ["KEY_DOWN"] }
+DpadLeft = { keys = ["KEY_LEFT"] }
+DpadRight = { keys = ["KEY_RIGHT"] }
+
+[profiles.gestures.Start]
+double_tap = { keys = ["KEY_F5"] }
+long_press = { keys = ["KEY_F9"] }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_E"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_E"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_E"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_Q"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_Q"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_Q"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { keys = ["KEY_LEFTCTRL", "KEY_DOWN"] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { multi = [{ keys = ["KEY_LEFTCTRL"] }, { layer = "Strike" }] }
+
+[profiles.guide]
+notes = '''The game has no controller support worth using (its joystick option can't turn the camera), so this plays it with the keys and mouse. Turn on mouse control in the game's Options, Controls first: the right stick {rs} then turns the hero and the camera.
+The left stick {ls} walks forward and back and steps sideways. {south} is the action key (Ctrl): talk, open, pick up, use. {east} jumps and climbs, {west} draws and puts away the weapon.
+{b}Fighting{/b}: hold {rt} (the action key) and push the left stick: forward strikes, left and right swing to the sides, back parries and steps away, as Ctrl with the arrow keys does. {lt} parries on its own. With a bow or a spell drawn, hold {rt} to aim at the target in front and let go to shoot or cast.
+Hold {lb} and point the right stick to draw the melee weapon, the bow or a spell from slots 3 to 0. {north} opens the inventory, {select} lists the inventory, character, log and map.
+The game's menus, dialogues and the inventory don't use the mouse: the {dpad} moves through them (the arrow keys), {south} or {rb} (Enter) picks, {start} (Escape) backs out. In dialogue {south} picks the highlighted line.
+{l3} sneaks (a toggle in the game). {start} is the menu; double tap it to {color:green}quick save{/color}, hold it to quick load.
+The keys are the game's defaults as remembered from Gothic II, which shares the engine, not checked on a Gothic install: forward and back on the arrow keys, Q and E to step sideways, Ctrl for action, Alt to jump, Space for the weapon, A to sneak, Tab, B, L and M for the screens, 1 to 0 for the weapon and spell slots. If one doesn't answer, check Options, Controls and change the buttons here to match. The unpatched game may have no quick save on F5 and F9; the Gothic 1 Community Patch or Union adds one. The map only opens while the hero carries one. The executables (Gothic.exe, or GothicMod.exe with the Player Kit, both in the System folder) come from the wiki and Discord's list, the Steam app id is the wiki's. The 2021 Switch port (Gothic Classic) has its own pad layout, which wasn't available to copy; this keeps the Gothic II setup's layout instead.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Walk · step aside" }
+"stick:Right" = { text = "Turn · look" }
+"trigger:Right" = { text = "{icon:sword} Hold + {ls}: strike" }
+"trigger:Left" = { text = "{icon:shield} Parry" }
+"button:South" = { text = "{icon:hand} Action · talk · pick up" }
+"button:East" = { text = "Jump · climb" }
+"button:West" = { text = "{icon:holster} Draw / put away" }
+"button:North" = { text = "{icon:bag} Inventory" }
+"button:LeftBumper" = { text = "Hold: {icon:sword} weapons · {icon:crystal} spells" }
+"button:RightBumper" = { text = "Enter (menus)" }
+"button:Select" = { text = "{icon:scroll} Character, log, map" }
+"button:Start" = { text = "Menu · back" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+"button:LeftStick" = { text = "{icon:footprints} Sneak" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown", "button:DpadLeft", "button:DpadRight"]
+text = "Menus · dialogue · inventory"
+
+[[layers]]
+name = "Strike"
+indicator = "off"
+
+[layers.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[layers.left_stick.action.ring]
+sectors = 4
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[layers.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[layers.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[layers.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[layers.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[menus]]
+name = "Weapons and spells"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:sword} Melee weapon"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:bow} Bow · crossbow"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 3"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 4"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 5"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 6"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 7"
+action = { keys = ["KEY_7"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 8"
+action = { keys = ["KEY_8"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 9"
+action = { keys = ["KEY_9"] }
+
+[[menus.items]]
+label = "{icon:crystal} Slot 0"
+action = { keys = ["KEY_0"] }
+
+[menus.style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#16100a"
+opacity = 0.93
+
+[menus.style.items]
+color = "#2a1f14"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#7a5420"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8f6f3c"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#100b06"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#45331f"
+
+[menus.style.glow]
+color = "#c08a3a"
+opacity = 0.4
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#8f6f3c"}
+paper = {opacity = 0.2}
+vignette = {color = "#000000", opacity = 0.55, reach = 25}
+
+[[menus]]
+name = "Screens"
+
+kind = "list"
+
+[[menus.items]]
+label = "{icon:bag} Inventory"
+action = { keys = ["KEY_TAB"] }
+
+[[menus.items]]
+label = "{icon:person} Character"
+action = { keys = ["KEY_B"] }
+
+[[menus.items]]
+label = "{icon:scroll} Log"
+action = { keys = ["KEY_L"] }
+
+[[menus.items]]
+label = "{icon:map} Map"
+action = { keys = ["KEY_M"] }
+
+[menus.style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#16100a"
+opacity = 0.93
+
+[menus.style.items]
+color = "#2a1f14"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#7a5420"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8f6f3c"
+opacity = 0.8
+
+[menus.style.gradient]
+color = "#100b06"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#45331f"
+
+[menus.style.glow]
+color = "#c08a3a"
+opacity = 0.4
+blur = 16
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#8f6f3c"}
+paper = {opacity = 0.2}
+vignette = {color = "#000000", opacity = 0.55, reach = 25}
+
+[keyboard_style]
+corners = 0.06
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#16100a"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#2a1f14"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#7a5420"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8f6f3c"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#100b06"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#45331f"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[keyboard_style.ornament]
+paper = {opacity = 0.18}
+
+[numpad_style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#16100a"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#2a1f14"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#7a5420"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8f6f3c"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#100b06"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#45331f"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[numpad_style.ornament]
+paper = {opacity = 0.18}
+
+[media_style]
+corners = 0.06
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#16100a"
+opacity = 0.93
+
+[media_style.items]
+color = "#2a1f14"
+opacity = 0.95
+
+[media_style.selected]
+color = "#7a5420"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8f6f3c"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#100b06"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#45331f"
+
+[media_style.type]
+letter_spacing = 1
+
+[media_style.ornament]
+paper = {opacity = 0.18}
+
+[menu_style]
+corners = 0.06
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#16100a"
+opacity = 0.93
+
+[menu_style.items]
+color = "#2a1f14"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#7a5420"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8f6f3c"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#100b06"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#45331f"
+
+[menu_style.glow]
+color = "#c08a3a"
+opacity = 0.4
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+frame = {kind = "chamfer", size = 10, width = 1, color = "#8f6f3c"}
+paper = {opacity = 0.2}
+vignette = {color = "#000000", opacity = 0.55, reach = 25}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "wood", volume = 0.08, pitch = 0.9}
+pick = {kind = "clank", volume = 0.1, pitch = 0.9}
+open = {kind = "page", volume = 0.07, pitch = 0.85}
+close = {kind = "page", volume = 0.05, pitch = 0.75}
+
+[sounds.numpad]
+step = {kind = "wood", volume = 0.07, pitch = 0.9}
+pick = {kind = "latch", volume = 0.12}
+
+[sounds.keyboard]
+step = {kind = "wood", volume = 0.07, pitch = 0.9}
+pick = {kind = "keys", volume = 0.16}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.21, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.21, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.21, length_ms = 60}
