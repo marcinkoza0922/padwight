@@ -27,9 +27,14 @@
 //! drawn straight; only a glyph right at the edge of a sub-pixel bin can fall into the next one
 //! (the float sums differ slightly), a level or so of difference at one glyph now and then.
 
-use tiny_skia::{FilterQuality, Pixmap, PixmapMut, PixmapPaint, Transform};
+use tiny_skia::{Pixmap, PixmapMut, Transform};
 
-use super::{Shown, screen_ops};
+use super::{
+    Shown,
+    damage::{Damage, History, Patch},
+    items::{self, Item, What},
+    screen_ops,
+};
 use crate::overlay::{
     OverlayFrame,
     render::{Layer, Op, Point, bounds, digest, raster},
@@ -43,6 +48,8 @@ const LIMIT: i32 = 16_384;
 
 /// A panel's list drawn into a picture.
 struct Kept {
+    /// Its number, never given to another picture.
+    id: u64,
     digest: u64,
     /// The device scale's bits.
     scale: u32,
@@ -61,12 +68,23 @@ pub struct Display {
     pub scale: f32,
 }
 
-/// Draws whole screens, keeping each panel's picture from one frame to the next.
+/// The last frame painted: what it laid down, on a buffer of what size, at what scale.
+struct Last {
+    items: Vec<Item>,
+    size: (u32, u32),
+    scale: u32,
+}
+
+/// Draws whole screens, keeping each panel's picture from one frame to the next, and what the
+/// last frames laid down, to repaint only what changed (`paint`).
 #[derive(Default)]
 pub struct Screen {
     kept: Vec<Kept>,
     frame: u64,
     drawn: u64,
+    pictures: u64,
+    last: Option<Last>,
+    history: History,
 }
 
 impl Screen {
@@ -75,38 +93,64 @@ impl Screen {
     }
 
     /// Draws `shown` on `display`, over what `target` (as big as the display in device pixels)
-    /// holds: clear it first for a fresh screen.
+    /// holds: clear it first for a fresh screen. The next `paint` repaints everything.
     pub fn draw(&mut self, frame: &OverlayFrame, shown: &Shown, display: Display, target: &mut PixmapMut) {
         self.lay(&screen_ops(frame, shown, display.size), display.scale, target);
     }
 
-    /// Draws a screen's list: each layer at its top level is a panel, laid down from its
-    /// picture; anything else there is drawn as it is.
+    /// Draws a screen's list over what `target` holds: each layer at its top level is a panel,
+    /// laid down from its picture; anything else there is drawn as it is.
     pub fn lay(&mut self, ops: &[Op], scale: f32, target: &mut PixmapMut) {
         self.frame += 1;
-        let straight = Transform::from_scale(scale, scale);
-        let mut at = 0;
-        while let Some(op) = ops.get(at) {
-            at = match op {
-                Op::Layer(layer) => {
-                    let (end, next) = close(ops, at + 1);
-                    self.panel(layer, &ops[at + 1..end], scale, target);
-                    next
-                }
-                Op::Clip { .. } => {
-                    let next = close(ops, at + 1).1;
-                    raster::draw(&ops[at..next], target, straight);
-                    next
-                }
-                // A close with nothing open is passed over, as the rasterizer does.
-                Op::Unlayer | Op::Unclip => at + 1,
-                op => {
-                    raster::draw(std::slice::from_ref(op), target, straight);
-                    at + 1
-                }
-            };
+        let items = self.items(ops, scale);
+        let whole = Patch::new(0, 0, target.width() as i32, target.height() as i32);
+        for item in &items {
+            self.lay_item(item, scale, whole, target);
         }
+        self.reset();
         self.prune();
+    }
+
+    /// Paints a screen's list (`screen_ops`) into `target`, a reused buffer holding the frame
+    /// painted `age` frames back (1: the last one; 0: unknown contents), and returns the
+    /// patches it cleared and redrew: the rest of `target` was neither read nor written.
+    ///
+    /// This frame's own damage is where any panel changed (its picture, place, zoom or
+    /// opacity), was or now is; with the damage of the `age - 1` frames before it, that is what
+    /// `target` needs. Each of those patches is cleared to transparent and every panel over it
+    /// laid down again, cut to it. Everything is repainted for an unknown buffer (age 0), one
+    /// older than the few frames remembered, the first frame, a new buffer size or scale, and
+    /// after `forget` or `lay`.
+    ///
+    /// Each call counts as a frame committed, unless it returns no damage: then nothing changed
+    /// and the buffer is as it was, to be left uncommitted.
+    pub fn paint(&mut self, ops: &[Op], scale: f32, target: &mut PixmapMut, age: u64) -> Damage {
+        self.frame += 1;
+        let (size, bits) = ((target.width(), target.height()), scale.to_bits());
+        let items = self.items(ops, scale);
+        let own = match &self.last {
+            Some(last) if (last.size, last.scale) == (size, bits) => Damage::of(items::changed(&last.items, &items), size.0, size.1),
+            _ => {
+                self.history.clear();
+                Damage::full(size.0, size.1)
+            }
+        };
+        let repaint = match self.history.since(age, own.patches()) {
+            Some(patches) => Damage::of(patches, size.0, size.1),
+            None => Damage::full(size.0, size.1),
+        };
+        if !repaint.is_empty() {
+            self.history.push(&own);
+        }
+        for &patch in repaint.patches() {
+            items::clear(target, patch);
+            for item in items.iter().filter(|i| i.at.intersection(&patch).is_some()) {
+                self.lay_item(item, scale, patch, target);
+            }
+        }
+        self.last = Some(Last { items, size, scale: bits });
+        self.prune();
+        repaint
     }
 
     /// How many panel pictures have been drawn (rather than reused) so far.
@@ -120,30 +164,80 @@ impl Screen {
         self.kept.len()
     }
 
-    /// Drops every picture, as when the overlay hides.
+    /// Drops every picture, as when the overlay hides; the next `paint` repaints everything.
     pub fn forget(&mut self) {
         self.kept.clear();
+        self.reset();
     }
 
-    /// Lays down a panel's picture, drawing it first unless it is kept.
-    fn panel(&mut self, layer: &Layer, ops: &[Op], scale: f32, target: &mut PixmapMut) {
+    /// Forgets what the last frames laid down: the next `paint` repaints everything.
+    fn reset(&mut self) {
+        self.last = None;
+        self.history.clear();
+    }
+
+    /// What `ops` lays at their top level, in order, drawing the pictures not kept.
+    fn items(&mut self, ops: &[Op], scale: f32) -> Vec<Item> {
+        let mut items = Vec::new();
+        let mut at = 0;
+        while let Some(op) = ops.get(at) {
+            let next = match op {
+                Op::Layer(layer) => {
+                    let (end, next) = close(ops, at + 1);
+                    items.extend(self.panel(layer, &ops[at + 1..end], scale));
+                    next
+                }
+                // A close with nothing open is passed over, as the rasterizer does.
+                Op::Unlayer | Op::Unclip => at + 1,
+                op => {
+                    let next = if let Op::Clip { .. } = op { close(ops, at + 1).1 } else { at + 1 };
+                    let straight = &ops[at..next];
+                    if let Some(patch) = items::straight_patch(straight, scale) {
+                        items.push(Item { what: What::Straight(straight.to_vec()), at: patch });
+                    }
+                    next
+                }
+            };
+            at = next;
+        }
+        items
+    }
+
+    /// A panel's picture as it goes down this frame, drawn first unless it is kept.
+    fn panel(&mut self, layer: &Layer, ops: &[Op], scale: f32) -> Option<Item> {
         if !(layer.opacity > 0.0 && layer.scale > 0.0) {
-            return;
+            return None;
         }
         let key = (digest(ops), scale.to_bits());
         let found = self.kept.iter().position(|k| (k.digest, k.scale) == key && k.ops == ops);
         let i = match found {
             Some(i) => i,
             None => {
-                let Some((pixmap, origin)) = picture(ops, scale) else { return };
+                let (pixmap, origin) = picture(ops, scale)?;
                 self.drawn += 1;
-                self.kept.push(Kept { digest: key.0, scale: key.1, ops: ops.to_vec(), pixmap, origin, used: 0 });
+                self.pictures += 1;
+                let kept = Kept { id: self.pictures, digest: key.0, scale: key.1, ops: ops.to_vec(), pixmap, origin, used: 0 };
+                self.kept.push(kept);
                 self.kept.len() - 1
             }
         };
         let kept = &mut self.kept[i];
         kept.used = self.frame;
-        composite(&kept.pixmap, kept.origin, layer, scale, target);
+        let (laid, at) = items::laid((kept.pixmap.width(), kept.pixmap.height()), kept.origin, layer, scale);
+        Some(Item { what: What::Picture { id: kept.id, laid }, at })
+    }
+
+    /// Lays `item` down over `target`, only within `clip`.
+    fn lay_item(&self, item: &Item, scale: f32, clip: Patch, target: &mut PixmapMut) {
+        let Some(clip) = item.at.intersection(&clip) else { return };
+        match &item.what {
+            What::Picture { id, laid } => {
+                if let Some(kept) = self.kept.iter().find(|k| k.id == *id) {
+                    items::lay_picture(&kept.pixmap, laid, clip, target);
+                }
+            }
+            What::Straight(ops) => items::draw_straight(ops, scale, clip, target),
+        }
     }
 
     /// Keeps the pictures laid down this frame and the most recently used of the rest, up to
@@ -186,22 +280,3 @@ fn picture(ops: &[Op], scale: f32) -> Option<(Pixmap, (i32, i32))> {
     Some((pixmap, (x0, y0)))
 }
 
-/// Lays `pixmap`, whose corner lies at `origin` (device pixels) at rest, onto `target` as
-/// `layer` moves it: faded, moved, and zoomed about the layer's point.
-fn composite(pixmap: &Pixmap, origin: (i32, i32), layer: &Layer, scale: f32, target: &mut PixmapMut) {
-    let opacity = layer.opacity.clamp(0.0, 1.0);
-    let z = layer.scale;
-    if (z - 1.0).abs() < 1e-4 {
-        let (dx, dy) = ((layer.shift.x * scale).round() as i32, (layer.shift.y * scale).round() as i32);
-        let paint = PixmapPaint { opacity, quality: FilterQuality::Nearest, ..PixmapPaint::default() };
-        target.draw_pixmap(origin.0 + dx, origin.1 + dy, pixmap.as_ref(), &paint, Transform::identity(), None);
-        return;
-    }
-    // Picture pixel u is device point origin + u at rest, logical (origin + u) / scale, which
-    // the layer takes to about + shift + (p - about) * z.
-    let (a, s) = (layer.about, layer.shift);
-    let tx = z * origin.0 as f32 + scale * (a.x * (1.0 - z) + s.x);
-    let ty = z * origin.1 as f32 + scale * (a.y * (1.0 - z) + s.y);
-    let paint = PixmapPaint { opacity, quality: FilterQuality::Bilinear, ..PixmapPaint::default() };
-    target.draw_pixmap(0, 0, pixmap.as_ref(), &paint, Transform::from_row(z, 0.0, 0.0, z, tx, ty), None);
-}

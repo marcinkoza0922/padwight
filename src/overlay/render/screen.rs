@@ -12,13 +12,21 @@
 //! each such layer's list once into a picture, keeps it while the list stays the same, and lays
 //! it down at the layer's opacity, offset and zoom, so a panel fades and moves as one picture.
 //! What moves inside a panel (an item's stagger fade, highlight or swell) changes its list,
-//! which is then drawn again. Damage is step 4.3.
+//! which is then drawn again.
+//!
+//! `Screen::paint` repaints only what changed into a reused buffer (`damage.rs`, `items.rs`):
+//! where a panel changed, was or now is, plus what the frames since the buffer was last drawn
+//! changed.
 
+mod damage;
+mod items;
 mod panels;
 mod pictures;
 mod stacks;
 #[cfg(test)]
 mod fades;
+#[cfg(test)]
+mod repaint;
 #[cfg(test)]
 mod tests;
 
@@ -34,6 +42,7 @@ use crate::{
     snapshot::Image,
 };
 
+pub use damage::{Damage, Patch, swap_red_blue};
 pub use pictures::{Display, Screen};
 
 /// What is on screen at one moment, each panel with how it is moving.
