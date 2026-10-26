@@ -14,10 +14,26 @@ use crate::{
     keyboard::{self, Board, Key},
     overlay::{
         FIELD_LEGEND, KEYBOARD_LEGEND, KeyboardView, NUMPAD_LEGEND,
-        draw::{GAP, UNIT, keyboard::{KEYBOARD_PADDING, keyboard_body_width}},
         fit::Fit,
     },
 };
+
+/// A key's width and height at scale 1.
+pub const UNIT: f32 = 46.0;
+/// The gap between keys at scale 1.
+pub const GAP: f32 = 4.0;
+/// The space the keyboard's padding takes inside its box, at scale 1.
+pub const KEYBOARD_PADDING: f32 = 16.0;
+
+/// The width of a keyboard's body at scale 1: the legend's or the keys', whichever is wider.
+pub fn keyboard_body_width(board: Board) -> f32 {
+    if board == Board::Numpad {
+        // Numpad keys are fewer, so bigger; its body has a floor of 230 at any scale.
+        (board.units_wide() * (UNIT * 1.5 + GAP)).max(230.0)
+    } else {
+        board.units_wide() * (UNIT + GAP)
+    }
+}
 
 /// The keyboard panel for `v`: its keys, legend, bar and typed line, framed. `style` is `v.style`
 /// resolved for drawing (see `Style::of`, `with_glyphs`, `faded`), with the animation in `anim`.

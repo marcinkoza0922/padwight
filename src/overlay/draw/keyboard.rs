@@ -8,20 +8,11 @@ use iced::{
 };
 
 use super::*;
-use crate::{keyboard, overlay::{FIELD_LEGEND, KEYBOARD_LEGEND, NUMPAD_LEGEND}};
+use crate::{
+    keyboard,
+    overlay::{FIELD_LEGEND, KEYBOARD_LEGEND, NUMPAD_LEGEND, render::{KEYBOARD_PADDING, keyboard_body_width}},
+};
 
-/// The space the keyboard's padding takes inside its box, at scale 1.
-pub(in crate::overlay) const KEYBOARD_PADDING: f32 = 16.0;
-
-/// The width of a keyboard's body at scale 1: the legend's or the keys', whichever is wider.
-pub(in crate::overlay) fn keyboard_body_width(board: crate::keyboard::Board) -> f32 {
-    if board == crate::keyboard::Board::Numpad {
-        // Numpad keys are fewer, so bigger; its body has a floor of 230 at any scale.
-        (board.units_wide() * (UNIT * 1.5 + GAP)).max(230.0)
-    } else {
-        board.units_wide() * (UNIT + GAP)
-    }
-}
 #[expect(clippy::too_many_lines, reason = "predates the size lints")]
 pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::info::Glyphs, fit: &Fit, anim: &Anim) -> Element<'a, M> {
     let c = colors(&v.style, font).with_glyphs(glyphs).faded(anim.opacity());

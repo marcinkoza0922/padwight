@@ -32,6 +32,7 @@ pub use op::{File, Fit, Markup, Op, PatternRef, RunKey, Svg, balanced, bounds, d
 pub use item::{Item, item};
 #[expect(unused_imports, reason = "drawn by the screen from step 4.1")]
 pub use keyboard::{keyboard_panel, scale as keyboard_scale};
+pub use keyboard::{GAP, KEYBOARD_PADDING, UNIT, keyboard_body_width};
 pub use panel::framed;
 pub use rich::{Setting, info_cell, line, plain, rich};
 pub use style::Style;

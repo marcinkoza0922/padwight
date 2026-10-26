@@ -8,7 +8,7 @@ mod glyphs;
 mod info;
 mod log_panel;
 mod look;
-pub(in crate::overlay) mod keyboard;
+mod keyboard;
 mod marked;
 mod menus;
 mod ornament;
@@ -56,10 +56,8 @@ use crate::{
     menu::MenuView,
     motion::Anim,
     offer::OfferView,
+    overlay::render::{GAP, UNIT},
 };
-
-pub(in crate::overlay) const UNIT: f32 = 46.0;
-pub(in crate::overlay) const GAP: f32 = 4.0;
 
 /// Distance from the screen edge for edge and corner positions.
 pub const EDGE_MARGIN: f32 = 40.0;
