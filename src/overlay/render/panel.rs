@@ -11,7 +11,7 @@ mod ornament;
 #[cfg(test)]
 mod tests;
 
-use super::{Align, Corners, Fill, Length, Linear, Node, Op, PANEL_CORNER, Padding, Rect, Style};
+use super::{Align, Corners, Fill, Length, Linear, Node, Op, PANEL_CORNER, Padding, Point, Rect, Style};
 use crate::{config::OverlayStyle, overlay::fit::Fit};
 
 /// The panel for `body`: `padding` around it, in a box at `fit`'s size.
@@ -52,6 +52,8 @@ pub fn framed(body: Node, style: &Style, config: &OverlayStyle, padding: impl In
 /// The box itself: its shadow, then its background and border.
 fn backdrop(style: Style, radii: Corners) -> Node {
     Node::leaf(move |rect: Rect, ops: &mut Vec<Op>| {
+        // The panel's filters, and its items', start from here (`anchor`).
+        super::anchor::set(Point::new(rect.x, rect.y));
         // The shadow fades with the panel's background, so a see-through panel casts less.
         if let Some(shadow) = style.look.panel_shadow(style.background.a) {
             ops.push(Op::Shadow { rect, radii, shadow, spread: 0.0 });
