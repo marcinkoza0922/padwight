@@ -12,14 +12,14 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use iced::{Color, Length, Size, widget::stack};
+use tiny_skia::PixmapMut;
 use windows::{
     Win32::{
-        Foundation::{HWND, LPARAM, LRESULT, POINT, SIZE, WPARAM},
+        Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, SIZE, WPARAM},
         Graphics::Gdi::{
             AC_SRC_ALPHA, AC_SRC_OVER, BI_RGB, BITMAPINFO, BITMAPINFOHEADER, BLENDFUNCTION, CreateCompatibleDC, CreateDIBSection,
-            DIB_RGB_COLORS, DeleteDC, DeleteObject, GetDC, GetMonitorInfoW, MONITOR_DEFAULTTOPRIMARY, MONITORINFO,
-            MonitorFromWindow, ReleaseDC, SelectObject,
+            DIB_RGB_COLORS, DeleteDC, DeleteObject, GetDC, GetMonitorInfoW, HBITMAP, HDC, HGDIOBJ, MONITOR_DEFAULTTOPRIMARY,
+            MONITORINFO, MonitorFromWindow, ReleaseDC, SelectObject,
         },
         System::LibraryLoader::GetModuleHandleW,
         UI::{
@@ -27,7 +27,7 @@ use windows::{
             WindowsAndMessaging::{
                 CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetForegroundWindow, GetMessageW, KillTimer,
                 PostMessageW, PostQuitMessage, RegisterClassW, SW_HIDE, SW_SHOWNOACTIVATE, SWP_NOACTIVATE, SetTimer,
-                SetWindowPos, ShowWindow, ULW_ALPHA, UpdateLayeredWindow, WM_APP, WM_CLOSE, WM_DESTROY, WM_TIMER, WNDCLASSW,
+                SetWindowPos, ShowWindow, ULW_ALPHA, UPDATELAYEREDWINDOWINFO, UpdateLayeredWindowIndirect, WM_APP, WM_CLOSE, WM_DESTROY, WM_TIMER, WNDCLASSW,
                 WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_EX_TRANSPARENT, WS_POPUP, HWND_TOPMOST,
             },
         },
@@ -38,7 +38,8 @@ use windows::{
 use super::{
     OverlayFrame,
     timing::{timing_log, unix_ns},
-    ui::{Overlay, layers},
+    render::{Damage, Patch, Point, Screen, swap_red_blue},
+    ui::Overlay,
 };
 use crate::ipc::{self, Request, UnixStream};
 
@@ -59,6 +60,76 @@ struct Window {
     scale: f32,
     visible: bool,
     animating: bool,
+    /// The renderer, which keeps its panels' pictures and what the last frames covered.
+    screen: Screen,
+    /// The window's picture, kept while it is shown: it always holds the last frame drawn.
+    dib: Option<Dib>,
+    /// Whether Windows has the picture in `dib` as it stands.
+    presented: bool,
+}
+
+/// A 32-bit top-down DIB section selected into its own memory DC: premultiplied BGRA, as
+/// `UpdateLayeredWindowIndirect` wants it.
+struct Dib {
+    memory: HDC,
+    bitmap: HBITMAP,
+    /// What the DC held before the bitmap went in.
+    old: HGDIOBJ,
+    bits: *mut u8,
+    width: u32,
+    height: u32,
+}
+
+impl Dib {
+    fn new(width: u32, height: u32) -> Result<Dib> {
+        // SAFETY: a DC made from the screen's, and a DIB section of `width` x `height` at 32
+        // bits (zeroed by Windows) selected into it; `Drop` undoes both.
+        unsafe {
+            let screen = GetDC(None);
+            let memory = CreateCompatibleDC(Some(screen));
+            ReleaseDC(None, screen);
+            let info = BITMAPINFO {
+                bmiHeader: BITMAPINFOHEADER {
+                    biSize: size_of::<BITMAPINFOHEADER>() as u32,
+                    biWidth: width as i32,
+                    biHeight: -(height as i32),
+                    biPlanes: 1,
+                    biBitCount: 32,
+                    biCompression: BI_RGB.0,
+                    ..Default::default()
+                },
+                ..Default::default()
+            };
+            let mut bits = std::ptr::null_mut();
+            match CreateDIBSection(Some(memory), &info, DIB_RGB_COLORS, &mut bits, None, 0) {
+                Ok(bitmap) => {
+                    let old = SelectObject(memory, bitmap.into());
+                    Ok(Dib { memory, bitmap, old, bits: bits.cast(), width, height })
+                }
+                Err(e) => {
+                    let _ = DeleteDC(memory);
+                    Err(e).context("making the overlay's picture")
+                }
+            }
+        }
+    }
+
+    fn pixels(&mut self) -> &mut [u8] {
+        // SAFETY: the section is `width` x `height` four-byte pixels, alive until `drop`, and
+        // `&mut self` is the only way to reach it.
+        unsafe { std::slice::from_raw_parts_mut(self.bits, 4 * self.width as usize * self.height as usize) }
+    }
+}
+
+impl Drop for Dib {
+    fn drop(&mut self) {
+        // SAFETY: the objects `new` made, selected out before they are deleted.
+        unsafe {
+            SelectObject(self.memory, self.old);
+            let _ = DeleteObject(self.bitmap.into());
+            let _ = DeleteDC(self.memory);
+        }
+    }
 }
 
 thread_local! {
@@ -86,6 +157,9 @@ pub fn run() -> Result<()> {
             scale: 1.0,
             visible: false,
             animating: false,
+            screen: Screen::new(),
+            dib: None,
+            presented: false,
         });
     });
     let mut msg = Default::default();
@@ -176,6 +250,9 @@ impl Window {
                 // SAFETY: hiding our own window.
                 let _ = unsafe { ShowWindow(self.hwnd, SW_HIDE) };
                 self.visible = false;
+                // The next time it shows may be on another monitor: start from nothing.
+                self.dib = None;
+                self.screen.forget();
             }
             self.animate(false);
             return;
@@ -228,66 +305,69 @@ impl Window {
         }
     }
 
-    /// Draws the overlay's layers and puts them on the window.
-    fn draw(&self, now: Instant) -> Result<()> {
+    /// Paints the overlay into the window's picture, redrawing only what changed since the last
+    /// frame, and puts that on the window.
+    fn draw(&mut self, now: Instant) -> Result<()> {
         let started = Instant::now();
-        let display = Size::new(self.size.cx as f32 / self.scale, self.size.cy as f32 / self.scale);
-        let screen = stack(layers::<()>(&self.overlay, display, now)).width(Length::Fill).height(Length::Fill);
-        let image = crate::snapshot::render(screen.into(), display, self.scale, Color::TRANSPARENT)?;
-        timing_log(&format!("built {} {} {}x{}", unix_ns(), started.elapsed().as_nanos(), display.width, display.height));
-        self.present(image.width, image.height, &image.rgba)
+        let (width, height) = (self.size.cx.max(0) as u32, self.size.cy.max(0) as u32);
+        if width == 0 || height == 0 {
+            return Ok(());
+        }
+        let size = Point::new(width as f32 / self.scale, height as f32 / self.scale);
+        let ops = self.overlay.screen_ops(now, size);
+        // A new picture is empty; one kept holds the last frame, which is age 1.
+        let age = match &self.dib {
+            Some(dib) if (dib.width, dib.height) == (width, height) => 1,
+            _ => {
+                self.dib = Some(Dib::new(width, height)?);
+                self.presented = false;
+                0
+            }
+        };
+        let Some(dib) = self.dib.as_mut() else { return Ok(()) };
+        let mut pixmap = PixmapMut::from_bytes(dib.pixels(), width, height).context("the overlay's picture has no size")?;
+        let damage = self.screen.paint(&ops, self.scale, &mut pixmap, age);
+        // tiny-skia's RGBA to the DIB's BGRA, over the repainted patches only.
+        swap_red_blue(dib.pixels(), width, &damage);
+        timing_log(&format!("built {} {} {}x{}", unix_ns(), started.elapsed().as_nanos(), size.x, size.y));
+        if damage.is_empty() && self.presented {
+            return Ok(());
+        }
+        self.presented = false;
+        self.present(&damage)?;
+        self.presented = true;
+        Ok(())
     }
 
-    /// Hands a premultiplied RGBA picture to Windows as the window's contents.
-    fn present(&self, width: u32, height: u32, rgba: &[u8]) -> Result<()> {
-        // SAFETY: the DIB section is `width` x `height` at 32 bits, as big as the copy into it;
-        // every GDI object is selected out and freed before returning.
+    /// Hands the DIB to Windows as the window's contents. Only the box round `damage` is
+    /// updated (`prcDirty`), unless Windows has no picture of ours yet.
+    fn present(&self, damage: &Damage) -> Result<()> {
+        let Some(dib) = &self.dib else { return Ok(()) };
+        let dirty = damage.patches().iter().copied().reduce(|a, b| Patch::new(a.x0.min(b.x0), a.y0.min(b.y0), a.x1.max(b.x1), a.y1.max(b.y1)));
+        let rect = dirty.map(|p| RECT { left: p.x0, top: p.y0, right: p.x1, bottom: p.y1 });
+        let partial = self.presented.then_some(rect.as_ref()).flatten();
+        let blend = BLENDFUNCTION { BlendOp: AC_SRC_OVER as u8, BlendFlags: 0, SourceConstantAlpha: 255, AlphaFormat: AC_SRC_ALPHA as u8 };
+        let size = SIZE { cx: dib.width as i32, cy: dib.height as i32 };
+        let origin = POINT::default();
+        // SAFETY: every pointer in the struct refers to a local that outlives the call, and the
+        // DCs are alive; the screen DC is released before returning.
         unsafe {
             let screen = GetDC(None);
-            let memory = CreateCompatibleDC(Some(screen));
-            let info = BITMAPINFO {
-                bmiHeader: BITMAPINFOHEADER {
-                    biSize: size_of::<BITMAPINFOHEADER>() as u32,
-                    biWidth: width as i32,
-                    biHeight: -(height as i32),
-                    biPlanes: 1,
-                    biBitCount: 32,
-                    biCompression: BI_RGB.0,
-                    ..Default::default()
-                },
-                ..Default::default()
+            let info = UPDATELAYEREDWINDOWINFO {
+                cbSize: size_of::<UPDATELAYEREDWINDOWINFO>() as u32,
+                hdcDst: screen,
+                pptDst: &self.at,
+                psize: &size,
+                hdcSrc: dib.memory,
+                pptSrc: &origin,
+                crKey: Default::default(),
+                pblend: &blend,
+                dwFlags: ULW_ALPHA,
+                prcDirty: partial.map_or(std::ptr::null(), std::ptr::from_ref),
             };
-            let mut bits = std::ptr::null_mut();
-            let bitmap = CreateDIBSection(Some(memory), &info, DIB_RGB_COLORS, &mut bits, None, 0);
-            let result = match bitmap {
-                Ok(bitmap) => {
-                    let pixels = std::slice::from_raw_parts_mut(bits.cast::<u8>(), rgba.len());
-                    for (dst, src) in pixels.as_chunks_mut::<4>().0.iter_mut().zip(rgba.as_chunks::<4>().0) {
-                        *dst = [src[2], src[1], src[0], src[3]];
-                    }
-                    let old = SelectObject(memory, bitmap.into());
-                    let blend = BLENDFUNCTION { BlendOp: AC_SRC_OVER as u8, BlendFlags: 0, SourceConstantAlpha: 255, AlphaFormat: AC_SRC_ALPHA as u8 };
-                    let size = SIZE { cx: width as i32, cy: height as i32 };
-                    let updated = UpdateLayeredWindow(
-                        self.hwnd,
-                        Some(screen),
-                        Some(&self.at),
-                        Some(&size),
-                        Some(memory),
-                        Some(&POINT::default()),
-                        Default::default(),
-                        Some(&blend),
-                        ULW_ALPHA,
-                    );
-                    SelectObject(memory, old);
-                    let _ = DeleteObject(bitmap.into());
-                    updated.context("updating the overlay window")
-                }
-                Err(e) => Err(e).context("making the overlay's picture"),
-            };
-            let _ = DeleteDC(memory);
+            let updated = UpdateLayeredWindowIndirect(self.hwnd, &info);
             ReleaseDC(None, screen);
-            result
+            if updated.as_bool() { Ok(()) } else { Err(windows::core::Error::from_thread()).context("updating the overlay window") }
         }
     }
 }

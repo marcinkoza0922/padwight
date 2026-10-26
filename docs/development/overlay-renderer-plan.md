@@ -227,7 +227,7 @@ that panel with both renderers, and compare (step 3.10 automates this). Port fro
 
 | # | Step | Model | Done when |
 |---|---|---|---|
-| 6.1 | Port `overlay/windows.rs` from iced's snapshot to the new renderer: the screen picture, premultiplied, converted to BGRA in the DIB section for `UpdateLayeredWindow`, damage only. Keep the 16 ms timer: layered windows have no frame callbacks. | Sonnet | `cargo check --target x86_64-pc-windows-msvc` passes. **It can't be run here; it needs testing on Windows.** |
+| 6.1 | Port `overlay/windows.rs` from iced's snapshot to the new renderer: the screen picture, premultiplied, converted to BGRA in the DIB section for `UpdateLayeredWindow`, damage only. Keep the 16 ms timer: layered windows have no frame callbacks. | done (untested) | `windows.rs` keeps a `render::Screen` and one DIB section (`Dib`), paints it with age 1 (0 when new), swaps red and blue over the damage only, and hands the damage's bounds to `UpdateLayeredWindowIndirect` as `prcDirty` (a full update after a new DIB or a failed present); hiding drops the DIB and forgets the pictures. `cargo check` and clippy pass for `x86_64-pc-windows-msvc`. **Still to test on Windows:** colors and transparency, no stale pixels from the dirty rect (else pass no `prcDirty`), fades on the timer, a change of monitor or DPI. `debug/window.rs` stays on iced: it draws the settings window. |
 
 ### Phase 7: take iced out of the overlay process
 
