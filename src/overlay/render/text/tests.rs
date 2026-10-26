@@ -105,6 +105,16 @@ fn case_bold_and_spacing_change_the_width() {
 }
 
 #[test]
+fn spaced_text_shaped_at_its_own_width_stays_on_one_line() {
+    // The spacing after the last letter is taken back, so the box is that much narrower than
+    // the line was laid out in; shaping again at the box's width must not wrap it.
+    let one = Spec { spacing: 3.0, ..spec("Quick Settings", 20.0) };
+    let size = shape(&one).size;
+    let again = shape(&Spec { width: Some(size.x + 0.01), ..one }).size;
+    assert_eq!(again, size);
+}
+
+#[test]
 fn lines_line_up_inside_the_width() {
     let at = |align| {
         let (shaped, pixmap) = drawn(&Spec { width: Some(200.0), align, ..spec("Mid", 16.0) }, Point::ZERO, 1.0, (200, 30), None);

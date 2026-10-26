@@ -14,6 +14,7 @@ pub mod layout;
 mod log;
 mod look;
 mod media;
+mod menus;
 mod op;
 mod panel;
 mod radial;
@@ -40,6 +41,7 @@ pub use media::{media, offer};
 #[expect(unused_imports, reason = "drawn by the screen from step 4.1")]
 pub use keyboard::{keyboard_panel, scale as keyboard_scale};
 pub use keyboard::{GAP, KEYBOARD_PADDING, UNIT, keyboard_body_width};
+pub use menus::{UNDER_PROMPT, frame as menu_frame, menu_panel, menu_style};
 pub use panel::framed;
 pub use radial::radial;
 pub use rich::{Setting, info_cell, line, plain, rich};
