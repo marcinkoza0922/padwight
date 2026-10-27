@@ -46,6 +46,8 @@ use sizing::{Commit, Target};
 use window::Window;
 
 pub(super) fn run() -> Result<()> {
+    // Read the installed fonts while nothing shows, not as the first frame is drawn.
+    super::render::text::warm();
     let conn = Connection::connect_to_env().context("the overlay window needs a Wayland session")?;
     let (globals, mut queue) = registry_queue_init::<Window>(&conn).context("reading the compositor's globals")?;
     let qh = queue.handle();
@@ -71,6 +73,9 @@ pub(super) fn run() -> Result<()> {
         overlay.prune(now);
         window.pacer.moving(overlay.busy(now));
         step(&mut window, &overlay, now, &qh)?;
+        if let Some(at) = window.presented.take() {
+            overlay.presented(at);
+        }
         if window.closed {
             anyhow::bail!("the compositor closed the overlay's surface");
         }

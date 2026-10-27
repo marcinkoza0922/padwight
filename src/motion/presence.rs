@@ -33,6 +33,8 @@ pub struct Entry<T> {
     cursor: Option<u32>,
     picked: Option<Instant>,
     pick: Option<u32>,
+    /// Whether a frame with it in has been put on screen (`Presence::presented`).
+    seen: bool,
 }
 
 impl<T: Tracked> Entry<T> {
@@ -47,6 +49,7 @@ impl<T: Tracked> Entry<T> {
             moved: now,
             from: None,
             picked: None,
+            seen: false,
         }
     }
 
@@ -135,6 +138,24 @@ impl<T: Tracked> Presence<T> {
         }
     }
 
+    /// A frame showing everything here went on screen at `at`: what hadn't been on before opens
+    /// from then, not from when it came. The first frame of a thing can take a while to draw
+    /// (its picture, a screen-sized buffer), and its open would otherwise have run on meanwhile,
+    /// so its next frame would jump ahead by that much.
+    pub fn presented(&mut self, at: Instant) {
+        for entry in self.entries.iter_mut().filter(|e| !e.seen) {
+            entry.seen = true;
+            if entry.closed.is_some() || at <= entry.opened {
+                continue;
+            }
+            // A cursor that hasn't moved since it opened stays at rest from the open.
+            if entry.moved == entry.opened {
+                entry.moved = at;
+            }
+            entry.opened = at;
+        }
+    }
+
     /// Drops the things that have finished closing.
     pub fn prune(&mut self, now: Instant, motion: &MotionSet) {
         self.entries.retain(|e| {
@@ -216,6 +237,25 @@ mod tests {
         assert!(shown.busy(t0 + Duration::from_millis(600), &motion));
         shown.prune(t0 + Duration::from_millis(700), &motion);
         assert!(shown.is_empty());
+    }
+
+    #[test]
+    fn a_thing_opens_from_when_it_was_first_on_screen() {
+        let t0 = Instant::now();
+        let mut shown = Presence::default();
+        shown.update(t0, vec![thing("belt", Some(0))]);
+        let on = t0 + Duration::from_millis(15);
+        shown.presented(on);
+        let motion = only(MotionStyle::Subtle);
+        let (_, anim) = shown.shown(on, &motion).next().unwrap();
+        assert!(anim.timing.opened.abs() < 1e-6 && anim.timing.moved.abs() < 1e-6, "{:?}", anim.timing);
+        shown.presented(on + Duration::from_millis(15));
+        let (_, later) = shown.shown(on + Duration::from_millis(15), &motion).next().unwrap();
+        assert!((later.timing.opened - 0.015).abs() < 1e-3, "only the first frame on screen moves it: {:?}", later.timing);
+        shown.update(on + Duration::from_millis(20), vec![thing("belt", Some(0)), thing("hint", None)]);
+        shown.presented(on + Duration::from_millis(30));
+        let opened: Vec<f32> = shown.shown(on + Duration::from_millis(30), &motion).map(|(_, a)| a.timing.opened).collect();
+        assert!((opened[0] - 0.030).abs() < 1e-3 && opened[1].abs() < 1e-6, "{opened:?}");
     }
 
     #[test]

@@ -27,7 +27,7 @@ pub(super) enum Picture<'a> {
 }
 
 /// A free buffer to put a picture into: `width`×`height` pixels in `format`, holding the frame
-/// committed `age` frames back (0: unknown).
+/// committed `age` frames back (`slots::Lease`).
 pub(super) struct Buffer<'a> {
     pub(super) pixels: &'a mut [u8],
     pub(super) size: (u32, u32),

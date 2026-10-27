@@ -22,7 +22,8 @@ pub(super) struct Lease {
     /// Which buffer.
     pub(super) slot: usize,
     /// How many frames old its pixels are: 1 holds the last frame committed, 2 the one before,
-    /// and so on. 0: nothing known (never drawn into), so everything has to be drawn.
+    /// and so on. A buffer never drawn into is still clear, as the pool was made: it holds
+    /// what came before the pool's first frame.
     pub(super) age: u64,
 }
 
@@ -75,7 +76,7 @@ impl Slots {
     pub(super) fn lease(&self) -> Option<Lease> {
         let free = self.slots.iter().enumerate().filter(|(_, s)| !s.held);
         let (slot, s) = free.max_by_key(|(i, s)| (s.frame, std::cmp::Reverse(*i)))?;
-        let age = s.frame.map_or(0, |f| self.frames + 1 - f);
+        let age = self.frames + 1 - s.frame.unwrap_or(0);
         Some(Lease { slot, age })
     }
 
@@ -105,6 +106,11 @@ impl Slots {
         }
     }
 
+    /// Whether nothing has been committed from the pool yet.
+    pub(super) fn fresh(&self) -> bool {
+        self.frames == 0
+    }
+
     /// How many buffers the compositor holds.
     pub(super) fn held(&self) -> usize {
         self.slots.iter().filter(|s| s.held).count()
@@ -116,9 +122,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn a_fresh_pool_hands_out_its_first_buffer_with_nothing_known() {
+    fn a_fresh_pool_hands_out_its_first_buffer_as_older_than_the_first_frame() {
         let s = Slots::default();
-        assert_eq!(s.lease(), Some(Lease { slot: 0, age: 0 }));
+        assert_eq!(s.lease(), Some(Lease { slot: 0, age: 1 }));
         assert_eq!(s.held(), 0);
     }
 
@@ -167,7 +173,7 @@ mod tests {
         let a = s.lease().unwrap();
         s.committed(a);
         let b = s.lease().unwrap();
-        assert_eq!(b, Lease { slot: 1, age: 0 });
+        assert_eq!(b, Lease { slot: 1, age: 3 }, "clear since before the first of the two frames");
         s.committed(b);
         s.released(a.slot);
         assert_eq!(s.lease(), Some(Lease { slot: a.slot, age: 2 }), "two frames behind");

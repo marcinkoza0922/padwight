@@ -15,6 +15,7 @@ use super::{Point, Rect, Rgba, RunKey, geom::hash_floats};
 use crate::config::Case;
 
 mod engine;
+pub use engine::warm;
 mod paint;
 mod set;
 #[cfg(test)]

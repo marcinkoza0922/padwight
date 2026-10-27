@@ -75,6 +75,15 @@ impl Overlay {
         crate::overlay::render::screen_ops(&self.frame, &self.showing(now), display)
     }
 
+    /// A frame drawn from what is shown now went on screen at `at`: what it is the first to show
+    /// starts opening from then (`Presence::presented`), so the time its first frame took to draw
+    /// doesn't land between the open's first two steps.
+    pub(super) fn presented(&mut self, at: Instant) {
+        self.panels.presented(at);
+        self.info.presented(at);
+        self.logs.presented(at);
+    }
+
     /// Drops what has finished closing.
     pub(super) fn prune(&mut self, now: Instant) {
         let motion = &self.frame.motion;

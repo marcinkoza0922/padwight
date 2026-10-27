@@ -69,18 +69,25 @@ fn menu_and_info(selected: usize, cell: &str) -> OverlayFrame {
 struct Window {
     buffers: Vec<(Pixmap, Option<u64>)>,
     frames: u64,
+    /// Whether a buffer never drawn into is known to be clear, as a new pool's are: it is then
+    /// as old as the frame before the first (`Screen::forget_onto_clear`), else unknown.
+    clear: bool,
 }
 
 impl Window {
     fn new() -> Window {
-        Window { buffers: (0..3).map(|_| (blank(), None)).collect(), frames: 0 }
+        Window { buffers: (0..3).map(|_| (blank(), None)).collect(), frames: 0, clear: false }
     }
 
     /// Paints `ops` into buffer `slot` as the window would, checking that nothing outside the
     /// damage was written, and returns the damage and the buffer.
     fn paint(&mut self, screen: &mut Screen, ops: &[Op], slot: usize) -> (Damage, &Pixmap) {
         let (buffer, held) = &mut self.buffers[slot];
-        let age = held.map_or(0, |f| self.frames + 1 - f);
+        let age = match *held {
+            Some(f) => self.frames + 1 - f,
+            None if self.clear => self.frames + 1,
+            None => 0,
+        };
         let before = buffer.clone();
         let damage = screen.paint(ops, 1.0, &mut buffer.as_mut(), age);
         for (i, (now, was)) in buffer.pixels().iter().zip(before.pixels()).enumerate() {
@@ -262,6 +269,24 @@ fn a_damaged_sequence_equals_drawing_afresh() {
             // Once all three buffers hold a frame, only the menu and the corner are repainted:
             // less than a screen over the two frames left.
             assert!(repainted < (W * H) as i32, "{name}: {repainted} pixels");
+        }
+    }
+}
+
+#[test]
+fn new_clear_buffers_are_painted_only_where_the_screen_draws() {
+    let menu = settled(&scenes::frame("menu-list").unwrap());
+    let rect = straight_patch(&menu, 1.0).unwrap();
+    let mut screen = Screen::new();
+    screen.forget_onto_clear((W, H), 1.0);
+    let mut window = Window { clear: true, ..Window::new() };
+    // An opening into the pool's three buffers in turn, the first two new.
+    for (n, (opacity, slot)) in [(0.1, 0), (0.3, 1), (0.6, 0), (1.0, 1), (1.0, 2)].into_iter().enumerate() {
+        let ops = moved(&menu, |l| l.opacity = opacity);
+        let (damage, buffer) = window.paint(&mut screen, &ops, slot);
+        assert_eq!(worst(buffer, &afresh(&ops)), 0, "frame {n}");
+        for p in damage.patches() {
+            assert!(rect.holds(p), "frame {n}: {p:?} is outside the menu {rect:?}");
         }
     }
 }

@@ -139,6 +139,8 @@ thread_local! {
 pub fn run() -> Result<()> {
     // SAFETY: called before any window exists; sizes are then in real pixels.
     let _ = unsafe { SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) };
+    // Read the installed fonts while nothing shows, not as the first frame is drawn.
+    crate::overlay::render::text::warm();
     let hwnd = create_window()?;
     let (tx, frames) = mpsc::channel();
     let stream = UnixStream::connect(ipc::socket_path()).context("the daemon isn't running")?;
@@ -253,6 +255,7 @@ impl Window {
                 // The next time it shows may be on another monitor: start from nothing.
                 self.dib = None;
                 self.screen.forget();
+                crate::overlay::render::raster::shrink();
             }
             self.animate(false);
             return;
@@ -336,6 +339,7 @@ impl Window {
         self.presented = false;
         self.present(&damage)?;
         self.presented = true;
+        self.overlay.presented(Instant::now());
         Ok(())
     }
 

@@ -12,7 +12,11 @@ use anyhow::{Context, Result, anyhow};
 use wayland_client::{
     QueueHandle,
     globals::GlobalList,
-    protocol::{wl_compositor::WlCompositor, wl_shm::WlShm, wl_surface::WlSurface},
+    protocol::{
+        wl_compositor::WlCompositor,
+        wl_shm::{self, WlShm},
+        wl_surface::WlSurface,
+    },
 };
 use wayland_protocols::wp::{
     fractional_scale::v1::client::{wp_fractional_scale_manager_v1::WpFractionalScaleManagerV1, wp_fractional_scale_v1::WpFractionalScaleV1},
@@ -32,7 +36,7 @@ use super::{
     slots::Layout,
 };
 use crate::overlay::{
-    render::{Point, Screen, screen_ops},
+    render::{Damage, Point, Screen, raster, screen_ops},
     timing::{timing_log, unix_ns},
     ui::Overlay,
 };
@@ -63,6 +67,8 @@ pub(super) struct Window {
     screen: Screen,
     /// The compositor closed the surface.
     pub(super) closed: bool,
+    /// When the last frame drawn went on, for the loop to tell the overlay (`Overlay::presented`).
+    pub(super) presented: Option<Instant>,
 }
 
 /// Why a buffer is committed, for the log.
@@ -112,6 +118,7 @@ impl Window {
             pacer: Pacer::default(),
             screen: Screen::new(),
             closed: false,
+            presented: None,
         };
         window.ask(Target::Corner);
         window.surface.commit();
@@ -137,11 +144,12 @@ impl Window {
     }
 
     /// Asks for the corner; clears what's on screen in the same commit, if anything is. The
-    /// panels' pictures go: showing again draws them anew.
+    /// panels' pictures go, and most of what the rasterizer keeps: showing again draws them anew.
     pub(super) fn shrink(&mut self, clear: Option<(u32, u32)>, qh: &QueueHandle<Window>) -> Result<()> {
         self.ask(Target::Corner);
         self.pacer.hidden();
         self.screen.forget();
+        raster::shrink();
         match clear {
             Some(size) => self.commit(size, Why::Clear, &Picture::Clear, qh),
             None => {
@@ -152,9 +160,12 @@ impl Window {
     }
 
     /// Puts a clear 1×1 buffer on: the surface while hidden. The screen's pool goes with it,
-    /// so hidden, the overlay keeps only a few bytes of buffers.
+    /// so hidden, the overlay keeps only a few bytes of buffers, and the memory freed since
+    /// `shrink` goes back to the system.
     pub(super) fn blank(&mut self, qh: &QueueHandle<Window>) -> Result<()> {
-        self.commit((1, 1), Why::Blank, &Picture::Clear, qh)
+        self.commit((1, 1), Why::Blank, &Picture::Clear, qh)?;
+        give_back_freed();
+        Ok(())
     }
 
     /// Draws the screen at its configured size, as it is at `now` (the animation clock), and
@@ -210,6 +221,26 @@ impl Window {
         }
     }
 
+    /// Makes the pool for buffers of `layout` and `format`, unless the one there is fits:
+    /// returns the pool it replaces.
+    fn pool_for(&mut self, layout: Layout, format: wl_shm::Format, qh: &QueueHandle<Window>) -> Result<Option<Pool>> {
+        match self.pool.take() {
+            Some(pool) if pool.fits(layout, format) => {
+                self.pool = Some(pool);
+                Ok(None)
+            }
+            old => {
+                self.pools += 1;
+                self.pool = Some(Pool::new(&self.shm, self.pools, layout, format, qh).context("the screen's buffers")?);
+                // New buffers hold nothing the screen painted, and are clear: the first frames
+                // into them paint only where the screen draws something.
+                self.screen.forget_onto_clear((layout.width, layout.height), self.scale.factor());
+                timing_log(&format!("pool {} {}x{} {format:?}", unix_ns(), layout.width, layout.height));
+                Ok(old)
+            }
+        }
+    }
+
     /// Puts `picture` into a free buffer for a surface of `logical` size, attaches it, damages
     /// what changed and commits. Makes a new pool when the size or format has changed; with
     /// every buffer held, or nothing changed, commits nothing.
@@ -222,22 +253,9 @@ impl Window {
             return Ok(());
         }
         let (dw, dh) = self.scale.device(logical);
-        let (layout, format) = (Layout { width: dw, height: dh }, self.formats.format());
+        let format = self.formats.format();
         // A pool for another size or format is kept until the new one's buffer is committed.
-        let old = match self.pool.take() {
-            Some(pool) if pool.fits(layout, format) => {
-                self.pool = Some(pool);
-                None
-            }
-            old => {
-                self.pools += 1;
-                self.pool = Some(Pool::new(&self.shm, self.pools, layout, format, qh).context("the screen's buffers")?);
-                // New buffers hold nothing the screen painted.
-                self.screen.forget();
-                timing_log(&format!("pool {} {dw}x{dh} {format:?}", unix_ns()));
-                old
-            }
-        };
+        let old = self.pool_for(Layout { width: dw, height: dh }, format, qh)?;
         let pool = self.pool.as_mut().expect("there is a pool: made above if not before");
         let Some(lease) = pool.slots.lease() else {
             timing_log(&format!("commit-skipped {} {w}x{h} {why:?} held {}", unix_ns(), pool.slots.held()));
@@ -251,13 +269,18 @@ impl Window {
         };
         let buffer = Buffer { pixels: pool.pixels(lease), size: (dw, dh), format, age: lease.age };
         let damage = picture.paint(&mut self.screen, buffer);
-        if damage.is_empty() {
+        // Nothing committed from the pool yet: its first buffer goes on whatever it holds.
+        let first = pool.slots.fresh();
+        if damage.is_empty() && !first {
             // The same as the buffer holds, and so as what is on: nothing to commit, and no
             // frame counted, so the screen's damage history stays in step with the buffers'.
             timing_log(&format!("commit-unchanged {} {w}x{h} {why:?} slot {} age {}", unix_ns(), lease.slot, lease.age));
             self.pacer.unchanged(Instant::now());
             return Ok(());
         }
+        // The first buffer at a size is all new to the compositor, its clear parts too. (Had it
+        // painted nothing, the screen's history is a frame short: later frames repaint more.)
+        let damage = if first { Damage::full(dw, dh) } else { damage };
         pool.attach(lease, &self.surface, &damage);
         self.put_on_scale(logical);
         if let Why::Draw = why {
@@ -279,8 +302,19 @@ impl Window {
             self.scale.mode()
         ));
         if let Why::Draw = why {
+            self.presented = Some(Instant::now());
             timing_log(&format!("present {now}"));
         }
         Ok(())
+    }
+}
+
+/// Hands the memory freed on hiding back to the system: glibc keeps freed heap memory for the
+/// process otherwise, and the panels' pictures and tiles are many middling allocations.
+fn give_back_freed() {
+    #[cfg(target_env = "gnu")]
+    // SAFETY: malloc_trim only releases memory that is free; nothing of ours points into it.
+    unsafe {
+        libc::malloc_trim(0);
     }
 }

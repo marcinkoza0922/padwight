@@ -51,6 +51,21 @@ pub fn forget() {
     });
 }
 
+/// What each cache keeps at most while the overlay is hidden, in bytes: the panels' own small
+/// pieces (a texture's parts, icons), so a menu opened again needn't make them again, but not a
+/// big picture, which at 4K can be tens of megabytes and is quick to read again by comparison.
+const HIDDEN: usize = 1 << 20;
+
+/// Drops what was used least lately until each cache is within `HIDDEN`, as the overlay hides.
+pub fn shrink() {
+    KEPT.with_borrow_mut(|kept| {
+        kept.trees.trim(HIDDEN);
+        kept.svgs.trim(HIDDEN);
+        kept.files.trim(HIDDEN);
+        kept.patterns.trim(HIDDEN);
+    });
+}
+
 /// How many SVG and pattern pixmaps are kept, for tests.
 #[cfg(test)]
 pub(super) fn kept_counts() -> (usize, usize) {
