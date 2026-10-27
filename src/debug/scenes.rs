@@ -70,6 +70,8 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "guide-mode" => guide(1),
         "tools" => active(tools(false)),
         "calculator" => active(tools(true)),
+        "doodles" => doodles(),
+        "doodle-typing" => doodle_typing(),
         "switch-profile" => active(switch_profile(false)),
         "new-profile" => active(switch_profile(true)),
         "edit-controls" => active(edit_controls(&[])),
@@ -167,18 +169,56 @@ fn guide(shown: usize) -> OverlayFrame {
     OverlayFrame { info, ..OverlayFrame { active: Some(OverlayView::Menu(menu)), ..OverlayFrame::default() } }
 }
 
-/// The Tools menu: its list, or the calculator with 7 × 6 keyed in.
-fn tools(calculator: bool) -> OverlayView {
-    use crate::tools::ToolsSession;
-    let mut session = ToolsSession::new();
-    if calculator {
-        session.handle(Button::South);
-        // 7, then × (one row down from ÷), then 6.
-        for b in [Button::South, Button::DpadRight, Button::DpadRight, Button::DpadRight, Button::DpadDown, Button::South, Button::DpadLeft, Button::South] {
-            session.handle(b);
+/// Doodles over the game: a few strokes in each tip and kind, a text box, and the Doodle cursor
+/// on the pen's ring.
+fn doodles() -> OverlayFrame {
+    use crate::tools::doodle::{Canvas, Kind, Pen, Point, TextBox, TextStyle, Tip};
+    let mut canvas = Canvas::default();
+    let tips = [Tip::Round, Tip::Square, Tip::Chisel, Tip::Diagonal];
+    let kinds = [Kind::Solid, Kind::Brush, Kind::Spray];
+    for (row, kind) in kinds.into_iter().enumerate() {
+        for (column, tip) in tips.into_iter().enumerate() {
+            let y = 0.2 + row as f32 * 0.12;
+            let x = 0.1 + column as f32 * 0.2;
+            let pen = Pen { color: 2 + column * 2, size: 0.012, tip, kind };
+            canvas.begin_stroke(pen, Point::new(x, y));
+            for step in 1..=12 {
+                let t = step as f32 / 12.0;
+                canvas.extend_stroke(Point::new(x + 0.14 * t, y + 0.05 * (t * std::f32::consts::TAU).sin()));
+            }
+            canvas.end_stroke();
         }
     }
-    OverlayView::Menu(session.view(OverlayStyle::default()))
+    canvas.add_text(TextBox { at: Point::new(0.1, 0.6), text: "Doodle".into(), style: TextStyle { color: 7, size: 0.05, bold: true, ..TextStyle::default() } });
+    let cursor = crate::overlay::DoodleCursor { at: Point::new(0.5, 0.8), radius: 0.006, color: [230, 57, 70] };
+    let style = crate::config::OverlayStyle::default();
+    let cells = vec![
+        crate::overlay::DoodleCell::Palette { current: 2, hint: "{leftright} colour".into() },
+        crate::overlay::DoodleCell::Text("{updown} size 14".into()),
+        crate::overlay::DoodleCell::Tip { tip: crate::tools::doodle::Tip::Round, text: "{north} Round".into() },
+        crate::overlay::DoodleCell::Kind { kind: crate::tools::doodle::Kind::Solid, text: "{west} Solid".into() },
+    ];
+    let hud = crate::overlay::DoodleHud { tool: 0, tray: true, cells, style };
+    OverlayFrame { doodles: canvas, doodle_cursor: Some(cursor), doodle_hud: Some(hud), ..OverlayFrame::default() }
+}
+
+/// The text keyboard the Doodle screen opens for a text box, typing "Hello", over the doodles.
+fn doodle_typing() -> OverlayFrame {
+    let keys = crate::overlay::OverlayController::for_field("Text", "Hello");
+    OverlayFrame { active: Some(OverlayView::Keyboard(keys.view(Instant::now()))), ..doodles() }
+}
+
+/// The Tools menu: its list, or the calculator with 7 × 6 keyed in.
+fn tools(calculator: bool) -> OverlayView {
+    use crate::tools::{ToolsSession, doodle::Canvas};
+    let (mut session, mut canvas, now) = (ToolsSession::new(), Canvas::default(), std::time::Instant::now());
+    if calculator {
+        // South opens the calculator; then 7, × (one row down from ÷), 6, and =, the press order below.
+        for b in [Button::South, Button::South, Button::DpadRight, Button::DpadRight, Button::DpadRight, Button::DpadDown, Button::South, Button::DpadLeft, Button::South] {
+            session.handle(b, true, &mut canvas, now);
+        }
+    }
+    OverlayView::Menu(session.view(OverlayStyle::default()).expect("the Tools menu draws a menu"))
 }
 
 /// Switch Profile's list (with the cursor on a profile that needs a gyro), or its new-profile page.

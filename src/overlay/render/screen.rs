@@ -20,6 +20,7 @@
 
 mod damage;
 mod diff;
+mod doodles;
 mod items;
 mod lay;
 mod lens;
@@ -97,44 +98,45 @@ impl Context {
 /// at the top level of the list (see `Node::layered`), laid out where it rests; the layer fades
 /// it and moves and zooms it by its animation.
 pub fn screen_ops(frame: &OverlayFrame, shown: &Shown, display: Point) -> Vec<Op> {
-    let mut ops = panel_ops(frame, shown, display);
+    let cx = Context::of(frame, display);
+    let mut ops = Vec::new();
+    // Doodles are over the game, the lens over the doodles, and every panel over both.
+    doodles::put(&mut ops, frame, &cx);
     if let Some(lens) = &frame.lens {
-        lens::put(&mut ops, lens, &Context::of(frame, display));
+        lens::put(&mut ops, lens, &cx);
     }
+    panel_ops(&mut ops, frame, shown, &cx);
     ops
 }
 
-fn panel_ops(frame: &OverlayFrame, shown: &Shown, display: Point) -> Vec<Op> {
-    let cx = Context::of(frame, display);
-    let mut ops = Vec::new();
-    let guide = stacks::guide_up(frame, shown, &cx);
-    let mut sides = stacks::put_stacks(&mut ops, shown, &cx, guide);
+fn panel_ops(ops: &mut Vec<Op>, frame: &OverlayFrame, shown: &Shown, cx: &Context) {
+    let guide = stacks::guide_up(frame, shown, cx);
+    let mut sides = stacks::put_stacks(ops, shown, cx, guide);
     if let Some(menu) = &frame.backdrop {
         let anim = Anim::still();
-        put(&mut ops, panels::menu(menu, &cx, anim), &menu.style, &cx, &anim);
+        put(ops, panels::menu(menu, cx, anim), &menu.style, cx, &anim);
     }
     if frame.peek {
-        return ops;
+        return;
     }
     for (view, anim) in &shown.panels {
         match view {
             OverlayView::Menu(m) => {
-                let menu = panels::menu(m, &cx, *anim);
+                let menu = panels::menu(m, cx, *anim);
                 if guide {
-                    stacks::beside(&mut ops, std::mem::take(&mut sides), menu, anim, &cx);
+                    stacks::beside(ops, std::mem::take(&mut sides), menu, anim, cx);
                 } else {
-                    put(&mut ops, menu, &m.style, &cx, anim);
+                    put(ops, menu, &m.style, cx, anim);
                 }
                 // A question asked over the menu stands on top of it, in the middle of the
                 // screen, a picture of its own; the menu under it is dimmed in its own colors.
                 if let Some(o) = &m.prompt {
-                    put(&mut ops, panels::offer(o, &cx), &o.style, &cx, &Anim::still());
+                    put(ops, panels::offer(o, cx), &o.style, cx, &Anim::still());
                 }
             }
-            other => put(&mut ops, panels::any(other, &cx, anim), other.style(), &cx, anim),
+            other => put(ops, panels::any(other, cx, anim), other.style(), cx, anim),
         }
     }
-    ops
 }
 
 /// Places `panel` as a layer of its own where `style` puts it at rest, the layer faded, moved

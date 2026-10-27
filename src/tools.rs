@@ -3,27 +3,35 @@
 //! routes the controller here and does what an [`Outcome`] asks (types, copies or closes).
 
 pub mod calculator;
+pub mod doodle;
+
+use std::time::Instant;
 
 use calculator::{Calculator, Press, symbol};
+use doodle::{Canvas, Doodle, Point, Step};
 
 use crate::{
     config::{Button, MenuKind, OverlayStyle},
+    input::Axis,
     menu::{ItemView, MenuView},
     nav::{self, Dir},
+    overlay::{DoodleCursor, DoodleHud, KeyboardView},
 };
 
 /// The tools on the list, in order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Tool {
     Calculator,
+    Doodle,
 }
 
-const TOOLS: [Tool; 1] = [Tool::Calculator];
+const TOOLS: [Tool; 2] = [Tool::Calculator, Tool::Doodle];
 
 impl Tool {
     fn name(self) -> &'static str {
         match self {
             Tool::Calculator => "Calculator",
+            Tool::Doodle => "Doodle",
         }
     }
 }
@@ -88,20 +96,24 @@ pub enum Outcome {
 enum Screen {
     List,
     Calculator,
+    /// Drawing over the game: the menu is gone, and the doodles and the cursor are what shows.
+    Doodle,
 }
 
 /// The open Tools menu: which screen, where its cursor is, and the calculator's keys, which
-/// are kept from one opening of the calculator to the next.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// are kept from one opening of the calculator to the next. The doodles themselves belong to the
+/// daemon, so they stay on screen once the menu is closed.
+#[derive(Debug, Clone, PartialEq)]
 pub struct ToolsSession {
     screen: Screen,
     cursor: usize,
     calc: Calculator,
+    doodle: Doodle,
 }
 
 impl Default for ToolsSession {
     fn default() -> Self {
-        ToolsSession { screen: Screen::List, cursor: 0, calc: Calculator::default() }
+        ToolsSession { screen: Screen::List, cursor: 0, calc: Calculator::default(), doodle: Doodle::new(Point::new(0.5, 0.5)) }
     }
 }
 
@@ -134,13 +146,67 @@ impl ToolsSession {
         self.cursor
     }
 
-    /// Handles one press of a button the menu takes. `None` when the menu stays as it is, or
-    /// only changes on screen.
-    pub fn handle(&mut self, b: Button) -> Option<Outcome> {
+    /// Handles a press (`down`) or a release of a button. The menus only act on presses; the
+    /// Doodle screen takes both. `None` when the menu stays as it is, or only changes on screen.
+    pub fn handle(&mut self, b: Button, down: bool, canvas: &mut Canvas, now: Instant) -> Option<Outcome> {
         match self.screen {
+            Screen::Doodle => match self.doodle.handle(canvas, b, down, now) {
+                Step::Stay => None,
+                Step::Leave => self.leave_doodle(),
+            },
+            _ if !down => None,
             Screen::List => self.list(b),
             Screen::Calculator => self.pad(b),
         }
+    }
+
+    /// Takes a stick reading, which only the Doodle screen uses.
+    pub fn axis(&mut self, canvas: &mut Canvas, axis: Axis, value: f32, now: Instant) {
+        if self.screen == Screen::Doodle {
+            self.doodle.axis(canvas, axis, value, now);
+        }
+    }
+
+    /// Whether the Doodle screen needs ticking, to move its cursor or carry a mark.
+    pub fn needs_tick(&self) -> bool {
+        self.screen == Screen::Doodle && self.doodle.needs_tick()
+    }
+
+    /// Moves the Doodle cursor on, once a tick has passed.
+    pub fn tick(&mut self, canvas: &mut Canvas, dt: f32, now: Instant) -> Option<Outcome> {
+        if self.screen != Screen::Doodle {
+            return None;
+        }
+        match self.doodle.tick(canvas, dt, now) {
+            Step::Stay => None,
+            Step::Leave => self.leave_doodle(),
+        }
+    }
+
+    /// Whether the Doodle screen is up.
+    pub fn in_doodle(&self) -> bool {
+        self.screen == Screen::Doodle
+    }
+
+    /// The Doodle cursor, while the Doodle screen is up.
+    pub fn doodle_cursor(&self) -> Option<DoodleCursor> {
+        self.in_doodle().then(|| self.doodle.cursor_ring())
+    }
+
+    /// The Doodle screen's HUD, while it's up, drawn in `style`.
+    pub fn doodle_hud(&self, style: OverlayStyle) -> Option<DoodleHud> {
+        self.in_doodle().then(|| self.doodle.hud(style))
+    }
+
+    /// The keyboard for a text box, while it's up in place of the menu.
+    pub fn keyboard(&self, now: Instant) -> Option<KeyboardView> {
+        self.doodle.keyboard(now)
+    }
+
+    /// Leaves the Doodle screen for good: the menu closes, and the doodles stay where they are.
+    fn leave_doodle(&mut self) -> Option<Outcome> {
+        self.screen = Screen::List;
+        Some(Outcome::Close)
     }
 
     fn list(&mut self, b: Button) -> Option<Outcome> {
@@ -151,6 +217,10 @@ impl ToolsSession {
             (Button::South, Tool::Calculator) => {
                 self.screen = Screen::Calculator;
                 self.cursor = 0;
+                None
+            }
+            (Button::South, Tool::Doodle) => {
+                self.screen = Screen::Doodle;
                 None
             }
             (Button::East, _) => Some(Outcome::Close),
@@ -193,9 +263,10 @@ impl ToolsSession {
         }
     }
 
-    /// The menu as the overlay draws it.
-    pub fn view(&self, style: OverlayStyle) -> MenuView {
-        match self.screen {
+    /// The menu as the overlay draws it. `None` on the Doodle screen, which draws no menu.
+    pub fn view(&self, style: OverlayStyle) -> Option<MenuView> {
+        Some(match self.screen {
+            Screen::Doodle => return None,
             Screen::List => MenuView {
                 title: "Tools".into(),
                 kind: MenuKind::List,
@@ -228,90 +299,9 @@ impl ToolsSession {
                 one_column: false,
                 figure: None,
             },
-        }
+        })
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// Moves the cursor to the keypad cell `index`, and presses it.
-    fn tap(session: &mut ToolsSession, index: usize) -> Option<Outcome> {
-        session.cursor = index;
-        session.handle(Button::South)
-    }
-
-    /// The keypad cell at `row`, `column`.
-    fn at(row: usize, column: usize) -> usize {
-        row * COLUMNS + column
-    }
-
-    #[test]
-    fn east_closes_the_list_and_south_opens_the_calculator() {
-        let mut session = ToolsSession::new();
-        assert_eq!(session.handle(Button::South), None);
-        assert_eq!(session.view(OverlayStyle::default()).title, "Calculator");
-        assert_eq!(session.handle(Button::East), None);
-        assert_eq!(session.view(OverlayStyle::default()).title, "Tools");
-        assert_eq!(session.handle(Button::East), Some(Outcome::Close));
-    }
-
-    #[test]
-    fn the_keypad_wraps_at_its_edges() {
-        assert_eq!(pad_step(at(0, 0), (-1, 0)), at(0, COLUMNS - 1));
-        assert_eq!(pad_step(at(0, 0), (0, -1)), at(PAD.len() / COLUMNS - 1, 0));
-        assert_eq!(pad_step(at(1, 1), (1, 1)), at(2, 2));
-    }
-
-    #[test]
-    fn the_d_pad_moves_across_the_keypad() {
-        let mut session = ToolsSession::new();
-        session.handle(Button::South);
-        session.handle(Button::DpadRight);
-        assert_eq!(session.cursor(), 1);
-        session.handle(Button::DpadDown);
-        assert_eq!(session.cursor(), COLUMNS + 1);
-    }
-
-    #[test]
-    fn a_sum_is_keyed_on_the_pad_and_sent_to_the_game() {
-        let mut session = ToolsSession::new();
-        session.handle(Button::South);
-        // 7 × 6 =, then Send
-        for index in [0, 7, 6, 17] {
-            assert_eq!(tap(&mut session, index), None);
-        }
-        assert_eq!(session.calc.line(), "42");
-        assert_eq!(tap(&mut session, 18), Some(Outcome::Type("42".into())));
-    }
-
-    #[test]
-    fn copy_sends_the_answer_to_the_clipboard_and_an_empty_sum_says_so() {
-        let mut session = ToolsSession::new();
-        session.handle(Button::South);
-        assert_eq!(tap(&mut session, 19), None);
-        assert_eq!(session.calc.line(), "Nothing to send yet");
-        tap(&mut session, 5);
-        assert_eq!(tap(&mut session, 19), Some(Outcome::Copy("5".into())));
-    }
-
-    #[test]
-    fn a_sum_left_unfinished_is_sent_as_the_number_before_its_operator() {
-        let mut session = ToolsSession::new();
-        session.handle(Button::South);
-        tap(&mut session, 5);
-        tap(&mut session, 7);
-        assert_eq!(tap(&mut session, 18), Some(Outcome::Type("5".into())));
-    }
-
-    #[test]
-    fn the_calculator_keeps_its_sum_when_the_list_is_opened_again() {
-        let mut session = ToolsSession::new();
-        session.handle(Button::South);
-        tap(&mut session, 2);
-        session.handle(Button::East);
-        session.handle(Button::South);
-        assert_eq!(session.calc.line(), "9");
-    }
-}
+mod tests;

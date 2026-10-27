@@ -203,7 +203,13 @@ impl Daemon {
             Some(Active::Offer(o)) => Some(o.view(self.config.active_menu_style())),
             Some(Active::Settings(m, _)) => Some(m.overlay_view(&self.config, &self.menu_live)),
             Some(Active::NewPad(s, _)) => Some(s.view(self.config.active_menu_style())),
-            Some(Active::Tools(session, _)) => Some(OverlayView::Menu(session.view(self.config.active_menu_style().clone()))),
+            Some(Active::Tools(session, _)) => match session.keyboard(Instant::now()) {
+                Some(mut view) => {
+                    view.style = self.config.active_keyboard_style().clone();
+                    Some(OverlayView::Keyboard(view))
+                }
+                None => session.view(self.config.active_menu_style().clone()).map(OverlayView::Menu),
+            },
             None => match &self.guide_menu {
                 Some(menu) => {
                     let profile = self.guide_profile().map(|p| p.name.as_str()).unwrap_or_default();
@@ -226,7 +232,7 @@ impl Daemon {
     pub(super) fn broadcast_overlay(&mut self) {
         self.sync_magnifier();
         let frame = self.overlay_frame();
-        if (!frame.info.is_empty() || !frame.logs.is_empty())
+        if (!frame.info.is_empty() || !frame.logs.is_empty() || !frame.doodles.is_empty())
             && self.overlay_process.is_none()
             && self.overlay_started.is_none_or(|t| t.elapsed() > Duration::from_secs(10))
         {
@@ -288,6 +294,7 @@ impl Daemon {
             backdrop: self.preview_menu(),
             peek: self.peeking(),
             lens: self.lens_view(),
+            doodles: self.doodles.clone(), doodle_cursor: self.doodle_cursor(), doodle_hud: self.doodle_hud(),
             font: self.config.active_font().map(str::to_string),
             colorblind: self.config.colorblind_tones,
             opener: crate::info::OpenerLabel::of(&self.config.shortcuts),

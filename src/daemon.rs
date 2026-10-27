@@ -528,6 +528,8 @@ struct Daemon {
     guide_menu: Option<GuideMenu>,
     /// The magnifying glass (see `magnifier.rs`).
     lens: magnifier::Lens,
+    /// The doodles drawn over the game (see `tools/doodle.rs`). They outlive the Tools menu.
+    doodles: crate::tools::doodle::Canvas,
     /// When shown info overlays with live values next refresh.
     info_refresh: Option<Instant>,
     /// When an info overlay that hides after a while next needs redrawing (fading or gone).
@@ -627,7 +629,7 @@ impl Daemon {
             menu_live: crate::figures::Live::default(),
             live_drawn: None,
             guide_menu: None,
-            lens: magnifier::Lens::default(),
+            lens: magnifier::Lens::default(), doodles: crate::tools::doodle::Canvas::default(),
             info_refresh: None,
             info_fade: None,
             info_timers: crate::info::Timers::default(),

@@ -79,6 +79,15 @@ pub struct OverlayFrame {
     /// The magnifying glass, while one is held.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lens: Option<Lens>,
+    /// The doodles over the game, drawn under the magnifying glass and the panels.
+    #[serde(default, skip_serializing_if = "crate::tools::doodle::Canvas::is_empty")]
+    pub doodles: crate::tools::doodle::Canvas,
+    /// The Doodle screen's cursor, while that screen is up.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub doodle_cursor: Option<DoodleCursor>,
+    /// The Doodle screen's HUD (its carousel and tray), while that screen is up.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub doodle_hud: Option<DoodleHud>,
     /// The font everything here is drawn in; the system's when unset.
     #[serde(default)]
     pub font: Option<String>,
@@ -114,6 +123,40 @@ pub struct OverlayFrame {
     /// What the performance settings cut from every overlay.
     #[serde(default, skip_serializing_if = "crate::config::Lite::is_off")]
     pub lite: crate::config::Lite,
+}
+
+/// The Doodle screen's cursor: where it is, the radius it marks, and its color (see
+/// `tools::doodle`). Positions and radii are shares of the screen's height.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DoodleCursor {
+    pub at: crate::tools::doodle::Point,
+    pub radius: f32,
+    pub color: [u8; 3],
+}
+
+/// The Doodle screen's HUD: the tool the carousel across the top highlights (its index in
+/// `tools::doodle::Tool`), and the tray along the bottom with the current settings. The tray is
+/// left off while the keyboard is up. Hints are text with controller tokens, such as `{lb}`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DoodleHud {
+    pub tool: usize,
+    pub tray: bool,
+    pub cells: Vec<DoodleCell>,
+    /// The menus' style, which the HUD is drawn in.
+    pub style: crate::config::OverlayStyle,
+}
+
+/// One part of the HUD's tray. Parts are drawn left to right, with a separator between them.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum DoodleCell {
+    /// The full palette, with the color in use ringed. `hint` says how to change it.
+    Palette { current: usize, hint: String },
+    /// A setting as text, with its hint.
+    Text(String),
+    /// A pen tip: its name, with a hint, and an icon of the mark it makes.
+    Tip { tip: crate::tools::doodle::Tip, text: String },
+    /// A pen style, the same way as a tip.
+    Kind { kind: crate::tools::doodle::Kind, text: String },
 }
 
 /// The magnifying glass: a lens over a frozen picture of the screen, centered on a point of it
