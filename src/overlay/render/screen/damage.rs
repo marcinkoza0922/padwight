@@ -99,7 +99,7 @@ impl Damage {
     }
 
     /// The whole of a `width` × `height` buffer.
-    pub(super) fn full(width: u32, height: u32) -> Damage {
+    pub fn full(width: u32, height: u32) -> Damage {
         Damage::of([Patch::new(0, 0, width as i32, height as i32)], width, height)
     }
 

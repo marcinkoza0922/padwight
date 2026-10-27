@@ -2,20 +2,17 @@
 //! Each commit goes through here, so the rule that a buffer only goes on at the size last acked
 //! is checked in one place (`Sizing::attached`), as is the rule that a frame is drawn only into
 //! a buffer the compositor has released (`Slots::check_free`), and each is logged. Each frame
-//! drawn asks for a frame callback in its own commit (`Pacer`).
+//! drawn asks for a frame callback in its own commit (`Pacer`). A frame that comes out the same
+//! as the buffer it went into is not committed at all; one that changed damages only what
+//! changed (`render::Screen::paint`).
 
 use std::time::Instant;
 
 use anyhow::{Context, Result, anyhow};
-use tiny_skia::PixmapMut;
 use wayland_client::{
     QueueHandle,
     globals::GlobalList,
-    protocol::{
-        wl_compositor::WlCompositor,
-        wl_shm::{self, WlShm},
-        wl_surface::WlSurface,
-    },
+    protocol::{wl_compositor::WlCompositor, wl_shm::WlShm, wl_surface::WlSurface},
 };
 use wayland_protocols::wp::{
     fractional_scale::v1::client::{wp_fractional_scale_manager_v1::WpFractionalScaleManagerV1, wp_fractional_scale_v1::WpFractionalScaleV1},
@@ -27,14 +24,15 @@ use wayland_protocols_wlr::layer_shell::v1::client::{
 };
 
 use super::{
-    picture::Screen,
     pacing::Pacer,
+    picture::{Buffer, Picture},
     scale::{Mode, Scale},
-    shm::{Formats, Pool, rgba_to_argb},
+    shm::{Formats, Pool},
     sizing::{Commit, Sizing, Target},
     slots::Layout,
 };
 use crate::overlay::{
+    render::{Point, Screen, screen_ops},
     timing::{timing_log, unix_ns},
     ui::Overlay,
 };
@@ -61,6 +59,8 @@ pub(super) struct Window {
     pools: u64,
     /// When to draw: on frame callbacks while anything moves.
     pub(super) pacer: Pacer,
+    /// Draws the screen, keeping each panel's picture and what the last frames repainted.
+    screen: Screen,
     /// The compositor closed the surface.
     pub(super) closed: bool,
 }
@@ -110,6 +110,7 @@ impl Window {
             pool: None,
             pools: 0,
             pacer: Pacer::default(),
+            screen: Screen::new(),
             closed: false,
         };
         window.ask(Target::Corner);
@@ -135,12 +136,14 @@ impl Window {
         self.surface.commit();
     }
 
-    /// Asks for the corner; clears what's on screen in the same commit, if anything is.
+    /// Asks for the corner; clears what's on screen in the same commit, if anything is. The
+    /// panels' pictures go: showing again draws them anew.
     pub(super) fn shrink(&mut self, clear: Option<(u32, u32)>, qh: &QueueHandle<Window>) -> Result<()> {
         self.ask(Target::Corner);
         self.pacer.hidden();
+        self.screen.forget();
         match clear {
-            Some(size) => self.commit(size, Why::Clear, qh, |pixels, _| pixels.fill(0)),
+            Some(size) => self.commit(size, Why::Clear, &Picture::Clear, qh),
             None => {
                 self.surface.commit();
                 Ok(())
@@ -151,41 +154,30 @@ impl Window {
     /// Puts a clear 1×1 buffer on: the surface while hidden. The screen's pool goes with it,
     /// so hidden, the overlay keeps only a few bytes of buffers.
     pub(super) fn blank(&mut self, qh: &QueueHandle<Window>) -> Result<()> {
-        self.commit((1, 1), Why::Blank, qh, |pixels, _| pixels.fill(0))
+        self.commit((1, 1), Why::Blank, &Picture::Clear, qh)
     }
 
     /// Draws the screen at its configured size, as it is at `now` (the animation clock), and
-    /// commits it with a frame callback asked for. Skipped while the compositor holds every
-    /// buffer, and drawn again once one is released.
-    pub(super) fn draw(&mut self, screen: &mut dyn Screen, overlay: &Overlay, now: Instant, qh: &QueueHandle<Window>) -> Result<()> {
+    /// commits what changed with a frame callback asked for. Skipped while the compositor holds
+    /// every buffer, and drawn again once one is released; not committed when nothing changed.
+    pub(super) fn draw(&mut self, overlay: &Overlay, now: Instant, qh: &QueueHandle<Window>) -> Result<()> {
         let Some(logical) = self.sizing.screen() else { return Ok(()) };
-        let (w, h) = self.scale.device(logical);
-        let factor = self.scale.factor();
         let started = Instant::now();
-        self.commit(logical, Why::Draw, qh, |pixels, format| {
-            // Drawn straight into the buffer, which holds an older frame (its lease's age);
-            // until step 4.3 the whole screen is drawn over it.
-            let mut direct = PixmapMut::from_bytes(pixels, w, h).expect("a buffer is as big as its size");
-            screen.draw(overlay, now, factor, &mut direct);
-            if format == wl_shm::Format::Argb8888 {
-                // Without ABGR8888 (KWin lacks it), swapped into ARGB8888's order in place,
-                // rather than drawn into a canvas of its own and converted: one screen less of
-                // memory, and the same pass over the pixels.
-                rgba_to_argb(pixels);
-            }
-            timing_log(&format!("built {} {} {w}x{h}", unix_ns(), started.elapsed().as_nanos()));
-        })
+        let shown = overlay.shown_at(now);
+        let ops = screen_ops(overlay.frame(), &shown, Point::new(logical.0 as f32, logical.1 as f32));
+        let scale = self.scale.factor();
+        self.commit(logical, Why::Draw, &Picture::Screen { ops: &ops, scale, started }, qh)
     }
 
     /// The scale has changed: puts what is on again at the new one, at once. A screen is drawn;
     /// the 1×1 buffer of the hidden surface is made again (a buffer scale must divide the
     /// buffer's size, so the old one can't stay on).
-    pub(super) fn rescale(&mut self, screen: &mut dyn Screen, overlay: &Overlay, now: Instant, qh: &QueueHandle<Window>) -> Result<()> {
+    pub(super) fn rescale(&mut self, overlay: &Overlay, now: Instant, qh: &QueueHandle<Window>) -> Result<()> {
         if !std::mem::take(&mut self.rescaled) {
             return Ok(());
         }
         if self.sizing.screen().is_some() {
-            self.draw(screen, overlay, now, qh)
+            self.draw(overlay, now, qh)
         } else if self.sizing.target() == Target::Corner && self.sizing.is_blank() {
             self.blank(qh)
         } else {
@@ -218,9 +210,10 @@ impl Window {
         }
     }
 
-    /// Fills a free `w`×`h` buffer with `fill`, attaches it, damages it all and commits. Makes
-    /// a new pool when the size or format has changed; with every buffer held, commits nothing.
-    fn commit(&mut self, logical: (u32, u32), why: Why, qh: &QueueHandle<Window>, fill: impl FnOnce(&mut [u8], wl_shm::Format)) -> Result<()> {
+    /// Puts `picture` into a free buffer for a surface of `logical` size, attaches it, damages
+    /// what changed and commits. Makes a new pool when the size or format has changed; with
+    /// every buffer held, or nothing changed, commits nothing.
+    fn commit(&mut self, logical: (u32, u32), why: Why, picture: &Picture, qh: &QueueHandle<Window>) -> Result<()> {
         let (w, h) = logical;
         if !self.sizing.may_attach(logical) {
             // Sizing hands out only sizes it may attach at; this is a bug, not the compositor's.
@@ -239,6 +232,8 @@ impl Window {
             old => {
                 self.pools += 1;
                 self.pool = Some(Pool::new(&self.shm, self.pools, layout, format, qh).context("the screen's buffers")?);
+                // New buffers hold nothing the screen painted.
+                self.screen.forget();
                 timing_log(&format!("pool {} {dw}x{dh} {format:?}", unix_ns()));
                 old
             }
@@ -254,8 +249,16 @@ impl Window {
             }
             return Ok(());
         };
-        fill(pool.pixels(lease), format);
-        pool.attach(lease, &self.surface);
+        let buffer = Buffer { pixels: pool.pixels(lease), size: (dw, dh), format, age: lease.age };
+        let damage = picture.paint(&mut self.screen, buffer);
+        if damage.is_empty() {
+            // The same as the buffer holds, and so as what is on: nothing to commit, and no
+            // frame counted, so the screen's damage history stays in step with the buffers'.
+            timing_log(&format!("commit-unchanged {} {w}x{h} {why:?} slot {} age {}", unix_ns(), lease.slot, lease.age));
+            self.pacer.unchanged(Instant::now());
+            return Ok(());
+        }
+        pool.attach(lease, &self.surface, &damage);
         self.put_on_scale(logical);
         if let Why::Draw = why {
             // Asked for before the commit, which it belongs to.
@@ -267,10 +270,12 @@ impl Window {
         self.sizing.attached(logical);
         let now = unix_ns();
         timing_log(&format!(
-            "commit {now} {w}x{h} {why:?} {:?} slot {} age {} buffer {dw}x{dh} {:?}",
+            "commit {now} {w}x{h} {why:?} {:?} slot {} age {} damage {} {} buffer {dw}x{dh} {:?}",
             self.sizing.target(),
             lease.slot,
             lease.age,
+            damage.patches().len(),
+            damage.patches().iter().map(|p| i64::from(p.width()) * i64::from(p.height())).sum::<i64>(),
             self.scale.mode()
         ));
         if let Why::Draw = why {

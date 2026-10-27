@@ -7,12 +7,20 @@
 //! buffers (`shm.rs`, `slots.rs`). A thread reads the daemon's frames and wakes the loop through an
 //! eventfd (`feed.rs`), so a still or hidden overlay sleeps in `poll` until something comes.
 //!
+//! The screen is the overlay's own renderer (`render::Screen`): each frame the panels shown at
+//! the animation clock (`Overlay::shown_at`) become a list (`render::screen_ops`), painted at the
+//! device scale over what the leased buffer holds, repainting and damaging only what changed
+//! since that buffer was drawn (`picture.rs`). A frame that changes nothing is not committed.
+//!
 //! In the harness: `PADWIGHT_HARNESS_RELEASE=1 PADWIGHT_OVERLAY=native scripts/overlay-harness.sh
-//! scripts/harness/pacing.sh <out>`. Besides the usual lines, the timing log has `surface <ns> ask
-//! <target> <w>x<h>` for each request, `configure <ns> <w>x<h> <target> <commit>` for each configure
-//! acked, and `commit <ns> <w>x<h> <why> <target>` for each buffer committed, so it shows that
-//! every buffer goes on at the size last configured; `present <ns>` is stamped at each frame's
-//! commit, and `callback <ns> <compositor ms> current|stale` as each frame callback is done.
+//! scripts/harness/pacing.sh <out>`. The timing log has iced's `recv`, `built` and `menu` lines
+//! (`menu` for each menu in each frame drawn, so `pacing.py` sees how fades step), and besides
+//! them `surface <ns> ask <target> <w>x<h>` for each request, `configure <ns> <w>x<h> <target>
+//! <commit>` for each configure acked, and `commit <ns> <w>x<h> <why> <target> ... damage
+//! <patches> <pixels>` for each buffer committed, so it shows that every buffer goes on at the
+//! size last configured; `commit-unchanged` for a frame drawn the same as before and not
+//! committed; `present <ns>` is stamped at each frame's commit, and `callback <ns> <compositor
+//! ms> current|stale` as each frame callback is done.
 
 use std::{
     os::fd::{AsRawFd, BorrowedFd},
@@ -35,7 +43,6 @@ mod slots;
 mod window;
 
 use feed::Feed;
-use picture::{Screen, TestPicture};
 use sizing::{Commit, Target};
 use window::Window;
 
@@ -46,7 +53,6 @@ pub(super) fn run() -> Result<()> {
     let mut window = Window::new(&globals, &qh)?;
     let feed = Feed::connect()?;
     let mut overlay = Overlay::new();
-    let mut screen = TestPicture;
     loop {
         // Looked at on every wake: a frame callback, a release, a configure, a frame from the
         // daemon or the fallback. The daemon's frames are all taken, those a later one stands in
@@ -65,7 +71,7 @@ pub(super) fn run() -> Result<()> {
         let now = Instant::now();
         overlay.prune(now);
         window.pacer.moving(overlay.busy(now));
-        step(&mut window, &mut screen, &overlay, now, &qh)?;
+        step(&mut window, &overlay, now, &qh)?;
         if window.closed {
             anyhow::bail!("the compositor closed the overlay's surface");
         }
@@ -76,7 +82,7 @@ pub(super) fn run() -> Result<()> {
 
 /// Brings the surface in line with the overlay: asks for the screen or the corner, puts on
 /// what the last configure asked for, and draws the screen at `now` when a frame is due.
-fn step(window: &mut Window, screen: &mut dyn Screen, overlay: &Overlay, now: Instant, qh: &wayland_client::QueueHandle<Window>) -> Result<()> {
+fn step(window: &mut Window, overlay: &Overlay, now: Instant, qh: &wayland_client::QueueHandle<Window>) -> Result<()> {
     let todo = std::mem::replace(&mut window.todo, Commit::Nothing);
     match window.sizing.want(overlay.shown()) {
         Commit::Grow => window.grow(),
@@ -86,14 +92,14 @@ fn step(window: &mut Window, screen: &mut dyn Screen, overlay: &Overlay, now: In
     }
     // A configure answers the request it came for; one asked since then waits for its own.
     // The first thing after a change of scale; a configure or draw that follows draws again.
-    window.rescale(screen, overlay, now, qh)?;
+    window.rescale(overlay, now, qh)?;
     match todo {
         Commit::Blank if window.sizing.target() == Target::Corner => window.blank(qh)?,
         // The first frame at a new size goes at once, callback or not: nothing of ours is on
         // at that size for it to wait behind.
-        Commit::Draw(_) => window.draw(screen, overlay, now, qh)?,
+        Commit::Draw(_) => window.draw(overlay, now, qh)?,
         // A frame skipped while every buffer was held goes out once one is released.
-        _ if overlay.shown() && window.can_draw() && window.pacer.due(now) => window.draw(screen, overlay, now, qh)?,
+        _ if overlay.shown() && window.can_draw() && window.pacer.due(now) => window.draw(overlay, now, qh)?,
         _ => {}
     }
     Ok(())
