@@ -77,6 +77,103 @@ the build just before the redraw.
 Run: `PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh scripts/harness/pacing.sh
 screenshots/pacing/<name>` (`--hz` on `pacing.py` for another refresh).
 
+### Result: resources
+
+Measured on 2026-10-27 at commit `5dbb8f0` (the `native-overlay` head). Runs: `PADWIGHT_HARNESS_RELEASE=1
+scripts/overlay-harness.sh scripts/harness/resources.sh` three times at 1920×1080 and three times at
+3840×2160 (`PADWIGHT_HEADLESS_SIZE=3840x2160`), and `scripts/harness/radial-sweep.sh` once at each
+size. Headless KWin, one run after another. The iced columns are the baselines above, at `909ea81`.
+Load (1-minute, 20 cores) before each run was 0.2 to 5.1; the first 1080p run ended at 7.6 because
+its release build ran inside it. The user's own session (KWin, rust-analyzer) was running throughout.
+CPU is the share of one core. Per-run files are in `screenshots/final/` (`resources-1080-{1,2,3}`,
+`resources-2160-{1,2,3}`, `radial-sweep-{1080,2160}`).
+
+| | iced on wgpu (today) | iced on tiny-skia | native, 1920×1080 | native, 3840×2160 |
+|---|---|---|---|---|
+| Memory, hidden | 193 MB | 22 MB | 12.8–12.9 MB | 12.8–13.2 MB |
+| Memory, menu shown | 216 MB | 45–47 MB | 41.8–42.0 MB | 90.6–90.7 MB |
+| Memory, hidden again | not measured | not measured | 23.5–23.6 MB | 23.6–23.8 MB (see below) |
+| CPU, hidden | 0.4% | 0.0% | 0.0% | 0.0% |
+| CPU, menu held still | 0.4–0.6% | 0.0% | 7.0%, 0.0%, 0.0% | 0.0%, 0.0%, 0.0% |
+| CPU, moving through a menu | 1.2–1.4% | 4.2–5.2% | 0.8%, 1.0%, 0.8% | 0.6%, 1.0%, 1.0% |
+| CPU, radial sweep (step 4.5) | 26.2% | 42.8% | 17.0% (one run) | 17.0% (one run) |
+
+**The 7.0% held reading.** It is the first open's text shaping, and the logs show it. The first
+`built` line after a start takes 2.3 to 2.4 s in `list` (layout and shaping) in two runs: 1080p
+run 1 and the 1080p radial run. In the other three 1080p runs and in all four 4K runs it takes
+31 to 57 ms, and those read 0.0% held. `resources.sh` has no marks, so the window is worked out from
+the timestamps. The held window starts 1.5 s after the press (the daemon's `recv` line, 845.619 and
+108.889 in those two runs) and lasts 5 s. The slow build ends 0.95 s and 0.87 s into it. The
+overlay used 0.35 core-seconds in each window (7.0% of 5 s). The build didn't use a full core
+for that time, so part of it was probably waiting (inferred; not checked). After the build the log
+has no draws until the first move, so the held state itself costs nothing. A diagnostic run with
+a 4 s wait after the press (`screenshots/final/diag-resources-1080-wait4`, not counted) had a fast
+build, so it did not reproduce the slow one. Why the build is slow in some runs and not others is
+not known.
+
+**Hidden again.** After one menu, the overlay keeps about 10 MB more than before it opened (23.5 MB
+against 12.8 MB at 1080p). Buffers are freed, so the rest is caches or allocator memory. Not
+investigated. The 3840×2160 run 3 reads 3.5 MB here with 0 kB anonymous memory, which can't be
+right for a running overlay. Not investigated; the other two 4K runs read 23.6 to 23.8 MB.
+
+Goals:
+
+- **Memory, at most 25 MB hidden and 50 MB shown at 1080p: met** (12.8–12.9 MB and 41.8–42.0 MB).
+  Hidden again is 23.5 MB, under 25 but not back near 13 MB. At 4K the menu uses 90.6 MB, which the
+  plan expects (each buffer is 33 MB). No 4K target is set.
+- **CPU while animating, no higher than 1.2–1.4%: met for moving through a menu** (0.6–1.0% at both
+  sizes). **Missed for the radial sweep**: 17.0% at both sizes, against 1.2–1.4%. The lit arcs are big,
+  so about 22 of 64 tiles are redrawn each frame (step 4.5). This is the gap.
+- **No GPU use: not checked directly.** Memory fell from 193 MB to 13 MB and the driver's share is
+  gone with it, which fits, but no run records which libraries are mapped.
+
+### Result: frame pacing
+
+Measured on 2026-10-27 at commit `5dbb8f0`. Runs: `PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh
+scripts/harness/pacing.sh screenshots/final/pacing-<n>` three times at 1920×1080, then `pacing.py` and
+`surface.py` on each log. Load (1-minute) before each run was 0.2 to 0.5. The fade check ran
+once: `PADWIGHT_FADE_FRAMES=screenshots/final/fade`, `cargo nextest run --run-ignored all fade_frames`,
+then `scripts/harness/fade-check.py screenshots/final/fade`. It has no iced baseline, and it checks the
+renderer's own pictures, not what the compositor shows.
+
+| | iced on wgpu (today) | iced on tiny-skia | native, 1920×1080 |
+|---|---|---|---|
+| Frame interval, median / p95 | 16.2 / 17.2–17.3 ms | 16.2–16.3 / 17.3 ms | 16.6 / 17.5 ms |
+| Frame interval, max | 18.3–19.5 ms | 23.6–49.0 ms | 20.5–27.8 ms |
+| Intervals of 1.5 refreshes or more, per run of ~525 | 0 | 0, 2 and 4 | 1, 0 and 0 |
+| Frames presented while held still | 0 | 0 | 0 |
+| Presents with no new build (same content) | 10–12 of ~580 | 8–9 of ~570 | 0 of 580–582 |
+| Frame from daemon to its first `present`, median / p95 | 0.2 / 0.3–0.8 ms | 0.2 / 0.3 ms | 4.0–4.2 / 16–26 ms |
+| ... worst of the run | 52 ms | 51 ms | 50.5–54.1 ms |
+| Open fade: partly faded frames, step median, max/median | 12, 0.089, 1.03–1.15 | 11–12, 0.090, 1.2–1.9 | 10, 0.092, 3.5–3.75 |
+| Close fade: partly faded frames, step median, max/median | 8, 0.135, 1.02–1.04 | 8, 0.135, 1.3–1.4 | 7, 0.139, 1.07–1.12 |
+
+The 16.6 ms median is close to the 60 Hz refresh (16.7 ms), so the timer drift from the baseline is gone.
+The surface checks pass in all three runs: each of the 15 showings commits its first buffer at
+1920×1080, there are no commits at 1×1 while showing, none before the configure, and no violations.
+The fade check finds no pixel off by more than 12 levels in any picture (worst 0), so each panel
+fades as one picture.
+
+The open fade is the open gap. Its first step is large (0.15 to 0.35), then one to three steps
+run uneven (0.03 to 0.14), and then it settles at 0.092 for the rest of the fade. The first steps
+are where the max/median comes from. The cause is not found. The close fade is even (1.07 to 1.12,
+about the same as iced on wgpu).
+
+First-present latency is worse than iced. The median is 4 ms against 0.2 ms, and the p95 is 16 to 26
+ms. Step 5.5 recorded 3.7 ms median and 5.8 ms p95, so this run doesn't match it. The likely cause is
+the pacer: a change waits for an outstanding frame callback, which can take up to one refresh
+(inferred; not checked).
+
+Goals:
+
+- **Frames come when the compositor asks: met.** Median interval 16.6 ms, no frames while still, no
+  same-content presents. What the display shows is still not in the log (step 8.3).
+- **Nothing shown at the wrong size: met** (`surface.py`, no violations).
+- **Every panel fades as one picture: met** for the renderer's pictures (fade check, worst 0). Not
+  yet checked on a live compositor (step 8.3).
+- **Fades step evenly: met for closing, not for opening.** Closing is even. Opening has uneven
+  first steps (max/median 3.5 to 3.75, against 1.03 to 1.15 for iced on wgpu). This is the gap.
+
 ## Goals
 
 - **Every panel fades, slides and zooms as one picture.** No stacked transparency and no
@@ -241,8 +338,8 @@ that panel with both renderers, and compare (step 3.10 automates this). Port fro
 
 | # | Step | Model | Done when |
 |---|---|---|---|
-| 8.1 | Re-run `resources.sh` at 1920×1080 and 3840×2160 (`PADWIGHT_HEADLESS_SIZE`) and add the figures to this doc. | Haiku | The goals for memory and CPU are met, or the gap is written down. |
-| 8.2 | Re-run the pacing scenario (0.3) and the fade check, and compare them with the baseline. | Haiku | Written down here. |
+| 8.1 | Re-run `resources.sh` at 1920×1080 and 3840×2160 (`PADWIGHT_HEADLESS_SIZE`) and add the figures to this doc. | done | Figures in "Result: resources". Memory goals met at 1080p. Moving CPU met at both sizes. Radial sweep at 17% is the gap (goal 1.2–1.4%). The 7.0% held reading is the first open's shaping. |
+| 8.2 | Re-run the pacing scenario (0.3) and the fade check, and compare them with the baseline. | done | Figures in "Result: frame pacing". Frame timing, surface sizes and close fades are good. The open fade's first steps are uneven, and first-present latency is worse than iced. |
 | 8.3 | Test on real hardware: KWin, a wlroots compositor (Sway or Hyprland), a game running full screen, a display at fractional scale, and Steam's gamescope if it's used. | the user | Flicker gone, nothing staged, no stutter. |
 | 8.4 | Docs: `overlay-debugging.md` (renderer, compare tool, pacing scenario) and `architecture.md` (the overlay process). | Haiku | Written. |
 
