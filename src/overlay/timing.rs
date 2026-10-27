@@ -48,6 +48,7 @@ pub(super) fn menu_log(m: &crate::menu::MenuView, anim: &crate::motion::Anim) {
 }
 
 /// Whether the timing log is on.
+#[cfg(target_os = "linux")]
 pub(super) fn timing_enabled() -> bool {
     std::env::var_os("PADWIGHT_OVERLAY_TIMING").is_some()
 }
@@ -59,6 +60,7 @@ pub(super) fn timing_enabled() -> bool {
 /// `built` lines show part of it), and the stamp is the same for a frame that draws nothing new.
 /// It is read from a subscription, so the stamp is taken from iced's own `began`, not from
 /// when the subscription got to run.
+#[cfg(target_os = "linux")]
 pub(super) fn present_log(began: std::time::Instant) {
     let late = std::time::Instant::now().saturating_duration_since(began).as_nanos();
     timing_log(&format!("present {}", unix_ns().saturating_sub(late)));
