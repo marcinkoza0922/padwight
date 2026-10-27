@@ -244,7 +244,7 @@ that panel with both renderers, and compare (step 3.10 automates this). Port fro
 | 8.1 | Re-run `resources.sh` at 1920×1080 and 3840×2160 (`PADWIGHT_HEADLESS_SIZE`) and add the figures to this doc. | Haiku | The goals for memory and CPU are met, or the gap is written down. |
 | 8.2 | Re-run the pacing scenario (0.3) and the fade check, and compare them with the baseline. | Haiku | Written down here. |
 | 8.3 | Test on real hardware: KWin, a wlroots compositor (Sway or Hyprland), a game running full screen, a display at fractional scale, and Steam's gamescope if it's used. | the user | Flicker gone, nothing staged, no stutter. |
-| 8.4 | Docs: `overlay-debugging.md` (renderer, compare tool, pacing scenario) and `architecture.md` (the overlay process). | Haiku | Written. |
+| 8.4 | Docs: `overlay-debugging.md` (renderer, compare tool, pacing scenario) and `architecture.md` (the overlay process). | done | `overlay-debugging.md`: how the overlay draws (layout tree, display list, tiled and diffed panel pictures, damage, the window), the compare tool and how to read its score, the harness scenarios with their commands, every timing-log line and its fields, and how to chase a look that differs from iced. `architecture.md`: the overlay process on Wayland and Windows, and where iced remains (the settings and debug windows, the previews, the glyph sheets and the compare tool's iced side). |
 
 ### Phase 9: later
 

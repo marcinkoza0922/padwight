@@ -1,9 +1,9 @@
 //! Profiling only: the overlay's timing log, for measuring and for scripts/overlay-harness.sh.
 
-/// Profiling only. When `PADWIGHT_OVERLAY_TIMING` names a file, each received frame, each build
-/// of the overlay's widgets and each animation tick is appended to it, as `recv <ns> <what>`,
-/// `built <ns> <build ns> <width>x<height>`, `tick <ns>` and `present <ns>` (and the surface's `surface`,
-/// `configure` and `commit` lines: `wayland.rs`).
+/// Profiling only. When `PADWIGHT_OVERLAY_TIMING` names a file, each received frame, each drawn
+/// screen and each menu drawn are appended to it, as `recv <ns> <what>`, `built <ns> ...` and
+/// `menu ...`, with the window's own lines (`present`, `commit`, `configure`, `surface`, `callback`,
+/// `pool`: `wayland/window.rs`). docs/development/overlay-debugging.md lists their fields.
 /// Unset, this does nothing; the file is opened per call, so it is only for measuring.
 pub(super) fn timing_log(entry: &str) {
     use std::io::Write;
