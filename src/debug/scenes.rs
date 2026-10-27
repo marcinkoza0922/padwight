@@ -68,10 +68,10 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "held-remapping" => active(held(crate::system_menu::Hold::RemappingOff)),
         "guide" => guide(0),
         "guide-mode" => guide(1),
-        "tools" => active(tools(false)),
-        "calculator" => active(tools(true)),
+        "tools" | "calculator" => active(tools(name == "calculator")),
         "doodles" => doodles(),
         "doodle-typing" => doodle_typing(),
+        "doodle-checks" => doodle_checks(),
         "switch-profile" => active(switch_profile(false)),
         "new-profile" => active(switch_profile(true)),
         "edit-controls" => active(edit_controls(&[])),
@@ -198,14 +198,32 @@ fn doodles() -> OverlayFrame {
         crate::overlay::DoodleCell::Tip { tip: crate::tools::doodle::Tip::Round, text: "{north} Round".into() },
         crate::overlay::DoodleCell::Kind { kind: crate::tools::doodle::Kind::Solid, text: "{west} Solid".into() },
     ];
-    let hud = crate::overlay::DoodleHud { tool: 0, tray: true, cells, style };
+    let hud = crate::overlay::DoodleHud { tool: 0, tray: true, cells, checks: None, style };
     OverlayFrame { doodles: canvas, doodle_cursor: Some(cursor), doodle_hud: Some(hud), ..OverlayFrame::default() }
 }
 
 /// The text keyboard the Doodle screen opens for a text box, typing "Hello", over the doodles.
 fn doodle_typing() -> OverlayFrame {
     let keys = crate::overlay::OverlayController::for_field("Text", "Hello");
-    OverlayFrame { active: Some(OverlayView::Keyboard(keys.view(Instant::now()))), ..doodles() }
+    let mut frame = OverlayFrame { active: Some(OverlayView::Keyboard(keys.view(Instant::now()))), ..doodles() };
+    if let Some(hud) = &mut frame.doodle_hud {
+        hud.tray = false;
+    }
+    frame
+}
+
+/// The text tool's checklist of styles, which North opens, over the doodles: Italic ticked and
+/// Bold under the cursor. The HUD is the Doodle screen's own, after those presses.
+fn doodle_checks() -> OverlayFrame {
+    use crate::{config::Button, tools::doodle::{Canvas, Doodle, Point}};
+    let (mut doodle, mut canvas, now) = (Doodle::new(Point::new(0.5, 0.8)), Canvas::default(), Instant::now());
+    for b in [Button::RightBumper, Button::RightBumper, Button::North, Button::South, Button::DpadDown] {
+        doodle.handle(&mut canvas, b, true, now);
+        doodle.handle(&mut canvas, b, false, now);
+    }
+    let frame = doodles();
+    let hud = doodle.hud(frame.doodle_hud.as_ref().map(|hud| hud.style.clone()).unwrap_or_default());
+    OverlayFrame { doodle_cursor: Some(doodle.cursor_ring()), doodle_hud: Some(hud), ..frame }
 }
 
 /// The Tools menu: its list, or the calculator with 7 × 6 keyed in.

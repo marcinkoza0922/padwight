@@ -7,7 +7,7 @@ use std::f32::consts::TAU;
 use super::{super::Context, ink};
 use crate::{
     overlay::{
-        DoodleCell, DoodleHud,
+        DoodleCell, DoodleChecks, DoodleHud,
         render::{Corners, Node, Op, Outline, Path, Point, Rect, Rgba, Rule, Style, rich},
     },
     tools::doodle::{Kind, PALETTE, Tip},
@@ -30,6 +30,11 @@ const TOP: f32 = 16.0;
 const BOTTOM: f32 = 24.0;
 /// The carousel's names, in the order of `tools::doodle::Tool`.
 const TOOL_NAMES: [&str; 3] = ["Pen", "Eraser", "Text"];
+/// Where the checklist's panel starts, below the carousel, and the gap between its rows.
+const CHECKS_TOP: f32 = 64.0;
+const ROW_GAP: f32 = 6.0;
+/// A check mark on the unit square, drawn in a ticked box.
+const TICK: [(f32, f32); 6] = [(0.14, 0.52), (0.26, 0.4), (0.42, 0.56), (0.76, 0.2), (0.88, 0.32), (0.42, 0.8)];
 
 /// How a piece draws at the point its top left corner lands on.
 type Draw = Box<dyn FnOnce(&mut Vec<Op>, Point)>;
@@ -249,6 +254,48 @@ pub fn tray(ops: &mut Vec<Op>, hud: &DoodleHud, cx: &Context) {
         slots.push(Slot::Piece(cell_piece(cell, &style, width)));
     }
     strip(ops, slots, cx, Anchor::Bottom);
+}
+
+/// The checklist of text styles, under the carousel: a box to tick for each style, with the row the
+/// cursor is on lit.
+pub fn checklist(ops: &mut Vec<Op>, checks: &DoodleChecks, hud: &DoodleHud, cx: &Context) {
+    let style = hud_style(hud, cx);
+    let width = cx.display.x;
+    let rows: Vec<Piece> = checks.rows.iter().enumerate().map(|(index, row)| check_piece(&row.label, row.on, index == checks.cursor, &style, width)).collect();
+    let tall = rows.iter().map(|piece| piece.size.y).sum::<f32>() + ROW_GAP * rows.len().saturating_sub(1) as f32;
+    let wide = rows.iter().map(|piece| piece.size.x).fold(0.0, f32::max);
+    let frame = Rect::new((cx.display.x - wide - 2.0 * PAD_X) / 2.0, CHECKS_TOP, wide + 2.0 * PAD_X, tall + 2.0 * PAD_Y);
+    ops.push(Op::Rect { rect: frame, radii: Corners::all(12.0), fill: Some(panel().into()), border: None });
+    let mut y = frame.y + PAD_Y;
+    for piece in rows {
+        let height = piece.size.y;
+        (piece.draw)(ops, Point::new(frame.x + PAD_X, y));
+        y += height + ROW_GAP;
+    }
+}
+
+/// One row of the checklist: a box, ticked when the style is on, and the style's name. The row
+/// under the cursor is lit like the carousel's tool in use.
+fn check_piece(label: &str, on: bool, lit: bool, style: &Style, width: f32) -> Piece {
+    let label = rich(label, style, TEXT, Rgba::WHITE);
+    let text = label.measure(width);
+    let size = Point::new(ICON + GAP + text.x, ICON.max(text.y));
+    Piece {
+        size,
+        draw: Box::new(move |ops, at| {
+            if lit {
+                let lit_rect = Rect::new(at.x - 6.0, at.y - 4.0, size.x + 12.0, size.y + 8.0);
+                ops.push(Op::Rect { rect: lit_rect, radii: Corners::all(8.0), fill: Some(Rgba::rgb(0.23, 0.45, 0.9).into()), border: None });
+            }
+            let box_rect = icon_rect(at, size.y);
+            let edge = Outline { width: 2.0, color: Rgba::WHITE };
+            ops.push(Op::Rect { rect: box_rect, radii: Corners::all(3.0), fill: None, border: Some(edge) });
+            if on {
+                fill(ops, box_rect, &TICK, Rgba::WHITE);
+            }
+            label.place(Rect::new(at.x + ICON + GAP, at.y + (size.y - text.y) / 2.0, text.x, text.y), ops);
+        }),
+    }
 }
 
 /// Lays `slots` out in a centred panel at `anchor`: pieces a gap apart, and a separator between

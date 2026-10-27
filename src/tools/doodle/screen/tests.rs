@@ -101,22 +101,6 @@ fn the_d_pad_sets_the_pen_and_the_eraser_reach() {
     assert_eq!(doodle.pen().kind, Kind::Brush);
 }
 
-#[test]
-fn north_steps_the_text_through_its_faces() {
-    let (mut doodle, mut canvas) = (Doodle::new(Point::new(0.5, 0.5)), Canvas::default());
-    doodle.handle(&mut canvas, Button::RightBumper, true, Instant::now());
-    doodle.handle(&mut canvas, Button::RightBumper, true, Instant::now());
-    assert_eq!(doodle.tool(), Tool::Text);
-    press(&mut doodle, &mut canvas, Button::North);
-    assert!(doodle.text().italic && !doodle.text().bold);
-    press(&mut doodle, &mut canvas, Button::North);
-    assert!(doodle.text().bold && !doodle.text().underline);
-    press(&mut doodle, &mut canvas, Button::North);
-    assert!(doodle.text().underline);
-    press(&mut doodle, &mut canvas, Button::North);
-    assert_eq!(doodle.text(), TextStyle::default());
-}
-
 /// Switches the Doodle screen to the text tool.
 fn text_tool(doodle: &mut Doodle, canvas: &mut Canvas) {
     press(doodle, canvas, Button::RightBumper);
@@ -223,6 +207,49 @@ fn the_cursor_is_there_even_while_the_keyboard_is_up() {
     doodle.handle(&mut canvas, Button::South, true, now);
     assert_eq!(doodle.cursor_ring().at, Point::new(0.5, 0.5));
     assert!(doodle.cursor_ring().radius >= CURSOR_MIN, "the ring is never too small to see");
+}
+
+#[test]
+fn the_text_tools_north_opens_a_checklist_of_its_styles() {
+    let (mut doodle, mut canvas) = (Doodle::new(Point::new(0.5, 0.5)), Canvas::default());
+    text_tool(&mut doodle, &mut canvas);
+    press(&mut doodle, &mut canvas, Button::North);
+    let checks = doodle.hud(OverlayStyle::default()).checks.expect("North opens the checklist");
+    assert_eq!((checks.cursor, checks.rows[0].on), (0, false));
+    press(&mut doodle, &mut canvas, Button::South);
+    press(&mut doodle, &mut canvas, Button::DpadDown);
+    press(&mut doodle, &mut canvas, Button::South);
+    let checks = doodle.hud(OverlayStyle::default()).checks.expect("the checklist stays open");
+    assert_eq!(checks.rows.iter().map(|row| row.on).collect::<Vec<_>>(), [true, true, false]);
+    assert_eq!((doodle.text().italic, doodle.text().bold, doodle.text().underline), (true, true, false));
+    assert!(canvas.is_empty(), "South ticks a style rather than opening a text box");
+    assert_eq!(doodle.text().size, TextStyle::default().size, "the D-pad moves the checklist's cursor, not the size");
+    press(&mut doodle, &mut canvas, Button::North);
+    assert!(doodle.hud(OverlayStyle::default()).checks.is_none(), "North closes it");
+    assert!(matches!(&doodle.hud(OverlayStyle::default()).cells[3], DoodleCell::Text(text) if text.contains("italic bold")));
+}
+
+#[test]
+fn east_closes_the_checklist_without_undoing_or_leaving() {
+    let (mut doodle, mut canvas, now) = (Doodle::new(Point::new(0.5, 0.5)), Canvas::default(), Instant::now());
+    canvas.add_text(words());
+    text_tool(&mut doodle, &mut canvas);
+    press(&mut doodle, &mut canvas, Button::North);
+    press(&mut doodle, &mut canvas, Button::East);
+    assert!(doodle.hud(OverlayStyle::default()).checks.is_none());
+    assert_eq!(canvas.items().len(), 1, "the tap closed the checklist, and undid nothing");
+    assert_eq!(doodle.tick(&mut canvas, 0.0, now + EXIT_HOLD), Step::Stay);
+}
+
+#[test]
+fn north_on_the_keyboard_is_the_keyboards_own() {
+    let (mut doodle, mut canvas, now) = (Doodle::new(Point::new(0.5, 0.5)), Canvas::default(), Instant::now());
+    text_tool(&mut doodle, &mut canvas);
+    press(&mut doodle, &mut canvas, Button::South);
+    assert!(doodle.keyboard(now).is_some());
+    press(&mut doodle, &mut canvas, Button::North);
+    assert!(doodle.hud(OverlayStyle::default()).checks.is_none(), "no checklist over the keyboard");
+    assert_eq!(doodle.text(), TextStyle::default());
 }
 
 impl Doodle {

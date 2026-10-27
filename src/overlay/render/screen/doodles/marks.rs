@@ -3,7 +3,7 @@
 
 use std::collections::BTreeSet;
 
-use crate::overlay::render::{Cap, Corners, Join, Op, Path, Point, Rect, Rgba, Rule, Stroke};
+use crate::overlay::render::{Cap, Join, Op, Path, Point, Rgba, Rule, Stroke};
 
 /// The brush's solid core, as a share of the stroke's width, and where its streaks run (the
 /// streaks' centers, as shares of the width from the middle), how wide they are, and how often
@@ -41,28 +41,28 @@ struct Streak {
     phase: usize,
 }
 
-/// Draws `streak` along the line through `px`, broken into runs.
+/// Draws `streak` along the line through `px`, broken into runs. The runs are one path, so a
+/// long stroke is one op to draw rather than one for each run.
 fn streak_along(ops: &mut Vec<Op>, px: &[Point], normals: &[Point], streak: &Streak) {
     let shifted = |i: usize| Point::new(px[i].x + normals[i].x * streak.offset, px[i].y + normals[i].y * streak.offset);
-    let mut paths = Vec::new();
-    let mut run: Option<Path> = None;
+    let mut path = Path::new();
+    let (mut running, mut any) = (false, false);
     for i in 0..px.len().saturating_sub(1) {
         if (i + streak.phase).is_multiple_of(GAP_EVERY) {
-            paths.extend(run.take());
+            running = false;
             continue;
         }
-        let path = run.get_or_insert_with(|| {
-            let mut path = Path::new();
+        if !running {
             path.move_to(shifted(i));
-            path
-        });
+            (running, any) = (true, true);
+        }
         path.line_to(shifted(i + 1));
     }
-    paths.extend(run);
-    for path in paths {
-        let stroke = Stroke { cap: Cap::Round, join: Join::Round, ..Stroke::new(streak.width, streak.color) };
-        ops.push(Op::Path { path, fill: None, rule: Rule::NonZero, stroke: Some(stroke) });
+    if !any {
+        return;
     }
+    let stroke = Stroke { cap: Cap::Round, join: Join::Round, ..Stroke::new(streak.width, streak.color) };
+    ops.push(Op::Path { path, fill: None, rule: Rule::NonZero, stroke: Some(stroke) });
 }
 
 /// The unit normal at each point of the line through `px`, pointing to its left.
@@ -112,8 +112,18 @@ pub fn spray(ops: &mut Vec<Op>, px: &[Point], width: f32, color: Rgba) {
             }
         }
     }
-    for (gx, gy) in dots {
-        let rect = Rect::new(gx as f32 * cell, gy as f32 * cell, cell * DOT, cell * DOT);
-        ops.push(Op::Rect { rect, radii: Corners::all(0.0), fill: Some(color.into()), border: None });
+    if dots.is_empty() {
+        return;
     }
+    // The dots are one path, so a spray is one op to draw however many dots it has.
+    let mut path = Path::new();
+    for (gx, gy) in dots {
+        let (x, y, side) = (gx as f32 * cell, gy as f32 * cell, cell * DOT);
+        path.move_to(Point::new(x, y));
+        path.line_to(Point::new(x + side, y));
+        path.line_to(Point::new(x + side, y + side));
+        path.line_to(Point::new(x, y + side));
+        path.close();
+    }
+    ops.push(Op::Path { path, fill: Some(color.into()), rule: Rule::NonZero, stroke: None });
 }

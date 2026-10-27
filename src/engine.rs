@@ -1251,6 +1251,14 @@ impl Engine {
         self.touch.reset();
     }
 
+    /// Notes where a stick or trigger is while an overlay has the controller and the engine
+    /// hears nothing else. Without it, a trigger let go of under the overlay stays pulled here,
+    /// and the next layer change (Guide held) re-applies it: Guide + right trigger, which opened
+    /// the Tools menu, would open it again on the next Guide press.
+    pub fn note_axis(&mut self, axis: Axis, value: f32) {
+        self.axes.insert(axis, value);
+    }
+
     /// Re-applies current analog state under a (new) profile, e.g. after switching.
     pub fn resync(&mut self, profile: &Profile, out: &mut Vec<OutEvent>) {
         self.stick(profile, Stick::Left, out);

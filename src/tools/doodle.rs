@@ -44,6 +44,10 @@ pub const TEXT_SIZE: f32 = 0.026;
 pub const SIZE_STEP: f32 = 0.002;
 pub const TEXT_STEP: f32 = 0.004;
 
+/// How far apart a stroke's points are kept, as a share of its pen's size, and at least.
+const POINT_STEP: f32 = 0.2;
+const MIN_POINT_STEP: f32 = 0.001;
+
 /// The width of a 16:9 screen as a multiple of its height, which distances are measured with.
 const ASPECT: f32 = 16.0 / 9.0;
 /// Rough size of a character as a share of the font size. The overlay measures real text when it
@@ -276,10 +280,16 @@ impl Canvas {
         self.pending = Some(Stroke { pen, points: vec![at] });
     }
 
-    /// Moves the drawing stroke to `at`. Does nothing when the pen is up.
+    /// Moves the drawing stroke to `at`. Does nothing when the pen is up. A point that lands
+    /// closer than [`POINT_STEP`] of the pen's size to the one before the stroke's last moves the
+    /// last one there instead, so a stroke gains a point a step along rather than one each tick:
+    /// fewer points to send and draw, and its end is still where the cursor is.
     pub fn extend_stroke(&mut self, at: Point) {
-        if let Some(stroke) = &mut self.pending {
-            stroke.points.push(at);
+        let Some(stroke) = &mut self.pending else { return };
+        let step = (stroke.pen.size * POINT_STEP).max(MIN_POINT_STEP);
+        match stroke.points.as_mut_slice() {
+            [.., before, last] if before.distance(at) < step => *last = at,
+            _ => stroke.points.push(at),
         }
     }
 

@@ -13,7 +13,7 @@ impl Daemon {
         }
         self.release_mappings();
         log!("tools open");
-        self.active = Some(Active::Tools(ToolsSession::new(), device));
+        self.active = Some(Active::Tools(Box::new(ToolsSession::new()), device));
         self.broadcast_overlay();
         self.overlay_sound(sound::SoundOverlay::Menu, Some(sound::Feedback::Open));
     }

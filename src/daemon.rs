@@ -373,7 +373,7 @@ enum Active {
     /// The question of how to set up a new controller (its id).
     NewPad(NewPadSession, String),
     /// The Tools menu, and the controller that opened it.
-    Tools(ToolsSession, u64),
+    Tools(Box<ToolsSession>, u64),
 }
 
 /// The sounds of the on-screen keyboard or the numpad, whichever is up.

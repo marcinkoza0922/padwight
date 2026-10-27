@@ -1,6 +1,6 @@
 //! The Doodle screen's controls: the left stick moves the cursor, South uses the current tool,
-//! LB and RB change tools, and the D-pad sets each tool's settings. Text boxes take the on-screen
-//! keyboard (see `text.rs`). It edits the daemon's canvas and says when it's done. The canvas
+//! LB and RB change tools, and the D-pad sets each tool's settings. The text tool's North opens a
+//! checklist of its styles. Text boxes take the on-screen keyboard (see `text.rs`). It edits the daemon's canvas and says when it's done. The canvas
 //! itself is in the parent module.
 
 #[cfg(test)]
@@ -11,12 +11,12 @@ use std::time::{Duration, Instant};
 use super::{
     Canvas, FONTS, PALETTE, PEN_SIZES, Pen, Point, SIZE_STEP, TEXT_SIZES, TEXT_STEP, TextStyle, Tool,
     resize,
-    text::{Entry, Grab, finished},
+    text::{FACES, Entry, Grab, face_on, finished, toggle_face},
 };
 use crate::{
     config::{Button, OverlayStyle},
     input::{Axis, InputEvent},
-    overlay::{DoodleCell, DoodleCursor, DoodleHud, KeyboardView, OverlayAction},
+    overlay::{DoodleCell, DoodleCheck, DoodleChecks, DoodleCursor, DoodleHud, KeyboardView, OverlayAction},
 };
 
 /// How long East is held to leave Doodle. A shorter press undoes the last item instead.
@@ -65,6 +65,9 @@ pub struct Doodle {
     entry: Option<Entry>,
     /// A text box South is holding, to move or to open.
     grab: Option<Grab>,
+    /// The row the checklist of text styles has its cursor on, while it's open. It takes the
+    /// buttons until it's closed.
+    checks: Option<usize>,
 }
 
 impl Doodle {
@@ -81,6 +84,7 @@ impl Doodle {
             clicks: [false; 2],
             entry: None,
             grab: None,
+            checks: None,
         }
     }
 
@@ -120,7 +124,11 @@ impl Doodle {
                 ]
             }
         };
-        DoodleHud { tool: self.tool.index(), tray: self.entry.is_none(), cells, style }
+        let checks = self.checks.map(|cursor| DoodleChecks {
+            rows: FACES.iter().enumerate().map(|(face, label)| DoodleCheck { label: label.to_string(), on: face_on(&self.text, face) }).collect(),
+            cursor,
+        });
+        DoodleHud { tool: self.tool.index(), tray: self.entry.is_none(), cells, checks, style }
     }
 
     /// The keyboard typing into a text box, as the overlay draws it, while it's up.
@@ -196,6 +204,11 @@ impl Doodle {
         }
         match b {
             Button::Guide if down => return Step::Leave,
+            _ if self.checks.is_some() => {
+                if down {
+                    self.check(b);
+                }
+            }
             Button::East => self.east(canvas, down, now),
             Button::LeftStick | Button::RightStick => self.click(canvas, b, down),
             Button::South => self.south(canvas, down),
@@ -213,6 +226,22 @@ impl Doodle {
         let Some(entry) = &mut self.entry else { return };
         let actions = entry.keys().handle(ev, now);
         self.finish_entry(canvas, &actions);
+    }
+
+    /// The checklist's controls: the D-pad moves its cursor, South ticks the style under it, and
+    /// North or East closes it.
+    fn check(&mut self, b: Button) {
+        let Some(cursor) = self.checks else { return };
+        self.checks = match b {
+            Button::DpadUp => Some(cursor.saturating_sub(1)),
+            Button::DpadDown => Some((cursor + 1).min(FACES.len() - 1)),
+            Button::South => {
+                toggle_face(&mut self.text, cursor);
+                Some(cursor)
+            }
+            Button::North | Button::East => None,
+            _ => Some(cursor),
+        };
     }
 
     /// Ends the keyboard when it asks to be done, setting the text box or closing without.
@@ -315,21 +344,10 @@ impl Doodle {
                 self.text.color = (self.text.color as i32 + sideways).rem_euclid(PALETTE.len() as i32) as usize;
                 match b {
                     Button::West => self.text.font = (self.text.font + 1) % FONTS.len(),
-                    Button::North => self.face_next(),
+                    Button::North if self.grab.is_none() => self.checks = Some(0),
                     _ => {}
                 }
             }
         }
-    }
-
-    /// North steps the text through italic, bold, underline and plain, one at a time.
-    fn face_next(&mut self) {
-        let (italic, bold, underline) = (self.text.italic, self.text.bold, self.text.underline);
-        (self.text.italic, self.text.bold, self.text.underline) = match (italic, bold, underline) {
-            (false, false, false) => (true, false, false),
-            (true, false, false) => (true, true, false),
-            (true, true, false) => (true, true, true),
-            _ => (false, false, false),
-        };
     }
 }

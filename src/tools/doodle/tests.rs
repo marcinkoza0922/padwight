@@ -46,6 +46,20 @@ fn sizes_step_and_stay_within_their_limits() {
 }
 
 #[test]
+fn points_closer_than_a_step_move_the_stroke_end_instead_of_adding_one() {
+    let mut canvas = Canvas::default();
+    canvas.begin_stroke(pen(), Point::new(0.0, 0.0));
+    canvas.extend_stroke(Point::new(0.0, 0.0001));
+    canvas.extend_stroke(Point::new(0.0, 0.0002));
+    let points = &canvas.pending().unwrap().points;
+    assert_eq!(points.len(), 2, "ticks a hair apart don't each add a point");
+    assert_eq!(points[1], Point::new(0.0, 0.0002), "the end is where the cursor is");
+    canvas.extend_stroke(Point::new(0.0, 0.05));
+    canvas.extend_stroke(Point::new(0.0, 0.1));
+    assert_eq!(canvas.pending().unwrap().points.len(), 4, "a step along adds one");
+}
+
+#[test]
 fn a_stroke_is_an_item_only_once_the_pen_lifts() {
     let mut canvas = Canvas::default();
     canvas.begin_stroke(pen(), Point::new(0.0, 0.0));

@@ -42,6 +42,9 @@ pub(super) fn put(ops: &mut Vec<Op>, frame: &OverlayFrame, cx: &Context) {
         if hud.tray {
             hud::tray(ops, hud, cx);
         }
+        if let Some(checks) = &hud.checks {
+            hud::checklist(ops, checks, hud, cx);
+        }
     }
 }
 
@@ -121,4 +124,28 @@ fn cursor_ring(ops: &mut Vec<Op>, cursor: &DoodleCursor, cx: &Context) {
     let colour = Rgba::from_rgba8(r, g, b, 1.0);
     ops.push(Op::Path { path: path.clone(), fill: None, rule: Rule::NonZero, stroke: Some(Stroke::new(RIM + 1.0, Rgba::BLACK)) });
     ops.push(Op::Path { path, fill: None, rule: Rule::NonZero, stroke: Some(Stroke::new(RIM, colour)) });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tools::doodle::{Canvas, Pen};
+
+    /// A brush or a spray is a few ops however long it is: each op is drawn on its own, so one
+    /// per dot or per streak made long strokes slow to draw.
+    #[test]
+    fn a_long_brush_or_spray_stroke_is_a_few_ops() {
+        for kind in [Kind::Brush, Kind::Spray] {
+            let mut canvas = Canvas::default();
+            canvas.begin_stroke(Pen { kind, size: 0.02, ..Pen::default() }, Share::new(0.1, 0.5));
+            for i in 0..400 {
+                canvas.extend_stroke(Share::new(0.1 + 0.002 * i as f32, 0.5 + 0.1 * (i as f32 / 20.0).sin()));
+            }
+            let frame = OverlayFrame { doodles: canvas, ..OverlayFrame::default() };
+            let cx = Context::of(&frame, Point::new(1920.0, 1080.0));
+            let mut ops = Vec::new();
+            put(&mut ops, &frame, &cx);
+            assert!(ops.len() <= 3, "{kind:?} draws {} ops", ops.len());
+        }
+    }
 }

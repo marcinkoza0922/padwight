@@ -192,6 +192,9 @@ impl Daemon {
         if let Some(dev) = self.devices.get_mut(&id) {
             for ev in &events {
                 dev.view.apply(ev);
+                if let InputEvent::Axis(axis, value) = *ev {
+                    dev.engine.note_axis(axis, value);
+                }
             }
             dev.draw_status();
         }

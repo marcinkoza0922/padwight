@@ -1,7 +1,7 @@
 //! The scenes `padwight debug overlay` can draw, by name.
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 75] = [
+pub const SCENES: [(&str, &str); 76] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-plaid", "the full on-screen keyboard on wood, its keys under one red tartan"),
@@ -64,6 +64,7 @@ pub const SCENES: [(&str, &str); 75] = [
     ("calculator", "the Tools menu's calculator, with 7 × 6 keyed in"),
     ("doodles", "doodles over the game: strokes in several tips and colors, a text box, and the Doodle cursor"),
     ("doodle-typing", "the keyboard a Doodle text box opens, typing Hello over the doodles"),
+    ("doodle-checks", "the text tool's checklist of styles, which North opens, over the doodles"),
     ("switch-profile", "Switch Profile, opened from the Guide menu: the profiles and a new one"),
     ("new-profile", "what a new profile from Switch Profile starts from"),
     ("edit-controls", "Edit Controls' first page: what can be edited"),

@@ -10,6 +10,28 @@ use crate::{
     overlay::{KeyboardView, OverlayAction, OverlayController},
 };
 
+/// The styles the text tool's checklist lists (North opens it), in its order. Each is a face a
+/// text box can take.
+pub const FACES: [&str; 3] = ["Italic", "Bold", "Underline"];
+
+/// Whether face `face` (an index into [`FACES`]) is set in `style`.
+pub fn face_on(style: &TextStyle, face: usize) -> bool {
+    match face {
+        0 => style.italic,
+        1 => style.bold,
+        _ => style.underline,
+    }
+}
+
+/// Sets face `face` in `style` the other way.
+pub fn toggle_face(style: &mut TextStyle, face: usize) {
+    match face {
+        0 => style.italic = !style.italic,
+        1 => style.bold = !style.bold,
+        _ => style.underline = !style.underline,
+    }
+}
+
 /// The keyboard typing into a text box, which is an existing one when `index` is set.
 #[derive(Debug, Clone)]
 pub struct Entry {
