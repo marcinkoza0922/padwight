@@ -14,7 +14,10 @@
 
 use tiny_skia::{Pixmap, Transform};
 
-use super::{damage::Patch, diff::Marked};
+use super::{
+    damage::Patch,
+    diff::{Marked, Reach},
+};
 use crate::overlay::render::{Op, Rect, raster};
 
 /// A tile's side, in device pixels.
@@ -68,12 +71,15 @@ fn over(reach: Rect, tile: Rect) -> bool {
     reach.x < tile.right() && tile.x < reach.right() && reach.y < tile.bottom() && tile.y < reach.bottom()
 }
 
-/// Which of `grid`'s tiles any of `rects` (logical pixels) lies over.
-pub(super) fn reached(grid: Grid, rects: &[Rect]) -> Vec<bool> {
+/// Which of `grid`'s tiles any of `reach` lies over: its box, and for a path, what it covers
+/// there, so an arc of a ring marks the tiles it covers rather than all those its box does.
+pub(super) fn reached(grid: Grid, reach: &[Reach]) -> Vec<bool> {
+    let whole = Transform::from_row(grid.scale, 0.0, 0.0, grid.scale, -grid.origin.0 as f32, -grid.origin.1 as f32);
     (0..grid.count())
         .map(|n| {
-            let tile = grid.reach(n);
-            rects.iter().any(|r| over(*r, tile))
+            let (tile, t) = (grid.reach(n), grid.tile(n));
+            let area = [t.x0, t.y0, t.x1, t.y1];
+            reach.iter().any(|r| over(r.rect, tile) && r.op.is_none_or(|op| raster::reaches(op, whole, area)))
         })
         .collect()
 }

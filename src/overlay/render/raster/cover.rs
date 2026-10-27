@@ -67,6 +67,27 @@ pub(super) fn stroke(pen: &mut Pen, path: &tiny_skia::Path, paint: &Paint, strok
     }
 }
 
+/// Whether `path` filled by `rule` through `transform` covers any of the pixels `area` (left,
+/// top, right, bottom).
+pub(super) fn fills_any(path: &tiny_skia::Path, rule: FillRule, transform: Transform, area: [i32; 4]) -> bool {
+    shape(path, Ink::Fill(rule), transform).is_some_and(|(shape, at)| covers_any(&shape, at, area))
+}
+
+/// Whether `path` stroked through `transform` covers any of the pixels `area`.
+pub(super) fn strokes_any(path: &tiny_skia::Path, stroke: &Stroke, transform: Transform, area: [i32; 4]) -> bool {
+    shape(path, Ink::Stroke(stroke), transform).is_some_and(|(shape, at)| covers_any(&shape, at, area))
+}
+
+/// Whether `shape`, its corner at `at`, covers any of the pixels `area`: whether a row's columns
+/// that it covers cross the area's.
+fn covers_any(shape: &Shape, at: (i32, i32), [x0, y0, x1, y1]: [i32; 4]) -> bool {
+    let h = shape.rows.len() as i32;
+    (y0.max(at.1)..y1.min(at.1 + h)).any(|y| {
+        let (a, b) = shape.rows[(y - at.1) as usize];
+        a < b && at.0 + (a as i32) < x1 && x0 < at.0 + b as i32
+    })
+}
+
 /// Fills `mask` (clear) with `path`'s coverage by `rule`, or (with `cut`) cuts what it holds to
 /// it.
 pub(super) fn mask(mask: &mut Mask, path: &tiny_skia::Path, rule: FillRule, transform: Transform, cut: bool) {

@@ -11,7 +11,7 @@ use std::{
 
 use tiny_skia::{Pixmap, Transform};
 
-use super::{draw, forget, picture, pictures::kept_counts};
+use super::{draw, forget, holds, picture, pictures::kept_counts};
 use crate::{
     config::{Checkerboard, FilterOn},
     overlay::{
@@ -358,4 +358,17 @@ fn a_picture_is_as_big_as_its_ink() {
     assert_eq!((pic.origin, pic.pixmap.width(), pic.pixmap.height()), ((-6, 4), 20, 9));
     assert_eq!(pic.pixmap.pixel(0, 0).map(tiny_skia::PremultipliedColorU8::alpha), Some(255));
     assert!(picture(&[Op::Unclip], 1.0).is_none(), "nothing to draw, no picture");
+}
+
+#[test]
+fn a_clip_holds_a_pixmap_only_clear_of_its_edges_and_corners() {
+    let size = (64, 64);
+    // A box well past the pixmap on every side, its corners far off.
+    assert!(holds([-100.0, -100.0, 200.0, 200.0], 20.0, size));
+    // An edge on the pixmap's own edge is too close to say.
+    assert!(!holds([0.0, -100.0, 200.0, 200.0], 0.0, size));
+    // Inside the box, but the pixmap's corner lies in the box's rounded one.
+    assert!(!holds([-10.0, -10.0, 200.0, 200.0], 40.0, size));
+    // Beside the rounded corners, in the band between them.
+    assert!(holds([-10.0, -100.0, 200.0, 300.0], 40.0, size));
 }

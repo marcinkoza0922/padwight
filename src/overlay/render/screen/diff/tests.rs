@@ -8,7 +8,8 @@ fn rect(x: f32, color: f32) -> Op {
 }
 
 fn changed_of(old: &[Op], new: &[Op]) -> Vec<Rect> {
-    changed(&Marked::new(old), &Marked::new(new)).unwrap().0
+    let (old, new) = (Marked::new(old), Marked::new(new));
+    changed(&old, &new).unwrap().0.into_iter().map(|r| r.rect).collect()
 }
 
 #[test]

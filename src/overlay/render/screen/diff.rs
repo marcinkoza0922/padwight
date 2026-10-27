@@ -30,6 +30,15 @@ pub(super) struct Marked {
     /// Where each op can put ink, in logical pixels; `None` for a close or an op that draws
     /// nothing.
     pub reach: Vec<Option<Rect>>,
+    /// Whether a layer round the op moves it.
+    pub moved: Vec<bool>,
+}
+
+/// Where a changed op can put ink, in logical pixels, and the op when what it covers can say
+/// more than that box (`raster::reaches`): one no layer moves.
+pub(super) struct Reach<'a> {
+    pub rect: Rect,
+    pub op: Option<&'a Op>,
 }
 
 /// A group around an op: a clip cuts what it reaches, a layer moves it.
@@ -51,6 +60,7 @@ impl Marked {
             .collect();
         let closes = closes(ops);
         let mut reach = vec![None; ops.len()];
+        let mut moved = vec![false; ops.len()];
         let mut around: Vec<Around> = Vec::new();
         for (i, op) in ops.iter().enumerate() {
             match op {
@@ -66,10 +76,13 @@ impl Marked {
                 Op::Unclip | Op::Unlayer => {
                     around.pop();
                 }
-                op => reach[i] = within(&around, op.bounds()),
+                op => {
+                    reach[i] = within(&around, op.bounds());
+                    moved[i] = around.iter().any(|group| matches!(group, Around::Layer(_)));
+                }
             }
         }
-        Marked { ops: ops.to_vec(), hashes, closes, reach }
+        Marked { ops: ops.to_vec(), hashes, closes, reach, moved }
     }
 
     fn same(&self, i: usize, other: &Marked, j: usize) -> bool {
@@ -111,9 +124,9 @@ fn closes(ops: &[Op]) -> Vec<usize> {
     out
 }
 
-/// Where the ops changed between `old` and `new` reach, in logical pixels, and how many ops
-/// they start with alike: `None` when the lists differ too much to say.
-pub(super) fn changed(old: &Marked, new: &Marked) -> Option<(Vec<Rect>, usize)> {
+/// Where the ops changed between `old` and `new` reach, and how many ops they start with alike:
+/// `None` when the lists differ too much to say.
+pub(super) fn changed<'a>(old: &'a Marked, new: &'a Marked) -> Option<(Vec<Reach<'a>>, usize)> {
     let (n, m) = (old.ops.len(), new.ops.len());
     let mut start = 0;
     while start < n.min(m) && old.same(start, new, start) {
@@ -141,7 +154,12 @@ pub(super) fn changed(old: &Marked, new: &Marked) -> Option<(Vec<Rect>, usize)> 
             break;
         }
     }
-    let reached = |list: &Marked, changed: &[bool]| (0..list.ops.len()).filter(|&i| changed[i]).filter_map(|i| list.reach[i]).collect::<Vec<_>>();
+    let reached = |list: &'a Marked, changed: &[bool]| {
+        (0..list.ops.len())
+            .filter(|&i| changed[i])
+            .filter_map(|i| list.reach[i].map(|rect| Reach { rect, op: (!list.moved[i]).then_some(&list.ops[i]) }))
+            .collect::<Vec<_>>()
+    };
     let mut out = reached(old, &was);
     out.extend(reached(new, &now));
     Some((out, start))

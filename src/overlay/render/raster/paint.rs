@@ -60,7 +60,20 @@ pub(super) fn path(pen: &mut Pen, path: &Path, fill: Option<&Fill>, fill_rule: R
         cover::fill(pen, &shape, &paint(fill, bounds), rule(fill_rule));
     }
     let Some(stroke) = stroke.filter(|s| s.width > 0.0 && s.color.a > 0.0) else { return };
-    let line = tiny_skia::Stroke {
+    cover::stroke(pen, &shape, &paint(&Fill::Solid(stroke.color), bounds), &line(stroke));
+}
+
+/// Whether `path` drawn as `path` draws it, through `transform`, puts ink on any of the pixels
+/// `area` (left, top, right, bottom).
+pub(super) fn path_reaches(path: &Path, (fill, fill_rule, stroke): (Option<&Fill>, Rule, Option<&Stroke>), transform: tiny_skia::Transform, area: [i32; 4]) -> bool {
+    let (Some(shape), Some(_)) = (outline(path), path.bounds()) else { return false };
+    let filled = fill.is_some() && cover::fills_any(&shape, rule(fill_rule), transform, area);
+    filled || stroke.filter(|s| s.width > 0.0 && s.color.a > 0.0).is_some_and(|s| cover::strokes_any(&shape, &line(s), transform, area))
+}
+
+/// A stroke in tiny-skia's terms.
+fn line(stroke: &Stroke) -> tiny_skia::Stroke {
+    tiny_skia::Stroke {
         width: stroke.width,
         line_cap: match stroke.cap {
             Cap::Butt => LineCap::Butt,
@@ -73,6 +86,5 @@ pub(super) fn path(pen: &mut Pen, path: &Path, fill: Option<&Fill>, fill_rule: R
             Join::Bevel => LineJoin::Bevel,
         },
         ..tiny_skia::Stroke::default()
-    };
-    cover::stroke(pen, &shape, &paint(&Fill::Solid(stroke.color), bounds), &line);
+    }
 }

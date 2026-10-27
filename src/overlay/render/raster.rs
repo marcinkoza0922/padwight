@@ -144,7 +144,11 @@ fn close(ops: &[Op], mut at: usize) -> (usize, usize) {
 
 /// Draws a clip's group cut to its rounded box, and the mask it is in.
 fn clip(ops: &[Op], at: usize, pen: &mut Pen, rect: Rect, radii: Corners) -> usize {
-    let Some(path) = quad::rounded(rect, quad::radii(rect, radii)) else { return close(ops, at).1 };
+    let radii = quad::radii(rect, radii);
+    if holds(pen.edges(rect), radii.into_iter().fold(0.0, f32::max) * pen.scale(), (pen.pixmap.width(), pen.pixmap.height())) {
+        return run(ops, at, pen.pixmap, pen.transform, pen.mask);
+    }
+    let Some(path) = quad::rounded(rect, radii) else { return close(ops, at).1 };
     let mask = match pen.mask {
         Some(outer) => {
             let mut mask = outer.clone();
@@ -161,6 +165,19 @@ fn clip(ops: &[Op], at: usize, pen: &mut Pen, rect: Rect, radii: Corners) -> usi
     // out, which cuts the same.
     let mask = mask.data().iter().any(|m| *m < 255).then_some(&mask);
     run(ops, at, pen.pixmap, pen.transform, mask)
+}
+
+/// Whether a box with edges `[left, top, right, bottom]` (device pixels) and corners rounded by
+/// at most `radius` holds every pixel of a pixmap `size` big, a pixel clear of its edges and
+/// clear of its corners: its mask would be full throughout, so it would cut nothing off.
+fn holds([left, top, right, bottom]: [f32; 4], radius: f32, (w, h): (u32, u32)) -> bool {
+    let (w, h) = (w as f32, h as f32);
+    let inside = |lo: f32, hi: f32, size: f32| lo <= -1.0 && hi >= size + 1.0;
+    // Clear of the corners: within the band between the left and right corners, or between the
+    // top and bottom ones.
+    let across = inside(left + radius, right - radius, w) && inside(top, bottom, h);
+    let down = inside(left, right, w) && inside(top + radius, bottom - radius, h);
+    across || down
 }
 
 /// Draws a layer's group into a pixmap of its own at the scale it is seen at, then lays that
@@ -206,6 +223,17 @@ fn covering(r: Rect, within: Option<(u32, u32)>) -> Option<IntRect> {
         return None;
     }
     IntRect::from_ltrb(x0 as i32, y0 as i32, x1 as i32, y1 as i32)
+}
+
+/// Whether `op`, drawn onto a pixmap through `transform` (a scale and a translation) and in no
+/// clip, can put ink on any of its pixels `area` (left, top, right, bottom): for a path, whether
+/// its coverage reaches them, which can be far less than its box (an arc of a ring); for any
+/// other op, yes.
+pub fn reaches(op: &Op, transform: Transform, area: [i32; 4]) -> bool {
+    match op {
+        Op::Path { path, fill, rule, stroke } => paint::path_reaches(path, (fill.as_ref(), *rule, stroke.as_ref()), transform, area),
+        _ => true,
+    }
 }
 
 /// Draws one op that isn't a group marker.

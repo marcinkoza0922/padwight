@@ -10,7 +10,9 @@
 //! there, is drawing them all (`raster` lays op after op), tile by tile the same pixels.
 //!
 //! The picture holds the list up to its cut for as long as the list doesn't change before the
-//! cut; when it does, it is drawn again to the new, earlier cut.
+//! cut; when it does, it is drawn again to the new, earlier cut. It is drawn tile by tile, only
+//! where a change needs it, so the first change after a panel is drawn afresh (a menu's first
+//! move) draws the tiles it touches twice rather than the whole panel again.
 
 use tiny_skia::Pixmap;
 
@@ -20,10 +22,11 @@ use super::{
 };
 use crate::overlay::render::Op;
 
-/// A panel's list drawn up to `upto`, the first op not drawn.
+/// A panel's list drawn up to `upto`, the first op not drawn, in the tiles `ready` marks.
 pub(super) struct Under {
     pub upto: usize,
     pub pixmap: Pixmap,
+    ready: Vec<bool>,
 }
 
 /// Where `ops` can be cut at or before `start`: before the outermost layer open there.
@@ -60,20 +63,28 @@ pub(super) fn rest(ops: &[Op], upto: usize) -> Vec<Op> {
     out
 }
 
-/// Brings `under` in step with `list`, which is the same as the list before it up to `start`:
-/// kept when its cut lies at or before `start`, else drawn again to the cut there (none when
-/// that is the very start). Returns how many tiles it drew.
-pub(super) fn update(under: &mut Option<Under>, list: &Marked, start: usize, grid: Grid) -> usize {
-    if under.as_ref().is_some_and(|u| u.upto <= start) {
+/// Brings `under` in step with `list`, which is the same as the list before it up to `start`,
+/// for drawing the tiles `which` marks: kept when its cut lies at or before `start`, else made
+/// anew to the cut there (none when that is the very start), and drawn in those tiles where it
+/// isn't yet. Returns how many tiles it drew.
+pub(super) fn update(under: &mut Option<Under>, list: &Marked, start: usize, grid: Grid, which: &[bool]) -> usize {
+    if under.as_ref().is_none_or(|u| u.upto > start) {
+        *under = None;
+        let upto = cut(&list.ops, start);
+        if upto == 0 {
+            return 0;
+        }
+        let Some(pixmap) = Pixmap::new(grid.size.0 as u32, grid.size.1 as u32) else { return 0 };
+        *under = Some(Under { upto, pixmap, ready: vec![false; grid.count()] });
+    }
+    let Some(u) = under else { return 0 };
+    let needed: Vec<bool> = which.iter().zip(&u.ready).map(|(w, r)| *w && !r).collect();
+    if !needed.contains(&true) {
         return 0;
     }
-    *under = None;
-    let upto = cut(&list.ops, start);
-    if upto == 0 {
-        return 0;
+    let drawn = tiles::draw(&Marked::new(&list.ops[..u.upto]), grid, &needed, &mut u.pixmap, None);
+    for (r, n) in u.ready.iter_mut().zip(needed) {
+        *r |= n;
     }
-    let Some(mut pixmap) = Pixmap::new(grid.size.0 as u32, grid.size.1 as u32) else { return 0 };
-    let drawn = tiles::draw(&Marked::new(&list.ops[..upto]), grid, &vec![true; grid.count()], &mut pixmap, None);
-    *under = Some(Under { upto, pixmap });
     drawn
 }

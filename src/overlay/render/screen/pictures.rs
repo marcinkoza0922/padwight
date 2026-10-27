@@ -293,17 +293,18 @@ impl Screen {
             return Err(list);
         };
         let start = Instant::now();
-        let rects = diff::changed(&self.kept[i].list, &list);
+        let Some((which, alike)) = diff::changed(&self.kept[i].list, &list).map(|(reach, alike)| (tiles::reached(grid, &reach), alike)) else {
+            self.spent[0] += start.elapsed();
+            return Err(list);
+        };
         self.spent[0] += start.elapsed();
         let kept = &mut self.kept[i];
-        let Some((rects, alike)) = rects else { return Err(list) };
-        let which = tiles::reached(grid, &rects);
         let count = which.iter().filter(|w| **w).count();
         if 4 * count > 3 * grid.count() {
             return Err(list);
         }
         let start = Instant::now();
-        under::update(&mut kept.under, &list, alike, grid);
+        under::update(&mut kept.under, &list, alike, grid, &which);
         match &kept.under {
             Some(u) => tiles::draw(&Marked::new(&under::rest(&list.ops, u.upto)), grid, &which, &mut kept.pixmap, Some(&u.pixmap)),
             None => tiles::draw(&list, grid, &which, &mut kept.pixmap, None),

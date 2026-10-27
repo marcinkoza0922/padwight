@@ -229,6 +229,31 @@ fn overlapping_panels_are_composited_again_where_one_changes() {
     }
 }
 
+/// A radial menu's highlight gliding once round it and on past the first item, a new item every
+/// other frame, so arcs are part lit and the first change moves back to the start.
+fn radial_sweep() -> Vec<Vec<Op>> {
+    use crate::motion::{Feel, Timing};
+    let mut frame = scenes::frame("menu-radial").unwrap();
+    let n = match &frame.active {
+        Some(OverlayView::Menu(m)) => m.items.len(),
+        _ => unreachable!(),
+    };
+    let feel = Feel { glide: 0.12, ..Feel::OFF };
+    (0..2 * n + 4)
+        .map(|f| {
+            let (i, step) = (f / 2 % n, f % 2);
+            if let Some(OverlayView::Menu(m)) = &mut frame.active {
+                m.selected = Some(i);
+                m.aim = Some(f as f32 * 11.0);
+            }
+            let timing = Timing { opened: 10.0, moved: step as f32 * 0.03, from: Some(((i + n - 1) % n) as u32), ..Timing::default() };
+            let anim = Anim { feel, timing, clock: 0.0 };
+            let shown = Shown { panels: frame.active.iter().map(|v| (v, anim)).collect(), info: Vec::new(), logs: Vec::new() };
+            screen_ops(&frame, &shown, DISPLAY)
+        })
+        .collect()
+}
+
 #[test]
 fn a_damaged_sequence_equals_drawing_afresh() {
     let mut scenes_frames: Vec<(&str, Vec<Vec<Op>>)> = Vec::new();
@@ -252,6 +277,7 @@ fn a_damaged_sequence_equals_drawing_afresh() {
         screen_ops(&busy, &shown, DISPLAY)
     });
     scenes_frames.push(("busy", opening.collect()));
+    scenes_frames.push(("radial-sweep", radial_sweep()));
     // Buffers of every age: 0 (new), 1, 2 and 3.
     let slots = [0, 1, 0, 2, 1, 1, 0, 2, 2, 0];
     for (name, frames) in scenes_frames {
