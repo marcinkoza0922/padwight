@@ -2,7 +2,7 @@
 (a shrink's Clear goes on at the old, still-acked size), none before the first configure, and
 each showing round's first commit at full size, with no 1x1 commit while showing.
 
-Run: PADWIGHT_HARNESS_RELEASE=1 PADWIGHT_OVERLAY=native scripts/overlay-harness.sh
+Run: PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh
 scripts/harness/pacing.sh <out>, then python3 -I scripts/harness/surface.py <out>/overlay.log [scale]
 (scripts/harness/scale.sh with SCALE=1.5 sets the output's scale with kscreen-doctor, as KWin's --scale doesn't
 change the surface's scale; pass the scale here too)"""

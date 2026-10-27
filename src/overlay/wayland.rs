@@ -1,6 +1,5 @@
 //! The overlay window on Linux without iced: a wlr-layer-shell surface of our own, drawn on the
-//! CPU. Chosen with `PADWIGHT_OVERLAY=native` while it is being built; `layershell.rs` stays
-//! the default until it can replace it.
+//! CPU. It is the only overlay on Linux.
 //!
 //! Frames are drawn on the compositor's frame callbacks while anything moves, and not at all
 //! while everything is still (`pacing.rs`), into a pool of up to three reused shared-memory
@@ -12,7 +11,7 @@
 //! device scale over what the leased buffer holds, repainting and damaging only what changed
 //! since that buffer was drawn (`picture.rs`). A frame that changes nothing is not committed.
 //!
-//! In the harness: `PADWIGHT_HARNESS_RELEASE=1 PADWIGHT_OVERLAY=native scripts/overlay-harness.sh
+//! In the harness: `PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh
 //! scripts/harness/pacing.sh <out>`. The timing log has iced's `recv`, `built` and `menu` lines
 //! (`menu` for each menu in each frame drawn, so `pacing.py` sees how fades step), and besides
 //! them `surface <ns> ask <target> <w>x<h>` for each request, `configure <ns> <w>x<h> <target>

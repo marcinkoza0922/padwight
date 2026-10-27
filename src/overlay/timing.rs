@@ -2,8 +2,8 @@
 
 /// Profiling only. When `PADWIGHT_OVERLAY_TIMING` names a file, each received frame, each build
 /// of the overlay's widgets and each animation tick is appended to it, as `recv <ns> <what>`,
-/// `built <ns> <build ns> <width>x<height>`, `tick <ns>` and `present <ns>` (and with
-/// `PADWIGHT_OVERLAY=native`, the surface's `surface`, `configure` and `commit` lines: `wayland.rs`).
+/// `built <ns> <build ns> <width>x<height>`, `tick <ns>` and `present <ns>` (and the surface's `surface`,
+/// `configure` and `commit` lines: `wayland.rs`).
 /// Unset, this does nothing; the file is opened per call, so it is only for measuring.
 pub(super) fn timing_log(entry: &str) {
     use std::io::Write;
@@ -45,25 +45,6 @@ pub(super) fn menu_log(m: &crate::menu::MenuView, anim: &crate::motion::Anim) {
         t.moved,
         t.picked,
     ));
-}
-
-/// Whether the timing log is on.
-#[cfg(target_os = "linux")]
-pub(super) fn timing_enabled() -> bool {
-    std::env::var_os("PADWIGHT_OVERLAY_TIMING").is_some()
-}
-
-/// Profiling only, with `timing_log`: `present <ns>`, for a redraw that began at `began`. iced
-/// starts the redraw (`RedrawRequested`) right before it lays out, draws and presents the
-/// buffer in one call, and gives the app no hook of its own on the commit. So this stamps the
-/// start of that call, not the commit: the commit follows by the time drawing takes (the
-/// `built` lines show part of it), and the stamp is the same for a frame that draws nothing new.
-/// It is read from a subscription, so the stamp is taken from iced's own `began`, not from
-/// when the subscription got to run.
-#[cfg(target_os = "linux")]
-pub(super) fn present_log(began: std::time::Instant) {
-    let late = std::time::Instant::now().saturating_duration_since(began).as_nanos();
-    timing_log(&format!("present {}", unix_ns().saturating_sub(late)));
 }
 
 pub(super) fn unix_ns() -> u128 {

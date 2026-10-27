@@ -1,6 +1,6 @@
 //! What the overlay window shows: the frames the daemon streams, and whatever is still fading
 //! out, drawn as layers over the screen. The window around it is a layer-shell surface on Linux
-//! (`layershell.rs`) and a layered window on Windows (`windows.rs`).
+//! (`wayland.rs`) and a layered window on Windows (`windows.rs`).
 
 use std::time::{Duration, Instant};
 
