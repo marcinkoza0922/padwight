@@ -743,7 +743,7 @@ log = "grim"
 | `swift` | Panels whoosh in from the side and on out the other, items trailing. |
 | `dreamy` | Panels drift down and settle softly, and picks glow gently. |
 | `retro` | Chunky steps like an old console: panels grow in blocks and picks blink. |
-| `grim` | Slow fades that rise into place, and a dim, heavy pulse on a pick. |
+| `grim` | Panels fade in rising and slow heavily into place, and a pick pulses dimly. |
 | `brutal` | Snaps in and out, the highlight jumps, and a pick jolts and flashes. |
 
 The kinds are `keyboard`, `numpad`, `menu` (every menu layout), `media` (the media controls), `offer` (library offers), `info` (info overlays) and `log` (input logs).

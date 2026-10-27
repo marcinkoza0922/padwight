@@ -1,6 +1,6 @@
 //! What the overlay window shows: the frames the daemon streams, and whatever is still fading
 //! out, drawn as layers over the screen. The window around it is a layer-shell surface on Linux
-//! (`layershell.rs`) and a layered window on Windows (`windows.rs`).
+//! (`wayland.rs`) and a layered window on Windows (`windows.rs`).
 
 use std::time::{Duration, Instant};
 
@@ -19,7 +19,11 @@ use crate::{
     info::InfoView,
     inputlog::LogView,
     motion::{Anim, MotionSet, MotionStyle, Presence},
+    overlay::render::Shown,
 };
+
+mod shots;
+pub use shots::{film, snapshot};
 
 /// What is on screen, and what is fading out, each with its own timing.
 pub(super) struct Overlay {
@@ -43,6 +47,41 @@ impl Overlay {
     pub(super) fn busy(&self, now: Instant) -> bool {
         let motion = &self.frame.motion;
         self.frame.loops() || self.panels.busy(now, motion) || self.info.busy(now, motion) || self.logs.busy(now, motion)
+    }
+
+    /// The daemon's latest frame, as received.
+    #[cfg(target_os = "linux")]
+    pub(super) fn frame(&self) -> &OverlayFrame {
+        &self.frame
+    }
+
+    /// What is on screen at `now`, each panel with how it is moving, for the overlay's own
+    /// renderer (`render::screen_ops` with `frame`): what `layers` draws for iced. Each menu's
+    /// `menu` line goes in the timing log, as `layers` writes it.
+    pub(super) fn showing(&self, now: Instant) -> Shown<'_> {
+        let motion = &self.frame.motion;
+        let panels: Vec<_> = self.panels.shown(now, motion).collect();
+        for (view, anim) in &panels {
+            if let OverlayView::Menu(m) = view {
+                menu_log(m, anim);
+            }
+        }
+        Shown { panels, info: self.info.shown(now, motion).collect(), logs: self.logs.shown(now, motion).collect() }
+    }
+
+    #[cfg(windows)]
+    /// The ops that draw the screen at `now`, on a display of `display` logical pixels.
+    pub(super) fn screen_ops(&self, now: Instant, display: crate::overlay::render::Point) -> Vec<crate::overlay::render::Op> {
+        crate::overlay::render::screen_ops(&self.frame, &self.showing(now), display)
+    }
+
+    /// A frame drawn from what is shown now went on screen at `at`: what it is the first to show
+    /// starts opening from then (`Presence::presented`), so the time its first frame took to draw
+    /// doesn't land between the open's first two steps.
+    pub(super) fn presented(&mut self, at: Instant) {
+        self.panels.presented(at);
+        self.info.presented(at);
+        self.logs.presented(at);
     }
 
     /// Drops what has finished closing.
@@ -177,9 +216,9 @@ fn guide_up(state: &Overlay, display: Size, now: Instant) -> bool {
         && state.info.shown(now, motion).any(|(v, _)| crate::info::is_guide_panel(&v.name))
 }
 
-/// Draws `frame` as the overlay window shows it once everything has finished opening, on a
-/// screen of `display` (logical pixels) over `background`: no window or compositor needed.
-pub fn snapshot(mut frame: OverlayFrame, display: Size, scale: f32, background: Color) -> anyhow::Result<crate::snapshot::Image> {
+/// Draws `frame` with iced, as the overlay window once showed it, once everything has finished
+/// opening: only `debug overlay compare` still wants this, to set it against the new renderer.
+pub fn snapshot_iced(mut frame: OverlayFrame, display: Size, scale: f32, background: Color) -> anyhow::Result<crate::snapshot::Image> {
     frame.motion = MotionSet::all(MotionStyle::Off);
     let mut state = Overlay::new();
     state.receive(frame);
@@ -187,25 +226,6 @@ pub fn snapshot(mut frame: OverlayFrame, display: Size, scale: f32, background: 
     let settled = Instant::now() + Duration::from_secs(10);
     let screen = stack(layers::<()>(&state, display, settled)).width(Length::Fill).height(Length::Fill);
     crate::snapshot::render(screen.into(), display, scale, background)
-}
-
-/// Draws a run of frames as the overlay window shows it, with no window: each frame in `script`
-/// arrives that many seconds into the run, and a picture is drawn at each time in `at`.
-pub fn film(script: &[(f32, OverlayFrame)], at: &[f32], display: Size, scale: f32, background: Color) -> anyhow::Result<Vec<crate::snapshot::Image>> {
-    let start = Instant::now();
-    let when = |secs: f32| start + Duration::from_secs_f32(secs.max(0.0));
-    let mut state = Overlay::new();
-    let mut next = script.iter().peekable();
-    let mut pictures = Vec::with_capacity(at.len());
-    for &t in at {
-        while let Some((arrives, frame)) = next.next_if(|(arrives, _)| *arrives <= t) {
-            state.receive_at(frame.clone(), when(*arrives));
-        }
-        state.prune(when(t));
-        let screen = stack(layers::<()>(&state, display, when(t))).width(Length::Fill).height(Length::Fill);
-        pictures.push(crate::snapshot::render(screen.into(), display, scale, background)?);
-    }
-    Ok(pictures)
 }
 
 #[cfg(test)]

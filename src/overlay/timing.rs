@@ -1,8 +1,9 @@
 //! Profiling only: the overlay's timing log, for measuring and for scripts/overlay-harness.sh.
 
-/// Profiling only. When `PADWIGHT_OVERLAY_TIMING` names a file, each received frame, each build
-/// of the overlay's widgets and each animation tick is appended to it, as `recv <ns> <what>`,
-/// `built <ns> <build ns> <width>x<height>` and `tick <ns>`.
+/// Profiling only. When `PADWIGHT_OVERLAY_TIMING` names a file, each received frame, each drawn
+/// screen and each menu drawn are appended to it, as `recv <ns> <what>`, `built <ns> ...` and
+/// `menu ...`, with the window's own lines (`present`, `commit`, `configure`, `surface`, `callback`,
+/// `pool`: `wayland/window.rs`). docs/development/overlay-debugging.md lists their fields.
 /// Unset, this does nothing; the file is opened per call, so it is only for measuring.
 pub(super) fn timing_log(entry: &str) {
     use std::io::Write;
@@ -31,7 +32,7 @@ pub(super) fn menu_log(m: &crate::menu::MenuView, anim: &crate::motion::Anim) {
     let t = &anim.timing;
     let lit = m.selected.map_or(0.0, |_| anim.lit(true, false));
     timing_log(&format!(
-        "menu {} {:?} picks={} selected={:?} opacity={:.2} lit={:.2} flash={:.2} since=open:{:.3},closed:{:?},moved:{:.3},picked:{:.3}",
+        "menu {} {:?} picks={} selected={:?} opacity={:.3} lit={:.2} flash={:.2} since=open:{:.3},closed:{:?},moved:{:.3},picked:{:.3}",
         unix_ns(),
         m.title,
         m.picks,

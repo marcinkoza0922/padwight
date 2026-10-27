@@ -25,7 +25,7 @@ pub enum MotionStyle {
     Dreamy,
     /// Chunky steps like an old console: panels grow in blocks and picks blink. Retro games.
     Retro,
-    /// Slow fades that rise into place, and a dim, heavy pulse on a pick. Dark fantasy.
+    /// Panels fade in rising and slow heavily into place, and a pick pulses dimly. Dark fantasy.
     Grim,
     /// Snaps in and out, the highlight jumps, and a pick jolts and flashes. Shooters and fights.
     Brutal,
@@ -54,7 +54,7 @@ impl MotionStyle {
             MotionStyle::Swift => "Panels whoosh in from the side and on out the other, items trailing. Suits racing and sci-fi.",
             MotionStyle::Dreamy => "Panels drift down and settle softly, and picks glow gently. Suits cozy games.",
             MotionStyle::Retro => "Chunky steps like an old console: panels grow in blocks and picks blink. Suits retro games.",
-            MotionStyle::Grim => "Slow fades that rise into place, and a dim, heavy pulse on a pick. Suits dark fantasy.",
+            MotionStyle::Grim => "Panels fade in rising and slow heavily into place, and a pick pulses dimly. Suits dark fantasy.",
             MotionStyle::Brutal => "Snaps in and out, the highlight jumps, and a pick jolts and flashes. Suits shooters and fights.",
         }
     }
@@ -162,14 +162,17 @@ const RETRO: Feel = Feel {
     ..Feel::OFF
 };
 
+// Each widget fades on its own, so where they overlap they show part way through a fade as
+// separate layers. The fade-in is kept short and quick off the mark so that phase is brief, and
+// the rise slowing into place carries the weight.
 const GRIM: Feel = Feel {
-    open: 0.6,
-    close: 0.5,
-    glide: 0.32,
-    pick: 0.7,
-    slide: 26.0,
+    open: 0.34,
+    close: 0.24,
+    glide: 0.2,
+    pick: 0.45,
+    slide: 22.0,
     flash: 0.35,
-    curve: Curve::InOut,
+    curve: Curve::Out,
     exit: Curve::InOut,
     ..Feel::OFF
 };

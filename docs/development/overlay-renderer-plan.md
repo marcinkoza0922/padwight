@@ -1,0 +1,372 @@
+# Plan: the overlay's own renderer
+
+A plan for drawing the overlays (menus, the keyboard and numpad, media controls, offers, info
+and log panels) without iced: our own layout, drawn on the CPU, on a Wayland surface we drive
+ourselves. The settings window keeps iced. Work happens on the branch `native-overlay`.
+
+## Why
+
+Two problems with the overlay as it is:
+
+1. **It flickers and draws in stages.** Four things cause it:
+   - **iced fades each widget on its own.** Part way through a fade, overlapping boxes,
+     outlines and labels stack their transparency, so outlines and boxes show before their
+     labels. The `whole-panel-fade` prototype works around this for some panels, by drawing the
+     panel off-screen while it fades. It doesn't cover info or log panels, and it needed
+     workarounds for wgpu's late uploads, blending that differs between tiny-skia and wgpu, and
+     sub-pixel alignment.
+   - **Frames run on a 16 ms timer** (`overlay/layershell.rs`), not on the compositor's frame
+     callbacks. They drift against the display, so some frames show twice and others are
+     dropped.
+   - **The surface grows from 1×1 when something opens.** The first frame can be laid out at
+     1×1 (the harness shows the first menu stalling this way).
+   - **Buffers are iced's and wgpu's to present and reuse**, so we can't control when or how.
+2. **It uses a lot of memory.** Most of it is the GPU driver, in a process that sits hidden
+   nearly all the time.
+
+### Baseline
+
+Measured on 2026-10-26 with `PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh
+scripts/harness/resources.sh` (headless KWin, 1920×1080, three runs each, at commit `909ea81`).
+CPU is the share of one core.
+
+| | iced on wgpu (today) | iced on tiny-skia (`ICED_BACKEND=tiny-skia`) |
+|---|---|---|
+| Memory, hidden | 193 MB | 22 MB |
+| Memory, menu shown | 216 MB | 45–47 MB |
+| CPU, hidden | 0.4% | 0.0% |
+| CPU, menu held still | 0.4–0.6% | 0.0% |
+| CPU, moving through a menu | 1.2–1.4% | 4.2–5.2% |
+
+About 170 MB is the graphics driver. Drawing on the CPU removes it, but costs more while
+things move: iced redraws its whole widget tree on every tick.
+
+### Baseline: frame pacing
+
+Measured on 2026-10-26 with `PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh
+scripts/harness/pacing.sh <out>` then `python3 -I scripts/harness/pacing.py <out>/overlay.log`
+(headless KWin, 60 Hz, 1920×1080, three runs each, five rounds per run of open, sweep the radial
+menu's cursor, hold still, close; at commit `909ea81` plus the `present` log). For tiny-skia run
+with `ICED_BACKEND=tiny-skia`.
+
+| | iced on wgpu (today) | iced on tiny-skia |
+|---|---|---|
+| Frame interval, median / p95 | 16.2 / 17.2–17.3 ms | 16.2–16.3 / 17.3 ms |
+| Frame interval, max | 18.3–19.5 ms | 23.6–49.0 ms |
+| Intervals of 1.5 refreshes or more, per run of ~520 | 0 | 0, 2 and 4 (up to 5 refreshes missed) |
+| Frames presented while held still | 0 | 0 |
+| Presents with no new build (same content) | 10–12 of ~580 | 8–9 of ~570 |
+| Frame from daemon to its first `present`, median / p95 | 0.2 / 0.3–0.8 ms | 0.2 / 0.3 ms |
+| ... worst (the very first open after start) | 52 ms | 51 ms |
+| Open fade: partly faded frames, step median, max/median | 12, 0.089, 1.03–1.15 | 11–12, 0.090, 1.2–1.9 |
+| Close fade: partly faded frames, step median, max/median | 8, 0.135, 1.02–1.04 | 8, 0.135, 1.3–1.4 |
+
+What it says: the 16 ms timer runs about 3% faster than a 60 Hz refresh (median 16.2 ms), so a
+display locked to the refresh would drop about one frame in 30 (inferred; see below). Fades step
+evenly on wgpu and less so on tiny-skia, where some frames take longer. A frame from the
+daemon is drawn at the next redraw, within 1 ms.
+
+Limits: a `present` line is stamped when iced starts the redraw (`RedrawRequested`, read from a
+subscription, using iced's own instant), not at the commit. iced_layershell lays out, draws and
+presents inside that one call and has no hook on the commit, so the buffer is committed the
+time drawing takes later, about 1–4 ms in the logs. Intervals between stamps are good; what the
+compositor shows is not in the log, so frames shown twice or dropped at the display are inferred
+from the interval against the refresh. The fade steps use the opacity of the last `menu` line, in
+the build just before the redraw.
+
+Run: `PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh scripts/harness/pacing.sh
+screenshots/pacing/<name>` (`--hz` on `pacing.py` for another refresh).
+
+### Result: resources
+
+Measured on 2026-10-27 at commit `5dbb8f0` (the `native-overlay` head). Runs: `PADWIGHT_HARNESS_RELEASE=1
+scripts/overlay-harness.sh scripts/harness/resources.sh` three times at 1920×1080 and three times at
+3840×2160 (`PADWIGHT_HEADLESS_SIZE=3840x2160`), and `scripts/harness/radial-sweep.sh` once at each
+size. Headless KWin, one run after another. The iced columns are the baselines above, at `909ea81`.
+Load (1-minute, 20 cores) before each run was 0.2 to 5.1; the first 1080p run ended at 7.6 because
+its release build ran inside it. The user's own session (KWin, rust-analyzer) was running throughout.
+CPU is the share of one core. Per-run files are in `screenshots/final/` (`resources-1080-{1,2,3}`,
+`resources-2160-{1,2,3}`, `radial-sweep-{1080,2160}`).
+
+| | iced on wgpu (today) | iced on tiny-skia | native, 1920×1080 | native, 3840×2160 |
+|---|---|---|---|---|
+| Memory, hidden | 193 MB | 22 MB | 12.8–12.9 MB | 12.8–13.2 MB |
+| Memory, menu shown | 216 MB | 45–47 MB | 41.8–42.0 MB | 90.6–90.7 MB |
+| Memory, hidden again | not measured | not measured | 23.5–23.6 MB | 23.6–23.8 MB (see below) |
+| CPU, hidden | 0.4% | 0.0% | 0.0% | 0.0% |
+| CPU, menu held still | 0.4–0.6% | 0.0% | 7.0%, 0.0%, 0.0% | 0.0%, 0.0%, 0.0% |
+| CPU, moving through a menu | 1.2–1.4% | 4.2–5.2% | 0.8%, 1.0%, 0.8% | 0.6%, 1.0%, 1.0% |
+| CPU, radial sweep (step 4.5) | 26.2% | 42.8% | 17.0% (one run) | 17.0% (one run) |
+
+**The 7.0% held reading.** It is the first open's text shaping, and the logs show it. The first
+`built` line after a start takes 2.3 to 2.4 s in `list` (layout and shaping) in two runs: 1080p
+run 1 and the 1080p radial run. In the other three 1080p runs and in all four 4K runs it takes
+31 to 57 ms, and those read 0.0% held. `resources.sh` has no marks, so the window is worked out from
+the timestamps. The held window starts 1.5 s after the press (the daemon's `recv` line, 845.619 and
+108.889 in those two runs) and lasts 5 s. The slow build ends 0.95 s and 0.87 s into it. The
+overlay used 0.35 core-seconds in each window (7.0% of 5 s). The build didn't use a full core
+for that time, so part of it was probably waiting (inferred; not checked). After the build the log
+has no draws until the first move, so the held state itself costs nothing. A diagnostic run with
+a 4 s wait after the press (`screenshots/final/diag-resources-1080-wait4`, not counted) had a fast
+build, so it did not reproduce the slow one. Why the build is slow in some runs and not others is
+not known.
+
+**Hidden again.** After one menu, the overlay keeps about 10 MB more than before it opened (23.5 MB
+against 12.8 MB at 1080p). Buffers are freed, so the rest is caches or allocator memory. Not
+investigated. The 3840×2160 run 3 reads 3.5 MB here with 0 kB anonymous memory, which can't be
+right for a running overlay. Not investigated; the other two 4K runs read 23.6 to 23.8 MB.
+
+Goals:
+
+- **Memory, at most 25 MB hidden and 50 MB shown at 1080p: met** (12.8–12.9 MB and 41.8–42.0 MB).
+  Hidden again is 23.5 MB, under 25 but not back near 13 MB. At 4K the menu uses 90.6 MB, which the
+  plan expects (each buffer is 33 MB). No 4K target is set.
+- **CPU while animating, no higher than 1.2–1.4%: met for moving through a menu** (0.6–1.0% at both
+  sizes). **Missed for the radial sweep**: 17.0% at both sizes, against 1.2–1.4%. The lit arcs are big,
+  so about 22 of 64 tiles are redrawn each frame (step 4.5). This is the gap.
+- **No GPU use: not checked directly.** Memory fell from 193 MB to 13 MB and the driver's share is
+  gone with it, which fits, but no run records which libraries are mapped.
+
+### Result: frame pacing
+
+Measured on 2026-10-27 at commit `5dbb8f0`. Runs: `PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh
+scripts/harness/pacing.sh screenshots/final/pacing-<n>` three times at 1920×1080, then `pacing.py` and
+`surface.py` on each log. Load (1-minute) before each run was 0.2 to 0.5. The fade check ran
+once: `PADWIGHT_FADE_FRAMES=screenshots/final/fade`, `cargo nextest run --run-ignored all fade_frames`,
+then `scripts/harness/fade-check.py screenshots/final/fade`. It has no iced baseline, and it checks the
+renderer's own pictures, not what the compositor shows.
+
+| | iced on wgpu (today) | iced on tiny-skia | native, 1920×1080 |
+|---|---|---|---|
+| Frame interval, median / p95 | 16.2 / 17.2–17.3 ms | 16.2–16.3 / 17.3 ms | 16.6 / 17.5 ms |
+| Frame interval, max | 18.3–19.5 ms | 23.6–49.0 ms | 20.5–27.8 ms |
+| Intervals of 1.5 refreshes or more, per run of ~525 | 0 | 0, 2 and 4 | 1, 0 and 0 |
+| Frames presented while held still | 0 | 0 | 0 |
+| Presents with no new build (same content) | 10–12 of ~580 | 8–9 of ~570 | 0 of 580–582 |
+| Frame from daemon to its first `present`, median / p95 | 0.2 / 0.3–0.8 ms | 0.2 / 0.3 ms | 4.0–4.2 / 16–26 ms |
+| ... worst of the run | 52 ms | 51 ms | 50.5–54.1 ms |
+| Open fade: partly faded frames, step median, max/median | 12, 0.089, 1.03–1.15 | 11–12, 0.090, 1.2–1.9 | 10, 0.092, 3.5–3.75 |
+| Close fade: partly faded frames, step median, max/median | 8, 0.135, 1.02–1.04 | 8, 0.135, 1.3–1.4 | 7, 0.139, 1.07–1.12 |
+
+The 16.6 ms median is close to the 60 Hz refresh (16.7 ms), so the timer drift from the baseline is gone.
+The surface checks pass in all three runs: each of the 15 showings commits its first buffer at
+1920×1080, there are no commits at 1×1 while showing, none before the configure, and no violations.
+The fade check finds no pixel off by more than 12 levels in any picture (worst 0), so each panel
+fades as one picture.
+
+The open fade is the open gap. Its first step is large (0.15 to 0.35), then one to three steps
+run uneven (0.03 to 0.14), and then it settles at 0.092 for the rest of the fade. The first steps
+are where the max/median comes from. The cause is not found. The close fade is even (1.07 to 1.12,
+about the same as iced on wgpu).
+
+First-present latency is worse than iced. The median is 4 ms against 0.2 ms, and the p95 is 16 to 26
+ms. Step 5.5 recorded 3.7 ms median and 5.8 ms p95, so this run doesn't match it. The likely cause is
+the pacer: a change waits for an outstanding frame callback, which can take up to one refresh
+(inferred; not checked).
+
+Goals:
+
+- **Frames come when the compositor asks: met.** Median interval 16.6 ms, no frames while still, no
+  same-content presents. What the display shows is still not in the log (step 8.3).
+- **Nothing shown at the wrong size: met** (`surface.py`, no violations).
+- **Every panel fades as one picture: met** for the renderer's pictures (fade check, worst 0). Not
+  yet checked on a live compositor (step 8.3).
+- **Fades step evenly: met for closing, not for opening.** Closing is even. Opening has uneven
+  first steps (max/median 3.5 to 3.75, against 1.03 to 1.15 for iced on wgpu). This is the gap.
+
+## Goals
+
+- **Every panel fades, slides and zooms as one picture.** No stacked transparency and no
+  staged drawing, for every kind of panel, info and log panels included.
+- **Frames come when the compositor asks for them** (frame callbacks), with the animation clock
+  read then. No fixed timer.
+- **Nothing is shown at the wrong size.** The first frame after opening is drawn only once the
+  compositor has given the surface its size.
+- **Memory near the tiny-skia figure:** at most 25 MB hidden and 50 MB shown at 1080p.
+  (Expect more at 4K, where each screen buffer is 33 MB. Buffers are freed while hidden.)
+- **CPU while animating no higher than today's 1.2–1.4%**, through caching: a panel whose
+  contents don't change is drawn once and only laid down again.
+- **The same look.** Every style, ornament, filter, font and motion style draws as it does now,
+  within a few levels per pixel. Text may differ slightly at its edges.
+- **No GPU use at all in the overlay process.**
+
+## Non-goals (for now)
+
+- **The settings window's previews stay on iced** (`overlay/draw/`, the stage editor's click
+  targets). Moving them onto the new renderer, so there is one source for how panels look, is
+  a later, separate task (step 9.1).
+- **No new looks or motion styles.** The motion maths in `motion/` stays as it is: the renderer
+  only reads `Anim`.
+- **No GNOME support.** Without wlr-layer-shell, the overlay keeps failing with a clear error,
+  as now.
+
+## Approach
+
+```
+OverlayFrame (from the daemon)
+   │  ui.rs: Presence/Anim per panel, unchanged
+   ▼
+screen.rs ── for each panel: build a Node tree (layout.rs) ── place ──▶ display list (Vec<Op>)
+   │                                                                      │ same as last frame?
+   │                                                          yes: reuse its picture / no: raster.rs
+   ▼                                                                      ▼
+composite each panel's picture at its opacity, offset and scale ──▶ screen buffer (damage only)
+   ▼
+wayland.rs: wl_shm buffer, damage, commit, frame callback ──▶ compositor
+```
+
+- **Libraries:** tiny-skia (shapes, paths, masks, gradients), cosmic-text with swash (shaping
+  and glyphs), resvg (SVG icons, frame marks, figures), and `image` (background pictures). All of
+  them are already in the lock file through iced, so the vendored Flatpak sources don't change.
+- **Layout:** a small tree of our own: row, column, wrapping row, stack, pinned children,
+  fixed/shrink/fill sizes, padding, alignment, clipping. It is measured at a width, then placed.
+  It only needs to do what the overlay's panels use, not everything iced does.
+- **The display list** is flat, comparable data: rounded rects, shadows, text runs, paths,
+  pictures, clips and layers. If a panel's list equals last frame's, its stored picture is
+  reused. A list with an effect (an item's stagger fade, its bounce) draws that subtree as a
+  layer of its own.
+- **Panels are drawn at full strength**, into a picture as big as the panel plus its shadow.
+  Their opacity, slide and zoom are applied only when the picture is laid onto the screen. At
+  scale 1, panels are placed on whole device pixels so text doesn't shimmer as it slides.
+- **Matching iced:** shadows use iced tiny-skia's formula (a rounded-box distance through a
+  smoothstep), gradients use iced's angle-to-endpoints maths, borders are drawn inside the box,
+  and line height is 1.3 times the font size, as in iced. The texture and frame-mark code moves
+  into an iced-free module that both renderers call, so filters stay identical.
+- **The window:** wayland-client directly, with zwlr_layer_shell_v1 on the overlay layer, no
+  keyboard focus and an empty input region. Buffers are wl_shm (memfd), two or three of them,
+  reused only once released, and drawn into directly when the compositor offers ABGR8888.
+  Damage covers only what changed. Scale comes from wp_fractional_scale_v1 with wp_viewporter,
+  else the surface's preferred buffer scale. One loop polls the Wayland socket and an eventfd
+  that the thread reading frames from the daemon wakes.
+
+## Steps
+
+Each step is meant to be done, checked and committed on its own. **Model** is a suggestion:
+
+- **Opus:** design work, or code where subtle mistakes (blending, timing, protocol state)
+  are hard to spot later.
+- **Sonnet:** porting or building to a pattern that's already set, with a clear reference to
+  match.
+- **Haiku:** mechanical edits, running commands, and docs.
+
+Unless a step says otherwise, check it with `cargo check`, clippy (zero warnings) and the tests
+of the module touched.
+
+### Phase 0: groundwork
+
+| # | Step | Model | Done when |
+|---|---|---|---|
+| 0.1 | Record the baseline. | done | The table above. |
+| 0.2 | **Optional quick win, separate from the rewrite:** have the overlay process use iced's tiny-skia renderer, either by setting the backend before iced starts or through iced's settings. This alone cuts about 170 MB, and can go to main now. | done | On branch `overlay-tiny-skia`: 21.8 MB hidden, 47 MB shown. |
+| 0.3 | Add a harness scenario and analysis for frame pacing. Log a `present <ns>` line for each buffer committed, then report the frame intervals, frames shown twice, the time from a frame arriving to its first draw, and how evenly a fade steps. Run it on today's overlay as the second baseline. | done | The second baseline table above; run it with `scripts/harness/pacing.sh` and `pacing.py`. |
+| 0.4 | Add the dependencies: `cosmic-text = "0.15"`, `tiny-skia = "0.11"`, and `wayland-protocols` with `staging` (stashed as "native-overlay deps"). | done | `cargo check` passes and the lock file gains no new packages. |
+
+### Phase 1: pieces both renderers share (iced-free)
+
+| # | Step | Model | Done when |
+|---|---|---|---|
+| 1.1 | Move the texture generators (`draw/texture/materials.rs`, the pixel code in `patterns.rs` and `texture.rs`, `hash`/`smooth`/`blotch`, and `Shape::cut`) to a new `overlay/art/` module. Each returns a `Pattern { key, opacity, build }`, and `draw/texture` turns that into an iced element. | done | `art::Pattern` and one function per generator; `draw/texture.rs` has `layer` and `wash`. |
+| 1.2 | Move the choice and order of a style's filters (`filtered::filters`) into `art` as a list of `Filter`s (pattern, or tint). `draw/filtered.rs` maps that list to elements. | done | `art::filters(style, items, clock) -> Vec<Filter>`, bottom up. |
+| 1.3 | Move the frame marks' SVG (`frame::markup` and its designs) and the SVGs for info icons and play states into `art`, taking colors as `[u8; 3]` and an alpha. Thin wrappers stay for iced callers. | done | `art::frame::markup`, `art::icons::{info_svg, play_state_svg}`. |
+| 1.4 | `font.rs`: resolve a font setting to a family name without iced (`family(name) -> Option<&'static str>`). Keep a list of the font files loaded, so each renderer can load them into its own font system. Read a file's family with fontdb, not iced's font system. `resolve` stays for iced. | done | `font::family` and `font::files`; families read with fontdb. |
+
+### Phase 2: the renderer's core (`overlay/render/`)
+
+| # | Step | Model | Done when |
+|---|---|---|---|
+| 2.1 | Colors: an `Rgba` type, `blend`, `text_on`, `paint`. The style resolved for drawing (today's `Colors` and `Look`): background, items, selected, muted, border, shadow, gradient, glow (pulse), bevel, item outline, corners, typography. | done | `render::{Rgba, blend, paint, text_on, Style, Look, Outline, Shadow, Type}`; `draw/look/parity.rs` checks them against `draw.rs`/`look.rs` for the default and decorated styles. |
+| 2.2 | Text: a thread-local cosmic-text font system with the bundled fonts and the pack's (synced from 1.4), and a cache of shaped runs. Handles case, letter spacing, size scaling, bold, italic, underline, wrapping at a width, and line alignment. Glyphs are drawn from swash's masks and color glyphs at the device scale and sub-pixel position. | done | `render::text::{shape, draw, Spec, Shaped, Canvas}` with a per-thread engine (`text/engine.rs`, kept in step through `font::version`), runs and glyphs cached; sizes equal iced's paragraphs for every font, and the ignored `a_page_of_every_font_drawn_by_both` page (`screenshots/render/text-*`) matches iced pixel for pixel, within 1 level for see-through text. |
+| 2.3 | The display list: an `Op` enum (rect, shadow, text, path, picture, svg, pattern, clip on/off, layer on/off) with equality, a hash and ink bounds. | done | `render::{Op, bounds, balanced, digest}` with `Point`, `Rect`, `Corners`, `Layer`, `Path`, `Fill`/`Linear` (iced's angle maths), `Stroke`, `Fit`, `Svg`/`Markup`, `PatternRef` and `RunKey`; tests for equality, hashes and bounds. |
+| 2.4 | The rasterizer. Covers: rounded rects with borders inside them (as iced draws them), linear gradients (iced's angle maths), box shadows (iced's formula), paths and strokes, clip masks (rounded), and nested layers with opacity and scale about a point. SVG goes through resvg, cached by content and size, and pictures through `image`, fitted (cover, contain, stretch) and cached by path. | done | `render::raster::{draw, picture, Picture, forget}`: quads and shadows ported from iced's `draw_quad`, layers drawn at the scale they're seen at; pictures, SVGs and pattern parts kept in byte-budgeted caches. Golden PNGs in `raster/golden/` for each op; shadowed boxes match iced tiny-skia exactly (0 levels) at scales 1, 1.5 and 2. |
+| 2.5 | The layout tree (`Node`): space, text, leaf painter, row, column, wrapping row, stack (first child sets the size), pinned children, fixed/shrink/fill sizes, max size, padding, alignment, clip, and effects (opacity, scale, shift) drawn as layers. Measured at a width, then placed into a rect, emitting ops. | done | `render::layout::{Node, Length, Padding, Pin, Painter, Align}`: `Node::{space, text, leaf, row, column, wrap, container, stack}` with builder methods, `measure(width)`, `place(rect, ops)` and `ops(at, width)`, following iced's flex, fill, shrink and compression where the panels rely on them; tests for spacing, alignment, fill sharing, stretching, stacks, pins, wrapping (rows, and text at a width), nested measurement, clips and effects. |
+| 2.6 | A test helper that draws a node to an `Image` and saves it under `screenshots/render/`, for the panel steps to use. | done | `render::sample::{draw, save}` (test only): `draw(node, width, scale)` makes a picture of the node's ink with `raster::picture`, and `save(name, pixmap)` writes `screenshots/render/<name>.png`; a test draws a shadowed, rounded card with text and checks it saves. |
+
+### Phase 3: the panels
+
+Each panel step is checked the same way: draw every scene in `debug overlay list` that uses
+that panel with both renderers, and compare (step 3.10 automates this). Port from the
+`overlay/draw/` file named, keeping its numbers (sizes, gaps, font sizes) as they are.
+
+| # | Step | Model | Done when |
+|---|---|---|---|
+| 3.1 | The panel's frame (`framed` in `draw.rs`): background or gradient (and its drift), border, shadow, background filters, picture, vignette, frame marks, clip to the rounded box, max size, and contents cut off past the max height. | done | `render::framed(body, &Style, &OverlayStyle, padding, &Fit) -> Node` (`render/panel.rs`, layers in `panel/ornament.rs`); unit tests for size, clip, cut-off and layer order; the ignored `every_ornament_and_filter_scene_drawn_as_a_framed_panel` saves `screenshots/render/panel-<scene>.png`, which match iced's backgrounds, filters, vignette and frames (the clip is rounded where iced's is square, so a mark at a rounded corner is cut). |
+| 3.2 | Rich text (`marked.rs`, `glyphs.rs`, `rich_text`): text, button glyphs (discs and tags), the D-pad glyph, icons, `{icon:…}` pictures, bars, `{b}`, `{i}`, `{u}`, `{color}`, `{font}`, `{box}`, and wrapping between words. | done | `render::{rich, plain, line, info_cell, Setting, segment, glyph, dpad, state_icon, icon_svg, bar_of}` (`render/rich.rs`, `render/glyphs.rs`; the markup is parsed by `info::glyph_text`, shared); layout tests; the ignored `the_token_scenes_drawn_with_rich_text` saves `screenshots/render/rich-info*.png`, which match iced's `info` and `info-formatted` cells (discs, tags, D-pad, icons, tags, fonts, boxes) to sub-pixel edges. |
+| 3.3 | Item boxes (`look.rs`, `item_box`): lit and flash blending, stagger fade, outline, glow and its pulse, bevel, filters on items, add/remove/note tones, color-blind tints. | done | `render::item(body, &Style, &Item, &OverlayStyle, round) -> Node` (`render/item.rs`) with `Item::{of, colors, REST}`: the stagger fade, swell and slide are one layer round the box, filters and body; item filters read the panel's corner from `render/anchor.rs`; unit tests, and the ignored `item_boxes_in_each_style_and_state` saves `screenshots/render/item-<scene>.png`, which match iced's items within a few levels (metal, plaid-items, styled). |
+| 3.4 | Menus (`menus.rs`): list (one or two columns, ▲/▼ more, dividers, ▸ at the right), buttons, directional, grid with merged cells, carousel (and touch), crumbs, about text, hint, a prompt over the menu (dimmed under it), and the editor's figure beside it. | done | `render::{menu_style, menu_panel, menu_frame, UNDER_PROMPT}` (`render/menus.rs`, kinds in `menus/kinds.rs`): `menu_panel` is `None` for radial menus, and dims under a prompt (the prompt panel itself is placed in 4.1); spaced text no longer wraps in its own measured box (`text/set.rs`); the ignored `every_menu_scene_drawn_as_a_framed_panel` saves `screenshots/render/menu-<scene>.png` for 55 scenes, most within a mean of 1–4 levels of iced's (filter grain differs in `menu-filters` and `menu-plaid`; `guide`, `unsaved` and `held-remapping` wait on 4.1's Notes, Mappings and prompt). |
+| 3.5 | Radial menus (`radial.rs`): arcs as paths with the lines between them, filters cut to each arc, the hub, the aim dot, and the boxes variant. | done | `render::radial(&MenuView, &Style, scale) -> Node` (`render/radial.rs`, labels in `radial/label.rs`); the arc and box maths moved to the iced-free `radial::{Ring, CELL, HUB, box_square}`, which iced calls too (fixing `arc_box` for a first arc over half the circle); the ignored `every_radial_scene_drawn` saves `screenshots/render/radial-*.png`, which match iced's radial, boxes and plaid scenes (arc edges sub-pixel; in the boxes variant item filters now fade with their box). |
+| 3.6 | The keyboard and numpad (`keyboard.rs`): keys, cursor and pressed key, latched keys and Caps Lock, the closing bar, the legends, and the typed line or field name. A set width scales the keys. | done | `render::{keyboard_panel, keyboard_scale, keyboard_body_width, UNIT, GAP, KEYBOARD_PADDING}` (`render/keyboard.rs`; iced reads the numbers from there): each key is an item box, latched keys green; the ignored `every_keyboard_and_numpad_scene` saves `screenshots/render/keyboard-*.png`, which match iced's keyboard, plaid and numpad scenes (the cursor key's outline a little thinner; the busy picture has no iced counterpart). |
+| 3.7 | Info panels (a table with columns as wide as their widest cell, a title, wrapping held to the max width) and log panels (lines of cells, labels, hold times, faded released inputs). | done | `render::{info_panel, column_widths, log_panel, shorten, RELEASED}` (`render/info.rs`, `render/log.rs`; the log's label cut and let-go dimming shared with iced); when the table passes the max width the widest columns give way (not checked against iced); the ignored `every_info_scene_drawn_as_an_info_panel` and `every_log_scene_drawn_as_a_log_panel` save `screenshots/render/{info,log}-<scene>.png`, which match iced's rows and columns to the pixel (the log's last hold time about 1 px lower). |
+| 3.8 | The media and offer panels (`draw.rs`). | done | `render::{media, offer}` (`render/media.rs`): the offer's answers are item boxes, the default one selected; the ignored `the_media_and_offer_scenes_drawn_as_panels` saves `screenshots/render/{media-media,offer-offer}.png`, which land on iced's pixels within 1–2 px, wrap points included. |
+| 3.9 | The editor's figures (`figure.rs`): SVG pictures with captions and notes, and the live touchpad picture with its labels (`touchpad_widget.rs`: draw its SVG with our own text over it). | done | `render::{figure, touchpad}` (`render/figure.rs`): `figure(&Figure, &Style, scale) -> Node` and `touchpad(&PadPicture) -> Node`, labels from `PadPicture::labels` shared with iced; SVGs match iced exactly, text within a pixel; the ignored `every_editor_figure_drawn_in_a_framed_panel` saves `screenshots/render/figure-*.png`. |
+| 3.10 | `padwight debug overlay compare`: draws each scene with both renderers and writes side-by-side PNGs and a difference score to `screenshots/compare/`. Can be built before 3.1 and used from then on. | done | `debug overlay compare` writes iced \| new \| difference PNGs to `screenshots/compare/` and lists scenes worst first (share over 8 levels, mean, max); unported scenes are listed as not ported; panels hook in at `draw_new` in `src/debug/overlay_compare.rs`. |
+
+### Phase 4: the screen
+
+| # | Step | Model | Done when |
+|---|---|---|---|
+| 4.1 | Port `ui::layers` to `render/screen.rs`: placing panels by position, margin, style offset and animation (`place.rs`), the Guide overlay's row of Notes, menu and Mappings (`beside`), the stacks of info and log panels, the editor's backdrop, `peek`, and a prompt over a menu. | done | `render::{screen, screen_ops, Shown}` (`render/screen.rs`, `screen/{panels,stacks}.rs`), placement maths iced-free in `render/place.rs` and `Fit::within`, which iced calls too; `draw_new` draws every one of the 74 scenes: all under 0.7% of pixels over 8 levels except the filter and texture scenes and `quick-styled`/`menu-styled` (1–5%: grain and the frame marks at rounded corners). Info columns now shrink to their widest wrapped line, as iced's table does. A panel taller than its room isn't clamped to it (not checked against iced). |
+| 4.2 | Panel pictures: draw each panel's list once at full strength, reuse it while the list is unchanged (a few kept, least recently used dropped), and composite it at its opacity, offset and scale. Snap to whole pixels at scale 1, and filter smoothly while zooming. | done | `render::Screen` (`screen/pictures.rs`): panels are built at full strength and each is one top-level layer (`Node::layered`), laid out where it rests, with its fade, slide and zoom applied when the picture is laid down; pictures keyed by `op::digest` and the scale, every one used this frame kept plus 8 more; slides snapped to whole device pixels at every scale, zooms bilinear. `screen/fades.rs`: across 15 scenes a fade, slide or zoom rasterizes nothing after the first frame, and every panel (info and log included) at opacity 0.1–0.9 is within 1 level of full strength × α everywhere. A staggered open still redraws its picture each frame until the items are in. Compare scores unchanged within rounding (one keyboard glyph moves a sub-pixel bin, max 58). |
+| 4.3 | Screen damage: the union of what each panel covered on the buffer before and what it covers now. Only that is cleared and redrawn. | done | `Screen::paint(ops, scale, target, age) -> Damage` with `render::{Damage, Patch, swap_red_blue}` (`screen/{items,damage}.rs`): panels matched in order with last frame's, the patches of those that changed merged (within 16 px, at most 8), cleared without being read and laid again cut to them; the last 4 frames' damage kept for buffers of that age, everything for age 0. `screen/repaint.rs`: an info panel changing in a corner repaints only that corner, pixels elsewhere untouched, and every damaged redraw across five scenes at ages 0–3 is bit-identical to a full one. |
+| 4.4 | Switch `overlay::snapshot` and `overlay::film` (used by `debug overlay` and `debug motion`) to the new renderer. Port the `fade_frames` test so it asserts that fades are even. | done | `overlay/ui/shots.rs` draws both with `render::Screen` (one kept across a film's frames), from `Overlay::showing(now)`; iced's stays as `overlay::snapshot_iced` for `compare`. `fade_frames` now runs by default: six menu scenes at opacities 0.1–1 over dark and light backgrounds, every channel within 2 levels of an even blend. In `debug motion` strips the sequence is as before, and the staged drawing is gone (in `stagger`, an item's outline no longer shows at full strength ahead of its box). `windows.rs` and `debug/window.rs` still call iced's snapshot. |
+| 4.5 | **Added:** keep what moves inside a panel out of the panel's picture, so a glide, a pick flash or a stagger redraws only what it touches. | done | Panel pictures are tiled (`screen/tiles.rs`, 64 px): each new list is diffed against the kept one (`screen/diff.rs`) and only the tiles its changed ops reach are redrawn, from a copy of the list drawn up to the first change (`screen/under.rs`); damage is those tiles. For tiles to equal the whole picture, paths, borders and clips are rasterized whole into kept masks (`raster/cover.rs`), and shadows are kept apart from their color (`raster/shadow.rs`). Harness: moving through a menu 0.8–1.0% of a core (iced wgpu 1.4%, tiny-skia 5.6%); a continuous radial sweep (`scripts/harness/radial-sweep.sh`) 16.8–17.2% (was 41.4%; iced wgpu 26.2%, tiny-skia 42.8%). It still redraws about 22 of the radial's 64 tiles a frame, the lit arcs being big, so the goal isn't met there. Damaged redraws stay bit-identical to full ones, fades stay even, compare scores slightly better on average. |
+
+### Phase 5: the Linux window (`overlay/wayland.rs`)
+
+| # | Step | Model | Done when |
+|---|---|---|---|
+| 5.1 | The surface. Bind the globals (compositor, shm, layer shell, fractional scale, viewporter) and create a layer surface on the overlay layer with no keyboard focus and an empty input region. It is 1×1 while hidden. On showing, it asks for the whole screen and draws nothing until that configure arrives. On hiding, it goes back to 1×1 once the last fade has been presented. A missing layer shell gives a clear error. | done | `overlay/wayland.rs` with `wayland/{sizing,window,events,shm,picture}.rs`, chosen with `PADWIGHT_OVERLAY=native` (iced stays the default); the size state machine (`sizing.rs`) is unit-tested and refuses a buffer at any size but the one last acked; drawing goes through `picture::Screen`, a test picture for now. In the harness (`pacing.sh`, then `scripts/harness/surface.py` on the log) all 5 rounds commit their first buffer at 1920×1080, none at 1×1 while showing and none before the configure. For now each frame gets a new memfd and the loop polls every 16 ms (5.2, 5.3, 5.5). The missing-layer-shell error is untested. |
+| 5.2 | Buffers: a memfd pool, two or three buffers reused only after `release`, drawn into directly in ABGR8888 or converted into ARGB8888, freed while hidden, and remade when the size or scale changes. | done | `wayland/slots.rs` (bookkeeping, unit-tested) and `wayland/shm.rs` (one sealed memfd for three buffers); a frame with all three held is skipped and drawn on the next release; drawing goes straight into the buffer, swapped to ARGB8888 in place where ABGR8888 isn't offered (headless KWin); each lease carries its `age` for 4.3. In the harness: 13.5 MB hidden, 40.5 MB with a menu shown, 17.1 MB hidden again (buffers freed); no frame drawn into a held buffer (`assert!`), `surface.py` reports no violations. The ABGR8888 path is untested here. |
+| 5.3 | Frame pacing: draw only on a frame callback, read the animation clock then, and request the next callback while anything moves. If callbacks stop (output off, overlay hidden behind something), a fallback timer of about 100 ms keeps pruning and closing going. | done | `wayland/pacing.rs` (`Pacer`, unit-tested): each drawn frame asks for its callback, a change with none outstanding is drawn at once, one settle frame follows the last movement, and a frame skipped for held buffers goes out on the release; the clock is `Instant::now()` at the wake (KWin's callback stamps are whole ms and don't follow wall time). Pacing on headless KWin (a loaded machine): interval median 16.4–16.6 ms, no presents while still apart from the stick's return to centre, no same-content presents; the 1–8 gaps of 1.5 refreshes or more per run are KWin's late callbacks or slow full-screen builds under load. Daemon to present is still 12–16 ms median, from the channel's 16/50 ms poll cap (5.5). |
+| 5.4 | Scale: wp_fractional_scale_v1 with a viewport, else the preferred buffer scale, else 1. Redraw at the new scale when it changes. | done | `wayland/scale.rs` (unit-tested): buffers at round(logical × scale/120) with the viewport's destination at the logical size, else `set_buffer_scale`; a change redraws at once, or remakes the hidden 1×1 surface's buffer (2×2 at 1.5). `scripts/harness/scale.sh` sets the scale with `kscreen-doctor` (`SCALE=1.5 PADWIGHT_OVERLAY=native scripts/overlay-harness.sh scripts/harness/scale.sh <out>`; `surface.py` checks the device sizes): at 1, 1.5 and 2 the screen buffer is 1920×1080 over a 1920×1080, 1280×720 or 960×540 configure, with no violations. The integer buffer-scale path and a scale change while shown aren't driven in the harness. |
+| 5.5 | The loop. A thread reads frames from the daemon (blocking socket, as on Windows) and wakes the loop through an eventfd. The loop polls both, keeps only the newest of a burst of frames that `stands_in_for` the ones before it, and exits when the daemon goes away. | done | `wayland/feed.rs`: a blocking reader thread, an eventfd polled with the Wayland socket, `coalesce` with `daemon/serve.rs`'s rule (openings, closings and picks kept); `Pacer::timeout` blocks unless a draw waits. Daemon send to first present is now 3.7 ms median, 5.8 ms p95 (12–16 ms median before); 0 wakes in 5 s hidden or shown and still; killing the daemon ends the overlay within 1.5 s. |
+| 5.6 | The timing log: keep the `recv`, `built` and `menu` lines and add `present`, so `analyze.py` and the pacing scenario keep working. | done | With the real overlay drawn in the window (`Window` owns a `render::Screen`, paints each lease at its age, commits nothing for an empty damage, damages per patch, swaps red and blue over the damage only; `Overlay::showing` is shared with snapshots and Windows): `built` gains `list`, `paint` and `pictures`, commits gain `damage`, and `pacing.py`, `surface.py` and `analyze.py` read the log. Harness: interval median 16.2 ms, open fades step 0.092 (even after each show's first, full-screen frame), close 0.140 with max/median 1.11; 14 MB hidden, 41 MB shown; CPU 0% hidden and still. **CPU while moving is over the goal** (step 4.5). |
+
+### Phase 6: Windows
+
+| # | Step | Model | Done when |
+|---|---|---|---|
+| 6.1 | Port `overlay/windows.rs` from iced's snapshot to the new renderer: the screen picture, premultiplied, converted to BGRA in the DIB section for `UpdateLayeredWindow`, damage only. Keep the 16 ms timer: layered windows have no frame callbacks. | done (untested) | `windows.rs` keeps a `render::Screen` and one DIB section (`Dib`), paints it with age 1 (0 when new), swaps red and blue over the damage only, and hands the damage's bounds to `UpdateLayeredWindowIndirect` as `prcDirty` (a full update after a new DIB or a failed present); hiding drops the DIB and forgets the pictures. `cargo check` and clippy pass for `x86_64-pc-windows-msvc`. **Still to test on Windows:** colors and transparency, no stale pixels from the dirty rect (else pass no `prcDirty`), fades on the timer, a change of monitor or DPI. `debug/window.rs` stays on iced: it draws the settings window. |
+
+### Phase 7: take iced out of the overlay process
+
+| # | Step | Model | Done when |
+|---|---|---|---|
+| 7.1 | Delete `overlay/layershell.rs`, and with it the `iced_layershell` dependency (nothing else uses it). Check what that leaves of the pin comments in `Cargo.toml` (`winit-core`, `xkbcommon`, `wayland-*`). | done | The native window is the only Linux overlay (`PADWIGHT_OVERLAY` gone). The lock file only loses packages: `iced_layershell` and its macros, `layershellev`, `iced_devtools`, `iced_exdevtools`, `darling` and its parts, `manyhow`, `waycrate_xkbkeycode`, `winit-common`, a second `smol_str` and `winit-core` among them; the `winit-core` pin went, and `xkbcommon` and `wayland-*` stay for their direct uses. `flatpak/cargo-sources.json` was regenerated. |
+| 7.2 | Make sure the overlay process never starts iced's font system or renderer (fonts from 1.4, snapshots from 4.4). | done | A game's fonts went through `font::load`, which started iced's font system: the overlay now uses `font::load_for_overlay`, which only registers them for its own text engine. `resources.sh`: 12.9 MB hidden, 42.1 MB with a menu held, 23.7 MB hidden again; 1.0% while moving through a menu. |
+
+### Phase 8: check and measure
+
+| # | Step | Model | Done when |
+|---|---|---|---|
+| 8.1 | Re-run `resources.sh` at 1920×1080 and 3840×2160 (`PADWIGHT_HEADLESS_SIZE`) and add the figures to this doc. | done | Figures in "Result: resources". Memory goals met at 1080p. Moving CPU met at both sizes. Radial sweep at 17% is the gap (goal 1.2–1.4%). The 7.0% held reading is the first open's shaping. |
+| 8.2 | Re-run the pacing scenario (0.3) and the fade check, and compare them with the baseline. | done | Figures in "Result: frame pacing". Frame timing, surface sizes and close fades are good. The open fade's first steps are uneven, and first-present latency is worse than iced. |
+| 8.5 | **Added:** close the gaps 8.1 and 8.2 found: the uneven first steps of an open fade, memory kept while hidden, the 16–26 ms p95 from a daemon frame to its first present, and an occasional 2.3–2.4 s first build. | done | **Open fade:** its clock starts at the first present (`Presence::presented`, Wayland and Windows), as the first frame took about 15 ms to paint; max/median 3.5 → 1.08–1.09 (close 1.06–1.09). **Slow first build:** cosmic-text parsed every installed font (2630 faces, 1.55 s from a cold page cache) inside the first `list`; `render::text::warm()` now does that on a background thread at start, and the first open's `list` is 3.6–6.7 ms. **Memory:** 17.6–18.0 MB hidden (the font database is now built at start), 29.0–29.4 MB shown (new buffers aren't cleared in full), 22.4–22.9 MB hidden again, which is clean pages of the binary and its fonts plus about 1.8 MB of font database; `malloc_trim` after hiding, raster caches trimmed to 1 MB each. **Latency:** recv to the start of the draw is 0.1 ms median, 0.3–0.9 ms p95, which is the figure comparable to iced's; the rest is drawing (an open, 12–27 ms; the first moves after a still second rebuild their shape masks). p95 to present 13–24 ms. **Note:** in `resources.sh` the first tap picks and closes the directional menu, so its "navigating" phase, and the baselines' too, mostly measure a closed overlay; `radial-sweep.sh` is the one that measures movement. |
+| 8.6 | **Added:** cut the radial sweep's cost and the first move's stall that 8.5 left. | done | **Tiles:** a changed path marks only the tiles its coverage reaches, not all its box touches (`raster::reaches`, from the kept masks); the harness's 4-item ring redraws 21 tiles a frame, not 25, and those ~106k pixels do change. **Under:** `under.rs` draws its picture only in the tiles a change needs, so the first move after an open, and each wrap round the ring, no longer draws all of it. **Clips:** a clip that holds the whole tile, clear of its corners, makes no mask. Bench (`bench_a_radial_sweep`) 0.52 → 0.23 ms a frame warm, 2.2–3.3 → 1.6 ms with `BENCH_SLEEP`. Harness sweep 16.2–16.8% → 14.2–15.0% of a core; first build after a move starts 4.3–16.7 → 5.8–8.1 ms. Unchanged: opens (12–26 ms, mostly the panel's shadow and box on an idle core), p95 to present (17.5–22 ms), 23.0 MB hidden. Idle cores here draw 5–7× slower than warm ones, so the harness's CPU figure overstates the cost while a game runs (inferred). Tried and dropped: keeping shapes and shadows while hidden (no faster opens, +2 MB hidden), and drawing a new picture whole rather than in tiles (no faster for the radial, up to 1 level off the tiles). Next, if 8.3 shows it matters: faster blending for fills and shadows. |
+| 8.3 | Test on real hardware: KWin, a wlroots compositor (Sway or Hyprland), a game running full screen, a display at fractional scale, and Steam's gamescope if it's used. | the user | Flicker gone, nothing staged, no stutter. |
+| 8.4 | Docs: `overlay-debugging.md` (renderer, compare tool, pacing scenario) and `architecture.md` (the overlay process). | done | `overlay-debugging.md`: how the overlay draws (layout tree, display list, tiled and diffed panel pictures, damage, the window), the compare tool and how to read its score, the harness scenarios with their commands, every timing-log line and its fields, and how to chase a look that differs from iced. `architecture.md`: the overlay process on Wayland and Windows, and where iced remains (the settings and debug windows, the previews, the glyph sheets and the compare tool's iced side). |
+
+### Phase 9: later
+
+| # | Step | Model | Done when |
+|---|---|---|---|
+| 9.1 | Draw the settings window's previews with the new renderer, shown as images, so a look is defined in one place. Needs click targets from the layout tree for the stage editor (`tag.rs`, `found_at`). Then delete `overlay/draw/`. | Opus | The GUI's previews and stage editor work as before. |
+
+## Order and parallel work
+
+Phase 1 and steps 2.1–2.5 come first. Steps 2.2, 2.4 and 2.5 can be done side by side once the
+op types from 2.3 are fixed. In phase 3, step 3.1 comes first, and the rest can be done in any
+order or side by side. Phase 5 needs only phase 4's composite: step 5.1 can start with a test
+picture as soon as 2.4 is done. Phase 6 is independent once phase 4 is done. Step 0.2 can ship
+to main at any time.
+
+## Risks
+
+- **The look drifts from iced** (text metrics, edge blending). Mitigated by porting numbers
+  as they are, the compare tool (3.10), and the iced formulas named above. Until 9.1, there are
+  two renderers to keep in line: a change to how a panel looks must be made in both.
+- **CPU at 4K while animating.** Four times the pixels. Mitigated by panel pictures and damage
+  (4.2, 4.3). Measured in 8.1.
+- **Compositor differences:** whether ABGR8888 is offered (ARGB8888 conversion is the
+  fallback), callbacks stopping while hidden (the fallback timer), and how fractional scale is
+  rounded. Covered by 8.3.
+- **Windows can't be run here.** Step 6.1 is only type-checked until someone tests it.

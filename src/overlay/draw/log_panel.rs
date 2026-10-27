@@ -11,12 +11,8 @@ use crate::{
     info::Segment,
     inputlog::{LogCell, LogView},
     motion::Anim,
+    overlay::render::{RELEASED, shorten},
 };
-
-/// How bright a let-go input is next to a held one.
-const RELEASED: f32 = 0.55;
-/// Labels longer than this are cut short, so one long macro name doesn't stretch the line.
-const LABEL_CHARS: usize = 22;
 
 pub fn log_panel<'a, M: 'a>(v: &LogView, font: Font, fit: &Fit, anim: &Anim) -> Element<'a, M> {
     if v.lines.is_empty() {
@@ -54,13 +50,4 @@ fn log_cell<'a, M: 'a>(cell: &LogCell, c: Colors, s: f32, v: &LogView, opacity: 
         col = col.push(text(format!("{ms} ms")).font(c.font).size(11.0 * s).color(c.muted));
     }
     col.into()
-}
-
-fn shorten(label: &str) -> String {
-    if label.chars().count() <= LABEL_CHARS {
-        return label.to_string();
-    }
-    let mut cut: String = label.chars().take(LABEL_CHARS - 1).collect();
-    cut.push('…');
-    cut
 }

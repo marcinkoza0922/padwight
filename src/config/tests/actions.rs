@@ -267,3 +267,11 @@ fn saving_refuses_a_cycle_step_that_isnt_an_input_and_a_missing_cycle() {
     let problem = crate::config::problems::game_problem(&config, &config.general).unwrap();
     assert!(problem.contains("missing cycle “Gone”"), "{problem}");
 }
+
+#[test]
+fn dpad_ring_presses_pad_directions_with_diagonals_pressing_both() {
+    let actions = StickAction::dpad().ring_actions().to_vec();
+    assert_eq!(actions.len(), 8);
+    assert_eq!(actions[0], ButtonAction::Gamepad(Button::DpadUp));
+    assert_eq!(actions[1], ButtonAction::Multi(vec![ButtonAction::Gamepad(Button::DpadUp), ButtonAction::Gamepad(Button::DpadRight)]));
+}

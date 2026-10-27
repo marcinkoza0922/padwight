@@ -49,6 +49,37 @@ Everything the daemon knows about the desktop comes from focus trackers (see bel
 
 Stick output and timers (tap windows, long presses, turbo) run on the daemon's tick, not on input events alone, so a held stick keeps moving without new events. The tick is 1 ms, or 4 ms with App settings → Input → 1000 Hz continuous output turned off.
 
+## The overlay process
+
+`padwight overlay` draws what the daemon sends it. It has no iced, no GPU and no font system of
+its own: it draws with `overlay/render/`, the overlay's own renderer, on the CPU.
+
+- **Frames in.** On Linux (`overlay/wayland.rs`, `overlay/wayland/feed.rs`), a thread reads the
+  daemon's frames from its socket and passes them to the loop through a channel. The thread then
+  writes an eventfd, and the loop, which polls that eventfd with the Wayland socket, takes what
+  has arrived. Of a burst of frames it drops those a later frame stands in for; openings,
+  closings and picks are always kept. When the daemon's socket closes, the loop exits.
+- **Frames out (Linux).** The window is a wlr-layer-shell surface on the overlay layer, with no
+  keyboard focus and an empty input region. It is 1×1 while hidden and the whole screen while
+  shown, and it draws nothing until the compositor has configured that size. A frame is drawn
+  only on a frame callback while something moves, and not while everything is still
+  (`wayland/pacing.rs`). Each frame is painted into one of up to three shared-memory buffers the
+  compositor has released (`wayland/shm.rs`, `wayland/slots.rs`) through `render::Screen`, and only
+  the damaged part is committed (`wayland/picture.rs`, `wayland/window.rs`). A fallback timer of
+  100 ms keeps fades and closing going when callbacks stop, for instance while the output is off.
+- **Windows.** `overlay/windows.rs` is a layered window (`WS_EX_LAYERED`, `WS_EX_TRANSPARENT`,
+  `WS_EX_NOACTIVATE`). A reader thread posts each frame to it, and it paints one DIB section
+  through the same `render::Screen`, handing the damage's bounds to `UpdateLayeredWindowIndirect`.
+  Layered windows have no frame callbacks, so it animates on a 16 ms timer. When the daemon's
+  socket closes, it closes the window.
+- **Drawing.** `render::Screen` lays each panel out as a tree, turns it into a display list, keeps
+  the panel's picture while its list is unchanged, and lays the picture down at the panel's
+  opacity, offset and scale. See [overlay-debugging.md](overlay-debugging.md#how-the-overlay-draws).
+
+iced stays in the settings window (`gui.rs` and `gui/`), the debug window (`debug/window.rs`),
+the settings previews of overlays (`overlay/draw/`), the glyph sheets of `debug overlay glyphs`,
+and the iced side of `debug overlay compare`. None of that runs in the overlay process.
+
 ## Module map
 
 Line counts are approximate and change; `scripts/long-files.sh` lists the files over 400 lines.
@@ -119,7 +150,7 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | `debug/motion_shot.rs` | `padwight debug motion`: plays a scripted run (open, move, pick, close) of a scene in each motion style and writes an animated PNG, a strip of frames, or a trace of the motion values. |
 | `debug/sound.rs`, `debug/sound_panel.rs` | `padwight debug sound`: plays cues from the command line (every kind, a kind with chosen volume/pitch/length/effects, or an overlay's default cues as a visit plays them), to hear them while tuning. The debug window has the same as a panel. Needs an audio device, no daemon. It plays the built-in defaults, not your config: to see what a running daemon plays, use `scripts/sound-trace.sh`. |
 | `debug/focus.rs` | `padwight debug focus` and `padwight debug steam`: what the daemon makes of the window in front, of any pid (a sandboxed one too), of running processes, and of Steam's app cache. It shows the program, the rule that matches, controller support in Steam and who has the controllers, through the same code the daemon uses. See [the code review plan](code-review-plan.md#tools-for-checking-findings). |
-| `snapshot.rs` | Draws any iced element offscreen with the CPU renderer (tiny-skia) into an image; what the overlay snapshots and their tests use. |
+| `snapshot.rs` | Draws any iced element offscreen with the CPU renderer (tiny-skia) into an image. Used by the glyph sheets, the settings window's screenshots, and `snapshot_iced` (the iced side of `debug overlay compare`). The overlay's own pictures don't go through it. |
 | `pad_svg/hit.rs` | Which part of a model's drawing a point falls on, for clicking. |
 | `pad_widget.rs` | The drawing as an iced widget, shared with the settings window. |
 | `touchpad_widget.rs` | The touchpad as a picture (each side's job, a menu's zones, the fingers), shared by the Touchpad tab and the debug window, where it can be dragged on. |
@@ -130,7 +161,7 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 
 **Checking which sound plays.** A `--debug` daemon logs every overlay cue it plays as a `sound:` line (`sound: guide Step -> pulse volume=0.1 pitch=1 length=1 file=None`), after the scope's sound set (the active setup's own, else App settings, with Performance's Sounds switch applied) has chosen it. `scripts/sound-trace.sh [config.toml]` starts such a daemon on throwaway config and runtime folders, attaches a virtual controller, drives the Guide overlay, the menu it leads to and Guide + Start, and prints those lines, so a sound setting that doesn't take effect shows up as the wrong kind there. `SETUP_TOML=file` appends a `[sounds...]` table to General's `setup.toml`. It needs `/dev/input` for the daemon's own scan but no speakers, display or uinput write access. Note that the Guide overlay and every menu it opens (Quick Settings, Guide + Start) use the `guide` overlay's sounds; only a setup's own menus use `menu`.
 
-**Looking at the overlay without a display.** `padwight debug overlay all glyphs` writes a PNG of every scene and of the glyph sheets to `screenshots/overlay/` (untracked), drawn by the overlay's own layer code (`overlay/ui.rs`, settled, no motion) on a virtual screen (`--size`, default 1920x1080). `padwight debug overlay list` names the scenes. `--json` prints a scene's frame, which can be edited and drawn again by passing the `.json` file. `live` draws what a running daemon's overlay shows, so with a `--debug` daemon and an attached session, `padwight debug press ...` followed by `padwight debug overlay live` captures a real menu or keyboard. None of it needs Wayland, a compositor or a GPU. `padwight debug motion <style>|all` does the same for motion: it plays a run of a menu or the keyboard on a made-up clock and writes it to `screenshots/motion/` (see [Motion runs](overlay-debugging.md#motion-runs)).
+**Looking at the overlay without a display.** `padwight debug overlay all glyphs` writes a PNG of every scene and of the glyph sheets to `screenshots/overlay/` (untracked), drawn by the overlay's own renderer (`overlay/ui/shots.rs`, settled, no motion) on a virtual screen (`--size`, default 1920x1080). `padwight debug overlay list` names the scenes. `--json` prints a scene's frame, which can be edited and drawn again by passing the `.json` file. `live` draws what a running daemon's overlay shows, so with a `--debug` daemon and an attached session, `padwight debug press ...` followed by `padwight debug overlay live` captures a real menu or keyboard. None of it needs Wayland, a compositor or a GPU. `padwight debug motion <style>|all` does the same for motion: it plays a run of a menu or the keyboard on a made-up clock and writes it to `screenshots/motion/` (see [Motion runs](overlay-debugging.md#motion-runs)).
 
 Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000 press south`, `padwight debug expect pressed south` (non-zero exit on failure), `padwight debug quit`. `padwight debug help` lists every command.
 
@@ -138,7 +169,12 @@ Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000
 
 | Path | Responsibility |
 |---|---|
-| `overlay.rs` (and `overlay/ui.rs`, `overlay/draw/`) | The overlay process: keyboard, numpad, menus, info and log panels. `OverlayController` owns the state inside the daemon; `ui.rs` holds what is on screen and draws its layers, `layershell.rs` is the layer-shell window, and `snapshot` draws a frame offscreen as that window would. `draw/look.rs` resolves a style's decorations into container styles; `draw/glyphs.rs` draws button glyphs and icons (or text, under the performance settings). `draw/typeset.rs` sets text in a style's typography (case, letter spacing, size, weight, slant). `draw/ornament.rs` draws the background picture, corner frames, scanlines, vignettes and the lines between items. A panel's contents are the base of a `Stack`, and its picture and ornaments are layered under and over it, so they're the panel's size. Looping effects keep the overlay redrawing (`OverlayFrame::loops`) and read `Anim::clock`. |
+| `overlay.rs` (and `overlay/ui.rs`, `overlay/ui/shots.rs`) | The overlay process: keyboard, numpad, menus, info and log panels. `OverlayController` owns the state inside the daemon. `ui.rs` holds what is on screen (`Overlay::showing` at a time), and `ui/shots.rs` draws it without a window (`snapshot` for one screen, `film` for a motion run). Looping effects keep the overlay redrawing (`OverlayFrame::loops`) and read `Anim::clock`. |
+| `overlay/render.rs` (and `overlay/render/`) | The overlay's own renderer, with no iced. `layout.rs` is the layout tree, `op.rs` the display list, `raster/` the rasterizer, `text/` the text engine (cosmic-text), and `screen.rs` with `screen/` the whole screen: panel pictures, tiles, diffs and damage. Each panel module (`menus.rs`, `radial.rs`, `keyboard.rs`, `info.rs`, `log.rs`, `media.rs`, `figure.rs`, `item.rs`, `panel.rs`) builds its tree from the same numbers as its iced twin in `overlay/draw/`. See [overlay-debugging.md](overlay-debugging.md#how-the-overlay-draws). |
+| `overlay/wayland.rs` (and `overlay/wayland/`) | The Linux overlay window: a wlr-layer-shell surface with its own shared-memory buffers, frame-callback pacing, scale, and the reader thread for the daemon's frames. See [The overlay process](#the-overlay-process). |
+| `overlay/windows.rs` | The Windows overlay window: a layered window drawn through `render::Screen`, on a 16 ms timer. |
+| `overlay/draw/` | iced's drawing of the same panels. Used by the settings window's previews and the stage editor, and by the iced side of `debug overlay compare`; the overlay process doesn't use it. `draw/look.rs` resolves a style's decorations into container styles, `draw/glyphs.rs` draws button glyphs and icons, and `draw/texture.rs` and `draw/filtered.rs` apply the textures and filters from `overlay/art/`. |
+| `overlay/art.rs` (and `overlay/art/`) | The textures, filters, frame marks and icon SVGs that both renderers draw, as data the renderers turn into pixels. |
 | `info.rs` | Info overlays: `{token}` expansion into button glyphs and live values, and the generated bindings sheet for layers. |
 | `font.rs` | Bundled fonts (`assets/fonts`) and installed families by name. |
 | `style.rs` | Shared widget styles for the GUI. |
@@ -200,7 +236,7 @@ Library packs are read at build time (`build.rs`) and checked by `cargo test` (`
 | `cargo test` | All unit tests, including every library pack check (`library.rs`, `pack.rs`). |
 | `cargo nextest run` | The same tests under nextest. `.config/nextest.toml` has a quiet `agent` profile. |
 | `scripts/profile.sh` | The profiling suite (`tests/profile/`): input latency, CPU and memory, start-up. Two parts need the host instead of the container: `profile_overlay_styles` (a Wayland session with layer-shell; what overlay looks, motion and the two renderers cost) and `profile_sound` (an audio device; what an open output stream costs). Run them with `cargo test --release --test profile -- --ignored --test-threads=1 --nocapture <name>`. `scripts/profile.sh` takes `PADWIGHT_PROFILE_OUT` (the folder for the results) and `PADWIGHT_PROFILE_VOLUME` (a build volume of its own, to compare two checkouts). Settings: `PADWIGHT_PROFILE_DIR` (where the JSON results go; default `target/profile`), `PADWIGHT_LATENCY_REPEATS` (sessions per latency run), `PADWIGHT_PROFILE_CASES` (run only the overlay style cases whose names contain it, such as `radial`). |
-| `scripts/overlay-harness.sh` | Runs the real daemon and overlay on a headless KWin, drives them with the debug controller, and logs every frame sent and drawn. With the fade frames test and its check, see [overlay-debugging.md](overlay-debugging.md). |
+| `scripts/overlay-harness.sh` | Runs the real daemon and overlay on a headless KWin, drives them with the debug controller, and logs every frame sent and drawn. Its scenarios (pacing, resources, radial sweep, scale) and the fade frames check are in [overlay-debugging.md](overlay-debugging.md). |
 | `tests/gnome_focus.rs` | GNOME focus tracking against a stand-in for GNOME Shell (`tests/fixtures/gnome_shell_mock.js`) on a private session bus: the daemon installs and enables the extension, reports GNOME Shell as its tracker, and accepts the extension's `WindowActivated` call. It doesn't prove real GNOME Shell loads the extension. Needs `gjs`, so it's opt-in: `dbus-run-session -- cargo nextest run --run-ignored ignored-only gnome_`. |
 | `scripts/fake-pad.py <fifo>` | A gamepad made through `/dev/uhid`, so the daemon sees a HID device like a real controller (the same layout as `tests/common/uhid.rs`). `echo press > <fifo>` presses South once, `echo quit > <fifo>` removes it. The kernel drops reports until the daemon has opened the device, so send `press` again until it shows up. Needs write access to `/dev/uhid`. `scripts/desktop-test.sh` uses it on the test VMs. |
 | `cargo test -- --ignored rumble` | The end-to-end rumble check. It needs `/dev/uinput`, so it is opt-in. |
@@ -241,7 +277,7 @@ Everything above describes Linux. The same binary builds for Windows, where the 
 | `output/uinput.rs` | `output/windows.rs` | The virtual pad through ViGEmBus (`vigem-client`; without the driver its output is dropped), the keyboard and mouse through `SendInput`, as scancodes. |
 | `rumble.rs` | `rumble/windows.rs` | ViGEmBus reports the game's rumble; `XInputSetState` plays it. |
 | `daemon/unix.rs` | `daemon/windows.rs` | Signals become the console's Ctrl+C and close events; the socket needs no permission bits in `%LOCALAPPDATA%`. |
-| `overlay/layershell.rs` | `overlay/windows.rs` | A layered window (`WS_EX_LAYERED`, `WS_EX_TRANSPARENT`, `WS_EX_NOACTIVATE`): `overlay/ui.rs`'s layers drawn by the CPU renderer (`snapshot.rs`) and handed over with `UpdateLayeredWindow`. |
+| `overlay/wayland.rs` | `overlay/windows.rs` | A layered window (`WS_EX_LAYERED`, `WS_EX_TRANSPARENT`, `WS_EX_NOACTIVATE`): the screen drawn by `render::Screen` into a DIB section and handed over with `UpdateLayeredWindowIndirect`. |
 | `focus/*.rs` | `focus/windows.rs` | A WinEvent hook on foreground changes; processes by `QueryFullProcessImageNameW`; Steam App IDs from `steamapps\common\<folder>` and its manifest. |
 | `keyboard/xkb.rs` | `keyboard/windows.rs` | Key labels from the active layout (`ToUnicodeEx`). |
 | `tray.rs` | `tray/windows.rs` | `Shell_NotifyIconW` on a hidden window. |

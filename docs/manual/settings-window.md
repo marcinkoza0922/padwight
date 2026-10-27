@@ -28,6 +28,7 @@ These switches turn things off in every overlay, for computers that struggle to 
 - **Decorations**: shadows, outlines, gradients and glows. Off is the biggest saving without a graphics card, such as in a virtual machine.
 - **Sounds**: off, the audio device is never opened.
 - **Looping animations**: off, glows stop pulsing and gradients stop drifting. Motion styles still play.
+- **Resolution**: Full, 75% or 50% of the display's pixels, stretched to fill it. Lower costs less to draw, mostly on high-resolution displays, and looks softer: at 50%, small text blurs. Linux only, where the compositor can stretch a window (KDE, Hyprland, Sway and most others). **Turn them all off** leaves it as it is.
 
 ## Help
 

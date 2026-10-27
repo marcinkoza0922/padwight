@@ -10,71 +10,24 @@ use super::{
     Colors, ornament,
     texture::{self, Shape},
 };
-use crate::config::{FilterOn, OverlayStyle};
+use crate::{
+    config::OverlayStyle,
+    overlay::art::{self, Filter},
+};
 
 /// The style's filters that cover the background (or, with `items`, an item), as layers from
-/// the bottom up, cut to `shape`: the materials, then scanlines, grain, pixel blocks, camo,
-/// plaid, argyle, stripes, a checkerboard, polka dots and a tint.
+/// the bottom up, cut to `shape` (see `art::filters` for what they are and their order).
 pub(super) fn filters<'a, M: 'a>(c: Colors, style: &OverlayStyle, items: bool, shape: Shape) -> Vec<Element<'a, M>> {
-    let mut layers = Vec::new();
-    if style.lite.plain {
-        return layers;
-    }
-    let covers = |on: FilterOn| if items { on.items() } else { on.background() };
-    let s = style.scale.clamp(0.5, 2.0);
-    let o = &style.ornament;
-    // Looping effects stop when the performance settings say nothing loops.
-    let moving = |on: bool| (on && !style.lite.calm).then_some(c.anim.clock);
-    // The first material lies over the ones after it, should several be on.
-    for (material, t) in [
-        (texture::Material::Wood, &o.wood),
-        (texture::Material::Steel, &o.steel),
-        (texture::Material::Leather, &o.leather),
-        (texture::Material::Silk, &o.silk),
-        (texture::Material::Denim, &o.denim),
-        (texture::Material::Cloth, &o.cloth),
-        (texture::Material::Concrete, &o.concrete),
-        (texture::Material::BrushedMetal, &o.brushed_metal),
-        (texture::Material::Paper, &o.paper),
-    ] {
-        if let Some(t) = t.as_ref().filter(|t| covers(t.on)) {
-            layers.push(texture::layer(material, t, shape, c.fade));
-        }
-    }
-    if let Some(lines) = o.scanlines.as_ref().filter(|l| covers(l.on)) {
-        layers.push(texture::scanlines(lines, s, moving(lines.drift), shape, c.fade));
-    }
-    if let Some(grain) = o.grain.as_ref().filter(|g| covers(g.on)) {
-        layers.push(texture::grain(grain, s, moving(grain.animated), shape, c.fade));
-    }
-    if let Some(pixels) = o.pixels.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::pixels(pixels, s, moving(pixels.shimmer), shape, c.fade));
-    }
-    if let Some(camo) = o.camo.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::camo(camo, s, shape, c.fade));
-    }
-    if let Some(plaid) = o.plaid.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::plaid(plaid, s, shape, c.fade));
-    }
-    if let Some(argyle) = o.argyle.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::argyle(argyle, s, shape, c.fade));
-    }
-    if let Some(stripes) = o.stripes.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::stripes(stripes, s, shape, c.fade));
-    }
-    if let Some(checks) = o.checkerboard.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::checkerboard(checks, s, shape, c.fade));
-    }
-    if let Some(dots) = o.polka_dots.as_ref().filter(|p| covers(p.on)) {
-        layers.push(texture::polka_dots(dots, s, shape, c.fade));
-    }
-    if let Some(tint) = o.tint.as_ref().filter(|p| covers(p.on)) {
-        layers.push(match shape {
-            Shape::Rounded(round) => ornament::tint(tint, round, c.fade),
-            Shape::Arc { .. } => texture::wash(tint, shape, c.fade),
-        });
-    }
-    layers
+    art::filters(style, items, Some(c.anim.clock))
+        .into_iter()
+        .map(|filter| match filter {
+            Filter::Pattern(pattern) => texture::layer(pattern, shape, c.fade),
+            Filter::Tint(tint) => match shape {
+                Shape::Rounded(round) => ornament::tint(&tint, round, c.fade),
+                Shape::Arc { .. } => texture::wash(&tint, shape, c.fade),
+            },
+        })
+        .collect()
 }
 
 /// An item's or key's box: `content` in a box drawn by `look`, rounded `round` pixels, with the

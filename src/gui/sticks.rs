@@ -199,6 +199,13 @@ fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message
     if cfg.action != StickAction::Disabled {
         options.push(invert_x);
     }
+    // Shortcuts that turn the stick into a button ring: one press and the sectors are bound.
+    if !matches!(cfg.action, StickAction::Ring { .. }) {
+        options.push(text("Use as").size(13).color(MUTED_COLOR).into());
+        for (label, ring) in [("WASD", StickAction::wasd as fn() -> StickAction), ("Arrows", StickAction::arrows), ("D-pad", StickAction::dpad)] {
+            options.push(button(text(label).size(13)).style(style::secondary).on_press(with(ring())).into());
+        }
+    }
     box_header(s.to_string(), kinds, kind, pick, options)
 }
 
@@ -258,6 +265,7 @@ fn ring_sectors<'a>(
             text("Fill with").size(13).color(MUTED_COLOR),
             button(text("WASD").size(13)).style(style::secondary).on_press(with(StickAction::wasd())),
             button(text("Arrows").size(13)).style(style::secondary).on_press(with(StickAction::arrows())),
+            button(text("D-pad").size(13)).style(style::secondary).on_press(with(StickAction::dpad())),
         ]
         .spacing(8)
         .align_y(Alignment::Center)

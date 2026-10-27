@@ -3,7 +3,7 @@
 use iced::widget::{column, row};
 
 use super::*;
-use crate::config::Performance;
+use crate::config::{Performance, Resolution};
 
 /// An entry in the auto-switch "default profile" list.
 #[derive(Debug, Clone, PartialEq)]
@@ -78,11 +78,25 @@ impl App {
             .spacing(2)
             .into()
         };
-        let all = if p == Performance::lightest() {
-            button(text("Turn them all back on").size(13)).style(style::secondary).on_press(Message::SetPerformance(Performance::default()))
+        let all = if p == p.lightest() {
+            button(text("Turn them all back on").size(13)).style(style::secondary).on_press(Message::SetPerformance(p.fullest()))
         } else {
-            button(text("Turn them all off").size(13)).style(style::secondary).on_press(Message::SetPerformance(Performance::lightest()))
+            button(text("Turn them all off").size(13)).style(style::secondary).on_press(Message::SetPerformance(p.lightest()))
         };
+        let resolution = column![
+            row![
+                text("Resolution").size(14),
+                space::horizontal(),
+                dropdown(Resolution::ALL, Some(p.resolution), move |resolution| Message::SetPerformance(Performance { resolution, ..p })),
+            ]
+            .align_y(Alignment::Center),
+            note(
+                "How many of the display's pixels overlays are drawn at, stretched to fill it. Fewer cost \
+                 less to draw, mostly on high-resolution displays, and look softer: at 50%, small text blurs. \
+                 Linux only, and only where the compositor can stretch a window (KDE, Hyprland, Sway and most others)."
+            ),
+        ]
+        .spacing(2);
         section(
             "Performance",
             Some(
@@ -97,6 +111,7 @@ impl App {
                 switch(!p.quiet, "Sounds", "Overlay sounds. Off, every overlay is silent and the audio device is never opened.", |p, v| p.quiet = !v),
                 switch(!p.no_loops, "Looping animations", "Glows pulse, and gradients and scanlines drift. Off, they hold still; motion styles still play.", |p, v| p.no_loops = !v),
                 all.into(),
+                resolution.into(),
             ],
         )
     }

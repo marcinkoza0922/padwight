@@ -174,3 +174,6 @@ pub(super) fn item_shadow(c: &Colors, lit: f32) -> Shadow {
         _ => glow,
     }
 }
+
+#[cfg(test)]
+mod parity;

@@ -224,16 +224,7 @@ impl crate::motion::Tracked for OverlayView {
 /// state the daemon streams, and exiting when the daemon hides it.
 #[cfg(target_os = "linux")]
 pub fn run() -> anyhow::Result<()> {
-    // iced_layershell unwraps when the compositor has no layer-shell (GNOME): report that
-    // as an error instead of a panic and backtrace.
-    std::panic::set_hook(Box::new(|_| {}));
-    std::panic::catch_unwind(layershell::run).unwrap_or_else(|panic| {
-        let why = panic.downcast_ref::<String>().cloned().or_else(|| panic.downcast_ref::<&str>().map(ToString::to_string));
-        anyhow::bail!(
-            "the overlay window could not start (the compositor probably lacks wlr-layer-shell, as GNOME does): {}",
-            why.unwrap_or_default()
-        )
-    })
+    wayland::run()
 }
 
 /// Runs the overlay window: a click-through layered window over the screen drawing the state
@@ -244,21 +235,27 @@ pub fn run() -> anyhow::Result<()> {
 }
 
 #[cfg(target_os = "linux")]
-mod layershell;
+mod wayland;
 mod controller;
 mod ui;
 pub use controller::{OverlayAction, OverlayController};
 #[cfg(windows)]
 mod windows;
 
-pub use ui::{film, snapshot};
+pub use ui::{film, snapshot, snapshot_iced};
 
+/// The procedural pictures behind panel filters, free of any drawing library.
+pub mod art;
 /// Drawing for overlays, generic over the message type so the settings GUI can show the
 /// same thing as a live preview.
 pub mod draw;
 #[cfg(test)]
 mod fade_frames;
 pub mod fit;
+/// The overlay's own renderer, free of iced.
+#[expect(dead_code, reason = "built up step by step; nothing draws with it yet")]
+#[cfg_attr(not(test), expect(unused_imports, reason = "built up step by step; nothing draws with it yet"))]
+pub mod render;
 mod timing;
 
 #[cfg(test)]

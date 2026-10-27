@@ -1,5 +1,9 @@
 //! The angles of a radial menu's items, shared by aiming and drawing so they always agree.
 
+mod ring;
+
+pub use ring::{CELL, HUB, Ring, box_square};
+
 /// The smallest share a weight counts for, so every item keeps an arc you can aim at.
 const MIN_WEIGHT: f32 = 0.25;
 

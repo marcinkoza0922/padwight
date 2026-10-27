@@ -7,7 +7,7 @@ use iced::{
 };
 
 use super::{EDGE_MARGIN, Fit, transform};
-use crate::{config::{OverlayStyle, ScreenPosition}, motion::Anim};
+use crate::{config::OverlayStyle, motion::Anim, overlay::render::{Margins, margins}};
 
 /// Positions an overlay panel on the full-screen surface, moved by its animation and by the
 /// style's offset.
@@ -15,10 +15,8 @@ pub fn place<'a, M: 'a>(panel: Element<'a, M>, style: &OverlayStyle, fit: &Fit, 
     let (col, row) = style.position.cell();
     let horizontal = [Horizontal::Left, Horizontal::Center, Horizontal::Right][col];
     let vertical = [Vertical::Top, Vertical::Center, Vertical::Bottom][row];
-    let margin = if style.position == ScreenPosition::Center { 0.0 } else { EDGE_MARGIN };
     let (x, y) = anim.offset();
-    let (left, right) = sides(margin, x + fit.x, col);
-    let (top, bottom) = sides(margin, y + fit.y, row);
+    let Margins { top, right, bottom, left } = margins(style.position, (x + fit.x, y + fit.y));
     container(transform(panel, anim.scale(), iced::Vector::ZERO))
         .width(Length::Fill)
         .height(Length::Fill)
@@ -43,15 +41,4 @@ pub fn beside<'a, M: 'a>(left: Option<Element<'a, M>>, panel: Element<'a, M>, ri
     ]
     .align_y(Vertical::Top);
     container(line).width(Length::Fill).height(Length::Fill).align_y(Vertical::Center).into()
-}
-
-/// The padding on the two sides of a panel, for a panel `shift` pixels off where it sits in
-/// `slot` (0 start, 1 center, 2 end) of a `margin` from the edge.
-fn sides(margin: f32, shift: f32, slot: usize) -> (f32, f32) {
-    match slot {
-        0 => ((margin + shift).max(0.0), margin),
-        2 => (margin, (margin - shift).max(0.0)),
-        // A centered panel sits halfway between its two paddings.
-        _ => (margin + (2.0 * shift).max(0.0), margin + (-2.0 * shift).max(0.0)),
-    }
 }
