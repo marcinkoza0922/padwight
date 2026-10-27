@@ -1,8 +1,8 @@
 //! Screen buffers in shared memory: one memfd, mapped once, with room for `slots::MOST`
 //! buffers of one size, each reused once the compositor releases it (`slots.rs` keeps the
 //! books). A frame is drawn straight into the buffer: when the compositor offers ABGR8888 that
-//! is all; otherwise (KWin offers only ARGB8888 of the two) its bytes are then swapped into
-//! ARGB8888's order in place.
+//! is all; otherwise (KWin offers only ARGB8888 of the two) the bytes it repainted are then
+//! swapped into ARGB8888's order in place (`render::swap_red_blue`).
 //!
 //! A pool is for one size and format. When either changes (hiding goes to 1×1, a new screen
 //! size or scale) it is dropped and a new one made. Dropping destroys its buffers at once, even
@@ -29,6 +29,7 @@ use wayland_client::{
 };
 
 use super::slots::{Layout, Lease, MOST, Slots};
+use crate::overlay::render::Damage;
 
 /// The layouts a frame can be handed over in, as the compositor offers them.
 #[derive(Debug, Default, Clone, Copy)]
@@ -107,11 +108,13 @@ impl Pool {
         self.map.bytes_mut(start, self.layout.len())
     }
 
-    /// Attaches the leased buffer to `surface` and damages all of it, for the caller to commit.
-    pub(super) fn attach(&mut self, lease: Lease, surface: &WlSurface) {
-        let (w, h) = (self.layout.width as i32, self.layout.height as i32);
+    /// Attaches the leased buffer to `surface` and damages what `damage` repainted of it, for
+    /// the caller to commit.
+    pub(super) fn attach(&mut self, lease: Lease, surface: &WlSurface, damage: &Damage) {
         surface.attach(Some(&self.buffers[lease.slot]), 0, 0);
-        surface.damage_buffer(0, 0, w, h);
+        for p in damage.patches() {
+            surface.damage_buffer(p.x0, p.y0, p.width(), p.height());
+        }
         self.slots.committed(lease);
     }
 }
@@ -129,13 +132,6 @@ impl Drop for Pool {
 /// make a new pool.
 fn fits(have: (Layout, wl_shm::Format), want: (Layout, wl_shm::Format)) -> bool {
     have == want
-}
-
-/// Turns premultiplied RGBA into ARGB8888's byte order, B, G, R, A, in place.
-pub(super) fn rgba_to_argb(pixels: &mut [u8]) {
-    for px in pixels.as_chunks_mut::<4>().0 {
-        px.swap(0, 2);
-    }
 }
 
 /// An anonymous shared-memory file of `len` bytes, sealed so its size can't change: then the
@@ -211,7 +207,7 @@ mod tests {
         let word = u32::from_le_bytes(rgba.clone().try_into().unwrap());
         assert_eq!((word >> 24, (word >> 16) & 0xff, (word >> 8) & 0xff, word & 0xff), (128, 0, 64, 128));
         let mut argb: [u8; 4] = rgba.try_into().unwrap();
-        rgba_to_argb(&mut argb);
+        crate::overlay::render::swap_red_blue(&mut argb, 1, &Damage::full(1, 1));
         // ARGB8888: A:R:G:B from the high bits down.
         let word = u32::from_le_bytes(argb);
         assert_eq!((word >> 24, (word >> 16) & 0xff, (word >> 8) & 0xff, word & 0xff), (128, 128, 64, 0));

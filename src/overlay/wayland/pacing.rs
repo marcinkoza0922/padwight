@@ -13,11 +13,19 @@
 //! A callback can stop coming: the output is off, or the surface is hidden behind something.
 //! After `FALLBACK` it is taken as lost, and the next frame goes out without it, so fades go on,
 //! what has closed is pruned, and the surface still shrinks to 1×1 after the last one.
+//!
+//! A frame can also come out the same as the one on screen (a fade waiting out its delay): it
+//! isn't committed, so no callback comes for it. While something moves, the next look is then
+//! `RETRY` later, about a refresh, rather than at once (a busy loop) or after the fallback (a
+//! stall).
 
 use std::time::{Duration, Instant};
 
 /// How long an unanswered callback is waited for before drawing without it.
 pub(super) const FALLBACK: Duration = Duration::from_millis(100);
+/// How long after a frame that showed nothing new the next one is looked at, while anything
+/// moves: about a refresh at 60 Hz.
+pub(super) const RETRY: Duration = Duration::from_millis(16);
 /// The callback asked for with the last frame drawn.
 #[derive(Debug, Clone, Copy)]
 struct Pending {
@@ -36,6 +44,8 @@ pub(super) struct Pacer {
     dirty: bool,
     /// Whether something was moving at the last look.
     moving: bool,
+    /// When the last look found nothing new to show, since the last frame committed.
+    quiet: Option<Instant>,
 }
 
 impl Pacer {
@@ -55,14 +65,18 @@ impl Pacer {
 
     /// Whether a frame is due at `now`: something changed or moves, and no callback is
     /// outstanding, or the one that is has been waited for too long.
+    /// After a look that found nothing new, what moves waits `RETRY` for the next.
     pub(super) fn due(&self, now: Instant) -> bool {
-        (self.dirty || self.moving) && self.pending.is_none_or(|p| now.duration_since(p.asked) >= FALLBACK)
+        let free = self.pending.is_none_or(|p| now.duration_since(p.asked) >= FALLBACK);
+        let rested = self.quiet.is_none_or(|t| now.duration_since(t) >= RETRY);
+        free && (self.dirty || (self.moving && rested))
     }
 
     /// A frame has been committed at `now`: returns the id of the callback to ask for in the
     /// same commit.
     pub(super) fn drawn(&mut self, now: Instant) -> u64 {
         self.dirty = false;
+        self.quiet = None;
         self.asked += 1;
         self.pending = Some(Pending { id: self.asked, asked: now });
         self.asked
@@ -72,6 +86,13 @@ impl Pacer {
     /// fallback runs out).
     pub(super) fn skipped(&mut self) {
         self.dirty = true;
+    }
+
+    /// A frame drawn at `now` came out the same as the one on screen, so it wasn't committed and
+    /// no callback comes for it.
+    pub(super) fn unchanged(&mut self, now: Instant) {
+        self.dirty = false;
+        self.quiet = Some(now);
     }
 
     /// The callback `id` is done: returns whether it was the one waited for.
@@ -89,6 +110,7 @@ impl Pacer {
         self.pending = None;
         self.dirty = false;
         self.moving = false;
+        self.quiet = None;
     }
 
     /// How long the loop may sleep at `now` before it has to look again: while something waits
@@ -101,9 +123,16 @@ impl Pacer {
 
     /// How long until the fallback is due, while something waits to be drawn. Without a callback
     /// outstanding, what is waited for is a released buffer or the configure.
+    /// After a frame that showed nothing new, what moves is looked at again after `RETRY`.
     fn fallback_in(&self, now: Instant) -> Option<Duration> {
-        let waiting = self.dirty || self.moving;
-        waiting.then(|| self.pending.map_or(FALLBACK, |p| (p.asked + FALLBACK).saturating_duration_since(now)))
+        if !(self.dirty || self.moving) {
+            return None;
+        }
+        Some(match (self.pending, self.quiet) {
+            (Some(p), _) => (p.asked + FALLBACK).saturating_duration_since(now),
+            (None, Some(t)) if !self.dirty => (t + RETRY).saturating_duration_since(now),
+            (None, _) => FALLBACK,
+        })
     }
 }
 
@@ -201,6 +230,33 @@ mod tests {
         p.skipped();
         assert!(p.due(t + 16 * MS), "drawn on the next look that finds a buffer free");
         assert_eq!(p.fallback_in(t + 16 * MS), Some(FALLBACK), "the release, or the fallback, wakes the loop");
+    }
+
+    #[test]
+    fn a_frame_with_nothing_new_waits_a_refresh_and_expects_no_callback() {
+        let mut p = Pacer::default();
+        let t = Instant::now();
+        p.moving(true);
+        p.changed();
+        assert!(p.due(t));
+        // Painted, but the same as what is on: not committed, no callback asked for.
+        p.unchanged(t);
+        p.moving(true);
+        assert!(!p.due(t + MS), "not again at once: that would spin");
+        assert_eq!(p.timeout(t + MS, true), Some(RETRY - MS), "woken a refresh on, not after the fallback");
+        assert!(p.due(t + RETRY), "looked at again a refresh on");
+        p.changed();
+        assert!(p.due(t + 2 * MS), "a daemon frame goes at once all the same");
+        let id = p.drawn(t + 2 * MS);
+        assert!(p.done(id));
+        p.moving(true);
+        assert!(p.due(t + 3 * MS), "a committed frame ends the wait");
+        // At rest, an unchanged frame leaves nothing to wake for.
+        p.moving(false);
+        p.unchanged(t + 4 * MS);
+        p.moving(false);
+        assert!(!p.due(t + 100 * MS));
+        assert_eq!(p.timeout(t + 5 * MS, true), None);
     }
 
     #[test]

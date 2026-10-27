@@ -49,24 +49,24 @@ impl Overlay {
         self.frame.loops() || self.panels.busy(now, motion) || self.info.busy(now, motion) || self.logs.busy(now, motion)
     }
 
-    /// The opacity of the most opaque thing shown at `now`: 0 when nothing is.
+    /// The daemon's latest frame, as received.
     #[cfg(target_os = "linux")]
-    pub(super) fn strongest(&self, now: Instant) -> f32 {
-        let motion = &self.frame.motion;
-        let panels = self.panels.shown(now, motion).map(|(_, a)| a.opacity());
-        let info = self.info.shown(now, motion).map(|(_, a)| a.opacity());
-        let logs = self.logs.shown(now, motion).map(|(_, a)| a.opacity());
-        panels.chain(info).chain(logs).fold(0.0, f32::max)
+    pub(super) fn frame(&self) -> &OverlayFrame {
+        &self.frame
     }
 
-    /// What is on screen at `now`, each panel with how it is moving.
-    fn showing(&self, now: Instant) -> Shown<'_> {
+    /// What is on screen at `now`, each panel with how it is moving, for the overlay's own
+    /// renderer (`render::screen_ops` with `frame`): what `layers` draws for iced. Each menu's
+    /// `menu` line goes in the timing log, as `layers` writes it.
+    pub(super) fn showing(&self, now: Instant) -> Shown<'_> {
         let motion = &self.frame.motion;
-        Shown {
-            panels: self.panels.shown(now, motion).collect(),
-            info: self.info.shown(now, motion).collect(),
-            logs: self.logs.shown(now, motion).collect(),
+        let panels: Vec<_> = self.panels.shown(now, motion).collect();
+        for (view, anim) in &panels {
+            if let OverlayView::Menu(m) = view {
+                menu_log(m, anim);
+            }
         }
+        Shown { panels, info: self.info.shown(now, motion).collect(), logs: self.logs.shown(now, motion).collect() }
     }
 
     #[cfg(windows)]
