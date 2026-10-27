@@ -3,8 +3,9 @@
 //! A frame's own damage is what changed since the frame before: the union of what each panel
 //! covered on the buffer before and what it covers now, for every panel whose picture, place,
 //! zoom or opacity changed, came or went (`Screen` in `pictures.rs` works that out). It is kept
-//! as a few disjoint patches: overlapping or nearby ones are merged into their bounding box, and
-//! past `MOST` of them all become one box.
+//! as a few disjoint patches: overlapping ones are merged into their bounding box, and so are
+//! nearby ones when the box adds little to them (two tiles of a picture side by side, not two
+//! corners of a panel), and past `MOST` of them all become one box.
 //!
 //! The window reuses its buffers, each holding a frame some frames old (its age: 1 is the last
 //! frame committed, 2 the one before; 0 is unknown contents). Bringing a buffer of age `n` up to
@@ -16,8 +17,10 @@ use std::collections::VecDeque;
 
 /// Patches nearer each other than this (device pixels, either way) are merged.
 const GAP: i32 = 16;
+/// How many pixels merging two nearby patches may add to them: a tile's worth.
+const SLACK: i64 = 64 * 64;
 /// Beyond this many patches, one box around them all is painted instead.
-const MOST: usize = 8;
+const MOST: usize = 16;
 /// How many frames' damage is kept: a buffer older than this is redrawn whole. The window has
 /// three buffers, so ages past 3 are rare.
 const FRAMES: usize = 4;
@@ -73,6 +76,16 @@ impl Patch {
     fn near(&self, other: &Patch) -> bool {
         self.x0 - GAP < other.x1 && other.x0 - GAP < self.x1 && self.y0 - GAP < other.y1 && other.y0 - GAP < self.y1
     }
+
+    fn area(&self) -> i64 {
+        i64::from(self.width()) * i64::from(self.height())
+    }
+
+    /// Whether it and `other` are better painted as the box round them: they overlap, or they
+    /// are near and the box adds little.
+    fn merges(&self, other: &Patch) -> bool {
+        self.intersection(other).is_some() || self.near(other) && self.around(other).area() <= self.area() + other.area() + SLACK
+    }
 }
 
 /// The pixels a frame repainted: a few disjoint patches within the buffer. Each pixel lies in
@@ -121,7 +134,7 @@ impl Damage {
 
 /// Two patches near each other, the first before the second.
 fn near_pair(patches: &[Patch]) -> Option<(usize, usize)> {
-    (0..patches.len()).find_map(|i| (i + 1..patches.len()).find(|&j| patches[i].near(&patches[j])).map(|j| (i, j)))
+    (0..patches.len()).find_map(|i| (i + 1..patches.len()).find(|&j| patches[i].merges(&patches[j])).map(|j| (i, j)))
 }
 
 /// The last few frames' own damage, newest first.

@@ -7,7 +7,7 @@ use std::{cell::RefCell, panic};
 use resvg::usvg;
 use tiny_skia::{ColorU8, FilterQuality, IntSize, Paint, Pixmap, PixmapPaint, SpreadMode, Transform};
 
-use super::{Pen, kept::Kept};
+use super::{Pen, blit, kept::Kept};
 use crate::overlay::{
     art,
     render::{File, Fit, PatternRef, Point, Rect, Svg},
@@ -70,9 +70,12 @@ pub(super) fn fitted(rect: Rect, (w, h): (f32, f32), fit: Fit) -> Rect {
 }
 
 /// `r` moved out to whole device pixels at its edges, and how many pixels that is each way.
+/// Halves round up on either side of the pixmap's corner (`round` takes them away from it), so
+/// a picture drawn in tiles snaps the same in each.
 fn snapped(pen: &Pen, r: Rect) -> (Rect, u32, u32) {
-    let (d, t) = (pen.device(r), pen.transform);
-    let (x0, y0, x1, y1) = (d.x.round(), d.y.round(), d.right().round(), d.bottom().round());
+    let ([x0, y0, x1, y1], t) = (pen.edges(r), pen.transform);
+    let round = |v: f32| (v + 0.5).floor();
+    let (x0, y0, x1, y1) = (round(x0), round(y0), round(x1), round(y1));
     let back = Rect::new((x0 - t.tx) / t.sx, (y0 - t.ty) / t.sy, (x1 - x0) / t.sx, (y1 - y0) / t.sy);
     (back, (x1 - x0).max(0.0) as u32, (y1 - y0).max(0.0) as u32)
 }
@@ -81,6 +84,11 @@ fn snapped(pen: &Pen, r: Rect) -> (Rect, u32, u32) {
 /// opacity and filtered by its quality.
 fn lay(pen: &mut Pen, image: &Pixmap, place: Rect, visible: Rect, how: PixmapPaint) {
     let Some(shown) = place.intersection(visible) else { return };
+    if shown == place
+        && let Some(at) = blit::whole(pen, place)
+    {
+        return blit::blit(pen, image, at, how.opacity);
+    }
     let Some(shown) = tiny_skia::Rect::from_xywh(shown.x, shown.y, shown.w, shown.h) else { return };
     let (iw, ih) = (image.width() as f32, image.height() as f32);
     let at = Transform::from_row(place.w / iw, 0.0, 0.0, place.h / ih, place.x, place.y);

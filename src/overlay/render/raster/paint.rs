@@ -2,7 +2,7 @@
 
 use tiny_skia::{GradientStop, LinearGradient, LineCap, LineJoin, Paint, PathBuilder, Shader, SpreadMode};
 
-use super::Pen;
+use super::{Pen, cover};
 use crate::overlay::render::{Cap, Fill, Join, Path, Rect, Rgba, Rule, Seg, Stroke};
 
 /// A straight color as tiny-skia takes it, each channel held to 0 to 1 (NaN as 0).
@@ -57,7 +57,7 @@ pub(super) fn outline(path: &Path) -> Option<tiny_skia::Path> {
 pub(super) fn path(pen: &mut Pen, path: &Path, fill: Option<&Fill>, fill_rule: Rule, stroke: Option<&Stroke>) {
     let (Some(shape), Some(bounds)) = (outline(path), path.bounds()) else { return };
     if let Some(fill) = fill {
-        pen.pixmap.fill_path(&shape, &paint(fill, bounds), rule(fill_rule), pen.transform, pen.mask);
+        cover::fill(pen, &shape, &paint(fill, bounds), rule(fill_rule));
     }
     let Some(stroke) = stroke.filter(|s| s.width > 0.0 && s.color.a > 0.0) else { return };
     let line = tiny_skia::Stroke {
@@ -74,5 +74,5 @@ pub(super) fn path(pen: &mut Pen, path: &Path, fill: Option<&Fill>, fill_rule: R
         },
         ..tiny_skia::Stroke::default()
     };
-    pen.pixmap.stroke_path(&shape, &paint(&Fill::Solid(stroke.color), bounds), &line, pen.transform, pen.mask);
+    cover::stroke(pen, &shape, &paint(&Fill::Solid(stroke.color), bounds), &line);
 }

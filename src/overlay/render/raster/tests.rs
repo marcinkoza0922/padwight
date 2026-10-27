@@ -339,6 +339,19 @@ fn pictures_fit_their_box_and_are_kept_by_path() {
 }
 
 #[test]
+fn a_gradient_box_is_the_same_wherever_the_pixmap_lies() {
+    let fill = Fill::Linear(Linear::new(std::f32::consts::PI).stop(0.0, RED).stop(1.0, BLUE));
+    let at = |x: f32| [Op::Rect { rect: Rect::new(x + 4.0, 4.0, 40.0, 20.0), radii: Corners::all(6.0), fill: Some(fill.clone()), border: None }];
+    let mut here = Pixmap::new(48, 28).unwrap();
+    draw(&at(0.0), &mut here.as_mut(), Transform::identity());
+    let mut there = Pixmap::new(48, 28).unwrap();
+    draw(&at(700.0), &mut there.as_mut(), Transform::from_translate(-700.0, 0.0));
+    let worst = here.data().iter().zip(there.data()).map(|(a, b)| a.abs_diff(*b)).max().unwrap();
+    assert!(worst <= 1, "{worst}");
+    assert!(here.pixel(24, 14).unwrap().alpha() > 200);
+}
+
+#[test]
 fn a_picture_is_as_big_as_its_ink() {
     let ops = [solid(Rect::new(-3.0, 2.0, 10.0, 4.5), 0.0, RED)];
     let pic = picture(&ops, 2.0).unwrap();

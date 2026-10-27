@@ -1,6 +1,13 @@
 //! The rasterizer: draws a display list into a tiny-skia pixmap at a device scale, op by op in
-//! order. Boxes, shadows and gradients follow iced tiny-skia's maths (`quad`), so a panel looks
-//! as it does under iced.
+//! order. Boxes, shadows and gradients follow iced tiny-skia's maths (`quad`, `shadow`), so a
+//! panel looks as it does under iced.
+//!
+//! A list comes out the same whatever whole pixel the pixmap's corner lies on, as a panel's
+//! picture drawn in tiles needs (`screen/tiles.rs`): shapes are rasterized whole and laid
+//! through their coverage (`cover`), shadows worked out whole (`shadow`), pictures and patterns
+//! placed on whole pixels copied or stretched from their corner (`blit`), and glyphs placed on
+//! the same sub-pixel bins (`text/paint.rs`). Shapes and shadows are kept, so one seen again
+//! is only laid down.
 //!
 //! A clip intersects the mask of the clips around it. A layer's ops are drawn into a pixmap of
 //! their own, as big as their ink once the layer has moved and scaled them, at the scale they
@@ -10,10 +17,13 @@
 //!
 //! Pixmaps hold premultiplied RGBA, tiny-skia's own order; colors in the list are straight.
 
+mod blit;
+mod cover;
 mod kept;
 mod paint;
 mod pictures;
 mod quad;
+mod shadow;
 
 #[cfg(test)]
 mod tests;
@@ -22,7 +32,20 @@ use tiny_skia::{FillRule, FilterQuality, IntRect, Mask, Pixmap, PixmapMut, Pixma
 
 use super::{Corners, Layer, Op, Rect, text};
 
-pub use pictures::forget;
+pub(super) use blit::{mul8, over};
+
+/// Drops every picture, SVG, pattern and shape's coverage kept, as when the overlay hides.
+pub fn forget() {
+    pictures::forget();
+    forget_shapes();
+}
+
+/// Drops the coverage of every shape and every shadow kept, as when a screen's pictures go
+/// (`Screen::forget`): they are made again from a panel's list as quickly as its picture is.
+pub fn forget_shapes() {
+    cover::forget();
+    shadow::forget();
+}
 
 /// A list drawn into a pixmap of its own (see `picture`).
 pub struct Picture {
@@ -49,6 +72,14 @@ impl Pen<'_, '_> {
     pub fn device(&self, r: Rect) -> Rect {
         let t = self.transform;
         Rect::new(r.x * t.sx + t.tx, r.y * t.sy + t.ty, r.w * t.sx, r.h * t.sy)
+    }
+
+    /// Where box `r`'s edges land on the pixmap: left, top, right, bottom. Each is its logical
+    /// edge moved, so it lands the same however far the pixmap's corner is (a box's right edge
+    /// taken as its left plus its width can round differently).
+    pub fn edges(&self, r: Rect) -> [f32; 4] {
+        let t = self.transform;
+        [r.x * t.sx + t.tx, r.y * t.sy + t.ty, r.right() * t.sx + t.tx, r.bottom() * t.sy + t.ty]
     }
 }
 
@@ -110,16 +141,19 @@ fn clip(ops: &[Op], at: usize, pen: &mut Pen, rect: Rect, radii: Corners) -> usi
     let mask = match pen.mask {
         Some(outer) => {
             let mut mask = outer.clone();
-            mask.intersect_path(&path, FillRule::Winding, true, pen.transform);
+            cover::mask(&mut mask, &path, FillRule::Winding, pen.transform, true);
             mask
         }
         None => {
             let Some(mut mask) = Mask::new(pen.pixmap.width(), pen.pixmap.height()) else { return close(ops, at).1 };
-            mask.fill_path(&path, FillRule::Winding, true, pen.transform);
+            cover::mask(&mut mask, &path, FillRule::Winding, pen.transform, false);
             mask
         }
     };
-    run(ops, at, pen.pixmap, pen.transform, Some(&mask))
+    // A clip that cuts nothing off this pixmap (a tile inside a panel's rounded box) is left
+    // out, which cuts the same.
+    let mask = mask.data().iter().any(|m| *m < 255).then_some(&mask);
+    run(ops, at, pen.pixmap, pen.transform, mask)
 }
 
 /// Draws a layer's group into a pixmap of its own at the scale it is seen at, then lays that
@@ -170,7 +204,7 @@ fn covering(r: Rect, within: Option<(u32, u32)>) -> Option<IntRect> {
 /// Draws one op that isn't a group marker.
 fn one(op: &Op, pen: &mut Pen) {
     match op {
-        Op::Shadow { rect, radii, shadow, spread } => quad::shadow(pen, *rect, *radii, *shadow, *spread),
+        Op::Shadow { rect, radii, shadow, spread } => shadow::shadow(pen, *rect, *radii, *shadow, *spread),
         Op::Rect { rect, radii, fill, border } => quad::rect(pen, *rect, *radii, fill.as_ref(), *border),
         Op::Text { run, at, color, .. } => {
             let (w, h) = (pen.pixmap.width(), pen.pixmap.height());

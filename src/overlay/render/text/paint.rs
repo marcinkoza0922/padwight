@@ -13,7 +13,12 @@ pub(super) fn run(run: &Run, glyphs: &mut GlyphSource, at: Point, color: Rgba, c
     }
     let t = canvas.transform;
     let scale = t.sx;
-    let origin = (at.x.mul_add(t.sx, t.tx), at.y.mul_add(t.sy, t.ty));
+    // The translation's whole pixels are added after the glyphs are placed, so a run lands on
+    // the same sub-pixel bins whichever whole pixel the pixmap's corner is on: a picture drawn
+    // in tiles places it the same in each.
+    let whole = (t.tx.floor(), t.ty.floor());
+    let origin = (at.x.mul_add(t.sx, t.tx - whole.0), at.y.mul_add(t.sy, t.ty - whole.1));
+    let shift = (whole.0 as i32, whole.1 as i32);
     let [r, g, b, _] = color.to_u8();
     let ink = Ink { rgb: [r, g, b], alpha: (alpha * 255.0).round() as u32 };
     // Under the glyphs, as iced draws its quads before its text, and filled as a path as iced
@@ -29,9 +34,12 @@ pub(super) fn run(run: &Run, glyphs: &mut GlyphSource, at: Point, color: Rgba, c
         let baseline = (line.baseline * scale).round() as i32;
         for glyph in &line.glyphs {
             let physical = glyph.physical(origin, scale);
+            // cosmic-text puts a glyph on the whole pixel down by truncating, which is the floor
+            // only on the positive side; the floor everywhere keeps it the same either side.
+            let y = (glyph.y - glyph.font_size * glyph.y_offset).mul_add(scale, origin.1).floor() as i32;
             if let Some(image) = glyphs.get(physical.cache_key) {
                 let p = image.placement;
-                blit(canvas, image, (physical.x + p.left, physical.y - p.top + baseline), ink);
+                blit(canvas, image, (physical.x + shift.0 + p.left, y + shift.1 - p.top + baseline), ink);
             }
         }
     }

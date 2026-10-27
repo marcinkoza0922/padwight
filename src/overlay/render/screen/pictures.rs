@@ -9,31 +9,37 @@
 //! picture is kept, keyed by the list's `digest` and the scale and checked against the list
 //! itself, while the list stays the same; a few are kept, the least recently used dropped.
 //!
-//! Laying it down: pixmaps hold premultiplied color, so a picture laid at opacity `a` has all
-//! four channels multiplied by `a` (tiny-skia's pattern opacity) and goes over the screen
-//! source-over: every part of the panel fades by the same amount, so an outline never shows
-//! ahead of the label inside it. Unzoomed, its offset is rounded to whole device pixels and the
-//! picture copied pixel for pixel, so text doesn't shimmer as it slides. Zoomed, it is sampled
-//! bilinearly; sampling premultiplied pixels, and the clear pixel round the edge, keep its rim
-//! free of dark fringes and hard cut edges.
+//! Laying it down (`lay.rs`): pixmaps hold premultiplied color, so a picture laid at opacity
+//! `a` has all four channels multiplied by `a` and goes over the screen source-over: every part
+//! of the panel fades by the same amount, so an outline never shows ahead of the label inside
+//! it. Unzoomed, its offset is rounded to whole device pixels and the picture copied pixel for
+//! pixel, so text doesn't shimmer as it slides. Zoomed, it is sampled bilinearly; sampling
+//! premultiplied pixels, and the clear pixel round the edge, keep its rim free of dark fringes
+//! and hard cut edges.
 //!
-//! What moves inside a panel stays in its list as layers: a motion style that staggers its
-//! items fades each in as a layer of its own, so through the open the list changes every frame
-//! and the picture is drawn anew each time (the panel as a whole still fades as one picture
-//! over it). Once the items are in, the list settles and the picture is reused. The same goes
-//! for a highlight gliding, an item swelling or a gradient drifting.
+//! What moves inside a panel (a highlight gliding, a pick flashing, an item swelling or fading
+//! in) changes its list. The picture is drawn in tiles (`tiles.rs`), so a changed list redraws
+//! only the tiles its changed ops reach (`diff.rs`), in the picture laid last in the same place,
+//! each from the list drawn as far as its changes began (`under.rs`); the frame's damage is
+//! then those tiles alone. When most of the picture would be redrawn, a new one is drawn
+//! instead, and the old one kept.
 //!
-//! The picture's corner is on a whole pixel, so the ops land on the same fraction of a pixel as
-//! drawn straight; only a glyph right at the edge of a sub-pixel bin can fall into the next one
-//! (the float sums differ slightly), a level or so of difference at one glyph now and then.
+//! The picture's corner is on a whole pixel, and the rasterizer draws a list the same whatever
+//! pixel a pixmap's corner is on (`tiles.rs`), so the picture is the ops drawn straight onto the
+//! screen within a level.
 
-use tiny_skia::{Pixmap, PixmapMut, Transform};
+use std::time::{Duration, Instant};
+
+use tiny_skia::{Pixmap, PixmapMut};
 
 use super::{
     Shown,
     damage::{Damage, History, Patch},
+    diff::{self, Marked},
     items::{self, Item, What},
     screen_ops,
+    tiles::{self, Grid},
+    under::{self, Under},
 };
 use crate::overlay::{
     OverlayFrame,
@@ -53,10 +59,17 @@ struct Kept {
     digest: u64,
     /// The device scale's bits.
     scale: u32,
-    ops: Vec<Op>,
+    list: Marked,
     pixmap: Pixmap,
-    /// Where the picture's top left corner lies on the screen at rest, in device pixels.
-    origin: (i32, i32),
+    /// Where the picture's top left corner lies on the screen at rest, in device pixels, and
+    /// its size.
+    grid: Grid,
+    /// How many times its tiles have been drawn again from a changed list.
+    version: u64,
+    /// The pixels of the picture its last redraw changed.
+    redrawn: Vec<Patch>,
+    /// Its list drawn as far as its changes began, for redrawing tiles from.
+    under: Option<Under>,
     /// The frame it was last laid down in.
     used: u64,
 }
@@ -82,9 +95,12 @@ pub struct Screen {
     kept: Vec<Kept>,
     frame: u64,
     drawn: u64,
+    tiles: u64,
     pictures: u64,
     last: Option<Last>,
     history: History,
+    /// Time spent since `spent` was last asked: marking and diffing lists, and drawing tiles.
+    spent: [Duration; 2],
 }
 
 impl Screen {
@@ -105,7 +121,7 @@ impl Screen {
         let items = self.items(ops, scale);
         let whole = Patch::new(0, 0, target.width() as i32, target.height() as i32);
         for item in &items {
-            self.lay_item(item, scale, whole, target);
+            self.lay_item(item, scale, (whole, false), target);
         }
         self.reset();
         self.prune();
@@ -144,8 +160,9 @@ impl Screen {
         }
         for &patch in repaint.patches() {
             items::clear(target, patch);
-            for item in items.iter().filter(|i| i.at.intersection(&patch).is_some()) {
-                self.lay_item(item, scale, patch, target);
+            // The first goes down onto the cleared patch, without reading it.
+            for (n, item) in items.iter().filter(|i| i.at.intersection(&patch).is_some()).enumerate() {
+                self.lay_item(item, scale, (patch, n == 0), target);
             }
         }
         self.last = Some(Last { items, size, scale: bits });
@@ -158,6 +175,18 @@ impl Screen {
         self.drawn
     }
 
+    /// How many tiles of kept pictures have been drawn again (rather than whole pictures) so
+    /// far.
+    pub fn tiles(&self) -> u64 {
+        self.tiles
+    }
+
+    /// The time spent marking and diffing panels' lists, and drawing their tiles, since last
+    /// asked.
+    pub fn spent(&mut self) -> [Duration; 2] {
+        std::mem::take(&mut self.spent)
+    }
+
     /// How many pictures are kept.
     #[cfg(test)]
     pub(super) fn kept(&self) -> usize {
@@ -167,6 +196,7 @@ impl Screen {
     /// Drops every picture, as when the overlay hides; the next `paint` repaints everything.
     pub fn forget(&mut self) {
         self.kept.clear();
+        raster::forget_shapes();
         self.reset();
     }
 
@@ -193,7 +223,7 @@ impl Screen {
                     let next = if let Op::Clip { .. } = op { close(ops, at + 1).1 } else { at + 1 };
                     let straight = &ops[at..next];
                     if let Some(patch) = items::straight_patch(straight, scale) {
-                        items.push(Item { what: What::Straight(straight.to_vec()), at: patch });
+                        items.push(Item { what: What::Straight(straight.to_vec()), at: patch, redrawn: Vec::new() });
                     }
                     next
                 }
@@ -203,37 +233,86 @@ impl Screen {
         items
     }
 
-    /// A panel's picture as it goes down this frame, drawn first unless it is kept.
+    /// A panel's picture as it goes down this frame: a kept one with the same list, else the
+    /// one laid last in the same place with the tiles its list changed drawn again (when that
+    /// isn't most of them), else a new one.
     fn panel(&mut self, layer: &Layer, ops: &[Op], scale: f32) -> Option<Item> {
         if !(layer.opacity > 0.0 && layer.scale > 0.0) {
             return None;
         }
         let key = (digest(ops), scale.to_bits());
-        let found = self.kept.iter().position(|k| (k.digest, k.scale) == key && k.ops == ops);
+        let found = self.kept.iter().position(|k| (k.digest, k.scale) == key && k.list.ops == ops);
         let i = match found {
             Some(i) => i,
             None => {
-                let (pixmap, origin) = picture(ops, scale)?;
-                self.drawn += 1;
-                self.pictures += 1;
-                let kept = Kept { id: self.pictures, digest: key.0, scale: key.1, ops: ops.to_vec(), pixmap, origin, used: 0 };
-                self.kept.push(kept);
-                self.kept.len() - 1
+                let start = Instant::now();
+                let list = Marked::new(ops);
+                self.spent[0] += start.elapsed();
+                let grid = grid(ops, scale)?;
+                match self.redraw(list, grid, key.0) {
+                    Ok(i) => i,
+                    Err(list) => {
+                        let mut pixmap = Pixmap::new(grid.size.0 as u32, grid.size.1 as u32)?;
+                        let start = Instant::now();
+                        tiles::draw(&list, grid, &vec![true; grid.count()], &mut pixmap, None);
+                        self.spent[1] += start.elapsed();
+                        self.drawn += 1;
+                        self.pictures += 1;
+                        let (id, redrawn) = (self.pictures, Vec::new());
+                        self.kept.push(Kept { id, digest: key.0, scale: key.1, list, pixmap, grid, version: 0, redrawn, under: None, used: 0 });
+                        self.kept.len() - 1
+                    }
+                }
             }
         };
         let kept = &mut self.kept[i];
         kept.used = self.frame;
-        let (laid, at) = items::laid((kept.pixmap.width(), kept.pixmap.height()), kept.origin, layer, scale);
-        Some(Item { what: What::Picture { id: kept.id, laid }, at })
+        let (laid, at) = items::laid((kept.pixmap.width(), kept.pixmap.height()), kept.grid.origin, layer, scale);
+        let redrawn = items::moved(&kept.redrawn, &laid, at);
+        Some(Item { what: What::Picture { id: kept.id, version: kept.version, laid }, at, redrawn })
     }
 
-    /// Lays `item` down over `target`, only within `clip`.
-    fn lay_item(&self, item: &Item, scale: f32, clip: Patch, target: &mut PixmapMut) {
+    /// Draws again the tiles that `list` changes of the picture laid most recently in the
+    /// same place, at the same size and scale, and not yet this frame; hands `list` back when
+    /// there is none, or it would redraw most of it.
+    fn redraw(&mut self, list: Marked, grid: Grid, digest: u64) -> Result<usize, Marked> {
+        let frame = self.frame;
+        let Some(i) = (0..self.kept.len())
+            .filter(|&i| self.kept[i].grid == grid && self.kept[i].used != frame)
+            .max_by_key(|&i| self.kept[i].used)
+        else {
+            return Err(list);
+        };
+        let start = Instant::now();
+        let rects = diff::changed(&self.kept[i].list, &list);
+        self.spent[0] += start.elapsed();
+        let kept = &mut self.kept[i];
+        let Some((rects, alike)) = rects else { return Err(list) };
+        let which = tiles::reached(grid, &rects);
+        let count = which.iter().filter(|w| **w).count();
+        if 4 * count > 3 * grid.count() {
+            return Err(list);
+        }
+        let start = Instant::now();
+        under::update(&mut kept.under, &list, alike, grid);
+        match &kept.under {
+            Some(u) => tiles::draw(&Marked::new(&under::rest(&list.ops, u.upto)), grid, &which, &mut kept.pixmap, Some(&u.pixmap)),
+            None => tiles::draw(&list, grid, &which, &mut kept.pixmap, None),
+        };
+        self.spent[1] += start.elapsed();
+        kept.redrawn = (0..grid.count()).filter(|&n| which[n]).map(|n| grid.tile(n)).collect();
+        (kept.list, kept.digest, kept.version) = (list, digest, kept.version + 1);
+        self.tiles += count as u64;
+        Ok(i)
+    }
+
+    /// Lays `item` down over `target`, only within `clip`, which is clear when `onto_clear`.
+    fn lay_item(&self, item: &Item, scale: f32, (clip, onto_clear): (Patch, bool), target: &mut PixmapMut) {
         let Some(clip) = item.at.intersection(&clip) else { return };
         match &item.what {
-            What::Picture { id, laid } => {
+            What::Picture { id, laid, .. } => {
                 if let Some(kept) = self.kept.iter().find(|k| k.id == *id) {
-                    items::lay_picture(&kept.pixmap, laid, clip, target);
+                    items::lay_picture(&kept.pixmap, laid, clip, target, onto_clear);
                 }
             }
             What::Straight(ops) => items::draw_straight(ops, scale, clip, target),
@@ -265,9 +344,9 @@ fn close(ops: &[Op], mut at: usize) -> (usize, usize) {
     (at, at)
 }
 
-/// `ops` drawn at `scale` into a clear picture covering their ink and a pixel more all round,
-/// and where its corner lies in device pixels; `None` when they draw nothing.
-fn picture(ops: &[Op], scale: f32) -> Option<(Pixmap, (i32, i32))> {
+/// The picture `ops` are drawn into at `scale`: covering their ink and a pixel more all round,
+/// its corner on a whole device pixel; `None` when they draw nothing.
+fn grid(ops: &[Op], scale: f32) -> Option<Grid> {
     let ink = bounds(ops)?;
     let edge = |v: f32| (v * scale).clamp(-LIMIT as f32, LIMIT as f32);
     let (x0, y0) = (edge(ink.x).floor() as i32 - 1, edge(ink.y).floor() as i32 - 1);
@@ -275,8 +354,5 @@ fn picture(ops: &[Op], scale: f32) -> Option<(Pixmap, (i32, i32))> {
     if x1 - x0 > LIMIT || y1 - y0 > LIMIT {
         return None;
     }
-    let mut pixmap = Pixmap::new((x1 - x0) as u32, (y1 - y0) as u32)?;
-    raster::draw(ops, &mut pixmap.as_mut(), Transform::from_row(scale, 0.0, 0.0, scale, -x0 as f32, -y0 as f32));
-    Some((pixmap, (x0, y0)))
+    Some(Grid { origin: (x0, y0), size: (x1 - x0, y1 - y0), scale })
 }
-

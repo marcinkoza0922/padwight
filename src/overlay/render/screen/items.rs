@@ -4,9 +4,12 @@
 //!
 //! An item's patch holds every pixel it can change. Outside the patches of the items that
 //! changed, the items over any pixel are the same ones, in the same order, laid the same way,
-//! so the pixel comes out the same and needn't be redrawn.
+//! so the pixel comes out the same and needn't be redrawn. A picture laid the same way as
+//! before, whose tiles were drawn again since (`tiles.rs`), changed only where those tiles lie.
 
-use tiny_skia::{FilterQuality, Paint, Pattern, Pixmap, PixmapMut, SpreadMode, Transform};
+use tiny_skia::{PixmapMut, Transform};
+
+pub(super) use super::lay::lay_picture;
 
 use super::damage::Patch;
 use crate::overlay::render::{Corners, Layer, Op, Rect, bounds, raster};
@@ -17,12 +20,15 @@ pub(super) struct Item {
     pub what: What,
     /// The device pixels it can change.
     pub at: Patch,
+    /// For a picture: the device pixels its last redraw changed, where it lies now.
+    pub redrawn: Vec<Patch>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub(super) enum What {
-    /// A kept picture (by its number, never reused) laid as `Laid` says.
-    Picture { id: u64, laid: Laid },
+    /// A kept picture (by its number, never reused), as it was after its `version`th redraw,
+    /// laid as `Laid` says.
+    Picture { id: u64, version: u64, laid: Laid },
     /// Ops outside any panel's layer, drawn straight.
     Straight(Vec<Op>),
 }
@@ -62,6 +68,38 @@ pub(super) fn laid(size: (u32, u32), origin: (i32, i32), layer: &Layer, scale: f
     (Laid { opacity, transform, smooth: true }, at)
 }
 
+/// Where `patches` of a picture lie on the screen when it is laid as `laid` covering `at`:
+/// moved with it unzoomed, and all of `at` zoomed.
+pub(super) fn moved(patches: &[Patch], laid: &Laid, at: Patch) -> Vec<Patch> {
+    if patches.is_empty() {
+        return Vec::new();
+    }
+    if laid.smooth {
+        return vec![at];
+    }
+    let (x, y) = (laid.transform.tx as i32, laid.transform.ty as i32);
+    patches.iter().map(|p| Patch::new(p.x0 + x, p.y0 + y, p.x1 + x, p.y1 + y)).collect()
+}
+
+/// Whether `now` is `before` laid the same way, its picture perhaps redrawn since.
+fn same(before: &Item, now: &Item) -> bool {
+    before.at == now.at
+        && match (&before.what, &now.what) {
+            (What::Picture { id: a, laid: la, .. }, What::Picture { id: b, laid: lb, .. }) => a == b && la == lb,
+            (a, b) => a == b,
+        }
+}
+
+/// What changed of an item laid the same way as last frame: nothing, the patches its picture's
+/// one redraw since changed, or all of it after more than one.
+fn redrawn(before: &Item, now: &Item, out: &mut Vec<Patch>) {
+    match (&before.what, &now.what) {
+        (What::Picture { version: a, .. }, What::Picture { version: b, .. }) if a == b => {}
+        (What::Picture { version: a, .. }, What::Picture { version: b, .. }) if a + 1 == *b => out.extend(&now.redrawn),
+        _ => out.push(now.at),
+    }
+}
+
 /// The patch `ops`, drawn straight at `scale`, can touch: their ink and a pixel more all round.
 pub(super) fn straight_patch(ops: &[Op], scale: f32) -> Option<Patch> {
     let ink = bounds(ops)?;
@@ -71,16 +109,17 @@ pub(super) fn straight_patch(ops: &[Op], scale: f32) -> Option<Patch> {
 }
 
 /// The patches that differ between frames laying `before` and `now`: the patches of the items
-/// of either not matched, in order, by the same item in the other. Matching keeps the order, as
-/// the stacking order matters where items overlap; an item matched out of order counts as gone
-/// and come, which only paints more.
+/// of either not matched, in order, by the same item in the other, and what was redrawn of
+/// those matched. Matching keeps the order, as the stacking order matters where items overlap;
+/// an item matched out of order counts as gone and come, which only paints more.
 pub(super) fn changed(before: &[Item], now: &[Item]) -> Vec<Patch> {
     let mut out = Vec::new();
     let mut from = 0;
     for item in now {
-        match before[from..].iter().position(|b| b == item) {
+        match before[from..].iter().position(|b| same(b, item)) {
             Some(k) => {
                 out.extend(before[from..from + k].iter().map(|b| b.at));
+                redrawn(&before[from + k], item, &mut out);
                 from += k + 1;
             }
             None => out.push(item.at),
@@ -101,19 +140,6 @@ pub(super) fn clear(target: &mut PixmapMut, patch: Patch) {
     }
 }
 
-/// Lays `pixmap` down as `laid` says over `target`, source-over, only within `clip`. The
-/// picture is a pattern over the patch's whole pixels, so a picture laid down in pieces is the
-/// same, pixel for pixel, as laid down whole.
-pub(super) fn lay_picture(pixmap: &Pixmap, laid: &Laid, clip: Patch, target: &mut PixmapMut) {
-    let Some(rect) = tiny_skia::Rect::from_ltrb(clip.x0 as f32, clip.y0 as f32, clip.x1 as f32, clip.y1 as f32) else {
-        return;
-    };
-    let quality = if laid.smooth { FilterQuality::Bilinear } else { FilterQuality::Nearest };
-    let shader = Pattern::new(pixmap.as_ref(), SpreadMode::Pad, quality, laid.opacity, laid.transform);
-    let paint = Paint { shader, anti_alias: false, ..Paint::default() };
-    target.fill_rect(rect, &paint, Transform::identity(), None);
-}
-
 /// Draws `ops` straight at `scale` over `target`, only within `clip`.
 pub(super) fn draw_straight(ops: &[Op], scale: f32, clip: Patch, target: &mut PixmapMut) {
     let rect = Rect::new(clip.x0 as f32 / scale, clip.y0 as f32 / scale, clip.width() as f32 / scale, clip.height() as f32 / scale);
@@ -130,7 +156,7 @@ mod tests {
 
     fn item(id: u64, x: i32) -> Item {
         let laid = Laid { opacity: 1.0, transform: Transform::identity(), smooth: false };
-        Item { what: What::Picture { id, laid }, at: Patch::new(x, 0, x + 10, 10) }
+        Item { what: What::Picture { id, version: 0, laid }, at: Patch::new(x, 0, x + 10, 10), redrawn: Vec::new() }
     }
 
     #[test]
@@ -151,6 +177,24 @@ mod tests {
         let (a, b, c) = (item(1, 0), item(2, 100), item(3, 200));
         assert_eq!(changed(&[a.clone(), b.clone()], std::slice::from_ref(&a)), vec![b.at]);
         assert_eq!(changed(std::slice::from_ref(&a), &[a.clone(), c.clone()]), vec![c.at]);
+    }
+
+    #[test]
+    fn a_redrawn_picture_adds_only_what_was_redrawn() {
+        let a = item(1, 0);
+        let patch = Patch::new(2, 2, 4, 4);
+        let mut b = a.clone();
+        if let What::Picture { version, .. } = &mut b.what {
+            *version = 1;
+        }
+        b.redrawn = vec![patch];
+        assert_eq!(changed(std::slice::from_ref(&a), std::slice::from_ref(&b)), vec![patch]);
+        // Redrawn twice since: all of it.
+        let mut c = b.clone();
+        if let What::Picture { version, .. } = &mut c.what {
+            *version = 2;
+        }
+        assert_eq!(changed(std::slice::from_ref(&a), std::slice::from_ref(&c)), vec![a.at]);
     }
 
     #[test]

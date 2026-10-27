@@ -125,3 +125,44 @@ fn the_screen_picture_is_the_display_at_scale() {
     assert_eq!((image.width, image.height), (800, 600));
     assert_eq!(image.pixel(0, 0), [51, 77, 102, 255]);
 }
+
+/// Times a radial menu's highlight gliding round it, a new item every three frames, as the
+/// harness's sweep does (run optimized: `--cargo-profile release`). With `BENCH_SLEEP` set it
+/// waits a frame's time between frames, as the overlay does, which on a CPU that slows down
+/// while idle is several times slower and closer to what the harness measures.
+#[test]
+#[ignore]
+#[expect(clippy::print_stdout, reason = "a benchmark reports its timing")]
+fn bench_a_radial_sweep() {
+    use crate::motion::{Feel, Timing};
+    let mut frame = scenes::frame("menu-radial").unwrap();
+    let n = match &frame.active {
+        Some(OverlayView::Menu(m)) => m.items.len(),
+        _ => unreachable!(),
+    };
+    let feel = Feel { glide: 0.12, ..Feel::OFF };
+    let mut screen = Screen::new();
+    let mut buffer = tiny_skia::Pixmap::new(DISPLAY.x as u32, DISPLAY.y as u32).unwrap();
+    let mut spent = std::time::Duration::ZERO;
+    for f in 0..180usize {
+        let (i, step) = (f / 3 % n, f % 3);
+        if let Some(OverlayView::Menu(m)) = &mut frame.active {
+            m.selected = Some(i);
+            m.aim = Some(f as f32 * 7.0);
+        }
+        let timing = Timing { opened: 10.0, moved: step as f32 * 0.016, from: Some(((i + n - 1) % n) as u32), ..Timing::default() };
+        let anim = Anim { feel, timing, clock: 0.0 };
+        let shown = Shown { panels: frame.active.iter().map(|v| (v, anim)).collect(), info: Vec::new(), logs: Vec::new() };
+        let ops = screen_ops(&frame, &shown, DISPLAY);
+        if std::env::var_os("BENCH_SLEEP").is_some() {
+            std::thread::sleep(std::time::Duration::from_millis(16));
+        }
+        let start = std::time::Instant::now();
+        screen.paint(&ops, 1.0, &mut buffer.as_mut(), 1);
+        if f >= 30 {
+            spent += start.elapsed();
+        }
+    }
+    let [diffed, tiled] = screen.spent();
+    println!("{:.2} ms a frame; tiles {}, pictures {}; diff {diffed:?} draw {tiled:?} in all", spent.as_secs_f64() * 1000.0 / 150.0, screen.tiles(), screen.drawn());
+}

@@ -1,13 +1,13 @@
-//! Boxes and their shadows, ported from iced tiny-skia's `draw_quad` (iced_tiny_skia 0.14,
+//! Boxes, ported from iced tiny-skia's `draw_quad` (iced_tiny_skia 0.14,
 //! `engine.rs`): the same radii and border clamps, the same fill rule and border strokes, and
-//! the same shadow, sampled the same way, so a box looks as it does under iced.
+//! the shadow in `shadow.rs`, so a box looks as it does under iced.
 
 use std::f32::consts::{FRAC_PI_2, PI};
 
-use tiny_skia::{FillRule, IntSize, Mask, PathBuilder, Pixmap, PixmapPaint, Transform};
+use tiny_skia::{FillRule, Mask, PathBuilder};
 
-use super::{Pen, paint};
-use crate::overlay::render::{Corners, Fill, Outline, Point, Rect, Shadow};
+use super::{Pen, cover, paint};
+use crate::overlay::render::{Corners, Fill, Outline, Point, Rect};
 
 /// The radii in iced's order, each held to half the box's shorter side.
 pub(super) fn radii(rect: Rect, radii: Corners) -> [f32; 4] {
@@ -81,7 +81,7 @@ pub(super) fn rect(pen: &mut Pen, rect: Rect, corners: Corners, fill: Option<&Fi
     let fill_radii = radii(rect, corners);
     let Some(path) = rounded(rect, fill_radii) else { return };
     if let Some(fill) = fill {
-        pen.pixmap.fill_path(&path, &paint::paint(fill, rect), FillRule::EvenOdd, pen.transform, pen.mask);
+        cover::fill(pen, &path, &paint::paint(fill, rect), FillRule::EvenOdd);
     }
     let Some(border) = border.filter(|b| b.color.a > 0.0) else { return };
     let width = border.width.min(rect.w / 2.0).min(rect.h / 2.0);
@@ -106,88 +106,26 @@ pub(super) fn rect(pen: &mut Pen, rect: Rect, corners: Corners, fill: Option<&Fi
     let paint = paint::paint(&Fill::Solid(border.color), rect);
     // A border as wide as half the box covers all of it.
     let Some(line) = rounded(inner, border_radii) else {
-        pen.pixmap.fill_path(&path, &paint, FillRule::EvenOdd, pen.transform, pen.mask);
+        cover::fill(pen, &path, &paint, FillRule::EvenOdd);
         return;
     };
     let stroke = tiny_skia::Stroke { width, ..tiny_skia::Stroke::default() };
     if simple {
-        pen.pixmap.stroke_path(&line, &paint, &stroke, pen.transform, pen.mask);
+        cover::stroke(pen, &line, &paint, &stroke);
         return;
     }
     let mask = match pen.mask {
         Some(outer) => {
             let mut mask = outer.clone();
-            mask.intersect_path(&path, FillRule::EvenOdd, true, pen.transform);
+            cover::mask(&mut mask, &path, FillRule::EvenOdd, pen.transform, true);
             Some(mask)
         }
         None => Mask::new(pen.pixmap.width(), pen.pixmap.height()).map(|mut mask| {
-            mask.fill_path(&path, FillRule::EvenOdd, true, pen.transform);
+            cover::mask(&mut mask, &path, FillRule::EvenOdd, pen.transform, false);
             mask
         }),
     };
     if let Some(mask) = mask {
-        pen.pixmap.stroke_path(&line, &paint, &stroke, pen.transform, Some(&mask));
+        cover::stroke(&mut Pen { pixmap: pen.pixmap, transform: pen.transform, mask: Some(&mask) }, &line, &paint, &stroke);
     }
-}
-
-/// A box's shadow by iced's formula: each device pixel of the shadow's box, sampled at its top
-/// left corner, takes the shadow's color times one less the smoothstep, over the blur either
-/// side, of its distance outside the rounded box. Inside the box the distance is 0, so a soft
-/// shadow is half strength there, as in iced. With no blur the shadow is the box itself,
-/// unsoftened (iced's sum gives 0/0 there, which tiny-skia reads as full strength).
-///
-/// The box is grown by `spread` first, its rounded corners with it.
-pub(super) fn shadow(pen: &mut Pen, rect: Rect, corners: Corners, shadow: Shadow, spread: f32) {
-    if shadow.color.a.is_nan() || shadow.color.a <= 0.0 {
-        return;
-    }
-    let base = radii(rect, corners);
-    let rect = rect.outset(spread);
-    if rect.is_empty() {
-        return;
-    }
-    let radii = base.map(|r| if r > 0.0 { (r + spread).max(0.0).min(rect.w / 2.0).min(rect.h / 2.0) } else { 0.0 });
-    let (s, blur, (dx, dy)) = (pen.scale(), shadow.blur.max(0.0), shadow.offset);
-    let reach = pen.device(Rect::new(rect.x + dx - blur, rect.y + dy - blur, rect.w + 2.0 * blur, rect.h + 2.0 * blur));
-    // Whole pixels as iced takes them (`as u32`), then only those on the pixmap.
-    let (x0, y0) = (reach.x as u32, reach.y as u32);
-    let x1 = (x0 + reach.w as u32).min(pen.pixmap.width());
-    let y1 = (y0 + reach.h as u32).min(pen.pixmap.height());
-    let Some(size) = IntSize::from_wh(x1.saturating_sub(x0), y1.saturating_sub(y0)) else { return };
-    let body = pen.device(rect);
-    let half = (body.w / 2.0, body.h / 2.0);
-    let center = (body.x + dx * s + half.0, body.y + dy * s + half.1);
-    let radii = radii.map(|r| r * s);
-    let mut pixels = Vec::with_capacity(size.width() as usize * size.height() as usize * 4);
-    for y in y0..y1 {
-        for x in x0..x1 {
-            let d = distance((x as f32 - center.0, y as f32 - center.1), half, radii).max(0.0);
-            let strength = if blur > 0.0 { 1.0 - smoothstep(-blur * s, blur * s, d) } else if d <= 0.0 { 1.0 } else { 0.0 };
-            let mut c = paint::color(shadow.color);
-            c.apply_opacity(strength);
-            let p = c.to_color_u8().premultiply();
-            pixels.extend_from_slice(&[p.red(), p.green(), p.blue(), p.alpha()]);
-        }
-    }
-    let Some(picture) = Pixmap::from_vec(pixels, size) else { return };
-    pen.pixmap.draw_pixmap(x0 as i32, y0 as i32, picture.as_ref(), &PixmapPaint::default(), Transform::identity(), pen.mask);
-}
-
-fn smoothstep(a: f32, b: f32, x: f32) -> f32 {
-    let x = ((x - a) / (b - a)).clamp(0.0, 1.0);
-    x * x * (3.0 - 2.0 * x)
-}
-
-/// How far `to_center` (from the box's middle) lies outside a box of `half` its size with
-/// corners `radii` round, negative inside (iced's `rounded_box_sdf`).
-fn distance(to_center: (f32, f32), half: (f32, f32), radii: [f32; 4]) -> f32 {
-    let radius = match (to_center.0 > 0.0, to_center.1 > 0.0) {
-        (true, true) => radii[2],
-        (true, false) => radii[1],
-        (false, true) => radii[3],
-        (false, false) => radii[0],
-    };
-    let x = (to_center.0.abs() - half.0 + radius).max(0.0);
-    let y = (to_center.1.abs() - half.1 + radius).max(0.0);
-    (x.powf(2.0) + y.powf(2.0)).sqrt() - radius
 }
