@@ -200,6 +200,15 @@ impl Screen {
         self.reset();
     }
 
+    /// Forgets as `forget` does, for new buffers of `size` device pixels at `scale` that hold
+    /// nothing (a new pool's, all clear): the screen before the next frame is taken to be
+    /// clear, so a buffer still clear is one frame older than the first frame painted, and the
+    /// first frame paints only where it draws something.
+    pub fn forget_onto_clear(&mut self, size: (u32, u32), scale: f32) {
+        self.forget();
+        self.last = Some(Last { items: Vec::new(), size, scale: scale.to_bits() });
+    }
+
     /// Forgets what the last frames laid down: the next `paint` repaints everything.
     fn reset(&mut self) {
         self.last = None;

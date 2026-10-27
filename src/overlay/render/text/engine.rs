@@ -6,7 +6,9 @@ use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
     hash::{DefaultHasher, Hash, Hasher},
-    sync::Arc,
+    sync::{Arc, Mutex, PoisonError},
+    thread::JoinHandle,
+    time::Instant,
 };
 
 use cosmic_text::{CacheKey, FontSystem, SwashCache, SwashImage, fontdb::Source};
@@ -14,7 +16,10 @@ use cosmic_text::{CacheKey, FontSystem, SwashCache, SwashImage, fontdb::Source};
 use super::{Canvas, Shaped, Spec, paint, set::Run};
 use crate::{
     font,
-    overlay::render::{Point, Rgba, RunKey},
+    overlay::{
+        render::{Point, Rgba, RunKey},
+        timing::{timing_log, unix_ns},
+    },
 };
 
 /// Past this many runs, those not used lately are dropped.
@@ -27,10 +32,28 @@ thread_local! {
     static ENGINE: RefCell<Option<Engine>> = const { RefCell::new(None) };
 }
 
-/// Runs `f` on this thread's engine, made on first use, with its fonts brought up to date.
+/// An engine being made on a thread of its own (`warm`), for the first thread that wants one.
+static WARMING: Mutex<Option<JoinHandle<Engine>>> = Mutex::new(None);
+
+/// Starts making an engine on a thread of its own, for the first thread to draw text to take.
+/// Making one reads every installed font (some 3000 faces here): tens of milliseconds with them
+/// in the page cache, seconds when they have to come off the disk, which would otherwise land on
+/// the first frame drawn.
+pub fn warm() {
+    let mut warming = WARMING.lock().unwrap_or_else(PoisonError::into_inner);
+    if warming.is_none() {
+        *warming = std::thread::Builder::new().name("fonts".into()).spawn(Engine::new).ok();
+    }
+}
+
+/// Runs `f` on this thread's engine, made on first use (or taken from `warm`, waited for if it
+/// isn't ready), with its fonts brought up to date.
 pub(super) fn with<R>(f: impl FnOnce(&mut Engine) -> R) -> R {
     ENGINE.with_borrow_mut(|engine| {
-        let engine = engine.get_or_insert_with(Engine::new);
+        let engine = engine.get_or_insert_with(|| {
+            let warmed = WARMING.lock().unwrap_or_else(PoisonError::into_inner).take();
+            warmed.and_then(|w| w.join().ok()).unwrap_or_else(Engine::new)
+        });
         engine.sync_fonts();
         f(engine)
     })
@@ -40,7 +63,7 @@ pub(super) struct Engine {
     fonts: FontSystem,
     /// `font::version` when the fonts were last loaded; a run shaped before then is shaped again.
     version: u64,
-    /// The files loaded, by a hash of their bytes.
+    /// The files loaded, by `key`.
     files: HashSet<u64>,
     runs: Kept<RunKey, Run>,
     pub glyphs: Glyphs,
@@ -51,11 +74,13 @@ pub(super) struct Engine {
 
 impl Engine {
     fn new() -> Engine {
+        let started = Instant::now();
         let version = font::version();
         let files = font::files();
-        let hashes = files.iter().map(|f| digest(f)).collect();
+        let hashes = files.iter().map(key).collect();
         // The installed fonts too, as iced loads them: a setting can name any family.
         let fonts = FontSystem::new_with_fonts(files.into_iter().map(source));
+        timing_log(&format!("fonts {} {} faces {}", unix_ns(), started.elapsed().as_nanos(), fonts.db().len()));
         Engine {
             fonts,
             version,
@@ -74,7 +99,7 @@ impl Engine {
             return;
         }
         for file in font::files() {
-            if self.files.insert(digest(&file)) {
+            if self.files.insert(key(&file)) {
                 self.fonts.db_mut().load_font_source(source(file));
             }
         }
@@ -125,9 +150,15 @@ fn source(file: Cow<'static, [u8]>) -> Source {
     }
 }
 
-fn digest(bytes: &[u8]) -> u64 {
+/// Tells font files apart: a bundled one by where it is, as hashing would read every byte of it
+/// (and so keep it all in memory), a game's by a hash of its bytes.
+#[expect(clippy::ptr_arg, reason = "whether it is borrowed is what tells a bundled font")]
+fn key(file: &Cow<'static, [u8]>) -> u64 {
     let mut hasher = DefaultHasher::new();
-    bytes.hash(&mut hasher);
+    match file {
+        Cow::Borrowed(bytes) => (bytes.as_ptr() as usize, bytes.len()).hash(&mut hasher),
+        Cow::Owned(bytes) => bytes.hash(&mut hasher),
+    }
     hasher.finish()
 }
 

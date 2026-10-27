@@ -40,6 +40,13 @@ pub fn forget() {
     forget_shapes();
 }
 
+/// What the overlay keeps while hidden: every shape's coverage and shadow dropped
+/// (`forget_shapes`), and of the pictures, SVGs and patterns only a little of what was used last.
+pub fn shrink() {
+    pictures::shrink();
+    forget_shapes();
+}
+
 /// Drops the coverage of every shape and every shadow kept, as when a screen's pictures go
 /// (`Screen::forget`): they are made again from a panel's list as quickly as its picture is.
 pub fn forget_shapes() {

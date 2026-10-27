@@ -122,9 +122,11 @@ fn family_of(bytes: &[u8]) -> Option<String> {
 /// Every font file a renderer should load to draw what [`family`] names: the bundled fonts, then
 /// the other files loaded so far (a game's). Each renderer loads them into its own font system.
 pub fn files() -> Vec<Cow<'static, [u8]>> {
-    let bundled: Vec<u64> = BUNDLED.iter().map(|b| hash(b.bytes)).collect();
+    // A bundled font is hashed only when a loaded file is as long: hashing reads every byte, and
+    // so keeps all the bundled fonts in memory where drawing reads only a few of their pages.
+    let bundled = |key: u64, bytes: &[u8]| BUNDLED.iter().any(|b| b.bytes.len() == bytes.len() && hash(b.bytes) == key);
     let loaded = LOADED.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-    let mut others: Vec<_> = loaded.iter().flatten().filter(|(key, _)| !bundled.contains(key)).collect();
+    let mut others: Vec<_> = loaded.iter().flatten().filter(|(key, (_, bytes))| !bundled(**key, bytes)).collect();
     others.sort_by_key(|(key, _)| **key);
     let others = others.into_iter().map(|(_, (_, bytes))| Cow::Owned(bytes.to_vec()));
     BUNDLED.iter().map(|b| Cow::Borrowed(b.bytes)).chain(others).collect()
