@@ -3,8 +3,8 @@
 apart frames are shown against the display's refresh, how many refreshes were missed, how long a
 frame from the daemon waits for its first `present`, and how evenly a fade steps.
 
-A `present` line stamps the start of iced's redraw (see `present_log` in src/overlay/timing.rs),
-a little before the buffer is committed, so intervals are good and absolute times are early.
+A `present` line is stamped as each buffer is committed (src/overlay/wayland/window.rs); what the
+compositor then shows is not in the log, so frames dropped at the display are inferred.
 Frames shown twice are refreshes in which nothing was presented (an interval of two or more
 refreshes), and presents with no new build since the one before (the same content again).
 
