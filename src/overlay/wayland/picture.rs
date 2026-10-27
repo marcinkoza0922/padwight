@@ -58,7 +58,14 @@ impl Picture<'_> {
                 }
                 let total = started.elapsed();
                 let (list, paint) = (listed.as_nanos(), (total - listed).as_nanos());
-                timing_log(&format!("built {} {} {width}x{height} list {list} paint {paint} pictures {}", unix_ns(), total.as_nanos(), screen.drawn()));
+                let [diffed, tiled] = screen.spent().map(|d| d.as_nanos());
+                timing_log(&format!(
+                    "built {} {} {width}x{height} list {list} paint {paint} pictures {} tiles {} diff {diffed} draw {tiled}",
+                    unix_ns(),
+                    total.as_nanos(),
+                    screen.drawn(),
+                    screen.tiles()
+                ));
                 damage
             }
         }

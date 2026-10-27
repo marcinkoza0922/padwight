@@ -212,15 +212,34 @@ fn a_few_pictures_are_kept_and_the_oldest_dropped() {
         }
         screen.draw(frame, &Shown::settled(frame), Display { size: DISPLAY, scale: 1.0 }, &mut target.as_mut());
     };
-    // The cursor moving back and forth over a few rows reuses their pictures.
-    for i in [0, 1, 2, 3, 2, 1, 0, 1, 2, 3] {
+    // The cursor moving back and forth over a few rows redraws the tiles of the rows it leaves
+    // and reaches, in the one picture.
+    select(&mut frame, &mut screen, 0);
+    let ops = screen_ops(&frame, &Shown::settled(&frame), DISPLAY);
+    let ink = bounds(&ops).unwrap();
+    let tiles = ((ink.w / 64.0).ceil() * (ink.h / 64.0).ceil()) as u64;
+    for (n, i) in [1, 2, 3, 2, 1, 0, 1, 2, 3].into_iter().enumerate() {
+        let before = screen.tiles();
         select(&mut frame, &mut screen, i);
+        assert!(screen.tiles() > before, "move {n} redrew some tiles");
+        assert!(screen.tiles() - before <= tiles / 2, "move {n} redrew {} of {tiles} tiles", screen.tiles() - before);
     }
-    assert_eq!(screen.drawn(), 4);
-    assert!(screen.kept() <= 4);
+    assert_eq!(screen.drawn(), 1);
+    assert!(screen.kept() <= 1);
+    // What the redrawn tiles make is the picture drawn afresh.
+    let redrawn = laid(&mut screen, &ops_selected(&mut frame, 3));
+    assert_eq!(redrawn.data(), laid(&mut Screen::new(), &ops_selected(&mut frame, 3)).data());
     // A new scale is a new picture.
     screen.draw(&frame, &Shown::settled(&frame), Display { size: DISPLAY, scale: 1.5 }, &mut target.as_mut());
-    assert_eq!(screen.drawn(), 5);
+    assert_eq!(screen.drawn(), 2);
     screen.forget();
     assert!(screen.kept() == 0);
+}
+
+/// The ops of `frame` with its menu's cursor on item `i`.
+fn ops_selected(frame: &mut OverlayFrame, i: usize) -> Vec<Op> {
+    if let Some(OverlayView::Menu(m)) = &mut frame.active {
+        m.selected = Some(i);
+    }
+    screen_ops(frame, &Shown::settled(frame), DISPLAY)
 }
