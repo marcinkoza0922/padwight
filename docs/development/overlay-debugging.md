@@ -1,188 +1,131 @@
 # Debugging the overlay
 
 Tools for seeing what the on-screen overlay does, frame by frame, without a monitor or a
-controller. They answer two kinds of question:
+controller. They answer these kinds of question:
 
-- **Timing:** did the overlay get the frame the daemon sent, and when did it draw what? Use the
-  [harness](#the-harness) and the [timing log](#the-timing-log).
+- **Timing:** did the overlay get the frame the daemon sent, and when did it draw and present
+  it? Use the [harness](#the-harness) and the [timing log](#the-timing-log).
 - **Looks:** what does a menu look like part way through a fade? Use the
   [fade frames](#fade-frames).
 - **Motion:** how does a motion style open, move, pick and close? Use the
   [motion runs](#motion-runs).
-
 - **Stills:** how does a screen look, start to finish? Use the
   [screenshot and preview tools](#screenshots-and-previews).
-- **Old against new:** does the overlay's own renderer (`overlay/render`) draw a scene like iced
-  does? `padwight debug overlay compare all` writes iced | new | difference (times 8) to
-  `screenshots/compare/` and lists the scenes worst first by the share of pixels that differ by
-  more than 8 levels, then the mean and largest difference. Scenes the new renderer can't draw
-  yet are listed as not ported; panels hook in at `draw_new` in `src/debug/overlay_compare.rs`.
+- **Against iced:** does the overlay's own renderer draw a scene the way the old iced overlay
+  did? Use the [compare tool](#compare-with-iced).
 
 All output goes under `screenshots/`, which git ignores.
 
-## The harness
+## How the overlay draws
 
-`scripts/overlay-harness.sh <scenario> [out dir]` runs the real daemon and overlay on a headless
-KWin, attaches the debug controller (see [Debug mode](architecture.md#debug-mode)), runs a
-scenario script, and records everything to `screenshots/harness/` (or `out dir`).
+The overlay process draws with its own renderer, `src/overlay/render/`. It has no iced in it.
+A frame from the daemon goes through five stages, each in its own part of the code:
 
-```sh
-scripts/overlay-harness.sh scripts/harness/directional-pick.sh
-scripts/harness/analyze.py            # or: analyze.py -v for every frame
-```
+1. **Layout tree** (`render/layout.rs`, `Node`). Each panel is a tree of rows, columns, wrapping
+   rows, stacks, text and painted leaves. It is measured at a width and then placed in a box. The
+   panels' trees are built in `render/menus.rs`, `radial.rs`, `keyboard.rs`, `info.rs`, `log.rs`,
+   `media.rs`, `figure.rs`, `item.rs` and `panel.rs`.
+2. **Display list** (`render/op.rs`, `Op`). Placing a tree emits a flat list of rects, shadows,
+   text runs, paths, pictures, clips and layers. Lists are plain data: they compare equal, and
+   have a hash (`op::digest`). `render::screen_ops` (`render/screen.rs`) builds the whole screen's
+   list, with each panel as one layer placed where it rests (`render/place.rs`).
+3. **Panel pictures** (`render/screen/pictures.rs`, `tiles.rs`, `diff.rs`, `lay.rs`). A panel's
+   list is drawn at full strength into its own picture, and the picture is kept while the list
+   stays the same. A fade, slide or zoom only lays the picture down again, at its opacity, offset
+   and scale, so every part of a panel fades by the same amount. When a list changes (a highlight
+   gliding, an item fading in), `diff.rs` finds the ops that changed and only the 64-pixel tiles
+   they reach are drawn again (`tiles.rs`, `under.rs`).
+4. **Damage** (`render/screen/damage.rs`, `items.rs`, `repaint.rs`). `Screen::paint` works out the
+   device pixels that changed since the buffer it draws into was last drawn. The buffer's age
+   says how many frames back that was; the last four frames' damage is kept. Only those patches
+   are cleared and drawn again.
+5. **Window.** On Linux, `overlay/wayland/picture.rs` paints each buffer the compositor has
+   released through `Screen::paint`. On Windows, `overlay/windows.rs` paints its DIB section the
+   same way and gives the damage's bounds to `UpdateLayeredWindowIndirect`.
 
-It needs `kwin_wayland`, `dbus-run-session`, `bwrap` and `python3`, and builds the debug binary
-first.
+The rasterizer (`render/raster.rs` and `raster/`) draws the ops with tiny-skia, SVGs with resvg,
+and text with cosmic-text (`render/text.rs`). Shadows, gradients and borders follow iced
+tiny-skia's maths, so the numbers from `overlay/draw/` carry over. `render/screen.rs`, `pictures.rs`
+and `damage.rs` start with module docs that say more.
 
-### What it keeps away from your desktop
+The iced versions of the same panels are still in `overlay/draw/`. The settings window's
+previews, the stage editor and the iced side of `debug overlay compare` use them. Until the
+settings previews move to the new renderer (plan step 9.1), a change to how a panel looks has to
+be made in both.
 
-The daemon in the harness can't touch your real session:
+## Compare with iced
 
-- It gets its own `XDG_RUNTIME_DIR`, so it can't reach the real daemon's socket, the desktop's
-  session bus or the sound server (menu sounds go nowhere).
-- It runs under `bwrap` with an empty `/dev/input` and every `/dev/hidraw*` hidden, so it can't
-  take your controllers. The debug controller reaches it over the socket, not through
-  `/dev/input`.
-- It gets a copy of a config folder, never your own. The default is
-  `scripts/harness/config`. In it, holding **South** opens a directional menu (`Directional`,
-  on the D-pad) and holding **East** opens a radial one (`Radial`, aimed with the right stick).
-  Set `PADWIGHT_HARNESS_CONFIG=<dir>` to use another folder.
-- Without `--live`, nothing the debug controller does reaches the real virtual keyboard, mouse
-  or pad.
-
-### Writing a scenario
-
-A scenario is a bash script, sourced once the controller is attached. It has three helpers:
-
-| Helper | What it does |
-|---|---|
-| `pad <command>` | Runs `padwight debug <command>` against the session: `pad press south`, `pad tap up 40`, `pad stick right 0 -1`, `pad release east`. `padwight debug help` lists the commands. |
-| `mark <text>` | Writes `mark <ns> <text>` into `overlay.log`, so the analysis can split the run into rounds. |
-| `shot <name>` | Saves a screenshot as `<name>.png`. Use it to check layout only (see [Limits](#limits)). |
-
-Leave time for the overlay to react (`sleep 0.5` and up). Each `pad` command returns once the
-daemon has handled the input, but the overlay draws after that. The scenarios in
-`scripts/harness/`:
-
-- `directional-pick.sh`: opens the directional menu and picks its top slot, ten times.
-- `radial-open-close.sh`: opens and closes the radial menu, then aims and picks, five times.
-
-### What it records
-
-| File | What's in it |
-|---|---|
-| `frames.log` | Every frame the daemon sent, as `<ns> <frame JSON>`, read from the daemon's socket as a second overlay watcher. |
-| `overlay.log` | The overlay's [timing log](#the-timing-log), plus the scenario's `mark` lines. |
-| `daemon.log` | The daemon's output. |
-| `session.log`, `kwin.log` | The debug session's and KWin's output, for when a run fails. |
-
-`frames.log` and `overlay.log` share a clock (nanoseconds since the Unix epoch). Comparing them
-shows what the daemon sent and what the overlay got: a frame that's in `frames.log` but has no
-`recv` in `overlay.log` was lost on the way.
-
-`scripts/harness/analyze.py [overlay.log]` sums up `overlay.log` for each `mark`:
-
-- the frames the overlay received;
-- the longest gap between two builds, and the window size it laid out at;
-- how soon after opening it drew the first frame part way into the fade;
-- for a menu closed by a pick, how many frames it held the pick fully shown, and the strongest
-  flash.
-
-With `-v` it also lists every build and every drawn menu under its mark.
-
-### Limits
-
-- **Screenshots lag.** KWin's virtual screen shows the overlay's frames late and updates parts
-  of them at a time, so a `shot` taken during a fade doesn't show what the overlay drew. To see a
-  fade, use the [fade frames](#fade-frames).
-- **The first menu stalls.** In every run so far, the first menu after the overlay starts is
-  laid out at 1×1, then nothing more happens until the next menu opens. Its other frames arrive
-  only then. So round 1 of a scenario shows nothing useful. Whether this happens on real
-  hardware too isn't known yet.
-- **The rendering path isn't yours.** KWin's virtual screen doesn't render the way a real GPU
-  does, so the timing it shows is close but not exact.
-
-## The timing log
-
-When `PADWIGHT_OVERLAY_TIMING` names a file, the overlay process appends a line to it for every
-frame it receives, every time it builds its widgets, and every menu it draws:
-
-```
-recv <ns> menu "Directional" selected=Some(0) picks=1
-built <ns> <build ns> 1920x1080
-menu <ns> "Directional" picks=1 selected=Some(0) opacity=1.00 lit=1.00 flash=0.80 since=open:0.517,closed:Some(0.075),moved:0.013,picked:0.013
-```
-
-- **`recv`:** the frame's menu title, cursor and pick count; `none` when nothing is shown, or
-  the overlay's kind for the keyboard, media controls and the offer.
-- **`built`:** how long the build took, and the window size it laid out at. A build at `1x1`
-  happened before the window grew to the whole screen.
-- **`menu`:** the menu's motion values in that build, and how many seconds ago it opened,
-  closed, moved its cursor and was picked from. A `closed` value means the menu is fading out.
-
-The overlay opens the file on every line, so the log is for measuring only, not for normal use.
-The code is in `src/overlay/timing.rs`.
-
-To log your real overlay, start the daemon with the variable set; the overlay process inherits
-it. Stop the running daemon first:
+`padwight debug overlay compare` draws each scene twice: with iced (`overlay::snapshot_iced`) and
+with the new renderer (`overlay::render::screen`). Both are settled, with motion off.
 
 ```sh
-PADWIGHT_OVERLAY_TIMING=$PWD/screenshots/overlay.log padwight daemon
+cargo run -q -- debug overlay compare all                 # every scene
+cargo run -q -- debug overlay compare menu-list radial    # some scenes
+cargo run -q -- debug overlay compare all --out <dir>     # default screenshots/compare
 ```
 
-`scripts/harness/analyze.py` reads this log too. Without `mark` lines it has no rounds to split
-by, so add some by hand, for example `echo "mark $(date +%s%N) pick" >> screenshots/overlay.log`.
+It takes the same options as `debug overlay` (`--size`, `--scale`, `--background`). For each
+scene it writes `<out>/<name>.png`: iced on the left, the new renderer in the middle, and the
+difference on the right. The difference is each channel's |iced − new| times 8, so a small
+difference shows.
+
+The report prints one line per scene, worst first:
+
+```
+scene                       over     mean   max  path
+```
+
+- **`over`:** the share of pixels where some channel (alpha included) differs by more than 8
+  levels. This is the number to watch.
+- **`mean`:** the average over all pixels of the largest channel difference, in levels.
+- **`max`:** the largest difference anywhere, in levels.
+
+Scenes come out "size differs" when the two pictures aren't the same size. Scenes the new
+renderer can't draw are listed last under "not ported"; right now that is only `glyphs`, the glyph
+sheets, which are still drawn by iced alone.
+
+To read a difference, open the PNG:
+
+- Differences only at letter edges and outlines are the text and anti-aliasing. The plan
+  expects those, and a few levels per pixel.
+- A whole box or area that differs points at a color or alpha. Compare the two in the same place
+  in `overlay/draw/` and `render/`: both read the same `Style` and `Look`, and
+  `draw/look/parity.rs` checks the resolved colors for the default and decorated styles.
+- Grain in the filter scenes (`menu-filters`, `menu-plaid`) and the frame marks at rounded corners
+  differ from iced for known reasons; the plan's step rows 3.4 and 4.1 say which.
 
 ## Fade frames
 
-The fade frames test draws menus part way through their fade-in, in-process, with the renderer
-the overlay itself picks: wgpu on a machine with a GPU, otherwise tiny-skia (the file names end
-in `-wgpu` or `-tiny-skia`). No compositor is involved, so each picture is exactly what the
-overlay would draw at that point.
+`cargo test fade_frames` draws six menus part way through a fade-in, with the overlay's own
+renderer, and checks them. It needs no `--ignored` flag and no display.
+
+The six scenes are a radial menu, the same menu with an item aimed at, the radial menu as boxes,
+directional menus on the D-pad and the face buttons, and a list. Each is drawn at 10%, 25%, 50%,
+75% and 100% opacity (set directly, with no motion), over black and over light grey. The test
+asserts that every pixel is its full-strength color blended over the background by the same
+share, within 2 levels. A part that ignores the fade, or parts that stack their transparency, fail
+it.
+
+To keep the pictures:
 
 ```sh
 mkdir -p screenshots/fade
-PADWIGHT_FADE_FRAMES=$PWD/screenshots/fade cargo test fade_frames -- --ignored
+PADWIGHT_FADE_FRAMES=$PWD/screenshots/fade cargo test fade_frames
 scripts/harness/fade-check.py screenshots/fade
 ```
 
-It draws six scenes: a radial menu, the same menu with an item aimed at, the radial menu as boxes,
-directional menus on the D-pad and the face buttons, and a list. Each is drawn at 10%, 25%,
-50%, 75% and 100% opacity under the Subtle motion style, over black and over light grey. The
-files are named `<scene>-<background>-<opacity>-<renderer>.png`. To add a scene, edit
-`scenes()` in `src/overlay/fade_frames.rs`.
-
-### Reading the check
-
-A menu faded as one picture follows a simple rule: at opacity `o`, each pixel is the background
-plus `o` of the way to that pixel fully shown. `scripts/harness/fade-check.py` compares every
-picture with that rule and prints, per scene, background and opacity:
-
-- how many pixels are more than 12 levels (of 255) off;
-- the worst of them;
-- the box they fall in.
-
-Two kinds of fault show up, and the two backgrounds tell them apart:
-
-- **A part that ignores the fade** is drawn at full strength from the first frame, so it shows
-  up even on black. For example, a color with a fixed alpha (`Color { a: 0.35, .. }`) instead
-  of one scaled from the faded color (`c.scale_alpha(0.35)`). Over black, the worst value should
-  stay low, around 20 to 50.
-- **Layers stacking.** Each widget fades on its own: the panel, an item, its label. Where they
-  overlap, the result looks more solid than the rule says. This barely shows over black, but
-  over light grey it covers large areas. iced can't fade a group of widgets as one, so this only
-  goes away for parts drawn into a single image, such as the radial menu's ring, which is one
-  SVG faded with the widget's own opacity.
-
-The check doesn't fail the build. It's for comparing before and after a change: render the
-frames on both versions, then run the check on each folder.
+The files are named `<scene>-<background>-<opacity>.png`, the opacity as a percentage with
+three digits (`radial-black-010.png`). `scripts/harness/fade-check.py` reads them and, for each
+scene and background, prints the pixels more than 12 levels off the blend, the worst of them, and
+the box they fall in. It is for looking at a change in the pictures; the test is the check that
+fails. To add a scene, edit `scenes()` in `src/overlay/fade_frames.rs`.
 
 ## Motion runs
 
 `padwight debug motion` plays a scripted run of an overlay in one or more motion styles and
-draws every moment of it in-process, with the overlay's own layer code (`overlay::film` in
-`src/overlay/ui.rs`) and the CPU renderer. No display, compositor, daemon or controller is
-involved, and the clock is made up, so every run draws the same frames.
+draws every moment of it in-process, with the overlay's own renderer (`overlay::film` in
+`src/overlay/ui/shots.rs`). No display, compositor, daemon or controller is involved, and the clock
+is made up, so every run draws the same frames.
 
 ```sh
 cargo run -q -- debug motion playful              # one style
@@ -230,10 +173,199 @@ their places (`shift0`, `shift3`). Once the overlay has finished closing, the li
 `(gone)`. The trace is quick, so check numbers there first (a spring's overshoot, when a style
 settles) and draw only to see how it looks.
 
-Drawing is slow, about 0.2 s a frame. A whole run at the default 50 fps takes about half a
-minute per style, so pick the styles you need, lower `--fps`, or run several styles as separate
-commands at once. The radial menu's items are one SVG picture, so it shows the panel's motion
-but not the items' own (their pop and slide).
+## The harness
+
+`scripts/overlay-harness.sh <scenario> [out dir]` runs the real daemon and overlay on a headless
+KWin, attaches the debug controller (see [Debug mode](architecture.md#debug-mode)), runs a
+scenario script, and records everything to `screenshots/harness/` (or `out dir`).
+
+```sh
+scripts/overlay-harness.sh scripts/harness/directional-pick.sh
+scripts/harness/analyze.py            # or: analyze.py -v for every frame
+```
+
+It needs `kwin_wayland`, `dbus-run-session`, `bwrap` and `python3`, and builds the debug binary
+first. Set `PADWIGHT_HARNESS_RELEASE=1` to build and run the optimized binary; use it for any
+figure about CPU or memory.
+
+### What it keeps away from your desktop
+
+The daemon in the harness can't touch your real session:
+
+- It gets its own `XDG_RUNTIME_DIR`, so it can't reach the real daemon's socket, the desktop's
+  session bus or the sound server (menu sounds go nowhere).
+- It runs under `bwrap` with an empty `/dev/input` and every `/dev/hidraw*` hidden, so it can't
+  take your controllers. The debug controller reaches it over the socket, not through
+  `/dev/input`.
+- It gets a copy of a config folder, never your own. The default is
+  `scripts/harness/config`. In it, holding **South** opens a directional menu (`Directional`,
+  on the D-pad) and holding **East** opens a radial one (`Radial`, aimed with the right stick).
+  Set `PADWIGHT_HARNESS_CONFIG=<dir>` to use another folder.
+- Without `--live`, nothing the debug controller does reaches the real virtual keyboard, mouse
+  or pad.
+
+### Writing a scenario
+
+A scenario is a bash script, sourced once the controller is attached. It has three helpers:
+
+| Helper | What it does |
+|---|---|
+| `pad <command>` | Runs `padwight debug <command>` against the session: `pad press south`, `pad tap up 40`, `pad stick right 0 -1`, `pad release east`. `padwight debug help` lists the commands. |
+| `mark <text>` | Writes `mark <ns> <text>` into `overlay.log`, so the analysis can split the run into rounds. |
+| `shot <name>` | Saves a screenshot as `<name>.png`. Use it to check layout only (see [Limits](#limits)). |
+
+Leave time for the overlay to react (`sleep 0.5` and up). Each `pad` command returns once the
+daemon has handled the input, but the overlay draws after that. The scenarios in
+`scripts/harness/`:
+
+- `directional-pick.sh`: opens the directional menu and picks its top slot, ten times.
+- `radial-open-close.sh`: opens and closes the radial menu, then aims and picks, five times.
+- `pacing.sh`: opens the radial menu, sweeps its cursor round, holds it still and closes it, five
+  times. Its rounds are marked `round N open|move|hold|close|idle`.
+- `radial-sweep.sh`: holds the radial menu open while the cursor goes round and round without
+  stopping, for about 5 s.
+- `resources.sh`: hidden, a menu held, a menu being moved through, and hidden again.
+- `scale.sh`: sets the first output's scale with `kscreen-doctor`, runs `pacing.sh`, then sets
+  the scale back to 1. Needs `SCALE` (for example `SCALE=1.5`) and `kscreen-doctor`.
+
+### Measuring
+
+Each figure has its own command. Run the harness with `PADWIGHT_HARNESS_RELEASE=1` and a folder
+of its own for each run.
+
+```sh
+# Frame pacing: intervals, missed refreshes, daemon-to-present, fade steps
+PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh scripts/harness/pacing.sh screenshots/pacing/<name>
+python3 -I scripts/harness/pacing.py screenshots/pacing/<name>/overlay.log           # --hz 60 by default
+
+# Surface: every buffer committed at the size last configured, none at 1x1 while showing
+python3 -I scripts/harness/surface.py screenshots/pacing/<name>/overlay.log [scale]
+
+# Resources: CPU (share of one core), resident memory, and the memory's kinds
+PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh scripts/harness/resources.sh <out>
+PADWIGHT_HEADLESS_SIZE=3840x2160 PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh scripts/harness/resources.sh <out>
+
+# Radial sweep: CPU while the cursor moves round without stopping
+PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh scripts/harness/radial-sweep.sh <out>
+
+# Scale: buffers at 1, 1.5 and 2 (kscreen-doctor sets the scale for the run)
+SCALE=1.5 PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh scripts/harness/scale.sh <out>
+python3 -I scripts/harness/surface.py <out>/overlay.log 1.5
+```
+
+`resources.sh` writes `resources.txt` in the out dir: one line per phase (hidden, menu-held,
+navigating, hidden-after) with the overlay's and KWin's CPU and the overlay's RSS, then the
+`smaps_rollup` lines (Pss, Pss_Anon, Pss_File, Pss_Shmem) that split the memory into the
+overlay's own and the files it maps in, such as the graphics driver. `radial-sweep.sh` writes the
+same file with phases hidden, radial-held, sweeping and hidden-after.
+
+`pacing.py` prints the frame intervals against the refresh (median, p95, max and missed refreshes
+per run), the frames shown twice or more, presents with no new build since the last one, the time
+from a daemon frame to its first present, and how evenly a fade steps. `surface.py` prints each
+round's configure and first commit, the commits made while showing, the buffer sizes it saw, and
+`violations: none` when nothing broke the rules.
+
+### What it records
+
+| File | What's in it |
+|---|---|
+| `frames.log` | Every frame the daemon sent, as `<ns> <frame JSON>`, read from the daemon's socket as a second overlay watcher. |
+| `overlay.log` | The overlay's [timing log](#the-timing-log), plus the scenario's `mark` lines. |
+| `daemon.log` | The daemon's output. |
+| `session.log`, `kwin.log` | The debug session's and KWin's output, for when a run fails. |
+| `resources.txt`, `outputs.log` | From `resources.sh` / `radial-sweep.sh`, and from `scale.sh` (the outputs before and after). |
+
+`frames.log` and `overlay.log` share a clock (nanoseconds since the Unix epoch). Comparing them
+shows what the daemon sent and what the overlay got: a frame that's in `frames.log` but has no
+`recv` in `overlay.log` was lost on the way.
+
+`scripts/harness/analyze.py [overlay.log]` sums up `overlay.log` for each `mark`:
+
+- the frames the overlay received;
+- the longest gap between two builds, and the window size it laid out at;
+- how soon after opening it drew the first frame part way into the fade;
+- for a menu closed by a pick, how many frames it held the pick fully shown, and the strongest
+  flash.
+
+With `-v` it also lists every build and every drawn menu under its mark.
+
+### Limits
+
+- **Screenshots lag.** KWin's virtual screen shows the overlay's frames late and updates parts
+  of them at a time, so a `shot` taken during a fade doesn't show what the overlay drew. To see a
+  fade, use the [fade frames](#fade-frames).
+- **The rendering path isn't yours.** KWin's virtual screen doesn't render the way a real GPU
+  does, so the timing it shows is close but not exact.
+- **Only KWin is covered.** The harness runs one virtual output under KWin. Other compositors
+  (Sway, Hyprland), full-screen games and real displays are checked by hand (plan step 8.3).
+
+## The timing log
+
+When `PADWIGHT_OVERLAY_TIMING` names a file, the overlay process appends lines to it: one for each
+frame it receives, each buffer it draws and commits, and each menu it draws. The harness sets the
+variable for the overlay. To log your real overlay, start the daemon with it set (the overlay
+process inherits it). Stop the running daemon first:
+
+```sh
+PADWIGHT_OVERLAY_TIMING=$PWD/screenshots/overlay.log padwight daemon
+```
+
+The overlay opens the file on every line, so the log is for measuring only, not for normal use.
+The code is in `src/overlay/timing.rs`, with the lines written where they happen (`ui.rs`,
+`wayland/`, `windows.rs`). Times are nanoseconds since the Unix epoch unless a field says
+otherwise. An example from a menu's opening:
+
+```
+recv 1793100000123456789 menu "Directional" selected=Some(0) picks=1
+built 1793100000124000000 812000 1920x1080 list 90000 paint 700000 pictures 1 tiles 0 diff 40000 draw 600000
+menu 1793100000124000000 "Directional" picks=1 selected=Some(0) opacity=0.42 lit=1.00 flash=0.00 since=open:0.012,closed:None,moved:0.012,picked:0.000
+commit 1793100000124100000 1920x1080 Draw Screen slot 0 age 0 damage 1 2073600 buffer 1920x1080 Buffer(1)
+present 1793100000124100000
+```
+
+The lines, in the order a frame goes through them (the fields are as the code prints them):
+
+| Line | When | Fields |
+|---|---|---|
+| `recv <ns> <what>` | A frame arrives from the daemon. | `<what>` is `menu "<title>" selected=<Option> picks=<n>` for a menu, `none` when nothing shows, and otherwise the overlay's name for what it shows. |
+| `built <ns> <total ns> <w>x<h> list <ns> paint <ns> pictures <n> tiles <n> diff <ns> draw <ns>` | Linux: a buffer is painted. | `<total ns>` is the whole paint. `<w>x<h>` is the buffer in device pixels. `list` is the time to build the display list, and `paint` the time to draw it into the buffer. `pictures` and `tiles` count the panel pictures drawn afresh and the tiles drawn again, both since the overlay started. `diff` and `draw` are the time spent diffing lists and drawing tiles since the last build. |
+| `built <ns> <total ns> <w>x<h>` | Windows: a frame is painted into the DIB. | As above, with no breakdown. |
+| `menu <ns> "<title>" picks=<n> selected=<Option> opacity=<f> lit=<f> flash=<f> since=open:<s>,closed:<Option>,moved:<s>,picked:<s>` | Each menu in each screen drawn. | The motion values of that screen. The `since` values are seconds ago: when it opened, when it started closing (`None` if it isn't), when its cursor last moved and when it was last picked. |
+| `surface <ns> ask <Corner\|Screen> <w>x<h>` | Linux: the surface asks for a size. | `Corner` is 1×1 in a corner, `Screen` the whole screen. A `0` side means the compositor chooses. |
+| `configure <ns> <w>x<h> <target> <next>` | Linux: a configure is acked. | `<next>` is what the loop does next: `Nothing`, `Grow`, `Shrink {..}`, `Blank` or `Draw((w, h))`. |
+| `commit <ns> <w>x<h> <Draw\|Clear\|Blank> <target> slot <n> age <n> damage <patches> <pixels> buffer <dw>x<dh> <Viewport\|Buffer(n)>` | Linux: a buffer is committed. | `<Draw\|Clear\|Blank>` is why: a frame, the clear that shrinks the surface, or the clear for hiding. `slot` and `age` identify the buffer and how many frames back it is. `damage` is the patches committed and their total pixels. The last field is the scale mode. |
+| `commit-unchanged <ns> <w>x<h> <why> slot <n> age <n>` | Linux: a frame came out the same as the screen. | Nothing is committed, and no callback is asked for. |
+| `commit-skipped <ns> <w>x<h> <why> held <n>` | Linux: every buffer is held by the compositor. | The frame is drawn on the next release. |
+| `commit-refused <ns> <w>x<h> <why>` | Linux: a buffer at a size the surface wasn't last configured to. | Shouldn't happen. A debug build asserts. |
+| `pool <ns> <dw>x<dh> <format>` | Linux: a new shared-memory pool is made. | Made when the size, scale or format changes. |
+| `present <ns>` | Linux: after each committed frame. | The same time as its `commit` line. |
+| `callback <ns> <compositor ms> current\|stale` | Linux: a frame callback is done. | `stale` means it answers an older commit. |
+| `shm-format <ns> <format>`, `scale <ns> <n>/120`, `scale <ns> buffer <n>` | Linux: the compositor offers a format or a scale. | |
+
+`analyze.py`, `pacing.py` and `surface.py` read these lines. A `menu` line is written for each
+menu each time the screen is built, so during a fade there is one per frame.
+
+## How to debug a look that differs from iced
+
+1. Compare the scene: `cargo run -q -- debug overlay compare <scene>`. Open
+   `screenshots/compare/<scene>.png` and see where the difference is (see [Compare with
+   iced](#compare-with-iced)).
+2. Find the panel. The iced version is in `overlay/draw/` and the new one in `render/`, usually
+   with the same name (for example `draw/menus.rs` and `render/menus.rs`). Check that both
+   use the same numbers for sizes, gaps and font sizes. The numbers are meant to be copied, not
+   recalculated.
+3. Check the colors and style. `draw/look/parity.rs` compares the resolved styles. If the colors
+   match and the picture doesn't, the difference is in the drawing (`render/raster/`).
+4. Check the fade and the motion. A look that is right settled but wrong part way through is
+   usually a layer or an opacity: run `cargo test fade_frames` (with `PADWIGHT_FADE_FRAMES`
+   for the pictures), or `padwight debug motion <style> --trace` for the numbers.
+5. Check the repaint. A look that is right when drawn afresh but wrong after something moves is
+   a damage problem. `render/screen/repaint.rs` tests that a damaged redraw equals a full one;
+   run `cargo nextest run overlay::render::screen` to check.
+6. Look at the saved pictures of each panel. The ignored tests write them to
+   `screenshots/render/` (for example `every_menu_scene_drawn_as_a_framed_panel`,
+   `every_info_scene_drawn_as_an_info_panel`, `every_radial_scene_drawn`); run one with
+   `cargo nextest run --run-ignored ignored-only <name>`.
 
 ## Screenshots and previews
 
