@@ -83,6 +83,19 @@ fn tap(name: &str) -> Vec<OverlayAction> {
     code(name).map(|k| vec![OverlayAction::Key(k, true), OverlayAction::Key(k, false)]).unwrap_or_default()
 }
 
+/// The presses that type `text` into the game: each character on the key that types it in the
+/// user's layout, with Shift held where that takes it. Characters no key types are left out.
+pub fn typing(text: &str) -> Vec<OverlayAction> {
+    let mut out = Vec::new();
+    for (name, shift) in text.chars().filter_map(keyboard::key_for) {
+        let shift_key = shift.then_some(KeyCode::KEY_LEFTSHIFT);
+        out.extend(shift_key.map(|k| OverlayAction::Key(k, true)));
+        out.extend(tap(name));
+        out.extend(shift_key.map(|k| OverlayAction::Key(k, false)));
+    }
+    out
+}
+
 impl OverlayController {
     pub fn new(board: impl Into<Board>, cursor: Cursor) -> Self {
         let board = board.into();
@@ -260,6 +273,9 @@ impl OverlayController {
 
     fn press_selected(&mut self) -> Vec<OverlayAction> {
         let name = keyboard::key_at(self.board, self.cursor).code;
+        if name == keyboard::PASTE {
+            return self.paste();
+        }
         let Some(k) = code(name) else { return Vec::new() };
         if k == KeyCode::KEY_CAPSLOCK {
             self.caps = !self.caps;
@@ -285,6 +301,22 @@ impl OverlayController {
         self.pressed_shift = self.board == Board::Numpad && !self.shift_down() && keyboard::needs_shift(name, label) == Some(true);
         let shift = self.pressed_shift.then_some(OverlayAction::Key(KeyCode::KEY_LEFTSHIFT, true));
         shift.into_iter().chain([OverlayAction::Key(k, true)]).collect()
+    }
+
+    /// Ctrl+V into the game, which pastes what the clipboard holds. A field of the in-game menu
+    /// takes its text from the keys it's typed with, so there it does nothing.
+    fn paste(&mut self) -> Vec<OverlayAction> {
+        if self.field.is_some() {
+            return Vec::new();
+        }
+        let mut out = vec![
+            OverlayAction::Key(KeyCode::KEY_LEFTCTRL, true),
+            OverlayAction::Key(KeyCode::KEY_V, true),
+            OverlayAction::Key(KeyCode::KEY_V, false),
+            OverlayAction::Key(KeyCode::KEY_LEFTCTRL, false),
+        ];
+        out.extend(self.release_latched());
+        out
     }
 
     fn release_selected(&mut self) -> Vec<OverlayAction> {

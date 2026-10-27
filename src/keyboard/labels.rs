@@ -28,6 +28,15 @@ pub fn cap_label(key: &Key, board: Board, shift: bool, caps: bool) -> String {
     }
 }
 
+/// The key of the basic keyboard that types `c` in the user's layout, and whether Shift has to be
+/// held for it. `None` when no key there types it.
+pub fn key_for(c: char) -> Option<(&'static str, bool)> {
+    let text = c.to_string();
+    super::Board::Basic.rows().iter().flat_map(|row| row.iter()).filter(|key| !key.code.is_empty()).find_map(|key| {
+        [false, true].into_iter().find(|&shift| typed(key.code, shift, false).as_deref() == Some(text.as_str())).map(|shift| (key.code, shift))
+    })
+}
+
 /// What `code` types in the user's layout, with `shift` and `caps`; `None` for a key that types
 /// no character.
 pub fn typed(code: &str, shift: bool, caps: bool) -> Option<String> {

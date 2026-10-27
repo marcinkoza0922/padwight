@@ -10,7 +10,7 @@ impl Daemon {
         match &self.active {
             Some(Active::Keyboard(k)) if k.layout() == layout => return self.close_overlay(),
             Some(Active::Keyboard(_)) => self.close_overlay(),
-            Some(Active::Menu { .. } | Active::Media(_) | Active::Offer(_) | Active::Settings(..) | Active::NewPad(..)) => return,
+            Some(Active::Menu { .. } | Active::Tools(..) | Active::Media(_) | Active::Offer(_) | Active::Settings(..) | Active::NewPad(..)) => return,
             None => {}
         }
         self.driving.owner = by;
@@ -139,7 +139,7 @@ impl Daemon {
                 self.apply_keyboard(actions);
                 log!("on-screen {} closed", layout_name(k.layout()));
             }
-            Some(Active::Menu { .. }) => {}
+            Some(Active::Menu { .. } | Active::Tools(..)) => {}
             Some(Active::Media(_)) => log!("media controls closed"),
             Some(Active::Offer(_) | Active::Settings(..) | Active::NewPad(..)) => {}
             None => return,
@@ -203,6 +203,7 @@ impl Daemon {
             Some(Active::Offer(o)) => Some(o.view(self.config.active_menu_style())),
             Some(Active::Settings(m, _)) => Some(m.overlay_view(&self.config, &self.menu_live)),
             Some(Active::NewPad(s, _)) => Some(s.view(self.config.active_menu_style())),
+            Some(Active::Tools(session, _)) => Some(OverlayView::Menu(session.view(self.config.active_menu_style().clone()))),
             None => match &self.guide_menu {
                 Some(menu) => {
                     let profile = self.guide_profile().map(|p| p.name.as_str()).unwrap_or_default();

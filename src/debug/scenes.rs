@@ -68,6 +68,8 @@ pub fn frame(name: &str) -> Result<OverlayFrame> {
         "held-remapping" => active(held(crate::system_menu::Hold::RemappingOff)),
         "guide" => guide(0),
         "guide-mode" => guide(1),
+        "tools" => active(tools(false)),
+        "calculator" => active(tools(true)),
         "switch-profile" => active(switch_profile(false)),
         "new-profile" => active(switch_profile(true)),
         "edit-controls" => active(edit_controls(&[])),
@@ -163,6 +165,20 @@ fn guide(shown: usize) -> OverlayFrame {
     let info = view.overlays().iter().map(|o| info::resolve(o, &live)).collect();
     let menu = crate::guide_menu::view(false, 0, "Gameplay", OverlayStyle::default());
     OverlayFrame { info, ..OverlayFrame { active: Some(OverlayView::Menu(menu)), ..OverlayFrame::default() } }
+}
+
+/// The Tools menu: its list, or the calculator with 7 × 6 keyed in.
+fn tools(calculator: bool) -> OverlayView {
+    use crate::tools::ToolsSession;
+    let mut session = ToolsSession::new();
+    if calculator {
+        session.handle(Button::South);
+        // 7, then × (one row down from ÷), then 6.
+        for b in [Button::South, Button::DpadRight, Button::DpadRight, Button::DpadRight, Button::DpadDown, Button::South, Button::DpadLeft, Button::South] {
+            session.handle(b);
+        }
+    }
+    OverlayView::Menu(session.view(OverlayStyle::default()))
 }
 
 /// Switch Profile's list (with the cursor on a profile that needs a gyro), or its new-profile page.

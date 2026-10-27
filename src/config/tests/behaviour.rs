@@ -270,7 +270,7 @@ fn the_built_in_modes_let_none_of_the_profile_s_sticks_triggers_gyro_or_touchpad
         assert_eq!(s.action, StickAction::Disabled);
     }
     assert_eq!(guide.left_stick.deadzone, 0.3, "the direction buttons keep the profile's deadzone");
-    assert_eq!(guide.right_trigger.action, TriggerAction::Disabled);
+    assert_eq!(guide.right_trigger.action, TriggerAction::Button { action: ButtonAction::Tools, threshold: 0.3 }, "the right trigger opens the Tools menu");
     assert_eq!(guide.left_trigger.action, TriggerAction::Button { action: ButtonAction::Mode(MAGNIFIER_MODE.into()), threshold: 0.3 }, "the left trigger turns the magnifying glass mode on");
     let mouse = p.with_layers([&Layer::mouse()]);
     assert_eq!(mouse.right_stick, Layer::mouse().right_stick.unwrap(), "mouse mode's own sticks stay");

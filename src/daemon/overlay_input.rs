@@ -75,7 +75,7 @@ impl Daemon {
     /// The controller the overlay on screen belongs to, if it has one yet.
     pub(super) fn overlay_driver(&self) -> Option<u64> {
         match &self.active {
-            Some(Active::Menu { device, .. } | Active::Settings(_, device)) => Some(*device),
+            Some(Active::Menu { device, .. } | Active::Settings(_, device) | Active::Tools(_, device)) => Some(*device),
             _ => self.driving.owner,
         }
     }
@@ -84,7 +84,7 @@ impl Daemon {
     /// and offer go to the first controller that sends them input; the others keep playing.
     pub(super) fn drives_overlay(&mut self, id: u64) -> bool {
         match &self.active {
-            Some(Active::Menu { device, .. } | Active::Settings(_, device)) => *device == id,
+            Some(Active::Menu { device, .. } | Active::Settings(_, device) | Active::Tools(_, device)) => *device == id,
             Some(_) => *self.driving.owner.get_or_insert(id) == id,
             None => false,
         }
@@ -172,6 +172,19 @@ impl Daemon {
         self.config.shortcuts.panel_press(group, b)
     }
 
+    /// What the overlay that's up hears of `ev`: the panels take A and B where their keys sit, and
+    /// a press they ignore is none. Menus do it themselves, since some read the face buttons as
+    /// they are.
+    fn overlay_hears(&self, ev: InputEvent) -> Option<InputEvent> {
+        let InputEvent::Button(b, down) = ev else { return Some(ev) };
+        Some(match self.panel_press(b) {
+            PanelPress::Key(key) => InputEvent::Button(key, down),
+            PanelPress::Ignored => return None,
+            PanelPress::Other if matches!(self.active, Some(Active::Menu { .. })) => InputEvent::Button(b, down),
+            PanelPress::Other => InputEvent::Button(self.config.shortcuts.menu_keys().logical(b, true), down),
+        })
+    }
+
     /// While the overlay shows something, controller input drives it instead of the mappings.
     /// (Every way out redraws, so the input log's view of it shows too.)
     pub(super) fn overlay_input(&mut self, id: u64, events: Vec<InputEvent>, fires: &[bool]) {
@@ -200,17 +213,7 @@ impl Daemon {
                 }
                 continue;
             }
-            // The panels hear A and B where the confirm and back buttons are. Menus do it
-            // themselves, since some read the face buttons as they are.
-            let ev = match ev {
-                InputEvent::Button(b, down) => match self.panel_press(b) {
-                    PanelPress::Key(key) => InputEvent::Button(key, down),
-                    PanelPress::Ignored => continue,
-                    PanelPress::Other if matches!(self.active, Some(Active::Menu { .. })) => InputEvent::Button(b, down),
-                    PanelPress::Other => InputEvent::Button(self.config.shortcuts.menu_keys().logical(b, true), down),
-                },
-                other => other,
-            };
+            let Some(ev) = self.overlay_hears(ev) else { continue };
             match &mut self.active {
                 Some(Active::Keyboard(_)) => self.keyboard_input(id, ev, now),
                 Some(Active::Menu { .. }) => {
@@ -220,6 +223,11 @@ impl Daemon {
                 }
                 Some(Active::Settings(..)) => {
                     if self.settings_input(ev) {
+                        return;
+                    }
+                }
+                Some(Active::Tools(..)) => {
+                    if self.tools_input(ev) {
                         return;
                     }
                 }

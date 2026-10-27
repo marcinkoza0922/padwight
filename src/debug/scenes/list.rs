@@ -1,7 +1,7 @@
 //! The scenes `padwight debug overlay` can draw, by name.
 
 /// Every scene, with what it shows.
-pub const SCENES: [(&str, &str); 71] = [
+pub const SCENES: [(&str, &str); 73] = [
     ("keyboard", "the basic on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-full", "the full on-screen keyboard, Shift latched, the cursor on H"),
     ("keyboard-plaid", "the full on-screen keyboard on wood, its keys under one red tartan"),
@@ -60,6 +60,8 @@ pub const SCENES: [(&str, &str); 71] = [
     ("held-remapping", "the in-game menu asking to save once remapping is turned off from the tray"),
     ("guide", "the Guide overlay: its menu, Notes, and Mappings with a held layer's section"),
     ("guide-mode", "the Guide overlay turned to a mode that isn't on"),
+    ("tools", "the Tools menu, opened with Guide + right trigger"),
+    ("calculator", "the Tools menu's calculator, with 7 × 6 keyed in"),
     ("switch-profile", "Switch Profile, opened from the Guide menu: the profiles and a new one"),
     ("new-profile", "what a new profile from Switch Profile starts from"),
     ("edit-controls", "Edit Controls' first page: what can be edited"),

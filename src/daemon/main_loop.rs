@@ -77,7 +77,7 @@ impl Daemon {
             Some(Active::Offer(o)) => o.next_deadline(),
             Some(Active::Settings(m, _)) => m.next_deadline(),
             Some(Active::NewPad(s, _)) => s.next_deadline(),
-            None => None,
+            Some(Active::Tools(..)) | None => None,
         };
         self.devices
             .values()

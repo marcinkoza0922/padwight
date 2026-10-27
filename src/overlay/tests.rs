@@ -201,6 +201,28 @@ fn guide_with_x_closes_the_keyboard_and_with_y_the_numpad() {
 }
 
 #[test]
+fn paste_is_ctrl_v_once_and_types_no_text() {
+    let mut c = OverlayController::new(Board::Basic, keyboard::find(Board::Basic, keyboard::PASTE).unwrap());
+    let t0 = Instant::now();
+    let (ctrl, v) = (KeyCode::KEY_LEFTCTRL, KeyCode::KEY_V);
+    assert_eq!(
+        c.handle(InputEvent::Button(Button::South, true), t0),
+        vec![OverlayAction::Key(ctrl, true), OverlayAction::Key(v, true), OverlayAction::Key(v, false), OverlayAction::Key(ctrl, false)]
+    );
+    assert!(c.handle(InputEvent::Button(Button::South, false), t0).is_empty(), "nothing is held down");
+    assert_eq!(c.typed(), "", "pasting is not typing");
+}
+
+#[test]
+fn typing_presses_the_keys_that_type_each_character() {
+    assert!(typing("").is_empty());
+    assert!(typing("\u{1F600}").is_empty(), "no key types it");
+    // One key, or Shift and a key, each pressed and let go.
+    assert!([2, 4].contains(&typing("5").len()));
+    assert!(typing("42").len() >= 4);
+}
+
+#[test]
 fn numpad_types_digits_and_enter_and_closes_with_b() {
     let mut c = OverlayController::new(Layout::Numpad, Layout::Numpad.home());
     let t0 = Instant::now();

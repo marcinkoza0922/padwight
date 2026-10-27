@@ -84,6 +84,20 @@ fn tap_at(e: &mut Engine, p: &Profile, b: Button, at: Instant) {
 }
 
 #[test]
+fn guide_and_the_right_trigger_ask_for_the_tools_menu_once_and_open_no_overlay() {
+    let base = Profile::passthrough("p");
+    let mut e = Engine::default();
+    let t0 = Instant::now();
+    let (_, guide) = guide_setup();
+    press(&mut e, &base, Button::Guide, true, t0);
+    axis(&mut e, &guide, Axis::RightTrigger, 1.0);
+    assert!(e.take_tools_request(), "Guide + right trigger asks for the Tools menu");
+    assert!(!e.take_tools_request(), "the request is taken once");
+    press(&mut e, &base, Button::Guide, false, ms(t0, 5));
+    assert!(!e.guide_overlay_open(), "a chord opens no Guide overlay on release");
+}
+
+#[test]
 fn the_magnifying_glass_mode_is_run_from_the_d_pad_and_x() {
     let base = Profile::passthrough("p");
     let on = layered(&base, &crate::config::Layer::magnifier());

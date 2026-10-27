@@ -230,6 +230,8 @@ pub struct Engine {
     recording_toggled: bool,
     /// Set when a ToggleMedia action fires; the daemon takes it.
     media_toggled: bool,
+    /// Set when a Tools action fires; the daemon takes it.
+    tools_requested: bool,
     /// How many inputs hold a ForceQuit action down.
     force_quit_holds: u32,
     /// Whether the magnifying glass mode is on.
@@ -387,6 +389,11 @@ impl Engine {
     /// Whether a ToggleMedia action fired since the last call.
     pub fn take_media_toggle(&mut self) -> bool {
         std::mem::take(&mut self.media_toggled)
+    }
+
+    /// Whether a Tools action fired since the last call.
+    pub fn take_tools_request(&mut self) -> bool {
+        std::mem::take(&mut self.tools_requested)
     }
 
     /// Whether a ForceQuit action is being held down.
@@ -866,6 +873,11 @@ impl Engine {
         ButtonAction::ToggleMedia => {
             if pressed {
                 self.media_toggled = true;
+            }
+        }
+        ButtonAction::Tools => {
+            if pressed {
+                self.tools_requested = true;
             }
         }
         ButtonAction::QuickSettings => {

@@ -1,4 +1,5 @@
 mod capture;
+mod clipboard;
 mod config;
 mod controller_id;
 mod daemon;
@@ -12,6 +13,7 @@ mod assets;
 mod font;
 mod gui;
 mod guide_menu;
+mod tools;
 mod icon;
 mod icons;
 mod info;

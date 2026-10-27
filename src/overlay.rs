@@ -258,7 +258,7 @@ pub fn run() -> anyhow::Result<()> {
 mod wayland;
 mod controller;
 mod ui;
-pub use controller::{OverlayAction, OverlayController};
+pub use controller::{OverlayAction, OverlayController, typing};
 #[cfg(windows)]
 mod windows;
 
