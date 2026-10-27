@@ -20,7 +20,7 @@ const GROUPS: [(&str, &[ActionKind]); 6] = [
     ("Open or switch", &[ActionKind::Menu, ActionKind::Layer, ActionKind::Mode, ActionKind::Cycle]),
     ("On screen", &[ActionKind::Overlay, ActionKind::Numpad, ActionKind::QuickSettings, ActionKind::Media, ActionKind::Info, ActionKind::Log]),
     ("Gyro", &[ActionKind::GyroToggle, ActionKind::GyroClutch, ActionKind::GyroHold, ActionKind::GyroRecenter]),
-    ("System", &[ActionKind::Screenshot, ActionKind::Recording, ActionKind::Magnifier, ActionKind::ForceQuit]),
+    ("System", &[ActionKind::Screenshot, ActionKind::Recording, ActionKind::ForceQuit]),
 ];
 
 /// The controller buttons a "Gamepad button" action can press, by group: every one of
@@ -199,7 +199,6 @@ impl ActionKind {
             ActionKind::GyroToggle => "Turns gyro aiming on or off with each press.",
             ActionKind::GyroClutch => "Stops the gyro while held, to reposition.",
             ActionKind::GyroHold => "Gyro aims only while held.",
-            ActionKind::Magnifier => "Shows an enlarged, frozen picture of the screen in a lens while held.",
             ActionKind::GyroRecenter => "Takes the controller's position now as center.",
             ActionKind::Screenshot => "Saves a picture of the screen.",
             ActionKind::Recording => "Starts or stops recording the screen.",

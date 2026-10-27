@@ -9,8 +9,9 @@ impl Engine {
     pub(super) fn guide_button(&mut self, pressed: bool) {
         match (pressed, self.guide_held) {
             // In mouse mode, Guide only exits it. Counted as a chord so letting go doesn't open the overlay.
-            (true, None) if self.mouse_mode => {
+            (true, None) if self.mouse_mode || self.magnifier_mode => {
                 self.set_mouse_mode(false);
+                self.set_magnifier_mode(false);
                 self.guide_held = Some(true);
             }
             (true, None) => {
@@ -104,6 +105,16 @@ impl Engine {
 
     pub(super) fn set_mouse_mode(&mut self, on: bool) {
         self.mouse_mode = on;
+        self.layers_changed = true;
+    }
+
+    /// Turns the magnifying glass mode on or off. The lens goes with the mode unless it is pinned.
+    pub(super) fn set_magnifier_mode(&mut self, on: bool) {
+        self.magnifier_mode = on;
+        // It starts in the middle, unless it was left pinned.
+        if on && self.lens_pinned.is_none() {
+            self.lens_at = (0.5, 0.5);
+        }
         self.layers_changed = true;
     }
 

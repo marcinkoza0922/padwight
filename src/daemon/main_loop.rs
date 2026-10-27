@@ -146,6 +146,9 @@ impl Daemon {
             dev.dispatch(&mut self.kbm, out);
             dev.out_view.end_tick(dt);
         }
+        if self.lens_active() {
+            self.broadcast_overlay();
+        }
         if self.last_draw.elapsed() >= STATUS_REDRAW
             && let Some(dev) = self.last_active.and_then(|id| self.devices.get(&id))
         {

@@ -102,8 +102,12 @@ pub const GUIDE_MODE: &str = "Guide";
 /// The name of the built-in mouse mode (see the engine).
 pub const MOUSE_MODE: &str = "Mouse mode";
 
+/// The name of the built-in magnifying glass mode (see the engine).
+pub const MAGNIFIER_MODE: &str = "Magnifying glass";
+
 static GUIDE_BUILT_IN: LazyLock<Layer> = LazyLock::new(Layer::guide);
 static MOUSE_BUILT_IN: LazyLock<Layer> = LazyLock::new(Layer::mouse);
+static MAGNIFIER_BUILT_IN: LazyLock<Layer> = LazyLock::new(Layer::magnifier);
 
 /// The built-in mode called `name`, if there is one. These are fixed: every game has them, and
 /// they're never stored in a game, so they can't be edited or deleted. While one is on, it stands
@@ -112,13 +116,14 @@ pub fn built_in_mode(name: &str) -> Option<&'static Layer> {
     match name {
         GUIDE_MODE => Some(&GUIDE_BUILT_IN),
         MOUSE_MODE => Some(&MOUSE_BUILT_IN),
+        MAGNIFIER_MODE => Some(&MAGNIFIER_BUILT_IN),
         _ => None,
     }
 }
 
 /// Every built-in mode.
-pub fn built_in_modes() -> [&'static Layer; 2] {
-    [&GUIDE_BUILT_IN, &MOUSE_BUILT_IN]
+pub fn built_in_modes() -> [&'static Layer; 3] {
+    [&GUIDE_BUILT_IN, &MOUSE_BUILT_IN, &MAGNIFIER_BUILT_IN]
 }
 
 impl Layer {
@@ -137,7 +142,7 @@ impl Layer {
         layer.indicator_delay_ms = 100;
         layer.swallow_unbound = true;
         layer.swallow_analog = true;
-        layer.left_trigger = Some(TriggerAction::Button { action: ButtonAction::Magnifier, threshold: 0.3 }.into());
+        layer.left_trigger = Some(TriggerAction::Button { action: ButtonAction::Mode(MAGNIFIER_MODE.into()), threshold: 0.3 }.into());
         layer
     }
 
@@ -145,6 +150,29 @@ impl Layer {
     /// scrolling. Only the inputs set here do anything, so the game underneath gets nothing.
     pub fn mouse() -> Self {
         Self::mouse_with(&Shortcuts::default(), MouseModeExtras::default())
+    }
+
+    /// The magnifying glass mode: a lens over a frozen picture of the screen. Everything else is
+    /// swallowed; the right stick (read by the engine) moves the lens.
+    pub fn magnifier() -> Self {
+        use ButtonAction::{Magnifier, Mode};
+        let mut layer = Self::new(MAGNIFIER_MODE);
+        layer.indicator = Indicator::Bindings;
+        layer.indicator_style = OverlayStyle::sheet();
+        layer.indicator_title = Some("Magnifying glass: right stick moves it, {guide} exits".into());
+        layer.swallow_unbound = true;
+        layer.swallow_analog = true;
+        for (button, action) in [
+            (Button::DpadUp, Magnifier(LensControl::ZoomIn)),
+            (Button::DpadDown, Magnifier(LensControl::ZoomOut)),
+            (Button::DpadRight, Magnifier(LensControl::Larger)),
+            (Button::DpadLeft, Magnifier(LensControl::Smaller)),
+            (Button::West, Magnifier(LensControl::Pin)),
+            (Button::East, Mode(MAGNIFIER_MODE.into())),
+        ] {
+            layer.buttons.insert(button, action);
+        }
+        layer
     }
 
     /// Mouse mode without its keys, which [`Layer::mouse_with`] puts on.

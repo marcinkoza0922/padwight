@@ -99,7 +99,7 @@ impl Context {
 pub fn screen_ops(frame: &OverlayFrame, shown: &Shown, display: Point) -> Vec<Op> {
     let mut ops = panel_ops(frame, shown, display);
     if let Some(lens) = &frame.lens {
-        lens::put(&mut ops, lens, display);
+        lens::put(&mut ops, lens, &Context::of(frame, display));
     }
     ops
 }

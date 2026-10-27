@@ -266,6 +266,9 @@ impl Daemon {
         if self.recording.is_some() {
             info.push(crate::info::recording_view());
         }
+        if self.lens_notice() {
+            info.push(crate::info::lens_notice_view());
+        }
         let (mut info, logs) = self.with_preview(info, logs, &values, now);
         let now = Instant::now();
         let glyphs = crate::info::Glyphs { family: values.family, nintendo_layout: values.nintendo_layout };

@@ -57,11 +57,32 @@ impl Daemon {
         self.broadcast_overlay();
     }
 
-    /// The lens as the overlay draws it, while one is held.
+    /// The lens as the overlay draws it: only once the picture it shows has been saved.
     pub(super) fn lens_view(&self) -> Option<crate::overlay::Lens> {
-        let (x, y, zoom) = self.devices.values().find_map(|d| d.engine.magnifier())?;
-        let shot = self.lens.shot.as_ref().filter(|s| s.ready).map(|s| s.path.clone());
-        Some(crate::overlay::Lens { x, y, zoom, shot })
+        let (x, y, zoom, size) = self.devices.values().find_map(|d| d.engine.magnifier())?;
+        let shot = self.lens.shot.as_ref().filter(|s| s.ready)?.path.clone();
+        let note = self.lens_note();
+        Some(crate::overlay::Lens { x, y, zoom, size, shot, note })
+    }
+
+    /// What is said under the lens: how to get rid of it, when it is pinned.
+    fn lens_note(&self) -> Option<String> {
+        let pinned = self.devices.values().any(|d| d.engine.lens_pinned());
+        let in_mode = self.devices.values().any(|d| d.engine.magnifier_mode());
+        let note = if !pinned {
+            return None;
+        } else if in_mode {
+            "Pinned: press X to unpin it"
+        } else {
+            "Pinned: hold Guide and pull the left trigger to remove it"
+        };
+        Some(note.into())
+    }
+
+    /// Whether the magnifying glass mode is up with its picture saved, which the notice says is
+    /// only a screenshot.
+    pub(super) fn lens_notice(&self) -> bool {
+        self.lens.shot.as_ref().is_some_and(|s| s.ready) && self.devices.values().any(|d| d.engine.magnifier_mode())
     }
 
     /// Whether a lens is up or coming down, so the frame has to follow the sticks.

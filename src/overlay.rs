@@ -124,8 +124,13 @@ pub struct Lens {
     pub x: f32,
     pub y: f32,
     pub zoom: f32,
-    /// The picture of the screen, once it has been saved.
-    pub shot: Option<std::path::PathBuf>,
+    /// Its radius as a share of the screen's shorter side.
+    pub size: f32,
+    /// A line under the lens, if it has something to say.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub note: Option<String>,
+    /// The saved picture of the screen.
+    pub shot: std::path::PathBuf,
 }
 
 impl OverlayFrame {

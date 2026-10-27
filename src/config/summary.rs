@@ -149,14 +149,13 @@ impl ButtonAction {
         }
     }
 
-    /// What the gyro actions and the magnifying glass say, as plain text.
-    fn held_or_gyro_text(&self) -> &'static str {
+    /// What the gyro actions say, as plain text.
+    fn gyro_text(&self) -> &'static str {
         match self {
             ButtonAction::GyroToggle => "Gyro on / off",
             ButtonAction::GyroClutch => "Gyro clutch (off while held)",
             ButtonAction::GyroHold => "Gyro on while held",
             ButtonAction::GyroRecenter => "Recenter gyro",
-            ButtonAction::Magnifier => "Magnifying glass while held",
             _ => "",
         }
     }
@@ -179,9 +178,10 @@ impl ButtonAction {
             ButtonAction::ToggleRecording => vec![text("Start or stop recording")],
             ButtonAction::ToggleMedia => vec![text("Media controls")],
             ButtonAction::QuickSettings => vec![text("Quick Settings")],
-            ButtonAction::GyroToggle | ButtonAction::GyroClutch | ButtonAction::GyroHold | ButtonAction::GyroRecenter | ButtonAction::Magnifier => {
-                vec![text(self.held_or_gyro_text())]
+            ButtonAction::GyroToggle | ButtonAction::GyroClutch | ButtonAction::GyroHold | ButtonAction::GyroRecenter => {
+                vec![text(self.gyro_text())]
             }
+            ButtonAction::Magnifier(c) => vec![text(c.label())],
             ButtonAction::ForceQuit => vec![text("Force quit focused window (hold)")],
             ButtonAction::OpenMenu(name) => vec![keyword(Keyword::Menu), text(&format!(" “{name}”"))],
             ButtonAction::ShowInfo(name) => vec![keyword(Keyword::Info), text(&format!(" “{name}”"))],

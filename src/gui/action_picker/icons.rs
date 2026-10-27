@@ -40,7 +40,6 @@ fn plain_icon(k: ActionKind) -> String {
         ActionKind::GyroToggle | ActionKind::GyroClutch | ActionKind::GyroHold | ActionKind::GyroRecenter => {
             "<circle cx='12' cy='12' r='8.5'/><ellipse cx='12' cy='12' rx='8.5' ry='3.5'/><circle cx='12' cy='12' r='1.5' fill='#8a8f98'/>"
         }
-        ActionKind::Magnifier => "<circle cx='10.5' cy='10.5' r='6.5'/><path d='M15.5 15.5 21 21'/>",
         ActionKind::Screenshot => "<path d='M4 8h3l2-3h6l2 3h3v11H4Z'/><circle cx='12' cy='13' r='3.5'/>",
         ActionKind::Recording => "<circle cx='12' cy='12' r='8.5'/><circle cx='12' cy='12' r='4' fill='#8a8f98'/>",
         ActionKind::ForceQuit => "<path d='M12 3v8M6.3 6.3a8 8 0 1 0 11.4 0'/>",

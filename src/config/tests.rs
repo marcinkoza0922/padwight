@@ -48,12 +48,12 @@ fn built_in_modes_are_never_stored_but_every_game_has_them() {
     game.strip_built_in_modes();
     assert_eq!(game.layers.iter().map(|l| l.name.as_str()).collect::<Vec<_>>(), ["Mine"]);
     assert_eq!(game.modes.iter().map(|l| l.name.as_str()).collect::<Vec<_>>(), ["Driving"]);
-    // Every game's scope has both as modes, unchanged, after its own.
+    // Every game's scope has them as modes, unchanged, after its own.
     let mut config = Config::default();
     config.games.push(game);
     let scope = config.scope_of(&config.games[0]);
     let names: Vec<&str> = scope.modes.iter().map(|l| l.name.as_str()).collect();
-    assert_eq!(names, ["Driving", GUIDE_MODE, MOUSE_MODE]);
+    assert_eq!(names, ["Driving", GUIDE_MODE, MOUSE_MODE, MAGNIFIER_MODE]);
     assert!(scope.layers.iter().all(|l| built_in_mode(&l.name).is_none()), "they aren't layers");
     let guide = scope.modes.iter().find(|l| l.name == GUIDE_MODE).unwrap();
     assert_eq!(**guide, Layer::guide());

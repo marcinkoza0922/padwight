@@ -173,10 +173,10 @@ fn a_lens_shows_the_saved_picture_enlarged_about_its_center() {
     let plain = ink(&screen_ops(&frame, &Shown::settled(&frame), DISPLAY));
     let shot = std::env::temp_dir().join(format!("padwight-lens-test-{}.png", std::process::id()));
     screen(&frame, DISPLAY, 1.0, Rgba::rgb(0.2, 0.3, 0.5)).unwrap().save(&shot).unwrap();
-    frame.lens = Some(crate::overlay::Lens { x: 0.5, y: 0.5, zoom: 3.0, shot: Some(shot.clone()) });
+    frame.lens = Some(crate::overlay::Lens { x: 0.5, y: 0.5, zoom: 3.0, size: 0.17, shot: shot.clone(), note: Some("Pinned: hold Guide and pull the left trigger to remove it".into()) });
     let ops = screen_ops(&frame, &Shown::settled(&frame), DISPLAY);
     assert!(balanced(&ops));
-    assert!(matches!(ops.last(), Some(Op::Rect { border: Some(_), .. })), "the rim goes on top");
+    assert!(ops.iter().any(|op| matches!(op, Op::Rect { border: Some(_), .. })), "the lens has a rim");
     let picture = ops.iter().find_map(|op| if let Op::Picture { rect, .. } = op { Some(*rect) } else { None });
     let rect = picture.expect("the lens draws the picture");
     assert_eq!((rect.w, rect.h), (3.0 * 1920.0, 3.0 * 1080.0));
@@ -188,13 +188,4 @@ fn a_lens_shows_the_saved_picture_enlarged_about_its_center() {
         image.save(std::path::Path::new(&out)).unwrap();
     }
     let _ = std::fs::remove_file(shot);
-}
-
-#[test]
-fn a_lens_without_its_picture_yet_is_only_a_rim() {
-    let mut frame = scenes::frame("menu-list").unwrap();
-    frame.lens = Some(crate::overlay::Lens { x: 0.0, y: 1.0, zoom: 3.0, shot: None });
-    let ops = screen_ops(&frame, &Shown::settled(&frame), DISPLAY);
-    assert!(balanced(&ops));
-    assert!(!ops.iter().any(|op| matches!(op, Op::Picture { .. })));
 }
