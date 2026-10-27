@@ -34,6 +34,7 @@ pub(super) enum ActionKind {
     GyroClutch,
     GyroHold,
     GyroRecenter,
+    Magnifier,
     Toggle,
     Turbo,
     Macro,
@@ -67,6 +68,7 @@ impl fmt::Display for ActionKind {
             ActionKind::GyroClutch => "Gyro clutch (off while held)",
             ActionKind::GyroHold => "Gyro on while held",
             ActionKind::GyroRecenter => "Recenter gyro",
+            ActionKind::Magnifier => "Magnifying glass while held",
             ActionKind::Toggle => "Toggle on / off…",
             ActionKind::Macro => "Macro…",
             ActionKind::Cycle => "Cycle…",
@@ -82,7 +84,7 @@ impl fmt::Display for ActionKind {
 }
 
 /// Every kind, for a top-level action.
-pub(super) const ACTION_KINDS: [ActionKind; 28] = [
+pub(super) const ACTION_KINDS: [ActionKind; 29] = [
     ActionKind::Disabled,
     ActionKind::Gamepad,
     ActionKind::PadTrigger,
@@ -101,6 +103,7 @@ pub(super) const ACTION_KINDS: [ActionKind; 28] = [
     ActionKind::GyroClutch,
     ActionKind::GyroHold,
     ActionKind::GyroRecenter,
+    ActionKind::Magnifier,
     ActionKind::Toggle,
     ActionKind::Turbo,
     ActionKind::Macro,
@@ -286,6 +289,7 @@ pub(super) fn action_kind(action: &ButtonAction) -> ActionKind {
         ButtonAction::GyroClutch => ActionKind::GyroClutch,
         ButtonAction::GyroHold => ActionKind::GyroHold,
         ButtonAction::GyroRecenter => ActionKind::GyroRecenter,
+        ButtonAction::Magnifier => ActionKind::Magnifier,
         ButtonAction::Multi(_) => ActionKind::Multiple,
         ButtonAction::Toggle(_) => ActionKind::Toggle,
         ButtonAction::Turbo { .. } => ActionKind::Turbo,
@@ -328,6 +332,7 @@ pub(super) fn new_action(k: ActionKind, default_button: Button, current: &Button
         ActionKind::GyroClutch => ButtonAction::GyroClutch,
         ActionKind::GyroHold => ButtonAction::GyroHold,
         ActionKind::GyroRecenter => ButtonAction::GyroRecenter,
+        ActionKind::Magnifier => ButtonAction::Magnifier,
         // Keep what was there as the first entry.
         ActionKind::Multiple => ButtonAction::Multi(wrappable.into_iter().collect()),
         ActionKind::Toggle => ButtonAction::toggle(wrappable.unwrap_or(ButtonAction::Keys(Vec::new()))),
@@ -565,7 +570,8 @@ pub(super) fn action_value<'a>(
         | ButtonAction::GyroToggle
         | ButtonAction::GyroClutch
         | ButtonAction::GyroHold
-        | ButtonAction::GyroRecenter => space().into(),
+        | ButtonAction::GyroRecenter
+        | ButtonAction::Magnifier => space().into(),
         ButtonAction::ToggleMedia => text("D-pad left and right seek, up and down change the volume, bumpers change track, A plays or pauses, B closes.").size(12).color(MUTED_COLOR).into(),
         ButtonAction::ForceQuit => {
             text("Hold for 2 seconds to close the program in the focused window. The desktop is never closed.")

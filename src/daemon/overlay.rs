@@ -223,6 +223,7 @@ impl Daemon {
     }
 
     pub(super) fn broadcast_overlay(&mut self) {
+        self.sync_magnifier();
         let frame = self.overlay_frame();
         if (!frame.info.is_empty() || !frame.logs.is_empty())
             && self.overlay_process.is_none()
@@ -282,6 +283,7 @@ impl Daemon {
             active: self.overlay_view(),
             backdrop: self.preview_menu(),
             peek: self.peeking(),
+            lens: self.lens_view(),
             font: self.config.active_font().map(str::to_string),
             colorblind: self.config.colorblind_tones,
             opener: crate::info::OpenerLabel::of(&self.config.shortcuts),

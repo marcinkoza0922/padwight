@@ -232,6 +232,8 @@ pub struct Engine {
     media_toggled: bool,
     /// How many inputs hold a ForceQuit action down.
     force_quit_holds: u32,
+    /// How many inputs hold a Magnifier action down.
+    magnifier_holds: u32,
     /// Set when an OpenMenu action fires; the daemon takes it.
     menu_request: Option<(String, Opener)>,
     /// Info overlays shown by held (or toggled) ShowInfo actions, with how many hold each.
@@ -357,6 +359,19 @@ impl Engine {
     /// Whether a ForceQuit action is being held down.
     pub fn force_quit_held(&self) -> bool {
         self.force_quit_holds > 0
+    }
+
+    /// The magnifying glass while a Magnifier action is held: where the right stick points it on
+    /// the screen (0..1 across and down; the middle with the stick at rest) and how much the
+    /// left trigger's pull magnifies (2 to 5 times).
+    pub fn magnifier(&self) -> Option<(f32, f32, f32)> {
+        if self.magnifier_holds == 0 {
+            return None;
+        }
+        let axis = |a: Axis| self.axes.get(&a).copied().unwrap_or(0.0);
+        let (x, y) = apply_deadzone(axis(Axis::RightX), axis(Axis::RightY), 0.12_f32);
+        let pull = ((axis(Axis::LeftTrigger) - 0.3) / 0.7).clamp(0.0, 1.0);
+        Some((0.5 + 0.5 * x.clamp(-1.0, 1.0), 0.5 + 0.5 * y.clamp(-1.0, 1.0), 2.0 + 3.0 * pull))
     }
 
     /// Whether a QuickSettings action fired since the last call.
@@ -791,6 +806,13 @@ impl Engine {
                 self.gyro.on_holds += 1;
             } else {
                 self.gyro.on_holds = self.gyro.on_holds.saturating_sub(1);
+            }
+        }
+        ButtonAction::Magnifier => {
+            if pressed {
+                self.magnifier_holds += 1;
+            } else {
+                self.magnifier_holds = self.magnifier_holds.saturating_sub(1);
             }
         }
         ButtonAction::ForceQuit => {

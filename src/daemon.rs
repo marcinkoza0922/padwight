@@ -43,6 +43,7 @@ mod first_pad;
 mod guide;
 mod in_game_menu;
 mod info_overlays;
+mod magnifier;
 mod new_pads;
 mod offers;
 mod overlay;
@@ -131,6 +132,8 @@ enum Msg {
     Tray(tray::Command),
     /// Whether Steam runs, looked up as the Guide overlay opened.
     SteamRunning(bool),
+    /// The screen grab for the magnifying glass finished, or failed.
+    LensShot { path: PathBuf, ok: bool },
 }
 
 struct Managed {
@@ -516,6 +519,8 @@ struct Daemon {
     live_drawn: Option<Instant>,
     /// The Guide overlay's menu while the overlay is up.
     guide_menu: Option<GuideMenu>,
+    /// The magnifying glass (see `magnifier.rs`).
+    lens: magnifier::Lens,
     /// When shown info overlays with live values next refresh.
     info_refresh: Option<Instant>,
     /// When an info overlay that hides after a while next needs redrawing (fading or gone).
@@ -573,8 +578,7 @@ fn log_path() -> PathBuf {
 
 impl Daemon {
     fn new(config: Config, kbm: VirtualKbm, injection: inject::Injection, tx: inbox::Tx) -> Self {
-        crate::info::set_opener(crate::info::OpenerLabel::of(&config.shortcuts));
-        crate::info::set_menu_keys(config.shortcuts.menu_keys());
+        set_shortcut_labels(&config.shortcuts);
         Daemon {
             pack_fonts: config.active_game().assets.activate_headless(),
             scope: config.scope(),
@@ -616,6 +620,7 @@ impl Daemon {
             menu_live: crate::figures::Live::default(),
             live_drawn: None,
             guide_menu: None,
+            lens: magnifier::Lens::default(),
             info_refresh: None,
             info_fade: None,
             info_timers: crate::info::Timers::default(),
@@ -634,6 +639,12 @@ impl Daemon {
             unsaved_at: None,
         }
     }
+}
+
+/// Tells the info overlays what `{guide}` and the menu buttons say.
+fn set_shortcut_labels(shortcuts: &crate::config::Shortcuts) {
+    crate::info::set_opener(crate::info::OpenerLabel::of(shortcuts));
+    crate::info::set_menu_keys(shortcuts.menu_keys());
 }
 
 /// Runs the service. With `debug`, controllers can also be injected over IPC (`padwight debug`).
@@ -904,6 +915,7 @@ impl Daemon {
             Msg::Toast(lines) => self.say(lines),
             Msg::Media(state) => self.update_media(state),
             Msg::SteamRunning(running) => self.guide_menu_steam(running),
+            Msg::LensShot { path, ok } => self.lens_shot_done(&path, ok),
             Msg::RecordingStarted { pid } => {
                 (self.recording, self.recording_starting) = (Some(pid), false);
                 self.say(vec!["Recording started".into()]);
@@ -1059,6 +1071,9 @@ impl Daemon {
             self.broadcast_overlay();
         }
         self.run_requests(id, asked);
+        if self.lens_active() {
+            self.broadcast_overlay();
+        }
         if !guide_keys.is_empty() {
             self.guide_keys(id, &guide_keys);
         }
@@ -1151,8 +1166,7 @@ impl Daemon {
             dev.opener_watch.set(self.config.shortcuts.opener());
             dev.engine.set_menu_keys(self.config.shortcuts.menu_keys());
         }
-        crate::info::set_opener(crate::info::OpenerLabel::of(&self.config.shortcuts));
-        crate::info::set_menu_keys(self.config.shortcuts.menu_keys());
+        set_shortcut_labels(&self.config.shortcuts);
         self.sync_identities();
     }
 

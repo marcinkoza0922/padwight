@@ -386,6 +386,9 @@ pub enum ButtonAction {
     /// Sets the controller's current tilt as straight ahead (steering and position modes) and
     /// clears leftover motion.
     GyroRecenter,
+    /// While held, a magnifying glass shows a frozen picture of the screen enlarged: the right
+    /// stick moves it and the trigger it sits on (if it is one) sets how much it magnifies.
+    Magnifier,
     /// Switches to the game's mode named here, which replaces whichever mode was on. Pressed
     /// while that mode is already on, it goes back to the default mode (no mode).
     Mode(String),

@@ -15,7 +15,7 @@ use anyhow::{Context, Result};
 #[cfg(windows)]
 mod windows;
 #[cfg(windows)]
-pub use windows::{screenshot, timestamp};
+pub use windows::{grab, screenshot, timestamp};
 
 /// A command-line screenshot tool.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -170,17 +170,24 @@ pub fn timestamp() -> String {
 /// the daemon's main thread.
 #[cfg(target_os = "linux")]
 pub fn screenshot(game: &str) -> Result<PathBuf> {
-    let desktop = std::env::var("XDG_CURRENT_DESKTOP").unwrap_or_default();
-    let tool = pick_tool(&desktop, on_path).context("no screenshot tool found (install spectacle, grim or gnome-screenshot)")?;
     let pictures = media_base(dirs::picture_dir(), "Pictures")?;
     let claim = claim_media_path(&pictures, "Screenshots", game, &timestamp(), "png");
     let path = claim.path();
     std::fs::create_dir_all(path.parent().context("no folder")?).with_context(|| format!("creating {}", path.display()))?;
+    grab(path)?;
+    Ok(path.to_owned())
+}
+
+/// Saves the whole screen to `path` (a PNG), for the magnifying glass. Waits for the tool.
+#[cfg(target_os = "linux")]
+pub fn grab(path: &Path) -> Result<()> {
+    let desktop = std::env::var("XDG_CURRENT_DESKTOP").unwrap_or_default();
+    let tool = pick_tool(&desktop, on_path).context("no screenshot tool found (install spectacle, grim or gnome-screenshot)")?;
     let status = Command::new(tool.program()).args(tool.args(path)).status().with_context(|| format!("running {}", tool.program()))?;
     if !status.success() || !path.exists() {
         bail!("{} did not save a screenshot ({status})", tool.program());
     }
-    Ok(path.to_owned())
+    Ok(())
 }
 
 #[cfg(test)]

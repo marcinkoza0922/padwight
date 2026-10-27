@@ -78,6 +78,23 @@ fn guide_tap_toggles_the_overlay_and_never_reaches_the_pad() {
 }
 
 #[test]
+fn guide_and_the_left_trigger_hold_a_magnifier_the_right_stick_aims() {
+    let (base, on) = guide_setup();
+    let mut e = Engine::default();
+    let t0 = Instant::now();
+    press(&mut e, &base, Button::Guide, true, t0);
+    assert_eq!(e.magnifier(), None, "Guide alone is no lens");
+    axis(&mut e, &on, Axis::LeftTrigger, 0.4);
+    assert_eq!(e.magnifier(), Some((0.5, 0.5, 2.0 + 3.0 * (0.1 / 0.7))), "a light pull: at the middle, a little magnified");
+    axis(&mut e, &on, Axis::RightX, 1.0);
+    axis(&mut e, &on, Axis::LeftTrigger, 1.0);
+    let (x, y, zoom) = e.magnifier().unwrap();
+    assert!(x > 0.95 && (y - 0.5).abs() < 1e-3 && (zoom - 5.0).abs() < 1e-3, "{x} {y} {zoom}");
+    axis(&mut e, &on, Axis::LeftTrigger, 0.0);
+    assert_eq!(e.magnifier(), None, "letting go of the trigger puts it away");
+}
+
+#[test]
 fn guide_chord_runs_its_shortcut_and_leaves_the_overlay_shut() {
     let (base, on) = guide_setup();
     let mut e = Engine::default();

@@ -137,6 +137,7 @@ impl Layer {
         layer.indicator_delay_ms = 100;
         layer.swallow_unbound = true;
         layer.swallow_analog = true;
+        layer.left_trigger = Some(TriggerAction::Button { action: ButtonAction::Magnifier, threshold: 0.3 }.into());
         layer
     }
 
