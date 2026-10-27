@@ -110,9 +110,10 @@ fn a_submenu_arrow_is_at_the_rows_right_end_in_a_list_but_beside_the_label_elsew
     let ops = laid(&kinds::list(&m, &style(&m), 1.0));
     let rows = boxes(&ops);
     let arrows: Vec<Rect> = ops.iter().filter_map(|op| if let Op::Text { ink, .. } = op { Some(*ink) } else { None }).collect();
-    // The widest right edge of any text sits at the row's padded right edge: the ▸.
+    // The widest right edge of any text sits at the row's padded right edge: the ▸. Its ink stops
+    // short of its advance by a side bearing that depends on the system's font (about 2.6 on Windows).
     let right = arrows.iter().map(Rect::right).fold(0.0, f32::max);
-    assert!((right - (rows[0].right() - 14.0)).abs() < 2.0, "{right} vs {}", rows[0].right());
+    assert!((right - (rows[0].right() - 14.0)).abs() < 4.0, "{right} vs {}", rows[0].right());
 }
 
 #[test]
