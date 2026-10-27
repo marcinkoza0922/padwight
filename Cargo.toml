@@ -29,24 +29,19 @@ rodio = { version = "0.22", default-features = false, features = ["playback"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 evdev = "0.13"
-iced_layershell = "0.19"
 libc = "0.2.190"
 # File chooser for importing and exporting packs, through the desktop portal.
 rfd = { version = "0.17", default-features = false, features = ["xdg-portal"] }
 zbus = "5"
 # wlroots focus tracking (focus/wlroots.rs). Both are already in the lock file through
-# iced_layershell, so the vendored Flatpak sources don't change.
+# iced's winit and smithay-client-toolkit, so the vendored Flatpak sources don't change.
 wayland-client = "0.31"
 wayland-protocols-wlr = "0.3"
 # The overlay's window (overlay/wayland.rs): fractional scaling and the viewporter.
 wayland-protocols = { version = "0.32", features = ["client", "staging"] }
 # StatusNotifierItem tray icon.
 ksni = { version = "0.3.6", features = ["blocking"] }
-# iced_layershell's devtools (iced_exdevtools 0.19.1) don't build against winit-core
-# 0.31.0-beta.3; pin the beta they were written for. Not used directly.
-winit-core = "=0.31.0-beta.2"
-# Labels the on-screen keyboard's keys in the user's layout (keyboard/xkb.rs). Already in the
-# lock file through iced_layershell.
+# Labels the on-screen keyboard's keys in the user's layout (keyboard/xkb.rs).
 xkbcommon = "0.8"
 
 [target.'cfg(windows)'.dependencies]

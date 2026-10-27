@@ -80,9 +80,19 @@ fn hash(bytes: &[u8]) -> u64 {
     h
 }
 
-/// Loads a font file into this process's fonts and returns the family it draws as. A file that
-/// holds no font is an error.
+/// Loads a font file into this process's fonts, iced's included, and returns the family it
+/// draws as. A file that holds no font is an error.
 pub fn load(bytes: &[u8]) -> Result<&'static str, String> {
+    register(bytes, true)
+}
+
+/// Like [`load`], without iced's font system, which it would start: for the overlay process,
+/// whose own renderer takes the file from [`files`].
+pub fn load_for_overlay(bytes: &[u8]) -> Result<&'static str, String> {
+    register(bytes, false)
+}
+
+fn register(bytes: &[u8], iced: bool) -> Result<&'static str, String> {
     if bytes.len() > MAX_FONT_BYTES {
         return Err(format!("a font is at most {} KB", MAX_FONT_BYTES / 1024));
     }
@@ -94,7 +104,9 @@ pub fn load(bytes: &[u8]) -> Result<&'static str, String> {
     }
     let family = family_of(bytes).ok_or("not a font file (TrueType or OpenType)")?;
     let family: &'static str = Box::leak(family.into_boxed_str());
-    font_system().write().unwrap_or_else(std::sync::PoisonError::into_inner).load_font(bytes.to_vec().into());
+    if iced {
+        font_system().write().unwrap_or_else(std::sync::PoisonError::into_inner).load_font(bytes.to_vec().into());
+    }
     loaded.insert(key, (family, bytes.into()));
     VERSION.fetch_add(1, Ordering::Release);
     Ok(family)
@@ -183,7 +195,7 @@ pub fn set_pack_font_files(files: &BTreeMap<String, PathBuf>) {
     if source.as_ref() == Some(files) {
         return;
     }
-    let ready = files.iter().filter_map(|(name, path)| Some((name.clone(), load(&std::fs::read(path).ok()?).ok()?))).collect();
+    let ready = files.iter().filter_map(|(name, path)| Some((name.clone(), load_for_overlay(&std::fs::read(path).ok()?).ok()?))).collect();
     set_pack(ready);
     *source = Some(files.clone());
 }
