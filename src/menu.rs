@@ -134,7 +134,7 @@ pub enum MenuOutcome {
 enum Mode {
     /// Up while the opener is held; letting go closes it (a radial menu chooses first).
     Held,
-    /// A list with a close button, once its opener is let go: up until the opener is pressed
+    /// A menu with a close button, once its opener is let go: up until the opener is pressed
     /// again or the close button closes it.
     Latched,
     /// Opened by something that can't be held (the command line, an analog zone): up until
@@ -271,7 +271,7 @@ impl MenuSession {
         self.axes = axes.into_iter().collect();
         self.opener_down = self.opener_is_down();
         if self.mode == Mode::Held && !self.opener_down {
-            // A quick tap opens a list that stays up; anything else it can't hold up.
+            // A quick tap opens a menu that stays up; anything else it can't hold up.
             if !self.top(menus).is_some_and(stays_open) {
                 return false;
             }
@@ -379,7 +379,7 @@ impl MenuSession {
                 (Mode::Unwatched, _) => "{confirm} choose".into(),
             };
         };
-        // A list that latches says so while it's still held, as letting go won't close it.
+        // A menu that latches says so while it's still held, as letting go won't close it.
         let mode = if self.mode == Mode::Held && stays_open(menu) { Mode::Latched } else { self.mode };
         match (mode, radial) {
             (Mode::Held, true) => format!("let go to choose · {cancel} cancel"),
@@ -740,10 +740,10 @@ fn carousel_step(controls: CarouselControls, b: Button) -> Option<Step> {
     }
 }
 
-/// Whether a list stays up once its opener is let go: it does when it has a close button to put
-/// it away.
+/// Whether a menu stays up once its opener is let go: it does when it has a close button to put
+/// it away, whatever its kind.
 fn stays_open(menu: &Menu) -> bool {
-    menu.kind == MenuKind::List && menu.cancel_button().is_some()
+    menu.cancel_button().is_some()
 }
 
 /// Whether the bumpers jump a page: in a list too long to show at once.

@@ -287,8 +287,8 @@ fn a_list_with_a_close_button_stays_up_until_the_opener_is_pressed_again() {
 
 #[test]
 fn other_held_menus_close_when_let_go_and_r3_no_longer_keeps_them() {
-    let grid = menu("G", MenuKind::Grid { columns: 2 }, numbers(4));
-    let wheel = Menu { cancel: Some(Button::East), ..menu("W", MenuKind::Radial { stick: Stick::Right, boxes: false }, numbers(4)) };
+    let grid = Menu { no_cancel: true, ..menu("G", MenuKind::Grid { columns: 2 }, numbers(4)) };
+    let wheel = menu("W", MenuKind::Radial { stick: Stick::Right, boxes: false }, numbers(4));
     let menus = [grid, wheel];
     let now = Instant::now();
     let mut s = MenuSession::open(&menus, "G", held_by(Button::LeftBumper)).unwrap();
@@ -467,8 +467,8 @@ fn a_grid_starts_on_its_start_cell_or_the_item_merged_over_it() {
 }
 
 #[test]
-fn openers_already_let_go_open_nothing_but_a_list_that_stays_up() {
-    let menus = [menu("L", MenuKind::List, numbers(2)), menu("G", MenuKind::Grid { columns: 2 }, numbers(2))];
+fn openers_already_let_go_open_nothing_but_a_menu_that_stays_up() {
+    let menus = [menu("L", MenuKind::List, numbers(2)), Menu { no_cancel: true, ..menu("G", MenuKind::Grid { columns: 2 }, numbers(2)) }];
     let mut s = MenuSession::open(&menus, "G", held_by(Button::LeftBumper)).unwrap();
     assert!(!s.prime(&menus, [], []), "a tap can't hold a menu up");
     let mut s = MenuSession::open(&menus, "L", held_by(Button::LeftBumper)).unwrap();
@@ -483,7 +483,7 @@ fn openers_already_let_go_open_nothing_but_a_list_that_stays_up() {
 
 #[test]
 fn stick_direction_openers_hold_the_menu() {
-    let menus = [menu("L", MenuKind::Grid { columns: 2 }, numbers(2))];
+    let menus = [Menu { no_cancel: true, ..menu("L", MenuKind::Grid { columns: 2 }, numbers(2)) }];
     let mut s = MenuSession::open(&menus, "L", held_by(Button::LeftStickUp)).unwrap();
     assert!(s.prime(&menus, [], [(Axis::LeftY, -0.9)]));
     let now = Instant::now();

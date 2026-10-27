@@ -76,6 +76,9 @@ pub struct OverlayFrame {
     /// `active` is held back so what's under it shows: it stays up, but isn't drawn.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub peek: bool,
+    /// The magnifying glass, while one is held.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lens: Option<Lens>,
     /// The font everything here is drawn in; the system's when unset.
     #[serde(default)]
     pub font: Option<String>,
@@ -111,6 +114,23 @@ pub struct OverlayFrame {
     /// What the performance settings cut from every overlay.
     #[serde(default, skip_serializing_if = "crate::config::Lite::is_off")]
     pub lite: crate::config::Lite,
+}
+
+/// The magnifying glass: a lens over a frozen picture of the screen, centered on a point of it
+/// and showing that part `zoom` times as large.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Lens {
+    /// Where the lens is, across and down the screen, 0 to 1.
+    pub x: f32,
+    pub y: f32,
+    pub zoom: f32,
+    /// Its radius as a share of the screen's shorter side.
+    pub size: f32,
+    /// A line under the lens, if it has something to say.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub note: Option<String>,
+    /// The saved picture of the screen.
+    pub shot: std::path::PathBuf,
 }
 
 impl OverlayFrame {

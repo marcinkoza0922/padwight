@@ -193,13 +193,15 @@ fn a_list_left_up_goes_back_and_closes_from_a_submenu_the_same_way() {
 fn any_kind_with_the_same_close_button_can_be_a_submenu() {
     let to = |kind| closing_with(Some(Button::East), menu("Sub", kind, numbers(4)));
     let directional = closing_with(Some(Button::East), menu("Top", MenuKind::Directional { cluster: Cluster::DPad }, vec![MenuItem::new("Sub", open_menu("Sub"))]));
-    // A directional menu opening a radial one: the wheel chooses as the opener is let go.
+    // A directional menu opening a radial one: with a close button the wheel stays up when the
+    // opener is let go, and chooses when it's pressed again.
     let menus = [directional, to(radial())];
     let mut pad = Pad::open(&menus, "Top");
     assert_eq!(pad.press(Button::DpadUp), None);
     assert_eq!((pad.title(), pad.crumbs()), ("Sub".to_string(), vec!["Top".to_string()]));
     pad.session.handle(&menus, InputEvent::Axis(Axis::RightX, 0.9), pad.now);
-    assert_eq!(chose(pad.up(Button::LeftBumper)).as_deref(), Some("KEY_2"));
+    assert_eq!(pad.up(Button::LeftBumper), None, "stays up");
+    assert_eq!(chose(pad.down(Button::LeftBumper)).as_deref(), Some("KEY_2"));
     // And B still goes back out of the wheel.
     let mut pad = Pad::open(&menus, "Top");
     pad.press(Button::DpadUp);

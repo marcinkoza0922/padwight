@@ -22,6 +22,7 @@ mod damage;
 mod diff;
 mod items;
 mod lay;
+mod lens;
 mod panels;
 mod pictures;
 mod stacks;
@@ -96,6 +97,14 @@ impl Context {
 /// at the top level of the list (see `Node::layered`), laid out where it rests; the layer fades
 /// it and moves and zooms it by its animation.
 pub fn screen_ops(frame: &OverlayFrame, shown: &Shown, display: Point) -> Vec<Op> {
+    let mut ops = panel_ops(frame, shown, display);
+    if let Some(lens) = &frame.lens {
+        lens::put(&mut ops, lens, &Context::of(frame, display));
+    }
+    ops
+}
+
+fn panel_ops(frame: &OverlayFrame, shown: &Shown, display: Point) -> Vec<Op> {
     let cx = Context::of(frame, display);
     let mut ops = Vec::new();
     let guide = stacks::guide_up(frame, shown, &cx);

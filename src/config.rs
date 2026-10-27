@@ -386,6 +386,8 @@ pub enum ButtonAction {
     /// Sets the controller's current tilt as straight ahead (steering and position modes) and
     /// clears leftover motion.
     GyroRecenter,
+    /// Works the magnifying glass, in the magnifying glass mode (see [`MAGNIFIER_MODE`]).
+    Magnifier(LensControl),
     /// Switches to the game's mode named here, which replaces whichever mode was on. Pressed
     /// while that mode is already on, it goes back to the default mode (no mode).
     Mode(String),
@@ -1090,6 +1092,32 @@ impl DeadzoneShape {
 impl std::fmt::Display for DeadzoneShape {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.name())
+    }
+}
+
+/// What a press does to the magnifying glass.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LensControl {
+    ZoomIn,
+    ZoomOut,
+    /// A bigger lens.
+    Larger,
+    Smaller,
+    /// Holds the lens where it is, or lets the stick move it again.
+    Pin,
+}
+
+impl LensControl {
+    /// What it says in a cheat sheet.
+    pub fn label(self) -> &'static str {
+        match self {
+            LensControl::ZoomIn => "Zoom in",
+            LensControl::ZoomOut => "Zoom out",
+            LensControl::Larger => "Bigger lens",
+            LensControl::Smaller => "Smaller lens",
+            LensControl::Pin => "Pin or unpin the lens",
+        }
     }
 }
 
@@ -2433,8 +2461,8 @@ impl Config {
     }
 
     /// The built-in modes, with the shortcuts where the player put them.
-    pub fn built_in_modes(&self) -> [Layer; 2] {
-        [Layer::guide_with(&self.shortcuts), Layer::mouse_with(&self.shortcuts, self.mouse_mode)]
+    pub fn built_in_modes(&self) -> [Layer; 3] {
+        [Layer::guide_with(&self.shortcuts), Layer::mouse_with(&self.shortcuts, self.mouse_mode), Layer::magnifier()]
     }
 
     /// The built-in mode called `name`, built from the shortcuts, else `game`'s own. A game's mode

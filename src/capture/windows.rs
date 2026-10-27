@@ -30,13 +30,19 @@ pub fn screenshot(game: &str) -> Result<PathBuf> {
     let claim = claim_media_path(&pictures, "Screenshots", game, &timestamp(), "png");
     let path = claim.path();
     std::fs::create_dir_all(path.parent().context("no folder")?).with_context(|| format!("creating {}", path.display()))?;
+    grab(path)?;
+    Ok(path.to_owned())
+}
+
+/// Saves the whole desktop to `path` (a PNG), for the magnifying glass.
+pub fn grab(path: &std::path::Path) -> Result<()> {
     let (width, height, rgba) = grab_desktop()?;
     let file = std::fs::File::create(path).with_context(|| format!("creating {}", path.display()))?;
     let mut encoder = png::Encoder::new(std::io::BufWriter::new(file), width, height);
     encoder.set_color(png::ColorType::Rgba);
     encoder.set_depth(png::BitDepth::Eight);
     encoder.write_header()?.write_image_data(&rgba)?;
-    Ok(path.to_owned())
+    Ok(())
 }
 
 /// The desktop's pixels, as width, height and RGBA rows from the top.

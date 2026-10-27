@@ -223,6 +223,7 @@ impl Daemon {
     }
 
     pub(super) fn broadcast_overlay(&mut self) {
+        self.sync_magnifier();
         let frame = self.overlay_frame();
         if (!frame.info.is_empty() || !frame.logs.is_empty())
             && self.overlay_process.is_none()
@@ -265,6 +266,9 @@ impl Daemon {
         if self.recording.is_some() {
             info.push(crate::info::recording_view());
         }
+        if self.lens_notice() {
+            info.push(crate::info::lens_notice_view());
+        }
         let (mut info, logs) = self.with_preview(info, logs, &values, now);
         let now = Instant::now();
         let glyphs = crate::info::Glyphs { family: values.family, nintendo_layout: values.nintendo_layout };
@@ -282,6 +286,7 @@ impl Daemon {
             active: self.overlay_view(),
             backdrop: self.preview_menu(),
             peek: self.peeking(),
+            lens: self.lens_view(),
             font: self.config.active_font().map(str::to_string),
             colorblind: self.config.colorblind_tones,
             opener: crate::info::OpenerLabel::of(&self.config.shortcuts),

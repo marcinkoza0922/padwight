@@ -149,6 +149,17 @@ impl ButtonAction {
         }
     }
 
+    /// What the gyro actions say, as plain text.
+    fn gyro_text(&self) -> &'static str {
+        match self {
+            ButtonAction::GyroToggle => "Gyro on / off",
+            ButtonAction::GyroClutch => "Gyro clutch (off while held)",
+            ButtonAction::GyroHold => "Gyro on while held",
+            ButtonAction::GyroRecenter => "Recenter gyro",
+            _ => "",
+        }
+    }
+
     /// The description in pieces (see [`Piece`]).
     pub fn pieces(&self) -> Vec<Piece> {
         let text = |s: &str| Piece::Text(s.to_string());
@@ -167,10 +178,10 @@ impl ButtonAction {
             ButtonAction::ToggleRecording => vec![text("Start or stop recording")],
             ButtonAction::ToggleMedia => vec![text("Media controls")],
             ButtonAction::QuickSettings => vec![text("Quick Settings")],
-            ButtonAction::GyroToggle => vec![text("Gyro on / off")],
-            ButtonAction::GyroClutch => vec![text("Gyro clutch (off while held)")],
-            ButtonAction::GyroHold => vec![text("Gyro on while held")],
-            ButtonAction::GyroRecenter => vec![text("Recenter gyro")],
+            ButtonAction::GyroToggle | ButtonAction::GyroClutch | ButtonAction::GyroHold | ButtonAction::GyroRecenter => {
+                vec![text(self.gyro_text())]
+            }
+            ButtonAction::Magnifier(c) => vec![text(c.label())],
             ButtonAction::ForceQuit => vec![text("Force quit focused window (hold)")],
             ButtonAction::OpenMenu(name) => vec![keyword(Keyword::Menu), text(&format!(" “{name}”"))],
             ButtonAction::ShowInfo(name) => vec![keyword(Keyword::Info), text(&format!(" “{name}”"))],

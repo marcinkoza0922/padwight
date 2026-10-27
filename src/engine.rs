@@ -12,7 +12,7 @@ use crate::config::{Deadzone, DeadzoneShape};
 
 use crate::{
     config::{
-        Analog, Button, ButtonAction, Cycle, GUIDE_MODE, GestureKind, MOUSE_MODE, GuideOpener, OPEN_GUIDE, Macro, MacroStep, Menu, Profile, Stick, StickAction, SwipeDirection, Toggled, TouchSide,
+        Analog, Button, ButtonAction, Cycle, GUIDE_MODE, GestureKind, MAGNIFIER_MODE, MOUSE_MODE, GuideOpener, OPEN_GUIDE, Macro, MacroStep, Menu, Profile, Stick, StickAction, SwipeDirection, Toggled, TouchSide,
         Trigger, TriggerAction,
     },
     input::{Axis, InputEvent},
@@ -232,6 +232,16 @@ pub struct Engine {
     media_toggled: bool,
     /// How many inputs hold a ForceQuit action down.
     force_quit_holds: u32,
+    /// Whether the magnifying glass mode is on.
+    magnifier_mode: bool,
+    /// How far the lens has been zoomed and resized from where it starts, in steps.
+    lens_zoom: i32,
+    lens_size: i32,
+    /// Where the lens is, across and down the screen (0..1): the right stick moves it like a
+    /// cursor while it isn't pinned.
+    lens_at: (f32, f32),
+    /// Where the lens is pinned, if it is.
+    lens_pinned: Option<(f32, f32)>,
     /// Set when an OpenMenu action fires; the daemon takes it.
     menu_request: Option<(String, Opener)>,
     /// Info overlays shown by held (or toggled) ShowInfo actions, with how many hold each.
@@ -248,6 +258,10 @@ pub struct Engine {
 /// Identifies a Toggle/Turbo node: the input it belongs to and its pre-order position among
 /// the stateful nodes of that input's action, so press and release find the same state.
 type StateId = (Source, usize);
+
+/// How fast the right stick moves the magnifying glass at full push, in screens per second across
+/// and down.
+const LENS_SPEED: (f32, f32) = (0.6, 0.9);
 
 impl Engine {
     /// Actions pressed since last taken, and the input behind each.
@@ -292,6 +306,8 @@ impl Engine {
             Some(GUIDE_MODE)
         } else if self.mouse_mode {
             Some(MOUSE_MODE)
+        } else if self.magnifier_mode {
+            Some(MAGNIFIER_MODE)
         } else {
             None
         }
@@ -304,17 +320,36 @@ impl Engine {
         match name {
             GUIDE_MODE => {}
             // The opener's gesture or combo: it opens and closes the overlay, and ends mouse mode.
-            OPEN_GUIDE if self.mouse_mode => self.set_mouse_mode(false),
+            OPEN_GUIDE if self.mouse_mode || self.magnifier_mode => {
+                self.set_mouse_mode(false);
+                self.set_magnifier_mode(false);
+            }
             OPEN_GUIDE => self.set_guide_open(!self.guide_open),
             MOUSE_MODE => {
                 if self.guide_open {
                     self.set_guide_open(false);
                 }
+                self.set_magnifier_mode(false);
                 self.set_mouse_mode(!self.mouse_mode);
+            }
+            // Out in the game, Guide + the trigger takes a pinned lens away; from the Guide menu it
+            // unpins the lens and starts it over.
+            MAGNIFIER_MODE if !self.guide_open && !self.magnifier_mode && self.lens_pinned.is_some() => {
+                self.lens_pinned = None;
+                self.layers_changed = true;
+            }
+            MAGNIFIER_MODE => {
+                if self.guide_open {
+                    self.set_guide_open(false);
+                    self.lens_pinned = None;
+                }
+                self.set_mouse_mode(false);
+                self.set_magnifier_mode(!self.magnifier_mode);
             }
             _ => {
                 self.mode = if self.mode.as_deref() == Some(name) && !self.mouse_mode { None } else { Some(name.to_string()) };
                 self.set_mouse_mode(false);
+                self.set_magnifier_mode(false);
             }
         }
     }
@@ -357,6 +392,68 @@ impl Engine {
     /// Whether a ForceQuit action is being held down.
     pub fn force_quit_held(&self) -> bool {
         self.force_quit_holds > 0
+    }
+
+    /// The magnifying glass while its mode is on or it is pinned: where it is on the screen
+    /// (0..1 across and down; the right stick moves it, the middle with the stick at rest), how
+    /// much it magnifies and its radius as a share of the screen's shorter side.
+    pub fn magnifier(&self) -> Option<(f32, f32, f32, f32)> {
+        if !self.magnifier_mode && self.lens_pinned.is_none() {
+            return None;
+        }
+        let (x, y) = self.lens_pinned.unwrap_or(self.lens_at);
+        let zoom = (2.5 * 1.25_f32.powi(self.lens_zoom)).clamp(1.5, 10.0);
+        let size = (0.17 + 0.03 * self.lens_size as f32).clamp(0.06, 0.4);
+        Some((x, y, zoom, size))
+    }
+
+    /// Whether the lens is pinned.
+    pub fn lens_pinned(&self) -> bool {
+        self.lens_pinned.is_some()
+    }
+
+    /// Whether the magnifying glass mode is on.
+    pub fn magnifier_mode(&self) -> bool {
+        self.magnifier_mode
+    }
+
+    /// How far the right stick pushes the lens, each way from -1 to 1.
+    fn lens_push(&self) -> (f32, f32) {
+        let axis = |a: Axis| self.axes.get(&a).copied().unwrap_or(0.0);
+        let (x, y) = apply_deadzone(axis(Axis::RightX), axis(Axis::RightY), 0.12_f32);
+        (x.clamp(-1.0, 1.0), y.clamp(-1.0, 1.0))
+    }
+
+    /// Whether the right stick is moving the lens.
+    fn lens_moving(&self) -> bool {
+        self.magnifier_mode && self.lens_pinned.is_none() && self.lens_push() != (0.0, 0.0)
+    }
+
+    /// Moves the lens by the stick's push, in whole screens per second at full push.
+    fn tick_lens(&mut self, dt: f32) {
+        if !self.lens_moving() {
+            return;
+        }
+        let (x, y) = self.lens_push();
+        self.lens_at = ((self.lens_at.0 + x * LENS_SPEED.0 * dt).clamp(0.0, 1.0), (self.lens_at.1 + y * LENS_SPEED.1 * dt).clamp(0.0, 1.0));
+    }
+
+    fn lens_control(&mut self, control: crate::config::LensControl) {
+        use crate::config::LensControl;
+        match control {
+            LensControl::ZoomIn => self.lens_zoom = (self.lens_zoom + 1).min(7),
+            LensControl::ZoomOut => self.lens_zoom = (self.lens_zoom - 1).max(-3),
+            LensControl::Larger => self.lens_size = (self.lens_size + 1).min(7),
+            LensControl::Smaller => self.lens_size = (self.lens_size - 1).max(-3),
+            LensControl::Pin => {
+                // Unpinned, the lens carries on from where it was held.
+                if let Some(at) = self.lens_pinned.take() {
+                    self.lens_at = at;
+                } else {
+                    self.lens_pinned = Some(self.lens_at);
+                }
+            }
+        }
     }
 
     /// Whether a QuickSettings action fired since the last call.
@@ -793,6 +890,11 @@ impl Engine {
                 self.gyro.on_holds = self.gyro.on_holds.saturating_sub(1);
             }
         }
+        ButtonAction::Magnifier(control) => {
+            if pressed {
+                self.lens_control(*control);
+            }
+        }
         ButtonAction::ForceQuit => {
             if pressed {
                 self.force_quit_holds += 1;
@@ -985,6 +1087,8 @@ impl Engine {
             TriggerAction::Button { action, threshold } => {
                 if !self.trigger_release.contains_key(&t) && analog_pressed(value, *threshold, false, TRIGGER_HYSTERESIS) {
                     self.trigger_release.insert(t, *threshold);
+                    // A pull with Guide held is a chord: letting go of Guide opens nothing.
+                    self.forget_guide_tap();
                     self.digital(&src, action, true, out);
                     self.edges(&src, profile.trigger_gestures(t), true, out);
                 }
@@ -1029,6 +1133,7 @@ impl Engine {
             || !self.turbo.is_empty()
             || !self.macros_running.is_empty()
             || self.touch.gliding()
+            || self.lens_moving()
             || self.held.values().any(|a| !a.wheel_directions().is_empty())
     }
 
@@ -1039,6 +1144,7 @@ impl Engine {
         self.tick_turbo(dt, out);
         self.tick_macros(dt, out);
         self.tick_touch(dt, out);
+        self.tick_lens(dt);
     }
 
     /// Keeps scrolling for wheel actions held past the repeat delay.

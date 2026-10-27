@@ -24,8 +24,8 @@ fn opened_everywhere() -> Game {
 #[test]
 fn a_menu_button_holds_its_menu_up_like_any_other() {
     let mut game = opened_everywhere();
-    // A grid, as a list with a close button stays up once let go.
-    game.menus[0].kind = MenuKind::Grid { columns: 2 };
+    // Without a close button, as a menu with one stays up once let go.
+    game.menus[0].no_cancel = true;
     let profile = &game.profiles[0];
     let mut engine = Engine::default();
     let mut out = Vec::new();

@@ -7,7 +7,7 @@ use std::{collections::BTreeMap, fmt};
 use serde::{Deserialize, Serialize};
 
 use super::{
-    Button, ButtonAction, Combo, GUIDE_MODE, GestureKind, Layer, MOUSE_MODE, MouseButton, MouseModeExtras, Profile,
+    Button, ButtonAction, Combo, GUIDE_MODE, GestureKind, Layer, MAGNIFIER_MODE, MOUSE_MODE, MouseButton, MouseModeExtras, Profile,
     TouchpadConfig,
 };
 
@@ -651,6 +651,7 @@ pub fn built_in_with(shortcuts: &Shortcuts, extras: MouseModeExtras, name: &str)
     match name {
         GUIDE_MODE => Some(Layer::guide_with(shortcuts)),
         MOUSE_MODE => Some(Layer::mouse_with(shortcuts, extras)),
+        MAGNIFIER_MODE => Some(Layer::magnifier()),
         _ => None,
     }
 }

@@ -660,6 +660,17 @@ pub fn recording_view() -> InfoView {
     }
 }
 
+/// The note shown with the magnifying glass: what it shows is a picture, not the game.
+pub fn lens_notice_view() -> InfoView {
+    InfoView {
+        name: "magnifier".into(),
+        style: OverlayStyle { position: ScreenPosition::TopCenter, scale: 1.8, background: crate::config::Paint::new("#16181c", 0.9), ..OverlayStyle::indicator() },
+        title: None,
+        rows: vec![vec![vec![glyph("Magnifying glass: a screenshot, not live gameplay", Some(YELLOW), false)]]],
+        opacity: 1.0,
+    }
+}
+
 /// The face button whose glyph `b` shows once the Nintendo layout swaps A with B and X with Y:
 /// the bottom button shows B, not A. Other buttons are unchanged.
 pub fn nintendo_face(b: Button) -> Button {

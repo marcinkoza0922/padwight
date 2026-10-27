@@ -77,6 +77,103 @@ fn guide_tap_toggles_the_overlay_and_never_reaches_the_pad() {
     assert_eq!(e.mode(), None, "a second tap closes it");
 }
 
+/// Presses and releases `b` at `at`.
+fn tap_at(e: &mut Engine, p: &Profile, b: Button, at: Instant) {
+    press(e, p, b, true, at);
+    press(e, p, b, false, at);
+}
+
+#[test]
+fn the_magnifying_glass_mode_is_run_from_the_d_pad_and_x() {
+    let base = Profile::passthrough("p");
+    let on = layered(&base, &crate::config::Layer::magnifier());
+    let mut e = Engine::default();
+    let t0 = Instant::now();
+    assert_eq!(e.magnifier(), None);
+    let (_, guide) = guide_setup();
+    press(&mut e, &base, Button::Guide, true, t0);
+    axis(&mut e, &guide, Axis::LeftTrigger, 1.0);
+    assert_eq!(e.mode(), Some(GUIDE_MODE), "Guide is still held");
+    press(&mut e, &base, Button::Guide, false, ms(t0, 5));
+    assert_eq!(e.mode(), Some(MAGNIFIER_MODE), "Guide + left trigger turns it on, and letting go opens no overlay");
+    assert_eq!(e.mode(), Some(MAGNIFIER_MODE));
+    let (x, y, zoom, size) = e.magnifier().unwrap();
+    assert_eq!((x, y), (0.5, 0.5), "the stick at rest: the middle");
+    tap_at(&mut e, &on, Button::DpadUp, t0);
+    tap_at(&mut e, &on, Button::DpadRight, ms(t0, 10));
+    let (_, _, bigger_zoom, bigger) = e.magnifier().unwrap();
+    assert!(bigger_zoom > zoom && bigger > size, "up zooms in, right makes the lens larger");
+    tap_at(&mut e, &on, Button::DpadDown, ms(t0, 20));
+    tap_at(&mut e, &on, Button::DpadLeft, ms(t0, 30));
+    assert_eq!(e.magnifier().map(|l| (l.2, l.3)), Some((zoom, size)));
+    axis(&mut e, &on, Axis::RightX, 1.0);
+    assert!(e.needs_tick(&on));
+    e.tick(&on, 0.5, &mut Vec::new());
+    let moved = e.magnifier().unwrap().0;
+    assert!((moved - 0.8).abs() < 1e-3, "the stick moves the lens like a cursor: {moved}");
+    axis(&mut e, &on, Axis::RightX, 0.0);
+    e.tick(&on, 0.5, &mut Vec::new());
+    assert_eq!(e.magnifier().unwrap().0, moved, "it stays where it was left, not back in the middle");
+    axis(&mut e, &on, Axis::RightX, 1.0);
+    tap_at(&mut e, &on, Button::West, ms(t0, 40));
+    e.tick(&on, 0.5, &mut Vec::new());
+    assert_eq!(e.magnifier().unwrap().0, moved, "pinned, it stays");
+    assert!(!e.needs_tick(&on));
+    tap_at(&mut e, &on, Button::East, ms(t0, 50));
+    assert_eq!(e.mode(), None, "B leaves the mode");
+    assert!(e.magnifier().is_some(), "a pinned lens stays up");
+}
+
+/// An engine with a lens pinned off to the right, and the mode left.
+fn pinned_lens() -> Engine {
+    let on = layered(&Profile::passthrough("p"), &crate::config::Layer::magnifier());
+    let mut e = Engine::default();
+    e.switch_mode(MAGNIFIER_MODE);
+    axis(&mut e, &on, Axis::RightX, 1.0);
+    e.tick(&on, 0.5, &mut Vec::new());
+    tap_at(&mut e, &on, Button::West, Instant::now());
+    e.switch_mode(MAGNIFIER_MODE);
+    assert!(e.magnifier().is_some() && e.mode().is_none());
+    e
+}
+
+#[test]
+fn guide_and_the_trigger_in_the_game_take_a_pinned_lens_away() {
+    let mut e = pinned_lens();
+    e.switch_mode(MAGNIFIER_MODE);
+    assert_eq!((e.magnifier(), e.mode()), (None, None), "removed, and the mode isn't entered");
+    e.switch_mode(MAGNIFIER_MODE);
+    assert_eq!(e.mode(), Some(MAGNIFIER_MODE), "again, it starts the mode");
+}
+
+#[test]
+fn the_trigger_from_the_guide_menu_unpins_and_restarts_the_lens() {
+    let mut e = pinned_lens();
+    e.set_guide_open(true);
+    e.switch_mode(MAGNIFIER_MODE);
+    assert_eq!(e.mode(), Some(MAGNIFIER_MODE));
+    let (x, y, ..) = e.magnifier().unwrap();
+    assert_eq!((x, y), (0.5, 0.5), "back in the middle");
+    assert!(!e.lens_pinned());
+}
+
+#[test]
+fn x_again_lets_the_stick_move_a_pinned_lens_on_from_where_it_was() {
+    let on = layered(&Profile::passthrough("p"), &crate::config::Layer::magnifier());
+    let mut e = Engine::default();
+    let t0 = Instant::now();
+    e.switch_mode(MAGNIFIER_MODE);
+    axis(&mut e, &on, Axis::RightX, 1.0);
+    e.tick(&on, 0.5, &mut Vec::new());
+    tap_at(&mut e, &on, Button::West, t0);
+    let pinned = e.magnifier().unwrap().0;
+    tap_at(&mut e, &on, Button::West, ms(t0, 10));
+    e.tick(&on, 0.1, &mut Vec::new());
+    assert!(e.magnifier().unwrap().0 > pinned, "it moves on from there");
+    tap_at(&mut e, &on, Button::East, ms(t0, 20));
+    assert_eq!(e.magnifier(), None, "unpinned, it goes with the mode");
+}
+
 #[test]
 fn guide_chord_runs_its_shortcut_and_leaves_the_overlay_shut() {
     let (base, on) = guide_setup();
