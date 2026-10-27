@@ -60,6 +60,8 @@ pub(super) fn run() -> Result<()> {
         // for left out.
         let arrived = feed.drain();
         for frame in arrived.frames {
+            let changed = window.scale.set_percent(frame.lite.resolution.percent());
+            window.scale_changed(changed);
             overlay.receive(frame);
             window.pacer.changed();
         }

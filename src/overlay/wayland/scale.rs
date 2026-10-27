@@ -6,9 +6,12 @@
 //! logical size, with a buffer scale of 1. Without them, the whole-number scale from
 //! `wl_surface.preferred_buffer_scale` is the buffer scale and the buffer is that many times
 //! the logical size. Without either, the scale is 1.
+//!
+//! The performance card's resolution takes its share of that scale, and the viewport stretches
+//! the smaller buffer over the logical size; without a viewport it has no effect.
 
-/// The scale the compositor prefers, as far as it has said.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+/// The scale the compositor prefers, as far as it has said, and the share of it drawn at.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) struct Scale {
     /// wp_fractional_scale_v1's preferred scale in 120ths, if it has sent one.
     fractional: Option<u32>,
@@ -16,6 +19,8 @@ pub(super) struct Scale {
     integer: Option<u32>,
     /// Whether the compositor has a viewporter, which the fractional scale needs.
     viewport: bool,
+    /// The share of the preferred scale drawn at, in hundredths (`Resolution::percent`).
+    percent: u32,
 }
 
 /// How a buffer goes onto the surface at a scale.
@@ -29,7 +34,7 @@ pub(super) enum Mode {
 
 impl Scale {
     pub(super) fn new(viewport: bool) -> Scale {
-        Scale { viewport, ..Scale::default() }
+        Scale { fractional: None, integer: None, viewport, percent: 100 }
     }
 
     /// A preferred scale from wp_fractional_scale_v1; whether it changed anything.
@@ -46,17 +51,31 @@ impl Scale {
         *self != before
     }
 
+    /// The share of the preferred scale to draw at, in hundredths; whether it changed anything.
+    pub(super) fn set_percent(&mut self, percent: u32) -> bool {
+        let before = *self;
+        self.percent = percent.clamp(1, 100);
+        *self != before
+    }
+
     pub(super) fn mode(self) -> Mode {
-        match self.fractional {
-            Some(_) if self.viewport => Mode::Viewport,
-            _ => Mode::Buffer(self.integer.unwrap_or(1)),
+        if self.viewport && (self.fractional.is_some() || self.percent < 100) {
+            Mode::Viewport
+        } else {
+            Mode::Buffer(self.integer.unwrap_or(1))
         }
+    }
+
+    /// The scale drawn at through the viewport, in 120ths: the preferred one's share.
+    fn scale120(self) -> u32 {
+        let preferred = self.fractional.unwrap_or(self.integer.unwrap_or(1) * 120);
+        ((preferred * self.percent + 50) / 100).max(1)
     }
 
     /// Device pixels to a logical one, for drawing.
     pub(super) fn factor(self) -> f32 {
         match self.mode() {
-            Mode::Viewport => self.fractional.unwrap_or(120) as f32 / 120.0,
+            Mode::Viewport => self.scale120() as f32 / 120.0,
             Mode::Buffer(n) => n as f32,
         }
     }
@@ -65,7 +84,7 @@ impl Scale {
     pub(super) fn device(self, (w, h): (u32, u32)) -> (u32, u32) {
         match self.mode() {
             Mode::Viewport => {
-                let s = self.fractional.unwrap_or(120);
+                let s = self.scale120();
                 (scaled(w, s), scaled(h, s))
             }
             Mode::Buffer(n) => (w * n, h * n),
@@ -133,5 +152,31 @@ mod tests {
         s.set_fractional(180);
         assert_eq!(s.mode(), Mode::Viewport);
         assert_eq!(s.device((100, 100)), (150, 150));
+    }
+
+    #[test]
+    fn a_lower_resolution_draws_a_share_of_the_scale_through_the_viewport() {
+        let mut s = Scale::new(true);
+        assert!(s.set_percent(50));
+        assert!(!s.set_percent(50));
+        // No scale heard: half of 1.
+        assert_eq!((s.mode(), s.factor(), s.device((1920, 1080))), (Mode::Viewport, 0.5, (960, 540)));
+        // The whole-number scale goes through the viewport too, so it can be halved.
+        s.set_integer(2);
+        assert_eq!((s.mode(), s.factor(), s.device((1920, 1080))), (Mode::Viewport, 1.0, (1920, 1080)));
+        s.set_fractional(180);
+        s.set_percent(75);
+        assert_eq!((s.factor(), s.device((1920, 1080))), (1.125, (2160, 1215)));
+        // Full again: back as it was before.
+        s.set_percent(100);
+        assert_eq!(s.device((1920, 1080)), (2880, 1620));
+    }
+
+    #[test]
+    fn without_a_viewport_the_resolution_does_nothing() {
+        let mut s = Scale::new(false);
+        s.set_integer(2);
+        s.set_percent(50);
+        assert_eq!((s.mode(), s.device((1920, 1080))), (Mode::Buffer(2), (3840, 2160)));
     }
 }

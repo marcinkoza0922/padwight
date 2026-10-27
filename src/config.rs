@@ -48,7 +48,7 @@ pub use guide::*;
 pub use gyro::*;
 pub use log::*;
 pub use modes::Mode;
-pub use performance::Performance;
+pub use performance::{Performance, Resolution};
 pub use rumble_cues::RumbleSet;
 pub use shortcuts::{Group, GuideOpener, MenuKeys, OPEN_GUIDE, PanelPress, Shortcut, ShortcutInput, Shortcuts};
 pub use ornament::*;

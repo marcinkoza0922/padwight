@@ -167,6 +167,8 @@ pub struct Lite {
     /// Nothing loops: glows don't pulse, gradients and scanlines don't drift, grain holds still. Set by the
     /// performance card's Looping animations or Motion switch turned off.
     pub calm: bool,
+    /// What share of the display's pixels the overlay window draws at.
+    pub resolution: super::performance::Resolution,
 }
 
 impl Lite {
