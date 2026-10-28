@@ -294,7 +294,7 @@ impl Daemon {
             backdrop: self.preview_menu(),
             peek: self.peeking(),
             lens: self.lens_view(),
-            doodles: self.doodles.clone(), doodle_cursor: self.doodle_cursor(), doodle_hud: self.doodle_hud(),
+            doodles: self.doodles.clone(), doodles_kept: false, doodle_cursor: self.doodle_cursor(), doodle_hud: self.doodle_hud(),
             font: self.config.active_font().map(str::to_string),
             colorblind: self.config.colorblind_tones,
             opener: crate::info::OpenerLabel::of(&self.config.shortcuts),

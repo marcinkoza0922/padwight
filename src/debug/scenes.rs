@@ -182,8 +182,9 @@ fn doodles() -> OverlayFrame {
             let x = 0.1 + column as f32 * 0.2;
             let pen = Pen { color: 2 + column * 2, size: 0.012, tip, kind };
             canvas.begin_stroke(pen, Point::new(x, y));
-            for step in 1..=12 {
-                let t = step as f32 / 12.0;
+            // As finely as the stick moves the cursor, so each stroke is drawn in several runs.
+            for step in 1..=240 {
+                let t = step as f32 / 240.0;
                 canvas.extend_stroke(Point::new(x + 0.14 * t, y + 0.05 * (t * std::f32::consts::TAU).sin()));
             }
             canvas.end_stroke();

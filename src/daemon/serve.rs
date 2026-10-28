@@ -67,7 +67,7 @@ fn serve_client(mut conn: &UnixStream, tx: &Tx) -> Result<()> {
 fn watch_overlay(mut conn: &UnixStream, tx: &Tx) -> Result<()> {
     let (view_tx, view_rx) = mpsc::channel::<OverlayFrame>();
     tx.send(Msg::WatchOverlay(view_tx))?;
-    let mut icons_sent = None;
+    let (mut icons_sent, mut doodles_sent) = (None, Vec::new());
     while let Ok(first) = view_rx.recv() {
         // Frames that came while the last was written: those a newer one stands in for are
         // skipped, so a burst doesn't pile up, but each opening, closing and pick is sent.
@@ -78,6 +78,7 @@ fn watch_overlay(mut conn: &UnixStream, tx: &Tx) -> Result<()> {
             }
             let view = &mut pending[i];
             leave_out_icons_sent(view, &mut icons_sent);
+            view.leave_out_doodles_sent(&mut doodles_sent);
             let mut line = serde_json::to_string(view)?;
             line.push('\n');
             if conn.write_all(line.as_bytes()).is_err() {

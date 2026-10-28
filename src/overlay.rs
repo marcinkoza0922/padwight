@@ -82,6 +82,10 @@ pub struct OverlayFrame {
     /// The doodles over the game, drawn under the magnifying glass and the panels.
     #[serde(default, skip_serializing_if = "crate::tools::doodle::Canvas::is_empty")]
     pub doodles: crate::tools::doodle::Canvas,
+    /// `doodles` was sent without its finished items, which are those sent last: the daemon
+    /// sends them only when one is added or goes (see `leave_out_doodles_sent`).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub doodles_kept: bool,
     /// The Doodle screen's cursor, while that screen is up.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub doodle_cursor: Option<DoodleCursor>,
@@ -198,6 +202,30 @@ impl OverlayFrame {
     /// missing anything it animates: the same panel, or none, with the same pick. A panel opening
     /// or closing, or a pick, must be seen even when the next frame follows at once, as the
     /// close does after a pick that closes a menu.
+    /// Leaves the doodles' finished items out when they are those last sent on this stream
+    /// (`sent`), for `put_back_doodles` at the other end. A screen of strokes is hundreds of KB
+    /// as JSON, and a frame goes with each tick the Doodle cursor moves; the items change only
+    /// when a stroke ends or one goes.
+    pub fn leave_out_doodles_sent(&mut self, sent: &mut Vec<crate::tools::doodle::Item>) {
+        let items = self.doodles.items_mut();
+        if items == sent {
+            items.clear();
+            self.doodles_kept = true;
+        } else {
+            sent.clone_from(items);
+        }
+    }
+
+    /// Puts back the finished doodles a frame was sent without (`leave_out_doodles_sent`), from
+    /// those `kept` from the frames before it, and keeps those of a frame sent with them.
+    pub fn put_back_doodles(&mut self, kept: &mut Vec<crate::tools::doodle::Item>) {
+        if std::mem::take(&mut self.doodles_kept) {
+            self.doodles.items_mut().clone_from(kept);
+        } else {
+            kept.clone_from(self.doodles.items_mut());
+        }
+    }
+
     pub fn stands_in_for(&self, older: &OverlayFrame) -> bool {
         use crate::motion::Tracked;
         let scene = |frame: &OverlayFrame| frame.active.as_ref().map(|view| (view.key(), view.pick()));

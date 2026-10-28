@@ -105,6 +105,10 @@ Decisions made while building:
 - East's hold time is 0.5 seconds. It leaves while held, and a shorter press undoes on release,
   so a long hold doesn't also undo.
 - Undo takes back the last item added. Erased items are gone.
+- Performance: a stroke is drawn in runs of 32 segments, an op each, so as it grows only its
+  tail is repainted. The overlay keeps the finished items' ops, and the daemon sends the finished
+  items only when they change; the stroke being drawn goes with every frame. Measure with the
+  ignored `doodles::tests::bench_drawing_over_doodles` (`--cargo-profile release`).
 
 ## Open questions
 

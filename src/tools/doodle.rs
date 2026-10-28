@@ -265,6 +265,12 @@ impl Canvas {
         &self.items
     }
 
+    /// The finished items, to leave out of a frame sent and put back where it arrives
+    /// (`OverlayFrame::leave_out_doodles_sent`).
+    pub fn items_mut(&mut self) -> &mut Vec<Item> {
+        &mut self.items
+    }
+
     /// The stroke being drawn, which isn't an item until the pen lifts.
     pub fn pending(&self) -> Option<&Stroke> {
         self.pending.as_ref()
