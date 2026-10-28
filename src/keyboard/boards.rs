@@ -3,8 +3,11 @@
 
 use super::{Key, Layout, gap, k, w};
 
+/// The on-screen keyboard's Paste key. It isn't a key of its own: the controller sends Ctrl+V.
+pub const PASTE: &str = "PASTE";
+
 /// The keys for typing into a game: letters, digits and symbols, Enter, Backspace, Escape, AltGr
-/// for the characters a layout puts there, and the arrows for moving through the text.
+/// for the characters a layout puts there, Paste, and the arrows for moving through the text.
 const BASIC: [&[Key]; 5] = [
     &[
         k("`", "KEY_GRAVE"), k("1", "KEY_1"), k("2", "KEY_2"), k("3", "KEY_3"), k("4", "KEY_4"),
@@ -28,7 +31,7 @@ const BASIC: [&[Key]; 5] = [
     ],
     &[
         w("Esc", "KEY_ESC", 1.25), w("Ctrl", "KEY_LEFTCTRL", 1.25), w("Alt", "KEY_LEFTALT", 1.25),
-        w("Space", "KEY_SPACE", 5.0), w("AltGr", "KEY_RIGHTALT", 1.25),
+        w("Space", "KEY_SPACE", 3.75), w("AltGr", "KEY_RIGHTALT", 1.25), w("Paste", PASTE, 1.25),
         w("←", "KEY_LEFT", 1.25), w("↑", "KEY_UP", 1.25), w("↓", "KEY_DOWN", 1.25), w("→", "KEY_RIGHT", 1.25),
     ],
 ];
@@ -68,8 +71,8 @@ const FULL: [&[Key]; 6] = [
     ],
     &[
         w("Ctrl", "KEY_LEFTCTRL", 1.25), w("Super", "KEY_LEFTMETA", 1.25), w("Alt", "KEY_LEFTALT", 1.25),
-        w("Space", "KEY_SPACE", 6.25), w("AltGr", "KEY_RIGHTALT", 1.25), w("Super", "KEY_RIGHTMETA", 1.25),
-        w("Menu", "KEY_COMPOSE", 1.25), w("Ctrl", "KEY_RIGHTCTRL", 1.25), gap(0.5),
+        w("Space", "KEY_SPACE", 5.0), w("AltGr", "KEY_RIGHTALT", 1.25), w("Super", "KEY_RIGHTMETA", 1.25),
+        w("Menu", "KEY_COMPOSE", 1.25), w("Ctrl", "KEY_RIGHTCTRL", 1.25), w("Paste", PASTE, 1.25), gap(0.5),
         w("←", "KEY_LEFT", 1.2), w("↓", "KEY_DOWN", 1.2), w("→", "KEY_RIGHT", 1.2),
     ],
 ];

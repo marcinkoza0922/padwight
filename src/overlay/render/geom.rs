@@ -5,7 +5,10 @@
 //! Equality is f32's own, and the hashes take each float's bits with -0 made 0, so equal values
 //! hash equal.
 
-use std::hash::{Hash, Hasher};
+use std::{
+    hash::{Hash, Hasher},
+    sync::{Arc, OnceLock},
+};
 
 /// Feeds `values` to `state` by their bits, -0 as 0.
 pub(super) fn hash_floats<H: Hasher>(state: &mut H, values: &[f32]) {
@@ -185,9 +188,32 @@ pub enum Seg {
 }
 
 /// A vector outline, as tiny-skia's path builder takes it.
-#[derive(Debug, Clone, PartialEq, Hash, Default)]
+///
+/// Its steps are shared between its clones, with their bounds once taken: a frame's list is
+/// cloned, compared with the last one's and measured every frame, and a doodle's paths hold
+/// thousands of points, which made those the slowest part of drawing over doodles. A clone of a
+/// path is the same path at once, and it is measured once.
+#[derive(Debug, Clone, Default)]
 pub struct Path {
-    pub segs: Vec<Seg>,
+    steps: Arc<Steps>,
+}
+
+#[derive(Debug, Clone, Default)]
+struct Steps {
+    segs: Vec<Seg>,
+    bounds: OnceLock<Option<Rect>>,
+}
+
+impl PartialEq for Path {
+    fn eq(&self, other: &Path) -> bool {
+        Arc::ptr_eq(&self.steps, &other.steps) || self.steps.segs == other.steps.segs
+    }
+}
+
+impl Hash for Path {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.steps.segs.hash(state);
+    }
 }
 
 impl Path {
@@ -195,29 +221,37 @@ impl Path {
         Path::default()
     }
 
-    pub fn move_to(&mut self, p: Point) -> &mut Path {
-        self.segs.push(Seg::MoveTo(p));
+    /// Its steps, in order.
+    pub fn segs(&self) -> &[Seg] {
+        &self.steps.segs
+    }
+
+    /// Adds `seg`, with the path no longer shared and its bounds to be taken again.
+    fn push(&mut self, seg: Seg) -> &mut Path {
+        let steps = Arc::make_mut(&mut self.steps);
+        steps.segs.push(seg);
+        steps.bounds.take();
         self
+    }
+
+    pub fn move_to(&mut self, p: Point) -> &mut Path {
+        self.push(Seg::MoveTo(p))
     }
 
     pub fn line_to(&mut self, p: Point) -> &mut Path {
-        self.segs.push(Seg::LineTo(p));
-        self
+        self.push(Seg::LineTo(p))
     }
 
     pub fn quad_to(&mut self, c: Point, p: Point) -> &mut Path {
-        self.segs.push(Seg::QuadTo(c, p));
-        self
+        self.push(Seg::QuadTo(c, p))
     }
 
     pub fn cubic_to(&mut self, c1: Point, c2: Point, p: Point) -> &mut Path {
-        self.segs.push(Seg::CubicTo(c1, c2, p));
-        self
+        self.push(Seg::CubicTo(c1, c2, p))
     }
 
     pub fn close(&mut self) -> &mut Path {
-        self.segs.push(Seg::Close);
-        self
+        self.push(Seg::Close)
     }
 
     /// Part of a circle of radius `r` around `center`, from `start` to `end` degrees clockwise
@@ -229,7 +263,7 @@ impl Path {
             Point::new(center.x + sin * r, center.y - cos * r)
         };
         let first = at(start);
-        match self.segs.last() {
+        match self.segs().last() {
             None | Some(Seg::Close) => {
                 self.move_to(first);
             }
@@ -262,11 +296,23 @@ impl Path {
 
     /// The box around every point and control point: the curves lie inside it.
     pub fn bounds(&self) -> Option<Rect> {
-        Rect::around(self.segs.iter().flat_map(|seg| match *seg {
-            Seg::MoveTo(p) | Seg::LineTo(p) => vec![p],
-            Seg::QuadTo(c, p) => vec![c, p],
-            Seg::CubicTo(c1, c2, p) => vec![c1, c2, p],
-            Seg::Close => vec![],
-        }))
+        *self.steps.bounds.get_or_init(|| self.measure())
+    }
+
+    fn measure(&self) -> Option<Rect> {
+        let mut edges: Option<[f32; 4]> = None;
+        for seg in self.segs() {
+            let (points, n) = match *seg {
+                Seg::MoveTo(p) | Seg::LineTo(p) => ([p, p, p], 1),
+                Seg::QuadTo(c, p) => ([c, p, p], 2),
+                Seg::CubicTo(c1, c2, p) => ([c1, c2, p], 3),
+                Seg::Close => continue,
+            };
+            for p in &points[..n] {
+                let [left, top, right, bottom] = edges.get_or_insert([p.x, p.y, p.x, p.y]);
+                (*left, *top, *right, *bottom) = (left.min(p.x), top.min(p.y), right.max(p.x), bottom.max(p.y));
+            }
+        }
+        edges.map(|[left, top, right, bottom]| Rect::new(left, top, right - left, bottom - top))
     }
 }

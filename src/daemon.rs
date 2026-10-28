@@ -17,6 +17,7 @@ use std::{
 use anyhow::{Context, Result};
 
 use crate::{
+    tools::ToolsSession,
     config::{Button, Config, Feature, Game, Group, PanelPress, Profile, ProfileRef, Refit, Scope, Shortcut},
     engine::{Engine, Opener},
     focus::{self, FocusEvent},
@@ -62,6 +63,7 @@ mod main_loop;
 mod requests;
 mod serve;
 mod stop;
+mod tools;
 /// The process around the service: signals, the control socket, running in the background.
 #[cfg_attr(target_os = "linux", path = "daemon/unix.rs")]
 #[cfg_attr(windows, path = "daemon/windows.rs")]
@@ -328,6 +330,7 @@ struct Requests {
     recording: bool,
     media: bool,
     settings: bool,
+    tools: bool,
     menu: Option<(String, Opener)>,
 }
 
@@ -339,6 +342,7 @@ impl Requests {
             recording: engine.take_recording_toggle(),
             media: engine.take_media_toggle(),
             settings: engine.take_settings_request(),
+            tools: engine.take_tools_request(),
             menu: engine.take_menu_request(),
         }
     }
@@ -368,6 +372,8 @@ enum Active {
     Settings(SystemMenu, u64),
     /// The question of how to set up a new controller (its id).
     NewPad(NewPadSession, String),
+    /// The Tools menu, and the controller that opened it.
+    Tools(Box<ToolsSession>, u64),
 }
 
 /// The sounds of the on-screen keyboard or the numpad, whichever is up.
@@ -386,6 +392,7 @@ fn active_sound(active: &Active) -> sound::SoundOverlay {
         Active::Settings(..) => sound::SoundOverlay::Guide,
         Active::Media(_) => sound::SoundOverlay::Media,
         Active::Offer(_) | Active::NewPad(..) => sound::SoundOverlay::Offer,
+        Active::Tools(..) => sound::SoundOverlay::Menu,
     }
 }
 
@@ -521,6 +528,8 @@ struct Daemon {
     guide_menu: Option<GuideMenu>,
     /// The magnifying glass (see `magnifier.rs`).
     lens: magnifier::Lens,
+    /// The doodles drawn over the game (see `tools/doodle.rs`). They outlive the Tools menu.
+    doodles: crate::tools::doodle::Canvas,
     /// When shown info overlays with live values next refresh.
     info_refresh: Option<Instant>,
     /// When an info overlay that hides after a while next needs redrawing (fading or gone).
@@ -620,7 +629,7 @@ impl Daemon {
             menu_live: crate::figures::Live::default(),
             live_drawn: None,
             guide_menu: None,
-            lens: magnifier::Lens::default(),
+            lens: magnifier::Lens::default(), doodles: crate::tools::doodle::Canvas::default(),
             info_refresh: None,
             info_fade: None,
             info_timers: crate::info::Timers::default(),
@@ -895,6 +904,9 @@ impl Daemon {
         }
         if asked.settings && self.active.is_none() {
             self.open_system_menu(id, Page::Main);
+        }
+        if asked.tools {
+            self.open_tools(id);
         }
         self.update_force_quit();
         if let Some((name, opener)) = asked.menu {
@@ -1227,7 +1239,7 @@ impl Daemon {
             self.info_timers.clear();
             self.log_timers.clear();
         }
-        if game_changes && matches!(self.active, Some(Active::Menu { .. })) {
+        if game_changes && matches!(self.active, Some(Active::Menu { .. } | Active::Tools(..))) {
             self.close_overlay();
         }
         // Modes belong to a game: the mode stays on within it.

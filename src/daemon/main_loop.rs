@@ -77,7 +77,7 @@ impl Daemon {
             Some(Active::Offer(o)) => o.next_deadline(),
             Some(Active::Settings(m, _)) => m.next_deadline(),
             Some(Active::NewPad(s, _)) => s.next_deadline(),
-            None => None,
+            Some(Active::Tools(..)) | None => None,
         };
         self.devices
             .values()
@@ -135,10 +135,11 @@ impl Daemon {
     }
 
     fn needs_tick(&self) -> bool {
-        self.devices.values().any(|d| self.config.profile_for(&d.id).is_some_and(|base| d.engine.needs_tick(layered(&d.layered, base))))
+        self.doodle_ticking() || self.devices.values().any(|d| self.config.profile_for(&d.id).is_some_and(|base| d.engine.needs_tick(layered(&d.layered, base))))
     }
 
     fn tick(&mut self, dt: f32) {
+        self.tick_doodle(dt);
         for dev in self.devices.values_mut() {
             let Some(base) = self.config.profile_for(&dev.id) else { continue };
             let mut out = Vec::new();

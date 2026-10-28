@@ -40,7 +40,7 @@ impl Overlay {
 
     /// Whether anything is drawn: something shown, or something still fading out.
     pub(super) fn shown(&self) -> bool {
-        !self.panels.is_empty() || !self.info.is_empty() || !self.logs.is_empty() || self.frame.lens.is_some()
+        !self.panels.is_empty() || !self.info.is_empty() || !self.logs.is_empty() || self.frame.lens.is_some() || !self.frame.doodles.is_empty() || self.frame.doodle_cursor.is_some()
     }
 
     /// Whether something is still moving at `now`, so the screen needs redrawing.

@@ -7,12 +7,12 @@
 //! so the pixel comes out the same and needn't be redrawn. A picture laid the same way as
 //! before, whose tiles were drawn again since (`tiles.rs`), changed only where those tiles lie.
 
-use tiny_skia::{PixmapMut, Transform};
+use tiny_skia::{Pixmap, PixmapMut, Transform};
 
 pub(super) use super::lay::lay_picture;
 
 use super::damage::Patch;
-use crate::overlay::render::{Corners, Layer, Op, Rect, bounds, raster};
+use crate::overlay::render::{Layer, Op, bounds, raster};
 
 /// One thing laid at the top level of a frame's list.
 #[derive(Debug, Clone, PartialEq)]
@@ -90,12 +90,14 @@ fn same(before: &Item, now: &Item) -> bool {
         }
 }
 
-/// What changed of an item laid the same way as last frame: nothing, the patches its picture's
-/// one redraw since changed, or all of it after more than one.
+/// What changed of an item laid the same way as last frame: nothing for the same ops drawn
+/// straight, or for a picture not redrawn since; the patches its picture's one redraw since
+/// changed, or all of it after more than one.
 fn redrawn(before: &Item, now: &Item, out: &mut Vec<Patch>) {
     match (&before.what, &now.what) {
         (What::Picture { version: a, .. }, What::Picture { version: b, .. }) if a == b => {}
         (What::Picture { version: a, .. }, What::Picture { version: b, .. }) if a + 1 == *b => out.extend(&now.redrawn),
+        (What::Straight(_), What::Straight(_)) => {}
         _ => out.push(now.at),
     }
 }
@@ -140,14 +142,20 @@ pub(super) fn clear(target: &mut PixmapMut, patch: Patch) {
     }
 }
 
-/// Draws `ops` straight at `scale` over `target`, only within `clip`.
-pub(super) fn draw_straight(ops: &[Op], scale: f32, clip: Patch, target: &mut PixmapMut) {
-    let rect = Rect::new(clip.x0 as f32 / scale, clip.y0 as f32 / scale, clip.width() as f32 / scale, clip.height() as f32 / scale);
-    let mut cut = Vec::with_capacity(ops.len() + 2);
-    cut.push(Op::Clip { rect, radii: Corners::default() });
-    cut.extend_from_slice(ops);
-    cut.push(Op::Unclip);
-    raster::draw(&cut, target, Transform::from_scale(scale, scale));
+/// Draws each of `lists` straight at `scale`, in order, over `target`, only within `clip`; when
+/// `onto_clear`, `clip` is clear and isn't read. They are drawn into a pixmap as big as the clip,
+/// which is then laid down: a clip mask would be as big as the screen, and making one for each
+/// list in each patch cost far more than the drawing (a doodle is many lists). Shapes moved by
+/// whole pixels take the same coverage, so this is the same as drawing them on the screen.
+pub(super) fn draw_straight(lists: &[&[Op]], scale: f32, clip: Patch, target: &mut PixmapMut, onto_clear: bool) {
+    let Some(clip) = clip.intersection(&Patch::new(0, 0, target.width() as i32, target.height() as i32)) else { return };
+    let Some(mut pixmap) = Pixmap::new(clip.width() as u32, clip.height() as u32) else { return };
+    let transform = Transform::from_row(scale, 0.0, 0.0, scale, -clip.x0 as f32, -clip.y0 as f32);
+    for ops in lists {
+        raster::draw(ops, &mut pixmap.as_mut(), transform);
+    }
+    let laid = Laid { opacity: 1.0, transform: Transform::from_translate(clip.x0 as f32, clip.y0 as f32), smooth: false };
+    lay_picture(&pixmap, &laid, clip, target, onto_clear);
 }
 
 #[cfg(test)]
@@ -163,6 +171,19 @@ mod tests {
     fn unchanged_items_add_nothing() {
         let items = [item(1, 0), item(2, 100)];
         assert!(changed(&items, &items).is_empty());
+    }
+
+    /// Ops drawn straight (doodles) that stay the same aren't repainted: each counted as
+    /// changed every frame, so a frame repainted every doodle's box.
+    #[test]
+    fn unchanged_straight_items_add_nothing() {
+        let straight = |x: f32| {
+            let ops = vec![Op::Rect { rect: crate::overlay::render::Rect::new(x, 0.0, 10.0, 10.0), radii: Default::default(), fill: None, border: None }];
+            Item { at: straight_patch(&ops, 1.0).unwrap(), what: What::Straight(ops), redrawn: Vec::new() }
+        };
+        let (a, b, moved) = (straight(0.0), straight(100.0), straight(300.0));
+        assert!(changed(&[a.clone(), b.clone()], &[a.clone(), b.clone()]).is_empty());
+        assert_eq!(changed(&[a.clone(), b.clone()], &[a.clone(), moved.clone()]), vec![moved.at, b.at]);
     }
 
     #[test]

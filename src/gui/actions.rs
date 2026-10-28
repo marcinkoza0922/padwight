@@ -286,8 +286,8 @@ pub(super) fn action_kind(action: &ButtonAction) -> ActionKind {
         ButtonAction::GyroClutch => ActionKind::GyroClutch,
         ButtonAction::GyroHold => ActionKind::GyroHold,
         ButtonAction::GyroRecenter => ActionKind::GyroRecenter,
-        // Only the built-in magnifying glass mode binds these.
-        ButtonAction::Magnifier(_) => ActionKind::Disabled,
+        // Only the built-in modes and the Guide mode's trigger bind these.
+        ButtonAction::Magnifier(_) | ButtonAction::Tools => ActionKind::Disabled,
         ButtonAction::Multi(_) => ActionKind::Multiple,
         ButtonAction::Toggle(_) => ActionKind::Toggle,
         ButtonAction::Turbo { .. } => ActionKind::Turbo,
@@ -568,7 +568,8 @@ pub(super) fn action_value<'a>(
         | ButtonAction::GyroClutch
         | ButtonAction::GyroHold
         | ButtonAction::GyroRecenter
-        | ButtonAction::Magnifier(_) => space().into(),
+        | ButtonAction::Magnifier(_)
+        | ButtonAction::Tools => space().into(),
         ButtonAction::ToggleMedia => text("D-pad left and right seek, up and down change the volume, bumpers change track, A plays or pauses, B closes.").size(12).color(MUTED_COLOR).into(),
         ButtonAction::ForceQuit => {
             text("Hold for 2 seconds to close the program in the focused window. The desktop is never closed.")

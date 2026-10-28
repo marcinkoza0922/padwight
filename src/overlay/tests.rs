@@ -103,6 +103,20 @@ fn left_trigger_holds_shift() {
 }
 
 #[test]
+fn right_trigger_holds_ctrl() {
+    let mut c = start();
+    let t0 = Instant::now();
+    let ctrl = KeyCode::KEY_LEFTCTRL;
+    assert_eq!(c.handle(InputEvent::Axis(Axis::RightTrigger, 0.8), t0), vec![OverlayAction::Key(ctrl, true)]);
+    assert_eq!(c.view(t0).latched, ["KEY_LEFTCTRL"]);
+    c.handle(InputEvent::Button(Button::South, true), t0);
+    assert_eq!(c.handle(InputEvent::Button(Button::South, false), t0), vec![OverlayAction::Key(KeyCode::KEY_Q, false)]);
+    assert_eq!(c.handle(InputEvent::Axis(Axis::RightTrigger, 0.1), t0), vec![OverlayAction::Key(ctrl, false)]);
+    c.handle(InputEvent::Axis(Axis::RightTrigger, 1.0), t0);
+    assert_eq!(c.release_all(), vec![OverlayAction::Key(ctrl, false)]);
+}
+
+#[test]
 fn a_latched_shift_coming_off_leaves_the_triggers_shift_down() {
     let mut c = OverlayController::new(Layout::Keyboard, keyboard::find(Layout::Keyboard, "KEY_LEFTSHIFT").unwrap());
     let t0 = Instant::now();
@@ -180,7 +194,17 @@ fn face_button_shortcuts() {
     let tap = |k| vec![OverlayAction::Key(k, true), OverlayAction::Key(k, false)];
     assert_eq!(c.handle(InputEvent::Button(Button::West, true), t0), tap(KeyCode::KEY_BACKSPACE));
     assert_eq!(c.handle(InputEvent::Button(Button::North, true), t0), tap(KeyCode::KEY_SPACE));
-    assert_eq!(c.handle(InputEvent::Button(Button::Start, true), t0), tap(KeyCode::KEY_ENTER));
+    assert_eq!(c.handle(InputEvent::Button(Button::Start, true), t0), [tap(KeyCode::KEY_ENTER), vec![OverlayAction::Close]].concat());
+}
+
+#[test]
+fn enter_closes_the_keyboard_but_not_the_numpad() {
+    let t0 = Instant::now();
+    let close = |mut v: Vec<OverlayAction>| v.pop() == Some(OverlayAction::Close);
+    let mut c = start();
+    assert!(close(c.handle(InputEvent::Button(Button::Start, true), t0)), "Start sends Enter and closes");
+    let mut n = OverlayController::new(Layout::Numpad, Layout::Numpad.home());
+    assert!(!close(n.handle(InputEvent::Button(Button::Start, true), t0)), "the numpad stays up");
 }
 
 #[test]
@@ -198,6 +222,28 @@ fn guide_with_x_closes_the_keyboard_and_with_y_the_numpad() {
     assert_eq!(numpad.handle(InputEvent::Button(Button::North, true), t0), vec![OverlayAction::Close]);
     numpad.handle(InputEvent::Button(Button::Guide, false), t0);
     assert!(numpad.handle(InputEvent::Button(Button::North, true), t0).is_empty());
+}
+
+#[test]
+fn paste_is_ctrl_v_once_and_types_no_text() {
+    let mut c = OverlayController::new(Board::Basic, keyboard::find(Board::Basic, keyboard::PASTE).unwrap());
+    let t0 = Instant::now();
+    let (ctrl, v) = (KeyCode::KEY_LEFTCTRL, KeyCode::KEY_V);
+    assert_eq!(
+        c.handle(InputEvent::Button(Button::South, true), t0),
+        vec![OverlayAction::Key(ctrl, true), OverlayAction::Key(v, true), OverlayAction::Key(v, false), OverlayAction::Key(ctrl, false)]
+    );
+    assert!(c.handle(InputEvent::Button(Button::South, false), t0).is_empty(), "nothing is held down");
+    assert_eq!(c.typed(), "", "pasting is not typing");
+}
+
+#[test]
+fn typing_presses_the_keys_that_type_each_character() {
+    assert!(typing("").is_empty());
+    assert!(typing("\u{1F600}").is_empty(), "no key types it");
+    // One key, or Shift and a key, each pressed and let go.
+    assert!([2, 4].contains(&typing("5").len()));
+    assert!(typing("42").len() >= 4);
 }
 
 #[test]

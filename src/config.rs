@@ -388,6 +388,9 @@ pub enum ButtonAction {
     GyroRecenter,
     /// Works the magnifying glass, in the magnifying glass mode (see [`MAGNIFIER_MODE`]).
     Magnifier(LensControl),
+    /// Opens the Tools menu over the game (the calculator and other small tools), which the
+    /// controller drives until it's closed. Guide + right trigger, in the Guide mode.
+    Tools,
     /// Switches to the game's mode named here, which replaces whichever mode was on. Pressed
     /// while that mode is already on, it goes back to the default mode (no mode).
     Mode(String),

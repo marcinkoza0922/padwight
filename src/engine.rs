@@ -230,6 +230,8 @@ pub struct Engine {
     recording_toggled: bool,
     /// Set when a ToggleMedia action fires; the daemon takes it.
     media_toggled: bool,
+    /// Set when a Tools action fires; the daemon takes it.
+    tools_requested: bool,
     /// How many inputs hold a ForceQuit action down.
     force_quit_holds: u32,
     /// Whether the magnifying glass mode is on.
@@ -387,6 +389,11 @@ impl Engine {
     /// Whether a ToggleMedia action fired since the last call.
     pub fn take_media_toggle(&mut self) -> bool {
         std::mem::take(&mut self.media_toggled)
+    }
+
+    /// Whether a Tools action fired since the last call.
+    pub fn take_tools_request(&mut self) -> bool {
+        std::mem::take(&mut self.tools_requested)
     }
 
     /// Whether a ForceQuit action is being held down.
@@ -868,6 +875,11 @@ impl Engine {
                 self.media_toggled = true;
             }
         }
+        ButtonAction::Tools => {
+            if pressed {
+                self.tools_requested = true;
+            }
+        }
         ButtonAction::QuickSettings => {
             if pressed {
                 self.settings_requested = true;
@@ -1237,6 +1249,14 @@ impl Engine {
         self.pad_sticks.clear();
         self.gyro.reset();
         self.touch.reset();
+    }
+
+    /// Notes where a stick or trigger is while an overlay has the controller and the engine
+    /// hears nothing else. Without it, a trigger let go of under the overlay stays pulled here,
+    /// and the next layer change (Guide held) re-applies it: Guide + right trigger, which opened
+    /// the Tools menu, would open it again on the next Guide press.
+    pub fn note_axis(&mut self, axis: Axis, value: f32) {
+        self.axes.insert(axis, value);
     }
 
     /// Re-applies current analog state under a (new) profile, e.g. after switching.

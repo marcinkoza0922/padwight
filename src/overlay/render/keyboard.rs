@@ -24,6 +24,8 @@ pub const UNIT: f32 = 46.0;
 pub const GAP: f32 = 4.0;
 /// The space the keyboard's padding takes inside its box, at scale 1.
 pub const KEYBOARD_PADDING: f32 = 16.0;
+/// The thickness of the bar that fills while East is held to close, at scale 1.
+pub const CLOSING_BAR: f32 = 12.0;
 
 /// The width of a keyboard's body at scale 1: the legend's or the keys', whichever is wider.
 pub fn keyboard_body_width(board: Board) -> f32 {
@@ -43,7 +45,7 @@ pub fn keyboard_panel(v: &KeyboardView, style: &Style, fit: &Fit) -> Node {
     body = typed_line(body, v, style, s);
     body = body.push(keys(v, style, &v.style, s)).push(legend(v, style, s));
     if v.closing > 0.0 {
-        body = body.push(bar_of(v.closing, 0.0, 4.0 * s).width(Length::Fill));
+        body = body.push(bar_of(v.closing, 0.0, CLOSING_BAR * s).width(Length::Fill));
     }
     super::framed(body, style, &v.style, KEYBOARD_PADDING * s, fit)
 }
@@ -155,7 +157,7 @@ fn typed_line(mut body: Node, v: &KeyboardView, style: &Style, s: f32) -> Node {
         body = body.push(text(field.clone(), 15.0, style.muted));
     }
     if !v.typed.is_empty() || v.field.is_some() {
-        body = body.push(text(format!("{}▏", v.typed), 18.0, style.background_text));
+        body = body.push(text(v.typed.clone(), 18.0, style.background_text));
     }
     body
 }

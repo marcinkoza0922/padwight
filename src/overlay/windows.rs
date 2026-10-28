@@ -175,9 +175,11 @@ pub fn run() -> Result<()> {
 /// Passes the daemon's frames to the window until the daemon goes away, then closes it.
 fn read_frames(stream: &UnixStream, tx: &Sender<OverlayFrame>, hwnd: isize) {
     let hwnd = HWND(hwnd as *mut _);
+    let mut doodles = Vec::new();
     for line in BufReader::new(stream).lines() {
         let Ok(line) = line else { break };
-        if let Ok(frame) = serde_json::from_str::<OverlayFrame>(&line) {
+        if let Ok(mut frame) = serde_json::from_str::<OverlayFrame>(&line) {
+            frame.put_back_doodles(&mut doodles);
             if tx.send(frame).is_err() {
                 return;
             }

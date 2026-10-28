@@ -143,6 +143,7 @@ impl Layer {
         layer.swallow_unbound = true;
         layer.swallow_analog = true;
         layer.left_trigger = Some(TriggerAction::Button { action: ButtonAction::Mode(MAGNIFIER_MODE.into()), threshold: 0.3 }.into());
+        layer.right_trigger = Some(TriggerAction::Button { action: ButtonAction::Tools, threshold: 0.3 }.into());
         layer
     }
 

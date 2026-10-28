@@ -47,9 +47,11 @@ impl Feed {
         let (tx, frames) = mpsc::channel();
         let signal = Arc::clone(&wake);
         thread::spawn(move || {
+            let mut doodles = Vec::new();
             for line in BufReader::new(&stream).lines() {
                 let Ok(line) = line else { break };
-                if let Ok(frame) = serde_json::from_str::<OverlayFrame>(&line) {
+                if let Ok(mut frame) = serde_json::from_str::<OverlayFrame>(&line) {
+                    frame.put_back_doodles(&mut doodles);
                     if tx.send(frame).is_err() {
                         return;
                     }

@@ -41,7 +41,7 @@ pub(super) fn rule(rule: Rule) -> tiny_skia::FillRule {
 /// The path in tiny-skia's terms, or `None` when it has no area or line to draw.
 pub(super) fn outline(path: &Path) -> Option<tiny_skia::Path> {
     let mut b = PathBuilder::new();
-    for seg in &path.segs {
+    for seg in path.segs() {
         match *seg {
             Seg::MoveTo(p) => b.move_to(p.x, p.y),
             Seg::LineTo(p) => b.line_to(p.x, p.y),

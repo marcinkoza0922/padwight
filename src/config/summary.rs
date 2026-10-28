@@ -178,10 +178,9 @@ impl ButtonAction {
             ButtonAction::ToggleRecording => vec![text("Start or stop recording")],
             ButtonAction::ToggleMedia => vec![text("Media controls")],
             ButtonAction::QuickSettings => vec![text("Quick Settings")],
-            ButtonAction::GyroToggle | ButtonAction::GyroClutch | ButtonAction::GyroHold | ButtonAction::GyroRecenter => {
-                vec![text(self.gyro_text())]
-            }
+            ButtonAction::GyroToggle | ButtonAction::GyroClutch | ButtonAction::GyroHold | ButtonAction::GyroRecenter => vec![text(self.gyro_text())],
             ButtonAction::Magnifier(c) => vec![text(c.label())],
+            ButtonAction::Tools => vec![text("Tools menu")],
             ButtonAction::ForceQuit => vec![text("Force quit focused window (hold)")],
             ButtonAction::OpenMenu(name) => vec![keyword(Keyword::Menu), text(&format!(" “{name}”"))],
             ButtonAction::ShowInfo(name) => vec![keyword(Keyword::Info), text(&format!(" “{name}”"))],

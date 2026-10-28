@@ -15,8 +15,8 @@ mod labels;
 #[cfg_attr(target_os = "linux", path = "keyboard/xkb.rs")]
 #[cfg_attr(windows, path = "keyboard/windows.rs")]
 mod layout;
-pub use boards::{Board, Cursor, find, key_at, step};
-pub use labels::{cap_label, needs_shift, typed};
+pub use boards::{Board, Cursor, PASTE, find, key_at, step};
+pub use labels::{cap_label, key_for, needs_shift, typed};
 
 /// One key cap. An empty `code` is a blank spacer used for alignment.
 pub struct Key {
@@ -252,10 +252,19 @@ mod tests {
 
     #[test]
     fn every_key_is_a_valid_code_the_virtual_keyboard_supports() {
-        for key in all_keys().filter(|k| !k.code.is_empty()) {
+        for key in all_keys().filter(|k| !k.code.is_empty() && k.code != PASTE) {
             let code = KeyCode::from_str(key.code).unwrap_or_else(|_| panic!("bad code {}", key.code));
             // VirtualKbm enables codes 1..=248.
             assert!((1..=248).contains(&code.code()), "{} not on the virtual keyboard", key.code);
+        }
+    }
+
+    #[test]
+    fn a_key_found_for_a_character_types_that_character() {
+        for c in "a5.-A".chars() {
+            if let Some((code, shift)) = key_for(c) {
+                assert_eq!(typed(code, shift, false).as_deref(), Some(c.to_string().as_str()));
+            }
         }
     }
 

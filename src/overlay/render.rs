@@ -41,7 +41,7 @@ pub use item::{Item, item};
 pub use log::{RELEASED, log_panel, shorten};
 pub use media::{media, offer};
 pub use keyboard::keyboard_panel;
-pub use keyboard::{GAP, KEYBOARD_PADDING, UNIT, keyboard_body_width};
+pub use keyboard::{CLOSING_BAR, GAP, KEYBOARD_PADDING, UNIT, keyboard_body_width};
 pub use menus::{UNDER_PROMPT, frame as menu_frame, menu_panel, menu_style};
 pub use panel::framed;
 pub use place::{EDGE_MARGIN, Margins, margins};

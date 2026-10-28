@@ -22,6 +22,7 @@ pub const FIELD_LEGEND: &[&str] = &[
     "{keyboard_space} space",
     "{keyboard_enter} done",
     "hold {lt} shift",
+    "hold {rt} ctrl",
     "hold {back} cancel",
 ];
 
@@ -33,7 +34,7 @@ pub const KEYBOARD_LEGEND: &[&str] = &[
     "{keyboard_enter} enter",
     "{keyboard_left} {keyboard_right} move the text cursor",
     "hold {lt} shift",
-    "Shift, Ctrl, Alt, AltGr and Super stay on for one key; press one again to let go",
+    "hold {rt} ctrl",
     "hold {keyboard_close} or press {guide} to close",
 ];
 
@@ -79,6 +80,19 @@ pub struct OverlayFrame {
     /// The magnifying glass, while one is held.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lens: Option<Lens>,
+    /// The doodles over the game, drawn under the magnifying glass and the panels.
+    #[serde(default, skip_serializing_if = "crate::tools::doodle::Canvas::is_empty")]
+    pub doodles: crate::tools::doodle::Canvas,
+    /// `doodles` was sent without its finished items, which are those sent last: the daemon
+    /// sends them only when one is added or goes (see `leave_out_doodles_sent`).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub doodles_kept: bool,
+    /// The Doodle screen's cursor, while that screen is up.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub doodle_cursor: Option<DoodleCursor>,
+    /// The Doodle screen's HUD (its carousel and tray), while that screen is up.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub doodle_hud: Option<DoodleHud>,
     /// The font everything here is drawn in; the system's when unset.
     #[serde(default)]
     pub font: Option<String>,
@@ -116,6 +130,62 @@ pub struct OverlayFrame {
     pub lite: crate::config::Lite,
 }
 
+/// The Doodle screen's cursor: where it is, the radius it marks, its color and whether it's a beam (see
+/// `tools::doodle`). Positions and radii are shares of the screen's height.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DoodleCursor {
+    pub at: crate::tools::doodle::Point,
+    pub radius: f32,
+    pub color: [u8; 3],
+    /// Drawn as a text editor's I-beam, from `at` down by the diameter, rather than a ring.
+    #[serde(default)]
+    pub beam: bool,
+}
+
+/// The Doodle screen's HUD: the tool the carousel across the top highlights (its index in
+/// `tools::doodle::Tool`), and the tray along the bottom with the current settings. The tray is
+/// left off while the keyboard is up. Hints are text with controller tokens, such as `{lb}`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DoodleHud {
+    pub tool: usize,
+    pub tray: bool,
+    pub cells: Vec<DoodleCell>,
+    /// The checklist of text styles, above the tray, while it's open.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub checks: Option<DoodleChecks>,
+    /// The menus' style, which the HUD is drawn in.
+    pub style: crate::config::OverlayStyle,
+}
+
+/// The checklist a text box's styles are ticked in: one row per style, the row the cursor is on,
+/// and the tray cell it opens from, which it stands over.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DoodleChecks {
+    pub rows: Vec<DoodleCheck>,
+    pub cursor: usize,
+    pub cell: usize,
+}
+
+/// One row of a [`DoodleChecks`]: a style's name, and whether it's ticked.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DoodleCheck {
+    pub label: String,
+    pub on: bool,
+}
+
+/// One part of the HUD's tray. Parts are drawn left to right, with a separator between them.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum DoodleCell {
+    /// The full palette, with the color in use ringed. `hint` says how to change it.
+    Palette { current: usize, hint: String },
+    /// A setting as text, with its hint.
+    Text(String),
+    /// A pen tip: its name, with a hint, and an icon of the mark it makes.
+    Tip { tip: crate::tools::doodle::Tip, text: String },
+    /// A pen style, the same way as a tip.
+    Kind { kind: crate::tools::doodle::Kind, text: String },
+}
+
 /// The magnifying glass: a lens over a frozen picture of the screen, centered on a point of it
 /// and showing that part `zoom` times as large.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -138,6 +208,30 @@ impl OverlayFrame {
     /// missing anything it animates: the same panel, or none, with the same pick. A panel opening
     /// or closing, or a pick, must be seen even when the next frame follows at once, as the
     /// close does after a pick that closes a menu.
+    /// Leaves the doodles' finished items out when they are those last sent on this stream
+    /// (`sent`), for `put_back_doodles` at the other end. A screen of strokes is hundreds of KB
+    /// as JSON, and a frame goes with each tick the Doodle cursor moves; the items change only
+    /// when a stroke ends or one goes.
+    pub fn leave_out_doodles_sent(&mut self, sent: &mut Vec<crate::tools::doodle::Item>) {
+        let items = self.doodles.items_mut();
+        if items == sent {
+            items.clear();
+            self.doodles_kept = true;
+        } else {
+            sent.clone_from(items);
+        }
+    }
+
+    /// Puts back the finished doodles a frame was sent without (`leave_out_doodles_sent`), from
+    /// those `kept` from the frames before it, and keeps those of a frame sent with them.
+    pub fn put_back_doodles(&mut self, kept: &mut Vec<crate::tools::doodle::Item>) {
+        if std::mem::take(&mut self.doodles_kept) {
+            self.doodles.items_mut().clone_from(kept);
+        } else {
+            kept.clone_from(self.doodles.items_mut());
+        }
+    }
+
     pub fn stands_in_for(&self, older: &OverlayFrame) -> bool {
         use crate::motion::Tracked;
         let scene = |frame: &OverlayFrame| frame.active.as_ref().map(|view| (view.key(), view.pick()));
@@ -258,7 +352,7 @@ pub fn run() -> anyhow::Result<()> {
 mod wayland;
 mod controller;
 mod ui;
-pub use controller::{OverlayAction, OverlayController};
+pub use controller::{OverlayAction, OverlayController, typing};
 #[cfg(windows)]
 mod windows;
 

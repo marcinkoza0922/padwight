@@ -68,7 +68,7 @@ impl Patch {
     }
 
     /// The box round it and `other`.
-    fn around(&self, other: &Patch) -> Patch {
+    pub fn around(&self, other: &Patch) -> Patch {
         Patch::new(self.x0.min(other.x0), self.y0.min(other.y0), self.x1.max(other.x1), self.y1.max(other.y1))
     }
 

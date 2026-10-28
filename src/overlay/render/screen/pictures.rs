@@ -120,9 +120,7 @@ impl Screen {
         self.frame += 1;
         let items = self.items(ops, scale);
         let whole = Patch::new(0, 0, target.width() as i32, target.height() as i32);
-        for item in &items {
-            self.lay_item(item, scale, (whole, false), target);
-        }
+        self.lay_items(&items.iter().collect::<Vec<_>>(), scale, (whole, false), target);
         self.reset();
         self.prune();
     }
@@ -160,10 +158,8 @@ impl Screen {
         }
         for &patch in repaint.patches() {
             items::clear(target, patch);
-            // The first goes down onto the cleared patch, without reading it.
-            for (n, item) in items.iter().filter(|i| i.at.intersection(&patch).is_some()).enumerate() {
-                self.lay_item(item, scale, (patch, n == 0), target);
-            }
+            let over: Vec<&Item> = items.iter().filter(|i| i.at.intersection(&patch).is_some()).collect();
+            self.lay_items(&over, scale, (patch, true), target);
         }
         self.last = Some(Last { items, size, scale: bits });
         self.prune();
@@ -316,16 +312,38 @@ impl Screen {
         Ok(i)
     }
 
-    /// Lays `item` down over `target`, only within `clip`, which is clear when `onto_clear`.
-    fn lay_item(&self, item: &Item, scale: f32, (clip, onto_clear): (Patch, bool), target: &mut PixmapMut) {
-        let Some(clip) = item.at.intersection(&clip) else { return };
-        match &item.what {
-            What::Picture { id, laid, .. } => {
-                if let Some(kept) = self.kept.iter().find(|k| k.id == *id) {
-                    items::lay_picture(&kept.pixmap, laid, clip, target, onto_clear);
+    /// Lays `items` down in order over `target`, only within `clip`, which is clear when
+    /// `onto_clear` (only the first goes down without reading it). Ops drawn straight one after
+    /// another are drawn together, into one pixmap as big as what they cover of the clip.
+    fn lay_items(&self, items: &[&Item], scale: f32, (clip, mut onto_clear): (Patch, bool), target: &mut PixmapMut) {
+        let mut n = 0;
+        while let Some(item) = items.get(n) {
+            let Some(at) = item.at.intersection(&clip) else {
+                n += 1;
+                continue;
+            };
+            match &item.what {
+                What::Picture { id, laid, .. } => {
+                    if let Some(kept) = self.kept.iter().find(|k| k.id == *id) {
+                        items::lay_picture(&kept.pixmap, laid, at, target, onto_clear);
+                    }
+                    n += 1;
+                }
+                What::Straight(_) => {
+                    let run = items[n..].iter().take_while(|i| matches!(i.what, What::Straight(_))).count();
+                    let mut lists = Vec::with_capacity(run);
+                    let mut cover = at;
+                    for item in &items[n..n + run] {
+                        let (What::Straight(ops), Some(at)) = (&item.what, item.at.intersection(&clip)) else { continue };
+                        lists.push(ops.as_slice());
+                        cover = cover.around(&at);
+                    }
+                    // Drawn into a clear pixmap, laid onto a clear patch only where it covers.
+                    items::draw_straight(&lists, scale, cover, target, onto_clear && cover == clip);
+                    n += run;
                 }
             }
-            What::Straight(ops) => items::draw_straight(ops, scale, clip, target),
+            onto_clear = false;
         }
     }
 
