@@ -101,7 +101,7 @@ impl ShortcutInput {
                 layer.buttons.insert(*b, action);
             }
             ([b], Some(kind)) => *layer.gestures.entry(*b).or_default().slot(kind) = Some(action),
-            (buttons, _) => layer.combos.push(Combo { buttons: super::combo_key(buttons), action }),
+            (buttons, _) => layer.combos.push(Combo { buttons: super::combo_key(buttons), action, window_ms: None }),
         }
     }
 }
@@ -594,7 +594,7 @@ impl Shortcuts {
             (buttons, None) if buttons.len() > 1 => {
                 let key = super::combo_key(buttons);
                 p.combos.retain(|c| super::combo_key(&c.buttons) != key);
-                p.combos.push(Combo { buttons: key, action });
+                p.combos.push(Combo { buttons: key, action, window_ms: None });
             }
             _ => {}
         }

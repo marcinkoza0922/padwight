@@ -9,7 +9,7 @@ use crate::engine::Engine;
 fn opened_everywhere() -> Game {
     let mut profile = Profile::passthrough("p");
     profile.set_button(Button::North, open_menu("M"));
-    profile.combos.push(Combo { buttons: vec![Button::LeftBumper, Button::RightBumper], action: ButtonAction::Multi(vec![key("KEY_B"), open_menu("M")]) });
+    profile.combos.push(Combo { buttons: vec![Button::LeftBumper, Button::RightBumper], action: ButtonAction::Multi(vec![key("KEY_B"), open_menu("M")]), window_ms: None });
     profile.left_trigger = TriggerAction::Button { action: open_menu("M"), threshold: 0.5 }.into();
     let mut game = Game::new("g", vec![profile]);
     let mut layer = Layer::new("L");

@@ -133,7 +133,7 @@ fn layers_override_on_top_of_a_profile_newest_last() {
     a.right_stick = Some(StickConfig::new(StickAction::Disabled, 0.1, 1.0));
     let mut b = Layer::new("B");
     b.buttons.insert(Button::South, f("KEY_F2"));
-    b.combos.push(Combo { buttons: vec![Button::Select, Button::Start], action: f("KEY_F3") });
+    b.combos.push(Combo { buttons: vec![Button::Select, Button::Start], action: f("KEY_F3"), window_ms: None });
 
     let p = base.with_layers([&a, &b]);
     assert_eq!(p.button(Button::South), &f("KEY_F2"), "the newest layer wins");
@@ -232,10 +232,10 @@ fn the_built_in_modes_let_nothing_of_the_profile_through_but_a_way_back() {
     p.set_button(Button::LeftPaddle, ButtonAction::Gamepad(Button::South));
     p.gestures.insert(Button::RightPaddle, Gestures { long_press: Some(key("KEY_R")), ..Gestures::default() });
     p.set_button(Button::RightStickUp, key("KEY_W"));
-    p.combos.push(Combo { buttons: vec![Button::LeftBumper, Button::RightBumper], action: key("KEY_G") });
+    p.combos.push(Combo { buttons: vec![Button::LeftBumper, Button::RightBumper], action: key("KEY_G"), window_ms: None });
     // What switches modes stays, so there's a way back out.
     p.set_button(Button::RightPaddle2, ButtonAction::Mode("Driving".into()));
-    p.combos.push(Combo { buttons: vec![Button::Select, Button::Start], action: ButtonAction::Layer("Map".into()) });
+    p.combos.push(Combo { buttons: vec![Button::Select, Button::Start], action: ButtonAction::Layer("Map".into()), window_ms: None });
     for mode in [Layer::mouse(), Layer::guide()] {
         let on = p.with_layers([&mode]);
         for b in [Button::LeftPaddle, Button::RightPaddle, Button::RightStickUp] {
@@ -329,10 +329,10 @@ fn combos_listing_a_button_twice_are_tidied_when_loaded() {
     let dir = scratch_dir("repeated-combo");
     let path = dir.join("config.toml");
     let mut config = Config::default();
-    let doubled = Combo { buttons: vec![Button::South, Button::East, Button::South], action: ButtonAction::Screenshot };
+    let doubled = Combo { buttons: vec![Button::South, Button::East, Button::South], action: ButtonAction::Screenshot, window_ms: None };
     config.general.profiles[0].combos.push(doubled);
     let mut layer = Layer::new("L");
-    layer.combos.push(Combo { buttons: vec![Button::Start, Button::Select, Button::Start], action: ButtonAction::Screenshot });
+    layer.combos.push(Combo { buttons: vec![Button::Start, Button::Select, Button::Start], action: ButtonAction::Screenshot, window_ms: None });
     layer.disabled_combos.push(vec![Button::East, Button::East]);
     config.general.layers.push(layer);
     config.save_to(&path).unwrap();
@@ -380,4 +380,15 @@ fn a_number_that_isn_t_finite_is_refused_naming_where() {
     let err = format!("{:#}", Config::load_from(&path).unwrap_err());
     assert!(err.contains("rumble_strength") && err.contains("config.toml"), "{err}");
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn a_button_waits_as_long_as_the_longest_combo_it_is_in() {
+    let mut p = Profile::passthrough("p");
+    p.combo_window_ms = 60;
+    p.combos.push(Combo { buttons: vec![Button::North, Button::South], action: ButtonAction::Screenshot, window_ms: Some(200) });
+    p.combos.push(Combo { buttons: vec![Button::North, Button::East], action: ButtonAction::Screenshot, window_ms: None });
+    assert_eq!(p.combo_window(Button::North), 200);
+    assert_eq!(p.combo_window(Button::East), 60);
+    assert_eq!(p.combo_window(Button::West), 60);
 }

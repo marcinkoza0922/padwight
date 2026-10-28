@@ -449,6 +449,13 @@ pub(super) fn combo_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message
         if let Some(offer) = menu_combos::offer(p, &combo.buttons, &combo.action, ui) {
             body = body.push(labeled("", offer));
         }
+        let fold = Target::ComboTiming(i);
+        let slider = ui.is_open(fold).then(|| {
+            column![button_list::timing_row("Combo window", 20.0..=300.0, 5.0, (combo.window_ms.unwrap_or(p.combo_window_ms), combo.window_ms.is_some()), move |ms| {
+                Message::SetOwnComboWindow(i, ms)
+            })]
+        });
+        body = body.push(advanced_fold("Timing", "how long its buttons wait for each other", fold, slider));
         if let Some(problem) = problem {
             body = body.push(labeled("", text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR).into()));
         }
@@ -596,7 +603,7 @@ impl App {
                                 *a = action;
                             }
                         }
-                        Target::MacroStep(..) | Target::CycleStep(..) | Target::MenuItem(..) | Target::StickAdvanced(_) | Target::GyroAdvanced => {}
+                        Target::MacroStep(..) | Target::CycleStep(..) | Target::MenuItem(..) | Target::StickAdvanced(_) | Target::GyroAdvanced | Target::Timing(_) | Target::ComboTiming(_) => {}
                     }
                 }
             }
@@ -709,9 +716,19 @@ impl App {
                     p.long_press_ms = ms.round() as u64;
                 }
             }
+            Message::SetButtonTapWindow(b, ms) => {
+                if let Some(g) = self.profile_mut().and_then(|p| p.gestures.get_mut(&b)) {
+                    g.tap_window_ms = ms.map(|ms| ms.round() as u64);
+                }
+            }
+            Message::SetButtonLongPress(b, ms) => {
+                if let Some(g) = self.profile_mut().and_then(|p| p.gestures.get_mut(&b)) {
+                    g.long_press_ms = ms.map(|ms| ms.round() as u64);
+                }
+            }
             Message::AddCombo => {
                 if let Some(p) = self.profile_mut() {
-                    p.combos.push(Combo { buttons: free_combo(&p.combos), action: ButtonAction::Keys(Vec::new()) });
+                    p.combos.push(Combo::new(free_combo(&p.combos), ButtonAction::Keys(Vec::new())));
                     let new = Target::Combo(p.combos.len() - 1);
                     self.expanded.insert(new);
                 }
@@ -743,6 +760,11 @@ impl App {
             Message::RemoveComboButton(i, b) => {
                 if let Some(c) = self.profile_mut().and_then(|p| p.combos.get_mut(i)) {
                     c.buttons.retain(|x| *x != b);
+                }
+            }
+            Message::SetOwnComboWindow(i, ms) => {
+                if let Some(c) = self.profile_mut().and_then(|p| p.combos.get_mut(i)) {
+                    c.window_ms = ms.map(|ms| ms.round() as u64);
                 }
             }
             Message::SetComboWindow(ms) => {

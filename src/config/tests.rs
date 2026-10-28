@@ -111,6 +111,7 @@ fn multi_and_combos_roundtrip_through_toml() {
     config.general.profiles[0].combos.push(Combo {
         buttons: vec![Button::Select, Button::Start],
         action: ButtonAction::Screenshot,
+        window_ms: None,
     });
     config.general.profiles[0].gestures.insert(
         Button::North,
@@ -120,6 +121,8 @@ fn multi_and_combos_roundtrip_through_toml() {
             long_press: Some(ButtonAction::Screenshot),
             on_press: Some(ButtonAction::Keys(vec!["KEY_Z".into()])),
             on_release: None,
+            tap_window_ms: Some(180),
+            long_press_ms: Some(900),
         },
     );
     let back: Config = toml::from_str(&toml::to_string_pretty(&config).unwrap()).unwrap();

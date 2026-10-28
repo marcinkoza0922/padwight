@@ -124,7 +124,7 @@ fn gyro_actions_work_from_a_gesture_or_a_combo() {
     use crate::config::{Combo, Gestures};
     let mut p = gyro_profile(mouse_gyro());
     p.gestures.insert(Button::LeftStick, Gestures { long_press: Some(ButtonAction::GyroClutch), ..Gestures::default() });
-    p.combos.push(Combo { buttons: vec![Button::LeftBumper, Button::RightBumper], action: ButtonAction::GyroToggle });
+    p.combos.push(Combo { buttons: vec![Button::LeftBumper, Button::RightBumper], action: ButtonAction::GyroToggle, window_ms: None });
     let mut e = Engine::default();
     let now = Instant::now();
     let mut out = Vec::new();

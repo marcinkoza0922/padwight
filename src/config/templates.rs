@@ -217,6 +217,7 @@ impl Profile {
             combos: vec![Combo {
                 buttons: vec![Button::LeftBumper, Button::RightBumper],
                 action: Keys(vec!["KEY_LEFTALT".into(), "KEY_TAB".into()]),
+                window_ms: None,
             }],
             combo_window_ms: default_combo_window_ms(),
             gestures: BTreeMap::new(),

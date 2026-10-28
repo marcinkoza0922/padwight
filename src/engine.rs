@@ -541,7 +541,7 @@ impl Engine {
             InputEvent::Button(b, true) if profile.in_combo(b) => {
                 let deadline = match profile.button(b) {
                     ButtonAction::Disabled => None,
-                    _ => Some(now + Duration::from_millis(profile.combo_window_ms)),
+                    _ => Some(now + Duration::from_millis(profile.combo_window(b))),
                 };
                 self.members.insert(b, ComboMember::Pending { deadline });
                 self.try_combo(profile, out);
@@ -712,9 +712,9 @@ impl Engine {
                 return;
             }
             let long_deadline = (taps == 1 && gestures.long_press.is_some())
-                .then(|| now + Duration::from_millis(profile.long_press_ms));
+                .then(|| now + Duration::from_millis(gestures.long_press(profile)));
             let hold_deadline = (taps == 1 && gestures.long_press.is_none())
-                .then(|| now + Duration::from_millis(profile.tap_window_ms));
+                .then(|| now + Duration::from_millis(gestures.tap_window(profile)));
             self.gestures.insert(b, GestureState::Down { taps, long_deadline, hold_deadline });
         } else {
             match self.gestures.remove(&b) {
@@ -725,7 +725,7 @@ impl Engine {
                     self.digital(&Source::Button(b), &ButtonAction::Disabled, false, out);
                 }
                 Some(GestureState::Down { taps, .. }) if taps < max_taps => {
-                    let deadline = now + Duration::from_millis(profile.tap_window_ms);
+                    let deadline = now + Duration::from_millis(gestures.tap_window(profile));
                     self.gestures.insert(b, GestureState::Up { taps, deadline });
                 }
                 // Nothing more can follow (e.g. only a long press is set): act as a tap now.

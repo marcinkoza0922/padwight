@@ -101,6 +101,7 @@ fn stick_direction_buttons_and_macro_stick_steps_roundtrip() {
     config.general.profiles[0].combos.push(Combo {
         buttons: vec![Button::LeftBumper, Button::RightStickRight],
         action: ButtonAction::Keys(vec!["KEY_F".into()]),
+        window_ms: None,
     });
     config.general.macros.push(Macro {
         name: "Jump".into(),

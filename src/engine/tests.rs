@@ -716,6 +716,7 @@ fn combo_profile() -> Profile {
     p.combos.push(Combo {
         buttons: vec![Button::LeftBumper, Button::RightBumper],
         action: ButtonAction::Keys(vec!["KEY_LEFTALT".into(), "KEY_TAB".into()]),
+        window_ms: None,
     });
     p
 }
@@ -791,6 +792,7 @@ fn disabled_member_works_as_modifier() {
     p.combos.push(Combo {
         buttons: vec![Button::Start, Button::South],
         action: ButtonAction::Screenshot,
+        window_ms: None,
     });
     let mut e = Engine::default();
     let t0 = Instant::now();
@@ -948,6 +950,24 @@ fn long_press_fires_while_held_and_releases_on_release() {
         vec![OutEvent::Key(KeyCode::KEY_L, false)]
     );
     assert_eq!(e.next_deadline(), None);
+}
+
+#[test]
+fn a_button_s_own_timings_replace_the_profile_s() {
+    let mut p = gesture_profile();
+    let g = p.gestures.get_mut(&Button::North).unwrap();
+    g.long_press_ms = Some(300);
+    let mut e = Engine::default();
+    let t0 = Instant::now();
+    press(&mut e, &p, Button::North, true, t0);
+    assert!(fire_timers(&mut e, &p, ms(t0, 299)).is_empty());
+    assert_eq!(fire_timers(&mut e, &p, ms(t0, 300)), vec![OutEvent::Key(KeyCode::KEY_L, true)]);
+    press(&mut e, &p, Button::North, false, ms(t0, 400));
+    // A shorter tap window ends the sequence sooner than the profile's 250 ms.
+    p.gestures.get_mut(&Button::North).unwrap().tap_window_ms = Some(100);
+    press(&mut e, &p, Button::North, true, ms(t0, 1000));
+    press(&mut e, &p, Button::North, false, ms(t0, 1050));
+    assert_eq!(e.next_deadline(), Some(ms(t0, 1150)));
 }
 
 #[test]
@@ -1437,6 +1457,7 @@ fn bumper_plus_stick_direction_combo() {
     p.combos.push(Combo {
         buttons: vec![Button::LeftBumper, Button::RightStickRight],
         action: key("KEY_F"),
+        window_ms: None,
     });
     let mut e = Engine::default();
     let t0 = Instant::now();
@@ -1616,7 +1637,7 @@ fn toggles_set_to_start_on_switch_on_when_the_game_starts() {
             starting(ButtonAction::Keys(vec!["KEY_C".into()])),
         ]),
     );
-    p.combos.push(Combo { buttons: vec![Button::RightBumper, Button::LeftBumper], action: starting(ButtonAction::Layer("L".into())) });
+    p.combos.push(Combo { buttons: vec![Button::RightBumper, Button::LeftBumper], action: starting(ButtonAction::Layer("L".into())), window_ms: None });
     let menu = Menu {
         name: "M".into(),
         kind: crate::config::MenuKind::List,

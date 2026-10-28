@@ -168,7 +168,7 @@ fn a_new_combo_takes_buttons_no_other_combo_has() {
 fn the_pictures_tips_list_a_buttons_press_gestures_and_combos() {
     use crate::config::{Combo, GestureKind};
     let mut p = app().profile().unwrap().clone();
-    p.combos = vec![Combo { buttons: vec![Button::LeftBumper, Button::South], action: ButtonAction::Keys(vec!["KEY_R".into()]) }];
+    p.combos = vec![Combo { buttons: vec![Button::LeftBumper, Button::South], action: ButtonAction::Keys(vec!["KEY_R".into()]), window_ms: None }];
     *p.gestures.entry(Button::South).or_default().slot(GestureKind::LongPress) = Some(ButtonAction::Keys(vec!["KEY_E".into()]));
     let tips = drawing_tips(&p);
     // Each line's lead, before its action.

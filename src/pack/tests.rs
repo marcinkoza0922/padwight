@@ -360,7 +360,7 @@ fn a_pack_can_t_bring_its_own_built_in_modes_or_repeat_a_combo_button() {
     let mut game = setup().games[0].clone();
     game.layers.push(Layer::new(MOUSE_MODE));
     game.modes = vec![Mode::new(GUIDE_MODE), Mode::new("Driving")];
-    game.profiles[0].combos.push(Combo { buttons: vec![Button::West, Button::South, Button::West], action: ButtonAction::Screenshot });
+    game.profiles[0].combos.push(Combo { buttons: vec![Button::West, Button::South, Button::West], action: ButtonAction::Screenshot, window_ms: None });
     let pack = parse(&export(&game, &draft(&game, false)).pack.to_toml().unwrap()).unwrap();
     assert!(pack.layers.is_empty());
     assert_eq!(pack.modes.iter().map(|m| m.name.as_str()).collect::<Vec<_>>(), ["Driving"]);
