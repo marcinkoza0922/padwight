@@ -36,8 +36,8 @@ where
     };
     vec![
         shape,
-        field("Middle", region.x, &ACROSS, |r| &mut r.x),
-        field("Middle", region.y, &DOWN, |r| &mut r.y),
+        field("X offset", region.x, &ACROSS, |r| &mut r.x),
+        field("Y offset", region.y, &DOWN, |r| &mut r.y),
         field("Width", region.width, &SIZE, |r| &mut r.width),
         field("Height", region.height, &SIZE, |r| &mut r.height),
         preset("Fill the whole desktop", MouseRegion::FULL),
