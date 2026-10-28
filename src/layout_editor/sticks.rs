@@ -225,7 +225,7 @@ fn ring_settings((owner, s): (Owner, Stick), sectors: u8, (start_angle, inner_ra
             stick_mut(c, owner, s).is_some_and(|cfg| ring(cfg, |n, _, _, _| set(n, next)))
         }),
         Row::open(format!("Sector actions ({sectors})"), Page::Ring(owner, s)),
-        num((owner, s), "First sector at", start_angle, &START_ANGLE, |c, v| ring(c, |_, a, _, _| set(a, v))),
+        num((owner, s), "Sector 1 points at", start_angle, &START_ANGLE, |c, v| ring(c, |_, a, _, _| set(a, v))),
         num((owner, s), "Starts at", inner_radius, &FRACTION, |c, v| ring(c, |_, _, r, _| set(r, v))),
         num((owner, s), "Stickiness", hysteresis, &STICKINESS, |c, v| ring(c, |_, _, _, h| set(h, v))),
         Row::apply("Fill with WASD", move |c| super::rows::Act::changed_if(fill_ring(c, owner, s, StickAction::wasd()))),

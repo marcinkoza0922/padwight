@@ -72,7 +72,8 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
         }
     };
 
-    let mut rows = column![header(s, cfg, with)].spacing(8);
+    let rows = column![header(s, cfg, with)].spacing(8);
+    let mut rows = invert_rows(rows, s, cfg, with);
     match &cfg.action {
         StickAction::Mouse { .. } => rows = mouse_rows(rows, s, cfg, with),
         StickAction::Scroll { speed, invert_y } => {
@@ -197,7 +198,7 @@ fn deadzone_extras<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a StickConfig
         ))
 }
 
-/// The stick's name, its mode, and the mode's output options (which stick it sends, Invert Y),
+/// The stick's name, its mode, and the mode's output options (which stick it sends),
 /// on one line.
 fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message + Copy + 'a) -> Element<'a, Message> {
     let kind = match cfg.action {
@@ -221,26 +222,10 @@ fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message
             StickKind::Region => StickAction::Region { region: MouseRegion::default() },
         })
     };
-    let invert = |on: bool, set: Box<dyn Fn(bool) -> Message + 'a>| checkbox(on).label("Invert Y").on_toggle(set).into();
-    let invert_x = {
-        let mut c = cfg.clone();
-        c.invert_x = !c.invert_x;
-        checkbox(cfg.invert_x).label("Invert X").on_toggle(move |_| Message::SetStick(s, c.clone())).into()
-    };
-    let options: Vec<Element<'a, Message>> = match cfg.action {
-        StickAction::Gamepad { stick, invert_y } => {
-            let mut options = Vec::from(as_stick(stick, move |t| with(StickAction::Gamepad { stick: t, invert_y })));
-            options.push(invert(invert_y, Box::new(move |inv| with(StickAction::Gamepad { stick, invert_y: inv }))));
-            options
-        }
-        StickAction::Mouse { speed, response, invert_y } => vec![invert(invert_y, Box::new(move |inv| with(StickAction::Mouse { speed, response, invert_y: inv })))],
-        StickAction::Scroll { speed, invert_y } => vec![invert(invert_y, Box::new(move |inv| with(StickAction::Scroll { speed, invert_y: inv })))],
+    let mut options: Vec<Element<'a, Message>> = match cfg.action {
+        StickAction::Gamepad { stick, invert_y } => Vec::from(as_stick(stick, move |t| with(StickAction::Gamepad { stick: t, invert_y }))),
         _ => Vec::new(),
     };
-    let mut options = options;
-    if cfg.action != StickAction::Disabled {
-        options.push(invert_x);
-    }
     // Shortcuts that turn the stick into a button ring: one press and the sectors are bound.
     if !matches!(cfg.action, StickAction::Ring { .. }) {
         options.push(text("Use as").size(13).color(MUTED_COLOR).into());
@@ -249,6 +234,25 @@ fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message
         }
     }
     box_header(s.to_string(), kinds, kind, pick, options)
+}
+
+/// "Invert Y" (for the modes that have it) and "Invert X", each on a row of its own.
+fn invert_rows<'a>(mut rows: Column<'a, Message>, s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message + Copy + 'a) -> Column<'a, Message> {
+    let invert_y = match cfg.action {
+        StickAction::Gamepad { stick, invert_y } => Some((invert_y, StickAction::Gamepad { stick, invert_y: !invert_y })),
+        StickAction::Mouse { speed, response, invert_y } => Some((invert_y, StickAction::Mouse { speed, response, invert_y: !invert_y })),
+        StickAction::Scroll { speed, invert_y } => Some((invert_y, StickAction::Scroll { speed, invert_y: !invert_y })),
+        _ => None,
+    };
+    if let Some((on, flipped)) = invert_y {
+        rows = rows.push(box_row("", checkbox(on).label("Invert Y").on_toggle(move |_| with(flipped.clone())).into()));
+    }
+    if cfg.action != StickAction::Disabled {
+        let mut c = cfg.clone();
+        c.invert_x = !c.invert_x;
+        rows = rows.push(box_row("", checkbox(cfg.invert_x).label("Invert X").on_toggle(move |_| Message::SetStick(s, c.clone())).into()));
+    }
+    rows
 }
 
 /// The stick's pictures in a panel of their own, centered in one row that wraps when the window
@@ -285,7 +289,13 @@ fn ring_settings<'a>(rows: Column<'a, Message>, cfg: &'a StickConfig, with: impl
         with(StickAction::Ring { sectors, start_angle, inner_radius, hysteresis, actions })
     };
     rows.push(box_row("Sectors", dropdown([4_u8, 8, 12], Some(sectors), move |n| set(n, start_angle, inner_radius, hysteresis)).width(170).into()))
-        .push(box_row("First sector at", slider_editor(0.0..=345.0, start_angle, 15.0, "° from up", move |v| set(sectors, v, inner_radius, hysteresis))))
+        .push(box_row(
+            "Sector 1 points at",
+            with_help(
+                slider_editor(0.0..=345.0, start_angle, 15.0, "° from up", move |v| set(sectors, v, inner_radius, hysteresis)),
+                "The direction the middle of sector 1 points, clockwise from straight up. The other sectors follow it round the ring.",
+            ),
+        ))
         .push(box_row("Starts at", fraction_editor(0.05..=0.95, inner_radius, 0.05, "of the way out", move |v| set(sectors, start_angle, v, hysteresis))))
         .push(box_row("Stickiness", fraction_editor(0.0..=0.4, hysteresis, 0.05, "of a sector", move |v| set(sectors, start_angle, inner_radius, v))))
 }
@@ -387,10 +397,12 @@ fn flick_advanced<'a>(rows: Column<'a, Message>, cfg: &StickConfig, with: impl F
         .push(fold_row("Dead angle", slider_editor(0.0..=30.0, forward_deadzone, 1.0, "° around forward", move |v| flick_with!(with, a3.clone(), forward_deadzone, v))))
         .push(fold_row(
             "",
-            checkbox(vertical == FlickVertical::Look)
-                .label("Also look up and down with the stick")
-                .on_toggle(move |on| flick_with!(with, a4.clone(), vertical, if on { FlickVertical::Look } else { FlickVertical::Off }))
-                .into(),
+            with_help(
+                checkbox(vertical == FlickVertical::Look)
+                    .label("Look up and down")
+                    .on_toggle(move |on| flick_with!(with, a4.clone(), vertical, if on { FlickVertical::Look } else { FlickVertical::Off })),
+                "Also look up and down with the stick.",
+            ),
         ));
     if vertical == FlickVertical::Look {
         advanced = advanced.push(fold_row("Vertical speed", slider_editor(100.0..=4000.0, vertical_speed, 50.0, "px/s", move |v| flick_with!(with, a.clone(), vertical_speed, v))));
