@@ -30,7 +30,7 @@ fn stick(name: &str) -> Option<&'static str> {
         "Anti-deadzone hold" => "Travel past the deadzone that stays at the anti-deadzone before rising.",
         "Rotate output" => "Turns the stick's directions by this angle.",
         "Directions press at" => "How far a push goes before the stick's directions count as pressed.",
-        "First sector at" => "Where the first sector is centered, clockwise from up.",
+        "Sector 1 points at" => "Where the middle of sector 1 points, clockwise from up.",
         "Starts at" => "How far out the stick picks a sector, of a full push.",
         "Stickiness" => "How far past a sector's edge the stick goes before the next one takes over.",
         _ => return None,

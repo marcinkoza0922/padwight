@@ -124,58 +124,19 @@ pub(super) fn zone_list<'a>(analog: Analog, zones: &'a [Zone], names: &Names) ->
     col.push(buttons.push(zones_help)).into()
 }
 
-/// What a trigger does, in one list: pass through as an analog trigger, or act as a button
-/// with any button action.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) enum TriggerChoice {
-    Analog(Trigger),
-    Action(ActionKind),
-}
-
-impl fmt::Display for TriggerChoice {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            TriggerChoice::Analog(Trigger::Left) => f.write_str("Gamepad LT (analog)"),
-            TriggerChoice::Analog(Trigger::Right) => f.write_str("Gamepad RT (analog)"),
-            TriggerChoice::Action(k) => k.fmt(f),
-        }
-    }
-}
-
-#[expect(clippy::too_many_lines, reason = "predates the size lints")]
 pub(super) fn trigger_editor<'a>(t: Trigger, cfg: &'a TriggerConfig, analog: bool, names: &Names) -> Element<'a, Message> {
     let (action, zones) = (&cfg.action, cfg.zones.as_slice());
-    let choice = match action {
-        TriggerAction::Disabled => TriggerChoice::Action(ActionKind::Disabled),
-        TriggerAction::Gamepad(out) => TriggerChoice::Analog(*out),
-        TriggerAction::Button { action, .. } => TriggerChoice::Action(action_kind(action)),
-    };
-    // Analog outputs first, then everything a button can do.
-    let other = if t == Trigger::Left { Trigger::Right } else { Trigger::Left };
-    let mut choices = vec![TriggerChoice::Action(ActionKind::Disabled), TriggerChoice::Analog(t), TriggerChoice::Analog(other)];
-    choices.extend(ACTION_KINDS.into_iter().skip(1).map(TriggerChoice::Action));
     // A trigger acting as a button presses the matching bumper by default.
     let default_button = if t == Trigger::Left { Button::LeftBumper } else { Button::RightBumper };
     let (threshold, current) = match action {
         TriggerAction::Button { action, threshold } => (*threshold, action.clone()),
         _ => (0.5, ButtonAction::Disabled),
     };
-    let picker = {
-        let names = names.clone();
-        dropdown(choices, Some(choice), move |c| {
-            Message::SetTrigger(
-                t,
-                match c {
-                    TriggerChoice::Analog(out) => TriggerAction::Gamepad(out),
-                    TriggerChoice::Action(ActionKind::Disabled) => TriggerAction::Disabled,
-                    TriggerChoice::Action(k) => {
-                        TriggerAction::Button { action: new_action(k, default_button, &current, &names), threshold }
-                    }
-                },
-            )
-        })
-        .width(215)
-    };
+    let analog_out = if let TriggerAction::Gamepad(out) = action { Some(*out) } else { None };
+    let on_change: OnAction<'a> = Rc::new(move |a| {
+        Message::SetTrigger(t, if a == ButtonAction::Disabled { TriggerAction::Disabled } else { TriggerAction::Button { action: a, threshold } })
+    });
+    let picker = super::action_picker::trigger_button(t, analog_out, &current, names, on_change);
 
     let mut line = row![text(t.to_string()).width(LABEL_WIDTH), picker].spacing(10).align_y(Alignment::Start);
     let mut rows = column![].spacing(8);

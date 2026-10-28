@@ -1,7 +1,7 @@
 //! A mouse stick's rows: its speed, its response (a preset and the settings it sets, as for
 //! gyro and touchpad acceleration), and the "Advanced" fold.
 
-use iced::widget::{Column, column};
+use iced::widget::Column;
 
 use super::*;
 use crate::config::{CurvePreset, MouseResponse};
@@ -19,6 +19,7 @@ pub(super) fn mouse_rows<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a Stick
         Message::SetStick(s, c)
     };
     let curve = cfg.curve;
+    let set_response = move |response: MouseResponse| set(curve, response);
     let preset = CurvePreset::of_stick(curve, &response);
     let picker = curve_preset_picker(preset, move |p: CurvePreset| {
         let (curve, response) = p.stick_response(response).unwrap_or_else(|| custom_response(preset, curve, response));
@@ -26,6 +27,7 @@ pub(super) fn mouse_rows<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a Stick
     });
     let rows = rows
         .push(box_row("Speed", slider_editor(100.0..=4000.0, speed, 50.0, "px/s", move |v| with(StickAction::Mouse { speed: v, response, invert_y }))))
+        .push(box_row("Vertical speed", slider_editor(0.25..=2.0, response.y_scale, 0.05, "× horizontal", move |v| set_response(MouseResponse { y_scale: v, ..response }))))
         .push(box_row("Response", picker));
     if preset == CurvePreset::Linear {
         return rows;
@@ -61,20 +63,23 @@ fn custom_response(from: CurvePreset, curve: f32, response: MouseResponse) -> (f
     (if curve + 0.25 <= 3.0 { curve + 0.25 } else { curve - 0.25 }, response)
 }
 
-/// A mouse stick's "Advanced" fold: vertical speed and smoothing, which no preset sets.
-pub(super) fn mouse_advanced<'a>(rows: Column<'a, Message>, cfg: &StickConfig, open: bool, s: Stick, with: impl Fn(StickAction) -> Message + Copy + 'a) -> Column<'a, Message> {
+/// What a mouse stick's "Advanced" fold holds besides the deadzone rows: smoothing, which no
+/// preset sets.
+pub(super) const ADVANCED_HOLDS: &str = "Deadzone shape, anti-deadzone, rotate output, press point, smoothing";
+
+pub(super) fn mouse_advanced<'a>(rows: Column<'a, Message>, cfg: &StickConfig, with: impl Fn(StickAction) -> Message + Copy + 'a) -> Column<'a, Message> {
     let StickAction::Mouse { speed, response, invert_y } = cfg.action else {
         return rows;
     };
-    const HOLDS: &str = "Vertical speed, smoothing";
-    if !open {
-        return rows.push(advanced_fold("Advanced", HOLDS, Target::StickAdvanced(s), None));
-    }
     let set = move |r: MouseResponse| with(StickAction::Mouse { speed, response: r, invert_y });
-    rows.push(advanced_fold("Advanced", HOLDS, Target::StickAdvanced(s), Some(column![
-        fold_row("Vertical speed", slider_editor(0.25..=2.0, response.y_scale, 0.05, "× horizontal", move |v| set(MouseResponse { y_scale: v, ..response }))),
-        fold_row("Smoothing", slider_editor(0.0..=200.0, response.smoothing_ms as f32, 5.0, "ms", move |v| set(MouseResponse { smoothing_ms: v as u32, ..response }))),
-    ])))
+    let smoothing = slider_editor(0.0..=200.0, response.smoothing_ms as f32, 5.0, "ms", move |v| set(MouseResponse { smoothing_ms: v as u32, ..response }));
+    rows.push(fold_row(
+        "Smoothing",
+        row![smoothing, help("Averages the stick's motion over this long, so the cursor glides instead of jittering. More smoothing adds a little delay.".to_string())]
+            .spacing(10)
+            .align_y(Alignment::Center)
+            .into(),
+    ))
 }
 
 #[cfg(test)]
@@ -99,7 +104,7 @@ mod tests {
             let cfg = StickConfig::new(StickAction::Mouse { speed: 1200.0, response, invert_y: false }, 0.1, curve);
             let with = |a| Message::SetStick(Stick::Right, StickConfig::new(a, 0.1, 1.0));
             let _ = mouse_rows(Column::new(), Stick::Right, &cfg, with);
-            let _ = mouse_advanced(Column::new(), &cfg, true, Stick::Right, with);
+            let _ = mouse_advanced(Column::new(), &cfg, with);
         }
     }
 }

@@ -3,9 +3,9 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::config::{Deadzone, Menu, MouseResponse, SpeedCurve, TouchpadConfig};
+use crate::config::{Deadzone, Menu, MouseRegion, MouseResponse, SpeedCurve, TouchpadConfig};
 
-use super::{deadzone, gyro, response, ring, trigger};
+use super::{deadzone, gyro, region, response, ring, trigger};
 
 /// What a mouse stick's response pictures show.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -17,8 +17,8 @@ pub struct MouseShown {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Figure {
-    /// A stick: its deadzone, its ring or mouse response when it has one, and where it is now.
-    Stick { deadzone: Deadzone, ring: Option<(u8, f32, f32)>, mouse: Option<MouseShown>, live: Option<(f32, f32)> },
+    /// A stick: its deadzone, its ring, mouse response or mouse region when it has one, and where it is now.
+    Stick { deadzone: Deadzone, ring: Option<(u8, f32, f32)>, mouse: Option<MouseShown>, region: Option<MouseRegion>, live: Option<(f32, f32)> },
     /// A trigger: where it presses, its zones, and how far it's pulled now.
     Trigger { press_at: Option<f32>, zones: Vec<(f32, f32)>, live: Option<f32> },
     /// The gyro: its response curve when its mode has one, how fast the controller turns now, and
@@ -40,7 +40,7 @@ impl Figure {
     /// The figure's SVG pictures. The touchpad and a menu are drawn by the overlay itself.
     pub fn pictures(&self) -> Vec<Picture> {
         match self {
-            Figure::Stick { deadzone: dz, ring: r, mouse, live } => stick_pictures(*dz, *r, mouse.as_ref(), *live),
+            Figure::Stick { deadzone: dz, ring: r, mouse, region, live } => stick_pictures(*dz, *r, mouse.as_ref(), region.as_ref(), *live),
             Figure::Trigger { press_at, zones, live } => {
                 let note = live.map(|v| format!("Pulled {:.0}%", v * 100.0));
                 vec![Picture { title: "Travel", svg: trigger::travel_svg(*press_at, zones, *live), size: (trigger::W, trigger::H), note }]
@@ -60,8 +60,12 @@ impl Figure {
     }
 }
 
-fn stick_pictures(dz: Deadzone, r: Option<(u8, f32, f32)>, mouse: Option<&MouseShown>, live: Option<(f32, f32)>) -> Vec<Picture> {
+fn stick_pictures(dz: Deadzone, r: Option<(u8, f32, f32)>, mouse: Option<&MouseShown>, region: Option<&MouseRegion>, live: Option<(f32, f32)>) -> Vec<Picture> {
     let mut pics = Vec::new();
+    if let Some(region) = region {
+        let pointer = live.map(|pos| crate::engine::stick::region::stick_point(region, crate::engine::apply_deadzone(pos.0, pos.1, dz)));
+        pics.push(Picture { title: "Desktop", svg: region::region_svg(region, pointer), size: (region::WIDTH, region::HEIGHT), note: None });
+    }
     if let Some((sectors, start, inner)) = r {
         let active = live.and_then(|pos| crate::engine::stick::ring_sector_at(pos, sectors, start, inner));
         let note = active.map(|i| format!("Sector {}", i + 1));
