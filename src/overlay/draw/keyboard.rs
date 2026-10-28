@@ -10,7 +10,7 @@ use iced::{
 use super::*;
 use crate::{
     keyboard,
-    overlay::{FIELD_LEGEND, KEYBOARD_LEGEND, NUMPAD_LEGEND, render::{KEYBOARD_PADDING, keyboard_body_width}},
+    overlay::{FIELD_LEGEND, KEYBOARD_LEGEND, NUMPAD_LEGEND, render::{CLOSING_BAR, KEYBOARD_PADDING, keyboard_body_width}},
 };
 
 #[expect(clippy::too_many_lines, reason = "predates the size lints")]
@@ -89,7 +89,7 @@ pub fn keyboard_panel<'a, M: 'a>(v: &KeyboardView, font: Font, glyphs: crate::in
     body = typed_line(body, v, &c, s);
     body = body.push(rows).push(legend);
     if v.closing > 0.0 {
-        body = body.push(progress_bar(0.0..=1.0, v.closing).girth(4.0 * s));
+        body = body.push(progress_bar(0.0..=1.0, v.closing).girth(CLOSING_BAR * s));
     }
     framed(body.into(), c, &v.style, KEYBOARD_PADDING * s, fit)
 }

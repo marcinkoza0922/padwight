@@ -94,7 +94,7 @@ fn the_closing_bar_and_typed_lines_come_only_when_there_is_something() {
     let base = laid(&v, &Fit::contents()).0;
     v.closing = 0.5;
     let closing = laid(&v, &Fit::contents()).0;
-    assert!((closing.y - base.y - (12.0 + 4.0)).abs() < 0.5, "{} {}", closing.y, base.y);
+    assert!((closing.y - base.y - (12.0 + CLOSING_BAR)).abs() < 0.5, "{} {}", closing.y, base.y);
     v.closing = 0.0;
     v.typed = "hello".into();
     let typed = laid(&v, &Fit::contents()).0;

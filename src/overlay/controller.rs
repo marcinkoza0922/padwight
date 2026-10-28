@@ -16,6 +16,9 @@ use crate::{
 
 use super::{HOLD_TO_CLOSE, KeyboardView};
 
+/// How often the closing bar is redrawn while East is held.
+const CLOSING_FRAME: Duration = Duration::from_millis(30);
+
 /// Left trigger pull that holds Shift on the keyboard, and where it lets go.
 const SHIFT_PRESS: f32 = 0.5;
 const SHIFT_RELEASE: f32 = 0.3;
@@ -50,6 +53,9 @@ pub struct OverlayController {
     /// The direction being held, repeating.
     repeat: crate::nav::Repeat,
     east_since: Option<Instant>,
+    /// When the closing bar next needs a frame while East is held, kept between ticks so the
+    /// deadline comes due instead of sliding away each time it is asked for.
+    next_frame: Instant,
     /// The opener is down: with it, the keyboard's own shortcut closes the keyboard (the numpad's
     /// the numpad), as it opened it.
     guide_held: bool,
@@ -110,6 +116,7 @@ impl OverlayController {
             stick_dir: crate::nav::StickDir::default(),
             repeat: crate::nav::Repeat::default(),
             east_since: None,
+            next_frame: Instant::now(),
             guide_held: false,
             guide_button: Some(Button::Guide),
             close_button,
@@ -247,6 +254,7 @@ impl OverlayController {
             (Button::Start, true) => self.enter(),
             (Button::East, true) => {
                 self.east_since = Some(now);
+                self.next_frame = now + CLOSING_FRAME;
                 Vec::new()
             }
             (Button::East, false) => {
@@ -389,7 +397,13 @@ impl OverlayController {
     /// Key repeat for held directions and hold-to-close. Returns what happened and whether
     /// the view changed.
     pub fn tick(&mut self, now: Instant) -> (Vec<OverlayAction>, bool) {
-        let mut changed = self.east_since.is_some();
+        let mut changed = false;
+        if self.east_since.is_some() && now >= self.next_frame {
+            changed = true;
+            while self.next_frame <= now {
+                self.next_frame += CLOSING_FRAME;
+            }
+        }
         if let Some(since) = self.east_since
             && now.duration_since(since) >= HOLD_TO_CLOSE
         {
@@ -415,7 +429,7 @@ impl OverlayController {
         let close = self.east_since.map(|t| t + HOLD_TO_CLOSE);
         let repeat = self.repeat.deadline().into_iter().chain(self.backspace).min();
         // While East is held the closing bar animates, so keep ticking.
-        let animate = self.east_since.map(|_| Instant::now() + Duration::from_millis(30));
+        let animate = self.east_since.map(|_| self.next_frame);
         [close, repeat, animate].into_iter().flatten().min()
     }
 
