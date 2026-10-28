@@ -12,7 +12,7 @@ use super::mouse_region::{region_figure, region_rows};
 use crate::config::{DeadzoneShape, FlickVertical, MouseRegion};
 
 mod mouse;
-use mouse::{mouse_advanced, mouse_rows};
+use mouse::{ADVANCED_HOLDS as MOUSE_HOLDS, mouse_advanced, mouse_rows};
 
 /// A stick's mode in a few words.
 pub(super) fn stick_summary(cfg: &StickConfig) -> String {
@@ -98,13 +98,11 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
         ));
     }
     if !matches!(cfg.action, StickAction::Disabled) {
-        rows = deadzone_extras(rows, s, cfg);
+        rows = stick_advanced(rows, s, cfg, open, with);
     }
-    match cfg.action {
-        StickAction::Mouse { .. } => rows = mouse_advanced(rows, cfg, open, s, with),
-        StickAction::Flick { .. } => rows = flick_advanced(rows, cfg, open, s, with),
-        _ => {}
-    }
+    rows = rows
+        .push(box_row("Rotate output", slider_editor(0.0..=345.0, cfg.rotate, 15.0, "° clockwise", set(|c, v| c.rotate = v))))
+        .push(box_row("Directions press at", fraction_editor(0.05..=0.95, cfg.key_threshold, 0.05, "of the way out", set(|c, v| c.key_threshold = v))));
     // The visualizers' panel sets off what comes after it; anything else gets a rule.
     let pictures = visualizers(cfg, live, ui.stick_probe);
     let mut panel_last = pictures.is_some();
@@ -116,12 +114,33 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
     if !panel_last {
         rows = rows.push(rule::horizontal(1));
     }
-    // The stick's direction buttons and zones work in every mode, so they come last, apart.
-    rows.push(box_row("Rotate output", slider_editor(0.0..=345.0, cfg.rotate, 15.0, "° clockwise", set(|c, v| c.rotate = v))))
-        .push(box_row("Directions press at", fraction_editor(0.05..=0.95, cfg.key_threshold, 0.05, "of the way out", set(|c, v| c.key_threshold = v))))
-        .push(box_row("Zones", zone_list(Analog::Stick(s), &cfg.zones, ui.names)))
+    // The stick's zones work in every mode, so they come last, apart.
+    rows.push(box_row("Command Zones", zone_list(Analog::Stick(s), &cfg.zones, ui.names)))
         .into()
 }
+
+/// The stick's one "Advanced" fold: the deadzone's shape and anti-deadzone, then the mode's own
+/// advanced rows.
+fn stick_advanced<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a StickConfig, open: bool, with: impl Fn(StickAction) -> Message + Copy + 'a) -> Column<'a, Message> {
+    let holds = match cfg.action {
+        StickAction::Mouse { .. } => MOUSE_HOLDS,
+        StickAction::Flick { .. } => FLICK_HOLDS,
+        _ => DEADZONE_HOLDS,
+    };
+    if !open {
+        return rows.push(advanced_fold("Advanced", holds, Target::StickAdvanced(s), None));
+    }
+    let inner = deadzone_extras(column![], s, cfg);
+    let inner = match cfg.action {
+        StickAction::Mouse { .. } => mouse_advanced(inner, cfg, with),
+        StickAction::Flick { .. } => flick_advanced(inner, cfg, with),
+        _ => inner,
+    };
+    rows.push(advanced_fold("Advanced", holds, Target::StickAdvanced(s), Some(inner)))
+}
+
+/// What the "Advanced" fold holds for every mode.
+const DEADZONE_HOLDS: &str = "Deadzone shape, anti-deadzone";
 
 /// The deadzone's shape and anti-deadzone rows.
 fn deadzone_extras<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a StickConfig) -> Column<'a, Message> {
@@ -138,15 +157,15 @@ fn deadzone_extras<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a StickConfig
         Message::SetStick(s, c)
     });
     let with_help = |editor: Element<'a, Message>, why: &str| row![editor, help(why.to_string())].spacing(10).align_y(Alignment::Center).into();
-    rows.push(box_row("Deadzone shape", shape.width(120).into()))
-        .push(box_row(
+    rows.push(fold_row("Deadzone shape", shape.width(120).into()))
+        .push(fold_row(
             "Anti-deadzone",
             with_help(
                 fraction_editor(0.0..=0.5, cfg.anti_deadzone, 0.01, "", set(|c, v| c.anti_deadzone = v)),
                 "Starts the output this far out as soon as the stick leaves the deadzone, to make up for a game's own deadzone.",
             ),
         ))
-        .push(box_row(
+        .push(fold_row(
             "Anti-deadzone hold",
             with_help(
                 fraction_editor(0.0..=0.5, cfg.anti_deadzone_buffer, 0.01, "", set(|c, v| c.anti_deadzone_buffer = v)),
@@ -331,29 +350,27 @@ fn flick_rows<'a>(rows: Column<'a, Message>, cfg: &StickConfig, with: impl Fn(St
         .push(box_row("Flick at", fraction_editor(0.5..=1.0, flick_threshold, 0.05, "of the way out", move |v| flick_with!(with, b.clone(), flick_threshold, v))))
 }
 
-/// A flick stick's "Advanced flick" fold.
-fn flick_advanced<'a>(rows: Column<'a, Message>, cfg: &StickConfig, open: bool, s: Stick, with: impl Fn(StickAction) -> Message + Copy + 'a) -> Column<'a, Message> {
+/// What a flick stick's "Advanced" fold holds besides the deadzone rows.
+const FLICK_HOLDS: &str = "Deadzone shape, anti-deadzone, flick time, dead angle, looking up and down";
+
+/// The flick rows of a flick stick's "Advanced" fold.
+fn flick_advanced<'a>(rows: Column<'a, Message>, cfg: &StickConfig, with: impl Fn(StickAction) -> Message + Copy + 'a) -> Column<'a, Message> {
     let (_, _, flick_time_ms, rotate_smoothing_ms, forward_deadzone, vertical, vertical_speed) = flick_fields!(cfg, rows);
-    const HOLDS: &str = "Flick time, smoothing, dead angle, looking up and down";
-    if !open {
-        return rows.push(advanced_fold("Advanced flick", HOLDS, Target::StickAdvanced(s), None));
-    }
     let a = cfg.action.clone();
     let (a1, a2, a3, a4) = (a.clone(), a.clone(), a.clone(), a.clone());
-    let mut advanced = column![
-        fold_row("Flick time", slider_editor(0.0..=300.0, flick_time_ms as f32, 10.0, "ms", move |v| flick_with!(with, a1.clone(), flick_time_ms, v as u32))),
-        fold_row("Turning smoothing", slider_editor(0.0..=200.0, rotate_smoothing_ms as f32, 5.0, "ms", move |v| flick_with!(with, a2.clone(), rotate_smoothing_ms, v as u32))),
-        fold_row("Dead angle", slider_editor(0.0..=30.0, forward_deadzone, 1.0, "° around forward", move |v| flick_with!(with, a3.clone(), forward_deadzone, v))),
-        fold_row(
+    let mut advanced = rows
+        .push(fold_row("Flick time", slider_editor(0.0..=300.0, flick_time_ms as f32, 10.0, "ms", move |v| flick_with!(with, a1.clone(), flick_time_ms, v as u32))))
+        .push(fold_row("Turning smoothing", slider_editor(0.0..=200.0, rotate_smoothing_ms as f32, 5.0, "ms", move |v| flick_with!(with, a2.clone(), rotate_smoothing_ms, v as u32))))
+        .push(fold_row("Dead angle", slider_editor(0.0..=30.0, forward_deadzone, 1.0, "° around forward", move |v| flick_with!(with, a3.clone(), forward_deadzone, v))))
+        .push(fold_row(
             "",
             checkbox(vertical == FlickVertical::Look)
                 .label("Also look up and down with the stick")
                 .on_toggle(move |on| flick_with!(with, a4.clone(), vertical, if on { FlickVertical::Look } else { FlickVertical::Off }))
                 .into(),
-        ),
-    ];
+        ));
     if vertical == FlickVertical::Look {
         advanced = advanced.push(fold_row("Vertical speed", slider_editor(100.0..=4000.0, vertical_speed, 50.0, "px/s", move |v| flick_with!(with, a.clone(), vertical_speed, v))));
     }
-    rows.push(advanced_fold("Advanced flick", HOLDS, Target::StickAdvanced(s), Some(advanced)))
+    advanced
 }
