@@ -103,6 +103,20 @@ fn left_trigger_holds_shift() {
 }
 
 #[test]
+fn right_trigger_holds_ctrl() {
+    let mut c = start();
+    let t0 = Instant::now();
+    let ctrl = KeyCode::KEY_LEFTCTRL;
+    assert_eq!(c.handle(InputEvent::Axis(Axis::RightTrigger, 0.8), t0), vec![OverlayAction::Key(ctrl, true)]);
+    assert_eq!(c.view(t0).latched, ["KEY_LEFTCTRL"]);
+    c.handle(InputEvent::Button(Button::South, true), t0);
+    assert_eq!(c.handle(InputEvent::Button(Button::South, false), t0), vec![OverlayAction::Key(KeyCode::KEY_Q, false)]);
+    assert_eq!(c.handle(InputEvent::Axis(Axis::RightTrigger, 0.1), t0), vec![OverlayAction::Key(ctrl, false)]);
+    c.handle(InputEvent::Axis(Axis::RightTrigger, 1.0), t0);
+    assert_eq!(c.release_all(), vec![OverlayAction::Key(ctrl, false)]);
+}
+
+#[test]
 fn a_latched_shift_coming_off_leaves_the_triggers_shift_down() {
     let mut c = OverlayController::new(Layout::Keyboard, keyboard::find(Layout::Keyboard, "KEY_LEFTSHIFT").unwrap());
     let t0 = Instant::now();

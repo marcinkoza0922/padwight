@@ -65,6 +65,8 @@ pub struct OverlayController {
     close_button: Option<Button>,
     /// Shift held down by the left trigger.
     trigger_shift: bool,
+    /// The right trigger is holding Left Ctrl.
+    trigger_ctrl: bool,
     /// Caps Lock is on, counting the keyboard's own presses of it.
     caps: bool,
     /// X is held: when backspace next repeats.
@@ -121,6 +123,7 @@ impl OverlayController {
             guide_button: Some(Button::Guide),
             close_button,
             trigger_shift: false,
+            trigger_ctrl: false,
             caps: false,
             backspace: None,
             pressed_shift: false,
@@ -162,7 +165,13 @@ impl OverlayController {
             board: self.board,
             style: crate::config::OverlayStyle::keyboard(),
             cursor: self.cursor,
-            latched: self.latched.iter().chain(self.trigger_shift.then_some(&KeyCode::KEY_LEFTSHIFT)).map(|k| name(*k)).collect(),
+            latched: self
+                .latched
+                .iter()
+                .chain(self.trigger_shift.then_some(&KeyCode::KEY_LEFTSHIFT))
+                .chain(self.trigger_ctrl.then_some(&KeyCode::KEY_LEFTCTRL))
+                .map(|k| name(*k))
+                .collect(),
             pressed: self.pressed.map(name),
             closing: self
                 .east_since
@@ -196,25 +205,26 @@ impl OverlayController {
                 self.stick_moved(now);
                 Vec::new()
             }
-            InputEvent::Axis(Axis::LeftTrigger, v) if self.layout() == Layout::Keyboard => self.left_trigger(v),
+            InputEvent::Axis(Axis::LeftTrigger, v) if self.layout() == Layout::Keyboard => self.trigger(KeyCode::KEY_LEFTSHIFT, v),
+            InputEvent::Axis(Axis::RightTrigger, v) if self.layout() == Layout::Keyboard => self.trigger(KeyCode::KEY_LEFTCTRL, v),
             InputEvent::Axis(..) | InputEvent::Touchpad(_) => Vec::new(),
         }
     }
 
-    /// Holding the left trigger holds Shift (alongside any latched modifiers).
-    fn left_trigger(&mut self, value: f32) -> Vec<OverlayAction> {
-        let shift = KeyCode::KEY_LEFTSHIFT;
-        let latched = self.latched.contains(&shift);
-        if !self.trigger_shift && value >= SHIFT_PRESS {
-            self.trigger_shift = true;
+    /// Holding the left trigger holds Shift, the right one Left Ctrl (alongside any latched modifiers).
+    fn trigger(&mut self, key: KeyCode, value: f32) -> Vec<OverlayAction> {
+        let latched = self.latched.contains(&key);
+        let on = if key == KeyCode::KEY_LEFTSHIFT { &mut self.trigger_shift } else { &mut self.trigger_ctrl };
+        if !*on && value >= SHIFT_PRESS {
+            *on = true;
             // Already down if latched; still mark it so letting go of the trigger is quiet.
             if !latched {
-                return vec![OverlayAction::Key(shift, true)];
+                return vec![OverlayAction::Key(key, true)];
             }
-        } else if self.trigger_shift && value < SHIFT_RELEASE {
-            self.trigger_shift = false;
+        } else if *on && value < SHIFT_RELEASE {
+            *on = false;
             if !latched {
-                return vec![OverlayAction::Key(shift, false)];
+                return vec![OverlayAction::Key(key, false)];
             }
         }
         Vec::new()
@@ -291,7 +301,7 @@ impl OverlayController {
         // Modifiers latch (held down) until the next key, like sticky keys. Shift held by the
         // trigger is already down, and stays down when its latch comes off.
         if MODIFIERS.contains(&name) {
-            let held = self.trigger_shift && k == KeyCode::KEY_LEFTSHIFT;
+            let held = (self.trigger_shift && k == KeyCode::KEY_LEFTSHIFT) || (self.trigger_ctrl && k == KeyCode::KEY_LEFTCTRL);
             if let Some(i) = self.latched.iter().position(|l| *l == k) {
                 self.latched.remove(i);
                 return if held { Vec::new() } else { vec![OverlayAction::Key(k, false)] };
@@ -360,7 +370,8 @@ impl OverlayController {
     /// Super latched) types nothing it can tell.
     fn note_typed(&mut self, code: &str) {
         const KEEP: usize = 60;
-        let shortcut = self.latched.iter().any(|k| {
+        let shortcut = self.trigger_ctrl
+            || self.latched.iter().any(|k| {
             matches!(*k, KeyCode::KEY_LEFTCTRL | KeyCode::KEY_RIGHTCTRL | KeyCode::KEY_LEFTALT | KeyCode::KEY_RIGHTALT | KeyCode::KEY_LEFTMETA | KeyCode::KEY_RIGHTMETA)
         });
         match code {
@@ -389,9 +400,9 @@ impl OverlayController {
     }
 
     fn release_latched(&mut self) -> Vec<OverlayAction> {
-        // Shift stays down while the trigger holds it.
-        let held = self.trigger_shift.then_some(KeyCode::KEY_LEFTSHIFT);
-        self.latched.drain(..).rev().filter(|k| Some(*k) != held).map(|k| OverlayAction::Key(k, false)).collect()
+        // Shift and Ctrl stay down while a trigger holds them.
+        let held = [self.trigger_shift.then_some(KeyCode::KEY_LEFTSHIFT), self.trigger_ctrl.then_some(KeyCode::KEY_LEFTCTRL)];
+        self.latched.drain(..).rev().filter(|k| !held.contains(&Some(*k))).map(|k| OverlayAction::Key(k, false)).collect()
     }
 
     /// Key repeat for held directions and hold-to-close. Returns what happened and whether
@@ -442,6 +453,9 @@ impl OverlayController {
         out.extend(self.release_latched());
         if std::mem::take(&mut self.trigger_shift) {
             out.push(OverlayAction::Key(KeyCode::KEY_LEFTSHIFT, false));
+        }
+        if std::mem::take(&mut self.trigger_ctrl) {
+            out.push(OverlayAction::Key(KeyCode::KEY_LEFTCTRL, false));
         }
         self.repeat.stop();
         self.backspace = None;

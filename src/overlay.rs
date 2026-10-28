@@ -22,6 +22,7 @@ pub const FIELD_LEGEND: &[&str] = &[
     "{keyboard_space} space",
     "{keyboard_enter} done",
     "hold {lt} shift",
+    "hold {rt} ctrl",
     "hold {back} cancel",
 ];
 
@@ -33,7 +34,7 @@ pub const KEYBOARD_LEGEND: &[&str] = &[
     "{keyboard_enter} enter",
     "{keyboard_left} {keyboard_right} move the text cursor",
     "hold {lt} shift",
-    "Shift, Ctrl, Alt, AltGr and Super stay on for one key; press one again to let go",
+    "hold {rt} ctrl",
     "hold {keyboard_close} or press {guide} to close",
 ];
 
