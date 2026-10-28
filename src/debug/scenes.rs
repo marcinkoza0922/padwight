@@ -94,7 +94,7 @@ fn keyboard_view(board: Board) -> KeyboardView {
         Board::Basic | Board::Full => (OverlayStyle::keyboard(), keyboard::find(board, "KEY_H").unwrap_or_default(), vec!["KEY_LEFTSHIFT".into()]),
         Board::Numpad => (OverlayStyle::numpad(), board.home(), Vec::new()),
     };
-    KeyboardView { board, style, cursor, latched, pressed: None, closing: 0.0, caps: false, typed: String::new(), field: None }
+    KeyboardView { board, style, cursor, latched, pressed: None, closing: 0.0, caps: false, typed: String::new(), field: None, caret: true }
 }
 
 /// A menu of this kind, open with the cursor on its second item: keys, a toggle, a submenu, a
@@ -191,13 +191,14 @@ fn doodles() -> OverlayFrame {
         }
     }
     canvas.add_text(TextBox { at: Point::new(0.1, 0.6), text: "Doodle".into(), style: TextStyle { color: 7, size: 0.05, bold: true, ..TextStyle::default() } });
-    let cursor = crate::overlay::DoodleCursor { at: Point::new(0.5, 0.8), radius: 0.006, color: [230, 57, 70] };
+    let cursor = crate::overlay::DoodleCursor { at: Point::new(0.5, 0.8), radius: 0.006, color: [230, 57, 70], beam: false };
     let style = crate::config::OverlayStyle::default();
     let cells = vec![
         crate::overlay::DoodleCell::Palette { current: 2, hint: "{leftright} colour".into() },
         crate::overlay::DoodleCell::Text("{updown} size 14".into()),
         crate::overlay::DoodleCell::Tip { tip: crate::tools::doodle::Tip::Round, text: "{north} Round".into() },
         crate::overlay::DoodleCell::Kind { kind: crate::tools::doodle::Kind::Solid, text: "{west} Solid".into() },
+        crate::overlay::DoodleCell::Text("{east} undo · hold {east} clear all · {guide} exit".into()),
     ];
     let hud = crate::overlay::DoodleHud { tool: 0, tray: true, cells, checks: None, style };
     OverlayFrame { doodles: canvas, doodle_cursor: Some(cursor), doodle_hud: Some(hud), ..OverlayFrame::default() }

@@ -129,13 +129,16 @@ pub struct OverlayFrame {
     pub lite: crate::config::Lite,
 }
 
-/// The Doodle screen's cursor: where it is, the radius it marks, and its color (see
+/// The Doodle screen's cursor: where it is, the radius it marks, its color and whether it's a beam (see
 /// `tools::doodle`). Positions and radii are shares of the screen's height.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DoodleCursor {
     pub at: crate::tools::doodle::Point,
     pub radius: f32,
     pub color: [u8; 3],
+    /// Drawn as a text editor's I-beam, from `at` down by the diameter, rather than a ring.
+    #[serde(default)]
+    pub beam: bool,
 }
 
 /// The Doodle screen's HUD: the tool the carousel across the top highlights (its index in
@@ -284,6 +287,14 @@ pub struct KeyboardView {
     /// to the game.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub field: Option<String>,
+    /// Whether the text caret is showing: it blinks while a field is typed into, like a text
+    /// editor's.
+    #[serde(default = "caret_on")]
+    pub caret: bool,
+}
+
+fn caret_on() -> bool {
+    true
 }
 
 /// Where a key sits in its layout, counting every slot in reading order: the number the motion

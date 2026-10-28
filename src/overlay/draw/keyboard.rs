@@ -101,7 +101,7 @@ fn typed_line<'a, M: 'a>(mut body: iced::widget::Column<'a, M>, v: &KeyboardView
         body = body.push(text(field.clone()).font(c.font).size(15.0 * s).color(c.muted));
     }
     if !v.typed.is_empty() || v.field.is_some() {
-        body = body.push(text(format!("{}▏", v.typed)).font(c.font).size(18.0 * s).color(c.background_text));
+        body = body.push(text(format!("{}{}", v.typed, if v.caret { "|" } else { " " })).font(c.font).size(18.0 * s).color(c.background_text));
     }
     body
 }

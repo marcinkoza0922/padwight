@@ -125,6 +125,11 @@ fn text_box(ops: &mut Vec<Op>, text: &TextBox, cx: &Context) {
 fn cursor_ring(ops: &mut Vec<Op>, cursor: &DoodleCursor, cx: &Context) {
     let centre = at(cursor.at, cx);
     let radius = cursor.radius * cx.display.y;
+    let [r, g, b] = cursor.color;
+    let colour = Rgba::from_rgba8(r, g, b, 1.0);
+    if cursor.beam {
+        return i_beam(ops, centre, 2.0 * radius, colour);
+    }
     let mut path = Path::new();
     for side in 0..=SIDES {
         let angle = TAU * side as f32 / SIDES as f32;
@@ -136,8 +141,24 @@ fn cursor_ring(ops: &mut Vec<Op>, cursor: &DoodleCursor, cx: &Context) {
         }
     }
     path.close();
-    let [r, g, b] = cursor.color;
-    let colour = Rgba::from_rgba8(r, g, b, 1.0);
+    ops.push(Op::Path { path: path.clone(), fill: None, rule: Rule::NonZero, stroke: Some(Stroke::new(RIM + 1.0, Rgba::BLACK)) });
+    ops.push(Op::Path { path, fill: None, rule: Rule::NonZero, stroke: Some(Stroke::new(RIM, colour)) });
+}
+
+/// The text tool's cursor: an I-beam like a text editor's, from `top` down by `height`, where the
+/// text box will start. It has a dark rim like the ring.
+fn i_beam(ops: &mut Vec<Op>, top: Point, height: f32, colour: Rgba) {
+    let serif = (height * 0.12).clamp(3.0, 8.0);
+    let bottom = top.y + height;
+    let mut path = Path::new();
+    for (from, to) in [
+        (Point::new(top.x, top.y), Point::new(top.x, bottom)),
+        (Point::new(top.x - serif, top.y), Point::new(top.x + serif, top.y)),
+        (Point::new(top.x - serif, bottom), Point::new(top.x + serif, bottom)),
+    ] {
+        path.move_to(from);
+        path.line_to(to);
+    }
     ops.push(Op::Path { path: path.clone(), fill: None, rule: Rule::NonZero, stroke: Some(Stroke::new(RIM + 1.0, Rgba::BLACK)) });
     ops.push(Op::Path { path, fill: None, rule: Rule::NonZero, stroke: Some(Stroke::new(RIM, colour)) });
 }
@@ -213,7 +234,7 @@ mod tests {
                 canvas.extend_stroke(at);
                 let mut frame = OverlayFrame {
                     doodles: canvas.clone(),
-                    doodle_cursor: Some(DoodleCursor { at, radius: 0.01, color: [255, 0, 0] }),
+                    doodle_cursor: Some(DoodleCursor { at, radius: 0.01, color: [255, 0, 0], beam: false }),
                     ..OverlayFrame::default()
                 };
                 let start = Instant::now();

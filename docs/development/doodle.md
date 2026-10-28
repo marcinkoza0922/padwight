@@ -9,10 +9,10 @@ only when wiped.
 - Doodle is a new entry on the **Tools** menu (Guide + right trigger), next to Calculator.
 - Opening Doodle takes the controller, the same way the Tools menu does. The game gets no input
   while it's open.
-- Leave Doodle by pressing **Guide**, or by **holding East**. Either hands the controller back.
+- Leave Doodle by pressing **Guide**, which hands the controller back.
   The doodles stay on screen.
-- East is also undo, so exit by holding it. A tap undoes, and a hold of about half a second or
-  longer exits. The hold time is not yet set (see open questions).
+- East is undo. A tap undoes, and a hold of about half a second or longer clears everything. The
+  tray's last cell says so.
 - Doodles are visible over the game at all times, in or out of Doodle mode.
 - Doodles are session-only. They are kept in memory and are lost when the daemon restarts.
 
@@ -29,7 +29,7 @@ menus (Guide menu, Tools menu, the on-screen keyboard, the Doodle HUD, and the r
 
 ## Wipe
 
-- **L3 + R3** clears every doodle and text box on screen.
+- **Hold East** clears every doodle and text box on screen.
 - There is no other way to clear them, so re-entering Doodle mode doesn't clear anything.
 
 ## Controls
@@ -38,7 +38,7 @@ The left stick moves the cursor. **South** uses the current tool. **LB / RB** sw
 tools in the order Pen, Eraser, Text.
 
 **East** (tap) undoes the last thing added (a stroke or a text box). It works in every tool.
-**East** (hold) leaves Doodle mode.
+**East** (hold) clears every doodle and text box. **Guide** leaves Doodle mode.
 
 ### Pen
 
@@ -107,7 +107,7 @@ is a placeholder too.
 Decisions made while building:
 - Positions are shares of the screen (0 to 1), as the magnifier's place is, so the canvas doesn't
   depend on resolution. Sizes are shares of the screen's height.
-- East's hold time is 0.5 seconds. It leaves while held, and a shorter press undoes on release,
+- East's hold time is 0.5 seconds. It clears while held, and a shorter press undoes on release,
   so a long hold doesn't also undo.
 - Undo takes back the last item added. Erased items are gone.
 - Performance: a stroke is drawn in runs of 32 segments, an op each, so as it grows only its
@@ -123,7 +123,6 @@ Decisions made while building:
 - **Palette**: the 12 colors are not yet chosen.
 - **Fonts**: the list of about 8 fonts is not yet chosen, and it's unclear whether they ship with
   the app or come from the system.
-- **L3 + R3 conflict**: it is a combo in normal play. Confirm whether the wipe should also work
-  outside Doodle mode, and whether it should ask for confirmation first.
+- **Clear confirmation**: whether the hold-East wipe should ask for confirmation first.
 - **Undo depth**: one step, or a stack of several steps?
 - **Pen sizes**: the range and step for D-pad up / down are not yet set.

@@ -19,8 +19,8 @@ use crate::{
     overlay::{DoodleCell, DoodleCheck, DoodleChecks, DoodleCursor, DoodleHud, KeyboardView, OverlayAction},
 };
 
-/// How long East is held to leave Doodle. A shorter press undoes the last item instead.
-pub const EXIT_HOLD: Duration = Duration::from_millis(500);
+/// How long East is held to clear every doodle. A shorter press undoes the last item instead.
+pub const CLEAR_HOLD: Duration = Duration::from_millis(500);
 /// How fast the left stick moves the cursor at full push, in screen heights a second.
 const CURSOR_SPEED: f32 = 1.2;
 /// Stick pushes this small don't move the cursor.
@@ -57,10 +57,8 @@ pub struct Doodle {
     reach: f32,
     /// South is held in a tool that marks: the pen draws, the eraser erases.
     marking: bool,
-    /// When East went down, while it may still be a hold that leaves.
+    /// When East went down, while it may still be a hold that clears.
     east_down: Option<Instant>,
-    /// Whether L3 and R3 are held, which together wipe the canvas.
-    clicks: [bool; 2],
     /// The keyboard typing into a text box, which takes the controller while it's up.
     entry: Option<Entry>,
     /// A text box South is holding, to move or to open.
@@ -81,7 +79,6 @@ impl Doodle {
             reach: DEFAULT_REACH,
             marking: false,
             east_down: None,
-            clicks: [false; 2],
             entry: None,
             grab: None,
             checks: None,
@@ -96,13 +93,13 @@ impl Doodle {
             Tool::Eraser => (self.reach, [200, 200, 200]),
             Tool::Text => (self.text.size / 2.0, PALETTE[self.text.color]),
         };
-        DoodleCursor { at: self.cursor, radius: radius.max(CURSOR_MIN), color }
+        DoodleCursor { at: self.cursor, radius: radius.max(CURSOR_MIN), color, beam: self.tool == Tool::Text }
     }
 
     /// The HUD: the tool for the carousel, and the tray's cells with a hint for each control.
     pub fn hud(&self, style: OverlayStyle) -> DoodleHud {
         let shown = |share: f32| (share * SHOWN_HEIGHT).round() as i32;
-        let cells = match self.tool {
+        let mut cells = match self.tool {
             Tool::Pen => vec![
                 DoodleCell::Palette { current: self.pen.color, hint: "{leftright} colour".into() },
                 DoodleCell::Text(format!("{{updown}} size {}", shown(self.pen.size))),
@@ -124,12 +121,13 @@ impl Doodle {
                 ]
             }
         };
-        // It opens from North's cell, the text tool's last.
+        // It opens from North's cell, the text tool's last before the controls hint added below.
         let checks = self.checks.map(|cursor| DoodleChecks {
             rows: FACES.iter().enumerate().map(|(face, label)| DoodleCheck { label: label.to_string(), on: face_on(&self.text, face) }).collect(),
             cursor,
             cell: cells.len() - 1,
         });
+        cells.push(DoodleCell::Text("{east} undo · hold {east} clear all · {guide} exit".into()));
         DoodleHud { tool: self.tool.index(), tray: self.entry.is_none(), cells, checks, style }
     }
 
@@ -158,15 +156,16 @@ impl Doodle {
     }
 
     /// Moves the cursor by the stick's push, and carries a mark or a grabbed text box along with
-    /// it. Returns `Leave` once East has been held for [`EXIT_HOLD`].
+    /// it. Clears the canvas once East has been held for [`CLEAR_HOLD`].
     pub fn tick(&mut self, canvas: &mut Canvas, dt: f32, now: Instant) -> Step {
         if let Some(entry) = &mut self.entry {
             let (actions, _) = entry.keys().tick(now);
             self.finish_entry(canvas, &actions);
             return Step::Stay;
         }
-        if self.east_down.is_some_and(|went_down| now.duration_since(went_down) >= EXIT_HOLD) {
-            return Step::Leave;
+        if self.east_down.is_some_and(|went_down| now.duration_since(went_down) >= CLEAR_HOLD) {
+            self.east_down = None;
+            self.clear(canvas);
         }
         let before = self.cursor;
         self.cursor = Point::new(
@@ -212,7 +211,6 @@ impl Doodle {
                 }
             }
             Button::East => self.east(canvas, down, now),
-            Button::LeftStick | Button::RightStick => self.click(canvas, b, down),
             Button::South => self.south(canvas, down),
             Button::LeftBumper if down => self.change_tool(canvas, self.tool.previous()),
             Button::RightBumper if down => self.change_tool(canvas, self.tool.next()),
@@ -256,28 +254,24 @@ impl Doodle {
         }
     }
 
-    /// A tap of East undoes the last item. Holding it leaves, which [`Doodle::tick`] says once the
-    /// hold is long enough, so a long hold doesn't also undo.
+    /// A tap of East undoes the last item. Holding it clears everything, which [`Doodle::tick`] does
+    /// once the hold is long enough, so a long hold doesn't also undo.
     fn east(&mut self, canvas: &mut Canvas, down: bool, now: Instant) {
         if down {
             self.east_down = Some(now);
         } else if let Some(went_down) = self.east_down.take()
-            && now.duration_since(went_down) < EXIT_HOLD
+            && now.duration_since(went_down) < CLEAR_HOLD
             && !self.marking
         {
             canvas.undo();
         }
     }
 
-    /// L3 and R3 pressed together wipe every doodle. Each click only counts while it's held.
-    fn click(&mut self, canvas: &mut Canvas, b: Button, down: bool) {
-        let index = usize::from(b == Button::RightStick);
-        self.clicks[index] = down;
-        if down && self.clicks == [true; 2] {
-            canvas.wipe();
-            self.marking = false;
-            self.grab = None;
-        }
+    /// Wipes every doodle and text box, and drops what the cursor was carrying.
+    fn clear(&mut self, canvas: &mut Canvas) {
+        canvas.wipe();
+        self.marking = false;
+        self.grab = None;
     }
 
     /// South marks with the pen or the eraser, and on text it opens a new box or grabs one. Lifting

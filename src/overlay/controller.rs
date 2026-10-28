@@ -70,7 +70,12 @@ pub struct OverlayController {
     /// Typing into a field, named here (see [`KeyboardView::field`]): the text is kept whole, and
     /// Enter and Escape don't clear it.
     field: Option<String>,
+    /// When the field's caret last started its blink.
+    caret_since: Instant,
 }
+
+/// How long the caret shows, and how long it hides, in turn.
+const CARET_BLINK: Duration = Duration::from_millis(530);
 
 /// The most a field keeps of what's typed into it.
 const FIELD_KEEP: usize = 1000;
@@ -119,6 +124,7 @@ impl OverlayController {
             pressed_shift: false,
             typed: String::new(),
             field: None,
+            caret_since: Instant::now(),
         }
     }
 
@@ -164,6 +170,7 @@ impl OverlayController {
             caps: self.caps,
             typed: self.typed.clone(),
             field: self.field.clone(),
+            caret: (now.saturating_duration_since(self.caret_since).as_millis() / CARET_BLINK.as_millis()).is_multiple_of(2),
         }
     }
 

@@ -57,34 +57,24 @@ fn the_eraser_removes_the_item_under_the_cursor() {
 }
 
 #[test]
-fn a_tap_of_east_undoes_and_a_hold_leaves() {
+fn a_tap_of_east_undoes_and_a_hold_clears() {
     let (mut doodle, mut canvas, start) = (Doodle::new(Point::new(0.5, 0.5)), Canvas::default(), Instant::now());
+    canvas.add_text(words());
     canvas.add_text(words());
     doodle.handle(&mut canvas, Button::East, true, start);
     assert_eq!(doodle.handle(&mut canvas, Button::East, false, start), Step::Stay);
-    assert!(canvas.items().is_empty());
+    assert_eq!(canvas.items().len(), 1);
 
     doodle.handle(&mut canvas, Button::East, true, start);
-    let held = start + EXIT_HOLD;
-    assert_eq!(doodle.tick(&mut canvas, 0.0, held), Step::Leave);
+    assert_eq!(doodle.tick(&mut canvas, 0.0, start + CLEAR_HOLD), Step::Stay);
+    assert!(canvas.is_empty());
+    doodle.handle(&mut canvas, Button::East, false, start + CLEAR_HOLD);
 }
 
 #[test]
 fn guide_leaves_the_screen() {
     let (mut doodle, mut canvas) = (Doodle::new(Point::new(0.5, 0.5)), Canvas::default());
     assert_eq!(doodle.handle(&mut canvas, Button::Guide, true, Instant::now()), Step::Leave);
-}
-
-#[test]
-fn l3_and_r3_together_wipe_the_canvas() {
-    let (mut doodle, mut canvas, now) = (Doodle::new(Point::new(0.5, 0.5)), Canvas::default(), Instant::now());
-    canvas.add_text(words());
-    doodle.handle(&mut canvas, Button::LeftStick, true, now);
-    doodle.handle(&mut canvas, Button::LeftStick, false, now);
-    doodle.handle(&mut canvas, Button::RightStick, true, now);
-    assert_eq!(canvas.items().len(), 1, "one click alone wipes nothing");
-    doodle.handle(&mut canvas, Button::LeftStick, true, now);
-    assert!(canvas.is_empty());
 }
 
 #[test]
@@ -188,7 +178,7 @@ fn the_hud_highlights_the_tool_and_hints_its_controls() {
     press(&mut doodle, &mut canvas, Button::RightBumper);
     let hud = doodle.hud(OverlayStyle::default());
     assert_eq!(hud.tool, 1);
-    assert_eq!(hud.cells.len(), 1);
+    assert_eq!(hud.cells.len(), 2);
     assert!(matches!(&hud.cells[0], DoodleCell::Text(text) if text.contains("{updown}")));
 }
 
@@ -238,7 +228,7 @@ fn east_closes_the_checklist_without_undoing_or_leaving() {
     press(&mut doodle, &mut canvas, Button::East);
     assert!(doodle.hud(OverlayStyle::default()).checks.is_none());
     assert_eq!(canvas.items().len(), 1, "the tap closed the checklist, and undid nothing");
-    assert_eq!(doodle.tick(&mut canvas, 0.0, now + EXIT_HOLD), Step::Stay);
+    assert_eq!(doodle.tick(&mut canvas, 0.0, now + CLEAR_HOLD), Step::Stay);
 }
 
 #[test]

@@ -33,7 +33,7 @@ pub fn frames(path: &Path) -> Result<Vec<(String, OverlayFrame)>> {
     }
     for (board, style) in [(Board::Basic, game.keyboard_style.clone().unwrap_or_else(OverlayStyle::keyboard)), (Board::Numpad, game.numpad_style.clone().unwrap_or_else(OverlayStyle::numpad))] {
         let cursor = if board == Board::Numpad { board.home() } else { keyboard::find(board, "KEY_H").unwrap_or_default() };
-        let view = KeyboardView { board, style, cursor, latched: Vec::new(), pressed: None, closing: 0.0, caps: false, typed: String::new(), field: None };
+        let view = KeyboardView { board, style, cursor, latched: Vec::new(), pressed: None, closing: 0.0, caps: false, typed: String::new(), field: None, caret: true };
         let name = if board == Board::Numpad { "numpad" } else { "keyboard" };
         out.push((format!("{stem}-{name}"), OverlayFrame { active: Some(OverlayView::Keyboard(view)), ..base.clone() }));
     }

@@ -93,7 +93,7 @@ fn doodle_draws_over_the_game_until_guide_leaves_it() {
 }
 
 #[test]
-fn a_held_east_leaves_doodle_on_a_tick_and_a_tap_undoes() {
+fn a_held_east_clears_doodle_on_a_tick_without_leaving() {
     let mut session = ToolsSession::new();
     let (mut canvas, start) = (Canvas::default(), Instant::now());
     session.cursor = TOOLS.iter().position(|&t| t == Tool::Doodle).unwrap();
@@ -102,7 +102,11 @@ fn a_held_east_leaves_doodle_on_a_tick_and_a_tap_undoes() {
     session.handle(Button::South, false, &mut canvas, start);
     assert!(session.in_doodle(), "a pen mark is not a leave");
     session.handle(Button::East, true, &mut canvas, start);
-    assert_eq!(session.tick(&mut canvas, 0.0, start + std::time::Duration::from_secs(5)), Some(Outcome::Close));
+    assert!(!canvas.is_empty(), "the mark was drawn");
+    session.handle(Button::East, true, &mut canvas, start);
+    assert_eq!(session.tick(&mut canvas, 0.0, start + std::time::Duration::from_secs(5)), None);
+    assert!(canvas.is_empty());
+    assert!(session.in_doodle());
 }
 
 #[test]

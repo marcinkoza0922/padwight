@@ -206,6 +206,7 @@ fn keyboard_preview(layout: Layout, style: &OverlayStyle, font: iced::Font, glyp
         caps: false,
         typed: String::new(),
         field: None,
+        caret: true,
     };
     preview(crate::overlay::draw::keyboard_panel(&sample, font, glyphs, &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still()))
 }
