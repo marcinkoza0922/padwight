@@ -380,7 +380,14 @@ fn flick_rows<'a>(rows: Column<'a, Message>, cfg: &StickConfig, with: impl Fn(St
             .align_y(Alignment::Center)
             .into(),
         ))
-        .push(box_row("Flick at", fraction_editor(0.5..=1.0, flick_threshold, 0.05, "of the way out", move |v| flick_with!(with, b.clone(), flick_threshold, v))))
+        .push(box_row(
+            "Flick at",
+            with_help(
+                fraction_editor(0.5..=1.0, flick_threshold, 0.05, "of the way out", move |v| flick_with!(with, b.clone(), flick_threshold, v)),
+                "How far out the stick must be pushed to start a flick. Lower it and a light push already flicks, but the camera also turns \
+                 when the stick only brushes past that point. Higher needs a firmer push.",
+            ),
+        ))
 }
 
 /// What a flick stick's "Advanced" fold holds besides the deadzone rows.
@@ -392,16 +399,39 @@ fn flick_advanced<'a>(rows: Column<'a, Message>, cfg: &StickConfig, with: impl F
     let a = cfg.action.clone();
     let (a1, a2, a3, a4) = (a.clone(), a.clone(), a.clone(), a.clone());
     let mut advanced = rows
-        .push(fold_row("Flick time", slider_editor(0.0..=300.0, flick_time_ms as f32, 10.0, "ms", move |v| flick_with!(with, a1.clone(), flick_time_ms, v as u32))))
-        .push(fold_row("Turning smoothing", slider_editor(0.0..=200.0, rotate_smoothing_ms as f32, 5.0, "ms", move |v| flick_with!(with, a2.clone(), rotate_smoothing_ms, v as u32))))
-        .push(fold_row("Dead angle", slider_editor(0.0..=30.0, forward_deadzone, 1.0, "° around forward", move |v| flick_with!(with, a3.clone(), forward_deadzone, v))))
+        .push(fold_row(
+            "Flick time",
+            with_help(
+                slider_editor(0.0..=300.0, flick_time_ms as f32, 10.0, "ms", move |v| flick_with!(with, a1.clone(), flick_time_ms, v as u32)),
+                "How long the first turn of a flick takes. 0 snaps the camera round in one frame; a few tens of milliseconds make the turn \
+                 easier to follow by eye, at the cost of the camera arriving a little later.",
+            ),
+        ))
+        .push(fold_row(
+            "Turning smoothing",
+            with_help(
+                slider_editor(0.0..=200.0, rotate_smoothing_ms as f32, 5.0, "ms", move |v| flick_with!(with, a2.clone(), rotate_smoothing_ms, v as u32)),
+                "Smooths the turning that follows a flick, while you rotate the stick. It hides the stick's jitter and its steps between \
+                 positions, but the camera lags behind your hand by about this long. 0 is off.",
+            ),
+        ))
+        .push(fold_row(
+            "Dead angle",
+            with_help(
+                slider_editor(0.0..=30.0, forward_deadzone, 1.0, "° around forward", move |v| flick_with!(with, a3.clone(), forward_deadzone, v)),
+                "A flick this close to straight up turns nothing, so pushing the stick forward to walk doesn't nudge the camera. \
+                 Raise it if forward pushes drift your view; too much and small corrections to the side are ignored.",
+            ),
+        ))
         .push(fold_row(
             "",
             with_help(
                 checkbox(vertical == FlickVertical::Look)
                     .label("Look up and down")
                     .on_toggle(move |on| flick_with!(with, a4.clone(), vertical, if on { FlickVertical::Look } else { FlickVertical::Off })),
-                "Also look up and down with the stick.",
+                "Also look up and down with the stick, at the vertical speed below. The catch: the stick's up and down is also what picks the \
+                 direction of a flick, so flicking forward tilts the camera up and flicking backward tilts it down for as long as the stick \
+                 is held out. It works best with a low vertical speed, and if you flick mostly sideways.",
             ),
         ));
     if vertical == FlickVertical::Look {

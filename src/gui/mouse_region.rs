@@ -27,8 +27,8 @@ pub(super) fn region_rows<'a>(rows: Column<'a, Message>, region: MouseRegion, se
         .align_y(Alignment::Center);
     rows.push(box_row("Region", presets.into()))
         .push(sub_row("Shape", shape.into()))
-        .push(sub_row("Middle across", fraction_editor(0.0..=1.0, region.x, 0.01, "from the left", move |v| set(MouseRegion { x: v, ..region }))))
-        .push(sub_row("Middle down", fraction_editor(0.0..=1.0, region.y, 0.01, "from the top", move |v| set(MouseRegion { y: v, ..region }))))
+        .push(sub_row("X offset", fraction_editor(0.0..=1.0, region.x, 0.01, "from the left", move |v| set(MouseRegion { x: v, ..region }))))
+        .push(sub_row("Y offset", fraction_editor(0.0..=1.0, region.y, 0.01, "from the top", move |v| set(MouseRegion { y: v, ..region }))))
         .push(sub_row("Width", fraction_editor(0.05..=1.0, region.width, 0.01, "of the desktop", move |v| set(MouseRegion { width: v, ..region }))))
         .push(sub_row("Height", fraction_editor(0.05..=1.0, region.height, 0.01, "of the desktop", move |v| set(MouseRegion { height: v, ..region }))))
 }
