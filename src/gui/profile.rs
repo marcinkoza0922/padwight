@@ -357,7 +357,7 @@ pub(super) fn requirement_rows(p: &Profile, f: Feature) -> Vec<Element<'_, Messa
          offered the profile, and Guide skips it."
     );
     vec![
-        row![checkbox(has).label(format!("Can't be played without {label}")).on_toggle(toggled), help(hint)]
+        row![checkbox(has).label(format!("Profile requires {label}")).on_toggle(toggled), help(hint)]
             .spacing(8)
             .align_y(Alignment::Center)
             .into(),

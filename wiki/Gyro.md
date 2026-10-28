@@ -23,11 +23,11 @@ A **recenter** input sets the current tilt as straight, for steering.
 
 Slow movement below a jitter threshold is scaled down, to hide drift. **Calibrate gyro** in the controller list measures the drift while the controller sits still.
 
-![The Gyro tab of a profile, with gyro off and the "Can't be played without gyro" option unticked](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/profile-gyro.png)
+![The Gyro tab of a profile, with gyro off and the "Profile requires gyro" option unticked](https://raw.githubusercontent.com/marcinkoza0922/padwight/main/docs/images/profile-gyro.png)
 
 ## Gyro and profiles
 
-Each profile says whether it needs gyro. Tick **Can't be played without gyro** on the Gyro tab when a profile depends on it. This matters for [packs](Packs-and-the-Library): players whose controller has no gyro aren't offered those profiles.
+Each profile says whether it needs gyro. Tick **Profile requires gyro** on the Gyro tab when a profile depends on it. This matters for [packs](Packs-and-the-Library): players whose controller has no gyro aren't offered those profiles.
 
 ## Examples in the library
 

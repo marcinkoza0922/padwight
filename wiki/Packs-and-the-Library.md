@@ -10,7 +10,7 @@ The format itself is documented in the repository: [pack format reference](https
 
 **Details → Export…** on a setup writes a `.padpack` file. The export dialog warns about references to missing items.
 
-Each profile declares what it needs beyond a plain controller: gyro, back paddles or a touchpad. Tick **Can't be played without gyro** on the profile's Gyro tab when the profile depends on it. The back paddles section of the Buttons tab and the Touchpad tab have the same box. Nothing is detected; the export dialog only lists what you've declared.
+Each profile declares what it needs beyond a plain controller: gyro, back paddles or a touchpad. Tick **Profile requires gyro** on the profile's Gyro tab when the profile depends on it. The back paddles section of the Buttons tab and the Touchpad tab have the same box. Nothing is detected; the export dialog only lists what you've declared.
 
 Re-exporting your own setup keeps its pack ID. Exporting someone else's makes a fork with its own ID, which credits the original.
 

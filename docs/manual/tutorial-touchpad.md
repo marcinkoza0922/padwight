@@ -33,7 +33,7 @@ Choose **Menu zones** to divide the pad into the items of one of your [menus](tu
 
 The **Visualizers** panel under the boxes draws the pad: each half's job, the menu's items, and your fingers.
 
-Tick **Can't be played without touchpad**, at the top of the tab, only if the profile depends on the pad. Players without one then aren't offered the profile.
+Tick **Profile requires touchpad**, at the top of the tab, only if the profile depends on the pad. Players without one then aren't offered the profile.
 
 ## Where next
 

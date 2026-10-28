@@ -51,7 +51,7 @@ If the game doesn't read the mouse alongside the gamepad, pick **Gamepad stick (
 
 ## 7. Say if the profile needs gyro
 
-Tick **Can't be played without gyro** (1) only if the profile depends on it, such as a flick-stick profile that aims up and down with gyro. Players without gyro then aren't offered it. Leave it unticked when gyro is an extra.
+Tick **Profile requires gyro** (1) only if the profile depends on it, such as a flick-stick profile that aims up and down with gyro. Players without gyro then aren't offered it. Leave it unticked when gyro is an extra.
 
 ## When it feels wrong
 

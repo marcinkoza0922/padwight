@@ -66,7 +66,7 @@ To set the baseline, put the controller down still and press **Calibrate gyro** 
 
 ## Profiles that need gyro
 
-On the **Gyro** tab, tick *Can't be played without gyro* if the profile depends on it. Players whose controller has no gyro then aren't offered it.
+On the **Gyro** tab, tick *Profile requires gyro* if the profile depends on it. Players whose controller has no gyro then aren't offered it.
 
 > **Tip:** PlayStation and Switch controllers also need a motion-sensor permission rule. See [Troubleshooting](troubleshooting.md).
 

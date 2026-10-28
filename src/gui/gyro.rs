@@ -280,13 +280,13 @@ pub(super) fn gyro_sections<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Mess
             note("None of your managed controllers has a gyro (PlayStation and Switch controllers do). These settings apply once one is connected.").into(),
         );
     }
-    let open = ui.expanded.contains(&Target::GyroAdvanced);
-    rows.push(device_box(layer_part(ui, LayerPart::Gyro, "Gyro".into(), summary, || vec![gyro_editor(&p.gyro, flick_turn, open, Some(pictures(&p.gyro, ui)))])));
-    // What the profile can't be played without sits with the feature, as the back paddles' does,
-    // after the setting it's about. With gyro off there's nothing to need, unless it was ticked.
+    // What the profile requires sits above the feature's settings, as the back paddles' and
+    // touchpad's do. With gyro off there's nothing to require, unless it was ticked.
     if ui.layer.is_none() && (p.gyro.mode != GyroMode::Off || p.requires.contains(&Feature::Gyro)) {
         rows.extend(super::requirement_rows(p, Feature::Gyro));
     }
+    let open = ui.expanded.contains(&Target::GyroAdvanced);
+    rows.push(device_box(layer_part(ui, LayerPart::Gyro, "Gyro".into(), summary, || vec![gyro_editor(&p.gyro, flick_turn, open, Some(pictures(&p.gyro, ui)))])));
     vec![section(
         "Gyro",
         Some("Aim by turning the controller. If the aim drifts, calibrate the gyro from the controller list on Overview.".into()),

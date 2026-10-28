@@ -51,7 +51,7 @@ The *Visualizers* panel under the boxes draws the pad: each half's job, where a 
 
 ## Profiles that need a touchpad
 
-At the top of the Touchpad tab, tick *Can't be played without touchpad* if the profile depends on it, such as a build menu that's only on the pad. Players whose controller has no touchpad then aren't offered the profile. Leave it unticked when the pad only adds extras.
+At the top of the Touchpad tab, tick *Profile requires touchpad* if the profile depends on it, such as a build menu that's only on the pad. Players whose controller has no touchpad then aren't offered the profile. Leave it unticked when the pad only adds extras.
 
 ## In layers
 
