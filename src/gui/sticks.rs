@@ -100,9 +100,6 @@ pub(super) fn stick_editor<'a>(s: Stick, cfg: &'a StickConfig, ui: &Ui<'_>) -> E
     if !matches!(cfg.action, StickAction::Disabled) {
         rows = stick_advanced(rows, s, cfg, open, with);
     }
-    rows = rows
-        .push(box_row("Rotate output", slider_editor(0.0..=345.0, cfg.rotate, 15.0, "° clockwise", set(|c, v| c.rotate = v))))
-        .push(box_row("Directions press at", fraction_editor(0.05..=0.95, cfg.key_threshold, 0.05, "of the way out", set(|c, v| c.key_threshold = v))));
     // The visualizers' panel sets off what comes after it; anything else gets a rule.
     let pictures = visualizers(cfg, live, ui.stick_probe);
     let mut panel_last = pictures.is_some();
@@ -130,7 +127,7 @@ fn stick_advanced<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a StickConfig,
     if !open {
         return rows.push(advanced_fold("Advanced", holds, Target::StickAdvanced(s), None));
     }
-    let inner = deadzone_extras(column![], s, cfg);
+    let inner = output_extras(deadzone_extras(column![], s, cfg), s, cfg);
     let inner = match cfg.action {
         StickAction::Mouse { .. } => mouse_advanced(inner, cfg, with),
         StickAction::Flick { .. } => flick_advanced(inner, cfg, with),
@@ -140,7 +137,33 @@ fn stick_advanced<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a StickConfig,
 }
 
 /// What the "Advanced" fold holds for every mode.
-const DEADZONE_HOLDS: &str = "Deadzone shape, anti-deadzone";
+const DEADZONE_HOLDS: &str = "Deadzone shape, anti-deadzone, rotate output, press point";
+
+/// The output's rotation and the point where a direction counts as pressed.
+fn output_extras<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a StickConfig) -> Column<'a, Message> {
+    let set = move |f: fn(&mut StickConfig, f32)| {
+        move |v| {
+            let mut c = cfg.clone();
+            f(&mut c, v);
+            Message::SetStick(s, c)
+        }
+    };
+    let with_help = |editor: Element<'a, Message>, why: &str| row![editor, help(why.to_string())].spacing(10).align_y(Alignment::Center).into();
+    rows.push(fold_row(
+        "Rotate output",
+        with_help(
+            slider_editor(0.0..=345.0, cfg.rotate, 15.0, "° clockwise", set(|c, v| c.rotate = v)),
+            "Turns the stick's output clockwise by this angle, for a stick that doesn't sit square to the screen or a game that expects another orientation.",
+        ),
+    ))
+    .push(fold_row(
+        "Press point",
+        with_help(
+            fraction_editor(0.05..=0.95, cfg.key_threshold, 0.05, "of the way out", set(|c, v| c.key_threshold = v)),
+            "How far out the stick has to go before a direction counts as pressed, for directions bound to keys or buttons.",
+        ),
+    ))
+}
 
 /// The deadzone's shape and anti-deadzone rows.
 fn deadzone_extras<'a>(rows: Column<'a, Message>, s: Stick, cfg: &'a StickConfig) -> Column<'a, Message> {
@@ -351,7 +374,7 @@ fn flick_rows<'a>(rows: Column<'a, Message>, cfg: &StickConfig, with: impl Fn(St
 }
 
 /// What a flick stick's "Advanced" fold holds besides the deadzone rows.
-const FLICK_HOLDS: &str = "Deadzone shape, anti-deadzone, flick time, dead angle, looking up and down";
+const FLICK_HOLDS: &str = "Deadzone shape, anti-deadzone, rotate output, press point, flick time, dead angle, looking up and down";
 
 /// The flick rows of a flick stick's "Advanced" fold.
 fn flick_advanced<'a>(rows: Column<'a, Message>, cfg: &StickConfig, with: impl Fn(StickAction) -> Message + Copy + 'a) -> Column<'a, Message> {
