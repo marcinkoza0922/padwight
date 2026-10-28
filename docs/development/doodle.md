@@ -51,6 +51,11 @@ Hold South to draw: press to put the pen down, move the stick to draw, release t
 | North | Cycle the tip shape: round, square, chisel, diagonal |
 | West | Cycle the kind: solid, brush, spray paint |
 
+The brush paints like a bristle brush in a paint program: bristles across the width, each a
+little lighter or darker than the paint, spreading out from a narrower start, with the outer ones
+running dry in streaks. The spray is an airbrush: fine dots scattered over a disc, thickest at the
+middle, as many for each stretch as the area it sweeps, so a wide spray is as dense as a thin one.
+
 ### Eraser
 
 Hold South over a stroke or a text box to delete the whole item it touches.
@@ -77,7 +82,8 @@ Text boxes can be moved with South (select, then move the stick) but not resized
 | North | Toggle italic, bold, underline |
 
 Italic, bold and underline are toggled on the text box being created or edited. They are not
-set globally.
+set globally. North opens them as a checklist standing just above the tray, over North's cell:
+the D-pad moves between them, South ticks one, and North or East closes it.
 
 ## Colors
 
@@ -95,8 +101,7 @@ and the text tool. South on empty space opens the on-screen keyboard for a new b
 grabs it, moving it with the stick, and lifting South without moving opens it for editing. Enter
 sets the text, and closing the keyboard keeps what was there. An emptied box is removed.
 
-Not yet: the brush and spray looks beyond a fainter, wider stroke. Chisel and diagonal tips draw
-with a butt end for now. The fonts are placeholders, all drawn in the system font, and the palette
+Not yet: chisel and diagonal tips draw with a butt end for now, and the brush ignores the tip. The fonts are placeholders, all drawn in the system font, and the palette
 is a placeholder too.
 
 Decisions made while building:
@@ -107,8 +112,11 @@ Decisions made while building:
 - Undo takes back the last item added. Erased items are gone.
 - Performance: a stroke is drawn in runs of 32 segments, an op each, so as it grows only its
   tail is repainted. The overlay keeps the finished items' ops, and the daemon sends the finished
-  items only when they change; the stroke being drawn goes with every frame. Measure with the
-  ignored `doodles::tests::bench_drawing_over_doodles` (`--cargo-profile release`).
+  items only when they change; the stroke being drawn goes with every frame. A spray is an op for
+  each 8 segments instead, as it has many more shapes to a segment. A path's steps are shared
+  between its clones with their bounds kept, so the frame's list is cloned, compared and measured
+  each frame without walking every point of every doodle. Measure with the ignored
+  `doodles::tests::bench_drawing_over_doodles` (`--cargo-profile release`).
 
 ## Open questions
 

@@ -30,8 +30,8 @@ const TOP: f32 = 16.0;
 const BOTTOM: f32 = 24.0;
 /// The carousel's names, in the order of `tools::doodle::Tool`.
 const TOOL_NAMES: [&str; 3] = ["Pen", "Eraser", "Text"];
-/// Where the checklist's panel starts, below the carousel, and the gap between its rows.
-const CHECKS_TOP: f32 = 64.0;
+/// How far the checklist's panel stands above the tray, and the gap between its rows.
+const CHECKS_GAP: f32 = 8.0;
 const ROW_GAP: f32 = 6.0;
 /// A check mark on the unit square, drawn in a ticked box.
 const TICK: [(f32, f32); 6] = [(0.14, 0.52), (0.26, 0.4), (0.42, 0.56), (0.76, 0.2), (0.88, 0.32), (0.42, 0.8)];
@@ -56,6 +56,12 @@ enum Slot {
 enum Anchor {
     Top,
     Bottom,
+}
+
+/// Where a strip was laid out: its panel, and each of its pieces, in order.
+pub struct Placed {
+    panel: Rect,
+    pieces: Vec<Rect>,
 }
 
 /// The HUD's style: the menus' look, with the controller's glyphs.
@@ -242,8 +248,9 @@ pub fn carousel(ops: &mut Vec<Op>, hud: &DoodleHud, cx: &Context) {
     strip(ops, slots, cx, Anchor::Top);
 }
 
-/// The tray along the bottom: each setting, with a separator between the groups.
-pub fn tray(ops: &mut Vec<Op>, hud: &DoodleHud, cx: &Context) {
+/// The tray along the bottom: each setting, with a separator between the groups. Returns where its
+/// cells went, for the checklist to stand over the one it opens from.
+pub fn tray(ops: &mut Vec<Op>, hud: &DoodleHud, cx: &Context) -> Placed {
     let style = hud_style(hud, cx);
     let width = cx.display.x;
     let mut slots = Vec::new();
@@ -253,18 +260,28 @@ pub fn tray(ops: &mut Vec<Op>, hud: &DoodleHud, cx: &Context) {
         }
         slots.push(Slot::Piece(cell_piece(cell, &style, width)));
     }
-    strip(ops, slots, cx, Anchor::Bottom);
+    strip(ops, slots, cx, Anchor::Bottom)
 }
 
-/// The checklist of text styles, under the carousel: a box to tick for each style, with the row the
-/// cursor is on lit.
-pub fn checklist(ops: &mut Vec<Op>, checks: &DoodleChecks, hud: &DoodleHud, cx: &Context) {
+/// The checklist of text styles: a box to tick for each style, with the row the cursor is on lit.
+/// It stands just above the tray, over the cell it opens from (`checks.cell`), kept on the screen;
+/// without the tray it stands where the tray would be.
+pub fn checklist(ops: &mut Vec<Op>, checks: &DoodleChecks, hud: &DoodleHud, tray: Option<&Placed>, cx: &Context) {
     let style = hud_style(hud, cx);
     let width = cx.display.x;
     let rows: Vec<Piece> = checks.rows.iter().enumerate().map(|(index, row)| check_piece(&row.label, row.on, index == checks.cursor, &style, width)).collect();
     let tall = rows.iter().map(|piece| piece.size.y).sum::<f32>() + ROW_GAP * rows.len().saturating_sub(1) as f32;
     let wide = rows.iter().map(|piece| piece.size.x).fold(0.0, f32::max);
-    let frame = Rect::new((cx.display.x - wide - 2.0 * PAD_X) / 2.0, CHECKS_TOP, wide + 2.0 * PAD_X, tall + 2.0 * PAD_Y);
+    let (w, h) = (wide + 2.0 * PAD_X, tall + 2.0 * PAD_Y);
+    let (middle, bottom) = match tray {
+        Some(placed) => {
+            let over = placed.pieces.get(checks.cell).unwrap_or(&placed.panel);
+            (over.x + over.w / 2.0, placed.panel.y - CHECKS_GAP)
+        }
+        None => (cx.display.x / 2.0, cx.display.y - BOTTOM),
+    };
+    let left = (middle - w / 2.0).clamp(0.0, (cx.display.x - w).max(0.0));
+    let frame = Rect::new(left, bottom - h, w, h);
     ops.push(Op::Rect { rect: frame, radii: Corners::all(12.0), fill: Some(panel().into()), border: None });
     let mut y = frame.y + PAD_Y;
     for piece in rows {
@@ -300,7 +317,7 @@ fn check_piece(label: &str, on: bool, lit: bool, style: &Style, width: f32) -> P
 
 /// Lays `slots` out in a centred panel at `anchor`: pieces a gap apart, and a separator between
 /// groups. The panel is drawn first, then each piece in its place.
-fn strip(ops: &mut Vec<Op>, slots: Vec<Slot>, cx: &Context, anchor: Anchor) {
+fn strip(ops: &mut Vec<Op>, slots: Vec<Slot>, cx: &Context, anchor: Anchor) -> Placed {
     let mut span = 0.0;
     let mut tall: f32 = 0.0;
     let mut after_piece = false;
@@ -324,7 +341,9 @@ fn strip(ops: &mut Vec<Op>, slots: Vec<Slot>, cx: &Context, anchor: Anchor) {
         Anchor::Top => TOP,
         Anchor::Bottom => cx.display.y - panel_height - BOTTOM,
     };
-    ops.push(Op::Rect { rect: Rect::new(x, y, panel_width, panel_height), radii: Corners::all(12.0), fill: Some(panel().into()), border: None });
+    let panel_rect = Rect::new(x, y, panel_width, panel_height);
+    ops.push(Op::Rect { rect: panel_rect, radii: Corners::all(12.0), fill: Some(panel().into()), border: None });
+    let mut pieces = Vec::new();
     let mut left = x + PAD_X;
     let mut after_piece = false;
     for slot in slots {
@@ -333,7 +352,9 @@ fn strip(ops: &mut Vec<Op>, slots: Vec<Slot>, cx: &Context, anchor: Anchor) {
                 if after_piece {
                     left += GAP;
                 }
-                (piece.draw)(ops, Point::new(left, y + PAD_Y + (tall - piece.size.y) / 2.0));
+                let at = Point::new(left, y + PAD_Y + (tall - piece.size.y) / 2.0);
+                pieces.push(Rect::new(at.x, at.y, piece.size.x, piece.size.y));
+                (piece.draw)(ops, at);
                 left += piece.size.x;
                 after_piece = true;
             }
@@ -346,6 +367,7 @@ fn strip(ops: &mut Vec<Op>, slots: Vec<Slot>, cx: &Context, anchor: Anchor) {
             }
         }
     }
+    Placed { panel: panel_rect, pieces }
 }
 
 /// The dark panel behind the HUD.

@@ -124,9 +124,11 @@ impl Doodle {
                 ]
             }
         };
+        // It opens from North's cell, the text tool's last.
         let checks = self.checks.map(|cursor| DoodleChecks {
             rows: FACES.iter().enumerate().map(|(face, label)| DoodleCheck { label: label.to_string(), on: face_on(&self.text, face) }).collect(),
             cursor,
+            cell: cells.len() - 1,
         });
         DoodleHud { tool: self.tool.index(), tray: self.entry.is_none(), cells, checks, style }
     }

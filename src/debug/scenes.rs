@@ -169,7 +169,7 @@ fn guide(shown: usize) -> OverlayFrame {
     OverlayFrame { info, ..OverlayFrame { active: Some(OverlayView::Menu(menu)), ..OverlayFrame::default() } }
 }
 
-/// Doodles over the game: a few strokes in each tip and kind, a text box, and the Doodle cursor
+/// Doodles over the game: a few strokes in each tip and kind, wider to the right, a text box, and the Doodle cursor
 /// on the pen's ring.
 fn doodles() -> OverlayFrame {
     use crate::tools::doodle::{Canvas, Kind, Pen, Point, TextBox, TextStyle, Tip};
@@ -180,7 +180,7 @@ fn doodles() -> OverlayFrame {
         for (column, tip) in tips.into_iter().enumerate() {
             let y = 0.2 + row as f32 * 0.12;
             let x = 0.1 + column as f32 * 0.2;
-            let pen = Pen { color: 2 + column * 2, size: 0.012, tip, kind };
+            let pen = Pen { color: 2 + column * 2, size: [0.008, 0.012, 0.02, 0.032][column], tip, kind };
             canvas.begin_stroke(pen, Point::new(x, y));
             // As finely as the stick moves the cursor, so each stroke is drawn in several runs.
             for step in 1..=240 {

@@ -115,11 +115,11 @@ fn bounds_follow_clips_and_layers() {
 fn paths_and_strokes_reach_their_bounds() {
     let mut ring = Path::new();
     ring.circle(Point::new(50.0, 50.0), 20.0);
-    assert!(matches!(ring.segs.as_slice(), [Seg::MoveTo(_), Seg::CubicTo(..), Seg::CubicTo(..), Seg::CubicTo(..), Seg::CubicTo(..), Seg::Close]));
+    assert!(matches!(ring.segs(), [Seg::MoveTo(_), Seg::CubicTo(..), Seg::CubicTo(..), Seg::CubicTo(..), Seg::CubicTo(..), Seg::Close]));
     let b = ring.bounds().unwrap();
     // The handles reach a little past the circle; the curve ends on it.
     assert!((b.x - 30.0).abs() < 0.01 && (b.w - 40.0).abs() < 0.01, "{b:?}");
-    let Some(&Seg::CubicTo(_, _, end)) = ring.segs.get(1) else { unreachable!() };
+    let Some(&Seg::CubicTo(_, _, end)) = ring.segs().get(1) else { unreachable!() };
     assert!((end.x - 70.0).abs() < 1e-4 && (end.y - 50.0).abs() < 1e-4, "{end:?}");
     let stroked = Op::Path { path: ring, fill: None, rule: Rule::EvenOdd, stroke: Some(Stroke { join: Join::Bevel, ..Stroke::new(4.0, Rgba::WHITE) }) };
     assert_eq!(stroked.bounds(), Some(b.outset(2.0)));

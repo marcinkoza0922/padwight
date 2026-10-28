@@ -146,18 +146,20 @@ pub struct DoodleHud {
     pub tool: usize,
     pub tray: bool,
     pub cells: Vec<DoodleCell>,
-    /// The checklist of text styles, under the carousel, while it's open over the keyboard.
+    /// The checklist of text styles, above the tray, while it's open.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub checks: Option<DoodleChecks>,
     /// The menus' style, which the HUD is drawn in.
     pub style: crate::config::OverlayStyle,
 }
 
-/// The checklist a text box's styles are ticked in: one row per style, and the row the cursor is on.
+/// The checklist a text box's styles are ticked in: one row per style, the row the cursor is on,
+/// and the tray cell it opens from, which it stands over.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DoodleChecks {
     pub rows: Vec<DoodleCheck>,
     pub cursor: usize,
+    pub cell: usize,
 }
 
 /// One row of a [`DoodleChecks`]: a style's name, and whether it's ticked.

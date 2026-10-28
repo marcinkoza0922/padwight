@@ -62,11 +62,9 @@ pub(super) fn put(ops: &mut Vec<Op>, frame: &OverlayFrame, cx: &Context) {
     }
     if let Some(hud) = &frame.doodle_hud {
         hud::carousel(ops, hud, cx);
-        if hud.tray {
-            hud::tray(ops, hud, cx);
-        }
+        let tray = hud.tray.then(|| hud::tray(ops, hud, cx));
         if let Some(checks) = &hud.checks {
-            hud::checklist(ops, checks, hud, cx);
+            hud::checklist(ops, checks, hud, tray.as_ref(), cx);
         }
     }
 }
@@ -93,7 +91,7 @@ fn stroke(ops: &mut Vec<Op>, mark: &Mark, cx: &Context) {
     let color = ink(pen.color, 1.0);
     match pen.kind {
         Kind::Solid => marks::line(ops, &px, (width, color, cap(pen.tip)), |_, _| {}),
-        Kind::Brush => marks::brush(ops, &px, width, color, cap(pen.tip)),
+        Kind::Brush => marks::brush(ops, &px, width, color),
         Kind::Spray => marks::spray(ops, &px, width * SPRAY_WIDTH, color),
     }
 }
