@@ -44,7 +44,11 @@ where
     T: ToString + PartialEq + Clone + 'a,
     L: std::borrow::Borrow<[T]> + 'a,
 {
-    let picker = dropdown(modes, Some(mode), on_pick).width(MODE_WIDTH);
+    header_with(name, dropdown(modes, Some(mode), on_pick).width(MODE_WIDTH).into(), options)
+}
+
+/// The same header line with a mode picker of the caller's own.
+pub(super) fn header_with<'a>(name: String, picker: Element<'a, Message>, options: Vec<Element<'a, Message>>) -> Element<'a, Message> {
     row![text(name).size(16).width(ROW_LABEL), picker].extend(options).spacing(10).align_y(Alignment::Center).into()
 }
 

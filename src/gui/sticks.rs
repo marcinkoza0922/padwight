@@ -210,7 +210,6 @@ fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message
         StickAction::Flick { .. } => StickKind::Flick,
         StickAction::Region { .. } => StickKind::Region,
     };
-    let kinds = [StickKind::Disabled, StickKind::Gamepad, StickKind::Mouse, StickKind::Scroll, StickKind::Ring, StickKind::Flick, StickKind::Region];
     let pick = move |k| {
         with(match k {
             StickKind::Disabled => StickAction::Disabled,
@@ -233,7 +232,7 @@ fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message
             options.push(button(text(label).size(13)).style(style::secondary).on_press(with(ring())).into());
         }
     }
-    box_header(s.to_string(), kinds, kind, pick, options)
+    header_with(s.to_string(), super::action_picker::stick_button(kind, format!("What the {s} does"), pick), options)
 }
 
 /// "Invert Y" (for the modes that have it) and "Invert X", each on a row of its own.

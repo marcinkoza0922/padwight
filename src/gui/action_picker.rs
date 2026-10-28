@@ -9,7 +9,8 @@ use super::*;
 use crate::info::Glyphs;
 
 mod icons;
-use icons::icon;
+use icons::{icon, stick_icon};
+use super::sticks::StickKind;
 
 /// The kinds in the dialog, by group. Each place's own list (`ACTION_KINDS`, a menu item's…) picks
 /// from these, and groups it has nothing of are left out. Each group is sized so that, in rows of
@@ -21,6 +22,12 @@ const GROUPS: [(&str, &[ActionKind]); 6] = [
     ("On screen", &[ActionKind::Overlay, ActionKind::Numpad, ActionKind::QuickSettings, ActionKind::Media, ActionKind::Info, ActionKind::Log]),
     ("Gyro", &[ActionKind::GyroToggle, ActionKind::GyroClutch, ActionKind::GyroHold, ActionKind::GyroRecenter]),
     ("System", &[ActionKind::Screenshot, ActionKind::Recording, ActionKind::ForceQuit]),
+];
+
+/// The stick modes in the dialog, by group.
+const STICK_GROUPS: [(&str, &[StickKind]); 2] = [
+    ("Aim and move", &[StickKind::Gamepad, StickKind::Mouse, StickKind::Flick, StickKind::Region]),
+    ("Other", &[StickKind::Scroll, StickKind::Ring, StickKind::Disabled]),
 ];
 
 /// The controller buttons a "Gamepad button" action can press, by group: every one of
@@ -44,6 +51,9 @@ const PAD_TILE_WIDTH: f32 = (TILE_WIDTH * COLUMNS + 8.0 * (COLUMNS - 1.0) - 8.0 
 pub(super) enum Face {
     Kind(ActionKind),
     Pad(Button),
+    Stick(StickKind),
+    /// A trigger passed through as an analog trigger, which this one is the output of.
+    Analog(Trigger),
 }
 
 /// A tile: what it offers, whether the action has it now, and what picking it sends.
@@ -84,6 +94,30 @@ impl ActionPicker {
             (title, choices)
         });
         Self::new(title_for(place.target, names.glyphs.family), names.glyphs, groups)
+    }
+
+    /// The dialog that picks what a stick does; `on_pick` writes the mode back.
+    fn sticks(current: StickKind, title: String, glyphs: Glyphs, on_pick: impl Fn(StickKind) -> Message) -> Self {
+        let groups = STICK_GROUPS.map(|(name, group)| {
+            (name, group.iter().map(|k| Choice { face: Face::Stick(*k), current: *k == current, pick: on_pick(*k) }).collect())
+        });
+        Self::new(title, glyphs, groups)
+    }
+
+    /// The dialog for what a trigger does: pass through as an analog trigger (its own or the
+    /// other's) first, then everything a button can do. `on_change` writes an action back.
+    fn trigger(t: Trigger, analog: Option<Trigger>, action: &ButtonAction, names: &Names, on_change: &OnAction<'_>) -> Self {
+        // A trigger acting as a button presses the matching bumper by default.
+        let default_button = if t == Trigger::Left { Button::LeftBumper } else { Button::RightBumper };
+        let place = Place { target: Target::Trigger(t), kinds: &ACTION_KINDS, default_button };
+        let mut picker = Self::kinds(place, action, names, on_change);
+        let other = if t == Trigger::Left { Trigger::Right } else { Trigger::Left };
+        let outputs = [t, other].map(|out| Choice { face: Face::Analog(out), current: analog == Some(out), pick: Message::SetTrigger(t, TriggerAction::Gamepad(out)) });
+        if analog.is_some() {
+            picker.groups.iter_mut().flat_map(|(_, c)| c).for_each(|c| c.current = false);
+        }
+        picker.groups.insert(0, ("Pass the pull through", outputs.into()));
+        picker
     }
 
     /// The dialog that picks the controller button a "Gamepad button" action presses.
@@ -228,6 +262,61 @@ pub(super) fn kind_button<'a>(place: Place<'static>, action: &ButtonAction, name
         .into()
 }
 
+impl StickKind {
+    /// What the mode does, in a line under its name in the dialog.
+    fn about(self) -> &'static str {
+        match self {
+            StickKind::Disabled => "The stick does nothing.",
+            StickKind::Gamepad => "Passes the stick to the game as a controller stick.",
+            StickKind::Mouse => "Moves the mouse pointer, faster the further you push.",
+            StickKind::Scroll => "Scrolls the wheel up and down while pushed.",
+            StickKind::Ring => "Presses a different button for each direction.",
+            StickKind::Flick => "Turns the camera by flicking, then steering.",
+            StickKind::Region => "Puts the pointer where the stick points, within an area of the screen.",
+        }
+    }
+}
+
+/// The trigger's own button, drawn as a dropdown is: what it does now, which opens the dialog.
+/// `action` is the button action it performs, if it acts as one, and `analog` the trigger it
+/// passes through, if it does.
+pub(super) fn trigger_button<'a>(t: Trigger, analog: Option<Trigger>, action: &ButtonAction, names: &Names, on_change: OnAction<'a>) -> Element<'a, Message> {
+    let (face, label) = match analog {
+        Some(out) => (icon(ActionKind::PadTrigger, 16.0), format!("Gamepad {} (analog)", trigger_short(out))),
+        None => {
+            let kind = action_kind(action);
+            (icon(kind, 16.0), kind.name())
+        }
+    };
+    let (action, names) = (action.clone(), names.clone());
+    field(face, label, TRIGGER_WIDTH, move || ActionPicker::trigger(t, analog, &action, &names, &on_change))
+}
+
+/// The trigger button's width: wide enough for "Gamepad LT (analog)" and the arrow.
+const TRIGGER_WIDTH: f32 = 260.0;
+
+/// "LT" or "RT".
+fn trigger_short(t: Trigger) -> &'static str {
+    if t == Trigger::Left { "LT" } else { "RT" }
+}
+
+/// The stick's mode button, drawn as a dropdown is; it opens the dialog of every mode.
+pub(super) fn stick_button<'a>(current: StickKind, title: String, on_pick: impl Fn(StickKind) -> Message + 'a) -> Element<'a, Message> {
+    let pick = move || ActionPicker::sticks(current, title.clone(), Glyphs::default(), &on_pick);
+    field(stick_icon(current, 16.0), current.to_string(), VALUE_WIDTH, pick)
+}
+
+/// A dropdown-looking button that opens a dialog built when it's clicked.
+fn field<'a>(face: Element<'a, Message>, label: String, width: f32, picker: impl Fn() -> ActionPicker + 'a) -> Element<'a, Message> {
+    let arrow = text("▾").size(14).style(|theme: &iced::Theme| text::Style { color: Some(theme.extended_palette().primary.base.color) });
+    button(row![face, text(label).width(Length::Fill), arrow].spacing(8).align_y(Alignment::Center))
+        .style(style::field_button)
+        .padding([6, 10])
+        .width(width)
+        .on_press_with(move || Message::OpenActionPicker(Box::new(picker())))
+        .into()
+}
+
 /// The button a "Gamepad button" action shows its button with: the glyph the game will see and
 /// where the button sits. It opens the dialog of every controller button.
 pub(super) fn pad_button<'a>(current: Button, glyphs: Glyphs, on_change: OnAction<'a>) -> Element<'a, Message> {
@@ -247,6 +336,14 @@ fn tile<'a>(choice: &Choice, glyphs: Glyphs) -> Element<'a, Message> {
         Face::Kind(kind) => {
             let words = column![text(kind.name()).size(14), text(kind.about()).size(12).color(MUTED_COLOR)].spacing(2);
             (row![icon(kind, 20.0), words].spacing(10).align_y(Alignment::Center).into(), TILE_WIDTH, 62.0)
+        }
+        Face::Stick(k) => {
+            let words = column![text(k.to_string()).size(14), text(k.about()).size(12).color(MUTED_COLOR)].spacing(2);
+            (row![stick_icon(k, 20.0), words].spacing(10).align_y(Alignment::Center).into(), TILE_WIDTH, 62.0)
+        }
+        Face::Analog(out) => {
+            let words = column![text(format!("Gamepad {} (analog)", trigger_short(out))).size(14), text("Sends the pull as it is, with zones.").size(12).color(MUTED_COLOR)].spacing(2);
+            (row![icon(ActionKind::PadTrigger, 20.0), words].spacing(10).align_y(Alignment::Center).into(), TILE_WIDTH, 62.0)
         }
         Face::Pad(b) => (row![pad_chip(b, glyphs), text(position_name(b)).size(14)].spacing(10).align_y(Alignment::Center).into(), PAD_TILE_WIDTH, 40.0),
     };
@@ -334,7 +431,7 @@ mod tests {
         let app = app();
         let picker = ActionPicker::for_target(Target::MacroStep(0, 0), &ButtonAction::Keys(Vec::new()), MACRO_STEP_KINDS, Button::South, &app.names());
         let mut offered: Vec<ActionKind> =
-            picker.groups.iter().flat_map(|(_, c)| c).filter_map(|c| match c.face { Face::Kind(k) => Some(k), Face::Pad(_) => None }).collect();
+            picker.groups.iter().flat_map(|(_, c)| c).filter_map(|c| match c.face { Face::Kind(k) => Some(k), Face::Pad(_) | Face::Stick(_) | Face::Analog(_) => None }).collect();
         offered.sort_by_key(|k| MACRO_STEP_KINDS.iter().position(|m| m == k));
         assert_eq!(offered, MACRO_STEP_KINDS);
     }
@@ -342,7 +439,7 @@ mod tests {
     #[test]
     fn the_pad_dialog_offers_every_output_button_once() {
         let picker = ActionPicker::pad_for_target(Target::Button(Button::South), Button::East, Glyphs::default());
-        let offered: Vec<Button> = picker.groups.iter().flat_map(|(_, c)| c).filter_map(|c| match c.face { Face::Pad(b) => Some(b), Face::Kind(_) => None }).collect();
+        let offered: Vec<Button> = picker.groups.iter().flat_map(|(_, c)| c).filter_map(|c| match c.face { Face::Pad(b) => Some(b), _ => None }).collect();
         assert_eq!(offered.len(), Button::ALL.len());
         assert!(Button::ALL.iter().all(|b| offered.contains(b)));
         let current: Vec<Face> = picker.groups.iter().flat_map(|(_, c)| c).filter(|c| c.current).map(|c| c.face).collect();
@@ -366,5 +463,29 @@ mod tests {
         let picker = ActionPicker::pad_for_target(Target::Button(Button::North), Button::South, Glyphs::default());
         let _ = app.update(picker.pick(Face::Pad(Button::DpadLeft)).unwrap().clone());
         assert_eq!(app.profile().unwrap().button(Button::North), &ButtonAction::Gamepad(Button::DpadLeft));
+    }
+
+    #[test]
+    fn picking_a_stick_mode_sets_it() {
+        let mut app = app();
+        let base = app.profile().unwrap().stick(Stick::Left).clone();
+        let picker = ActionPicker::sticks(StickKind::Gamepad, "x".into(), Glyphs::default(), |k| {
+            let action = if k == StickKind::Scroll { StickAction::Scroll { speed: 15.0, invert_y: false } } else { StickAction::Disabled };
+            Message::SetStick(Stick::Left, StickConfig { action, ..base.clone() })
+        });
+        let offered = picker.groups.iter().map(|(_, c)| c.len()).sum::<usize>();
+        assert_eq!(offered, 7);
+        let _ = app.update(picker.pick(Face::Stick(StickKind::Scroll)).unwrap().clone());
+        assert!(matches!(app.profile().unwrap().stick(Stick::Left).action, StickAction::Scroll { .. }));
+    }
+
+    #[test]
+    fn a_trigger_offers_analog_outputs_and_marks_the_current_one() {
+        let app = app();
+        let on_change: OnAction<'_> = Rc::new(|_| Message::CloseActionPicker);
+        let picker = ActionPicker::trigger(Trigger::Left, Some(Trigger::Right), &ButtonAction::Disabled, &app.names(), &on_change);
+        let current: Vec<Face> = picker.groups.iter().flat_map(|(_, c)| c).filter(|c| c.current).map(|c| c.face).collect();
+        assert_eq!(current, [Face::Analog(Trigger::Right)]);
+        assert!(picker.pick(Face::Analog(Trigger::Left)).is_some());
     }
 }

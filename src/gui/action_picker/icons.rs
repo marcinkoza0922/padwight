@@ -45,6 +45,24 @@ fn plain_icon(k: ActionKind) -> String {
         ActionKind::ForceQuit => "<path d='M12 3v8M6.3 6.3a8 8 0 1 0 11.4 0'/>",
         _ => "",
     };
+    framed(body)
+}
+
+/// A stick mode's icon, drawn like the plain action icons.
+pub(super) fn stick_icon<'a>(k: StickKind, size: f32) -> Element<'a, Message> {
+    let body = match k {
+        StickKind::Disabled => return icon(ActionKind::Disabled, size),
+        StickKind::Gamepad => return icon(ActionKind::PadStick, size),
+        StickKind::Mouse => "<path d='M5 3l5 15 2.5-6 6-2.5Z'/>",
+        StickKind::Scroll => "<path d='M12 4v16M8 8l4-4 4 4M8 16l4 4 4-4'/>",
+        StickKind::Ring => "<circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='3.5'/><path d='M12 3v5.5M12 15.5V21M3 12h5.5M15.5 12H21'/>",
+        StickKind::Flick => "<path d='M12 20a8 8 0 1 1 8-8'/><path d='M16 12h4l-2 3.5Z' fill='#8a8f98'/><circle cx='12' cy='12' r='1.5' fill='#8a8f98'/>",
+        StickKind::Region => "<rect x='2' y='4' width='20' height='16' rx='2'/><rect x='8' y='9' width='8' height='6' rx='1' fill='#8a8f98'/>",
+    };
+    svg(svg::Handle::from_memory(framed(body).into_bytes())).width(size).height(size).into()
+}
+
+fn framed(body: &str) -> String {
     format!(
         "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='#8a8f98' stroke-width='2' \
          stroke-linecap='round' stroke-linejoin='round'>{body}</svg>"
