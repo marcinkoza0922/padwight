@@ -47,7 +47,6 @@ impl App {
                         caps: false,
                         typed: String::new(),
                         field: None,
-                        caret: true,
                     };
                     draw::keyboard_panel(&view, font, self.glyphs(), fit, anim)
                 }

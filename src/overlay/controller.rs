@@ -70,12 +70,7 @@ pub struct OverlayController {
     /// Typing into a field, named here (see [`KeyboardView::field`]): the text is kept whole, and
     /// Enter and Escape don't clear it.
     field: Option<String>,
-    /// When the field's caret last started its blink.
-    caret_since: Instant,
 }
-
-/// How long the caret shows, and how long it hides, in turn.
-const CARET_BLINK: Duration = Duration::from_millis(530);
 
 /// The most a field keeps of what's typed into it.
 const FIELD_KEEP: usize = 1000;
@@ -124,7 +119,6 @@ impl OverlayController {
             pressed_shift: false,
             typed: String::new(),
             field: None,
-            caret_since: Instant::now(),
         }
     }
 
@@ -170,7 +164,6 @@ impl OverlayController {
             caps: self.caps,
             typed: self.typed.clone(),
             field: self.field.clone(),
-            caret: (now.saturating_duration_since(self.caret_since).as_millis() / CARET_BLINK.as_millis()).is_multiple_of(2),
         }
     }
 
@@ -251,7 +244,7 @@ impl OverlayController {
             // The bumpers move the text cursor, as the D-pad moves the keyboard's.
             (Button::LeftBumper, true) if keyboard => tap("KEY_LEFT"),
             (Button::RightBumper, true) if keyboard => tap("KEY_RIGHT"),
-            (Button::Start, true) => self.shortcut("KEY_ENTER"),
+            (Button::Start, true) => self.enter(),
             (Button::East, true) => {
                 self.east_since = Some(now);
                 Vec::new()
@@ -307,7 +300,20 @@ impl OverlayController {
         let label = keyboard::key_at(self.board, self.cursor).label;
         self.pressed_shift = self.board == Board::Numpad && !self.shift_down() && keyboard::needs_shift(name, label) == Some(true);
         let shift = self.pressed_shift.then_some(OverlayAction::Key(KeyCode::KEY_LEFTSHIFT, true));
-        shift.into_iter().chain([OverlayAction::Key(k, true)]).collect()
+        let mut out: Vec<OverlayAction> = shift.into_iter().chain([OverlayAction::Key(k, true)]).collect();
+        if name == "KEY_ENTER" && self.layout() == Layout::Keyboard {
+            out.push(OverlayAction::Close);
+        }
+        out
+    }
+
+    /// Start's Enter: sends it, and closes the keyboard the way the Enter key does.
+    fn enter(&mut self) -> Vec<OverlayAction> {
+        let mut out = self.shortcut("KEY_ENTER");
+        if self.layout() == Layout::Keyboard {
+            out.push(OverlayAction::Close);
+        }
+        out
     }
 
     /// Ctrl+V into the game, which pastes what the clipboard holds. A field of the in-game menu

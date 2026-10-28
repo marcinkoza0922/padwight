@@ -180,7 +180,17 @@ fn face_button_shortcuts() {
     let tap = |k| vec![OverlayAction::Key(k, true), OverlayAction::Key(k, false)];
     assert_eq!(c.handle(InputEvent::Button(Button::West, true), t0), tap(KeyCode::KEY_BACKSPACE));
     assert_eq!(c.handle(InputEvent::Button(Button::North, true), t0), tap(KeyCode::KEY_SPACE));
-    assert_eq!(c.handle(InputEvent::Button(Button::Start, true), t0), tap(KeyCode::KEY_ENTER));
+    assert_eq!(c.handle(InputEvent::Button(Button::Start, true), t0), [tap(KeyCode::KEY_ENTER), vec![OverlayAction::Close]].concat());
+}
+
+#[test]
+fn enter_closes_the_keyboard_but_not_the_numpad() {
+    let t0 = Instant::now();
+    let close = |mut v: Vec<OverlayAction>| v.pop() == Some(OverlayAction::Close);
+    let mut c = start();
+    assert!(close(c.handle(InputEvent::Button(Button::Start, true), t0)), "Start sends Enter and closes");
+    let mut n = OverlayController::new(Layout::Numpad, Layout::Numpad.home());
+    assert!(!close(n.handle(InputEvent::Button(Button::Start, true), t0)), "the numpad stays up");
 }
 
 #[test]

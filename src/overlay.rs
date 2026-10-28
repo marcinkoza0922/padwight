@@ -287,14 +287,6 @@ pub struct KeyboardView {
     /// to the game.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub field: Option<String>,
-    /// Whether the text caret is showing: it blinks while a field is typed into, like a text
-    /// editor's.
-    #[serde(default = "caret_on")]
-    pub caret: bool,
-}
-
-fn caret_on() -> bool {
-    true
 }
 
 /// Where a key sits in its layout, counting every slot in reading order: the number the motion

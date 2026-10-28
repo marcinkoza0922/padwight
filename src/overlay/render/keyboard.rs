@@ -155,7 +155,7 @@ fn typed_line(mut body: Node, v: &KeyboardView, style: &Style, s: f32) -> Node {
         body = body.push(text(field.clone(), 15.0, style.muted));
     }
     if !v.typed.is_empty() || v.field.is_some() {
-        body = body.push(text(format!("{}{}", v.typed, if v.caret { "|" } else { " " }), 18.0, style.background_text));
+        body = body.push(text(v.typed.clone(), 18.0, style.background_text));
     }
     body
 }
