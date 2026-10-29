@@ -1406,6 +1406,20 @@ fn toggled_repeating_macro_and_profile_switch_stop() {
 }
 
 #[test]
+fn macro_in_a_toggle_loops_even_when_not_set_to_repeat() {
+    let mut e = macro_engine(vec![MacroStep::Tap { action: key("KEY_A"), hold_ms: 10 }, MacroStep::Wait(40)]);
+    let mut p = Profile::passthrough("p");
+    p.set_button(Button::West, toggle(ButtonAction::Macro { name: "m".into(), repeat: false }));
+    run(&mut e, &p, InputEvent::Button(Button::West, true));
+    run(&mut e, &p, InputEvent::Button(Button::West, false));
+    let presses = |out: &[OutEvent]| out.iter().filter(|ev| **ev == OutEvent::Key(KeyCode::KEY_A, true)).count();
+    assert_eq!(presses(&hold_for(&mut e, &p, 0.5)), 10, "loops until the toggle turns it off");
+    run(&mut e, &p, InputEvent::Button(Button::West, true));
+    run(&mut e, &p, InputEvent::Button(Button::West, false));
+    assert_eq!(presses(&hold_for(&mut e, &p, 0.5)), 0, "the next press turns it off");
+}
+
+#[test]
 fn repeating_macro_without_waits_cannot_hang() {
     let mut e = macro_engine(vec![MacroStep::Press(key("KEY_A")), MacroStep::Release(key("KEY_A"))]);
     let p = mapped(true);

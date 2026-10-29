@@ -463,6 +463,19 @@ fn tab_link<'a>(before: &str, link: &str, tab: GameTab, after: &str) -> Element<
     line.into()
 }
 
+/// The "Repeat while held" box for a macro. A macro in a turbo plays once per press, so there's
+/// nothing to loop and no box. In a toggle it always loops, so the box is on and fixed.
+fn macro_repeat_box<'a>(repeat: bool, name: String, on_change: &OnAction<'a>, names: &Names) -> Option<Element<'a, Message>> {
+    if names.in_toggle {
+        return Some(checkbox(true).label("Repeat while held (toggled)").size(14).text_size(12).into());
+    }
+    if names.in_turbo {
+        return None;
+    }
+    let on_change = on_change.clone();
+    Some(checkbox(repeat).label("Repeat while held").on_toggle(move |r| on_change(ButtonAction::Macro { name: name.clone(), repeat: r })).into())
+}
+
 /// The settings to the right of an action's kind picker.
 #[expect(clippy::too_many_lines, reason = "predates the size lints")]
 pub(super) fn action_value<'a>(
@@ -505,7 +518,7 @@ pub(super) fn action_value<'a>(
             column![
                 wrapped(
                     "Each press turns this on or off:",
-                    action_editor(inner, default_button, TOGGLE_INNER_KINDS, wrap, field.child(0), names),
+                    action_editor(inner, default_button, TOGGLE_INNER_KINDS, wrap, field.child(0), &Names { in_toggle: true, ..names.clone() }),
                 ),
                 tooltip(
                     checkbox(start_on).label("On when the game starts").size(14).text_size(12).on_toggle(starting),
@@ -546,14 +559,7 @@ pub(super) fn action_value<'a>(
             .spacing(12)
             .align_y(Alignment::Center);
             let goto = goto_button(ItemKind::Macro, &name, !missing);
-            // A macro in a turbo plays once per press, so there's nothing to loop.
-            if !names.in_turbo {
-                line = line.push(
-                    checkbox(repeat)
-                        .label("Repeat while held")
-                        .on_toggle(move |r| on_change(ButtonAction::Macro { name: name.clone(), repeat: r })),
-                );
-            }
+            line = line.push(macro_repeat_box(repeat, name, &on_change, names));
             if missing {
                 line = line.push(text("missing macro").size(12).color(ERROR_COLOR));
             }

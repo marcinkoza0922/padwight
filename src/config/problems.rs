@@ -61,6 +61,8 @@ pub struct Names {
     pub macro_ms: std::collections::HashMap<String, u64>,
     /// Inside a turbo, where a macro plays once per press and never loops.
     pub in_turbo: bool,
+    /// Inside a toggle, where a macro always loops until the toggle turns it off.
+    pub in_toggle: bool,
     /// The glyphs of the controller games see, for pickers that show controller buttons. Left at
     /// the default (Xbox) outside the settings window.
     pub glyphs: crate::info::Glyphs,
@@ -89,6 +91,7 @@ impl Names {
             layers: list(ItemKind::Layer),
             modes: list(ItemKind::Mode),
             in_turbo: false,
+            in_toggle: false,
             glyphs: crate::info::Glyphs::default(),
             no_gyro: false,
             gyro_items: gyro_items(scope),

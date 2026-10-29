@@ -23,7 +23,7 @@ mod cycles;
 mod flick;
 mod guide;
 mod macros;
-use macros::{MacroOp, MacroRun, TurboState};
+use macros::{looping_in_toggle, MacroOp, MacroRun, TurboState};
 mod gyro;
 pub(crate) mod stick;
 mod touchpad;
@@ -1006,8 +1006,9 @@ impl Engine {
 
     /// Turns a Toggle (at `slot` of `src`'s action) on, pressing its inner action.
     fn toggle_on(&mut self, src: &Source, inner: &ButtonAction, slot: usize, out: &mut Vec<OutEvent>) {
+        let inner = looping_in_toggle(inner);
         self.toggled.insert((src.clone(), slot), inner.clone());
-        self.emit(src, inner, true, slot + 1, out);
+        self.emit(src, &inner, true, slot + 1, out);
     }
 
     /// Switches on every Toggle set to start on, in the profile's mappings and the game's menu
