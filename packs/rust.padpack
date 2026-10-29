@@ -290,7 +290,7 @@ Chat and the console need typing: {guide} + {west} opens the on-screen keyboard.
 "gesture:button:Select:long_press" = { text = "{icon:helicopter} Flying mode" }
 "button:Start" = { text = "Menu" }
 "combo:button:LeftBumper+button:RightBumper" = { text = "Pause gyro (hold)" }
-"combo:button:Select+button:Start" = { text = "Gyro on / off" }
+"combo:button:Select+button:Start" = { text = "Gyro active / inactive" }
 "gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]
@@ -444,7 +444,7 @@ Chat and the console need typing: {guide} + {west} opens the on-screen keyboard.
 "gesture:button:Select:long_press" = { text = "{icon:helicopter} Flying mode" }
 "button:Start" = { text = "Menu" }
 "combo:button:LeftBumper+button:RightBumper" = { text = "Pause gyro (hold)" }
-"combo:button:Select+button:Start" = { text = "Gyro on / off" }
+"combo:button:Select+button:Start" = { text = "Gyro active / inactive" }
 "gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]

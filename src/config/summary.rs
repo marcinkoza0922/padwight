@@ -152,9 +152,9 @@ impl ButtonAction {
     /// What the gyro actions say, as plain text.
     fn gyro_text(&self) -> &'static str {
         match self {
-            ButtonAction::GyroToggle => "Gyro on / off",
-            ButtonAction::GyroClutch => "Gyro clutch (off while held)",
-            ButtonAction::GyroHold => "Gyro on while held",
+            ButtonAction::GyroToggle => "Gyro active / inactive",
+            ButtonAction::GyroClutch => "Gyro inactive while held",
+            ButtonAction::GyroHold => "Gyro active while held",
             ButtonAction::GyroRecenter => "Recenter gyro",
             _ => "",
         }

@@ -16,9 +16,9 @@ use super::{
     style::{Look, StyleAt},
 };
 
-const TAP_WINDOW: Number = Number::new(10.0, (100.0, 600.0), 0, " ms");
-const LONG_PRESS: Number = Number::new(50.0, (200.0, 1500.0), 0, " ms");
-const COMBO_WINDOW: Number = Number::new(5.0, (20.0, 300.0), 0, " ms");
+pub(super) const TAP_WINDOW: Number = Number::new(10.0, (100.0, 600.0), 0, " ms");
+pub(super) const LONG_PRESS: Number = Number::new(50.0, (200.0, 1500.0), 0, " ms");
+pub(super) const COMBO_WINDOW: Number = Number::new(5.0, (20.0, 300.0), 0, " ms");
 
 /// The profile being edited's game, as a rule or default names it.
 fn game_key(config: &Config) -> Option<String> {

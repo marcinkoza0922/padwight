@@ -268,7 +268,7 @@ The remove, drop and notebook keys are inferred: if they don't answer, check the
 "button:Select" = { text = "{icon:book} Notebook, chat" }
 "button:Start" = { text = "Menu" }
 "combo:button:LeftBumper+button:RightBumper" = { text = "Pause gyro (hold)" }
-"combo:button:Select+button:Start" = { text = "Gyro on / off" }
+"combo:button:Select+button:Start" = { text = "Gyro active / inactive" }
 "gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]
@@ -411,7 +411,7 @@ The remove, drop and notebook keys are inferred: if they don't answer, check the
 "button:Select" = { text = "{icon:book} Notebook, chat" }
 "button:Start" = { text = "Menu" }
 "combo:button:LeftBumper+button:RightBumper" = { text = "Pause gyro (hold)" }
-"combo:button:Select+button:Start" = { text = "Gyro on / off" }
+"combo:button:Select+button:Start" = { text = "Gyro active / inactive" }
 "gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]

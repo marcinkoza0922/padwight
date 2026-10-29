@@ -650,7 +650,7 @@ fn feature_notes<'a>(mut col: Column<'a, Message>, out: &pack::Export) -> Column
         } else {
             note(format!(
                 "The {} uses {} as an extra, so it's marked as playable without it. If it isn't, tick \
-                 “Can't be played without {}” in that profile.",
+                 “Profile requires {}” in that profile.",
                 f.place,
                 f.feature.label(),
                 f.feature.label(),

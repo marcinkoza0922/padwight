@@ -24,12 +24,12 @@ impl App {
                 .spacing(16)
                 .into(),
             ),
-            appearance_row(appearance_open, Message::ToggleAppearance(None), StageTarget::Panel(stage::Panel::Keyboard)),
         ];
+        let mut look = Vec::new();
         if appearance_open {
             let style = &self.config.keyboard_style;
-            rows.push(style_editor(style, Rc::new(Message::SetKeyboardStyle)));
-            rows.extend(self.spot_note(style.position, true));
+            look.push(style_editor(style, Rc::new(Message::SetKeyboardStyle)));
+            look.extend(self.spot_note(style.position, true));
             let board = if self.config.full_keyboard { crate::keyboard::Board::Full } else { crate::keyboard::Board::Basic };
             let sample = crate::overlay::KeyboardView {
                 board,
@@ -42,8 +42,9 @@ impl App {
                 typed: String::new(),
                 field: None,
             };
-            rows.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
+            look.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         }
+        rows.push(appearance_row(appearance_open, Message::ToggleAppearance(None), StageTarget::Panel(stage::Panel::Keyboard), look));
         section(
             "On-screen keyboard",
             Some(
@@ -58,14 +59,15 @@ impl App {
     }
 
     pub(super) fn view_media_card(&self) -> Element<'_, Message> {
-        let mut rows: Vec<Element<'_, Message>> = vec![appearance_row(self.media_appearance, Message::ToggleMediaAppearance, StageTarget::Panel(stage::Panel::Media))];
+        let mut look = Vec::new();
         if self.media_appearance {
             let style = &self.config.media_style;
-            rows.push(style_editor(style, Rc::new(Message::SetMediaStyle)));
-            rows.extend(self.spot_note(style.position, true));
+            look.push(style_editor(style, Rc::new(Message::SetMediaStyle)));
+            look.extend(self.spot_note(style.position, true));
             let sample = crate::media::MediaView::sample(preview_style(style));
-            rows.push(preview(crate::overlay::draw::media_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
+            look.push(preview(crate::overlay::draw::media_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         }
+        let rows = vec![appearance_row(self.media_appearance, Message::ToggleMediaAppearance, StageTarget::Panel(stage::Panel::Media), look)];
         section(
             "Media controls",
             Some(
@@ -78,14 +80,15 @@ impl App {
     }
 
     pub(super) fn view_in_game_menu_card(&self) -> Element<'_, Message> {
-        let mut rows: Vec<Element<'_, Message>> = vec![appearance_row(self.menu_appearance, Message::ToggleInGameMenuAppearance, StageTarget::Panel(stage::Panel::InGameMenu))];
+        let mut look = Vec::new();
         if self.menu_appearance {
             let style = &self.config.menu_style;
-            rows.push(style_editor(style, Rc::new(Message::SetInGameMenuStyle)));
-            rows.extend(self.spot_note(style.position, true));
+            look.push(style_editor(style, Rc::new(Message::SetInGameMenuStyle)));
+            look.extend(self.spot_note(style.position, true));
             let sample = crate::system_menu::main_page(preview_style(style), 0);
-            rows.push(preview(crate::overlay::draw::menu_panel(&sample, self.preview_font(), self.menu_look(), &crate::overlay::fit::Fit::contents())));
+            look.push(preview(crate::overlay::draw::menu_panel(&sample, self.preview_font(), self.menu_look(), &crate::overlay::fit::Fit::contents())));
         }
+        let rows = vec![appearance_row(self.menu_appearance, Message::ToggleInGameMenuAppearance, StageTarget::Panel(stage::Panel::InGameMenu), look)];
         section(
             "In-game menu",
             Some(
@@ -99,17 +102,15 @@ impl App {
 
     pub(super) fn view_numpad_card(&self) -> Element<'_, Message> {
         let numpad_open = self.status.as_ref().is_some_and(|s| s.numpad_visible);
-        let mut rows: Vec<Element<'_, Message>> = vec![
-            button(text(if numpad_open { "Close it" } else { "Open it now" }).size(13))
-                .style(style::secondary)
-                .on_press(Message::ToggleNumpad)
-                .into(),
-            appearance_row(self.numpad_appearance, Message::ToggleNumpadAppearance, StageTarget::Panel(stage::Panel::Numpad)),
-        ];
+        let mut rows: Vec<Element<'_, Message>> = vec![button(text(if numpad_open { "Close it" } else { "Open it now" }).size(13))
+            .style(style::secondary)
+            .on_press(Message::ToggleNumpad)
+            .into()];
+        let mut look = Vec::new();
         if self.numpad_appearance {
             let style = &self.config.numpad_style;
-            rows.push(style_editor(style, Rc::new(Message::SetNumpadStyle)));
-            rows.extend(self.spot_note(style.position, true));
+            look.push(style_editor(style, Rc::new(Message::SetNumpadStyle)));
+            look.extend(self.spot_note(style.position, true));
             let sample = crate::overlay::KeyboardView {
                 board: crate::keyboard::Board::Numpad,
                 style: preview_style(style),
@@ -121,8 +122,9 @@ impl App {
                 typed: String::new(),
                 field: None,
             };
-            rows.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
+            look.push(preview(crate::overlay::draw::keyboard_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         }
+        rows.push(appearance_row(self.numpad_appearance, Message::ToggleNumpadAppearance, StageTarget::Panel(stage::Panel::Numpad), look));
         section(
             "On-screen numpad",
             Some(

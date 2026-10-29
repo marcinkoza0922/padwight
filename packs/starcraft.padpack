@@ -142,7 +142,7 @@ mouse = "Left"
 mode = "Menus"
 
 [profiles.gyro]
-mode = "off"
+enabled = false
 horizontal = "yaw"
 invert_x = false
 invert_y = false

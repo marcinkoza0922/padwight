@@ -111,6 +111,7 @@ fn multi_and_combos_roundtrip_through_toml() {
     config.general.profiles[0].combos.push(Combo {
         buttons: vec![Button::Select, Button::Start],
         action: ButtonAction::Screenshot,
+        window_ms: None,
     });
     config.general.profiles[0].gestures.insert(
         Button::North,
@@ -120,6 +121,8 @@ fn multi_and_combos_roundtrip_through_toml() {
             long_press: Some(ButtonAction::Screenshot),
             on_press: Some(ButtonAction::Keys(vec!["KEY_Z".into()])),
             on_release: None,
+            tap_window_ms: Some(180),
+            long_press_ms: Some(900),
         },
     );
     let back: Config = toml::from_str(&toml::to_string_pretty(&config).unwrap()).unwrap();
@@ -172,7 +175,8 @@ fn auto_switch_roundtrips_and_is_optional() {
     game.rules.push(Rule { enabled: false, ..Rule::new(RuleKind::Executable, "eldenring.exe", "Gameplay") });
     config.games.push(game);
     let text = toml::to_string_pretty(&config).unwrap();
-    assert_eq!(text.matches("enabled = false").count(), 1, "rules only note being off");
+    let rules: Vec<String> = config.games[0].rules.iter().map(|r| toml::to_string(r).unwrap()).collect();
+    assert!(!rules[0].contains("enabled") && rules[1].contains("enabled = false"), "rules only note being off");
     let back: Config = toml::from_str(&text).unwrap();
     assert_eq!(config, back);
 
@@ -269,4 +273,5 @@ fn the_guide_layer_leaves_profiles_alone() {
 mod actions;
 /// How profiles are picked, layered and saved.
 mod behaviour;
+mod gyro_use;
 mod refused;

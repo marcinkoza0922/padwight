@@ -278,7 +278,7 @@ Naming a creation or chatting: {guide} + {west} opens the on-screen keyboard. Th
 "gesture:button:Select:long_press" = { text = "{icon:car} Driving mode" }
 "button:Start" = { text = "Menu" }
 "combo:button:LeftBumper+button:RightBumper" = { text = "Pause gyro (hold)" }
-"combo:button:Select+button:Start" = { text = "Gyro on / off" }
+"combo:button:Select+button:Start" = { text = "Gyro active / inactive" }
 "gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]
@@ -426,7 +426,7 @@ Naming a creation or chatting: {guide} + {west} opens the on-screen keyboard. Th
 "gesture:button:Select:long_press" = { text = "{icon:car} Driving mode" }
 "button:Start" = { text = "Menu" }
 "combo:button:LeftBumper+button:RightBumper" = { text = "Pause gyro (hold)" }
-"combo:button:Select+button:Start" = { text = "Gyro on / off" }
+"combo:button:Select+button:Start" = { text = "Gyro active / inactive" }
 "gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]

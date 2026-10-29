@@ -42,7 +42,7 @@ fn gyro_config_roundtrips_and_is_optional() {
         horizontal: GyroHorizontal::YawAndRoll,
         invert_x: true,
         invert_y: false,
-        start_off: true,
+        enabled: true, starts_active: false,
         noise_threshold: 2.0,
         axes: GyroAxes::Vertical,
         y_scale: 1.5,
@@ -101,6 +101,7 @@ fn stick_direction_buttons_and_macro_stick_steps_roundtrip() {
     config.general.profiles[0].combos.push(Combo {
         buttons: vec![Button::LeftBumper, Button::RightStickRight],
         action: ButtonAction::Keys(vec!["KEY_F".into()]),
+        window_ms: None,
     });
     config.general.macros.push(Macro {
         name: "Jump".into(),

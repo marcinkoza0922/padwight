@@ -10,7 +10,7 @@ use crate::{motion::MotionSet, pad_identity::ControllerSupport};
 use crate::sound::SoundSet;
 use crate::config::{
     RumbleSet,
-    Button, ButtonAction, Combo, Config, Cycle, Game, Gestures, GyroMode, Indicator, InfoOverlay, ItemKind, Layer, LogOverlay, Macro, Mode,
+    Button, ButtonAction, Combo, Config, Cycle, Game, Gestures, Indicator, InfoOverlay, ItemKind, Layer, LogOverlay, Macro, Mode,
     Menu, MacroStep, Origin, OverlayStyle, PackAssets, PackInfo, PackRef, Profile, Rule, free_name,
 };
 
@@ -325,7 +325,7 @@ pub fn dependencies(source: &Game, kind: ItemKind, name: &str, resolves: impl Fn
 pub fn features(game: &Game) -> Vec<FeatureUse> {
     let profiles = game.profiles.iter().flat_map(|p| {
         let uses = [
-            (Feature::Gyro, p.gyro.mode != GyroMode::Off),
+            (Feature::Gyro, p.gyro.enabled),
             (Feature::BackPaddles, uses_paddles(&p.buttons, &p.gestures, &p.combos)),
             (Feature::Touchpad, !p.touchpad.is_default()),
         ];
@@ -337,7 +337,7 @@ pub fn features(game: &Game) -> Vec<FeatureUse> {
     });
     let shifts = game.layers.iter().map(|l| (l, "layer")).chain(game.modes.iter().map(|l| (l, "mode")));
     let layers = shifts.flat_map(|(l, noun)| {
-        let gyro = l.gyro.as_ref().is_some_and(|g| g.mode != GyroMode::Off);
+        let gyro = l.gyro.as_ref().is_some_and(|g| g.enabled);
         [(Feature::Gyro, gyro), (Feature::BackPaddles, uses_paddles(&l.buttons, &l.gestures, &l.combos)), (Feature::Touchpad, l.touchpad.is_some())]
             .into_iter()
             .filter(|(_, used)| *used)

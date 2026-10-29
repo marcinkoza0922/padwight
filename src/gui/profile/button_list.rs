@@ -199,6 +199,44 @@ fn collapsed_row<'a>(p: &'a Profile, b: Button, ui: &Ui, from_base: bool) -> Vec
     rows
 }
 
+/// A button's own tap window and, with a long press set, long press time, in a fold that stays
+/// shut until asked for.
+fn timing_fold<'a>(p: &Profile, b: Button, g: &crate::config::Gestures, ui: &Ui) -> Element<'a, Message> {
+    let target = Target::Timing(b);
+    let holds = if g.long_press.is_some() { "tap window and long press time" } else { "tap window" };
+    let rows = ui.is_open(target).then(|| {
+        let mut rows = column![timing_row("Tap window", 100.0..=600.0, 10.0, (g.tap_window(p), g.tap_window_ms.is_some()), move |ms| {
+            Message::SetButtonTapWindow(b, ms)
+        })];
+        if g.long_press.is_some() {
+            rows = rows.push(timing_row("Long press after", 200.0..=1500.0, 50.0, (g.long_press(p), g.long_press_ms.is_some()), move |ms| {
+                Message::SetButtonLongPress(b, ms)
+            }));
+        }
+        rows
+    });
+    advanced_fold("Timing", holds, target, rows)
+}
+
+/// One timing: a slider showing the time in effect (the button's own, or the profile's) and,
+/// while it's the button's own, a button to go back to the profile's.
+pub(super) fn timing_row<'a>(
+    label: &'a str,
+    range: std::ops::RangeInclusive<f32>,
+    step: f32,
+    (value, overridden): (u64, bool),
+    message: impl Fn(Option<f32>) -> Message + Clone + 'a,
+) -> Element<'a, Message> {
+    let set = message.clone();
+    let slider = slider_editor(range, value as f32, step, "ms", move |ms| set(Some(ms)));
+    let line = if overridden {
+        row![slider, button(text("Use profile's").size(13)).style(style::secondary).on_press(message(None))]
+    } else {
+        row![slider, text("profile's").size(13).color(MUTED_COLOR)]
+    };
+    fold_row(label, line.spacing(10).align_y(Alignment::Center).into())
+}
+
 /// An open row: the name on its own line, then a box with the action's editor, a row per
 /// gesture and the buttons that add the rest.
 fn open_row<'a>(p: &'a Profile, b: Button, ui: &Ui) -> Vec<Element<'a, Message>> {
@@ -240,6 +278,9 @@ fn open_row<'a>(p: &'a Profile, b: Button, ui: &Ui) -> Vec<Element<'a, Message>>
         if kind == GestureKind::LongPress {
             rows.extend(menu_combos::offer(p, &[b], action, ui).map(|o| labeled("", o)));
         }
+    }
+    if let Some(g) = gestures.filter(|g| g.timed()) {
+        rows.push(timing_fold(p, b, g, ui));
     }
     // Adding a gesture sits under the rows it extends, one click per kind.
     if !missing.is_empty() {

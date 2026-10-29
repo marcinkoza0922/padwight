@@ -24,11 +24,11 @@ Gyro belongs to a profile. Keep your plain profile and make a copy for gyro: on 
 
 ## 4. Choose when it works
 
-The **Active** row (4) sets how gyro starts: on, unless you tick **Starts switched off**. What switches it is an action, which you put on any button, gesture, combo or menu item:
+**Enabled** at the top turns gyro on for the profile, and **Starts active** sets whether it begins on. What switches it is an action, which you put on any button, gesture, combo or menu item:
 
-- **Gyro clutch (off while held)**: hold it to lift the controller and bring it back without the view turning.
-- **Gyro on while held**: gyro only while you hold the aim button. Tick **Starts switched off** too.
-- **Gyro on / off**: each press switches gyro on or off. **Rumble on gyro on / off** gives a short buzz when it does.
+- **Gyro inactive while held**: hold it to lift the controller and bring it back without the view turning.
+- **Gyro active while held**: gyro only while you hold the aim button. Untick **Starts active** too.
+- **Gyro active / inactive**: each press switches gyro on or off. **Rumble on gyro active / inactive** gives a short buzz when it does.
 - **Recenter gyro**: counts the way the controller points now as straight ahead (steering and position modes), and clears leftover motion.
 
 Most games use every button already, so a combo, a gesture or a back paddle makes a good clutch.
@@ -51,7 +51,7 @@ If the game doesn't read the mouse alongside the gamepad, pick **Gamepad stick (
 
 ## 7. Say if the profile needs gyro
 
-Tick **Can't be played without gyro** (1) only if the profile depends on it, such as a flick-stick profile that aims up and down with gyro. Players without gyro then aren't offered it. Leave it unticked when gyro is an extra.
+Tick **Profile requires gyro** (1) only if the profile depends on it, such as a flick-stick profile that aims up and down with gyro. Players without gyro then aren't offered it. Leave it unticked when gyro is an extra.
 
 ## When it feels wrong
 

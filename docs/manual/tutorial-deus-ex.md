@@ -137,7 +137,7 @@ On the game's screens the right stick moves the cursor, with RT and A as the cli
 On the **Sticks & triggers** tab, set both triggers to work as a button with a **threshold** of 0.30:
 
 - **Right trigger (RT)**: **Mouse click** **Left** (fire).
-- **Left trigger (LT)**: **Gyro clutch (off while held)**.
+- **Left trigger (LT)**: **Gyro inactive while held**.
 
 Deus Ex has no secondary fire, and its right mouse button is Use, which went on A. That leaves LT for the gyro clutch. It does nothing in this profile, which has no gyro, but the gyro profiles copied from it in Steps 11 and 12 keep it.
 
@@ -207,7 +207,7 @@ Shooters get gyro and flick stick profiles to try, but never as the default: the
    - **Gyro**: **Mouse (gyro aiming)**, **Sensitivity** **30** (pixels per degree turned).
    - **Turning read as**: **Player space (any grip)** (turning left aims left however you hold the controller).
    - Under **Advanced**, **Ignore jitter below**: 1.0 °/s.
-3. Leave **Can't be played without gyro** unticked.
+3. Leave **Profile requires gyro** unticked.
 
 **Why:** gyro adds fine aim on top of the right stick, so the profile plays without it. LT, the clutch from Step 6, turns gyro off while held, to reposition the controller.
 
@@ -220,7 +220,7 @@ A flick stick turns the camera by flicking the right stick instead of holding it
 
 ![The right stick set to Flick stick: turn size and Test turn, flick point and deadzone, and the Advanced flick fold](../images/manual/deus-flick.png "The flick stick's settings.")
 3. On its **Gyro** tab: sensitivity **22.0**, about one to one with that turn size.
-4. Tick **Can't be played without gyro**.
+4. Tick **Profile requires gyro**.
 
 > **Calibration.** Turn size depends on the game's mouse sensitivity: set it again with Test turn if you change that.
 

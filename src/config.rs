@@ -381,7 +381,7 @@ pub enum ButtonAction {
     GyroToggle,
     /// Gyro is off while held: a clutch for repositioning the controller without moving the aim.
     GyroClutch,
-    /// Gyro is on while held, even if it is switched off (see `start_off` in the gyro settings).
+    /// Gyro is on while held, even if it is switched off (see `starts_active` in the gyro settings).
     GyroHold,
     /// Sets the controller's current tilt as straight ahead (steering and position modes) and
     /// clears leftover motion.
@@ -627,6 +627,11 @@ impl ButtonAction {
         }
     }
 
+    /// Whether this is one of the gyro's actions (not counting a menu or macro that holds one).
+    pub fn is_gyro(&self) -> bool {
+        matches!(self, ButtonAction::GyroToggle | ButtonAction::GyroClutch | ButtonAction::GyroHold | ButtonAction::GyroRecenter)
+    }
+
     /// This action and every action nested inside it.
     pub fn walk(&self, f: &mut dyn FnMut(&ButtonAction)) {
         f(self);
@@ -652,6 +657,15 @@ impl ButtonAction {
 pub struct Combo {
     pub buttons: Vec<Button>,
     pub action: ButtonAction,
+    /// How long this combo's buttons wait for each other, in place of the profile's.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub window_ms: Option<u64>,
+}
+
+impl Combo {
+    pub fn new(buttons: Vec<Button>, action: ButtonAction) -> Self {
+        Combo { buttons, action, window_ms: None }
+    }
 }
 
 fn default_combo_window_ms() -> u64 {
@@ -714,9 +728,25 @@ pub struct Gestures {
     /// Tapped as the input is let go.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub on_release: Option<ButtonAction>,
+    /// This input's own tap window, in place of the profile's.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tap_window_ms: Option<u64>,
+    /// This input's own long press time, in place of the profile's.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub long_press_ms: Option<u64>,
 }
 
 impl Gestures {
+    /// The gap that still continues a tap sequence on this input.
+    pub fn tap_window(&self, profile: &Profile) -> u64 {
+        self.tap_window_ms.unwrap_or(profile.tap_window_ms)
+    }
+
+    /// The hold time that makes a press a long press on this input.
+    pub fn long_press(&self, profile: &Profile) -> u64 {
+        self.long_press_ms.unwrap_or(profile.long_press_ms)
+    }
+
     pub fn get(&self, kind: GestureKind) -> Option<&ButtonAction> {
         match kind {
             GestureKind::DoubleTap => self.double_tap.as_ref(),
@@ -1213,7 +1243,7 @@ enum TriggerConfigRepr {
         #[serde(default)]
         zones: Vec<Zone>,
         #[serde(default)]
-        gestures: Gestures,
+        gestures: Box<Gestures>,
     },
     Legacy(TriggerAction),
 }
@@ -1221,7 +1251,7 @@ enum TriggerConfigRepr {
 impl From<TriggerConfigRepr> for TriggerConfig {
     fn from(repr: TriggerConfigRepr) -> Self {
         match repr {
-            TriggerConfigRepr::Full { action, zones, gestures } => TriggerConfig { action, zones, gestures },
+            TriggerConfigRepr::Full { action, zones, gestures } => TriggerConfig { action, zones, gestures: *gestures },
             TriggerConfigRepr::Legacy(action) => action.into(),
         }
     }
@@ -1325,6 +1355,12 @@ impl Profile {
     /// True if `b` belongs to a combo (2+ buttons), so its own action is held back briefly.
     pub fn in_combo(&self, b: Button) -> bool {
         self.combos.iter().any(|c| c.buttons.len() >= 2 && c.buttons.contains(&b))
+    }
+
+    /// How long `b` waits for the rest of a combo: the longest wait of the combos it's in.
+    pub fn combo_window(&self, b: Button) -> u64 {
+        let own = self.combos.iter().filter(|c| c.buttons.len() >= 2 && c.buttons.contains(&b)).map(|c| c.window_ms.unwrap_or(self.combo_window_ms));
+        own.max().unwrap_or(self.combo_window_ms)
     }
 
     pub fn button(&self, b: Button) -> &ButtonAction {

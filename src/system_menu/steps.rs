@@ -47,7 +47,7 @@ impl SystemMenu {
                     Step::Left => -1,
                     _ => 1,
                 };
-                quick::adjust(row, dir, self.big_steps, config, &self.saved)
+                quick::adjust(row, dir, self.big_steps, config)
             }
         }
     }

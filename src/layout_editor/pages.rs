@@ -35,6 +35,10 @@ pub enum Page {
     Pick(ActionAt, Picker),
     Multi(ActionAt),
     Gestures(Owner, Button),
+    /// A button's own tap window and long press time.
+    GestureTiming(Owner, Button),
+    /// A combo's own window.
+    ComboTiming(Owner, usize),
     Combos(Owner),
     Combo(Owner, usize),
     Sticks(Owner),
@@ -126,6 +130,8 @@ fn input_rows(page: Page, cx: &Cx) -> Option<Vec<Row>> {
         Page::Pick(at, p) => action_page::pick_rows(config, at, p),
         Page::Multi(at) => action_page::multi_rows(config, at),
         Page::Gestures(owner, b) => inputs::gesture_rows(config, owner, b),
+        Page::GestureTiming(owner, b) => inputs::gesture_timing_rows(config, owner, b),
+        Page::ComboTiming(owner, i) => inputs::combo_timing_rows(config, owner, i),
         Page::Combos(owner) => inputs::combo_rows(config, owner),
         Page::Combo(owner, i) => inputs::combo_page(cx, owner, i),
         Page::Sticks(owner) => sticks::sticks_rows(config, owner),
@@ -208,6 +214,8 @@ fn input_title(page: Page, config: &Config) -> Option<String> {
         Page::Gestures(owner, b) => in_owner(config, owner, &format!("{} gestures", b.short_name())),
         Page::Combos(owner) => in_owner(config, owner, "Combos"),
         Page::Combo(owner, i) => in_owner(config, owner, &format!("Combo {}", i + 1)),
+        Page::GestureTiming(owner, b) => in_owner(config, owner, &format!("{} timing", b.short_name())),
+        Page::ComboTiming(owner, i) => in_owner(config, owner, &format!("Combo {} timing", i + 1)),
         Page::Sticks(owner) => in_owner(config, owner, "Sticks"),
         Page::Stick(owner, s) => in_owner(config, owner, &stick_name(s)),
         Page::Ring(owner, s) => in_owner(config, owner, &format!("{} ring", stick_name(s))),
@@ -329,8 +337,8 @@ fn macro_name(config: &Config, m: usize) -> String {
 fn paint_title(of: PaintOf) -> &'static str {
     match of {
         PaintOf::Background => "Background color",
-        PaintOf::Items => "Items' color",
-        PaintOf::Selected => "Selected item's color",
+        PaintOf::Items => "Primary element color",
+        PaintOf::Selected => "Secondary element color (selected item, lit arm)",
         PaintOf::Decor(d) => d.name(),
     }
 }

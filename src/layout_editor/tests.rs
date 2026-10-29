@@ -209,10 +209,23 @@ fn gyro_can_start_switched_off() {
     let mut config = config();
     let mut editor = LayoutEditor::new();
     editor.pick("Gyro", &mut config);
-    editor.step_row("Mode", 1, &mut config);
-    assert!(!config.active().unwrap().gyro.start_off);
-    editor.pick("Starts switched off", &mut config);
-    assert!(config.active().unwrap().gyro.start_off);
+    assert!(!config.active().unwrap().gyro.enabled);
+    editor.pick("Gyro enabled", &mut config);
+    assert!(config.active().unwrap().gyro.enabled && config.active().unwrap().gyro.starts_active);
+    editor.pick("Starts active", &mut config);
+    assert!(!config.active().unwrap().gyro.starts_active);
+}
+
+#[test]
+fn gyro_actions_are_offered_only_while_gyro_is_enabled() {
+    let mut config = config();
+    let mut editor = LayoutEditor::new();
+    editor.pick("Buttons", &mut config);
+    editor.pick_button(Button::South, &mut config);
+    let offers = |editor: &LayoutEditor, config: &Config| editor.labels(config).iter().any(|l| l.starts_with("Gyro active / inactive"));
+    assert!(!offers(&editor, &config), "gyro is off in the profile");
+    config.general.profiles[0].gyro.enabled = true;
+    assert!(offers(&editor, &config));
 }
 
 #[test]

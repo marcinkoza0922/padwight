@@ -41,6 +41,6 @@ Together they turn a game's toggle into a hold. If a game's aim down sights is a
 
 Xbox Elite, DualSense Edge and Steam Deck controllers have extra buttons on the back. They're in the **Back paddles** box under the buttons on the Buttons tab, and map like any other button.
 
-Tick *Can't be played without back paddles* only if the profile depends on them. Players whose controller has none then aren't offered the profile, and the Guide overlay's Switch Profile skips it.
+Tick *Profile requires back paddles* only if the profile depends on them. Players whose controller has none then aren't offered the profile, and the Guide overlay's Switch Profile skips it.
 
 See also [Sticks and triggers](sticks.md) for zones, and [Modes](modes.md) and [Layers](layers.md) for changing many buttons at once.

@@ -177,8 +177,18 @@ pub(super) fn stage_keys(event: iced::Event, status: iced::event::Status, id: wi
 }
 
 /// The Appearance toggle of a card, with the button that opens the overlay on screen beside it.
-pub(super) fn appearance_row<'a>(open: bool, toggle: Message, target: StageTarget) -> Element<'a, Message> {
-    row![disclosure("Appearance", open, toggle), edit_button(target)].spacing(12).align_y(Alignment::Center).into()
+/// An Appearance disclosure with its Edit on screen button, and the open look under them. All of
+/// it sits on the tinted panel, so the look reads apart from the rows around it.
+pub(super) fn appearance_row<'a>(open: bool, toggle: Message, target: StageTarget, look: Vec<Element<'a, Message>>) -> Element<'a, Message> {
+    let header = row![disclosure("Appearance", open, toggle), edit_button(target)].spacing(12).align_y(Alignment::Center);
+    let mut items: Vec<Element<'a, Message>> = vec![header.into()];
+    items.extend(look);
+    tinted_panel(items)
+}
+
+/// Rows that make up one look, on the tinted panel.
+pub(super) fn tinted_panel<'a>(items: Vec<Element<'a, Message>>) -> Element<'a, Message> {
+    container(column(items).spacing(10)).padding(10).width(Length::Fill).style(style::tinted).into()
 }
 
 /// The button that opens `target` on the stage.

@@ -92,6 +92,7 @@ impl App {
             .iter()
             .filter_map(|t| match *t {
                 Target::Combo(i) => to(i).map(Target::Combo),
+                Target::ComboTiming(i) => to(i).map(Target::ComboTiming),
                 other => Some(other),
             })
             .collect();

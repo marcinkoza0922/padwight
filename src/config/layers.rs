@@ -323,10 +323,13 @@ impl Layer {
         p.left_trigger = TriggerAction::Disabled.into();
         p.right_trigger = TriggerAction::Disabled.into();
         if !self.gyro_pointer {
-            p.gyro.mode = GyroMode::Off;
-        } else if !matches!(p.gyro.mode, GyroMode::Mouse { .. }) {
-            // Its activation and smoothing stay; a full-turn scale only means something with
-            // the player's own sensitivity.
+            p.gyro.enabled = false;
+        } else if !p.gyro.enabled || !matches!(p.gyro.mode, GyroMode::Mouse { .. }) {
+            // A gyro that was off comes on; otherwise whether it starts active and its smoothing stay. A
+            // full-turn scale only means something with the player's own sensitivity.
+            if !p.gyro.enabled {
+                p.gyro.enabled = true;
+            }
             p.gyro.mode = GyroMode::Mouse { sensitivity: MOUSE_MODE_GYRO_SENSITIVITY };
             p.gyro.full_turn_px = None;
         }

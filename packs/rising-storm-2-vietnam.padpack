@@ -280,7 +280,7 @@ These are the game's default keys, written from memory and not checked in the ga
 "button:DpadUp" = { text = "{icon:map} Map" }
 "button:Select" = { text = "Scoreboard" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]
@@ -430,7 +430,7 @@ These are the game's default keys, written from memory and not checked in the ga
 "button:DpadUp" = { text = "{icon:map} Map" }
 "button:Select" = { text = "Scoreboard" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]

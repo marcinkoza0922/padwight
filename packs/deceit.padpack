@@ -239,7 +239,7 @@ These keys are written from memory and not checked in the game (transform, flash
 "button:DpadUp" = { text = "{icon:microphone} Voice (hold)" }
 "button:Select" = { text = "{icon:people} Players" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]
@@ -370,7 +370,7 @@ These keys are written from memory and not checked in the game (transform, flash
 "button:DpadUp" = { text = "{icon:microphone} Voice (hold)" }
 "button:Select" = { text = "{icon:people} Players" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]

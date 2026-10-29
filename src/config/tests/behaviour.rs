@@ -133,7 +133,7 @@ fn layers_override_on_top_of_a_profile_newest_last() {
     a.right_stick = Some(StickConfig::new(StickAction::Disabled, 0.1, 1.0));
     let mut b = Layer::new("B");
     b.buttons.insert(Button::South, f("KEY_F2"));
-    b.combos.push(Combo { buttons: vec![Button::Select, Button::Start], action: f("KEY_F3") });
+    b.combos.push(Combo { buttons: vec![Button::Select, Button::Start], action: f("KEY_F3"), window_ms: None });
 
     let p = base.with_layers([&a, &b]);
     assert_eq!(p.button(Button::South), &f("KEY_F2"), "the newest layer wins");
@@ -232,10 +232,10 @@ fn the_built_in_modes_let_nothing_of_the_profile_through_but_a_way_back() {
     p.set_button(Button::LeftPaddle, ButtonAction::Gamepad(Button::South));
     p.gestures.insert(Button::RightPaddle, Gestures { long_press: Some(key("KEY_R")), ..Gestures::default() });
     p.set_button(Button::RightStickUp, key("KEY_W"));
-    p.combos.push(Combo { buttons: vec![Button::LeftBumper, Button::RightBumper], action: key("KEY_G") });
+    p.combos.push(Combo { buttons: vec![Button::LeftBumper, Button::RightBumper], action: key("KEY_G"), window_ms: None });
     // What switches modes stays, so there's a way back out.
     p.set_button(Button::RightPaddle2, ButtonAction::Mode("Driving".into()));
-    p.combos.push(Combo { buttons: vec![Button::Select, Button::Start], action: ButtonAction::Layer("Map".into()) });
+    p.combos.push(Combo { buttons: vec![Button::Select, Button::Start], action: ButtonAction::Layer("Map".into()), window_ms: None });
     for mode in [Layer::mouse(), Layer::guide()] {
         let on = p.with_layers([&mode]);
         for b in [Button::LeftPaddle, Button::RightPaddle, Button::RightStickUp] {
@@ -255,13 +255,13 @@ fn the_built_in_modes_let_none_of_the_profile_s_sticks_triggers_gyro_or_touchpad
     p.left_stick.zones.push(Zone { min: 0.9, max: 1.0, action: key("KEY_LEFTSHIFT") });
     p.left_stick.deadzone = 0.3;
     p.left_trigger.zones.push(Zone { min: 0.5, max: 1.0, action: key("KEY_E") });
-    p.gyro.mode = GyroMode::Mouse { sensitivity: 10.0 };
+    p.gyro = GyroConfig { enabled: true, mode: GyroMode::Mouse { sensitivity: 10.0 }, ..GyroConfig::default() };
     p.touchpad = TouchpadConfig::default();
     assert!(p.left_stick.action != StickAction::Disabled && p.left_trigger.action != TriggerAction::Disabled);
     let off = TouchpadConfig { motion: TouchpadMotion::Off, click: ButtonAction::Disabled, right: None };
     for mode in [Layer::mouse(), Layer::guide()] {
         let on = p.with_layers([&mode]);
-        assert_eq!(on.gyro.mode, GyroMode::Off, "{}", mode.name);
+        assert!(!on.gyro.enabled, "{}", mode.name);
         assert_eq!(on.touchpad, off, "{}", mode.name);
         assert!(on.left_stick.zones.is_empty() && on.left_trigger.zones.is_empty(), "{}", mode.name);
     }
@@ -285,7 +285,8 @@ fn the_built_in_modes_let_none_of_the_profile_s_sticks_triggers_gyro_or_touchpad
 fn mouse_mode_can_let_the_gyro_and_touchpad_move_the_pointer() {
     let mut p = Profile::passthrough("Aim");
     p.gyro.mode = GyroMode::Stick { stick: Stick::Right, full_rate: 300.0, anti_deadzone: 0.1, game_curve: 1.0 };
-    p.gyro.start_off = true;
+    p.gyro.enabled = true;
+    p.gyro.starts_active = false;
     p.gyro.full_turn_px = Some(4000.0);
     p.touchpad.motion = TouchpadMotion::Off;
     let config = Config { mouse_mode: MouseModeExtras { gyro: true, touchpad: true }, ..Config::default() };
@@ -293,13 +294,13 @@ fn mouse_mode_can_let_the_gyro_and_touchpad_move_the_pointer() {
     let mouse = config.mode_for(&game, MOUSE_MODE).unwrap();
     let on = p.with_layers([&*mouse]);
     assert_eq!(on.gyro.mode, GyroMode::Mouse { sensitivity: 15.0 }, "a gyro aiming a stick moves the pointer at the default speed");
-    assert_eq!((on.gyro.start_off, on.gyro.full_turn_px), (true, None), "it keeps whether it starts on");
+    assert_eq!((on.gyro.starts_active, on.gyro.full_turn_px), (false, None), "it keeps whether it starts on");
     assert_eq!(on.touchpad, TouchpadConfig::default(), "the touchpad works as a laptop's");
     p.gyro.mode = GyroMode::Mouse { sensitivity: 8.0 };
     assert_eq!(p.with_layers([&*mouse]).gyro, p.gyro, "a gyro that already moves the pointer is kept as it is");
     // The Guide mode still lets neither through.
     let guide = config.mode_for(&game, GUIDE_MODE).unwrap();
-    assert_eq!(p.with_layers([&*guide]).gyro.mode, GyroMode::Off);
+    assert!(!p.with_layers([&*guide]).gyro.enabled);
 
     let dir = scratch_dir("mouse-mode-extras");
     let path = dir.join("config.toml");
@@ -329,10 +330,10 @@ fn combos_listing_a_button_twice_are_tidied_when_loaded() {
     let dir = scratch_dir("repeated-combo");
     let path = dir.join("config.toml");
     let mut config = Config::default();
-    let doubled = Combo { buttons: vec![Button::South, Button::East, Button::South], action: ButtonAction::Screenshot };
+    let doubled = Combo { buttons: vec![Button::South, Button::East, Button::South], action: ButtonAction::Screenshot, window_ms: None };
     config.general.profiles[0].combos.push(doubled);
     let mut layer = Layer::new("L");
-    layer.combos.push(Combo { buttons: vec![Button::Start, Button::Select, Button::Start], action: ButtonAction::Screenshot });
+    layer.combos.push(Combo { buttons: vec![Button::Start, Button::Select, Button::Start], action: ButtonAction::Screenshot, window_ms: None });
     layer.disabled_combos.push(vec![Button::East, Button::East]);
     config.general.layers.push(layer);
     config.save_to(&path).unwrap();
@@ -380,4 +381,15 @@ fn a_number_that_isn_t_finite_is_refused_naming_where() {
     let err = format!("{:#}", Config::load_from(&path).unwrap_err());
     assert!(err.contains("rumble_strength") && err.contains("config.toml"), "{err}");
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn a_button_waits_as_long_as_the_longest_combo_it_is_in() {
+    let mut p = Profile::passthrough("p");
+    p.combo_window_ms = 60;
+    p.combos.push(Combo { buttons: vec![Button::North, Button::South], action: ButtonAction::Screenshot, window_ms: Some(200) });
+    p.combos.push(Combo { buttons: vec![Button::North, Button::East], action: ButtonAction::Screenshot, window_ms: None });
+    assert_eq!(p.combo_window(Button::North), 200);
+    assert_eq!(p.combo_window(Button::East), 60);
+    assert_eq!(p.combo_window(Button::West), 60);
 }

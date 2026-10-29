@@ -41,7 +41,7 @@ fn editing_a_layer_records_only_overrides() {
     assert!(app.game().layers[0].right_stick.is_none() && app.game().layers[0].gestures.is_empty());
 
     // Its own combos, and switching off one of the profile's.
-    app.config.games[0].profiles[0].combos.push(Combo { buttons: vec![Button::LeftBumper, Button::RightBumper], action: ButtonAction::Disabled });
+    app.config.games[0].profiles[0].combos.push(Combo { buttons: vec![Button::LeftBumper, Button::RightBumper], action: ButtonAction::Disabled, window_ms: None });
     let _ = app.update(Message::AddCombo);
     assert_eq!(app.game().layers[0].combos.len(), 1);
     assert_eq!(app.game().profiles[0].combos.len(), 1);

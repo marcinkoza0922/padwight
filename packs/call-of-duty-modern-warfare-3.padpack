@@ -280,7 +280,7 @@ These are the game's default PC keys, written from memory and taken to match Mod
 "button:DpadDown" = { text = "{icon:bomb} Equipment" }
 "button:Select" = { text = "Scoreboard" }
 "button:Start" = { text = "Pause" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles]]
@@ -421,7 +421,7 @@ These are the game's default PC keys, written from memory and taken to match Mod
 "button:DpadDown" = { text = "{icon:bomb} Equipment" }
 "button:Select" = { text = "Scoreboard" }
 "button:Start" = { text = "Pause" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [[layers]]

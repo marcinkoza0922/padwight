@@ -59,6 +59,19 @@ pub fn warning_banner(theme: &Theme) -> container::Style {
     }
 }
 
+/// The open look of an overlay or menu: tinted with the accent over the page, so it reads as a
+/// group apart from the rows around it.
+pub fn tinted(theme: &Theme) -> container::Style {
+    let p = theme.extended_palette();
+    let accent = p.primary.base.color;
+    container::Style {
+        background: Some(Color { a: 0.08, ..accent }.into()),
+        text_color: Some(p.background.base.text),
+        border: Border { width: 1.0, radius: 6.0.into(), color: Color { a: 0.4, ..accent } },
+        ..container::Style::default()
+    }
+}
+
 /// The header of a fold: accent text that marks it as something to open, tinted on hover.
 pub fn fold_header(theme: &Theme, status: button::Status) -> button::Style {
     let p = theme.extended_palette();

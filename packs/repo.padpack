@@ -250,7 +250,7 @@ These keys are written from memory and not checked in the game (the right mouse 
 "button:DpadDown" = { text = "{icon:microphone} Talk (hold)" }
 "button:Select" = { text = "{icon:map} Map (hold)" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles]]
@@ -383,7 +383,7 @@ These keys are written from memory and not checked in the game (the right mouse 
 "button:DpadDown" = { text = "{icon:microphone} Talk (hold)" }
 "button:Select" = { text = "{icon:map} Map (hold)" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [keyboard_style]

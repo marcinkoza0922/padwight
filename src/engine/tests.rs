@@ -716,6 +716,7 @@ fn combo_profile() -> Profile {
     p.combos.push(Combo {
         buttons: vec![Button::LeftBumper, Button::RightBumper],
         action: ButtonAction::Keys(vec!["KEY_LEFTALT".into(), "KEY_TAB".into()]),
+        window_ms: None,
     });
     p
 }
@@ -791,6 +792,7 @@ fn disabled_member_works_as_modifier() {
     p.combos.push(Combo {
         buttons: vec![Button::Start, Button::South],
         action: ButtonAction::Screenshot,
+        window_ms: None,
     });
     let mut e = Engine::default();
     let t0 = Instant::now();
@@ -948,6 +950,24 @@ fn long_press_fires_while_held_and_releases_on_release() {
         vec![OutEvent::Key(KeyCode::KEY_L, false)]
     );
     assert_eq!(e.next_deadline(), None);
+}
+
+#[test]
+fn a_button_s_own_timings_replace_the_profile_s() {
+    let mut p = gesture_profile();
+    let g = p.gestures.get_mut(&Button::North).unwrap();
+    g.long_press_ms = Some(300);
+    let mut e = Engine::default();
+    let t0 = Instant::now();
+    press(&mut e, &p, Button::North, true, t0);
+    assert!(fire_timers(&mut e, &p, ms(t0, 299)).is_empty());
+    assert_eq!(fire_timers(&mut e, &p, ms(t0, 300)), vec![OutEvent::Key(KeyCode::KEY_L, true)]);
+    press(&mut e, &p, Button::North, false, ms(t0, 400));
+    // A shorter tap window ends the sequence sooner than the profile's 250 ms.
+    p.gestures.get_mut(&Button::North).unwrap().tap_window_ms = Some(100);
+    press(&mut e, &p, Button::North, true, ms(t0, 1000));
+    press(&mut e, &p, Button::North, false, ms(t0, 1050));
+    assert_eq!(e.next_deadline(), Some(ms(t0, 1150)));
 }
 
 #[test]
@@ -1386,6 +1406,20 @@ fn toggled_repeating_macro_and_profile_switch_stop() {
 }
 
 #[test]
+fn macro_in_a_toggle_loops_even_when_not_set_to_repeat() {
+    let mut e = macro_engine(vec![MacroStep::Tap { action: key("KEY_A"), hold_ms: 10 }, MacroStep::Wait(40)]);
+    let mut p = Profile::passthrough("p");
+    p.set_button(Button::West, toggle(ButtonAction::Macro { name: "m".into(), repeat: false }));
+    run(&mut e, &p, InputEvent::Button(Button::West, true));
+    run(&mut e, &p, InputEvent::Button(Button::West, false));
+    let presses = |out: &[OutEvent]| out.iter().filter(|ev| **ev == OutEvent::Key(KeyCode::KEY_A, true)).count();
+    assert_eq!(presses(&hold_for(&mut e, &p, 0.5)), 10, "loops until the toggle turns it off");
+    run(&mut e, &p, InputEvent::Button(Button::West, true));
+    run(&mut e, &p, InputEvent::Button(Button::West, false));
+    assert_eq!(presses(&hold_for(&mut e, &p, 0.5)), 0, "the next press turns it off");
+}
+
+#[test]
 fn repeating_macro_without_waits_cannot_hang() {
     let mut e = macro_engine(vec![MacroStep::Press(key("KEY_A")), MacroStep::Release(key("KEY_A"))]);
     let p = mapped(true);
@@ -1437,6 +1471,7 @@ fn bumper_plus_stick_direction_combo() {
     p.combos.push(Combo {
         buttons: vec![Button::LeftBumper, Button::RightStickRight],
         action: key("KEY_F"),
+        window_ms: None,
     });
     let mut e = Engine::default();
     let t0 = Instant::now();
@@ -1616,7 +1651,7 @@ fn toggles_set_to_start_on_switch_on_when_the_game_starts() {
             starting(ButtonAction::Keys(vec!["KEY_C".into()])),
         ]),
     );
-    p.combos.push(Combo { buttons: vec![Button::RightBumper, Button::LeftBumper], action: starting(ButtonAction::Layer("L".into())) });
+    p.combos.push(Combo { buttons: vec![Button::RightBumper, Button::LeftBumper], action: starting(ButtonAction::Layer("L".into())), window_ms: None });
     let menu = Menu {
         name: "M".into(),
         kind: crate::config::MenuKind::List,

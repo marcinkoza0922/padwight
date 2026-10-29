@@ -22,7 +22,7 @@ pub(super) fn menu_combos(trigger: &[Button], action: &ButtonAction, menus: &[&M
         .filter_map(|(item, pick)| {
             let pick = pick.filter(|b| !trigger.contains(b))?;
             let buttons = trigger.iter().copied().chain([pick]).collect();
-            Some(Combo { buttons, action: item.action.clone() })
+            Some(Combo { buttons, action: item.action.clone(), window_ms: None })
         })
         .collect()
 }

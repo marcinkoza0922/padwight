@@ -29,6 +29,16 @@ impl MacroRun {
     }
 }
 
+/// What a toggle holds on: a macro under it (also inside a multi) loops until the toggle turns
+/// it off, so it always repeats. A turbo keeps its macro playing once per press.
+pub(super) fn looping_in_toggle(action: &ButtonAction) -> ButtonAction {
+    match action {
+        ButtonAction::Macro { name, .. } => ButtonAction::Macro { name: name.clone(), repeat: true },
+        ButtonAction::Multi(parts) => ButtonAction::Multi(parts.iter().map(looping_in_toggle).collect()),
+        other => other.clone(),
+    }
+}
+
 pub(super) fn compile_macro(m: &Macro) -> Vec<MacroOp> {
     let mut ops = Vec::new();
     for step in &m.steps {

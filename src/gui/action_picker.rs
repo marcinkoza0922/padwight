@@ -24,6 +24,11 @@ const GROUPS: [(&str, &[ActionKind]); 6] = [
     ("System", &[ActionKind::Screenshot, ActionKind::Recording, ActionKind::ForceQuit]),
 ];
 
+/// Whether the kind is one of the gyro's actions, which a profile with gyro off can't hold.
+fn is_gyro_kind(kind: ActionKind) -> bool {
+    matches!(kind, ActionKind::GyroToggle | ActionKind::GyroClutch | ActionKind::GyroHold | ActionKind::GyroRecenter)
+}
+
 /// The stick modes in the dialog, by group.
 const STICK_GROUPS: [(&str, &[StickKind]); 2] = [
     ("Aim and move", &[StickKind::Gamepad, StickKind::Mouse, StickKind::Flick, StickKind::Region]),
@@ -89,6 +94,7 @@ impl ActionPicker {
             let choices = group
                 .iter()
                 .filter(|k| place.kinds.contains(k))
+                .filter(|k| !(names.no_gyro && is_gyro_kind(**k)))
                 .map(|k| Choice { face: Face::Kind(*k), current: *k == current, pick: on_change(new_action(*k, place.default_button, action, names)) })
                 .collect();
             (title, choices)
@@ -434,6 +440,19 @@ mod tests {
             picker.groups.iter().flat_map(|(_, c)| c).filter_map(|c| match c.face { Face::Kind(k) => Some(k), Face::Pad(_) | Face::Stick(_) | Face::Analog(_) => None }).collect();
         offered.sort_by_key(|k| MACRO_STEP_KINDS.iter().position(|m| m == k));
         assert_eq!(offered, MACRO_STEP_KINDS);
+    }
+
+    #[test]
+    fn gyro_actions_are_offered_only_where_gyro_is_on() {
+        let app = app();
+        let offered = |names: &Names| -> Vec<ActionKind> {
+            let picker = ActionPicker::for_target(Target::Button(Button::South), &ButtonAction::Disabled, &ACTION_KINDS, Button::South, names);
+            picker.groups.iter().flat_map(|(_, c)| c).filter_map(|c| match c.face { Face::Kind(k) => Some(k), _ => None }).collect()
+        };
+        let names = app.names();
+        assert!(offered(&names.for_gyro(true)).contains(&ActionKind::GyroToggle));
+        let without = offered(&names.for_gyro(false));
+        assert!(!without.iter().any(|k| is_gyro_kind(*k)) && without.contains(&ActionKind::Screenshot));
     }
 
     #[test]

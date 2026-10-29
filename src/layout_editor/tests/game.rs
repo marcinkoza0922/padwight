@@ -133,7 +133,7 @@ fn a_color_is_typed_as_hex_and_a_bad_one_is_refused() {
     editor.pick("Menus", &mut config);
     editor.pick("M ·", &mut config);
     editor.pick("Look", &mut config);
-    editor.pick("Items", &mut config);
+    editor.pick("Element primary", &mut config);
     editor.pick("Type a color", &mut config);
     assert_eq!(editor.set_text(&mut config, "12ab34"), EditStep::Changed);
     assert_eq!(config.general.menus[0].style.items.color, "#12ab34");

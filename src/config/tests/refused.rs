@@ -9,7 +9,7 @@ fn a_setup_saving_would_refuse_is_left_out_and_kept() {
     let dir = scratch_dir("refused-setup");
     let path = dir.join("config.toml");
     let mut config = Config::default();
-    let combo = |action| Combo { buttons: vec![Button::LeftBumper, Button::RightBumper], action };
+    let combo = |action| Combo { buttons: vec![Button::LeftBumper, Button::RightBumper], action, window_ms: None };
     let mut doom = Game::new("Doom", vec![Profile::passthrough("Play")]);
     doom.profiles[0].combos = vec![combo(ButtonAction::Screenshot), combo(ButtonAction::ToggleMedia)];
     config.games = vec![doom, Game::new("Quake", vec![Profile::passthrough("Play")])];

@@ -246,7 +246,13 @@ impl Engine {
     /// Whether gyro is switched on, before the clutch: how the profile starts it, flipped by the
     /// on/off action, or held on.
     fn gyro_enabled(&self, cfg: &GyroConfig) -> bool {
-        (cfg.start_off == self.gyro.flipped) || self.gyro.on_holds > 0
+        self.gyro_switched_on(cfg) || self.gyro.on_holds > 0
+    }
+
+    /// Whether gyro is on apart from being held on: it starts on, unless the profile waits for an
+    /// action, and each on/off action flips that.
+    fn gyro_switched_on(&self, cfg: &GyroConfig) -> bool {
+        cfg.starts_active != self.gyro.flipped
     }
 
     /// Acts on what the gyro actions asked for since the last call: flips gyro on or off (with
@@ -255,7 +261,7 @@ impl Engine {
         if std::mem::take(&mut self.gyro.toggle_pending) {
             self.gyro.flipped = !self.gyro.flipped;
             if cfg.toggle_rumble {
-                self.gyro.rumble = Some(cfg.start_off == self.gyro.flipped);
+                self.gyro.rumble = Some(self.gyro_switched_on(cfg));
             }
         }
         if std::mem::take(&mut self.gyro.recenter_pending) {
@@ -288,7 +294,7 @@ impl Engine {
 
     /// Whether gyro output is live: on, activated and not paused.
     fn gyro_live(&self, profile: &Profile) -> bool {
-        !matches!(profile.gyro.mode, GyroMode::Off) && self.gyro_active(&profile.gyro) && !self.gyro_paused(profile)
+        profile.gyro.enabled && self.gyro_active(&profile.gyro) && !self.gyro_paused(profile)
     }
 
     fn gyro_off(&mut self, out: &mut Vec<OutEvent>) {
@@ -325,7 +331,6 @@ impl Engine {
         self.gyro.aim = Some((speed, (x, y)));
 
         match cfg.mode {
-            GyroMode::Off => {}
             GyroMode::Mouse { sensitivity } => {
                 // A layer may have switched from stick mode: stop deflecting the stick.
                 self.set_gyro_stick(None, out);

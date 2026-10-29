@@ -412,6 +412,10 @@ enum Target {
     Button(Button),
     Trigger(Trigger),
     Combo(usize),
+    /// A button's "Timing" fold.
+    Timing(Button),
+    /// A combo's "Timing" fold.
+    ComboTiming(usize),
     Gesture(Button, GestureKind),
     /// A trigger's On press or On release.
     TriggerGesture(Trigger, GestureKind),
@@ -519,12 +523,18 @@ enum Message {
     AddComboButton(usize, Button),
     RemoveComboButton(usize, Button),
     SetComboWindow(f32),
+    /// A combo's own window (`None` goes back to the profile's).
+    SetOwnComboWindow(usize, Option<f32>),
     AddGesture(Button, GestureKind),
     RemoveGesture(Button, GestureKind),
     AddTriggerGesture(Trigger, GestureKind),
     RemoveTriggerGesture(Trigger, GestureKind),
     SetTapWindow(f32),
     SetLongPress(f32),
+    /// A button's own tap window (`None` goes back to the profile's).
+    SetButtonTapWindow(Button, Option<f32>),
+    /// A button's own long press time (`None` goes back to the profile's).
+    SetButtonLongPress(Button, Option<f32>),
     AddZone(Analog, ZonePreset),
     RemoveZone(Analog, usize),
     SetZoneRange(Analog, usize, f32, f32),

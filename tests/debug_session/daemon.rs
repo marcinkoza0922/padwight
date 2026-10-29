@@ -34,7 +34,7 @@ fn status(env: &Env) -> String {
 
 /// The config with the active profile's gyro turning the mouse.
 fn gyro_mouse_config() -> String {
-    let text = hold_config().replacen("[general.profiles.gyro]\nmode = \"off\"", "[general.profiles.gyro]\nmode = { mouse = { sensitivity = 2.0 } }", 1);
+    let text = hold_config().replacen("[general.profiles.gyro]\nenabled = false", "[general.profiles.gyro]\nmode = { mouse = { sensitivity = 2.0 } }", 1);
     assert!(text.contains("sensitivity = 2.0"), "the default config's gyro is off");
     text
 }

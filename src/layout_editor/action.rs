@@ -29,6 +29,15 @@ pub enum Slot {
 }
 
 impl Slot {
+    /// The profile, mode or layer the slot belongs to, if it belongs to one (a menu item or
+    /// macro step belongs to the game).
+    pub fn owner(self) -> Option<Owner> {
+        match self {
+            Slot::Button(o, _) | Slot::Gesture(o, ..) | Slot::Combo(o, _) | Slot::Trigger(o, _) | Slot::TriggerGesture(o, ..) | Slot::Zone(o, ..) | Slot::Ring(o, ..) | Slot::Touch(o, _) => Some(o),
+            Slot::MenuItem(..) | Slot::MacroStep(..) => None,
+        }
+    }
+
     /// Whether it can be left unset (a gesture, or a button a mode or layer leaves alone),
     /// rather than doing nothing.
     pub fn unsettable(self) -> bool {
@@ -160,6 +169,23 @@ pub fn action(config: &Config, at: ActionAt) -> Option<ButtonAction> {
     Some(action)
 }
 
+/// Whether the macro at `at` is forced to loop by a Toggle above it: the nearest wrapper above
+/// it is a Toggle, with only Multis between (a Turbo in between keeps it playing once per press).
+pub fn looped_by_toggle(config: &Config, at: ActionAt) -> bool {
+    let Some(mut action) = slot_action(config, at.slot) else { return false };
+    let mut forced = false;
+    for &part in at.path() {
+        match &action {
+            ButtonAction::Toggle(_) => forced = true,
+            ButtonAction::Turbo { .. } => forced = false,
+            _ => {}
+        }
+        let Some(next) = nested(&action, usize::from(part)) else { return false };
+        action = next.clone();
+    }
+    forced
+}
+
 /// Sets the action at `at`. `None` unsets the slot itself; a nested action can't be unset (a
 /// Multi's part is removed on the Multi's page instead).
 pub fn set_action(config: &mut Config, at: ActionAt, new: Option<ButtonAction>) -> bool {
@@ -215,6 +241,19 @@ mod tests {
         let ButtonAction::Multi(parts) = slot_action(&config, slot).unwrap() else { panic!("not a multi") };
         assert_eq!(parts[1], ButtonAction::Toggle(Toggled { action: Box::new(ButtonAction::ToggleNumpad), start_on: false }));
         assert!(!set_action(&mut config, inner, None), "a nested action can't be unset");
+    }
+
+    #[test]
+    fn a_macro_under_a_toggle_is_looped_by_it_but_not_under_a_turbo() {
+        let mut config = Config::default();
+        let slot = Slot::Button(Owner::Profile, Button::South);
+        let mac = || ButtonAction::Macro { name: "m".into(), repeat: false };
+        assert!(set_slot_action(&mut config, slot, Some(ButtonAction::toggle(mac()))));
+        assert!(looped_by_toggle(&config, ActionAt::new(slot).child(0).unwrap()));
+        assert!(!looped_by_toggle(&config, ActionAt::new(slot)), "the toggle itself isn't a macro under one");
+        let turbo = ButtonAction::toggle(ButtonAction::Turbo { action: Box::new(mac()), rate: 5.0, every_ms: 0 });
+        assert!(set_slot_action(&mut config, slot, Some(turbo)));
+        assert!(!looped_by_toggle(&config, ActionAt::new(slot).child(0).unwrap().child(0).unwrap()));
     }
 
     #[test]

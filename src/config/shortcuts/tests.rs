@@ -29,7 +29,7 @@ fn a_moved_shortcut_leaves_its_old_button_and_takes_a_gesture_or_a_combo() {
     assert!(!guide.buttons.contains_key(&Button::RightBumper) && !guide.buttons.contains_key(&Button::LeftBumper));
     assert!(!guide.buttons.contains_key(&Button::West), "the keyboard left X");
     assert_eq!(guide.gestures[&Button::Start].double_tap, Some(ButtonAction::Screenshot));
-    assert_eq!(guide.combos, vec![Combo { buttons: super::super::combo_key(&[Button::Start, Button::East]), action: ButtonAction::ToggleOverlay }]);
+    assert_eq!(guide.combos, vec![Combo { buttons: super::super::combo_key(&[Button::Start, Button::East]), action: ButtonAction::ToggleOverlay, window_ms: None }]);
 }
 
 #[test]
@@ -75,7 +75,7 @@ fn the_opener_has_three_forms_and_an_off_state() {
 fn injecting_puts_the_opener_on_the_profile() {
     let s = moved(&[(Shortcut::OpenGuide, Some(ShortcutInput::combo(&[Button::Start, Button::Select])))]);
     let mut p = Profile::passthrough("p");
-    p.combos.push(Combo { buttons: vec![Button::Select, Button::Start], action: ButtonAction::Disabled });
+    p.combos.push(Combo { buttons: vec![Button::Select, Button::Start], action: ButtonAction::Disabled, window_ms: None });
     s.inject(&mut p);
     assert_eq!(p.combos.len(), 1, "the profile's own combo of them is replaced");
     assert_eq!(p.combos[0].action, ButtonAction::Mode(OPEN_GUIDE.into()));
@@ -117,7 +117,7 @@ fn a_profile_that_uses_the_openers_input_conflicts() {
     let s = moved(&[(Shortcut::OpenGuide, Some(ShortcutInput::combo(&[Button::Start, Button::Select])))]);
     assert!(s.conflict(&p).is_none());
     let mut with_combo = p;
-    with_combo.combos.push(Combo { buttons: vec![Button::Select, Button::Start], action: ButtonAction::Disabled });
+    with_combo.combos.push(Combo { buttons: vec![Button::Select, Button::Start], action: ButtonAction::Disabled, window_ms: None });
     assert!(s.conflict(&with_combo).is_some());
 }
 

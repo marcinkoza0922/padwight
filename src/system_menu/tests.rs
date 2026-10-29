@@ -65,7 +65,7 @@ fn quick_settings_tunes_the_speeds_a_layer_or_mode_sets_itself() {
     let base = config.general.profiles[0].left_stick.clone();
     let mut aim = Layer::new("Aim");
     aim.left_stick = Some(StickConfig::new(StickAction::Mouse { speed: 500.0, response: MouseResponse::default(), invert_y: false }, 0.1, 1.0));
-    aim.gyro = Some(crate::config::GyroConfig { mode: GyroMode::Mouse { sensitivity: 5.0 }, ..Default::default() });
+    aim.gyro = Some(crate::config::GyroConfig { enabled: true, mode: GyroMode::Mouse { sensitivity: 5.0 }, ..Default::default() });
     config.general.layers.push(aim);
     let mut driving = Layer::new("Driving");
     driving.left_stick = Some(StickConfig::new(StickAction::Mouse { speed: 300.0, response: MouseResponse::default(), invert_y: false }, 0.1, 1.0));
@@ -78,8 +78,8 @@ fn quick_settings_tunes_the_speeds_a_layer_or_mode_sets_itself() {
     assert_eq!(quick::label(Row::ScopedStickSpeed(layer, Stick::Left), &config, &config), "Left Stick speed, Aim layer: 500 px/s");
     assert_eq!(quick::label(Row::ScopedStickSpeed(mode, Stick::Left), &config, &config), "Left Stick speed, Driving mode: 300 px/s");
     let saved = config.clone();
-    assert_eq!(quick::adjust(Row::ScopedStickSpeed(layer, Stick::Left), -1, false, &mut config, &saved), Some(Outcome::Changed));
-    assert_eq!(quick::adjust(Row::ScopedGyroSensitivity(layer), 1, false, &mut config, &saved), Some(Outcome::Changed));
+    assert_eq!(quick::adjust(Row::ScopedStickSpeed(layer, Stick::Left), -1, false, &mut config), Some(Outcome::Changed));
+    assert_eq!(quick::adjust(Row::ScopedGyroSensitivity(layer), 1, false, &mut config), Some(Outcome::Changed));
     assert!(quick::label(Row::ScopedStickSpeed(layer, Stick::Left), &config, &saved).contains("(was 500 px/s)"));
     assert_eq!(config.general.profiles[0].left_stick, base, "the base speed stays as it was");
     assert_eq!(config.general.modes[0], saved.general.modes[0]);
@@ -102,11 +102,11 @@ fn quick_nintendo_layout_sets_the_active_game_only() {
     let mut config = mouse_config();
     assert!(!config.active_nintendo_layout());
     // Picking the row turns it on for the game the menu is over, and leaves Settings alone.
-    assert_eq!(quick::adjust(Row::NintendoLayout, 1, false, &mut config, &Config::default()), Some(Outcome::Changed));
+    assert_eq!(quick::adjust(Row::NintendoLayout, 1, false, &mut config), Some(Outcome::Changed));
     assert!(config.active_nintendo_layout());
     assert_eq!(config.general.nintendo_layout, Some(true));
     assert_eq!(quick::label(Row::NintendoLayout, &config, &config), "Nintendo button layout: on");
-    assert_eq!(quick::adjust(Row::NintendoLayout, 1, false, &mut config, &Config::default()), Some(Outcome::Changed));
+    assert_eq!(quick::adjust(Row::NintendoLayout, 1, false, &mut config), Some(Outcome::Changed));
     assert_eq!(config.general.nintendo_layout, Some(false));
 }
 

@@ -8,7 +8,7 @@ fn button_menu_items_nothing_can_pick_are_warned_about() {
     let sub = menu("Sub", vec![item(Some(Button::RightBumper))]);
     let mut profile = Profile::passthrough("p");
     profile.set_button(Button::LeftBumper, ButtonAction::OpenMenu("Quick".into()));
-    profile.combos.push(Combo { buttons: vec![Button::Select, Button::RightBumper], action: ButtonAction::OpenMenu("Quick".into()) });
+    profile.combos.push(Combo { buttons: vec![Button::Select, Button::RightBumper], action: ButtonAction::OpenMenu("Quick".into()), window_ms: None });
     let mut game = Game::new("g", vec![profile]);
     game.menus = vec![quick.clone(), sub.clone()];
     game.menus[0].items[1].action = ButtonAction::OpenMenu("Sub".into());
@@ -59,14 +59,14 @@ fn problems_are_found_inside_nested_actions_and_flag_their_section() {
     let StickAction::Ring { actions, .. } = &mut p.stick_mut(Stick::Right).action else { unreachable!() };
     actions[0] = missing;
     assert!(section_has_problem(&p, ProfileTab::Sticks, &names), "ring sectors live on the Sticks tab");
-    p.combos.push(Combo { buttons: vec![Button::South], action: ButtonAction::Disabled });
+    p.combos.push(Combo { buttons: vec![Button::South], action: ButtonAction::Disabled, window_ms: None });
     assert!(section_has_problem(&p, ProfileTab::Combos, &names));
 }
 
 #[test]
 fn two_combos_of_the_same_buttons_are_refused() {
     let names = Names::default();
-    let combo = |buttons: Vec<Button>, key: &str| Combo { buttons, action: ButtonAction::Keys(vec![key.into()]) };
+    let combo = |buttons: Vec<Button>, key: &str| Combo { buttons, action: ButtonAction::Keys(vec![key.into()]), window_ms: None };
     let mut p = Profile::passthrough("p");
     p.combos = vec![combo(vec![Button::LeftBumper, Button::RightBumper], "KEY_A"), combo(vec![Button::South, Button::East], "KEY_B")];
     assert!(!section_has_problem(&p, ProfileTab::Combos, &names));

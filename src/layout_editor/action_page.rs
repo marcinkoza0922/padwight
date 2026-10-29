@@ -10,7 +10,7 @@ use crate::{
 
 use super::{
     Page,
-    action::{ActionAt, Slot, action, set_action},
+    action::{ActionAt, Slot, action, looped_by_toggle, set_action},
     rows::{Act, Nav, Number, Row, set},
 };
 
@@ -116,9 +116,9 @@ const TOOLS: [Choice; 11] = [
     ("On-screen numpad", || ButtonAction::ToggleNumpad),
     ("Quick Settings", || ButtonAction::QuickSettings),
     ("Media controls", || ButtonAction::ToggleMedia),
-    ("Gyro on / off", || ButtonAction::GyroToggle),
-    ("Gyro clutch (off while held)", || ButtonAction::GyroClutch),
-    ("Gyro on while held", || ButtonAction::GyroHold),
+    ("Gyro active / inactive", || ButtonAction::GyroToggle),
+    ("Gyro inactive while held", || ButtonAction::GyroClutch),
+    ("Gyro active while held", || ButtonAction::GyroHold),
     ("Recenter gyro", || ButtonAction::GyroRecenter),
     ("Screenshot", || ButtonAction::Screenshot),
     ("Start or stop recording", || ButtonAction::ToggleRecording),
@@ -136,7 +136,7 @@ pub(super) fn rows(config: &Config, at: ActionAt) -> Vec<Row> {
     let current = action(config, at);
     let mut rows = vec![Row::note(format!("Now: {}", current.as_ref().map_or("not set".into(), ButtonAction::summary))).keyword(current.as_ref().and_then(ButtonAction::keyword))];
     if let Some(current) = &current {
-        rows.extend(wrapper_rows(at, current));
+        rows.extend(wrapper_rows(config, at, current));
     }
     let step = matches!(at.slot, Slot::MacroStep(..));
     let choice = |&(label, make): &Choice| Row::apply(label, move |c| Act::changed_if(set_action(c, at, Some(make()))).then(Nav::Back(1)));
@@ -162,7 +162,9 @@ pub(super) fn rows(config: &Config, at: ActionAt) -> Vec<Row> {
         for p in Picker::ALL.into_iter().filter(|p| !(item && *p == Picker::Layer)) {
             rows.push(Row::open(p.label(), Page::Pick(at, p)).keyword(Some(p.keyword())));
         }
-        rows.extend(TOOLS.iter().map(choice));
+        // Where gyro is off, its actions aren't offered (saving would refuse them).
+        let no_gyro = at.slot.owner().and_then(|o| super::owner::gyro(config, o)).is_some_and(|g| !g.enabled);
+        rows.extend(TOOLS.iter().filter(|(_, make)| !(no_gyro && make().is_gyro())).map(choice));
     }
     if at.slot.unsettable() && at.is_top() {
         rows.push(Row::apply("Not set", move |c| Act::changed_if(set_action(c, at, None)).then(Nav::Back(1))));
@@ -171,7 +173,7 @@ pub(super) fn rows(config: &Config, at: ActionAt) -> Vec<Row> {
 }
 
 /// The settings of the wrapper or macro `current` is, first on its page.
-fn wrapper_rows(at: ActionAt, current: &ButtonAction) -> Vec<Row> {
+fn wrapper_rows(config: &Config, at: ActionAt, current: &ButtonAction) -> Vec<Row> {
     let Some(inner) = at.child(0) else { return Vec::new() };
     match current {
         ButtonAction::Toggle(t) => vec![
@@ -206,6 +208,8 @@ fn wrapper_rows(at: ActionAt, current: &ButtonAction) -> Vec<Row> {
             rows
         }
         ButtonAction::Multi(parts) => vec![Row::open(format!("Several at once: {} actions", parts.len()), Page::Multi(at))],
+        // In a toggle a macro always loops until the toggle turns it off, so there's no choice.
+        ButtonAction::Macro { .. } if looped_by_toggle(config, at) => vec![Row::note("Repeats while held: it's in a toggle, so it always does.")],
         ButtonAction::Macro { repeat, .. } => vec![Row::toggle("Repeats while held", *repeat, move |c, on| {
             edit(c, at, |a| match a {
                 ButtonAction::Macro { repeat, .. } => set(repeat, on),

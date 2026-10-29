@@ -123,8 +123,8 @@ fn rows_join_their_glyphs_by_shape() {
 fn gestures_and_combos_are_listed_after_the_inputs() {
     let mut p = profile();
     p.gestures.insert(Button::South, Gestures { double_tap: Some(ButtonAction::Keys(vec!["KEY_F".into()])), ..Default::default() });
-    p.combos.push(Combo { buttons: vec![Button::North, Button::West], action: ButtonAction::Keys(vec!["KEY_R".into()]) });
-    p.combos.push(Combo { buttons: vec![Button::North, Button::Guide], action: ButtonAction::Keys(vec!["KEY_X".into()]) });
+    p.combos.push(Combo { buttons: vec![Button::North, Button::West], action: ButtonAction::Keys(vec!["KEY_R".into()]), window_ms: None });
+    p.combos.push(Combo { buttons: vec![Button::North, Button::Guide], action: ButtonAction::Keys(vec!["KEY_X".into()]), window_ms: None });
     let rows = mapping_rows(&p);
     assert_eq!(row_of(&rows, &[btn(Button::South)]).map(|r| r.text), Some("{keyboard:e}".into()));
     assert!(rows.iter().any(|r| r.inputs == [btn(Button::South)] && r.text == "{keyboard:f}" && r.shape == RowShape::Gesture(GestureKind::DoubleTap)));
@@ -137,7 +137,7 @@ fn gestures_and_combos_are_listed_after_the_inputs() {
 fn a_gesture_or_combo_row_can_be_renamed_and_hidden() {
     let mut p = profile();
     p.gestures.insert(Button::South, Gestures { double_tap: Some(ButtonAction::Keys(vec!["KEY_F".into()])), ..Default::default() });
-    p.combos.push(Combo { buttons: vec![Button::North, Button::West], action: ButtonAction::Keys(vec!["KEY_R".into()]) });
+    p.combos.push(Combo { buttons: vec![Button::North, Button::West], action: ButtonAction::Keys(vec!["KEY_R".into()]), window_ms: None });
     let gesture = RowKey::Row(RowId::Gesture(btn(Button::South), GestureKind::DoubleTap));
     let combo = RowKey::Row(RowId::Combo(combo_inputs(&[Button::North, Button::West])));
     p.guide.set_text(gesture.clone(), "Reload".into());
@@ -153,7 +153,7 @@ fn a_gesture_or_combo_row_can_be_renamed_and_hidden() {
 fn edits_to_gestures_and_combos_roundtrip_under_readable_keys() {
     let mut p = profile();
     p.gestures.insert(Button::South, Gestures { double_tap: Some(ButtonAction::Keys(vec!["KEY_F".into()])), ..Default::default() });
-    p.combos.push(Combo { buttons: vec![Button::North, Button::West], action: ButtonAction::Keys(vec!["KEY_R".into()]) });
+    p.combos.push(Combo { buttons: vec![Button::North, Button::West], action: ButtonAction::Keys(vec!["KEY_R".into()]), window_ms: None });
     p.guide.set_text(RowKey::Row(RowId::Gesture(btn(Button::South), GestureKind::DoubleTap)), "Reload".into());
     p.guide.set_hidden(RowKey::Row(RowId::Combo(combo_inputs(&[Button::North, Button::West]))), true);
     let text = toml::to_string_pretty(&p.guide).unwrap();

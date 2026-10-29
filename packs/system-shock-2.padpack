@@ -119,9 +119,8 @@ accel = 0.5
 accel_ramp_ms = 350
 y_scale = 0.75
 
-[profiles.left_trigger.action.button]
-threshold = 0.3
-action = "gyro_clutch"
+[profiles.left_trigger]
+action = {gamepad = "Left"}
 
 [profiles.right_trigger.action.button]
 threshold = 0.3

@@ -118,12 +118,13 @@ impl App {
         rows.extend(input_settings(s, &edit));
 
         let appearance_open = self.open_log_appearance.contains(&i);
-        rows.push(labeled("", appearance_row(appearance_open, Message::ToggleLogAppearance(i), StageTarget::Log(i))));
+        let mut look = Vec::new();
         if appearance_open {
             let e = edit.clone();
-            rows.push(style_editor(&o.style, Rc::new(move |style| e(&|o| o.style = style.clone()))));
-            rows.extend(self.spot_note(o.style.position, false));
+            look.push(text_style_editor(&o.style, Rc::new(move |style| e(&|o| o.style = style.clone()))));
+            look.extend(self.spot_note(o.style.position, false));
         }
+        rows.push(appearance_row(appearance_open, Message::ToggleLogAppearance(i), StageTarget::Log(i), look));
         let sample = crate::inputlog::Inputs::sample();
         let now = sample.now.unwrap_or_else(std::time::Instant::now);
         let glyphs = Glyphs { family: self.config.info_glyphs, nintendo_layout: self.nintendo_layout() };

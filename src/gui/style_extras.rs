@@ -37,7 +37,7 @@ pub(super) fn typography_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>)
 }
 
 /// The panel's picture, its lines between items, its corner frame and vignette.
-pub(super) fn ornament_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a, Message> {
+pub(super) fn ornament_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>, items: bool) -> Element<'a, Message> {
     let picture = optional(
         &Slot {
             label: "Background picture",
@@ -77,9 +77,14 @@ pub(super) fn ornament_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -
         style,
         on_change,
     );
-    column![text("    Ornaments").size(14).color(MUTED_COLOR), picture, bevel_rows(style, on_change), dividers, frame, vignette, filter_rows(style, on_change)]
-    .spacing(8)
-    .into()
+    column![text("    Ornaments").size(14).color(MUTED_COLOR), picture]
+        .extend(items.then(|| bevel_rows(style, on_change)))
+        .extend(items.then_some(dividers))
+        .push(frame)
+        .push(vignette)
+        .push(filter_rows(style, on_change))
+        .spacing(8)
+        .into()
 }
 
 /// The 3D buttons.

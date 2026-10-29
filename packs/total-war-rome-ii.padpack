@@ -101,7 +101,7 @@ threshold = 0.3
 action = { mouse = "Left" }
 
 [profiles.gyro]
-mode = "off"
+enabled = false
 horizontal = "yaw"
 invert_x = false
 invert_y = false

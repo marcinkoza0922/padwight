@@ -251,7 +251,7 @@ These are the game's default PC keys, written from memory and not checked in the
 "button:DpadUp" = { text = "{icon:messages} Chat" }
 "button:Select" = { text = "Objectives · stats" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]
@@ -388,7 +388,7 @@ These are the game's default PC keys, written from memory and not checked in the
 "button:DpadUp" = { text = "{icon:messages} Chat" }
 "button:Select" = { text = "Objectives · stats" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]
