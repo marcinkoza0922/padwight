@@ -34,7 +34,7 @@ impl Daemon {
             Some(Preview::Log(i)) => {
                 if let Some(o) = game.logs.get(i) {
                     let glyphs = Glyphs { family: values.family, nintendo_layout: values.nintendo_layout };
-                    let view = crate::inputlog::Inputs::sample_view(&o.source, &o.style, glyphs);
+                    let view = crate::inputlog::Inputs::sample_view(o, &o.style, glyphs);
                     logs.retain(|v| v.name != o.name);
                     logs.push(LogView { name: o.name.clone(), opacity: 1.0, ..view });
                 }

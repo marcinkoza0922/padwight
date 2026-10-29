@@ -66,6 +66,7 @@ fn built_in_modes_are_never_stored_but_every_game_has_them() {
 fn log_overlays_roundtrip_and_old_configs_load_without_them() {
     let mut config = Config::default();
     let mut log = LogOverlay::new("Inputs");
+    log.heading = "Pressed".into();
     let s = log.source.settings_mut();
     (s.tracking.device, s.newest, s.fade_after) = (Some(1), LogEnd::Bottom, 0.0);
     s.tracking.set_tracked(TrackedInput::Stick(Stick::Right), false);

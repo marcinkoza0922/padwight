@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{Entry, Input};
 use crate::{
-    config::{CurrentInput, InputLogSettings, InputTracking, LogEnd, LogKind, LogSource, OverlayStyle, Stick, TrackedInput},
+    config::{CurrentInput, InputLogSettings, InputTracking, LogEnd, LogKind, LogOverlay, OverlayStyle, Stick, TrackedInput},
     info::{Glyphs, PadFamily, Segment, button_glyph, glyph, key_glyph, mouse_glyph, trigger_glyph},
 };
 
@@ -30,6 +30,9 @@ pub struct LogView {
     pub style: OverlayStyle,
     /// 1 normally, falling to 0 as the overlay fades out.
     pub opacity: f32,
+    /// A title above the lines; none when empty.
+    #[serde(default)]
+    pub heading: String,
     /// In drawing order, top first.
     pub lines: Vec<LogLine>,
     pub show_labels: bool,
@@ -214,7 +217,7 @@ pub fn log_view(entries: &[Entry], s: &InputLogSettings, style: &OverlayStyle, g
     if s.newest == LogEnd::Top {
         lines.reverse();
     }
-    LogView { name: String::new(), style: style.clone(), opacity: 1.0, lines, show_labels: s.show_labels, show_holds: s.show_holds }
+    LogView { name: String::new(), style: style.clone(), opacity: 1.0, heading: String::new(), lines, show_labels: s.show_labels, show_holds: s.show_holds }
 }
 
 /// A log of modes and layers: one line per entry, newest at the end its settings name. A
@@ -235,7 +238,7 @@ pub fn shifts_view(entries: &[Entry], s: &InputLogSettings, style: &OverlayStyle
     if s.newest == LogEnd::Top {
         lines.reverse();
     }
-    LogView { name: String::new(), style: style.clone(), opacity: 1.0, lines, show_labels: false, show_holds: s.show_holds }
+    LogView { name: String::new(), style: style.clone(), opacity: 1.0, heading: String::new(), lines, show_labels: false, show_holds: s.show_holds }
 }
 
 /// When a log of modes and layers next changes on its own: as a line starts to fade, then
@@ -343,15 +346,16 @@ impl Inputs {
 
     /// What the settings previews show of a log overlay's source: made-up input for an input
     /// log, keys and clicks for an output log, a mode and layers for a log of those.
-    pub fn sample_view(source: &LogSource, style: &OverlayStyle, glyphs: Glyphs) -> LogView {
+    pub fn sample_view(o: &LogOverlay, style: &OverlayStyle, glyphs: Glyphs) -> LogView {
         let sample = Inputs::sample();
         let now = sample.now.unwrap_or_else(Instant::now);
-        let s = source.settings();
-        match source.kind() {
+        let s = o.source.settings();
+        let view = match o.source.kind() {
             LogKind::Input => log_view(&sample.entries(None), s, style, glyphs, now),
             LogKind::Output => log_view(&sample_output(now), s, style, glyphs, now),
             LogKind::Shifts => shifts_view(&sample_shifts(now), s, style, glyphs, now),
-        }
+        };
+        LogView { heading: o.heading.clone(), ..view }
     }
 
     /// Made-up input for the settings previews: a combo, a mashed button, then a fireball

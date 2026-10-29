@@ -14,6 +14,9 @@ pub struct LogOverlay {
     /// Shown whenever a profile of its game is active, rather than only by `ShowLog`.
     #[serde(default)]
     pub always: bool,
+    /// A title above the lines, when not empty.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub heading: String,
     /// Seconds it stays after the action showing it lets go, fading out at the end.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub linger: Option<f32>,
@@ -25,7 +28,7 @@ pub struct LogOverlay {
 
 impl LogOverlay {
     pub fn new(name: &str) -> Self {
-        LogOverlay { name: name.into(), always: false, linger: None, style: OverlayStyle::log(), source: LogSource::default() }
+        LogOverlay { name: name.into(), heading: String::new(), always: false, linger: None, style: OverlayStyle::log(), source: LogSource::default() }
     }
 }
 

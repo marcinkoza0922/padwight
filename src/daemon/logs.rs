@@ -188,7 +188,7 @@ impl Daemon {
                     LogKind::Shifts => inputlog::shifts_view(&entries, s, &o.style, glyphs, now),
                     _ => inputlog::log_view(&entries, s, &o.style, glyphs, now),
                 };
-                LogView { name: o.name.clone(), opacity: *opacity, ..view }
+                LogView { name: o.name.clone(), opacity: *opacity, heading: o.heading.clone(), ..view }
             })
             .filter(|v| !v.lines.is_empty())
             .collect();

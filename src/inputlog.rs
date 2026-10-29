@@ -246,7 +246,7 @@ impl InputLog {
     }
 
     /// Records what the mappings sent as a keyboard and mouse: a key or a mouse button going
-    /// down or up, or a turn of the wheel (a tap). Returns whether the log changed.
+    /// down or up, a turn of the wheel (a tap), or a stick or trigger of the virtual pad moving. Returns whether the log changed.
     pub fn output(&mut self, ev: &crate::output::OutEvent, now: Instant) -> bool {
         use crate::output::OutEvent;
         match *ev {
@@ -276,7 +276,8 @@ impl InputLog {
                 true
             }
             OutEvent::PadButton(b, pressed) => self.event(InputEvent::Button(b, pressed), Thresholds::default(), now),
-            OutEvent::PadAxis(..) | OutEvent::MouseMove(..) | OutEvent::MouseTo(..) => false,
+            OutEvent::PadAxis(axis, v) => self.event(InputEvent::Axis(axis, v), Thresholds::default(), now),
+            OutEvent::MouseMove(..) | OutEvent::MouseTo(..) => false,
         }
     }
 

@@ -15,6 +15,7 @@ fn view(lines: Vec<Vec<LogCell>>) -> LogView {
         name: String::new(),
         style: OverlayStyle::log(),
         opacity: 1.0,
+        heading: String::new(),
         lines: lines.into_iter().map(|cells| LogLine { opacity: 1.0, cells }).collect(),
         show_labels: true,
         show_holds: true,
@@ -46,6 +47,15 @@ fn labels_and_hold_times_make_a_cell_taller() {
     v.show_labels = false;
     v.show_holds = false;
     assert_eq!(laid(&v, &Fit::contents()).0, bare);
+}
+
+#[test]
+fn a_heading_sits_over_the_lines() {
+    let mut v = view(vec![vec![cell(None, None, true, 1)]]);
+    let bare = laid(&v, &Fit::contents()).0;
+    v.heading = "Sent".into();
+    let headed = laid(&v, &Fit::contents()).0;
+    assert!(headed.y > bare.y + 10.0, "{headed:?} {bare:?}");
 }
 
 #[test]

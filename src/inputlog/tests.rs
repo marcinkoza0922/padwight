@@ -306,6 +306,20 @@ fn a_log_of_shifts_has_a_line_per_entry_and_fades_them() {
 }
 
 #[test]
+fn output_logs_record_the_virtual_pad_sticks_and_triggers() {
+    use crate::{input::Axis, output::OutEvent};
+    let t0 = Instant::now();
+    let at = |ms: u64| t0 + Duration::from_millis(ms);
+    let mut log = InputLog::default();
+    assert!(log.output(&OutEvent::PadAxis(Axis::LeftX, 1.0), t0));
+    assert!(log.output(&OutEvent::PadAxis(Axis::RightTrigger, 1.0), at(10)));
+    assert!(log.output(&OutEvent::PadAxis(Axis::LeftX, 0.0), at(100)));
+    let inputs: Vec<_> = log.entries().iter().map(|e| e.input.clone()).collect();
+    assert_eq!(inputs, [Input::Direction(Some(Stick::Left), Dir::Right), Input::Trigger(Trigger::Right)]);
+    assert!(log.entries()[0].released.is_some() && log.entries()[1].released.is_none());
+}
+
+#[test]
 fn output_logs_show_keys_and_ignore_nothing() {
     let t0 = Instant::now();
     let mut log = InputLog::default();

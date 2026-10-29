@@ -92,6 +92,9 @@ pub(super) fn log_rows(config: &crate::config::Config, i: usize) -> Vec<Row> {
                 true
             })
         }),
+        Row::text(format!("Heading: {}", if o.heading.is_empty() { "none" } else { &o.heading }), "Heading of the overlay", o.heading.clone(), move |c, typed| {
+            log_mut(c, i).is_some_and(|o| set(&mut o.heading, typed.trim().to_string()))
+        }),
         Row::toggle("Always on screen", o.always, move |c, on| log_mut(c, i).is_some_and(|o| set(&mut o.always, on))),
     ];
     if !o.always {

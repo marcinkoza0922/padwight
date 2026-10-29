@@ -598,7 +598,7 @@ impl App {
                     ItemKind::Log => {
                         let o = &items.logs[i];
                         let glyphs = crate::info::Glyphs { family: self.config.info_glyphs, nintendo_layout: self.nintendo_layout() };
-                        let view = crate::inputlog::Inputs::sample_view(&o.source, &preview_style(&o.style), glyphs);
+                        let view = crate::inputlog::Inputs::sample_view(o, &preview_style(&o.style), glyphs);
                         (o.name.clone(), format!("{} · {} lines", o.source.kind().name().to_lowercase(), o.source.settings().lines), Some(preview(crate::overlay::draw::log_panel(&view, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still()))))
                     }
                     ItemKind::Layer | ItemKind::Mode => {

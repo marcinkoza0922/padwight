@@ -114,6 +114,10 @@ impl App {
                 "Lists",
                 dropdown(LogKind::ALL, Some(kind), move |k| on_kind(&|o| o.source = o.source.with_kind(k))).width(200).into(),
             ),
+            labeled("Heading", {
+                let e = edit.clone();
+                field("None", &o.heading).on_input(move |h| e(&|o| o.heading = h.clone())).width(240).into()
+            }),
             self.view_log_shown(o, &edit),
         ];
         if !o.always {
@@ -143,7 +147,7 @@ impl App {
         }
         rows.push(appearance_row(appearance_open, Message::ToggleLogAppearance(i), StageTarget::Log(i), look));
         let glyphs = Glyphs { family: self.config.info_glyphs, nintendo_layout: self.nintendo_layout() };
-        let view = crate::inputlog::Inputs::sample_view(&o.source, &preview_style(&o.style), glyphs);
+        let view = crate::inputlog::Inputs::sample_view(o, &preview_style(&o.style), glyphs);
         rows.push(preview(crate::overlay::draw::log_panel(&view, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         column(rows).spacing(12).into()
     }
