@@ -942,24 +942,19 @@ impl App {
             ));
         }
 
-        // Appearance, and a live preview with the fallback glyphs.
+        rows.push(info_cells_editor(i, o, self.config.info_glyphs, self.preview_font()));
+
+        // Appearance, with a live preview with the fallback glyphs under it.
         let appearance_open = self.open_info_appearance.contains(&i);
-        rows.push(labeled("", appearance_row(appearance_open, Message::ToggleInfoAppearance(i), StageTarget::Info(i))));
+        let mut look = Vec::new();
         if appearance_open {
-            rows.push(style_editor(&o.style, Rc::new(move |s| Message::SetInfoStyle(i, s))));
-            rows.extend(self.spot_note(o.style.position, false));
+            look.push(style_editor(&o.style, Rc::new(move |s| Message::SetInfoStyle(i, s))));
+            look.extend(self.spot_note(o.style.position, false));
         }
-        // As on a menu, the preview sits under the Appearance editor while that's open, to show
-        // each change, and after the cells otherwise.
+        rows.push(appearance_row(appearance_open, Message::ToggleInfoAppearance(i), StageTarget::Info(i), look));
         let sample = InfoOverlay { style: preview_style(&o.style), ..o.clone() };
         let view = crate::info::resolve(&sample, &crate::info::Live::sample(self.config.info_glyphs).with_layout(self.nintendo_layout()));
-        let mut shown = Some(preview(crate::overlay::draw::info_panel(&view, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
-        if appearance_open && let Some(p) = shown.take() {
-            rows.push(p);
-        }
-
-        rows.push(info_cells_editor(i, o, self.config.info_glyphs, self.preview_font()));
-        rows.extend(shown);
+        rows.push(preview(crate::overlay::draw::info_panel(&view, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         rows.extend(self.view_info_input(i, o));
         column(rows).spacing(10).into()
     }
@@ -1051,25 +1046,22 @@ impl App {
     pub(super) fn view_menu_editor<'a>(&'a self, mi: usize, menu: &'a Menu, names: &Names) -> Element<'a, Message> {
         let mut rows = menu_basics(mi, menu);
 
-        // Appearance, with a live preview.
+        rows.push(self.menu_items_editor(mi, menu, names, false));
+
+        // Appearance, with a live preview under it.
         let appearance_open = self.open_appearance.contains(&Some(mi));
-        rows.push(labeled("", appearance_row(appearance_open, Message::ToggleAppearance(Some(mi)), StageTarget::Menu(mi))));
+        let mut look = Vec::new();
         if appearance_open {
-            rows.push(style_editor(&menu.style, Rc::new(move |s| Message::SetMenuStyle(mi, s))));
-            rows.extend(self.spot_note(menu.style.position, true));
+            look.push(style_editor(&menu.style, Rc::new(move |s| Message::SetMenuStyle(mi, s))));
+            look.extend(self.spot_note(menu.style.position, true));
         }
-        // The preview sits under the Appearance editor while that's open, to show each change,
-        // and after the items otherwise, so a big menu doesn't push them out of sight.
-        let mut shown = MenuSession::open(std::slice::from_ref(menu), &menu.name, Opener { buttons: vec![Button::LeftBumper], ..Opener::default() })
+        rows.push(appearance_row(appearance_open, Message::ToggleAppearance(Some(mi)), StageTarget::Menu(mi), look));
+        let shown = MenuSession::open(std::slice::from_ref(menu), &menu.name, Opener { buttons: vec![Button::LeftBumper], ..Opener::default() })
             .and_then(|s| s.view(std::slice::from_ref(menu)))
             .map(|view| {
                 let view = crate::menu::MenuView { style: menu_preview_style(&menu.style), ..view };
                 preview(crate::overlay::draw::menu_panel(&view, self.preview_font(), self.menu_look(), &crate::overlay::fit::Fit::contents()))
             });
-        if appearance_open && let Some(p) = shown.take() {
-            rows.push(p);
-        }
-        rows.push(self.menu_items_editor(mi, menu, names, false));
         rows.extend(shown);
         column(rows).spacing(10).into()
     }
