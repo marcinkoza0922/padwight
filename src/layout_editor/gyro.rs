@@ -225,7 +225,7 @@ fn curve_rows(owner: Owner, curve: &SpeedCurve) -> Vec<Row> {
 /// switching on and off and recentering are actions, set on the input that should do them.
 fn activation_rows(owner: Owner, g: &GyroConfig) -> Vec<Row> {
     let mut rows = vec![
-        switch(owner, "Rumble on gyro on / off", g.toggle_rumble, |g, on| set(&mut g.toggle_rumble, on)),
+        switch(owner, "Rumble on gyro active / inactive", g.toggle_rumble, |g, on| set(&mut g.toggle_rumble, on)),
     ];
     let pause = g.pause_with_stick;
     let label = pause.map_or("off".into(), stick_name);

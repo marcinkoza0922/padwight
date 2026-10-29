@@ -215,7 +215,7 @@ smoothing_threshold = 8.0 # optional: rotation slower than this (degrees/second)
 smoothing_ms = 125        # optional: over this long
 pause_with_stick = "Right" # optional: gyro pauses while this stick is pushed
 auto_calibrate = false    # optional: re-measure drift whenever the controller is set down still
-toggle_rumble = false     # optional: a short rumble when the gyro on / off action switches it
+toggle_rumble = false     # optional: a short rumble when the gyro active / inactive action switches it
 
 [profiles.gyro.mode.mouse]          # or: stick = {...}, position = {...}, steering = {...}
 sensitivity = 15.0                  # pixels per degree turned

@@ -137,7 +137,7 @@ On the game's screens the right stick moves the cursor, with RT and A as the cli
 On the **Sticks & triggers** tab, set both triggers to work as a button with a **threshold** of 0.30:
 
 - **Right trigger (RT)**: **Mouse click** **Left** (fire).
-- **Left trigger (LT)**: **Gyro clutch (off while held)**.
+- **Left trigger (LT)**: **Gyro inactive while held**.
 
 Deus Ex has no secondary fire, and its right mouse button is Use, which went on A. That leaves LT for the gyro clutch. It does nothing in this profile, which has no gyro, but the gyro profiles copied from it in Steps 11 and 12 keep it.
 

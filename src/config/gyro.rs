@@ -147,7 +147,7 @@ pub struct GyroConfig {
     #[serde(default = "yes", skip_serializing_if = "is_true")]
     pub enabled: bool,
     /// Whether gyro is active from the start, once enabled. When it isn't, an action turns it
-    /// on: Gyro on / off, or Gyro while held. Left out of a save when it is.
+    /// on: Gyro active / inactive, or Gyro while held. Left out of a save when it is.
     #[serde(default = "yes", skip_serializing_if = "is_true")]
     pub starts_active: bool,
     #[serde(default = "default_mode")]

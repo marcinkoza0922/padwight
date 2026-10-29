@@ -271,7 +271,7 @@ The gyro's real-world turn assumes a full turn of 4000 pixels at the default mou
 "button:DpadRight" = { text = "{icon:person} Squadmate 2: attack · move" }
 "combo:button:LeftBumper+button:RightBumper" = { text = "{icon:star} Quick slots" }
 "combo:button:Select+button:Start" = { text = "Pause gyro (hold)" }
-"combo:button:LeftStick+button:RightStick" = { text = "Gyro on / off" }
+"combo:button:LeftStick+button:RightStick" = { text = "Gyro active / inactive" }
 "gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles]]
@@ -415,7 +415,7 @@ The gyro's real-world turn assumes a full turn of 4000 pixels at the default mou
 "button:DpadRight" = { text = "{icon:person} Squadmate 2: attack · move" }
 "combo:button:LeftBumper+button:RightBumper" = { text = "{icon:star} Quick slots" }
 "combo:button:Select+button:Start" = { text = "Pause gyro (hold)" }
-"combo:button:LeftStick+button:RightStick" = { text = "Gyro on / off" }
+"combo:button:LeftStick+button:RightStick" = { text = "Gyro active / inactive" }
 "gesture:button:LeftStick:long_press" = { text = "Recenter gyro" }
 
 [[modes]]

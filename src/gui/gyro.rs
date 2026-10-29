@@ -98,7 +98,7 @@ fn header<'a>(cfg: &GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Messa
     if cfg.enabled {
         options.push(with_help(
             checkbox(cfg.starts_active).label("Starts active").on_toggle(move |v| with(&|c| c.starts_active = v)),
-            "Untick it and gyro waits until a Gyro on / off or Gyro while held action turns it on.",
+            "Untick it and gyro waits until a Gyro active / inactive or Gyro while held action turns it on.",
         ));
     }
     header_with("Gyro".into(), enabled, options)
@@ -234,8 +234,8 @@ fn curve_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(
 /// recentering are actions, set on the input that should do them.
 fn activation_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Message + Copy + 'a) -> Column<'a, Message> {
     let starts = row![
-        checkbox(cfg.toggle_rumble).label("Rumble on gyro on / off").on_toggle(move |v| with(&|c| c.toggle_rumble = v)),
-        text("assign Gyro on / off, clutch, hold and recenter to any button, gesture, combo or menu item").size(12).color(MUTED_COLOR),
+        checkbox(cfg.toggle_rumble).label("Rumble on gyro active / inactive").on_toggle(move |v| with(&|c| c.toggle_rumble = v)),
+        text("assign Gyro active / inactive, clutch, hold and recenter to any button, gesture, combo or menu item").size(12).color(MUTED_COLOR),
     ]
     .spacing(14)
     .align_y(Alignment::Center);

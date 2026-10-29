@@ -243,7 +243,7 @@ These keys are written from memory and not checked in the game (crouch, the gren
 "button:Select" = { text = "{icon:bag} Inventory" }
 "gesture:button:Select:long_press" = { text = "{icon:map} Map" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]
@@ -376,7 +376,7 @@ These keys are written from memory and not checked in the game (crouch, the gren
 "button:Select" = { text = "{icon:bag} Inventory" }
 "gesture:button:Select:long_press" = { text = "{icon:map} Map" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles.guide.merged]]

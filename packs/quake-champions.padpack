@@ -242,7 +242,7 @@ These keys and weapon slots are written from memory and not checked in the game 
 "button:DpadLeft" = { text = "{icon:rifle} Super shotgun" }
 "button:Select" = { text = "Scoreboard" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [[profiles]]
@@ -371,7 +371,7 @@ These keys and weapon slots are written from memory and not checked in the game 
 "button:DpadLeft" = { text = "{icon:rifle} Super shotgun" }
 "button:Select" = { text = "Scoreboard" }
 "button:Start" = { text = "Menu" }
-"gesture:button:Start:long_press" = { text = "Gyro on / off" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
 "gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
 
 [[layers]]

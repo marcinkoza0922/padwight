@@ -26,9 +26,9 @@ Gyro belongs to a profile. Keep your plain profile and make a copy for gyro: on 
 
 **Enabled** at the top turns gyro on for the profile, and **Starts active** sets whether it begins on. What switches it is an action, which you put on any button, gesture, combo or menu item:
 
-- **Gyro clutch (off while held)**: hold it to lift the controller and bring it back without the view turning.
-- **Gyro on while held**: gyro only while you hold the aim button. Untick **Starts active** too.
-- **Gyro on / off**: each press switches gyro on or off. **Rumble on gyro on / off** gives a short buzz when it does.
+- **Gyro inactive while held**: hold it to lift the controller and bring it back without the view turning.
+- **Gyro active while held**: gyro only while you hold the aim button. Untick **Starts active** too.
+- **Gyro active / inactive**: each press switches gyro on or off. **Rumble on gyro active / inactive** gives a short buzz when it does.
 - **Recenter gyro**: counts the way the controller points now as straight ahead (steering and position modes), and clears leftover motion.
 
 Most games use every button already, so a combo, a gesture or a back paddle makes a good clutch.
