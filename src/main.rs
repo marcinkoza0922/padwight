@@ -25,6 +25,8 @@ mod keycode;
 mod keyword_icon;
 mod launchers;
 mod library;
+#[cfg(target_os = "linux")]
+mod run;
 mod sessions;
 mod titles;
 mod media;
@@ -67,6 +69,8 @@ usage: padwight [command]
 commands:
   gui              open the settings window (default)
   daemon [--debug] run the background remapping service (--debug lets `debug --attach` inject controllers)
+  run [--title <id>] [--setup <name>] -- <command>
+                   start a game as its parent, for a store's launch options (Linux)
   status           show daemon status and detected controllers
   doctor [--explain] check the permissions padwight needs and say how to fix them (Linux)
   enable|disable   turn remapping on or off
@@ -83,6 +87,10 @@ commands:
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let args: Vec<&str> = args.iter().map(String::as_str).collect();
+    #[cfg(target_os = "linux")]
+    if std::env::args().next().is_some_and(|a| a.rsplit('/').next() == Some("padwight-run")) {
+        std::process::exit(run::run(&args)?);
+    }
     if matches!(args.as_slice(), [] | ["gui"] | ["overlay"] | ["daemon", ..]) {
         leave_own_console();
     }
@@ -90,6 +98,8 @@ fn main() -> Result<()> {
         [] | ["gui"] => gui::run().map_err(Into::into),
         ["daemon"] => daemon::run(false),
         ["daemon", "--debug"] => daemon::run(true),
+        #[cfg(target_os = "linux")]
+        ["run", rest @ ..] => std::process::exit(run::run(rest)?),
         ["status"] => status(),
         #[cfg(target_os = "linux")]
         ["doctor", rest @ ..] => doctor::run(rest),

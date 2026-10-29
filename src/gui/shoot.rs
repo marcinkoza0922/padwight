@@ -319,7 +319,7 @@ fn tab_word(tab: GameTab) -> &'static str {
 fn titles_demo(app: &mut App) {
     use crate::config::{Store, Title};
     let title = |source: Store, id: &str, name: &str, runner: &str, setup: &str, installed| Title {
-        id: format!("{}-{id}", source.label().to_lowercase()), name: name.into(), source, store_id: id.into(), runner: runner.into(), setup: setup.into(), hidden: false, installed,
+        id: format!("{}-{id}", source.label().to_lowercase()), name: name.into(), source, store_id: id.into(), runner: runner.into(), setup: setup.into(), hidden: false, installed, env: Default::default(), hide_controllers: false,
     };
     app.config.titles = vec![
         title(Store::Steam, "1245620", "ELDEN RING", "", "Elden Ring", true),

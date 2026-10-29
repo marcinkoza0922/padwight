@@ -8,6 +8,7 @@ Padwight runs in the background and changes what your controller does. It can ma
 - make the sticks move the mouse, scroll, or press keys in a ring of sectors
 - add macros, cycles, layers and on-screen menus for harder controls
 - show an on-screen keyboard, or info overlays such as a cheat sheet, over a game
+- start games from Steam, Heroic and Lutris, and follow them from the moment they launch (see [Launching games](launching-games.md))
 
 > **Tip:** games see Padwight's virtual controller, keyboard and mouse, not your real controller. That's why a game may list two controllers. See [Troubleshooting](troubleshooting.md).
 

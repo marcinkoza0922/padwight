@@ -422,6 +422,33 @@ Each phase can be merged on its own.
      opens the link).
 3. **The wrapper.** `padwight-run`, `Request::Launch`, sessions from the wrapper, per-game
    variables, Hide real controllers. The guide, with its screenshots.
+   Built (branch `launcher-phase1`, on top of Phase 2): `src/run.rs`, `Request::Run` and
+   `Response::Launched`, `daemon/launches.rs` (`run_game`, `run_ended`), `Title::env` and
+   `hide_controllers`, the details panel on the Games page, `docs/manual/launching-games.md`.
+   Deviations and findings:
+   - **A subcommand, not a second program**: `padwight run [--title <id>] [--setup <name>] -- <command>`.
+     A copy or link of the binary named `padwight-run` behaves the same.
+   - **The connection is the signal.** The wrapper sends `Request::Run`, reads the environment to
+     add, and holds the socket; the daemon takes it closing as the game's end. There is no
+     "stop" message back: Stop and force quit signal the wrapper like any root, and it passes
+     SIGTERM to everything under it, then SIGKILL after `quit::GRACE`. A Flatpak daemon will need
+     a message there (Phase 5), since it can't signal host processes.
+   - **No systemd scope**: orphans are handed to the wrapper (a child subreaper), so it finds the
+     tree by `/proc` parent links and needs nothing else.
+   - **It waits for the whole tree**, as Steam's `reaper` does, and exits with the command's status.
+   - **A title is told by the store's variables** (`SteamAppId`, `SteamGameId`, `STEAM_COMPAT_APP_ID`,
+     `HEROIC_APP_NAME`/`HEROIC_APP_RUNNER`, `GAME_NAME`) unless `--title` names it; a game no title
+     names gets an unsaved `Store::Run` title, played with `--setup` if given. A session that
+     Play already opened for the title is joined rather than replaced.
+   - **Hide real controllers is `SDL_GAMECONTROLLER_IGNORE_DEVICES` only.** Proton's hidraw switch
+     isn't set (not checked), and a real pad whose USB ids the virtual pad presents too is left
+     out of the list, since SDL would ignore both.
+   - **Library packs' suggested variables aren't built**; titles take the user's own.
+   - Checked with a fake daemon socket: the environment reaches the game, the wrapper outlives a
+     detached child and returns the command's status, SIGTERM ends a tree that ignores it after
+     the grace. Not checked: Steam's launch-option prefix against the Linux Runtime container,
+     Heroic's wrapper setting and Lutris's command prefix taking arguments, SDL honouring the
+     ignore list, a real daemon (needs uinput), and the guide's screenshots (the page has none).
 4. **Launched-games-only mode.** The setting, the session-only focus handling, the table above.
 5. **The Flatpak.** Play through the portal, `gameprocess_log.txt`, window-class matching for sessions,
    the static wrapper and its host path, the manifest's new read-only paths.

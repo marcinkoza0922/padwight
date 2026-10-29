@@ -37,6 +37,7 @@ impl Found {
             Store::Steam => format!("steam-{}", self.store_id),
             Store::Heroic => format!("heroic-{}-{}", self.runner, self.store_id),
             Store::Lutris => format!("lutris-{}", self.store_id),
+            Store::Run => format!("run-{}", self.store_id),
         }
     }
 }
@@ -72,6 +73,8 @@ pub fn scan(setups: &[(String, Vec<Rule>)], library: &[Listing]) -> Vec<Scanned>
                 setup: String::new(),
                 hidden: false,
                 installed: true,
+                env: Default::default(),
+                hide_controllers: false,
             };
             Scanned { title, setup, library }
         })
@@ -102,7 +105,7 @@ mod tests {
     use super::*;
 
     fn scanned(id: &str, name: &str, setup: Option<&str>) -> Scanned {
-        let title = Title { id: id.into(), name: name.into(), source: Store::Steam, store_id: "1".into(), runner: String::new(), setup: String::new(), hidden: false, installed: true };
+        let title = Title { id: id.into(), name: name.into(), source: Store::Steam, store_id: "1".into(), runner: String::new(), setup: String::new(), hidden: false, installed: true, env: Default::default(), hide_controllers: false };
         Scanned { title, setup: setup.map(str::to_string), library: None }
     }
 

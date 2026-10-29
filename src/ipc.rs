@@ -36,6 +36,9 @@ pub enum Request {
     LaunchTitle(Box<crate::config::Title>),
     /// Ends the game started for the title with this id.
     StopTitle(String),
+    /// `padwight run` starting a game: the reply says what to add to its environment, and the
+    /// connection then stays open for as long as the game runs (see `Response::Launched`).
+    Run(RunRequest),
     /// Lock the active profile so rules and the default profile don't switch it away. Not kept
     /// across restarts, and cleared by any switch of profile.
     SetProfileLock(bool),
@@ -119,7 +122,31 @@ pub enum Response {
     /// The device path of an injected controller.
     Attached(String),
     Lines(Vec<String>),
+    /// What `padwight run` is to add to the game's environment. The daemon watches the
+    /// connection, and the game is over when it closes.
+    Launched(RunReply),
     Error(String),
+}
+
+/// What `padwight run` tells the daemon about the game it is about to start.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct RunRequest {
+    /// The wrapper's own process, the parent of everything the game starts.
+    pub pid: u32,
+    pub command: Vec<String>,
+    /// A title's id (`--title`), else the store's variables below pick one.
+    pub title: Option<String>,
+    /// A setup's name (`--setup`), for a game that is no title.
+    pub setup: Option<String>,
+    /// The store variables the wrapper inherited (`SteamAppId`, `HEROIC_APP_NAME`, …).
+    pub store_env: Vec<(String, String)>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct RunReply {
+    pub env: Vec<(String, String)>,
+    /// What the daemon will call the game, for the wrapper's message.
+    pub name: String,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]

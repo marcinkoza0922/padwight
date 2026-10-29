@@ -45,6 +45,7 @@ fn serve_client(mut conn: &UnixStream, tx: &Tx) -> Result<()> {
         Ok(Request::WatchInput) => return watch_input(conn, tx),
         Ok(Request::WatchOverlay) => return watch_overlay(conn, tx),
         Ok(Request::WatchFeed(pick)) => return watch_feed(conn, tx, pick),
+        Ok(Request::Run(run)) => return serve_run(conn, tx, run),
         Ok(req) => {
             let (reply_tx, reply_rx) = mpsc::channel();
             tx.send(Msg::Ipc { req, reply: reply_tx })?;
@@ -59,6 +60,30 @@ fn serve_client(mut conn: &UnixStream, tx: &Tx) -> Result<()> {
     let mut out = serde_json::to_string(&response)?;
     out.push('\n');
     conn.write_all(out.as_bytes())?;
+    Ok(())
+}
+
+/// Answers `padwight run`, then holds the connection until the wrapper lets go of it (it does when
+/// the game is over, or when it dies), and tells the event loop.
+fn serve_run(mut conn: &UnixStream, tx: &Tx, run: ipc::RunRequest) -> Result<()> {
+    let pid = run.pid;
+    let (reply_tx, reply_rx) = mpsc::channel();
+    tx.send(Msg::Run { req: run, reply: reply_tx })?;
+    let response = reply_rx.recv_timeout(ipc::REPLY_WAIT).unwrap_or_else(|_| Response::Error("the daemon is busy and didn't answer in time".into()));
+    let failed = matches!(response, Response::Error(_));
+    let mut out = serde_json::to_string(&response)?;
+    out.push('\n');
+    conn.write_all(out.as_bytes())?;
+    if failed {
+        return Ok(());
+    }
+    conn.set_read_timeout(None)?;
+    let mut sink = String::new();
+    let mut reader = BufReader::new(conn);
+    while reader.read_line(&mut sink).is_ok_and(|n| n > 0) {
+        sink.clear();
+    }
+    tx.send(Msg::RunEnded(pid))?;
     Ok(())
 }
 
@@ -161,6 +186,24 @@ mod tests {
         let text = reply(&mut client);
         assert!(text.contains("didn't answer in time"), "{text:?}");
         drop(held.join());
+    }
+
+    #[test]
+    fn a_wrapper_is_answered_and_its_connection_closing_ends_its_game() {
+        let (client, server) = UnixStream::pair().unwrap();
+        let (tx, rx) = super::super::inbox::channel().unwrap();
+        let run = ipc::RunRequest { pid: 77, command: vec!["game".into()], ..Default::default() };
+        let serving = thread::spawn(move || serve_run(&server, &tx, run).is_ok());
+        let Ok(Msg::Run { req, reply }) = rx.recv() else { panic!("no run") };
+        assert_eq!(req.pid, 77);
+        reply.send(Response::Launched(ipc::RunReply { env: vec![("A".into(), "b".into())], name: "Game".into() })).unwrap();
+        let mut lines = BufReader::new(client.try_clone().unwrap()).lines();
+        let Response::Launched(got) = serde_json::from_str(&lines.next().unwrap().unwrap()).unwrap() else { panic!("not launched") };
+        assert_eq!(got.env, [("A".to_string(), "b".to_string())]);
+        assert!(rx.try_recv().is_err(), "the game runs while the connection is open");
+        client.shutdown(std::net::Shutdown::Both).unwrap();
+        assert!(matches!(rx.recv(), Ok(Msg::RunEnded(77))));
+        assert!(serving.join().unwrap());
     }
 
     #[test]

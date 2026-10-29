@@ -53,6 +53,7 @@ impl Daemon {
             }
             Request::LaunchTitle(title) => self.launch_title(&title),
             Request::StopTitle(id) => self.stop_title(&id),
+            Request::Run(_) => Response::Error("Run must be the only request".into()),
             Request::SetProfileLock(locked) => {
                 self.profile_locked = locked;
                 Response::Ok

@@ -65,7 +65,7 @@ mod tests {
         let mut config = doom();
         let title = |setup: &str| crate::config::Title {
             id: setup.into(), name: String::new(), source: crate::config::Store::Steam, store_id: "1".into(), runner: String::new(),
-            setup: setup.into(), hidden: false, installed: true,
+            setup: setup.into(), hidden: false, installed: true, env: Default::default(), hide_controllers: false,
         };
         config.titles = vec![title("Doom"), title("Other")];
         assert!(config.rename_game("Doom", "Doom (2016)"));

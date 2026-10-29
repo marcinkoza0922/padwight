@@ -119,6 +119,10 @@ enum Msg {
     Gone { id: u64 },
     Ipc { req: Request, reply: Sender<Response> },
     Watch(Sender<Option<InputSnapshot>>),
+    /// `padwight run` is starting a game; the reply carries its environment.
+    Run { req: ipc::RunRequest, reply: Sender<Response> },
+    /// The connection of the wrapper with this pid closed.
+    RunEnded(u32),
     WatchFeed(Option<String>, Sender<Option<Feeds>>),
     Focus(FocusEvent),
     WatchOverlay(Sender<OverlayFrame>),
@@ -169,6 +173,8 @@ struct Managed {
     uniq: Option<String>,
     /// See `controller_id`; empty for an injected controller.
     id: String,
+    /// USB vendor and product, for hiding the controller from a game (`(0, 0)` if unknown).
+    usb: (u16, u16),
     /// Motion-sensor device feeding this controller's gyro, once found.
     motion: Option<PathBuf>,
     /// Touchpad node of this controller, once found (and taken from the desktop).
@@ -970,6 +976,10 @@ impl Daemon {
                 }
             }
             Msg::WatchFeed(pick, watcher) => self.watch_feed(pick, watcher),
+            Msg::Run { req, reply } => {
+                let _ = reply.send(self.run_game(&req));
+            }
+            Msg::RunEnded(pid) => self.run_ended(pid),
         }
     }
 
@@ -1488,6 +1498,7 @@ impl Daemon {
             #[cfg(target_os = "linux")]
             uniq: None,
             id: String::new(),
+            usb: (0, 0),
             motion: None,
             touchpad: None,
             #[cfg(target_os = "linux")]

@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use iced::widget::{column, row};
 
 use super::*;
-use crate::{config::Title, titles};
+use crate::{config::{Store, Title}, titles};
 
 const LIST_HEIGHT: f32 = 420.0;
 const ROW_HEIGHT: f32 = 40.0;
@@ -27,6 +27,22 @@ pub(super) struct GamesPage {
     help: bool,
     /// Library game (index in `App::library`) that looks like each title that has no setup.
     library: HashMap<String, usize>,
+    /// The variables field as typed for one title, which the parsed variables can't show
+    /// (`NAME=` while the value is still to come).
+    env_draft: Option<(String, String)>,
+}
+
+/// The `NAME=value` words of `text`; words with no name or no `=` are left out.
+fn parse_env(text: &str) -> std::collections::BTreeMap<String, String> {
+    text.split_whitespace().filter_map(|word| word.split_once('=')).filter(|(k, _)| !k.is_empty()).map(|(k, v)| (k.to_string(), v.to_string())).collect()
+}
+
+/// The launch-option line that makes the game start through Padwight.
+fn launch_line(title: &Title) -> String {
+    match title.source {
+        Store::Steam => "padwight run -- %command%".to_string(),
+        _ => format!("padwight run --title {} --", title.id),
+    }
 }
 
 /// Plays a title through the daemon, which follows the game; with no daemon running, the store's
@@ -89,6 +105,18 @@ impl App {
                     title.setup = setup;
                 }
             }
+            Message::SetTitleHideControllers(id, on) => {
+                if let Some(title) = self.config.titles.iter_mut().find(|t| t.id == id) {
+                    title.hide_controllers = on;
+                }
+            }
+            Message::SetTitleEnv(id, text) => {
+                if let Some(title) = self.config.titles.iter_mut().find(|t| t.id == id) {
+                    title.env = parse_env(&text);
+                }
+                self.games_page.env_draft = Some((id, text));
+            }
+            Message::CopyLaunchLine(line) => return iced::clipboard::write(line),
             Message::SetTitleHidden(id, hidden) => {
                 if let Some(title) = self.config.titles.iter_mut().find(|t| t.id == id) {
                     title.hidden = hidden;
@@ -241,6 +269,25 @@ impl App {
         }
         let hidden = title.hidden;
         let id = title.id.clone();
+        let (hide_id, env_id) = (title.id.clone(), title.id.clone());
+        let env_text = match &self.games_page.env_draft {
+            Some((draft_id, text)) if *draft_id == title.id => text.clone(),
+            _ => title.env.iter().map(|(k, v)| format!("{k}={v}")).collect::<Vec<_>>().join(" "),
+        };
+        let line = launch_line(title);
+        let wrapper = column![
+            text("Start through Padwight").size(14),
+            note("Put this line in the game's launch options (Steam), wrapper setting (Heroic) or command prefix (Lutris). It lets Padwight follow the whole game and apply the settings below. Without it they do nothing."),
+            row![
+                container(text(line.clone()).size(13)).padding([4, 8]).style(style::card),
+                button(text("Copy").size(13)).style(style::secondary).on_press(Message::CopyLaunchLine(line)),
+            ]
+            .spacing(8)
+            .align_y(Alignment::Center),
+            checkbox(title.hide_controllers).label("Hide real controllers from the game").on_toggle(move |on| Message::SetTitleHideControllers(hide_id.clone(), on)),
+            field("Variables to set, e.g. PROTON_LOG=1 SDL_JOYSTICK_HIDAPI=0", &env_text).on_input(move |text| Message::SetTitleEnv(env_id.clone(), text)),
+        ]
+        .spacing(8);
         container(
             column![
                 text(title.name.as_str()).size(18),
@@ -253,6 +300,7 @@ impl App {
                 ]
                 .spacing(10)
                 .align_y(Alignment::Center),
+                wrapper,
             ]
             .spacing(10),
         )
@@ -272,7 +320,7 @@ mod tests {
     use crate::{config::Store, gui::tests::*, titles::Scanned};
 
     fn title(id: &str, name: &str, installed: bool) -> Title {
-        Title { id: id.into(), name: name.into(), source: Store::Steam, store_id: "1".into(), runner: String::new(), setup: String::new(), hidden: false, installed }
+        Title { id: id.into(), name: name.into(), source: Store::Steam, store_id: "1".into(), runner: String::new(), setup: String::new(), hidden: false, installed, env: Default::default(), hide_controllers: false }
     }
 
     #[test]
@@ -285,6 +333,23 @@ mod tests {
         assert_eq!(names(&app), ["Aaa", "Mango", "Zebra", "Apple"]);
         let _ = app.update(Message::SetTitleSearch("ma".into()));
         assert_eq!(names(&app), ["Mango"]);
+    }
+
+    #[test]
+    fn launch_settings_are_edited_and_kept_through_an_import() {
+        let mut app = app();
+        app.config.titles = vec![title("a", "Zebra", true)];
+        let _ = app.update(Message::SetTitleHideControllers("a".into(), true));
+        let _ = app.update(Message::SetTitleEnv("a".into(), "PROTON_LOG=1 oops FOO= =x".into()));
+        let t = &app.config.titles[0];
+        assert!(t.hide_controllers);
+        assert_eq!(t.env.iter().map(|(k, v)| format!("{k}={v}")).collect::<Vec<_>>(), ["FOO=", "PROTON_LOG=1"]);
+        let found = Scanned { title: title("a", "Zebra", true), setup: None, library: None };
+        let _ = app.update(Message::TitlesScanned(vec![found]));
+        assert!(app.config.titles[0].hide_controllers && app.config.titles[0].env.len() == 2);
+        assert_eq!(launch_line(&app.config.titles[0]), "padwight run -- %command%");
+        let heroic = Title { source: Store::Heroic, id: "heroic-gog-7".into(), ..title("x", "G", true) };
+        assert_eq!(launch_line(&heroic), "padwight run --title heroic-gog-7 --");
     }
 
     #[test]

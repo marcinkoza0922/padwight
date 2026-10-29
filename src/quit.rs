@@ -12,7 +12,7 @@ pub use windows::{force_quit, is_running};
 use windows::{is_running as alive, parents};
 
 /// How long a game gets to exit after it is asked to before it is killed.
-const GRACE: Duration = Duration::from_secs(3);
+pub(crate) const GRACE: Duration = Duration::from_secs(3);
 
 /// Programs that must never be force quit: the desktop itself, so a stray hold with no
 /// window in front (or the shell focused) can't take the session down.
@@ -69,7 +69,7 @@ fn started_after_parents(listed: &[(u32, u32)], started: impl Fn(u32) -> Option<
 
 /// Every process's parent, from /proc.
 #[cfg(target_os = "linux")]
-fn parents() -> HashMap<u32, u32> {
+pub(crate) fn parents() -> HashMap<u32, u32> {
     let Ok(entries) = fs::read_dir("/proc") else { return HashMap::new() };
     entries
         .flatten()
@@ -86,7 +86,7 @@ fn parents() -> HashMap<u32, u32> {
 }
 
 #[cfg(target_os = "linux")]
-fn signal(pids: &[u32], sig: libc::c_int) {
+pub(crate) fn signal(pids: &[u32], sig: libc::c_int) {
     for pid in pids {
         // SAFETY: `kill` only sends a signal.
         unsafe { libc::kill(*pid as libc::pid_t, sig) };

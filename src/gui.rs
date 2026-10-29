@@ -722,6 +722,11 @@ enum Message {
     /// Title id and the name of the setup that plays it (empty: by rules).
     SetTitleSetup(String, String),
     SetTitleHidden(String, bool),
+    SetTitleHideControllers(String, bool),
+    /// Title id and the text of its variables (`NAME=value`, spaces between).
+    SetTitleEnv(String, String),
+    /// Copy this text (the title's launch-option line) to the clipboard.
+    CopyLaunchLine(String),
     /// The library picker's list scrolled to this offset.
     LibraryScrolled(f32),
     AddEmptyGame(Template),
@@ -1353,7 +1358,10 @@ impl App {
             | Message::TitleOpened(_)
             | Message::StopTitle(_)
             | Message::SetTitleSetup(..)
-            | Message::SetTitleHidden(..) => return self.update_titles(message),
+            | Message::SetTitleHidden(..)
+            | Message::SetTitleHideControllers(..)
+            | Message::SetTitleEnv(..)
+            | Message::CopyLaunchLine(_) => return self.update_titles(message),
             other => return self.update_games(other),
         }
         Task::none()

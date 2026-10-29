@@ -1,6 +1,8 @@
 //! Titles: games that can be launched from the Games page, imported from Steam, Heroic and
 //! Lutris. A title is not a setup (`Game`): it says what to start, and which setup plays it.
 
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 
 use super::{is_true, yes};
@@ -11,6 +13,8 @@ pub enum Store {
     Steam,
     Heroic,
     Lutris,
+    /// Not imported: a game `padwight run` started that no title names.
+    Run,
 }
 
 impl Store {
@@ -19,6 +23,7 @@ impl Store {
             Store::Steam => "Steam",
             Store::Heroic => "Heroic",
             Store::Lutris => "Lutris",
+            Store::Run => "Padwight",
         }
     }
 }
@@ -43,6 +48,12 @@ pub struct Title {
     /// False once the store no longer lists it as installed.
     #[serde(default = "yes", skip_serializing_if = "is_true")]
     pub installed: bool,
+    /// Variables set on the game when it is started through `padwight run`.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub env: BTreeMap<String, String>,
+    /// Through `padwight run`, hides the controllers Padwight has taken over from SDL.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub hide_controllers: bool,
 }
 
 impl Title {
@@ -52,6 +63,7 @@ impl Title {
             Store::Steam => format!("steam://rungameid/{}", self.store_id),
             Store::Heroic => format!("heroic://launch?appName={}&runner={}", encode(&self.store_id), encode(&self.runner)),
             Store::Lutris => format!("lutris:rungameid/{}", self.store_id),
+            Store::Run => String::new(),
         }
     }
 }
@@ -68,7 +80,7 @@ mod tests {
     use super::*;
 
     fn title(source: Store, id: &str, runner: &str) -> Title {
-        Title { id: String::new(), name: String::new(), source, store_id: id.into(), runner: runner.into(), setup: String::new(), hidden: false, installed: true }
+        Title { id: String::new(), name: String::new(), source, store_id: id.into(), runner: runner.into(), setup: String::new(), hidden: false, installed: true, env: BTreeMap::new(), hide_controllers: false }
     }
 
     #[test]
@@ -79,12 +91,22 @@ mod tests {
     }
 
     #[test]
+    fn launch_settings_are_saved_with_the_title() {
+        let env = BTreeMap::from([("PROTON_LOG".to_string(), "1".to_string())]);
+        let titles = vec![Title { env, hide_controllers: true, ..title(Store::Steam, "1", "") }];
+        let config = super::super::Config { titles, ..super::super::Config::default() };
+        let back: super::super::Config = toml::from_str(&toml::to_string(&config).unwrap()).unwrap();
+        assert_eq!(back.titles, config.titles);
+        assert!(back.titles[0].hide_controllers && back.titles[0].env["PROTON_LOG"] == "1");
+    }
+
+    #[test]
     fn titles_are_saved_in_the_config() {
         let titles = vec![Title { id: "heroic-gog-1".into(), name: "Factorio".into(), ..title(Store::Heroic, "1", "gog") }];
         let config = super::super::Config { titles, ..super::super::Config::default() };
         let text = toml::to_string(&config).unwrap();
         assert!(text.contains("[[titles]]") && text.contains("source = \"heroic\""), "{text}");
-        assert!(!text.contains("hidden") && !text.contains("installed"), "defaults aren't written: {text}");
+        assert!(!text.contains("hidden") && !text.contains("installed") && !text.contains("env") && !text.contains("hide_controllers"), "defaults aren't written: {text}");
         let back: super::super::Config = toml::from_str(&text).unwrap();
         assert_eq!(back.titles, config.titles);
     }

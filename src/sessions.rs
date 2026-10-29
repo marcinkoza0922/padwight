@@ -93,6 +93,22 @@ enum Follow {
     Heroic { app: String, runner: String },
     /// `GAME_NAME` in the environment.
     Lutris(String),
+    /// Started by `padwight run`, whose process is the root: nothing else names the game.
+    Wrapper,
+}
+
+/// The store variables `padwight run` passes on, and what each says about the game.
+pub const STORE_VARS: [&str; 6] = ["SteamAppId", "SteamGameId", "STEAM_COMPAT_APP_ID", "HEROIC_APP_NAME", "HEROIC_APP_RUNNER", "GAME_NAME"];
+
+/// Whether the store variables name this title's game.
+pub fn names_title(title: &Title, vars: &[(String, String)]) -> bool {
+    let get = |key: &str| vars.iter().find(|(k, _)| k == key).map(|(_, v)| v.as_str());
+    match Follow::of(title) {
+        Follow::Steam(ids) => ["SteamAppId", "SteamGameId", "STEAM_COMPAT_APP_ID"].iter().filter_map(|k| get(k)).any(|v| ids.iter().any(|i| i == v)),
+        Follow::Heroic { app, runner } => get("HEROIC_APP_NAME") == Some(app.as_str()) && (runner.is_empty() || get("HEROIC_APP_RUNNER").is_none_or(|r| r == runner)),
+        Follow::Lutris(name) => get("GAME_NAME").is_some_and(|n| n.trim() == name),
+        Follow::Wrapper => false,
+    }
 }
 
 impl Follow {
@@ -105,6 +121,7 @@ impl Follow {
             }
             Store::Heroic => Follow::Heroic { app: title.store_id.clone(), runner: title.runner.clone() },
             Store::Lutris => Follow::Lutris(title.name.trim().to_string()),
+            Store::Run => Follow::Wrapper,
         }
     }
 
@@ -116,6 +133,7 @@ impl Follow {
                     && (runner.is_empty() || procs.env_var(pid, "HEROIC_APP_RUNNER").is_none_or(|r| &r == runner))
             }
             Follow::Lutris(name) => procs.env_var(pid, "GAME_NAME").is_some_and(|n| n.trim() == name),
+            Follow::Wrapper => false,
         }
     }
 }
@@ -155,13 +173,51 @@ pub struct Session {
     root: Option<Proc>,
     /// Window classes seen for the game's windows.
     classes: Vec<String>,
+    /// The `padwight run` process the game came through, if any.
+    wrapper: Option<u32>,
 }
 
 impl Session {
     /// Starts a session. Call it before opening the store's link, so only what the link starts is looked at.
     pub fn new(title: Title, procs: &Procs, now: Instant) -> Self {
         let follow = Follow::of(&title);
-        Session { title, began: now, follow, seen: procs.pids().into_iter().map(|p| (p, None)).collect(), members: Vec::new(), root: None, classes: Vec::new() }
+        Session { title, began: now, follow, seen: procs.pids().into_iter().map(|p| (p, None)).collect(), members: Vec::new(), root: None, classes: Vec::new(), wrapper: None }
+    }
+
+    /// A session for a game `padwight run` started: the wrapper is its root and everything the
+    /// game starts is under it. `None` when the wrapper is already gone.
+    pub fn wrapped(title: Title, procs: &Procs, pid: u32, now: Instant) -> Option<Self> {
+        let started = procs.stat(pid)?.started;
+        let wrapper = Proc { pid, started };
+        let mut session = Session::new(title, procs, now);
+        session.follow = Follow::Wrapper;
+        session.members.push(wrapper);
+        session.root = Some(wrapper);
+        session.wrapper = Some(pid);
+        Some(session)
+    }
+
+    /// The wrapper of a game this session already waits for: its tree joins the game's, and it
+    /// becomes the root when nothing else was found.
+    pub fn attach(&mut self, procs: &Procs, pid: u32) -> bool {
+        let Some(stat) = procs.stat(pid) else { return false };
+        let wrapper = Proc { pid, started: stat.started };
+        if !self.members.iter().any(|m| m.pid == pid) {
+            self.members.push(wrapper);
+        }
+        self.root.get_or_insert(wrapper);
+        self.wrapper = Some(pid);
+        true
+    }
+
+    /// The pid of the `padwight run` process of this game, if it came through one.
+    pub fn wrapper(&self) -> Option<u32> {
+        self.wrapper
+    }
+
+    /// Whether the game is the wrapper with this pid and everything under it.
+    pub fn rooted_in(&self, pid: u32) -> bool {
+        self.wrapper == Some(pid) && self.root.is_some_and(|r| r.pid == pid)
     }
 
     pub fn running(&self) -> bool {
@@ -207,7 +263,7 @@ impl Session {
         if let Some(root) = self.root {
             let gone = match self.follow {
                 // Everything the game starts stays under its `reaper`.
-                Follow::Steam(_) => !root.alive(procs),
+                Follow::Steam(_) | Follow::Wrapper => !root.alive(procs),
                 _ => self.members.iter().all(|m| !m.alive(procs)),
             };
             return if gone { Event::Ended } else if was_running { Event::Nothing } else { Event::Found };
@@ -306,7 +362,7 @@ mod tests {
     }
 
     fn title(source: Store, id: &str, runner: &str, name: &str) -> Title {
-        Title { id: format!("{}-{id}", source.label()), name: name.into(), source, store_id: id.into(), runner: runner.into(), setup: String::new(), hidden: false, installed: true }
+        Title { id: format!("{}-{id}", source.label()), name: name.into(), source, store_id: id.into(), runner: runner.into(), setup: String::new(), hidden: false, installed: true, env: Default::default(), hide_controllers: false }
     }
 
     const REAPER: [&str; 6] = ["/home/me/.local/share/Steam/ubuntu12_32/reaper", "SteamLaunch", "AppId=2379780", "--", "entry", "run"];
@@ -390,6 +446,58 @@ mod tests {
             fake.remove(pid);
         }
         assert_eq!(session.poll(&procs, now), Event::Ended);
+    }
+
+    #[test]
+    fn a_wrapped_game_is_everything_under_the_wrapper_and_ends_with_it() {
+        let fake = Fake::new("wrapped");
+        fake.add(1, 0, &["init"], &[]);
+        fake.add(40, 1, &["padwight", "run"], &[]);
+        let (procs, now) = (fake.procs(), Instant::now());
+        let mut session = Session::wrapped(title(Store::Run, "", "", "game"), &procs, 40, now).unwrap();
+        assert!(session.running() && session.rooted_in(40) && !session.rooted_in(41));
+        fake.add(41, 40, &["game"], &[]);
+        fake.add(42, 41, &["helper"], &[]);
+        assert_eq!(session.poll(&procs, now), Event::Nothing);
+        assert_eq!(session.owns(&procs, 42), Some(true));
+        assert_eq!(session.kill_root(&procs), Some(40));
+        // A process that double-forks is handed to the wrapper, a subreaper.
+        fake.remove(41);
+        fake.add(42, 40, &["helper"], &[]);
+        assert_eq!(session.owns(&procs, 42), Some(true));
+        fake.remove(40);
+        assert_eq!(session.poll(&procs, now), Event::Ended);
+        assert!(Session::wrapped(title(Store::Run, "", "", "game"), &procs, 40, now).is_none(), "a wrapper that is gone");
+    }
+
+    #[test]
+    fn a_wrapper_joins_the_session_that_waits_for_its_game() {
+        let fake = Fake::new("attach");
+        fake.add(1, 0, &["init"], &[]);
+        let (procs, now) = (fake.procs(), Instant::now());
+        let mut session = Session::new(title(Store::Heroic, "7", "gog", "G"), &procs, now);
+        fake.add(40, 1, &["padwight", "run"], &[]);
+        assert!(session.attach(&procs, 40));
+        assert!(session.running() && session.rooted_in(40));
+        fake.add(41, 40, &["game"], &[]);
+        assert_eq!(session.poll(&procs, now), Event::Nothing);
+        assert_eq!(session.owns(&procs, 41), Some(true));
+        assert!(!session.attach(&procs, 999));
+    }
+
+    #[test]
+    fn the_stores_variables_name_a_title() {
+        let vars = |pairs: &[(&str, &str)]| pairs.iter().map(|(k, v)| ((*k).to_string(), (*v).to_string())).collect::<Vec<_>>();
+        let steam = title(Store::Steam, "2379780", "", "Balatro");
+        assert!(names_title(&steam, &vars(&[("SteamGameId", "2379780")])));
+        assert!(!names_title(&steam, &vars(&[("SteamGameId", "400")])));
+        let shortcut = title(Store::Steam, &(3_135_921_720_u64 << 32 | 0x0200_0000).to_string(), "", "Cuphead");
+        assert!(names_title(&shortcut, &vars(&[("SteamAppId", "3135921720")])));
+        let heroic = title(Store::Heroic, "7", "gog", "G");
+        assert!(names_title(&heroic, &vars(&[("HEROIC_APP_NAME", "7"), ("HEROIC_APP_RUNNER", "gog")])));
+        assert!(!names_title(&heroic, &vars(&[("HEROIC_APP_NAME", "7"), ("HEROIC_APP_RUNNER", "legendary")])));
+        assert!(names_title(&title(Store::Lutris, "1", "", "Rome "), &vars(&[("GAME_NAME", "Rome")])));
+        assert!(!names_title(&title(Store::Run, "", "", "x"), &vars(&[("GAME_NAME", "x")])));
     }
 
     #[test]

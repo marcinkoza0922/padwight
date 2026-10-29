@@ -207,6 +207,7 @@ impl Daemon {
         let family = crate::info::PadFamily::detect(dev.input_id().vendor(), &name);
         let model = crate::info::PadModel::detect(dev.input_id().vendor(), dev.input_id().product(), &name);
         let uniq = dev.unique_name().map(str::to_string);
+        let usb = (dev.input_id().vendor(), dev.input_id().product());
         let paddles = input::has_paddles(&dev);
         if let Err(e) = dev.grab() {
             log!("cannot grab {name} ({}): {e}", path.display());
@@ -241,6 +242,7 @@ impl Daemon {
         managed.model = model;
         managed.parent = parent;
         managed.uniq = uniq;
+        managed.usb = usb;
         managed.id = pad_id;
         managed.paddles = paddles;
         managed.readers.push(reader);

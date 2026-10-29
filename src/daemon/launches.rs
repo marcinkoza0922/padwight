@@ -5,8 +5,8 @@ use std::time::Instant;
 
 use super::Daemon;
 use crate::{
-    config::{ProfileRef, Title},
-    ipc::{LaunchInfo, Response, WindowInfo},
+    config::{ProfileRef, Store, Title},
+    ipc::{LaunchInfo, Response, RunReply, RunRequest, WindowInfo},
     monitor::log,
     sessions::{Event, Procs, Session},
     titles,
@@ -69,14 +69,78 @@ impl Daemon {
             }
         }
         for (i, why) in closed.into_iter().rev() {
-            let session = self.launch_sessions.remove(i);
-            log!("{why}");
-            if self.session_game.as_deref() == Some(session.title.setup.as_str()) && !session.title.setup.is_empty() {
-                self.leave_game(&why);
-            }
-            if !session.running() {
-                self.say(vec![why]);
-            }
+            self.end_session(i, why);
+        }
+    }
+
+    /// Closes the session at `i`: its setup gives way, and a game that never started is said so.
+    fn end_session(&mut self, i: usize, why: String) {
+        let session = self.launch_sessions.remove(i);
+        log!("{why}");
+        if self.session_game.as_deref() == Some(session.title.setup.as_str()) && !session.title.setup.is_empty() {
+            self.leave_game(&why);
+        }
+        if !session.running() {
+            self.say(vec![why]);
+        }
+    }
+
+    /// `padwight run` is about to start a game: finds its title (named, or told by the store's
+    /// variables), follows the game through the wrapper, and says what to add to its environment.
+    pub(super) fn run_game(&mut self, req: &RunRequest) -> Response {
+        let named = match &req.title {
+            Some(id) => match self.config.titles.iter().find(|t| &t.id == id) {
+                Some(title) => Some(title.clone()),
+                None => return Response::Error(format!("no game with the id {id:?}; the Games page lists them")),
+            },
+            None => self.config.titles.iter().find(|t| crate::sessions::names_title(t, &req.store_env)).cloned(),
+        };
+        if let Some(setup) = &req.setup
+            && !self.config.games.iter().any(|g| &g.name == setup)
+        {
+            return Response::Error(format!("no setup named {setup:?}"));
+        }
+        let procs = Procs::system();
+        let now = Instant::now();
+        let mut title = named.unwrap_or_else(|| {
+            let program = req.command.first().map_or("", |c| c.rsplit('/').next().unwrap_or(c));
+            Title { id: format!("run-{}", req.pid), name: program.to_string(), source: Store::Run, store_id: String::new(), runner: String::new(), setup: String::new(), hidden: false, installed: true, env: Default::default(), hide_controllers: false }
+        });
+        if title.setup.is_empty() {
+            title.setup = req.setup.clone().unwrap_or_default();
+        }
+        let attached = self.launch_sessions.iter_mut().find(|s| s.title.id == title.id && s.wrapper().is_none()).is_some_and(|s| s.attach(&procs, req.pid));
+        if !attached {
+            // A game started by hand twice runs twice: the second takes the first's place.
+            self.launch_sessions.retain(|s| s.title.id != title.id);
+            let Some(session) = Session::wrapped(title.clone(), &procs, req.pid, now) else { return Response::Error("the wrapper's process is gone".into()) };
+            self.launch_sessions.push(session);
+        }
+        log!("{} starts through padwight run (pid {})", title.name, req.pid);
+        let mut env: Vec<(String, String)> = title.env.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+        if title.hide_controllers
+            && let Some(ignore) = self.ignore_devices()
+        {
+            env.push(("SDL_GAMECONTROLLER_IGNORE_DEVICES".into(), ignore));
+        }
+        Response::Launched(RunReply { env, name: title.name })
+    }
+
+    /// `SDL_GAMECONTROLLER_IGNORE_DEVICES`' value for the controllers taken over, left out where
+    /// the virtual pad presents the same ids (hiding them would hide it too).
+    fn ignore_devices(&self) -> Option<String> {
+        let virtual_ids: Vec<(u16, u16)> = self.devices.values().filter_map(|d| d.pad.as_ref()).map(|p| p.identity().usb_id()).map(|(v, p, _)| (v, p)).collect();
+        let mut ids: Vec<(u16, u16)> = self.devices.values().map(|d| d.usb).filter(|id| *id != (0, 0) && !virtual_ids.contains(id)).collect();
+        ids.sort_unstable();
+        ids.dedup();
+        (!ids.is_empty()).then(|| ids.iter().map(|(v, p)| format!("0x{v:04x}/0x{p:04x}")).collect::<Vec<_>>().join(","))
+    }
+
+    /// The wrapper with this pid let go of its connection: a game it started is over.
+    pub(super) fn run_ended(&mut self, pid: u32) {
+        if let Some(i) = self.launch_sessions.iter().position(|s| s.rooted_in(pid)) {
+            let why = format!("{} exited", self.launch_sessions[i].title.name);
+            self.end_session(i, why);
         }
     }
 
