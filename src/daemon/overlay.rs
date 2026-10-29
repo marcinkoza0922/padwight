@@ -276,7 +276,7 @@ impl Daemon {
         if self.lens_notice() {
             info.push(crate::info::lens_notice_view());
         }
-        let (mut info, logs) = self.with_preview(info, logs, &values, now);
+        let (mut info, logs) = self.with_preview(info, logs, &values);
         let now = Instant::now();
         let glyphs = crate::info::Glyphs { family: values.family, nintendo_layout: values.nintendo_layout };
         let toast = self.toast.as_ref().and_then(|t| Some((t.view(now, glyphs)?, t.next_redraw(now, FADE_FRAME))));

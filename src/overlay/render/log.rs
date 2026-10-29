@@ -29,7 +29,10 @@ pub fn log_panel(view: &LogView, font: Option<&'static str>, fit: &Fit) -> Node 
         let cells = line.cells.iter().map(|cell| log_cell(cell, style.faded(line.opacity), s, view, line.opacity));
         Node::wrap(cells).spacing(12.0 * s).line_spacing(4.0 * s).align_y(Align::Start)
     });
-    let body = Node::column(lines).spacing(8.0 * s);
+    let mut body = Node::column(lines).spacing(8.0 * s);
+    if !view.heading.is_empty() {
+        body = Node::column([info_cell(&[Segment::Text(view.heading.clone())], &style, s, 1.0), body]).spacing(8.0 * s);
+    }
     super::framed(body, &style, &view.style, [10.0 * s, 14.0 * s], fit)
 }
 

@@ -66,7 +66,8 @@ fn built_in_modes_are_never_stored_but_every_game_has_them() {
 fn log_overlays_roundtrip_and_old_configs_load_without_them() {
     let mut config = Config::default();
     let mut log = LogOverlay::new("Inputs");
-    let LogSource::Input(s) = &mut log.source;
+    log.heading = "Pressed".into();
+    let s = log.source.settings_mut();
     (s.tracking.device, s.newest, s.fade_after) = (Some(1), LogEnd::Bottom, 0.0);
     s.tracking.set_tracked(TrackedInput::Stick(Stick::Right), false);
     config.general.logs.push(log);
@@ -275,3 +276,16 @@ mod actions;
 mod behaviour;
 mod gyro_use;
 mod refused;
+
+#[test]
+fn output_and_shifts_logs_roundtrip_and_keep_their_settings_when_switched() {
+    let mut config = Config::default();
+    for (name, kind) in [("Sent", LogKind::Output), ("Modes", LogKind::Shifts)] {
+        config.general.logs.push(LogOverlay { source: LogSource::new(kind), ..LogOverlay::new(name) });
+    }
+    let back: Config = toml::from_str(&toml::to_string_pretty(&config).unwrap()).unwrap();
+    assert_eq!(back, config);
+    let mut source = LogSource::new(LogKind::Input);
+    source.settings_mut().lines = 3;
+    assert_eq!(source.with_kind(LogKind::Shifts), LogSource::Shifts(InputLogSettings { lines: 3, ..InputLogSettings::default() }));
+}

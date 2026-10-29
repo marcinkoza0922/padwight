@@ -191,6 +191,10 @@ struct Managed {
     log: crate::inputlog::InputLog,
     /// The buttons padwight exported to the virtual pad lately, for the Overview's second feed.
     exports: crate::inputlog::InputLog,
+    /// The modes and layers it has been in lately, for log overlays of them.
+    shifts: crate::inputlog::InputLog,
+    /// Something in `exports` or `shifts` changed since a log overlay last redrew.
+    log_dirty: bool,
     /// 0, 1, 2… in the order controllers connected, kept until this one disconnects
     /// (`{current_input_device_N}`, a log overlay's controller).
     number: u8,
@@ -249,7 +253,7 @@ impl Managed {
         let now = Instant::now();
         // What the game is sent, gamepad and keyboard and mouse alike, for the Overview's feed.
         for ev in &out {
-            self.exports.output(ev, now);
+            self.log_dirty |= self.exports.output(ev, now);
         }
         if let Some(recorded) = &mut self.recorded {
             inject::record(recorded, &out);
@@ -287,6 +291,7 @@ impl Managed {
     /// Brings `layered` up to date with the engine's mode and layers. True if they changed.
     fn refresh_layers(&mut self, config: &Config) -> bool {
         let shifts: Shifts = (self.engine.mode().map(str::to_string), self.engine.layers());
+        self.log_dirty |= self.shifts.shifts(shifts.0.as_deref(), &shifts.1, Instant::now());
         let current = self.layered.as_ref().map(|(shifts, _)| shifts);
         let plain = shifts.0.is_none() && shifts.1.is_empty() && !config.shortcuts.injects();
         if current == Some(&shifts) || (current.is_none() && plain) {
@@ -1488,6 +1493,8 @@ impl Daemon {
             opener_watch,
             log: crate::inputlog::InputLog::default(),
             exports: crate::inputlog::InputLog::default(),
+            shifts: crate::inputlog::InputLog::default(),
+            log_dirty: false,
             number: logs::free_number(self.devices.values().map(|d| d.number)),
         }
     }

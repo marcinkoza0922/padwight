@@ -27,16 +27,11 @@ const DEVICE_CHOICES: [DeviceChoice; 5] =
 impl App {
     /// Rows for the tracking settings of overlay `at` (a kind and index; its group lists
     /// open by `ToggleInputGroup`). `what` names a sequence there: "line" or "sequence".
-    pub(super) fn tracking_editor<'a>(
-        &self,
-        at: (ItemKind, usize),
-        t: &InputTracking,
-        what: &'static str,
-        on_change: &OnTracking<'a>,
-    ) -> Vec<Element<'a, Message>> {
+    /// Which controller a display follows.
+    pub(super) fn device_picker<'a>(&self, t: &InputTracking, on_change: &OnTracking<'a>) -> Element<'a, Message> {
         let on = on_change.clone();
         let base = t.clone();
-        let device = row![
+        row![
             dropdown(DEVICE_CHOICES, Some(DeviceChoice(t.device)), move |d: DeviceChoice| on(InputTracking { device: d.0, ..base.clone() }))
                 .width(200),
             help(
@@ -46,7 +41,18 @@ impl App {
             ),
         ]
         .spacing(8)
-        .align_y(Alignment::Center);
+        .align_y(Alignment::Center)
+        .into()
+    }
+
+    pub(super) fn tracking_editor<'a>(
+        &self,
+        at: (ItemKind, usize),
+        t: &InputTracking,
+        what: &'static str,
+        on_change: &OnTracking<'a>,
+    ) -> Vec<Element<'a, Message>> {
+        let device = self.device_picker(t, on_change);
         let (on, base) = (on_change.clone(), t.clone());
         let max = row![
             slider(1.0..=30.0, f32::from(t.max_inputs), move |v| on(InputTracking { max_inputs: v as u8, ..base.clone() }))
@@ -68,7 +74,7 @@ impl App {
         .spacing(10)
         .align_y(Alignment::Center);
         vec![
-            labeled("Controller", device.into()),
+            labeled("Controller", device),
             labeled("Inputs", self.input_groups(at, t, on_change)),
             labeled(if what == "line" { "Per line, at most" } else { "At most" }, max.into()),
             labeled(if what == "line" { "New line after" } else { "New sequence after" }, gap.into()),

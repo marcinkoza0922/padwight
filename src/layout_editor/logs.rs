@@ -2,7 +2,7 @@
 //! which inputs, how they group), shared by log overlays and info overlays' `{current_input}`
 //! cells.
 
-use crate::config::{CurrentInput, INPUT_GROUPS, InputLogSettings, InputTracking, ItemKind, LogEnd, LogOverlay, LogSource, ScreenPosition};
+use crate::config::{CurrentInput, INPUT_GROUPS, InputLogSettings, InputTracking, ItemKind, LogEnd, LogKind, LogOverlay, ScreenPosition};
 
 use super::{
     named,
@@ -29,13 +29,16 @@ const STAY: Number = Number::new(100.0, (0.0, 5000.0), 0, " ms");
 /// Which controller a display follows: every one, or one by its number.
 const DEVICES: [Option<u8>; 5] = [None, Some(0), Some(1), Some(2), Some(3)];
 
+fn device_name(device: Option<u8>) -> String {
+    device.map_or("every one".into(), |n| format!("number {n}"))
+}
+
 fn log_mut(config: &mut crate::config::Config, i: usize) -> Option<&mut LogOverlay> {
     game_mut(config)?.logs.get_mut(i)
 }
 
 fn settings_mut(config: &mut crate::config::Config, i: usize) -> Option<&mut InputLogSettings> {
-    let LogSource::Input(s) = &mut log_mut(config, i)?.source;
-    Some(s)
+    Some(log_mut(config, i)?.source.settings_mut())
 }
 
 /// The game's log overlays, and a row to add one.
@@ -61,12 +64,37 @@ fn switch(i: usize, label: &str, on: bool, field: fn(&mut InputLogSettings, bool
     Row::toggle(label, on, move |c, v| settings_mut(c, i).is_some_and(|s| field(s, v)))
 }
 
+/// The switches for what a line shows, which vary by the kind of log.
+fn display_switches(i: usize, kind: LogKind, s: &InputLogSettings) -> Vec<Row> {
+    let mut rows = Vec::new();
+    if kind != LogKind::Shifts {
+        rows.push(switch(i, "Merge repeats (X×3)", s.merge_repeats, |s, v| set(&mut s.merge_repeats, v)));
+    }
+    if kind == LogKind::Input {
+        rows.push(switch(i, "What each press did", s.show_labels, |s, v| set(&mut s.show_labels, v)));
+    }
+    let holds = if kind == LogKind::Shifts { "How long each one lasted" } else { "How long each press was held" };
+    rows.push(switch(i, holds, s.show_holds, |s, v| set(&mut s.show_holds, v)));
+    rows
+}
+
 /// A log overlay's page.
 pub(super) fn log_rows(config: &crate::config::Config, i: usize) -> Vec<Row> {
     let Some(o) = config.active_game().logs.get(i) else { return Vec::new() };
-    let LogSource::Input(s) = &o.source;
+    let s = o.source.settings();
+    let kind = o.source.kind();
     let mut rows = vec![
         named::rename_row(config, ItemKind::Log, i),
+        Row::step(format!("Lists: {}", kind.name().to_lowercase()), move |c, dir| {
+            log_mut(c, i).is_some_and(|o| {
+                let to = cycle(&LogKind::ALL, o.source.kind(), dir);
+                o.source = o.source.with_kind(to);
+                true
+            })
+        }),
+        Row::text(format!("Heading: {}", if o.heading.is_empty() { "none" } else { &o.heading }), "Heading of the overlay", o.heading.clone(), move |c, typed| {
+            log_mut(c, i).is_some_and(|o| set(&mut o.heading, typed.trim().to_string()))
+        }),
         Row::toggle("Always on screen", o.always, move |c, on| log_mut(c, i).is_some_and(|o| set(&mut o.always, on))),
     ];
     if !o.always {
@@ -77,8 +105,17 @@ pub(super) fn log_rows(config: &crate::config::Config, i: usize) -> Vec<Row> {
         rows.push(linger);
     }
     let newest = s.newest;
+    let follows = match kind {
+        LogKind::Shifts => Row::step(format!("Controller: {}", device_name(s.tracking.device)), move |c, dir| {
+            settings_mut(c, i).is_some_and(|s| {
+                let to = cycle(&DEVICES, s.tracking.device, dir);
+                set(&mut s.tracking.device, to)
+            })
+        }),
+        LogKind::Input | LogKind::Output => Row::open("What it follows", Page::Tracking(Tracked::Log(i))),
+    };
     rows.extend([
-        Row::open("What it follows", Page::Tracking(Tracked::Log(i))),
+        follows,
         LINES.row("Lines", f32::from(s.lines), move |c, v| settings_mut(c, i).is_some_and(|s| set(&mut s.lines, v as u8))),
         Row::step(format!("Newest line: {}", if newest == LogEnd::Top { "at the top" } else { "at the bottom" }), move |c, _| {
             let other = if newest == LogEnd::Top { LogEnd::Bottom } else { LogEnd::Top };
@@ -90,9 +127,7 @@ pub(super) fn log_rows(config: &crate::config::Config, i: usize) -> Vec<Row> {
         fade.item.label = "Lines fade after: never".into();
     }
     rows.push(fade);
-    rows.push(switch(i, "Merge repeats (X×3)", s.merge_repeats, |s, v| set(&mut s.merge_repeats, v)));
-    rows.push(switch(i, "What each press did", s.show_labels, |s, v| set(&mut s.show_labels, v)));
-    rows.push(switch(i, "How long each press was held", s.show_holds, |s, v| set(&mut s.show_holds, v)));
+    rows.extend(display_switches(i, kind, s));
     let position = o.style.position;
     rows.push(Row::step(format!("Position: {position}"), move |c, dir| log_mut(c, i).is_some_and(|o| set(&mut o.style.position, cycle(&ScreenPosition::GRID, position, dir)))));
     rows.push(Row::open("Look", Page::Style(StyleAt::Log(i))));
@@ -107,10 +142,7 @@ pub(super) fn log_rows(config: &crate::config::Config, i: usize) -> Vec<Row> {
 fn tracking(config: &crate::config::Config, of: Tracked) -> Option<&InputTracking> {
     let game = config.active_game();
     match of {
-        Tracked::Log(i) => game.logs.get(i).map(|o| {
-            let LogSource::Input(s) = &o.source;
-            &s.tracking
-        }),
+        Tracked::Log(i) => game.logs.get(i).map(|o| &o.source.settings().tracking),
         Tracked::Info(i) => game.info.get(i).map(|o| &o.current_input.tracking),
     }
 }
@@ -131,7 +163,7 @@ fn current_input_mut(config: &mut crate::config::Config, i: usize) -> Option<&mu
 pub(super) fn tracking_rows(config: &crate::config::Config, of: Tracked) -> Vec<Row> {
     let Some(t) = tracking(config, of) else { return Vec::new() };
     let device = t.device;
-    let mut rows = vec![Row::step(format!("Controller: {}", device.map_or("every one".into(), |n| format!("number {n}"))), move |c, dir| {
+    let mut rows = vec![Row::step(format!("Controller: {}", device_name(device)), move |c, dir| {
         tracking_mut(c, of).is_some_and(|t| set(&mut t.device, cycle(&DEVICES, device, dir)))
     })];
     for (g, (name, members)) in INPUT_GROUPS.iter().enumerate() {

@@ -62,7 +62,7 @@ impl App {
         let mut look = Vec::new();
         if self.media_appearance {
             let style = &self.config.media_style;
-            look.push(style_editor(style, Rc::new(Message::SetMediaStyle)));
+            look.push(media_style_editor(style, Rc::new(Message::SetMediaStyle)));
             look.extend(self.spot_note(style.position, true));
             let sample = crate::media::MediaView::sample(preview_style(style));
             look.push(preview(crate::overlay::draw::media_panel(&sample, self.preview_font(), self.glyphs(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));

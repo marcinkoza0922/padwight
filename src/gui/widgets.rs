@@ -214,7 +214,7 @@ pub(super) fn items_header<'a>(
     )
     .padding(14)
     .width(Length::Fill)
-    .style(style::card)
+    .style(style::add_card)
     .into()
 }
 

@@ -70,7 +70,7 @@ fn a_log_overlay_is_added_and_leaves_out_a_group_of_inputs() {
     editor.pick("What it follows", &mut config);
     let (group, members) = crate::config::INPUT_GROUPS[0];
     editor.pick(group, &mut config);
-    let crate::config::LogSource::Input(s) = &config.general.logs[0].source;
+    let s = config.general.logs[0].source.settings();
     assert!(members.iter().all(|m| !s.tracking.tracks(*m)));
 }
 

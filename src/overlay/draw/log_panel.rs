@@ -29,7 +29,12 @@ pub fn log_panel<'a, M: 'a>(v: &LogView, font: Font, fit: &Fit, anim: &Anim) -> 
         }
         lines = lines.push(cells.wrap().vertical_spacing(4.0 * s));
     }
-    framed(lines.into(), c, &v.style, [10.0 * s, 14.0 * s], fit)
+    let body: Element<'a, M> = if v.heading.is_empty() {
+        lines.into()
+    } else {
+        column![info_cell(&[Segment::Text(v.heading.clone())], c, s, opacity), lines].spacing(8.0 * s).into()
+    };
+    framed(body, c, &v.style, [10.0 * s, 14.0 * s], fit)
 }
 
 fn log_cell<'a, M: 'a>(cell: &LogCell, c: Colors, s: f32, v: &LogView, opacity: f32) -> Element<'a, M> {

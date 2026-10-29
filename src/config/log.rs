@@ -1,5 +1,6 @@
-//! Log overlays: a list of recent entries on screen. So far the one kind of log is the
-//! input log (see `crate::inputlog`).
+//! Log overlays: a list of recent entries on screen. A log lists the presses on the
+//! controller, what was sent to the game, or the modes and layers that came and went (see
+//! `crate::inputlog`).
 
 use serde::{Deserialize, Serialize};
 
@@ -13,6 +14,9 @@ pub struct LogOverlay {
     /// Shown whenever a profile of its game is active, rather than only by `ShowLog`.
     #[serde(default)]
     pub always: bool,
+    /// A title above the lines, when not empty.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub heading: String,
     /// Seconds it stays after the action showing it lets go, fading out at the end.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub linger: Option<f32>,
@@ -24,7 +28,7 @@ pub struct LogOverlay {
 
 impl LogOverlay {
     pub fn new(name: &str) -> Self {
-        LogOverlay { name: name.into(), always: false, linger: None, style: OverlayStyle::log(), source: LogSource::default() }
+        LogOverlay { name: name.into(), heading: String::new(), always: false, linger: None, style: OverlayStyle::log(), source: LogSource::default() }
     }
 }
 
@@ -34,11 +38,71 @@ impl LogOverlay {
 pub enum LogSource {
     /// The buttons pressed, one line per sequence, with what each did.
     Input(InputLogSettings),
+    /// What was sent to the game, as keys, mouse buttons, wheel turns and pad buttons.
+    Output(InputLogSettings),
+    /// The modes and layers that came and went, one line each, with how long it lasted.
+    Shifts(InputLogSettings),
 }
 
 impl Default for LogSource {
     fn default() -> Self {
         LogSource::Input(InputLogSettings::default())
+    }
+}
+
+/// The kinds of log, for the editors to pick from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LogKind {
+    Input,
+    Output,
+    Shifts,
+}
+
+impl LogKind {
+    pub const ALL: [LogKind; 3] = [LogKind::Input, LogKind::Output, LogKind::Shifts];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            LogKind::Input => "Input",
+            LogKind::Output => "Output",
+            LogKind::Shifts => "Modes and layers",
+        }
+    }
+}
+
+impl LogSource {
+    pub fn kind(&self) -> LogKind {
+        match self {
+            LogSource::Input(_) => LogKind::Input,
+            LogSource::Output(_) => LogKind::Output,
+            LogSource::Shifts(_) => LogKind::Shifts,
+        }
+    }
+
+    /// A source of `kind` with the settings of a new log of it.
+    pub fn new(kind: LogKind) -> Self {
+        match kind {
+            LogKind::Input => LogSource::Input(InputLogSettings::default()),
+            LogKind::Output => LogSource::Output(InputLogSettings::default()),
+            LogKind::Shifts => LogSource::Shifts(InputLogSettings::shifts()),
+        }
+    }
+
+    pub fn settings(&self) -> &InputLogSettings {
+        let (LogSource::Input(s) | LogSource::Output(s) | LogSource::Shifts(s)) = self;
+        s
+    }
+
+    pub fn settings_mut(&mut self) -> &mut InputLogSettings {
+        let (LogSource::Input(s) | LogSource::Output(s) | LogSource::Shifts(s)) = self;
+        s
+    }
+
+    /// The same settings, listing `kind` instead.
+    pub fn with_kind(&self, kind: LogKind) -> Self {
+        let mut source = LogSource::new(kind);
+        *source.settings_mut() = self.settings().clone();
+        source
     }
 }
 
@@ -82,6 +146,13 @@ impl Default for InputLogSettings {
             show_labels: true,
             show_holds: true,
         }
+    }
+}
+
+impl InputLogSettings {
+    /// A log of modes and layers: fewer lines, and each one stays a while.
+    pub fn shifts() -> Self {
+        InputLogSettings { lines: 6, merge_repeats: false, fade_after: 10.0, ..InputLogSettings::default() }
     }
 }
 

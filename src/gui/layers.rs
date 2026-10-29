@@ -371,7 +371,7 @@ impl App {
         if matches!(layer.indicator, Indicator::Name | Indicator::Bindings) {
             settings.push(labeled("", disclosure("Appearance", self.indicator_appearance, Message::ToggleIndicatorAppearance)));
             if self.indicator_appearance {
-                settings.push(style_editor(&layer.indicator_style, Rc::new(Message::SetIndicatorStyle)));
+                settings.push(text_style_editor(&layer.indicator_style, Rc::new(Message::SetIndicatorStyle)));
             }
             let sample = InfoOverlay {
                 name: layer.name.clone(),

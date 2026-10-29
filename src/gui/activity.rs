@@ -125,6 +125,7 @@ mod tests {
             name: "feed".into(),
             style: OverlayStyle::default(),
             opacity: 1.0,
+            heading: String::new(),
             lines: vec![LogLine { opacity: 1.0, cells: vec![cell] }],
             show_labels: true,
             show_holds: true,

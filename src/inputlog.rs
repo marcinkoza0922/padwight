@@ -11,7 +11,7 @@ mod tests;
 
 use std::time::Instant;
 
-pub use view::{Inputs, LogCell, LogView, line_life, log_view, merged, next_change};
+pub use view::{Inputs, LogCell, LogView, line_life, log_view, merged, next_change, shifts_next_change, shifts_view};
 #[cfg(test)]
 pub use view::LogLine;
 
@@ -108,6 +108,12 @@ pub enum Input {
     Key(String),
     Mouse(MouseButton),
     Wheel(WheelDirection),
+    /// The pointer moving, for as long as moves follow each other closely.
+    MouseMove,
+    /// A mode the controller was in; held for as long as it was.
+    Mode(String),
+    /// A layer held down.
+    Layer(String),
 }
 
 /// One press: what, when, for how long, and what it did.
@@ -124,7 +130,7 @@ pub struct Entry {
     id: u64,
 }
 
-/// Wheel turns closer together than this are one entry.
+/// Wheel turns, and pointer moves, closer together than this are one entry.
 const WHEEL_MERGE: std::time::Duration = std::time::Duration::from_millis(300);
 
 /// Where an input is held; each holds at most one entry.
@@ -242,7 +248,7 @@ impl InputLog {
     }
 
     /// Records what the mappings sent as a keyboard and mouse: a key or a mouse button going
-    /// down or up, or a turn of the wheel (a tap). Returns whether the log changed.
+    /// down or up, a turn of the wheel (a tap), the pointer moving, or a stick or trigger of the virtual pad moving. Returns whether the log changed.
     pub fn output(&mut self, ev: &crate::output::OutEvent, now: Instant) -> bool {
         use crate::output::OutEvent;
         match *ev {
@@ -272,8 +278,53 @@ impl InputLog {
                 true
             }
             OutEvent::PadButton(b, pressed) => self.event(InputEvent::Button(b, pressed), Thresholds::default(), now),
-            OutEvent::PadAxis(..) | OutEvent::MouseMove(..) | OutEvent::MouseTo(..) => false,
+            OutEvent::PadAxis(axis, v) => self.event(InputEvent::Axis(axis, v), Thresholds::default(), now),
+            OutEvent::MouseMove(0, 0) => false,
+            OutEvent::MouseMove(..) | OutEvent::MouseTo(..) => {
+                // Moves arrive in a stream with no end of their own: one entry grows while they
+                // keep coming, and a pause starts the next.
+                match self.entries.last_mut() {
+                    Some(e) if e.input == Input::MouseMove && e.released.is_some_and(|r| now.duration_since(r) < WHEEL_MERGE) => {
+                        e.released = Some(now);
+                        false
+                    }
+                    _ => {
+                        let id = self.next_id;
+                        self.press(Slot::Wheel, Input::MouseMove, now);
+                        self.open.retain(|(_, open)| *open != id);
+                        if let Some(e) = self.entries.last_mut() {
+                            e.released = Some(now);
+                        }
+                        true
+                    }
+                }
+            }
         }
+    }
+
+    /// Records the controller's mode and held layers as they are now: what stopped being on is
+    /// let go, and what started is a new entry. Returns whether the log changed.
+    pub fn shifts(&mut self, mode: Option<&str>, layers: &[String], now: Instant) -> bool {
+        let mut changed = false;
+        for e in self.entries.iter_mut().filter(|e| e.released.is_none()) {
+            let on = match &e.input {
+                Input::Mode(m) => mode == Some(m.as_str()),
+                Input::Layer(l) => layers.contains(l),
+                _ => continue,
+            };
+            if !on {
+                e.released = Some(now);
+                changed = true;
+            }
+        }
+        let wanted = mode.map(|m| Input::Mode(m.to_string())).into_iter().chain(layers.iter().map(|l| Input::Layer(l.clone())));
+        for input in wanted {
+            if !self.entries.iter().any(|e| e.released.is_none() && e.input == input) {
+                self.record(input, now);
+                changed = true;
+            }
+        }
+        changed
     }
 
     /// Attaches an action to the press that fired it. A combo's presses become one entry.
@@ -344,14 +395,20 @@ impl InputLog {
 
     fn press(&mut self, slot: Slot, input: Input, now: Instant) -> bool {
         self.release(slot, now);
+        let id = self.record(input, now);
+        self.open.push((slot, id));
+        true
+    }
+
+    /// Adds an entry, held until something lets it go; returns its id.
+    fn record(&mut self, input: Input, now: Instant) -> u64 {
         let id = self.next_id;
         self.next_id += 1;
         self.entries.push(Entry { input, pressed: now, released: None, label: None, resolved: false, id });
-        self.open.push((slot, id));
         if self.entries.len() > CAPACITY {
             self.entries.drain(..CAPACITY / 4);
         }
-        true
+        id
     }
 
     fn release(&mut self, slot: Slot, now: Instant) -> bool {

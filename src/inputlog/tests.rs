@@ -258,10 +258,12 @@ fn keyboard_and_mouse_output_is_logged_with_key_and_mouse_glyphs() {
     log.output(&OutEvent::MouseButton(MouseButton::Left, false), at(210));
     log.output(&OutEvent::Wheel { vertical: 120, horizontal: 0 }, at(300));
     assert!(!log.output(&OutEvent::Wheel { vertical: 120, horizontal: 0 }, at(320)), "a turning wheel is one entry");
-    assert!(!log.output(&OutEvent::MouseMove(5, 5), at(330)));
+    assert!(log.output(&OutEvent::MouseMove(5, 5), at(330)), "a move starts an entry");
+    assert!(!log.output(&OutEvent::MouseMove(5, 5), at(400)), "moves close together are one");
+    assert!(log.output(&OutEvent::MouseMove(5, 5), at(900)), "a pause starts another");
     assert_eq!(
         inputs(&log),
-        [Input::Key("KEY_W".into()), Input::Mouse(MouseButton::Left), Input::Wheel(crate::config::WheelDirection::Up)]
+        [Input::Key("KEY_W".into()), Input::Mouse(MouseButton::Left), Input::Wheel(crate::config::WheelDirection::Up), Input::MouseMove, Input::MouseMove]
     );
     assert!(log.entries().iter().all(|e| e.released.is_some()), "all let go");
     let glyph = super::view::input_glyph(&Input::Key("KEY_W".into()), crate::info::PadFamily::Xbox, false);
@@ -272,4 +274,61 @@ fn keyboard_and_mouse_output_is_logged_with_key_and_mouse_glyphs() {
 fn a_fade_too_long_for_a_duration_keeps_lines_rather_than_crashing() {
     let s = InputLogSettings { fade_after: f32::INFINITY, ..InputLogSettings::default() };
     assert!(line_life(&s).is_some_and(|life| life > Duration::from_secs(3600)));
+}
+
+#[test]
+fn shifts_record_each_mode_and_layer_for_as_long_as_it_lasts() {
+    let t0 = Instant::now();
+    let mut log = InputLog::default();
+    let aim = vec!["Aim".to_string()];
+    assert!(log.shifts(Some("Driving"), &[], t0));
+    assert!(!log.shifts(Some("Driving"), &[], ms(t0, 10)), "nothing changed");
+    assert!(log.shifts(Some("Driving"), &aim, ms(t0, 100)));
+    assert!(log.shifts(Some("Driving"), &[], ms(t0, 400)));
+    assert!(log.shifts(None, &[], ms(t0, 900)));
+    assert_eq!(inputs(&log), [Input::Mode("Driving".into()), Input::Layer("Aim".into())]);
+    let held: Vec<_> = log.entries().iter().map(|e| e.released.map(|r| r.duration_since(e.pressed).as_millis())).collect();
+    assert_eq!(held, [Some(900), Some(300)]);
+}
+
+#[test]
+fn a_log_of_shifts_has_a_line_per_entry_and_fades_them() {
+    let t0 = Instant::now();
+    let mut log = InputLog::default();
+    log.shifts(Some("Driving"), &[], t0);
+    log.shifts(None, &["Aim".to_string()], ms(t0, 500));
+    let s = InputLogSettings { fade_after: 2.0, ..InputLogSettings::shifts() };
+    let glyphs = Glyphs { family: PadFamily::Xbox, nintendo_layout: false };
+    let view = view::shifts_view(log.entries(), &s, &OverlayStyle::default(), glyphs, ms(t0, 1000));
+    assert_eq!(view.lines.len(), 2);
+    assert!(view.lines[0].cells[0].held, "newest first, and the layer is still on");
+    assert_eq!(view.lines[1].cells[0].hold_ms, Some(500));
+    let later = view::shifts_view(log.entries(), &s, &OverlayStyle::default(), glyphs, ms(t0, 5000));
+    assert_eq!(later.lines.len(), 1, "the ended mode has faded away, the held layer stays");
+}
+
+#[test]
+fn output_logs_record_the_virtual_pad_sticks_and_triggers() {
+    use crate::{input::Axis, output::OutEvent};
+    let t0 = Instant::now();
+    let at = |ms: u64| t0 + Duration::from_millis(ms);
+    let mut log = InputLog::default();
+    assert!(log.output(&OutEvent::PadAxis(Axis::LeftX, 1.0), t0));
+    assert!(log.output(&OutEvent::PadAxis(Axis::RightTrigger, 1.0), at(10)));
+    assert!(log.output(&OutEvent::PadAxis(Axis::LeftX, 0.0), at(100)));
+    let inputs: Vec<_> = log.entries().iter().map(|e| e.input.clone()).collect();
+    assert_eq!(inputs, [Input::Direction(Some(Stick::Left), Dir::Right), Input::Trigger(Trigger::Right)]);
+    assert!(log.entries()[0].released.is_some() && log.entries()[1].released.is_none());
+}
+
+#[test]
+fn output_logs_show_keys_and_ignore_nothing() {
+    let t0 = Instant::now();
+    let mut log = InputLog::default();
+    log.output(&crate::output::OutEvent::MouseButton(crate::config::MouseButton::Left, true), t0);
+    log.output(&crate::output::OutEvent::MouseButton(crate::config::MouseButton::Left, false), ms(t0, 40));
+    let glyphs = Glyphs { family: PadFamily::Xbox, nintendo_layout: false };
+    let view = view::log_view(log.entries(), &InputLogSettings::default(), &OverlayStyle::default(), glyphs, ms(t0, 100));
+    assert_eq!(view.lines.len(), 1);
+    assert_eq!(view.lines[0].cells[0].hold_ms, Some(40));
 }
