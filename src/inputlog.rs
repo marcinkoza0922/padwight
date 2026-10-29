@@ -108,6 +108,8 @@ pub enum Input {
     Key(String),
     Mouse(MouseButton),
     Wheel(WheelDirection),
+    /// The pointer moving, for as long as moves follow each other closely.
+    MouseMove,
     /// A mode the controller was in; held for as long as it was.
     Mode(String),
     /// A layer held down.
@@ -128,7 +130,7 @@ pub struct Entry {
     id: u64,
 }
 
-/// Wheel turns closer together than this are one entry.
+/// Wheel turns, and pointer moves, closer together than this are one entry.
 const WHEEL_MERGE: std::time::Duration = std::time::Duration::from_millis(300);
 
 /// Where an input is held; each holds at most one entry.
@@ -246,7 +248,7 @@ impl InputLog {
     }
 
     /// Records what the mappings sent as a keyboard and mouse: a key or a mouse button going
-    /// down or up, a turn of the wheel (a tap), or a stick or trigger of the virtual pad moving. Returns whether the log changed.
+    /// down or up, a turn of the wheel (a tap), the pointer moving, or a stick or trigger of the virtual pad moving. Returns whether the log changed.
     pub fn output(&mut self, ev: &crate::output::OutEvent, now: Instant) -> bool {
         use crate::output::OutEvent;
         match *ev {
@@ -277,7 +279,26 @@ impl InputLog {
             }
             OutEvent::PadButton(b, pressed) => self.event(InputEvent::Button(b, pressed), Thresholds::default(), now),
             OutEvent::PadAxis(axis, v) => self.event(InputEvent::Axis(axis, v), Thresholds::default(), now),
-            OutEvent::MouseMove(..) | OutEvent::MouseTo(..) => false,
+            OutEvent::MouseMove(0, 0) => false,
+            OutEvent::MouseMove(..) | OutEvent::MouseTo(..) => {
+                // Moves arrive in a stream with no end of their own: one entry grows while they
+                // keep coming, and a pause starts the next.
+                match self.entries.last_mut() {
+                    Some(e) if e.input == Input::MouseMove && e.released.is_some_and(|r| now.duration_since(r) < WHEEL_MERGE) => {
+                        e.released = Some(now);
+                        false
+                    }
+                    _ => {
+                        let id = self.next_id;
+                        self.press(Slot::Wheel, Input::MouseMove, now);
+                        self.open.retain(|(_, open)| *open != id);
+                        if let Some(e) = self.entries.last_mut() {
+                            e.released = Some(now);
+                        }
+                        true
+                    }
+                }
+            }
         }
     }
 

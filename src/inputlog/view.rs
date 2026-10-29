@@ -99,7 +99,7 @@ fn tracked(entries: &[Entry], t: &InputTracking) -> Vec<Entry> {
         Input::Trigger(tr) => t.tracks(TrackedInput::Trigger(*tr)),
         Input::Combo(members) => members.iter().any(|b| t.tracks(TrackedInput::Button(*b))),
         // Only exports have these, and an export log shows all of them.
-        Input::Key(_) | Input::Mouse(_) | Input::Wheel(_) | Input::Mode(_) | Input::Layer(_) => true,
+        Input::Key(_) | Input::Mouse(_) | Input::Wheel(_) | Input::MouseMove | Input::Mode(_) | Input::Layer(_) => true,
     };
     entries.iter().filter(|e| follows(&e.input)).cloned().collect()
 }
@@ -164,6 +164,7 @@ pub fn input_glyph(input: &Input, family: PadFamily, swapped: bool) -> Vec<Segme
         Input::Key(code) => vec![key_glyph(code)],
         Input::Mouse(m) => vec![mouse_glyph(*m)],
         Input::Wheel(d) => vec![glyph(&format!("Wheel {}", wheel_arrow(*d)), None, false)],
+        Input::MouseMove => vec![glyph("Mouse moving", None, false)],
         Input::Mode(name) => vec![glyph("Mode", Some(MODE), false), Segment::Text(name.clone())],
         Input::Layer(name) => vec![glyph("Layer", Some(LAYER), false), Segment::Text(name.clone())],
         Input::Combo(members) => {

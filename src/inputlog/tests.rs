@@ -258,10 +258,12 @@ fn keyboard_and_mouse_output_is_logged_with_key_and_mouse_glyphs() {
     log.output(&OutEvent::MouseButton(MouseButton::Left, false), at(210));
     log.output(&OutEvent::Wheel { vertical: 120, horizontal: 0 }, at(300));
     assert!(!log.output(&OutEvent::Wheel { vertical: 120, horizontal: 0 }, at(320)), "a turning wheel is one entry");
-    assert!(!log.output(&OutEvent::MouseMove(5, 5), at(330)));
+    assert!(log.output(&OutEvent::MouseMove(5, 5), at(330)), "a move starts an entry");
+    assert!(!log.output(&OutEvent::MouseMove(5, 5), at(400)), "moves close together are one");
+    assert!(log.output(&OutEvent::MouseMove(5, 5), at(900)), "a pause starts another");
     assert_eq!(
         inputs(&log),
-        [Input::Key("KEY_W".into()), Input::Mouse(MouseButton::Left), Input::Wheel(crate::config::WheelDirection::Up)]
+        [Input::Key("KEY_W".into()), Input::Mouse(MouseButton::Left), Input::Wheel(crate::config::WheelDirection::Up), Input::MouseMove, Input::MouseMove]
     );
     assert!(log.entries().iter().all(|e| e.released.is_some()), "all let go");
     let glyph = super::view::input_glyph(&Input::Key("KEY_W".into()), crate::info::PadFamily::Xbox, false);
