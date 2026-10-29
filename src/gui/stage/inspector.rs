@@ -35,7 +35,8 @@ impl App {
         let page = match stage.tab {
             StageTab::Look => self.stage_style(stage.target).map_or_else(|| space().into(), |style| {
                 let target = stage.target;
-                style_editor(style, Rc::new(move |s| self.stage_restyle(target, s).unwrap_or(Message::Stage(StageMessage::Close))))
+                let on_change = Rc::new(move |s| self.stage_restyle(target, s).unwrap_or(Message::Stage(StageMessage::Close)));
+                if matches!(target, StageTarget::Info(_) | StageTarget::Log(_)) { text_style_editor(style, on_change) } else { style_editor(style, on_change) }
             }),
             StageTab::Content if has_content(stage.target) => self.stage_content(stage.target),
             _ => self.stage_layout(stage),

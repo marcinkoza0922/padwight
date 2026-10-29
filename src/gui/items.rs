@@ -948,7 +948,7 @@ impl App {
         let appearance_open = self.open_info_appearance.contains(&i);
         let mut look = Vec::new();
         if appearance_open {
-            look.push(style_editor(&o.style, Rc::new(move |s| Message::SetInfoStyle(i, s))));
+            look.push(text_style_editor(&o.style, Rc::new(move |s| Message::SetInfoStyle(i, s))));
             look.extend(self.spot_note(o.style.position, false));
         }
         rows.push(appearance_row(appearance_open, Message::ToggleInfoAppearance(i), StageTarget::Info(i), look));

@@ -126,7 +126,9 @@ fn stroke_mut(s: &mut OverlayStyle, d: Decor) -> Option<&mut Stroke> {
 /// Every decoration, with whether it's on.
 pub(super) fn list_rows(config: &Config, at: StyleAt) -> Vec<Row> {
     let Some(s) = style(config, at) else { return Vec::new() };
-    DECORS.into_iter().map(|d| Row::open(format!("{}: {}", d.name(), if d.is_on(s) { "on" } else { "off" }), Page::Decor(at, d))).collect()
+    // Info and log overlays have no items to outline, light up or separate.
+    let text_only = matches!(at, StyleAt::Info(_) | StyleAt::Log(_));
+    DECORS.into_iter().filter(|d| !(text_only && matches!(d, Decor::ItemBorder | Decor::Glow | Decor::Dividers))).map(|d| Row::open(format!("{}: {}", d.name(), if d.is_on(s) { "on" } else { "off" }), Page::Decor(at, d))).collect()
 }
 
 const STROKE: Number = Number::new(1.0, (0.0, 8.0), 0, " px");

@@ -121,7 +121,7 @@ impl App {
         let mut look = Vec::new();
         if appearance_open {
             let e = edit.clone();
-            look.push(style_editor(&o.style, Rc::new(move |style| e(&|o| o.style = style.clone()))));
+            look.push(text_style_editor(&o.style, Rc::new(move |style| e(&|o| o.style = style.clone()))));
             look.extend(self.spot_note(o.style.position, false));
         }
         rows.push(appearance_row(appearance_open, Message::ToggleLogAppearance(i), StageTarget::Log(i), look));

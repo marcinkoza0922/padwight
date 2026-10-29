@@ -18,8 +18,19 @@ pub(super) const SWATCHES: [&str; 12] = [
 ];
 
 /// Position, size, colors and decorations of an overlay.
-#[expect(clippy::needless_pass_by_value, reason = "editors take their callbacks by value")]
 pub(super) fn style_editor<'a>(style: &OverlayStyle, on_change: OnStyle<'a>) -> Element<'a, Message> {
+    editor(style, on_change, true)
+}
+
+/// The same for an info or log overlay, without what only menu items, keys and buttons show:
+/// their outline and glow, 3D buttons and the lines between them.
+pub(super) fn text_style_editor<'a>(style: &OverlayStyle, on_change: OnStyle<'a>) -> Element<'a, Message> {
+    editor(style, on_change, false)
+}
+
+/// `style_editor`, with the settings for items when `items`.
+#[expect(clippy::needless_pass_by_value, reason = "editors take their callbacks by value")]
+fn editor<'a>(style: &OverlayStyle, on_change: OnStyle<'a>, items: bool) -> Element<'a, Message> {
     let set = |f: fn(&mut OverlayStyle, Paint)| setter(&on_change, style, f);
     let scale = style.scale;
     let size = stepped_slider(50.0..=200.0, scale * 100.0, format!("{:.0}%", scale * 100.0), {
@@ -60,9 +71,9 @@ pub(super) fn style_editor<'a>(style: &OverlayStyle, on_change: OnStyle<'a>) -> 
         labeled("    Background", paint_row(&style.background, true, &set(|s, p| s.background = p))),
         labeled("    Element primary", paint_row(&style.items, true, &set(|s, p| s.items = p))),
         labeled("    Element secondary", paint_row(&style.selected, true, &set(|s, p| s.selected = p))),
-        decorations(style, &on_change),
+        decorations(style, &on_change, items),
         typography_rows(style, &on_change),
-        ornament_rows(style, &on_change),
+        ornament_rows(style, &on_change, items),
     ]
     .spacing(8)
     .into()
@@ -101,7 +112,7 @@ pub(super) struct Slot<T> {
 
 /// The decorations, each off until ticked: the panel's outline, shadow and gradient, the items'
 /// outline, the selected item's glow.
-fn decorations<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a, Message> {
+fn decorations<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>, items: bool) -> Element<'a, Message> {
     let border = Slot { label: "Panel outline", get: |s| s.border.as_ref(), put: |s, v| s.border = v, start: |_| Stroke::default() };
     let shadow = Slot { label: "Panel shadow", get: |s| s.shadow.as_ref(), put: |s, v| s.shadow = v, start: |_| Shade::panel() };
     let gradient = Slot { label: "Gradient", get: |s| s.gradient.as_ref(), put: |s, v| s.gradient = v, start: |_| Gradient::default() };
@@ -118,9 +129,9 @@ fn decorations<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'a,
         optional(&border, |stroke, set| stroke_rows(stroke, 0.0..=8.0, &set), style, on_change),
         optional(&shadow, |shade, set| shade_rows(shade, &set), style, on_change),
         optional(&gradient, |g, set| gradient_rows(g, &set), style, on_change),
-        optional(&item_border, |stroke, set| stroke_rows(stroke, 0.0..=6.0, &set), style, on_change),
-        optional(&glow, |shade, set| glow_rows(shade, &set), style, on_change),
     ]
+    .extend(items.then(|| optional(&item_border, |stroke, set| stroke_rows(stroke, 0.0..=6.0, &set), style, on_change)))
+    .extend(items.then(|| optional(&glow, |shade, set| glow_rows(shade, &set), style, on_change)))
     .spacing(8)
     .into()
 }
