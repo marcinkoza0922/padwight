@@ -126,8 +126,8 @@ fn stroke_mut(s: &mut OverlayStyle, d: Decor) -> Option<&mut Stroke> {
 /// Every decoration, with whether it's on.
 pub(super) fn list_rows(config: &Config, at: StyleAt) -> Vec<Row> {
     let Some(s) = style(config, at) else { return Vec::new() };
-    // Info and log overlays have no items to outline, light up or separate.
-    let text_only = matches!(at, StyleAt::Info(_) | StyleAt::Log(_));
+    // Info, log and media overlays and name labels have no items to outline, light up or separate.
+    let text_only = matches!(at, StyleAt::Info(_) | StyleAt::Log(_) | StyleAt::Indicator(..) | StyleAt::Game(super::style::Look::Media));
     DECORS.into_iter().filter(|d| !(text_only && matches!(d, Decor::ItemBorder | Decor::Glow | Decor::Dividers))).map(|d| Row::open(format!("{}: {}", d.name(), if d.is_on(s) { "on" } else { "off" }), Page::Decor(at, d))).collect()
 }
 

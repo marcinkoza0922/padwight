@@ -19,18 +19,42 @@ pub(super) const SWATCHES: [&str; 12] = [
 
 /// Position, size, colors and decorations of an overlay.
 pub(super) fn style_editor<'a>(style: &OverlayStyle, on_change: OnStyle<'a>) -> Element<'a, Message> {
-    editor(style, on_change, true)
+    editor(style, on_change, Shows::Items)
 }
 
 /// The same for an info or log overlay, without what only menu items, keys and buttons show:
 /// their outline and glow, 3D buttons and the lines between them.
 pub(super) fn text_style_editor<'a>(style: &OverlayStyle, on_change: OnStyle<'a>) -> Element<'a, Message> {
-    editor(style, on_change, false)
+    editor(style, on_change, Shows::Text)
 }
 
-/// `style_editor`, with the settings for items when `items`.
+/// The same for the media controls, which draw no items at all: no element colors either.
+pub(super) fn media_style_editor<'a>(style: &OverlayStyle, on_change: OnStyle<'a>) -> Element<'a, Message> {
+    editor(style, on_change, Shows::Media)
+}
+
+/// What an overlay draws, and so which of the style's settings show.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum Shows {
+    /// Items, keys or buttons: every setting.
+    Items,
+    /// Text and glyphs that take the element colors, but no items.
+    Text,
+    /// Text and a progress bar, nothing the element colors or item settings reach.
+    Media,
+}
+
+impl Shows {
+    /// Whether items are drawn: their outline, glow, 3D buttons and the lines between them.
+    pub(super) fn items(self) -> bool {
+        self == Self::Items
+    }
+}
+
+/// `style_editor`, with the settings for what `shows`.
 #[expect(clippy::needless_pass_by_value, reason = "editors take their callbacks by value")]
-fn editor<'a>(style: &OverlayStyle, on_change: OnStyle<'a>, items: bool) -> Element<'a, Message> {
+fn editor<'a>(style: &OverlayStyle, on_change: OnStyle<'a>, shows: Shows) -> Element<'a, Message> {
+    let items = shows.items();
     let set = |f: fn(&mut OverlayStyle, Paint)| setter(&on_change, style, f);
     let scale = style.scale;
     let size = stepped_slider(50.0..=200.0, scale * 100.0, format!("{:.0}%", scale * 100.0), {
@@ -58,6 +82,15 @@ fn editor<'a>(style: &OverlayStyle, on_change: OnStyle<'a>, items: bool) -> Elem
     let max_width = percent_slider(style.max_width, 10.0..=100.0, set_field(on_change.clone(), style, |s: &mut OverlayStyle, v: f32| s.max_width = v));
     let max_height = percent_slider(style.max_height, 10.0..=100.0, set_field(on_change.clone(), style, |s: &mut OverlayStyle, v: f32| s.max_height = v));
 
+    let colors = (shows != Shows::Media).then(|| -> Element<'a, Message> {
+        column![
+            labeled("    Element primary", paint_row(&style.items, true, &set(|s, p| s.items = p))),
+            labeled("    Element secondary", paint_row(&style.selected, true, &set(|s, p| s.selected = p))),
+        ]
+        .spacing(8)
+        .into()
+    });
+
     column![
         labeled("    Position", position_grid(style, &on_change)),
         labeled("    Size", size),
@@ -69,12 +102,11 @@ fn editor<'a>(style: &OverlayStyle, on_change: OnStyle<'a>, items: bool) -> Elem
         labeled("    Max height", max_height),
         labeled("    Corners", shape),
         labeled("    Background", paint_row(&style.background, true, &set(|s, p| s.background = p))),
-        labeled("    Element primary", paint_row(&style.items, true, &set(|s, p| s.items = p))),
-        labeled("    Element secondary", paint_row(&style.selected, true, &set(|s, p| s.selected = p))),
-        decorations(style, &on_change, items),
-        typography_rows(style, &on_change),
-        ornament_rows(style, &on_change, items),
     ]
+    .extend(colors)
+    .push(decorations(style, &on_change, items))
+    .push(typography_rows(style, &on_change))
+    .push(ornament_rows(style, &on_change, items))
     .spacing(8)
     .into()
 }

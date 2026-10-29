@@ -184,7 +184,7 @@ fn game_overlay_card<'a>(
     };
     let mut rows = own_rows("appearance", "the appearance set on the App settings page", own.is_some(), move |on| set(on.then(|| global.clone())));
     if let Some(style) = own {
-        rows.push(stage::tinted_panel(vec![stage::edit_button(StageTarget::Setup(panel)), style_editor(style, on_style), sample(style)]));
+        rows.push(stage::tinted_panel(vec![stage::edit_button(StageTarget::Setup(panel)), if panel == stage::Panel::Media { media_style_editor(style, on_style) } else { style_editor(style, on_style) }, sample(style)]));
     }
     section(panel.name(), Some("A setup can have its own look here, or follow the one set on the App settings page.".into()), rows)
 }

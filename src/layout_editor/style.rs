@@ -181,8 +181,11 @@ pub(super) fn style_rows(config: &Config, at: StyleAt) -> Vec<Row> {
         num(at, "Tallest", s.max_height, &PERCENT, |s, v| set(&mut s.max_height, v)),
         num(at, "Corners", s.corners, &CORNERS, |s, v| set(&mut s.corners, v)),
     ];
-    for (label, of, paint) in [("Background", PaintOf::Background, &s.background), ("Element primary", PaintOf::Items, &s.items), ("Element secondary", PaintOf::Selected, &s.selected)] {
-        rows.push(Row::open(format!("{label}: {}", paint_name(paint)), Page::Paint(at, of)));
+    // The media controls draw no items, so the element colors reach nothing there.
+    let colors = [("Background", PaintOf::Background, &s.background), ("Element primary", PaintOf::Items, &s.items), ("Element secondary", PaintOf::Selected, &s.selected)];
+    let shown = if at == StyleAt::Game(Look::Media) { &colors[..1] } else { &colors[..] };
+    for (label, of, paint) in shown {
+        rows.push(Row::open(format!("{label}: {}", paint_name(paint)), Page::Paint(at, *of)));
     }
     rows.push(Row::open("Text", Page::StyleText(at)));
     rows.push(Row::open("Decorations", Page::Decorations(at)));
