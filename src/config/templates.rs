@@ -70,7 +70,7 @@ impl Profile {
             left_trigger: TriggerAction::Button { action: Multi(vec![Mouse(MouseButton::Right), GyroHold]), threshold: 0.3 }.into(),
             right_trigger: TriggerAction::Button { action: Mouse(MouseButton::Left), threshold: 0.3 }.into(),
             // Gyro aiming while aiming down sights (LT), on pads that have a gyro.
-            gyro: GyroConfig { mode: GyroMode::Mouse { sensitivity: 15.0 }, start_off: true, ..GyroConfig::default() },
+            gyro: GyroConfig { enabled: true, starts_active: false, mode: GyroMode::Mouse { sensitivity: 15.0 }, ..GyroConfig::default() },
             ..Profile::passthrough(name)
         }
     }
@@ -125,6 +125,7 @@ impl Profile {
         let mut p = Profile::pc_action(name);
         p.requires = vec![Feature::Gyro];
         p.gyro = GyroConfig {
+            enabled: true,
             mode: GyroMode::Mouse { sensitivity: 15.0 },
             ..GyroConfig::default()
         };
@@ -139,6 +140,7 @@ impl Profile {
         p.requires = vec![Feature::Gyro];
         p.right_stick = StickConfig::new(StickAction::flick(), 0.1, 2.0);
         p.gyro = GyroConfig {
+            enabled: true,
             mode: GyroMode::Mouse { sensitivity: 22.0 },
             ..GyroConfig::default()
         };

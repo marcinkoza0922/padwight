@@ -255,13 +255,13 @@ fn the_built_in_modes_let_none_of_the_profile_s_sticks_triggers_gyro_or_touchpad
     p.left_stick.zones.push(Zone { min: 0.9, max: 1.0, action: key("KEY_LEFTSHIFT") });
     p.left_stick.deadzone = 0.3;
     p.left_trigger.zones.push(Zone { min: 0.5, max: 1.0, action: key("KEY_E") });
-    p.gyro.mode = GyroMode::Mouse { sensitivity: 10.0 };
+    p.gyro = GyroConfig { enabled: true, mode: GyroMode::Mouse { sensitivity: 10.0 }, ..GyroConfig::default() };
     p.touchpad = TouchpadConfig::default();
     assert!(p.left_stick.action != StickAction::Disabled && p.left_trigger.action != TriggerAction::Disabled);
     let off = TouchpadConfig { motion: TouchpadMotion::Off, click: ButtonAction::Disabled, right: None };
     for mode in [Layer::mouse(), Layer::guide()] {
         let on = p.with_layers([&mode]);
-        assert_eq!(on.gyro.mode, GyroMode::Off, "{}", mode.name);
+        assert!(!on.gyro.enabled, "{}", mode.name);
         assert_eq!(on.touchpad, off, "{}", mode.name);
         assert!(on.left_stick.zones.is_empty() && on.left_trigger.zones.is_empty(), "{}", mode.name);
     }
@@ -285,7 +285,8 @@ fn the_built_in_modes_let_none_of_the_profile_s_sticks_triggers_gyro_or_touchpad
 fn mouse_mode_can_let_the_gyro_and_touchpad_move_the_pointer() {
     let mut p = Profile::passthrough("Aim");
     p.gyro.mode = GyroMode::Stick { stick: Stick::Right, full_rate: 300.0, anti_deadzone: 0.1, game_curve: 1.0 };
-    p.gyro.start_off = true;
+    p.gyro.enabled = true;
+    p.gyro.starts_active = false;
     p.gyro.full_turn_px = Some(4000.0);
     p.touchpad.motion = TouchpadMotion::Off;
     let config = Config { mouse_mode: MouseModeExtras { gyro: true, touchpad: true }, ..Config::default() };
@@ -293,13 +294,13 @@ fn mouse_mode_can_let_the_gyro_and_touchpad_move_the_pointer() {
     let mouse = config.mode_for(&game, MOUSE_MODE).unwrap();
     let on = p.with_layers([&*mouse]);
     assert_eq!(on.gyro.mode, GyroMode::Mouse { sensitivity: 15.0 }, "a gyro aiming a stick moves the pointer at the default speed");
-    assert_eq!((on.gyro.start_off, on.gyro.full_turn_px), (true, None), "it keeps whether it starts on");
+    assert_eq!((on.gyro.starts_active, on.gyro.full_turn_px), (false, None), "it keeps whether it starts on");
     assert_eq!(on.touchpad, TouchpadConfig::default(), "the touchpad works as a laptop's");
     p.gyro.mode = GyroMode::Mouse { sensitivity: 8.0 };
     assert_eq!(p.with_layers([&*mouse]).gyro, p.gyro, "a gyro that already moves the pointer is kept as it is");
     // The Guide mode still lets neither through.
     let guide = config.mode_for(&game, GUIDE_MODE).unwrap();
-    assert_eq!(p.with_layers([&*guide]).gyro.mode, GyroMode::Off);
+    assert!(!p.with_layers([&*guide]).gyro.enabled);
 
     let dir = scratch_dir("mouse-mode-extras");
     let path = dir.join("config.toml");

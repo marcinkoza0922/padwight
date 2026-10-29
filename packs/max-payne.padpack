@@ -140,7 +140,7 @@ keys = ["KEY_F5"]
 keys = ["KEY_F9"]
 
 [profiles.gyro]
-mode = "off"
+enabled = false
 horizontal = "yaw"
 invert_x = false
 invert_y = false

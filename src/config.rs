@@ -381,7 +381,7 @@ pub enum ButtonAction {
     GyroToggle,
     /// Gyro is off while held: a clutch for repositioning the controller without moving the aim.
     GyroClutch,
-    /// Gyro is on while held, even if it is switched off (see `start_off` in the gyro settings).
+    /// Gyro is on while held, even if it is switched off (see `starts_active` in the gyro settings).
     GyroHold,
     /// Sets the controller's current tilt as straight ahead (steering and position modes) and
     /// clears leftover motion.
@@ -625,6 +625,11 @@ impl ButtonAction {
             ButtonAction::Toggle(Toggled { action: inner, .. }) | ButtonAction::Turbo { action: inner, .. } => inner.key_names(),
             _ => Vec::new(),
         }
+    }
+
+    /// Whether this is one of the gyro's actions (not counting a menu or macro that holds one).
+    pub fn is_gyro(&self) -> bool {
+        matches!(self, ButtonAction::GyroToggle | ButtonAction::GyroClutch | ButtonAction::GyroHold | ButtonAction::GyroRecenter)
     }
 
     /// This action and every action nested inside it.

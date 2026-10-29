@@ -12,19 +12,17 @@ use super::{
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Mode {
-    Off,
     Mouse,
     Stick,
     Position,
     Steering,
 }
 
-const MODES: [Mode; 5] = [Mode::Off, Mode::Mouse, Mode::Stick, Mode::Position, Mode::Steering];
+const MODES: [Mode; 4] = [Mode::Mouse, Mode::Stick, Mode::Position, Mode::Steering];
 
 impl Mode {
     fn of(mode: &GyroMode) -> Mode {
         match mode {
-            GyroMode::Off => Mode::Off,
             GyroMode::Mouse { .. } => Mode::Mouse,
             GyroMode::Stick { .. } => Mode::Stick,
             GyroMode::Position { .. } => Mode::Position,
@@ -34,7 +32,6 @@ impl Mode {
 
     fn name(self) -> &'static str {
         match self {
-            Mode::Off => "Off",
             Mode::Mouse => "Mouse",
             Mode::Stick => "Stick (turning speed)",
             Mode::Position => "Stick (position)",
@@ -45,7 +42,6 @@ impl Mode {
     /// The mode with its starting settings, as the settings window starts them.
     fn mode(self) -> GyroMode {
         match self {
-            Mode::Off => GyroMode::Off,
             Mode::Mouse => GyroMode::Mouse { sensitivity: 15.0 },
             Mode::Stick => GyroMode::Stick { stick: Stick::Right, full_rate: 360.0, anti_deadzone: 0.15, game_curve: 1.0 },
             Mode::Position => GyroMode::Position { stick: Stick::Right, max_angle: 30.0, anti_deadzone: 0.15, lock_at_edge: true },
@@ -84,11 +80,13 @@ fn switch(owner: Owner, label: &str, on: bool, field: fn(&mut GyroConfig, bool) 
 pub(super) fn gyro_rows(config: &Config, owner: Owner) -> Vec<Row> {
     let Some(g) = owner::gyro(config, owner) else { return override_rows(owner, Part::Gyro, "Gyro") };
     let mode = Mode::of(&g.mode);
-    let mut rows = vec![Row::step(format!("Mode: {}", mode.name()), move |c, dir| {
-        let next = cycle(&MODES, mode, dir).mode();
-        gyro_mut(c, owner).is_some_and(|g| set(&mut g.mode, next))
-    })];
-    if mode != Mode::Off {
+    let mut rows = vec![switch(owner, "Gyro enabled", g.enabled, |g, on| set(&mut g.enabled, on))];
+    if g.enabled {
+        rows.push(switch(owner, "Starts active", g.starts_active, |g, on| set(&mut g.starts_active, on)));
+        rows.push(Row::step(format!("Mode: {}", mode.name()), move |c, dir| {
+            let next = cycle(&MODES, mode, dir).mode();
+            gyro_mut(c, owner).is_some_and(|g| set(&mut g.mode, next))
+        }));
         rows.extend(mode_rows(owner, g));
         if mode != Mode::Steering {
             rows.extend(aim_rows(owner, g));
@@ -117,7 +115,6 @@ fn sends_row(owner: Owner, stick: Stick) -> Row {
 /// The mode's own settings: sensitivity, or how far the stick is pushed.
 fn mode_rows(owner: Owner, g: &GyroConfig) -> Vec<Row> {
     match g.mode {
-        GyroMode::Off => Vec::new(),
         GyroMode::Mouse { sensitivity } => {
             let real = g.full_turn_px.is_some();
             let field = |g: &mut GyroConfig, v: f32| match &mut g.mode {
@@ -224,11 +221,10 @@ fn curve_rows(owner: Owner, curve: &SpeedCurve) -> Vec<Row> {
     rows
 }
 
-/// Whether gyro starts on, the rumble of its on/off action, and pausing with a stick. Clutching,
+/// The rumble of the on/off action, and pausing with a stick. Clutching,
 /// switching on and off and recentering are actions, set on the input that should do them.
 fn activation_rows(owner: Owner, g: &GyroConfig) -> Vec<Row> {
     let mut rows = vec![
-        switch(owner, "Starts switched off", g.start_off, |g, on| set(&mut g.start_off, on)),
         switch(owner, "Rumble on gyro on / off", g.toggle_rumble, |g, on| set(&mut g.toggle_rumble, on)),
     ];
     let pause = g.pause_with_stick;

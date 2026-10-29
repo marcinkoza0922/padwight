@@ -1021,7 +1021,7 @@ impl App {
         ]
         .spacing(12)
         .align_y(Alignment::Center);
-        if let Some(note) = self.menu_card_note(menu, problem) {
+        if let Some(note) = self.menu_card_note(menu, problem, names) {
             header = header.push(note);
         }
         if open {
@@ -1034,11 +1034,14 @@ impl App {
         container(col).padding(14).width(Length::Fill).style(style::card).into()
     }
 
-    /// What a closed menu card says is wrong: a problem that stops saving, or else the first
-    /// button-menu item nothing can pick.
-    fn menu_card_note<'a>(&self, menu: &Menu, problem: Option<String>) -> Option<Element<'a, Message>> {
+    /// What a closed menu card says is wrong: a problem that stops saving, or else a warning:
+    /// gyro items in a setup with no gyro, or the first button-menu item nothing can pick.
+    fn menu_card_note<'a>(&self, menu: &Menu, problem: Option<String>, names: &Names) -> Option<Element<'a, Message>> {
         if let Some(problem) = problem {
             return Some(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR).into());
+        }
+        if let Some(warning) = menu_gyro_warning(self.game(), names, menu) {
+            return Some(text(format!("⚠ {warning}")).size(12).color(WARNING_COLOR).into());
         }
         let openers = menu_openers(self.game(), &menu.name);
         let warning = (0..menu.items.len()).find_map(|i| button_item_warning(menu, i, &openers))?;

@@ -1,6 +1,7 @@
 //! Quick Settings: a few values of the active profile, and of the overlays and rumble, changed
 //! with the D-pad over the game. Which rows show depends on what the profile uses.
 
+use crate::config::problems::{Names, gyro_problem, touchpad_gyro_problem};
 use crate::config::{Config, GyroConfig, GyroMode, Layer, Profile, ProfileRef, Stick, StickAction, StickConfig};
 
 use super::{Outcome, active_profile_mut};
@@ -93,11 +94,11 @@ pub(super) fn rows(config: &Config, saved: &Config) -> Vec<Row> {
                 rows.push(Row::StickSpeed(stick));
             }
         }
-        if matches!(profile.gyro.mode, GyroMode::Mouse { .. }) {
+        if profile.gyro.enabled && matches!(profile.gyro.mode, GyroMode::Mouse { .. }) {
             rows.push(Row::GyroSensitivity);
         }
-        let had_gyro = |c: &Config| c.active().is_some_and(|p| !matches!(p.gyro.mode, GyroMode::Off));
-        if had_gyro(config) || had_gyro(saved) {
+        let had_gyro = |c: &Config| c.active().is_some_and(|p| p.gyro.enabled);
+        if (had_gyro(config) || had_gyro(saved)) && (!profile.gyro.enabled || gyro_can_turn_off(config, profile)) {
             rows.push(Row::Gyro);
         }
         rows.extend(scoped_rows(config));
@@ -129,7 +130,7 @@ fn scoped_rows(config: &Config) -> Vec<Row> {
                 rows.push(Row::ScopedStickSpeed(scope, stick));
             }
         }
-        if layer.gyro.as_ref().is_some_and(|g| matches!(g.mode, GyroMode::Mouse { .. })) {
+        if layer.gyro.as_ref().is_some_and(|g| g.enabled && matches!(g.mode, GyroMode::Mouse { .. })) {
             rows.push(Row::ScopedGyroSensitivity(scope));
         }
     }
@@ -177,7 +178,7 @@ pub(super) fn label(row: Row, config: &Config, saved: &Config) -> String {
         Row::ScopedGyroSensitivity(scope) => {
             format!("Gyro sensitivity, {}: {}", scope.name(config), was(&|c| scope.get(c).and_then(|l| l.gyro.as_ref()?.sensitivity_label())))
         }
-        Row::Gyro => format!("Gyro: {}", on(config.active().is_some_and(|p| !matches!(p.gyro.mode, GyroMode::Off)))),
+        Row::Gyro => format!("Gyro: {}", on(config.active().is_some_and(|p| p.gyro.enabled))),
         Row::InvertY => format!("Invert Y: {}", on(config.active().is_some_and(inverted_y))),
         Row::Deadzone(stick) => format!("{} Stick deadzone: {}", side(stick), was(&|c| c.active().map(|p| percent(stick_config(p, stick).deadzone)))),
         Row::Rumble => format!("Rumble: {}", was(&|c| Some(percent(c.rumble_strength)))),
@@ -216,8 +217,8 @@ fn y_flags(profile: &mut Profile) -> Vec<&mut bool> {
 }
 
 /// Changes a row's value by one step (`dir` is -1 or 1; `big` with RB held), or moves to the
-/// next profile, or turns remapping off. `saved` is the config as the menu opened.
-pub(super) fn adjust(row: Row, dir: i32, big: bool, config: &mut Config, saved: &Config) -> Option<Outcome> {
+/// next profile, or turns remapping off.
+pub(super) fn adjust(row: Row, dir: i32, big: bool, config: &mut Config) -> Option<Outcome> {
     let pick = |(small, large): (f32, f32)| if big { large } else { small } * dir as f32;
     match row {
         Row::Profile => return next_profile(dir, config).map(Outcome::Switch),
@@ -234,12 +235,8 @@ pub(super) fn adjust(row: Row, dir: i32, big: bool, config: &mut Config, saved: 
             set_panel_size(config, size);
         }
         Row::Gyro => {
-            let restored = saved.active().map(|p| p.gyro.mode.clone()).filter(|m| !matches!(m, GyroMode::Off));
             let gyro = &mut active_profile_mut(config)?.gyro;
-            gyro.mode = match gyro.mode {
-                GyroMode::Off => restored?,
-                _ => GyroMode::Off,
-            };
+            gyro.enabled = !gyro.enabled;
         }
         Row::ScopedStickSpeed(scope, stick) => {
             let cfg = if stick == Stick::Left { &mut scope.get_mut(config)?.left_stick } else { &mut scope.get_mut(config)?.right_stick };
@@ -301,6 +298,14 @@ fn scale_speed(cfg: &mut StickConfig, dir: i32, step: f32) -> Option<()> {
     Some(())
 }
 
+/// Whether the profile can have gyro turned off: none of its inputs holds a gyro action, which
+/// saving would refuse without gyro.
+fn gyro_can_turn_off(config: &Config, profile: &Profile) -> bool {
+    let names = Names::for_game(config, config.active_game());
+    let names = names.for_gyro(false);
+    profile.actions().into_iter().all(|a| gyro_problem(a, &names).is_none()) && touchpad_gyro_problem(&profile.touchpad, &names).is_none()
+}
+
 /// Scales the sensitivity of a gyro that moves the mouse.
 fn scale_sensitivity(gyro: &mut GyroConfig, dir: i32, step: f32) -> Option<()> {
     let GyroMode::Mouse { sensitivity } = &mut gyro.mode else { return None };
@@ -332,8 +337,16 @@ mod tests {
         config.general.profiles.truncate(1);
         let profile = &mut config.general.profiles[0];
         profile.left_stick.action = StickAction::Mouse { speed: 1000.0, response: MouseResponse::default(), invert_y: false };
-        profile.gyro.mode = GyroMode::Mouse { sensitivity: 10.0 };
+        profile.gyro = GyroConfig { enabled: true, mode: GyroMode::Mouse { sensitivity: 10.0 }, ..GyroConfig::default() };
         config
+    }
+
+    #[test]
+    fn gyro_cant_be_turned_off_under_a_profile_that_has_a_gyro_action() {
+        let mut config = config();
+        let saved = config.clone();
+        active_profile_mut(&mut config).unwrap().set_button(crate::config::Button::North, crate::config::ButtonAction::GyroToggle);
+        assert!(!rows(&config, &saved).contains(&Row::Gyro), "turning it off would leave a config saving refuses");
     }
 
     #[test]
@@ -341,12 +354,12 @@ mod tests {
         let mut config = config();
         let saved = config.clone();
         assert!(rows(&config, &saved).contains(&Row::Gyro));
-        adjust(Row::Gyro, 1, false, &mut config, &saved);
-        assert!(matches!(config.active().unwrap().gyro.mode, GyroMode::Off));
+        adjust(Row::Gyro, 1, false, &mut config);
+        assert!(!config.active().unwrap().gyro.enabled);
         assert!(rows(&config, &saved).contains(&Row::Gyro), "still there to turn back on");
         assert!(!rows(&config, &saved).contains(&Row::GyroSensitivity));
-        adjust(Row::Gyro, 1, false, &mut config, &saved);
-        assert_eq!(config.active().unwrap().gyro.mode, saved.active().unwrap().gyro.mode);
+        adjust(Row::Gyro, 1, false, &mut config);
+        assert_eq!(config.active().unwrap().gyro, saved.active().unwrap().gyro);
     }
 
     #[test]
@@ -354,17 +367,17 @@ mod tests {
         let mut config = config();
         let saved = config.clone();
         let deadzone = config.active().unwrap().left_stick.deadzone;
-        adjust(Row::Deadzone(Stick::Left), 1, false, &mut config, &saved);
+        adjust(Row::Deadzone(Stick::Left), 1, false, &mut config);
         assert!((config.active().unwrap().left_stick.deadzone - (deadzone + 0.01)).abs() < 1e-4);
         assert!(label(Row::Deadzone(Stick::Left), &config, &saved).contains("(was"));
         for _ in 0..20 {
-            adjust(Row::Rumble, -1, false, &mut config, &saved);
+            adjust(Row::Rumble, -1, false, &mut config);
         }
         assert_eq!(config.rumble_strength, 0.0);
         assert_eq!(label(Row::Rumble, &config, &saved), "Rumble: 0% (was 100%)");
-        adjust(Row::OverlaySize, 1, true, &mut config, &saved);
+        adjust(Row::OverlaySize, 1, true, &mut config);
         assert!((config.active_menu_style().scale - 1.25).abs() < 1e-4);
         assert!((config.keyboard_style.scale - 1.25).abs() < 1e-4, "every panel takes the size");
-        assert_eq!(adjust(Row::Remapping, 1, false, &mut config, &saved), Some(Outcome::RemappingOff));
+        assert_eq!(adjust(Row::Remapping, 1, false, &mut config), Some(Outcome::RemappingOff));
     }
 }

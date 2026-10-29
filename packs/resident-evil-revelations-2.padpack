@@ -68,7 +68,7 @@ action = {gamepad = "Left"}
 action = {gamepad = "Right"}
 
 [profiles.gyro]
-mode = "off"
+enabled = false
 horizontal = "yaw"
 invert_x = false
 invert_y = false

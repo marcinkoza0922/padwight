@@ -108,7 +108,7 @@ threshold = 0.3
 action = {keys = ["KEY_D"]}
 
 [profiles.gyro]
-mode = "off"
+enabled = false
 horizontal = "yaw"
 invert_x = false
 invert_y = false

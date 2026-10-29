@@ -329,7 +329,10 @@ impl App {
                 .into()
         }));
 
-        let profile_issue = self.profile().is_some_and(|p| ProfileTab::ALL.iter().any(|t| section_has_problem(p, *t, &names)));
+        let profile_issue = self.profile().is_some_and(|p| {
+            let names = names.for_gyro(self.edited().map_or(p.gyro.enabled, |l| l.gyro.as_ref().is_none_or(|g| g.enabled)));
+            ProfileTab::ALL.iter().any(|t| section_has_problem(p, *t, &names))
+        });
         let reachable = reachable_menus(&self.config, game);
         let issue = |tab: GameTab| match tab {
             GameTab::Profiles => profile_issue,

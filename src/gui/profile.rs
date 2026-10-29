@@ -836,6 +836,8 @@ impl App {
     /// The live drawing, "Find by pressing", and the Buttons, Sticks & triggers, Combos and
     /// Gyro tabs for `p`: a profile, or (with `layer`) a layer over one.
     pub(super) fn view_profile_editor<'a>(&'a self, p: &'a Profile, names: &Names, layer: Option<LayerMarks<'a>>) -> Element<'a, Message> {
+        // Where gyro is off, the pickers leave out its actions and what uses them.
+        let names = &*names.for_gyro(layer.map_or(p.gyro.enabled, |m| m.layer.gyro.as_ref().is_none_or(|g| g.enabled)));
         // The active profile's drawing also shows the layers that are on right now.
         let live = (layer.is_none() && self.profile_ref().is_some_and(|at| at == self.saved.active)).then(|| self.with_active_layers(p));
         let mut col = column![overview_card(self.view_live(Some(live.as_ref().unwrap_or(p)), None, true))].spacing(16);

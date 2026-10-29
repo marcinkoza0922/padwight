@@ -91,7 +91,9 @@ pub(super) fn section_has_problem(p: &Profile, tab: ProfileTab, names: &Names) -
         }
         ProfileTab::Combos => combos_problem(&p.combos).is_some() || p.combos.iter().any(|c| bad(&c.action)),
         ProfileTab::Touchpad => p.touchpad.actions().into_iter().any(bad) || super::touchpad::touchpad_problem(&p.touchpad, names).is_some(),
-        ProfileTab::Gyro | ProfileTab::Guide => false,
+        // Gyro is off, yet something uses it: the way out is on this tab, the Enabled box.
+        ProfileTab::Gyro => p.actions().into_iter().any(|a| gyro_problem(a, names).is_some()) || touchpad_gyro_problem(&p.touchpad, names).is_some(),
+        ProfileTab::Guide => false,
     }
 }
 
@@ -152,7 +154,7 @@ impl App {
             game_problem(config, g)?;
             let names = Names::for_game(config, g);
             g.profiles.iter().enumerate().find_map(|(i, p)| {
-                bad_target(p, &names).map(|target| Place { game: key.map(str::to_string), profile: i, target })
+                bad_target(p, &names.for_gyro(p.gyro.enabled)).map(|target| Place { game: key.map(str::to_string), profile: i, target })
             })
         })
     }

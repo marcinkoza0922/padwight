@@ -5,7 +5,7 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use super::{SpeedCurve, Stick, is_one, is_zero};
+use super::{SpeedCurve, Stick, is_one, is_true, is_zero, yes};
 
 /// Which rotation drives horizontal aim. Pitch drives vertical, except in world space.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -78,7 +78,6 @@ impl fmt::Display for GyroAxes {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum GyroMode {
-    Off,
     /// Rotation moves the mouse; `sensitivity` is pixels per degree turned (or, with
     /// [`GyroConfig::full_turn_px`], a multiple of the real-world turn).
     Mouse { sensitivity: f32 },
@@ -118,6 +117,10 @@ impl GyroMode {
     }
 }
 
+fn default_mode() -> GyroMode {
+    GyroMode::Mouse { sensitivity: 15.0 }
+}
+
 fn one() -> f32 {
     1.0
 }
@@ -138,6 +141,16 @@ fn is_false(v: &bool) -> bool {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GyroConfig {
+    /// Whether the profile uses gyro at all. While it doesn't, gyro does nothing, no input may
+    /// hold a gyro action, and the aim settings are kept for when it is turned on. Left out of a
+    /// save when it is, so a profile that doesn't say uses it.
+    #[serde(default = "yes", skip_serializing_if = "is_true")]
+    pub enabled: bool,
+    /// Whether gyro is active from the start, once enabled. When it isn't, an action turns it
+    /// on: Gyro on / off, or Gyro while held. Left out of a save when it is.
+    #[serde(default = "yes", skip_serializing_if = "is_true")]
+    pub starts_active: bool,
+    #[serde(default = "default_mode")]
     pub mode: GyroMode,
     pub horizontal: GyroHorizontal,
     #[serde(default)]
@@ -159,10 +172,6 @@ pub struct GyroConfig {
     /// 1.0 turns the game as far as the controller turned.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub full_turn_px: Option<f32>,
-    /// Gyro is off until an action turns it on (Gyro on/off, or Gyro while held), instead of on
-    /// from the start. Clutching, toggling and recentering are actions, assigned to any input.
-    #[serde(default, skip_serializing_if = "is_false")]
-    pub start_off: bool,
     /// Rotation slower than this (degrees/second) is scaled down, hiding jitter and drift.
     pub noise_threshold: f32,
     /// Rotation slower than this (degrees/second) is smoothed over `smoothing_ms`, steadying
@@ -190,7 +199,9 @@ fn is_both(v: &GyroAxes) -> bool {
 impl Default for GyroConfig {
     fn default() -> Self {
         GyroConfig {
-            mode: GyroMode::Off,
+            enabled: false,
+            starts_active: true,
+            mode: default_mode(),
             horizontal: GyroHorizontal::Yaw,
             invert_x: false,
             invert_y: false,
@@ -199,7 +210,6 @@ impl Default for GyroConfig {
             y_scale: 1.0,
             curve: SpeedCurve::default(),
             full_turn_px: None,
-            start_off: false,
             noise_threshold: 1.0,
             smoothing_threshold: 0.0,
             smoothing_ms: default_smoothing_ms(),
@@ -238,11 +248,22 @@ mod tests {
     fn older_gyro_settings_still_load_and_new_defaults_stay_out_of_saves() {
         let old = "horizontal = \"yaw\"\nnoise_threshold = 1.0\n[mode.mouse]\nsensitivity = 15.0\n";
         let g: GyroConfig = toml::from_str(old).unwrap();
-        assert_eq!(g, GyroConfig { mode: GyroMode::Mouse { sensitivity: 15.0 }, ..GyroConfig::default() });
+        assert_eq!(g, GyroConfig { enabled: true, mode: GyroMode::Mouse { sensitivity: 15.0 }, ..GyroConfig::default() });
         let saved = toml::to_string(&g).unwrap();
-        for new in ["axes", "x_scale", "curve", "full_turn_px", "smoothing", "pause_with_stick", "auto_calibrate", "toggle_rumble", "start_off"] {
+        for new in ["axes", "x_scale", "curve", "full_turn_px", "smoothing", "pause_with_stick", "auto_calibrate", "toggle_rumble", "enabled", "starts_active"] {
             assert!(!saved.contains(new), "{new} in {saved}");
         }
+    }
+
+    #[test]
+    fn disabled_gyro_keeps_its_aim_settings() {
+        let off = GyroConfig { mode: GyroMode::Mouse { sensitivity: 9.0 }, starts_active: false, ..GyroConfig::default() };
+        let saved = toml::to_string(&off).unwrap();
+        assert!(saved.contains("enabled = false") && saved.contains("starts_active = false"), "{saved}");
+        let back: GyroConfig = toml::from_str(&saved).unwrap();
+        assert_eq!(back, off);
+        let bare: GyroConfig = toml::from_str("enabled = false\nhorizontal = \"yaw\"\nnoise_threshold = 1.0\n").unwrap();
+        assert!(!bare.enabled && bare.starts_active && bare.mode == default_mode(), "a pack can just say gyro is off");
     }
 
     #[test]

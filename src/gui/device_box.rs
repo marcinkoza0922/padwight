@@ -14,7 +14,7 @@ pub(super) const BOX_PADDING: f32 = 12.0;
 pub(super) const ROW_LABEL: f32 = LABEL_WIDTH - BOX_PADDING;
 
 /// The width of the mode dropdown on a box's header line.
-const MODE_WIDTH: f32 = 250.0;
+pub(super) const MODE_WIDTH: f32 = 250.0;
 
 /// A labeled row in a box.
 pub(super) fn box_row<'a>(label: impl text::IntoFragment<'a>, editor: Element<'a, Message>) -> Element<'a, Message> {

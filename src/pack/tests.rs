@@ -170,13 +170,15 @@ fn copies_bring_what_they_refer_to_unless_already_there() {
 #[test]
 fn layers_travel_in_packs_with_what_they_use() {
     let mut config = setup();
+    // No gyro on the profile: not even the trigger that holds it on.
     config.games[0].profiles[0].gyro = crate::config::GyroConfig::default();
+    config.games[0].profiles[0].left_trigger = crate::config::TriggerAction::Disabled.into();
     let mut layer = Layer::new("Hotkeys");
     layer.buttons.insert(Button::South, macro_ref("Heal"));
     layer.buttons.insert(Button::East, ButtonAction::Layer("Deeper".into()));
     layer.indicator = Indicator::Info("Cheat sheet".into());
     let mut deeper = Layer::new("Deeper");
-    deeper.gyro = Some(crate::config::GyroConfig { mode: crate::config::GyroMode::Mouse { sensitivity: 10.0 }, ..Default::default() });
+    deeper.gyro = Some(crate::config::GyroConfig { enabled: true, mode: crate::config::GyroMode::Mouse { sensitivity: 10.0 }, ..Default::default() });
     config.games[0].layers = vec![layer.clone(), deeper];
     config.games[0].info.push(InfoOverlay { name: "Cheat sheet".into(), always: false, on_start: None, linger: None, title: None, current_input: Default::default(), style: Default::default(), rows: vec![] });
 

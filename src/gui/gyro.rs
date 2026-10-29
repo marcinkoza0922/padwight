@@ -5,11 +5,11 @@
 use iced::widget::{Column, row};
 
 use super::*;
+use crate::config::problems::{gyro_problem, touchpad_gyro_problem};
 use crate::config::{CurvePreset, GyroAxes, SpeedCurve};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum GyroModeKind {
-    Off,
     Mouse,
     Stick,
     Position,
@@ -17,11 +17,10 @@ pub(super) enum GyroModeKind {
 }
 
 impl GyroModeKind {
-    const ALL: [GyroModeKind; 5] = [GyroModeKind::Off, GyroModeKind::Mouse, GyroModeKind::Stick, GyroModeKind::Position, GyroModeKind::Steering];
+    const ALL: [GyroModeKind; 4] = [GyroModeKind::Mouse, GyroModeKind::Stick, GyroModeKind::Position, GyroModeKind::Steering];
 
     fn of(mode: &GyroMode) -> Self {
         match mode {
-            GyroMode::Off => GyroModeKind::Off,
             GyroMode::Mouse { .. } => GyroModeKind::Mouse,
             GyroMode::Stick { .. } => GyroModeKind::Stick,
             GyroMode::Position { .. } => GyroModeKind::Position,
@@ -32,7 +31,6 @@ impl GyroModeKind {
     /// The mode with its starting settings.
     fn mode(self) -> GyroMode {
         match self {
-            GyroModeKind::Off => GyroMode::Off,
             GyroModeKind::Mouse => GyroMode::Mouse { sensitivity: 15.0 },
             GyroModeKind::Stick => GyroMode::Stick { stick: Stick::Right, full_rate: 360.0, anti_deadzone: 0.15, game_curve: 1.0 },
             GyroModeKind::Position => GyroMode::Position { stick: Stick::Right, max_angle: 30.0, anti_deadzone: 0.15, lock_at_edge: true },
@@ -44,7 +42,6 @@ impl GyroModeKind {
 impl fmt::Display for GyroModeKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            GyroModeKind::Off => "Off",
             GyroModeKind::Mouse => "Mouse (gyro aiming)",
             GyroModeKind::Stick => "Gamepad stick (turn speed)",
             GyroModeKind::Position => "Gamepad stick (turn position)",
@@ -67,7 +64,7 @@ impl<T: fmt::Display> fmt::Display for Optional<T> {
     }
 }
 
-/// The gyro's editor, for its box: the mode on the header line and, unless it's off, everything that tunes it,
+/// The gyro's editor, for its box: whether it is in use on the header line and, unless it's off, the mode and everything that tunes it,
 /// the "Advanced" fold (open when `open`) and the pictures. A real-world sensitivity starts from
 /// `flick_turn`, the profile's flick stick's full turn, when it has one.
 pub(super) fn gyro_editor<'a>(cfg: &'a GyroConfig, flick_turn: Option<f32>, open: bool, pictures: Option<Element<'a, Message>>) -> Element<'a, Message> {
@@ -77,8 +74,8 @@ pub(super) fn gyro_editor<'a>(cfg: &'a GyroConfig, flick_turn: Option<f32>, open
         Message::SetGyro(c)
     };
     let mut rows = Column::new().spacing(8).push(header(cfg, with));
-    if cfg.mode != GyroMode::Off {
-        rows = mode_rows(rows, cfg, with, flick_turn);
+    if cfg.enabled {
+        rows = mode_rows(rows.push(mode_row(cfg, with)), cfg, with, flick_turn);
         if !matches!(cfg.mode, GyroMode::Steering { .. }) {
             rows = aim_rows(rows, cfg, with);
         }
@@ -90,8 +87,33 @@ pub(super) fn gyro_editor<'a>(cfg: &'a GyroConfig, flick_turn: Option<f32>, open
     rows.into()
 }
 
-/// "Gyro", the mode, and the stick it sends (and Invert, for steering) on one line.
+/// "Gyro", whether the profile uses it, and (once it does) whether it is active from the start.
+/// Enabled lets inputs hold gyro actions; active is whether it is turned on right now.
 fn header<'a>(cfg: &GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Message + Copy + 'a) -> Element<'a, Message> {
+    let enabled = with_help(
+        checkbox(cfg.enabled).label("Enabled").on_toggle(move |v| with(&|c| c.enabled = v)),
+        "Turn it on to use gyro in this profile, and to assign gyro actions to its inputs. Off, its settings are kept.",
+    );
+    let mut options = Vec::new();
+    if cfg.enabled {
+        options.push(with_help(
+            checkbox(cfg.starts_active).label("Starts active").on_toggle(move |v| with(&|c| c.starts_active = v)),
+            "Untick it and gyro waits until a Gyro on / off or Gyro while held action turns it on.",
+        ));
+    }
+    header_with("Gyro".into(), enabled, options)
+}
+
+/// The mode, and the stick it sends (and Invert, for steering) on one line.
+fn mode_row<'a>(cfg: &GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Message + Copy + 'a) -> Element<'a, Message> {
+    let modes = dropdown(GyroModeKind::ALL, Some(GyroModeKind::of(&cfg.mode)), move |k| {
+        with(&|c| {
+            if GyroModeKind::of(&c.mode) != k {
+                c.mode = k.mode();
+            }
+        })
+    });
+    let mut line = row![modes.width(SETTING_WIDTH)].spacing(10).align_y(Alignment::Center);
     let options = match cfg.mode {
         GyroMode::Stick { stick, full_rate, anti_deadzone, game_curve } => {
             Vec::from(as_stick(stick, move |s| with(&|c| c.mode = GyroMode::Stick { stick: s, full_rate, anti_deadzone, game_curve })))
@@ -104,9 +126,10 @@ fn header<'a>(cfg: &GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Messa
             options.push(checkbox(cfg.invert_x).label("Invert").on_toggle(move |v| with(&|c| c.invert_x = v)).into());
             options
         }
-        GyroMode::Off | GyroMode::Mouse { .. } => Vec::new(),
+        GyroMode::Mouse { .. } => Vec::new(),
     };
-    box_header("Gyro".into(), GyroModeKind::ALL, GyroModeKind::of(&cfg.mode), move |k| with(&|c| c.mode = k.mode()), options)
+    line = line.extend(options);
+    box_row("Aims as", line.into())
 }
 
 /// How far the stick starts out, for the stick modes.
@@ -116,7 +139,6 @@ const ANTI_DEADZONE: &str = "Starts the stick this far out, past the game's own 
 /// The mode's own settings: sensitivity, or how far the stick is pushed.
 fn mode_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Message + Copy + 'a, flick_turn: Option<f32>) -> Column<'a, Message> {
     match cfg.mode {
-        GyroMode::Off => rows,
         GyroMode::Mouse { sensitivity } => {
             let set = move |v: f32| with(&|c| c.mode = GyroMode::Mouse { sensitivity: v });
             let real_world = cfg.full_turn_px.is_some();
@@ -208,11 +230,10 @@ fn curve_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(
         .push(sub_row("Shape", slider_editor(0.25..=4.0, curve.power, 0.05, "(1 = straight, more = slow for longer)", set(|c, v| c.power = v))))
 }
 
-/// Whether gyro starts on, the rumble of its on/off action, and pausing with a stick. Clutching,
-/// switching on and off and recentering are actions, set on the input that should do them.
+/// The rumble of the on/off action, and pausing with a stick. Clutching, switching on and off and
+/// recentering are actions, set on the input that should do them.
 fn activation_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Message + Copy + 'a) -> Column<'a, Message> {
     let starts = row![
-        checkbox(cfg.start_off).label("Starts switched off").on_toggle(move |v| with(&|c| c.start_off = v)),
         checkbox(cfg.toggle_rumble).label("Rumble on gyro on / off").on_toggle(move |v| with(&|c| c.toggle_rumble = v)),
         text("assign Gyro on / off, clutch, hold and recenter to any button, gesture, combo or menu item").size(12).color(MUTED_COLOR),
     ]
@@ -222,7 +243,7 @@ fn activation_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: imp
     let hinted = |picker: Element<'a, Message>, hint: &'a str| -> Element<'a, Message> {
         row![picker, text(hint).size(12).color(MUTED_COLOR)].spacing(10).align_y(Alignment::Center).into()
     };
-    rows.push(box_row("Active", starts.into()))
+    rows.push(box_row("Switching", starts.into()))
         .push(box_row(
             "Pause while pushing",
             hinted(
@@ -268,7 +289,7 @@ fn pictures<'a>(cfg: &GyroConfig, ui: &Ui) -> Element<'a, Message> {
 /// profile what it can't be played without.
 pub(super) fn gyro_sections<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message>> {
     let base = ui.layer.map_or(&p.gyro, |m| &m.base.gyro);
-    let summary = if base.mode == GyroMode::Off { "off".to_string() } else { "on".to_string() };
+    let summary = if base.enabled { "on".to_string() } else { "off".to_string() };
     let flick_turn = [&p.left_stick, &p.right_stick].into_iter().find_map(|s| match s.action {
         StickAction::Flick { full_turn_px, .. } => Some(full_turn_px),
         _ => None,
@@ -280,9 +301,16 @@ pub(super) fn gyro_sections<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Mess
             note("None of your managed controllers has a gyro (PlayStation and Switch controllers do). These settings apply once one is connected.").into(),
         );
     }
+    // Gyro is off, yet inputs hold gyro actions: saving is refused until one of the two changes.
+    let users = p.actions().into_iter().filter(|a| gyro_problem(a, ui.names).is_some()).count()
+        + usize::from(touchpad_gyro_problem(&p.touchpad, ui.names).is_some());
+    if users > 0 {
+        let what = if users == 1 { "1 input here uses" } else { &format!("{users} inputs here use") };
+        rows.push(text(format!("⚠ Gyro is off, but {what} gyro. Tick Enabled, or take the gyro actions off (the Buttons tab marks them).")).size(13).color(ERROR_COLOR).into());
+    }
     // What the profile requires sits above the feature's settings, as the back paddles' and
     // touchpad's do. With gyro off there's nothing to require, unless it was ticked.
-    if ui.layer.is_none() && (p.gyro.mode != GyroMode::Off || p.requires.contains(&Feature::Gyro)) {
+    if ui.layer.is_none() && (p.gyro.enabled || p.requires.contains(&Feature::Gyro)) {
         rows.extend(super::requirement_rows(p, Feature::Gyro));
     }
     let open = ui.expanded.contains(&Target::GyroAdvanced);
@@ -304,11 +332,11 @@ mod tests {
         for kind in GyroModeKind::ALL {
             for axes in GyroAxes::ALL {
                 let cfg = GyroConfig {
+                    enabled: true, starts_active: false,
                     mode: kind.mode(),
                     axes,
                     curve,
                     full_turn_px: Some(7200.0),
-                    start_off: true,
                     smoothing_threshold: 5.0,
                     pause_with_stick: Some(Stick::Right),
                     ..GyroConfig::default()
@@ -320,7 +348,7 @@ mod tests {
 
     #[test]
     fn custom_starts_from_a_curve_of_its_own() {
-        let cfg = GyroConfig { mode: GyroMode::Mouse { sensitivity: 10.0 }, ..GyroConfig::default() };
+        let cfg = GyroConfig { enabled: true, mode: GyroMode::Mouse { sensitivity: 10.0 }, ..GyroConfig::default() };
         // Linear shows no curve settings; each named preset is recognized as itself.
         assert_eq!(cfg.curve.preset(1.0), CurvePreset::Linear);
         for p in CurvePreset::NAMED {

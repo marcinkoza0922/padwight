@@ -1,6 +1,8 @@
 //! What a config must follow to be saved, and so to be loaded: names, references and the rules
 //! each game, profile and item must follow. The settings window checks the same before saving.
 
+use std::borrow::Cow;
+use std::collections::BTreeSet;
 use std::str::FromStr;
 
 use crate::keycode::KeyCode;
@@ -62,6 +64,12 @@ pub struct Names {
     /// The glyphs of the controller games see, for pickers that show controller buttons. Left at
     /// the default (Xbox) outside the settings window.
     pub glyphs: crate::info::Glyphs,
+    /// Set where gyro is disabled: the input being checked can't hold a gyro action, nor open
+    /// anything in `gyro_items`.
+    pub no_gyro: bool,
+    /// The macros, cycles, menus, layers and modes that use gyro, directly or through others they
+    /// use. A layer or mode that sets its own gyro supplies it, so it isn't one.
+    pub gyro_items: BTreeSet<(ItemKind, String)>,
 }
 
 impl Names {
@@ -82,7 +90,22 @@ impl Names {
             modes: list(ItemKind::Mode),
             in_turbo: false,
             glyphs: crate::info::Glyphs::default(),
+            no_gyro: false,
+            gyro_items: gyro_items(scope),
         }
+    }
+
+    /// These names for inputs whose gyro is `enabled` or not.
+    pub fn for_gyro(&self, enabled: bool) -> Cow<'_, Names> {
+        if self.no_gyro == !enabled {
+            return Cow::Borrowed(self);
+        }
+        Cow::Owned(Names { no_gyro: !enabled, ..self.clone() })
+    }
+
+    /// Whether the item `kind` called `name` uses gyro.
+    pub fn uses_gyro(&self, kind: ItemKind, name: &str) -> bool {
+        self.gyro_items.contains(&(kind, name.to_string()))
     }
 
     /// What a game's profiles and items can use: its own items.
@@ -101,6 +124,60 @@ impl Names {
             ItemKind::Mode => &self.modes,
         }
     }
+}
+
+/// The items of a scope that use gyro: those with a gyro action, and those using one that does
+/// (a menu item opening a menu with one, a macro playing one, and so on).
+fn gyro_items(scope: &ScopeRef) -> BTreeSet<(ItemKind, String)> {
+    let mut items: Vec<((ItemKind, String), Vec<&ButtonAction>)> = Vec::new();
+    items.extend(scope.macros.iter().map(|m| ((ItemKind::Macro, m.name.clone()), m.steps.iter().filter_map(MacroStep::action).collect())));
+    items.extend(scope.cycles.iter().map(|c| ((ItemKind::Cycle, c.name.clone()), c.steps.iter().collect())));
+    items.extend(scope.menus.iter().map(|m| ((ItemKind::Menu, m.name.clone()), m.items.iter().map(|i| &i.action).collect())));
+    items.extend(scope.layers.iter().filter(|l| l.gyro.is_none()).map(|l| ((ItemKind::Layer, l.name.clone()), l.actions())));
+    items.extend(scope.modes.iter().filter(|l| l.gyro.is_none()).map(|l| ((ItemKind::Mode, l.name.clone()), l.actions())));
+    let mut found = BTreeSet::new();
+    loop {
+        let before = found.len();
+        for (item, actions) in &items {
+            let mut hit = false;
+            actions.iter().for_each(|a| {
+                a.walk(&mut |a| {
+                    hit |= a.is_gyro() || ItemKind::ALL.into_iter().any(|k| k.name_in(a).is_some_and(|n| found.contains(&(k, n.clone()))));
+                })
+            });
+            if hit {
+                found.insert(item.clone());
+            }
+        }
+        if found.len() == before {
+            return found;
+        }
+    }
+}
+
+/// Why `action` can't be on an input whose gyro is disabled, if it can't: it is a gyro action, or
+/// opens or plays something that has one.
+pub fn gyro_problem(action: &ButtonAction, names: &Names) -> Option<String> {
+    if !names.no_gyro {
+        return None;
+    }
+    let mut problem = None;
+    action.walk(&mut |a| {
+        if problem.is_some() {
+            return;
+        }
+        if a.is_gyro() {
+            problem = Some("a gyro action needs gyro, which is off here: tick Enabled on the Gyro tab, or take the action off".to_string());
+        }
+        for kind in ItemKind::ALL {
+            if let Some(name) = kind.name_in(a)
+                && names.uses_gyro(kind, name)
+            {
+                problem = Some(format!("{} “{name}” uses gyro, which is off here: tick Enabled on the Gyro tab, or use something else", kind.noun()));
+            }
+        }
+    });
+    problem
 }
 
 /// Whether `action` holds a layer anywhere in it, which a tap (a menu item) can't do.
@@ -123,6 +200,9 @@ fn toggle_problem(inner: &ButtonAction) -> Option<&'static str> {
 
 /// What's wrong with an action, if anything (the same things saving checks).
 pub fn action_problem(action: &ButtonAction, names: &Names) -> Option<String> {
+    if let Some(problem) = gyro_problem(action, names) {
+        return Some(problem);
+    }
     let mut problem = None;
     action.walk(&mut |a| {
         if problem.is_some() {
@@ -177,6 +257,22 @@ pub fn action_problem(action: &ButtonAction, names: &Names) -> Option<String> {
         }
     });
     problem
+}
+
+/// Why a touchpad can't be set up as it is where gyro is disabled: it lays out a menu that uses gyro.
+pub fn touchpad_gyro_problem(touchpad: &TouchpadConfig, names: &Names) -> Option<String> {
+    if !names.no_gyro {
+        return None;
+    }
+    let menu = touchpad.menus().find(|m| names.uses_gyro(ItemKind::Menu, m))?;
+    Some(format!("the touchpad's menu “{menu}” uses gyro, which is off here: tick Enabled on the Gyro tab, or use something else"))
+}
+
+/// A warning, not a refusal: the menu has gyro actions, but gyro is off in every profile of the
+/// game, so they can never do anything.
+pub fn menu_gyro_warning(game: &Game, names: &Names, menu: &Menu) -> Option<String> {
+    (names.uses_gyro(ItemKind::Menu, &menu.name) && !game.profiles.iter().any(|p| p.gyro.enabled))
+        .then(|| "uses gyro, but gyro is off in every profile here, so those items do nothing".to_string())
 }
 
 /// Why combo `i` can't be saved, apart from its action, as its row says it.
@@ -308,9 +404,13 @@ pub fn game_problem(config: &Config, g: &Game) -> Option<String> {
         if g.profiles[..i].iter().any(|o| o.name == p.name) {
             return Some(format!("Two profiles are named “{}”.", p.name));
         }
+        let names = &*names.for_gyro(p.gyro.enabled);
         if let Some(problem) = p.actions().into_iter().find_map(|a| {
-            action_problem(a, &names).filter(|problem| !problem.starts_with("unknown key"))
+            action_problem(a, names).filter(|problem| !problem.starts_with("unknown key"))
         }) {
+            return Some(format!("Profile “{}”: {problem}.", p.name));
+        }
+        if let Some(problem) = touchpad_gyro_problem(&p.touchpad, names) {
             return Some(format!("Profile “{}”: {problem}.", p.name));
         }
         if let Some(problem) = combos_problem(&p.combos) {
@@ -371,6 +471,7 @@ fn shifts_problem(list: &[Layer], kind: ItemKind, names: &Names) -> Option<Strin
                 format!("{label}: missing info overlay “{info}” to show.")
             });
         }
+        let names = &*names.for_gyro(l.gyro.as_ref().is_none_or(|g| g.enabled));
         if let Some(problem) = l.actions().into_iter().find_map(|a| action_problem(a, names)) {
             return Some(format!("{label}: {problem}."));
         }

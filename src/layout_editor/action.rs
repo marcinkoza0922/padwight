@@ -29,6 +29,15 @@ pub enum Slot {
 }
 
 impl Slot {
+    /// The profile, mode or layer the slot belongs to, if it belongs to one (a menu item or
+    /// macro step belongs to the game).
+    pub fn owner(self) -> Option<Owner> {
+        match self {
+            Slot::Button(o, _) | Slot::Gesture(o, ..) | Slot::Combo(o, _) | Slot::Trigger(o, _) | Slot::TriggerGesture(o, ..) | Slot::Zone(o, ..) | Slot::Ring(o, ..) | Slot::Touch(o, _) => Some(o),
+            Slot::MenuItem(..) | Slot::MacroStep(..) => None,
+        }
+    }
+
     /// Whether it can be left unset (a gesture, or a button a mode or layer leaves alone),
     /// rather than doing nothing.
     pub fn unsettable(self) -> bool {

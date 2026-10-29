@@ -162,7 +162,9 @@ pub(super) fn rows(config: &Config, at: ActionAt) -> Vec<Row> {
         for p in Picker::ALL.into_iter().filter(|p| !(item && *p == Picker::Layer)) {
             rows.push(Row::open(p.label(), Page::Pick(at, p)).keyword(Some(p.keyword())));
         }
-        rows.extend(TOOLS.iter().map(choice));
+        // Where gyro is off, its actions aren't offered (saving would refuse them).
+        let no_gyro = at.slot.owner().and_then(|o| super::owner::gyro(config, o)).is_some_and(|g| !g.enabled);
+        rows.extend(TOOLS.iter().filter(|(_, make)| !(no_gyro && make().is_gyro())).map(choice));
     }
     if at.slot.unsettable() && at.is_top() {
         rows.push(Row::apply("Not set", move |c| Act::changed_if(set_action(c, at, None)).then(Nav::Back(1))));

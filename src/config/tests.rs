@@ -175,7 +175,8 @@ fn auto_switch_roundtrips_and_is_optional() {
     game.rules.push(Rule { enabled: false, ..Rule::new(RuleKind::Executable, "eldenring.exe", "Gameplay") });
     config.games.push(game);
     let text = toml::to_string_pretty(&config).unwrap();
-    assert_eq!(text.matches("enabled = false").count(), 1, "rules only note being off");
+    let rules: Vec<String> = config.games[0].rules.iter().map(|r| toml::to_string(r).unwrap()).collect();
+    assert!(!rules[0].contains("enabled") && rules[1].contains("enabled = false"), "rules only note being off");
     let back: Config = toml::from_str(&text).unwrap();
     assert_eq!(config, back);
 
@@ -272,4 +273,5 @@ fn the_guide_layer_leaves_profiles_alone() {
 mod actions;
 /// How profiles are picked, layered and saved.
 mod behaviour;
+mod gyro_use;
 mod refused;

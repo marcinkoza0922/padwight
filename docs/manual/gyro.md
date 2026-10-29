@@ -47,7 +47,7 @@ Set the game's own stick sensitivity first, then *Full tilt at*, the anti-deadzo
 
 ## When gyro is on
 
-Gyro is on from the start, unless you tick **Starts switched off**. These actions, on any button, gesture, combo or menu item, change that:
+**Enabled** at the top says whether the profile uses gyro at all; until it is ticked, no input can be given a gyro action, and a profile that has one can't be saved with gyro disabled. **Starts active** says whether gyro is on from the start; untick it and gyro waits for a button. Unticking Enabled keeps your aim settings for later. These actions, on any button, gesture, combo or menu item, change that:
 
 - **Gyro on while held**: only while you hold it, such as LT to aim down the sights
 - **Gyro clutch (off while held)**: lets you reposition the controller without turning the view

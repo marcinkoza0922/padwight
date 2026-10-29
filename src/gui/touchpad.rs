@@ -88,7 +88,7 @@ pub(super) fn touchpad_summary(cfg: &TouchpadConfig) -> String {
 
 /// What's wrong with the touchpad settings: a menu mode without a menu that exists.
 pub(super) fn touchpad_problem(cfg: &TouchpadConfig, names: &Names) -> Option<String> {
-    let missing = cfg.menus().find(|m| !names.menus.contains(m))?;
+    let Some(missing) = cfg.menus().find(|m| !names.menus.contains(m)) else { return touchpad_gyro_problem(cfg, names) };
     Some(if missing.is_empty() { "pick a menu to lay out on the pad".into() } else { format!("there is no menu “{missing}”") })
 }
 

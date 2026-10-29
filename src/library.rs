@@ -258,7 +258,7 @@ mod tests {
 
     #[test]
     fn shooters_offer_plain_gyro_and_flick_stick_profiles() {
-        use crate::config::{GyroMode, StickAction};
+        use crate::config::StickAction;
         let shooters = ["deus-ex", "fear", "max-payne", "max-payne-2", "thief-gold", "thief-2", "system-shock-2", "counter-strike-2",
             "unturned", "scp-secret-laboratory", "insurgency", "repo", "rust", "raft", "scrap-mechanic",
             "call-of-duty-modern-warfare-2", "stalker-shadow-of-chernobyl", "stalker-call-of-pripyat", "crab-game",
@@ -270,7 +270,7 @@ mod tests {
             let text = files::FILES.iter().find(|(f, _)| *f == format!("{file}.padpack")).map(|(_, t)| t).unwrap();
             let pack = pack::parse(text).unwrap();
             let flick = |p: &Profile| [&p.left_stick, &p.right_stick].iter().any(|s| matches!(s.action, StickAction::Flick { .. }));
-            let gyro = |p: &Profile| p.gyro.mode != GyroMode::Off;
+            let gyro = |p: &Profile| p.gyro.enabled;
             let plain: Vec<_> = pack.profiles.iter().filter(|p| !gyro(p) && !flick(p) && p.usable_with(&[])).collect();
             assert_eq!(plain.len(), 1, "{file}: one profile without gyro");
             assert!(pack.profiles.iter().any(|p| gyro(p) && !flick(p) && p.usable_with(&[])), "{file}: gyro as an extra, playable without");

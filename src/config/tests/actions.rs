@@ -42,7 +42,7 @@ fn gyro_config_roundtrips_and_is_optional() {
         horizontal: GyroHorizontal::YawAndRoll,
         invert_x: true,
         invert_y: false,
-        start_off: true,
+        enabled: true, starts_active: false,
         noise_threshold: 2.0,
         axes: GyroAxes::Vertical,
         y_scale: 1.5,

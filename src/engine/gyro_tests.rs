@@ -26,6 +26,11 @@ fn last_pad(out: &[OutEvent], axis: Axis) -> Option<f32> {
     })
 }
 
+/// Gyro in use from the start, which the settings default to being off.
+fn on() -> GyroConfig {
+    GyroConfig { enabled: true, ..GyroConfig::default() }
+}
+
 fn gyro_profile(gyro: GyroConfig) -> Profile {
     Profile { gyro, ..Profile::passthrough("p") }
 }
@@ -49,7 +54,7 @@ fn mouse_total(out: &[OutEvent]) -> (i32, i32) {
 }
 
 fn mouse_gyro() -> GyroConfig {
-    GyroConfig { mode: GyroMode::Mouse { sensitivity: 10.0 }, ..GyroConfig::default() }
+    GyroConfig { mode: GyroMode::Mouse { sensitivity: 10.0 }, ..on() }
 }
 
 /// A profile with `gyro` and `action` on `button`.
@@ -86,7 +91,7 @@ fn gyro_ignores_jitter_below_threshold() {
 
 #[test]
 fn gyro_only_while_the_hold_action_is_held() {
-    let p = with_action(GyroConfig { start_off: true, ..mouse_gyro() }, Button::LeftBumper, ButtonAction::GyroHold);
+    let p = with_action(GyroConfig { enabled: true, starts_active: false, ..mouse_gyro() }, Button::LeftBumper, ButtonAction::GyroHold);
     let mut e = Engine::default();
     assert_eq!(mouse_total(&turn(&mut e, &p, 0.0, 60.0, 0.0, 0.5)), (0, 0));
     run(&mut e, &p, InputEvent::Button(Button::LeftBumper, true));
@@ -108,7 +113,7 @@ fn gyro_clutch_stops_gyro_while_held() {
 #[test]
 fn the_toggle_action_flips_gyro_from_how_it_starts() {
     for start_off in [false, true] {
-        let toggle = with_action(GyroConfig { start_off, ..mouse_gyro() }, Button::Select, ButtonAction::GyroToggle);
+        let toggle = with_action(GyroConfig { starts_active: !start_off, ..mouse_gyro() }, Button::Select, ButtonAction::GyroToggle);
         let mut e = Engine::default();
         let moves = |e: &mut Engine| mouse_total(&turn(e, &toggle, 0.0, 60.0, 0.0, 0.2)) != (0, 0);
         assert_eq!(moves(&mut e), !start_off);
@@ -139,8 +144,8 @@ fn gyro_actions_work_from_a_gesture_or_a_combo() {
 fn gyro_stick_adds_to_physical_stick_and_clears_when_off() {
     let mut p = gyro_profile(GyroConfig {
         mode: GyroMode::Stick { stick: Stick::Right, full_rate: 100.0, anti_deadzone: 0.0, game_curve: 1.0 },
-        start_off: true,
-        ..GyroConfig::default()
+        enabled: true, starts_active: false,
+        ..on()
     });
     p.set_button(Button::LeftBumper, ButtonAction::GyroHold);
     p.right_stick.deadzone = 0.0; // so the physical 0.3 passes through unchanged
@@ -159,7 +164,7 @@ fn gyro_stick_adds_to_physical_stick_and_clears_when_off() {
 fn gyro_stick_undoes_the_games_curve() {
     let p = gyro_profile(GyroConfig {
         mode: GyroMode::Stick { stick: Stick::Right, full_rate: 100.0, anti_deadzone: 0.0, game_curve: 2.0 },
-        ..GyroConfig::default()
+        ..on()
     });
     let mut e = Engine::default();
     // A game turning at deflection^2 turns at a quarter of its full rate with half deflection,
@@ -170,7 +175,7 @@ fn gyro_stick_undoes_the_games_curve() {
 
 #[test]
 fn gyro_steering_follows_tilt_and_recenters() {
-    let p = with_action(GyroConfig { mode: GyroMode::Steering { stick: Stick::Left, max_angle: 45.0 }, ..GyroConfig::default() }, Button::Select, ButtonAction::GyroRecenter);
+    let p = with_action(GyroConfig { mode: GyroMode::Steering { stick: Stick::Left, max_angle: 45.0 }, ..on() }, Button::Select, ButtonAction::GyroRecenter);
     let mut e = Engine::default();
     let tilt = |e: &mut Engine, degrees: f32| {
         let r = degrees.to_radians();
@@ -319,7 +324,7 @@ fn position_gyro(lock_at_edge: bool) -> Profile {
     let mut p = gyro_profile(GyroConfig {
         mode: GyroMode::Position { stick: Stick::Right, max_angle: 20.0, anti_deadzone: 0.0, lock_at_edge },
         noise_threshold: 0.0,
-        ..GyroConfig::default()
+        ..on()
     });
     p.set_button(Button::Select, ButtonAction::GyroRecenter);
     p.right_stick.deadzone = 0.0;
