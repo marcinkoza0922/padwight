@@ -337,8 +337,8 @@ fn macro_name(config: &Config, m: usize) -> String {
 fn paint_title(of: PaintOf) -> &'static str {
     match of {
         PaintOf::Background => "Background color",
-        PaintOf::Items => "Items' color",
-        PaintOf::Selected => "Selected item's color",
+        PaintOf::Items => "Primary element color",
+        PaintOf::Selected => "Secondary element color (selected item, lit arm)",
         PaintOf::Decor(d) => d.name(),
     }
 }

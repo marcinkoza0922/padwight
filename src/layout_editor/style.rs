@@ -181,7 +181,7 @@ pub(super) fn style_rows(config: &Config, at: StyleAt) -> Vec<Row> {
         num(at, "Tallest", s.max_height, &PERCENT, |s, v| set(&mut s.max_height, v)),
         num(at, "Corners", s.corners, &CORNERS, |s, v| set(&mut s.corners, v)),
     ];
-    for (label, of, paint) in [("Background", PaintOf::Background, &s.background), ("Items", PaintOf::Items, &s.items), ("Selected item", PaintOf::Selected, &s.selected)] {
+    for (label, of, paint) in [("Background", PaintOf::Background, &s.background), ("Element primary", PaintOf::Items, &s.items), ("Element secondary", PaintOf::Selected, &s.selected)] {
         rows.push(Row::open(format!("{label}: {}", paint_name(paint)), Page::Paint(at, of)));
     }
     rows.push(Row::open("Text", Page::StyleText(at)));
