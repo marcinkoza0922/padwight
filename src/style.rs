@@ -72,6 +72,19 @@ pub fn tinted(theme: &Theme) -> container::Style {
     }
 }
 
+/// The card holding an items tab's "+ New" buttons: the success color, tinted lightly, so the
+/// place to add something reads apart from the cards of the items already there.
+pub fn add_card(theme: &Theme) -> container::Style {
+    let p = theme.extended_palette();
+    let green = p.success.base.color;
+    container::Style {
+        background: Some(Color { a: 0.22, ..green }.into()),
+        text_color: Some(p.background.base.text),
+        border: Border { width: 1.0, radius: 8.0.into(), color: Color { a: 0.7, ..green } },
+        ..container::Style::default()
+    }
+}
+
 /// The header of a fold: accent text that marks it as something to open, tinted on hover.
 pub fn fold_header(theme: &Theme, status: button::Status) -> button::Style {
     let p = theme.extended_palette();
