@@ -3,7 +3,13 @@
 use iced::widget::{column, row};
 
 use super::*;
-use crate::{config::{InputLogSettings, LogEnd, LogSource}, info::Glyphs};
+use crate::{config::{InputLogSettings, LogEnd, LogKind}, info::Glyphs};
+
+impl fmt::Display for LogKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
 
 impl fmt::Display for LogEnd {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -18,18 +24,19 @@ impl fmt::Display for LogEnd {
 type Edit<'a> = Rc<dyn Fn(&dyn Fn(&mut LogOverlay)) -> Message + 'a>;
 
 fn settings(o: &mut LogOverlay) -> &mut InputLogSettings {
-    let LogSource::Input(s) = &mut o.source;
-    s
+    o.source.settings_mut()
 }
 
 fn view_new_log_card<'a>(empty: bool) -> Element<'a, Message> {
     items_header(
         ItemKind::Log,
         button(text("+ New log overlay")).style(style::secondary).on_press(Message::NewLog).into(),
-        "A log overlay shows the buttons just pressed and what each did.",
-        "A log overlay lists recent input on screen, one line per burst of presses: a fireball \
+        "A log overlay shows the buttons just pressed, what was sent to the game, or the modes and layers entered.",
+        "An input log lists recent input on screen, one line per burst of presses: a fireball \
          motion reads ↓ ↘ → X. Under each button is what it did, if remapped, \
-         and how long it was held. Show it always while its game is active, or with the \
+         and how long it was held. An output log lists what was sent to the game instead: keys, \
+         mouse buttons, wheel turns. A log of modes and layers has a line for each one entered, \
+         bright while it lasts. Show it always while its game is active, or with the \
          \"Log overlay…\" action. For just the latest burst inside an info overlay, use the \
          {current_input} token there."
             .into(),
@@ -68,9 +75,9 @@ impl App {
         let problem = self.name_problem(ItemKind::Log, i, &o.name);
         let title = text(if o.name.is_empty() { "(unnamed)" } else { &o.name }).size(18);
         let title = if problem.is_some() { title.color(ERROR_COLOR) } else { title };
-        let LogSource::Input(s) = &o.source;
+        let s = o.source.settings();
         let shown = if o.always { "always shown" } else { "shown by an action" };
-        let summary = format!("Input · {} lines · {} · {shown}", s.lines, DeviceChoice(s.tracking.device).to_string().to_lowercase());
+        let summary = format!("{} · {} lines · {} · {shown}", o.source.kind().name(), s.lines, DeviceChoice(s.tracking.device).to_string().to_lowercase());
         let mut header = row![
             card_title(open, title).on_press(Message::ToggleLog(i)),
             text(summary).size(13).color(MUTED_COLOR),
@@ -98,9 +105,15 @@ impl App {
             f(&mut o);
             Message::SetLog(i, o)
         });
-        let LogSource::Input(s) = &o.source;
+        let s = o.source.settings();
+        let kind = o.source.kind();
+        let on_kind = edit.clone();
         let mut rows: Vec<Element<'a, Message>> = vec![
             labeled("Name", field("Log overlay name", &o.name).on_input(move |n| Message::RenameLog(i, n)).width(240).into()),
+            labeled(
+                "Lists",
+                dropdown(LogKind::ALL, Some(kind), move |k| on_kind(&|o| o.source = o.source.with_kind(k))).width(200).into(),
+            ),
             self.view_log_shown(o, &edit),
         ];
         if !o.always {
@@ -114,8 +127,12 @@ impl App {
         }
         let e = edit.clone();
         let on_tracking: OnTracking<'a> = Rc::new(move |t| e(&|o| settings(o).tracking = t.clone()));
-        rows.extend(self.tracking_editor((ItemKind::Log, i), &s.tracking, "line", &on_tracking));
-        rows.extend(input_settings(s, &edit));
+        if kind == LogKind::Shifts {
+            rows.push(labeled("Controller", self.device_picker(&s.tracking, &on_tracking)));
+        } else {
+            rows.extend(self.tracking_editor((ItemKind::Log, i), &s.tracking, "line", &on_tracking));
+        }
+        rows.extend(input_settings(s, kind, &edit));
 
         let appearance_open = self.open_log_appearance.contains(&i);
         let mut look = Vec::new();
@@ -125,10 +142,8 @@ impl App {
             look.extend(self.spot_note(o.style.position, false));
         }
         rows.push(appearance_row(appearance_open, Message::ToggleLogAppearance(i), StageTarget::Log(i), look));
-        let sample = crate::inputlog::Inputs::sample();
-        let now = sample.now.unwrap_or_else(std::time::Instant::now);
         let glyphs = Glyphs { family: self.config.info_glyphs, nintendo_layout: self.nintendo_layout() };
-        let view = crate::inputlog::log_view(&sample.entries(None), s, &preview_style(&o.style), glyphs, now);
+        let view = crate::inputlog::Inputs::sample_view(&o.source, &preview_style(&o.style), glyphs);
         rows.push(preview(crate::overlay::draw::log_panel(&view, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still())));
         column(rows).spacing(12).into()
     }
@@ -208,7 +223,7 @@ impl App {
 }
 
 /// The log's own settings: lines, order, fading and what's shown.
-fn input_settings<'a>(s: &InputLogSettings, edit: &Edit<'a>) -> Vec<Element<'a, Message>> {
+fn input_settings<'a>(s: &InputLogSettings, kind: LogKind, edit: &Edit<'a>) -> Vec<Element<'a, Message>> {
     let e = edit.clone();
     let lines = value_slider("Lines", 1.0..=20.0, f32::from(s.lines), 1.0, "", move |v| e(&|o| settings(o).lines = v as u8));
     let e = edit.clone();
@@ -220,12 +235,15 @@ fn input_settings<'a>(s: &InputLogSettings, edit: &Edit<'a>) -> Vec<Element<'a, 
         let e = edit.clone();
         checkbox(on).label(label).on_toggle(move |v| e(&|o| set(settings(o), v))).into()
     };
-    let show = column![
-        check("Merge repeats (X X X shows as X×3)", s.merge_repeats, |s, v| s.merge_repeats = v),
-        check("What each press did, when remapped", s.show_labels, |s, v| s.show_labels = v),
-        check("How long each press was held", s.show_holds, |s, v| s.show_holds = v),
-    ]
-    .spacing(6);
+    let mut show = column![].spacing(6);
+    if kind != LogKind::Shifts {
+        show = show.push(check("Merge repeats (X X X shows as X×3)", s.merge_repeats, |s, v| s.merge_repeats = v));
+    }
+    if kind == LogKind::Input {
+        show = show.push(check("What each press did, when remapped", s.show_labels, |s, v| s.show_labels = v));
+    }
+    let holds = if kind == LogKind::Shifts { "How long each one lasted" } else { "How long each press was held" };
+    show = show.push(check(holds, s.show_holds, |s, v| s.show_holds = v));
     vec![
         lines,
         labeled("Order", newest.into()),
@@ -250,7 +268,7 @@ mod tests {
         settings(&mut edited).lines = 3;
         edited.always = false;
         let _ = app.update(Message::SetLog(0, edited));
-        assert_eq!(app.config.general.logs[0].source, LogSource::Input(InputLogSettings { lines: 3, ..InputLogSettings::default() }));
+        assert_eq!(app.config.general.logs[0].source, crate::config::LogSource::Input(InputLogSettings { lines: 3, ..InputLogSettings::default() }));
 
         // "Show log overlay" mappings follow a rename; a missing one blocks saving.
         app.config.general.profiles[0].set_button(Button::Select, ButtonAction::ShowLog("Input log".into()));

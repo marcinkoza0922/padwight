@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{Entry, Input};
 use crate::{
-    config::{CurrentInput, InputLogSettings, InputTracking, LogEnd, OverlayStyle, Stick, TrackedInput},
+    config::{CurrentInput, InputLogSettings, InputTracking, LogEnd, LogKind, LogSource, OverlayStyle, Stick, TrackedInput},
     info::{Glyphs, PadFamily, Segment, button_glyph, glyph, key_glyph, mouse_glyph, trigger_glyph},
 };
 
@@ -96,7 +96,7 @@ fn tracked(entries: &[Entry], t: &InputTracking) -> Vec<Entry> {
         Input::Trigger(tr) => t.tracks(TrackedInput::Trigger(*tr)),
         Input::Combo(members) => members.iter().any(|b| t.tracks(TrackedInput::Button(*b))),
         // Only exports have these, and an export log shows all of them.
-        Input::Key(_) | Input::Mouse(_) | Input::Wheel(_) => true,
+        Input::Key(_) | Input::Mouse(_) | Input::Wheel(_) | Input::Mode(_) | Input::Layer(_) => true,
     };
     entries.iter().filter(|e| follows(&e.input)).cloned().collect()
 }
@@ -133,6 +133,10 @@ fn cells(seq: &[Entry], merge: bool, max: u8, family: PadFamily, swapped: bool) 
         .collect()
 }
 
+/// The fills of the "Mode" and "Layer" tags, which tell them apart from a button.
+const MODE: [u8; 3] = [0x6a, 0x4c, 0x93];
+const LAYER: [u8; 3] = [0x2f, 0x6f, 0x8f];
+
 fn wheel_arrow(d: crate::config::WheelDirection) -> &'static str {
     use crate::config::WheelDirection;
     match d {
@@ -157,6 +161,8 @@ pub fn input_glyph(input: &Input, family: PadFamily, swapped: bool) -> Vec<Segme
         Input::Key(code) => vec![key_glyph(code)],
         Input::Mouse(m) => vec![mouse_glyph(*m)],
         Input::Wheel(d) => vec![glyph(&format!("Wheel {}", wheel_arrow(*d)), None, false)],
+        Input::Mode(name) => vec![glyph("Mode", Some(MODE), false), Segment::Text(name.clone())],
+        Input::Layer(name) => vec![glyph("Layer", Some(LAYER), false), Segment::Text(name.clone())],
         Input::Combo(members) => {
             let mut out = Vec::new();
             for (i, b) in members.iter().enumerate() {
@@ -211,6 +217,41 @@ pub fn log_view(entries: &[Entry], s: &InputLogSettings, style: &OverlayStyle, g
     LogView { name: String::new(), style: style.clone(), opacity: 1.0, lines, show_labels: s.show_labels, show_holds: s.show_holds }
 }
 
+/// A log of modes and layers: one line per entry, newest at the end its settings name. A
+/// line stays bright while its mode or layer is on, and fades `fade_after` seconds after.
+pub fn shifts_view(entries: &[Entry], s: &InputLogSettings, style: &OverlayStyle, glyphs: Glyphs, now: Instant) -> LogView {
+    let shifts: Vec<&Entry> = entries.iter().filter(|e| matches!(e.input, Input::Mode(_) | Input::Layer(_))).collect();
+    let skip = shifts.len().saturating_sub(usize::from(s.lines.max(1)));
+    let mut lines: Vec<LogLine> = shifts[skip..]
+        .iter()
+        .filter_map(|e| {
+            let opacity = match (fade_after(s), e.released) {
+                (Some(after), Some(end)) => crate::info::fade(now, end + after)?,
+                _ => 1.0,
+            };
+            Some(LogLine { opacity, cells: cells(std::slice::from_ref(*e), false, 1, glyphs.family, glyphs.nintendo_layout) })
+        })
+        .collect();
+    if s.newest == LogEnd::Top {
+        lines.reverse();
+    }
+    LogView { name: String::new(), style: style.clone(), opacity: 1.0, lines, show_labels: false, show_holds: s.show_holds }
+}
+
+/// When a log of modes and layers next changes on its own: as a line starts to fade, then
+/// every `frame` until it's gone.
+pub fn shifts_next_change(entries: &[Entry], s: &InputLogSettings, now: Instant, frame: Duration) -> Option<Instant> {
+    let after = fade_after(s)?;
+    entries
+        .iter()
+        .filter(|e| matches!(e.input, Input::Mode(_) | Input::Layer(_)))
+        .filter_map(|e| e.released)
+        .map(|end| end + after)
+        .filter(|due| *due > now)
+        .map(|due| crate::info::redraw_at(due, now, frame))
+        .min()
+}
+
 fn fade_after(s: &InputLogSettings) -> Option<Duration> {
     (s.fade_after > 0.0).then(|| crate::info::seconds(s.fade_after))
 }
@@ -240,6 +281,43 @@ pub fn line_life(s: &InputLogSettings) -> Option<Duration> {
     fade_after(s)
 }
 
+fn sample_entries(now: Instant, parts: &[(Input, i64, Option<i64>)]) -> Vec<Entry> {
+    let at = |ms: i64| now - Duration::from_millis(1600) + Duration::from_millis(ms as u64);
+    parts
+        .iter()
+        .enumerate()
+        .map(|(id, (input, from, to))| Entry { input: input.clone(), pressed: at(*from), released: to.map(at), label: None, resolved: true, id: id as u64 })
+        .collect()
+}
+
+/// A sprint, a click, a turn of the wheel and a jump still held.
+fn sample_output(now: Instant) -> Vec<Entry> {
+    use crate::config::{MouseButton, WheelDirection};
+    let key = |k: &str| Input::Key(k.into());
+    sample_entries(
+        now,
+        &[
+            (key("KEY_LEFTSHIFT"), 0, Some(700)),
+            (key("KEY_W"), 20, Some(680)),
+            (Input::Mouse(MouseButton::Left), 900, Some(960)),
+            (Input::Wheel(WheelDirection::Down), 1100, Some(1100)),
+            (key("KEY_SPACE"), 1400, None),
+        ],
+    )
+}
+
+/// A mode, and a layer held twice in it.
+fn sample_shifts(now: Instant) -> Vec<Entry> {
+    sample_entries(
+        now,
+        &[
+            (Input::Mode("Driving".into()), 0, None),
+            (Input::Layer("Aim".into()), 500, Some(1100)),
+            (Input::Layer("Aim".into()), 1300, None),
+        ],
+    )
+}
+
 /// Every controller's recent input, by its number, as info overlays read it.
 #[derive(Debug, Clone, Default)]
 pub struct Inputs {
@@ -261,6 +339,19 @@ impl Inputs {
     pub fn current(&self, c: &CurrentInput, family: PadFamily, swapped: bool) -> Vec<Segment> {
         let now = self.now.unwrap_or_else(Instant::now);
         current_input(&self.entries(c.tracking.device), c, family, swapped, now)
+    }
+
+    /// What the settings previews show of a log overlay's source: made-up input for an input
+    /// log, keys and clicks for an output log, a mode and layers for a log of those.
+    pub fn sample_view(source: &LogSource, style: &OverlayStyle, glyphs: Glyphs) -> LogView {
+        let sample = Inputs::sample();
+        let now = sample.now.unwrap_or_else(Instant::now);
+        let s = source.settings();
+        match source.kind() {
+            LogKind::Input => log_view(&sample.entries(None), s, style, glyphs, now),
+            LogKind::Output => log_view(&sample_output(now), s, style, glyphs, now),
+            LogKind::Shifts => shifts_view(&sample_shifts(now), s, style, glyphs, now),
+        }
     }
 
     /// Made-up input for the settings previews: a combo, a mashed button, then a fireball

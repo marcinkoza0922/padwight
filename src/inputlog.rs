@@ -11,7 +11,7 @@ mod tests;
 
 use std::time::Instant;
 
-pub use view::{Inputs, LogCell, LogView, line_life, log_view, merged, next_change};
+pub use view::{Inputs, LogCell, LogView, line_life, log_view, merged, next_change, shifts_next_change, shifts_view};
 #[cfg(test)]
 pub use view::LogLine;
 
@@ -108,6 +108,10 @@ pub enum Input {
     Key(String),
     Mouse(MouseButton),
     Wheel(WheelDirection),
+    /// A mode the controller was in; held for as long as it was.
+    Mode(String),
+    /// A layer held down.
+    Layer(String),
 }
 
 /// One press: what, when, for how long, and what it did.
@@ -276,6 +280,31 @@ impl InputLog {
         }
     }
 
+    /// Records the controller's mode and held layers as they are now: what stopped being on is
+    /// let go, and what started is a new entry. Returns whether the log changed.
+    pub fn shifts(&mut self, mode: Option<&str>, layers: &[String], now: Instant) -> bool {
+        let mut changed = false;
+        for e in self.entries.iter_mut().filter(|e| e.released.is_none()) {
+            let on = match &e.input {
+                Input::Mode(m) => mode == Some(m.as_str()),
+                Input::Layer(l) => layers.contains(l),
+                _ => continue,
+            };
+            if !on {
+                e.released = Some(now);
+                changed = true;
+            }
+        }
+        let wanted = mode.map(|m| Input::Mode(m.to_string())).into_iter().chain(layers.iter().map(|l| Input::Layer(l.clone())));
+        for input in wanted {
+            if !self.entries.iter().any(|e| e.released.is_none() && e.input == input) {
+                self.record(input, now);
+                changed = true;
+            }
+        }
+        changed
+    }
+
     /// Attaches an action to the press that fired it. A combo's presses become one entry.
     pub fn attach(&mut self, from: &FiredFrom, label: Option<String>) {
         if let FiredFrom::Combo(members) = from
@@ -344,14 +373,20 @@ impl InputLog {
 
     fn press(&mut self, slot: Slot, input: Input, now: Instant) -> bool {
         self.release(slot, now);
+        let id = self.record(input, now);
+        self.open.push((slot, id));
+        true
+    }
+
+    /// Adds an entry, held until something lets it go; returns its id.
+    fn record(&mut self, input: Input, now: Instant) -> u64 {
         let id = self.next_id;
         self.next_id += 1;
         self.entries.push(Entry { input, pressed: now, released: None, label: None, resolved: false, id });
-        self.open.push((slot, id));
         if self.entries.len() > CAPACITY {
             self.entries.drain(..CAPACITY / 4);
         }
-        true
+        id
     }
 
     fn release(&mut self, slot: Slot, now: Instant) -> bool {

@@ -9,7 +9,7 @@ use std::{
 
 use super::{Daemon, FADE_FRAME, Managed, layered};
 use crate::{
-    config::{InfoOverlay, InputLogSettings, LogOverlay, LogSource, OverlayStyle, Profile, Stick, Trigger},
+    config::{InfoOverlay, InputLogSettings, LogKind, LogOverlay, OverlayStyle, Profile, Stick, Trigger},
     info::Glyphs,
     input::InputEvent,
     inputlog::{self, Entry, FiredFrom, Inputs, LogView, Thresholds},
@@ -54,7 +54,9 @@ impl Daemon {
         for (from, action) in &fired {
             dev.log.attach(from, inputlog::label_for(from, action));
         }
-        !fired.is_empty()
+        // What it sent and the modes it entered are logged as they happen; this is where the
+        // overlay learns of them.
+        !fired.is_empty() | std::mem::take(&mut dev.log_dirty)
     }
 
     /// Labels the press that just chose a menu item.
@@ -128,11 +130,19 @@ impl Daemon {
         self.feed_watchers = watchers.into_iter().filter(|(pick, w)| w.send(self.feeds(pick.as_deref(), now)).is_ok()).collect();
     }
 
-    /// One controller's entries by its number, or every controller's merged.
-    fn entries(&self, device: Option<u8>) -> Vec<Entry> {
+    /// One controller's entries of a kind of log by its number, or every controller's merged.
+    fn entries(&self, device: Option<u8>, kind: LogKind) -> Vec<Entry> {
+        let of = |d: &Managed| match kind {
+            LogKind::Input => d.log.entries().to_vec(),
+            LogKind::Output => d.exports.entries().to_vec(),
+            LogKind::Shifts => d.shifts.entries().to_vec(),
+        };
         match device {
-            Some(n) => self.devices.values().find(|d| d.number == n).map(|d| d.log.entries().to_vec()).unwrap_or_default(),
-            None => inputlog::merged(self.devices.values().map(|d| d.log.entries())),
+            Some(n) => self.devices.values().find(|d| d.number == n).map(of).unwrap_or_default(),
+            None => {
+                let all: Vec<Vec<Entry>> = self.devices.values().map(of).collect();
+                inputlog::merged(all.iter().map(Vec::as_slice))
+            }
         }
     }
 
@@ -164,14 +174,21 @@ impl Daemon {
         let views = shown
             .iter()
             .map(|(o, opacity)| {
-                let LogSource::Input(s) = &o.source;
-                let entries = self.entries(s.tracking.device);
-                if let Some(life) = inputlog::line_life(s) {
-                    let due = inputlog::next_change(&entries, &s.tracking, life, now, FADE_FRAME);
-                    redraw = redraw.into_iter().chain(due).min();
-                }
+                let s = o.source.settings();
+                let kind = o.source.kind();
+                let entries = self.entries(s.tracking.device, kind);
+                let due = match (kind, inputlog::line_life(s)) {
+                    (LogKind::Shifts, _) => inputlog::shifts_next_change(&entries, s, now, FADE_FRAME),
+                    (_, Some(life)) => inputlog::next_change(&entries, &s.tracking, life, now, FADE_FRAME),
+                    (_, None) => None,
+                };
+                redraw = redraw.into_iter().chain(due).min();
                 let glyphs = Glyphs { family, nintendo_layout: swapped };
-                LogView { name: o.name.clone(), opacity: *opacity, ..inputlog::log_view(&entries, s, &o.style, glyphs, now) }
+                let view = match kind {
+                    LogKind::Shifts => inputlog::shifts_view(&entries, s, &o.style, glyphs, now),
+                    _ => inputlog::log_view(&entries, s, &o.style, glyphs, now),
+                };
+                LogView { name: o.name.clone(), opacity: *opacity, ..view }
             })
             .filter(|v| !v.lines.is_empty())
             .collect();

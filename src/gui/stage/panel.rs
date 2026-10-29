@@ -25,10 +25,7 @@ impl App {
             }
             StageTarget::Log(i) => {
                 let o = self.logs().get(i)?;
-                let crate::config::LogSource::Input(source) = &o.source;
-                let sample = crate::inputlog::Inputs::sample();
-                let now = sample.now.unwrap_or_else(Instant::now);
-                draw::log_panel(&crate::inputlog::log_view(&sample.entries(None), source, style, self.glyphs(), now), font, fit, anim)
+                draw::log_panel(&crate::inputlog::Inputs::sample_view(&o.source, style, self.glyphs()), font, fit, anim)
             }
             StageTarget::Panel(panel) | StageTarget::Setup(panel) => match panel {
                 Panel::Keyboard | Panel::Numpad => {

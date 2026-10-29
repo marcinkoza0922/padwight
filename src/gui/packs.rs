@@ -597,12 +597,9 @@ impl App {
                     }
                     ItemKind::Log => {
                         let o = &items.logs[i];
-                        let crate::config::LogSource::Input(s) = &o.source;
-                        let sample = crate::inputlog::Inputs::sample();
-                        let now = sample.now.unwrap_or_else(std::time::Instant::now);
                         let glyphs = crate::info::Glyphs { family: self.config.info_glyphs, nintendo_layout: self.nintendo_layout() };
-                        let view = crate::inputlog::log_view(&sample.entries(None), s, &preview_style(&o.style), glyphs, now);
-                        (o.name.clone(), format!("input · {} lines", s.lines), Some(preview(crate::overlay::draw::log_panel(&view, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still()))))
+                        let view = crate::inputlog::Inputs::sample_view(&o.source, &preview_style(&o.style), glyphs);
+                        (o.name.clone(), format!("{} · {} lines", o.source.kind().name().to_lowercase(), o.source.settings().lines), Some(preview(crate::overlay::draw::log_panel(&view, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still()))))
                     }
                     ItemKind::Layer | ItemKind::Mode => {
                         let l = if kind == ItemKind::Mode { &items.modes[i] } else { &items.layers[i] };
