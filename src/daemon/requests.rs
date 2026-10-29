@@ -51,6 +51,8 @@ impl Daemon {
                     Err(e) => Response::Error(format!("saving config: {e:#}")),
                 }
             }
+            Request::LaunchTitle(title) => self.launch_title(&title),
+            Request::StopTitle(id) => self.stop_title(&id),
             Request::SetProfileLock(locked) => {
                 self.profile_locked = locked;
                 Response::Ok

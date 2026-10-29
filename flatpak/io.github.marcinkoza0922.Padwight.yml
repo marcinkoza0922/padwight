@@ -36,6 +36,23 @@ finish-args:
   - --filesystem=~/.var/app/com.valvesoftware.Steam/.local/share/Steam:ro
   - --filesystem=xdg-data/lutris:ro
   - --filesystem=xdg-config/lutris:ro
+  # Heroic's lists of installed games and their names, file by file: its folders also hold the
+  # stores' login tokens, which Padwight has no need to see.
+  - --filesystem=xdg-config/heroic/legendaryConfig/legendary/installed.json:ro
+  - --filesystem=xdg-config/heroic/gog_store/installed.json:ro
+  - --filesystem=xdg-config/heroic/nile_config/nile/installed.json:ro
+  - --filesystem=xdg-config/heroic/sideload_apps/library.json:ro
+  - --filesystem=xdg-config/heroic/store_cache/legendary_library.json:ro
+  - --filesystem=xdg-config/heroic/store_cache/gog_library.json:ro
+  - --filesystem=xdg-config/heroic/store_cache/nile_library.json:ro
+  - --filesystem=~/.var/app/com.heroicgameslauncher.hgl/config/heroic/legendaryConfig/legendary/installed.json:ro
+  - --filesystem=~/.var/app/com.heroicgameslauncher.hgl/config/heroic/gog_store/installed.json:ro
+  - --filesystem=~/.var/app/com.heroicgameslauncher.hgl/config/heroic/nile_config/nile/installed.json:ro
+  - --filesystem=~/.var/app/com.heroicgameslauncher.hgl/config/heroic/sideload_apps/library.json:ro
+  - --filesystem=~/.var/app/com.heroicgameslauncher.hgl/config/heroic/store_cache/legendary_library.json:ro
+  - --filesystem=~/.var/app/com.heroicgameslauncher.hgl/config/heroic/store_cache/gog_library.json:ro
+  - --filesystem=~/.var/app/com.heroicgameslauncher.hgl/config/heroic/store_cache/nile_library.json:ro
+  - --filesystem=~/.var/app/net.lutris.Lutris/data/lutris:ro
 
 modules:
   - name: padwight

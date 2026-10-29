@@ -47,6 +47,22 @@ impl Installed {
         }) || rules.iter().any(|r| crate::focus::rule_matches_any(r, &self.running))
     }
 
+    /// What one title has installed: its Steam App ID, the files in its folder, and the programs
+    /// its store says it starts. Reads the disk.
+    pub(crate) fn of_title(steam: Option<&str>, folder: Option<&Path>, programs: &[String]) -> Self {
+        let mut found = Installed::default();
+        found.steam.extend(steam.map(str::to_string));
+        if let Some(folder) = folder.filter(|f| !f.as_os_str().is_empty()) {
+            let mut budget = SEARCH_BUDGET;
+            collect_files(folder, SEARCH_DEPTH, &mut budget, &mut found);
+        }
+        for exe in programs.iter().filter(|e| !file_name(e).is_empty()) {
+            found.files.insert(file_name(exe));
+            found.add_program(exe.clone());
+        }
+        found
+    }
+
     fn add_program(&mut self, path: String) {
         self.programs.entry(file_name(&path)).or_default().push(path);
     }
@@ -158,18 +174,18 @@ fn steam_candidates(_home: &Path) -> Vec<PathBuf> {
 
 /// Heroic's config folders, where it lists the games it installed.
 #[cfg(target_os = "linux")]
-fn heroic_configs(home: &Path) -> Vec<PathBuf> {
+pub(crate) fn heroic_configs(home: &Path) -> Vec<PathBuf> {
     vec![home.join(".config/heroic"), home.join(".var/app/com.heroicgameslauncher.hgl/config/heroic")]
 }
 
 /// Heroic's config folder, in the roaming app data.
 #[cfg(windows)]
-fn heroic_configs(_home: &Path) -> Vec<PathBuf> {
+pub(crate) fn heroic_configs(_home: &Path) -> Vec<PathBuf> {
     dirs::config_dir().map(|dir| dir.join("heroic")).into_iter().collect()
 }
 
 /// A Steam install's library folders: its own, plus those in `libraryfolders.vdf`.
-fn steam_libraries(root: &Path) -> Vec<PathBuf> {
+pub(crate) fn steam_libraries(root: &Path) -> Vec<PathBuf> {
     let mut libraries = vec![root.to_path_buf()];
     if let Ok(text) = fs::read_to_string(root.join("steamapps/libraryfolders.vdf")) {
         libraries.extend(vdf_values(&text, "path").into_iter().map(PathBuf::from));
@@ -180,7 +196,7 @@ fn steam_libraries(root: &Path) -> Vec<PathBuf> {
 }
 
 /// Every value of `key` in Valve's KeyValues text (`"key"  "value"` lines).
-fn vdf_values(text: &str, key: &str) -> Vec<String> {
+pub(crate) fn vdf_values(text: &str, key: &str) -> Vec<String> {
     text.lines()
         .filter_map(|line| {
             let parts: Vec<&str> = line.split('"').collect();
@@ -230,11 +246,11 @@ fn parse_lutris(text: &str) -> Vec<String> {
 }
 
 /// Lowercase file name of a Unix or Windows path.
-fn file_name(path: &str) -> String {
+pub(crate) fn file_name(path: &str) -> String {
     crate::focus::base_name(path).to_lowercase()
 }
 
-fn collect_files(dir: &Path, depth: usize, budget: &mut usize, out: &mut Installed) {
+pub(crate) fn collect_files(dir: &Path, depth: usize, budget: &mut usize, out: &mut Installed) {
     let Ok(entries) = fs::read_dir(dir) else { return };
     for entry in entries.flatten() {
         if *budget == 0 {

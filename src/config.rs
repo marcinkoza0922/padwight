@@ -30,6 +30,8 @@ pub use summary::{Keyword, Piece};
 mod region;
 mod touchpad;
 mod window_game;
+mod titles;
+pub use titles::{Store, Title};
 mod menus;
 mod layers;
 mod templates;
@@ -2116,6 +2118,9 @@ pub struct Config {
     pub general: Game,
     #[serde(default, rename = "setups")]
     pub games: Vec<Game>,
+    /// Games imported from the stores, for the Games page.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub titles: Vec<Title>,
     /// IDs of library packs the user asked never to be offered again (see `offer`).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub declined_packs: Vec<String>,
@@ -2207,6 +2212,7 @@ impl Default for Config {
             overlay_font: None,
             general: Game::new("General", vec![Profile::passthrough("Gamepad"), Profile::desktop("Desktop")]),
             games: Vec::new(),
+            titles: Vec::new(),
             declined_packs: Vec::new(),
             unreadable: Vec::new(),
         }

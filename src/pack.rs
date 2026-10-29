@@ -169,6 +169,10 @@ impl Pack {
     }
 }
 
+/// Top-level keys a pack may not have: titles, and the commands, arguments and environment
+/// variables that would start something.
+const LAUNCH_FIELDS: [&str; 6] = ["titles", "command", "commands", "args", "arguments", "env"];
+
 /// Reads a pack, refusing one from a newer app and anything malformed (whole or nothing).
 pub fn parse(text: &str) -> Result<Pack> {
     let table: toml::Table = toml::from_str(text).context("not a valid pack file")?;
@@ -179,6 +183,11 @@ pub fn parse(text: &str) -> Result<Pack> {
     }
     if format < 1 {
         bail!("unknown pack format {format}");
+    }
+    // What starts a game belongs to the user's own config, never to a pack they were handed.
+    let launching: Vec<&str> = LAUNCH_FIELDS.iter().copied().filter(|key| table.contains_key(*key)).collect();
+    if !launching.is_empty() {
+        bail!("Packs can't carry launch settings, but this one has: {}.", launching.join(", "));
     }
     let mut pack: Pack = toml::from_str(text).context("reading the pack")?;
     // The built-in modes are every game's, fixed: a pack can't bring its own (see `built_in_mode`).

@@ -25,6 +25,8 @@ serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 tokio = { version = "1.53.2", features = ["io-util", "net", "rt", "time"] }
 toml = "1.1.6"
+# Reads Lutris's game list (titles/lutris.rs); read-only, SQLite built in so it works in the Flatpak.
+rusqlite = { version = "0.37", features = ["bundled"] }
 rodio = { version = "0.22", default-features = false, features = ["playback"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
@@ -96,6 +98,8 @@ print_stderr = "warn"
 [build-dependencies]
 # Reads each library pack's listing at build time (`build.rs`).
 toml = "1.1.6"
+# Reads Lutris's game list (titles/lutris.rs); read-only, SQLite built in so it works in the Flatpak.
+rusqlite = { version = "0.37", features = ["bundled"] }
 
 [dev-dependencies]
 iced_test = "0.14"

@@ -50,6 +50,7 @@ mod checks;
 mod cycles;
 mod font_menu;
 mod games;
+mod titles_page;
 mod goto;
 mod header_pick;
 mod guide_tab;
@@ -301,6 +302,7 @@ struct App {
     /// Whether each library game is installed or running, once looked up for the library
     /// picker.
     installed: Option<Vec<bool>>,
+    games_page: titles_page::GamesPage,
     /// Games and profiles renamed since the last save. The daemon still reports the active
     /// profile by its old name until then.
     renames: Vec<Rename>,
@@ -340,6 +342,8 @@ enum Page {
     Settings,
     /// The in-app manual.
     Manual,
+    /// The games imported from the stores, to start through them.
+    Games,
     /// A game's page; `None` is General.
     Game(Option<String>),
 }
@@ -702,6 +706,22 @@ enum Message {
     /// Library entry to show details of (index in `App::library`).
     SelectLibrary(usize),
     Installed(Vec<bool>),
+    /// "Import games" on the Games page.
+    ImportTitles,
+    TitlesScanned(Vec<crate::titles::Scanned>),
+    SetTitleSearch(String),
+    SelectTitle(String),
+    TitlesScrolled(f32),
+    ToggleHiddenTitles(bool),
+    ToggleAddGameHelp,
+    /// Start this title (by id) through its store.
+    PlayTitle(String),
+    TitleOpened(Result<(), String>),
+    /// End the game started for this title.
+    StopTitle(String),
+    /// Title id and the name of the setup that plays it (empty: by rules).
+    SetTitleSetup(String, String),
+    SetTitleHidden(String, bool),
     /// The library picker's list scrolled to this offset.
     LibraryScrolled(f32),
     AddEmptyGame(Template),
@@ -825,7 +845,7 @@ impl App {
             open_log_appearance: HashSet::new(),
             open_input_groups: HashSet::new(),
             library: library::listings(),
-            installed: None,
+            installed: None, games_page: titles_page::GamesPage::default(),
             renames: Vec::new(),
             edited: Vec::new(),
             layer: 0, mode: 0, compare: 0,
@@ -1322,6 +1342,18 @@ impl App {
             | Message::KeepEditing => {
                 return self.update_session(&message);
             }
+            Message::ImportTitles
+            | Message::TitlesScanned(_)
+            | Message::SetTitleSearch(_)
+            | Message::SelectTitle(_)
+            | Message::TitlesScrolled(_)
+            | Message::ToggleHiddenTitles(_)
+            | Message::ToggleAddGameHelp
+            | Message::PlayTitle(_)
+            | Message::TitleOpened(_)
+            | Message::StopTitle(_)
+            | Message::SetTitleSetup(..)
+            | Message::SetTitleHidden(..) => return self.update_titles(message),
             other => return self.update_games(other),
         }
         Task::none()
@@ -1460,6 +1492,7 @@ impl App {
                 .into(),
             Page::Settings => self.view_settings(),
             Page::Manual => self.view_manual(),
+            Page::Games => self.view_games_page(),
             Page::Game(_) => self.view_game(),
         };
         // The Manual is for reading: the status header would only push it down.

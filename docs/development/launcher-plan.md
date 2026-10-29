@@ -103,7 +103,8 @@ details:
   start with). The link is `steam://rungameid/<id>`.
 - **Steam's non-Steam shortcuts**: `userdata/<account>/config/shortcuts.vdf` (binary VDF) gives
   each shortcut's `appid`, `AppName`, `Exe` and `LaunchOptions`. Read the account in
-  `loginusers.vdf` marked most recent. The link is `steam://rungameid/<id>`, where the id is the
+  `loginusers.vdf` with the newest `timestamp` (this Steam build writes no `MostRecent` key; the
+  directory name is the SteamID64 minus 76561197960265728). The link is `steam://rungameid/<id>`, where the id is the
   shortcut's `appid` shifted into the top 32 bits with `0x02000000` in the low ones. Shortcuts
   that start another store's game (`heroic://…` or `lutris:…` in `Exe` or `LaunchOptions`, which
   is common) are that store's titles: skip them so the game isn't listed twice.
@@ -175,22 +176,38 @@ forks included. The native daemon looks for the `reaper` with the expected App I
 processes, takes it as the game's root, and gets its exit through `pidfd_open`. That reads only
 `/proc/<pid>/cmdline` of new processes named `reaper`, nothing else.
 
-In the Flatpak, which can't see host processes, Steam's `~/.steam/registry.vdf` may say which game
-is running (`RunningAppID`, to check). With read-only access to that one file, the session opens
-when it names the expected game and closes when it changes. Proton games' windows carry the App
-ID in their class, so they're matched exactly. Native Linux games are matched by the first new
-window after the game starts, and then by its class.
+Steam starts a Proton game with **two** `reaper`s: first `reaper SteamLaunch AppId=<id> Install=1 --`
+(the runtime and prefix setup, which can run for many seconds and exits before the game), then
+`reaper SteamLaunch AppId=<id> --`. The session's root is the one without `Install=1`, and the
+first one's exit must not close the session. (Shortcuts that start a store's game, such as
+Heroic's, end their `reaper` within seconds, so they have to be followed as that store's titles.)
+
+In the Flatpak, which can't see host processes, `~/.steam/registry.vdf` does **not** carry the
+running game (see [Phase 0 results](#phase-0-results)). Steam's `logs/gameprocess_log.txt`
+does: `AppID <id> adding PID <pid> as a tracked process` while the game runs and
+`Remove <id> from running list` when it exits. It's in the Steam folder the manifest already
+shares read-only. The session opens when the log names the expected id and closes on the
+removal line. Proton games' windows carry the App ID in their class (`steam_app_<id>`), so they're
+matched exactly. Native Linux games are matched by the first new window after the game starts,
+and then by its class.
 
 ### Following a Heroic or Lutris game
 
 Neither has a process like `reaper` that names the game. In order of preference:
 
-1. A variable they set on the game's processes that names it (umu's `GAMEID`, or their own;
-   to check), read from `/proc/<pid>/environ` of new processes only.
+1. A variable they set on the game's processes that names it, read from `/proc/<pid>/environ` of
+   new processes only. **Heroic** sets `HEROIC_APP_NAME` (the id in its link), `HEROIC_APP_RUNNER`
+   and `HEROIC_APP_SOURCE` on `gogdl`/`legendary` and on every process of the game, plus
+   `UMU_STEAM_GAME_ID=heroic-<title>`. **Lutris** sets `GAME_NAME`, `GAME_DIRECTORY` and `STORE`
+   (from its source, not yet seen running), and a random per-run `LUTRIS_GAME_UUID` that names
+   the run, not the game. umu's `GAMEID` is `umu-0` for these games and names nothing.
 2. The executable named in the game's install manifest, among processes that appear after Play.
 
-The root is the topmost process of the game's that isn't the store's own. Its tree is followed
-by pid, so a double fork can escape it. In the Flatpak, a Heroic or Lutris game is matched by the
+A Flatpak Heroic's game is **not** under Heroic: `steam-runtime-launch-client` hands it to the
+Flatpak portal, so its `pv-adverb` is a child of `flatpak-portal`. The root is therefore the
+process of the game's that carries the variable and whose parent doesn't, and Heroic's own
+`gogdl` (which waits for the game and exits with it) is the better exit signal. Its tree is
+followed by pid, so a double fork can escape it. In the Flatpak, a Heroic or Lutris game is matched by the
 first new window after Play, and then by its class, and its exit isn't known until its windows
 are gone.
 
@@ -308,7 +325,7 @@ The pid the compositor reports is the host's, which names nothing inside the san
 |---|---|---|
 | Import | Yes (read-only library access) | Yes |
 | Play | Yes: the store's link opens through the desktop portal (`org.freedesktop.portal.OpenURI`), as a browser opens Steam links | Yes |
-| Which game, start and exit | Steam: `registry.vdf` and the window class. Heroic, Lutris: first new window, then its class | Exact, from the wrapper |
+| Which game, start and exit | Steam: `gameprocess_log.txt` and the window class. Heroic, Lutris: first new window, then its class | Exact, from the wrapper |
 | Stop and force quit | No | Yes, through the wrapper |
 | Per-game variables, Hide real controllers | No | Yes |
 
@@ -357,37 +374,105 @@ Each phase can be merged on its own.
 1. **Titles, import and the Games page.** The `[[titles]]` config, the import from Steam (with
    its shortcuts), Heroic (with sideloaded games) and Lutris, matching to setups, the library
    offer. Play opens the store's link. No sessions yet: setups still switch by focus as today.
+   Built (branch `launcher-phase1`): `src/titles/` (`steam.rs` with `shortcuts.vdf`, `heroic.rs`,
+   `lutris.rs` through `rusqlite` with bundled SQLite, `open.rs`), `config::Title`,
+   `gui/titles_page.rs`. Decisions: Lutris is read through SQLite rather than its per-game YAML
+   (which has no name or id); this adds a crate, so `flatpak/cargo-sources.json` must be
+   regenerated. The Flatpak manifest grants Heroic's list files one by one, because its
+   `gog_store/` and `legendaryConfig/` folders also hold login tokens (a file bind-mount keeps
+   the old inode if Heroic replaces the file by renaming, so a running Padwight can show a stale
+   list until it restarts; to check). Library packs' suggested environment variables wait for
+   Phase 3, where something uses them. Not exercised: Nile's installed list (its shape is a guess),
+   Play from the Flatpak (Phase 5), a mouse on the page.
 2. **Launch sessions.** Following Steam games through `reaper`, Heroic and Lutris games by their
    variables or executables, `pidfd` exits, setup activation while the session's window is in
    front, `game_started` when the game is found, Stop and force quit through the session.
    Tests: a fake store that starts a fake `reaper` with a game that double-forks, and the daemon
    tests in Docker.
+   Built (branch `launcher-phase1`, on top of Phase 1): `src/sessions.rs` (following, pure over a
+   `/proc` folder so a fake one tests it), `src/daemon/launches.rs`, `Request::LaunchTitle` and
+   `StopTitle`, `Status::launches`, Play/Stop and a running tag on the Games page. Play goes
+   through the daemon, which opens the link after noting the processes that exist; with no
+   daemon the page opens the link itself and nothing follows the game. Deviations and findings:
+   - **Exit is polled, not `pidfd`.** The daemon polls a session every 250 ms while it waits and
+     every second after, and a process is told from a later one with its number by its start
+     time. That is as exact as a pidfd for what we poll anyway, and needs no kernel feature.
+   - **A new process is looked at again for a second**: between `fork` and `exec` it still has its
+     parent's command line and environment, and a first version that looked once missed a
+     `reaper` that way (found by the real-process test).
+   - **A Heroic or Lutris game's root is the first process carrying its name**, and the game is
+     over when none of its processes is left. Stop ends the top process with the most under it
+     (the game, not the launcher stub that ends with it). The manifest-executable fallback isn't
+     built: Lutris is followed by `GAME_NAME` only.
+   - **`game_started` runs when the session's setup first becomes active**, which is when the
+     game's first window is in front, not when its root is found: switching setups with nothing in
+     front would be wrong while Steam's window is. With start-on toggles that is the same moment
+     as today; what changed is that the setup applies by pid or class with no rules at all.
+   - **Checked on this machine** with `PADWIGHT_PLAY=steam:2379780` (or
+     `heroic:gog:1963513391`) `cargo test sessions::tests::play_for_real -- --ignored --nocapture`:
+     Balatro (Proton) was found 11 s after Play with 19 processes under its `reaper` and its exit
+     noticed 0.3 s after Stop; Cuphead through Heroic's Flatpak was found after 10 s with 20
+     processes, ended 2.3 s after Stop, nothing left behind. Also run: native Dead Cells (found
+     after 16 s under `reaper` in the Steam Linux Runtime, `deadcells` among the 6 processes tracked,
+     ended 0.26 s after Stop), and through Lutris a Linux game (found after 1.5 s, `start.sh` then
+     the game) and a Windows game under umu/Proton (found after 2.3 s, 17 processes, ended 2.3 s
+     after Stop). Lutris sets `GAME_NAME` on both, so the plan's Lutris variable is confirmed.
+     Not checked: the setup switch in a running daemon (it needs uinput; the glue is
+     `daemon/launches.rs` and `auto_switch.rs`) and Windows (no sessions there yet; Play just
+     opens the link).
 3. **The wrapper.** `padwight-run`, `Request::Launch`, sessions from the wrapper, per-game
    variables, Hide real controllers. The guide, with its screenshots.
 4. **Launched-games-only mode.** The setting, the session-only focus handling, the table above.
-5. **The Flatpak.** Play through the portal, `registry.vdf`, window-class matching for sessions,
+5. **The Flatpak.** Play through the portal, `gameprocess_log.txt`, window-class matching for sessions,
    the static wrapper and its host path, the manifest's new read-only paths.
 6. **Windows.**
 
-## To check first
+## Phase 0 results
 
-- Steam writes `RunningAppID` (or a per-app `Running` key) into `~/.steam/registry.vdf` while a
-  game runs, and clears it when the game exits, promptly enough to follow.
-- `reaper`'s command line has the App ID for every game: native, Proton, and non-Steam shortcuts
-  (which would have the shortcut's `appid`).
-- `steam://rungameid/<id>` with the id worked out from a shortcut's `appid` starts that shortcut,
-  and Heroic's `runner=sideload` link starts a game added by hand.
-- What Heroic (Legendary, GOG, Nile) and Lutris set on a game's processes that names the game.
-- The desktop portal opens `steam://`, `heroic://` and `lutris:` links from the sandbox, and what
-  it asks the user the first time.
-- The pid KWin, GNOME and Hyprland report for a Proton game's window (an X11 window through
-  XWayland) is in `reaper`'s tree, and the same for native games on Wayland.
-- With the wrapper: Steam's launch-option prefix runs outside the Steam Linux Runtime container,
-  the variables it sets reach the game inside pressure-vessel and Proton, and Steam still tracks
-  the game as running with our subreaper between `reaper` and the game.
-- `SDL_GAMECONTROLLER_IGNORE_DEVICES` with the real pad's ids hides it from SDL's HIDAPI driver
-  as well as from evdev, and Proton's hidraw path respects it or has its own switch.
-- Heroic's wrapper setting and Lutris's command prefix take a command with arguments, and pass
-  on the variables.
-- A static binary inside the Flatpak's install folder runs from the host, from native Steam's
-  launch options.
+Checked on 2026-10-29, on native Steam (Proton-GE Latest is the default compatibility tool, so
+every game ran under Proton), Flatpak Heroic with a GOG game, native Lutris and the installed
+Padwight Flatpak, KDE Plasma on Wayland.
+
+**Confirmed**
+
+- `reaper SteamLaunch AppId=<id>` names the game and keeps the whole tree: all 18 processes
+  with the game's `SteamGameId` were under it, none escaped. Its parent is the `steam` process.
+- `pidfd_open` on `reaper` works and fires when the game ends. Steam's own log says
+  `Remove <id> from running list` in the same second.
+- A Proton game's windows report `steam_app_<id>` as their class, and their pid is in
+  `reaper`'s tree (read through XWayland's `_NET_WM_PID`, which KWin reports the same).
+- `steam://rungameid/<(appid << 32) | 0x02000000>` starts a non-Steam shortcut. Checked with a
+  Heroic shortcut (Cuphead) from `shortcuts.vdf`'s little-endian `appid`.
+- Shortcuts here are `Exe "flatpak"` with `run com.heroicgameslauncher.hgl --no-gui … "heroic://launch?…"`
+  as the launch options, so the "skip shortcuts that start another store's game" rule applies
+  and has to look at `Exe` and `LaunchOptions` both.
+- The `lutris:rungameid/<id>` link starts a Lutris game, and the desktop portal opens it from
+  inside the Padwight Flatpak with no prompt (KDE). The game itself failed here because its
+  executable is missing. The portal is scheme-agnostic, but `steam://` and `heroic://` through it
+  weren't tried.
+- Heroic marks its game processes with `HEROIC_APP_NAME` and friends, readable from `/proc`, and
+  stopping the game's tree ends `gogdl` too (see [Following a Heroic or Lutris game](#following-a-heroic-or-lutris-game)).
+- Lutris's `pga.db` `games` table has `id, name, slug, runner, executable, directory, installed,
+  service, service_id, …`, as the plan assumed.
+
+**Wrong in the plan, now fixed above**
+
+- `registry.vdf` has no `RunningAppID` or per-app running key, before, during or after a game.
+  `logs/gameprocess_log.txt` replaces it.
+- Proton games get two `reaper`s (the first with `Install=1`).
+- Heroic's Flatpak game isn't a descendant of Heroic or `gogdl`.
+- `loginusers.vdf` has no `MostRecent`; use the newest `timestamp`.
+
+**Not checked yet**
+
+- Native (non-Proton) Steam games were later checked with Dead Cells (Phase 2 notes). Still open:
+  the pid KWin reports for a native Wayland window, and GNOME and Hyprland for anything.
+- `reaper`'s command line for a shortcut that runs a program directly (the ones here exit at once).
+- Heroic's Legendary and Nile games (Lutris's `GAME_NAME` was confirmed on running games).
+- The wrapper: Steam's launch-option prefix against the Steam Linux Runtime container, our
+  subreaper between `reaper` and the game, Heroic's wrapper setting and Lutris's command prefix
+  taking arguments. Each needs a launch option set in the store, which this plan and the Steam
+  notes say Padwight never writes, so it wants a hand-set test game.
+- `SDL_GAMECONTROLLER_IGNORE_DEVICES` against SDL's HIDAPI driver and Proton's hidraw path.
+- A static `padwight-run` inside the Flatpak's install folder run from the host.
+- Whether the portal asks the user the first time on other desktops or for `steam://` and `heroic://`.

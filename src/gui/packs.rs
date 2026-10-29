@@ -195,6 +195,9 @@ impl App {
             Message::ConfirmDeleteGame => {
                 if let Some(Dialog::DeleteGame(name)) = self.dialog.take() {
                     self.config.games.retain(|g| g.name != name);
+                    for title in self.config.titles.iter_mut().filter(|t| t.setup == name) {
+                        title.setup.clear();
+                    }
                     if self.config.auto_switch.default_profile.as_ref().is_some_and(|d| d.game.as_ref() == Some(&name)) {
                         self.config.auto_switch.default_profile = None;
                     }

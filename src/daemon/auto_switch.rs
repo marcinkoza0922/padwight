@@ -28,6 +28,9 @@ impl Daemon {
         if self.focus_waits() {
             return;
         }
+        if self.config.auto_switch.enabled && self.play_session_setup(window) {
+            return;
+        }
         self.hint_library_game(window);
 
         if !self.config.auto_switch.enabled {
@@ -45,6 +48,19 @@ impl Daemon {
         if let Some((game, pid)) = focus::game_launch(&self.config, window) {
             self.launched(&game, pid);
         }
+    }
+
+    /// A window of a game started from the Games page whose title has a setup plays with that
+    /// setup, rules or not. False for any other window.
+    fn play_session_setup(&mut self, window: &WindowInfo) -> bool {
+        let Some((game, pid)) = self.session_setup(window) else { return false };
+        let Some(picked) = self.session_profile(&game) else { return false };
+        let target = self.config.usable_profile(picked.clone(), self.pad_features().as_deref());
+        let why = format!("{} is {game}, started from the Games page", describe(window));
+        self.session_game = Some(game.clone());
+        self.auto_switch_to(target.clone(), &with_fallback(why, &picked, &target), true);
+        self.launched(&game, pid);
+        true
     }
 
     pub(super) fn focus_event(&mut self, event: FocusEvent) {
@@ -186,6 +202,9 @@ impl Daemon {
             return focus::game_launch_in(&self.config, &focus::running_processes()).filter(|(game, _)| game == active);
         }
         let window = self.focused.as_ref()?;
+        if let Some(target) = self.session_target(window) {
+            return Some(target);
+        }
         if let Some(game) = focus::game_launch(&self.config, window) {
             return Some(game);
         }
@@ -221,7 +240,8 @@ impl Daemon {
     /// No game has focus: a profile of a game that rules pick gives way to the default one.
     /// No toast, since alt-tabbing out of a game would show one every time.
     pub(super) fn leave_game(&mut self, reason: &str) {
-        let in_game = self.config.active_ref().game.is_some_and(|g| focus::has_rules(&self.config, &g));
+        let from_session = self.session_game.take();
+        let in_game = self.config.active_ref().game.is_some_and(|g| focus::has_rules(&self.config, &g) || from_session.as_deref() == Some(g.as_str()));
         if in_game && let Some(default) = self.config.auto_switch.default_profile.clone() {
             let why = format!("{reason}, so the default profile takes over");
             self.auto_switch_to(default, &why, false);

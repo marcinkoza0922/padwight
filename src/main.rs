@@ -25,6 +25,8 @@ mod keycode;
 mod keyword_icon;
 mod launchers;
 mod library;
+mod sessions;
+mod titles;
 mod media;
 mod new_pad;
 mod offer;

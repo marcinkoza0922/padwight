@@ -55,6 +55,9 @@ impl App {
                     }
                 }
                 self.sync_motion_demo();
+                if self.page == Page::Games {
+                    return self.import_titles_once();
+                }
             }
             Message::SetGameSearch(search) => self.game_search = search,
             Message::SelectGameTab(tab) => {
@@ -273,15 +276,12 @@ impl App {
         };
         let updates: Vec<&str> = library::updates(&self.config, self.library).into_iter().map(|(name, _)| name).collect();
 
-        let mut col = column![
-            entry("Overview".into(), Page::Overview, None),
-            entry("App settings".into(), Page::Settings, None),
-            entry("Manual".into(), Page::Manual, None),
-            rule::horizontal(1),
+        let pages = [("Overview", Page::Overview), ("App settings", Page::Settings), ("Manual", Page::Manual), ("Games", Page::Games)];
+        let mut col = column(pages.map(|(label, page)| entry(label.into(), page, None))).spacing(6);
+        col = col.push(rule::horizontal(1)).push(column![
             text("Setups").size(13).color(MUTED_COLOR),
             entry("General".into(), Page::Game(None), warned(&self.config.general, playing(&None))),
-        ]
-        .spacing(6);
+        ].spacing(6));
         // General is always listed, so the search box and the empty note are about the games.
         if self.config.games.is_empty() {
             col = col.push(text("No game setups yet.").size(13).color(MUTED_COLOR));

@@ -32,6 +32,10 @@ pub enum Request {
     /// Re-read the config file from disk.
     Reload,
     SetEnabled(bool),
+    /// Play a title: opens its store's link and follows the game the store starts.
+    LaunchTitle(Box<crate::config::Title>),
+    /// Ends the game started for the title with this id.
+    StopTitle(String),
     /// Lock the active profile so rules and the default profile don't switch it away. Not kept
     /// across restarts, and cleared by any switch of profile.
     SetProfileLock(bool),
@@ -163,6 +167,18 @@ pub struct Status {
     /// Profile switches, newest first, each with the reason the daemon made it.
     #[serde(default)]
     pub switches: Vec<SwitchEvent>,
+    /// Games started from the Games page that are starting or running.
+    #[serde(default)]
+    pub launches: Vec<LaunchInfo>,
+}
+
+/// A game started from the Games page.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LaunchInfo {
+    /// The title's id.
+    pub id: String,
+    /// Its processes have been found; otherwise it's still starting.
+    pub running: bool,
 }
 
 /// The Overview's two feeds for one controller.

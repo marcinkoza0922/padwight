@@ -14,9 +14,10 @@ pub const USAGE: &str = "
 Drawing the settings window without a display or a daemon (for the manual's screenshots):
   gui [options] <step>...        run the steps in order, saving a picture at each `shot`
   steps: library <name>          add that library game        game <name>   show a game's page
-         page <overview|settings|manual|general>              profile <name>  edit that profile
+         page <overview|settings|manual|games|general>           profile <name>  edit that profile
          tab <profiles|modes|layers|macros|menus|info|logs|details>
          sub <buttons|sticks|combos|gyro|touchpad|guide>      chapter <file.md>  open a manual chapter
+         titles-demo             fill the Games page with a few stand-in games
          demo                    add a macro and an info overlay to the game shown
          readers-demo            have Steam read the controller past Padwight (the warning banner)
          settings <general|shortcuts>   the App settings tab    shortcuts-demo  move the opener to Start + Select and Tab to Start
@@ -134,6 +135,7 @@ fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut im
             app.saved = app.config.clone();
         }
         "demo" => demo(app),
+        "titles-demo" => titles_demo(app),
         "readers-demo" => readers_demo(app),
         "settings" => settings_tab(app, arg()?)?,
         "shortcuts-demo" => shortcuts_demo(app),
@@ -313,6 +315,24 @@ fn tab_word(tab: GameTab) -> &'static str {
     }
 }
 
+/// A few imported games from each store, standing in for the user's own.
+fn titles_demo(app: &mut App) {
+    use crate::config::{Store, Title};
+    let title = |source: Store, id: &str, name: &str, runner: &str, setup: &str, installed| Title {
+        id: format!("{}-{id}", source.label().to_lowercase()), name: name.into(), source, store_id: id.into(), runner: runner.into(), setup: setup.into(), hidden: false, installed,
+    };
+    app.config.titles = vec![
+        title(Store::Steam, "1245620", "ELDEN RING", "", "Elden Ring", true),
+        title(Store::Steam, "400", "Portal", "", "", true),
+        title(Store::Heroic, "1238653230", "Factorio", "gog", "", true),
+        title(Store::Heroic, "abc", "Quake", "sideload", "", true),
+        title(Store::Lutris, "1", "Total War: ROME II", "", "", true),
+        title(Store::Steam, "12140", "Max Payne", "", "", false),
+    ];
+    app.saved = app.config.clone();
+    app.games_page.select_first(&app.config.titles);
+}
+
 /// What the macro and overlay tutorials build, added to the setup on screen.
 fn demo(app: &mut App) {
     let game = app.game_mut();
@@ -342,6 +362,7 @@ fn page_named(word: &str) -> Result<Page> {
         "overview" => Page::Overview,
         "settings" => Page::Settings,
         "manual" => Page::Manual,
+        "games" => Page::Games,
         "general" => Page::Game(None),
         other => bail!("no page {other:?}"),
     })

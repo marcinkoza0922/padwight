@@ -388,3 +388,10 @@ fn a_pack_with_a_number_that_isn_t_finite_is_refused() {
     let text = export(&config.games[0], &draft(&config.games[0], false)).pack.to_toml().unwrap();
     assert!(parse(&text).unwrap_err().to_string().contains("menu_style.scale"));
 }
+
+#[test]
+fn a_pack_cannot_carry_launch_settings() {
+    let pack = "format = 20\ntitles = []\nenv = { SDL_X = \"1\" }\n[pack]\nid = \"x\"\nname = \"X\"\n";
+    let error = parse(pack).unwrap_err().to_string();
+    assert!(error.contains("titles") && error.contains("env"), "{error}");
+}

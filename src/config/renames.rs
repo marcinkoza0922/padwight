@@ -34,6 +34,9 @@ impl Config {
         }
         let Some(game) = self.games.iter_mut().find(|g| g.name == old) else { return false };
         game.name = new.to_string();
+        for title in self.titles.iter_mut().filter(|t| t.setup == old) {
+            title.setup = new.to_string();
+        }
         for at in self.auto_switch.default_profile.iter_mut().chain([&mut self.active]) {
             if at.game.as_deref() == Some(old) {
                 at.game = Some(new.to_string());
@@ -55,6 +58,18 @@ mod tests {
         config.active = ProfileRef::new(Some("Doom"), "Play");
         config.auto_switch.default_profile = Some(ProfileRef::new(Some("Doom"), "Play"));
         config
+    }
+
+    #[test]
+    fn titles_follow_a_renamed_setup() {
+        let mut config = doom();
+        let title = |setup: &str| crate::config::Title {
+            id: setup.into(), name: String::new(), source: crate::config::Store::Steam, store_id: "1".into(), runner: String::new(),
+            setup: setup.into(), hidden: false, installed: true,
+        };
+        config.titles = vec![title("Doom"), title("Other")];
+        assert!(config.rename_game("Doom", "Doom (2016)"));
+        assert_eq!((config.titles[0].setup.as_str(), config.titles[1].setup.as_str()), ("Doom (2016)", "Other"));
     }
 
     #[test]

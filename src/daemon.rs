@@ -39,6 +39,7 @@ use crate::{
 
 mod activity;
 mod auto_switch;
+mod launches;
 mod close_all;
 mod first_pad;
 mod guide;
@@ -551,6 +552,11 @@ struct Daemon {
     shows_input: bool,
     /// Each game's process when it last started, so focusing it again isn't another start.
     launches: HashMap<String, u32>,
+    /// Games started from the Games page, being waited for or followed.
+    launch_sessions: Vec<crate::sessions::Session>,
+    /// The setup a launch session's window made active, so it gives way when another window is
+    /// in front even where its rules name nothing.
+    session_game: Option<String>,
     sampler: crate::info::Sampler,
     /// When the overlay window was last started, so a window that can't start (no
     /// layer-shell) isn't restarted every second for info overlays.
@@ -617,8 +623,7 @@ impl Daemon {
             focused: None,
             focus_waited: false,
             profile_locked: false,
-            recent_windows: Vec::new(),
-            scan_target: None,
+            recent_windows: Vec::new(), scan_target: None,
             active: None,
             driving: Driving::default(),
             quit_hold: None,
@@ -643,6 +648,7 @@ impl Daemon {
             log_redraw: None,
             shows_input: false,
             launches: HashMap::new(),
+            launch_sessions: Vec::new(), session_game: None,
             sampler: crate::info::Sampler::default(),
             overlay_started: None,
             overlay_process: None,
@@ -1370,6 +1376,7 @@ impl Daemon {
             stop_pending: self.stop_asked,
             profile_locked: self.profile_locked,
             switches: self.activity.switches(Instant::now()),
+            launches: self.launch_infos(),
         }
     }
 
