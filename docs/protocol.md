@@ -6,7 +6,7 @@ This page is the protocol's specification. The Rust types behind it are in [src/
 
 ## Versions
 
-The protocol has a version, `major.minor`, and this page describes **1.0**. Ask the daemon for its version first with [`Version`](#version).
+The protocol has a version, `major.minor`, and this page describes **1.0**. Ask the daemon for its version first with [`Version`](#reading).
 
 - Within one major version, requests and fields are only ever **added**. Nothing is removed, renamed or changes meaning.
 - A minor version is a release that added something. A client written for 1.0 works with a 1.3 daemon.
