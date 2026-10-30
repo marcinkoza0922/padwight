@@ -7,7 +7,7 @@
 //! The extension maps the memfd, so the memfd is not written again once sent; two alternate.
 //! Without frame callbacks it animates on a 16 ms timer, as the Windows overlay does.
 //!
-//! Run on GNOME Shell 51 in the test VM; not yet over a fullscreen game or with several monitors.
+//! Run on GNOME Shell 51 in the test VM; over a fullscreen window too; not yet with several monitors or fractional scaling.
 
 use std::{
     fs::File,
