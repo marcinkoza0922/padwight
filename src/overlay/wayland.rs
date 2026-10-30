@@ -32,7 +32,7 @@ use wayland_client::{Connection, EventQueue, globals::registry_queue_init};
 use super::ui::Overlay;
 
 mod events;
-mod feed;
+pub(in crate::overlay) mod feed;
 mod pacing;
 mod picture;
 mod scale;

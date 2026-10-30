@@ -67,6 +67,7 @@ its own: it draws with `overlay/render/`, the overlay's own renderer, on the CPU
   compositor has released (`wayland/shm.rs`, `wayland/slots.rs`) through `render::Screen`, and only
   the damaged part is committed (`wayland/picture.rs`, `wayland/window.rs`). A fallback timer of
   100 ms keeps fades and closing going when callbacks stop, for instance while the output is off.
+- **Frames out (GNOME).** `overlay/gnome.rs` runs instead of the layer-shell window when `XDG_CURRENT_DESKTOP` is GNOME. It paints through `render::Screen` into a picture kept between frames, writes it to one of two memfds and calls `Present` on the extension's D-Bus object (`overlay.js`), which shows it as a click-through actor in Shell's chrome. It animates on a 16 ms timer and sends whole frames. Not yet run on a real GNOME Shell.
 - **Windows.** `overlay/windows.rs` is a layered window (`WS_EX_LAYERED`, `WS_EX_TRANSPARENT`,
   `WS_EX_NOACTIVATE`). A reader thread posts each frame to it, and it paints one DIB section
   through the same `render::Screen`, handing the damage's bounds to `UpdateLayeredWindowIndirect`.
@@ -264,7 +265,7 @@ The daemon picks the profile from the focused window. The tracker is chosen by t
 5. **wlroots compositors** (`wlroots.rs`): the `wlr-foreign-toplevel-management` protocol (labwc, Wayfire, river, and others). Windows match by class only.
 6. **Fallback**: no tracker. Rules apply while a matching process runs.
 
-`identify.rs` resolves a window to an executable name, Steam App ID (from `SteamAppId`/`STEAM_COMPAT_APP_ID` or Proton's `steam_app_<id>` class) and window class. Wine/Proton games are matched by their `.exe`, not the Wine loader. GNOME has no layer-shell, so the overlays can't be shown there. Focus tracking works through the GNOME Shell extension in `gnome-extension/`.
+`identify.rs` resolves a window to an executable name, Steam App ID (from `SteamAppId`/`STEAM_COMPAT_APP_ID` or Proton's `steam_app_<id>` class) and window class. Wine/Proton games are matched by their `.exe`, not the Wine loader. GNOME has no layer-shell: focus tracking and the overlay both go through the GNOME Shell extension in `gnome-extension/` (`overlay/gnome.rs` sends it each frame; see [The overlay process](#the-overlay-process)).
 
 ## Windows
 

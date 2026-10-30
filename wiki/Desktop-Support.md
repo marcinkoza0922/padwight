@@ -7,13 +7,13 @@ Automatic profile switching needs to know which window has focus. padwight picks
 | **KDE Plasma** (Wayland or X11) | A small KWin script reports focus changes over D-Bus | Yes | Yes |
 | **Sway** | The compositor's IPC socket (`$SWAYSOCK`) | Yes | Yes |
 | **Hyprland** | Its event and command sockets | Yes | Yes |
-| **GNOME** | GNOME Shell extension | Yes | No |
+| **GNOME** | GNOME Shell extension | Yes | Experimental, through the extension |
 | **wlroots compositors** (labwc, Wayfire, river, …) | The `wlr-foreign-toplevel-management` protocol. Matches by window class, not executable | Yes | Yes |
 | Other desktops | None | Only the fallback below | Only if the compositor supports layer-shell |
 
 ## GNOME
 
-Focus tracking works through a small GNOME Shell extension, which padwight installs and enables itself. Mutter has no layer-shell, so the on-screen keyboard, menus and overlays can't be shown.
+Focus tracking works through a small GNOME Shell extension, which padwight installs and enables itself. Mutter has no layer-shell, so the overlay can't be a window of its own: the extension shows the frames the overlay draws instead (experimental, not yet checked on a real GNOME Shell).
 
 ## Flatpak
 

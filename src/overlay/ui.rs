@@ -69,7 +69,7 @@ impl Overlay {
         Shown { panels, info: self.info.shown(now, motion).collect(), logs: self.logs.shown(now, motion).collect() }
     }
 
-    #[cfg(windows)]
+    #[cfg(any(windows, target_os = "linux"))]
     /// The ops that draw the screen at `now`, on a display of `display` logical pixels.
     pub(super) fn screen_ops(&self, now: Instant, display: crate::overlay::render::Point) -> Vec<crate::overlay::render::Op> {
         crate::overlay::render::screen_ops(&self.frame, &self.showing(now), display)

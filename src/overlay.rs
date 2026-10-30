@@ -335,10 +335,11 @@ impl crate::motion::Tracked for OverlayView {
 }
 
 /// Runs the overlay window: a layer-shell surface at the bottom of the screen drawing the
-/// state the daemon streams, and exiting when the daemon hides it.
+/// state the daemon streams, and exiting when the daemon hides it. On GNOME, which has no
+/// layer-shell, the frames go to the Shell extension instead.
 #[cfg(target_os = "linux")]
 pub fn run() -> anyhow::Result<()> {
-    wayland::run()
+    if gnome::wanted() { gnome::run() } else { wayland::run() }
 }
 
 /// Runs the overlay window: a click-through layered window over the screen drawing the state
@@ -348,6 +349,8 @@ pub fn run() -> anyhow::Result<()> {
     windows::run()
 }
 
+#[cfg(target_os = "linux")]
+mod gnome;
 #[cfg(target_os = "linux")]
 mod wayland;
 mod controller;

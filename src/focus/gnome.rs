@@ -16,9 +16,10 @@ const EXTENSIONS: (&str, &str, &str) = (SHELL, "/org/gnome/Shell", "org.gnome.Sh
 const ENABLED: f64 = 1.0;
 
 /// The extension's files, compiled in so the app can install them anywhere.
-const FILES: [(&str, &str); 2] = [
+const FILES: [(&str, &str); 3] = [
     ("metadata.json", include_str!("../../gnome-extension/padwight-focus@io.github.marcinkoza0922/metadata.json")),
     ("extension.js", include_str!("../../gnome-extension/padwight-focus@io.github.marcinkoza0922/extension.js")),
+    ("overlay.js", include_str!("../../gnome-extension/padwight-focus@io.github.marcinkoza0922/overlay.js")),
 ];
 
 /// Whether GNOME Shell is on the session bus.

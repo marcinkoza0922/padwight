@@ -1,0 +1,86 @@
+// Shows padwight's overlay on GNOME, which has no layer-shell for a client window to use.
+// The overlay process still draws every frame on the CPU, into a memfd; it hands the fd to
+// this D-Bus object, and the frame is shown as a click-through actor in Shell's chrome, above
+// fullscreen windows and without taking focus or input.
+
+import Clutter from 'gi://Clutter';
+import Cogl from 'gi://Cogl';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import St from 'gi://St';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+export const BUS_NAME = 'io.github.marcinkoza0922.Padwight.Shell';
+const OBJECT_PATH = '/Overlay';
+
+const INTERFACE_XML = `
+<node>
+  <interface name="io.github.marcinkoza0922.Padwight.Overlay">
+    <!-- A finished frame: width x height pixels, premultiplied RGBA in memory order, rows
+         stride bytes apart, in the memfd. It covers the primary monitor. -->
+    <method name="Present">
+      <arg type="h" direction="in" name="fd"/>
+      <arg type="i" direction="in" name="width"/>
+      <arg type="i" direction="in" name="height"/>
+      <arg type="i" direction="in" name="stride"/>
+    </method>
+    <!-- The monitor the overlay covers: its logical size and its scale. -->
+    <method name="Geometry">
+      <arg type="i" direction="out" name="width"/>
+      <arg type="i" direction="out" name="height"/>
+      <arg type="d" direction="out" name="scale"/>
+    </method>
+    <!-- Nothing to show: the overlay is closed. -->
+    <method name="Hide"/>
+  </interface>
+</node>`;
+
+export class Overlay {
+    constructor() {
+        this._actor = new St.Widget({reactive: false, can_focus: false, track_hover: false, visible: false});
+        // Added as chrome that doesn't claim input or shrink the work area; it stays above
+        // fullscreen windows because it doesn't track them.
+        Main.layoutManager.addChrome(this._actor, {affectsInputRegion: false, affectsStruts: false, trackFullscreen: false});
+        this._content = new Clutter.Image();
+        this._actor.set_content(this._content);
+        this._actor.set_content_scaling_filters(Clutter.ScalingFilter.NEAREST, Clutter.ScalingFilter.NEAREST);
+
+        this._dbus = Gio.DBusExportedObject.wrapJSObject(INTERFACE_XML, this);
+        this._dbus.export(Gio.DBus.session, OBJECT_PATH);
+        this._ownerId = Gio.bus_own_name_on_connection(Gio.DBus.session, BUS_NAME, Gio.BusNameOwnerFlags.NONE, null, null);
+    }
+
+    destroy() {
+        Gio.bus_unown_name(this._ownerId);
+        this._dbus.unexport();
+        Main.layoutManager.removeChrome(this._actor);
+        this._actor.destroy();
+        this._actor = null;
+    }
+
+    // `fdList` is the message's Gio.UnixFDList; `fd` is an index into it.
+    Present(fd, width, height, stride, fdList) {
+        try {
+            const real = fdList.get(fd);
+            // Reopening the memfd through /proc maps it without copying it into JS.
+            const bytes = new GLib.MappedFile(`/proc/self/fd/${real}`, false).get_bytes();
+            GLib.close(real);
+            this._content.set_bytes(bytes, Cogl.PixelFormat.RGBA_8888_PRE, width, height, stride);
+            const monitor = Main.layoutManager.primaryMonitor;
+            this._actor.set_position(monitor.x, monitor.y);
+            this._actor.set_size(monitor.width, monitor.height);
+            this._actor.show();
+        } catch (e) {
+            logError(e, 'padwight overlay frame');
+        }
+    }
+
+    Geometry() {
+        const monitor = Main.layoutManager.primaryMonitor;
+        return [monitor.width, monitor.height, monitor.geometry_scale];
+    }
+
+    Hide() {
+        this._actor.hide();
+    }
+}
