@@ -1,200 +1,369 @@
 # QA plan
 
-What to check beyond `cargo test`, and what a human reviewer should look at. Automated checks are listed with their status, so it's clear what runs in CI and what still needs a person.
+How Padwight is tested: what can go wrong and what it costs, which layer of testing catches each
+kind of fault, what runs on every pull request and what before a release, and the checks that still
+need a person, a controller or a game. The tools this plan needs but that don't exist yet are in
+[qa-tooling.md](qa-tooling.md); each gap below names the tool that closes it (`T-n`).
 
-## 1. Issues found and their status
+Fix-by-fix findings live in [code-review-plan.md](code-review-plan.md). Its hardware checks are
+written `CR H-n` here, to keep them apart from this plan's own IDs.
 
-| # | Issue | Status |
-|---|---|---|
-| F1 | `README.md` said the pack format is **8**; the code and `docs/pack-format.md` say **9**. | Fixed. Enforced by check A-2. |
-| F2 | The IPC socket fell back to a file in the shared `/tmp` with no permissions set, so the daemon's control socket could be reached by other users. | Fixed. The socket is `0600`, in a directory the daemon checks is owned by this user and sets to `0700`. The `/tmp` fallback now uses a per-user directory. Covered by `daemon::tests::the_control_socket_is_private_to_this_user` and, without `XDG_RUNTIME_DIR`, by `tests/socket_fallback.rs` (I-9). |
-| F3 | No CI: nothing ran check, clippy, the tests or the audit automatically. | Fixed: `.github/workflows/ci.yml` runs on every pull request. Its first run found a problem in the install check, since fixed. |
-| F4 | Packs might be able to trigger host programs. | Corrected. A pack can't name an arbitrary program. The only host-program paths reachable from a pack are the built-in Screenshot and ToggleRecording actions, which run fixed tools (`grim` or a recorder). No code change; whether an import preview should list these is still a reviewer's call (H-SEC-2). |
-| F5 | `unwrap()` calls on daemon paths could panic and leave the pad grabbed. | Audited. The daemon had one production `unwrap()`, in `release_devices`; it is now a `let ... else`. The remaining production `unwrap`/`expect` calls are invariants or bundled assets: `icon.rs` (the bundled icon) and `monitor.rs` (a mutex). |
-| F6 | `scripts/long-files.sh` lists files over 400 lines. | Unchanged. It's a maintainability note, not a defect. |
-| F7 | `flatpak/cargo-sources.json` could drift from `Cargo.lock`. | Checked. Enforced by check A-7; currently in sync. |
+## 1. Risk tiers
 
-## 2. Automated checks
+A bug is worth more testing the more it costs the player. Every feature area in
+[section 3](#3-coverage-by-feature-area) is ranked by the worst tier it can reach.
 
-Scripted checks live in `scripts/check-project.py` and `scripts/check-install.sh`, and the Rust tests use the commands in `CLAUDE.md`. CI runs the default tests, clippy, the audit and both scripts. The container tests need `/dev/uinput` and `/dev/uhid`, and run through `scripts/kernel-test-docker.sh`, not in CI.
-
-| # | Check | Status | Where |
+| Tier | What goes wrong | Examples | Evidence needed before a release |
 |---|---|---|---|
-| A-0 | CI on push and pull request | Done | `.github/workflows/ci.yml`: build-and-test, project-checks, install-files, audit |
-| A-1 | CLI commands in the docs exist | Done | `check-project.py`, against the dispatch in `src/main.rs` |
-| A-2 | Pack format number agrees across code and docs | Done | `check-project.py` |
-| A-3 | Links and `#anchors` resolve; GitHub `blob/main` links point at real files and headings | Done | `check-project.py` |
-| A-4 | README and wiki don't contradict each other | Not automated: a review item. The wiki repeats README sections, so it's worth reading both when either changes. | Manual (section 3.6) |
-| A-5 | Every shipped pack survives a save and reload unchanged | Done | `library::tests::every_library_pack_survives_a_save_and_load` |
-| A-6 | Config folder: every setup, profile and item is saved as its own file, reloads unchanged, and a removed setup leaves no folder behind | Done. `Config::load_from` and `save_to` take a path, so the tests use a temporary directory and never touch the real config. Covers a full round trip (the app settings in `config.toml`, the setups as folders), the removal of a setup, a missing General folder falling back to the default, an old `shared/` folder folded into the setups that use it, and file names made from unsafe item names. | `config::store::tests::*` |
-| A-7 | `cargo-sources.json` matches `Cargo.lock` | Done | `check-project.py` |
-| A-8 | Damaged pack and config text is refused or handled without panicking | Done, as a deterministic sweep (truncations, deleted and replaced characters). Not coverage-guided fuzzing; that would need `cargo-fuzz`. | `library::tests::damaged_packs_…`, `config::tests::damaged_configs_…` |
-| A-9 | Engine outputs stay in range | Done. Pad-axis outputs are checked to be finite and within -1..=1 over random input. Ring sectors are checked to cover the full circle with no gaps, for 4, 8 and 12 sectors and several start angles. | `engine::release_tests`, `engine::stick::tests::rings_cover_the_whole_circle_without_gaps` |
-| A-10 | No stuck keys, buttons or mouse buttons after releasing everything | Partly done. Engine-level: random input sequences on four profiles, followed by `release_all`, leave nothing held (`engine::release_tests`; checked by breaking `release_all` on purpose). Kernel-level: written (`daemon::kernel_tests::nothing_stays_pressed_in_the_kernel`, ignored, needs `/dev/uinput`). It runs the engine's output through the daemon's `dispatch` into the real virtual keyboard and mouse, reads what the kernel reports, and checks it against an independent count, with an unplug-style release every 50 steps. A write the kernel refuses is no longer dropped: the press state keeps what was not sent, and the daemon's periodic scan sends it again (`output::tests`, which fail when the old error handling is put back). Run in a container with `scripts/kernel-test-docker.sh`, where it passes (twice). It also runs on a host where the account is in the `input` group: `cargo test -- --ignored nothing_stays`. | | `engine::release_tests`, `daemon::kernel_tests` (container), `output::tests` |
-| A-11 | Virtual devices and grabs are released when the daemon exits or is killed; keys it holds are released before it exits | Done for SIGTERM, SIGINT, SIGKILL, and the tray's Quit path (the tray is not exercised by the test; it needs a session). `tests/daemon_exit.rs` runs the real daemon against a fake controller made with uhid (`/dev/uhid`, a real HID path; the daemon ignores uinput devices). It holds a key and a mouse button, then stops the daemon. SIGTERM and SIGINT release what the daemon holds before it exits (a handler writes to a pipe, and the loop releases and exits). SIGKILL can't be handled: the test checks only that the grab is released and the virtual devices disappear. Run with `scripts/kernel-test-docker.sh daemon_`. | | `tests/daemon_exit.rs` (container) |
-| A-12 | Known vulnerabilities in dependencies | Done in CI. Currently four unmaintained or unsound warnings from transitive crates (for example `ttf-parser`, `lru`) and no vulnerabilities, so the job passes. | `cargo audit` in CI |
-| A-13 | Each bundled font has a license file | Done | `check-project.py` |
+| **T0: device safety and data** | The player loses control of the machine or loses work | A key or mouse button stays held; a controller stays grabbed after the daemon dies; a game sees both the real pad and the virtual one; Force Quit ends the wrong process; a save destroys setups | Automated test at the kernel level (container), plus a hardware check for each controller family |
+| **T1: wrong output** | The game gets the wrong input, or the right input at the wrong time | A mapping, gesture, combo, layer or mode does the wrong thing; the wrong profile is active; a macro runs on after a profile switch | Automated end-to-end test through the daemon (debug session or container) |
+| **T2: overlays steal or stall** | An overlay gets in the way of play | A menu won't close; the overlay takes keyboard focus; input still reaches the game while a menu is up; flicker; CPU while idle | Off-screen render and harness checks, plus a run on each compositor |
+| **T3: editing** | The editors save something other than what the player saw | The GUI or Edit Controls writes a different config; Save & apply's checks miss a broken reference | GUI message tests and round-trip tests |
+| **T4: presentation** | It works, but reads or sounds wrong | Overlapping labels, wrong glyph family, unclear copy, a cue too loud | Screenshots reviewed by a person; sound audit |
 
-`check-project.py` was checked against a scratch copy with planted errors (a wrong format number, a missing link file, a missing heading and an unknown command). It reported each one.
+## 2. Test layers
 
-## 3. Manual QA
+What exists today, from fastest to slowest. Counts are as of 2026-10-30.
 
-Each item has the expected result in the last column. Record the OS, compositor, controller model and firmware, and app version for each run. These are unchanged from the first version of this plan.
+| # | Layer | What it proves | Where it runs | How |
+|---|---|---|---|---|
+| L1 | Unit tests (1,477 `#[test]`) | Logic of single modules: engine, config, packs, menus, renderer | CI on Linux and Windows | `cargo nextest run --profile agent …` |
+| L2 | Sweeps over many inputs | No stuck output after random input; damaged packs and configs are refused without a panic; ring sectors leave no gaps; every library pack round-trips | CI | `engine::release_tests`, `library::tests::damaged_packs_…`, `config::tests::damaged_configs_…` |
+| L3 | Off-screen pictures | What the overlay, the settings window and the controller drawings look like, with no display | Locally, by hand | `debug overlay`, `debug overlay compare`, `debug motion`, `debug gui` |
+| L4 | Debug sessions | Mappings end to end through a real daemon, with a virtual controller and recorded output | CI (session tests); `--ignored` daemon tests need `/dev/uinput` | `tests/debug_session/`, `padwight debug --attach` |
+| L5 | Kernel tests in a container | Real uinput and uhid: release on exit, hot-plug, idle CPU, process-scan switching, the GUI under Xvfb | Docker, by hand | `scripts/kernel-test-docker.sh <filter>` |
+| L6 | Headless compositor harness | The overlay process on a real Wayland compositor (KWin): frame pacing, buffers, scale, CPU and memory | Locally, by hand | `scripts/overlay-harness.sh scripts/harness/<scenario>` |
+| L7 | Desktop VMs | Focus tracking and rules on GNOME, Plasma, Sway, Hyprland and labwc, native and Flatpak | QEMU VMs in `vms/`, by hand | `scripts/desktop-test.sh <desktop>` |
+| L8 | Profiling | Latency, CPU, memory, start-up; not pass/fail | Docker, plus host-only parts | `scripts/profile.sh` |
+| L9 | Hardware checks | Real controllers, Bluetooth, real compositors and screens, feel | A person with a controller | [Section 5](#5-manual-and-hardware-checks) |
+| L10 | Playtests | A pack's bindings work in the real game | A person with the game | [Section 6](#6-pack-qa) |
 
-### 3.1 Hardware and hot-plug
+Layers L3 and L5 to L8 run only when someone remembers to run them. The biggest single
+improvement to this plan is to run them on a schedule ([section 4](#4-when-each-layer-runs), T-12).
+
+## 3. Coverage by feature area
+
+"Unit density" is `#[test]` count per thousand lines of the area's code, as a rough sign of where
+tests are thin (the engine is at 27; anything under 10 is worth a look). It counts only L1; areas
+covered mostly by integration tests (the daemon) score low here for that reason.
+
+| Area | Tier | Unit density | Covered now | Gap | Closes it |
+|---|---|---|---|---|---|
+| Device ownership: grab, release, hot-plug, exit (`daemon/`, `input/`, `output/`) | T0 | daemon 3, output 8, input 12 | Release on SIGTERM/SIGINT/SIGKILL, unplug and replug, a different pad in the same slot, nothing stays pressed in the kernel (L5) | Suspend and resume; Bluetooth drop and reconnect; two pads at once through uhid; gyro and touchpad nodes from real kernel drivers; rare write errors; bugs seen only on a player's hardware | T-3, T-6, T-9, T-18 |
+| Steam first pad (`daemon/first_pad.rs`) | T0 | — | Unit tests | Steam started with a pad already connected; daemon restarted with a pad connected | HW-9 |
+| Other readers of the raw device (`daemon/raw_readers.rs`) | T0 | — | Unit tests; GUI banner shot | A real Steam or browser holding `/dev/hidraw*` | HW-8 |
+| Force Quit (`quit/`) | T0 | 26 | Process-tree picking; container test | Launcher-started games, Proton, Flatpak sandboxes | FOC-9, WIN-3 |
+| Config store (`config/store.rs`) | T0 | config 14 | Round trip, staging folder, `0600` files, unsafe names, removal | Disk full or read-only mid-save; a crash between staging and swap | T-9 |
+| Engine: buttons, gestures, combos, toggles, turbo (`engine/`) | T1 | 27 | Dense unit tests on an injected clock; random release sweep | Combinations across features (a gesture inside a layer inside a mode while a cycle steps); timing at the daemon's real tick | T-1, T-2, T-5 |
+| Sticks, flick stick, rings, zones (`engine/stick*`, `engine/flick.rs`) | T1 | 27 | Units; ring coverage sweep | Feel (FEEL-1 to FEEL-3) | T-1 for regressions |
+| Gyro (`engine/gyro*`, `motion/`) | T1 | 22 | Units; debug `gyro` command | Real sensor noise and drift; the motion node arriving after the pad | T-3, HW-4 |
+| Touchpad (`engine/touchpad/`, `input/linux/touchpad.rs`) | T1 | — | Units; debug `touch`/`swipe` | Never run on a real DualShock 4 or DualSense; evdev contact slots from the real driver | T-3, HW-5 |
+| Modes and layers | T1 | — | Units; layer docs | Cross-feature sequences | T-1, T-2 |
+| Macros and cycles | T1 | — | Units (`cycle_tests.rs`) | Cycles never tried on hardware; macros against games that drop fast input | FEEL-4, G-3 |
+| Automatic switching and focus (`focus/`, `daemon/auto_switch.rs`) | T1 | 20 | Process scan (L5), GNOME against a mock shell, desktop VMs (L7) | Sway and Hyprland have no CI test; Flatpak Heroic; Proton `.exe` names in real launches | T-7, FOC-1 to FOC-9 |
+| Menus: radial, directional, list, button, carousel, grid (`menu/`, `radial.rs`) | T2 | 27 | Units; off-screen scenes | Assertions on what the live overlay shows (today only pictures) | T-4 |
+| Guide overlay and movable shortcuts (`guide_menu.rs`, `config/shortcuts/`) | T2 | — | Units; scenes | The opener on a gesture or combo with real timing | T-1, OVL-6 |
+| On-screen keyboard, numpad, Paste | T2 | keyboard 13 | Units; scenes | Over a fullscreen game on each compositor | OVL-1, OVL-2 |
+| Tools: calculator, doodle, clipboard (`tools/`, `clipboard.rs`) | T2 | 27 | Units; scenes | Never run on hardware; clipboard in the Flatpak; Windows `clip` | OVL-9, WIN-1 |
+| Info and log overlays, tokens (`info/`, `inputlog/`) | T4 | 15, 17 | Units; scenes; library token check | Live values on real hardware (battery, wifi, GPU) | OVL-7 |
+| Overlay process and renderer (`overlay/render`, `overlay/wayland`) | T2 | overlay 14 | Units; compare with iced; harness pacing, surface, scale, CPU | Never on a real screen (renderer plan step 8.3); ABGR8888 buffers; integer buffer scale; Windows window | T-8, OVL-3 to OVL-5 |
+| Sounds and rumble cues (`sound/`, `rumble.rs`) | T4 | 14, 6 | Sound trace; loudness audit | Library packs' synthesized cues never listened to; rumble cues on real motors | SND-1 to SND-4 |
+| Settings window (`gui/`) | T3 | 8 | Every page builds; tab shots; GUI under Xvfb (L5); one `iced_test` simulator test | Nothing clicks through the window and checks the saved config; dark theme; minimum size | T-10, T-11 |
+| On-screen stage editor (`gui/stage/`) | T3 | — | Shots; handle drag in the simulator | Never used with a real mouse; focus and scroll after a pick run only live | GUI-8 |
+| In-game editor: Quick Settings, Edit Controls (`system_menu/`, `layout_editor/`) | T3 | 18, 7 | Units; scenes | Typing, live pictures and Save/Discard on hardware; layout editor is thin on tests | T-1, EDIT-1 to EDIT-6 |
+| Packs: parse, check, import, export, update (`pack.rs`) | T3 | 18 | Round trips, damaged input, clashes, forks, assets | Coverage-guided fuzzing of parse and of SVG and WAV assets | T-5 |
+| Library: 232 packs (`packs/`) | T1 | — | Every pack valid, round-trips, known tokens only, built-in assets only, no shared executables | IDs and executable names unverified for several families; bindings unverified against the games | T-13, T-14, [section 6](#6-pack-qa) |
+| Control protocol 1.0 (`ipc.rs`, `docs/protocol.md`) | T3 | 11 | `ipc/tests.rs` pins the wire format | The doc's examples aren't executed; no client outside Rust is tested | T-15 |
+| CLI, doctor, tray (`main.rs`, `doctor/`, `tray/`) | T3 | 17, 8 | Docs name real commands (`check-project.py`); doctor units | Doctor against real broken setups; tray Quit in a session | INS-8, INS-10 |
+| Screenshots, recording, media (`capture/`, `record/`, `media/`) | T2 | 17, 15, 11 | Units; `--debug` daemon writes to a temp folder | Each desktop's tool; a stuck MPRIS player; Windows ffmpeg (CR H-9) | INS-11, WIN-2 |
+| Input priority and latency (`priority.rs`, `daemon/input_timing.rs`) | T1 | 6 | Profiling suite | No regression gate | T-12 |
+| Install, systemd, udev, Flatpak, tarball | T0 | — | `check-install.sh` validates the files in CI | A clean install on each distro family; uninstall | INS-1 to INS-7 |
+| Windows port | T1 | — | Builds, lints and unit tests in CI | No integration test at all; every Windows path is unconfirmed on a real machine | T-16, [section 5.10](#510-windows) |
+
+## 4. When each layer runs
+
+### On every pull request (CI, today)
+
+`.github/workflows/ci.yml`: check, clippy with warnings denied, the tests on Linux and Windows,
+`check-project.py`, `check-install.sh` and `cargo audit`, filtered by the paths a change touches.
+
+Worth adding to CI (see [qa-tooling.md](qa-tooling.md)): the scenario tests (T-1), a short fuzz run
+(T-5), the overlay picture regression (T-8), and the container suite where the runner allows
+`/dev/uinput` and `/dev/uhid` (GitHub's Ubuntu runners do, with `sudo modprobe uinput uhid`).
+
+### Before merging a change to a risky area
+
+The author runs these by hand until they are in CI. The pull request description says which ran.
+
+| Change touches | Run |
+|---|---|
+| `daemon/`, `input/`, `output/`, `rumble/` | `scripts/kernel-test-docker.sh` with `nothing_stays`, `daemon_`, `hotplug_`, `idle_`, `debug_` |
+| `engine/`, `menu/`, `system_menu/`, `layout_editor/` | The module's tests, then `debug_` in the container |
+| `focus/`, `launchers.rs` | `process_` in the container; `scripts/desktop-test.sh` on the backend touched; `debug focus` on a real game |
+| `overlay/` | `debug overlay all glyphs`, `debug overlay compare all`, `debug motion all`, and the harness's `pacing.sh` and `resources.sh` |
+| `sound/`, an overlay's cues | `scripts/sound-trace.sh`, `scripts/sound-audit.py` |
+| `gui/` | `debug gui` shots of the tabs touched, light and `--dark`, looked at; `gui_` in the container |
+| `config/`, `pack.rs` | `config::`, `pack::`, `library::` tests |
+| `packs/` | `library::` tests, `debug overlay packs/<name>.padpack`, and [section 6](#6-pack-qa)'s checks for the pack |
+| `dist/`, `flatpak/`, `scripts/package.sh` | `check-install.sh`, and INS-1 or INS-4 on a VM |
+
+### Weekly, and after a large merge
+
+1. The whole container suite: `scripts/kernel-test-docker.sh` with no filter.
+2. `scripts/profile.sh`, compared with the last run on the same machine (T-12 makes the comparison).
+3. `scripts/desktop-versions.sh`, then `scripts/desktop-test.sh` on every desktop, native and Flatpak.
+   Update the table in [section 8](#8-desktop-session-runs).
+4. The soak run (T-6) overnight.
+5. `cargo mutants` on one area in turn (T-19), fixing tests it shows to be weak.
+
+### Release candidate
+
+Everything weekly, plus:
+
+1. The hardware matrix ([section 5.1](#51-controller-matrix)) on every controller at hand, and
+   every `HW-`, `OVL-`, `EDIT-` and `INS-` check, or a note of why one was skipped.
+2. The pack playtest tier for this release ([section 6](#6-pack-qa)).
+3. Install from the release tarball on a clean VM of the oldest supported distro (INS-1), and the
+   Flatpak from scratch (INS-4).
+4. The Windows checks ([section 5.10](#510-windows)) on a real Windows machine.
+5. The security review ([section 7](#7-security-review)) with a second reviewer.
+6. No open T0 or T1 bug. Open T2 to T4 bugs are listed in the release notes.
+
+## 5. Manual and hardware checks
+
+### 5.0 Recording a run
+
+Each run records: date, commit, OS and kernel, desktop and its version, display scale and refresh
+rate, controller model, connection (USB or Bluetooth) and firmware, whether Steam was running, and
+for each check: pass, fail (with the issue number) or skipped (with why). Attach `padwight doctor`
+output and `~/.local/state/padwight/daemon.log`. A bug report bundle that collects all of this in one
+command is T-17.
+
+### 5.1 Controller matrix
+
+Fill a cell with the date of the last pass. A cell that doesn't apply is "—".
+
+| Controller | Connection | Buttons, sticks, triggers | Guide | Glyphs | Gyro | Touchpad | Paddles | Rumble | Battery token | Hot-plug |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Xbox Series / One | USB | | | | — | — | | | | |
+| Xbox Series / One | Bluetooth | | | | — | — | | | | |
+| Xbox Elite 2 | USB / BT | | | | — | — | | | | |
+| DualSense | USB / BT | | | | | | — | | | |
+| DualSense Edge | USB | | | | | | | | | |
+| DualShock 4 | USB / BT | | | | | | — | | | |
+| Switch Pro | USB / BT | | | | | — | — | | | |
+| Joy-Con pair | BT | | | | | — | — | | | |
+| 8BitDo Ultimate (Switch mode) | BT | | | | | — | | | | |
+| A generic pad (GameSir or similar) | USB | | | | — | — | — | | | |
+| Steam Deck | built in | | | | | | | | | |
+| No Guide button (opener on Start + Select) | any | | | | — | — | — | — | — | — |
+
+### 5.2 Device lifecycle
 
 | # | Steps | Expected |
 |---|---|---|
-| H-1 | Test each controller type you can get: Xbox (wired and wireless), DualSense, DualShock 4, Switch Pro, a Switch-style or 8BitDo pad, a generic pad. Run passthrough and a remapped profile on each. | Every button, stick and trigger produces the right output. Triggers and sticks are centered at rest. |
-| H-2 | Unplug while a button is held: the held key and button are released, and the daemon keeps running | Done in the container: `tests/hotplug.rs` makes the controller with uhid, holds a key and a button, drops the controller, and reads the release from the virtual devices (which stay up). Menus closing isn't checked. |
-| H-3 | Replug the same controller: it is managed again and its mappings work | Done in the container for the same controller (`hotplug_replugging_the_same_controller_works_again`). Done for a different controller too (`hotplug_a_different_controller_takes_over_and_is_remapped`): a second, differently named controller is grabbed, remapped, and the first one's grab is released. The slot number itself isn't reported outside the daemon, so the test checks the behaviour, not the number. Not covered: the gyro fallback. The fallback needs a real motion sensor (INPUT_PROP_ACCELEROMETER), which a simulated controller can't provide. |
-| H-4 | Plug in a PlayStation or Switch pad, first without and then with the udev motion rule. | Without the rule, gyro is unavailable and the app says so. With it, gyro works. The profile doesn't flicker when the motion sensor appears a moment after the pad (two 2 s scans). |
-| H-5 | Touchpad on DualSense/DS4 in touchpad-as-mouse mode. | Click and movement behave as configured. |
-| H-6 | Rumble test button on a pad that supports it and one that doesn't. | Rumble works, or the app says it isn't supported. |
-| H-7 | Run for several hours with the pad idle, then use it. | No drift, no lost input, no CPU use while idle (check `top`). Partly done in the container: `tests/daemon_health.rs` idles a fake controller for 5 s and fails if the daemon uses 1% of a core or more (measured 0.2%, one clock tick). The several-hour run, drift and lost input still need a person. |
-| H-8 | On a DualSense or DualShock 4, switch remapping off and straight back on (`padwight disable; padwight enable`), then use the touchpad (code review H-16). | The touchpad still drives the profile, not the desktop pointer; the log has no `touchpad: cannot take`. The pad itself is checked in the container (`hotplug_switching_remapping_off_and_on_takes_the_controller_back_at_once`). |
+| HW-1 | On each controller in the matrix, run General's Gamepad passthrough, then a remapped profile. | Every button, stick and trigger gives the right output. Sticks and triggers rest at center. |
+| HW-2 | Unplug while a mapped key is held; plug back in. | The key comes up at once; the pad is managed again and works. (Automated with uhid: `hotplug_`.) |
+| HW-3 | Two controllers at once, each with its own setup (see [per-controller-setups.md](per-controller-setups.md)). Unplug the first. | Each pad follows its own mappings; the second keeps working; nothing is held. |
+| HW-4 | A PlayStation or Switch pad, first without the motion udev rule, then with it. | Without it, the app says gyro is unavailable; with it, gyro works. The profile doesn't flicker when the motion node appears after the pad. |
+| HW-5 | DualSense or DualShock 4 touchpad in each mode: mouse (tap, two-finger scroll, glide), stick, swipes, menu zones, split pad. Also CR H-5 and CR H-16. | Each behaves as the Touchpad tab says. Tap and swipe times feel right. |
+| HW-6 | Test rumble on a pad with motors and one without; play a game that rumbles. | Rumble works, or the app says it isn't supported. |
+| HW-7 | Leave a pad idle for several hours, then play. Also suspend and resume, and let a Bluetooth pad sleep and wake. | No drift, no lost input, no CPU while idle; the pad comes back after resume and wake. |
+| HW-8 | With Steam running and a PlayStation or Switch pad, with and without `dist/72-padwight-hidraw.rules`. | Without the rule, the GUI and a toast warn that Steam reads the pad past Padwight. With it, no warning and no double input. |
+| HW-9 | Slay the Spire 2 (reads only the first Steam controller): start Steam with the pad already connected; also restart the daemon with the pad connected. | The game reads Padwight's pad in both cases. |
+| HW-10 | `padwight disable; padwight enable` in one line, on each family. | The pad is taken back at once; a touchpad still drives the profile (CR H-16). |
+| HW-11 | `systemctl --user restart padwight` mid-macro, mid-layer and with a menu open; then `kill -9` the daemon. | It comes back, releases everything, and doesn't grab twice. After `kill -9` the pad and the virtual devices are free. |
 
-### 3.2 Desktop focus and auto-switching
-
-| # | Steps | Expected |
-|---|---|---|
-| D-0 | Process-scan fallback (no tracker): a game's rule switches the profile while its process runs, and back when it exits. | Done in the container (`tests/process_focus.rs`). The daemon used to forget the game when the first focus report arrived after its startup scan, so a game that exited soon after start left the game's profile active. Now only a change of backend resets the scan. |
-| D-1 | On KDE (KWin), add a game with a rule. Launch and switch between the game and the desktop. | The right profile is active in each. Alt+Tab from a game works. |
-| D-2 | Repeat on Sway, and on Hyprland. | Same as D-1. The README says the Hyprland and Sway support is untested in the sandbox; mark each result as tested or not. |
-| D-3 | Use the Flatpak build on KWin, with the window matched by class and title only. | Auto-switching works. Note any window that is matched wrongly. |
-| D-4 | Games launched through Steam, Heroic, and Lutris, plus a plain binary. | The library finds them, and the rule matches the window. |
-| D-5 | Two games with rules for the same window. | The import preview shows the conflict. The imported game takes over only when the user chooses it. |
-| D-6 | On labwc or Wayfire, restart the daemon with a game that has a rule in front, then switch between two windows (code review H-6). | The game's profile comes on without touching a window. The log shows no `no window has focus` between the two windows. |
-| D-7 | On GNOME, log out and in once to load the updated extension, then restart the daemon with a game that has a rule in front (code review H-7). | The game's profile comes on straight away. |
-| D-8 | On Sway, from a game with a rule, go to an empty workspace and back. | The default profile on the empty workspace, the game's on return. |
-| D-9 | On a desktop without focus tracking, with automatic switching on, hold Force Quit over a game with a rule, then again just after closing it (code review H-17). | The first hold names and ends the game; the second says there is nothing to force quit. |
-
-### 3.3 Overlays, layers and menus
+### 5.3 Desktops and focus
 
 | # | Steps | Expected |
 |---|---|---|
-| O-1 | Open the on-screen keyboard over a fullscreen game (windowed and exclusive fullscreen). Type into a text field. | Keys reach the game. The overlay never takes keyboard focus. |
-| O-2 | Open the numpad and the keyboard together. | Opening one closes the other. |
-| O-3 | Hold and toggle layers, stack two layers, and change profiles while a layer is held. | Layer behaviour matches `docs/development/layers.md`. Held layers end on profile change. |
-| O-4 | Open a menu from a stick direction and a combo. Pick an item several times. | Items fire once each. The menu stays up while the input is held. |
-| O-5 | Info overlays and the live controller drawing, with layers on. | Labels show the layer's mappings. They don't overlap or overflow. |
-| O-6 | Open the in-game menu over a game with a rule, change a setting, then bring another window to the front with the mouse. Switch profile on Quick Settings' Profile row and Discard (code review H-11). | The menu keeps editing the game; the profile follows the window only once the menu closes. After Discard, `config.toml` has the settings as they were. |
-| O-7 | With the in-game menu open, save a change in the settings window (code review H-12). | The in-game menu closes, and opened again shows the new values without asking about unsaved changes. |
-| O-8 | Turn off every audio output, move a menu overlay's cursor, then turn one back on and move it again (code review H-13). | The log says once that there is no audio device. The cues sound again without a restart. |
-| O-9 | Open the Guide overlay with Steam running, then with Steam closed (code review H-18). | The Steam overlay row shows at once while Steam runs, and not otherwise. |
+| FOC-1 | On KDE Plasma, a game with a rule: launch, Alt+Tab to the desktop and back. | The game's profile in the game, the default outside it. |
+| FOC-2 | FOC-1 on Sway, Hyprland, labwc, Wayfire and GNOME. | Same. On wlroots compositors only class rules match. |
+| FOC-3 | FOC-1 with the Flatpak build on KWin. | Switching works. Note any window matched wrongly. |
+| FOC-4 | Games started from Steam (Proton), Heroic (native and Flatpak, CR H-4), Lutris and a plain binary. | The library finds them and `debug focus` names the right executable or `.exe`. |
+| FOC-5 | Two setups with rules for the same window. | The import preview shows the clash; the imported one takes over only if chosen. |
+| FOC-6 | On labwc or Wayfire, restart the daemon with a ruled game in front, then switch between two windows (CR H-6). | The game's profile at once; no `no window has focus` between windows. |
+| FOC-7 | On GNOME, log out and in once, then restart the daemon with a ruled game in front (CR H-7). | The game's profile at once. |
+| FOC-8 | On Sway, from a ruled game, go to an empty workspace and back. | Default on the empty one, the game's on return. |
+| FOC-9 | Without focus tracking, hold Force Quit over a ruled game, then again just after it closed (CR H-17). | The first names and ends the game; the second says there is nothing to force quit. |
 
-### 3.4 Games and packs
+### 5.4 Overlays and menus
 
-These are checks of the shipped packs, not the code.
+Run each on KDE Plasma and Hyprland at least, at scale 1 and at a fractional scale, over a
+windowed game and a fullscreen one.
 
 | # | Steps | Expected |
 |---|---|---|
-| G-1 | For each of the five shipped packs (`packs/`), play in the real game with the pack's Gamepad profile. | Every mapped action works and the game's own menus can be used. |
-| G-2 | Each shipped pack that uses a flick stick or gyro (find them with `grep -l 'flick\|gyro' packs/*.padpack`). Use the *Test turn* button, then play. | Turn size matches the game's mouse sensitivity. Camera turns and stops cleanly. |
-| G-3 | Turbo and macros in a game that rejects fast input. | Rate and timing are acceptable. Nothing is sent faster than the game can read. |
-| G-4 | Export a game, import it on a clean profile, and play it. | The imported game behaves the same. |
-| G-5 | Import a pack from an untrusted source (see H-SEC-2). | The preview shows everything the pack can do. Nothing runs before Save & apply. |
-| G-6 | Games with anti-cheat (for example, one that blocks virtual input devices). | Record what happens. Don't try to evade anti-cheat; note the result in the docs if it blocks the app. |
+| OVL-1 | Open the on-screen keyboard over a fullscreen game; type into a text field; use Paste. | Keys reach the game; the overlay never takes focus; Paste sends Ctrl+V. |
+| OVL-2 | Open the numpad while the keyboard is up. | One closes the other. |
+| OVL-3 | Open and close each menu style (radial, directional, list, button menu, carousel, grid) many times quickly; hold one open for a minute. | No flicker, no stale frame, fades finish. CPU drops to near zero once it stops moving. |
+| OVL-4 | Two monitors with different scales; a menu set to each corner of the 3×3 grid. | Each draws sharp, in the right place, on the monitor with the game. |
+| OVL-5 | Turn the display off and on with a menu open; change the scale while one is up. | It recovers and draws at the new size. |
+| OVL-6 | Move the Guide opener to a double tap, then to a combo (App settings → Controller shortcuts); open the Guide overlay; use each Guide shortcut. | Each opens what it says; the warnings on the tab match the clashes. |
+| OVL-7 | An info overlay with every live token (time, profile, layer, mode, app, cpu, ram, gpu, wifi, both batteries with `:icon`). | Each shows a real value and updates every second. |
+| OVL-8 | Hold and toggle layers, stack two, switch mode, change profile while a layer is held. | As [layers.md](layers.md) and [modes.md](modes.md) say; held layers end on a profile change. |
+| OVL-9 | Guide + right trigger: Tools. Calculator: an expression with × and ÷, then Send and Copy. Doodle: each tool, then the text tool with bold and italic. | The answer is typed into the game, or on the clipboard; Doodle marks stay until cleared; a Guide press afterwards doesn't re-fire a trigger shortcut. |
+| OVL-10 | Turn off every audio output, move a menu's cursor, turn one back on, move again (CR H-13). | One log line about no audio device; cues sound again without a restart. |
+| OVL-11 | The Guide overlay with Steam running, then without (CR H-18). | The Steam overlay row is there only while Steam runs. |
 
-### 3.5 Feel and timing
+### 5.5 Feel and timing
 
-These need a person with the controller in hand. Record the values used, so a change can be compared.
+Need a person with the controller in hand. Record the values used, so a later run can compare.
 
 | # | Check |
 |---|---|
-| T-1 | Deadzone, response curve, and acceleration feel right for a mouse-look game and for a menu. |
-| T-2 | Combo window (default 60 ms): LB+RB chords register reliably without firing a single button by accident. |
-| T-3 | Double-tap, triple-tap and long-press thresholds work for a relaxed press and a quick one. |
-| T-4 | Toggle and Turbo are predictable across a long session. |
-| T-5 | Input latency feels acceptable. Measure with a high-speed camera or an input-lag tool if a regression is suspected. |
+| FEEL-1 | Deadzone, response curve, acceleration and outer-edge boost feel right in a mouse-look game and in a menu. |
+| FEEL-2 | Flick stick: set Turn size, press Test turn, then play. One full turn of the stick is one full turn in game; the camera stops cleanly. |
+| FEEL-3 | Gyro mouse, gyro stick and steering; the jitter threshold hides drift without eating slow aim; Calibrate gyro helps a drifting pad. |
+| FEEL-4 | Combo window (60 ms), double and triple tap, long press, Toggle, Turbo and cycles: chords register without firing single buttons; gestures work for a relaxed press and a quick one. |
+| FEEL-5 | Input latency feels like a wired pad without Padwight. If in doubt, measure (T-3's rig can, or a high-speed camera). |
 
-### 3.6 GUI
-
-| # | Check |
-|---|---|
-| U-0 | The settings window opens and draws under a display. | Done in the container under Xvfb (`tests/gui_smoke.rs`, `scripts/kernel-test-docker.sh gui_`). It renders with the CPU fallback where there is no GPU. Clicking through the tabs in the real window is still manual. |
-| U-1 | Light and dark themes. `todo.md` says dark mode was not checked. Check every page and every dialog. |
-| U-2 | Every tab, sub-tab and empty state (no games, no profiles, no macros, no layers). |
-| U-3 | Resize the window to its minimum size. Nothing is clipped. |
-| U-4 | Keyboard-only navigation of the main flows (add game, edit a button, save). |
-| U-5 | Save & apply with a conflict (the daemon is running and the file was edited by hand). The user is told which file wins. |
-| U-6 | Reload from the command line (`padwight reload`) while the GUI is open. |
-| U-7 | The app icon shows in the tray, the app menu and the window. |
-| U-8 | Text in the labels: every item in `todo.md` that was checked off, rechecked on a new build. |
-| U-9 | README and wiki read the same where they overlap (A-4). |
-
-### 3.7 Install, upgrade and lifecycle
+### 5.6 In-game editing
 
 | # | Steps | Expected |
 |---|---|---|
-| I-1 | Fresh install on a clean machine, following README "Install", both with and without `uaccess`. | The daemon runs with no root. The udev rule fallback works. |
-| I-2 | Upgrade from the previous single-file `config.toml`. | Not supported, by design: the format changed and old configs aren't converted. The old file is overwritten on the next save, so keep a copy before upgrading. |
-| I-3 | Downgrade attempt with a pack from a newer format. | The app refuses it and asks for an update. |
-| I-4 | Flatpak build from scratch, install, run, and use the daemon from the sandbox. | Matches the README's list of sandbox differences. |
-| I-5 | `systemctl --user restart padwight` mid-macro and mid-layer. Also kill the daemon with `SIGKILL`. | The daemon comes back, releases everything, and doesn't grab the pad twice. After `SIGKILL` the pad and virtual devices are free again (A-11). |
-| I-6 | Suspend and resume with a pad connected. | The pad comes back and works. |
-| I-7 | Log in and out. Check the service starts at login. | Works. |
-| I-8 | Read the daemon logs (`src/daemon/logs.rs`) after a full session. | No errors or panics. Messages are clear to a user. Partly done: `common::assert_log_clean` fails on a panic or an output error, and runs at the end of the daemon-exit, hotplug and idle tests (container). It doesn't check other error lines, and the user-facing wording still needs a read. |
-| I-9 | On a machine without `XDG_RUNTIME_DIR`, start the daemon and check the socket: `stat` on its directory shows `0700`, and on the socket `0600`. Run `padwight status` from another user's shell and check it is refused. | Only this user can reach the daemon (F2). |
-| I-10 | Install files are valid: systemd units, udev rule, desktop entry, metainfo, Flatpak manifest | Done in CI. `scripts/check-install.sh` runs `systemd-analyze verify`, `udevadm verify`, `desktop-file-validate`, `appstreamcli validate` and checks the manifest's required keys. A missing validator is an error. Checked that a broken `command` in the manifest fails. |
-| I-11 | On Windows at 125% or 150% scaling, look at the tray icon, then switch profiles 50 times (code review H-8). | The icon looks right. Task Manager's GDI objects for Padwight stay flat. |
-| I-12 | On Windows, start a recording, then end the daemon from Task Manager (code review H-9). | ffmpeg stops, and the file plays. If not, R5-12 needs a fix. |
-| I-13 | On Windows, force quit a launcher-started game, and take a screenshot in a game whose name has a colon (code review H-10). | Only the game and its helpers end. The screenshot is saved, in a folder with ` - ` for the colon. |
-| I-14 | On Windows, show an info overlay set in a font the game's pack carries (code review H-14). | The overlay draws in the pack's font. |
-| I-15 | On Windows, press Ctrl+C in the console running `padwight daemon`, and in one running `padwight debug --attach --live` while a button is held (code review H-15). | The daemon releases what it holds and exits; the debug session's controller goes from `padwight status` and its held key comes up. |
+| EDIT-1 | Guide + Start over a ruled game; change stick sensitivity, Invert Y, the profile; Save. | The change applies at once and is in the setup's files after Save. |
+| EDIT-2 | Edit Controls: change a button, a stick, a trigger, gyro, the touchpad, a combo, a layer, a macro, a menu; name a new item with the on-screen keyboard. | Each row does what the settings window does; typing works; the live pictures follow the controller. |
+| EDIT-3 | Bring another window to the front with the mouse while the menu is open; switch profile on Quick Settings and Discard (CR H-11). | The menu keeps editing the game; Discard leaves the files as they were. |
+| EDIT-4 | Save a change in the settings window while the in-game menu is open (CR H-12). | The in-game menu closes and shows the new values when opened again. |
+| EDIT-5 | Unplug the pad with a change made; replug; turn remapping off from the tray; kill `padwight overlay` (CR H-19). | As CR H-19 says. |
+| EDIT-6 | Edit Controls over a window with no setup. | A change makes a new setup for that window. With no window in front, Edit Controls is refused. |
 
-## 4. Security review (for a human)
+### 5.7 Settings window
 
-Automated checks can't judge these. Each needs a reviewer to decide what's acceptable.
+| # | Check |
+|---|---|
+| GUI-1 | Every page, tab, sub-tab, card and dialog in the light theme and the dark one. Nothing clipped, nothing unreadable. |
+| GUI-2 | Every empty state: no setups, no profiles, no macros, cycles, layers, modes, menus or overlays. |
+| GUI-3 | The window at its minimum size and at a fractional scale. |
+| GUI-4 | Keyboard only: add a setup from the library, change a button, save. |
+| GUI-5 | Save & apply with problems: an unknown key, a missing macro, an incomplete combo. Each is flagged on its row and its tab. |
+| GUI-6 | `padwight reload` after a hand edit, with the window open and unsaved edits in it. |
+| GUI-7 | Import a pack: the preview, a name clash, a rule clash, a pack from a newer format (refused), an update with the player's own changes listed. |
+| GUI-8 | Edit on screen with a real mouse: drag, resize, grid snapping, click an item or cell to open it, Also show, fold and dock the panel; without a compositor (black behind it is known). |
+| GUI-9 | Find by pressing; the token picker; Copy from another setup; the Manual page's pictures. |
+| GUI-10 | The tray icon, the app menu entry and the window icon. |
+
+### 5.8 Sound and rumble
+
+| # | Check |
+|---|---|
+| SND-1 | Every overlay's default cues, on speakers and headphones, at a normal game volume: none startles, none is lost under game audio. |
+| SND-2 | Every synthesized cue kind the library packs use (`grep -ho 'kind = "[a-z_]*"' packs/*.padpack \| sort -u`; lockpick, shing, geiger, radio and the rest), with the volume, pitch and length the packs give them: `padwight debug sound <kind>` plays one. Several were never listened to. A pack's own WAV sounds (`[assets]`, none in the library) get the same once. |
+| SND-3 | The Performance card's Sounds switch, and a setup's own sound set, take effect at once (`scripts/sound-trace.sh` shows which cue plays). |
+| SND-4 | Rumble cues on a pad with motors, at each strength. |
+
+### 5.9 Install and lifecycle
+
+| # | Steps | Expected |
+|---|---|---|
+| INS-1 | Install from the release tarball on a clean VM of the oldest supported distro, and on Fedora, Ubuntu LTS and Arch; with and without `uaccess`. Then `./install.sh --uninstall`. | Runs without root; the udev fallback works; uninstall leaves no files, units or rules. |
+| INS-2 | `cargo install` from source, following the README. | Same as INS-1. |
+| INS-3 | A pack from a newer format. | Refused, asking for an update. |
+| INS-4 | Build the Flatpak from scratch, install, run, use from the sandbox. | Matches the README's list of sandbox differences. |
+| INS-5 | Log out and in; reboot. | The service starts at login. |
+| INS-6 | Without `XDG_RUNTIME_DIR`: the socket directory is `0700`, the socket `0600`; `padwight status` from another user is refused. | Only this user reaches the daemon. (Automated: `socket_fallback`.) |
+| INS-7 | `scripts/check-install.sh`. | Passes (in CI). |
+| INS-8 | `padwight doctor` on a machine missing each piece in turn: no uinput access, no udev rules, no motion rule, no daemon. | Each missing piece is named with the command that fixes it. |
+| INS-9 | Read the daemon log after a full session of play. | No errors, no panics, messages clear to a player. |
+| INS-10 | Outside systemd: the tray icon's Remapping switch, Open settings, Close overlays, Quit. | Each works; Quit releases everything. |
+| INS-11 | Screenshot and recording on each desktop, in a game whose name has a colon. | The file is saved and plays; the folder name replaces the colon. |
+
+### 5.10 Windows
+
+| # | Steps | Expected |
+|---|---|---|
+| WIN-1 | A full play session: XInput pad in, ViGEmBus pad and `SendInput` out, focus switching, overlay, tray, media keys, clipboard (`clip`). | Same behaviour as Linux. Without ViGEmBus, the app says the pad output is dropped. |
+| WIN-2 | Start a recording, then end the daemon from Task Manager (CR H-9). | ffmpeg stops and the file plays; if not, R5-12 needs a fix. |
+| WIN-3 | Force quit a launcher-started game; screenshot in a game with a colon in its name (CR H-10). | Only the game and its helpers end; the screenshot folder uses ` - `. |
+| WIN-4 | Tray icon at 125% and 150%; switch profiles 50 times (CR H-8). | The icon looks right; GDI objects stay flat. |
+| WIN-5 | An info overlay in a pack's font (CR H-14). | Drawn in that font. |
+| WIN-6 | Ctrl+C in a console running the daemon, and in a `debug --attach --live` session with a button held (CR H-15). | Both release what they hold. |
+
+## 6. Pack QA
+
+The library has 232 packs. The Rust tests already check that every pack parses, passes `check`,
+round-trips through a save, uses only known tokens and built-in assets, and that no two packs claim
+the same executable. Those prove a pack is well formed, not that it is right. Three things can still
+be wrong, from cheapest to check to dearest:
+
+1. **Identity: the Steam app IDs, executable names and window classes.** Several families were
+   written with unverified IDs (Doom, Resident Evil, Remedy, Baldur's Gate, KOTOR, Warcraft III and
+   Company of Heroes among them). `pcgamingwiki/` has the facts offline, so this check can be
+   automated entirely (T-13). Until then: for each pack, look the game up in `games.tsv` and
+   `executables.tsv` as [game-setup-guidelines.md](game-setup-guidelines.md) says.
+2. **Bindings: does each key the pack sends do what its label says in the game's default
+   controls?** For games whose defaults are in a readable file (Unreal's `User.ini`, Dark engine
+   `.bnd`, id Tech `.cfg`, Source `config.cfg`), a tool can compare them (T-14). For the rest, a
+   person reads the game's controls screen.
+3. **Play: does the scheme work in the game?** Only a playtest shows that a menu is reachable, a
+   gesture is comfortable, or the game drops fast macro input.
+
+Playtests are tiered, since 232 full playtests are out of reach:
+
+| Tier | Which packs | Check | When |
+|---|---|---|---|
+| P0 | Packs changed since the last release | Smoke: the rule switches on launch; movement, camera, the main action and the pause menu work; the Guide overlay's notes are right | Every release |
+| P1 | One pack per engine family (packs on one engine share their bindings), and the ten most played | Full: play through a level, use every mapped action at least once, every menu, every gesture | Every release, rotating within the family |
+| P2 | Everything else | Smoke, once | Once per pack, then when its bindings change |
+| G-3 | Packs with turbo or macros | Fast input is accepted by the game | When those mappings change |
+| G-4 | Any pack | Export, import on a clean config, play: it behaves the same | Every release, one pack |
+| G-6 | Games with anti-cheat | Record whether it blocks virtual input; never try to get round it | When a pack for one is added |
+
+Track each pack's state (IDs checked, bindings checked, last smoke, last full play) in one table,
+generated and kept current by T-13, the way `pack-candidates/build.py` keeps the candidate list.
+
+## 7. Security review
+
+For a reviewer before each release. Automated checks can't settle these.
 
 | # | Question |
 |---|---|
-| H-SEC-1 | **IPC socket (F2).** Fixed for permissions. Should any request be refused by a non-owner even with the socket reachable? Which requests (`SetConfig`, `TestRumble`, …) are most sensitive? |
-| H-SEC-2 | **Pack import (F4).** The only host-program actions a pack can contain are Screenshot and ToggleRecording. Should the import preview list them, so a player sees a pack can take screenshots or record the screen? |
-| H-SEC-3 | **Virtual input.** The app creates a keyboard and mouse that any local program can use. Is that clear to users? |
-| H-SEC-4 | **Flatpak sandbox.** `--device=all` lets the sandbox read and send input on the whole machine. Is the README's warning enough? |
-| H-SEC-5 | **Config folder.** The daemon is the only writer while it runs. Saves build a staging folder and swap it in, so a failed save leaves the old setups. Are the files written atomically, and are their permissions `0600`? Every file is written `0600` through one helper (tested). No backup copies are made any more, so there is no second copy to protect. |
-| H-SEC-6 | **Dependencies.** Read the `cargo audit` warnings (four today, all in transitive crates) and the licenses of direct dependencies. |
+| SEC-1 | **The control socket.** It is `0600` in a private directory. The protocol is now public (1.0), so any program running as the user can `SetConfig`, switch profiles or read input. Is that the right line, and should the docs say so more plainly? |
+| SEC-2 | **Packs.** A pack can't name a program; the only host-program actions are Screenshot and ToggleRecording. Packs now carry SVG icons and base64 WAV sounds: are the SVG and WAV parsers safe on hostile input (T-5 fuzzes them)? Should the import preview list screenshot and recording actions? |
+| SEC-3 | **Virtual input.** The virtual keyboard and mouse can be used by any local program. Is that clear to users? |
+| SEC-4 | **Flatpak.** `--device=all` gives the sandbox all input devices. Is the README's warning enough? |
+| SEC-5 | **Config files.** Written `0600` through one helper, swapped in from a staging folder. Does a crash at any point leave either the old tree or the new one, never a mix (T-9)? |
+| SEC-6 | **Dependencies.** Read `cargo audit`'s warnings and the direct dependencies' licenses. |
+| SEC-7 | **Force Quit.** Can a window's reported pid, or a process name, make it end something outside the game's tree (the desktop, a launcher, another user's process)? |
+| SEC-8 | **Helper programs.** Clipboard (`wl-copy`, `xclip`, `xsel`, `clip`), screenshot and recording tools are run with arguments, never through a shell. Check no text the player types reaches a command line. |
+| SEC-9 | **The dashboard example.** It binds to `127.0.0.1` and checks the `Host` header. Re-check when it changes. |
 
-## 5. Judgement calls for a reviewer
+## 8. Desktop session runs
 
-- Are the shipped packs' mappings sensible for the games they cover? The tests only check the format, not whether the mapping is good.
-- Are the defaults right: Gamepad passthrough, the Desktop mouse mapping, the 60 ms combo window, and the turbo range?
-- Does the copy make sense to a new user? Read the GUI text as someone who hasn't seen the app.
-- Is the scope of the wiki right? It repeats the README in several places, and the two should be kept in step (A-4).
-- Which unsupported setups should be documented as unsupported (Sway and Hyprland, the Flatpak focus path, GNOME)?
+Rerun when the daemon's interaction with the system changes (focus tracking, input, the GNOME
+extension), and when a desktop, the kernel or the input stack has a new release:
 
-## 6. Remaining work, in order
+```sh
+scripts/desktop-versions.sh   # network: latest GNOME, Plasma, Sway and Hyprland; exits 1 if GNOME's major isn't in the extension's shell-version list
+DESKTOP_TEST_HOST=dev@127.0.0.1 DESKTOP_TEST_SSH_OPTS="-p <port> -i vms/id_ed25519" scripts/desktop-test.sh gnome   # or kde, sway, hyprland, labwc
+```
 
-Automatable, not yet done:
+`desktop-test.sh` syncs the checkout to the VM, builds it, and checks in that session that the
+tracker is found, a terminal's window is seen, its rule switches the profile, and the profile falls
+back when the window closes. Set `DESKTOP_TEST_QMP` to the VM's QMP socket to close the GNOME
+Overview first. Run it only against a throwaway VM: the daemon grabs gamepads and creates virtual
+input devices.
 
-1. ~~**Idle CPU and log checks (H-7, I-8).**~~ Done, see H-7 and I-8 above.
-2. ~~**Config file permissions (H-SEC-5, partly).**~~ Done: the saved config is `0600` (`config::tests::a_saved_config_is_readable_only_by_its_owner`). The save used to leave it `0644`; it now creates the temporary file private and sets its mode again before the rename.
-3. ~~**Process-based focus switching (D-partial).**~~ Done: `tests/process_focus.rs` starts the daemon with a game rule, runs a stand-in process named like the game, and checks the profile switches to the game's and back when it exits. The test found a race (fixed, see below). KWin, Sway and Hyprland stay manual.
-4. ~~**GUI smoke test (U-partial).**~~ Done in the container: `tests/gui_smoke.rs` starts the real settings window under Xvfb against a daemon, checks that a window titled "Padwight" is on the display, keeps it open for 5 s, and fails on a panic. Tabs are not clicked through: nothing drives the window. Every page and tab is built in-process by `gui::tests::every_page_tab_and_dialog_builds`.
-5. ~~**Ring sector coverage (A-9).**~~ Done: `engine::stick::tests::rings_cover_the_whole_circle_without_gaps`. A sweep of directions finds no gaps for 4, 8 and 12 sectors and several start angles. Breaking the sector offset makes it fail.
-6. ~~**Controller in the same slot (H-3).**~~ Done: `hotplug_a_different_controller_takes_over_and_is_remapped` (container).
+Last run, 2026-10-09, kernel 7.2.9:
 
-Needs a person or a real session:
+| Desktop | Version | Native | Flatpak |
+|---|---|---|---|
+| GNOME | 51.0 | all pass (overlay skipped) | all pass (overlay skipped) |
+| KDE Plasma | 6.7.5 | all pass | all pass |
+| Sway | 1.12 | all pass | focus falls back to processes; overlay and rules skipped |
+| Hyprland | 0.56.2 | all pass | all pass except the overlay, skipped (layer-shell hidden) |
+| labwc | 0.20.2 | all pass | focus falls back to processes; overlay and rules skipped |
 
-7. Tray Quit on a desktop session, and whether libinput releases keys when a virtual keyboard disappears (only relevant to SIGKILL, a crash or a power cut).
-8. The manual sections (3.1 to 3.6 and the rest of 3.7) on the controllers and compositors you have, in this order: H, D, O, G, I, U, T.
-9. The security review (section 4) before the next release, with a second reviewer for H-SEC-1 and H-SEC-2.
+## 9. Commands
 
-## Commands
-
-From `CLAUDE.md`:
+From `CLAUDE.md`, plus the checks CI runs:
 
 ```sh
 cargo check --all-targets --message-format=short 2>&1 | head -40
-cargo clippy --all-targets -- -D warnings
-RUST_BACKTRACE=0 cargo nextest run --profile agent --hide-progress-bar --cargo-quiet
-cargo test -- --ignored rumble      # needs /dev/uinput
-```
-
-Project checks, install files, and dependency audit:
-
-```sh
+cargo clippy --all-targets --message-format=short
+RUST_BACKTRACE=0 cargo nextest run --profile agent --hide-progress-bar --cargo-quiet [filter]
 python3 scripts/check-project.py
 scripts/check-install.sh
 cargo audit
@@ -203,50 +372,32 @@ cargo audit
 Container tests (need `/dev/uinput` and `/dev/uhid`; run as root in the container):
 
 ```sh
-scripts/kernel-test-docker.sh nothing_stays   # A-10, kernel level
-scripts/kernel-test-docker.sh daemon_         # A-11, daemon exit
-scripts/kernel-test-docker.sh hotplug_        # H-2, H-3
-scripts/kernel-test-docker.sh idle_           # H-7 (idle CPU)
-scripts/kernel-test-docker.sh process_        # D-0, process-scan switching
-scripts/kernel-test-docker.sh gui_            # U-0, the settings window under Xvfb
-scripts/kernel-test-docker.sh socket_fallback # I-9
-scripts/kernel-test-docker.sh debug_          # debug sessions against a --debug daemon (touchpad included)
+scripts/kernel-test-docker.sh nothing_stays   # stuck output, kernel level
+scripts/kernel-test-docker.sh daemon_         # release on exit and on signals
+scripts/kernel-test-docker.sh hotplug_        # unplug, replug, a different pad, disable/enable
+scripts/kernel-test-docker.sh idle_           # idle CPU
+scripts/kernel-test-docker.sh process_        # process-scan switching
+scripts/kernel-test-docker.sh gui_            # the settings window under Xvfb
+scripts/kernel-test-docker.sh socket_fallback # the socket without XDG_RUNTIME_DIR
+scripts/kernel-test-docker.sh debug_          # debug sessions against a --debug daemon
+dbus-run-session -- cargo nextest run --run-ignored ignored-only gnome_   # GNOME focus against a mock shell (host, needs gjs)
 ```
 
 Things that have tripped up container runs:
 
-- **Stale builds across checkouts.** Every checkout is mounted at `/src` and shares the `padwight-kernel-target` volume, and Cargo rebuilds by file times. After a run from another checkout (a worktree of `HEAD`, say), files that are older than that build aren't rebuilt, and the run tests the other checkout's code. Check the test count, then `touch` the sources (or `docker volume rm padwight-kernel-target`) before trusting the result.
-- **A padwight daemon running on the host.** The container sees the host's `/dev/input`, so the host daemon's devices are there too. The `debug_` tests read the keyboard that appeared after their daemon started (`Reader::open_new`), so they run either way. The tests with a uhid controller (`hotplug_`, `daemon_`, `idle_`, the profiling suite) stop at once and say so: the host daemon would grab their controller first and type their keys into the desktop. Stop it with `systemctl --user stop padwight`. (Before pass 9 of the code review, a helper picked the keyboard with the highest event number; the kernel reuses free numbers, so it could pick the host's and time out.)
-- Outside the container, the tests that read virtual devices need the account in the `input` group; the others only need `/dev/uinput`.
+- **Stale builds across checkouts.** Every checkout is mounted at `/src` and shares the
+  `padwight-kernel-target` volume, and Cargo rebuilds by file times. After a run from another
+  checkout, files older than that build aren't rebuilt, and the run tests the other checkout's code.
+  Check the test count, then `touch` the sources (or `docker volume rm padwight-kernel-target`)
+  before trusting the result.
+- **A daemon running on the host.** The container sees the host's `/dev/input`. The `debug_` tests
+  read the keyboard that appeared after their daemon started, so they run either way. The tests with
+  a uhid controller stop at once and say so, since the host daemon would grab their controller and
+  type their keys into the desktop. Stop it with `systemctl --user stop padwight`.
+- Outside the container, the tests that read virtual devices need the account in the `input` group;
+  the others only need `/dev/uinput`.
 
-Performance (not a pass/fail check). `scripts/profile.sh` runs `tests/profile` in a release build and writes one JSON file per measurement to `target/profile/`: press-to-output latency for the daemon's virtual pad, idle, under a 1 kHz stick flood and with every CPU busy, split into the daemon's own stages (its input timing log); a stick moving the mouse at 250 and 1000 Hz (time to the first motion, reports per second, CPU); daemon CPU and memory, idle and under flood; daemon start-up, cold (no config, binary evicted from the page cache) and warm; and settings-window start-up with the daemon running. The latency figure excludes USB polling and the controller's own scan, since the test uses a uhid pad. When the run ends, `scripts/plot_profile.py` draws the charts (`target/profile/charts/*.png`) and `target/profile/report.html`, which pairs each chart with its numbers.
-
-```sh
-scripts/profile.sh                        # everything
-scripts/profile.sh profile_input_latency  # one measurement
-```
-
-Desktop sessions (need test VMs, see below; not run in CI). Rerun them when the daemon's
-interaction with the system changes (focus tracking, input, the GNOME extension), and when a
-desktop, the kernel or the input stack gets a new release:
-
-```sh
-scripts/desktop-versions.sh   # network: latest GNOME, Plasma, Sway and Hyprland releases; exits 1 if GNOME's major isn't in the extension's shell-version list
-DESKTOP_TEST_HOST=dev@127.0.0.1 DESKTOP_TEST_SSH_OPTS="-p <port> -i vms/id_ed25519" scripts/desktop-test.sh gnome   # or kde, sway, hyprland, labwc (a wlroots compositor)
-```
-
-`desktop-test.sh` syncs the checkout to the VM, builds it, and runs the checks in that session:
-the tracker is found, a terminal's window is seen, its rule switches the profile, and the profile
-falls back when the window closes. Set `DESKTOP_TEST_QMP` to the VM's QMP socket to close the GNOME
-Overview first. Run it only against a throwaway VM: the daemon grabs gamepads and creates virtual
-input devices. Record the versions it prints with the result.
-
-Last run, 2026-10-09, kernel 7.2.9. Each row is the native build, with the Flatpak in the last column where it was run:
-
-| Desktop | Version | Checks | Flatpak |
-|---|---|---|---|
-| GNOME | 51.0 | all pass (overlay skipped) | all pass (overlay skipped) |
-| KDE Plasma | 6.7.5 | all pass | all pass |
-| Sway | 1.12 | all pass | focus falls back to processes; overlay and rules skipped |
-| Hyprland | 0.56.2 | all pass | all pass except the overlay, skipped (layer-shell hidden) |
-| labwc | 0.20.2 | all pass | focus falls back to processes; overlay and rules skipped |
+Performance (not pass/fail): `scripts/profile.sh [filter]` writes JSON per measurement and
+`target/profile/report.html` with charts. See [architecture.md](architecture.md#testing-and-checks)
+for its settings and the host-only parts, and the overlay harness in
+[overlay-debugging.md](overlay-debugging.md#the-harness).

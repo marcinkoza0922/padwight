@@ -9,7 +9,7 @@ The codebase is about 72,000 lines of Rust in 258 files. A single review of all 
 1. **Scope.** Name the files (the table below). If a pass is over about 6,000 lines, split it.
 2. **Read for correctness first.** Use the checklist below. Cleanups come second and are only reported if they make a bug less likely.
 3. **Check every finding against the code** before recording it. A finding the code doesn't support is dropped, and the reason is noted.
-4. **Fix, with a test that fails without the fix.** Put the fix back to its old form once to check that the test catches it (see pass 0). If no test is possible without hardware, add the case to the hardware checks below and to `qa-plan.md` section 3.
+4. **Fix, with a test that fails without the fix.** Put the fix back to its old form once to check that the test catches it (see pass 0). If no test is possible without hardware, add the case to the hardware checks below and to `qa-plan.md` section 5.
 5. **Record** each finding in the pass's table: ID, file, what's wrong, status (fixed / open / not a bug / needs hardware).
 6. **Leave the tree clean.** `cargo clippy --all-targets` has no warnings, the tests pass, and files the pass grew over 400 lines are split (`scripts/long-files.sh`).
 
@@ -345,7 +345,7 @@ Tools added in pass 0:
 | `padwight debug focus processes` | For desktops without focus tracking: which running processes each rule matches, and which one the process scan picks. |
 | `scripts/sandbox-pid.sh [program [args]]` | Runs a program in its own pid namespace (as a Flatpak or the Steam runtime does) and prints its pid there and here, with the `debug focus` line to try. Needs unprivileged user namespaces. |
 
-Earlier tools that later passes will need are listed in `CLAUDE.md` (overlay and motion screenshots, sound traces, long files), in `qa-plan.md` (project checks, container kernel tests with `scripts/kernel-test-docker.sh`) and in `overlay-debugging.md`.
+Earlier tools that later passes will need are listed in `CLAUDE.md` (overlay and motion screenshots, sound traces, long files), in `qa-plan.md` (project checks, container kernel tests with `scripts/kernel-test-docker.sh`), in `qa-tooling.md` (tools still to build, including the input replay below) and in `overlay-debugging.md`.
 
 Tools later passes are likely to want, to be built when a finding needs them:
 
@@ -354,7 +354,7 @@ Tools later passes are likely to want, to be built when a finding needs them:
 
 ## Hardware checks
 
-These can't be checked without real controllers and Steam. When they pass, they move to `qa-plan.md` section 3.
+These can't be checked without real controllers and Steam. When they pass, they move to `qa-plan.md` section 5.
 
 | ID | Check | From |
 |---|---|---|
