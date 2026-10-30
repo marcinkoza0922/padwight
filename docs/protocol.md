@@ -191,6 +191,8 @@ The rest of the shape is defined by the types in [src/config.rs](../src/config.r
 1. **Read, change, write back.** Take the object from `GetConfig`, change the part you edit, and send **all** of it back. The daemon builds its configuration from what you send; anything you leave out goes back to its default. Don't build a configuration from scratch.
 2. **Keep fields you don't understand** as they are, for the same reason.
 
+`GetConfig` leaves out a setting that has its default value, so read a missing key as the default. The first `SetConfig` after the daemon starts can fill in what was unset (an empty `active.profile` becomes the profile in use); the configuration is otherwise handed back as it was sent.
+
 The daemon refuses a configuration it finds a problem with (`{"Error":"not saved: …"}`, such as a General setup with no profile) and keeps what it has. For what it accepts, it keeps these of its own, whatever you send: `enabled`, the active profile, the remembered `controllers` (change those with `SetController` and the like), and the list of files it couldn't read.
 
 #### Writing the config files instead

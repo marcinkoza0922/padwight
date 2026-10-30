@@ -42,6 +42,11 @@
   .buttons { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; min-width: 160px; }
   .buttons span { padding: 2px 8px; border-radius: 5px; background: var(--accent); color: #fff; font-size: 13px; }
   #error { display: none; color: var(--warn); }
+  .settings { display: grid; grid-template-columns: max-content 1fr; gap: 10px 14px; align-items: center; }
+  .settings label { color: var(--muted); }
+  .settings input[type=checkbox] { justify-self: start; }
+  .settings select { justify-self: start; min-width: 140px; }
+  input[type=range] { width: 100%; max-width: 280px; accent-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -74,6 +79,22 @@
       <div class="buttons" id="buttons"></div>
     </div>
     <p class="muted" id="device" style="margin-bottom:0"></p>
+  </section>
+
+  <section>
+    <h2>Settings</h2>
+    <div class="settings">
+      <label for="rumble_strength">Rumble strength <span id="rumble_text"></span></label>
+      <input id="rumble_strength" type="range" min="0" max="100" step="5">
+      <label for="full_keyboard">Full on-screen keyboard</label>
+      <input id="full_keyboard" type="checkbox">
+      <label for="colorblind_tones">Colorblind tones</label>
+      <input id="colorblind_tones" type="checkbox">
+      <label for="peek_trigger">Peek trigger</label>
+      <select id="peek_trigger"><option>left</option><option>right</option><option>off</option></select>
+      <label for="appearance">Settings window</label>
+      <select id="appearance"><option>auto</option><option>light</option><option>dark</option></select>
+    </div>
   </section>
 
   <section><h2>Controllers</h2><ul id="devices"></ul></section>
@@ -133,6 +154,15 @@ function render(s) {
     const features = ['rumble', 'gyro', 'touchpad', 'paddles'].filter(f => d[f]);
     if (features.length) li.append(el('span', features.join(', '), 'muted'));
     if (d.profile) li.append(el('span', '→ ' + d.profile, 'muted'));
+    // A controller without an id can't be told apart, so it can't be ignored by id.
+    const box = el('input');
+    box.type = 'checkbox';
+    box.checked = d.ignored;
+    box.disabled = !d.id;
+    box.onchange = act('/api/ignore', () => ({ id: d.id, ignored: box.checked }));
+    const label = el('label', ' ignore', 'muted');
+    label.prepend(box);
+    li.append(label);
     return li;
   }));
 
@@ -184,7 +214,35 @@ function watch() {
   events.onerror = () => { events.close(); live(null); setTimeout(watch, 2000); };
 }
 
+// A setting is saved the moment it changes; what the daemon then holds is shown again.
+const SETTINGS = {
+  rumble_strength: { read: e => e.value / 100, write: (e, v) => { e.value = Math.round(v * 100); } },
+  full_keyboard: { read: e => e.checked, write: (e, v) => { e.checked = v; } },
+  colorblind_tones: { read: e => e.checked, write: (e, v) => { e.checked = v; } },
+  peek_trigger: { read: e => e.value, write: (e, v) => { e.value = v; } },
+  appearance: { read: e => e.value, write: (e, v) => { e.value = v; } },
+};
+
+function showSettings(values) {
+  for (const [name, { write }] of Object.entries(SETTINGS)) write($(name), values[name]);
+  $('rumble_text').textContent = `(${$('rumble_strength').value}%)`;
+}
+
+async function loadSettings() {
+  try { showSettings(await api('/api/settings')); } catch (e) { fail(e); }
+}
+
+for (const [name, { read }] of Object.entries(SETTINGS)) {
+  const input = $(name);
+  input.addEventListener('input', () => { if (name === 'rumble_strength') $('rumble_text').textContent = `(${input.value}%)`; });
+  input.addEventListener('change', async () => {
+    try { await api('/api/settings', { [name]: read(input) }); fail(null); } catch (e) { fail(e); }
+    loadSettings(); // the daemon's word, whether it took the change or not
+  });
+}
+
 live(null);
+loadSettings();
 loadProfiles();
 poll();
 watch();

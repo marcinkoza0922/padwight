@@ -9,8 +9,10 @@ requests of the protocol in docs/protocol.md. Standard library only.
 Then open http://127.0.0.1:8765/.
 
 Anyone who can reach this server can change what your buttons do, so it listens on the loopback
-address only, forwards just the requests below (never SetConfig), and refuses requests whose Host
-or Origin isn't itself, which keeps other web pages from reaching it (DNS rebinding, CSRF).
+address only, forwards just the requests below, and refuses requests whose Host or Origin isn't
+itself, which keeps other web pages from reaching it (DNS rebinding, CSRF). The page never sends a
+configuration: it sends values for the few settings in SETTINGS, which are checked here and put
+into the daemon's own configuration with GetConfig and SetConfig.
 """
 
 import argparse
@@ -63,15 +65,89 @@ def activate(body):
     ref = {"profile": str(body["profile"])}
     if body.get("setup"):  # General has no "setup" key
         ref["setup"] = str(body["setup"])
-    return {"Activate": ref}
+    request({"Activate": ref})
 
 
-# What the page may ask for. Each takes the page's JSON body and returns the daemon's request.
+# The settings the page may change: each is the key in the Config object (docs/protocol.md,
+# "Config"), the value the daemon uses when the key is missing (GetConfig leaves out what has its
+# default), and a check that returns the value to store or raises ValueError.
+def number(low, high):
+    def check(v):
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or not low <= v <= high:
+            raise ValueError(f"a number from {low} to {high}")
+        return float(v)
+    return check
+
+
+def boolean(v):
+    if not isinstance(v, bool):
+        raise ValueError("true or false")
+    return v
+
+
+def one_of(*names):
+    def check(v):
+        if v not in names:
+            raise ValueError("one of " + ", ".join(names))
+        return v
+    return check
+
+
+SETTINGS = {
+    "rumble_strength": ("rumble_strength", 1.0, number(0.0, 1.0)),
+    "full_keyboard": ("full_keyboard", False, boolean),
+    "colorblind_tones": ("colourblind_tones", False, boolean),  # the key is spelled the British way
+    "peek_trigger": ("peek_trigger", "left", one_of("left", "right", "off")),
+    "appearance": ("appearance", "auto", one_of("auto", "light", "dark")),
+}
+
+
+def change_config(change):
+    """Read the daemon's whole configuration, let `change` edit it, and send all of it back.
+
+    Not atomic: a change made elsewhere between the two requests is lost. Fine for a dashboard."""
+    config = request("GetConfig")["Config"]
+    change(config)
+    request({"SetConfig": config})
+
+
+def read_settings():
+    config = request("GetConfig")["Config"]
+    found = {name: config.get(key, default) for name, (key, default, _) in SETTINGS.items()}
+    found["ignored_devices"] = config.get("ignored_devices", [])
+    return found
+
+
+def write_settings(body):
+    changes = {}
+    for name, value in body.items():
+        if name not in SETTINGS:
+            raise ValueError(f"unknown setting {name!r}")
+        changes[SETTINGS[name][0]] = SETTINGS[name][2](value)
+    change_config(lambda config: config.update(changes))
+
+
+def ignore(body):
+    """Leave one controller (by its id) alone, or stop doing so."""
+    device, ignored = str(body["id"]), bool(body["ignored"])
+    if not device:
+        raise ValueError("this controller has no id to ignore it by")
+
+    def change(config):
+        rest = [d for d in config.get("ignored_devices", []) if d != device]
+        config["ignored_devices"] = rest + [device] if ignored else rest
+
+    change_config(change)
+
+
+# What the page may ask for by POST: each takes the page's JSON body and does it.
 ACTIONS = {
-    "enabled": lambda body: {"SetEnabled": bool(body["enabled"])},
-    "lock": lambda body: {"SetProfileLock": bool(body["locked"])},
+    "enabled": lambda body: request({"SetEnabled": bool(body["enabled"])}),
+    "lock": lambda body: request({"SetProfileLock": bool(body["locked"])}),
     "profile": activate,
-    "next": lambda body: "NextProfile",
+    "next": lambda body: request("NextProfile"),
+    "settings": write_settings,
+    "ignore": ignore,
 }
 
 
@@ -110,6 +186,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.reply(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             elif self.path == "/api/status":
                 self.reply(200, request("Status")["Status"])
+            elif self.path == "/api/settings":
+                self.reply(200, read_settings())
             elif self.path == "/api/profiles":
                 self.reply(200, profiles(request("GetConfig")["Config"]))
             elif self.path == "/api/input":
@@ -130,7 +208,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(404, {"Error": "not found"})
         try:
             body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
-            request(action(body))
+            action(body)
             self.reply(200, {"ok": True})
         except (KeyError, TypeError, ValueError) as e:
             self.reply(400, {"Error": f"bad body: {e}"})
