@@ -38,10 +38,10 @@ const INTERFACE_XML = `
 export class Overlay {
     constructor() {
         this._actor = new St.Widget({reactive: false, can_focus: false, track_hover: false, visible: false});
-        // Added as chrome that doesn't claim input or shrink the work area; it stays above
-        // fullscreen windows because it doesn't track them.
-        Main.layoutManager.addChrome(this._actor, {affectsInputRegion: false, affectsStruts: false, trackFullscreen: false});
-        this._content = new Clutter.Image();
+        // Added as chrome that doesn't shrink the work area; it stays above fullscreen
+        // windows because it doesn't track them, and takes no input because it isn't reactive.
+        Main.layoutManager.addChrome(this._actor, {affectsStruts: false, trackFullscreen: false});
+        this._content = St.ImageContent.new_with_preferred_size(1, 1);
         this._actor.set_content(this._content);
         this._actor.set_content_scaling_filters(Clutter.ScalingFilter.NEAREST, Clutter.ScalingFilter.NEAREST);
 
@@ -65,7 +65,7 @@ export class Overlay {
             // Reopening the memfd through /proc maps it without copying it into JS.
             const bytes = new GLib.MappedFile(`/proc/self/fd/${real}`, false).get_bytes();
             GLib.close(real);
-            this._content.set_bytes(bytes, Cogl.PixelFormat.RGBA_8888_PRE, width, height, stride);
+            this._content.set_bytes(global.stage.context.get_backend().get_cogl_context(), bytes, Cogl.PixelFormat.RGBA_8888_PRE, width, height, stride);
             const monitor = Main.layoutManager.primaryMonitor;
             this._actor.set_position(monitor.x, monitor.y);
             this._actor.set_size(monitor.width, monitor.height);

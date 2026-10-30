@@ -13,7 +13,7 @@ Automatic profile switching needs to know which window has focus. padwight picks
 
 ## GNOME
 
-Focus tracking works through a small GNOME Shell extension, which padwight installs and enables itself. Mutter has no layer-shell, so the overlay can't be a window of its own: the extension shows the frames the overlay draws instead (experimental, not yet checked on a real GNOME Shell).
+Focus tracking works through a small GNOME Shell extension, which padwight installs and enables itself. Mutter has no layer-shell, so the overlay can't be a window of its own: the extension shows the frames the overlay draws instead (experimental: checked on GNOME 51 in a VM, where the on-screen keyboard shows and hides, but not yet over a fullscreen game).
 
 ## Flatpak
 

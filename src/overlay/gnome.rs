@@ -7,8 +7,7 @@
 //! The extension maps the memfd, so the memfd is not written again once sent; two alternate.
 //! Without frame callbacks it animates on a 16 ms timer, as the Windows overlay does.
 //!
-//! Untried on a real GNOME Shell: the pieces were built against the extension's interface, not
-//! run with it.
+//! Run on GNOME Shell 51 in the test VM; not yet over a fullscreen game or with several monitors.
 
 use std::{
     fs::File,
@@ -35,9 +34,15 @@ const INTERFACE: &str = "io.github.marcinkoza0922.Padwight.Overlay";
 /// About a refresh at 60 Hz.
 const STEP: Duration = Duration::from_millis(16);
 
-/// Whether this session is GNOME's, where the overlay can't be a window of its own.
+/// Whether this session is GNOME's, where the overlay can't be a window of its own. The
+/// desktop's name isn't always in the daemon's environment, so GNOME Shell on the bus counts too.
 pub(super) fn wanted() -> bool {
     std::env::var("XDG_CURRENT_DESKTOP").is_ok_and(|desktop| desktop.split(':').any(|part| part.eq_ignore_ascii_case("gnome")))
+        || Connection::session().is_ok_and(|conn| {
+            conn.call_method(Some("org.freedesktop.DBus"), "/org/freedesktop/DBus", Some("org.freedesktop.DBus"), "NameHasOwner", &("org.gnome.Shell",))
+                .and_then(|reply| Ok(reply.body().deserialize::<bool>()?))
+                .unwrap_or(false)
+        })
 }
 
 /// The monitor the extension covers: logical size and scale.

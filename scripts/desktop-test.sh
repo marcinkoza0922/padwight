@@ -218,12 +218,11 @@ else
     fail "a pad press reaches the focused $window window as the mapped key"
 fi
 
-# The on-screen keyboard is a layer-shell surface, which GNOME doesn't have.
+# The on-screen keyboard is a layer-shell surface; GNOME has none, so there the overlay process
+# hands its frames to the Shell extension (this checks the process, not what the extension shows).
 overlay_running() { pgrep -f 'padwight overlay$' >/dev/null; }
 # A Flatpak can't create the overlay's layer-shell surface on wlroots compositors (README, Flatpak).
-if [ "$desktop" = gnome ]; then
-    echo "SKIP the on-screen overlay (GNOME has no layer-shell)"
-elif [ -n "${FLATPAK:-}" ] && [ "$desktop" = hyprland ]; then
+if [ -n "${FLATPAK:-}" ] && [ "$desktop" = hyprland ]; then
     echo "SKIP the on-screen overlay (the compositor hides layer-shell from the sandbox)"
 else
     "${bin[@]}" overlay-toggle >/dev/null 2>&1 || true
