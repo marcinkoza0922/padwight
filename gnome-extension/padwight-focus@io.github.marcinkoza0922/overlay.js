@@ -76,13 +76,36 @@ export class Overlay {
         }
     }
 
+    // Newer Shells' St.ImageContent.set_bytes wants the Cogl context first; older ones have no
+    // context to give (global.stage.context is missing) and take the picture alone.
+    _setBytes(width, height) {
+        const format = Cogl.PixelFormat.RGBA_8888_PRE;
+        const context = global.stage.context?.get_backend?.()?.get_cogl_context?.();
+        const forms = [
+            () => this._content.set_bytes(context, this._picture, format, width, height, width * 4),
+            () => this._content.set_bytes(this._picture, format, width, height, width * 4),
+        ];
+        // Tries the form that worked last, else the one that fits what the Shell offers, and
+        // the other if that is refused for its arguments.
+        const first = this._form ?? (context ? 0 : 1);
+        for (const form of [first, 1 - first]) {
+            try {
+                forms[form]();
+                this._form = form;
+                return;
+            } catch (e) {
+                if (!(e instanceof TypeError) || form !== first)
+                    throw e;
+            }
+        }
+    }
+
     Present() {
         if (!this._picture)
             return;
         try {
             const [width, height] = this._size;
-            this._content.set_bytes(global.stage.context.get_backend().get_cogl_context(), this._picture,
-                Cogl.PixelFormat.RGBA_8888_PRE, width, height, width * 4);
+            this._setBytes(width, height);
             // The monitor chosen by the last Geometry call, unless it has gone since.
             const layout = Main.layoutManager;
             const monitor = layout.monitors[this._monitor ?? -1] ?? layout.primaryMonitor;
