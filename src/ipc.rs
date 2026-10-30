@@ -1,4 +1,6 @@
 //! Daemon <-> client protocol: one JSON request line, one JSON response line per connection.
+//! The protocol is specified in `docs/protocol.md`; a change to the wire format of anything it
+//! covers is a change of [`PROTOCOL_MAJOR`] or [`PROTOCOL_MINOR`].
 
 use std::{
     io::{BufRead, BufReader, Write},
@@ -23,8 +25,15 @@ use crate::{
     input::Axis,
 };
 
+/// The protocol's version. Within one major version a request or a field only ever gets added;
+/// removing or reshaping one is a new major version (see `docs/protocol.md`).
+pub const PROTOCOL_MAJOR: u32 = 1;
+pub const PROTOCOL_MINOR: u32 = 0;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Request {
+    /// Which protocol version the daemon speaks, and which build it is.
+    Version,
     Status,
     GetConfig,
     /// Replace profiles/ignore list. The daemon keeps its current `enabled` and active profile.
@@ -110,12 +119,28 @@ pub enum DebugEvent {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Response {
     Ok,
+    Version(VersionInfo),
     Status(Status),
     Config(Box<Config>),
     /// The device path of an injected controller.
     Attached(String),
     Lines(Vec<String>),
     Error(String),
+}
+
+/// The reply to [`Request::Version`].
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VersionInfo {
+    pub protocol_major: u32,
+    pub protocol_minor: u32,
+    /// The daemon's own version (`CARGO_PKG_VERSION`), for bug reports; not for compatibility checks.
+    pub app: String,
+}
+
+impl VersionInfo {
+    pub fn current() -> Self {
+        Self { protocol_major: PROTOCOL_MAJOR, protocol_minor: PROTOCOL_MINOR, app: env!("CARGO_PKG_VERSION").into() }
+    }
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
