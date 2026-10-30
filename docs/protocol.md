@@ -193,7 +193,13 @@ The rest of the shape is defined by the types in [src/config.rs](../src/config.r
 
 The daemon refuses a configuration it finds a problem with (`{"Error":"not saved: …"}`, such as a General setup with no profile) and keeps what it has. For what it accepts, it keeps these of its own, whatever you send: `enabled`, the active profile, the remembered `controllers` (change those with `SetController` and the like), and the list of files it couldn't read.
 
-When no daemon is running a client could write the config folder itself; this protocol doesn't cover that. Tell the user to start the daemon instead.
+#### Writing the config files instead
+
+A client may also edit the config folder directly, and with no daemon running that is the only way. The folder is `~/.config/padwight/` on Linux and `%APPDATA%\padwight\` on Windows (`$XDG_CONFIG_HOME` can name another). `config.toml` holds the app's settings, and `general/` and `setups/<name>/` hold the profiles, macros, menus and so on, one TOML file each. [src/config/store.rs](../src/config/store.rs) describes the layout.
+
+- With the daemon running, send `"Reload"` after writing, so it reads the folder again. Without it the daemon keeps its own copy, and its next save **rewrites the whole folder** over your changes.
+- A file that doesn't load is left out of the configuration and kept on disk; `Reload` answers `{"Error": …}` when the folder as a whole can't be read.
+- The version of this protocol covers the socket only. The files are the app's own storage, and their layout can change between releases without a new protocol version. Prefer `SetConfig` when the daemon is up.
 
 ### WatchInput
 
