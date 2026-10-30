@@ -16,14 +16,16 @@ const OBJECT_PATH = '/Overlay';
 const INTERFACE_XML = `
 <node>
   <interface name="io.github.marcinkoza0922.Padwight.Overlay">
-    <!-- A finished frame: width x height pixels, premultiplied RGBA in memory order, rows
-         stride bytes apart, in the memfd. It covers the primary monitor. -->
-    <method name="Present">
+    <!-- The shared picture frames are drawn into: width x height pixels, premultiplied RGBA in
+         memory order, rows width * 4 bytes apart, in the memfd. It covers the primary monitor.
+         The sender paints into it only between a Present's return and its next call. -->
+    <method name="SetBuffer">
       <arg type="h" direction="in" name="fd"/>
       <arg type="i" direction="in" name="width"/>
       <arg type="i" direction="in" name="height"/>
-      <arg type="i" direction="in" name="stride"/>
     </method>
+    <!-- The picture holds a finished frame: show it. -->
+    <method name="Present"/>
     <!-- The monitor the overlay covers: its logical size and its scale. -->
     <method name="Geometry">
       <arg type="i" direction="out" name="width"/>
@@ -59,13 +61,26 @@ export class Overlay {
     }
 
     // `fdList` is the message's Gio.UnixFDList; `fd` is an index into it.
-    Present(fd, width, height, stride, fdList) {
+    SetBuffer(fd, width, height, fdList) {
         try {
             const real = fdList.get(fd);
-            // Reopening the memfd through /proc maps it without copying it into JS.
-            const bytes = new GLib.MappedFile(`/proc/self/fd/${real}`, false).get_bytes();
+            // Reopening the memfd through /proc maps it, without copying it into JS. The mapping
+            // is kept: every frame is drawn into it.
+            this._picture = new GLib.MappedFile(`/proc/self/fd/${real}`, false).get_bytes();
             GLib.close(real);
-            this._content.set_bytes(global.stage.context.get_backend().get_cogl_context(), bytes, Cogl.PixelFormat.RGBA_8888_PRE, width, height, stride);
+            this._size = [width, height];
+        } catch (e) {
+            logError(e, 'padwight overlay buffer');
+        }
+    }
+
+    Present() {
+        if (!this._picture)
+            return;
+        try {
+            const [width, height] = this._size;
+            this._content.set_bytes(global.stage.context.get_backend().get_cogl_context(), this._picture,
+                Cogl.PixelFormat.RGBA_8888_PRE, width, height, width * 4);
             const monitor = Main.layoutManager.primaryMonitor;
             this._actor.set_position(monitor.x, monitor.y);
             this._actor.set_size(monitor.width, monitor.height);
@@ -82,5 +97,6 @@ export class Overlay {
 
     Hide() {
         this._actor.hide();
+        this._picture = null;
     }
 }
