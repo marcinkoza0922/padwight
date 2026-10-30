@@ -9,7 +9,7 @@
 //! extension reads the picture only while `Present` runs, which we wait out before painting again.
 //! Without frame callbacks it animates on a 16 ms timer, as the Windows overlay does.
 //!
-//! Run on GNOME Shell 51 in the test VM; over a fullscreen window too; not yet with several monitors or fractional scaling.
+//! Run on GNOME Shell 51 in the test VM; over a fullscreen window, on two monitors and at a fractional scale.
 
 use std::{
     fs::File,
@@ -44,7 +44,8 @@ pub(super) fn wanted() -> bool {
         })
 }
 
-/// The monitor the extension covers: logical size and scale.
+/// The monitor the extension covers (the focused window's): logical size and scale, which may
+/// be fractional.
 struct Monitor {
     size: (u32, u32),
     scale: f64,

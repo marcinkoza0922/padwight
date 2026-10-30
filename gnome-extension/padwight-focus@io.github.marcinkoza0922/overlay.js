@@ -17,7 +17,7 @@ const INTERFACE_XML = `
 <node>
   <interface name="io.github.marcinkoza0922.Padwight.Overlay">
     <!-- The shared picture frames are drawn into: width x height pixels, premultiplied RGBA in
-         memory order, rows width * 4 bytes apart, in the memfd. It covers the primary monitor.
+         memory order, rows width * 4 bytes apart, in the memfd. It covers the monitor Geometry chose.
          The sender paints into it only between a Present's return and its next call. -->
     <method name="SetBuffer">
       <arg type="h" direction="in" name="fd"/>
@@ -26,7 +26,9 @@ const INTERFACE_XML = `
     </method>
     <!-- The picture holds a finished frame: show it. -->
     <method name="Present"/>
-    <!-- The monitor the overlay covers: its logical size and its scale. -->
+    <!-- Picks the monitor the overlay covers from now on, the one the focused window is on (the
+         primary one when nothing has focus), and returns its logical size and its scale, which
+         may be fractional. -->
     <method name="Geometry">
       <arg type="i" direction="out" name="width"/>
       <arg type="i" direction="out" name="height"/>
@@ -81,7 +83,9 @@ export class Overlay {
             const [width, height] = this._size;
             this._content.set_bytes(global.stage.context.get_backend().get_cogl_context(), this._picture,
                 Cogl.PixelFormat.RGBA_8888_PRE, width, height, width * 4);
-            const monitor = Main.layoutManager.primaryMonitor;
+            // The monitor chosen by the last Geometry call, unless it has gone since.
+            const layout = Main.layoutManager;
+            const monitor = layout.monitors[this._monitor ?? -1] ?? layout.primaryMonitor;
             this._actor.set_position(monitor.x, monitor.y);
             this._actor.set_size(monitor.width, monitor.height);
             this._actor.show();
@@ -91,8 +95,12 @@ export class Overlay {
     }
 
     Geometry() {
-        const monitor = Main.layoutManager.primaryMonitor;
-        return [monitor.width, monitor.height, monitor.geometry_scale];
+        const layout = Main.layoutManager;
+        const focused = global.display.focus_window?.get_monitor() ?? -1;
+        this._monitor = focused >= 0 && focused < layout.monitors.length ? focused : layout.primaryIndex;
+        const monitor = layout.monitors[this._monitor];
+        const scale = global.display.get_monitor_scale?.(this._monitor) ?? monitor.geometry_scale;
+        return [monitor.width, monitor.height, scale];
     }
 
     Hide() {
