@@ -6,7 +6,7 @@ use super::{Active, BY_HAND, Calibration, Daemon};
 use crate::{
     config::Config,
     engine::Opener,
-    ipc::{Request, Response},
+    ipc::{Request, Response, VersionInfo},
     keyboard::Layout,
     monitor::log,
     rumble,
@@ -16,6 +16,7 @@ impl Daemon {
     #[expect(clippy::too_many_lines, reason = "predates the size lints")]
     pub(super) fn request(&mut self, req: Request) -> Response {
         match req {
+            Request::Version => Response::Version(VersionInfo::current()),
             Request::Status => Response::Status(self.status()),
             Request::GetConfig => Response::Config(Box::new(self.config.clone())),
             Request::SetConfig(new) => {
