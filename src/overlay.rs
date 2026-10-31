@@ -242,7 +242,8 @@ impl OverlayFrame {
     /// settings let it, so the screen keeps redrawing while it shows.
     pub fn loops(&self) -> bool {
         let styles = self.info.iter().map(|v| &v.style).chain(self.logs.iter().map(|v| &v.style)).chain(self.active.as_ref().map(OverlayView::style)).chain(self.backdrop.as_ref().map(|m| &m.style));
-        styles.into_iter().any(|style| !style.lite.calm && style.loops())
+        let blinking = !self.lite.calm && matches!(self.active, Some(OverlayView::Keyboard(_)));
+        blinking || styles.into_iter().any(|style| !style.lite.calm && style.loops())
     }
 
     /// Hands the frame's performance settings to every style in it, where the drawing reads them.
@@ -284,6 +285,9 @@ pub struct KeyboardView {
     /// What's been typed lately, as far as the keyboard can tell, for the line above its keys.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub typed: String,
+    /// Where the text cursor sits in `typed`, counted in characters.
+    #[serde(default)]
+    pub caret: usize,
     /// Typing into a field of the in-game menu, which this names: the keys go into `typed`, not
     /// to the game.
     #[serde(default, skip_serializing_if = "Option::is_none")]
