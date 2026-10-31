@@ -75,6 +75,8 @@ pub struct OverlayController {
     pressed_shift: bool,
     /// What's been typed lately (see [`KeyboardView::typed`]).
     typed: String,
+    /// Where the text cursor sits in `typed`, counted in characters.
+    caret: usize,
     /// Typing into a field, named here (see [`KeyboardView::field`]): the text is kept whole, and
     /// Enter and Escape don't clear it.
     field: Option<String>,
@@ -128,6 +130,7 @@ impl OverlayController {
             backspace: None,
             pressed_shift: false,
             typed: String::new(),
+            caret: 0,
             field: None,
         }
     }
@@ -138,6 +141,7 @@ impl OverlayController {
         keyboard.guide_button = None;
         keyboard.close_button = None;
         keyboard.typed = text.to_string();
+        keyboard.caret = text.chars().count();
         keyboard.field = Some(title.to_string());
         keyboard
     }
@@ -179,6 +183,7 @@ impl OverlayController {
                 .unwrap_or(0.0),
             caps: self.caps,
             typed: self.typed.clone(),
+            caret: self.caret,
             field: self.field.clone(),
         }
     }
@@ -259,8 +264,8 @@ impl OverlayController {
             }
             (Button::North, true) if keyboard => self.shortcut("KEY_SPACE"),
             // The bumpers move the text cursor, as the D-pad moves the keyboard's.
-            (Button::LeftBumper, true) if keyboard => tap("KEY_LEFT"),
-            (Button::RightBumper, true) if keyboard => tap("KEY_RIGHT"),
+            (Button::LeftBumper, true) if keyboard => self.move_caret("KEY_LEFT"),
+            (Button::RightBumper, true) if keyboard => self.move_caret("KEY_RIGHT"),
             (Button::Start, true) => self.enter(),
             (Button::East, true) => {
                 self.east_since = Some(now);
@@ -374,22 +379,46 @@ impl OverlayController {
             || self.latched.iter().any(|k| {
             matches!(*k, KeyCode::KEY_LEFTCTRL | KeyCode::KEY_RIGHTCTRL | KeyCode::KEY_LEFTALT | KeyCode::KEY_RIGHTALT | KeyCode::KEY_LEFTMETA | KeyCode::KEY_RIGHTMETA)
         });
+        let mut chars: Vec<char> = self.typed.chars().collect();
+        let at = self.caret.min(chars.len());
+        let insert = |text: &str, chars: &mut Vec<char>, caret: &mut usize| {
+            let new: Vec<char> = text.chars().collect();
+            *caret = at + new.len();
+            chars.splice(at..at, new);
+        };
+        let mut caret = at;
         match code {
             _ if shortcut => {}
-            "KEY_BACKSPACE" => drop(self.typed.pop()),
+            "KEY_LEFT" => caret = at.saturating_sub(1),
+            "KEY_RIGHT" => caret = (at + 1).min(chars.len()),
+            "KEY_HOME" => caret = 0,
+            "KEY_END" => caret = chars.len(),
+            "KEY_BACKSPACE" if at > 0 => {
+                chars.remove(at - 1);
+                caret = at - 1;
+            }
+            "KEY_DELETE" if at < chars.len() => drop(chars.remove(at)),
             // A field keeps its text: Enter is how it's done.
             "KEY_ENTER" | "KEY_KPENTER" | "KEY_ESC" if self.field.is_some() => {}
-            "KEY_ENTER" | "KEY_KPENTER" | "KEY_ESC" => self.typed.clear(),
-            "KEY_SPACE" => self.typed.push(' '),
-            "KEY_KPMINUS" => self.typed.push('-'),
-            _ if self.board == Board::Numpad => self.typed.push_str(keyboard::key_at(self.board, self.cursor).label),
-            _ => self.typed.push_str(&keyboard::typed(code, self.shift_down(), self.caps).unwrap_or_default()),
+            "KEY_ENTER" | "KEY_KPENTER" | "KEY_ESC" => {
+                chars.clear();
+                caret = 0;
+            }
+            "KEY_SPACE" => insert(" ", &mut chars, &mut caret),
+            "KEY_KPMINUS" => insert("-", &mut chars, &mut caret),
+            _ if self.board == Board::Numpad => insert(keyboard::key_at(self.board, self.cursor).label, &mut chars, &mut caret),
+            _ => insert(&keyboard::typed(code, self.shift_down(), self.caps).unwrap_or_default(), &mut chars, &mut caret),
         }
         let keep = if self.field.is_some() { FIELD_KEEP } else { KEEP };
-        let extra = self.typed.chars().count().saturating_sub(keep);
-        if extra > 0 {
-            self.typed = self.typed.chars().skip(extra).collect();
-        }
+        let extra = chars.len().saturating_sub(keep);
+        self.typed = chars[extra..].iter().collect();
+        self.caret = caret.saturating_sub(extra);
+    }
+
+    /// A bumper: moves the text cursor in the game, and the caret on the typed line with it.
+    fn move_caret(&mut self, name: &str) -> Vec<OverlayAction> {
+        self.note_typed(name);
+        tap(name)
     }
 
     fn shortcut(&mut self, name: &str) -> Vec<OverlayAction> {
