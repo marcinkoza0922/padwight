@@ -8,7 +8,7 @@
 # devices, which would take over your own desktop.
 #
 # Usage: DESKTOP_TEST_HOST=dev@127.0.0.1 DESKTOP_TEST_SSH_OPTS="-p 2457 -i vms/id_ed25519" \
-#        scripts/desktop-test.sh <gnome|cinnamon|cosmic|kde|sway|hyprland|labwc>
+#        scripts/desktop-test.sh <gnome|cinnamon|cosmic|kde|sway|hyprland|niri|labwc>
 #   DESKTOP_TEST_QMP=<qmp socket>  optional: sends Escape through QEMU first, to close GNOME's
 #                                  Overview after login (VMs started by vms/vm.sh have one).
 #
@@ -16,9 +16,9 @@
 # the input stack gets a new release. Record the versions it prints with the result.
 set -euo pipefail
 
-desktop=${1:?usage: scripts/desktop-test.sh gnome|cinnamon|cosmic|kde|sway|hyprland|labwc}
+desktop=${1:?usage: scripts/desktop-test.sh gnome|cinnamon|cosmic|kde|sway|hyprland|niri|labwc}
 case $desktop in
-gnome | cinnamon | cosmic | kde | sway | hyprland | labwc) ;;
+gnome | cinnamon | cosmic | kde | sway | hyprland | niri | labwc) ;;
 *)
     echo "unknown desktop: $desktop" >&2
     exit 2
@@ -88,6 +88,7 @@ cosmic) window=cosmic-term; class=com.system76.CosmicTerm; tracker=COSMIC; launc
 kde) window=konsole; class=org.kde.konsole; tracker=KWin; launch=(konsole -e sh -c "$read_key") ;;
 sway) window=foot; class=foot; tracker=Sway; launch=(foot sh -c "$read_key") ;;
 hyprland) window=kitty; class=kitty; tracker=Hyprland; launch=(kitty sh -c "$read_key") ;;
+niri) window=foot; class=foot; tracker=niri; launch=(foot sh -c "$read_key") ;;
 labwc) window=foot; class=foot; tracker=wlroots; launch=(foot sh -c "$read_key") ;;
 esac
 
@@ -104,7 +105,7 @@ stop_daemon() { pkill -x padwight 2>/dev/null || true; sleep 1; }
 
 echo "== versions"
 echo "kernel $(uname -r)"
-for tool in gnome-shell cinnamon cosmic-comp plasmashell sway Hyprland labwc; do
+for tool in gnome-shell cinnamon cosmic-comp plasmashell sway Hyprland niri labwc; do
     command -v "$tool" >/dev/null && echo "$tool: $("$tool" --version 2>/dev/null | head -1)"
 done
 

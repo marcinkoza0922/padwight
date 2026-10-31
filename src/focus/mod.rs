@@ -17,6 +17,8 @@ mod identify;
 #[cfg(target_os = "linux")]
 mod kwin;
 #[cfg(target_os = "linux")]
+mod niri;
+#[cfg(target_os = "linux")]
 mod sway;
 #[cfg(target_os = "linux")]
 mod wlroots;
@@ -104,7 +106,7 @@ pub fn spawn(notify: impl Fn(FocusEvent) + Send + Sync + 'static) {
     });
 }
 
-/// One round of tracking. Sway and Hyprland push events, so this returns only when that
+/// One round of tracking. Sway, Hyprland and niri push events, so this returns only when that
 /// connection ends; the rest are checked once.
 #[cfg(target_os = "linux")]
 fn track(reporter: &mut Reporter, conn: Option<&Connection>) {
@@ -118,6 +120,11 @@ fn track(reporter: &mut Reporter, conn: Option<&Connection>) {
         reporter.backend(FocusBackend::Hyprland);
         if let Err(e) = hypr.follow(&notify) {
             log!("lost Hyprland: {e:#}");
+        }
+    } else if let Ok(niri) = niri::connect() {
+        reporter.backend(FocusBackend::Niri);
+        if let Err(e) = niri.follow(&notify) {
+            log!("lost niri: {e:#}");
         }
     } else if let Some(backend) = conn.and_then(shell_backend) {
         reporter.backend(backend);

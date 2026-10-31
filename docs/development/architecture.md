@@ -125,6 +125,7 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | `focus/kwin.rs`, `focus/dbus.rs` | KDE Plasma: a KWin script reports focus changes over D-Bus. |
 | `focus/sway.rs` | Sway (and i3-IPC compositors) over `$SWAYSOCK`. |
 | `focus/hyprland.rs` | Hyprland's event and command sockets. |
+| `focus/niri.rs` | niri's IPC event stream. |
 | `focus/wlroots.rs` | wlroots compositors (labwc, Wayfire, river, …) over `wlr-foreign-toplevel-management`. Matches windows by class only, since the protocol doesn't give the process. |
 | `focus/cinnamon.rs` | Cinnamon: installs and enables the extension in `cinnamon-extension/` (focus and overlay, the same D-Bus objects as GNOME's). |
 | `focus/cosmic.rs` | COSMIC: `ext-foreign-toplevel-list` for titles and app ids plus `cosmic-toplevel-info` (generated from `protocols/`) for the activated state. Class rules only. |

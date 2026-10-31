@@ -224,6 +224,8 @@ pub enum FocusBackend {
     Sway,
     /// Hyprland's event socket reports focus changes.
     Hyprland,
+    /// niri's IPC event stream reports focus changes.
+    Niri,
     /// The compositor's `wlr-foreign-toplevel-management` reports focus changes (labwc, Wayfire, river, and others).
     Wlroots,
     /// No focus information: rules match against running processes instead.
@@ -241,6 +243,7 @@ impl FocusBackend {
             Self::Cosmic => Some("COSMIC"),
             Self::Sway => Some("Sway"),
             Self::Hyprland => Some("Hyprland"),
+            Self::Niri => Some("niri"),
             Self::Wlroots => Some("wlroots"),
             Self::ProcessScan => None,
         }
