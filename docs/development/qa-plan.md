@@ -8,6 +8,13 @@ need a person, a controller or a game. The tools this plan needs but that don't 
 Fix-by-fix findings live in [code-review-plan.md](code-review-plan.md). Its hardware checks are
 written `CR H-n` here, to keep them apart from this plan's own IDs.
 
+**Scope.** Wayland sessions on x86_64 Linux. X11 and XLibre sessions aren't supported and aren't
+tested; a failure that shows only there is not a bug. X11 *clients* inside a Wayland session are
+in scope: most games, and every Proton game, run through Xwayland, so focus tracking, Force Quit
+and the overlay are checked against them (FOC-11). Beyond the desktop, the rest of the system the
+daemon runs on (kernel drivers, other programs that own the pad, sandboxes, keyboard layouts,
+audio, graphics, init and seats) is covered in [section 5.10](#510-linux-environment).
+
 ## 1. Risk tiers
 
 A bug is worth more testing the more it costs the player. Every feature area in
@@ -31,7 +38,7 @@ What exists today, from fastest to slowest. Counts are as of 2026-10-31.
 | L2 | Sweeps over many inputs | No stuck output after random input; damaged packs and configs are refused without a panic; ring sectors leave no gaps; every library pack round-trips | CI | `engine::release_tests`, `library::tests::damaged_packs_…`, `config::tests::damaged_configs_…` |
 | L3 | Off-screen pictures | What the overlay, the settings window and the controller drawings look like, with no display | Locally, by hand | `debug overlay`, `debug overlay compare`, `debug motion`, `debug gui` |
 | L4 | Debug sessions | Mappings end to end through a real daemon, with a virtual controller and recorded output | CI (session tests); `--ignored` daemon tests need `/dev/uinput` | `tests/debug_session/`, `padwight debug --attach` |
-| L5 | Kernel tests in a container | Real uinput and uhid: release on exit, hot-plug, idle CPU, process-scan switching, the GUI under Xvfb | Docker, by hand | `scripts/kernel-test-docker.sh <filter>` |
+| L5 | Kernel tests in a container | Real uinput and uhid: release on exit, hot-plug, idle CPU, process-scan switching, the GUI starting (under Xvfb, an unsupported session type: it proves the window builds, not how it behaves on Wayland) | Docker, by hand | `scripts/kernel-test-docker.sh <filter>` |
 | L6 | Headless compositor harness | The overlay process on a real Wayland compositor (KWin): frame pacing, buffers, scale, CPU and memory | Locally, by hand | `scripts/overlay-harness.sh scripts/harness/<scenario>` |
 | L7 | Desktop VMs | Focus tracking, rules and the overlay process on GNOME, Cinnamon, Budgie, COSMIC, Plasma, Sway, Hyprland, niri and labwc | QEMU VMs in `vms/`, by hand | `scripts/desktop-test.sh <desktop>` |
 | L7b | GNOME Shell versions | The GNOME extension's overlay shows a shared picture and hides it, on each Shell from 45 to 51, headless | Docker, by hand | `scripts/gnome-versions/run.sh` |
@@ -65,12 +72,12 @@ covered mostly by integration tests (the daemon) score low here for that reason.
 | Menus: radial, directional, list, button, carousel, grid (`menu/`, `radial.rs`) | T2 | 27 | Units; off-screen scenes | Assertions on what the live overlay shows (today only pictures) | T-4 |
 | Guide overlay and movable shortcuts (`guide_menu.rs`, `config/shortcuts/`) | T2 | — | Units; scenes | The opener on a gesture or combo with real timing | T-1, OVL-6 |
 | On-screen keyboard, numpad, Paste | T2 | keyboard 13 | Units; scenes | Over a fullscreen game on each compositor | OVL-1, OVL-2 |
-| Tools: calculator, doodle, clipboard (`tools/`, `clipboard.rs`) | T2 | 27 | Units; scenes | Never run on hardware; clipboard on each desktop (`wl-copy`, `xclip`, `xsel`) | OVL-9 |
+| Tools: calculator, doodle, clipboard (`tools/`, `clipboard.rs`) | T2 | 27 | Units; scenes | Never run on hardware; `wl-copy` on each desktop, and Paste into an Xwayland game | OVL-9 |
 | Info and log overlays, tokens (`info/`, `inputlog/`) | T4 | 15, 17 | Units; scenes; library token check | Live values on real hardware (battery, wifi, GPU) | OVL-7 |
 | Overlay process and renderer (`overlay/render`, `overlay/wayland`) | T2 | overlay 14 | Units; compare with iced; harness pacing, surface, scale, CPU | Never on a real screen (renderer plan step 8.3); ABGR8888 buffers; integer buffer scale; following the focused window's monitor (`wayland/monitors.rs`) has no test | T-8, OVL-3 to OVL-5, OVL-12 |
 | GNOME and Cinnamon overlay through the Shell extension (`overlay/gnome.rs`, `gnome-extension/`, `cinnamon-extension/`) | T2 | — | Shell 45 to 51 headless (L7b); GNOME 51 and Cinnamon 6.6 in VMs, by hand | No unit tests; never with a real pad; `Present` blocks Shell's main loop, so a slow frame stalls the desktop | OVL-13 |
 | Sounds and rumble cues (`sound/`, `rumble.rs`) | T4 | 14, 6 | Sound trace; loudness audit | Library packs' synthesized cues never listened to; rumble cues on real motors | SND-1 to SND-4 |
-| Settings window (`gui/`) | T3 | 8 | Every page builds; tab shots; GUI under Xvfb (L5); one `iced_test` simulator test | Nothing clicks through the window and checks the saved config; dark theme; minimum size | T-10, T-11 |
+| Settings window (`gui/`) | T3 | 8 | Every page builds; tab shots; GUI under Xvfb (L5); one `iced_test` simulator test | Nothing clicks through the window and checks the saved config; dark theme; minimum size; the `gui_` container test runs on X11, so nothing starts the window on a Wayland compositor automatically (the harness's KWin could) | T-10, T-11 |
 | On-screen stage editor (`gui/stage/`) | T3 | — | Shots; handle drag in the simulator | Never used with a real mouse; focus and scroll after a pick run only live | GUI-8 |
 | In-game editor: Quick Settings, Edit Controls (`system_menu/`, `layout_editor/`) | T3 | 18, 7 | Units; scenes | Typing, live pictures and Save/Discard on hardware; layout editor is thin on tests | T-1, EDIT-1 to EDIT-6 |
 | Packs: parse, check, import, export, update (`pack.rs`) | T3 | 18 | Round trips, damaged input, clashes, forks, assets | Coverage-guided fuzzing of parse and of SVG and WAV assets | T-5 |
@@ -80,6 +87,11 @@ covered mostly by integration tests (the daemon) score low here for that reason.
 | Screenshots, recording, media (`capture/`, `record/`, `media/`) | T2 | 17, 15, 11 | Units; `--debug` daemon writes to a temp folder | Each desktop's tool; a stuck MPRIS player | INS-11 |
 | Input priority and latency (`priority.rs`, `daemon/input_timing.rs`) | T1 | 6 | Profiling suite | No regression gate | T-12 |
 | Install, systemd, udev, the desktop extensions, tarball | T0 | — | `check-install.sh` validates the files in CI | A clean install on each distro family; uninstall | INS-1 to INS-7 |
+| Kernel drivers and other owners of the pad (`input/linux.rs`, `pad_identity.rs`, `doctor/`) | T0 | input 12 | Driver name checks for `xpad`'s label order; uhid pads in the container | Out-of-tree `xone` and `xpadneo`, `joycond`, `hid-steam`, the oldest supported kernel; InputPlumber, Handheld Daemon and other remappers grabbing or hiding the pad | ENV-1, ENV-2 |
+| Seats and sessions (`daemon/`, udev rules) | T0 | — | Nothing | A second user's session, or a switch to a text console, while the daemon holds the pad: grabbed evdev and uinput file descriptors survive the loss of `uaccess` | ENV-9 |
+| Keyboard layouts (`keyboard/xkb.rs`, `output/`) | T1 | — | Units for XKB labels | Mapped keys, typed text and macros under AZERTY, QWERTZ, Dvorak and a non-Latin layout; per-desktop layout detection | ENV-5 |
+| Sandboxed and nested game sessions (`focus/identify.rs`, `quit/`) | T1 | — | Flatpak Heroic pid handling (units) | Flatpak and Snap Steam, Bottles; gamescope nested and as Steam's game mode | ENV-3, ENV-4 |
+| Audio, graphics and init outside the usual stack (`sound/`, `media/`, `overlay/`, `tray/`) | T2 | — | VMs use virtio GL and PipeWire | PulseAudio alone, ALSA alone; NVIDIA, hybrid laptops, software rendering; non-systemd distros | ENV-6 to ENV-8 |
 
 ## 4. When each layer runs
 
@@ -123,7 +135,8 @@ The author runs these by hand until they are in CI. The pull request description
 Everything weekly, plus:
 
 1. The hardware matrix ([section 5.1](#51-controller-matrix)) on every controller at hand, and
-   every `HW-`, `OVL-`, `EDIT-` and `INS-` check, or a note of why one was skipped.
+   every `HW-`, `OVL-`, `EDIT-`, `INS-` and `ENV-` check, or a note of why one was skipped. The
+   `ENV-` checks may be spread across releases, but each must have passed within the last three.
 2. The pack playtest tier for this release ([section 6](#6-pack-qa)).
 3. Install from the release tarball on a clean VM of the oldest supported distro (INS-1), and on
    an immutable distro (INS-4).
@@ -135,7 +148,9 @@ Everything weekly, plus:
 ### 5.0 Recording a run
 
 Each run records: date, commit, OS and kernel, desktop and its version, display scale and refresh
-rate, controller model, connection (USB or Bluetooth) and firmware, whether Steam was running, and
+rate, controller model, connection (USB or Bluetooth) and firmware, the pad's kernel driver
+(`udevadm info` on its event node), GPU and driver, audio server, keyboard layout, init system,
+whether Steam (and which package: native, Flatpak, Snap) or another remapper was running, and
 for each check: pass, fail (with the issue number) or skipped (with why). Attach `padwight doctor`
 output and `~/.local/state/padwight/daemon.log`. A bug report bundle that collects all of this in one
 command is T-17.
@@ -189,6 +204,7 @@ Fill a cell with the date of the last pass. A cell that doesn't apply is "—".
 | FOC-8 | On Sway, from a ruled game, go to an empty workspace and back. | Default on the empty one, the game's on return. |
 | FOC-9 | Without focus tracking, hold Force Quit over a ruled game, then again just after it closed (CR H-17). | The first names and ends the game; the second says there is nothing to force quit. |
 | FOC-10 | On Cinnamon, a fresh install: start the daemon, then log out and in. | The daemon installs and enables its Cinnamon extension; switching works after the log in without touching a setting. |
+| FOC-11 | On each desktop, a native Wayland game and an Xwayland one (a Proton game, and on niri one through `xwayland-satellite`), each with a class rule and an executable rule; Force Quit each. | Both rules match both games; the overlay shows over both, fullscreen too; Force Quit ends the right one. |
 
 ### 5.4 Overlays and menus
 
@@ -269,10 +285,29 @@ Need a person with the controller in hand. Record the values used, so a later ru
 | INS-5 | Log out and in; reboot. | The service starts at login. |
 | INS-6 | Without `XDG_RUNTIME_DIR`: the socket directory is `0700`, the socket `0600`; `padwight status` from another user is refused. | Only this user reaches the daemon. (Automated: `socket_fallback`.) |
 | INS-7 | `scripts/check-install.sh`. | Passes (in CI). |
-| INS-8 | `padwight doctor` on a machine missing each piece in turn: no uinput access, no udev rules, no motion rule, no daemon. | Each missing piece is named with the command that fixes it. |
+| INS-8 | `padwight doctor` on a machine missing each piece in turn: no uinput access, no udev rules, no motion rule, no `wl-copy`, an X11 session, no daemon. | Each missing piece is named with the command that fixes it. |
 | INS-9 | Read the daemon log after a full session of play. | No errors, no panics, messages clear to a player. |
 | INS-10 | Outside systemd: the tray icon's Remapping switch, Open settings, Close overlays, Quit. | Each works; Quit releases everything. |
 | INS-11 | Screenshot and recording on each desktop, in a game whose name has a colon. | The file is saved and plays; the folder name replaces the colon. |
+
+### 5.10 Linux environment
+
+What differs between Linux systems apart from the desktop. Most of these need a VM or a spare
+install rather than a particular controller; ENV-1 and ENV-2 need the pads and handhelds named.
+
+| # | Steps | Expected |
+|---|---|---|
+| ENV-1 | **Pad drivers.** Each Xbox pad on in-kernel `xpad` and on the out-of-tree `xone` (USB, dongle) and `xpadneo` (Bluetooth); Joy-Cons on `hid-nintendo` alone and with `joycond` combining them; a Steam Deck on `hid-steam` in and out of lizard mode; a PlayStation pad on the oldest supported kernel. HW-1 and the glyph check on each. | Face buttons are positional whatever the driver; gyro and touchpad nodes are found; the glyph family is right; `doctor` names the driver when a node is missing. |
+| ENV-2 | **Other programs that own the pad.** On Bazzite or ChimeraOS with InputPlumber running, on a ROG Ally or Legion Go with Handheld Daemon, and with AntiMicroX or a second Padwight-like remapper grabbing the pad. Steam is HW-8. | Padwight either manages the pad without double input or says which program holds it; it never fights another grab in a loop. |
+| ENV-3 | **gamescope.** A game in gamescope nested inside each of KDE Plasma and Hyprland; then Steam's game mode session (Bazzite or a Deck). | Nested: the rule matches the game (or, if only gamescope's window is visible, the plan records that a class rule on gamescope is needed). Game mode: whatever works is written down in the README; nothing stays held, the daemon doesn't crash without a supported focus backend. |
+| ENV-4 | **Sandboxed launchers.** Steam as a Flatpak and as a Snap (Ubuntu), Lutris and Bottles as Flatpaks, Heroic as a Flatpak (FOC-4). For each: a rule, `debug focus`, Force Quit. | The library finds the games; the right executable is named across the pid namespace; Force Quit ends the game, not the launcher or the sandbox's helper. |
+| ENV-5 | **Keyboard layouts.** With the desktop set to AZERTY, QWERTZ, Dvorak, and a non-Latin layout (Russian or Greek, with US second): a mapped key, a typed macro, the on-screen keyboard (labels and typing), the calculator's Send, and `PADWIGHT_KEYBOARD_LAYOUT` overriding detection. Switch layout while the daemon runs. | Mapped keys go to the key position the config names; the on-screen keyboard's labels match what reaches the game; typed text and Send produce the intended characters or the docs say what they can't type. |
+| ENV-6 | **Audio.** Overlay cues and media actions (volume, play/pause) on PipeWire with `pipewire-pulse`, on PulseAudio alone, and on ALSA with no sound server; switch output to a Bluetooth headset mid-session. | Cues play on each, or one log line says why not; media actions work or say they're unavailable; nothing blocks input while audio is missing (OVL-10). |
+| ENV-7 | **Graphics.** The overlay and the settings window on Mesa (AMD and Intel), on NVIDIA's proprietary driver (current and the oldest branch it still supports), on a hybrid laptop with the game on the discrete GPU, and with software rendering only (`LIBGL_ALWAYS_SOFTWARE=1`, or a VM without GL). Also at 144 Hz or more, with VRR on, with HDR on, and on a rotated panel (the Deck's is portrait). | The overlay draws in the right place, sharp and without flicker; idle CPU stays near zero; with no GPU it either draws in software or logs that it can't and the daemon keeps running. |
+| ENV-8 | **Init and permissions without systemd.** Void (runit) and Artix or Gentoo (OpenRC, elogind): install, start from an autostart entry, log out and in. Also a system where `uaccess` isn't applied (seatd only). | The README's steps work; the tray icon appears; `doctor` names any missing access with the fix; the daemon releases everything on logout. |
+| ENV-9 | **Seats and session switching.** With the daemon running and a pad held: switch to a second user's graphical session; switch to a text console; lock the screen. Then come back. | While the session is inactive, input doesn't reach it and the active user's session can use the pad (or the docs say it can't); on return, the pad is managed again. No key stays held in either session. |
+| ENV-10 | **Security modules.** Fedora with SELinux enforcing and Ubuntu with AppArmor's user-namespace restrictions: install, play, use the overlay, Force Quit, run `scripts/sandbox-pid.sh`. | No denials in the audit log (`ausearch -m avc`, `journalctl -k \| grep apparmor`). |
+| ENV-11 | **Paths.** `XDG_CONFIG_HOME`, `XDG_STATE_HOME` and `XDG_RUNTIME_DIR` set to unusual places; the config directory a symlink to another filesystem; home on NFS. Save from the settings window. | Files land where XDG says; a save swaps in atomically or fails with a clear message, never a half-written tree (SEC-5). |
 
 ## 6. Pack QA
 
@@ -320,14 +355,14 @@ For a reviewer before each release. Automated checks can't settle these.
 | SEC-5 | **Config files.** Written `0600` through one helper, swapped in from a staging folder. Does a crash at any point leave either the old tree or the new one, never a mix (T-9)? |
 | SEC-6 | **Dependencies.** Read `cargo audit`'s warnings and the direct dependencies' licenses. |
 | SEC-7 | **Force Quit.** Can a window's reported pid, or a process name, make it end something outside the game's tree (the desktop, a launcher, another user's process)? |
-| SEC-8 | **Helper programs.** Clipboard (`wl-copy`, `xclip`, `xsel`), screenshot and recording tools are run with arguments, never through a shell. Check no text the player types reaches a command line. |
+| SEC-8 | **Helper programs.** Clipboard (`wl-copy`), screenshot and recording tools are run with arguments, never through a shell. Check no text the player types reaches a command line. |
 | SEC-9 | **The dashboard example.** It binds to `127.0.0.1` and checks the `Host` header. Re-check when it changes. |
 
 ## 8. Desktop session runs
 
-Rerun when the daemon's interaction with the system changes (focus tracking, input, the GNOME or
-Cinnamon extension, the overlay window), and when a desktop, the kernel or the input stack has a new
-release:
+Wayland sessions only; the VMs have no X11 session to test. Rerun when the daemon's interaction
+with the system changes (focus tracking, input, the GNOME or Cinnamon extension, the overlay
+window), and when a desktop, the kernel or the input stack has a new release:
 
 ```sh
 scripts/desktop-versions.sh   # network: latest GNOME, Plasma, Sway and Hyprland; exits 1 if GNOME's major isn't in the extension's shell-version list

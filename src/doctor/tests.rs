@@ -187,6 +187,22 @@ fn the_shipped_files_install_what_the_checks_look_for() {
 }
 
 #[test]
+fn only_a_wayland_session_counts_as_a_desktop() {
+    assert_eq!(desktop_finding(true, true).level, Level::Ok);
+    assert_eq!(desktop_finding(true, false).level, Level::Ok);
+    let x11 = desktop_finding(false, true);
+    assert!(x11.level == Level::Problem && x11.title.contains("X11"), "{}", x11.title);
+    assert_eq!(desktop_finding(false, false).level, Level::Note);
+}
+
+#[test]
+fn a_missing_wl_copy_is_only_a_note() {
+    assert_eq!(clipboard_finding(true).level, Level::Ok);
+    let missing = clipboard_finding(false);
+    assert!(missing.level == Level::Note && missing.detail.contains("wl-clipboard") && missing.fix.is_none());
+}
+
+#[test]
 fn a_fix_writes_the_rule_with_printf_and_tee() {
     let fix = install_rule(MOTION_RULE_NAME, MOTION_RULE);
     let first = fix.lines().next().unwrap();

@@ -1,29 +1,31 @@
-//! Puts text on the desktop's clipboard, through whichever clipboard tool the system has. The
-//! daemon has no window of its own to do it with, so it asks the tool that the desktop ships.
+//! Puts text on the desktop's clipboard through `wl-copy` (wl-clipboard). The daemon has no
+//! window of its own to do it with, so it asks the tool. Xwayland games read the same clipboard,
+//! since the compositor keeps the two in step.
 
 use std::{
     io::Write,
     process::{Command, Stdio},
 };
 
-/// The tools that read text on standard input and make it the clipboard, in the order they're tried.
-#[cfg(target_os = "linux")]
-const TOOLS: &[(&str, &[&str])] = &[("wl-copy", &[]), ("xclip", &["-selection", "clipboard"]), ("xsel", &["--clipboard", "--input"])];
+/// The tool that reads text on standard input and makes it the clipboard.
+pub const TOOL: &str = "wl-copy";
 
-/// Copies `text`. Errs with the reason when no tool takes it.
+/// Copies `text`. Errs with the reason when the tool is missing or fails.
 pub fn copy(text: &str) -> Result<(), String> {
-    for (program, args) in TOOLS {
-        let Ok(mut child) = Command::new(program).args(*args).stdin(Stdio::piped()).stdout(Stdio::null()).stderr(Stdio::null()).spawn() else {
-            continue;
-        };
-        if let Some(mut stdin) = child.stdin.take() {
-            // The tool reads to the end, so it's closed before waiting: a tool that forks to keep
-            // the clipboard keeps none of our pipes.
-            let _ = stdin.write_all(text.as_bytes());
-        }
-        if child.wait().is_ok_and(|status| status.success()) {
-            return Ok(());
-        }
+    let mut child = Command::new(TOOL)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|e| format!("can't run {TOOL} (install wl-clipboard): {e}"))?;
+    if let Some(mut stdin) = child.stdin.take() {
+        // The tool reads to the end, so it's closed before waiting: a tool that forks to keep
+        // the clipboard keeps none of our pipes.
+        let _ = stdin.write_all(text.as_bytes());
     }
-    Err(format!("no clipboard tool took it ({})", TOOLS.iter().map(|(program, _)| *program).collect::<Vec<_>>().join(", ")))
+    match child.wait() {
+        Ok(status) if status.success() => Ok(()),
+        Ok(status) => Err(format!("{TOOL} failed ({status})")),
+        Err(e) => Err(format!("{TOOL} failed: {e}")),
+    }
 }

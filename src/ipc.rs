@@ -212,11 +212,11 @@ pub struct SwitchEvent {
 /// How the daemon learns which game is active.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FocusBackend {
-    /// KWin script reports focus changes (KDE Plasma, Wayland or X11).
+    /// KWin script reports focus changes (KDE Plasma).
     Kwin,
-    /// Our GNOME Shell extension reports focus changes (GNOME, Wayland or X11).
+    /// Our GNOME Shell extension reports focus changes (GNOME).
     GnomeShell,
-    /// Our Cinnamon extension reports focus changes (Cinnamon, Wayland or X11).
+    /// Our Cinnamon extension reports focus changes (Cinnamon).
     Cinnamon,
     /// COSMIC's toplevel info protocol reports focus changes.
     Cosmic,

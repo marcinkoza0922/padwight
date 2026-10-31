@@ -55,12 +55,17 @@ What padwight needs from the system, and why
    so they read the input node, which padwight holds. While padwight is off they then read it
    there too, which costs Steam's own gyro and lightbar control for those controllers.
 
-5. A graphical session, for the settings window, the on-screen keyboard and the overlays.
+5. A Wayland session, for the settings window, the on-screen keyboard and the overlays.
+   X11 sessions (Xorg, XLibre) aren't supported; games running under Xwayland are fine.
    The overlays need a Wayland compositor with layer-shell (KDE Plasma, COSMIC, Sway, Hyprland,
    labwc and other wlroots compositors). GNOME and Cinnamon have none: their overlays are shown by
    padwight's shell extension instead (experimental).
 
-6. Optional: the daemon running. `systemctl --user enable --now padwight` starts it at login.
+6. Optional: wl-copy, from the wl-clipboard package, for the calculator's Copy. padwight has no
+   window of its own to own the clipboard with, so it hands the text to wl-copy. Everything else
+   works without it, Paste included.
+
+7. Optional: the daemon running. `systemctl --user enable --now padwight` starts it at login.
 
 All udev rules go in /etc/udev/rules.d/ and need root once. `padwight doctor` prints the
 exact commands for whatever is missing.";
@@ -324,23 +329,50 @@ on after installing it."
     }
 }
 
-/// Everything the settings window shows: the permissions, and whether there is a desktop.
+/// Everything the settings window shows: the permissions, the desktop and the helper programs.
 pub fn check_all() -> Vec<Finding> {
     let mut findings = check_permissions(&Roots::system());
     findings.push(check_desktop());
+    findings.push(clipboard_finding(crate::capture::on_path(crate::clipboard::TOOL)));
     findings
 }
 
 fn check_desktop() -> Finding {
-    let graphical = ["WAYLAND_DISPLAY", "DISPLAY"].iter().any(|v| std::env::var_os(v).is_some_and(|s| !s.is_empty()));
-    if graphical {
-        Finding::new(Level::Ok, "Desktop session: found", "")
+    let set = |v: &str| std::env::var_os(v).is_some_and(|s| !s.is_empty());
+    desktop_finding(set("WAYLAND_DISPLAY"), set("DISPLAY"))
+}
+
+/// What the session variables say: Wayland is needed, an X11 session alone isn't supported.
+fn desktop_finding(wayland: bool, x11: bool) -> Finding {
+    if wayland {
+        Finding::new(Level::Ok, "Desktop session: Wayland", "")
+    } else if x11 {
+        Finding::new(
+            Level::Problem,
+            "Desktop session: X11, which isn't supported",
+            "padwight needs a Wayland session for the settings window, the on-screen keyboard and the overlays \
+(DISPLAY is set, WAYLAND_DISPLAY isn't). Log in to your desktop's Wayland session instead. Games running under Xwayland are fine.",
+        )
     } else {
         Finding::new(
             Level::Note,
             "Desktop session: none found here",
-            "The settings window and overlays need a graphical session (neither WAYLAND_DISPLAY nor DISPLAY is set). \
-The daemon itself doesn't.",
+            "The settings window and overlays need a Wayland session (WAYLAND_DISPLAY isn't set). The daemon itself doesn't.",
+        )
+    }
+}
+
+/// Whether the calculator's Copy can reach the clipboard. Nothing else needs it, so a missing
+/// tool is a note; the package's name is the same on every major distro, the install command isn't.
+fn clipboard_finding(found: bool) -> Finding {
+    if found {
+        Finding::new(Level::Ok, format!("Clipboard: {} found", crate::clipboard::TOOL), "")
+    } else {
+        Finding::new(
+            Level::Note,
+            format!("Clipboard: {} isn't installed", crate::clipboard::TOOL),
+            "The calculator's Copy puts its answer on the clipboard through wl-copy. Install your distro's \
+wl-clipboard package to use it. Everything else, Paste included, works without it.",
         )
     }
 }
@@ -410,8 +442,7 @@ pub fn run(args: &[&str]) -> Result<()> {
         [] => {}
         _ => bail!("usage: padwight doctor [--explain]"),
     }
-    let mut findings = check_permissions(&Roots::system());
-    findings.push(check_desktop());
+    let mut findings = check_all();
     findings.push(check_daemon());
     print!("{}", render(&findings));
     let problems = findings.iter().filter(|f| f.level == Level::Problem).count();

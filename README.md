@@ -52,6 +52,8 @@ The library is `packs/*.padpack` in this repository, embedded at build time. See
 
 ## Install
 
+padwight needs a Wayland session; X11 sessions (Xorg, XLibre) aren't supported. Games running under Xwayland, which includes every Proton game, work as usual.
+
 From a release tarball (Linux, x86_64):
 
 ```sh
@@ -262,14 +264,14 @@ A setup's Details tab lists recently focused windows, each with a one-click "+ R
 
 Focus tracking depends on your desktop. The daemon picks the right method by itself and logs which one it uses (`padwight status` shows it):
 
-- **KDE Plasma** (Wayland or X11): a small KWin script.
+- **KDE Plasma**: a small KWin script.
 - **Sway**: the compositor's IPC socket (`$SWAYSOCK`).
 - **Hyprland**: its event and command sockets.
 - **niri**: its IPC socket's event stream.
 - **wlroots compositors** (labwc, Wayfire, river, Budgie 10.10 and later, which runs on labwc, and others that offer `wlr-foreign-toplevel-management`): the protocol's window list. It doesn't say which process owns a window, so these match windows by class only, and executable-name rules don't match.
 - **COSMIC**: its toplevel info protocol (`cosmic-toplevel-info`); class rules only, like wlroots. The overlays are ordinary layer-shell windows there.
 - **GNOME** (Mutter): a small GNOME Shell extension, which the daemon installs and enables itself. A log out and back in may be needed the first time.
-- **Cinnamon** (Muffin, Wayland or X11): the same, as a Cinnamon extension, enabled through the `enabled-extensions` setting.
+- **Cinnamon** (Muffin): the same, as a Cinnamon extension, enabled through the `enabled-extensions` setting.
 
 GNOME and Cinnamon can't show the on-screen keyboard, menus or overlays as windows, because Mutter and Muffin have no layer-shell; the same extension shows them instead (experimental). Focus tracking works, through the extension. On other desktops, rules apply while a matching process is running.
 
