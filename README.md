@@ -77,8 +77,8 @@ padwight            # open the GUI
 For an application-menu entry and icon for the settings window:
 
 ```sh
-install -Dm644 flatpak/io.github.marcinkoza0922.Padwight.svg ~/.local/share/icons/hicolor/scalable/apps/io.github.marcinkoza0922.Padwight.svg
-install -Dm644 flatpak/io.github.marcinkoza0922.Padwight.desktop ~/.local/share/applications/io.github.marcinkoza0922.Padwight.desktop
+install -Dm644 dist/io.github.marcinkoza0922.Padwight.svg ~/.local/share/icons/hicolor/scalable/apps/io.github.marcinkoza0922.Padwight.svg
+install -Dm644 dist/io.github.marcinkoza0922.Padwight.desktop ~/.local/share/applications/io.github.marcinkoza0922.Padwight.desktop
 ```
 
 Controllers can be unplugged, reconnected or swapped while padwight runs, and it copes. A disconnect releases everything that controller was holding and closes every overlay it was driving (unsaved in-game menu changes are put aside until the menu opens again). A toast names the controller that left or arrived. Your profile stays put, so reconnecting the same pad picks up where you left off.
@@ -100,29 +100,9 @@ Rules go in `/etc/udev/rules.d/`, and apply after:
 sudo udevadm control --reload && sudo udevadm trigger
 ```
 
-### Flatpak
+### Immutable and atomic distros
 
-`flatpak/io.github.marcinkoza0922.Padwight.yml` builds the same binary as a Flatpak. Run these from the checkout:
-
-```sh
-flatpak install --user flathub org.freedesktop.Sdk//25.08 org.freedesktop.Sdk.Extension.rust-stable//25.08 org.flatpak.Builder
-flatpak run org.flatpak.Builder --user --force-clean --disable-rofiles-fuse --install-deps-from=flathub --repo=repo build-dir flatpak/io.github.marcinkoza0922.Padwight.yml
-flatpak remote-add --user --no-gpg-verify --if-not-exists padwight-local file://$PWD/repo
-flatpak install --user --reinstall padwight-local io.github.marcinkoza0922.Padwight
-flatpak run io.github.marcinkoza0922.Padwight          # open the GUI
-```
-
-`--disable-rofiles-fuse` is only needed when flatpak-builder itself runs inside a sandbox. `cargo-sources.json` lists the crates the build downloads. Regenerate it with flatpak-builder-tools' `flatpak-cargo-generator.py` whenever `Cargo.lock` changes.
-
-To run the daemon at login, copy `dist/padwight-flatpak.service` to `~/.config/systemd/user/` and enable it. The Flatpak differs from the native install in a few ways:
-
-- Settings live in `~/.var/app/io.github.marcinkoza0922.Padwight/config/padwight/`. To keep your existing setups, copy `~/.config/padwight/` there.
-- The motion-sensor rule is a host file, so install it with the `sudo` commands above. The app can't run `sudo` itself.
-- Game detection reads Steam and Lutris libraries read-only. Other library folders need `flatpak override --user --filesystem=/path:ro io.github.marcinkoza0922.Padwight`.
-- The sandbox has its own process list, so a window is identified by its class and title only, not by its executable. Focus tracking works through KWin, GNOME and Hyprland. On GNOME, the sandbox can reach the whole Shell D-Bus interface (`--talk-name=org.gnome.Shell`), and it writes the extension into `~/.local/share/gnome-shell/extensions`, which is what lets it install and enable the extension.
-- Sway's IPC socket isn't shared into the sandbox, so on Sway and labwc (and other wlroots compositors) focus falls back to matching running processes. Hyprland's socket is shared, so focus works there. On all wlroots compositors, including Hyprland, the compositor hides its layer-shell protocol from sandboxed apps, so the on-screen keyboard and overlays don't show in a Flatpak. Run the app natively there for those.
-- Screenshot and recording actions run host programs (grim, gpu-screen-recorder, …), which the sandbox doesn't include, so they may not work.
-- `--device=all` is needed so the sandbox can reach `/dev/uinput`. That lets the app read and send input on the machine, just like the native daemon.
+Padwight installs entirely into your home directory plus three small files in `/etc`, so it works on Silverblue, Kinoite, Bazzite, Aeon and similar systems without layering packages. The binary and the systemd user unit go in `~/.local`; the udev rules and `dist/padwight-uinput.conf` go in `/etc/udev/rules.d/` and `/etc/modules-load.d/`, which stay writable. On NixOS, declare the rules and the `uinput` module in your configuration instead. A Flatpak isn't offered: the sandbox would block `/dev/uinput`, the process list that game detection reads, and the overlay's layer-shell surface.
 
 ### Windows
 
@@ -337,7 +317,7 @@ When `padwight daemon` runs in a terminal, it keeps a live status line showing e
 
 Opening the GUI starts the daemon in the background if it isn't already running. Its output goes to `~/.local/state/padwight/daemon.log`, and the daemon keeps running after the window closes. Stopping the daemon closes the window.
 
-Outside systemd (in a terminal, or from an autostart entry), the daemon also puts an icon in the system tray. Clicking it opens the settings window, and its menu has a Remapping switch, Open settings, Close overlays, and Quit. Under systemd, the unit manages the daemon, so no icon is shown. Desktops without a tray (such as GNOME without an extension) show no icon, and the daemon works fine without one. In a Flatpak, the tray needs the `org.kde.StatusNotifierWatcher` permission, which the manifest grants.
+Outside systemd (in a terminal, or from an autostart entry), the daemon also puts an icon in the system tray. Clicking it opens the settings window, and its menu has a Remapping switch, Open settings, Close overlays, and Quit. Under systemd, the unit manages the daemon, so no icon is shown. Desktops without a tray (such as GNOME without an extension) show no icon, and the daemon works fine without one.
 
 ## Good to know
 

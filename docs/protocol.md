@@ -20,7 +20,7 @@ What the version covers: everything on this page except what is marked *internal
 
 | | |
 |---|---|
-| Socket | A Unix stream socket named `padwight.sock` in `$XDG_RUNTIME_DIR` (`/run/user/1000/` on most systems). Without a runtime directory, `/tmp/padwight-<uid>/padwight.sock`. Inside a Flatpak, `$XDG_RUNTIME_DIR/app/<FLATPAK_ID>/`. On Windows it is an AF_UNIX socket in `%LOCALAPPDATA%\padwight\` (or in `$XDG_RUNTIME_DIR` when that is set). |
+| Socket | A Unix stream socket named `padwight.sock` in `$XDG_RUNTIME_DIR` (`/run/user/1000/` on most systems). Without a runtime directory, `/tmp/padwight-<uid>/padwight.sock`. On Windows it is an AF_UNIX socket in `%LOCALAPPDATA%\padwight\` (or in `$XDG_RUNTIME_DIR` when that is set). |
 | Access | Mode `0600`: only your own user can connect. There is no other authentication. |
 | Encoding | JSON, UTF-8, one value per line (`\n`). |
 | Requests | **One request per connection.** Connect, write one line, read one line, close. |

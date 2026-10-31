@@ -24,7 +24,7 @@ The Overview page's **What's happening** lists the last profile switches, newest
 
 ## The keyboard, menus or overlays don't appear
 
-They need KDE Plasma, Sway, Hyprland or labwc; GNOME lacks the layer-shell they use. In a Flatpak, they only show on KDE Plasma.
+They need KDE Plasma, Sway, Hyprland or labwc; GNOME lacks the layer-shell they use.
 
 ## The on-screen keyboard shows the wrong letters
 

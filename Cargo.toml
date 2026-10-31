@@ -8,7 +8,7 @@ anyhow = "1.0.104"
 dirs = "7.0.0"
 iced = { version = "0.14", features = ["svg", "image-without-codecs", "tokio", "markdown", "advanced"] }
 # Offscreen drawing for overlay snapshots (snapshot.rs). Both are already in the lock file
-# through iced, so the vendored Flatpak sources don't change.
+# through iced, so the lock file doesn't change.
 iced_runtime = "0.14"
 # Reads a font file's family name without a renderer (font.rs); same version iced already locks.
 fontdb = "0.23"
@@ -18,7 +18,7 @@ image = { version = "0.25", default-features = false, features = ["png", "jpeg"]
 # Rasterizes the app icon for the tray and window (iced already pulls it in).
 resvg = "0.45"
 # The overlay's own renderer (overlay/render): shapes text, and draws everything on the CPU.
-# Both are already in the lock file through iced, so the vendored Flatpak sources don't change.
+# Both are already in the lock file through iced, so the lock file doesn't change.
 cosmic-text = "0.15"
 tiny-skia = "0.11"
 serde = { version = "1.0.229", features = ["derive"] }
@@ -34,7 +34,7 @@ libc = "0.2.190"
 rfd = { version = "0.17", default-features = false, features = ["xdg-portal"] }
 zbus = "5"
 # wlroots focus tracking (focus/wlroots.rs). Both are already in the lock file through
-# iced's winit and smithay-client-toolkit, so the vendored Flatpak sources don't change.
+# iced's winit and smithay-client-toolkit, so the lock file doesn't change.
 wayland-client = "0.31"
 wayland-protocols-wlr = "0.3"
 # The overlay's window (overlay/wayland.rs): fractional scaling and the viewporter.

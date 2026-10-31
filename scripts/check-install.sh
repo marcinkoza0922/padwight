@@ -1,6 +1,6 @@
 #!/bin/sh
 # Validates the files a user installs: the systemd units, the udev rule, the desktop entry, the
-# AppStream metainfo and the Flatpak manifest. A missing validator is an error, not a skip, so a
+# AppStream metainfo. A missing validator is an error, not a skip, so a
 # run can't pass without checking anything.
 set -eu
 cd "$(dirname "$0")/.."
@@ -19,7 +19,7 @@ need python3
 # copy whose ExecStart is /bin/true; the directives around it are what's being checked.
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
-for unit in dist/padwight.service dist/padwight-flatpak.service; do
+for unit in dist/padwight.service; do
     copy="$tmp/$(basename "$unit")"
     sed -E 's|^ExecStart=[^ ]+|ExecStart=/bin/true|' "$unit" > "$copy"
     systemd-analyze verify --man=no "$copy"
@@ -35,34 +35,9 @@ sh -n dist/install.sh
 sh -n scripts/package.sh
 echo "ok: install scripts"
 
-desktop-file-validate flatpak/io.github.marcinkoza0922.Padwight.desktop
+desktop-file-validate dist/io.github.marcinkoza0922.Padwight.desktop
 echo "ok: desktop entry"
 
 # --no-net: no network access in CI. Pedantic hints are not failures.
-appstreamcli validate --no-net flatpak/io.github.marcinkoza0922.Padwight.metainfo.xml
+appstreamcli validate --no-net dist/io.github.marcinkoza0922.Padwight.metainfo.xml
 echo "ok: metainfo"
-
-python3 - <<'PY'
-import sys
-try:
-    import yaml
-except ImportError:
-    sys.exit("missing Python module: PyYAML (pip install pyyaml, or python3-yaml)")
-
-path = "flatpak/io.github.marcinkoza0922.Padwight.yml"
-with open(path) as f:
-    manifest = yaml.safe_load(f)
-
-problems = []
-for key in ("id", "runtime", "runtime-version", "sdk", "command", "modules", "finish-args"):
-    if key not in manifest:
-        problems.append(f"{path}: missing `{key}`")
-for module in manifest.get("modules", []):
-    if "name" not in module:
-        problems.append(f"{path}: a module has no name")
-if manifest.get("command") != "padwight":
-    problems.append(f"{path}: command should be padwight, is {manifest.get('command')!r}")
-if problems:
-    sys.exit("\n".join(problems))
-print(f"ok: {path}")
-PY

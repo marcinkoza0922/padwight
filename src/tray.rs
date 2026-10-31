@@ -62,8 +62,7 @@ impl TrayIcon {
     /// session has no tray to join; the daemon works without one.
     pub fn start(shown: Shown, on_command: impl Fn(Command) + Send + 'static) -> Option<Self> {
         let tray = Padwight { shown: shown.clone(), on_command: Box::new(on_command) };
-        // A Flatpak can't own the StatusNotifierItem bus name, so it must not ask for it.
-        let handle = tray.disable_dbus_name(std::env::var_os("FLATPAK_ID").is_some()).spawn().ok()?;
+        let handle = tray.spawn().ok()?;
         Some(Self { handle, shown })
     }
 

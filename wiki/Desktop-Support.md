@@ -15,13 +15,9 @@ Automatic profile switching needs to know which window has focus. padwight picks
 
 Focus tracking works through a small GNOME Shell extension, which padwight installs and enables itself. Mutter has no layer-shell, so the overlay can't be a window of its own: the extension shows the frames the overlay draws instead (experimental: checked on GNOME 51 in a VM: the keyboard, the Guide shortcuts and menus show over a fullscreen window and hide again, on the focused window's monitor, at fractional scales too. The extension was checked against GNOME Shell 45 to 51 headless; only 51 was run in a full session).
 
-## Flatpak
-
-In a Flatpak, Sway, labwc and Hyprland hide their layer-shell protocol from the app, so the on-screen keyboard and overlays don't show. Sway and labwc also hide the window list, so focus falls back to matching running processes there. Hyprland's focus still works through its socket. KDE Plasma and GNOME work in a Flatpak. Run the native build on Sway, labwc or Hyprland for overlays, or for per-window switching on Sway and labwc.
-
 ## Tested
 
-The desktop checks last ran on 2026-10-09 with kernel 7.2.9. GNOME 51.0, KDE Plasma 6.7.5, Sway 1.12, Hyprland 0.56.2 and labwc 0.20.2 pass the focus, profile and input checks (the overlay is skipped on GNOME). The Flatpak build passes on GNOME and KDE, and the Sway, labwc and Hyprland limits above apply to it.
+The desktop checks last ran on 2026-10-09 with kernel 7.2.9. GNOME 51.0, KDE Plasma 6.7.5, Sway 1.12, Hyprland 0.56.2 and labwc 0.20.2 pass the focus, profile and input checks (the overlay is skipped on GNOME).
 
 ## Fallback
 

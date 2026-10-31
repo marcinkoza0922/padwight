@@ -403,15 +403,10 @@ pub struct GyroOut {
     pub stick: Option<(f32, f32)>,
 }
 
-/// A runtime directory the host can see too, for files that the desktop or another instance
-/// must reach. In a Flatpak, `$XDG_RUNTIME_DIR` is private to each sandbox run, so the app's
-/// own directory under it is used instead: the host shares that one between runs.
+/// The runtime directory, for files that the desktop or another instance must reach.
 #[cfg(target_os = "linux")]
 pub fn shared_runtime_dir() -> Option<PathBuf> {
-    match std::env::var_os("FLATPAK_ID") {
-        Some(id) => dirs::runtime_dir().map(|dir| dir.join("app").join(id)),
-        None => dirs::runtime_dir(),
-    }
+    dirs::runtime_dir()
 }
 
 /// Windows has no runtime directory, but `XDG_RUNTIME_DIR` can still name one, as on Linux, so
