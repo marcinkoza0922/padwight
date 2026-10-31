@@ -10,9 +10,6 @@ use std::{
 #[cfg(target_os = "linux")]
 const TOOLS: &[(&str, &[&str])] = &[("wl-copy", &[]), ("xclip", &["-selection", "clipboard"]), ("xsel", &["--clipboard", "--input"])];
 
-#[cfg(windows)]
-const TOOLS: &[(&str, &[&str])] = &[("clip", &[])];
-
 /// Copies `text`. Errs with the reason when no tool takes it.
 pub fn copy(text: &str) -> Result<(), String> {
     for (program, args) in TOOLS {

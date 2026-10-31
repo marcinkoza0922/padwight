@@ -1,4 +1,4 @@
-//! Screenshots: picks the screenshot tool for the desktop (on Windows, grabs the screen itself)
+//! Screenshots: picks the screenshot tool for the desktop
 //! and saves to `~/Pictures/Screenshots/<game>/`. Also the file naming recordings share.
 
 use std::{
@@ -11,11 +11,6 @@ use std::process::Command;
 #[cfg(target_os = "linux")]
 use anyhow::bail;
 use anyhow::{Context, Result};
-
-#[cfg(windows)]
-mod windows;
-#[cfg(windows)]
-pub use windows::{grab, screenshot, timestamp};
 
 /// A command-line screenshot tool.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -66,10 +61,9 @@ fn pick_tool(desktop: &str, installed: impl Fn(&str) -> bool) -> Option<Tool> {
         .find(|t| installed(t.program()))
 }
 
-/// Whether `program` is installed where the shell would find it (as `program.exe` on Windows).
+/// Whether `program` is installed where the shell would find it.
 pub fn on_path(program: &str) -> bool {
-    let file = format!("{program}{}", std::env::consts::EXE_SUFFIX);
-    std::env::var_os("PATH").is_some_and(|paths| std::env::split_paths(&paths).any(|dir| dir.join(&file).is_file()))
+    std::env::var_os("PATH").is_some_and(|paths| std::env::split_paths(&paths).any(|dir| dir.join(program).is_file()))
 }
 
 /// Where captures go instead of the user's Pictures and Videos, when set (debug mode).
@@ -90,28 +84,11 @@ pub fn media_base(dir: Option<PathBuf>, fallback: &str) -> Result<PathBuf> {
     dir.or_else(|| dirs::home_dir().map(|h| h.join(fallback))).with_context(|| format!("no {fallback} folder"))
 }
 
-/// A game's name as a folder name: no path separators or leading dots, and on Windows none of
-/// the characters it refuses in names (`Prince of Persia: The Sands of Time`), the trailing dots
-/// and spaces it drops, or the device names it reserves.
+/// A game's name as a folder name: no path separators or leading dots.
 fn folder_name(game: &str) -> String {
-    folder_name_for(game, cfg!(windows))
-}
-
-fn folder_name_for(game: &str, windows: bool) -> String {
-    let game = if windows { game.replace(": ", " - ") } else { game.to_string() };
-    let refused = |c: char| c == '/' || c == '\\' || c.is_control() || (windows && matches!(c, ':' | '*' | '?' | '"' | '<' | '>' | '|'));
-    let name: String = game.chars().map(|c| if refused(c) { '_' } else { c }).collect();
-    let mut name = name.trim().trim_start_matches('.');
-    if windows {
-        name = name.trim_end_matches(['.', ' ']);
-    }
-    if name.is_empty() {
-        return "Screenshots".into();
-    }
-    let device = name.split('.').next().unwrap_or(name).trim_end().to_ascii_uppercase();
-    let reserved = matches!(device.as_str(), "CON" | "PRN" | "AUX" | "NUL")
-        || (device.len() == 4 && (device.starts_with("COM") || device.starts_with("LPT")) && device.ends_with(|c: char| c.is_ascii_digit()));
-    if windows && reserved { format!("{name}_") } else { name.into() }
+    let name: String = game.chars().map(|c| if c == '/' || c == '\\' || c.is_control() { '_' } else { c }).collect();
+    let name = name.trim().trim_start_matches('.');
+    if name.is_empty() { "Screenshots".into() } else { name.into() }
 }
 
 /// `<base>/<kind>/<game>/<stamp>.<ext>`, e.g. `~/Pictures/Screenshots/Doom/<time>.png`.
@@ -217,20 +194,9 @@ mod tests {
     }
 
     #[test]
-    fn folder_names_are_ones_windows_accepts() {
-        for (game, folder) in [
-            ("Prince of Persia: The Sands of Time", "Prince of Persia - The Sands of Time"),
-            ("What? <Why|How>*", "What_ _Why_How__"),
-            ("Thief II: The Metal Age...", "Thief II - The Metal Age"),
-            ("con", "con_"),
-            ("COM1.exe", "COM1.exe_"),
-            ("Console", "Console"),
-        ] {
-            assert_eq!(folder_name_for(game, true), folder, "{game}");
-        }
-        // Elsewhere, names keep what they have, so existing folders are still used.
-        assert_eq!(folder_name_for("Thief II: The Metal Age", false), "Thief II: The Metal Age");
-        assert_eq!(folder_name_for("con", false), "con");
+    fn folder_names_keep_what_they_have() {
+        assert_eq!(folder_name("Thief II: The Metal Age"), "Thief II: The Metal Age");
+        assert_eq!(folder_name("con"), "con");
     }
 
     #[test]

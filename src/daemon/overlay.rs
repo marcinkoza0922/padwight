@@ -98,7 +98,7 @@ impl Daemon {
         if self.overlay_process.is_some() {
             return true;
         }
-        match std::env::current_exe().and_then(|exe| os::windowless(std::process::Command::new(exe).arg("overlay")).spawn()) {
+        match std::env::current_exe().and_then(|exe| std::process::Command::new(exe).arg("overlay").spawn()) {
             Ok(child) => {
                 self.overlay_process = Some(child);
                 self.overlay_started = Some(Instant::now());

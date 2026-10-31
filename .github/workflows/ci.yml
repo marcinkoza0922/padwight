@@ -86,32 +86,6 @@ jobs:
       - name: Tests
         run: cargo nextest run --profile agent --hide-progress-bar --cargo-quiet
 
-  build-and-test-windows:
-    needs: changes
-    if: needs.changes.outputs.code == 'true'
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Check
-        run: cargo check --all-targets
-
-      - name: Clippy (zero warnings)
-        run: cargo clippy --all-targets -- -D warnings
-
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: nextest
-
-      - name: Tests
-        run: cargo nextest run --profile agent --hide-progress-bar --cargo-quiet
-
   project-checks:
     runs-on: ubuntu-latest
     steps:

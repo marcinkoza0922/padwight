@@ -1,5 +1,5 @@
 //! Which game is active: a tracker for the running desktop reports the focused window, windows
-//! and processes are identified from /proc or, on Windows, their executables (see [`identify`]),
+//! and processes are identified from /proc (see [`identify`]),
 //! and per-game rules pick the profile. Desktops without a tracker fall back to matching running
 //! processes.
 
@@ -17,8 +17,6 @@ mod kwin;
 mod sway;
 #[cfg(target_os = "linux")]
 mod wlroots;
-#[cfg(windows)]
-mod windows;
 
 use std::sync::Arc;
 #[cfg(target_os = "linux")]
@@ -34,8 +32,6 @@ use crate::{
 };
 #[cfg(target_os = "linux")]
 pub use identify::{identify, is_own_window, running_processes};
-#[cfg(windows)]
-pub use windows::{identify, is_own_window, running_processes, spawn};
 
 /// How often we check that the desktop's tracker is still there (a compositor restart, a late
 /// login, an extension switched on).

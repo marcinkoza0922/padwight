@@ -210,13 +210,6 @@ fn private_file(path: &Path) -> Result<fs::File> {
     Ok(file)
 }
 
-/// Creates (or empties) `path` for writing. The config folder is in the user's profile, which
-/// only they can read.
-#[cfg(windows)]
-fn private_file(path: &Path) -> Result<fs::File> {
-    Ok(fs::File::create(path)?)
-}
-
 /// A setup's folder: `setup.toml`, then one subfolder per kind of item.
 fn write_setup(dir: &Path, game: &Game) -> Result<()> {
     fs::create_dir_all(dir)?;

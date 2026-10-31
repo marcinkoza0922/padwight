@@ -68,11 +68,6 @@ its own: it draws with `overlay/render/`, the overlay's own renderer, on the CPU
   the damaged part is committed (`wayland/picture.rs`, `wayland/window.rs`). A fallback timer of
   100 ms keeps fades and closing going when callbacks stop, for instance while the output is off.
 - **Frames out (GNOME).** `overlay/gnome.rs` runs instead of the layer-shell window when `XDG_CURRENT_DESKTOP` is GNOME. It paints through `render::Screen` straight into one memfd that both it and the extension (`overlay.js`) have mapped (`SetBuffer`, again when the size changes), kept between frames so only what changed is repainted, and calls `Present` on the extension's D-Bus object, which uploads the picture and shows it as a click-through actor in Shell's chrome. Nothing is sent per frame, since Clutter can only upload a whole texture whatever was damaged. It animates on a 16 ms deadline, not a sleep after the work, and asks for the monitor only when the overlay appears. Run on GNOME Shell 51 in the test VM (the keyboard, Guide shortcuts and menus show over a window and over a fullscreen one, and hide again, driven by the debug controller); with two monitors it follows the focused window's, and at a fractional scale it draws at the monitor's device size; not yet with a real pad). The extension is checked against GNOME Shell 45 to 51 with `scripts/gnome-versions/run.sh`. `Geometry` picks the monitor when the overlay appears; the daemon closes every overlay when focus moves, so it never has to move. Shell 49+ has no `Clutter.Image`, so `overlay.js` uses `St.ImageContent` and passes the Cogl context to its `set_bytes`.
-- **Windows.** `overlay/windows.rs` is a layered window (`WS_EX_LAYERED`, `WS_EX_TRANSPARENT`,
-  `WS_EX_NOACTIVATE`). A reader thread posts each frame to it, and it paints one DIB section
-  through the same `render::Screen`, handing the damage's bounds to `UpdateLayeredWindowIndirect`.
-  Layered windows have no frame callbacks, so it animates on a 16 ms timer. When the daemon's
-  socket closes, it closes the window.
 - **Drawing.** `render::Screen` lays each panel out as a tree, turns it into a display list, keeps
   the panel's picture while its list is unchanged, and lays the picture down at the panel's
   opacity, offset and scale. See [overlay-debugging.md](overlay-debugging.md#how-the-overlay-draws).
@@ -173,7 +168,6 @@ Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000
 | `overlay.rs` (and `overlay/ui.rs`, `overlay/ui/shots.rs`) | The overlay process: keyboard, numpad, menus, info and log panels. `OverlayController` owns the state inside the daemon. `ui.rs` holds what is on screen (`Overlay::showing` at a time), and `ui/shots.rs` draws it without a window (`snapshot` for one screen, `film` for a motion run). Looping effects keep the overlay redrawing (`OverlayFrame::loops`) and read `Anim::clock`. |
 | `overlay/render.rs` (and `overlay/render/`) | The overlay's own renderer, with no iced. `layout.rs` is the layout tree, `op.rs` the display list, `raster/` the rasterizer, `text/` the text engine (cosmic-text), and `screen.rs` with `screen/` the whole screen: panel pictures, tiles, diffs and damage. Each panel module (`menus.rs`, `radial.rs`, `keyboard.rs`, `info.rs`, `log.rs`, `media.rs`, `figure.rs`, `item.rs`, `panel.rs`) builds its tree from the same numbers as its iced twin in `overlay/draw/`. See [overlay-debugging.md](overlay-debugging.md#how-the-overlay-draws). |
 | `overlay/wayland.rs` (and `overlay/wayland/`) | The Linux overlay window: a wlr-layer-shell surface with its own shared-memory buffers, frame-callback pacing, scale, and the reader thread for the daemon's frames. See [The overlay process](#the-overlay-process). |
-| `overlay/windows.rs` | The Windows overlay window: a layered window drawn through `render::Screen`, on a 16 ms timer. |
 | `overlay/draw/` | iced's drawing of the same panels. Used by the settings window's previews and the stage editor, and by the iced side of `debug overlay compare`; the overlay process doesn't use it. `draw/look.rs` resolves a style's decorations into container styles, `draw/glyphs.rs` draws button glyphs and icons, and `draw/texture.rs` and `draw/filtered.rs` apply the textures and filters from `overlay/art/`. |
 | `overlay/art.rs` (and `overlay/art/`) | The textures, filters, frame marks and icon SVGs that both renderers draw, as data the renderers turn into pixels. |
 | `info.rs` | Info overlays: `{token}` expansion into button glyphs and live values, and the generated bindings sheet for layers. |
@@ -267,30 +261,6 @@ The daemon picks the profile from the focused window. The tracker is chosen by t
 6. **Fallback**: no tracker. Rules apply while a matching process runs.
 
 `identify.rs` resolves a window to an executable name, Steam App ID (from `SteamAppId`/`STEAM_COMPAT_APP_ID` or Proton's `steam_app_<id>` class) and window class. Wine/Proton games are matched by their `.exe`, not the Wine loader. GNOME has no layer-shell: focus tracking and the overlay both go through the GNOME Shell extension in `gnome-extension/` (`overlay/gnome.rs` sends it each frame; see [The overlay process](#the-overlay-process)).
-
-## Windows
-
-Everything above describes Linux. The same binary builds for Windows, where the engine, config, packs, menus, overlays' drawing and the GUI are shared, and each place that talks to the system has a Windows file beside the Linux one. The `mod` line picks the file (`#[cfg_attr(windows, path = "…")]`), or the module declares both under `#[cfg]`:
-
-| Linux | Windows | What it does there |
-|---|---|---|
-| `daemon/evdev.rs` | `daemon/xinput.rs` | The daemon's controllers (`scan_devices`): XInput's four slots, polled on a thread each, skipping the slots our own virtual pads take. |
-| `input/linux.rs` | `input/xinput.rs` | Raw input to `InputEvent`. The Guide button and USB IDs come from `xinput1_4.dll`'s unnamed exports. |
-| `output/uinput.rs` | `output/windows.rs` | The virtual pad through ViGEmBus (`vigem-client`; without the driver its output is dropped), the keyboard and mouse through `SendInput`, as scancodes. |
-| `rumble.rs` | `rumble/windows.rs` | ViGEmBus reports the game's rumble; `XInputSetState` plays it. |
-| `daemon/unix.rs` | `daemon/windows.rs` | Signals become the console's Ctrl+C and close events; the socket needs no permission bits in `%LOCALAPPDATA%`. |
-| `overlay/wayland.rs` | `overlay/windows.rs` | A layered window (`WS_EX_LAYERED`, `WS_EX_TRANSPARENT`, `WS_EX_NOACTIVATE`): the screen drawn by `render::Screen` into a DIB section and handed over with `UpdateLayeredWindowIndirect`. |
-| `focus/*.rs` | `focus/windows.rs` | A WinEvent hook on foreground changes; processes by `QueryFullProcessImageNameW`; Steam App IDs from `steamapps\common\<folder>` and its manifest. |
-| `keyboard/xkb.rs` | `keyboard/windows.rs` | Key labels from the active layout (`ToUnicodeEx`). |
-| `tray.rs` | `tray/windows.rs` | `Shell_NotifyIconW` on a hidden window. |
-| `media/mpris.rs`, `media/mixer.rs` | `media/windows.rs`, `media/windows_mixer.rs` | The system media session (GSMTC) and the default output's endpoint volume. |
-| `capture.rs`, `record.rs` | `capture/windows.rs`, `record/windows.rs` | GDI screenshots; recording with `ffmpeg`. |
-| `quit.rs` | `quit/windows.rs` | `WM_CLOSE` to the game's windows, then `TerminateProcess`. |
-| `info.rs` | `info/windows.rs` | The clock, CPU, memory and battery from Win32. |
-
-Key codes stay Linux's everywhere (`keycode.rs`: evdev's `KeyCode` on Linux, the same table generated from it elsewhere), so configs and packs are the same files on both. `ipc.rs` uses AF_UNIX sockets on both, through `uds_windows` on Windows; `ipc::watch` reads the streaming requests on a thread, the same on both. The integration tests that need uinput, uhid or D-Bus are Linux only; `tests/debug_session`'s session tests run on both. CI builds, lints and tests on both.
-
-To check Linux code from Windows, `cargo check --target x86_64-unknown-linux-gnu` works once `PKG_CONFIG` points at a stub that answers for `xkbcommon` (nothing is linked).
 
 ## Where to start reading
 

@@ -1,6 +1,6 @@
 //! What the overlay window shows: the frames the daemon streams, and whatever is still fading
-//! out, drawn as layers over the screen. The window around it is a layer-shell surface on Linux
-//! (`wayland.rs`) and a layered window on Windows (`windows.rs`).
+//! out, drawn as layers over the screen. The window around it is a layer-shell surface
+//! (`wayland.rs`) or, on GNOME, a picture the shell extension shows (`gnome.rs`).
 
 use std::time::{Duration, Instant};
 
@@ -69,7 +69,7 @@ impl Overlay {
         Shown { panels, info: self.info.shown(now, motion).collect(), logs: self.logs.shown(now, motion).collect() }
     }
 
-    #[cfg(any(windows, target_os = "linux"))]
+    #[cfg(target_os = "linux")]
     /// The ops that draw the screen at `now`, on a display of `display` logical pixels.
     pub(super) fn screen_ops(&self, now: Instant, display: crate::overlay::render::Point) -> Vec<crate::overlay::render::Op> {
         crate::overlay::render::screen_ops(&self.frame, &self.showing(now), display)

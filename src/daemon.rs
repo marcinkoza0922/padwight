@@ -51,9 +51,8 @@ mod overlay;
 mod overlay_input;
 mod previews;
 mod raw_readers;
-/// The controllers themselves: evdev nodes on Linux, XInput slots on Windows.
-#[cfg_attr(target_os = "linux", path = "daemon/evdev.rs")]
-#[cfg_attr(windows, path = "daemon/xinput.rs")]
+/// The controllers themselves: evdev nodes.
+#[path = "daemon/evdev.rs"]
 mod devices;
 mod inbox;
 mod inject;
@@ -65,8 +64,7 @@ mod serve;
 mod stop;
 mod tools;
 /// The process around the service: signals, the control socket, running in the background.
-#[cfg_attr(target_os = "linux", path = "daemon/unix.rs")]
-#[cfg_attr(windows, path = "daemon/windows.rs")]
+#[path = "daemon/unix.rs"]
 mod os;
 #[cfg(target_os = "linux")]
 mod pads;
@@ -694,11 +692,6 @@ fn explain_kbm_failure(e: anyhow::Error) -> anyhow::Error {
     e.context("creating virtual keyboard/mouse (run `padwight doctor` for what to change)")
 }
 
-#[cfg(windows)]
-fn explain_kbm_failure(e: anyhow::Error) -> anyhow::Error {
-    e.context("creating virtual keyboard/mouse")
-}
-
 /// Binds the control socket and serves it on a thread.
 fn serve_ipc(tx: inbox::Tx) -> Result<()> {
     let listener = bind_socket()?;
@@ -887,7 +880,7 @@ impl Daemon {
         }
         // Not tied to the daemon's life: the window answers for its unsaved changes before the daemon
         // ends (see `stop.rs`), and closes itself if the daemon goes without it.
-        match os::windowless(&mut std::process::Command::new(std::env::current_exe().unwrap_or_default())).spawn() {
+        match std::process::Command::new(std::env::current_exe().unwrap_or_default()).spawn() {
             Ok(child) => self.settings_process = Some(child),
             Err(e) => log!("cannot open the settings window: {e}"),
         }

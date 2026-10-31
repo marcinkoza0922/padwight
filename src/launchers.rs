@@ -132,40 +132,10 @@ fn steam_candidates(home: &Path) -> Vec<PathBuf> {
     ]
 }
 
-/// Where Steam may be installed: where the registry says, else where its installer puts it.
-#[cfg(windows)]
-fn steam_candidates(_home: &Path) -> Vec<PathBuf> {
-    use windows::{
-        Win32::System::Registry::{HKEY_CURRENT_USER, RRF_RT_REG_SZ, RegGetValueW},
-        core::w,
-    };
-    let mut buf = [0u16; 512];
-    let mut len = (buf.len() * 2) as u32;
-    // SAFETY: the buffer is as long as the size passed, in bytes.
-    let found = unsafe {
-        RegGetValueW(HKEY_CURRENT_USER, w!(r"Software\Valve\Steam"), w!("SteamPath"), RRF_RT_REG_SZ, None, Some(buf.as_mut_ptr().cast()), Some(&mut len))
-    };
-    let mut candidates = Vec::new();
-    if found.is_ok() {
-        let chars = (len as usize / 2).saturating_sub(1);
-        candidates.push(PathBuf::from(String::from_utf16_lossy(&buf[..chars])));
-    }
-    for var in ["ProgramFiles(x86)", "ProgramFiles"] {
-        candidates.extend(std::env::var_os(var).map(|dir| PathBuf::from(dir).join("Steam")));
-    }
-    candidates
-}
-
 /// Heroic's config folders, where it lists the games it installed.
 #[cfg(target_os = "linux")]
 fn heroic_configs(home: &Path) -> Vec<PathBuf> {
     vec![home.join(".config/heroic"), home.join(".var/app/com.heroicgameslauncher.hgl/config/heroic")]
-}
-
-/// Heroic's config folder, in the roaming app data.
-#[cfg(windows)]
-fn heroic_configs(_home: &Path) -> Vec<PathBuf> {
-    dirs::config_dir().map(|dir| dir.join("heroic")).into_iter().collect()
 }
 
 /// A Steam install's library folders: its own, plus those in `libraryfolders.vdf`.

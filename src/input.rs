@@ -1,12 +1,10 @@
 //! Normalized controller input: buttons, sticks in -1..1 and triggers in 0..1, whatever the
-//! platform reads them from (evdev on Linux, XInput on Windows).
+//! platform reads them from (evdev).
 
 use crate::config::Button;
 
 #[cfg(target_os = "linux")]
 mod linux;
-#[cfg(windows)]
-pub mod xinput;
 mod touchpad;
 
 #[cfg(target_os = "linux")]

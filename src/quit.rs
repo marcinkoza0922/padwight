@@ -4,13 +4,6 @@ use std::{collections::HashMap, time::Duration};
 #[cfg(target_os = "linux")]
 use std::{fs, thread};
 
-#[cfg(windows)]
-mod windows;
-#[cfg(windows)]
-pub use windows::{force_quit, is_running};
-#[cfg(all(windows, test))]
-use windows::{is_running as alive, parents};
-
 /// How long a game gets to exit after it is asked to before it is killed.
 const GRACE: Duration = Duration::from_secs(3);
 
@@ -20,10 +13,6 @@ const PROTECTED: &[&str] = &[
     "plasmashell", "kwin_wayland", "kwin_wayland_wrapper", "kwin_x11", "krunner", "xorg", "xwayland", "gnome-shell",
     "mutter", "sway", "hyprland", "weston", "labwc", "river", "niri", "cosmic-comp", "wayfire", "systemd", "sddm",
     "gdm", "lightdm", "login", "pipewire", "wireplumber", "padwight",
-    // Windows: the shell, the session, and us.
-    "explorer.exe", "dwm.exe", "winlogon.exe", "csrss.exe", "lsass.exe", "services.exe", "svchost.exe", "sihost.exe",
-    "shellexperiencehost.exe", "startmenuexperiencehost.exe", "searchhost.exe", "textinputhost.exe", "lockapp.exe",
-    "applicationframehost.exe", "padwight.exe",
 ];
 
 /// Whether a window of this executable is off limits to force quit.
@@ -51,20 +40,6 @@ fn tree(pid: u32, parents: &HashMap<u32, u32>, me: u32) -> Vec<u32> {
     }
     found.reverse();
     found
-}
-
-/// The parent links that hold, from `(pid, parent pid)` pairs and each process's start time.
-/// Windows keeps a process's parent ID after the parent exits and soon gives that ID to a new
-/// process, so a link only holds when the child started after its parent; one whose times
-/// can't be read is dropped too.
-#[cfg(any(windows, test))]
-fn started_after_parents(listed: &[(u32, u32)], started: impl Fn(u32) -> Option<u64>) -> HashMap<u32, u32> {
-    let started: HashMap<u32, u64> = listed.iter().filter_map(|&(pid, _)| Some((pid, started(pid)?))).collect();
-    listed
-        .iter()
-        .filter(|(pid, parent)| started.get(pid).zip(started.get(parent)).is_some_and(|(child, parent)| child >= parent))
-        .copied()
-        .collect()
 }
 
 /// Every process's parent, from /proc.
@@ -142,16 +117,6 @@ mod tests {
         let parents = HashMap::from([(11, 10), (12, 10), (13, 11)]);
         assert_eq!(tree(10, &parents, 11), [12, 10]);
         assert_eq!(tree(11, &parents, 11), [] as [u32; 0]);
-    }
-
-    #[test]
-    fn a_parent_id_left_by_an_exited_parent_is_no_link() {
-        // 50 started 30 and exited; its ID went to 50 again, a game started later than 30.
-        // 31 is the game's real child. 32's start time can't be read.
-        let listed = [(30, 50), (50, 4), (31, 50), (32, 50)];
-        let started = |pid| HashMap::from([(30, 100), (50, 200), (31, 300), (4, 1)]).get(&pid).copied();
-        let parents = started_after_parents(&listed, started);
-        assert_eq!(tree(50, &parents, 1), [31, 50]);
     }
 
     #[test]
