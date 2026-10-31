@@ -1,9 +1,12 @@
 // Reports every focus change to padwight's daemon, which matches the window against the
-// game rules. The daemon's D-Bus service is the same one the KWin script reports to.
+// game rules (the daemon's D-Bus service is the same one the KWin script reports to), and
+// shows the overlay's frames (overlay.js).
 
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+import {Overlay} from './overlay.js';
 
 const BUS_NAME = 'io.github.marcinkoza0922.Padwight';
 const OBJECT_PATH = '/Focus';
@@ -11,6 +14,7 @@ const INTERFACE = 'io.github.marcinkoza0922.Padwight.Focus';
 
 export default class PadwightFocus extends Extension {
     enable() {
+        this._overlay = new Overlay();
         this._display = global.display;
         this._focusId = this._display.connect('notify::focus-window', () => this._report());
         // A daemon that starts (or restarts) after this hears nothing until focus moves, so
@@ -20,6 +24,8 @@ export default class PadwightFocus extends Extension {
     }
 
     disable() {
+        this._overlay.destroy();
+        this._overlay = null;
         Gio.bus_unwatch_name(this._watchId);
         this._display.disconnect(this._focusId);
         this._display = null;
