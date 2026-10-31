@@ -1,0 +1,7 @@
+{
+  "uuid": "padwight-focus@io.github.marcinkoza0922",
+  "name": "Padwight focus",
+  "url": "https://github.com/marcinkoza0922/padwight",
+  "description": "Tells padwight which window has focus, so each game's profile switches on its own, and shows its overlays.",
+  "cinnamon-version": ["5.8", "6.0", "6.2", "6.4", "6.6"]
+}

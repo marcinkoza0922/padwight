@@ -85,7 +85,7 @@ impl Window {
     /// buffer, and waits for its first configure.
     pub(super) fn new(globals: &GlobalList, qh: &QueueHandle<Window>) -> Result<Window> {
         let layer_shell: ZwlrLayerShellV1 = globals.bind(qh, 1..=4, ()).map_err(|_| {
-            anyhow!("the overlay window could not start: the compositor lacks wlr-layer-shell (as GNOME does)")
+            anyhow!("the overlay window could not start: the compositor lacks wlr-layer-shell (as GNOME and Cinnamon do)")
         })?;
         let compositor: WlCompositor = globals.bind(qh, 4..=6, ()).context("the compositor's wl_compositor is too old")?;
         let shm: WlShm = globals.bind(qh, 1..=1, ()).context("the compositor has no wl_shm")?;

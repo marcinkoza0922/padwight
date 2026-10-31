@@ -6,6 +6,7 @@
 #[cfg(target_os = "linux")]
 mod dbus;
 #[cfg(target_os = "linux")]
+mod cinnamon;
 mod gnome;
 #[cfg(target_os = "linux")]
 mod hyprland;
@@ -128,7 +129,7 @@ fn track(reporter: &mut Reporter, conn: Option<&Connection>) {
     }
 }
 
-/// The tracker for a desktop reached over D-Bus: KWin, or GNOME Shell with our extension. `None`
+/// The tracker for a desktop reached over D-Bus: KWin, or GNOME Shell or Cinnamon with our extension. `None`
 /// when the desktop isn't one of those.
 #[cfg(target_os = "linux")]
 fn shell_backend(conn: &Connection) -> Option<FocusBackend> {
@@ -136,6 +137,8 @@ fn shell_backend(conn: &Connection) -> Option<FocusBackend> {
         Some(FocusBackend::Kwin)
     } else if gnome::is_running(conn) && gnome::ensure_extension(conn).is_ok() {
         Some(FocusBackend::GnomeShell)
+    } else if cinnamon::is_running(conn) && cinnamon::ensure_extension(conn).is_ok() {
+        Some(FocusBackend::Cinnamon)
     } else {
         None
     }

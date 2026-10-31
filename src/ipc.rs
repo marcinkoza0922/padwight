@@ -216,6 +216,8 @@ pub enum FocusBackend {
     Kwin,
     /// Our GNOME Shell extension reports focus changes (GNOME, Wayland or X11).
     GnomeShell,
+    /// Our Cinnamon extension reports focus changes (Cinnamon, Wayland or X11).
+    Cinnamon,
     /// Sway's IPC socket reports focus changes.
     Sway,
     /// Hyprland's event socket reports focus changes.
@@ -233,6 +235,7 @@ impl FocusBackend {
         match self {
             Self::Kwin => Some("KWin"),
             Self::GnomeShell => Some("GNOME Shell"),
+            Self::Cinnamon => Some("Cinnamon"),
             Self::Sway => Some("Sway"),
             Self::Hyprland => Some("Hyprland"),
             Self::Wlroots => Some("wlroots"),

@@ -57,8 +57,8 @@ What padwight needs from the system, and why
 
 5. A graphical session, for the settings window, the on-screen keyboard and the overlays.
    The overlays need a Wayland compositor with layer-shell (KDE Plasma, Sway, Hyprland,
-   labwc and other wlroots compositors). GNOME has none: its overlays are shown by padwight's
-   Shell extension instead (experimental).
+   labwc and other wlroots compositors). GNOME and Cinnamon have none: their overlays are shown by
+   padwight's shell extension instead (experimental).
 
 6. Optional: the daemon running. `systemctl --user enable --now padwight` starts it at login.
 

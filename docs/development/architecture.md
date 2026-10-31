@@ -126,6 +126,7 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | `focus/sway.rs` | Sway (and i3-IPC compositors) over `$SWAYSOCK`. |
 | `focus/hyprland.rs` | Hyprland's event and command sockets. |
 | `focus/wlroots.rs` | wlroots compositors (labwc, Wayfire, river, …) over `wlr-foreign-toplevel-management`. Matches windows by class only, since the protocol doesn't give the process. |
+| `focus/cinnamon.rs` | Cinnamon: installs and enables the extension in `cinnamon-extension/` (focus and overlay, the same D-Bus objects as GNOME's). |
 | `focus/gnome.rs` | GNOME Shell: installs and enables the extension in `gnome-extension/`, which reports focus over the same D-Bus service. |
 | `focus/identify.rs` | Identifies a window's executable, Steam App ID and class from `/proc`, including Wine/Proton `.exe` names. |
 | `launchers.rs` | Which games are installed (Steam, Heroic, Lutris) or running, for the library picker. |
