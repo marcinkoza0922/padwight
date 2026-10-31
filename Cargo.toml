@@ -37,6 +37,9 @@ zbus = "5"
 # iced's winit and smithay-client-toolkit, so the lock file doesn't change.
 wayland-client = "0.31"
 wayland-protocols-wlr = "0.3"
+# COSMIC focus tracking (focus/cosmic.rs) generates its protocol from protocols/.
+wayland-backend = "0.3"
+wayland-scanner = "0.31"
 # The overlay's window (overlay/wayland.rs): fractional scaling and the viewporter.
 wayland-protocols = { version = "0.32", features = ["client", "staging"] }
 # StatusNotifierItem tray icon.

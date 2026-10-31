@@ -7,6 +7,8 @@
 mod dbus;
 #[cfg(target_os = "linux")]
 mod cinnamon;
+#[cfg(target_os = "linux")]
+mod cosmic;
 mod gnome;
 #[cfg(target_os = "linux")]
 mod hyprland;
@@ -123,6 +125,11 @@ fn track(reporter: &mut Reporter, conn: Option<&Connection>) {
         reporter.backend(FocusBackend::Wlroots);
         if let Err(e) = wl.follow(&notify) {
             log!("lost the Wayland compositor: {e:#}");
+        }
+    } else if let Ok(cosmic) = cosmic::connect() {
+        reporter.backend(FocusBackend::Cosmic);
+        if let Err(e) = cosmic.follow(&notify) {
+            log!("lost COSMIC: {e:#}");
         }
     } else {
         reporter.backend(FocusBackend::ProcessScan);

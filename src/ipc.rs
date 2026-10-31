@@ -218,6 +218,8 @@ pub enum FocusBackend {
     GnomeShell,
     /// Our Cinnamon extension reports focus changes (Cinnamon, Wayland or X11).
     Cinnamon,
+    /// COSMIC's toplevel info protocol reports focus changes.
+    Cosmic,
     /// Sway's IPC socket reports focus changes.
     Sway,
     /// Hyprland's event socket reports focus changes.
@@ -236,6 +238,7 @@ impl FocusBackend {
             Self::Kwin => Some("KWin"),
             Self::GnomeShell => Some("GNOME Shell"),
             Self::Cinnamon => Some("Cinnamon"),
+            Self::Cosmic => Some("COSMIC"),
             Self::Sway => Some("Sway"),
             Self::Hyprland => Some("Hyprland"),
             Self::Wlroots => Some("wlroots"),

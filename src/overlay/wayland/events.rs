@@ -1,7 +1,7 @@
 //! The protocol's events, dispatched to the `Window`.
 
 use wayland_client::{
-    Connection, Dispatch, QueueHandle, WEnum, delegate_noop,
+    Connection, Dispatch, Proxy, QueueHandle, WEnum, delegate_noop,
     globals::GlobalListContents,
     protocol::{
         wl_buffer::{self, WlBuffer},
@@ -31,6 +31,10 @@ use crate::overlay::timing::{timing_log, unix_ns};
 
 impl Dispatch<ZwlrLayerSurfaceV1, ()> for Window {
     fn event(window: &mut Window, layer: &ZwlrLayerSurfaceV1, event: zwlr_layer_surface_v1::Event, _: &(), _: &Connection, _: &QueueHandle<Window>) {
+        // A surface made again (`Window::remake`) leaves nothing to listen to on the old one.
+        if layer.id() != window.layer.id() {
+            return;
+        }
         match event {
             zwlr_layer_surface_v1::Event::Configure { serial, width, height } => {
                 // Acked before anything is committed for it; a later configure replaces what

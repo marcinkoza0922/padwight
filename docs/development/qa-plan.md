@@ -223,7 +223,7 @@ desktop, the kernel or the input stack gets a new release:
 
 ```sh
 scripts/desktop-versions.sh   # network: latest GNOME, Plasma, Sway and Hyprland releases; exits 1 if GNOME's major isn't in the extension's shell-version list
-DESKTOP_TEST_HOST=dev@127.0.0.1 DESKTOP_TEST_SSH_OPTS="-p <port> -i vms/id_ed25519" scripts/desktop-test.sh gnome   # or cinnamon, kde, sway, hyprland, labwc (a wlroots compositor)
+DESKTOP_TEST_HOST=dev@127.0.0.1 DESKTOP_TEST_SSH_OPTS="-p <port> -i vms/id_ed25519" scripts/desktop-test.sh gnome   # or cinnamon, cosmic, kde, sway, hyprland, labwc (a wlroots compositor)
 ```
 
 `desktop-test.sh` syncs the checkout to the VM, builds it, and runs the checks in that session:
@@ -238,6 +238,7 @@ Last run, 2026-10-09, kernel 7.2.9:
 |---|---|---|
 | GNOME | 51.0 | all pass (overlay skipped) |
 | Cinnamon (Wayland) | 6.6.9 | all pass (2026-10-30, kernel 7.2.11); overlay also checked by hand over a fullscreen window, on two monitors (1280x800 at 1.25, 1024x768 at 1) and at scale 1.5 |
+| COSMIC | cosmic-comp 1.10.0 (Arch) | all pass (2026-10-31, kernel 7.2.11); overlay is a plain layer-shell window; also checked by hand over a fullscreen window (foot --fullscreen), on two monitors (1280x800 and 1024x768) and at scale 1.5; the overlay's surface is made again each time it shows, so the compositor puts it on the active output (checked on the second monitor; moving a game between monitors with one overlay process running not pinned down by hand) |
 | KDE Plasma | 6.7.5 | all pass |
 | Sway | 1.12 | all pass |
 | Hyprland | 0.56.2 | all pass |

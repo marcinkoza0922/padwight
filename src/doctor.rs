@@ -56,7 +56,7 @@ What padwight needs from the system, and why
    there too, which costs Steam's own gyro and lightbar control for those controllers.
 
 5. A graphical session, for the settings window, the on-screen keyboard and the overlays.
-   The overlays need a Wayland compositor with layer-shell (KDE Plasma, Sway, Hyprland,
+   The overlays need a Wayland compositor with layer-shell (KDE Plasma, COSMIC, Sway, Hyprland,
    labwc and other wlroots compositors). GNOME and Cinnamon have none: their overlays are shown by
    padwight's shell extension instead (experimental).
 
