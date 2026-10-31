@@ -19,7 +19,6 @@ The codebase is about 72,000 lines of Rust in 258 files. A single review of all 
 - **Event-loop stalls.** Nothing slow runs on the daemon thread: file reads, process scans, D-Bus calls, subprocesses. If it has to, it's cached and the cost is measured.
 - **State after a change.** When the config, focus, the enabled switch or a device changes, everything derived from the old state is worked out again (scope, hand-off, layers, overlays).
 - **Untrusted input.** Packs, config files, `/proc`, Steam's files and IPC messages can be malformed. Parsing can't panic, loop forever or index out of bounds.
-- **Platform split.** Linux and Windows paths make the same decisions (`#[cfg]` twins such as `daemon/evdev.rs` and `daemon/xinput.rs`).
 - **Concurrency.** Threads, channels and mutexes: no lock held across blocking calls, no poisoned-lock panics, threads stop when their device goes.
 - **Error reporting.** Failures reach the log or the GUI, not `let _ =`, unless ignoring them is the point (and a comment says so).
 - **Tests.** The behaviour the code promises in its doc comments has a test.
@@ -49,11 +48,10 @@ Everything the passes left unsolved, gathered here as of commit `72f0c59` (2026-
 
 None.
 
-### Needs Windows or hardware to settle
+### Needs hardware to settle
 
 | ID | What's left | Check |
 |---|---|---|
-| R5-12 | On Windows nothing ends ffmpeg when the daemon dies; it may record until the disk is full. A job object would kill it but leave the MP4 unplayable. | H-9 |
 | R0-7 | Whether a Steam game with Steam Input off inherits an `SDL_GAMECONTROLLER_IGNORE_DEVICES` that hides Padwight's controller. Checked only with Steam Input on. 
 Every fix with a hardware check (H-1 to H-19, [below](#hardware-checks)) is also unconfirmed on real devices until that check passes.
 
@@ -77,7 +75,7 @@ R0-10, R1-4, R2-7, R4-9 and R8-8 shrank the worst files, but these are still wel
 
 These parts were only searched (for unwraps, indexing, clamps and slow work), not read line by line:
 
-- Pass 6: the rest of `overlay/draw/`, `overlay/windows.rs`, `info/catalog.rs`, `opener.rs`, `pad_model.rs`, `keyboard/xkb.rs`, `labels.rs`, `layout_editor/buttons.rs`, `values.rs`, `views.rs`, `menu/suite/`.
+- Pass 6: the rest of `overlay/draw/`, `info/catalog.rs`, `opener.rs`, `pad_model.rs`, `keyboard/xkb.rs`, `labels.rs`, `layout_editor/buttons.rs`, `values.rs`, `views.rs`, `menu/suite/`.
 - Pass 7: the drawing data in `pad_svg/models.rs` and `parts.rs`.
 - Pass 8: the GUI's editor views (`actions.rs`, `sticks.rs`, `triggers.rs`, `gyro.rs`, `touchpad.rs`, `style_editor.rs`, `overlays.rs`, `settings.rs`, the graphs), `manual.rs`, `tour.rs`, `shoot.rs`.
 - Pass 9: the profiling suite, `tests/profile/`.
@@ -128,7 +126,7 @@ Checked and found sound:
 - When a virtual device is destroyed, even by SIGKILL, the kernel releases its keys.
 - `set_profile` rebuilds virtual pads for a new identity before it resyncs.
 - `VirtualKbm` sends each key as it changes, so key order is kept. After a failed write it catches up in code order, which only matters if a write failed in the middle of a key combination.
-- SIGTERM, SIGINT and the console events on Windows all reach `shut_down`, which releases everything.
+- SIGTERM and SIGINT both reach `shut_down`, which releases everything.
 
 ## Pass 2: The engine
 
@@ -156,7 +154,7 @@ Checked and found sound:
 
 ## Pass 3: Game detection and launchers (the rest)
 
-Read the focus backends (`focus/dbus.rs`, `kwin.rs`, `gnome.rs` and the GNOME extension, `sway.rs`, `hyprland.rs`, `wlroots.rs`, `windows.rs`), `launchers.rs`, `offer.rs`, `opener_watch.rs` and `library.rs`, and the daemon code that calls them (`daemon/auto_switch.rs`, the offer handling in `daemon.rs`). `focus/identify.rs` and the rule matching in `focus/mod.rs` were pass 0's.
+Read the focus backends (`focus/dbus.rs`, `kwin.rs`, `gnome.rs` and the GNOME extension, `sway.rs`, `hyprland.rs`, `wlroots.rs`, and `windows.rs`, since removed), `launchers.rs`, `offer.rs`, `opener_watch.rs` and `library.rs`, and the daemon code that calls them (`daemon/auto_switch.rs`, the offer handling in `daemon.rs`). `focus/identify.rs` and the rule matching in `focus/mod.rs` were pass 0's.
 
 | ID | File | Finding | Status |
 |---|---|---|---|
@@ -207,22 +205,15 @@ For later passes: a menu's `start` and a grid item's `span` come from files unch
 
 ## Pass 5: IPC and process lifecycle
 
-Read all of `ipc.rs`, `monitor.rs`, `main.rs`, `tray.rs` and `tray/windows.rs`, `quit.rs` and `quit/windows.rs`, `record.rs` and `record/windows.rs`, `capture.rs` and `capture/windows.rs`, `media.rs` and `media/`, and the daemon's side of them: the socket server, `daemon/requests.rs`, and the force-quit, screenshot and recording paths in `daemon.rs`. The Windows files were checked with `cargo clippy --target x86_64-pc-windows-msvc --all-targets`, which builds here; their tests compile but only run on Windows.
+Read all of `ipc.rs`, `monitor.rs`, `main.rs`, `tray.rs`, `quit.rs`, `record.rs`, `capture.rs`, `media.rs` and `media/`, and the daemon's side of them: the socket server, `daemon/requests.rs`, and the force-quit, screenshot and recording paths in `daemon.rs`. The pass also read the Windows twins of the tray, force quit, recording and capture; Windows support was removed on 2026-10-31 (`9ed4fb4`), and with it the code of findings R5-1 to R5-4, R5-6, R5-11 and R5-12, all in Windows-only code (the tray icon, process-ID reuse in force quit, folder names Windows refuses, and ffmpeg outliving the daemon).
 
 | ID | File | Finding | Status |
 |---|---|---|---|
-| R5-1 | `tray/windows.rs` | The tray icon's 1-bit mask was `size * size / 8` bytes, but each of its rows is padded to whole 16-bit words. At 125%, 150% or 175% scaling (icons of 20, 24 or 28 pixels) `CreateIcon` read past the end of the buffer. | **Fixed.** `mask_len` pads the rows. Test: `the_mask_covers_every_padded_row` (runs on Windows). |
-| R5-2 | `tray/windows.rs` | Every tooltip update (each profile switch) made a new icon handle and never freed it. A long session of switching games used up GDI handles. | **Fixed.** The icon is made once on the tray's thread. Needs Windows: I-11. |
-| R5-3 | `quit/windows.rs` | Force quit ends the game and its descendants, found by parent ID. Windows keeps a process's parent ID after the parent exits and soon gives that ID to new processes, so if the game's ID had once belonged to another process's parent, that unrelated process (Explorer, say, whose parent `userinit.exe` exits at login) was asked to close and then terminated. | **Fixed.** A child counts only when it started after its parent (`started_after_parents`, by process start time); links whose times can't be read are dropped. Test: `a_parent_id_left_by_an_exited_parent_is_no_link`. |
-| R5-4 | `quit/windows.rs` | After the 3 second grace, processes were terminated by ID. Windows reuses IDs quickly, so one that had exited in the meantime could be a new, unrelated process by then. | **Fixed.** The processes are opened before they are asked to close and terminated through those handles, which keep their IDs from being reused. On Linux, `pid_max` is 4,194,304 under systemd, so an ID coming back within 3 seconds isn't a real risk; left as it is. |
-| R5-5 | `quit.rs`, `quit/windows.rs` | Reading every process's parent ran on the daemon thread, on each force quit. The tree could also include Padwight itself, when a game or launcher had started it. | **Fixed.** The walk runs on the force-quit thread, and the tree leaves out this process and what it started. Test: `a_tree_never_holds_this_program_or_what_it_started`. |
-| R5-6 | `capture.rs` | Captures go in a folder named after the game. On Windows a name with `:`, `?`, `*`, `"`, `<`, `>` or `\|`, a trailing dot, or a reserved name (`CON`, `COM1`…) can't be a folder, so every screenshot and recording of "Prince of Persia: The Sands of Time" and "Thief II: The Metal Age" (both library packs) failed. | **Fixed.** On Windows those characters become `_` (`: ` becomes ` - `) and reserved names get a `_`. Other platforms keep their names, so existing folders are still used. Test: `folder_names_are_ones_windows_accepts`. |
+| R5-5 | `quit.rs` | Reading every process's parent ran on the daemon thread, on each force quit. The tree could also include Padwight itself, when a game or launcher had started it. | **Fixed.** The walk runs on the force-quit thread, and the tree leaves out this process and what it started. Test: `a_tree_never_holds_this_program_or_what_it_started`. |
 | R5-7 | `capture.rs`, `record.rs` | Files are named by the second. A second screenshot in the same second, from a double press, was written over the first. | **Fixed.** `claim_media_path` adds `-2`, `-3`… when the file exists or another capture is being written to it. Test: `two_captures_in_one_second_get_a_file_each`. |
 | R5-8 | `daemon/serve.rs`, `ipc.rs` | When the event loop didn't answer a request within 2 seconds, the daemon closed the connection without a word, while the request stayed queued and was still carried out. The client, waiting 2 seconds too, showed "EOF while parsing a value" or a read timeout. | **Fixed.** The daemon answers with an error saying it was busy and the change may still be made, and the client waits 2 seconds longer than the daemon, so it hears that. A connection closed without a reply says so. Tests: `a_request_the_event_loop_doesn_t_answer_gets_an_error_not_silence`, `a_daemon_that_hangs_up_without_replying_is_reported_as_such`. |
 | R5-9 | `daemon/serve.rs` | Watch streams had no write timeout. A GUI that stopped reading (suspended with Ctrl+Z in a terminal, or hung) held a daemon thread forever, and the event loop kept queueing a snapshot for it on every input event, without bound. | **Fixed.** A watcher that takes nothing for 10 seconds is let go. The GUI connects again when it can, and the overlay is restarted when next needed. Tests: the first test above checks that the timeout is set; `a_watcher_that_stops_reading_is_let_go` checks that a timed-out write ends the stream. |
-| R5-10 | `media/mixer.rs` | Through `pactl` (PulseAudio without `wpctl`), D-pad up at full volume changed the player's volume instead, unlike `wpctl` and Windows, and a step from 98% went to 103%. | **Fixed.** The volume is set outright and capped at full; at full there is nothing to do. Test: `pactl_raises_the_volume_no_further_than_full`. |
-| R5-11 | `record/windows.rs` | A recorder that exited by itself left its stdin pipe in the list `stop` reads, for good. | **Fixed.** Ended recorders' pipes are dropped when the next one starts. |
-| R5-12 | `record/windows.rs` | Linux ends the recorder with the daemon (`PR_SET_PDEATHSIG`). Windows has nothing like it: if the daemon dies, ffmpeg's stdin closes, and ffmpeg may not take that as a reason to stop, so it would record until the disk is full. | **Open: needs Windows.** I-12. A job object would kill it, but then the MP4 isn't finished and won't play. |
+| R5-10 | `media/mixer.rs` | Through `pactl` (PulseAudio without `wpctl`), D-pad up at full volume changed the player's volume instead, unlike `wpctl`, and a step from 98% went to 103%. | **Fixed.** The volume is set outright and capped at full; at full there is nothing to do. Test: `pactl_raises_the_volume_no_further_than_full`. |
 | R5-13 | `daemon.rs` (`focused_target`) | Without focus tracking, force quit and recording scan every process on the daemon thread, twice per force-quit hold. | **Fixed, 2026-10-13.** `focused_target` (now in `daemon/auto_switch.rs`) takes the active game's process as the 2-second scan last recorded it (`launches`), while it still runs. With automatic switching off that scan doesn't run, so the processes are still read then. Test: `without_focus_tracking_the_target_is_the_scanned_launch_while_it_runs`. Desktop check H-17. |
 
 Checked and found sound:
@@ -231,12 +222,12 @@ Checked and found sound:
 - `monitor`'s lock is only held while writing to stderr, with errors ignored, so it can't be poisoned.
 - The Linux recorder is ended with the daemon by `PR_SET_PDEATHSIG`, which fires when the spawning thread ends, not the process. The thread that starts the recorder waits on it for the whole recording, so this holds. `record::start` now says so.
 - The media worker runs on its own thread, so a player that doesn't answer over D-Bus holds up only the media overlay.
-- The tray (`ksni` on Linux, a window of its own on Windows) only sends commands to the event loop.
+- The tray (`ksni`) only sends commands to the event loop.
 - `capture::folder_name` already kept names from leaving the folder (`../`).
 
 ## Pass 6: Overlays and menus
 
-Read in full: `menu.rs` and `menu/grid.rs`, `menu/touch.rs`, `radial.rs`, `nav.rs`, `guide_menu.rs`, `system_menu.rs`, `layout_editor.rs` and `layout_editor/menus.rs`, `zones.rs`, `macros.rs`, `info.rs` and `info/guide.rs`, `keyboard.rs` and `keyboard/boards.rs`, `overlay.rs` and `overlay/ui.rs`, `fit.rs`, `layershell.rs`, `overlay/draw/menus.rs` and `radial.rs`, the timing parts of `inputlog/view.rs`, and the daemon's side: opening and closing overlays, the frames it sends, the Guide menu, the in-game menu and overlay input. Searched for unwraps, indexing and clamps only: the rest of `overlay/draw/`, `overlay/windows.rs`, `info/catalog.rs`, `opener.rs`, `pad_model.rs`, `windows.rs`, `keyboard/xkb.rs`, `labels.rs`, `windows.rs`, `layout_editor/buttons.rs`, `values.rs`, `views.rs`, and `menu/suite/`. The pass ran in one go rather than three.
+Read in full: `menu.rs` and `menu/grid.rs`, `menu/touch.rs`, `radial.rs`, `nav.rs`, `guide_menu.rs`, `system_menu.rs`, `layout_editor.rs` and `layout_editor/menus.rs`, `zones.rs`, `macros.rs`, `info.rs` and `info/guide.rs`, `keyboard.rs` and `keyboard/boards.rs`, `overlay.rs` and `overlay/ui.rs`, `fit.rs`, `layershell.rs`, `overlay/draw/menus.rs` and `radial.rs`, the timing parts of `inputlog/view.rs`, and the daemon's side: opening and closing overlays, the frames it sends, the Guide menu, the in-game menu and overlay input. Searched for unwraps, indexing and clamps only: the rest of `overlay/draw/`, `info/catalog.rs`, `opener.rs`, `pad_model.rs`, `keyboard/xkb.rs`, `labels.rs`, `layout_editor/buttons.rs`, `values.rs`, `views.rs`, and `menu/suite/`. The pass ran in one go rather than three.
 
 | ID | File | Finding | Status |
 |---|---|---|---|
@@ -262,14 +253,13 @@ Checked and found sound:
 
 ## Pass 7: Sound, drawing and fonts
 
-Read in full: `sound.rs` and `sound/` (`player.rs`, `wav.rs`, `effects.rs`, `synth.rs`, `library.rs`, `kind.rs`), `pad_svg.rs` and `pad_svg/` but for the drawing data in `models.rs` and `parts.rs` (searched for clamps and input values only), `font.rs`, `icons.rs`, `style.rs`, `icon.rs`, `keyword_icon.rs`, `pad_widget.rs`, `touchpad_widget.rs` and `gui/widgets.rs`, and where the daemon and the overlay call into them: the pack assets (`config/assets.rs`), the frame's fonts and icons (`daemon/overlay.rs`, `overlay/ui.rs`). The Windows build was checked with `cargo clippy --target x86_64-pc-windows-msvc --all-targets`.
+Read in full: `sound.rs` and `sound/` (`player.rs`, `wav.rs`, `effects.rs`, `synth.rs`, `library.rs`, `kind.rs`), `pad_svg.rs` and `pad_svg/` but for the drawing data in `models.rs` and `parts.rs` (searched for clamps and input values only), `font.rs`, `icons.rs`, `style.rs`, `icon.rs`, `keyword_icon.rs`, `pad_widget.rs`, `touchpad_widget.rs` and `gui/widgets.rs`, and where the daemon and the overlay call into them: the pack assets (`config/assets.rs`), the frame's fonts and icons (`daemon/overlay.rs`, `overlay/ui.rs`). Windows support was removed on 2026-10-31 (`9ed4fb4`), and with it the code of finding R7-4 (pack fonts on Windows).
 
 | ID | File | Finding | Status |
 |---|---|---|---|
 | R7-1 | `icons.rs` | A pack's icon was checked for `<image>`, scripts and `http` links, but the SVG renderer (usvg, under iced) also reads `<feImage href="…">` as a file from disk, whole. A shared pack could draw any picture at a known path, or name `/dev/zero` and run the settings window or the overlay out of memory. Checked with resvg: an icon with an `feImage` naming a local file passed `check_svg` and drew the file. | **Fixed.** Every `href` must name a part of the file itself (`#id`), so an icon can still `<use>` its own shapes. A pack with such an icon is refused on import, and a game file already holding one (imported before, or edited by hand) has the icon left out when its icons are put to use (`set_pack_icons`). Tests: `an_icon_can_t_read_a_file_from_disk`, `a_game_s_icon_that_fails_the_check_is_never_drawn`. |
 | R7-2 | `sound/player.rs` | The sound thread ended for good the first time the audio device didn't open (no output plugged in, the sound server restarting, Bluetooth headphones the only output and off), so overlay sounds stayed silent until the daemon or settings window restarted, and nothing said why. | **Fixed.** That cue is dropped and the next one tries again; the first failure is logged. Test: `a_device_that_won_t_open_drops_that_cue_and_the_next_tries_again`. Desktop check H-13. |
 | R7-3 | `font.rs`, `overlay/ui.rs` | Every frame names the pack's font files, and the overlay read and hashed each one (up to 1 MB) on every frame it took, which is every input event while an overlay is up, on its drawing thread. Only games whose pack carries fonts. | **Fixed.** The files are read again only when the frame names different ones. Test: `the_overlay_reads_a_pack_s_font_files_once_not_every_frame`. |
-| R7-4 | `font.rs` | The daemon shares a pack's fonts with the overlay as files in the runtime folder. Windows has none unless `XDG_RUNTIME_DIR` is set, so on Windows the overlays never drew a pack's own fonts. | **Fixed.** On Windows they go in the user's local app data. Needs Windows: H-14. |
 | R7-5 | `font.rs` | A shared font file was used as it was whenever it existed, so one cut short (the daemon ending while writing it) stayed broken until logout cleared the runtime folder. | **Fixed.** A file of the wrong length is written again. Test: `a_shared_font_file_cut_short_is_written_again`. |
 | R7-6 | `touchpad_widget.rs` | The Touchpad tab drew a radial menu of one item as an arc from a point back to itself, which SVG leaves out, so the side was blank and a finger on it lit nothing. (The overlay's ring already draws this case as a circle.) | **Fixed.** One item fills its side. Test: `a_ring_of_one_item_fills_its_side_and_lights_up`. `gui/ring_preview.rs` drew its wedges the same way: see R8-7. |
 | R7-7 | `sound/player.rs` | `Sounds::play` said cues queue up behind each other. Each plays on its own player, so they overlap. | **Fixed:** the comment now says so. Overlapping is what a fast-moving cursor wants. |
@@ -309,14 +299,14 @@ Checked and found sound:
 
 ## Pass 9: Debug tools and integration tests
 
-Read in full: `debug.rs` and `debug/` (`protocol.rs`, `server.rs`, `bridge.rs`, `pad.rs`, `window.rs`, `focus.rs`, `sound.rs`, `sound_panel.rs`, `glyphs.rs`, `overlay_shot.rs`, `pack_scenes.rs`, `motion_shot.rs`, the frame building in `scenes.rs`), the daemon's side of `--attach` (`daemon/inject.rs`), `snapshot.rs`, and `tests/` but for the profiling suite (`tests/profile/`, searched for how it finds its devices and controllers only). The `debug_`, `hotplug_`, `daemon_` and `idle_` container tests were run before and after (`scripts/kernel-test-docker.sh`), and the Windows build was checked with `cargo clippy --target x86_64-pc-windows-msvc --all-targets`.
+Read in full: `debug.rs` and `debug/` (`protocol.rs`, `server.rs`, `bridge.rs`, `pad.rs`, `window.rs`, `focus.rs`, `sound.rs`, `sound_panel.rs`, `glyphs.rs`, `overlay_shot.rs`, `pack_scenes.rs`, `motion_shot.rs`, the frame building in `scenes.rs`), the daemon's side of `--attach` (`daemon/inject.rs`), `snapshot.rs`, and `tests/` but for the profiling suite (`tests/profile/`, searched for how it finds its devices and controllers only). The `debug_`, `hotplug_`, `daemon_` and `idle_` container tests were run before and after (`scripts/kernel-test-docker.sh`).
 
 | ID | File | Finding | Status |
 |---|---|---|---|
-| R9-1 | `debug.rs` | Ctrl+C (or SIGTERM) on a `padwight debug --attach` session ended it without a word, so its controller stayed in the daemon with whatever it held. With `--live`, a key held at the time stayed down on the desktop until `padwight debug detach-all`. | **Fixed.** Ctrl+C ends the session the way `quit` does, which removes the controller and lets go of what it held. The daemon's signal handling (`stop_on_signals`) now takes what to do, and the session uses it. Test: `debug_ctrl_c_detaches_the_controller_and_lets_go_of_what_it_held` (container). Windows: H-15. |
+| R9-1 | `debug.rs` | Ctrl+C (or SIGTERM) on a `padwight debug --attach` session ended it without a word, so its controller stayed in the daemon with whatever it held. With `--live`, a key held at the time stayed down on the desktop until `padwight debug detach-all`. | **Fixed.** Ctrl+C ends the session the way `quit` does, which removes the controller and lets go of what it held. The daemon's signal handling (`stop_on_signals`) now takes what to do, and the session uses it. Test: `debug_ctrl_c_detaches_the_controller_and_lets_go_of_what_it_held` (container). |
 | R9-2 | `debug.rs` | An attached session attached to the daemon before taking its socket. A second `--attach` session, refused because the first had the socket, left its controller in the daemon. | **Fixed.** The socket comes first, and is removed again when attaching fails. Test: `debug_a_second_attached_session_leaves_no_controller_behind` (container). |
 | R9-3 | `debug/server.rs` | `tap`, `pad-click <ms>` and `swipe` returned as soon as a send to the daemon failed, before letting go. The session then showed the button, click or finger as held, and the next change sent its release on to a daemon that never had the press. | **Fixed.** The release always happens; the first error is still reported. Test: `debug_a_tap_the_daemon_never_got_leaves_nothing_held` (container). |
-| R9-4 | `snapshot.rs` | A zero, negative or `nan` size or scale (`debug overlay --size 0x0`, `--scale 0`, the same in `debug motion` and `debug gui`) panicked inside the renderer ("Create clip mask"), and a huge one ran out of memory. The Windows overlay draws its window through the same function, with the display's size. | **Fixed.** Refused with an error; each side must be 1 to 16,384 pixels. Test: `an_empty_or_huge_image_is_refused_not_a_panic`. |
+| R9-4 | `snapshot.rs` | A zero, negative or `nan` size or scale (`debug overlay --size 0x0`, `--scale 0`, the same in `debug motion` and `debug gui`) panicked inside the renderer ("Create clip mask"), and a huge one ran out of memory. | **Fixed.** Refused with an error; each side must be 1 to 16,384 pixels. Test: `an_empty_or_huge_image_is_refused_not_a_panic`. |
 | R9-5 | `debug/sound.rs` | `padwight debug sound length=nan` (or `pitch=nan` for a recorded kind) panicked working out how long the cue lasts. | **Fixed.** A setting must be a finite number. Test: `a_setting_that_is_not_a_finite_number_is_refused`. |
 | R9-6 | `debug/protocol.rs` | `stick left nan 0` parsed, then JSON wrote the `nan` as `null`, and the session answered "bad request: invalid type: null". | **Fixed.** Refused as "not a number". Test: `mistakes_are_explained`. |
 | R9-7 | `debug/motion_shot.rs` | The animated PNG's frame time was `fps × 1000` over 1000 in 16 bits, which tops out at 65.5 fps: `--fps 100` played at 65.5. | **Fixed.** Written in ten-thousandths of a second. Test: `the_animation_plays_at_the_frame_rate_asked_for`. |
@@ -343,7 +333,7 @@ Tools added in pass 0:
 | `padwight debug focus` | What the running daemon sees in front: the focus backend, the active profile, and, for the focused window, its program and path, the Steam app and its controller support, the rule it matches, and the SDL controller variables the process runs with. A long `SDL_GAMECONTROLLER_IGNORE_DEVICES` list is summarised as its length and which of Padwight's controller IDs it hides. |
 | `padwight debug focus <pid> [class] [title]` | The same for any window, without the daemon: identifies the pid as the daemon would now, including finding a sandboxed process from its inner pid (it says so when it does). |
 | `padwight debug focus processes` | For desktops without focus tracking: which running processes each rule matches, and which one the process scan picks. |
-| `scripts/sandbox-pid.sh [program [args]]` | Runs a program in its own pid namespace (as a Flatpak or the Steam runtime does) and prints its pid there and here, with the `debug focus` line to try. Needs unprivileged user namespaces. |
+| `scripts/sandbox-pid.sh [program [args]]` | Runs a program in its own pid namespace (as a Flatpak game or the Steam runtime does) and prints its pid there and here, with the `debug focus` line to try. Needs unprivileged user namespaces. |
 
 Earlier tools that later passes will need are listed in `CLAUDE.md` (overlay and motion screenshots, sound traces, long files), in `qa-plan.md` (project checks, container kernel tests with `scripts/kernel-test-docker.sh`), in `qa-tooling.md` (tools still to build, including the input replay below) and in `overlay-debugging.md`.
 
@@ -360,18 +350,13 @@ These can't be checked without real controllers and Steam. When they pass, they 
 |---|---|---|
 | H-1 | (Retired with the Steam hand-off.) | R0-1 |
 | H-2 | (Retired with the Steam hand-off.) | R0-5 |
-| H-4 | Start a game from Flatpak Heroic, on each desktop with focus tracking (KWin, GNOME, Sway, Hyprland). `debug focus` names the game's process, and its setup switches on. Where the desktop passes on the pid an X11 window gives itself, this exercises the sandbox lookup. | R0-2 |
+| H-4 | Start a game from Flatpak Heroic, on each desktop with focus tracking (KWin, GNOME, Cinnamon, COSMIC, Sway, Hyprland, niri). `debug focus` names the game's process, and its setup switches on. Where the desktop passes on the pid an X11 window gives itself, this exercises the sandbox lookup. | R0-2 |
 | H-5 | On a DualSense or Steam Deck touchpad in mouse mode with scrolling off, put two fingers down, lift the first, put a finger down again, and move each in turn. Only the finger that stayed down moves the pointer. | R2-3 |
 | H-6 | On labwc or Wayfire, with a game that has a rule in front, restart the daemon. The game's profile comes on straight away, without touching any window. Then switch between two windows: the log shows no `no window has focus` in between. | R3-2, R3-3 |
 | H-7 | On GNOME, after logging out and in once to load the updated extension, with a game that has a rule in front, restart the daemon. The game's profile comes on straight away. | R3-4 |
-| H-8 | On Windows at 125% or 150% scaling, look at the tray icon, then switch profiles 50 times. Task Manager's GDI objects column for Padwight stays flat. | R5-1, R5-2 |
-| H-9 | On Windows, start a recording, then end the daemon from Task Manager. Check whether ffmpeg is still running and whether the file plays. | R5-12 |
-| H-10 | On Windows, force quit a game started from a launcher (Steam, Epic): the game and its helpers end, the launcher and Explorer don't. Take a screenshot in Prince of Persia: The Sands of Time: it is saved under `Prince of Persia - The Sands of Time`. | R5-3, R5-4, R5-6 |
 | H-11 | With a game that has a rule in front, open the in-game menu (Guide + Start) and change the rumble strength in Quick Settings. Bring another window or the desktop to the front with the mouse. The menu keeps showing the game's values, and the log shows no profile switch until the menu closes; then it switches. Open the menu again, change the rumble, switch profile on the Profile row, and Discard: `config.toml` still has the old rumble strength. | R6-5, R6-6 |
 | H-12 | Open the in-game menu, then save a change in the settings window. The in-game menu closes; opened again, it shows the settings window's values, and closing it asks nothing. | R6-4 |
 | H-13 | Turn off or unplug every audio output, open a menu overlay and move its cursor, then plug one back in and move it again. The daemon's log says once that there is no audio device; the cues sound again once the output is back, without a restart. | R7-2 |
-| H-14 | On Windows, with a game whose pack carries a font used by an info overlay, bring the game up. The overlay draws in the pack's font. | R7-4 |
-| H-15 | On Windows, press Ctrl+C in a console running `padwight daemon`: it releases what it holds and exits. Then run `padwight debug --attach --live` against a `--debug` daemon, hold a button mapped to a key, and press Ctrl+C: `padwight status` no longer lists the debug controller, and the key comes up. | R9-1 |
 | H-16 | On a DualSense or DualShock 4, run `padwight disable; padwight enable` in one line, then move a finger on the touchpad. The desktop pointer doesn't move, and the log has no `touchpad: cannot take`. | R1-3 |
 | H-17 | On a desktop without focus tracking (`padwight status` says process scan), with automatic switching on and a game with a rule running, hold Force Quit. The toast names the game, and the game ends. Close the game, wait under 2 seconds and hold it again: "Nothing to force quit". | R5-13 |
 | H-18 | With Steam running, open the Guide overlay: the Steam overlay row is there at once. Quit Steam and open it again: the row isn't. | R6-8 |
