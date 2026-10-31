@@ -8,7 +8,7 @@
 #[cfg(test)]
 mod tests;
 
-use super::{Align, Item, Length, Look, Node, Outline, Rgba, Style, bar_of, item, rich, text::Spec};
+use super::{Align, Corners, Item, Op, Rect, Length, Look, Node, Outline, Rgba, Style, bar_of, item, rich, text::Spec};
 use crate::{
     config::OverlayStyle,
     keyboard::{self, Board, Key},
@@ -157,7 +157,27 @@ fn typed_line(mut body: Node, v: &KeyboardView, style: &Style, s: f32) -> Node {
         body = body.push(text(field.clone(), 15.0, style.muted));
     }
     if !v.typed.is_empty() || v.field.is_some() {
-        body = body.push(text(v.typed.clone(), 18.0, style.background_text));
+        let at = v.caret.min(v.typed.chars().count());
+        let split = v.typed.char_indices().nth(at).map_or(v.typed.len(), |(i, _)| i);
+        let (before, after) = v.typed.split_at(split);
+        let ink = style.background_text;
+        let line = [text(before.to_string(), 18.0, ink), caret(style, s), text(after.to_string(), 18.0, ink)];
+        body = body.push(Node::row(line));
     }
     body
+}
+
+/// The text cursor in the typed line: a thin bar as tall as the text, taking next to no room,
+/// that blinks (on for the first half of each second, by the overlay's clock).
+fn caret(style: &Style, s: f32) -> Node {
+    let on = style.anim.clock.fract() < 0.5;
+    let color = style.background_text;
+    Node::leaf(move |rect: Rect, ops: &mut Vec<Op>| {
+        if on {
+            let bar = Rect { x: rect.x - 0.5 * s, w: 1.5 * s, ..rect };
+            ops.push(Op::Rect { rect: bar, radii: Corners::all(0.0), fill: Some(color.into()), border: None });
+        }
+    })
+    .width(0.0)
+    .height(22.0 * s)
 }
