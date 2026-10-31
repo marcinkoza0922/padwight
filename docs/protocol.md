@@ -20,7 +20,7 @@ What the version covers: everything on this page except what is marked *internal
 
 | | |
 |---|---|
-| Socket | A Unix stream socket named `padwight.sock` in `$XDG_RUNTIME_DIR` (`/run/user/1000/` on most systems). Without a runtime directory, `/tmp/padwight-<uid>/padwight.sock`. Inside a Flatpak, `$XDG_RUNTIME_DIR/app/<FLATPAK_ID>/`. On Windows it is an AF_UNIX socket in `%LOCALAPPDATA%\padwight\` (or in `$XDG_RUNTIME_DIR` when that is set). |
+| Socket | A Unix stream socket named `padwight.sock` in `$XDG_RUNTIME_DIR` (`/run/user/1000/` on most systems). Without a runtime directory, `/tmp/padwight-<uid>/padwight.sock`. |
 | Access | Mode `0600`: only your own user can connect. There is no other authentication. |
 | Encoding | JSON, UTF-8, one value per line (`\n`). |
 | Requests | **One request per connection.** Connect, write one line, read one line, close. |
@@ -148,8 +148,8 @@ Not covered by the version; they can change in any release.
 | `active_mode` | The mode switched to; missing in the default mode. |
 | `devices` | The controllers connected. Each has `name`, `id`, `path`, `profile` (the one it uses; empty if unmanaged), `managed` (grabbed and remapped), `ignored`, and the features `analog_triggers`, `rumble`, `gyro`, `paddles`, `touchpad`, plus `family` and `model` (strings when the model is recognized, else `null`). |
 | `controllers` | Every controller remembered, connected or not: [ControllerInfo](#controllerinfo). |
-| `focus_backend` | How the daemon learns the active game: `Kwin`, `GnomeShell`, `Sway`, `Hyprland`, `Wlroots`, `Windows` or `ProcessScan`. |
-| `focused`, `recent_windows` | The focused window, and recent ones newest first. Each has `class`, `title`, `pid`, `exe`, `path`, `steam_app_id`. Windows' titles can be private; show them with care. `focused` is `null` when unknown. |
+| `focus_backend` | How the daemon learns the active game: `Kwin`, `GnomeShell`, `Cinnamon`, `Cosmic`, `Sway`, `Hyprland`, `Niri`, `Wlroots` or `ProcessScan`. |
+| `focused`, `recent_windows` | The focused window, and recent ones newest first. Each has `class`, `title`, `pid`, `exe`, `path`, `steam_app_id`. Window titles can be private; show them with care. `focused` is `null` when unknown. |
 | `motion_access_denied`, `raw_readers` | Problems to show the user: motion sensors the daemon may not open, and other programs reading a managed controller directly (`{"controller", "programs"}`). |
 | `overlay_visible`, `numpad_visible` | The on-screen keyboard or numpad is up. |
 | `stop_pending` | The daemon is ending and waits for [`Unsaved`](#settings-window-cooperation) edits. |
@@ -197,7 +197,7 @@ The daemon refuses a configuration it finds a problem with (`{"Error":"not saved
 
 #### Writing the config files instead
 
-A client may also edit the config folder directly, and with no daemon running that is the only way. The folder is `~/.config/padwight/` on Linux and `%APPDATA%\padwight\` on Windows (`$XDG_CONFIG_HOME` can name another). `config.toml` holds the app's settings, and `general/` and `setups/<name>/` hold the profiles, macros, menus and so on, one TOML file each. [src/config/store.rs](../src/config/store.rs) describes the layout.
+A client may also edit the config folder directly, and with no daemon running that is the only way. The folder is `~/.config/padwight/` (`$XDG_CONFIG_HOME` can name another). `config.toml` holds the app's settings, and `general/` and `setups/<name>/` hold the profiles, macros, menus and so on, one TOML file each. [src/config/store.rs](../src/config/store.rs) describes the layout.
 
 - With the daemon running, send `"Reload"` after writing, so it reads the folder again. Without it the daemon keeps its own copy, and its next save **rewrites the whole folder** over your changes.
 - A file that doesn't load is left out of the configuration and kept on disk; `Reload` answers `{"Error": …}` when the folder as a whole can't be read.

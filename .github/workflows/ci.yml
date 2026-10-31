@@ -43,7 +43,7 @@ jobs:
               - 'docs/manual/**'
               - 'dist/**'
               - 'gnome-extension/**'
-              - 'flatpak/*.svg'
+              - 'cinnamon-extension/**'
               - '.github/workflows/ci.yml'
             # Library packs are embedded and validated by the Rust tests, but need no clippy or Windows run.
             packs:
@@ -87,37 +87,11 @@ jobs:
       - name: Tests
         run: cargo nextest run --profile agent --hide-progress-bar --cargo-quiet
 
-  build-and-test-windows:
-    needs: changes
-    if: needs.changes.outputs.code == 'true'
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Check
-        run: cargo check --all-targets
-
-      - name: Clippy (zero warnings)
-        run: cargo clippy --all-targets -- -D warnings
-
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: nextest
-
-      - name: Tests
-        run: cargo nextest run --profile agent --hide-progress-bar --cargo-quiet
-
   project-checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Docs, pack format, links, Flatpak sources, fonts
+      - name: Docs, pack format, links, fonts
         run: python3 scripts/check-project.py
 
   install-files:
@@ -125,8 +99,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validators
-        run: sudo apt-get update && sudo apt-get install -y desktop-file-utils appstream python3-yaml
-      - name: Service units, udev rule, desktop entry, metainfo, Flatpak manifest
+        run: sudo apt-get update && sudo apt-get install -y desktop-file-utils appstream
+      - name: Service units, udev rule, desktop entry, metainfo
         run: scripts/check-install.sh
 
   audit:

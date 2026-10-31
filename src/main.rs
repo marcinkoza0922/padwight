@@ -42,9 +42,7 @@ mod pad_widget;
 mod priority;
 mod radial;
 mod quit;
-#[cfg_attr(windows, path = "record/windows.rs")]
 mod record;
-#[cfg_attr(windows, path = "rumble/windows.rs")]
 mod rumble;
 mod style;
 mod layout_editor;
@@ -52,7 +50,6 @@ mod snapshot;
 mod sound;
 mod system_menu;
 mod touchpad_widget;
-#[cfg_attr(windows, path = "tray/windows.rs")]
 mod tray;
 
 use anyhow::{Result, bail};
@@ -81,9 +78,6 @@ commands:
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let args: Vec<&str> = args.iter().map(String::as_str).collect();
-    if matches!(args.as_slice(), [] | ["gui"] | ["overlay"] | ["daemon", ..]) {
-        leave_own_console();
-    }
     match args.as_slice() {
         [] | ["gui"] => gui::run().map_err(Into::into),
         ["daemon"] => daemon::run(false),
@@ -109,23 +103,6 @@ fn main() -> Result<()> {
         _ => bail!("{USAGE}"),
     }
 }
-
-/// On Windows the program is a console program, for its command line, so a window started from
-/// Explorer or the Start menu comes with a console window of its own. This closes that one, and
-/// leaves a console shared with a terminal alone.
-#[cfg(windows)]
-fn leave_own_console() {
-    use windows::Win32::System::Console::{FreeConsole, GetConsoleProcessList};
-    let mut attached = [0u32; 2];
-    // SAFETY: the list is written into a local array of the length passed.
-    if unsafe { GetConsoleProcessList(&mut attached) } == 1 {
-        // SAFETY: detaching from a console only this process uses.
-        let _ = unsafe { FreeConsole() };
-    }
-}
-
-#[cfg(target_os = "linux")]
-fn leave_own_console() {}
 
 fn send(req: &Request) -> Result<()> {
     ipc::request(req)?;

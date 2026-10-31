@@ -8,7 +8,7 @@
 # devices, which would take over your own desktop.
 #
 # Usage: DESKTOP_TEST_HOST=dev@127.0.0.1 DESKTOP_TEST_SSH_OPTS="-p 2457 -i vms/id_ed25519" \
-#        scripts/desktop-test.sh <gnome|kde|sway|hyprland|labwc>
+#        scripts/desktop-test.sh <gnome|cinnamon|budgie|cosmic|kde|sway|hyprland|niri|labwc>
 #   DESKTOP_TEST_QMP=<qmp socket>  optional: sends Escape through QEMU first, to close GNOME's
 #                                  Overview after login (VMs started by vms/vm.sh have one).
 #
@@ -16,9 +16,9 @@
 # the input stack gets a new release. Record the versions it prints with the result.
 set -euo pipefail
 
-desktop=${1:?usage: scripts/desktop-test.sh gnome|kde|sway|hyprland|labwc}
+desktop=${1:?usage: scripts/desktop-test.sh gnome|cinnamon|budgie|cosmic|kde|sway|hyprland|niri|labwc}
 case $desktop in
-gnome | kde | sway | hyprland | labwc) ;;
+gnome | cinnamon | budgie | cosmic | kde | sway | hyprland | niri | labwc) ;;
 *)
     echo "unknown desktop: $desktop" >&2
     exit 2
@@ -53,19 +53,10 @@ print(text.replace(south, '[buttons.South]\nkeys = ["KEY_A"]', 1))
 PY
 
 echo "== syncing the checkout to $host"
-rsync -az --delete --exclude target --exclude vms --exclude .git --exclude .flatpak-builder --exclude build-dir --exclude repo -e "ssh ${DESKTOP_TEST_SSH_OPTS:-}" "$root/" "$host:controller_app/"
+rsync -az --delete --exclude target --exclude vms --exclude .git -e "ssh ${DESKTOP_TEST_SSH_OPTS:-}" "$root/" "$host:controller_app/"
 
-if [ -n "${DESKTOP_TEST_FLATPAK:-}" ]; then
-    echo "== building the Flatpak (the first time takes a long while: it downloads the runtimes)"
-    remote 'set -e
-command -v flatpak-builder >/dev/null || sudo pacman -S --noconfirm --needed flatpak flatpak-builder >/dev/null
-flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-flatpak install --user -y --noninteractive flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08 org.freedesktop.Sdk.Extension.rust-stable//25.08 >/dev/null
-cd controller_app && flatpak-builder --user --install --force-clean --disable-rofiles-fuse build-dir flatpak/io.github.marcinkoza0922.Padwight.yml >/tmp/flatpak-build.log 2>&1'
-else
-    echo "== building the release binary"
-    remote 'cd controller_app && cargo build --release'
-fi
+echo "== building the release binary"
+remote 'cd controller_app && cargo build --release'
 
 if [ "$desktop" = gnome ] && [ -n "${DESKTOP_TEST_QMP:-}" ]; then
     echo "== closing the GNOME Overview"
@@ -77,30 +68,30 @@ fi
 
 echo "== running the $desktop checks"
 {
-    printf 'PROFILE_B64=%s\nFLATPAK=%s\n' "$(base64 -w0 "$profile")" "${DESKTOP_TEST_FLATPAK:-}"
+    printf 'PROFILE_B64=%s\n' "$(base64 -w0 "$profile")"
     cat <<'SCENARIO'
 set -u
 uid=$(id -u)
 export XDG_RUNTIME_DIR=/run/user/$uid DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus
 export WAYLAND_DISPLAY=$(basename "$(ls /run/user/$uid/wayland-* | grep -v lock | head -1)")
-# A Flatpak runs the app in its own sandbox, with its own config folder.
-if [ -n "${FLATPAK:-}" ]; then
-    bin=(flatpak run io.github.marcinkoza0922.Padwight)
-    config=$HOME/.var/app/io.github.marcinkoza0922.Padwight/config/padwight
-else
-    bin=("$HOME/controller_app/target/release/padwight")
-    config=$HOME/.config/padwight
-fi
+bin=("$HOME/controller_app/target/release/padwight")
+config=$HOME/.config/padwight
 desktop=$1
 
-# The window runs a shell that reads one key and records it, so a pad press shows where it went.
+# The window runs bash (dash has no read -n) that reads one key and records it, so a pad press shows where it went.
 read_key='read -n1 key; printf %s "$key" > /tmp/desktop-test-key; sleep 120'
 case $desktop in
-gnome) window=kgx; class=org.gnome.Console; tracker="GNOME Shell"; launch=(kgx -- sh -c "$read_key") ;;
-kde) window=konsole; class=org.kde.konsole; tracker=KWin; launch=(konsole -e sh -c "$read_key") ;;
-sway) window=foot; class=foot; tracker=Sway; launch=(foot sh -c "$read_key") ;;
-hyprland) window=kitty; class=kitty; tracker=Hyprland; launch=(kitty sh -c "$read_key") ;;
-labwc) window=foot; class=foot; tracker=wlroots; launch=(foot sh -c "$read_key") ;;
+gnome) window=kgx; class=org.gnome.Console; tracker="GNOME Shell"; launch=(kgx -- bash -c "$read_key") ;;
+# The window belongs to the terminal's server (its process name is cut to 15 characters), not to the command that opened it.
+cinnamon) window=gnome-terminal; closer=gnome-terminal-; class=org.gnome.Terminal; tracker=Cinnamon; launch=(gnome-terminal -- bash -c "$read_key") ;;
+# Budgie 10.10 is labwc underneath, so the generic wlroots tracker serves it.
+budgie) window=gnome-terminal; closer=gnome-terminal-; class=org.gnome.Terminal; tracker=wlroots; launch=(gnome-terminal -- bash -c "$read_key") ;;
+cosmic) window=cosmic-term; class=com.system76.CosmicTerm; tracker=COSMIC; launch=(cosmic-term -e bash -c "$read_key") ;;
+kde) window=konsole; class=org.kde.konsole; tracker=KWin; launch=(konsole -e bash -c "$read_key") ;;
+sway) window=foot; class=foot; tracker=Sway; launch=(foot bash -c "$read_key") ;;
+hyprland) window=kitty; class=kitty; tracker=Hyprland; launch=(kitty bash -c "$read_key") ;;
+niri) window=foot; class=foot; tracker=niri; launch=(foot bash -c "$read_key") ;;
+labwc) window=foot; class=foot; tracker=wlroots; launch=(foot bash -c "$read_key") ;;
 esac
 
 failures=0
@@ -116,7 +107,7 @@ stop_daemon() { pkill -x padwight 2>/dev/null || true; sleep 1; }
 
 echo "== versions"
 echo "kernel $(uname -r)"
-for tool in gnome-shell plasmashell sway Hyprland labwc; do
+for tool in gnome-shell cinnamon budgie-desktop cosmic-comp plasmashell sway Hyprland niri labwc; do
     command -v "$tool" >/dev/null && echo "$tool: $("$tool" --version 2>/dev/null | head -1)"
 done
 
@@ -163,15 +154,9 @@ echo "$PROFILE_B64" | base64 -d >"$setup/profiles/001-Console-Pad.toml"
 (setsid nohup "${bin[@]}" daemon >/tmp/desktop-test-daemon.log 2>&1 </dev/null &)
 
 # The daemon retries the tracker every 10 seconds, so give it a little longer than that.
-# wlroots compositors hide their window and overlay protocols from sandboxed apps, so a Flatpak
-# there falls back to matching processes (README, Flatpak).
-sandboxed_wlroots=0
-if [ -n "${FLATPAK:-}" ] && { [ "$desktop" = sway ] || [ "$desktop" = labwc ]; }; then sandboxed_wlroots=1; fi
 expected="focus tracking: focused window ($tracker)"
-[ "$sandboxed_wlroots" = 1 ] && expected="focus tracking: running processes"
 tracker_up() { for _ in $(seq 1 40); do log_has "$expected" && return 0; sleep 1; done; return 1; }
 msg="daemon tracks focus through $tracker"
-[ "$sandboxed_wlroots" = 1 ] && msg="a Flatpak on $tracker falls back to process matching"
 if tracker_up; then
     pass "$msg"
 else
@@ -187,15 +172,15 @@ if [ "$desktop" = gnome ]; then
     fi
 fi
 
-(setsid nohup "${launch[@]}" >/tmp/desktop-test-window.log 2>&1 </dev/null &)
-if [ "$sandboxed_wlroots" = 1 ]; then
-    echo "SKIP focus, rules, pad input and the overlay in a Flatpak on $tracker (the compositor hides its protocols from the sandbox)"
-    stop_daemon
-    stop_pad
-    rm -rf "$setup"
-    echo "== $failures failure(s)"
-    exit "$failures"
+if [ "$desktop" = cinnamon ]; then
+    if eventually gdbus call --session -d org.freedesktop.DBus -o /org/freedesktop/DBus -m org.freedesktop.DBus.NameHasOwner io.github.marcinkoza0922.Padwight.Shell | grep -q true; then
+        pass "the Cinnamon extension is loaded"
+    else
+        fail "the Cinnamon extension is loaded (a log out and back in may be needed after an update)"
+    fi
 fi
+
+(setsid nohup "${launch[@]}" >/tmp/desktop-test-window.log 2>&1 </dev/null &)
 
 if eventually focused_is "$class"; then
     pass "a focused $window window is reported"
@@ -218,35 +203,29 @@ else
     fail "a pad press reaches the focused $window window as the mapped key"
 fi
 
-# The on-screen keyboard is a layer-shell surface, which GNOME doesn't have.
+# The on-screen keyboard is a layer-shell surface; GNOME has none, so there the overlay process
+# hands its frames to the Shell extension (this checks the process, not what the extension shows).
 overlay_running() { pgrep -f 'padwight overlay$' >/dev/null; }
-# A Flatpak can't create the overlay's layer-shell surface on wlroots compositors (README, Flatpak).
-if [ "$desktop" = gnome ]; then
-    echo "SKIP the on-screen overlay (GNOME has no layer-shell)"
-elif [ -n "${FLATPAK:-}" ] && [ "$desktop" = hyprland ]; then
-    echo "SKIP the on-screen overlay (the compositor hides layer-shell from the sandbox)"
-else
-    "${bin[@]}" overlay-toggle >/dev/null 2>&1 || true
-    if eventually overlay_running; then
-        sleep 3
-        if overlay_running; then
-            pass "the on-screen overlay opens and stays up"
-        else
-            fail "the on-screen overlay opens and stays up"
-        fi
+"${bin[@]}" overlay-toggle >/dev/null 2>&1 || true
+if eventually overlay_running; then
+    sleep 3
+    if overlay_running; then
+        pass "the on-screen overlay opens and stays up"
     else
         fail "the on-screen overlay opens and stays up"
     fi
-    "${bin[@]}" overlay-toggle >/dev/null 2>&1 || true
-    # The overlay process stays running and goes back to idle, so the daemon's log is what says it closed.
-    if eventually log_has "on-screen keyboard closed"; then
-        pass "the on-screen overlay closes again"
-    else
-        fail "the on-screen overlay closes again"
-    fi
+else
+    fail "the on-screen overlay opens and stays up"
+fi
+"${bin[@]}" overlay-toggle >/dev/null 2>&1 || true
+# The overlay process stays running and goes back to idle, so the daemon's log is what says it closed.
+if eventually log_has "on-screen keyboard closed"; then
+    pass "the on-screen overlay closes again"
+else
+    fail "the on-screen overlay closes again"
 fi
 
-pkill -x "$window" 2>/dev/null || true
+pkill -x "${closer:-$window}" 2>/dev/null || true
 if eventually on_profile "Gamepad"; then
     pass "the profile falls back to Gamepad after $window closes"
 else

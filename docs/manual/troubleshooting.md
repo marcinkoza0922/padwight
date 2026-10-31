@@ -24,7 +24,7 @@ The Overview page's **What's happening** lists the last profile switches, newest
 
 ## The keyboard, menus or overlays don't appear
 
-They need KDE Plasma, Sway, Hyprland or labwc; GNOME lacks the layer-shell they use. In a Flatpak, they only show on KDE Plasma.
+They need KDE Plasma, Sway, Hyprland or labwc; GNOME lacks the layer-shell they use.
 
 ## The on-screen keyboard shows the wrong letters
 
@@ -41,7 +41,7 @@ Those controllers' motion sensors need a permission rule of their own. `padwight
 
 ## The top bar says the daemon isn't running
 
-Start it with `systemctl --user start padwight`, or on Windows with `padwight daemon`. You can still edit in the meantime. Your changes are kept, and they take effect once it starts.
+Start it with `systemctl --user start padwight`, or `padwight daemon`. You can still edit in the meantime. Your changes are kept, and they take effect once it starts.
 
 ## I edited the config file by hand, and nothing changed
 
@@ -54,17 +54,3 @@ Only controllers with force feedback vibrate. Press **Test rumble** on the Overv
 ## The profile changed after I unplugged my controller
 
 When the same controller comes back, the profile you were using returns, unless you've changed it since. If a different controller lacks something the profile needs, such as gyro, a profile that doesn't need it takes over, and a message says so.
-
-## On Windows
-
-**The game sees my controller twice.** Windows can't keep the controller to Padwight alone, so games see it next to Padwight's virtual one. HidHide hides it: add the controller to its hidden devices, and Padwight to the programs still allowed to see it.
-
-**Games don't see Padwight's controller.** The virtual controller needs the ViGEmBus driver. Keyboard and mouse mappings work without it.
-
-**Keys and the mouse don't reach a game.** Windows doesn't let a program send input to one that runs as administrator. Run Padwight as administrator too.
-
-**My controller has no Guide button.** On **App settings › Controller shortcuts**, set *Open the Guide overlay* to a combo such as Start + Select, a long press, or another button. See [The Guide button](guide-button.md).
-
-**Guide opens the Xbox Game Bar.** Turn off the Game Bar's controller button in Windows' Settings, under Gaming, Xbox Game Bar.
-
-**My PlayStation or Switch controller doesn't show up.** On Windows, Padwight reads controllers through XInput, so only Xbox controllers show up. Others work through Steam Input or DS4Windows, which present them as Xbox controllers, without gyro or touchpad.

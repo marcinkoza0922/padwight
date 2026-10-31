@@ -24,13 +24,12 @@ Ranked by what it catches per day spent. Effort: S is a day or two, M about a we
 | 10 | [T-8](#t-8-picture-regression) Picture regression | M | Unintended visual changes in overlays and the settings window | T4 |
 | 11 | [T-6](#t-6-soak-and-chaos-runs) Soak and chaos runs | M | Leaks, stuck output and panics over hours of mixed use | T0 |
 | 12 | [T-9](#t-9-fault-injection) Fault injection | M | Write errors, a full disk, a crash mid-save | T0 |
-| 13 | [T-7](#t-7-stand-in-compositors) Stand-in compositors | M | Focus backends (Sway, Hyprland, wlroots, KWin) in CI | T1 |
+| 13 | [T-7](#t-7-stand-in-compositors) Stand-in compositors | M | Focus backends (Sway, Hyprland, niri, wlroots, COSMIC, KWin, Cinnamon) in CI | T1 |
 | 14 | [T-19](#t-19-coverage-and-mutation-testing) Coverage and mutation testing | S | Code no test runs; tests that pass whatever the code does | all |
 | 15 | [T-14](#t-14-binding-comparison) Binding comparison | M per engine | Pack keys that don't match the game's controls | T1 |
 | 16 | [T-17](#t-17-bug-report-bundle) Bug report bundle | S | Missing facts in manual QA runs and user reports | — |
 | 17 | [T-15](#t-15-protocol-conformance) Protocol conformance | S | `docs/protocol.md` drifting from the daemon | T3 |
 | 18 | [T-11](#t-11-gui-layout-checks) GUI layout checks | M | Clipped and overflowing text, dark-theme contrast | T4 |
-| 19 | [T-16](#t-16-windows-integration) Windows integration | L | Every Windows-only path, now unit-tested only | T0, T1 |
 
 ## T-1: Scenario tests
 
@@ -176,15 +175,24 @@ saves its seed, so a failure can be replayed exactly. Run overnight weekly.
 ## T-7: Stand-in compositors
 
 **Gap.** GNOME focus has a stand-in shell (`tests/fixtures/gnome_shell_mock.js`). Sway, Hyprland,
-wlroots and KWin have none, so their backends are tested only in the VMs.
+niri, wlroots, COSMIC, KWin and Cinnamon have none, so their backends are tested only in the VMs.
+The overlay's choice of monitor on wlroots (`overlay/wayland/monitors.rs`) and the GNOME overlay's
+`SetBuffer`/`Present` calls have no test outside a VM either.
 
 **What to build.** Small servers in the test crate that speak just enough of each protocol:
 
 - **Sway**: an i3-IPC socket at `$SWAYSOCK` that answers `subscribe` and sends `window` events.
 - **Hyprland**: the `.socket.sock` command socket and `.socket2.sock` event socket.
 - **KWin**: the D-Bus calls the KWin script makes, on a private session bus (as `gnome_` does).
+- **niri**: a `$NIRI_SOCKET` that answers `EventStream` with window and focus events (with pids).
+- **Cinnamon**: the extension's D-Bus calls, on a private session bus, as the GNOME mock does.
 - **wlroots**: a minimal Wayland server offering `wlr-foreign-toplevel-management` (the
-  `wayland-server` crate does this in a few hundred lines).
+  `wayland-server` crate does this in a few hundred lines). Giving it two outputs also tests which
+  one the overlay picks.
+- **COSMIC**: the same server with `ext-foreign-toplevel-list` and `cosmic-toplevel-info`
+  (`protocols/`) instead.
+- **GNOME overlay**: the GNOME mock taking `SetBuffer` and `Present`, so a test can check the
+  overlay hands over the right size and redraws only on change.
 
 Each test starts the stand-in, starts the daemon, sends a focus change for a window whose pid is a
 stand-in process named like a game, and checks the profile with `padwight status`. This also
@@ -302,18 +310,6 @@ run, and no client in another language is tested.
 parses it with the Rust types, and checks it serializes back the same; and an integration test that
 runs `examples/dashboard/server.py`'s socket client against a `--debug` daemon and reads `Status`
 and a few `WatchInput` lines. `check-project.py` can run the first.
-
-## T-16: Windows integration
-
-**Gap.** On Windows, CI builds and runs the unit tests. Every system path (XInput, ViGEmBus,
-`SendInput`, the layered overlay window, the WinEvent focus hook, the tray, GSMTC media, GDI
-capture, ffmpeg recording, Force Quit) is unconfirmed by any test.
-
-**What to build.** A Windows VM image in `vms/` with ViGEmBus installed, and a test that uses
-ViGEmBus to make a fake XInput pad (the role uhid plays on Linux), starts the daemon, presses
-buttons and reads what `SendInput` produced through a low-level keyboard hook. The `debug_session`
-tests already run on Windows; with this, the daemon tests can too. GitHub's Windows runners allow
-installing ViGEmBus, so it may run in CI as well. Then WIN-2 to WIN-6 one by one.
 
 ## T-17: Bug report bundle
 

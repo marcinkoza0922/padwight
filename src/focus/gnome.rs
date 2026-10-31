@@ -16,16 +16,15 @@ const EXTENSIONS: (&str, &str, &str) = (SHELL, "/org/gnome/Shell", "org.gnome.Sh
 const ENABLED: f64 = 1.0;
 
 /// The extension's files, compiled in so the app can install them anywhere.
-const FILES: [(&str, &str); 2] = [
+const FILES: [(&str, &str); 3] = [
     ("metadata.json", include_str!("../../gnome-extension/padwight-focus@io.github.marcinkoza0922/metadata.json")),
     ("extension.js", include_str!("../../gnome-extension/padwight-focus@io.github.marcinkoza0922/extension.js")),
+    ("overlay.js", include_str!("../../gnome-extension/padwight-focus@io.github.marcinkoza0922/overlay.js")),
 ];
 
-/// Whether GNOME Shell is on the session bus.
+/// Whether GNOME Shell is on the session bus (and not just a program answering to its name).
 pub fn is_running(conn: &Connection) -> bool {
-    call(conn, ("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus"), "NameHasOwner", &(SHELL,))
-        .and_then(|reply| Ok(reply.body().deserialize::<bool>()?))
-        .unwrap_or(false)
+    super::dbus::owner_program(conn, SHELL).is_some_and(|program| program == "gnome-shell")
 }
 
 /// Installs the extension if needed and makes sure GNOME Shell has it running. Errors when it
@@ -73,14 +72,7 @@ fn write_files(dir: &Path) -> Result<bool> {
 }
 
 fn extension_dir() -> Result<PathBuf> {
-    // Inside a Flatpak, XDG_DATA_HOME is the app's own directory. GNOME reads the host's, which
-    // the manifest grants at the same path.
-    let data = if std::env::var_os("FLATPAK_ID").is_some() {
-        dirs::home_dir().map(|home| home.join(".local/share"))
-    } else {
-        dirs::data_dir()
-    };
-    Ok(data.context("no data directory")?.join("gnome-shell/extensions").join(UUID))
+    Ok(dirs::data_dir().context("no data directory")?.join("gnome-shell/extensions").join(UUID))
 }
 
 #[cfg(test)]

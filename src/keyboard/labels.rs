@@ -1,6 +1,6 @@
 //! Key labels in the user's keyboard layout: what each key types, so the on-screen keyboard
 //! shows "z" on the key a German layout types z with, and "!" over "1" with Shift on. The layout
-//! comes from XKB on Linux (`xkb.rs`) and from Windows' active layout there (`windows.rs`).
+//! comes from XKB (`xkb.rs`).
 
 use std::{collections::HashMap, sync::OnceLock};
 

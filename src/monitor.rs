@@ -90,16 +90,6 @@ fn truncate(s: &str, width: usize) -> String {
     s.chars().take(width.saturating_sub(1)).collect()
 }
 
-#[cfg(windows)]
-fn terminal_width() -> usize {
-    use windows::Win32::System::Console::{CONSOLE_SCREEN_BUFFER_INFO, GetConsoleScreenBufferInfo, GetStdHandle, STD_ERROR_HANDLE};
-    let mut info = CONSOLE_SCREEN_BUFFER_INFO::default();
-    // SAFETY: the info is written into a local; a missing console just fails.
-    let ok = unsafe { GetStdHandle(STD_ERROR_HANDLE).and_then(|console| GetConsoleScreenBufferInfo(console, &mut info)) }.is_ok();
-    let width = info.srWindow.Right - info.srWindow.Left + 1;
-    if ok && width > 0 { width as usize } else { 120 }
-}
-
 #[cfg(target_os = "linux")]
 fn terminal_width() -> usize {
     let mut ws: libc::winsize = unsafe { std::mem::zeroed() };

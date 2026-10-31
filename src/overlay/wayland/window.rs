@@ -14,6 +14,7 @@ use wayland_client::{
     globals::GlobalList,
     protocol::{
         wl_compositor::WlCompositor,
+        wl_output::WlOutput,
         wl_shm::{self, WlShm},
         wl_surface::WlSurface,
     },
@@ -28,6 +29,7 @@ use wayland_protocols_wlr::layer_shell::v1::client::{
 };
 
 use super::{
+    monitors::Monitors,
     pacing::Pacer,
     picture::{Buffer, Picture},
     scale::{Mode, Scale},
@@ -44,12 +46,16 @@ use crate::overlay::{
 /// The surface and what it needs, also the state the protocol's events are dispatched to.
 pub(super) struct Window {
     pub(super) shm: WlShm,
+    /// Kept to make the surface again (`remake`).
+    makers: Makers,
     pub(super) formats: Formats,
     pub(super) surface: WlSurface,
     pub(super) layer: ZwlrLayerSurfaceV1,
     /// Kept alive: it is what sends the preferred scale.
     _fractional: Option<WpFractionalScaleV1>,
     viewport: Option<WpViewport>,
+    /// Where the focused window is, to put the surface on that monitor (`remake`).
+    pub(super) monitors: Monitors,
     /// The scale the compositor prefers; buffers are made at it.
     pub(super) scale: Scale,
     /// The scale changed since the last commit: what is on needs drawing again at the new one.
@@ -71,6 +77,40 @@ pub(super) struct Window {
     pub(super) presented: Option<Instant>,
 }
 
+/// The globals a surface is made from.
+struct Makers {
+    layer_shell: ZwlrLayerShellV1,
+    compositor: WlCompositor,
+    fractional: Option<WpFractionalScaleManagerV1>,
+    viewporter: Option<WpViewporter>,
+}
+
+/// The objects of one layer surface.
+struct Surface {
+    surface: WlSurface,
+    layer: ZwlrLayerSurfaceV1,
+    fractional: Option<WpFractionalScaleV1>,
+    viewport: Option<WpViewport>,
+}
+
+impl Makers {
+    /// A surface on the overlay layer, 1×1 in a corner, never taking keyboard focus, with clicks
+    /// passing through. On `output` when given; otherwise the compositor chooses, as it is made.
+    fn surface(&self, qh: &QueueHandle<Window>, output: Option<&WlOutput>) -> Surface {
+        let surface = self.compositor.create_surface(qh, ());
+        let fractional = self.fractional.as_ref().map(|m| m.get_fractional_scale(&surface, qh, ()));
+        let viewport = self.viewporter.as_ref().map(|v| v.get_viewport(&surface, qh, ()));
+        // An empty input region: clicks and touches go to whatever is underneath.
+        let region = self.compositor.create_region(qh, ());
+        surface.set_input_region(Some(&region));
+        region.destroy();
+        let layer = self.layer_shell.get_layer_surface(&surface, output, Layer::Overlay, "padwight_overlay".into(), qh, ());
+        layer.set_keyboard_interactivity(KeyboardInteractivity::None);
+        layer.set_exclusive_zone(-1);
+        Surface { surface, layer, fractional, viewport }
+    }
+}
+
 /// Why a buffer is committed, for the log.
 #[derive(Debug, Clone, Copy)]
 enum Why {
@@ -85,25 +125,19 @@ impl Window {
     /// buffer, and waits for its first configure.
     pub(super) fn new(globals: &GlobalList, qh: &QueueHandle<Window>) -> Result<Window> {
         let layer_shell: ZwlrLayerShellV1 = globals.bind(qh, 1..=4, ()).map_err(|_| {
-            anyhow!("the overlay window could not start: the compositor lacks wlr-layer-shell (as GNOME does)")
+            anyhow!("the overlay window could not start: the compositor lacks wlr-layer-shell (as GNOME and Cinnamon do)")
         })?;
         let compositor: WlCompositor = globals.bind(qh, 4..=6, ()).context("the compositor's wl_compositor is too old")?;
         let shm: WlShm = globals.bind(qh, 1..=1, ()).context("the compositor has no wl_shm")?;
         let fractional: Option<WpFractionalScaleManagerV1> = globals.bind(qh, 1..=1, ()).ok();
         let viewporter: Option<WpViewporter> = globals.bind(qh, 1..=1, ()).ok();
 
-        let surface = compositor.create_surface(qh, ());
-        let fractional = fractional.map(|m| m.get_fractional_scale(&surface, qh, ()));
-        let viewport = viewporter.map(|v| v.get_viewport(&surface, qh, ()));
-        // An empty input region: clicks and touches go to whatever is underneath.
-        let region = compositor.create_region(qh, ());
-        surface.set_input_region(Some(&region));
-        region.destroy();
-        let layer = layer_shell.get_layer_surface(&surface, None, Layer::Overlay, "padwight_overlay".into(), qh, ());
-        layer.set_keyboard_interactivity(KeyboardInteractivity::None);
-        layer.set_exclusive_zone(-1);
+        let makers = Makers { layer_shell, compositor, fractional, viewporter };
+        let Surface { surface, layer, fractional, viewport } = makers.surface(qh, None);
         let window = Window {
             shm,
+            makers,
+            monitors: Monitors::new(globals, qh),
             formats: Formats::default(),
             surface,
             layer,
@@ -123,6 +157,39 @@ impl Window {
         window.ask(Target::Corner);
         window.surface.commit();
         Ok(window)
+    }
+
+    /// Whether the surface is hidden, in its corner, with nothing asked of it.
+    pub(super) fn is_hidden(&self) -> bool {
+        self.sizing.target() == Target::Corner
+    }
+
+    /// Makes the surface again, in place of the hidden one. The compositor chooses an output for
+    /// a layer surface as it is made, and the surface would stay there (so it is told the focused window's monitor, where the compositor says it): a game that moved to
+    /// another monitor would keep its overlay on the old one. What the surface needs to know
+    /// afresh goes back to its start; the scale, the formats and the pacer's count carry over.
+    pub(super) fn remake(&mut self, qh: &QueueHandle<Window>) {
+        let Surface { surface, layer, fractional, viewport } = self.makers.surface(qh, self.monitors.focused());
+        if let Some(old) = self._fractional.take() {
+            old.destroy();
+        }
+        if let Some(old) = self.viewport.take() {
+            old.destroy();
+        }
+        self.layer.destroy();
+        self.surface.destroy();
+        self.surface = surface;
+        self.layer = layer;
+        self._fractional = fractional;
+        self.viewport = viewport;
+        self.sizing = Sizing::new();
+        self.todo = Commit::Nothing;
+        // Buffers drawn into a new surface are all new to the compositor: a new pool paints them whole.
+        self.pool = None;
+        self.screen.forget();
+        self.rescaled = false;
+        self.ask(Target::Corner);
+        self.surface.commit();
     }
 
     /// Sets the anchors and size for `target`, for the next commit.

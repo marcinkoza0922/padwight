@@ -79,16 +79,3 @@ impl Wake {
         self.0.as_raw_fd()
     }
 }
-
-/// Windows: the loop waits on the channel alone, which wakes it itself.
-#[cfg(windows)]
-pub(super) struct Wake;
-
-#[cfg(windows)]
-impl Wake {
-    fn new() -> std::io::Result<Self> {
-        Ok(Wake)
-    }
-
-    fn ring(&self) {}
-}

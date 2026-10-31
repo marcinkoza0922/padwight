@@ -311,6 +311,7 @@ PADWIGHT_OVERLAY_TIMING=$PWD/screenshots/overlay.log padwight daemon
 ```
 
 The overlay opens the file on every line, so the log is for measuring only, not for normal use.
+On GNOME the overlay writes `gnome <ns> <total ns> <w>x<h> monitor <ns> paint <ns> write 0 call <ns> damage <patches> <pixels>` for each frame it presents (`call` is the extension's `Present`, which blocks Shell's main loop) and `gnome-unchanged` for one it doesn't. `python3 scripts/harness/gnome-timing.py <log>` summarizes them; at 1280x800 in the test VM a frame cost about 5 ms and the gap between frames was 16.6 ms.
 The code is in `src/overlay/timing.rs`, with the lines written where they happen (`ui.rs`,
 `wayland/`, `windows.rs`). Times are nanoseconds since the Unix epoch unless a field says
 otherwise. An example from a menu's opening:

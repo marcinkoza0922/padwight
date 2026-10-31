@@ -2,7 +2,7 @@
 
 use resvg::{tiny_skia, usvg};
 
-const SVG: &str = include_str!("../flatpak/io.github.marcinkoza0922.Padwight.svg");
+const SVG: &str = include_str!("../dist/io.github.marcinkoza0922.Padwight.svg");
 
 /// The icon as straight-alpha RGBA pixels, `size` by `size`.
 pub fn rgba(size: u32) -> Vec<u8> {

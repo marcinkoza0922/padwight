@@ -23,13 +23,13 @@ use crate::{
     overlay::OverlayFrame,
 };
 
-pub(super) struct Feed {
+pub(in crate::overlay) struct Feed {
     frames: Receiver<OverlayFrame>,
     wake: Arc<OwnedFd>,
 }
 
 /// What a wake brought.
-pub(super) struct Arrived {
+pub(in crate::overlay) struct Arrived {
     /// The frames to show, in order: those a newer one stands in for are left out.
     pub frames: Vec<OverlayFrame>,
     /// The daemon went away.

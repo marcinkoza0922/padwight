@@ -1,11 +1,14 @@
 //! Which game is active: a tracker for the running desktop reports the focused window, windows
-//! and processes are identified from /proc or, on Windows, their executables (see [`identify`]),
+//! and processes are identified from /proc (see [`identify`]),
 //! and per-game rules pick the profile. Desktops without a tracker fall back to matching running
 //! processes.
 
 #[cfg(target_os = "linux")]
 mod dbus;
 #[cfg(target_os = "linux")]
+mod cinnamon;
+#[cfg(target_os = "linux")]
+mod cosmic;
 mod gnome;
 #[cfg(target_os = "linux")]
 mod hyprland;
@@ -14,11 +17,11 @@ mod identify;
 #[cfg(target_os = "linux")]
 mod kwin;
 #[cfg(target_os = "linux")]
+mod niri;
+#[cfg(target_os = "linux")]
 mod sway;
 #[cfg(target_os = "linux")]
 mod wlroots;
-#[cfg(windows)]
-mod windows;
 
 use std::sync::Arc;
 #[cfg(target_os = "linux")]
@@ -33,9 +36,9 @@ use crate::{
     monitor::log,
 };
 #[cfg(target_os = "linux")]
+pub(crate) use gnome::is_running as gnome_shell_running;
+#[cfg(target_os = "linux")]
 pub use identify::{identify, is_own_window, running_processes};
-#[cfg(windows)]
-pub use windows::{identify, is_own_window, running_processes, spawn};
 
 /// How often we check that the desktop's tracker is still there (a compositor restart, a late
 /// login, an extension switched on).
@@ -105,7 +108,7 @@ pub fn spawn(notify: impl Fn(FocusEvent) + Send + Sync + 'static) {
     });
 }
 
-/// One round of tracking. Sway and Hyprland push events, so this returns only when that
+/// One round of tracking. Sway, Hyprland and niri push events, so this returns only when that
 /// connection ends; the rest are checked once.
 #[cfg(target_os = "linux")]
 fn track(reporter: &mut Reporter, conn: Option<&Connection>) {
@@ -120,6 +123,11 @@ fn track(reporter: &mut Reporter, conn: Option<&Connection>) {
         if let Err(e) = hypr.follow(&notify) {
             log!("lost Hyprland: {e:#}");
         }
+    } else if let Ok(niri) = niri::connect() {
+        reporter.backend(FocusBackend::Niri);
+        if let Err(e) = niri.follow(&notify) {
+            log!("lost niri: {e:#}");
+        }
     } else if let Some(backend) = conn.and_then(shell_backend) {
         reporter.backend(backend);
     } else if let Ok(wl) = wlroots::connect() {
@@ -127,12 +135,17 @@ fn track(reporter: &mut Reporter, conn: Option<&Connection>) {
         if let Err(e) = wl.follow(&notify) {
             log!("lost the Wayland compositor: {e:#}");
         }
+    } else if let Ok(cosmic) = cosmic::connect() {
+        reporter.backend(FocusBackend::Cosmic);
+        if let Err(e) = cosmic.follow(&notify) {
+            log!("lost COSMIC: {e:#}");
+        }
     } else {
         reporter.backend(FocusBackend::ProcessScan);
     }
 }
 
-/// The tracker for a desktop reached over D-Bus: KWin, or GNOME Shell with our extension. `None`
+/// The tracker for a desktop reached over D-Bus: KWin, or GNOME Shell or Cinnamon with our extension. `None`
 /// when the desktop isn't one of those.
 #[cfg(target_os = "linux")]
 fn shell_backend(conn: &Connection) -> Option<FocusBackend> {
@@ -140,6 +153,8 @@ fn shell_backend(conn: &Connection) -> Option<FocusBackend> {
         Some(FocusBackend::Kwin)
     } else if gnome::is_running(conn) && gnome::ensure_extension(conn).is_ok() {
         Some(FocusBackend::GnomeShell)
+    } else if cinnamon::is_running(conn) && cinnamon::ensure_extension(conn).is_ok() {
+        Some(FocusBackend::Cinnamon)
     } else {
         None
     }

@@ -133,6 +133,15 @@ impl State {
     }
 }
 
+/// Tells the daemon about a focus change.
+pub(super) fn announce(notify: &Notify, change: Option<Change>) {
+    match change {
+        Some(Change::Focused { app_id, title }) => report(notify, Reported { class: app_id, title, pid: 0 }),
+        Some(Change::Unfocused) => notify(FocusEvent::Unfocused),
+        None => {}
+    }
+}
+
 /// A connection to the compositor's foreign toplevel manager.
 pub struct Wlroots {
     queue: wayland_client::EventQueue<State>,
@@ -141,7 +150,7 @@ pub struct Wlroots {
 
 /// The compositor's socket: `$WAYLAND_DISPLAY`, else the first `wayland-N` in the runtime dir (a
 /// systemd user service doesn't necessarily inherit the compositor's environment).
-fn socket_candidates() -> Vec<PathBuf> {
+pub(super) fn socket_candidates() -> Vec<PathBuf> {
     let dir = dirs::runtime_dir().unwrap_or_default();
     let mut paths: Vec<PathBuf> = std::env::var_os("WAYLAND_DISPLAY").map(|name| dir.join(name)).into_iter().collect();
     if let Ok(entries) = fs::read_dir(&dir) {
@@ -181,11 +190,7 @@ impl Wlroots {
     pub fn follow(mut self, notify: &Notify) -> Result<()> {
         loop {
             // The first time round, this is the window `connect`'s roundtrip found in front.
-            match self.state.settled() {
-                Some(Change::Focused { app_id, title }) => report(notify, Reported { class: app_id, title, pid: 0 }),
-                Some(Change::Unfocused) => notify(FocusEvent::Unfocused),
-                None => {}
-            }
+            announce(notify, self.state.settled());
             self.queue.blocking_dispatch(&mut self.state)?;
         }
     }

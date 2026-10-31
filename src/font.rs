@@ -180,13 +180,9 @@ pub fn share_pack_fonts(fonts: &BTreeMap<String, String>) -> BTreeMap<String, Pa
         .collect()
 }
 
-/// Where the shared font files go: the runtime folder, or on Windows, which has none, the user's
-/// local app data, which only they can open.
+/// Where the shared font files go: in the runtime folder.
 fn shared_font_dir() -> Option<PathBuf> {
-    let dir = crate::ipc::shared_runtime_dir();
-    #[cfg(windows)]
-    let dir = dir.or_else(|| dirs::data_local_dir().map(|d| d.join("padwight")));
-    dir.map(|d| d.join("padwight-fonts"))
+    crate::ipc::shared_runtime_dir().map(|d| d.join("padwight-fonts"))
 }
 
 /// Like [`set_pack_fonts`], from the files [`share_pack_fonts`] wrote: for the overlay process.

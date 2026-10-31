@@ -67,11 +67,7 @@ its own: it draws with `overlay/render/`, the overlay's own renderer, on the CPU
   compositor has released (`wayland/shm.rs`, `wayland/slots.rs`) through `render::Screen`, and only
   the damaged part is committed (`wayland/picture.rs`, `wayland/window.rs`). A fallback timer of
   100 ms keeps fades and closing going when callbacks stop, for instance while the output is off.
-- **Windows.** `overlay/windows.rs` is a layered window (`WS_EX_LAYERED`, `WS_EX_TRANSPARENT`,
-  `WS_EX_NOACTIVATE`). A reader thread posts each frame to it, and it paints one DIB section
-  through the same `render::Screen`, handing the damage's bounds to `UpdateLayeredWindowIndirect`.
-  Layered windows have no frame callbacks, so it animates on a 16 ms timer. When the daemon's
-  socket closes, it closes the window.
+- **Frames out (GNOME).** `overlay/gnome.rs` runs instead of the layer-shell window when `XDG_CURRENT_DESKTOP` is GNOME. It paints through `render::Screen` straight into one memfd that both it and the extension (`overlay.js`) have mapped (`SetBuffer`, again when the size changes), kept between frames so only what changed is repainted, and calls `Present` on the extension's D-Bus object, which uploads the picture and shows it as a click-through actor in Shell's chrome. Nothing is sent per frame, since Clutter can only upload a whole texture whatever was damaged. It animates on a 16 ms deadline, not a sleep after the work, and asks for the monitor only when the overlay appears. Run on GNOME Shell 51 in the test VM (the keyboard, Guide shortcuts and menus show over a window and over a fullscreen one, and hide again, driven by the debug controller); with two monitors it follows the focused window's, and at a fractional scale it draws at the monitor's device size; not yet with a real pad). The extension is checked against GNOME Shell 45 to 51 with `scripts/gnome-versions/run.sh`. `Geometry` picks the monitor when the overlay appears; the daemon closes every overlay when focus moves, so it never has to move. Shell 49+ has no `Clutter.Image`, so `overlay.js` uses `St.ImageContent` and passes the Cogl context to its `set_bytes`.
 - **Drawing.** `render::Screen` lays each panel out as a tree, turns it into a display list, keeps
   the panel's picture while its list is unchanged, and lays the picture down at the panel's
   opacity, offset and scale. See [overlay-debugging.md](overlay-debugging.md#how-the-overlay-draws).
@@ -129,7 +125,10 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | `focus/kwin.rs`, `focus/dbus.rs` | KDE Plasma: a KWin script reports focus changes over D-Bus. |
 | `focus/sway.rs` | Sway (and i3-IPC compositors) over `$SWAYSOCK`. |
 | `focus/hyprland.rs` | Hyprland's event and command sockets. |
+| `focus/niri.rs` | niri's IPC event stream. |
 | `focus/wlroots.rs` | wlroots compositors (labwc, Wayfire, river, …) over `wlr-foreign-toplevel-management`. Matches windows by class only, since the protocol doesn't give the process. |
+| `focus/cinnamon.rs` | Cinnamon: installs and enables the extension in `cinnamon-extension/` (focus and overlay, the same D-Bus objects as GNOME's). |
+| `focus/cosmic.rs` | COSMIC: `ext-foreign-toplevel-list` for titles and app ids plus `cosmic-toplevel-info` (generated from `protocols/`) for the activated state. Class rules only. |
 | `focus/gnome.rs` | GNOME Shell: installs and enables the extension in `gnome-extension/`, which reports focus over the same D-Bus service. |
 | `focus/identify.rs` | Identifies a window's executable, Steam App ID and class from `/proc`, including Wine/Proton `.exe` names. |
 | `launchers.rs` | Which games are installed (Steam, Heroic, Lutris) or running, for the library picker. |
@@ -172,7 +171,6 @@ Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000
 | `overlay.rs` (and `overlay/ui.rs`, `overlay/ui/shots.rs`) | The overlay process: keyboard, numpad, menus, info and log panels. `OverlayController` owns the state inside the daemon. `ui.rs` holds what is on screen (`Overlay::showing` at a time), and `ui/shots.rs` draws it without a window (`snapshot` for one screen, `film` for a motion run). Looping effects keep the overlay redrawing (`OverlayFrame::loops`) and read `Anim::clock`. |
 | `overlay/render.rs` (and `overlay/render/`) | The overlay's own renderer, with no iced. `layout.rs` is the layout tree, `op.rs` the display list, `raster/` the rasterizer, `text/` the text engine (cosmic-text), and `screen.rs` with `screen/` the whole screen: panel pictures, tiles, diffs and damage. Each panel module (`menus.rs`, `radial.rs`, `keyboard.rs`, `info.rs`, `log.rs`, `media.rs`, `figure.rs`, `item.rs`, `panel.rs`) builds its tree from the same numbers as its iced twin in `overlay/draw/`. See [overlay-debugging.md](overlay-debugging.md#how-the-overlay-draws). |
 | `overlay/wayland.rs` (and `overlay/wayland/`) | The Linux overlay window: a wlr-layer-shell surface with its own shared-memory buffers, frame-callback pacing, scale, and the reader thread for the daemon's frames. See [The overlay process](#the-overlay-process). |
-| `overlay/windows.rs` | The Windows overlay window: a layered window drawn through `render::Screen`, on a 16 ms timer. |
 | `overlay/draw/` | iced's drawing of the same panels. Used by the settings window's previews and the stage editor, and by the iced side of `debug overlay compare`; the overlay process doesn't use it. `draw/look.rs` resolves a style's decorations into container styles, `draw/glyphs.rs` draws button glyphs and icons, and `draw/texture.rs` and `draw/filtered.rs` apply the textures and filters from `overlay/art/`. |
 | `overlay/art.rs` (and `overlay/art/`) | The textures, filters, frame marks and icon SVGs that both renderers draw, as data the renderers turn into pixels. |
 | `info.rs` | Info overlays: `{token}` expansion into button glyphs and live values, and the generated bindings sheet for layers. |
@@ -237,12 +235,13 @@ Library packs are read at build time (`build.rs`) and checked by `cargo test` (`
 | `cargo nextest run` | The same tests under nextest. `.config/nextest.toml` has a quiet `agent` profile. |
 | `scripts/profile.sh` | The profiling suite (`tests/profile/`): input latency, CPU and memory, start-up. Two parts need the host instead of the container: `profile_overlay_styles` (a Wayland session with layer-shell; what overlay looks, motion and the two renderers cost) and `profile_sound` (an audio device; what an open output stream costs). Run them with `cargo test --release --test profile -- --ignored --test-threads=1 --nocapture <name>`. `scripts/profile.sh` takes `PADWIGHT_PROFILE_OUT` (the folder for the results) and `PADWIGHT_PROFILE_VOLUME` (a build volume of its own, to compare two checkouts). Settings: `PADWIGHT_PROFILE_DIR` (where the JSON results go; default `target/profile`), `PADWIGHT_LATENCY_REPEATS` (sessions per latency run), `PADWIGHT_PROFILE_CASES` (run only the overlay style cases whose names contain it, such as `radial`). |
 | `scripts/overlay-harness.sh` | Runs the real daemon and overlay on a headless KWin, drives them with the debug controller, and logs every frame sent and drawn. Its scenarios (pacing, resources, radial sweep, scale) and the fade frames check are in [overlay-debugging.md](overlay-debugging.md). |
+| `scripts/gnome-versions/run.sh [fedora release]...` | Checks the GNOME overlay extension against every Shell it claims (Fedora 39 to 45 = Shell 45 to 51), headless in Docker: the Shell loads it, `probe.py` shares a picture over D-Bus like the overlay process does, and a screenshot has to show it and then show it gone after `Hide`. It tests the extension and the Shell API it uses, not padwight's Rust side. Old releases need the archive repos and `localed-stub.py` (their libgnome-desktop crashes without a localed on the bus), both handled by the Dockerfile and `run-in-container.sh`. Each image takes a few minutes and a couple of GB to build. |
 | `tests/gnome_focus.rs` | GNOME focus tracking against a stand-in for GNOME Shell (`tests/fixtures/gnome_shell_mock.js`) on a private session bus: the daemon installs and enables the extension, reports GNOME Shell as its tracker, and accepts the extension's `WindowActivated` call. It doesn't prove real GNOME Shell loads the extension. Needs `gjs`, so it's opt-in: `dbus-run-session -- cargo nextest run --run-ignored ignored-only gnome_`. |
 | `scripts/fake-pad.py <fifo>` | A gamepad made through `/dev/uhid`, so the daemon sees a HID device like a real controller (the same layout as `tests/common/uhid.rs`). `echo press > <fifo>` presses South once, `echo quit > <fifo>` removes it. The kernel drops reports until the daemon has opened the device, so send `press` again until it shows up. Needs write access to `/dev/uhid`. `scripts/desktop-test.sh` uses it on the test VMs. |
 | `cargo test -- --ignored rumble` | The end-to-end rumble check. It needs `/dev/uinput`, so it is opt-in. |
-| `python3 scripts/check-project.py` | Checks that the docs match the code: CLI commands, the pack format number, links and anchors, `flatpak/cargo-sources.json` against `Cargo.lock`, and bundled font licenses. CI runs it. |
+| `python3 scripts/check-project.py` | Checks that the docs match the code: CLI commands, the pack format number, links and anchors, and bundled font licenses. CI runs it. |
 | `scripts/kernel-test-docker.sh` | Runs the kernel-level tests in a Docker container, so the account needs no `input` group membership: `nothing_stays` (uinput), `daemon_` (the daemon-exit tests, which also need `/dev/uhid`) `socket_fallback` (run as root, since it makes a second user). `hotplug_` covers unplug and replug with a simulated controller. The KWin unit test (`focus::kwin`) needs the desktop session bus, so it runs on the host, not in the container. |
-| `scripts/check-install.sh` | Validates the installed files: the systemd units, the udev rule, the desktop entry, the metainfo and the Flatpak manifest. Errors if a validator is missing. CI runs it. |
+| `scripts/check-install.sh` | Validates the installed files: the systemd units, the udev rule, the desktop entry, and the metainfo. Errors if a validator is missing. CI runs it. |
 | `cargo audit` | Known vulnerabilities in `Cargo.lock`. CI runs it. |
 
 A few conventions to know:
@@ -261,34 +260,10 @@ The daemon picks the profile from the focused window. The tracker is chosen by t
 2. **Hyprland** (`hyprland.rs`): follows the event socket and asks the command socket for details.
 3. **KDE Plasma** (`kwin.rs`): a small KWin script sends each focus change to the daemon's D-Bus service (`dbus.rs`).
 4. **GNOME** (`gnome.rs`): a GNOME Shell extension sends each focus change over the same D-Bus service.
-5. **wlroots compositors** (`wlroots.rs`): the `wlr-foreign-toplevel-management` protocol (labwc, Wayfire, river, and others). Windows match by class only.
+5. **wlroots compositors** (`wlroots.rs`): the `wlr-foreign-toplevel-management` protocol (labwc, Wayfire, river, Budgie 10.10+, and others). The overlay process follows the same protocol on its own connection (`overlay/wayland/monitors.rs`) to learn which monitor the focused window is on and names it when it makes the layer surface, because labwc puts a surface made without an output on the first monitor. Budgie's power dialog owns `org.gnome.Shell` on the bus, so `gnome::is_running` checks the owner's program name, and `overlay/gnome.rs::wanted()` never picks the extension path on a desktop named Budgie. Windows match by class only.
 6. **Fallback**: no tracker. Rules apply while a matching process runs.
 
-`identify.rs` resolves a window to an executable name, Steam App ID (from `SteamAppId`/`STEAM_COMPAT_APP_ID` or Proton's `steam_app_<id>` class) and window class. Wine/Proton games are matched by their `.exe`, not the Wine loader. GNOME has no layer-shell, so the overlays can't be shown there. Focus tracking works through the GNOME Shell extension in `gnome-extension/`.
-
-## Windows
-
-Everything above describes Linux. The same binary builds for Windows, where the engine, config, packs, menus, overlays' drawing and the GUI are shared, and each place that talks to the system has a Windows file beside the Linux one. The `mod` line picks the file (`#[cfg_attr(windows, path = "…")]`), or the module declares both under `#[cfg]`:
-
-| Linux | Windows | What it does there |
-|---|---|---|
-| `daemon/evdev.rs` | `daemon/xinput.rs` | The daemon's controllers (`scan_devices`): XInput's four slots, polled on a thread each, skipping the slots our own virtual pads take. |
-| `input/linux.rs` | `input/xinput.rs` | Raw input to `InputEvent`. The Guide button and USB IDs come from `xinput1_4.dll`'s unnamed exports. |
-| `output/uinput.rs` | `output/windows.rs` | The virtual pad through ViGEmBus (`vigem-client`; without the driver its output is dropped), the keyboard and mouse through `SendInput`, as scancodes. |
-| `rumble.rs` | `rumble/windows.rs` | ViGEmBus reports the game's rumble; `XInputSetState` plays it. |
-| `daemon/unix.rs` | `daemon/windows.rs` | Signals become the console's Ctrl+C and close events; the socket needs no permission bits in `%LOCALAPPDATA%`. |
-| `overlay/wayland.rs` | `overlay/windows.rs` | A layered window (`WS_EX_LAYERED`, `WS_EX_TRANSPARENT`, `WS_EX_NOACTIVATE`): the screen drawn by `render::Screen` into a DIB section and handed over with `UpdateLayeredWindowIndirect`. |
-| `focus/*.rs` | `focus/windows.rs` | A WinEvent hook on foreground changes; processes by `QueryFullProcessImageNameW`; Steam App IDs from `steamapps\common\<folder>` and its manifest. |
-| `keyboard/xkb.rs` | `keyboard/windows.rs` | Key labels from the active layout (`ToUnicodeEx`). |
-| `tray.rs` | `tray/windows.rs` | `Shell_NotifyIconW` on a hidden window. |
-| `media/mpris.rs`, `media/mixer.rs` | `media/windows.rs`, `media/windows_mixer.rs` | The system media session (GSMTC) and the default output's endpoint volume. |
-| `capture.rs`, `record.rs` | `capture/windows.rs`, `record/windows.rs` | GDI screenshots; recording with `ffmpeg`. |
-| `quit.rs` | `quit/windows.rs` | `WM_CLOSE` to the game's windows, then `TerminateProcess`. |
-| `info.rs` | `info/windows.rs` | The clock, CPU, memory and battery from Win32. |
-
-Key codes stay Linux's everywhere (`keycode.rs`: evdev's `KeyCode` on Linux, the same table generated from it elsewhere), so configs and packs are the same files on both. `ipc.rs` uses AF_UNIX sockets on both, through `uds_windows` on Windows; `ipc::watch` reads the streaming requests on a thread, the same on both. The integration tests that need uinput, uhid or D-Bus are Linux only; `tests/debug_session`'s session tests run on both. CI builds, lints and tests on both.
-
-To check Linux code from Windows, `cargo check --target x86_64-unknown-linux-gnu` works once `PKG_CONFIG` points at a stub that answers for `xkbcommon` (nothing is linked).
+`identify.rs` resolves a window to an executable name, Steam App ID (from `SteamAppId`/`STEAM_COMPAT_APP_ID` or Proton's `steam_app_<id>` class) and window class. Wine/Proton games are matched by their `.exe`, not the Wine loader. GNOME has no layer-shell: focus tracking and the overlay both go through the GNOME Shell extension in `gnome-extension/` (`overlay/gnome.rs` sends it each frame; see [The overlay process](#the-overlay-process)).
 
 ## Where to start reading
 

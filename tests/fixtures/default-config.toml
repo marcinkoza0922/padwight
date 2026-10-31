@@ -164,7 +164,7 @@ gamepad = "Right"
 gamepad = "Guide"
 
 [general.profiles.gyro]
-mode = "off"
+enabled = false
 horizontal = "yaw"
 invert_x = false
 invert_y = false
@@ -266,7 +266,7 @@ keys = [
 gamepad = "Guide"
 
 [general.profiles.gyro]
-mode = "off"
+enabled = false
 horizontal = "yaw"
 invert_x = false
 invert_y = false

@@ -4,16 +4,13 @@
   - every `padwight <command>` in the docs is a command the binary accepts
   - the pack format number agrees across the code and the docs
   - relative and github.com/…/blob/main links in the docs resolve (and their #anchors)
-  - flatpak/cargo-sources.json lists exactly the crates in Cargo.lock
   - every bundled font has a license file
 
 Run from anywhere: `scripts/check-project.py`. Exits 1 and lists each problem it finds.
 """
 
-import json
 import re
 import sys
-import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -118,28 +115,6 @@ def check_links():
                     fail(f"{rel(path)}:{n}: `{target}` has no such heading")
 
 
-def check_flatpak_sources():
-    lock = tomllib.loads((ROOT / "Cargo.lock").read_text())
-    locked = {
-        (p["name"], p["version"])
-        for p in lock["package"]
-        if p.get("source", "").startswith("registry+")
-    }
-    sources = json.loads((ROOT / "flatpak/cargo-sources.json").read_text())
-    listed = set()
-    for entry in sources:
-        if entry.get("type") != "archive":
-            continue
-        # https://…/crates/<name>/<name>-<version>.crate (the name is the directory)
-        m = re.search(r"/crates/([^/]+)/([^/]+)\.crate$", entry.get("url", ""))
-        if m and m.group(2).startswith(m.group(1) + "-"):
-            listed.add((m.group(1), m.group(2)[len(m.group(1)) + 1 :]))
-    for name, version in sorted(locked - listed):
-        fail(f"flatpak/cargo-sources.json lacks {name} {version} (Cargo.lock has it): regenerate it")
-    for name, version in sorted(listed - locked):
-        fail(f"flatpak/cargo-sources.json has {name} {version}, which Cargo.lock doesn't: regenerate it")
-
-
 def check_font_licenses():
     fonts = ROOT / "assets/fonts"
     licenses = {p.name.split("-LICENSE")[0] for p in fonts.glob("*-LICENSE*")}
@@ -152,7 +127,7 @@ def check_font_licenses():
 
 
 def main():
-    for check in (check_commands, check_format_versions, check_links, check_flatpak_sources, check_font_licenses):
+    for check in (check_commands, check_format_versions, check_links, check_font_licenses):
         check()
     if problems:
         print("\n".join(problems))

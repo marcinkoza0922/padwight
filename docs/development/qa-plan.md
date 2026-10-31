@@ -23,17 +23,18 @@ A bug is worth more testing the more it costs the player. Every feature area in
 
 ## 2. Test layers
 
-What exists today, from fastest to slowest. Counts are as of 2026-10-30.
+What exists today, from fastest to slowest. Counts are as of 2026-10-31.
 
 | # | Layer | What it proves | Where it runs | How |
 |---|---|---|---|---|
-| L1 | Unit tests (1,477 `#[test]`) | Logic of single modules: engine, config, packs, menus, renderer | CI on Linux and Windows | `cargo nextest run --profile agent …` |
+| L1 | Unit tests (1,465 `#[test]`) | Logic of single modules: engine, config, packs, menus, renderer | CI | `cargo nextest run --profile agent …` |
 | L2 | Sweeps over many inputs | No stuck output after random input; damaged packs and configs are refused without a panic; ring sectors leave no gaps; every library pack round-trips | CI | `engine::release_tests`, `library::tests::damaged_packs_…`, `config::tests::damaged_configs_…` |
 | L3 | Off-screen pictures | What the overlay, the settings window and the controller drawings look like, with no display | Locally, by hand | `debug overlay`, `debug overlay compare`, `debug motion`, `debug gui` |
 | L4 | Debug sessions | Mappings end to end through a real daemon, with a virtual controller and recorded output | CI (session tests); `--ignored` daemon tests need `/dev/uinput` | `tests/debug_session/`, `padwight debug --attach` |
 | L5 | Kernel tests in a container | Real uinput and uhid: release on exit, hot-plug, idle CPU, process-scan switching, the GUI under Xvfb | Docker, by hand | `scripts/kernel-test-docker.sh <filter>` |
 | L6 | Headless compositor harness | The overlay process on a real Wayland compositor (KWin): frame pacing, buffers, scale, CPU and memory | Locally, by hand | `scripts/overlay-harness.sh scripts/harness/<scenario>` |
-| L7 | Desktop VMs | Focus tracking and rules on GNOME, Plasma, Sway, Hyprland and labwc, native and Flatpak | QEMU VMs in `vms/`, by hand | `scripts/desktop-test.sh <desktop>` |
+| L7 | Desktop VMs | Focus tracking, rules and the overlay process on GNOME, Cinnamon, Budgie, COSMIC, Plasma, Sway, Hyprland, niri and labwc | QEMU VMs in `vms/`, by hand | `scripts/desktop-test.sh <desktop>` |
+| L7b | GNOME Shell versions | The GNOME extension's overlay shows a shared picture and hides it, on each Shell from 45 to 51, headless | Docker, by hand | `scripts/gnome-versions/run.sh` |
 | L8 | Profiling | Latency, CPU, memory, start-up; not pass/fail | Docker, plus host-only parts | `scripts/profile.sh` |
 | L9 | Hardware checks | Real controllers, Bluetooth, real compositors and screens, feel | A person with a controller | [Section 5](#5-manual-and-hardware-checks) |
 | L10 | Playtests | A pack's bindings work in the real game | A person with the game | [Section 6](#6-pack-qa) |
@@ -52,7 +53,7 @@ covered mostly by integration tests (the daemon) score low here for that reason.
 | Device ownership: grab, release, hot-plug, exit (`daemon/`, `input/`, `output/`) | T0 | daemon 3, output 8, input 12 | Release on SIGTERM/SIGINT/SIGKILL, unplug and replug, a different pad in the same slot, nothing stays pressed in the kernel (L5) | Suspend and resume; Bluetooth drop and reconnect; two pads at once through uhid; gyro and touchpad nodes from real kernel drivers; rare write errors; bugs seen only on a player's hardware | T-3, T-6, T-9, T-18 |
 | Steam first pad (`daemon/first_pad.rs`) | T0 | — | Unit tests | Steam started with a pad already connected; daemon restarted with a pad connected | HW-9 |
 | Other readers of the raw device (`daemon/raw_readers.rs`) | T0 | — | Unit tests; GUI banner shot | A real Steam or browser holding `/dev/hidraw*` | HW-8 |
-| Force Quit (`quit/`) | T0 | 26 | Process-tree picking; container test | Launcher-started games, Proton, Flatpak sandboxes | FOC-9, WIN-3 |
+| Force Quit (`quit/`) | T0 | 26 | Process-tree picking; container test | Launcher-started games, Proton, games in Flatpak sandboxes | FOC-9 |
 | Config store (`config/store.rs`) | T0 | config 14 | Round trip, staging folder, `0600` files, unsafe names, removal | Disk full or read-only mid-save; a crash between staging and swap | T-9 |
 | Engine: buttons, gestures, combos, toggles, turbo (`engine/`) | T1 | 27 | Dense unit tests on an injected clock; random release sweep | Combinations across features (a gesture inside a layer inside a mode while a cycle steps); timing at the daemon's real tick | T-1, T-2, T-5 |
 | Sticks, flick stick, rings, zones (`engine/stick*`, `engine/flick.rs`) | T1 | 27 | Units; ring coverage sweep | Feel (FEEL-1 to FEEL-3) | T-1 for regressions |
@@ -60,13 +61,14 @@ covered mostly by integration tests (the daemon) score low here for that reason.
 | Touchpad (`engine/touchpad/`, `input/linux/touchpad.rs`) | T1 | — | Units; debug `touch`/`swipe` | Never run on a real DualShock 4 or DualSense; evdev contact slots from the real driver | T-3, HW-5 |
 | Modes and layers | T1 | — | Units; layer docs | Cross-feature sequences | T-1, T-2 |
 | Macros and cycles | T1 | — | Units (`cycle_tests.rs`) | Cycles never tried on hardware; macros against games that drop fast input | FEEL-4, G-3 |
-| Automatic switching and focus (`focus/`, `daemon/auto_switch.rs`) | T1 | 20 | Process scan (L5), GNOME against a mock shell, desktop VMs (L7) | Sway and Hyprland have no CI test; Flatpak Heroic; Proton `.exe` names in real launches | T-7, FOC-1 to FOC-9 |
+| Automatic switching and focus (`focus/`, `daemon/auto_switch.rs`) | T1 | 20 | Process scan (L5), GNOME against a mock shell, desktop VMs (L7); Cinnamon and niri parsing units | Sway, Hyprland, niri, COSMIC, Cinnamon and wlroots have no CI test (`cosmic.rs` has no unit test either); Flatpak Heroic; Proton `.exe` names in real launches | T-7, FOC-1 to FOC-10 |
 | Menus: radial, directional, list, button, carousel, grid (`menu/`, `radial.rs`) | T2 | 27 | Units; off-screen scenes | Assertions on what the live overlay shows (today only pictures) | T-4 |
 | Guide overlay and movable shortcuts (`guide_menu.rs`, `config/shortcuts/`) | T2 | — | Units; scenes | The opener on a gesture or combo with real timing | T-1, OVL-6 |
 | On-screen keyboard, numpad, Paste | T2 | keyboard 13 | Units; scenes | Over a fullscreen game on each compositor | OVL-1, OVL-2 |
-| Tools: calculator, doodle, clipboard (`tools/`, `clipboard.rs`) | T2 | 27 | Units; scenes | Never run on hardware; clipboard in the Flatpak; Windows `clip` | OVL-9, WIN-1 |
+| Tools: calculator, doodle, clipboard (`tools/`, `clipboard.rs`) | T2 | 27 | Units; scenes | Never run on hardware; clipboard on each desktop (`wl-copy`, `xclip`, `xsel`) | OVL-9 |
 | Info and log overlays, tokens (`info/`, `inputlog/`) | T4 | 15, 17 | Units; scenes; library token check | Live values on real hardware (battery, wifi, GPU) | OVL-7 |
-| Overlay process and renderer (`overlay/render`, `overlay/wayland`) | T2 | overlay 14 | Units; compare with iced; harness pacing, surface, scale, CPU | Never on a real screen (renderer plan step 8.3); ABGR8888 buffers; integer buffer scale; Windows window | T-8, OVL-3 to OVL-5 |
+| Overlay process and renderer (`overlay/render`, `overlay/wayland`) | T2 | overlay 14 | Units; compare with iced; harness pacing, surface, scale, CPU | Never on a real screen (renderer plan step 8.3); ABGR8888 buffers; integer buffer scale; following the focused window's monitor (`wayland/monitors.rs`) has no test | T-8, OVL-3 to OVL-5, OVL-12 |
+| GNOME and Cinnamon overlay through the Shell extension (`overlay/gnome.rs`, `gnome-extension/`, `cinnamon-extension/`) | T2 | — | Shell 45 to 51 headless (L7b); GNOME 51 and Cinnamon 6.6 in VMs, by hand | No unit tests; never with a real pad; `Present` blocks Shell's main loop, so a slow frame stalls the desktop | OVL-13 |
 | Sounds and rumble cues (`sound/`, `rumble.rs`) | T4 | 14, 6 | Sound trace; loudness audit | Library packs' synthesized cues never listened to; rumble cues on real motors | SND-1 to SND-4 |
 | Settings window (`gui/`) | T3 | 8 | Every page builds; tab shots; GUI under Xvfb (L5); one `iced_test` simulator test | Nothing clicks through the window and checks the saved config; dark theme; minimum size | T-10, T-11 |
 | On-screen stage editor (`gui/stage/`) | T3 | — | Shots; handle drag in the simulator | Never used with a real mouse; focus and scroll after a pick run only live | GUI-8 |
@@ -75,16 +77,15 @@ covered mostly by integration tests (the daemon) score low here for that reason.
 | Library: 232 packs (`packs/`) | T1 | — | Every pack valid, round-trips, known tokens only, built-in assets only, no shared executables | IDs and executable names unverified for several families; bindings unverified against the games | T-13, T-14, [section 6](#6-pack-qa) |
 | Control protocol 1.0 (`ipc.rs`, `docs/protocol.md`) | T3 | 11 | `ipc/tests.rs` pins the wire format | The doc's examples aren't executed; no client outside Rust is tested | T-15 |
 | CLI, doctor, tray (`main.rs`, `doctor/`, `tray/`) | T3 | 17, 8 | Docs name real commands (`check-project.py`); doctor units | Doctor against real broken setups; tray Quit in a session | INS-8, INS-10 |
-| Screenshots, recording, media (`capture/`, `record/`, `media/`) | T2 | 17, 15, 11 | Units; `--debug` daemon writes to a temp folder | Each desktop's tool; a stuck MPRIS player; Windows ffmpeg (CR H-9) | INS-11, WIN-2 |
+| Screenshots, recording, media (`capture/`, `record/`, `media/`) | T2 | 17, 15, 11 | Units; `--debug` daemon writes to a temp folder | Each desktop's tool; a stuck MPRIS player | INS-11 |
 | Input priority and latency (`priority.rs`, `daemon/input_timing.rs`) | T1 | 6 | Profiling suite | No regression gate | T-12 |
-| Install, systemd, udev, Flatpak, tarball | T0 | — | `check-install.sh` validates the files in CI | A clean install on each distro family; uninstall | INS-1 to INS-7 |
-| Windows port | T1 | — | Builds, lints and unit tests in CI | No integration test at all; every Windows path is unconfirmed on a real machine | T-16, [section 5.10](#510-windows) |
+| Install, systemd, udev, the desktop extensions, tarball | T0 | — | `check-install.sh` validates the files in CI | A clean install on each distro family; uninstall | INS-1 to INS-7 |
 
 ## 4. When each layer runs
 
 ### On every pull request (CI, today)
 
-`.github/workflows/ci.yml`: check, clippy with warnings denied, the tests on Linux and Windows,
+`.github/workflows/ci.yml`: check, clippy with warnings denied, the tests,
 `check-project.py`, `check-install.sh` and `cargo audit`, filtered by the paths a change touches.
 
 Worth adding to CI (see [qa-tooling.md](qa-tooling.md)): the scenario tests (T-1), a short fuzz run
@@ -100,18 +101,19 @@ The author runs these by hand until they are in CI. The pull request description
 | `daemon/`, `input/`, `output/`, `rumble/` | `scripts/kernel-test-docker.sh` with `nothing_stays`, `daemon_`, `hotplug_`, `idle_`, `debug_` |
 | `engine/`, `menu/`, `system_menu/`, `layout_editor/` | The module's tests, then `debug_` in the container |
 | `focus/`, `launchers.rs` | `process_` in the container; `scripts/desktop-test.sh` on the backend touched; `debug focus` on a real game |
+| `gnome-extension/`, `cinnamon-extension/`, `overlay/gnome.rs` | `scripts/gnome-versions/run.sh` (every Shell the extension claims); `scripts/desktop-test.sh gnome` or `cinnamon`; OVL-13 by hand |
 | `overlay/` | `debug overlay all glyphs`, `debug overlay compare all`, `debug motion all`, and the harness's `pacing.sh` and `resources.sh` |
 | `sound/`, an overlay's cues | `scripts/sound-trace.sh`, `scripts/sound-audit.py` |
 | `gui/` | `debug gui` shots of the tabs touched, light and `--dark`, looked at; `gui_` in the container |
 | `config/`, `pack.rs` | `config::`, `pack::`, `library::` tests |
 | `packs/` | `library::` tests, `debug overlay packs/<name>.padpack`, and [section 6](#6-pack-qa)'s checks for the pack |
-| `dist/`, `flatpak/`, `scripts/package.sh` | `check-install.sh`, and INS-1 or INS-4 on a VM |
+| `dist/`, `scripts/package.sh` | `check-install.sh`, and INS-1 or INS-4 on a VM |
 
 ### Weekly, and after a large merge
 
 1. The whole container suite: `scripts/kernel-test-docker.sh` with no filter.
 2. `scripts/profile.sh`, compared with the last run on the same machine (T-12 makes the comparison).
-3. `scripts/desktop-versions.sh`, then `scripts/desktop-test.sh` on every desktop, native and Flatpak.
+3. `scripts/desktop-versions.sh`, then `scripts/desktop-test.sh` on every desktop.
    Update the table in [section 8](#8-desktop-session-runs).
 4. The soak run (T-6) overnight.
 5. `cargo mutants` on one area in turn (T-19), fixing tests it shows to be weak.
@@ -123,11 +125,10 @@ Everything weekly, plus:
 1. The hardware matrix ([section 5.1](#51-controller-matrix)) on every controller at hand, and
    every `HW-`, `OVL-`, `EDIT-` and `INS-` check, or a note of why one was skipped.
 2. The pack playtest tier for this release ([section 6](#6-pack-qa)).
-3. Install from the release tarball on a clean VM of the oldest supported distro (INS-1), and the
-   Flatpak from scratch (INS-4).
-4. The Windows checks ([section 5.10](#510-windows)) on a real Windows machine.
-5. The security review ([section 7](#7-security-review)) with a second reviewer.
-6. No open T0 or T1 bug. Open T2 to T4 bugs are listed in the release notes.
+3. Install from the release tarball on a clean VM of the oldest supported distro (INS-1), and on
+   an immutable distro (INS-4).
+4. The security review ([section 7](#7-security-review)) with a second reviewer.
+5. No open T0 or T1 bug. Open T2 to T4 bugs are listed in the release notes.
 
 ## 5. Manual and hardware checks
 
@@ -179,14 +180,15 @@ Fill a cell with the date of the last pass. A cell that doesn't apply is "—".
 | # | Steps | Expected |
 |---|---|---|
 | FOC-1 | On KDE Plasma, a game with a rule: launch, Alt+Tab to the desktop and back. | The game's profile in the game, the default outside it. |
-| FOC-2 | FOC-1 on Sway, Hyprland, labwc, Wayfire and GNOME. | Same. On wlroots compositors only class rules match. |
-| FOC-3 | FOC-1 with the Flatpak build on KWin. | Switching works. Note any window matched wrongly. |
+| FOC-2 | FOC-1 on GNOME, Cinnamon, Budgie, COSMIC, Sway, Hyprland, niri, labwc and Wayfire. | Same. On wlroots compositors, Budgie and COSMIC only class rules match; niri matches executables too. |
+| FOC-3 | On Budgie (and Ubuntu Budgie, whose desktop name may be `Budgie:GNOME`), start the daemon. | The wlroots tracker is used, not GNOME's; no GNOME extension is installed; no `overlay:` errors in the log. |
 | FOC-4 | Games started from Steam (Proton), Heroic (native and Flatpak, CR H-4), Lutris and a plain binary. | The library finds them and `debug focus` names the right executable or `.exe`. |
 | FOC-5 | Two setups with rules for the same window. | The import preview shows the clash; the imported one takes over only if chosen. |
 | FOC-6 | On labwc or Wayfire, restart the daemon with a ruled game in front, then switch between two windows (CR H-6). | The game's profile at once; no `no window has focus` between windows. |
 | FOC-7 | On GNOME, log out and in once, then restart the daemon with a ruled game in front (CR H-7). | The game's profile at once. |
 | FOC-8 | On Sway, from a ruled game, go to an empty workspace and back. | Default on the empty one, the game's on return. |
 | FOC-9 | Without focus tracking, hold Force Quit over a ruled game, then again just after it closed (CR H-17). | The first names and ends the game; the second says there is nothing to force quit. |
+| FOC-10 | On Cinnamon, a fresh install: start the daemon, then log out and in. | The daemon installs and enables its Cinnamon extension; switching works after the log in without touching a setting. |
 
 ### 5.4 Overlays and menus
 
@@ -206,6 +208,8 @@ windowed game and a fullscreen one.
 | OVL-9 | Guide + right trigger: Tools. Calculator: an expression with × and ÷, then Send and Copy. Doodle: each tool, then the text tool with bold and italic. | The answer is typed into the game, or on the clipboard; Doodle marks stay until cleared; a Guide press afterwards doesn't re-fire a trigger shortcut. |
 | OVL-10 | Turn off every audio output, move a menu's cursor, turn one back on, move again (CR H-13). | One log line about no audio device; cues sound again without a restart. |
 | OVL-11 | The Guide overlay with Steam running, then without (CR H-18). | The Steam overlay row is there only while Steam runs. |
+| OVL-12 | On labwc, Budgie and COSMIC with two monitors: a game on each in turn, the pointer on the other monitor; then move a game to the other monitor with an overlay process running. | The overlay opens on the game's monitor every time. (Checked by hand in VMs, not with a pad; the move with one overlay process running not yet.) |
+| OVL-13 | On GNOME and Cinnamon, with a real pad: the keyboard, Guide shortcuts and every menu style over a windowed and a fullscreen game, on two monitors and at a fractional scale; watch the desktop's own animations while a menu moves. | The overlay shows on the focused window's monitor, sharp, and hides again; clicks pass through it; the Shell doesn't stutter. |
 
 ### 5.5 Feel and timing
 
@@ -261,7 +265,7 @@ Need a person with the controller in hand. Record the values used, so a later ru
 | INS-1 | Install from the release tarball on a clean VM of the oldest supported distro, and on Fedora, Ubuntu LTS and Arch; with and without `uaccess`. Then `./install.sh --uninstall`. | Runs without root; the udev fallback works; uninstall leaves no files, units or rules. |
 | INS-2 | `cargo install` from source, following the README. | Same as INS-1. |
 | INS-3 | A pack from a newer format. | Refused, asking for an update. |
-| INS-4 | Build the Flatpak from scratch, install, run, use from the sandbox. | Matches the README's list of sandbox differences. |
+| INS-4 | Install on an immutable distro (Silverblue or Bazzite), following README "Immutable and atomic distros". | Works without layering packages; only the rules and `padwight-uinput.conf` land in `/etc`. |
 | INS-5 | Log out and in; reboot. | The service starts at login. |
 | INS-6 | Without `XDG_RUNTIME_DIR`: the socket directory is `0700`, the socket `0600`; `padwight status` from another user is refused. | Only this user reaches the daemon. (Automated: `socket_fallback`.) |
 | INS-7 | `scripts/check-install.sh`. | Passes (in CI). |
@@ -269,17 +273,6 @@ Need a person with the controller in hand. Record the values used, so a later ru
 | INS-9 | Read the daemon log after a full session of play. | No errors, no panics, messages clear to a player. |
 | INS-10 | Outside systemd: the tray icon's Remapping switch, Open settings, Close overlays, Quit. | Each works; Quit releases everything. |
 | INS-11 | Screenshot and recording on each desktop, in a game whose name has a colon. | The file is saved and plays; the folder name replaces the colon. |
-
-### 5.10 Windows
-
-| # | Steps | Expected |
-|---|---|---|
-| WIN-1 | A full play session: XInput pad in, ViGEmBus pad and `SendInput` out, focus switching, overlay, tray, media keys, clipboard (`clip`). | Same behaviour as Linux. Without ViGEmBus, the app says the pad output is dropped. |
-| WIN-2 | Start a recording, then end the daemon from Task Manager (CR H-9). | ffmpeg stops and the file plays; if not, R5-12 needs a fix. |
-| WIN-3 | Force quit a launcher-started game; screenshot in a game with a colon in its name (CR H-10). | Only the game and its helpers end; the screenshot folder uses ` - `. |
-| WIN-4 | Tray icon at 125% and 150%; switch profiles 50 times (CR H-8). | The icon looks right; GDI objects stay flat. |
-| WIN-5 | An info overlay in a pack's font (CR H-14). | Drawn in that font. |
-| WIN-6 | Ctrl+C in a console running the daemon, and in a `debug --attach --live` session with a button held (CR H-15). | Both release what they hold. |
 
 ## 6. Pack QA
 
@@ -323,38 +316,45 @@ For a reviewer before each release. Automated checks can't settle these.
 | SEC-1 | **The control socket.** It is `0600` in a private directory. The protocol is now public (1.0), so any program running as the user can `SetConfig`, switch profiles or read input. Is that the right line, and should the docs say so more plainly? |
 | SEC-2 | **Packs.** A pack can't name a program; the only host-program actions are Screenshot and ToggleRecording. Packs now carry SVG icons and base64 WAV sounds: are the SVG and WAV parsers safe on hostile input (T-5 fuzzes them)? Should the import preview list screenshot and recording actions? |
 | SEC-3 | **Virtual input.** The virtual keyboard and mouse can be used by any local program. Is that clear to users? |
-| SEC-4 | **Flatpak.** `--device=all` gives the sandbox all input devices. Is the README's warning enough? |
+| SEC-4 | **Shell extensions.** The daemon installs and enables GNOME and Cinnamon extensions that run inside the Shell, and the overlay hands them a memfd to draw. Can another program on the session bus show pictures through them, or get the Shell to read past the buffer with a wrong size? |
 | SEC-5 | **Config files.** Written `0600` through one helper, swapped in from a staging folder. Does a crash at any point leave either the old tree or the new one, never a mix (T-9)? |
 | SEC-6 | **Dependencies.** Read `cargo audit`'s warnings and the direct dependencies' licenses. |
 | SEC-7 | **Force Quit.** Can a window's reported pid, or a process name, make it end something outside the game's tree (the desktop, a launcher, another user's process)? |
-| SEC-8 | **Helper programs.** Clipboard (`wl-copy`, `xclip`, `xsel`, `clip`), screenshot and recording tools are run with arguments, never through a shell. Check no text the player types reaches a command line. |
+| SEC-8 | **Helper programs.** Clipboard (`wl-copy`, `xclip`, `xsel`), screenshot and recording tools are run with arguments, never through a shell. Check no text the player types reaches a command line. |
 | SEC-9 | **The dashboard example.** It binds to `127.0.0.1` and checks the `Host` header. Re-check when it changes. |
 
 ## 8. Desktop session runs
 
-Rerun when the daemon's interaction with the system changes (focus tracking, input, the GNOME
-extension), and when a desktop, the kernel or the input stack has a new release:
+Rerun when the daemon's interaction with the system changes (focus tracking, input, the GNOME or
+Cinnamon extension, the overlay window), and when a desktop, the kernel or the input stack has a new
+release:
 
 ```sh
 scripts/desktop-versions.sh   # network: latest GNOME, Plasma, Sway and Hyprland; exits 1 if GNOME's major isn't in the extension's shell-version list
-DESKTOP_TEST_HOST=dev@127.0.0.1 DESKTOP_TEST_SSH_OPTS="-p <port> -i vms/id_ed25519" scripts/desktop-test.sh gnome   # or kde, sway, hyprland, labwc
+DESKTOP_TEST_HOST=dev@127.0.0.1 DESKTOP_TEST_SSH_OPTS="-p <port> -i vms/id_ed25519" scripts/desktop-test.sh gnome   # or cinnamon, budgie, cosmic, kde, sway, hyprland, niri, labwc
+scripts/gnome-versions/run.sh   # the GNOME extension on each older Shell, headless in Docker
 ```
 
 `desktop-test.sh` syncs the checkout to the VM, builds it, and checks in that session that the
-tracker is found, a terminal's window is seen, its rule switches the profile, and the profile falls
-back when the window closes. Set `DESKTOP_TEST_QMP` to the VM's QMP socket to close the GNOME
-Overview first. Run it only against a throwaway VM: the daemon grabs gamepads and creates virtual
-input devices.
+tracker is found, a terminal's window is seen, its rule switches the profile, the profile falls
+back when the window closes, and the overlay process runs. Set `DESKTOP_TEST_QMP` to the VM's QMP
+socket to close the GNOME Overview first. Run it only against a throwaway VM: the daemon grabs
+gamepads and creates virtual input devices. niri's VM needs GL (`VM_GL=1 vms/vm.sh start niri`).
 
-Last run, 2026-10-09, kernel 7.2.9:
+Last full run 2026-10-09, kernel 7.2.9; the newer desktops have their own dates:
 
-| Desktop | Version | Native | Flatpak |
-|---|---|---|---|
-| GNOME | 51.0 | all pass (overlay skipped) | all pass (overlay skipped) |
-| KDE Plasma | 6.7.5 | all pass | all pass |
-| Sway | 1.12 | all pass | focus falls back to processes; overlay and rules skipped |
-| Hyprland | 0.56.2 | all pass | all pass except the overlay, skipped (layer-shell hidden) |
-| labwc | 0.20.2 | all pass | focus falls back to processes; overlay and rules skipped |
+| Desktop | Version | Result |
+|---|---|---|
+| GNOME | 51.0 | all pass (2026-10-09; overlay skipped then). The extension overlay since checked by hand in the VM on Shell 51: keyboard, Guide shortcuts and menus over a fullscreen window, two monitors, fractional scale; Shell 45 to 51 headless (L7b) |
+| Cinnamon (Wayland) | 6.6.9 | all pass (2026-10-30, kernel 7.2.11); overlay by hand over a fullscreen window, on two monitors (1280x800 at 1.25, 1024x768 at 1) and at scale 1.5 |
+| COSMIC | cosmic-comp 1.10.0 (Arch) | all pass (2026-10-31, kernel 7.2.11); overlay by hand over a fullscreen window, on two monitors and at scale 1.5. The surface is made again each time it shows, so it lands on the active output; moving a game between monitors with one overlay process running not checked |
+| Budgie (Wayland) | 10.10.2 on labwc 0.20.2 (Arch) | all pass (2026-10-31, kernel 7.2.11); wlroots tracker; overlay follows the focused window's monitor whatever the pointer is on, over a fullscreen window and at scales 1.5 and 1.25; desktop name `Budgie:GNOME` or unset still picks wlroots |
+| Ubuntu Budgie | 26.04.1, Budgie 10.10.2, labwc 0.9.3 (kernel 7.0) | all pass (2026-10-31), the same checks by hand. Names its desktop plain `Budgie`; `budgie-power-dialog` owns `org.gnome.Shell`. VM: `vms/vm.sh create ubuntu-budgie ubuntu-budgie` |
+| niri | 26.04 | all pass (2026-10-31), also with an executable rule; layer-shell overlay draws. Xwayland games (xwayland-satellite) not checked |
+| KDE Plasma | 6.7.5 | all pass |
+| Sway | 1.12 | all pass |
+| Hyprland | 0.56.2 | all pass |
+| labwc | 0.20.2 | all pass |
 
 ## 9. Commands
 

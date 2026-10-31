@@ -221,7 +221,7 @@ Tick an item when it's done and merged.
   which some players ignore. Offer the system's volume (PipeWire/Pulse) as an option or a second
   row. Album art next to the title would make the panel easier to recognize at a glance.
   - System volume and mute are done (through `wpctl`, or `pactl`). Album art isn't: drawing
-    images needs iced's `image` feature, which brings new crates into the Flatpak's vendored sources.
+    images needs iced's `image` feature, which brings new crates into the build.
 - [x] 43. **Recent items in the Guide menu.** Show the last few menu items you chose, or the
   last macro run, so a common action is one press away.
 - [x] 44. **Typed-text preview and suggestions on the keyboard.** A line above the keys showing

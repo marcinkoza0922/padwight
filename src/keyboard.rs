@@ -11,9 +11,8 @@ const GAP: f32 = 3.0;
 
 mod boards;
 mod labels;
-/// What each key types in the user's layout: XKB's on Linux, the active layout's on Windows.
-#[cfg_attr(target_os = "linux", path = "keyboard/xkb.rs")]
-#[cfg_attr(windows, path = "keyboard/windows.rs")]
+/// What each key types in the user's layout: XKB's.
+#[path = "keyboard/xkb.rs"]
 mod layout;
 pub use boards::{Board, Cursor, PASTE, find, key_at, step};
 pub use labels::{cap_label, key_for, needs_shift, typed};
