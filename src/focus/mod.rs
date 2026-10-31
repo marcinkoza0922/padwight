@@ -36,6 +36,8 @@ use crate::{
     monitor::log,
 };
 #[cfg(target_os = "linux")]
+pub(crate) use gnome::is_running as gnome_shell_running;
+#[cfg(target_os = "linux")]
 pub use identify::{identify, is_own_window, running_processes};
 
 /// How often we check that the desktop's tracker is still there (a compositor restart, a late

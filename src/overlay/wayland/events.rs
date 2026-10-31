@@ -2,13 +2,11 @@
 
 use wayland_client::{
     Connection, Dispatch, Proxy, QueueHandle, WEnum, delegate_noop,
-    globals::GlobalListContents,
     protocol::{
         wl_buffer::{self, WlBuffer},
         wl_callback::{self, WlCallback},
         wl_compositor::WlCompositor,
         wl_region::WlRegion,
-        wl_registry::{self, WlRegistry},
         wl_shm::{self, WlShm},
         wl_shm_pool::WlShmPool,
         wl_surface::{self, WlSurface},
@@ -88,10 +86,6 @@ impl Dispatch<WpFractionalScaleV1, ()> for Window {
             window.scale_changed(changed);
         }
     }
-}
-
-impl Dispatch<WlRegistry, GlobalListContents> for Window {
-    fn event(_: &mut Window, _: &WlRegistry, _: wl_registry::Event, _: &GlobalListContents, _: &Connection, _: &QueueHandle<Window>) {}
 }
 
 impl Dispatch<WlSurface, ()> for Window {

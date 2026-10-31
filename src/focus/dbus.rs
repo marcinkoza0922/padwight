@@ -45,3 +45,11 @@ where
     let (dest, path, iface) = target;
     Ok(conn.call_method(Some(dest), path, Some(iface), method, body)?)
 }
+
+/// The name of the program (`/proc/<pid>/comm`) that owns `name` on the bus, if anyone does.
+/// Some desktops borrow another's well-known names: Budgie's power dialog answers as `org.gnome.Shell`.
+pub fn owner_program(conn: &Connection, name: &str) -> Option<String> {
+    let reply = call(conn, ("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus"), "GetConnectionUnixProcessID", &(name,)).ok()?;
+    let pid: u32 = reply.body().deserialize().ok()?;
+    Some(std::fs::read_to_string(format!("/proc/{pid}/comm")).ok()?.trim().to_string())
+}

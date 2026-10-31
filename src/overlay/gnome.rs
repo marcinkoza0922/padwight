@@ -40,13 +40,20 @@ const STEP: Duration = Duration::from_millis(16);
 
 /// Whether this session is GNOME's or Cinnamon's, where the overlay can't be a window of its own.
 /// The desktop's name isn't always in the daemon's environment, so the shell on the bus counts too.
+/// Budgie names itself GNOME in some distributions but is a wlroots compositor with layer-shell.
 pub(super) fn wanted() -> bool {
-    std::env::var("XDG_CURRENT_DESKTOP").is_ok_and(|desktop| desktop.split(':').any(|part| ["gnome", "x-cinnamon"].iter().any(|name| part.eq_ignore_ascii_case(name))))
+    let named = |wanted: &[&str]| {
+        std::env::var("XDG_CURRENT_DESKTOP").is_ok_and(|desktop| desktop.split(':').any(|part| wanted.iter().any(|name| part.eq_ignore_ascii_case(name))))
+    };
+    if named(&["budgie"]) {
+        return false;
+    }
+    named(&["gnome", "x-cinnamon"])
         || Connection::session().is_ok_and(|conn| {
-            ["org.gnome.Shell", "org.Cinnamon"].iter().any(|name| {
-                let reply = conn.call_method(Some("org.freedesktop.DBus"), "/org/freedesktop/DBus", Some("org.freedesktop.DBus"), "NameHasOwner", &(*name,));
-                reply.is_ok_and(|reply| reply.body().deserialize::<bool>().unwrap_or(false))
-            })
+            crate::focus::gnome_shell_running(&conn)
+                || conn
+                    .call_method(Some("org.freedesktop.DBus"), "/org/freedesktop/DBus", Some("org.freedesktop.DBus"), "NameHasOwner", &("org.Cinnamon",))
+                    .is_ok_and(|reply| reply.body().deserialize::<bool>().unwrap_or(false))
         })
 }
 

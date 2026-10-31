@@ -8,7 +8,7 @@
 # devices, which would take over your own desktop.
 #
 # Usage: DESKTOP_TEST_HOST=dev@127.0.0.1 DESKTOP_TEST_SSH_OPTS="-p 2457 -i vms/id_ed25519" \
-#        scripts/desktop-test.sh <gnome|cinnamon|cosmic|kde|sway|hyprland|niri|labwc>
+#        scripts/desktop-test.sh <gnome|cinnamon|budgie|cosmic|kde|sway|hyprland|niri|labwc>
 #   DESKTOP_TEST_QMP=<qmp socket>  optional: sends Escape through QEMU first, to close GNOME's
 #                                  Overview after login (VMs started by vms/vm.sh have one).
 #
@@ -16,9 +16,9 @@
 # the input stack gets a new release. Record the versions it prints with the result.
 set -euo pipefail
 
-desktop=${1:?usage: scripts/desktop-test.sh gnome|cinnamon|cosmic|kde|sway|hyprland|niri|labwc}
+desktop=${1:?usage: scripts/desktop-test.sh gnome|cinnamon|budgie|cosmic|kde|sway|hyprland|niri|labwc}
 case $desktop in
-gnome | cinnamon | cosmic | kde | sway | hyprland | niri | labwc) ;;
+gnome | cinnamon | budgie | cosmic | kde | sway | hyprland | niri | labwc) ;;
 *)
     echo "unknown desktop: $desktop" >&2
     exit 2
@@ -78,18 +78,20 @@ bin=("$HOME/controller_app/target/release/padwight")
 config=$HOME/.config/padwight
 desktop=$1
 
-# The window runs a shell that reads one key and records it, so a pad press shows where it went.
+# The window runs bash (dash has no read -n) that reads one key and records it, so a pad press shows where it went.
 read_key='read -n1 key; printf %s "$key" > /tmp/desktop-test-key; sleep 120'
 case $desktop in
-gnome) window=kgx; class=org.gnome.Console; tracker="GNOME Shell"; launch=(kgx -- sh -c "$read_key") ;;
+gnome) window=kgx; class=org.gnome.Console; tracker="GNOME Shell"; launch=(kgx -- bash -c "$read_key") ;;
 # The window belongs to the terminal's server (its process name is cut to 15 characters), not to the command that opened it.
-cinnamon) window=gnome-terminal; closer=gnome-terminal-; class=org.gnome.Terminal; tracker=Cinnamon; launch=(gnome-terminal -- sh -c "$read_key") ;;
-cosmic) window=cosmic-term; class=com.system76.CosmicTerm; tracker=COSMIC; launch=(cosmic-term -e sh -c "$read_key") ;;
-kde) window=konsole; class=org.kde.konsole; tracker=KWin; launch=(konsole -e sh -c "$read_key") ;;
-sway) window=foot; class=foot; tracker=Sway; launch=(foot sh -c "$read_key") ;;
-hyprland) window=kitty; class=kitty; tracker=Hyprland; launch=(kitty sh -c "$read_key") ;;
-niri) window=foot; class=foot; tracker=niri; launch=(foot sh -c "$read_key") ;;
-labwc) window=foot; class=foot; tracker=wlroots; launch=(foot sh -c "$read_key") ;;
+cinnamon) window=gnome-terminal; closer=gnome-terminal-; class=org.gnome.Terminal; tracker=Cinnamon; launch=(gnome-terminal -- bash -c "$read_key") ;;
+# Budgie 10.10 is labwc underneath, so the generic wlroots tracker serves it.
+budgie) window=gnome-terminal; closer=gnome-terminal-; class=org.gnome.Terminal; tracker=wlroots; launch=(gnome-terminal -- bash -c "$read_key") ;;
+cosmic) window=cosmic-term; class=com.system76.CosmicTerm; tracker=COSMIC; launch=(cosmic-term -e bash -c "$read_key") ;;
+kde) window=konsole; class=org.kde.konsole; tracker=KWin; launch=(konsole -e bash -c "$read_key") ;;
+sway) window=foot; class=foot; tracker=Sway; launch=(foot bash -c "$read_key") ;;
+hyprland) window=kitty; class=kitty; tracker=Hyprland; launch=(kitty bash -c "$read_key") ;;
+niri) window=foot; class=foot; tracker=niri; launch=(foot bash -c "$read_key") ;;
+labwc) window=foot; class=foot; tracker=wlroots; launch=(foot bash -c "$read_key") ;;
 esac
 
 failures=0
@@ -105,7 +107,7 @@ stop_daemon() { pkill -x padwight 2>/dev/null || true; sleep 1; }
 
 echo "== versions"
 echo "kernel $(uname -r)"
-for tool in gnome-shell cinnamon cosmic-comp plasmashell sway Hyprland niri labwc; do
+for tool in gnome-shell cinnamon budgie-desktop cosmic-comp plasmashell sway Hyprland niri labwc; do
     command -v "$tool" >/dev/null && echo "$tool: $("$tool" --version 2>/dev/null | head -1)"
 done
 

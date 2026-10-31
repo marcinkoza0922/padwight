@@ -14,6 +14,7 @@ use wayland_client::{
     globals::GlobalList,
     protocol::{
         wl_compositor::WlCompositor,
+        wl_output::WlOutput,
         wl_shm::{self, WlShm},
         wl_surface::WlSurface,
     },
@@ -28,6 +29,7 @@ use wayland_protocols_wlr::layer_shell::v1::client::{
 };
 
 use super::{
+    monitors::Monitors,
     pacing::Pacer,
     picture::{Buffer, Picture},
     scale::{Mode, Scale},
@@ -52,6 +54,8 @@ pub(super) struct Window {
     /// Kept alive: it is what sends the preferred scale.
     _fractional: Option<WpFractionalScaleV1>,
     viewport: Option<WpViewport>,
+    /// Where the focused window is, to put the surface on that monitor (`remake`).
+    pub(super) monitors: Monitors,
     /// The scale the compositor prefers; buffers are made at it.
     pub(super) scale: Scale,
     /// The scale changed since the last commit: what is on needs drawing again at the new one.
@@ -91,8 +95,8 @@ struct Surface {
 
 impl Makers {
     /// A surface on the overlay layer, 1×1 in a corner, never taking keyboard focus, with clicks
-    /// passing through. The compositor chooses its output, as it is made.
-    fn surface(&self, qh: &QueueHandle<Window>) -> Surface {
+    /// passing through. On `output` when given; otherwise the compositor chooses, as it is made.
+    fn surface(&self, qh: &QueueHandle<Window>, output: Option<&WlOutput>) -> Surface {
         let surface = self.compositor.create_surface(qh, ());
         let fractional = self.fractional.as_ref().map(|m| m.get_fractional_scale(&surface, qh, ()));
         let viewport = self.viewporter.as_ref().map(|v| v.get_viewport(&surface, qh, ()));
@@ -100,7 +104,7 @@ impl Makers {
         let region = self.compositor.create_region(qh, ());
         surface.set_input_region(Some(&region));
         region.destroy();
-        let layer = self.layer_shell.get_layer_surface(&surface, None, Layer::Overlay, "padwight_overlay".into(), qh, ());
+        let layer = self.layer_shell.get_layer_surface(&surface, output, Layer::Overlay, "padwight_overlay".into(), qh, ());
         layer.set_keyboard_interactivity(KeyboardInteractivity::None);
         layer.set_exclusive_zone(-1);
         Surface { surface, layer, fractional, viewport }
@@ -129,10 +133,11 @@ impl Window {
         let viewporter: Option<WpViewporter> = globals.bind(qh, 1..=1, ()).ok();
 
         let makers = Makers { layer_shell, compositor, fractional, viewporter };
-        let Surface { surface, layer, fractional, viewport } = makers.surface(qh);
+        let Surface { surface, layer, fractional, viewport } = makers.surface(qh, None);
         let window = Window {
             shm,
             makers,
+            monitors: Monitors::new(globals, qh),
             formats: Formats::default(),
             surface,
             layer,
@@ -160,11 +165,11 @@ impl Window {
     }
 
     /// Makes the surface again, in place of the hidden one. The compositor chooses an output for
-    /// a layer surface as it is made, and the surface would stay there: a game that moved to
+    /// a layer surface as it is made, and the surface would stay there (so it is told the focused window's monitor, where the compositor says it): a game that moved to
     /// another monitor would keep its overlay on the old one. What the surface needs to know
     /// afresh goes back to its start; the scale, the formats and the pacer's count carry over.
     pub(super) fn remake(&mut self, qh: &QueueHandle<Window>) {
-        let Surface { surface, layer, fractional, viewport } = self.makers.surface(qh);
+        let Surface { surface, layer, fractional, viewport } = self.makers.surface(qh, self.monitors.focused());
         if let Some(old) = self._fractional.take() {
             old.destroy();
         }

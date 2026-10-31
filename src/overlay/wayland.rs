@@ -33,6 +33,7 @@ use super::ui::Overlay;
 
 mod events;
 pub(in crate::overlay) mod feed;
+mod monitors;
 mod pacing;
 mod picture;
 mod scale;

@@ -223,7 +223,7 @@ desktop, the kernel or the input stack gets a new release:
 
 ```sh
 scripts/desktop-versions.sh   # network: latest GNOME, Plasma, Sway and Hyprland releases; exits 1 if GNOME's major isn't in the extension's shell-version list
-DESKTOP_TEST_HOST=dev@127.0.0.1 DESKTOP_TEST_SSH_OPTS="-p <port> -i vms/id_ed25519" scripts/desktop-test.sh gnome   # or cinnamon, cosmic, kde, sway, hyprland, labwc (a wlroots compositor)
+DESKTOP_TEST_HOST=dev@127.0.0.1 DESKTOP_TEST_SSH_OPTS="-p <port> -i vms/id_ed25519" scripts/desktop-test.sh gnome   # or cinnamon, budgie, cosmic, kde, sway, hyprland, labwc (a wlroots compositor)
 ```
 
 `desktop-test.sh` syncs the checkout to the VM, builds it, and runs the checks in that session:
@@ -243,3 +243,5 @@ Last run, 2026-10-09, kernel 7.2.9:
 | Sway | 1.12 | all pass |
 | Hyprland | 0.56.2 | all pass |
 | labwc | 0.20.2 | all pass |
+| Budgie (Wayland) | 10.10.2 (labwc 0.20.2, Arch) | all pass (2026-10-31, kernel 7.2.11); tracked by the wlroots backend, overlay is a plain layer-shell window; checked by hand over a fullscreen window and on two monitors (1280x800 and 1024x768): the overlay follows the focused window's monitor whatever the pointer is on, in both directions; also at fractional scale (monitor 1 at 1.5, monitor 2 at 1.25, 2026-10-31: sharp, sized like the panel's text); the daemon's desktop name set to `Budgie:GNOME` (as Ubuntu flavours report it) or unset still gives the wlroots tracker and a layer-shell overlay with no `overlay:` errors. |
+| Ubuntu Budgie | 26.04.1, Budgie 10.10.2, labwc 0.9.3 (kernel 7.0) | all pass (2026-10-31): desktop-test 9/9; by hand, a window on each monitor with the pointer on the other, a fullscreen window, and scale 1.5 / 1.25 on the two monitors, the overlay always on the focused window's monitor. It names its desktop plain `Budgie`, and `budgie-power-dialog` owns `org.gnome.Shell` there too. VM: `vms/vm.sh create ubuntu-budgie ubuntu-budgie` (`vms/provision-ubuntu.sh`, SDDM autologin) |
