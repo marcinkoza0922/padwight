@@ -216,10 +216,16 @@ pub enum FocusBackend {
     Kwin,
     /// Our GNOME Shell extension reports focus changes (GNOME, Wayland or X11).
     GnomeShell,
+    /// Our Cinnamon extension reports focus changes (Cinnamon, Wayland or X11).
+    Cinnamon,
+    /// COSMIC's toplevel info protocol reports focus changes.
+    Cosmic,
     /// Sway's IPC socket reports focus changes.
     Sway,
     /// Hyprland's event socket reports focus changes.
     Hyprland,
+    /// niri's IPC event stream reports focus changes.
+    Niri,
     /// The compositor's `wlr-foreign-toplevel-management` reports focus changes (labwc, Wayfire, river, and others).
     Wlroots,
     /// No focus information: rules match against running processes instead.
@@ -233,8 +239,11 @@ impl FocusBackend {
         match self {
             Self::Kwin => Some("KWin"),
             Self::GnomeShell => Some("GNOME Shell"),
+            Self::Cinnamon => Some("Cinnamon"),
+            Self::Cosmic => Some("COSMIC"),
             Self::Sway => Some("Sway"),
             Self::Hyprland => Some("Hyprland"),
+            Self::Niri => Some("niri"),
             Self::Wlroots => Some("wlroots"),
             Self::ProcessScan => None,
         }

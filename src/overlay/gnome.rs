@@ -1,5 +1,6 @@
-//! The overlay on GNOME, which has no layer-shell: the frames are drawn here, as everywhere
-//! on Linux, but handed to the Shell extension (`gnome-extension/…/overlay.js`), which shows
+//! The overlay on GNOME and Cinnamon, which have no layer-shell: the frames are drawn here, as
+//! everywhere on Linux, but handed to the shell extension (`gnome-extension/…/overlay.js`,
+//! `cinnamon-extension/…/extension.js`, the same D-Bus object), which shows
 //! them as a click-through actor above everything, fullscreen games included.
 //!
 //! The picture is one memfd, mapped here and in the extension (`SetBuffer`, again whenever the
@@ -10,6 +11,9 @@
 //! Without frame callbacks it animates on a 16 ms timer.
 //!
 //! Run on GNOME Shell 51 in the test VM; over a fullscreen window, on two monitors and at a fractional scale.
+//! On Cinnamon 6.6.9 (Wayland) in the test VM too: over a fullscreen window, on two monitors of
+//! different sizes and scales (1.25 and 1), and at 1.5. Fractional scales need Muffin's
+//! `scale-monitor-framebuffer` experimental feature.
 
 use std::{
     fs::File,
@@ -34,13 +38,22 @@ const INTERFACE: &str = "io.github.marcinkoza0922.Padwight.Overlay";
 /// About a refresh at 60 Hz.
 const STEP: Duration = Duration::from_millis(16);
 
-/// Whether this session is GNOME's, where the overlay can't be a window of its own. The
-/// desktop's name isn't always in the daemon's environment, so GNOME Shell on the bus counts too.
+/// Whether this session is GNOME's or Cinnamon's, where the overlay can't be a window of its own.
+/// The desktop's name isn't always in the daemon's environment, so the shell on the bus counts too.
+/// Budgie names itself GNOME in some distributions but is a wlroots compositor with layer-shell.
 pub(super) fn wanted() -> bool {
-    std::env::var("XDG_CURRENT_DESKTOP").is_ok_and(|desktop| desktop.split(':').any(|part| part.eq_ignore_ascii_case("gnome")))
+    let named = |wanted: &[&str]| {
+        std::env::var("XDG_CURRENT_DESKTOP").is_ok_and(|desktop| desktop.split(':').any(|part| wanted.iter().any(|name| part.eq_ignore_ascii_case(name))))
+    };
+    if named(&["budgie"]) {
+        return false;
+    }
+    named(&["gnome", "x-cinnamon"])
         || Connection::session().is_ok_and(|conn| {
-            let reply = conn.call_method(Some("org.freedesktop.DBus"), "/org/freedesktop/DBus", Some("org.freedesktop.DBus"), "NameHasOwner", &("org.gnome.Shell",));
-            reply.is_ok_and(|reply| reply.body().deserialize::<bool>().unwrap_or(false))
+            crate::focus::gnome_shell_running(&conn)
+                || conn
+                    .call_method(Some("org.freedesktop.DBus"), "/org/freedesktop/DBus", Some("org.freedesktop.DBus"), "NameHasOwner", &("org.Cinnamon",))
+                    .is_ok_and(|reply| reply.body().deserialize::<bool>().unwrap_or(false))
         })
 }
 

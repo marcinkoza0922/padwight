@@ -125,7 +125,10 @@ Line counts are approximate and change; `scripts/long-files.sh` lists the files 
 | `focus/kwin.rs`, `focus/dbus.rs` | KDE Plasma: a KWin script reports focus changes over D-Bus. |
 | `focus/sway.rs` | Sway (and i3-IPC compositors) over `$SWAYSOCK`. |
 | `focus/hyprland.rs` | Hyprland's event and command sockets. |
+| `focus/niri.rs` | niri's IPC event stream. |
 | `focus/wlroots.rs` | wlroots compositors (labwc, Wayfire, river, …) over `wlr-foreign-toplevel-management`. Matches windows by class only, since the protocol doesn't give the process. |
+| `focus/cinnamon.rs` | Cinnamon: installs and enables the extension in `cinnamon-extension/` (focus and overlay, the same D-Bus objects as GNOME's). |
+| `focus/cosmic.rs` | COSMIC: `ext-foreign-toplevel-list` for titles and app ids plus `cosmic-toplevel-info` (generated from `protocols/`) for the activated state. Class rules only. |
 | `focus/gnome.rs` | GNOME Shell: installs and enables the extension in `gnome-extension/`, which reports focus over the same D-Bus service. |
 | `focus/identify.rs` | Identifies a window's executable, Steam App ID and class from `/proc`, including Wine/Proton `.exe` names. |
 | `launchers.rs` | Which games are installed (Steam, Heroic, Lutris) or running, for the library picker. |
@@ -257,7 +260,7 @@ The daemon picks the profile from the focused window. The tracker is chosen by t
 2. **Hyprland** (`hyprland.rs`): follows the event socket and asks the command socket for details.
 3. **KDE Plasma** (`kwin.rs`): a small KWin script sends each focus change to the daemon's D-Bus service (`dbus.rs`).
 4. **GNOME** (`gnome.rs`): a GNOME Shell extension sends each focus change over the same D-Bus service.
-5. **wlroots compositors** (`wlroots.rs`): the `wlr-foreign-toplevel-management` protocol (labwc, Wayfire, river, and others). Windows match by class only.
+5. **wlroots compositors** (`wlroots.rs`): the `wlr-foreign-toplevel-management` protocol (labwc, Wayfire, river, Budgie 10.10+, and others). The overlay process follows the same protocol on its own connection (`overlay/wayland/monitors.rs`) to learn which monitor the focused window is on and names it when it makes the layer surface, because labwc puts a surface made without an output on the first monitor. Budgie's power dialog owns `org.gnome.Shell` on the bus, so `gnome::is_running` checks the owner's program name, and `overlay/gnome.rs::wanted()` never picks the extension path on a desktop named Budgie. Windows match by class only.
 6. **Fallback**: no tracker. Rules apply while a matching process runs.
 
 `identify.rs` resolves a window to an executable name, Steam App ID (from `SteamAppId`/`STEAM_COMPAT_APP_ID` or Proton's `steam_app_<id>` class) and window class. Wine/Proton games are matched by their `.exe`, not the Wine loader. GNOME has no layer-shell: focus tracking and the overlay both go through the GNOME Shell extension in `gnome-extension/` (`overlay/gnome.rs` sends it each frame; see [The overlay process](#the-overlay-process)).

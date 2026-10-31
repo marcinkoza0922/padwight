@@ -2687,9 +2687,11 @@ dependencies = [
  "tiny-skia",
  "tokio",
  "toml",
+ "wayland-backend",
  "wayland-client",
  "wayland-protocols",
  "wayland-protocols-wlr",
+ "wayland-scanner",
  "xkbcommon",
  "zbus",
 ]

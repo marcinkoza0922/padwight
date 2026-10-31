@@ -1,14 +1,12 @@
 //! The protocol's events, dispatched to the `Window`.
 
 use wayland_client::{
-    Connection, Dispatch, QueueHandle, WEnum, delegate_noop,
-    globals::GlobalListContents,
+    Connection, Dispatch, Proxy, QueueHandle, WEnum, delegate_noop,
     protocol::{
         wl_buffer::{self, WlBuffer},
         wl_callback::{self, WlCallback},
         wl_compositor::WlCompositor,
         wl_region::WlRegion,
-        wl_registry::{self, WlRegistry},
         wl_shm::{self, WlShm},
         wl_shm_pool::WlShmPool,
         wl_surface::{self, WlSurface},
@@ -31,6 +29,10 @@ use crate::overlay::timing::{timing_log, unix_ns};
 
 impl Dispatch<ZwlrLayerSurfaceV1, ()> for Window {
     fn event(window: &mut Window, layer: &ZwlrLayerSurfaceV1, event: zwlr_layer_surface_v1::Event, _: &(), _: &Connection, _: &QueueHandle<Window>) {
+        // A surface made again (`Window::remake`) leaves nothing to listen to on the old one.
+        if layer.id() != window.layer.id() {
+            return;
+        }
         match event {
             zwlr_layer_surface_v1::Event::Configure { serial, width, height } => {
                 // Acked before anything is committed for it; a later configure replaces what
@@ -84,10 +86,6 @@ impl Dispatch<WpFractionalScaleV1, ()> for Window {
             window.scale_changed(changed);
         }
     }
-}
-
-impl Dispatch<WlRegistry, GlobalListContents> for Window {
-    fn event(_: &mut Window, _: &WlRegistry, _: wl_registry::Event, _: &GlobalListContents, _: &Connection, _: &QueueHandle<Window>) {}
 }
 
 impl Dispatch<WlSurface, ()> for Window {

@@ -33,6 +33,7 @@ use super::ui::Overlay;
 
 mod events;
 pub(in crate::overlay) mod feed;
+mod monitors;
 mod pacing;
 mod picture;
 mod scale;
@@ -68,6 +69,11 @@ pub(super) fn run() -> Result<()> {
         if arrived.gone {
             // The daemon went away: nothing left to draw for.
             return Ok(());
+        }
+        // A hidden surface is made anew as the overlay shows, so the compositor puts it on the
+        // output that is active then.
+        if overlay.shown() && window.is_hidden() {
+            window.remake(&qh);
         }
         // The animation clock, read as the loop wakes: just after a frame callback while
         // anything moves, so frames step by the compositor's refresh.

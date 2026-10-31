@@ -43,6 +43,7 @@ jobs:
               - 'docs/manual/**'
               - 'dist/**'
               - 'gnome-extension/**'
+              - 'cinnamon-extension/**'
               - '.github/workflows/ci.yml'
             # Library packs are embedded and validated by the Rust tests, but need no clippy or Windows run.
             packs:

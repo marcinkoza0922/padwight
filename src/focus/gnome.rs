@@ -22,11 +22,9 @@ const FILES: [(&str, &str); 3] = [
     ("overlay.js", include_str!("../../gnome-extension/padwight-focus@io.github.marcinkoza0922/overlay.js")),
 ];
 
-/// Whether GNOME Shell is on the session bus.
+/// Whether GNOME Shell is on the session bus (and not just a program answering to its name).
 pub fn is_running(conn: &Connection) -> bool {
-    call(conn, ("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus"), "NameHasOwner", &(SHELL,))
-        .and_then(|reply| Ok(reply.body().deserialize::<bool>()?))
-        .unwrap_or(false)
+    super::dbus::owner_program(conn, SHELL).is_some_and(|program| program == "gnome-shell")
 }
 
 /// Installs the extension if needed and makes sure GNOME Shell has it running. Errors when it
