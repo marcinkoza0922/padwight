@@ -1582,17 +1582,10 @@ impl App {
 
         if !running && self.page == Page::Overview {
             let code = |s: &'static str| -> text::Span<'static> { span(s).font(iced::Font::MONOSPACE) };
-            #[cfg(target_os = "linux")]
             let how = rich_text![
                 "The background service isn't running. Start it with ",
                 code("systemctl --user start padwight"),
                 " or ",
-                code("padwight daemon"),
-                ". You can still edit: your changes are saved and take effect once it starts.",
-            ];
-            #[cfg(windows)]
-            let how = rich_text![
-                "The background service isn't running. Start it with ",
                 code("padwight daemon"),
                 ". You can still edit: your changes are saved and take effect once it starts.",
             ];

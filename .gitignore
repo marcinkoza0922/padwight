@@ -23,11 +23,6 @@ rustc-ice-*.txt
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# Flatpak build output (flatpak/ README steps)
-/build-dir/
-/repo/
-/.flatpak-builder/
-
 # Reference images for drawing the controller pictures
 /references/
 

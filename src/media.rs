@@ -1,6 +1,5 @@
 //! Media playback controls: an overlay at the top of the screen that drives whatever player is
-//! running (Spotify, YouTube Music in a browser, a local player) over MPRIS, or Windows' media
-//! controls. A worker thread talks to the players so a stuck one can't stall the daemon;
+//! running (Spotify, YouTube Music in a browser, a local player) over MPRIS. A worker thread talks to the players so a stuck one can't stall the daemon;
 //! `MediaSession` turns controller input into commands for it, and the overlay process draws
 //! `MediaView`.
 
@@ -16,17 +15,12 @@ use crate::{
     input::InputEvent,
 };
 
-#[cfg_attr(windows, path = "media/windows_mixer.rs")]
 mod mixer;
 #[cfg(target_os = "linux")]
 mod mpris;
-#[cfg(windows)]
-mod windows;
 
 #[cfg(target_os = "linux")]
 pub use mpris::worker;
-#[cfg(windows)]
-pub use windows::worker;
 
 /// How often the worker re-reads the player (the progress bar moves with it).
 const POLL: Duration = Duration::from_millis(500);

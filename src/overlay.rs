@@ -342,13 +342,6 @@ pub fn run() -> anyhow::Result<()> {
     if gnome::wanted() { gnome::run() } else { wayland::run() }
 }
 
-/// Runs the overlay window: a click-through layered window over the screen drawing the state
-/// the daemon streams, and exiting when the daemon goes away.
-#[cfg(windows)]
-pub fn run() -> anyhow::Result<()> {
-    windows::run()
-}
-
 #[cfg(target_os = "linux")]
 mod gnome;
 #[cfg(target_os = "linux")]
@@ -356,8 +349,6 @@ mod wayland;
 mod controller;
 mod ui;
 pub use controller::{OverlayAction, OverlayController, typing};
-#[cfg(windows)]
-mod windows;
 
 pub use ui::{film, snapshot, snapshot_iced};
 

@@ -81,12 +81,6 @@ pub fn view(steam: bool, cursor: usize, profile: &str, style: OverlayStyle) -> M
     }
 }
 
-/// Whether Steam is running: some process is `steam.exe`.
-#[cfg(windows)]
-pub fn steam_running() -> bool {
-    crate::focus::running_processes().iter().any(|p| p.exe.eq_ignore_ascii_case("steam.exe"))
-}
-
 /// Whether Steam is running: some process is named `steam`.
 #[cfg(target_os = "linux")]
 pub fn steam_running() -> bool {

@@ -217,7 +217,7 @@ wayland.rs: wl_shm buffer, damage, commit, frame callback ──▶ compositor
 
 - **Libraries:** tiny-skia (shapes, paths, masks, gradients), cosmic-text with swash (shaping
   and glyphs), resvg (SVG icons, frame marks, figures), and `image` (background pictures). All of
-  them are already in the lock file through iced, so the vendored Flatpak sources don't change.
+  them are already in the lock file through iced, so the lock file doesn't change.
 - **Layout:** a small tree of our own: row, column, wrapping row, stack, pinned children,
   fixed/shrink/fill sizes, padding, alignment, clipping. It is measured at a width, then placed.
   It only needs to do what the overlay's panels use, not everything iced does.
@@ -331,7 +331,7 @@ that panel with both renderers, and compare (step 3.10 automates this). Port fro
 
 | # | Step | Model | Done when |
 |---|---|---|---|
-| 7.1 | Delete `overlay/layershell.rs`, and with it the `iced_layershell` dependency (nothing else uses it). Check what that leaves of the pin comments in `Cargo.toml` (`winit-core`, `xkbcommon`, `wayland-*`). | done | The native window is the only Linux overlay (`PADWIGHT_OVERLAY` gone). The lock file only loses packages: `iced_layershell` and its macros, `layershellev`, `iced_devtools`, `iced_exdevtools`, `darling` and its parts, `manyhow`, `waycrate_xkbkeycode`, `winit-common`, a second `smol_str` and `winit-core` among them; the `winit-core` pin went, and `xkbcommon` and `wayland-*` stay for their direct uses. `flatpak/cargo-sources.json` was regenerated. |
+| 7.1 | Delete `overlay/layershell.rs`, and with it the `iced_layershell` dependency (nothing else uses it). Check what that leaves of the pin comments in `Cargo.toml` (`winit-core`, `xkbcommon`, `wayland-*`). | done | The native window is the only Linux overlay (`PADWIGHT_OVERLAY` gone). The lock file only loses packages: `iced_layershell` and its macros, `layershellev`, `iced_devtools`, `iced_exdevtools`, `darling` and its parts, `manyhow`, `waycrate_xkbkeycode`, `winit-common`, a second `smol_str` and `winit-core` among them; the `winit-core` pin went, and `xkbcommon` and `wayland-*` stay for their direct uses. |
 | 7.2 | Make sure the overlay process never starts iced's font system or renderer (fonts from 1.4, snapshots from 4.4). | done | A game's fonts went through `font::load`, which started iced's font system: the overlay now uses `font::load_for_overlay`, which only registers them for its own text engine. `resources.sh`: 12.9 MB hidden, 42.1 MB with a menu held, 23.7 MB hidden again; 1.0% while moving through a menu. |
 
 ### Phase 8: check and measure

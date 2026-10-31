@@ -11,12 +11,7 @@ use std::{
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
 
-/// The control socket's ends: std's on Linux, and AF_UNIX through `uds_windows` on Windows, which
-/// has had it since Windows 10 1803.
-#[cfg(target_os = "linux")]
 pub use std::os::unix::net::{UnixListener, UnixStream};
-#[cfg(windows)]
-pub use uds_windows::{UnixListener, UnixStream};
 
 use crate::{
     config::{Button, Config, ProfileRef},
@@ -227,8 +222,6 @@ pub enum FocusBackend {
     Hyprland,
     /// The compositor's `wlr-foreign-toplevel-management` reports focus changes (labwc, Wayfire, river, and others).
     Wlroots,
-    /// A WinEvent hook reports foreground window changes (Windows).
-    Windows,
     /// No focus information: rules match against running processes instead.
     #[default]
     ProcessScan,
@@ -243,7 +236,6 @@ impl FocusBackend {
             Self::Sway => Some("Sway"),
             Self::Hyprland => Some("Hyprland"),
             Self::Wlroots => Some("wlroots"),
-            Self::Windows => Some("Windows"),
             Self::ProcessScan => None,
         }
     }
@@ -403,22 +395,10 @@ pub struct GyroOut {
     pub stick: Option<(f32, f32)>,
 }
 
-/// A runtime directory the host can see too, for files that the desktop or another instance
-/// must reach. In a Flatpak, `$XDG_RUNTIME_DIR` is private to each sandbox run, so the app's
-/// own directory under it is used instead: the host shares that one between runs.
+/// The runtime directory, for files that the desktop or another instance must reach.
 #[cfg(target_os = "linux")]
 pub fn shared_runtime_dir() -> Option<PathBuf> {
-    match std::env::var_os("FLATPAK_ID") {
-        Some(id) => dirs::runtime_dir().map(|dir| dir.join("app").join(id)),
-        None => dirs::runtime_dir(),
-    }
-}
-
-/// Windows has no runtime directory, but `XDG_RUNTIME_DIR` can still name one, as on Linux, so
-/// tests and scripts can run a daemon of their own beside the user's.
-#[cfg(windows)]
-pub fn shared_runtime_dir() -> Option<PathBuf> {
-    std::env::var_os("XDG_RUNTIME_DIR").map(PathBuf::from)
+    dirs::runtime_dir()
 }
 
 pub fn socket_path() -> PathBuf {
@@ -434,12 +414,6 @@ pub fn socket_path() -> PathBuf {
 fn fallback_socket_dir() -> PathBuf {
     // SAFETY: getuid cannot fail.
     std::env::temp_dir().join(format!("padwight-{}", unsafe { libc::getuid() }))
-}
-
-/// Windows has no runtime dir: the user's local app data, which only they can open.
-#[cfg(windows)]
-fn fallback_socket_dir() -> PathBuf {
-    dirs::data_local_dir().unwrap_or_else(std::env::temp_dir).join("padwight")
 }
 
 /// Sends one of the watch requests and returns the JSON lines the daemon streams back, until the

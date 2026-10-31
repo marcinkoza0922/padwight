@@ -1,4 +1,4 @@
-//! The virtual devices the daemon writes to: uinput on Linux, ViGEmBus and SendInput on Windows.
+//! The virtual devices the daemon writes to: uinput.
 
 use std::collections::{HashMap, HashSet};
 
@@ -10,8 +10,7 @@ use crate::{
     keycode::KeyCode,
 };
 
-#[cfg_attr(target_os = "linux", path = "output/uinput.rs")]
-#[cfg_attr(windows, path = "output/windows.rs")]
+#[path = "output/uinput.rs"]
 mod device;
 #[cfg(target_os = "linux")]
 mod frames;
@@ -19,8 +18,6 @@ mod frames;
 pub use device::{VirtualKbm, VirtualPad};
 #[cfg(target_os = "linux")]
 pub use device::{FfCaps, VIRTUAL_PREFIX};
-#[cfg(windows)]
-pub use device::{Target, is_virtual_slot, slots_known};
 
 /// Abstract output produced by the mapping engine.
 #[derive(Debug, Clone, PartialEq)]

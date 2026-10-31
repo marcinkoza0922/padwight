@@ -12,7 +12,6 @@ What to check beyond `cargo test`, and what a human reviewer should look at. Aut
 | F4 | Packs might be able to trigger host programs. | Corrected. A pack can't name an arbitrary program. The only host-program paths reachable from a pack are the built-in Screenshot and ToggleRecording actions, which run fixed tools (`grim` or a recorder). No code change; whether an import preview should list these is still a reviewer's call (H-SEC-2). |
 | F5 | `unwrap()` calls on daemon paths could panic and leave the pad grabbed. | Audited. The daemon had one production `unwrap()`, in `release_devices`; it is now a `let ... else`. The remaining production `unwrap`/`expect` calls are invariants or bundled assets: `icon.rs` (the bundled icon) and `monitor.rs` (a mutex). |
 | F6 | `scripts/long-files.sh` lists files over 400 lines. | Unchanged. It's a maintainability note, not a defect. |
-| F7 | `flatpak/cargo-sources.json` could drift from `Cargo.lock`. | Checked. Enforced by check A-7; currently in sync. |
 
 ## 2. Automated checks
 
@@ -61,7 +60,6 @@ Each item has the expected result in the last column. Record the OS, compositor,
 | D-0 | Process-scan fallback (no tracker): a game's rule switches the profile while its process runs, and back when it exits. | Done in the container (`tests/process_focus.rs`). The daemon used to forget the game when the first focus report arrived after its startup scan, so a game that exited soon after start left the game's profile active. Now only a change of backend resets the scan. |
 | D-1 | On KDE (KWin), add a game with a rule. Launch and switch between the game and the desktop. | The right profile is active in each. Alt+Tab from a game works. |
 | D-2 | Repeat on Sway, and on Hyprland. | Same as D-1. The README says the Hyprland and Sway support is untested in the sandbox; mark each result as tested or not. |
-| D-3 | Use the Flatpak build on KWin, with the window matched by class and title only. | Auto-switching works. Note any window that is matched wrongly. |
 | D-4 | Games launched through Steam, Heroic, and Lutris, plus a plain binary. | The library finds them, and the rule matches the window. |
 | D-5 | Two games with rules for the same window. | The import preview shows the conflict. The imported game takes over only when the user chooses it. |
 | D-6 | On labwc or Wayfire, restart the daemon with a game that has a rule in front, then switch between two windows (code review H-6). | The game's profile comes on without touching a window. The log shows no `no window has focus` between the two windows. |
@@ -130,18 +128,12 @@ These need a person with the controller in hand. Record the values used, so a ch
 | I-1 | Fresh install on a clean machine, following README "Install", both with and without `uaccess`. | The daemon runs with no root. The udev rule fallback works. |
 | I-2 | Upgrade from the previous single-file `config.toml`. | Not supported, by design: the format changed and old configs aren't converted. The old file is overwritten on the next save, so keep a copy before upgrading. |
 | I-3 | Downgrade attempt with a pack from a newer format. | The app refuses it and asks for an update. |
-| I-4 | Flatpak build from scratch, install, run, and use the daemon from the sandbox. | Matches the README's list of sandbox differences. |
 | I-5 | `systemctl --user restart padwight` mid-macro and mid-layer. Also kill the daemon with `SIGKILL`. | The daemon comes back, releases everything, and doesn't grab the pad twice. After `SIGKILL` the pad and virtual devices are free again (A-11). |
 | I-6 | Suspend and resume with a pad connected. | The pad comes back and works. |
 | I-7 | Log in and out. Check the service starts at login. | Works. |
 | I-8 | Read the daemon logs (`src/daemon/logs.rs`) after a full session. | No errors or panics. Messages are clear to a user. Partly done: `common::assert_log_clean` fails on a panic or an output error, and runs at the end of the daemon-exit, hotplug and idle tests (container). It doesn't check other error lines, and the user-facing wording still needs a read. |
 | I-9 | On a machine without `XDG_RUNTIME_DIR`, start the daemon and check the socket: `stat` on its directory shows `0700`, and on the socket `0600`. Run `padwight status` from another user's shell and check it is refused. | Only this user can reach the daemon (F2). |
-| I-10 | Install files are valid: systemd units, udev rule, desktop entry, metainfo, Flatpak manifest | Done in CI. `scripts/check-install.sh` runs `systemd-analyze verify`, `udevadm verify`, `desktop-file-validate`, `appstreamcli validate` and checks the manifest's required keys. A missing validator is an error. Checked that a broken `command` in the manifest fails. |
-| I-11 | On Windows at 125% or 150% scaling, look at the tray icon, then switch profiles 50 times (code review H-8). | The icon looks right. Task Manager's GDI objects for Padwight stay flat. |
-| I-12 | On Windows, start a recording, then end the daemon from Task Manager (code review H-9). | ffmpeg stops, and the file plays. If not, R5-12 needs a fix. |
-| I-13 | On Windows, force quit a launcher-started game, and take a screenshot in a game whose name has a colon (code review H-10). | Only the game and its helpers end. The screenshot is saved, in a folder with ` - ` for the colon. |
-| I-14 | On Windows, show an info overlay set in a font the game's pack carries (code review H-14). | The overlay draws in the pack's font. |
-| I-15 | On Windows, press Ctrl+C in the console running `padwight daemon`, and in one running `padwight debug --attach --live` while a button is held (code review H-15). | The daemon releases what it holds and exits; the debug session's controller goes from `padwight status` and its held key comes up. |
+| I-10 | Install files are valid: systemd units, udev rule, desktop entry, metainfo | Done in CI. `scripts/check-install.sh` runs `systemd-analyze verify`, `udevadm verify`, `desktop-file-validate`, `appstreamcli validate` and checks the manifest's required keys. A missing validator is an error. Checked that a broken `command` in the manifest fails. |
 
 ## 4. Security review (for a human)
 
@@ -152,7 +144,6 @@ Automated checks can't judge these. Each needs a reviewer to decide what's accep
 | H-SEC-1 | **IPC socket (F2).** Fixed for permissions. Should any request be refused by a non-owner even with the socket reachable? Which requests (`SetConfig`, `TestRumble`, …) are most sensitive? |
 | H-SEC-2 | **Pack import (F4).** The only host-program actions a pack can contain are Screenshot and ToggleRecording. Should the import preview list them, so a player sees a pack can take screenshots or record the screen? |
 | H-SEC-3 | **Virtual input.** The app creates a keyboard and mouse that any local program can use. Is that clear to users? |
-| H-SEC-4 | **Flatpak sandbox.** `--device=all` lets the sandbox read and send input on the whole machine. Is the README's warning enough? |
 | H-SEC-5 | **Config folder.** The daemon is the only writer while it runs. Saves build a staging folder and swap it in, so a failed save leaves the old setups. Are the files written atomically, and are their permissions `0600`? Every file is written `0600` through one helper (tested). No backup copies are made any more, so there is no second copy to protect. |
 | H-SEC-6 | **Dependencies.** Read the `cargo audit` warnings (four today, all in transitive crates) and the licenses of direct dependencies. |
 
@@ -162,7 +153,7 @@ Automated checks can't judge these. Each needs a reviewer to decide what's accep
 - Are the defaults right: Gamepad passthrough, the Desktop mouse mapping, the 60 ms combo window, and the turbo range?
 - Does the copy make sense to a new user? Read the GUI text as someone who hasn't seen the app.
 - Is the scope of the wiki right? It repeats the README in several places, and the two should be kept in step (A-4).
-- Which unsupported setups should be documented as unsupported (Sway and Hyprland, the Flatpak focus path, GNOME)?
+- Which unsupported setups should be documented as unsupported (Sway and Hyprland, GNOME)?
 
 ## 6. Remaining work, in order
 
@@ -241,12 +232,12 @@ falls back when the window closes. Set `DESKTOP_TEST_QMP` to the VM's QMP socket
 Overview first. Run it only against a throwaway VM: the daemon grabs gamepads and creates virtual
 input devices. Record the versions it prints with the result.
 
-Last run, 2026-10-09, kernel 7.2.9. Each row is the native build, with the Flatpak in the last column where it was run:
+Last run, 2026-10-09, kernel 7.2.9:
 
-| Desktop | Version | Checks | Flatpak |
-|---|---|---|---|
-| GNOME | 51.0 | all pass (overlay skipped) | all pass (overlay skipped) |
-| KDE Plasma | 6.7.5 | all pass | all pass |
-| Sway | 1.12 | all pass | focus falls back to processes; overlay and rules skipped |
-| Hyprland | 0.56.2 | all pass | all pass except the overlay, skipped (layer-shell hidden) |
-| labwc | 0.20.2 | all pass | focus falls back to processes; overlay and rules skipped |
+| Desktop | Version | Checks |
+|---|---|---|
+| GNOME | 51.0 | all pass (overlay skipped) |
+| KDE Plasma | 6.7.5 | all pass |
+| Sway | 1.12 | all pass |
+| Hyprland | 0.56.2 | all pass |
+| labwc | 0.20.2 | all pass |

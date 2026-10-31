@@ -45,12 +45,6 @@ pub(super) fn run() -> Vec<Check> {
         .collect()
 }
 
-/// Windows has no udev rules to check.
-#[cfg(windows)]
-pub(super) fn run() -> Vec<Check> {
-    Vec::new()
-}
-
 /// Made-up findings, for pictures of what a machine with problems shows.
 pub(super) fn demo() -> Vec<Check> {
     let check = |severity, title: &str, detail: &str, fix: Option<&str>| Check {

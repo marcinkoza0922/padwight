@@ -19,12 +19,6 @@ pub fn user_temp_dir(name: &str) -> std::path::PathBuf {
     std::env::temp_dir().join(format!("{name}-{}", unsafe { libc::getuid() }))
 }
 
-/// A window the daemon starts (the overlay, the settings) as it is: only Windows would give it a
-/// console window too.
-pub fn windowless(command: &mut Command) -> &mut Command {
-    command
-}
-
 /// Puts the daemon `command` starts in a session of its own, which keeps it alive when the
 /// terminal that started the window goes away.
 pub fn detach(command: &mut Command) {

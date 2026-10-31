@@ -16,7 +16,7 @@ mkdir -p "$stage/share"
 install -m755 target/release/padwight "$stage/padwight"
 install -m755 dist/install.sh "$stage/install.sh"
 install -m644 dist/padwight.service dist/70-padwight-motion.rules dist/70-padwight-uinput.rules dist/72-padwight-hidraw.rules dist/padwight-uinput.conf "$stage/share/"
-install -m644 flatpak/io.github.marcinkoza0922.Padwight.desktop flatpak/io.github.marcinkoza0922.Padwight.svg "$stage/share/"
+install -m644 dist/io.github.marcinkoza0922.Padwight.desktop dist/io.github.marcinkoza0922.Padwight.svg "$stage/share/"
 install -m644 LICENSE "$stage/LICENSE"
 cat > "$stage/README.txt" <<TEXT
 padwight $version

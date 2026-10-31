@@ -5,8 +5,7 @@
 //! On Linux the threads get a lower nice level (a bigger share of the CPU) and a short time slice
 //! (EEVDF, Linux 6.12 and later: one that wakes up takes the CPU sooner). That still leaves a
 //! busy machine's presses waiting up to a scheduler tick now and then, so with the App setting on
-//! (the default) they also run in the real-time class, which takes the CPU at once. On Windows
-//! the setting picks time-critical over highest thread priority.
+//! (the default) they also run in the real-time class, which takes the CPU at once.
 
 use std::{
     cell::Cell,
@@ -236,22 +235,6 @@ mod os {
             log!("rtkit: {e}");
         }
         result
-    }
-}
-
-#[cfg(windows)]
-mod os {
-    use windows::Win32::System::Threading::{GetCurrentThread, SetThreadPriority, THREAD_PRIORITY_HIGHEST, THREAD_PRIORITY_TIME_CRITICAL};
-
-    /// Any process may raise its own threads this far, within its priority class.
-    pub(super) fn raise(realtime: bool) -> Result<String, String> {
-        let (level, said) = if realtime { (THREAD_PRIORITY_TIME_CRITICAL, "time-critical priority") } else { (THREAD_PRIORITY_HIGHEST, "highest priority") };
-        // SAFETY: the pseudo handle of the current thread is always valid.
-        unsafe { SetThreadPriority(GetCurrentThread(), level) }.map(|()| said.into()).map_err(|e| e.to_string())
-    }
-
-    pub(super) fn take_overrun() -> bool {
-        false
     }
 }
 

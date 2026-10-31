@@ -81,7 +81,7 @@ Checked against the code (`config.rs`, `daemon.rs`, `daemon/*.rs`).
   `ignored_devices` are keyed by `dev.name`. Two identical pads therefore share a calibration and
   can't be ignored separately. Linux has `Managed.uniq` (`#[cfg(target_os = "linux")]`) and `parent`
   (HID parent path), used only to pair motion/touchpad nodes with their gamepad. There is no stable
-  id type yet, and `uniq` is absent on non-Linux builds (`xinput.rs`).
+  id type yet.
 - **Overlays are mostly per device already.** `Active::Menu { device }` and `Active::Settings(_, device)`
   record the pad that opened them; `guide_current_mode` finds the opener by
   `engine.guide_overlay_open()`. But `guide_view()` shows `self.config.active()` (one profile) and

@@ -2214,12 +2214,10 @@ impl Default for Config {
 }
 
 impl Config {
-    /// `config.toml` in the user's config folder: `~/.config/padwight/` on Linux, and
-    /// `%APPDATA%\padwight\` on Windows, where `XDG_CONFIG_HOME` can name another, as on Linux.
+    /// `config.toml` in the user's config folder, `~/.config/padwight/` unless `XDG_CONFIG_HOME`
+    /// names another.
     pub fn path() -> PathBuf {
-        let windows_override = if cfg!(windows) { std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from) } else { None };
-        windows_override
-            .or_else(dirs::config_dir)
+        dirs::config_dir()
             .unwrap_or_else(|| PathBuf::from("."))
             .join("padwight")
             .join("config.toml")

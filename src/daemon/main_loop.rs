@@ -51,24 +51,6 @@ impl Daemon {
         }
     }
 
-    /// Waits up to `timeout` for a message, and handles what came. False once no message can
-    /// come any more. (Linux waits on the controllers too: see `readers.rs`.)
-    #[cfg(windows)]
-    fn wait_and_handle(&mut self, rx: &Receiver<Msg>, timeout: Duration) -> bool {
-        match rx.recv_timeout(timeout) {
-            Ok(msg) => {
-                self.handle(msg);
-                while let Ok(msg) = rx.try_recv() {
-                    self.handle(msg);
-                }
-                self.sync_tray();
-                true
-            }
-            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => true,
-            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => false,
-        }
-    }
-
     fn next_deadline(&self) -> Option<Instant> {
         let overlay = match &self.active {
             Some(Active::Keyboard(k)) => k.next_deadline(),

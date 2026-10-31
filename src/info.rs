@@ -14,13 +14,6 @@ mod guide;
 mod opener;
 mod pad_model;
 mod timers;
-#[cfg(windows)]
-mod windows;
-
-#[cfg(windows)]
-use windows::{battery, cpu_times, gpu_busy, local_time, memory, wifi_strength};
-#[cfg(windows)]
-pub use windows::form_factor;
 
 pub use catalog::{Entry, Fold, folds};
 pub use guide::{DEFAULT_MODE, GuideView, is_guide_panel, notes_panel};

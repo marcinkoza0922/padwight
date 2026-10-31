@@ -45,7 +45,7 @@ pub use keyboard::{CLOSING_BAR, GAP, KEYBOARD_PADDING, UNIT, keyboard_body_width
 pub use menus::{UNDER_PROMPT, frame as menu_frame, menu_panel, menu_style};
 pub use panel::framed;
 pub use place::{EDGE_MARGIN, Margins, margins};
-#[cfg_attr(not(windows), expect(unused_imports, reason = "the Wayland window draws with Screen from step 5.x, snapshot and film from step 4.4"))]
+#[expect(unused_imports, reason = "the Wayland window draws with Screen from step 5.x, snapshot and film from step 4.4")]
 pub use screen::{Damage, Display, Patch, Screen, Shown, screen_ops, swap_red_blue};
 pub use screen::screen;
 pub use radial::radial;

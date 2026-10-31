@@ -7,7 +7,7 @@
 //! between frames so only what changed is repainted, and `Present` tells the extension to show
 //! it. Nothing is sent per frame: Clutter takes a whole texture whatever was damaged. The
 //! extension reads the picture only while `Present` runs, which we wait out before painting again.
-//! Without frame callbacks it animates on a 16 ms timer, as the Windows overlay does.
+//! Without frame callbacks it animates on a 16 ms timer.
 //!
 //! Run on GNOME Shell 51 in the test VM; over a fullscreen window, on two monitors and at a fractional scale.
 
