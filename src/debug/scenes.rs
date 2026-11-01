@@ -94,7 +94,7 @@ fn keyboard_view(board: Board) -> KeyboardView {
         Board::Basic | Board::Full => (OverlayStyle::keyboard(), keyboard::find(board, "KEY_H").unwrap_or_default(), vec!["KEY_LEFTSHIFT".into()]),
         Board::Numpad => (OverlayStyle::numpad(), board.home(), Vec::new()),
     };
-    KeyboardView { board, style, cursor, latched, pressed: None, closing: 0.0, caps: false, typed: String::new(), field: None }
+    KeyboardView { board, style, cursor, latched, pressed: None, closing: 0.0, caps: false, typed: String::new(), caret: 0, field: None }
 }
 
 /// A menu of this kind, open with the cursor on its second item: keys, a toggle, a submenu, a

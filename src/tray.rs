@@ -14,6 +14,7 @@ use crate::icon;
 pub enum Command {
     ToggleEnabled,
     OpenSettings,
+    InstallUpdate,
     CloseOverlays,
     Quit,
 }
@@ -23,6 +24,8 @@ pub enum Command {
 pub struct Shown {
     pub enabled: bool,
     pub profile: String,
+    /// A newer release: its version, and whether the tray may install it.
+    pub update: Option<(String, bool)>,
 }
 
 /// Sizes the host may pick from; hosts scale whichever they need.
@@ -110,7 +113,20 @@ impl Tray for Padwight {
     }
 
     fn menu(&self) -> Vec<MenuItem<Self>> {
-        vec![
+        let mut menu = Vec::new();
+        if let Some((version, installable)) = &self.shown.update {
+            menu.push(
+                StandardItem {
+                    label: if *installable { format!("Update to {version}") } else { format!("{version} is available (use your package manager)") },
+                    enabled: *installable,
+                    activate: Box::new(|tray: &mut Self| (tray.on_command)(Command::InstallUpdate)),
+                    ..Default::default()
+                }
+                .into(),
+            );
+            menu.push(MenuItem::Separator);
+        }
+        menu.extend([
             CheckmarkItem {
                 label: "Remapping".into(),
                 checked: self.shown.enabled,
@@ -137,7 +153,8 @@ impl Tray for Padwight {
                 ..Default::default()
             }
             .into(),
-        ]
+        ]);
+        menu
     }
 }
 

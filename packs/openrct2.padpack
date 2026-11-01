@@ -5,7 +5,7 @@ overlay_font = "Comfortaa"
 [pack]
 id = "231b759b-2fae-4bdc-95e3-a860b0de7529"
 name = "OpenRCT2"
-version = "1.2"
+version = "1.0"
 author = "Padwight"
 description = "OpenRCT2 on an Xbox-style pad, for the game's default keys. The left stick scrolls the view, the right stick moves the pointer, RT and A click, LT right-clicks (hold it to drag the view). Hold LB for the build tools and RB for the view options; Select lists the park screens. Y rotates what you're placing, B closes windows (hold: all), X cancels building, the d-pad zooms and rotates the view, Start pauses. L3 changes the game speed, double tap Start to save and hold it to load, and R3 switches to a Track building mode that lays coaster track from the pad."
 made_with = "Xbox controller"

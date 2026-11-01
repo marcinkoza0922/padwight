@@ -1,0 +1,40 @@
+name: Release
+
+# Pushing a tag like v0.1.0 builds the tarball and publishes it with get.sh, the one-line installer.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # The oldest runner image we have: the binary needs at least the glibc it was built against.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: System packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libxkbcommon-dev libwayland-dev libudev-dev libfontconfig1-dev libdbus-1-dev libasound2-dev binutils
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: The tag matches Cargo.toml
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "tag $GITHUB_REF_NAME but Cargo.toml says $version" >&2; exit 1; }
+
+      - name: Build the tarball
+        run: scripts/package.sh
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/*.tar.gz release/*.sha256 dist/get.sh \
+            --title "padwight ${GITHUB_REF_NAME#v}" --generate-notes

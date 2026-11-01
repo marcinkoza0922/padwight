@@ -136,6 +136,12 @@ impl App {
                 .spacing(2)
                 .into(),
                 column![
+                    toggler(self.config.check_updates).label("Check for updates").on_toggle(Message::SetCheckUpdates),
+                    note("Once a day, padwight asks GitHub whether a newer release exists and says so here and in the tray. It sends nothing else."),
+                ]
+                .spacing(2)
+                .into(),
+                column![
                     toggler(self.config.fast_tick).label("1000 Hz continuous output").on_toggle(Message::SetFastTick),
                     note(
                         "A stick or touchpad moving the mouse, scrolling, turbo and macros update every \
@@ -295,7 +301,7 @@ impl App {
     pub(super) fn view_access_banner(&self) -> Element<'_, Message> {
         let warnings = self.access_warnings();
         if warnings.is_empty() {
-            return space().height(0).into();
+            return self.view_update_banner();
         }
         let lines = warnings.into_iter().fold(column![].spacing(4), |lines, w| lines.push(text(w).size(14)));
         let fix = button(text("Fix…").size(14)).style(style::primary).on_press(Message::OpenSystemCheck);
@@ -304,6 +310,20 @@ impl App {
             .width(Length::Fill)
             .style(style::warning_banner)
             .into()
+    }
+
+    /// Says a newer release exists, with a button to install it when this copy can update itself.
+    fn view_update_banner(&self) -> Element<'_, Message> {
+        let Some(update) = self.status.as_ref().and_then(|s| s.update.as_ref()) else {
+            return space().height(0).into();
+        };
+        let (line, action) = if update.self_updating {
+            (format!("padwight {} is available.", update.version), Some(button(text("Update").size(14)).style(style::primary).on_press(Message::InstallUpdate)))
+        } else {
+            (format!("padwight {} is available: {}.", update.version, update.advice), None)
+        };
+        let row = row![text("⬆").size(22), text(line).size(14).width(Length::Fill)].spacing(12).align_y(Alignment::Center);
+        container(row.extend(action.map(Element::from))).padding([10, 20]).width(Length::Fill).style(style::warning_banner).into()
     }
 
     pub(super) fn view_auto_switch(&self) -> Element<'_, Message> {

@@ -628,6 +628,10 @@ enum Message {
     SetRealtimeInput(bool),
     /// Whether continuous output updates every millisecond rather than every four.
     SetFastTick(bool),
+    /// Whether the daemon checks GitHub for new releases.
+    SetCheckUpdates(bool),
+    /// Installs the newer release found, through the daemon.
+    InstallUpdate,
     SetPeekTrigger(crate::config::PeekTrigger),
     /// The font of all overlays (`None`: the system's), or the shown game's own.
     SetOverlayFont(Option<String>),
@@ -1230,6 +1234,7 @@ impl App {
                 self.unreadable = err;
             }
             Message::SetEnabled(on) => return call_ok(Request::SetEnabled(on)),
+            Message::InstallUpdate => return call_ok(Request::InstallUpdate),
             Message::SetProfileLock(on) => return Task::batch([call_ok(Request::SetProfileLock(on)), Task::done(Message::Poll)]),
             Message::ActivateProfile(at) => {
                 if self.saved.profile(&at).is_some() {

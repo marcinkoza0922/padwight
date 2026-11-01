@@ -5,9 +5,12 @@
 #   ./install.sh --no-system    skip the system files (udev rules, uinput module list)
 #   ./install.sh --no-service   don't enable the background service
 #   ./install.sh --yes          don't ask before using sudo
-#   ./install.sh --uninstall    remove everything this script installs
+#   ./install.sh --update       what `padwight update` runs: refresh the user files, leave the rest
+#   ./install.sh --uninstall    remove everything this script installs (also: `padwight-uninstall`)
+#   ./install.sh --purge        with --uninstall: also delete your settings, packs and the daemon log
 #
-# Your own files go in ~/.local and ~/.config/systemd/user. Only the udev rules and the module list
+# Your own files go in ~/.local and ~/.config/systemd/user (plus the desktop extension the daemon
+# installs on GNOME and Cinnamon, which the uninstall removes too). Only the udev rules and the module list
 # need root, and only for the file copies: /etc/udev/rules.d and /etc/modules-load.d.
 set -eu
 
@@ -18,14 +21,19 @@ config_dir=${XDG_CONFIG_HOME:-$HOME/.config}
 app_id=io.github.marcinkoza0922.Padwight
 rules="70-padwight-motion.rules 70-padwight-uinput.rules 72-padwight-hidraw.rules"
 
-system=1 service=1 yes=0 uninstall=0
+uuid=padwight-focus@io.github.marcinkoza0922
+system=1 service=1 yes=0 uninstall=0 purge=0 update=0
+# The copy kept in ~/.local/bin only ever uninstalls.
+case $(basename "$0") in padwight-uninstall*) uninstall=1 ;; esac
 for arg in "$@"; do
     case $arg in
         --no-system) system=0 ;;
         --no-service) service=0 ;;
         --yes|-y) yes=1 ;;
         --uninstall) uninstall=1 ;;
-        -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        --purge) purge=1 ;;
+        --update) update=1 system=0 ;;
+        -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "unknown option: $arg" >&2; exit 2 ;;
     esac
 done
@@ -59,7 +67,8 @@ install_user() {
     install -m755 "$here/padwight" "$bin_dir/padwight"
     install -m644 "$here/share/$app_id.svg" "$data_dir/icons/hicolor/scalable/apps/$app_id.svg"
     sed "s|^Exec=.*|Exec=$bin_dir/padwight|" "$here/share/$app_id.desktop" > "$data_dir/applications/$app_id.desktop"
-    echo "installed $bin_dir/padwight, its icon and its menu entry"
+    install -m755 "$here/install.sh" "$bin_dir/padwight-uninstall"
+    echo "installed $bin_dir/padwight, its icon and its menu entry (\`padwight-uninstall\` removes them again)"
     case ":$PATH:" in *":$bin_dir:"*) ;; *) echo "note: $bin_dir isn't in your PATH, so add it to run \`padwight\` from a terminal" ;; esac
 }
 
@@ -82,16 +91,44 @@ install_system() {
     echo "installed the udev rules and the module list"
 }
 
+# Takes our extension out of a gsettings list of enabled extensions, if it's in there.
+drop_enabled() {
+    command -v gsettings >/dev/null 2>&1 || return 0
+    current=$(gsettings get "$1" enabled-extensions 2>/dev/null) || return 0
+    case $current in *"$uuid"*) ;; *) return 0 ;; esac
+    updated=$(printf '%s' "$current" | sed -e "s/'$uuid', //" -e "s/, '$uuid'//" -e "s/'$uuid'//")
+    case $updated in "[]") updated="@as []" ;; esac
+    gsettings set "$1" enabled-extensions "$updated" 2>/dev/null || true
+}
+
+# The daemon installs a focus-tracking extension into GNOME Shell or Cinnamon on its own.
+uninstall_extensions() {
+    removed=0
+    for dir in "$data_dir/gnome-shell/extensions/$uuid" "$data_dir/cinnamon/extensions/$uuid"; do
+        if [ -d "$dir" ]; then rm -rf "$dir"; removed=1; fi
+    done
+    drop_enabled org.gnome.shell
+    drop_enabled org.cinnamon
+    if [ "$removed" -eq 1 ]; then echo "removed the desktop extension (a running desktop unloads it at the next log out)"; fi
+}
+
 uninstall() {
     systemctl --user disable --now padwight 2>/dev/null || true
-    rm -f "$bin_dir/padwight" "$config_dir/systemd/user/padwight.service" \
+    uninstall_extensions
+    rm -f "$bin_dir/padwight" "$bin_dir/padwight-uninstall" "$config_dir/systemd/user/padwight.service" \
         "$data_dir/applications/$app_id.desktop" "$data_dir/icons/hicolor/scalable/apps/$app_id.svg"
     systemctl --user daemon-reload 2>/dev/null || true
-    echo "removed the user files. Your settings in $config_dir/padwight are kept."
-    if [ "$system" -eq 1 ] && [ -e /etc/modules-load.d/padwight-uinput.conf -o -e /etc/udev/rules.d/70-padwight-uinput.rules ] && confirm_remove; then
+    if [ "$purge" -eq 1 ]; then
+        rm -rf "$config_dir/padwight" "${XDG_STATE_HOME:-$HOME/.local/state}/padwight" "$data_dir/padwight"
+        echo "removed the user files and your settings"
+    else
+        echo "removed the user files. Your settings in $config_dir/padwight are kept (--purge deletes them)."
+    fi
+    if [ "$system" -eq 1 ] && [ -e /etc/modules-load.d/padwight-uinput.conf -o -e /etc/udev/rules.d/70-padwight-uinput.rules -o -e /etc/udev/rules.d/70-padwight-motion.rules -o -e /etc/udev/rules.d/72-padwight-hidraw.rules ] && confirm_remove; then
         for rule in $rules; do as_root rm -f "/etc/udev/rules.d/$rule"; done
         as_root rm -f /etc/modules-load.d/padwight-uinput.conf
         as_root udevadm control --reload
+        as_root udevadm trigger
         echo "removed the udev rules and the module list"
     fi
 }
@@ -112,6 +149,14 @@ fi
 install_user
 if [ "$system" -eq 1 ]; then
     if confirm_system; then install_system; else echo "skipped the system files; \`padwight doctor\` prints the commands for them"; fi
+fi
+if [ "$update" -eq 1 ]; then
+    # `padwight update` restarts the service itself once it has cleaned up. Only refresh a unit that exists.
+    if [ -e "$config_dir/systemd/user/padwight.service" ]; then
+        sed "s|^ExecStart=.*|ExecStart=$bin_dir/padwight daemon|" "$here/share/padwight.service" > "$config_dir/systemd/user/padwight.service"
+        systemctl --user daemon-reload || true
+    fi
+    exit 0
 fi
 if [ "$service" -eq 1 ]; then
     install_service

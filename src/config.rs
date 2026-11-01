@@ -2061,6 +2061,9 @@ pub struct Config {
     /// so a game keeping every CPU busy doesn't delay presses.
     #[serde(default = "yes", skip_serializing_if = "is_true")]
     pub realtime_input: bool,
+    /// Look on GitHub once a day for a newer release and say so in the settings window and tray.
+    #[serde(default = "yes", skip_serializing_if = "is_true")]
+    pub check_updates: bool,
     /// Continuous output (a stick or touchpad moving the mouse, scrolling, turbo, macros) updates
     /// every millisecond instead of every four: smoother and about 3 ms quicker to start, for
     /// about 0.8% more of a core while it runs.
@@ -2196,6 +2199,7 @@ impl Default for Config {
             rumble_strength: 1.0,
             realtime_input: true,
             fast_tick: true,
+            check_updates: true,
             pick_rumble: false,
             peek_trigger: PeekTrigger::default(),
             numpad_style: OverlayStyle::numpad(),

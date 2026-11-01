@@ -291,3 +291,22 @@ fn closing_releases_everything_held() {
     assert!(out.contains(&OverlayAction::Key(KeyCode::KEY_LEFTCTRL, false)));
     assert_eq!(c.next_deadline(), None);
 }
+
+#[test]
+fn the_bumpers_and_the_arrow_keys_move_the_caret_in_the_typed_line() {
+    let t0 = Instant::now();
+    let mut c = OverlayController::for_field("Name", "abc");
+    assert_eq!(c.view(t0).caret, 3);
+    c.handle(InputEvent::Button(Button::LeftBumper, true), t0);
+    c.handle(InputEvent::Button(Button::LeftBumper, true), t0);
+    assert_eq!(c.view(t0).caret, 1);
+    // Typing and deleting happen at the caret.
+    c.handle(InputEvent::Button(Button::West, true), t0);
+    assert_eq!((c.typed(), c.view(t0).caret), ("bc", 0));
+    c.handle(InputEvent::Button(Button::RightBumper, true), t0);
+    c.handle(InputEvent::Button(Button::RightBumper, true), t0);
+    c.handle(InputEvent::Button(Button::RightBumper, true), t0);
+    assert_eq!(c.view(t0).caret, 2, "stops at the end");
+    c.handle(InputEvent::Button(Button::North, true), t0);
+    assert_eq!((c.typed(), c.view(t0).caret), ("bc ", 3));
+}

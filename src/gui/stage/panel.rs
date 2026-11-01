@@ -43,6 +43,7 @@ impl App {
                         closing: 0.0,
                         caps: false,
                         typed: String::new(),
+                caret: 0,
                         field: None,
                     };
                     draw::keyboard_panel(&view, font, self.glyphs(), fit, anim)

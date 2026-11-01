@@ -5,7 +5,7 @@ overlay_font = "Cinzel"
 [pack]
 id = "bc371170-5e82-4a40-a256-6f8c90652b75"
 name = "Wolcen: Lords of Mayhem"
-version = "1.1"
+version = "1.0"
 author = "Padwight"
 description = "Wolcen: Lords of Mayhem on an Xbox-style pad, for the game's mouse and keys. The left stick walks the hero the way it's pushed, clicking around them; the right stick is the pointer. A left-clicks, LT uses the right-click skill, X, Y, RB and RT are skills 1 to 4, B rolls and LB drinks a potion. The D-pad shows the map and zooms. Select lists the character, inventory, skills, the Gate of Fates and quests; Start is the menu. The game has no controller support. Overlays in black and Wolcen gold."
 made_with = "Xbox controller"

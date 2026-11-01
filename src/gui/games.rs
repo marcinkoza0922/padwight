@@ -157,6 +157,7 @@ impl App {
             Message::SetPickRumble(on) => self.config.pick_rumble = on,
             Message::SetRealtimeInput(on) => self.config.realtime_input = on,
             Message::SetFastTick(on) => self.config.fast_tick = on,
+            Message::SetCheckUpdates(on) => self.config.check_updates = on,
             Message::SetPeekTrigger(t) => self.config.peek_trigger = t,
             Message::SetOverlayFont(font) => {
                 self.config.overlay_font = font;

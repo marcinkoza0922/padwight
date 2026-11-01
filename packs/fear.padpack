@@ -5,7 +5,7 @@ overlay_font = "Rajdhani"
 [pack]
 id = "440bc3de-a490-4318-b4d5-b11e53597dfe"
 name = "F.E.A.R."
-version = "1.2"
+version = "1.0"
 author = "Padwight"
 description = "F.E.A.R. (2005) and its expansions on an Xbox-style pad, for the game's default keys. A uses, B jumps, RT fires, X reloads, Y throws a grenade, L3 toggles crouch, R3 is melee, and LT zooms. Hold LB for the weapon and grenade ring, aiming with the right stick, and double tap LB to holster. RB is slow-mo, D-pad left and right lean, and up and down are the flashlight and med kit. Start is the menu and backs out of every screen; double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
 made_with = "Xbox controller"

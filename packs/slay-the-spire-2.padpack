@@ -5,7 +5,7 @@ overlay_font = "Kreon"
 [pack]
 id = "5081b502-b8b1-503c-ad10-5b1596ee6f00"
 name = "Slay the Spire 2"
-version = "1.1"
+version = "1.0"
 author = "Padwight"
 description = "Slay the Spire 2 on an Xbox-style pad. The controller passes through untouched and the game's own settings set the buttons. Padwight adds the Guide overlay on top, with the media controls and the on-screen keyboard, in the same look as Slay the Spire."
 made_with = "Xbox controller"

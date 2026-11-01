@@ -5,7 +5,7 @@ overlay_font = "Comfortaa"
 [pack]
 id = "5da0f454-aeee-4621-a8d6-504ceec68400"
 name = "Timberborn"
-version = "1.2"
+version = "1.0"
 author = "Padwight"
 description = "Timberborn on an Xbox-style pad, for the game's default keys. The left stick moves the camera, the right stick the pointer; RT and A click, LT drops the tool. LB and RB step through the tools (hold: toolbar groups), X rotates (hold: the other way), R3 flips, L3 pauses, and Y steps through the speeds (hold it with the d-pad for one). The d-pad zooms and turns the camera (hold: layers and 90° turns). Select lists the settlement panels; Start is the menu."
 made_with = "Xbox controller"

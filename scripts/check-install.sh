@@ -32,6 +32,7 @@ for rules in dist/70-padwight-motion.rules dist/70-padwight-uinput.rules dist/72
 done
 
 sh -n dist/install.sh
+sh -n dist/get.sh
 sh -n scripts/package.sh
 echo "ok: install scripts"
 

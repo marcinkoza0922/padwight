@@ -18,6 +18,7 @@ impl Daemon {
         match req {
             Request::Version => Response::Version(VersionInfo::current()),
             Request::Status => Response::Status(self.status()),
+            Request::InstallUpdate => self.install_update(),
             Request::GetConfig => Response::Config(Box::new(self.config.clone())),
             Request::SetConfig(new) => {
                 // What couldn't be loaded isn't taken over IPC either.

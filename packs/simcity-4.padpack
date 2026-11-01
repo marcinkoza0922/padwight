@@ -5,7 +5,7 @@ overlay_font = "Inter"
 [pack]
 id = "561bc3f4-116e-45c8-9622-be5b4c824e06"
 name = "SimCity 4"
-version = "1.2"
+version = "1.0"
 author = "Padwight"
 description = "SimCity 4 Deluxe (GOG) on an Xbox-style pad. The right stick moves the pointer, the left stick scrolls the view, RT or A left-clicks, LT right-clicks. Hold LB for the zones and RB for transport and services. X demolishes, Y queries, B drops the tool. The d-pad zooms and rotates, L3 pauses, R3 centers. Select lists the modes and the speed; hold it for a Driving mode for U-Drive-It. Start is the options; double tap it to save quickly, hold it for a full save."
 made_with = "Xbox controller"

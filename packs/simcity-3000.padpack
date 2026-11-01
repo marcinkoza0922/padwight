@@ -5,7 +5,7 @@ overlay_font = "Cantarell"
 [pack]
 id = "a02787b8-2177-48cc-9111-86617957ac2b"
 name = "SimCity 3000 Unlimited"
-version = "1.2"
+version = "1.0"
 author = "Padwight"
 description = "SimCity 3000 Unlimited (GOG) on an Xbox-style pad. The right stick moves the pointer, the left stick scrolls the view, RT or A left-clicks, LT right-clicks. Hold LB for the zones and RB for roads, utilities and services. X bulldozes, B closes windows, hold Y and click to query. The d-pad zooms and rotates (hold left or right for the speed), L3 pauses, R3 centers. Select lists the budget, advisors and data windows. Start is the preferences; double tap it to save."
 made_with = "Xbox controller"

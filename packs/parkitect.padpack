@@ -5,7 +5,7 @@ overlay_font = "Inter"
 [pack]
 id = "eab999a4-c909-43e5-83d3-f1b292474d72"
 name = "Parkitect"
-version = "1.2"
+version = "1.0"
 author = "Padwight"
 description = "Parkitect on an Xbox-style pad, for the game's default keys. The left stick moves the camera, the right stick the pointer; RT and A click, LT deletes. RB steps through the game speeds (hold it with the d-pad for one). Hold LB for the build tools, Select for the view toggles. X rotates what you're placing (hold: pipette), hold Y to change height, hold L3 or R3 to snap. The d-pad zooms and turns the camera. Start is the menu; double tap it to quick save."
 made_with = "Xbox controller"

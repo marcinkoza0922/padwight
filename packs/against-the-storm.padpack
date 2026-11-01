@@ -5,7 +5,7 @@ overlay_font = "Cinzel"
 [pack]
 id = "af91e206-a8d2-4273-bbc2-e573240af2a0"
 name = "Against the Storm"
-version = "1.1"
+version = "1.0"
 author = "Padwight"
 description = "Against the Storm on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and the game's Gamepad options set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard for names and the media controls, in the game's colors."
 made_with = "Xbox controller"

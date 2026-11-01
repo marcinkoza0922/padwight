@@ -5,7 +5,7 @@ overlay_font = "Source Code Pro"
 [pack]
 id = "a3e96f08-81c7-4d2b-b5f3-6c0d47e9128a"
 name = "Max Payne 2"
-version = "1.4"
+version = "1.0"
 author = "Padwight"
 description = "Max Payne 2: The Fall of Max Payne (2003) on an Xbox-style pad, for the game's default keys. RT shoots, LT is bullet time and RB shootdodges (with a direction). A uses, B jumps, X reloads and Y takes a painkiller. LB opens a radial menu of weapon groups (aim with the right stick), R3 is the secondary attack, up on the d-pad the sniper zoom, L3 toggles crouch. Start is the menu: double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
 made_with = "Xbox controller"

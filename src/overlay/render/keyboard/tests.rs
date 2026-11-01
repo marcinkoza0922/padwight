@@ -123,3 +123,24 @@ fn every_keyboard_and_numpad_scene() {
     let node = keyboard_panel(&v, &style_of(&v), &Fit::contents());
     sample::save("keyboard-busy", &sample::draw(&node, 2000.0, 1.0));
 }
+
+#[test]
+fn the_caret_blinks_and_takes_no_room() {
+    let mut v = view("keyboard");
+    v.typed = "hello".into();
+    v.caret = 5;
+    let rects = |clock: f32| {
+        let mut style = style_of(&v);
+        style.anim.clock = clock;
+        let (size, ops) = keyboard_panel(&v, &style, &Fit::contents()).ops(render::Point::ZERO, 2000.0);
+        (size, ops.iter().filter(|op| matches!(op, Op::Rect { rect, .. } if rect.w < 3.0 && rect.h > 15.0 && rect.h < 40.0)).count())
+    };
+    let (on_size, on) = rects(0.2);
+    let (off_size, off) = rects(0.7);
+    assert_eq!(on, off + 1, "the bar is there in the first half of a second only");
+    assert_eq!(on_size, off_size);
+    let mut bare = v.clone();
+    bare.typed = "hello".into();
+    bare.caret = 0;
+    assert_eq!(keyboard_panel(&bare, &style_of(&bare), &Fit::contents()).ops(render::Point::ZERO, 2000.0).0, on_size);
+}
