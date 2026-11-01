@@ -30,11 +30,11 @@ A bug is worth more testing the more it costs the player. Every feature area in
 
 ## 2. Test layers
 
-What exists today, from fastest to slowest. Counts are as of 2026-10-31.
+What exists today, from fastest to slowest. Counts are as of 2026-11-01.
 
 | # | Layer | What it proves | Where it runs | How |
 |---|---|---|---|---|
-| L1 | Unit tests (1,465 `#[test]`) | Logic of single modules: engine, config, packs, menus, renderer | CI | `cargo nextest run --profile agent …` |
+| L1 | Unit tests (1,473 `#[test]`) | Logic of single modules: engine, config, packs, menus, renderer | CI | `cargo nextest run --profile agent …` |
 | L2 | Sweeps over many inputs | No stuck output after random input; damaged packs and configs are refused without a panic; ring sectors leave no gaps; every library pack round-trips | CI | `engine::release_tests`, `library::tests::damaged_packs_…`, `config::tests::damaged_configs_…` |
 | L3 | Off-screen pictures | What the overlay, the settings window and the controller drawings look like, with no display | Locally, by hand | `debug overlay`, `debug overlay compare`, `debug motion`, `debug gui` |
 | L4 | Debug sessions | Mappings end to end through a real daemon, with a virtual controller and recorded output | CI (session tests); `--ignored` daemon tests need `/dev/uinput` | `tests/debug_session/`, `padwight debug --attach` |
@@ -71,7 +71,7 @@ covered mostly by integration tests (the daemon) score low here for that reason.
 | Automatic switching and focus (`focus/`, `daemon/auto_switch.rs`) | T1 | 20 | Process scan (L5), GNOME against a mock shell, desktop VMs (L7); Cinnamon and niri parsing units | Sway, Hyprland, niri, COSMIC, Cinnamon and wlroots have no CI test (`cosmic.rs` has no unit test either); Flatpak Heroic; Proton `.exe` names in real launches | T-7, FOC-1 to FOC-10 |
 | Menus: radial, directional, list, button, carousel, grid (`menu/`, `radial.rs`) | T2 | 27 | Units; off-screen scenes | Assertions on what the live overlay shows (today only pictures) | T-4 |
 | Guide overlay and movable shortcuts (`guide_menu.rs`, `config/shortcuts/`) | T2 | — | Units; scenes | The opener on a gesture or combo with real timing | T-1, OVL-6 |
-| On-screen keyboard, numpad, Paste | T2 | keyboard 13 | Units; scenes | Over a fullscreen game on each compositor | OVL-1, OVL-2 |
+| On-screen keyboard, numpad, Paste | T2 | keyboard 13 | Units, including the typed line's caret (moving, editing at it, blinking); scenes | Over a fullscreen game on each compositor; the caret with a real pad, and LB/RB sending arrows to a game with a text field | OVL-1, OVL-2 |
 | Tools: calculator, doodle, clipboard (`tools/`, `clipboard.rs`) | T2 | 27 | Units; scenes | Never run on hardware; `wl-copy` on each desktop, and Paste into an Xwayland game | OVL-9 |
 | Info and log overlays, tokens (`info/`, `inputlog/`) | T4 | 15, 17 | Units; scenes; library token check | Live values on real hardware (battery, wifi, GPU) | OVL-7 |
 | Overlay process and renderer (`overlay/render`, `overlay/wayland`) | T2 | overlay 14 | Units; compare with iced; harness pacing, surface, scale, CPU | Never on a real screen (renderer plan step 8.3); ABGR8888 buffers; integer buffer scale; following the focused window's monitor (`wayland/monitors.rs`) has no test | T-8, OVL-3 to OVL-5, OVL-12 |
@@ -86,7 +86,8 @@ covered mostly by integration tests (the daemon) score low here for that reason.
 | CLI, doctor, tray (`main.rs`, `doctor/`, `tray/`) | T3 | 17, 8 | Docs name real commands (`check-project.py`); doctor units | Doctor against real broken setups; tray Quit in a session | INS-8, INS-10 |
 | Screenshots, recording, media (`capture/`, `record/`, `media/`) | T2 | 17, 15, 11 | Units; `--debug` daemon writes to a temp folder | Each desktop's tool; a stuck MPRIS player | INS-11 |
 | Input priority and latency (`priority.rs`, `daemon/input_timing.rs`) | T1 | 6 | Profiling suite | No regression gate | T-12 |
-| Install, systemd, udev, the desktop extensions, tarball | T0 | — | `check-install.sh` validates the files in CI | A clean install on each distro family; uninstall | INS-1 to INS-7 |
+| Install, systemd, udev, the desktop extensions, tarball (`dist/install.sh`, `dist/get.sh`, `release.yml`) | T0 | — | `check-install.sh` validates the files and syntax-checks both scripts in CI; the release workflow refuses a tag that doesn't match `Cargo.toml` | A clean install on each distro family; the one-line installer through a pipe, with and without a terminal; `padwight-uninstall` and `--purge`, including the GNOME/Cinnamon extension's removal; the release workflow has never run | INS-1 to INS-7, INS-13 |
+| Self-update (`update.rs`, `daemon/updates.rs`, `doctor --files`) | T0 | update 13 | Units: version from the redirect, version order, which copies may update themselves; `doctor --files` stale-file units | Never run against a real release; a checksum mismatch, a cut download or a failed `install.sh --update` leaving the old binary working; the daemon restarting itself mid-update; the daily check (`daemon/updates.rs` has no test) and turning it off | INS-12 |
 | Kernel drivers and other owners of the pad (`input/linux.rs`, `pad_identity.rs`, `doctor/`) | T0 | input 12 | Driver name checks for `xpad`'s label order; uhid pads in the container | Out-of-tree `xone` and `xpadneo`, `joycond`, `hid-steam`, the oldest supported kernel; InputPlumber, Handheld Daemon and other remappers grabbing or hiding the pad | ENV-1, ENV-2 |
 | Seats and sessions (`daemon/`, udev rules) | T0 | — | Nothing | A second user's session, or a switch to a text console, while the daemon holds the pad: grabbed evdev and uinput file descriptors survive the loss of `uaccess` | ENV-9 |
 | Keyboard layouts (`keyboard/xkb.rs`, `output/`) | T1 | — | Units for XKB labels | Mapped keys, typed text and macros under AZERTY, QWERTZ, Dvorak and a non-Latin layout; per-desktop layout detection | ENV-5 |
@@ -119,7 +120,8 @@ The author runs these by hand until they are in CI. The pull request description
 | `gui/` | `debug gui` shots of the tabs touched, light and `--dark`, looked at; `gui_` in the container |
 | `config/`, `pack.rs` | `config::`, `pack::`, `library::` tests |
 | `packs/` | `library::` tests, `debug overlay packs/<name>.padpack`, and [section 6](#6-pack-qa)'s checks for the pack |
-| `dist/`, `scripts/package.sh` | `check-install.sh`, and INS-1 or INS-4 on a VM |
+| `dist/`, `scripts/package.sh`, `.github/workflows/release.yml` | `check-install.sh`, and INS-1 or INS-4 on a VM; INS-13 for `get.sh` |
+| `update.rs`, `daemon/updates.rs`, `install.sh --update`, `doctor --files` | `update::` and `doctor::` tests; INS-12 on a VM against a pre-release tag on a fork |
 
 ### Weekly, and after a large merge
 
@@ -139,7 +141,8 @@ Everything weekly, plus:
    `ENV-` checks may be spread across releases, but each must have passed within the last three.
 2. The pack playtest tier for this release ([section 6](#6-pack-qa)).
 3. Install from the release tarball on a clean VM of the oldest supported distro (INS-1), and on
-   an immutable distro (INS-4).
+   an immutable distro (INS-4). Once the release is published: the one-line installer (INS-13), and
+   `padwight update` from the previous release (INS-12).
 4. The security review ([section 7](#7-security-review)) with a second reviewer.
 5. No open T0 or T1 bug. Open T2 to T4 bugs are listed in the release notes.
 
@@ -213,7 +216,7 @@ windowed game and a fullscreen one.
 
 | # | Steps | Expected |
 |---|---|---|
-| OVL-1 | Open the on-screen keyboard over a fullscreen game; type into a text field; use Paste. | Keys reach the game; the overlay never takes focus; Paste sends Ctrl+V. |
+| OVL-1 | Open the on-screen keyboard over a fullscreen game; type into a text field; move the caret with LB/RB and the arrow keys, then type, Backspace and Delete in the middle of the line; use Paste. | Keys reach the game; the overlay never takes focus; the caret blinks, moves and edits where it is, and the game's own cursor moves with it; Paste sends Ctrl+V. |
 | OVL-2 | Open the numpad while the keyboard is up. | One closes the other. |
 | OVL-3 | Open and close each menu style (radial, directional, list, button menu, carousel, grid) many times quickly; hold one open for a minute. | No flicker, no stale frame, fades finish. CPU drops to near zero once it stops moving. |
 | OVL-4 | Two monitors with different scales; a menu set to each corner of the 3×3 grid. | Each draws sharp, in the right place, on the monitor with the game. |
@@ -278,17 +281,19 @@ Need a person with the controller in hand. Record the values used, so a later ru
 
 | # | Steps | Expected |
 |---|---|---|
-| INS-1 | Install from the release tarball on a clean VM of the oldest supported distro, and on Fedora, Ubuntu LTS and Arch; with and without `uaccess`. Then `./install.sh --uninstall`. | Runs without root; the udev fallback works; uninstall leaves no files, units or rules. |
+| INS-1 | Install from the release tarball on a clean VM of the oldest supported distro, and on Fedora, Ubuntu LTS and Arch; with and without `uaccess`. Then `padwight-uninstall`; on a second install, on GNOME or Cinnamon after the daemon has put its extension in, `padwight-uninstall --purge`. | Runs without root; the udev fallback works; uninstall leaves no files, units, rules or extension, and drops the extension from the enabled list; settings stay, unless `--purge`, which also removes `~/.config/padwight` and the daemon log. |
 | INS-2 | `cargo install` from source, following the README. | Same as INS-1. |
 | INS-3 | A pack from a newer format. | Refused, asking for an update. |
 | INS-4 | Install on an immutable distro (Silverblue or Bazzite), following README "Immutable and atomic distros". | Works without layering packages; only the rules and `padwight-uinput.conf` land in `/etc`. |
 | INS-5 | Log out and in; reboot. | The service starts at login. |
 | INS-6 | Without `XDG_RUNTIME_DIR`: the socket directory is `0700`, the socket `0600`; `padwight status` from another user is refused. | Only this user reaches the daemon. (Automated: `socket_fallback`.) |
 | INS-7 | `scripts/check-install.sh`. | Passes (in CI). |
-| INS-8 | `padwight doctor` on a machine missing each piece in turn: no uinput access, no udev rules, no motion rule, no `wl-copy`, an X11 session, no daemon. | Each missing piece is named with the command that fixes it. |
+| INS-8 | `padwight doctor` on a machine missing each piece in turn: no uinput access, no udev rules, no motion rule, no `wl-copy`, an X11 session, no daemon. Then edit each installed rule and the module list by hand and run `padwight doctor --files`. | Each missing piece is named with the command that fixes it. `--files` lists only the changed system files, with their fix, and prints nothing when all are current. |
 | INS-9 | Read the daemon log after a full session of play. | No errors, no panics, messages clear to a player. |
 | INS-10 | Outside systemd: the tray icon's Remapping switch, Open settings, Close overlays, Quit. | Each works; Quit releases everything. |
 | INS-11 | Screenshot and recording on each desktop, in a game whose name has a colon. | The file is saved and plays; the folder name replaces the colon. |
+| INS-12 | **Update.** Install the previous release, then: `padwight update --check`; wait for the daily check (two minutes after start) and look at the settings window's banner and the tray entry; Update from the tray, then from the settings window on a second VM, then `padwight update` in a terminal, with a pad held and a layer active. Repeat with a release that changes a udev rule. Also: Settings → Input → Check for updates off; a copy in `/usr/bin` and a source build; the checksum file edited to not match; the network cut mid-download. | The banner and tray name the new version; the update replaces only `~/.local/bin/padwight` and the user files, never asks for `sudo`, and restarts the service, which comes back managing the pad with nothing held. A changed rule is listed with its command at the end, and by `doctor` until installed. With the check off: no banner, no request to GitHub. A package or source copy is refused with advice and the tray entry is greyed out. A bad checksum or a cut download leaves the old version installed and running. |
+| INS-13 | **One-line installer.** `curl -fsSL …/get.sh \| sh` in a terminal; the same with no terminal (over `ssh -T`, or from a script); with `sh -s -- --no-system` and `--yes`; `PADWIGHT_VERSION` set to an older release; with only `wget`; on aarch64. | In a terminal it asks before the system files; with no terminal it skips them and says how to add them; the version asked for is installed; a missing tool or architecture stops with a clear message before anything is installed. |
 
 ### 5.10 Linux environment
 
@@ -357,6 +362,7 @@ For a reviewer before each release. Automated checks can't settle these.
 | SEC-7 | **Force Quit.** Can a window's reported pid, or a process name, make it end something outside the game's tree (the desktop, a launcher, another user's process)? |
 | SEC-8 | **Helper programs.** Clipboard (`wl-copy`), screenshot and recording tools are run with arguments, never through a shell. Check no text the player types reaches a command line. |
 | SEC-9 | **The dashboard example.** It binds to `127.0.0.1` and checks the `Host` header. Re-check when it changes. |
+| SEC-10 | **Updates and the one-line installer.** `get.sh` and `padwight update` trust whatever the GitHub release holds: the SHA-256 comes from the same release, so it catches a broken download, not a replaced one. Is that enough, or should releases be signed (minisign, or GitHub's artifact attestations)? The control socket's new `InstallUpdate` lets any program running as the user start an update: harmless while it can only install the latest official release? Check the scratch directory (`~/.cache/padwight/update-<pid>`) can't be raced by another user, and that `get.sh` runs nothing if the download is cut short. |
 
 ## 8. Desktop session runs
 
