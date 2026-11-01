@@ -5,7 +5,7 @@ overlay_font = "VT323"
 [pack]
 id = "a5f15405-94d6-4dee-b789-3d2dd4e99ed3"
 name = "System Shock 2"
-version = "1.2"
+version = "1.0"
 author = "Padwight"
 description = "System Shock 2 (GOG, NewDark) on an Xbox-style pad, for the keys GOG ships. A uses, B jumps, RT fires, X reloads (hold: cycle ammo), Y switches to use mode for the inventory and MFDs (hold: med patch), L3 toggles crouch, R3 switches the weapon setting. Hold LB for the quick slots and patches, RB for weapons and the psi amp. D-pad left and right lean, up and down cycle weapons. Select lists the map, logs and messages. Start is the menu; double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
 made_with = "Xbox controller"

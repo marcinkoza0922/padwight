@@ -5,7 +5,7 @@ overlay_font = "Rajdhani"
 [pack]
 id = "61b6cfbf-9932-4091-89e9-6cf0f6fa5a6e"
 name = "StarCraft"
-version = "1.4"
+version = "1.0"
 author = "Padwight"
 description = "StarCraft: Remastered (Battle.net) on an Xbox-style pad, for the default hotkeys. The right stick moves the cursor, RT left-clicks, LT right-clicks, the left stick scrolls the map. Face buttons are Attack / Cancel / Stop / Hold, the d-pad is Move / Patrol / Basic and Advanced structures, RB is Shift (queue). Hold LB for control groups 1-8 (also hold RB in there to assign the group instead), R3 opens a radial menu of worker and unit commands. Start is the game menu, Select jumps to the last alert, Guide + X opens the on-screen keyboard (profile names, chat); hold Guide to see every control and the system shortcuts. Holding Select switches to the Menus mode and back (face buttons click and confirm, the d-pad presses the arrows, the left stick scrolls). The \"Gameplay + Gyro\" profile also moves the cursor by tilting the controller, as a fine pointer next to the right stick. Unit-specific keys (siege, cloak, burrow...) aren't mapped; add them to the radial menu if you want them."
 made_with = "Xbox controller"

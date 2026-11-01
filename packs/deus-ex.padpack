@@ -5,7 +5,7 @@ overlay_font = "Rajdhani"
 [pack]
 id = "744efa38-f5b0-4a49-bc95-126809ef6fc2"
 name = "Deus Ex"
-version = "1.2"
+version = "1.0"
 author = "Padwight"
 description = "The original Deus Ex (2000) on an Xbox-style pad, for the game's default keys. A uses, B jumps, RT fires, X reloads (hold: change ammo), L3 toggles crouch, R3 toggles the scope (hold: laser sight). Hold LB for the belt and RB for augmentations, aiming with the right stick; double tap LB to holster. D-pad left and right lean, up and down cycle the belt. Select opens a list of the inventory and goals. Start is the menu and backs out of every screen; double tap it to quick save, hold it to quick load. Gyro and flick stick profiles are included to try."
 made_with = "Xbox controller"
