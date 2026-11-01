@@ -19,6 +19,15 @@ cd padwight-*-linux-x86_64
 ```
 
 The script installs padwight for your user (`~/.local/bin`, the menu entry and icon, and a background service that starts at login). Then it explains three small system files and asks before copying them with `sudo`: two udev rules and a list that loads the `uinput` kernel module. 
+## Update
+
+```sh
+padwight update --check    # is there a newer release on GitHub?
+padwight update            # download it, check its SHA-256, replace the installed copy, restart the service
+```
+
+Once a day the background service asks GitHub whether a newer release exists (Settings → Input → Check for updates turns this off). If there is one, the settings window and the tray menu say so, with an Update button. Only a copy the release installer put in `~/.local/bin` is replaced. A copy from a package manager (anything under `/usr` or `/opt`) or a source build is never touched: the notice then tells you to update it the way you installed it. Updates leave the system files in `/etc` alone; rerun the full installer if a release says its udev rules changed.
+
 ## Uninstall
 
 ```sh

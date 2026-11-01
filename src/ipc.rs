@@ -30,6 +30,8 @@ pub enum Request {
     /// Which protocol version the daemon speaks, and which build it is.
     Version,
     Status,
+    /// Runs `padwight update` in the background (the daemon restarts at its end).
+    InstallUpdate,
     GetConfig,
     /// Replace profiles/ignore list. The daemon keeps its current `enabled` and active profile.
     SetConfig(Box<Config>),
@@ -183,6 +185,18 @@ pub struct Status {
     /// Profile switches, newest first, each with the reason the daemon made it.
     #[serde(default)]
     pub switches: Vec<SwitchEvent>,
+    /// A newer release than this one, found by the daily check.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub update: Option<UpdateInfo>,
+}
+
+/// A release newer than the running one.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UpdateInfo {
+    pub version: String,
+    /// Whether `padwight update` may replace this copy; if not, `advice` says where to get it.
+    pub self_updating: bool,
+    pub advice: String,
 }
 
 /// The Overview's two feeds for one controller.

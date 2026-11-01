@@ -5,6 +5,7 @@
 #   ./install.sh --no-system    skip the system files (udev rules, uinput module list)
 #   ./install.sh --no-service   don't enable the background service
 #   ./install.sh --yes          don't ask before using sudo
+#   ./install.sh --update       what `padwight update` runs: refresh the user files, leave the rest
 #   ./install.sh --uninstall    remove everything this script installs (also: `padwight-uninstall`)
 #   ./install.sh --purge        with --uninstall: also delete your settings, packs and the daemon log
 #
@@ -21,7 +22,7 @@ app_id=io.github.marcinkoza0922.Padwight
 rules="70-padwight-motion.rules 70-padwight-uinput.rules 72-padwight-hidraw.rules"
 
 uuid=padwight-focus@io.github.marcinkoza0922
-system=1 service=1 yes=0 uninstall=0 purge=0
+system=1 service=1 yes=0 uninstall=0 purge=0 update=0
 # The copy kept in ~/.local/bin only ever uninstalls.
 case $(basename "$0") in padwight-uninstall*) uninstall=1 ;; esac
 for arg in "$@"; do
@@ -31,7 +32,8 @@ for arg in "$@"; do
         --yes|-y) yes=1 ;;
         --uninstall) uninstall=1 ;;
         --purge) purge=1 ;;
-        -h|--help) sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        --update) update=1 system=0 ;;
+        -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "unknown option: $arg" >&2; exit 2 ;;
     esac
 done
@@ -147,6 +149,14 @@ fi
 install_user
 if [ "$system" -eq 1 ]; then
     if confirm_system; then install_system; else echo "skipped the system files; \`padwight doctor\` prints the commands for them"; fi
+fi
+if [ "$update" -eq 1 ]; then
+    # `padwight update` restarts the service itself once it has cleaned up. Only refresh a unit that exists.
+    if [ -e "$config_dir/systemd/user/padwight.service" ]; then
+        sed "s|^ExecStart=.*|ExecStart=$bin_dir/padwight daemon|" "$here/share/padwight.service" > "$config_dir/systemd/user/padwight.service"
+        systemctl --user daemon-reload || true
+    fi
+    exit 0
 fi
 if [ "$service" -eq 1 ]; then
     install_service
