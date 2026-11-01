@@ -5,7 +5,7 @@ overlay_font = "Silkscreen"
 [pack]
 id = "83de13c0-9832-4676-b3ef-438915c1feda"
 name = "RollerCoaster Tycoon 2"
-version = "1.2"
+version = "1.0"
 author = "Padwight"
 description = "RollerCoaster Tycoon 2 on an Xbox-style pad, for the game's default keys. The left stick scrolls the view, the right stick moves the pointer, RT and A click, LT right-clicks (hold it to drag the view). Hold LB for the build tools and RB for the view options; Select lists the park screens. Y rotates what you're placing, B closes windows (hold: all), X cancels building, the d-pad zooms and rotates the view, Start pauses."
 made_with = "Xbox controller"

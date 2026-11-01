@@ -5,7 +5,7 @@ overlay_font = "Cinzel"
 [pack]
 id = "b54da73c-2a3c-4f10-bc31-79c2f11db6cd"
 name = "Baldur's Gate 3"
-version = "1.1"
+version = "1.0"
 author = "Padwight"
 description = "Baldur's Gate 3 on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and the game's Controller options set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard for naming a character and the media controls, in the game's colors."
 made_with = "Xbox controller"

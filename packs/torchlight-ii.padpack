@@ -5,7 +5,7 @@ overlay_font = "Kreon"
 [pack]
 id = "aef6f26f-6be8-4efb-9203-a3fd039fefc6"
 name = "Torchlight II"
-version = "1.1"
+version = "1.0"
 author = "Padwight"
 description = "Torchlight II on an Xbox-style pad, for the PC game's mouse and keys with the skills on the face buttons, as the console versions have them. The left stick walks the hero the way it's pushed, clicking around them; the right stick is the pointer. A left-clicks and LT casts the right-click skill. X, Y and B are skills 1 to 3; hold RT for 4 to 0. LB and RB drink health and mana potions. The D-pad shows the map, swaps weapons and zooms. Select lists the character, inventory, skills, pet and quests; Start is the menu. Overlays in leather brown with a torch-orange pick."
 made_with = "Xbox controller"

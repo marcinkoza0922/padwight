@@ -5,7 +5,7 @@ overlay_font = "Cinzel"
 [pack]
 id = "aa46287e-2997-4ffd-9ff8-2f78e8b91dd4"
 name = "Civilization V"
-version = "1.3"
+version = "1.0"
 author = "Padwight"
 description = "Civilization V (Steam, Linux or Windows build) on an Xbox-style pad. The right stick moves the pointer, the left stick pans the map, RT or A left-clicks, LT right-clicks to move units. X skips a unit, Y fortifies, RB goes to the next unit or ends the turn. Hold LB for unit orders. The d-pad zooms and cycles units (hold: cities). Select lists the advisors and screens. Start is the game menu; double tap it to quick save, hold it to quick load."
 made_with = "Xbox controller"
