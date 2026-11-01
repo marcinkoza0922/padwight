@@ -60,7 +60,9 @@ cd padwight-*-linux-x86_64
 ./install.sh
 ```
 
-It installs padwight for your user, starts the background service at login, and, after asking, copies three small system files with `sudo` (see Permissions below). `./install.sh --uninstall` removes it. `scripts/package.sh` builds the tarball; build it on the oldest distro you want to support, as the binary needs at least the glibc it was built against.
+Or in one line: `curl -fsSL https://github.com/marcinkoza0922/padwight/releases/latest/download/get.sh | sh` (it checks the tarball's checksum and runs the same installer).
+
+It installs padwight for your user, starts the background service at login, and, after asking, copies three small system files with `sudo` (see Permissions below). `padwight-uninstall` (or `./install.sh --uninstall`) removes it, and `--purge` also deletes your settings. `scripts/package.sh` builds the tarball; build it on the oldest distro you want to support, as the binary needs at least the glibc it was built against.
 
 From source:
 
