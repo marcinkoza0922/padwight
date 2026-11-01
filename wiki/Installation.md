@@ -26,7 +26,7 @@ padwight update --check    # is there a newer release on GitHub?
 padwight update            # download it, check its SHA-256, replace the installed copy, restart the service
 ```
 
-Once a day the background service asks GitHub whether a newer release exists (Settings → Input → Check for updates turns this off). If there is one, the settings window and the tray menu say so, with an Update button. Only a copy the release installer put in `~/.local/bin` is replaced. A copy from a package manager (anything under `/usr` or `/opt`) or a source build is never touched: the notice then tells you to update it the way you installed it. Updates leave the system files in `/etc` alone; rerun the full installer if a release says its udev rules changed.
+Once a day the background service asks GitHub whether a newer release exists (Settings → Input → Check for updates turns this off). If there is one, the settings window and the tray menu say so, with an Update button. Only a copy the release installer put in `~/.local/bin` is replaced. A copy from a package manager (anything under `/usr` or `/opt`) or a source build is never touched: the notice then tells you to update it the way you installed it. Updates never use `sudo`, so they leave the system files in `/etc` alone. When a release changes one, `padwight update` ends by listing the changed files with the commands that install them, and `padwight doctor` and the settings window's system check say the same until you run them.
 
 ## Uninstall
 

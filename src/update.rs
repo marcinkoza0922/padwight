@@ -133,6 +133,7 @@ pub fn run(args: &[&str]) -> Result<()> {
     }
     install(&latest)?;
     println!("updated to {latest}");
+    report_stale_system_files();
     restart_service();
     Ok(())
 }
@@ -164,6 +165,13 @@ fn run_tool(cmd: &mut Command, what: &str) -> Result<()> {
         bail!("{what} failed ({status})");
     }
     Ok(())
+}
+
+/// Asks the new binary which of the system files in /etc differ from what it ships, and prints
+/// them with the commands to fix. An update never uses sudo itself, so this is the user's cue.
+fn report_stale_system_files() {
+    // Best effort: a failure here must not make a finished update look failed.
+    let _ = Command::new(installed_path()).args(["doctor", "--files"]).status();
 }
 
 /// Restarts the background service onto the new binary, if systemd runs it. This is last: when the
