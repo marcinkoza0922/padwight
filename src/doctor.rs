@@ -81,15 +81,23 @@ pub struct Finding {
     pub detail: String,
     /// Shell commands that fix it.
     pub fix: Option<String>,
+    /// A system file is installed but differs from the one this version ships. An update leaves
+    /// those alone, so `padwight update` ends by listing them.
+    pub stale: bool,
 }
 
 impl Finding {
     fn new(level: Level, title: impl Into<String>, detail: impl Into<String>) -> Self {
-        Finding { level, title: title.into(), detail: detail.into(), fix: None }
+        Finding { level, title: title.into(), detail: detail.into(), fix: None, stale: false }
     }
 
     fn fix(mut self, commands: String) -> Self {
         self.fix = Some(commands);
+        self
+    }
+
+    fn stale(mut self) -> Self {
+        self.stale = true;
         self
     }
 }
@@ -157,8 +165,38 @@ const RELOAD: &str = "sudo udevadm control --reload && sudo udevadm trigger";
 /// The checks that decide whether the daemon can do its job.
 pub fn check_permissions(roots: &Roots) -> Vec<Finding> {
     let mut findings = vec![check_uinput(roots)];
+    findings.extend(stale_uinput_files(roots));
     findings.extend(check_controllers(roots));
     findings
+}
+
+/// The uinput rule and the module list, when installed copies differ from this version's. (A missing
+/// one is no finding: the desktop may grant access already, or the module be loaded another way.)
+fn stale_uinput_files(roots: &Roots) -> Vec<Finding> {
+    let mut found = Vec::new();
+    if file_state(&roots.rule_dirs, UINPUT_RULE_NAME, UINPUT_RULE) == RuleState::Outdated {
+        found.push(
+            Finding::new(
+                Level::Note,
+                format!("Virtual devices: the installed {UINPUT_RULE_NAME} differs from this version's"),
+                "Install this version's to be sure padwight keeps access to /dev/uinput.",
+            )
+            .fix(install_rule(UINPUT_RULE_NAME, UINPUT_RULE))
+            .stale(),
+        );
+    }
+    if file_state(&roots.module_dirs, MODULES_CONF_NAME, MODULES_CONF) == RuleState::Outdated {
+        found.push(
+            Finding::new(
+                Level::Note,
+                format!("Virtual devices: the installed {MODULES_CONF_NAME} differs from this version's"),
+                "Install this version's to be sure the uinput module keeps loading at boot.",
+            )
+            .fix(write_as_root(&format!("/etc/modules-load.d/{MODULES_CONF_NAME}"), MODULES_CONF))
+            .stale(),
+        );
+    }
+    found
 }
 
 fn check_uinput(roots: &Roots) -> Finding {
@@ -275,7 +313,8 @@ fn check_motion_rule(roots: &Roots, nodes: &[Node]) -> Finding {
             format!("Gyro: the installed {MOTION_RULE_NAME} differs from this version's"),
             "Install this version's to be sure gyro access keeps working.",
         )
-        .fix(install_rule(MOTION_RULE_NAME, MOTION_RULE)),
+        .fix(install_rule(MOTION_RULE_NAME, MOTION_RULE))
+        .stale(),
         RuleState::Missing => {
             let needed = if nodes.iter().any(Node::is_pad_motion) {
                 "A PlayStation or Switch controller is connected."
@@ -303,7 +342,8 @@ fn check_hidraw_rule(roots: &Roots, nodes: &[Node]) -> Finding {
             format!("Raw controller access: the installed {HIDRAW_RULE_NAME} differs from this version's"),
             "Install this version's to be sure Steam and games keep reading those controllers through padwight.",
         )
-        .fix(install_rule(HIDRAW_RULE_NAME, HIDRAW_RULE)),
+        .fix(install_rule(HIDRAW_RULE_NAME, HIDRAW_RULE))
+        .stale(),
         RuleState::Missing => {
             let connected = if nodes.iter().any(Node::is_hidraw_pad) {
                 "A PlayStation or Switch controller is connected. "
@@ -400,15 +440,29 @@ pub fn problems_report() -> String {
     render(&problems)
 }
 
+/// `padwight doctor --files`: only the installed system files that differ from this version's, with
+/// the commands that need root. `padwight update` runs it on the new binary, since an update never
+/// touches /etc itself. Prints nothing when all is current.
+#[expect(clippy::print_stdout, reason = "CLI output")]
+fn print_stale_files() -> Result<()> {
+    let stale: Vec<Finding> = check_permissions(&Roots::system()).into_iter().filter(|f| f.stale).collect();
+    if !stale.is_empty() {
+        println!("This version changes system files that need root, so they weren't updated:");
+        print!("{}", render(&stale));
+    }
+    Ok(())
+}
+
 #[expect(clippy::print_stdout, reason = "CLI output")]
 pub fn run(args: &[&str]) -> Result<()> {
     match args {
+        ["--files"] => return print_stale_files(),
         ["--explain"] => {
             println!("{REFERENCE}");
             return Ok(());
         }
         [] => {}
-        _ => bail!("usage: padwight doctor [--explain]"),
+        _ => bail!("usage: padwight doctor [--explain|--files]"),
     }
     let mut findings = check_permissions(&Roots::system());
     findings.push(check_desktop());

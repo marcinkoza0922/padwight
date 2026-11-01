@@ -2,6 +2,14 @@
 
 padwight runs on Linux. It needs a Wayland or X11 desktop for the on-screen overlays, and a desktop with focus tracking (KDE Plasma, GNOME, Hyprland, Sway, or a wlroots compositor such as labwc) for automatic profile switching. See [Desktop support](Desktop-Support).
 
+## One-line install
+
+```sh
+curl -fsSL https://github.com/marcinkoza0922/padwight/releases/latest/download/get.sh | sh
+```
+
+`get.sh` downloads the latest release tarball, checks its SHA-256, and runs the `install.sh` inside it. It does nothing else, so you can instead download the tarball and read `install.sh` first (below). Options go after `sh -s --`, for example `sh -s -- --no-system`. `PADWIGHT_VERSION=0.1.0` picks a version.
+
 ## Install from a release
 
 ```sh
@@ -10,7 +18,24 @@ cd padwight-*-linux-x86_64
 ./install.sh
 ```
 
-The script installs padwight for your user (`~/.local/bin`, the menu entry and icon, and a background service that starts at login). Then it explains three small system files and asks before copying them with `sudo`: two udev rules and a list that loads the `uinput` kernel module. `./install.sh --uninstall` removes everything it installed. Your settings stay.
+The script installs padwight for your user (`~/.local/bin`, the menu entry and icon, and a background service that starts at login). Then it explains three small system files and asks before copying them with `sudo`: two udev rules and a list that loads the `uinput` kernel module. 
+## Update
+
+```sh
+padwight update --check    # is there a newer release on GitHub?
+padwight update            # download it, check its SHA-256, replace the installed copy, restart the service
+```
+
+Once a day the background service asks GitHub whether a newer release exists (Settings → Input → Check for updates turns this off). If there is one, the settings window and the tray menu say so, with an Update button. Only a copy the release installer put in `~/.local/bin` is replaced. A copy from a package manager (anything under `/usr` or `/opt`) or a source build is never touched: the notice then tells you to update it the way you installed it. Updates never use `sudo`, so they leave the system files in `/etc` alone. When a release changes one, `padwight update` ends by listing the changed files with the commands that install them, and `padwight doctor` and the settings window's system check say the same until you run them.
+
+## Uninstall
+
+```sh
+padwight-uninstall            # or ./install.sh --uninstall
+padwight-uninstall --purge    # also deletes your settings (~/.config/padwight) and the daemon log
+```
+
+It stops and removes the background service, the binary, the menu entry and icon, and the GNOME or Cinnamon focus extension the daemon installed (including its entry in the enabled-extensions list). Then it asks before removing the udev rules and module list from `/etc` with `sudo`. Your settings stay unless you pass `--purge`.
 
 ## Build from source
 

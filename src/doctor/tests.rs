@@ -193,3 +193,20 @@ fn a_fix_writes_the_rule_with_printf_and_tee() {
     assert!(first.starts_with("printf '%s\\n' '") && first.ends_with("| sudo tee /etc/udev/rules.d/70-padwight-motion.rules > /dev/null"), "{fix}");
     assert!(fix.lines().nth(1) == Some(RELOAD) && !fix.contains('#'), "{fix}");
 }
+
+#[test]
+fn every_installed_system_file_that_differs_is_stale() {
+    let tree = Tree::new("stale");
+    let stale = || check_permissions(&tree.roots()).into_iter().filter(|f| f.stale).count();
+    assert_eq!(stale(), 0, "nothing installed, nothing to update");
+    tree.put("rules", UINPUT_RULE_NAME, "# old\nKERNEL==\"uinput\"\n");
+    tree.put("modules", MODULES_CONF_NAME, "old\n");
+    tree.put("rules", MOTION_RULE_NAME, "# old\n");
+    tree.put("rules", HIDRAW_RULE_NAME, "# old\n");
+    assert_eq!(stale(), 4);
+    tree.put("rules", UINPUT_RULE_NAME, UINPUT_RULE);
+    tree.put("modules", MODULES_CONF_NAME, MODULES_CONF);
+    tree.put("rules", MOTION_RULE_NAME, MOTION_RULE);
+    tree.put("rules", HIDRAW_RULE_NAME, HIDRAW_RULE);
+    assert_eq!(stale(), 0);
+}

@@ -51,6 +51,7 @@ mod sound;
 mod system_menu;
 mod touchpad_widget;
 mod tray;
+mod update;
 
 use anyhow::{Result, bail};
 
@@ -64,6 +65,7 @@ commands:
   daemon [--debug] run the background remapping service (--debug lets `debug --attach` inject controllers)
   status           show daemon status and detected controllers
   doctor [--explain] check the permissions padwight needs and say how to fix them (Linux)
+  update [--check] check GitHub for a newer release and install it (only a copy the release installer made)
   enable|disable   turn remapping on or off
   profile <name>   switch to a profile (in the current game, General, or any game)
   next-profile     switch to the next profile
@@ -85,6 +87,7 @@ fn main() -> Result<()> {
         ["status"] => status(),
         #[cfg(target_os = "linux")]
         ["doctor", rest @ ..] => doctor::run(rest),
+        ["update", rest @ ..] => update::run(rest),
         ["enable"] => send(&Request::SetEnabled(true)),
         ["disable"] => send(&Request::SetEnabled(false)),
         ["profile", name] => send(&Request::SetProfile(name.to_string())),

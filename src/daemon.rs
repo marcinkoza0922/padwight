@@ -50,6 +50,7 @@ mod offers;
 mod overlay;
 mod overlay_input;
 mod previews;
+mod updates;
 mod raw_readers;
 /// The controllers themselves: evdev nodes.
 #[path = "daemon/evdev.rs"]
@@ -130,6 +131,8 @@ enum Msg {
     Media(MediaState),
     /// A choice from the tray icon's menu.
     Tray(tray::Command),
+    /// The daily check found release `version`.
+    UpdateFound(String),
     /// Whether Steam runs, looked up as the Guide overlay opened.
     SteamRunning(bool),
     /// The screen grab for the magnifying glass finished, or failed.
@@ -557,6 +560,8 @@ struct Daemon {
     /// The settings window, opened from the tray; one at a time.
     settings_process: Option<std::process::Child>,
     tray: Option<TrayIcon>,
+    /// A newer release the daily check found.
+    update: Option<String>,
     tx: inbox::Tx,
     /// A stop was asked for and is waiting for the settings window's unsaved edits to be dealt with.
     stop_asked: bool,
@@ -645,7 +650,7 @@ impl Daemon {
             overlay_started: None,
             overlay_process: None,
             settings_process: None,
-            tray: None,
+            tray: None, update: None,
             tx,
             stop_asked: false,
             unsaved_at: None,
@@ -812,6 +817,7 @@ impl Daemon {
         });
         self.ensure_overlay_process();
         self.tray = self.start_tray();
+        self.start_update_checks();
     }
 
     fn start_tray(&self) -> Option<TrayIcon> {
@@ -832,6 +838,7 @@ impl Daemon {
         tray::Shown {
             enabled: self.config.enabled,
             profile: self.config.active().map(|p| p.name.clone()).unwrap_or_default(),
+            update: self.update_info().map(|u| (u.version, u.self_updating)),
         }
     }
 
@@ -848,6 +855,9 @@ impl Daemon {
                 self.request(Request::SetEnabled(!self.config.enabled));
             }
             tray::Command::OpenSettings => self.open_settings(),
+            tray::Command::InstallUpdate => {
+                self.install_update();
+            }
             tray::Command::CloseOverlays => self.close_overlays_by_hand("from the tray"),
             tray::Command::Quit => {
                 log!("quit from the tray");
@@ -921,6 +931,7 @@ impl Daemon {
                 let _ = reply.send(self.request(req));
             }
             Msg::Tray(cmd) => self.tray_command(cmd),
+            Msg::UpdateFound(version) => self.update_found(version),
             Msg::Focus(event) => self.focus_event(event),
             Msg::Toast(lines) => self.say(lines),
             Msg::Media(state) => self.update_media(state),
@@ -1363,6 +1374,7 @@ impl Daemon {
             stop_pending: self.stop_asked,
             profile_locked: self.profile_locked,
             switches: self.activity.switches(Instant::now()),
+            update: self.update_info(),
         }
     }
 
