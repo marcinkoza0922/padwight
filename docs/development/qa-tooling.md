@@ -281,6 +281,18 @@ with the audit result and columns for the manual checks of [qa-plan.md section 6
 (bindings checked, last smoke, last full play), kept between runs. Never read `games.jsonl`
 whole; use the TSV files and the article lookup its README describes.
 
+**Status.** Built: `scripts/pack-audit.py` (Python standard library only). `python3 -I scripts/pack-audit.py`
+audits every pack against the snapshot and rewrites `docs/development/pack-qa.tsv`; `-v` prints each finding,
+`--check` fails if the table is stale, `--self-test` checks the matching logic on a tiny in-memory snapshot.
+Matching is by pack name (title or redirect), then by Steam ids; several name matches or none are reported
+(`ambiguous`, `no_match`), never picked. Findings: `id_wrong_game`, `id_other_game`, `id_unknown`,
+`exe_unseen`, `exe_no_data`, `year_mismatch`, `passthrough_pre2006`, `passthrough_no_support`,
+`mapped_but_native`, plus info kinds. The table is tracked next to the plan so the manual columns
+(`bindings_checked`, `last_smoke`, `last_full_play`, `manual_notes`) are versioned and reviewed; reruns keep
+them. Left: the snapshot is untracked, so the audit columns only refresh where it exists; the executable list
+comes only from Discord's list (no second source); the controller check is a heuristic on the wiki's
+`controller_support`/`xinput` fields and the pack's shape, not its prose.
+
 ## T-14: Binding comparison
 
 **Gap.** Whether a pack's keys match the game's own controls is checked by a person reading the
