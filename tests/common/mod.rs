@@ -102,7 +102,7 @@ fn real_gamepads() -> Vec<String> {
                 && axes.contains(evdev::AbsoluteAxisCode::ABS_X)
                 && axes.contains(evdev::AbsoluteAxisCode::ABS_Y);
             let name = dev.name()?;
-            let ours = name.starts_with("Padwight Virtual") || dev.unique_name() == Some(uhid::TEST_UNIQ);
+            let ours = name.starts_with("Padwight Virtual") || dev.unique_name().is_some_and(uhid::is_test_uniq);
             let id = dev.input_id();
             let uniq = dev.unique_name().map(str::trim).filter(|u| !u.is_empty());
             (gamepad && !ours).then(|| uniq.map_or_else(|| format!("{:04x}:{:04x}", id.vendor(), id.product()), str::to_string))
