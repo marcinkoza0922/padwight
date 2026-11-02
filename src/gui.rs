@@ -1280,7 +1280,11 @@ impl App {
                 self.unreadable = err;
             }
             Message::SetEnabled(on) => return call_ok(Request::SetEnabled(on)),
-            Message::InstallUpdate => return call_ok(Request::InstallUpdate),
+            Message::InstallUpdate => {
+                // The daemon answers once the update has started, not when it is done.
+                self.message = Some(("Updating padwight: it restarts when the update is installed. If it doesn't, run `padwight update` to see why.".into(), false));
+                return call_ok(Request::InstallUpdate);
+            }
             Message::SetProfileLock(on) => return Task::batch([call_ok(Request::SetProfileLock(on)), Task::done(Message::Poll)]),
             Message::ActivateProfile(at) => {
                 if self.saved.profile(&at).is_some() {

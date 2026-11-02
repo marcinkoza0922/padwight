@@ -35,6 +35,10 @@ main() {
         [ -n "$version" ] && [ "$version" != latest ] || { echo "couldn't find the latest padwight release" >&2; exit 1; }
     fi
     version=${version#v}
+    # It goes into a URL and a file name: digits, dots and a pre-release suffix, nothing else.
+    case $version in
+        ""|*[!0-9A-Za-z.+-]*|[!0-9]*) echo "not a padwight version: $version" >&2; exit 1 ;;
+    esac
     name=padwight-$version-linux-$arch
     base=https://github.com/$repo/releases/download/v$version
 

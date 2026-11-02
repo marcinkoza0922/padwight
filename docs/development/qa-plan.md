@@ -487,8 +487,10 @@ Fixed:
   it, so General and the setups are never one old and one new.
 - **SEC-10.** The update's scratch folder is private (0700) and never in a shared temp folder. An
   update already running refuses a second; the child is reaped; a replaced binary's
-  `(deleted)` path is cleaned. Still open: `InstallUpdate` answers Ok before anything has run;
-  `get.sh` doesn't validate `PADWIGHT_VERSION`.
+  `(deleted)` path is cleaned. `get.sh` rejects a `PADWIGHT_VERSION` that
+  isn't a plain version. `InstallUpdate` answers Ok once the child has started (it can't know more:
+  the update ends by restarting the daemon); the settings window says so, and a failed update is
+  logged.
 - **Packs.** `mount-and-blade-napoleonic-wars` had the wrong Steam id (73000; the DLC is 48705);
   `doom-and-doom-2` gained its executable (`doom.exe`, read from an installed copy);
   `hitman-world-of-assassination` said 2016. The audit's other `id_other_game` warnings on those
