@@ -21,7 +21,8 @@
 //! imports a pack from the repository, `config hold` is the default config with South as KEY_A and
 //! East as the left mouse button, `config <file>` installs a config in the form
 //! `tests/common` writes, and without either the default config is used. `model`, `full-keyboard` (the
-//! on-screen keyboard with every key) and `append <file>` (a TOML fragment added to the default
+//! on-screen keyboard with every key), `steam running` and `steam not-running` (the daemon runs
+//! alone in a pid namespace, with a process named steam or without) and `append <file>` (a TOML fragment added to the default
 //! config, such as a `[shortcuts]` table) are header lines too. The daemon runs `--debug --fake-clock`, so `wait`, `tap` and `advance` move its
 //! clock exactly and the `@ms` stamps in the transcript never vary, and with its output only
 //! recorded it needs neither /dev/uinput nor /dev/input.
@@ -39,7 +40,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use common::{Daemon, install_config, spawn_daemon_env, temp_root, wait_for};
+use common::{Daemon, install_config, spawn_daemon_alone, spawn_daemon_env, temp_root, wait_for};
 
 const BIN: &str = env!("CARGO_BIN_EXE_padwight");
 
@@ -51,6 +52,8 @@ struct Scenario {
     config: Option<String>,
     model: Option<String>,
     full_keyboard: bool,
+    /// Run the daemon alone in a pid namespace, with a process named `steam` in it or without.
+    steam: Option<bool>,
     /// TOML files from the repository appended to the default config.
     append: Vec<String>,
     script: Vec<String>,
@@ -70,6 +73,7 @@ fn parse(path: &Path) -> Scenario {
         config: None,
         model: None,
         full_keyboard: false,
+        steam: None,
         append: Vec::new(),
         script: Vec::new(),
         expected,
@@ -83,6 +87,8 @@ fn parse(path: &Path) -> Scenario {
             ["config", file] => s.config = Some(file.to_string()),
             ["model", name] => s.model = Some(name.to_string()),
             ["full-keyboard"] => s.full_keyboard = true,
+            ["steam", "running"] => s.steam = Some(true),
+            ["steam", "not-running"] => s.steam = Some(false),
             ["append", file] => s.append.push(file.to_string()),
             _ => s.script.push(words.join(" ")),
         }
@@ -176,7 +182,11 @@ fn run(s: &Scenario) -> Result<String, String> {
         // No session bus either, so the desktop the tests run on can't switch profiles under a
         // scenario by focusing a window.
         let no_bus = Path::new("unix:path=/nonexistent/padwight-scenario-bus");
-        let daemon = spawn_daemon_env(&root, Some(&run_dir), &["--debug", "--fake-clock"], &[("DBUS_SESSION_BUS_ADDRESS", no_bus)]);
+        let (args, env) = (["--debug", "--fake-clock"], [("DBUS_SESSION_BUS_ADDRESS", no_bus)]);
+        let daemon = match s.steam {
+            Some(running) => spawn_daemon_alone(&root, Some(&run_dir), &args, &env, running),
+            None => spawn_daemon_env(&root, Some(&run_dir), &args, &env),
+        };
         wait_for("the daemon to answer", || {
             let mut command = Command::new(BIN);
             env_of(&mut command);

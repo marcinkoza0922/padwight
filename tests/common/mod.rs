@@ -178,6 +178,18 @@ pub fn spawn_daemon_with(root: &Path, runtime: Option<&Path>, args: &[&str]) -> 
 /// in: the compositor sockets and Wayland display are removed first, so a stand-in compositor
 /// (see [`standin`]) is the only one the daemon can find.
 pub fn spawn_daemon_env(root: &Path, runtime: Option<&Path>, args: &[&str], env: &[(&str, &Path)]) -> Daemon {
+    spawn_daemon_command(root, runtime, args, env, None)
+}
+
+/// [`spawn_daemon_env`] in a pid namespace of its own, so the daemon sees only its own processes
+/// and not the machine's (whether Steam runs there, say). With `fake_steam` a process named
+/// `steam` runs in there too. Needs unprivileged user namespaces.
+#[cfg(target_os = "linux")]
+pub fn spawn_daemon_alone(root: &Path, runtime: Option<&Path>, args: &[&str], env: &[(&str, &Path)], fake_steam: bool) -> Daemon {
+    spawn_daemon_command(root, runtime, args, env, Some(fake_steam))
+}
+
+fn spawn_daemon_command(root: &Path, runtime: Option<&Path>, args: &[&str], env: &[(&str, &Path)], alone: Option<bool>) -> Daemon {
     let config = root.join("config/padwight");
     if !config.join("config.toml").exists() {
         install_config(&config, &default_config());
@@ -185,7 +197,22 @@ pub fn spawn_daemon_env(root: &Path, runtime: Option<&Path>, args: &[&str], env:
     let tmp = root.join("tmp");
     fs::create_dir_all(&tmp).unwrap();
     let log = fs::File::create(root.join("daemon.log")).unwrap();
-    let mut command = Command::new(env!("CARGO_BIN_EXE_padwight"));
+    let exe = env!("CARGO_BIN_EXE_padwight");
+    let mut command = match alone {
+        None => Command::new(exe),
+        Some(fake_steam) => {
+            // A copy of `sleep` under the name `steam`, which Padwight looks for by process name.
+            let steam = if fake_steam { "cp \"$(command -v sleep)\" \"$1/steam\"; \"$1/steam\" 600 &" } else { "" };
+            let mut command = Command::new("unshare");
+            command
+                .args(["--user", "--map-root-user", "--pid", "--fork", "--kill-child", "--mount-proc", "sh", "-c"])
+                .arg(format!("{steam} shift; exec \"$@\""))
+                .arg("sh")
+                .arg(&tmp)
+                .arg(exe);
+            command
+        }
+    };
     command
         .arg("daemon")
         .args(args)

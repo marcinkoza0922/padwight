@@ -249,9 +249,17 @@ fn glob(pattern: &[char], text: &[char]) -> bool {
 /// double quotes around `want` are dropped); numbers match within 0.01; `none` matches null and
 /// an empty list; a list matches when one of its items does. `glob:<pattern>|<pattern>` matches
 /// a string that fits one of the patterns (`*` any run, `?` any character, `@` any digit), such
-/// as `glob:@@:@@` for a clock.
+/// as `glob:@@:@@` for a clock. `not:<want>` holds where `<want>` does not.
 pub fn check(doc: &Value, path: &str, want: &str) -> Result<(), String> {
     let want = want.trim();
+    // `not:<want>` holds where `<want>` does not (the path must still exist).
+    if let Some(rest) = want.strip_prefix("not:") {
+        lookup(doc, path)?;
+        return match check(doc, path, rest) {
+            Ok(()) => Err(format!("overlay {path} is {rest:?}, which it should not be")),
+            Err(_) => Ok(()),
+        };
+    }
     let want = want.strip_prefix('"').and_then(|w| w.strip_suffix('"')).unwrap_or(want);
     let got = lookup(doc, path)?;
     let same = |v: &Value| match v {
@@ -307,6 +315,15 @@ mod tests {
         assert!(check(&doc, "clock", "glob:@@").is_err());
         assert!(check(&doc, "clock", "glob:@:@@").is_err());
         assert!(check(&doc, "n", "glob:@").is_err(), "a number is not a string");
+    }
+
+    #[test]
+    fn not_inverts_a_check_but_still_needs_the_path() {
+        let doc = json!({ "labels": ["a", "b"], "clock": "17:10" });
+        check(&doc, "labels", "not:c").unwrap();
+        assert!(check(&doc, "labels", "not:b").is_err());
+        check(&doc, "clock", "not:glob:@@").unwrap();
+        assert!(check(&doc, "nope", "not:x").is_err());
     }
 
     #[test]
