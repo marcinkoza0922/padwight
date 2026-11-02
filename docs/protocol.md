@@ -76,6 +76,7 @@ These take effect at once and last until the daemon stops, unless noted.
 | `"ToggleOverlay"`, `"ToggleNumpad"` | Open or close the on-screen keyboard or numpad. |
 | `{"OpenMenu": "Name"}` | Show the menu with this name on the controller used last. |
 | `"CloseOverlays"` | Close every overlay that has the controller. |
+| `"InstallUpdate"` | Start `padwight update` in the background, to install the release named in `Status.update`. Fails when this copy can't update itself (`self_updating` is `false`). The update ends by restarting the service, so the connection, and any `Watch…` stream, closes; reconnect and check `Version`. |
 
 ### Changing the configuration
 
@@ -136,7 +137,8 @@ Not covered by the version; they can change in any release.
   "numpad_visible": false,
   "stop_pending": false,
   "profile_locked": false,
-  "switches": [ … ]
+  "switches": [ … ],
+  "update": {"version": "0.2.0", "self_updating": true, "advice": "run `padwight update`"}
 }}
 ```
 
@@ -155,6 +157,7 @@ Not covered by the version; they can change in any release.
 | `stop_pending` | The daemon is ending and waits for [`Unsaved`](#settings-window-cooperation) edits. |
 | `profile_locked` | The active profile is [locked](#changing-the-daemons-state). |
 | `switches` | Recent profile switches, newest first: `{"age_ms", "game", "profile", "why"}`, `why` being a sentence such as `Doom (doom.exe) matches Executable “doom.exe”`. |
+| `update` | A newer release found by the daily check; missing when there is none or the user turned the check off. `version` is the release; `self_updating` says whether [`InstallUpdate`](#changing-the-daemons-state) may install it (only for a copy the release installer put in `~/.local/bin`); `advice` is a sentence telling the user how to get it otherwise. |
 
 ### ControllerInfo
 
