@@ -105,7 +105,7 @@ impl Rig {
 
 fn collect(root: &Path, dir: &Path, found: &mut BTreeMap<String, String>) {
     let mut entries: Vec<_> = std::fs::read_dir(dir).unwrap().flatten().collect();
-    entries.sort_by_key(|e| e.path());
+    entries.sort_by_key(std::fs::DirEntry::path);
     for e in entries {
         let path = e.path();
         if path.is_dir() {
