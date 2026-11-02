@@ -15,13 +15,18 @@ use crate::{
     snapshot::Image,
 };
 
-/// `state` at `now`, drawn on a `display` over the opaque `background`.
-fn picture(screen: &mut Screen, state: &Overlay, now: Instant, display: Display, background: Color) -> anyhow::Result<Image> {
+/// `state` at `now`, drawn on a `display` over the opaque `background`. `clock` is the time in
+/// seconds that looping effects (drifting scanlines, grain) run on, pinned so that a picture is
+/// the same every time rather than depending on how long the process has been running.
+fn picture(screen: &mut Screen, state: &Overlay, now: Instant, clock: f32, display: Display, background: Color) -> anyhow::Result<Image> {
     let (size, scale) = (display.size, display.scale);
     let (w, h) = ((size.x * scale).round() as u32, (size.y * scale).round() as u32);
     let mut pixmap = tiny_skia::Pixmap::new(w, h).ok_or_else(|| anyhow::anyhow!("a {w}x{h} picture can't be made"))?;
     pixmap.fill(tiny_skia::Color::from_rgba(background.r, background.g, background.b, 1.0).unwrap_or(tiny_skia::Color::BLACK));
-    screen.draw(&state.frame, &state.showing(now), display, &mut pixmap.as_mut());
+    let mut shown = state.showing(now);
+    let anims = shown.panels.iter_mut().map(|p| &mut p.1).chain(shown.info.iter_mut().map(|p| &mut p.1)).chain(shown.logs.iter_mut().map(|p| &mut p.1));
+    anims.for_each(|a| a.clock = clock);
+    screen.draw(&state.frame, &shown, display, &mut pixmap.as_mut());
     let rgba = pixmap.data().as_chunks::<4>().0.iter().flat_map(|p| [p[0], p[1], p[2], 255]).collect();
     Ok(Image { width: w, height: h, rgba })
 }
@@ -34,7 +39,7 @@ pub fn snapshot(mut frame: OverlayFrame, display: Size, scale: f32, background: 
     state.receive(frame);
     // Well after now, so nothing is still on its way in.
     let settled = Instant::now() + Duration::from_secs(10);
-    picture(&mut Screen::new(), &state, settled, shown(display, scale), background)
+    picture(&mut Screen::new(), &state, settled, 10.0, shown(display, scale), background)
 }
 
 /// Draws a run of frames as the overlay window shows it, with no window: each frame in `script`
@@ -51,7 +56,7 @@ pub fn film(script: &[(f32, OverlayFrame)], at: &[f32], display: Size, scale: f3
             state.receive_at(frame.clone(), when(*arrives));
         }
         state.prune(when(t));
-        pictures.push(picture(&mut screen, &state, when(t), shown(display, scale), background)?);
+        pictures.push(picture(&mut screen, &state, when(t), t, shown(display, scale), background)?);
     }
     Ok(pictures)
 }

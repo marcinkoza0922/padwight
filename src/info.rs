@@ -1010,15 +1010,26 @@ fn reading_text(reading: &Icon) -> String {
     }
 }
 
+/// When set (seconds since the epoch), the clock readings show this moment in UTC instead of the
+/// local time now, so that pictures drawn for regression checks are the same every time.
+static PINNED_TIME: std::sync::atomic::AtomicI64 = std::sync::atomic::AtomicI64::new(i64::MIN);
+
+/// Makes the time and date readings show `secs` since the epoch, in UTC, from now on.
+pub fn pin_time(secs: i64) {
+    PINNED_TIME.store(secs, std::sync::atomic::Ordering::Relaxed);
+}
+
 /// Formats the local time with a `strftime` pattern.
 #[cfg(target_os = "linux")]
 fn local_time(pattern: &str) -> String {
     let Ok(pattern) = std::ffi::CString::new(pattern) else { return String::new() };
     // SAFETY: localtime_r and strftime write into the buffers given; tm is plain data.
     unsafe {
-        let now = libc::time(std::ptr::null_mut());
+        let pinned = PINNED_TIME.load(std::sync::atomic::Ordering::Relaxed);
+        let now = if pinned == i64::MIN { libc::time(std::ptr::null_mut()) } else { pinned as libc::time_t };
         let mut tm: libc::tm = std::mem::zeroed();
-        if libc::localtime_r(&now, &mut tm).is_null() {
+        let done = if pinned == i64::MIN { libc::localtime_r(&now, &mut tm) } else { libc::gmtime_r(&now, &mut tm) };
+        if done.is_null() {
             return String::new();
         }
         let mut buf = [0u8; 64];

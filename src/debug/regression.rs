@@ -125,6 +125,8 @@ fn manifest_of(sets: &[String], dir: &Path, files: &[String]) -> Result<Manifest
 
 /// Draws the pictures of `sets` into `dir`; the files written, relative to it.
 fn produce(sets: &[String], dir: &Path) -> Result<Vec<String>> {
+    // The clock readings in info overlays: a fixed moment (2026-01-02 03:04:05 UTC).
+    crate::info::pin_time(1_767_323_045);
     let mut files = Vec::new();
     for set in sets {
         match set.as_str() {
