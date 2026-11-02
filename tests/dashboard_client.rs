@@ -4,7 +4,7 @@
 //!
 //! The daemon runs with `--debug` on throwaway config and runtime folders. It needs no controller
 //! and no /dev/input or /dev/uinput, so with no pad connected `WatchInput` sends `null`; this runs
-//! with the ordinary tests, wherever `python3` exists (it is skipped otherwise).
+//! with the ordinary tests, where `python3` exists (CI has it).
 
 #![cfg(target_os = "linux")]
 
@@ -16,10 +16,7 @@ use common::{serial, spawn_daemon_with, temp_root, wait_for};
 
 #[test]
 fn the_dashboard_client_speaks_the_documented_protocol() {
-    let Ok(version) = Command::new("python3").arg("--version").output() else {
-        eprintln!("python3 isn't installed: skipping");
-        return;
-    };
+    let version = Command::new("python3").arg("--version").output().expect("this test needs python3");
     assert!(version.status.success());
     let _serial = serial();
     let root = temp_root();
