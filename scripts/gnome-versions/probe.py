@@ -37,6 +37,21 @@ else:
     fail("the extension never loaded")
 print("extension enabled")
 
+# Only a process running the daemon's executable may use the overlay. With nothing owning the
+# daemon's name there is nothing to compare with, so the call is refused.
+DAEMON = "io.github.marcinkoza0922.Padwight"
+try:
+    call(NAME, PATH, IFACE, "Geometry")
+    fail("Geometry was served with no daemon on the bus")
+except GLib.Error as e:
+    if "AccessDenied" not in e.message and "only padwight" not in e.message:
+        fail(f"unexpected refusal: {e.message}")
+print("refused while no daemon is on the bus")
+# This script stands in for the daemon (and the overlay process, which runs the same executable).
+if bus.call_sync("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "RequestName",
+                 GLib.Variant("(su)", (DAEMON, 0)), None, 0, 10000, None).unpack()[0] != 1:
+    fail("couldn't own the daemon's name")
+
 w, h, scale = call(NAME, PATH, IFACE, "Geometry").unpack()
 print(f"geometry {w}x{h} scale {scale}")
 device = (round(w * scale), round(h * scale))
@@ -72,6 +87,16 @@ if not (inside[1] > 200 and inside[0] < 60 and inside[2] < 60):
     fail(f"the picture isn't on screen: the square reads {inside}")
 if outside[1] > 200 and outside[0] < 60:
     fail("the clear part of the picture is drawn green")
+# A program that isn't the daemon's executable (gdbus here) can't hide it, or call anything else.
+import subprocess
+stranger = subprocess.run(["gdbus", "call", "--session", "--dest", NAME, "--object-path", PATH, "--method", IFACE + ".Hide"],
+                          capture_output=True, text=True)
+if "AccessDenied" not in stranger.stderr:
+    fail(f"another program's Hide wasn't refused: {stranger.stdout} {stranger.stderr}")
+time.sleep(0.5)
+if shot("stranger")((square[0] + square[2]) / 2 / scale, (square[1] + square[3]) / 2 / scale) != inside:
+    fail("another program's Hide took effect")
+print("another program refused")
 call(NAME, PATH, IFACE, "Hide")
 time.sleep(1)
 after = shot("hidden")((square[0] + square[2]) / 2 / scale, (square[1] + square[3]) / 2 / scale)
@@ -85,7 +110,12 @@ import fcntl
 size = device[0] * device[1] * 4
 loose = os.memfd_create("probe-loose")
 os.write(loose, bytes(size))
-call(NAME, PATH, IFACE, "SetBuffer", GLib.Variant("(hii)", (0, *device)), fds=[os.dup(loose)])
+try:
+    call(NAME, PATH, IFACE, "SetBuffer", GLib.Variant("(hii)", (0, *device)), fds=[os.dup(loose)])
+    fail("an unsealed memfd was accepted")
+except GLib.Error as e:
+    if "not sealed" not in e.message:
+        fail(f"unexpected refusal: {e.message}")
 if os.fstat(loose).st_size != size - 1:
     fail("an unsealed memfd wasn't tested (it should have lost a byte)")
 print("unsealed memfd refused")

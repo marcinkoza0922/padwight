@@ -469,8 +469,13 @@ Fixed:
   against shrinking (`F_SEAL_SHRINK`); the extensions take only a sealed one (they try to shrink it by a
   byte, which fails on a sealed memfd) and map it as before, so a client can't shrink it into a SIGBUS.
   `scripts/gnome-versions/probe.py` checks it on Shell 45 to 50; `bench.py` times Present (reading the
-  memfd on each Present instead cost 3 to 5 times as much). Cinnamon 6.6.9 (VM): `desktop-test.sh cinnamon` 10/10 with it. Still open: it doesn't
-  check who calls (any program of the same user on the bus can still draw on the overlay).
+  memfd on each Present instead cost 3 to 5 times as much). Cinnamon 6.6.9 (VM): `desktop-test.sh cinnamon` 10/10 with it. Later the same
+  day: both extensions also check the caller. Every method is served only to a sender whose `/proc/<pid>/exe` is the
+  executable of the process that owns the daemon's bus name (the overlay process is the daemon's own binary re-run), and a
+  refusal is an `AccessDenied` error. `probe.py` checks it on Shell 45, 46, 49 and 50 (it stands in for the daemon by
+  owning its name; a `gdbus` call is refused). Not run: the Cinnamon extension with the check, nor the Rust overlay
+  against a real Shell. Still open: a program that runs padwight's own binary (or injects into it) passes, as does
+  anything that took the daemon's bus name before the daemon.
 - **SEC-7.** A window that matched a game rule skipped Force Quit's protected-name check. It no
   longer does; the list gained the session plumbing and the launchers; `force_quit` refuses a
   protected process by its own name; the SIGKILL goes only to processes whose start time hasn't

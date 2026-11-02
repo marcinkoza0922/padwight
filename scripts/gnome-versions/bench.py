@@ -15,6 +15,8 @@ for _ in range(90):
         if call("org.gnome.Shell", "/org/gnome/Shell", "org.gnome.Shell.Extensions", "GetExtensionInfo", GLib.Variant("(s)", (UUID,))).unpack()[0].get("state") == 1.0: break
     except GLib.Error: pass
     time.sleep(1)
+# Stands in for the daemon: only its executable may use the overlay.
+bus.call_sync("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "RequestName", GLib.Variant("(su)", ("io.github.marcinkoza0922.Padwight", 0)), None, 0, 10000, None)
 pid = int(os.popen("pgrep -x gnome-shell").read().split()[0])
 def cpu():
     f = open(f"/proc/{pid}/stat").read().rsplit(")", 1)[1].split()
