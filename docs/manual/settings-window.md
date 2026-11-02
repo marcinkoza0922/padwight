@@ -32,6 +32,6 @@ These switches turn things off in every overlay, for computers that struggle to 
 
 ## Help
 
-The **Help** card on App settings has **Take the tour**, which walks through the window again, and **System check**, which also shows as a strip on the Overview when something is missing. It lists what Padwight needs from your system (access to `/dev/uinput`, your controller and its gyro), and for anything missing the commands that fix it, with a **Copy** button. `padwight doctor` in a terminal does the same.
+The **Help** card on App settings has **Take the tour**, which walks through the window again, and **System check**, which also shows as a strip on the Overview when something is missing. It lists what Padwight needs from your system (access to `/dev/uinput`, your controller and its gyro, a Wayland session, and `wl-copy` for the calculator's Copy), and for anything missing the commands that fix it, with a **Copy** button. `padwight doctor` in a terminal does the same.
 
 > **Tip:** you can edit while the daemon isn't running. Changes are saved and take effect once it starts.

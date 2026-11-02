@@ -1,6 +1,6 @@
 # Installation
 
-padwight runs on Linux. It needs a Wayland or X11 desktop for the on-screen overlays, and a desktop with focus tracking (KDE Plasma, GNOME, Hyprland, Sway, or a wlroots compositor such as labwc) for automatic profile switching. See [Desktop support](Desktop-Support).
+padwight runs on x86_64 Linux in a Wayland session; X11 sessions (Xorg, XLibre) aren't supported. Games running under Xwayland, which includes every Proton game, work as usual. Automatic profile switching needs a desktop with focus tracking: KDE Plasma, GNOME, Cinnamon, COSMIC, Hyprland, Sway, niri, or a wlroots compositor such as labwc (and Budgie, which runs on it). See [Desktop support](Desktop-Support).
 
 ## One-line install
 
@@ -18,7 +18,8 @@ cd padwight-*-linux-x86_64
 ./install.sh
 ```
 
-The script installs padwight for your user (`~/.local/bin`, the menu entry and icon, and a background service that starts at login). Then it explains three small system files and asks before copying them with `sudo`: two udev rules and a list that loads the `uinput` kernel module. 
+The script installs padwight for your user (`~/.local/bin`, the menu entry and icon, and a background service that starts at login). Then it explains three small system files and asks before copying them with `sudo`: two udev rules and a list that loads the `uinput` kernel module. `padwight-uninstall` removes it again (see [Uninstall](#uninstall)).
+
 ## Update
 
 ```sh

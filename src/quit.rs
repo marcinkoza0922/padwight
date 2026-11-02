@@ -10,7 +10,7 @@ const GRACE: Duration = Duration::from_secs(3);
 /// Programs that must never be force quit: the desktop itself, so a stray hold with no
 /// window in front (or the shell focused) can't take the session down.
 const PROTECTED: &[&str] = &[
-    "plasmashell", "kwin_wayland", "kwin_wayland_wrapper", "kwin_x11", "krunner", "xorg", "xwayland", "gnome-shell",
+    "plasmashell", "kwin_wayland", "kwin_wayland_wrapper", "krunner", "xwayland", "gnome-shell",
     "mutter", "sway", "hyprland", "weston", "labwc", "river", "niri", "cosmic-comp", "wayfire", "systemd", "sddm",
     "gdm", "lightdm", "login", "pipewire", "wireplumber", "padwight",
 ];
