@@ -1,0 +1,113 @@
+# OVL-1: the on-screen keyboard's typed line and caret. Types "qwe", moves the caret with the
+# bumpers, types and deletes in the middle, then moves it with the arrow keys on the board.
+tap lb 40
+press guide
+advance 100
+tap west 60
+release guide
+advance 400
+expect overlay showing keyboard
+expect overlay keyboard.key KEY_Q
+expect overlay keyboard.typed ""
+tap south 60
+tap right 40
+tap south 60
+tap right 40
+tap south 60
+advance 100
+expect overlay keyboard.typed qwe
+expect overlay keyboard.caret 3
+# LB and RB move the caret (and send an arrow to the game).
+tap lb 40
+tap lb 40
+expect overlay keyboard.caret 1
+tap rb 40
+expect overlay keyboard.caret 2
+tap rb 40
+tap rb 40
+expect overlay keyboard.caret 3
+# Typing at the caret inserts there.
+tap lb 40
+tap south 60
+expect overlay keyboard.typed qwee
+expect overlay keyboard.caret 3
+# X is Backspace and takes the character before the caret.
+tap west 60
+expect overlay keyboard.typed qwe
+expect overlay keyboard.caret 2
+tap lb 40
+tap lb 40
+tap lb 40
+expect overlay keyboard.caret 0
+tap west 60
+expect overlay keyboard.typed qwe
+tap rb 40
+tap west 60
+expect overlay keyboard.typed we
+expect overlay keyboard.caret 0
+tap north 60
+expect overlay keyboard.typed " we"
+---
+pad LeftBumper down        @0
+pad LeftBumper up          @40
+shifts mode Guide layers - @40
+overlay none + info 1      @140
+shifts mode - layers -     @140
+overlay keyboard           @140
+sound keyboard Open pop    @140
+sound keyboard Pick pop    @600
+key KEY_Q down             @600
+key KEY_Q up               @660
+sound keyboard Step click  @660
+sound keyboard Pick pop    @700
+key KEY_W down             @700
+key KEY_W up               @760
+sound keyboard Step click  @760
+sound keyboard Pick pop    @800
+key KEY_E down             @800
+key KEY_E up               @860
+sound keyboard Pick pop    @960
+key KEY_LEFT down          @960
+key KEY_LEFT up            @960
+sound keyboard Pick pop    @1000
+key KEY_LEFT down          @1000
+key KEY_LEFT up            @1000
+sound keyboard Pick pop    @1040
+key KEY_RIGHT down         @1040
+key KEY_RIGHT up           @1040
+sound keyboard Pick pop    @1080
+key KEY_RIGHT down         @1080
+key KEY_RIGHT up           @1080
+sound keyboard Pick pop    @1120
+key KEY_RIGHT down         @1120
+key KEY_RIGHT up           @1120
+sound keyboard Pick pop    @1160
+key KEY_LEFT down          @1160
+key KEY_LEFT up            @1160
+sound keyboard Pick pop    @1200
+key KEY_E down             @1200
+key KEY_E up               @1260
+sound keyboard Pick pop    @1260
+key KEY_BACKSPACE down     @1260
+key KEY_BACKSPACE up       @1260
+sound keyboard Pick pop    @1320
+key KEY_LEFT down          @1320
+key KEY_LEFT up            @1320
+sound keyboard Pick pop    @1360
+key KEY_LEFT down          @1360
+key KEY_LEFT up            @1360
+sound keyboard Pick pop    @1400
+key KEY_LEFT down          @1400
+key KEY_LEFT up            @1400
+sound keyboard Pick pop    @1440
+key KEY_BACKSPACE down     @1440
+key KEY_BACKSPACE up       @1440
+sound keyboard Pick pop    @1500
+key KEY_RIGHT down         @1500
+key KEY_RIGHT up           @1500
+sound keyboard Pick pop    @1540
+key KEY_BACKSPACE down     @1540
+key KEY_BACKSPACE up       @1540
+sound keyboard Pick pop    @1600
+key KEY_SPACE down         @1600
+key KEY_SPACE up           @1600

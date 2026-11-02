@@ -160,7 +160,13 @@ impl Daemon {
     pub(super) fn apply_keyboard(&mut self, actions: Vec<OverlayAction>) {
         for action in actions {
             match action {
-                OverlayAction::Key(k, pressed) => self.kbm.key(k, pressed),
+                OverlayAction::Key(k, pressed) => {
+                    // A debug daemon's transcript shows what the overlay types, like any other output.
+                    if super::transcript::on() {
+                        super::transcript::output(&format!("key {k:?} {}", if pressed { "down" } else { "up" }));
+                    }
+                    self.kbm.key(k, pressed);
+                }
                 OverlayAction::Close => self.close_overlay(),
             }
         }

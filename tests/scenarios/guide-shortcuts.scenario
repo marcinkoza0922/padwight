@@ -1,0 +1,60 @@
+# OVL-6: each Guide shortcut at its default opens what its label says: Guide + Y the numpad,
+# Guide + LB the media controls, Guide + Start Quick Settings, Guide + R3 mouse mode. (Screenshot,
+# recording and force quit do real things on the desktop and are left to HW checks.)
+press guide
+advance 100
+tap north 60
+release guide
+advance 400
+expect overlay showing numpad
+tap east 700
+advance 300
+expect overlay showing none
+press guide
+advance 100
+tap lb 60
+release guide
+advance 400
+expect overlay showing media
+tap east 700
+advance 300
+expect overlay showing none
+press guide
+advance 100
+tap start 60
+release guide
+advance 400
+expect overlay showing in-game-menu
+tap east 700
+advance 300
+expect overlay showing none
+press guide
+advance 100
+tap rs 60
+release guide
+advance 400
+---
+shifts mode Guide layers -                            @0
+overlay none + info 1                                 @100
+shifts mode - layers -                                @100
+overlay keyboard                                      @100
+sound numpad Open pop                                 @100
+overlay none                                          @1260
+sound numpad Close pop                                @1260
+shifts mode Guide layers -                            @1560
+overlay none + info 1                                 @1660
+shifts mode - layers -                                @1660
+overlay media                                         @1660
+sound media Open pop                                  @1660
+overlay none                                          @2120
+sound media Close pop                                 @2120
+shifts mode Guide layers -                            @3120
+overlay none + info 1                                 @3220
+shifts mode - layers -                                @3220
+overlay menu "In-game menu" selected "Quick Settings" @3220
+sound guide Open rise                                 @3220
+overlay none                                          @3680
+sound guide Close fall                                @3680
+shifts mode Guide layers -                            @4680
+overlay none + info 1                                 @4780
+shifts mode Mouse mode layers -                       @4840

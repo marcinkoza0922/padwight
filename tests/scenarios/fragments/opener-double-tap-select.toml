@@ -1,0 +1,3 @@
+[shortcuts.open_guide]
+buttons = ["Select"]
+gesture = "DoubleTap"

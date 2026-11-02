@@ -15,11 +15,14 @@
 //! key KEY_A down @0
 //! ```
 //!
+//! A `cli <args>` line in the script runs `padwight <args>` against the daemon.
+//!
 //! Header lines (before the first debug word) pick the configuration: `setup <pack> [profile]`
 //! imports a pack from the repository, `config hold` is the default config with South as KEY_A and
 //! East as the left mouse button, `config <file>` installs a config in the form
-//! `tests/common` writes, and without either the default config is used. `model` is a header
-//! line too. The daemon runs `--debug --fake-clock`, so `wait`, `tap` and `advance` move its
+//! `tests/common` writes, and without either the default config is used. `model`, `full-keyboard` (the
+//! on-screen keyboard with every key) and `append <file>` (a TOML fragment added to the default
+//! config, such as a `[shortcuts]` table) are header lines too. The daemon runs `--debug --fake-clock`, so `wait`, `tap` and `advance` move its
 //! clock exactly and the `@ms` stamps in the transcript never vary, and with its output only
 //! recorded it needs neither /dev/uinput nor /dev/input.
 //!
@@ -47,6 +50,9 @@ struct Scenario {
     setup: Option<(String, Option<String>)>,
     config: Option<String>,
     model: Option<String>,
+    full_keyboard: bool,
+    /// TOML files from the repository appended to the default config.
+    append: Vec<String>,
     script: Vec<String>,
     expected: String,
 }
@@ -63,6 +69,8 @@ fn parse(path: &Path) -> Scenario {
         setup: None,
         config: None,
         model: None,
+        full_keyboard: false,
+        append: Vec::new(),
         script: Vec::new(),
         expected,
     };
@@ -74,6 +82,8 @@ fn parse(path: &Path) -> Scenario {
             ["setup", pack, profile @ ..] => s.setup = Some((pack.to_string(), Some(profile.join(" ")))),
             ["config", file] => s.config = Some(file.to_string()),
             ["model", name] => s.model = Some(name.to_string()),
+            ["full-keyboard"] => s.full_keyboard = true,
+            ["append", file] => s.append.push(file.to_string()),
             _ => s.script.push(words.join(" ")),
         }
     }
@@ -91,7 +101,14 @@ fn install(s: &Scenario, config_dir: &Path, debug: &Debug) -> Result<(), String>
     } else if let Some(file) = &s.config {
         install_config(config_dir, &fs::read_to_string(manifest.join(file)).unwrap());
     } else {
-        install_config(config_dir, &steady(&common::default_config()));
+        let mut text = steady(&common::default_config());
+        if s.full_keyboard {
+            text = text.replacen("[active]\n", "full_keyboard = true\n\n[active]\n", 1);
+        }
+        for file in &s.append {
+            text.push_str(&format!("\n{}\n", fs::read_to_string(manifest.join(file)).unwrap()));
+        }
+        install_config(config_dir, &text);
         if let Some((pack, profile)) = &s.setup {
             let pack = manifest.join(pack);
             let mut args = vec!["install-pack", pack.to_str().unwrap()];
@@ -100,6 +117,30 @@ fn install(s: &Scenario, config_dir: &Path, debug: &Debug) -> Result<(), String>
         }
     }
     Ok(())
+}
+
+/// Runs the script. `cli <args>` lines run `padwight <args>` against the daemon between the debug
+/// words, for what only a command can ask for (`cli numpad-toggle`).
+fn run_script(script: &[String], debug: &Debug, cli: &dyn Fn(&[&str]) -> std::process::Output) -> Result<String, String> {
+    let run_chunk = |chunk: &mut Vec<&str>| {
+        let text = chunk.join("\n");
+        chunk.clear();
+        debug(&["run"], Some(&text)).map_err(|e| format!("the script failed: {e}"))
+    };
+    let mut chunk: Vec<&str> = Vec::new();
+    for line in script {
+        if let Some(args) = line.strip_prefix("cli ") {
+            run_chunk(&mut chunk)?;
+            let args: Vec<&str> = args.split_whitespace().collect();
+            let out = cli(&args);
+            if !out.status.success() {
+                return Err(format!("`padwight {}` failed: {}", args.join(" "), String::from_utf8_lossy(&out.stderr)));
+            }
+        } else {
+            chunk.push(line);
+        }
+    }
+    run_chunk(&mut chunk)
 }
 
 /// What went wrong running a scenario's script.
@@ -152,8 +193,11 @@ fn run(s: &Scenario) -> Result<String, String> {
     session.stdout(Stdio::null()).stderr(Stdio::null());
     let mut session = session.spawn().unwrap();
 
-    let script = s.script.join("\n");
-    let ran = debug(&["run"], Some(&script)).map_err(|e| format!("the script failed: {e}"));
+    let ran = run_script(&s.script, &debug, &|args| {
+        let mut command = Command::new(BIN);
+        env_of(&mut command);
+        command.args(args).output().unwrap()
+    });
     let transcript = ran.and_then(|_| debug(&["transcript"], None));
     let _ = debug(&["quit"], None);
     let _ = session.wait();
