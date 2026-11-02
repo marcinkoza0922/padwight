@@ -172,6 +172,23 @@ minutes it releases everything and checks the invariants: nothing held in the ke
 the log, resident memory, open descriptors and thread count within a bound of their start. It
 saves its seed, so a failure can be replayed exactly. Run overnight weekly.
 
+**Status.** Built: `tests/soak/` (an `#[ignore]` test, `soak_run`) and `scripts/soak.sh`, which runs it
+in the Docker container against a `--debug` daemon. Seeded steps: input on 1-4 uhid pads
+(`HidPad::with_uniq`), plug and unplug, `SetProfile`/`Activate`/`NextProfile`/lock, the Guide mode
+(North held), `Reload`, `SetConfig` (changes every `long_press_ms`), disable/enable, keyboard and
+numpad overlays, `CloseOverlays`, SIGKILL/SIGSTOP/SIGCONT of the `padwight overlay` child, and a
+focus hook. At each check it releases everything, then asserts the kernel's key state on every
+`Padwight Virtual` device is empty, the daemon answers, the log has no `panicked`/`output error`,
+at most one overlay process, and RSS, fds and threads are within a bound of the start. Run:
+`scripts/soak.sh` (60 s); `PADWIGHT_SOAK_SECONDS=600 PADWIGHT_SOAK_CHECK_SECONDS=60 scripts/soak.sh`;
+overnight: `PADWIGHT_SOAK_SECONDS=28800 scripts/soak.sh` (not under the shared Docker lock; use it only
+when no other run needs the container). Replay: `PADWIGHT_SOAK_SEED=n PADWIGHT_SOAK_STEPS=k`.
+Output (`soak.csv` trend, `steps.log`, `daemon.log`) goes to `soak-runs/`. Settings are listed at
+the top of `tests/soak/main.rs`. Focus changes: set `PADWIGHT_SOAK_FOCUS_HOOK` to a command that
+takes a window class (T-7 plugs in there). Left: the container has no compositor, so the overlay
+process exits at once and the kill/stop steps mostly find nothing (needs T-7's wlroots stand-in);
+no menu is configured for `OpenMenu`; only key state (not axes) is checked in the kernel.
+
 ## T-7: Stand-in compositors
 
 **Gap.** GNOME focus has a stand-in shell (`tests/fixtures/gnome_shell_mock.js`). Sway, Hyprland,
