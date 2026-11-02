@@ -458,11 +458,12 @@ compares them with the last run.
 **Status.** Built, except the weekly profile run itself, which stays manual on a fixed machine.
 `.github/workflows/nightly.yml` (on `main`, 02:17 UTC and by hand) runs the container suite as one
 job per filter (`scripts/kernel-test-docker.sh`, after `modprobe uinput uhid`),
-`scripts/desktop-versions.sh`, and coverage (T-19). It also holds jobs for fuzz targets (T-5,
-guarded on `fuzz/Cargo.toml`), scenario tests (T-1, guarded on `tests/scenarios/`) and the overlay
-picture diff (T-8, guarded on the CLI having `baseline` and `diff`); each does nothing until its tool
-is merged, and carries a TODO to check its command when it is. None of the workflow has run on
-GitHub yet; the YAML parses. `python3 -I scripts/profile-compare.py old/ new/` compares two
+`scripts/desktop-versions.sh`, coverage (T-19), each fuzz target for a minute (`scripts/fuzz.sh`,
+T-5), and the overlay and window baseline of `main` (T-8, kept 30 days as the `overlay-baseline`
+artefact). On a pull request, `ci.yml`'s `overlay-diff` job downloads the newest baseline, runs
+`debug overlay diff` and writes the list of changed pictures to the job summary, without failing the
+pull request. The scenario tests (T-1) need no job of their own: they run with the ordinary tests.
+None of the workflows has run on GitHub yet; the YAML parses. `python3 -I scripts/profile-compare.py old/ new/` compares two
 `PADWIGHT_PROFILE_OUT` folders (limits and noise rules in its docstring; exit 1 when something got
 worse, 2 when the machines differ) and was tried on synthetic folders only.
 `scripts/desktop-weekly.sh [--dry-run] [--only names]` runs `desktop-test.sh` on every VM in `vms/`
