@@ -25,6 +25,11 @@ kind = "steam_app_id"
 value = "2290"
 profile = "Doom + Doom II"
 
+[[rules]]
+kind = "executable"
+value = "doom.exe"
+profile = "Doom + Doom II"
+
 [[profiles]]
 name = "Doom + Doom II"
 combos = []
