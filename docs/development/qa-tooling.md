@@ -159,6 +159,20 @@ coverage, and the newer parsers have no sweep at all.
 Seed each with the library packs, the fixtures and the debug scenes. Run each for a minute in CI
 (T-12) and for an hour weekly; keep the corpus in a separate repository or cache, not in git.
 
+**Status.** Built: the seven targets in the table, in `fuzz/` (a separate crate, outside the normal
+build). The program is a binary crate, so `src/fuzz_lib.rs` is a second crate root with the same
+module list as `main.rs` (keep the two equal), which `fuzz/Cargo.toml` builds as a library; the
+entry points are in `src/fuzz_targets.rs`, which sees private items, and each target is a one-line
+`fuzz_target!`. `fuzz/{packs,assets,protocols,build.rs}` are symlinks so the build script and the
+protocol macros find their files. `config_load` reads a text of files, each started by a line
+`#### relative/path`. Run `scripts/fuzz.sh [target [seconds]]` (needs `cargo install cargo-fuzz`
+and nightly; set `CARGO_TARGET_DIR` to share a build folder). It builds the seed corpus on the
+first run (`scripts/fuzz-seeds.py`: the library packs, built-in icons, sounds and fonts, token
+strings of the packs and debug scenes, IPC lines; config folders come from the program itself) and
+runs without a sanitizer (`-s none`) to keep the build short. Corpus and crashes stay in
+`fuzz/corpus` and `fuzz/artifacts`, not in git. Left: the weekly hour-long run and a shared corpus
+cache (T-12), `touchpad` events in `engine_input`, and results of the first runs (below).
+
 ## T-6: Soak and chaos runs
 
 **Gap.** The idle test runs 5 seconds. Leaks of file descriptors, threads or memory, and stuck

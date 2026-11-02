@@ -28,6 +28,8 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
   scripts/harness/resources.sh <out>` (`gui-idle.sh` for the settings window)
 - Game facts (Steam ids, executables, controller support, config paths): local PCGamingWiki snapshot and
   Discord's detectable-games list in `pcgamingwiki/`, see its `README.md`; never read `games.jsonl` whole
+- Fuzzing (needs `cargo install cargo-fuzz` and nightly): `scripts/fuzz.sh [target [seconds]]` runs one or all seven
+  targets in `fuzz/`; corpus in `fuzz/corpus`, crashes in `fuzz/artifacts` (neither in git); see `docs/development/qa-tooling.md` T-5
 - Long files: `scripts/long-files.sh` (lists files over 400 lines; split them when you work in them)
 
 Filter tests to the module you touched (e.g. `engine::`) unless the change is broad.

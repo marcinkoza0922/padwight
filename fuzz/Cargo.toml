@@ -1,0 +1,120 @@
+[package]
+name = "padwight-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+build = "build.rs"
+
+[package.metadata]
+cargo-fuzz = true
+
+[lib]
+name = "padwight_fuzz"
+path = "../src/fuzz_lib.rs"
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+anyhow = "1.0.104"
+dirs = "7.0.0"
+iced = { version = "0.14", features = ["svg", "image-without-codecs", "tokio", "markdown", "advanced"] }
+# Offscreen drawing for overlay snapshots (snapshot.rs). Both are already in the lock file
+# through iced, so the lock file doesn't change.
+iced_runtime = "0.14"
+# Reads a font file's family name without a renderer (font.rs); same version iced already locks.
+fontdb = "0.23"
+png = "0.17"
+# Decodes the background pictures (PNG and JPEG only, so no AVIF or other codecs come along).
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+# Rasterizes the app icon for the tray and window (iced already pulls it in).
+resvg = "0.45"
+# The overlay's own renderer (overlay/render): shapes text, and draws everything on the CPU.
+# Both are already in the lock file through iced, so the lock file doesn't change.
+cosmic-text = "0.15"
+tiny-skia = "0.11"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+tokio = { version = "1.53.2", features = ["io-util", "net", "rt", "time"] }
+toml = "1.1.6"
+rodio = { version = "0.22", default-features = false, features = ["playback"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+evdev = "0.13"
+libc = "0.2.190"
+# File chooser for importing and exporting packs, through the desktop portal.
+rfd = { version = "0.17", default-features = false, features = ["xdg-portal"] }
+zbus = "5"
+# wlroots focus tracking (focus/wlroots.rs). Both are already in the lock file through
+# iced's winit and smithay-client-toolkit, so the lock file doesn't change.
+wayland-client = "0.31"
+wayland-protocols-wlr = "0.3"
+# COSMIC focus tracking (focus/cosmic.rs) generates its protocol from protocols/.
+wayland-backend = "0.3"
+wayland-scanner = "0.31"
+# The overlay's window (overlay/wayland.rs): fractional scaling and the viewporter.
+wayland-protocols = { version = "0.32", features = ["client", "staging"] }
+# StatusNotifierItem tray icon.
+ksni = { version = "0.3.6", features = ["blocking"] }
+# Labels the on-screen keyboard's keys in the user's layout (keyboard/xkb.rs).
+xkbcommon = "0.8"
+
+
+[build-dependencies]
+toml = "1.1.6"
+
+[workspace]
+
+# Fuzzing runs optimised code; overflow checks and debug assertions stay on to catch more.
+[profile.release]
+debug = 1
+debug-assertions = true
+overflow-checks = true
+
+[[bin]]
+name = "pack_parse"
+path = "fuzz_targets/pack_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pack_assets"
+path = "fuzz_targets/pack_assets.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "config_load"
+path = "fuzz_targets/config_load.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "ipc_request"
+path = "fuzz_targets/ipc_request.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "tokens"
+path = "fuzz_targets/tokens.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "calculator"
+path = "fuzz_targets/calculator.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "engine_input"
+path = "fuzz_targets/engine_input.rs"
+test = false
+doc = false
+bench = false

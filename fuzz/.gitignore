@@ -1,0 +1,7 @@
+corpus/
+artifacts/
+target/
+work/
+Cargo.lock
+fuzz-*.log
+run.log
