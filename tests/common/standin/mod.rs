@@ -24,6 +24,7 @@ pub mod kwin;
 pub mod niri;
 pub mod overlay;
 pub mod sway;
+pub mod wlroots;
 
 /// A window a stand-in compositor shows. The pid should belong to a process that exists (see
 /// [`super::focus::GameProcess`]): the daemon identifies the game from it.

@@ -19,7 +19,7 @@ use std::{
 use common::{
     Daemon, assert_log_clean, install_config, serial, spawn_daemon_env, temp_root, wait_for,
     focus::{DEFAULT_LINE, GAME_LINE, GameProcess, game_config, status, wait_for_log, wait_for_status},
-    standin::{Compositor, bus::SessionBus, cinnamon::Cinnamon, kwin::Kwin, Window, hyprland::Hyprland, niri::Niri, sway::Sway},
+    standin::{Compositor, wlroots::{OutputSpec, Wlroots}, bus::SessionBus, cinnamon::Cinnamon, kwin::Kwin, Window, hyprland::Hyprland, niri::Niri, sway::Sway},
 };
 
 /// A desktop-like window owned by this test process, which no rule matches.
@@ -157,5 +157,27 @@ fn compositor_cinnamon_focus_switches_the_profile() {
     let path = PathBuf::from(format!("{}:{path}", cinnamon.bin_dir().display()));
     let daemon = start_daemon_on(&s, &[("PATH", &path)], Some(&bus));
     walk(&s, &cinnamon, "Cinnamon", &daemon);
+    stop(daemon, &s);
+}
+
+/// The protocol has no pid, so the rule matches the window class the game's window carries.
+#[test]
+#[ignore]
+fn compositor_wlroots_focus_switches_the_profile() {
+    let _serial = serial();
+    let s = setup();
+    let config = s.root.join("config/padwight");
+    let class_rule = game_config().replace("kind = \"executable\"\nvalue = \"padwight-fake-game\"", "kind = \"window_class\"\nvalue = \"padwight_game\"");
+    assert!(class_rule.contains("window_class"), "the game's rule became a class rule");
+    fs::remove_dir_all(&config).unwrap();
+    install_config(&config, &class_rule);
+    let outputs = [
+        OutputSpec { x: 0, y: 0, width: 1280, height: 800, scale: 1 },
+        OutputSpec { x: 1280, y: 0, width: 1024, height: 768, scale: 1 },
+    ];
+    let wl = Wlroots::start(&s.runtime.join("wayland-test"), &outputs);
+    let name = PathBuf::from("wayland-test");
+    let daemon = start_daemon(&s, &[("WAYLAND_DISPLAY", &name)]);
+    walk(&s, &wl, "wlroots", &daemon);
     stop(daemon, &s);
 }
