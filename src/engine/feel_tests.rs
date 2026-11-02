@@ -232,16 +232,13 @@ fn one_full_stick_turn_is_exactly_one_configured_turn_size() {
 }
 
 #[test]
-fn rotation_smoothing_loses_its_lag_when_the_stick_is_let_go() {
-    // Characterisation, not a verdict: smoothing delays the turn, and what is still queued in the
-    // filter when the stick is released is dropped (the filter resets), so a full stick turn with
-    // smoothing on comes up short of the configured size. The shortfall is bounded by roughly the
-    // pixels a filter-time-constant of rotation carries.
+fn rotation_smoothing_flushes_its_lag_when_the_stick_is_let_go() {
+    // Smoothing delays the turn, but what the filter still holds at release is sent then, so a
+    // full stick turn is one Turn size with or without smoothing.
     let exact = one_full_stick_turn(3600.0, 0, 360, true);
     let smoothed = one_full_stick_turn(3600.0, 50, 360, true);
     assert!((exact - 3600).abs() <= 2, "{exact}");
-    assert!(smoothed < exact, "smoothing loses the lag it was holding: {smoothed} vs {exact}");
-    assert!(smoothed > 3600 * 9 / 10, "and loses under a tenth for a 1.44 s turn with 50 ms smoothing: {smoothed}");
+    assert!((smoothed - 3600).abs() <= 2, "smoothed turn: {smoothed}");
 }
 
 #[test]

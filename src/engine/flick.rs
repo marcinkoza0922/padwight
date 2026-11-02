@@ -31,6 +31,8 @@ pub(super) struct FlickState {
     flicks: Vec<(f32, f32, f32)>,
     /// Low-pass filtered rotation, in pixels per tick.
     smoothed: f32,
+    /// Rotation taken in but not yet sent (the filter's lag); flushed on release.
+    owed: f32,
 }
 
 fn ease(t: f32) -> f32 {
@@ -56,6 +58,7 @@ impl FlickState {
                 let raw = if turned.abs() >= ROTATE_NOISE_DEGREES { turned / 360.0 * p.full_turn_px } else { 0.0 };
                 dx += if p.rotate_smoothing_secs > 0.0 {
                     self.smoothed += (raw - self.smoothed) * (1.0 - (-dt / p.rotate_smoothing_secs).exp());
+                    self.owed += raw - self.smoothed;
                     self.smoothed
                 } else {
                     raw
@@ -63,12 +66,15 @@ impl FlickState {
             } else {
                 self.active = true;
                 self.smoothed = 0.0;
+                self.owed = 0.0;
                 if angle.abs() > p.forward_deadzone {
                     self.flicks.push((angle / 360.0 * p.full_turn_px, 0.0, p.flick_secs.max(0.001)));
                 }
             }
             self.last_angle = angle;
         } else {
+            // Letting go sends what the filter still held, so a full turn is one Turn size.
+            dx += std::mem::take(&mut self.owed);
             self.active = false;
             self.smoothed = 0.0;
         }
