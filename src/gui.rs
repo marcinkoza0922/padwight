@@ -65,6 +65,10 @@ mod mouse_region;
 mod menu_grid;
 #[cfg(test)]
 mod menu_suite;
+#[cfg(test)]
+mod harness;
+#[cfg(test)]
+mod save_tests;
 mod open_cards;
 mod keys;
 mod layers;

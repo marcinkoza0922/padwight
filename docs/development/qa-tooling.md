@@ -253,6 +253,17 @@ folder and compare the config with the expected one:
 The same approach fits the in-game editor: `layout_editor` rows driven by the input the menu
 would get, then compared (EDIT-1, EDIT-2).
 
+**Status.** Built for the settings window: `src/gui/harness.rs` (`Rig`) boots the app on a config
+folder of its own under `screenshots/gui-save-tests/`, drives it by `Message`s, runs the real Save
+checks (`Message::Save`), writes with `Config::save_to`, diffs the files line by line and reads them
+back to compare with what the window holds. Tests are in `src/gui/save_tests.rs` (one change per
+editor: buttons, library setup, sticks, triggers, gyro, touchpad, combos, layers, modes, macros,
+cycles, menus, info, logs; Revert and Undo restoring the files exactly) and `save_tests/blocks.rs`
+(ten Save & apply checks, each refusing with its own words, writing nothing, flagging its tab, and
+passing once fixed). Run: `cargo nextest run --profile agent save_tests`. Left: the in-game editor
+(`layout_editor` rows, EDIT-1/EDIT-2), the remaining checks (zones, two flick sticks, layer
+indicator, duplicate profile names), and iced_test clicks on labelled widgets.
+
 ## T-11: GUI layout checks
 
 **Gap.** Clipped text, wrapped labels and low contrast are found by eye.
