@@ -1,0 +1,69 @@
+name: Weekly
+
+# Mutation testing (T-19 in docs/development/qa-tooling.md), one area at a time so a run fits in a
+# job. Survivors are in the mutants-<area> artifact (mutants.out/missed.txt): fix each with a test,
+# or note why it can't matter. The performance baselines and the desktop VMs run on a fixed
+# machine instead (scripts/profile-compare.py, scripts/desktop-weekly.sh).
+
+on:
+  schedule:
+    - cron: "43 3 * * 0"
+  workflow_dispatch:
+    inputs:
+      area:
+        description: "One area (engine, menu, gui-checks, config-store) or all"
+        default: all
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: never
+  RUST_BACKTRACE: "0"
+
+jobs:
+  mutants:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { area: engine, files: "src/engine/**/*.rs" }
+          - { area: menu, files: "src/menu/**/*.rs" }
+          - { area: gui-checks, files: "src/gui/checks.rs src/gui/checks/**/*.rs" }
+          - { area: config-store, files: "src/config/store.rs src/config/store/**/*.rs" }
+    steps:
+      - name: Skip other areas
+        id: pick
+        run: |
+          want='${{ github.event.inputs.area }}'
+          if [ -n "$want" ] && [ "$want" != all ] && [ "$want" != '${{ matrix.area }}' ]; then echo run=false >> "$GITHUB_OUTPUT"; else echo run=true >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/checkout@v4
+        if: steps.pick.outputs.run == 'true'
+      - name: System packages
+        if: steps.pick.outputs.run == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libxkbcommon-dev libwayland-dev libudev-dev libfontconfig1-dev libdbus-1-dev libasound2-dev
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.pick.outputs.run == 'true'
+      - uses: Swatinem/rust-cache@v2
+        if: steps.pick.outputs.run == 'true'
+      - uses: taiki-e/install-action@v2
+        if: steps.pick.outputs.run == 'true'
+        with:
+          tool: nextest,cargo-mutants
+      - name: cargo mutants
+        if: steps.pick.outputs.run == 'true'
+        # Exit 2 means some mutants survived, which is the report, not a failure of the job.
+        run: |
+          args=()
+          for f in ${{ matrix.files }}; do args+=(--file "$f"); done
+          cargo mutants "${args[@]}" --output mutants-out || [ $? -eq 2 ]
+      - uses: actions/upload-artifact@v4
+        if: steps.pick.outputs.run == 'true' && always()
+        with:
+          name: mutants-${{ matrix.area }}
+          path: mutants-out/mutants.out
