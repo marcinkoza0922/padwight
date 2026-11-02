@@ -220,7 +220,10 @@ compare tool's scoring, and lists added and removed pictures, changed fonts and 
 moved, worst first, with `baseline | new | difference` PNGs in `screenshots/regression/diff`;
 it exits 1 when anything moved. Options: `--only overlay,motion,gui`, `--out`, `--min-over <percent>`,
 `--exact` (any difference at all). `debug gui baseline|diff <dir>` is the same for the window alone.
-Code: `src/debug/regression.rs`. CI recipe (not wired): on `main`, run `baseline base/` and upload
+Determinism: after a baseline, two diffs with `--exact` found 137 of 137 pictures byte-identical, once the
+overlay's looping clock (`overlay/ui/shots.rs`) and the info overlays' time and date (`info::pin_time`) were
+pinned; before that, drifting scanlines, caret blinks and the wall clock made 7 scenes differ. A baseline
+takes about 4 CPU minutes, mostly the window shots. Code: `src/debug/regression.rs`. CI recipe (not wired): on `main`, run `baseline base/` and upload
 `base/` as an artefact; on a pull request, download it, run `diff base/ --out regression/`, upload
 `regression/diff` and post the printed list as the comment; the exit status says whether to flag it.
 Left: the window shots use whatever fonts the machine has beyond the bundled ones, so a CI baseline

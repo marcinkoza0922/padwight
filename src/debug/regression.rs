@@ -212,22 +212,9 @@ fn load(path: &Path) -> Result<Image> {
     Ok(Image { width: info.width, height: info.height, rgba })
 }
 
+/// Prints what differs in the tool and the bundled fonts.
 #[expect(clippy::print_stdout, reason = "CLI output")]
-fn diff(options: &Options) -> Result<()> {
-    let text = std::fs::read_to_string(options.dir.join("manifest.json")).with_context(|| format!("no baseline in {} (make one with `baseline`)", options.dir.display()))?;
-    let old: Manifest = serde_json::from_str(&text).context("manifest.json is not a baseline manifest")?;
-    let sets: Vec<String> = old.sets.iter().filter(|s| wanted(options, s)).cloned().collect();
-    let fresh_dir = options.out.join("new");
-    let diff_dir = options.out.join("diff");
-    // Old pictures left from an earlier run would be mistaken for this one's.
-    for dir in [&fresh_dir, &diff_dir] {
-        let _ = std::fs::remove_dir_all(dir);
-    }
-    let files = produce(&sets, &fresh_dir)?;
-    let new = manifest_of(&sets, &fresh_dir, &files)?;
-
-    let in_sets = |file: &str| sets.iter().any(|s| file.starts_with(&format!("{s}/")));
-    let mut problems = 0;
+fn report_tool_and_fonts(old: &Manifest, new: &Manifest) {
     if old.renderer != new.renderer || old.tool != new.tool {
         println!("tool: baseline {} / {}, now {} / {}", old.tool, old.renderer, new.tool, new.renderer);
     }
@@ -241,10 +228,26 @@ fn diff(options: &Options) -> Result<()> {
     for name in old.fonts.keys().filter(|n| !new.fonts.contains_key(*n)) {
         println!("font removed: {name}");
     }
+}
+
+#[expect(clippy::print_stdout, reason = "CLI output")]
+fn diff(options: &Options) -> Result<()> {
+    let text = std::fs::read_to_string(options.dir.join("manifest.json")).with_context(|| format!("no baseline in {} (make one with `baseline`)", options.dir.display()))?;
+    let old: Manifest = serde_json::from_str(&text).context("manifest.json is not a baseline manifest")?;
+    let sets: Vec<String> = old.sets.iter().filter(|s| wanted(options, s)).cloned().collect();
+    let fresh_dir = options.out.join("new");
+    let diff_dir = options.out.join("diff");
+    // Old pictures left from an earlier run would be mistaken for this one's.
+    for dir in [&fresh_dir, &diff_dir] {
+        let _ = std::fs::remove_dir_all(dir);
+    }
+    let files = produce(&sets, &fresh_dir)?;
+    let new = manifest_of(&sets, &fresh_dir, &files)?;
+    let in_sets = |file: &str| sets.iter().any(|s| file.starts_with(&format!("{s}/")));
+    report_tool_and_fonts(&old, &new);
     let known: Vec<&str> = old.entries.iter().map(|e| e.file.as_str()).collect();
     let added: Vec<&str> = new.entries.iter().map(|e| e.file.as_str()).filter(|f| !known.contains(f)).collect();
     let removed: Vec<&str> = known.iter().copied().filter(|f| in_sets(f) && !files.iter().any(|n| n == f)).collect();
-
     let (mut results, mut same, mut faint) = (Vec::new(), 0, 0);
     for entry in old.entries.iter().filter(|e| files.contains(&e.file)) {
         let name = entry.file.trim_end_matches(".png").to_string();
@@ -284,7 +287,7 @@ fn diff(options: &Options) -> Result<()> {
     if !removed.is_empty() {
         println!("removed ({}): {}", removed.len(), removed.join(" "));
     }
-    problems += results.len() + added.len() + removed.len();
+    let problems = results.len() + added.len() + removed.len();
     println!("{} moved, {} added, {} removed, {faint} differ below the threshold, {same} identical", results.len(), added.len(), removed.len());
     if problems > 0 {
         bail!("{problems} pictures differ from the baseline in {}", options.dir.display());
