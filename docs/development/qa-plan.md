@@ -30,11 +30,11 @@ A bug is worth more testing the more it costs the player. Every feature area in
 
 ## 2. Test layers
 
-What exists today, from fastest to slowest. Counts are as of 2026-11-01.
+What exists today, from fastest to slowest. Counts are as of 2026-11-02.
 
 | # | Layer | What it proves | Where it runs | How |
 |---|---|---|---|---|
-| L1 | Unit tests (1,473 `#[test]`) | Logic of single modules: engine, config, packs, menus, renderer | CI | `cargo nextest run --profile agent …` |
+| L1 | Unit tests (1,577 `#[test]`) | Logic of single modules: engine, config, packs, menus, renderer | CI | `cargo nextest run --profile agent …` |
 | L2 | Sweeps over many inputs | No stuck output after random input; damaged packs and configs are refused without a panic; ring sectors leave no gaps; every library pack round-trips | CI | `engine::release_tests`, `library::tests::damaged_packs_…`, `config::tests::damaged_configs_…` |
 | L3 | Off-screen pictures | What the overlay, the settings window and the controller drawings look like, with no display | Locally, by hand | `debug overlay`, `debug overlay compare`, `debug motion`, `debug gui` |
 | L4 | Debug sessions | Mappings end to end through a real daemon, with a virtual controller and recorded output | CI (session tests); `--ignored` daemon tests need `/dev/uinput` | `tests/debug_session/`, `padwight debug --attach` |
@@ -81,7 +81,7 @@ covered mostly by integration tests (the daemon) score low here for that reason.
 | On-screen stage editor (`gui/stage/`) | T3 | — | Shots; handle drag in the simulator | Never used with a real mouse; focus and scroll after a pick run only live | GUI-8 |
 | In-game editor: Quick Settings, Edit Controls (`system_menu/`, `layout_editor/`) | T3 | 18, 7 | Units; scenes | Typing, live pictures and Save/Discard on hardware; layout editor is thin on tests | T-1, EDIT-1 to EDIT-6 |
 | Packs: parse, check, import, export, update (`pack.rs`) | T3 | 18 | Round trips, damaged input, clashes, forks, assets | Coverage-guided fuzzing of parse and of SVG and WAV assets | T-5 |
-| Library: 232 packs (`packs/`) | T1 | — | Every pack valid, round-trips, known tokens only, built-in assets only, no shared executables | IDs and executable names unverified for several families; bindings unverified against the games | T-13, T-14, [section 6](#6-pack-qa) |
+| Library: 231 packs (`packs/`) | T1 | — | Every pack valid, round-trips, known tokens only, built-in assets only, no shared executables | IDs and executable names unverified for several families; bindings unverified against the games | T-13, T-14, [section 6](#6-pack-qa) |
 | Control protocol 1.0 (`ipc.rs`, `docs/protocol.md`) | T3 | 11 | `ipc/tests.rs` pins the wire format | The doc's examples aren't executed; no client outside Rust is tested | T-15 |
 | CLI, doctor, tray (`main.rs`, `doctor/`, `tray/`) | T3 | 17, 8 | Docs name real commands (`check-project.py`); doctor units | Doctor against real broken setups; tray Quit in a session | INS-8, INS-10 |
 | Screenshots, recording, media (`capture/`, `record/`, `media/`) | T2 | 17, 15, 11 | Units; `--debug` daemon writes to a temp folder | Each desktop's tool; a stuck MPRIS player | INS-11 |
@@ -318,7 +318,7 @@ install rather than a particular controller; ENV-1 and ENV-2 need the pads and h
 
 ## 6. Pack QA
 
-The library has 232 packs. The Rust tests already check that every pack parses, passes `check`,
+The library has 231 packs. The Rust tests already check that every pack parses, passes `check`,
 round-trips through a save, uses only known tokens and built-in assets, and that no two packs claim
 the same executable. Those prove a pack is well formed, not that it is right. Three things can still
 be wrong, from cheapest to check to dearest:
@@ -335,7 +335,7 @@ be wrong, from cheapest to check to dearest:
 3. **Play: does the scheme work in the game?** Only a playtest shows that a menu is reachable, a
    gesture is comfortable, or the game drops fast macro input.
 
-Playtests are tiered, since 232 full playtests are out of reach:
+Playtests are tiered, since 231 full playtests are out of reach:
 
 | Tier | Which packs | Check | When |
 |---|---|---|---|
@@ -444,3 +444,63 @@ Performance (not pass/fail): `scripts/profile.sh [filter]` writes JSON per measu
 `target/profile/report.html` with charts. See [architecture.md](architecture.md#testing-and-checks)
 for its settings and the host-only parts, and the overlay harness in
 [overlay-debugging.md](overlay-debugging.md#the-harness).
+
+## 10. Pass log
+
+One entry per pass, newest first: what ran, what it found, what is still open.
+
+### 2026-11-02 (commit before this pass: 18717b6, kernel 7.3.0, no controller, no display)
+
+Ran: check, clippy, the whole nextest suite (1,492 run, 83 ignored; again on the fixed tree: 1,496
+run, all passed), scenarios, `check-project.py`,
+`check-install.sh`, `cargo audit`; the container suite (`nothing_stays`, `daemon_`, `hotplug_`,
+`idle_`, `process_`, `gui_`, `socket_fallback`, `debug_`; 33 tests, no host daemon running;
+`nothing_stays`, `daemon_`, `hotplug_`, `idle_` and `debug_` again on the fixed tree, all passed);
+`gnome-versions/run.sh` (Shell 45 to 51); the off-screen pictures (`debug overlay all glyphs`,
+`compare`, `motion`, `gui-check --strict`, settings tabs), the sound trace and audit; the pack
+audit and binding comparison; a read of SEC-4, 5, 7, 8 and 10 against the source. Not run: every
+`HW-`, `FOC-`, `OVL-`, `INS-`, `ENV-` and `FEEL-` check, SEC-1, 2, 3, 6 and 9, `debug overlay diff`
+(no baseline exists), the fuzz targets.
+
+Fixed:
+
+- **SEC-4.** The GNOME and Cinnamon extensions took any width, height and fd from any program on
+  the bus. `SetBuffer` now refuses sizes the mapped buffer can't back. Still open: it doesn't check
+  who calls, and a client can shrink its own memfd after the Shell maps it (SIGBUS).
+- **SEC-7.** A window that matched a game rule skipped Force Quit's protected-name check. It no
+  longer does; the list gained the session plumbing and the launchers; `force_quit` refuses a
+  protected process by its own name; the SIGKILL goes only to processes whose start time hasn't
+  changed since the SIGTERM. Still open: a sandboxed game that reports its in-sandbox pid can
+  resolve to an unrelated process of the same user (`focus/identify.rs` `host_pid`).
+- **SEC-5.** A save writes a `complete` marker last; the next load finishes a swap cut short after
+  it, so General and the setups are never one old and one new.
+- **SEC-10.** The update's scratch folder is private (0700) and never in a shared temp folder. An
+  update already running refuses a second; the child is reaped; a replaced binary's
+  `(deleted)` path is cleaned. Still open: `InstallUpdate` answers Ok before anything has run;
+  `get.sh` doesn't validate `PADWIGHT_VERSION`.
+- **Packs.** `mount-and-blade-napoleonic-wars` had the wrong Steam id (73000; the DLC is 48705);
+  `doom-and-doom-2` gained its executable (`doom.exe`, read from an installed copy);
+  `hitman-world-of-assassination` said 2016. The audit's other `id_other_game` warnings on those
+  packs are intended (they cover several apps) and are noted in `pack-qa.tsv`.
+- **Settings window contrast.** `gui-check --strict` went from 225 findings to 0: amber and green
+  text deepened on the light theme, one accent color that reads on both, button text moved until it
+  reads, lighter muted text in dark mode. The checker no longer judges page text a popup covers,
+  short labels inside pictures, or a few disabled labels (`layout_check/scan.rs` `exempt`).
+- Counts in section 2 and 3 (1,577 tests, 231 packs).
+
+Open from this pass:
+
+- The pack audit still flags 79 of 231 packs. 85 executables aren't in Discord's list (many are
+  likely gaps there); 14 packs have no `steam_app_id` rule; `alan-wake` and `mirrors-edge` have a
+  release year that differs from the wiki; `half-life-2`, `quake`, `quake-ii` and `against-the-storm`
+  are passthrough packs where the wiki doesn't confirm native support; `control-resonant`
+  and `final-doom` have no executable rule.
+- `cargo audit`: nine allowed warnings (six unmaintained crates, `lru` and tokio unsound, one
+  yanked). Nobody has read them for reachability (SEC-6).
+- Old vs new overlay renderer: `doodle-*` scenes differ 4 to 7% (the old renderer draws no doodles,
+  probably), `quick-styled` 4.9% (not looked at).
+- Motion strips weren't opened. Most settings tabs weren't looked at: the `tab` step needs a
+  profile or game opened first.
+- The overlay picture baseline doesn't exist yet; run `debug overlay baseline <dir>` once so the
+  next pass can diff.
+- The settings pages after the contrast work haven't been looked at in the dark theme.
