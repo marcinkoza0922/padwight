@@ -5,3 +5,4 @@ work/
 Cargo.lock
 fuzz-*.log
 run.log
+run-*.log

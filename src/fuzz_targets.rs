@@ -19,6 +19,18 @@ use crate::{
     tools::calculator::{Calculator, Press},
 };
 
+/// Lets panics inside the font parser pass: `font::family_of` catches them (a damaged font file
+/// must not stop the app), but libfuzzer's own panic hook would abort on them first. Call from a
+/// target's `init`, after libfuzzer has set its hook.
+pub fn allow_caught_font_panics() {
+    let libfuzzer_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        if !info.location().is_some_and(|at| at.file().contains("ttf-parser")) {
+            libfuzzer_hook(info);
+        }
+    }));
+}
+
 /// A pack file: parse it, and if it reads, plan and apply the import and write it back out.
 pub fn pack_parse(data: &[u8]) {
     let Ok(text) = std::str::from_utf8(data) else { return };

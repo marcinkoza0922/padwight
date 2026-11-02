@@ -171,7 +171,14 @@ first run (`scripts/fuzz-seeds.py`: the library packs, built-in icons, sounds an
 strings of the packs and debug scenes, IPC lines; config folders come from the program itself) and
 runs without a sanitizer (`-s none`) to keep the build short. Corpus and crashes stay in
 `fuzz/corpus` and `fuzz/artifacts`, not in git. Left: the weekly hour-long run and a shared corpus
-cache (T-12), `touchpad` events in `engine_input`, and results of the first runs (below).
+cache (T-12) and `touchpad` events in `engine_input`.
+
+First runs, two minutes per target on two workers: `engine_input` (about 200k runs), `calculator`
+(440k), `ipc_request` (17M), `tokens` (1.1M), `pack_parse` (250k) and `config_load` (1.3k, slow:
+each run writes a folder) found nothing. `pack_assets` found two faults in the font parser, both
+from a few bytes of a damaged TrueType collection in a pack: an assertion panic in `ttf-parser`
+and a hang on a header claiming 875 million fonts. Fixed in `font::family_of` (the count must fit
+the file; the parse is wrapped in `catch_unwind`), with regression tests in `font.rs`.
 
 ## T-6: Soak and chaos runs
 
