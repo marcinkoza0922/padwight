@@ -183,17 +183,17 @@ Fill a cell with the date of the last pass. A cell that doesn't apply is "—".
 
 | # | Steps | Expected |
 |---|---|---|
-| HW-1 | On each controller in the matrix, run General's Gamepad passthrough, then a remapped profile. | Every button, stick and trigger gives the right output. Sticks and triggers rest at center. |
-| HW-2 | Unplug while a mapped key is held; plug back in. | The key comes up at once; the pad is managed again and works. (Automated with uhid: `hotplug_`.) |
-| HW-3 | Two controllers at once, each with its own setup (see [per-controller-setups.md](per-controller-setups.md)). Unplug the first. | Each pad follows its own mappings; the second keeps working; nothing is held. |
+| HW-1 | On each controller in the matrix, run General's Gamepad passthrough, then a remapped profile. | Every button, stick and trigger gives the right output. Sticks and triggers rest at center. (Automated for the DualSense replica: `hw_1_`, `tests/hardware.rs`; the Xbox and Switch families and real firmware still need a person.) |
+| HW-2 | Unplug while a mapped key is held; plug back in. | The key comes up at once; the pad is managed again and works. (Automated with uhid: `hotplug_`.) (Also `hw_11_` covers a stop mid-macro, mid-layer and with a menu open.) |
+| HW-3 | Two controllers at once, each with its own setup (see [per-controller-setups.md](per-controller-setups.md)). Unplug the first. | Each pad follows its own mappings; the second keeps working; nothing is held. (Automated with two uhid pads: `hw_3_`, `tests/hardware.rs`.) |
 | HW-4 | A PlayStation or Switch pad, first without the motion udev rule, then with it. | Without it, the app says gyro is unavailable; with it, gyro works. The profile doesn't flicker when the motion node appears after the pad. |
-| HW-5 | DualSense or DualShock 4 touchpad in each mode: mouse (tap, two-finger scroll, glide), stick, swipes, menu zones, split pad. Also CR H-5 and CR H-16. | Each behaves as the Touchpad tab says. Tap and swipe times feel right. |
+| HW-5 | DualSense or DualShock 4 touchpad in each mode: mouse (tap, two-finger scroll, glide), stick, swipes, menu zones, split pad. Also CR H-5 and CR H-16. | Each behaves as the Touchpad tab says. Tap and swipe times feel right. (Partly automated: `tests/touchpad_modes.rs` through a DualSense replica. Stick, swipe and menu modes pass; mouse tap/scroll/glide, CR H-5 and the split pad's right-half click are built but fail in the last run, unresolved, so those need a look or a person. Feel stays manual.) |
 | HW-6 | Test rumble on a pad with motors and one without; play a game that rumbles. | Rumble works, or the app says it isn't supported. |
 | HW-7 | Leave a pad idle for several hours, then play. Also suspend and resume, and let a Bluetooth pad sleep and wake. | No drift, no lost input, no CPU while idle; the pad comes back after resume and wake. |
-| HW-8 | With Steam running and a PlayStation or Switch pad, with and without `dist/72-padwight-hidraw.rules`. | Without the rule, the GUI and a toast warn that Steam reads the pad past Padwight. With it, no warning and no double input. |
+| HW-8 | With Steam running and a PlayStation or Switch pad, with and without `dist/72-padwight-hidraw.rules`. | Without the rule, the GUI and a toast warn that Steam reads the pad past Padwight. With it, no warning and no double input. (Automated with a fake `steam` holding the raw node, mode 0000 standing for the rule: `hw_8_`, `tests/hardware.rs`; real Steam stays manual.) |
 | HW-9 | Slay the Spire 2 (reads only the first Steam controller): start Steam with the pad already connected; also restart the daemon with the pad connected. | The game reads Padwight's pad in both cases. |
-| HW-10 | `padwight disable; padwight enable` in one line, on each family. | The pad is taken back at once; a touchpad still drives the profile (CR H-16). |
-| HW-11 | `systemctl --user restart padwight` mid-macro, mid-layer and with a menu open; then `kill -9` the daemon. | It comes back, releases everything, and doesn't grab twice. After `kill -9` the pad and the virtual devices are free. |
+| HW-10 | `padwight disable; padwight enable` in one line, on each family. | The pad is taken back at once; a touchpad still drives the profile (CR H-16). (Automated for a generic Xbox-id pad and a DualSense with touchpad: `hw_10_`, `tests/hardware.rs`; a Switch pad and a DualShock 4 replica are not built.) |
+| HW-11 | `systemctl --user restart padwight` mid-macro, mid-layer and with a menu open; then `kill -9` the daemon. | It comes back, releases everything, and doesn't grab twice. After `kill -9` the pad and the virtual devices are free. (Automated with SIGTERM and SIGKILL, mid-macro, mid-layer, menu open: `hw_11_`, `tests/hardware.rs`; `systemctl` itself is manual.) |
 
 ### 5.3 Desktops and focus
 

@@ -14,6 +14,8 @@ use std::{
 #[cfg(target_os = "linux")]
 pub mod focus;
 #[cfg(target_os = "linux")]
+pub mod ds;
+#[cfg(target_os = "linux")]
 pub mod input;
 #[cfg(target_os = "linux")]
 pub mod standin;
