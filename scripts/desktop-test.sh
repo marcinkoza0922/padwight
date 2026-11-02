@@ -370,10 +370,13 @@ fi
 # terminal can run either way: GTK and Qt pick the backend from the environment, kitty from a flag.
 exe_name=${exe_name:-$window}
 wayland_launch=() x11_launch=()
+# The session starts Xwayland on demand and tells only its own children where it is.
+xwayland=$(pgrep -a Xwayland | head -1)
+xenv=(env "DISPLAY=$(grep -o ' :[0-9]*' <<<"$xwayland" | head -1 | tr -d ' ')" "XAUTHORITY=$(sed -n 's/.*-auth \([^ ]*\).*/\1/p' <<<"$xwayland")")
 case $desktop in
-gnome) wayland_launch=(env GDK_BACKEND=wayland "${launch[@]}"); x11_launch=(env GDK_BACKEND=x11 "${launch[@]}") ;;
-kde) wayland_launch=(env QT_QPA_PLATFORM=wayland konsole --separate -e bash -c "$read_key"); x11_launch=(env QT_QPA_PLATFORM=xcb konsole --separate -e bash -c "$read_key") ;;
-hyprland) wayland_launch=(kitty --override linux_display_server=wayland bash -c "$read_key"); x11_launch=(kitty --override linux_display_server=x11 bash -c "$read_key") ;;
+gnome) wayland_launch=(env GDK_BACKEND=wayland "${launch[@]}"); x11_launch=("${xenv[@]}" GDK_BACKEND=x11 "${launch[@]}") ;;
+kde) wayland_launch=(env QT_QPA_PLATFORM=wayland konsole --separate -e bash -c "$read_key"); x11_launch=("${xenv[@]}" QT_QPA_PLATFORM=xcb konsole --separate -e bash -c "$read_key") ;;
+hyprland) wayland_launch=(kitty --override linux_display_server=wayland bash -c "$read_key"); x11_launch=("${xenv[@]}" kitty --override linux_display_server=x11 bash -c "$read_key") ;;
 esac
 if [ ${#x11_launch[@]} -eq 0 ] || ! command -v Xwayland >/dev/null; then
     skip "native Wayland and Xwayland windows ($desktop has no way to run $window both ways here, or no Xwayland)"
