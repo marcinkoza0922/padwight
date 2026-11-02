@@ -80,7 +80,7 @@ impl App {
         let summary = format!("{} · {} lines · {} · {shown}", o.source.kind().name(), s.lines, DeviceChoice(s.tracking.device).to_string().to_lowercase());
         let mut header = row![
             card_title(open, title).on_press(Message::ToggleLog(i)),
-            text(summary).size(13).color(MUTED_COLOR),
+            text(summary).size(13).style(muted),
             space::horizontal(),
         ]
         .spacing(12)
@@ -167,7 +167,7 @@ impl App {
                      wrapped in \"Toggle on / off…\"."
                 })
                 .size(12)
-                .color(MUTED_COLOR),
+                .style(muted),
             ]
             .spacing(4)
             .into(),

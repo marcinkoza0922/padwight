@@ -235,13 +235,13 @@ fn curve_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(
 fn activation_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Message + Copy + 'a) -> Column<'a, Message> {
     let starts = row![
         checkbox(cfg.toggle_rumble).label("Rumble on gyro active / inactive").on_toggle(move |v| with(&|c| c.toggle_rumble = v)),
-        text("assign Gyro active / inactive, clutch, hold and recenter to any button, gesture, combo or menu item").size(12).color(MUTED_COLOR),
+        text("assign Gyro active / inactive, clutch, hold and recenter to any button, gesture, combo or menu item").size(12).style(muted),
     ]
     .spacing(14)
     .align_y(Alignment::Center);
     let pause_choices = [Optional(None), Optional(Some(Stick::Left)), Optional(Some(Stick::Right))];
     let hinted = |picker: Element<'a, Message>, hint: &'a str| -> Element<'a, Message> {
-        row![picker, text(hint).size(12).color(MUTED_COLOR)].spacing(10).align_y(Alignment::Center).into()
+        row![picker, text(hint).size(12).style(muted)].spacing(10).align_y(Alignment::Center).into()
     };
     rows.push(box_row("Switching", starts.into()))
         .push(box_row(

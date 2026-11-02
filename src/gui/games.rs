@@ -279,13 +279,13 @@ impl App {
             entry("App settings".into(), Page::Settings, None),
             entry("Manual".into(), Page::Manual, None),
             rule::horizontal(1),
-            text("Setups").size(13).color(MUTED_COLOR),
+            text("Setups").size(13).style(muted),
             entry("General".into(), Page::Game(None), warned(&self.config.general, playing(&None))),
         ]
         .spacing(6);
         // General is always listed, so the search box and the empty note are about the games.
         if self.config.games.is_empty() {
-            col = col.push(text("No game setups yet.").size(13).color(MUTED_COLOR));
+            col = col.push(text("No game setups yet.").size(13).style(muted));
         } else {
             col = col.push(field("Search setups…", &self.game_search).on_input(Message::SetGameSearch).size(14));
         }
@@ -319,7 +319,7 @@ impl App {
             .spacing(12)
             .align_y(Alignment::Center);
         if let Some(note) = origin_note(game) {
-            title = title.push(text(note).size(13).color(MUTED_COLOR));
+            title = title.push(text(note).size(13).style(muted));
         }
         // Every setup's title has an ⓘ saying what the page holds.
         title = title.push(help(if general {

@@ -26,7 +26,7 @@ impl App {
     fn feed_box<'a>(&self, feed: Option<&LogView>, hint: &'static str) -> Element<'a, Message> {
         match feed {
             Some(feed) if !feed.lines.is_empty() => crate::overlay::draw::log_panel(feed, self.preview_font(), &crate::overlay::fit::Fit::contents(), &crate::motion::Anim::still()),
-            _ => text(hint).size(13).color(MUTED_COLOR).into(),
+            _ => text(hint).size(13).style(muted).into(),
         }
     }
 
@@ -50,14 +50,14 @@ impl App {
         let mut list = column![].spacing(10);
         if switches.is_empty() {
             let none = if self.status.is_some() { "No profile switches yet." } else { NEEDS_DAEMON };
-            list = list.push(text(none).size(13).color(MUTED_COLOR));
+            list = list.push(text(none).size(13).style(muted));
         }
         for s in switches.iter().take(SHOWN_SWITCHES) {
             let setup = s.game.as_deref().unwrap_or("General");
             list = list.push(
                 row![
-                    text(ago(s.age_ms)).size(12).color(MUTED_COLOR).width(Length::Fixed(90.0)),
-                    column![text(format!("{setup} › {}", s.profile)), text(&s.why).size(12).color(MUTED_COLOR)]
+                    text(ago(s.age_ms)).size(12).style(muted).width(Length::Fixed(90.0)),
+                    column![text(format!("{setup} › {}", s.profile)), text(&s.why).size(12).style(muted)]
                         .spacing(2)
                         .width(Length::Fill),
                 ]

@@ -26,7 +26,7 @@ pub(super) fn fraction_editor<'a>(
     unit: &'a str,
     on_change: impl Fn(f32) -> Message + 'a,
 ) -> Element<'a, Message> {
-    row![slider(range, value, on_change).step(step).width(300), text(fraction_value(value, unit)).size(13)]
+    row![slider(range, value, on_change).step(step).width(300), text(fraction_value(value, unit)).size(13).wrapping(iced::widget::text::Wrapping::None)]
         .spacing(10)
         .align_y(Alignment::Center)
         .into()
@@ -52,7 +52,7 @@ pub(super) fn slider_editor<'a>(
     unit: &'a str,
     on_change: impl Fn(f32) -> Message + 'a,
 ) -> Element<'a, Message> {
-    row![slider(range, value, on_change).step(step).width(300), text(slider_value(value, step, unit)).size(13)]
+    row![slider(range, value, on_change).step(step).width(300), text(slider_value(value, step, unit)).size(13).wrapping(iced::widget::text::Wrapping::None)]
         .spacing(10)
         .align_y(Alignment::Center)
         .into()

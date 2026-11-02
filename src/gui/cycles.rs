@@ -119,7 +119,7 @@ impl App {
         };
         let mut header = row![
             card_title(open, title).on_press(Message::ToggleCycle(ci)),
-            text(shown).size(13).color(MUTED_COLOR),
+            text(shown).size(13).style(muted),
             space::horizontal(),
         ]
         .spacing(12)
@@ -174,7 +174,7 @@ fn view_cycle_editor<'a>(ci: usize, c: &'a Cycle, names: &Names) -> Element<'a, 
         text("Steps").size(16),
         steps,
         row![button(text("+ Add step").size(13)).style(style::secondary).on_press(Message::AddCycleStep(ci))],
-        text(note).size(12).color(MUTED_COLOR),
+        text(note).size(12).style(muted),
     ]
     .spacing(10)
     .into()

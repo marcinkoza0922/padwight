@@ -18,6 +18,8 @@ pub struct Seen {
     pub visible: Option<Rectangle>,
     /// The container directly around it, if any.
     pub parent: Option<Rectangle>,
+    /// Inside a scrollable that scrolls sideways, so being past the window's edge is by design.
+    pub sideways: bool,
 }
 
 /// Collects every text widget, depth first.
@@ -28,7 +30,8 @@ pub struct Probe {
     translation: Vector,
     parent: Option<Rectangle>,
     next_parent: Option<Rectangle>,
-    saved: Vec<(Option<Rectangle>, Vector, Option<Rectangle>)>,
+    sideways: bool,
+    saved: Vec<(Option<Rectangle>, Vector, Option<Rectangle>, bool)>,
 }
 
 impl Probe {
@@ -39,11 +42,11 @@ impl Probe {
 
 impl Operation for Probe {
     fn traverse(&mut self, operate: &mut dyn FnMut(&mut dyn Operation)) {
-        self.saved.push((self.viewport, self.translation, self.parent));
+        self.saved.push((self.viewport, self.translation, self.parent, self.sideways));
         self.parent = self.next_parent.take().or(self.parent);
         operate(self);
-        if let Some((viewport, translation, parent)) = self.saved.pop() {
-            (self.viewport, self.translation, self.parent) = (viewport, translation, parent);
+        if let Some((viewport, translation, parent, sideways)) = self.saved.pop() {
+            (self.viewport, self.translation, self.parent, self.sideways) = (viewport, translation, parent, sideways);
         }
     }
 
@@ -51,18 +54,19 @@ impl Operation for Probe {
         self.next_parent = Some(bounds);
     }
 
-    fn scrollable(&mut self, _id: Option<&Id>, bounds: Rectangle, _content: Rectangle, translation: Vector, _state: &mut dyn Scrollable) {
+    fn scrollable(&mut self, _id: Option<&Id>, bounds: Rectangle, content: Rectangle, translation: Vector, _state: &mut dyn Scrollable) {
         let visible = self.viewport.and_then(|v| v.intersection(&(bounds + self.translation)));
         // Its content is as tall as it needs to be, so it isn't a parent to fit inside.
         self.next_parent = None;
         self.parent = None;
         self.translation -= translation;
+        self.sideways |= content.width > bounds.width + 0.5;
         self.viewport = Some(visible.unwrap_or_default());
     }
 
     fn text(&mut self, _id: Option<&Id>, bounds: Rectangle, text: &str) {
         let visible = self.viewport.and_then(|v| v.intersection(&(bounds + self.translation)));
-        self.texts.push(Seen { text: text.to_string(), bounds: bounds + self.translation, visible, parent: self.parent.map(|p| p + self.translation) });
+        self.texts.push(Seen { text: text.to_string(), bounds: bounds + self.translation, visible, parent: self.parent.map(|p| p + self.translation), sideways: self.sideways });
     }
 }
 

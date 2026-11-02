@@ -130,7 +130,7 @@ fn position_grid<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>) -> Element<'
         }
         grid = grid.push(line);
     }
-    row![grid, text(style.position.to_string()).size(13).color(MUTED_COLOR)].spacing(12).align_y(Alignment::Center).into()
+    row![grid, text(style.position.to_string()).size(13).style(muted)].spacing(12).align_y(Alignment::Center).into()
 }
 
 /// Where an optional decoration lives in a style, what it's called, and what it starts as when
@@ -157,7 +157,7 @@ fn decorations<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>, items: bool) -
     let glow = Slot { label: "Glow on the selected item", get: |s| s.glow.as_ref(), put: |s, v| s.glow = v, start: |s| Shade::glow(&s.selected.color) };
     column![
         // Indented like the editor's labels above, so it reads as part of the editor.
-        text("    Decorations").size(14).color(MUTED_COLOR),
+        text("    Decorations").size(14).style(muted),
         optional(&border, |stroke, set| stroke_rows(stroke, 0.0..=8.0, &set), style, on_change),
         optional(&shadow, |shade, set| shade_rows(shade, &set), style, on_change),
         optional(&gradient, |g, set| gradient_rows(g, &set), style, on_change),

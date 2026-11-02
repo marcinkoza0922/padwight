@@ -413,7 +413,7 @@ fn turbo_editor<'a>(
                 .align_y(Alignment::Center);
             if shown != every_ms {
                 line = line
-                    .push(text(format!("(raised to {shown} ms, the macro's length)")).size(12).color(MUTED_COLOR));
+                    .push(text(format!("(raised to {shown} ms, the macro's length)")).size(12).style(muted));
             }
             line.into()
         }
@@ -441,7 +441,7 @@ fn turbo_editor<'a>(
 /// The action a Toggle or Turbo wraps, boxed like a "Several at once" list so it reads as sitting
 /// inside the outer action rather than beside it.
 fn wrapped<'a>(caption: &'a str, inner: Element<'a, Message>) -> Element<'a, Message> {
-    container(column![text(caption).size(12).color(MUTED_COLOR), inner].spacing(4))
+    container(column![text(caption).size(12).style(muted), inner].spacing(4))
         .padding(8)
         .width(Length::Fill)
         .style(style::output_list)
@@ -452,13 +452,13 @@ fn wrapped<'a>(caption: &'a str, inner: Element<'a, Message>) -> Element<'a, Mes
 /// text that follows the link.
 fn tab_link<'a>(before: &str, link: &str, tab: GameTab, after: &str) -> Element<'a, Message> {
     let mut line = row![
-        text(before.to_string()).size(12).color(MUTED_COLOR),
+        text(before.to_string()).size(12).style(muted),
         button(text(link.to_string()).size(12)).style(button::text).padding(0).on_press(Message::SelectGameTab(tab)),
     ]
     .spacing(6)
     .align_y(Alignment::Center);
     if !after.is_empty() {
-        line = line.push(text(after.to_string()).size(12).color(MUTED_COLOR));
+        line = line.push(text(after.to_string()).size(12).style(muted));
     }
     line.into()
 }
@@ -576,15 +576,15 @@ pub(super) fn action_value<'a>(
         | ButtonAction::GyroRecenter
         | ButtonAction::Magnifier(_)
         | ButtonAction::Tools => space().into(),
-        ButtonAction::ToggleMedia => text("D-pad left and right seek, up and down change the volume, bumpers change track, A plays or pauses, B closes.").size(12).color(MUTED_COLOR).into(),
+        ButtonAction::ToggleMedia => text("D-pad left and right seek, up and down change the volume, bumpers change track, A plays or pauses, B closes.").size(12).style(muted).into(),
         ButtonAction::ForceQuit => {
             text("Hold for 2 seconds to close the program in the focused window. The desktop is never closed.")
                 .size(12)
-                .color(MUTED_COLOR)
+                .style(muted)
                 .into()
         }
         ButtonAction::ToggleOverlay | ButtonAction::ToggleNumpad => {
-            text("Hold B on the controller to close it.").size(12).color(MUTED_COLOR).into()
+            text("Hold B on the controller to close it.").size(12).style(muted).into()
         }
         ButtonAction::ShowInfo(_) if names.infos.is_empty() => {
             tab_link(

@@ -119,8 +119,8 @@ pub(super) fn layer_part<'a>(ui: &Ui, part: LayerPart, label: String, summary: S
     }
     vec![
         row![
-            text(label).width(LABEL_WIDTH).color(MUTED_COLOR),
-            text(format!("Same as {}: {summary}", marks.base.name)).color(MUTED_COLOR),
+            text(label).width(LABEL_WIDTH).style(muted),
+            text(format!("Same as {}: {summary}", marks.base.name)).style(muted),
             space::horizontal(),
             button(text("Override").size(13)).style(style::secondary).on_press(Message::OverrideInput(part)),
         ]
@@ -279,18 +279,18 @@ pub(super) fn base_combos<'a>(marks: LayerMarks<'_>) -> Element<'a, Message> {
         let off = marks.layer.disabled_combos.iter().any(|d| crate::config::combo_key(d) == key);
         let replaced = marks.layer.combos.iter().any(|c| crate::config::combo_key(&c.buttons) == key);
         let name = combo.buttons.iter().map(|b| short_button(*b)).collect::<Vec<_>>().join(" + ");
-        let mut line = row![text(name).width(LABEL_WIDTH), text(summarize(&combo.action)).color(MUTED_COLOR), space::horizontal()]
+        let mut line = row![text(name).width(LABEL_WIDTH), text(summarize(&combo.action)).style(muted), space::horizontal()]
             .spacing(10)
             .align_y(Alignment::Center);
         line = if replaced {
-            line.push(text("replaced by this layer's").size(12).color(MUTED_COLOR))
+            line.push(text("replaced by this layer's").size(12).style(muted))
         } else {
             line.push(checkbox(off).label("Off in this layer").on_toggle(move |_| Message::ToggleBaseCombo(key.clone())))
         };
         rows.push(line.into());
     }
     if rows.is_empty() {
-        rows.push(text(format!("{} has no combos.", marks.base.name)).size(13).color(MUTED_COLOR).into());
+        rows.push(text(format!("{} has no combos.", marks.base.name)).size(13).style(muted).into());
     }
     section(
         "The profile's combos",
@@ -392,7 +392,7 @@ pub(super) fn combo_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message
     // The window only means something once there is a combo to press within it.
     let searching = !ui.query.trim().is_empty();
     if p.combos.is_empty() {
-        rows.push(text("This profile has no combos yet.").color(MUTED_COLOR).into());
+        rows.push(text("This profile has no combos yet.").style(muted).into());
     } else if ui.layer.is_none() && !searching {
         rows.push(value_slider("Combo window", 20.0..=300.0, p.combo_window_ms as f32, 5.0, "ms", Message::SetComboWindow));
     }
@@ -471,7 +471,7 @@ pub(super) fn combo_rows<'a>(p: &'a Profile, ui: &Ui) -> Vec<Element<'a, Message
     }
     rows.push(button(text("+ Add combo").size(13)).style(style::secondary).on_press(Message::AddCombo).into());
     if searching && rows.is_empty() {
-        rows.push(text("No combo matches.").color(MUTED_COLOR).into());
+        rows.push(text("No combo matches.").style(muted).into());
     }
     rows
 }
@@ -824,7 +824,7 @@ impl App {
             || "Set per controller, the same in every profile. Pick a controller in the header to change it.".to_string(),
             |c| format!("For {}, in every profile.", c.nickname_or_name()),
         );
-        section("Button layout", Some(note.into()), vec![toggle.into(), text(hint).size(13).color(MUTED_COLOR).into()])
+        section("Button layout", Some(note.into()), vec![toggle.into(), text(hint).size(13).style(muted).into()])
     }
 
     pub(super) fn view_profile_tab<'a>(&'a self, names: &Names) -> Element<'a, Message> {
@@ -931,7 +931,7 @@ impl App {
             return None;
         }
         let others: Vec<ProfileTab> = ProfileTab::ALL.into_iter().filter(|t| *t != self.profile_tab && tab_has_match(p, *t, ui)).collect();
-        let mut line = row![text(if others.is_empty() { "No other tab matches." } else { "Also found in" }).size(13).color(MUTED_COLOR)]
+        let mut line = row![text(if others.is_empty() { "No other tab matches." } else { "Also found in" }).size(13).style(muted)]
             .spacing(6)
             .align_y(Alignment::Center);
         for t in others {
@@ -1042,7 +1042,7 @@ impl App {
                 .width(Length::Shrink)
             )
             .center_x(Length::Fill),
-            container(text(caption).size(13).color(MUTED_COLOR).align_x(iced::alignment::Horizontal::Center)).center_x(Length::Fill),
+            container(text(caption).size(13).style(muted).align_x(iced::alignment::Horizontal::Center)).center_x(Length::Fill),
         ]
         .spacing(8)
         .into()

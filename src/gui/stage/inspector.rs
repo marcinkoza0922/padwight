@@ -79,8 +79,8 @@ impl App {
     fn inspector_footer<'a>(&self) -> Element<'a, Message> {
         let dirty = self.config != self.saved;
         let note: Element<'a, Message> = match &self.message {
-            Some((m, is_err)) => text(m.clone()).size(13).color(if *is_err { ERROR_COLOR } else { MUTED_COLOR }).into(),
-            None if dirty => text("Unsaved changes").size(13).color(MUTED_COLOR).into(),
+            Some((m, is_err)) => text(m.clone()).size(13).style(if *is_err { error_text } else { muted }).into(),
+            None if dirty => text("Unsaved changes").size(13).style(muted).into(),
             None => space().into(),
         };
         row![
@@ -131,7 +131,7 @@ impl App {
         });
         let mut rows = vec![
             labeled("Snap", checkbox(stage.snap).label("Snap to the grid").on_toggle(|on| Message::Stage(StageMessage::Snap(on))).into()),
-            labeled("Grid size", row![steps, text("px").size(13).color(MUTED_COLOR)].spacing(8).align_y(Alignment::Center).into()),
+            labeled("Grid size", row![steps, text("px").size(13).style(muted)].spacing(8).align_y(Alignment::Center).into()),
             labeled("Show", checkbox(stage.show_grid).label("Grid lines").on_toggle(|on| Message::Stage(StageMessage::ShowGrid(on))).into()),
             labeled("Screen", checkbox(stage.dim).label("Dim what's behind").on_toggle(|on| Message::Stage(StageMessage::Dim(on))).into()),
         ];

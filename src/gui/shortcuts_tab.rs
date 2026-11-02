@@ -229,7 +229,7 @@ impl App {
     /// The trigger that hides the in-game editor while held, to show the overlay being edited.
     fn peek_trigger_row(&self) -> Element<'_, Message> {
         let pick = dropdown(crate::config::PeekTrigger::ALL, Some(self.config.peek_trigger), Message::SetPeekTrigger).width(190);
-        let help = text("In the in-game editor, hold this to hide the editor and see the overlay underneath.").size(13).color(MUTED_COLOR);
+        let help = text("In the in-game editor, hold this to hide the editor and see the overlay underneath.").size(13).style(muted);
         // The picker starts where the other rows' button pickers do, past their kind column.
         let line = row![space().width(KIND_WIDTH), pick].spacing(8).align_y(Alignment::Center);
         column![labeled_in(190.0, "Peek while editing", line.into()), help].spacing(2).into()

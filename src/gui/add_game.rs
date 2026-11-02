@@ -140,7 +140,7 @@ impl App {
                     Some(_) => "Built-in games:",
                 })
                 .size(13)
-                .color(MUTED_COLOR),
+                .style(muted),
                 space::horizontal(),
                 tutorial_link("tutorial-first-setup.md"),
             ]
@@ -148,9 +148,9 @@ impl App {
         ]
         .spacing(8);
         list = list.push(if self.library.is_empty() {
-            Element::from(text("The built-in library is empty in this build.").size(13).color(MUTED_COLOR))
+            Element::from(text("The built-in library is empty in this build.").size(13).style(muted))
         } else if picker.rows.is_empty() {
-            text("No built-in game matches.").size(13).color(MUTED_COLOR).into()
+            text("No built-in game matches.").size(13).style(muted).into()
         } else {
             self.library_rows(picker, selected)
         });
@@ -196,18 +196,18 @@ impl App {
         let mut entries = column![space().height(height(first))];
         for row in &rows[first..last] {
             let line: Element<'a, Message> = match *row {
-                Row::NotInstalled => container(text("Not installed").size(12).color(MUTED_COLOR)).align_bottom(ROW_HEIGHT).padding([4, 0]).into(),
+                Row::NotInstalled => container(text("Not installed").size(12).style(muted)).align_bottom(ROW_HEIGHT).padding([4, 0]).into(),
                 Row::Game(i) => {
                     let listing = &self.library[i];
                     let mut line = row![text(listing.name.as_str()).size(15).width(Length::Fill)].spacing(8).align_y(Alignment::Center);
                     for f in listing.required_by_all() {
-                        line = line.push(text(f.label()).size(12).color(MUTED_COLOR));
+                        line = line.push(text(f.label()).size(12).style(muted));
                     }
                     if installed(i) {
                         line = line.push(text("installed").size(12).color(style_accent()));
                     }
                     if added.contains(listing.id.as_str()) {
-                        line = line.push(text("added").size(12).color(MUTED_COLOR));
+                        line = line.push(text("added").size(12).style(muted));
                     }
                     let entry = button(line).width(Length::Fill).padding([6, 10]).style(style::segment(selected == Some(i))).on_press(Message::SelectLibrary(i));
                     container(entry).center_y(ROW_HEIGHT).into()

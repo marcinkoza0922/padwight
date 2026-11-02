@@ -53,7 +53,7 @@ impl App {
     }
 
     fn view_remembered_one<'a>(&'a self, c: &'a ControllerInfo) -> Element<'a, Message> {
-        let shade = if c.connected { None } else { Some(MUTED_COLOR) };
+        let shade = !c.connected;
         let name = if c.name.is_empty() { c.id.as_str() } else { c.name.as_str() };
         let state = match (c.connected, c.pending) {
             (false, _) => "not connected",
@@ -66,10 +66,10 @@ impl App {
             title = title.push(text("●").color(color));
         }
         let mut label = text(name);
-        if let Some(shade) = shade {
-            label = label.color(shade);
+        if shade {
+            label = label.style(muted);
         }
-        title = title.push(label).push(text(state).size(12).color(MUTED_COLOR));
+        title = title.push(label).push(text(state).size(12).style(muted));
 
         let draft = self.nick_drafts.get(&c.id).unwrap_or(&c.nickname);
         let id = c.id.clone();

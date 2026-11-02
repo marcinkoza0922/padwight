@@ -428,7 +428,7 @@ impl App {
             }
             col = col.push(list);
         }
-        col.push(text("Nothing changes until you Save & apply.").size(13).color(MUTED_COLOR))
+        col.push(text("Nothing changes until you Save & apply.").size(13).style(muted))
             .push(row![
                 space::horizontal(),
                 button(text("Cancel")).style(style::secondary).on_press(Message::CloseDialog),
@@ -544,7 +544,7 @@ impl App {
             .into_iter()
             .flatten(),
         );
-        col.push(text("Nothing changes until you Save & apply.").size(13).color(MUTED_COLOR))
+        col.push(text("Nothing changes until you Save & apply.").size(13).style(muted))
             .push(row![
                 space::horizontal(),
                 button(text("Cancel")).style(style::secondary).on_press(Message::CloseDialog),
@@ -612,7 +612,7 @@ impl App {
                 let mut card = column![
                     row![
                         button(text(format!("{chevron}  {name}")).size(16)).style(button::text).padding(0).on_press(Message::BrowseOpen(i)),
-                        text(summary).size(13).color(MUTED_COLOR),
+                        text(summary).size(13).style(muted),
                         space::horizontal(),
                         button(text("Copy here").size(13)).on_press(Message::CopyItem(i)),
                     ]
@@ -628,7 +628,7 @@ impl App {
                 list = list.push(container(card).padding(10).width(Length::Fill).style(style::inset));
             }
             if count == 0 {
-                list = list.push(text(format!("It has no {}s.", kind.noun())).size(13).color(MUTED_COLOR));
+                list = list.push(text(format!("It has no {}s.", kind.noun())).size(13).style(muted));
             }
             col = col.push(scrollable(list).height(Length::Shrink));
         }
@@ -676,10 +676,10 @@ pub(super) fn pack_summary<'a>(p: &pack::Pack, pad_has: impl Fn(pack::Feature) -
         by.push(format!("made with {}", h.made_with));
     }
     if !by.is_empty() {
-        col = col.push(text(by.join(" · ")).size(13).color(MUTED_COLOR));
+        col = col.push(text(by.join(" · ")).size(13).style(muted));
     }
     if let Some(b) = &h.based_on {
-        col = col.push(text(format!("Based on {} {} by {}", b.name, b.version, b.author)).size(13).color(MUTED_COLOR));
+        col = col.push(text(format!("Based on {} {} by {}", b.name, b.version, b.author)).size(13).style(muted));
     }
     if !h.description.is_empty() {
         col = col.push(text(h.description.clone()).size(14));
@@ -687,7 +687,7 @@ pub(super) fn pack_summary<'a>(p: &pack::Pack, pad_has: impl Fn(pack::Feature) -
     col = col.push(text(contents_line(p)).size(13));
     let ids: Vec<String> = p.rules.iter().map(|r| format!("{} “{}”", r.kind, r.value)).collect();
     if !ids.is_empty() {
-        col = col.push(text(format!("Switches on for: {}", ids.join(", "))).size(13).color(MUTED_COLOR));
+        col = col.push(text(format!("Switches on for: {}", ids.join(", "))).size(13).style(muted));
     }
     for f in pack::Feature::ALL {
         let needing = p.needing(f);
@@ -699,9 +699,9 @@ pub(super) fn pack_summary<'a>(p: &pack::Pack, pad_has: impl Fn(pack::Feature) -
             Some(false) if needing.len() == p.profiles.len() => {
                 text(format!("Every profile needs {}, and your controller has none: {}.", f.label(), f.missing())).color(ERROR_COLOR)
             }
-            Some(false) => text(format!("Your controller has no {}, so these profiles aren't offered: {list}.", f.label())).color(MUTED_COLOR),
-            Some(true) => text(format!("Needs {}, which your controller has: {list}.", f.label())).color(MUTED_COLOR),
-            None => text(format!("Needs {} (no controller connected to check): {list}.", f.label())).color(MUTED_COLOR),
+            Some(false) => text(format!("Your controller has no {}, so these profiles aren't offered: {list}.", f.label())).style(muted),
+            Some(true) => text(format!("Needs {}, which your controller has: {list}.", f.label())).style(muted),
+            None => text(format!("Needs {} (no controller connected to check): {list}.", f.label())).style(muted),
         };
         col = col.push(line.size(13));
     }

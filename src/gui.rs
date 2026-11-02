@@ -177,6 +177,18 @@ const LABEL_WIDTH: f32 = 170.0;
 const SIDEBAR_WIDTH: f32 = 210.0;
 const ERROR_COLOR: Color = Color::from_rgb(0.9, 0.3, 0.3);
 const MUTED_COLOR: Color = Color::from_rgb(0.55, 0.55, 0.6);
+
+/// De-emphasised text: grey, but dark enough on a light window and light enough on a dark one to
+/// keep WCAG AA contrast (`MUTED_COLOR` alone cannot do both).
+/// Error text in the same way.
+fn error_text(_: &iced::Theme) -> iced::widget::text::Style {
+    iced::widget::text::Style { color: Some(ERROR_COLOR) }
+}
+
+fn muted(theme: &iced::Theme) -> iced::widget::text::Style {
+    let color = if theme.extended_palette().is_dark { Color::from_rgb(0.7, 0.7, 0.75) } else { Color::from_rgb(0.33, 0.33, 0.38) };
+    iced::widget::text::Style { color: Some(color) }
+}
 /// Something that saves but likely won't work as meant, such as a menu item nothing can pick.
 const WARNING_COLOR: Color = Color::from_rgb(0.85, 0.58, 0.1);
 
@@ -1542,7 +1554,7 @@ impl App {
         let shown = self.picked_controller().map(|d| &d.profile).filter(|p| !p.is_empty());
         let setup = pick.setup_box().input_style(style::text_field).menu_style(style::dropdown_menu).padding([6, 10]).width(SETTING_WIDTH);
         let profile = pick.profile_box(shown).input_style(style::text_field).menu_style(style::dropdown_menu).padding([6, 10]).width(SETTING_WIDTH);
-        let pair = row![setup, text("›").size(20).color(MUTED_COLOR), profile].spacing(8).align_y(Alignment::Center);
+        let pair = row![setup, text("›").size(20).style(muted), profile].spacing(8).align_y(Alignment::Center);
         let Some(status) = self.status.as_ref().filter(|s| s.devices.iter().filter(|d| !d.id.is_empty()).count() > 0) else {
             return labelled("Active profile", pair);
         };
@@ -1599,7 +1611,7 @@ impl App {
                 code("padwight daemon"),
                 ". You can still edit: your changes are saved and take effect once it starts.",
             ];
-            header = header.push(how.size(13).color(MUTED_COLOR));
+            header = header.push(how.size(13).style(muted));
         }
         if self.page == Page::Overview
             && let Some(banner) = self.view_system_check_banner()
@@ -1612,8 +1624,8 @@ impl App {
     fn view_footer(&self) -> Element<'_, Message> {
         let dirty = self.config != self.saved;
         let msg: Element<'_, Message> = match &self.message {
-            Some((m, is_err)) => text(m).color(if *is_err { ERROR_COLOR } else { MUTED_COLOR }).into(),
-            None if dirty => text("Unsaved changes").color(MUTED_COLOR).into(),
+            Some((m, is_err)) => text(m).style(if *is_err { error_text } else { muted }).into(),
+            None if dirty => text("Unsaved changes").style(muted).into(),
             None => space().into(),
         };
         let mut actions = row![msg, space::horizontal()].spacing(8).align_y(Alignment::Center);
@@ -1634,7 +1646,7 @@ impl App {
 
 /// A control with a small muted label above it.
 fn labelled<'a>(label: &'static str, control: impl Into<Element<'a, Message>>) -> Element<'a, Message> {
-    column![text(label).size(11).color(MUTED_COLOR), control.into()].spacing(2).into()
+    column![text(label).size(11).style(muted), control.into()].spacing(2).into()
 }
 
 /// Ctrl+Z, without Shift, undoes the last edit.

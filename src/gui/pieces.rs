@@ -67,7 +67,7 @@ fn piece_items<'a>(pieces: Vec<Piece>, family: PadFamily, swap: Swap, muted: boo
     pieces
         .into_iter()
         .map(|piece| match piece {
-            Piece::Text(s) => text(s).color_maybe(muted.then_some(MUTED_COLOR)).into(),
+            Piece::Text(s) => text(s).style(move |t: &iced::Theme| if muted { self::muted(t) } else { iced::widget::text::base(t) }).into(),
             Piece::Keyword(k) => keyword(k),
             Piece::Pad(b) if swap.marked() && is_face(b) => row![chip(button_glyph(b, family, true)), swap_marker(swap)].spacing(2).align_y(Alignment::Center).into(),
             Piece::Pad(b) => chip(button_glyph(b, family, swap.labels())),
@@ -139,7 +139,7 @@ pub(super) fn row_glyphs<'a>(inputs: &[GuideInput], shape: RowShape, family: Pad
             GestureKind::OnPress => "On press",
             GestureKind::OnRelease => "On release",
         };
-        items.push(text(name).size(13).color(MUTED_COLOR).wrapping(text::Wrapping::None).into());
+        items.push(text(name).size(13).style(muted).wrapping(text::Wrapping::None).into());
     }
     row(items).spacing(4).align_y(Alignment::Center).into()
 }

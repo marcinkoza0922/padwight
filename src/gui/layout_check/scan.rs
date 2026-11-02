@@ -69,7 +69,9 @@ fn layout_findings(seen: &Seen, alone: Option<Rectangle>, window: f32, add: &mut
             }
         }
     }
-    if b.x + b.width > window + 0.5 || b.x < -0.5 {
+    if seen.sideways {
+        // Reached by scrolling sideways, so past the edge or cut by the viewport is meant.
+    } else if b.x + b.width > window + 0.5 || b.x < -0.5 {
         add(Kind::OffScreen, format!("spans {:.0} to {:.0} px in a {window:.0} px window", b.x, b.x + b.width));
     } else if let Some(v) = seen.visible.filter(|v| v.width < b.width - 1.0 && v.width > 0.0) {
         add(Kind::Clipped, format!("{:.0} of {:.0} px wide shows", v.width, b.width));

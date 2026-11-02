@@ -340,15 +340,15 @@ pub(super) fn pad_button<'a>(current: Button, glyphs: Glyphs, on_change: OnActio
 fn tile<'a>(choice: &Choice, glyphs: Glyphs) -> Element<'a, Message> {
     let (content, width, height): (Element<'a, Message>, f32, f32) = match choice.face {
         Face::Kind(kind) => {
-            let words = column![text(kind.name()).size(14), text(kind.about()).size(12).color(MUTED_COLOR)].spacing(2);
+            let words = column![text(kind.name()).size(14), text(kind.about()).size(12).style(muted)].spacing(2);
             (row![icon(kind, 20.0), words].spacing(10).align_y(Alignment::Center).into(), TILE_WIDTH, 62.0)
         }
         Face::Stick(k) => {
-            let words = column![text(k.to_string()).size(14), text(k.about()).size(12).color(MUTED_COLOR)].spacing(2);
+            let words = column![text(k.to_string()).size(14), text(k.about()).size(12).style(muted)].spacing(2);
             (row![stick_icon(k, 20.0), words].spacing(10).align_y(Alignment::Center).into(), TILE_WIDTH, 62.0)
         }
         Face::Analog(out) => {
-            let words = column![text(format!("Gamepad {} (analog)", trigger_short(out))).size(14), text("Sends the pull as it is, with zones.").size(12).color(MUTED_COLOR)].spacing(2);
+            let words = column![text(format!("Gamepad {} (analog)", trigger_short(out))).size(14), text("Sends the pull as it is, with zones.").size(12).style(muted)].spacing(2);
             (row![icon(ActionKind::PadTrigger, 20.0), words].spacing(10).align_y(Alignment::Center).into(), TILE_WIDTH, 62.0)
         }
         Face::Pad(b) => (row![pad_chip(b, glyphs), text(position_name(b)).size(14)].spacing(10).align_y(Alignment::Center).into(), PAD_TILE_WIDTH, 40.0),
@@ -368,7 +368,7 @@ pub(super) fn view_action_picker(picker: &ActionPicker) -> Element<'_, Message> 
     let mut groups = column![].spacing(14);
     for (title, choices) in &picker.groups {
         let tiles = choices.iter().map(|c| tile(c, picker.glyphs));
-        groups = groups.push(column![text(*title).size(13).color(MUTED_COLOR), row(tiles).spacing(8).wrap().vertical_spacing(8)].spacing(6));
+        groups = groups.push(column![text(*title).size(13).style(muted), row(tiles).spacing(8).wrap().vertical_spacing(8)].spacing(6));
     }
     let dialog = container(
         column![

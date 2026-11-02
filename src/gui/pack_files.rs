@@ -64,7 +64,7 @@ impl App {
         let mut rows: Vec<Element<'_, Message>> = vec![
             text("Icons, sounds and fonts are exported with the pack and work only in this setup. Use an icon as {icon:name} in any text, a font as {font:name}…{/font} or as the overlay font, and a sound for an overlay's cues under Sounds.")
                 .size(13)
-                .color(MUTED_COLOR)
+                .style(muted)
                 .into(),
         ];
         for name in assets.icons.keys() {
@@ -104,7 +104,7 @@ impl App {
             );
         }
         if assets.is_empty() {
-            rows.push(text("None yet.").size(13).color(MUTED_COLOR).into());
+            rows.push(text("None yet.").size(13).style(muted).into());
         }
         rows.push(
             row![
@@ -112,7 +112,7 @@ impl App {
                 button(text("Add sound…").size(13)).style(style::secondary).on_press(Message::AddPackFile(FileKind::Sound)),
                 button(text("Add font…").size(13)).style(style::secondary).on_press(Message::AddPackFile(FileKind::Font)),
                 space::horizontal(),
-                text("An SVG icon, a short WAV, or a TTF/OTF font").size(12).color(MUTED_COLOR),
+                text("An SVG icon, a short WAV, or a TTF/OTF font").size(12).style(muted),
             ]
             .spacing(8)
             .align_y(Alignment::Center)

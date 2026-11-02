@@ -110,7 +110,7 @@ impl<'a> markdown::Viewer<'a, String> for Viewer {
         };
         let mut shown = column![svg(handle).width(Length::Fill)].spacing(4);
         if !title.is_empty() {
-            shown = shown.push(text(title).size(12).color(MUTED_COLOR));
+            shown = shown.push(text(title).size(12).style(muted));
         }
         // As wide as the picture is, no wider, so small ones aren't blown up.
         container(shown).max_width(width.min(900) as f32).into()
@@ -188,7 +188,7 @@ impl App {
             if tutorial.is_some() != in_tutorials {
                 in_tutorials = tutorial.is_some();
                 index = index.push(if in_tutorials {
-                    Element::from(container(text("Tutorials").size(12).color(MUTED_COLOR)).padding(iced::Padding::ZERO.top(10).left(10)))
+                    Element::from(container(text("Tutorials").size(12).style(muted)).padding(iced::Padding::ZERO.top(10).left(10)))
                 } else {
                     container(rule::horizontal(1)).padding([6, 0]).into()
                 });
@@ -196,14 +196,14 @@ impl App {
             let shown = tutorial.map_or_else(|| full.to_string(), capitalized);
             let mut label = column![text(shown).size(14)].spacing(2);
             if searching && let Some(line) = line {
-                label = label.push(text(line).size(12).color(MUTED_COLOR));
+                label = label.push(text(line).size(12).style(muted));
             }
             index = index.push(
                 button(label).width(Length::Fill).padding([6, 10]).style(style::nav(i == chosen)).on_press(Message::SelectChapter(i)),
             );
         }
         if hits.is_empty() {
-            index = index.push(text("No chapter matches.").size(13).color(MUTED_COLOR));
+            index = index.push(text("No chapter matches.").size(13).style(muted));
         }
         let body: Element<'_, Message> = if hits.is_empty() {
             space().into()

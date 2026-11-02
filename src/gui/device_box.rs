@@ -54,7 +54,7 @@ pub(super) fn header_with<'a>(name: String, picker: Element<'a, Message>, option
 
 /// The output stick option on a header line: "as [Right Stick]".
 pub(super) fn as_stick<'a>(stick: Stick, set: impl Fn(Stick) -> Message + 'a) -> [Element<'a, Message>; 2] {
-    [text("as").size(13).color(MUTED_COLOR).into(), dropdown([Stick::Left, Stick::Right], Some(stick), set).width(150).into()]
+    [text("as").size(13).style(muted).into(), dropdown([Stick::Left, Stick::Right], Some(stick), set).width(150).into()]
 }
 
 /// The space around an "Advanced" fold's header and its rows; with the rows' own inset it adds up
@@ -67,7 +67,7 @@ pub(super) fn advanced_fold<'a>(title: &str, holds: &'a str, target: Target, row
     let chevron = if rows.is_some() { "▾" } else { "▸" };
     let mut line = row![text(format!("{chevron}  {title}")).size(14), space::horizontal()].align_y(Alignment::Center);
     if rows.is_none() {
-        line = line.push(text(holds).size(12).color(MUTED_COLOR));
+        line = line.push(text(holds).size(12).style(muted));
     }
     let header = button(line).style(style::fold_header).padding([6.0, BOX_PADDING - FOLD_PADDING]).width(Length::Fill);
     let mut body = column![header.on_press(Message::ToggleExpanded(target))];
@@ -98,9 +98,9 @@ pub(super) fn visualizer_panel<'a>(pics: Vec<Element<'a, Message>>, why: Option<
 
 /// A picture with a small caption above it and an optional note under it, `width` wide.
 pub(super) fn figure<'a>(title: &'a str, picture: impl Into<Element<'a, Message>>, note: Option<String>, width: f32) -> Element<'a, Message> {
-    let mut col = column![text(title).size(12).color(MUTED_COLOR), picture.into()].spacing(4).width(width);
+    let mut col = column![text(title).size(12).style(muted), picture.into()].spacing(4).width(width);
     if let Some(note) = note {
-        col = col.push(text(note).size(12).color(MUTED_COLOR));
+        col = col.push(text(note).size(12).style(muted));
     }
     col.into()
 }

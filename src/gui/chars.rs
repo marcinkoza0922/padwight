@@ -144,7 +144,7 @@ impl App {
 
     pub(super) fn view_char_picker<'a>(&'a self, picker: &'a CharPicker) -> Element<'a, Message> {
         let current = self.token_target_text(&picker.target);
-        let mine: Element<'a, Message> = if current.is_empty() { text("(empty)").size(13).color(MUTED_COLOR).into() } else { text(current).size(15).into() };
+        let mine: Element<'a, Message> = if current.is_empty() { text("(empty)").size(13).style(muted).into() } else { text(current).size(15).into() };
         let tabs = iced::widget::row(GROUPS.iter().enumerate().map(|(i, (name, _))| {
             let on = picker.query.trim().is_empty() && i == picker.group;
             let b = button(text(*name).size(13)).on_press(Message::CharGroup(i));
@@ -155,7 +155,7 @@ impl App {
         .vertical_spacing(6);
         let found = shown(picker.group, &picker.query);
         let body: Element<'a, Message> = if found.is_empty() {
-            text("Nothing by that name.").size(13).color(MUTED_COLOR).into()
+            text("Nothing by that name.").size(13).style(muted).into()
         } else {
             let cells = found.into_iter().map(|(c, words)| {
                 tooltip(
@@ -170,12 +170,12 @@ impl App {
         let dialog = container(
             column![
                 text("Insert an emoji or symbol").size(20),
-                row![text("Your text").size(13).color(MUTED_COLOR), mine].spacing(10).align_y(Alignment::Center),
+                row![text("Your text").size(13).style(muted), mine].spacing(10).align_y(Alignment::Center),
                 field("Search by name, e.g. heart, arrow, sword", &picker.query).on_input(Message::CharSearch).width(Length::Fill),
                 tabs,
                 body,
                 row![
-                    text("Click a character to add it to the end of your text. Emoji show in color if the system has an emoji font.").size(12).color(MUTED_COLOR).width(Length::Fill),
+                    text("Click a character to add it to the end of your text. Emoji show in color if the system has an emoji font.").size(12).style(muted).width(Length::Fill),
                     space::horizontal(),
                     button(text("Done")).on_press(Message::CloseCharPicker),
                 ]
