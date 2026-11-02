@@ -35,6 +35,8 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
   manual columns of `docs/development/pack-qa.tsv`): `python3 -I scripts/pack-audit.py [-v|--check|--self-test]`
 - Pack keys against the game's own bindings: `python3 -I scripts/binding-compare.py list|compare [game]|self-test`
   (readers for Unreal `User.ini`, Dark engine `.bnd`, id Tech/Source cfg, F.E.A.R. profile, Max Payne registry)
+- Fuzzing (needs `cargo install cargo-fuzz` and nightly): `scripts/fuzz.sh [target [seconds]]` runs one or all seven
+  targets in `fuzz/`; corpus in `fuzz/corpus`, crashes in `fuzz/artifacts` (neither in git); see `docs/development/qa-tooling.md` T-5
 - Long files: `scripts/long-files.sh` (lists files over 400 lines; split them when you work in them)
 
 Filter tests to the module you touched (e.g. `engine::`) unless the change is broad.

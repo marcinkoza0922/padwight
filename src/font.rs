@@ -114,9 +114,22 @@ fn register(bytes: &[u8], iced: bool) -> Result<&'static str, String> {
 
 /// The family name a font file draws as, read without any renderer.
 fn family_of(bytes: &[u8]) -> Option<String> {
-    let mut db = fontdb::Database::new();
-    db.load_font_data(bytes.to_vec());
-    db.faces().find_map(|f| f.families.first().map(|(name, _)| name.clone()))
+    // A collection says how many fonts it holds, and the parser walks that many offsets: a tiny
+    // file claiming millions stalls it (found by fuzzing). The offsets must fit in the file.
+    if bytes.starts_with(b"ttcf") {
+        let count = bytes.get(8..12).map_or(u32::MAX, |n| u32::from_be_bytes([n[0], n[1], n[2], n[3]]));
+        if u64::from(count) * 4 + 12 > bytes.len() as u64 {
+            return None;
+        }
+    }
+    // The font parser asserts on some damaged collections (found by fuzzing); a pack's font mustn't stop the app.
+    std::panic::catch_unwind(|| {
+        let mut db = fontdb::Database::new();
+        db.load_font_data(bytes.to_vec());
+        db.faces().find_map(|f| f.families.first().map(|(name, _)| name.clone()))
+    })
+    .ok()
+    .flatten()
 }
 
 /// Every font file a renderer should load to draw what [`family`] names: the bundled fonts, then
@@ -227,6 +240,22 @@ pub fn resolve(name: Option<&str>) -> Font {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A damaged font collection that made the font parser panic (found by fuzzing): the first
+    /// byte is the fuzz target's loader choice, not part of the file.
+    #[test]
+    fn a_damaged_font_collection_is_refused_not_a_panic() {
+        let file = include_bytes!("../tests/fixtures/damaged-font-collection.bin");
+        assert!(load_for_overlay(&file[1..]).is_err());
+    }
+
+    /// A 28-byte collection that claims 875 million fonts stalled the parser for good.
+    #[test]
+    fn a_collection_claiming_millions_of_fonts_is_refused_at_once() {
+        let started = std::time::Instant::now();
+        assert!(load_for_overlay(b"ttcf44444444444444444k\0da\0").is_err());
+        assert!(started.elapsed().as_secs() < 2);
+    }
 
     #[test]
     fn unset_is_the_default_and_names_resolve_to_themselves() {
