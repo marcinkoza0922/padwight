@@ -1,0 +1,182 @@
+name: Nightly
+
+# The layers that need a kernel with uinput and uhid (GitHub's Ubuntu runners have both), network
+# access, or more time than a pull request should wait: the container suite, desktop version
+# checks and coverage (T-12, T-19 in docs/development/qa-tooling.md). Latency baselines are not
+# here: shared runners are too noisy, so scripts/profile.sh and scripts/profile-compare.py run
+# weekly on a fixed machine. Mutation testing is in weekly.yml.
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: never
+  RUST_BACKTRACE: "0"
+
+jobs:
+  # scripts/kernel-test-docker.sh takes one test filter per run, so one job per filter.
+  container-suite:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        filter: [nothing_stays, daemon_, hotplug_, idle_, process_, gui_, socket_fallback, debug_]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load uinput and uhid
+        run: |
+          sudo modprobe uinput uhid
+          ls -l /dev/uinput /dev/uhid
+      - name: Container tests
+        run: scripts/kernel-test-docker.sh '${{ matrix.filter }}'
+
+  desktop-versions:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Exits 1 when GNOME has a stable major the extension does not list.
+      - run: scripts/desktop-versions.sh
+
+  # The unit tests and the container suite run under llvm-cov, and their profiles are merged into
+  # one HTML report. There is no percentage gate: read it for T0 and T1 code no test reaches.
+  coverage:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: System packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libxkbcommon-dev libwayland-dev libudev-dev libfontconfig1-dev libdbus-1-dev libasound2-dev xvfb xauth libxcursor1 libxrandr2 libxi6 libxinerama1 libxkbcommon-x11-0 x11-utils
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: nextest,cargo-llvm-cov
+      - name: Unit and integration tests
+        run: cargo llvm-cov nextest --no-report --profile agent --hide-progress-bar --cargo-quiet
+      - name: Load uinput and uhid
+        run: sudo modprobe uinput uhid
+      # The ignored tests need /dev/uinput, /dev/uhid and the virtual devices' event nodes, so they
+      # run as root. Their profiles land in the same target directory and are merged by `report`.
+      - name: Container suite
+        continue-on-error: true
+        run: |
+          sudo -E env "PATH=$PATH" xvfb-run -a \
+            cargo llvm-cov nextest --no-report --run-ignored ignored-only --profile agent \
+            -E 'not binary(profile)' --no-fail-fast
+          sudo chown -R "$(id -u):$(id -g)" target
+      - name: Report
+        run: |
+          cargo llvm-cov report --html --output-dir coverage
+          cargo llvm-cov report --lcov --output-path coverage/lcov.info
+          {
+            echo '### Coverage (no gate)'
+            echo '```'
+            cargo llvm-cov report --summary-only
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: coverage
+
+  # Jobs for tools other agents are building. Each checks out and does nothing until its files
+  # exist on main, so they switch on once the tool is merged.
+
+  # T-5: fuzz targets, a minute each.
+  fuzz:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - id: has
+        run: test -f fuzz/Cargo.toml && echo present=true >> "$GITHUB_OUTPUT" || echo present=false >> "$GITHUB_OUTPUT"
+      - name: System packages
+        if: steps.has.outputs.present == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libxkbcommon-dev libwayland-dev libudev-dev libfontconfig1-dev libdbus-1-dev libasound2-dev
+      - uses: dtolnay/rust-toolchain@nightly
+        if: steps.has.outputs.present == 'true'
+      - uses: taiki-e/install-action@v2
+        if: steps.has.outputs.present == 'true'
+        with:
+          tool: cargo-fuzz
+      - name: Each target for a minute
+        if: steps.has.outputs.present == 'true'
+        run: |
+          for target in $(cargo fuzz list); do
+            cargo fuzz run "$target" -- -max_total_time=60
+          done
+      - uses: actions/upload-artifact@v4
+        if: failure() && steps.has.outputs.present == 'true'
+        with:
+          name: fuzz-crashes
+          path: fuzz/artifacts
+
+  # T-1: scenario tests. TODO(T-1): confirm the test target name when tests/scenarios/ lands.
+  scenarios:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: has
+        run: test -d tests/scenarios && echo present=true >> "$GITHUB_OUTPUT" || echo present=false >> "$GITHUB_OUTPUT"
+      - name: System packages
+        if: steps.has.outputs.present == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libxkbcommon-dev libwayland-dev libudev-dev libfontconfig1-dev libdbus-1-dev libasound2-dev
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.has.outputs.present == 'true'
+      - uses: Swatinem/rust-cache@v2
+        if: steps.has.outputs.present == 'true'
+      - uses: taiki-e/install-action@v2
+        if: steps.has.outputs.present == 'true'
+        with:
+          tool: nextest
+      - name: Scenario tests
+        if: steps.has.outputs.present == 'true'
+        run: cargo nextest run --profile agent --hide-progress-bar --cargo-quiet scenario
+
+  # T-8: overlay picture regression. Runs when the binary has `debug overlay diff`.
+  # TODO(T-8): confirm the arguments and where the baseline lives when it lands.
+  overlay-diff:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: System packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libxkbcommon-dev libwayland-dev libudev-dev libfontconfig1-dev libdbus-1-dev libasound2-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - id: has
+        run: |
+          if grep -rq '"baseline"' src/cli* src/main.rs 2>/dev/null && grep -rq '"diff"' src/cli* src/main.rs 2>/dev/null; then
+            echo present=true >> "$GITHUB_OUTPUT"
+          else
+            echo present=false >> "$GITHUB_OUTPUT"
+          fi
+      - name: Compare the overlay with its baseline
+        if: steps.has.outputs.present == 'true'
+        run: cargo run -q -- debug overlay diff
+      - uses: actions/upload-artifact@v4
+        if: failure() && steps.has.outputs.present == 'true'
+        with:
+          name: overlay-diff
+          path: screenshots

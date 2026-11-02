@@ -268,6 +268,23 @@ compares them with the last run.
 - The weekly desktop VM run as one script that runs `desktop-test.sh` on every VM and updates the
   table in [qa-plan.md section 8](qa-plan.md#8-desktop-session-runs).
 
+**Status.** Built, except the weekly profile run itself, which stays manual on a fixed machine.
+`.github/workflows/nightly.yml` (on `main`, 02:17 UTC and by hand) runs the container suite as one
+job per filter (`scripts/kernel-test-docker.sh`, after `modprobe uinput uhid`),
+`scripts/desktop-versions.sh`, and coverage (T-19). It also holds jobs for fuzz targets (T-5,
+guarded on `fuzz/Cargo.toml`), scenario tests (T-1, guarded on `tests/scenarios/`) and the overlay
+picture diff (T-8, guarded on the CLI having `baseline` and `diff`); each does nothing until its tool
+is merged, and carries a TODO to check its command when it is. None of the workflow has run on
+GitHub yet; the YAML parses. `python3 -I scripts/profile-compare.py old/ new/` compares two
+`PADWIGHT_PROFILE_OUT` folders (limits and noise rules in its docstring; exit 1 when something got
+worse, 2 when the machines differ) and was tried on synthetic folders only.
+`scripts/desktop-weekly.sh [--dry-run] [--only names]` runs `desktop-test.sh` on every VM in `vms/`
+(starting and stopping the ones that are off) and has `scripts/update-desktop-table.py` write the
+result, date and kernel into the table of section 8; the dry run was checked, a real run was not.
+Left: a weekly cron on the profiling machine that runs `scripts/profile.sh` into a dated folder and
+then `profile-compare.py` against the last one; the Version column of the desktop table is still
+filled in by hand.
+
 ## T-13: Pack identity audit and status table
 
 **Gap.** Several pack families were written with unverified Steam IDs and executable names. The
@@ -369,3 +386,13 @@ known.
 percentage gate: read it for T0 and T1 code no test reaches. Then `cargo mutants` one area at a time
 in the weekly run (start with `engine/`, `menu/`, `gui/checks.rs` and `config/store.rs`), fixing
 each surviving mutant with a test or a reason it can't matter.
+
+**Status.** Built. The nightly workflow's `coverage` job runs `cargo llvm-cov nextest --no-report`
+for the CI tests, then again as root with `--run-ignored ignored-only` for the container suite
+(minus the profiling tests), and `cargo llvm-cov report --html` merges the profiles; the HTML and
+`lcov.info` are the `coverage-html` artefact and a summary goes on the run page. No gate. Locally:
+`cargo llvm-cov nextest --no-report` then `cargo llvm-cov report --html`. Mutation testing:
+`scripts/mutants.sh engine|menu|gui-checks|config-store` (settings in `.cargo/mutants.toml`), and
+`.github/workflows/weekly.yml` runs the four areas as a matrix on Sundays, uploading
+`mutants-<area>` artefacts with `missed.txt`. Left: working through the survivors, and checking the
+privileged coverage step on a real runner.

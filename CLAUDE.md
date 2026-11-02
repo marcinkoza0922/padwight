@@ -26,6 +26,9 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
   (`PADWIGHT_PROFILE_OUT=dir`); a daemon with `PADWIGHT_INPUT_TIMING=file` logs each input's stages
 - Overlay CPU and memory on a headless KWin: `PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh
   scripts/harness/resources.sh <out>` (`gui-idle.sh` for the settings window)
+- Performance regressions: `python3 -I scripts/profile-compare.py old/ new/` over two `PADWIGHT_PROFILE_OUT` folders
+- Weekly desktop VM run and the qa-plan table: `scripts/desktop-weekly.sh [--dry-run]`
+- Mutation testing: `scripts/mutants.sh engine|menu|gui-checks|config-store`; coverage: `cargo llvm-cov nextest`
 - Game facts (Steam ids, executables, controller support, config paths): local PCGamingWiki snapshot and
   Discord's detectable-games list in `pcgamingwiki/`, see its `README.md`; never read `games.jsonl` whole
 - Pack identity audit (Steam ids, executables, release, controller support vs the PCGamingWiki snapshot; keeps the
