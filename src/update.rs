@@ -152,11 +152,23 @@ fn install(version: &str) -> Result<()> {
     for file in [format!("{name}.tar.gz"), format!("{name}.tar.gz.sha256")] {
         run_tool(Command::new("curl").args(["-fsSL", "--max-time", "300", "-o"]).arg(work.0.join(&file)).arg(format!("{base}/{file}")), "download")?;
     }
-    run_tool(Command::new("sha256sum").args(["-c", &format!("{name}.tar.gz.sha256")]).current_dir(&work.0), "checksum check: the download doesn't match")?;
+    check_checksum(&work.0, &name)?;
     run_tool(Command::new("tar").arg("-C").arg(&work.0).arg("-xzf").arg(work.0.join(format!("{name}.tar.gz"))), "unpacking")?;
     // The installer refreshes the binary, the service file, the icon and the menu entry. It leaves
     // the system files and the restart to us.
     run_tool(Command::new(work.0.join(&name).join("install.sh")).arg("--update"), "install")
+}
+
+/// Checks the downloaded archive against its published checksum.
+fn check_checksum(dir: &Path, name: &str) -> Result<()> {
+    let mut cmd = Command::new("sha256sum");
+    cmd.args(["-c", &format!("{name}.tar.gz.sha256")]).current_dir(dir);
+    checksum_result(run_tool(&mut cmd, "checksum check"))
+}
+
+/// Turns a failed checksum run into a sentence a player understands.
+fn checksum_result(run: Result<()>) -> Result<()> {
+    run.map_err(|_| anyhow::anyhow!("the download doesn't match its checksum, so it may be damaged; nothing was installed. Try again"))
 }
 
 fn run_tool(cmd: &mut Command, what: &str) -> Result<()> {
@@ -217,6 +229,12 @@ impl Drop for Scratch {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_checksum_failure_reads_as_a_sentence() {
+        let err = checksum_result(run_tool(&mut Command::new("false"), "checksum check")).unwrap_err().to_string();
+        assert!(err.contains("doesn't match its checksum") && !err.contains("match failed"), "{err}");
+    }
 
     #[test]
     fn the_scratch_folder_is_private() {
