@@ -12,6 +12,12 @@ Some games, such as Slay the Spire 2, read only the first controller Steam Input
 
 Run `padwight doctor` in a terminal. It checks that you can open the controller, its motion sensor and `/dev/uinput`, and prints the commands that fix anything missing. `padwight status` shows what the running daemon has found.
 
+## The calculator's Copy does nothing
+
+Copy puts the answer on the clipboard through `wl-copy`, from your distro's `wl-clipboard` package. Install it; nothing needs restarting. **Send**, which types the answer into the game, and the keyboard's **Paste** work without it. `padwight doctor` says whether it's installed.
+
+Padwight needs a Wayland session. On an X11 session (Xorg or XLibre) the overlays, including the calculator, don't work at all; `padwight doctor` says so.
+
 ## Why did my profile change?
 
 The Overview page's **What's happening** lists the last profile switches, newest first, each with its cause: the rule that matched, the default profile taking over when a game lost focus, or your own pick. It also lists your latest presses next to what Padwight sent for them.
