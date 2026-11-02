@@ -181,6 +181,20 @@ press dpad-down
 expect overlay guide.selected "Keyboard"
 ```
 
+**Status.** Built. `padwight debug overlay state [--wait ms]` prints the state document of a
+running daemon (any daemon, not only `--debug`; it reads the frame the overlay window would get,
+so no new IPC request). `expect overlay <path> <value>` is a debug-session word that asks the same
+document, retrying for half a second, and fails with what is actually there (or the keys a bad
+path could have used). The document's shape is in the doc comment of `src/debug/overlay_state.rs`:
+`showing` (list of names, `guide`, `keyboard`, `info:<name>` ...), `menu` (also under the menu's
+title, so `guide.selected`), `keyboard` (`key`, `latched`, `typed` ...), `media`, `offer`, `info`
+(cells as text after token expansion), `logs`. Values match strings exactly, numbers within 0.01,
+`none` matches null or an empty list, and a list matches when one item does. Tests:
+`overlay_state::` unit tests, `expect_overlay_fails_clearly_without_a_daemon`, and the ignored
+daemon tests `debug_the_guide_overlay_*`, `debug_the_keyboard_*`, `debug_menus_of_different_styles_*`
+in `tests/debug_session/overlay.rs`. Left: info-overlay and doodle/lens/peek assertions have no
+daemon test; the document does not yet cover the settings/new-pad panels beyond their menu view.
+
 ## T-5: Fuzzing
 
 **Gap.** The damaged-input sweeps (truncations, deletions) catch a lot, but they aren't guided by

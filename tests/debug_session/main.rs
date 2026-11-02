@@ -11,6 +11,7 @@
 mod common;
 #[cfg(target_os = "linux")]
 mod daemon;
+mod overlay;
 
 use std::{
     fs,

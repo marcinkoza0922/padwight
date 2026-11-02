@@ -71,6 +71,9 @@ pub enum Expectation {
     Output(String),
     /// They have output nothing since then.
     NoOutput,
+    /// The overlay of the running daemon shows `value` at `path` of its state document (see
+    /// `overlay_state`). Needs no attached controller.
+    Overlay { path: String, value: String },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -128,6 +131,10 @@ pub const COMMANDS: &str = "\
   expect trigger <left|right> <0..1>  ... unless the trigger is pulled that far
   expect output <line>           attached: ... unless the mappings have output that line
   expect no-output               attached: ... if they have output anything
+  expect overlay <path> <value>  ... unless the daemon's overlay state (`debug overlay state`)
+                                 has <value> at <path>, e.g. `showing guide`, `guide.selected
+                                 Keyboard`, `keyboard.latched KEY_LEFTSHIFT`, `showing none`;
+                                 retried for half a second
   run [file]                     run commands, one per line, from a file or stdin;
                                  blank lines and # comments are skipped; `sleep <ms>` waits
 
@@ -201,9 +208,10 @@ fn expectation(words: &[&str]) -> Result<Expectation> {
         ["idle"] => Expectation::Idle,
         ["output", line @ ..] if !line.is_empty() => Expectation::Output(line.join(" ")),
         ["no-output"] => Expectation::NoOutput,
+        ["overlay", path, value @ ..] if !value.is_empty() => Expectation::Overlay { path: (*path).into(), value: value.join(" ") },
         ["stick", side, x, y] => Expectation::Stick { stick: stick(side)?, x: number(x)?, y: number(y)? },
         ["trigger", side, value] => Expectation::Trigger { trigger: trigger(side)?, value: number(value)? },
-        _ => bail!("expect what? model, pressed, released, idle, stick, trigger, output or no-output"),
+        _ => bail!("expect what? model, pressed, released, idle, stick, trigger, output, no-output or overlay"),
     })
 }
 
@@ -329,6 +337,10 @@ mod tests {
         assert_eq!(req("expect idle"), DebugRequest::Expect(Expectation::Idle));
         assert_eq!(req("expect output key KEY_A down"), DebugRequest::Expect(Expectation::Output("key KEY_A down".into())));
         assert_eq!(req("expect no-output"), DebugRequest::Expect(Expectation::NoOutput));
+        assert_eq!(
+            req("expect overlay guide.selected \"Quick settings\""),
+            DebugRequest::Expect(Expectation::Overlay { path: "guide.selected".into(), value: "\"Quick settings\"".into() })
+        );
         assert_eq!(req("output clear"), DebugRequest::Output { clear: true });
         assert_eq!(req("gyro 1 2 3 250"), DebugRequest::Gyro { rates: [1.0, 2.0, 3.0], ms: 250 });
         assert_eq!(parse(&["sleep", "20"]).unwrap(), Command::Sleep(20));
