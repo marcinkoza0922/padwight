@@ -41,13 +41,15 @@ w, h, scale = call(NAME, PATH, IFACE, "Geometry").unpack()
 print(f"geometry {w}x{h} scale {scale}")
 device = (round(w * scale), round(h * scale))
 square = (100, 120, 300, 320)  # x0 y0 x1 y1 in device pixels
-fd = os.memfd_create("probe")
+fd = os.memfd_create("probe", 2)  # MFD_ALLOW_SEALING
 rows = bytearray()
 for y in range(device[1]):
     for x in range(device[0]):
         inside = square[0] <= x < square[2] and square[1] <= y < square[3]
         rows += bytes((0, 255, 0, 255)) if inside else bytes(4)
 os.write(fd, bytes(rows))
+import fcntl as _f
+_f.fcntl(fd, _f.F_ADD_SEALS, _f.F_SEAL_SHRINK | _f.F_SEAL_SEAL)
 call(NAME, PATH, IFACE, "SetBuffer", GLib.Variant("(hii)", (0, *device)), fds=[fd])
 call(NAME, PATH, IFACE, "Present")
 
@@ -76,4 +78,31 @@ after = shot("hidden")((square[0] + square[2]) / 2 / scale, (square[1] + square[
 print("after Hide", after)
 if after == inside:
     fail("Hide left the picture on screen")
+# A client that shrinks its memfd after sharing it must not take the Shell down (a mapping would
+# SIGBUS on the next read). The extension takes only a memfd sealed against shrinking: it tries to
+# shrink it by a byte, which fails on a sealed one. An unsealed one is refused (and loses the byte).
+import fcntl
+size = device[0] * device[1] * 4
+loose = os.memfd_create("probe-loose")
+os.write(loose, bytes(size))
+call(NAME, PATH, IFACE, "SetBuffer", GLib.Variant("(hii)", (0, *device)), fds=[os.dup(loose)])
+if os.fstat(loose).st_size != size - 1:
+    fail("an unsealed memfd wasn't tested (it should have lost a byte)")
+print("unsealed memfd refused")
+sealed = os.memfd_create("probe-sealed", os.MFD_ALLOW_SEALING if hasattr(os, "MFD_ALLOW_SEALING") else 2)
+os.write(sealed, bytes([0, 255, 0, 255]) * (device[0] * device[1]))
+fcntl.fcntl(sealed, fcntl.F_ADD_SEALS, fcntl.F_SEAL_SHRINK | fcntl.F_SEAL_SEAL)
+call(NAME, PATH, IFACE, "SetBuffer", GLib.Variant("(hii)", (0, *device)), fds=[os.dup(sealed)])
+if os.fstat(sealed).st_size != size:
+    fail("the extension shrank a sealed memfd")
+try:
+    os.ftruncate(sealed, 4096)
+    fail("a sealed memfd could be shrunk")
+except PermissionError:
+    pass
+call(NAME, PATH, IFACE, "Present")
+time.sleep(1)
+if shot("sealed")(w / 2, h / 2)[1] < 200:
+    fail("a sealed memfd wasn't shown")
+print("sealed memfd shown, shrinking it refused")
 print("PASS")

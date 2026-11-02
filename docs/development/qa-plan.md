@@ -465,8 +465,12 @@ audit and binding comparison; a read of SEC-4, 5, 7, 8 and 10 against the source
 Fixed:
 
 - **SEC-4.** The GNOME and Cinnamon extensions took any width, height and fd from any program on
-  the bus. `SetBuffer` now refuses sizes the mapped buffer can't back. Still open: it doesn't check
-  who calls, and a client can shrink its own memfd after the Shell maps it (SIGBUS).
+  the bus. `SetBuffer` now refuses sizes the buffer can't back. The overlay process seals its memfd
+  against shrinking (`F_SEAL_SHRINK`); the extensions take only a sealed one (they try to shrink it by a
+  byte, which fails on a sealed memfd) and map it as before, so a client can't shrink it into a SIGBUS.
+  `scripts/gnome-versions/probe.py` checks it on Shell 45 to 50; `bench.py` times Present (reading the
+  memfd on each Present instead cost 3 to 5 times as much). Cinnamon 6.6.9 (VM): `desktop-test.sh cinnamon` 10/10 with it. Still open: it doesn't
+  check who calls (any program of the same user on the bus can still draw on the overlay).
 - **SEC-7.** A window that matched a game rule skipped Force Quit's protected-name check. It no
   longer does; the list gained the session plumbing and the launchers; `force_quit` refuses a
   protected process by its own name; the SIGKILL goes only to processes whose start time hasn't

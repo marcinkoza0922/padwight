@@ -16,6 +16,28 @@ const OBJECT_PATH = '/Overlay';
 // Larger than any screen: keeps width * height * 4 well inside what a number holds exactly.
 const MAX_SIDE = 32768;
 
+// Any program on the bus can call SetBuffer, and one that shrinks its memfd after it is mapped
+// would kill the Shell with SIGBUS on the next read. The overlay process seals its memfd against
+// shrinking (F_SEAL_SHRINK, which can't be undone). GJS has no fcntl to read the seals, so this
+// tries to shrink the file by a byte: it fails only on a sealed one. On an unsealed memfd it
+// succeeds, which refuses the buffer (and cuts only the sender's own file).
+function requireShrinkSeal(path) {
+    const file = Gio.File.new_for_path(path).open_readwrite(null);
+    try {
+        const size = file.query_info('standard::size', null).get_size();
+        let shrank = false;
+        try {
+            shrank = file.truncate(size - 1, null);
+        } catch (e) {
+            // Refused (EPERM): the file is sealed against shrinking.
+        }
+        if (shrank)
+            throw new Error('the picture\'s memfd is not sealed against shrinking');
+    } finally {
+        file.close(null);
+    }
+}
+
 const INTERFACE_XML = `
 <node>
   <interface name="io.github.marcinkoza0922.Padwight.Overlay">
@@ -73,6 +95,7 @@ export class Overlay {
             // is kept: every frame is drawn into it.
             let picture;
             try {
+                requireShrinkSeal(`/proc/self/fd/${real}`);
                 picture = new GLib.MappedFile(`/proc/self/fd/${real}`, false).get_bytes();
             } finally {
                 GLib.close(real);
