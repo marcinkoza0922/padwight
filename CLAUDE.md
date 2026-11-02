@@ -28,6 +28,8 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
   scripts/harness/resources.sh <out>` (`gui-idle.sh` for the settings window)
 - Game facts (Steam ids, executables, controller support, config paths): local PCGamingWiki snapshot and
   Discord's detectable-games list in `pcgamingwiki/`, see its `README.md`; never read `games.jsonl` whole
+- Pack keys against the game's own bindings: `python3 -I scripts/binding-compare.py list|compare [game]|self-test`
+  (readers for Unreal `User.ini`, Dark engine `.bnd`, id Tech/Source cfg, F.E.A.R. profile, Max Payne registry)
 - Long files: `scripts/long-files.sh` (lists files over 400 lines; split them when you work in them)
 
 Filter tests to the module you touched (e.g. `engine::`) unless the change is broad.

@@ -1,0 +1,39 @@
+format = 20
+
+[pack]
+name = "Binding fixture"
+
+[[profiles]]
+name = "Fixture"
+
+[profiles.buttons]
+South = { mouse = "Right" }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_SEMICOLON"] }
+North = { keys = ["KEY_TAB"] }
+LeftBumper = { keys = ["KEY_Q"] }
+RightStick = { keys = ["KEY_LEFTBRACE"] }
+DpadUp = { multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_UP"] }] }
+Select = { keys = ["KEY_LEFTALT", "KEY_S"] }
+Start = { keys = ["KEY_F10"] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide.edits]
+"button:South" = { text = "Use {icon:hand}" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Drop" }
+
+[[menus]]
+name = "Belt"
+
+[[menus.items]]
+label = "{icon:key} Belt 1"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "Belt 2"
+action = { keys = ["KEY_2"] }

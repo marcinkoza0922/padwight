@@ -1,0 +1,18 @@
+; Dark engine test bindings
+
+freelook 1
+
+bind w +walkfast
+bind up +walkfast
+bind keypad_up +walkfast
+bind space +jump
+bind x crouch
+bind f1 "inv_select healingpotion"
+bind f9+ctrl screen_dump
+bind alt+s quick_save
+bind mouse1 +use_weapon
+bind mouse2 +use_item
+bind mouse_wheel_up cycle_item 1
+bind ' chat
+bind - "equip_weapon crystal shard"
+bind + "gamma_delta -0.025"

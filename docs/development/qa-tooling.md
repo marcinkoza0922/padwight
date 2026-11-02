@@ -301,6 +301,18 @@ action names by a small table per game, and reports keys that don't match. Start
 files already read by hand for the format 19 pack update: Deus Ex's `User.ini`, the Dark engine
 `.bnd` files, F.E.A.R.'s profile and Max Payne's registry keys in its Proton prefix.
 
+**Status.** Built: `scripts/binding-compare.py` with readers for Unreal 1 `User.ini`/`DefUser.ini`, Dark engine
+`.bnd`, id Tech/GoldSrc/Source `config.cfg` and `kb_def.lst`, F.E.A.R.'s `Profile000.gdb` and Max Payne 1/2
+registry scancodes (Wine `user.reg`). The per-game tables are in `scripts/binding-compare.toml` (pack input path or
+Guide label to engine action names; Deus Ex, Thief Gold, Thief 2, System Shock 2, F.E.A.R., Max Payne 1 and 2,
+VKQuake). `python3 -I scripts/binding-compare.py list` shows which games are installed here, `compare [game]`
+reports mismatches (`--all` shows agreeing rows, `--file path` points at a file for a game that isn't installed),
+`dump-game` and `dump-pack` print what each side reads, `self-test` runs every reader on the fixtures in
+`tests/fixtures/bindings/` plus a pack comparison. Left: Unity games (Timberborn, Parkitect), Unreal 2 and
+Lithtech games beyond F.E.A.R., id Tech 4 (`Doom 3`), Half-Life/Source packs (the installed HL2 and Portal packs are
+gamepad passthrough, so there are no keys to compare), the Max Payne 1 action roles are inferred from default keys,
+sticks other than the four cardinal ring sectors, and layers and modes.
+
 ## T-15: Protocol conformance
 
 **Gap.** `ipc/tests.rs` pins the wire format from Rust. The examples in `docs/protocol.md` aren't

@@ -1,0 +1,106 @@
+# Self-test for scripts/binding-compare.py: each reader on a small fixture written for it
+# (tests/fixtures/bindings/), then a pack comparison on a fixture pack.
+
+[selftest.unreal]
+engine = "unreal"
+files = ["unreal-user.ini"]
+[selftest.unreal.expect]
+ParseLeftClick = ["mouse_left"]
+Fire = ["mouse_left"]
+MoveForward = ["w", "up"]
+ToggleScope = ["leftbrace"]
+ReloadWeapon = ["semicolon"]
+SwitchAmmo = ["apostrophe"]
+QuickSave = ["kpplus"]
+"ActivateBelt 1" = ["1"]
+"ActivateAugmentation 0" = ["f3"]
+
+[selftest.dark]
+engine = "dark"
+files = ["dark.bnd"]
+[selftest.dark.expect]
+"+walkfast" = ["w", "up", "kp8"]
+"+jump" = ["space"]
+crouch = ["x"]
+"inv_select healingpotion" = ["f1"]
+screen_dump = ["f9+leftctrl"]
+quick_save = ["leftalt+s"]
+"+use_weapon" = ["mouse_left"]
+"+use_item" = ["mouse_right"]
+"cycle_item 1" = ["wheel_up"]
+chat = ["apostrophe"]
+"equip_weapon crystal shard" = ["minus"]
+"gamma_delta -0.025" = ["plus"]
+
+[selftest.source-config]
+engine = "source"
+files = ["config.cfg"]
+[selftest.source-config.expect]
+"+forward" = ["w", "up"]
+"+jump" = ["space"]
+"+speed" = ["leftshift"]
+"+attack" = ["mouse_left"]
+"impulse 12" = ["wheel_up"]
+"+mlook" = ["semicolon"]
+"echo Quicksaving...; wait; save quick" = ["f6"]
+sizeup = ["kpplus"]
+"impulse 7" = ["7"]
+
+[selftest.source-kb-def]
+engine = "source"
+files = ["kb_def.lst"]
+[selftest.source-kb-def.expect]
+"+forward" = ["w", "up"]
+"+use" = ["e"]
+"+attack2" = ["mouse_right", "backslash"]
+
+[selftest.maxpayne]
+engine = "maxpayne"
+files = ["maxpayne.reg"]
+[selftest.maxpayne.expect]
+"0.0" = ["w"]
+"0.1" = ["s"]
+"0" = ["w", "s", "up"]
+"13" = ["e"]
+"31" = ["mouse_right", "leftshift"]
+CROUCH = ["c", "rightalt"]
+ATTACK = ["f", "mouse_middle"]
+BULLETTIME = []
+
+[selftest.fear]
+engine = "fear"
+files = ["fear.gdb"]
+[selftest.fear.expect]
+Activate = ["f"]
+"Alt-Fire" = ["mouse_right"]
+BACKWARD = ["s"]
+CenterView = ["end"]
+DUCK = ["c"]
+Fire = ["mouse_left"]
+JUMP = ["space"]
+NextWeapon = ["wheel"]
+Radio = ["v"]
+SlowMo = ["leftctrl"]
+WEAPON_0 = ["1"]
+PreviousWeapon = []
+
+[selftest_pack]
+pack = "test.padpack"
+engine = "unreal"
+files = ["unreal-user.ini"]
+expect = ["ok", "ok", "ok", "game-unbound", "MISMATCH", "ok", "ok", "MISMATCH", "game-unbound", "ok", "ok", "game-unbound", "no-pack-input"]
+map = [
+  { pack = "Use", game = "ParseRightClick" },
+  { pack = "button:East", game = "Jump" },
+  { pack = "Reload", game = "ReloadWeapon" },
+  { pack = "button:North", game = "DropItem" },
+  { pack = "button:LeftBumper", game = "Jump" },
+  { pack = "button:DpadUp", game = "MoveForward" },
+  { pack = "button:RightStick", game = "ToggleScope" },
+  { pack = "button:Select", game = "QuickSave" },
+  { pack = "button:Start", game = "NoSuchThing" },
+  { pack = "trigger:Right", game = "Fire" },
+  { pack = "menu:Belt/Belt 1", game = "ActivateBelt 1" },
+  { pack = "Belt 2", game = "ActivateBelt 2" },
+  { pack = "button:Missing", game = "Jump" },
+]
