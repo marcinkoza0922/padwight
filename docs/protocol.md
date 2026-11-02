@@ -114,30 +114,41 @@ A client that edits the configuration should tell the daemon when it has changes
 Not covered by the version; they can change in any release.
 
 - `"WatchOverlay"`, `{"WatchFeed": …}`: the streams of what the overlay window and the Overview page draw. Their lines are drawing instructions in the app's own renderer types.
-- `DebugAttach`, `DebugInput`, `DebugOutput`, `DebugDetach`, `DebugIdentify`: debug mode only (the daemon must have been started with `--debug`); they add and drive controllers no hardware backs.
+- `DebugAttach`, `DebugInput`, `DebugOutput`, `DebugDetach`, `DebugIdentify`: debug mode only (the daemon must have been started with `--debug`); they add and drive controllers no hardware backs. Their replies are `{"Attached": "<path>"}` and `{"Lines": ["…"]}`.
 
 ## Replies in detail
 
 ### Status
 
-```json
+```json reply
 {"Status": {
   "enabled": true,
   "active_profile": "Gamepad",
   "active_game": null,
   "active_layers": [],
-  "devices": [ … ],
-  "controllers": [ … ],
+  "devices": [
+    {"name": "Generic X-Box pad", "id": "3537:1079", "path": "/dev/input/event10", "profile": "Gamepad",
+     "managed": true, "ignored": false, "analog_triggers": true, "rumble": true, "gyro": false,
+     "paddles": false, "touchpad": false, "family": null, "model": null}
+  ],
+  "controllers": [
+    {"id": "3537:1079", "name": "Generic X-Box pad", "nickname": "", "color": null, "player": null,
+     "pass_through": false, "nintendo_layout": false, "pending": false, "connected": true}
+  ],
   "focus_backend": "Kwin",
-  "focused": {"class": "kitty", "title": "…", "pid": 24750, "exe": "kitty", "path": "/usr/bin/kitty", "steam_app_id": null},
-  "recent_windows": [ … ],
+  "focused": {"class": "kitty", "title": "~", "pid": 24750, "exe": "kitty", "path": "/usr/bin/kitty", "steam_app_id": null},
+  "recent_windows": [
+    {"class": "kitty", "title": "~", "pid": 24750, "exe": "kitty", "path": "/usr/bin/kitty", "steam_app_id": null}
+  ],
   "motion_access_denied": [],
-  "raw_readers": [],
+  "raw_readers": [{"controller": "Generic X-Box pad", "programs": ["steam"]}],
   "overlay_visible": false,
   "numpad_visible": false,
   "stop_pending": false,
   "profile_locked": false,
-  "switches": [ … ],
+  "switches": [
+    {"age_ms": 5200, "game": "Doom", "profile": "Default", "why": "Doom (doom.exe) matches Executable \u201cdoom.exe\u201d"}
+  ],
   "update": {"version": "0.2.0", "self_updating": true, "advice": "run `padwight update`"}
 }}
 ```
@@ -161,9 +172,16 @@ Not covered by the version; they can change in any release.
 
 ### ControllerInfo
 
-```json
+```json ControllerInfo
 {"id": "3537:1079", "name": "Generic X-Box pad", "nickname": "", "color": null, "player": null,
  "pass_through": false, "nintendo_layout": false, "pending": false, "connected": true}
+```
+
+`SetController` takes the same object, wrapped:
+
+```json request
+{"SetController": {"id": "3537:1079", "name": "Generic X-Box pad", "nickname": "Player two", "color": "#e04040", "player": 2,
+ "pass_through": false, "nintendo_layout": false, "pending": false, "connected": true}}
 ```
 
 `nickname` is what the user calls it; show it, else `name`, else `id`. `pending`: its set-up question is still unanswered. `pass_through`: the daemon leaves it alone.
@@ -210,14 +228,14 @@ A client may also edit the config folder directly, and with no daemon running th
 
 Send `"WatchInput"` and keep reading. The daemon writes a line for each change, **at most about 60 a second** (a burst is merged into the latest state). The first line comes at once and is the current state. Each line is `null`, meaning no controller is active, or a snapshot of the one used last:
 
-```json
+```json InputSnapshot
 {"device": "Generic X-Box pad", "model": null, "family": null,
  "buttons": ["South", "LeftBumper"],
  "left_stick": [0.5, -1.0], "right_stick": [0.0, 0.0],
- "left_trigger": 0.25, "right_trigger": 0.0}
+ "left_trigger": 0.25, "right_trigger": 0.0, "gyro": null, "gyro_out": null}
 ```
 
-This is the controller's **physical** state, before any mapping. `buttons` are the ones held. Where present, `gyro` is `[pitch, yaw, roll]` in degrees per second, `touches` is `[x, y]` for each finger on the touchpad (0 to 1 from its top left corner) and `touch_click` says it is clicked; `gyro_out` is what the gyro does under the active profile.
+This is the controller's **physical** state, before any mapping. `buttons` are the ones held. `gyro` is `null` without a gyro, else `[pitch, yaw, roll]` in degrees per second, `touches` and `touch_click` are left out when there are no fingers and no click; `touches` is `[x, y]` for each finger on the touchpad (0 to 1 from its top left corner), and `touch_click` says it is clicked; `gyro_out` is `null` unless the gyro is live, and then what it does under the active profile: `speed` (degrees per second the acceleration curve reads), `aim` (`[x, y]` turning sent on, degrees per second, positive = right/down) and `stick` (`[x, y]` deflection sent to the virtual pad in the stick modes, else `null`). `model` and `family` say which controller it is, as in `Status.devices`, and are `null` when it isn't recognized.
 
 Button names: `South`, `East`, `North`, `West` (the face buttons by position, so `South` is A on an Xbox pad and ✕ on a PlayStation pad), `LeftBumper`, `RightBumper`, `Select`, `Start`, `Guide`, `LeftStick`, `RightStick`, `DpadUp`, `DpadDown`, `DpadLeft`, `DpadRight`, the four paddles `LeftPaddle`, `RightPaddle`, `LeftPaddle2`, `RightPaddle2`, and a stick pushed far enough counts as a button: `LeftStickUp` … `RightStickRight`. More may come.
 

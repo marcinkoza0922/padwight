@@ -352,6 +352,22 @@ parses it with the Rust types, and checks it serializes back the same; and an in
 runs `examples/dashboard/server.py`'s socket client against a `--debug` daemon and reads `Status`
 and a few `WatchInput` lines. `check-project.py` can run the first.
 
+**Status.** Built. `cargo nextest run --profile agent ipc::tests::protocol_doc` runs the document
+test (`src/ipc/tests/protocol_doc.rs`): every `json request`, `json reply` and `json <Type>` fenced
+block, and every JSON code span in the Requests and JSON shapes sections, must parse with the real
+types and serialize back to the same value. Every `Request` and `Response` variant must have an
+example (the `Debug*` requests, `Attached`, `Lines`, and the whole-configuration `SetConfig` and
+`Config` only need to be shown), and every field of the reply structs must be named in the
+document, so a new message or field can't go undocumented. `tests/dashboard_client.rs` starts a
+`--debug` daemon on throwaway folders and runs `tests/dashboard_client/check.py`, which drives
+`examples/dashboard/server.py`'s socket client and HTTP bridge (Version, Status, GetConfig, error
+replies, a `WatchInput` line, `/api/status`, `/api/input`, the Host check). It needs neither
+/dev/input nor /dev/uinput, so it runs with the ordinary tests; with no pad attached `WatchInput`
+sends only `null`. `scripts/check-project.py` checks the doc's version against `src/ipc.rs` and
+that the marked examples are JSON, but not the Rust parsing (it can't run the types). Left: a pad
+attached through `debug --attach` (needs uinput) to read real snapshots, `SetConfig` examples, and
+clients in other languages.
+
 ## T-17: Bug report bundle
 
 **Gap.** Manual QA runs and user reports both need the same facts ([qa-plan.md section 5.0](qa-plan.md#50-recording-a-run)),
