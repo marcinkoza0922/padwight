@@ -4,8 +4,9 @@
 //! The "other program" is a stub that opens the controller's node and takes the evdev grab (what
 //! InputPlumber does to hide the physical pad), and a uinput device that looks like the pad (what
 //! it publishes in its place). The tests check what the daemon does about each: it must not type
-//! the pad's input twice, must say once in its log that it could not take the pad, and must not
-//! retry the grab in a loop.
+//! the pad's input twice, must say in its log that it could not take the pad, and must not
+//! retry the grab in a loop (it tries again when a new input node appears, so one or two lines come
+//! at start-up, and then none).
 //!
 //! The real InputPlumber, Handheld Daemon and AntiMicroX are not run, so how they present the
 //! pad on a ROG Ally or Bazzite stays a manual check. Needs /dev/uinput and /dev/uhid and read
@@ -65,13 +66,19 @@ fn duplicate_pad(name: &str) -> VirtualDevice {
         .unwrap()
 }
 
+/// How many times the daemon has logged that it could not grab the pad. It asks once per scan,
+/// every 2 seconds.
+fn grab_failures(root: &std::path::Path) -> usize {
+    daemon_log(root).matches("cannot grab").count()
+}
+
 fn press(dev: &mut VirtualDevice, down: bool) {
     dev.emit(&[InputEvent::new(EventType::KEY.0, KeyCode::BTN_SOUTH.0, i32::from(down))]).unwrap();
 }
 
 #[test]
 #[ignore]
-fn second_grabber_a_pad_held_by_another_program_is_reported_once_and_typed_zero_times() {
+fn second_grabber_a_pad_held_by_another_program_is_retried_gently_and_typed_zero_times() {
     let _serial = serial();
     let root = temp_root();
     start(&root);
@@ -81,6 +88,8 @@ fn second_grabber_a_pad_held_by_another_program_is_reported_once_and_typed_zero_
     let mut keys = Reader::open("Padwight Virtual Keyboard");
 
     wait_for("the daemon to say it cannot grab the pad", || daemon_log(&root).contains("cannot grab").then_some(()));
+    let before = grab_failures(&root);
+    let started = std::time::Instant::now();
     // Press South for three seconds: the stub, which owns the grab, sees it all; Padwight types nothing.
     let mut stub_saw = 0;
     for _ in 0..60 {
@@ -94,9 +103,15 @@ fn second_grabber_a_pad_held_by_another_program_is_reported_once_and_typed_zero_
     }
     assert!(stub_saw > 0, "the holder still receives the pad's input");
     let log = daemon_log(&root);
-    assert_eq!(log.matches("cannot grab").count(), 1, "one line says so, and it does not retry in a loop: {log}");
+    let asks = grab_failures(&root) - before;
+    let seconds = started.elapsed().as_secs_f32();
+    assert!(asks as f32 <= seconds / 2.0 + 1.0, "it asks no faster than once per 2 s scan: {asks} asks in {seconds:.1} s: {log}");
+    assert!(grab_failures(&root) >= 1, "{log}");
     assert!(log.contains("busy"), "the line carries the kernel's reason (the grab is busy): {log}");
     assert!(!log.contains(&format!("managing {NAME}")), "not managed: {log}");
+    // The other program lets go: the next scan takes the pad, with no restart.
+    drop(stub);
+    wait_for("the daemon to take the pad once it is free", || daemon_log(&root).contains(&format!("managing {NAME} (")).then_some(()));
     drop(daemon);
     assert_log_clean(&root);
     let _ = fs::remove_dir_all(&root);
@@ -158,6 +173,8 @@ fn second_grabber_a_hidden_physical_pad_with_only_a_duplicate_left_is_not_taken_
     let mut keys = Reader::open("Padwight Virtual Keyboard");
 
     wait_for("the daemon to say it cannot grab the pad", || daemon_log(&root).contains("cannot grab").then_some(()));
+    let before = grab_failures(&root);
+    let started = std::time::Instant::now();
     for _ in 0..40 {
         pad.report(BUTTON_SOUTH, 0, 0);
         press(&mut duplicate, true);
@@ -170,7 +187,9 @@ fn second_grabber_a_hidden_physical_pad_with_only_a_duplicate_left_is_not_taken_
     }
     let log = daemon_log(&root);
     assert!(!log.contains("managing "), "nothing managed: {log}");
-    assert_eq!(log.matches("cannot grab").count(), 1, "{log}");
+    let asks = grab_failures(&root) - before;
+    let seconds = started.elapsed().as_secs_f32();
+    assert!(asks as f32 <= seconds / 2.0 + 1.0, "no faster than once per scan: {asks} in {seconds:.1} s: {log}");
     drop(daemon);
     assert_log_clean(&root);
     let _ = fs::remove_dir_all(&root);

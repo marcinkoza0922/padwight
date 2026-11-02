@@ -158,3 +158,34 @@ fn force_quit_of_a_sandboxed_game_ends_the_game_and_its_children_not_the_launche
         assert!(crate::quit::protected(exe), "{exe}");
     }
 }
+
+/// A config with one game whose profile "P" is picked by `kind` = `value`.
+fn config_with(kind: RuleKind, value: &str) -> crate::config::Config {
+    let mut config = crate::config::Config::default();
+    let mut game = crate::config::Game::new("Game", vec![crate::config::Profile::passthrough("P")]);
+    game.rules = vec![Rule::new(kind, value, "P")];
+    config.games.push(game);
+    config
+}
+
+#[test]
+fn a_game_nested_in_gamescope_is_found_by_its_process_or_by_a_class_rule_on_gamescope() {
+    // ENV-3, the part that needs no gamescope: gamescope nested in a desktop is one window of class
+    // "gamescope" there (the game's own window lives in gamescope's private Xwayland), and the game
+    // is its child process. A window-focused lookup sees only gamescope, the process lookup sees
+    // the game, and a class rule on gamescope matches the window.
+    let proc = Proc::new("gamescope");
+    let scope = proc.add(&[8000], "/usr/bin/gamescope", &["gamescope", "-W", "1280", "-H", "720", "--", "factorio"], &[]);
+    proc.add(&[8100], &format!("{FLATPAK_STEAM}/steamapps/common/Factorio/bin/x64/factorio"), &["factorio"], &["SteamAppId=427520"]);
+
+    let window = proc.identify("gamescope", scope);
+    assert_eq!(window.exe, "gamescope");
+    let by_exe = config_with(RuleKind::Executable, "factorio");
+    assert_eq!(crate::focus::profile_for(&by_exe, &window), None, "the focused window is gamescope, not the game");
+    let running = running_processes_in(&proc.0);
+    assert!(crate::focus::profile_for_processes(&by_exe, &running).is_some(), "the running game is found by its executable");
+    let by_app = config_with(RuleKind::SteamAppId, "427520");
+    assert!(crate::focus::profile_for_processes(&by_app, &running).is_some(), "and by its Steam app id");
+    let by_class = config_with(RuleKind::WindowClass, "gamescope");
+    assert!(crate::focus::profile_for(&by_class, &window).is_some(), "a class rule on gamescope matches its window");
+}

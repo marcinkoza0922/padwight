@@ -262,7 +262,7 @@ mod kernel {
             .unwrap();
         for code in v.abs {
             let info = match *code {
-                ABS_Z | ABS_RZ if v.driver == "xpad" => AbsInfo::new(0, 0, 255, 0, 0, 0),
+                ABS_Z | ABS_RZ if v.driver == "xpad" || v.driver == "playstation" => AbsInfo::new(0, 0, 255, 0, 0, 0),
                 ABS_Z | ABS_RZ if v.driver == "xpadneo" || v.driver == "xone-gip-gamepad" => AbsInfo::new(0, 0, 1023, 0, 0, 0),
                 ABS_HAT0X | ABS_HAT0Y => AbsInfo::new(0, -1, 1, 0, 0, 0),
                 _ => AbsInfo::new(0, -32768, 32767, 16, 128, 0),
@@ -296,7 +296,7 @@ mod kernel {
             assert_eq!(out, [InputEvent::Axis(Axis::LeftX, 1.0), InputEvent::Axis(Axis::LeftX, -1.0)], "{}", v.name);
             out.clear();
             if analog {
-                let max = if v.driver == "xpad" { 255 } else { 1023 };
+                let max = if matches!(v.driver, "xpad" | "playstation") { 255 } else { 1023 };
                 norm.translate(abs(ABS_Z, max), &mut out);
                 assert_eq!(out, [InputEvent::Axis(Axis::LeftTrigger, 1.0)], "{}", v.name);
             } else if v.keys.contains(&BTN_TL2) {
