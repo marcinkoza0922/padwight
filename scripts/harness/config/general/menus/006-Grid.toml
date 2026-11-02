@@ -1,0 +1,44 @@
+name = "Grid"
+
+[kind.grid]
+columns = 2
+
+[[items]]
+label = "Aa"
+
+[items.action]
+keys = ["KEY_A"]
+
+[[items]]
+label = "Bb"
+
+[items.action]
+keys = ["KEY_B"]
+
+[[items]]
+label = "Cc"
+
+[items.action]
+keys = ["KEY_C"]
+
+[[items]]
+label = "Dd"
+
+[items.action]
+keys = ["KEY_D"]
+
+[style]
+position = "center"
+scale = 1.0
+
+[style.background]
+color = "#16181c"
+opacity = 0.92
+
+[style.items]
+color = "#30343c"
+opacity = 0.95
+
+[style.selected]
+color = "#2f5db0"
+opacity = 1.0

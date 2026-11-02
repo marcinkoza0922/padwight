@@ -14,6 +14,8 @@ mod common;
 use std::{
     fs,
     path::{Path, PathBuf},
+    thread,
+    time::Duration,
 };
 
 use common::{
@@ -207,6 +209,38 @@ fn compositor_wlroots_overlay_follows_the_focused_windows_output() {
         assert_eq!(wl.layer_surfaces().last().unwrap().output, Some(output), "the overlay is on the focused window's output");
         stop(daemon, &s);
     }
+}
+
+/// The game moves to the other monitor while the one overlay process keeps running: the next time
+/// the overlay shows, its surface is made on the output the game is on now (OVL-12).
+#[test]
+#[ignore]
+fn compositor_wlroots_overlay_follows_a_game_moved_to_the_other_output() {
+    let _serial = serial();
+    let s = setup();
+    let outputs = [
+        OutputSpec { x: 0, y: 0, width: 1280, height: 800, scale: 1 },
+        OutputSpec { x: 1280, y: 0, width: 1024, height: 768, scale: 1 },
+    ];
+    let wl = Wlroots::start(&s.runtime.join("wayland-test"), &outputs);
+    let game = Window::new(1, std::process::id(), "foot", "~");
+    wl.focus_on(&game, 0);
+    let name = PathBuf::from("wayland-test");
+    let daemon = start_daemon(&s, &[("WAYLAND_DISPLAY", &name)]);
+    wait_for_log(&s.root, "focus tracking: focused window (wlroots)");
+    cli(&s.runtime, &["overlay-toggle"]);
+    wait_for("an overlay surface on the first output", || wl.layer_surfaces().iter().any(|l| l.output == Some(0)).then_some(()));
+    cli(&s.runtime, &["close-overlays"]);
+    let made = wl.layer_surfaces().len();
+    // The same game window, now on the second monitor.
+    wl.focus_on(&game, 1);
+    thread::sleep(Duration::from_millis(300));
+    cli(&s.runtime, &["overlay-toggle"]);
+    wait_for("a new overlay surface on the second output", || {
+        let surfaces = wl.layer_surfaces();
+        (surfaces.len() > made && surfaces.last().is_some_and(|l| l.output == Some(1))).then_some(())
+    });
+    stop(daemon, &s);
 }
 
 /// The GNOME and Cinnamon overlay hands the extension a picture of the monitor's size at its
