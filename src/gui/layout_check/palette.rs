@@ -15,7 +15,7 @@ const APART: f32 = 10.0;
 const AA: f32 = 4.5;
 
 fn finding(scene: &str, theme: &'static str, kind: Kind, name: &str, detail: String) -> Finding {
-    Finding::new(scene, theme, kind, name, detail, Rectangle::with_size(iced::Size::ZERO))
+    Finding::new((scene, theme), kind, name, detail, Rectangle::with_size(iced::Size::ZERO))
 }
 
 /// Every text/background pair the window's theme defines.

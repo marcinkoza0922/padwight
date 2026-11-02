@@ -35,7 +35,7 @@ pub fn scan(app: &App, scene: &str, theme_name: &'static str, size: Size) -> Res
     let tall = Size::new(size.width, (bottom + 24.0).min(MAX_HEIGHT));
     let mut narrow = Probe::new();
     let (element, theme, background) = drawn(app);
-    let image = snapshot::render_probed(element, tall, 1.0, background, &theme, &mut narrow)?;
+    let image = snapshot::render_probed(element, &snapshot::Canvas { size: tall, scale: 1.0, background }, &theme, &mut narrow)?;
     let mut wide = Probe::new();
     snapshot::probe(drawn(app).0, Size::new(WIDE, tall.height), &mut wide)?;
     let natural = natural(&wide.texts);
@@ -48,7 +48,7 @@ pub fn scan(app: &App, scene: &str, theme_name: &'static str, size: Size) -> Res
         if seen.text.trim().is_empty() {
             continue;
         }
-        let mut add = |kind, detail: String| found.push(Finding::new(scene, theme_name, kind, &seen.text, detail, seen.bounds));
+        let mut add = |kind, detail: String| found.push(Finding::new((scene, theme_name), kind, &seen.text, detail, seen.bounds));
         layout_findings(seen, alone, size.width, &mut add);
         if let Some(detail) = contrast_finding(&image, seen, alone) {
             add(Kind::LowContrast, detail);

@@ -18,12 +18,12 @@ pub struct Scene {
 const GAME: &str = "Age of Empires II: Definitive Edition";
 
 fn scene(name: &str, steps: &[&str]) -> Scene {
-    Scene { name: name.into(), steps: steps.iter().map(|s| s.to_string()).collect() }
+    Scene { name: name.into(), steps: steps.iter().map(ToString::to_string).collect() }
 }
 
 /// The steps that show `GAME` with a macro and an info overlay added, then `more`.
 fn game(more: &[&str]) -> Vec<String> {
-    ["library", GAME, "game", GAME, "demo"].iter().chain(more).map(|s| s.to_string()).collect()
+    ["library", GAME, "game", GAME, "demo"].iter().chain(more).map(ToString::to_string).collect()
 }
 
 pub fn all() -> Vec<Scene> {

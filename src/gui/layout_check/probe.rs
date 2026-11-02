@@ -56,7 +56,7 @@ impl Operation for Probe {
         // Its content is as tall as it needs to be, so it isn't a parent to fit inside.
         self.next_parent = None;
         self.parent = None;
-        self.translation = self.translation - translation;
+        self.translation -= translation;
         self.viewport = Some(visible.unwrap_or_default());
     }
 

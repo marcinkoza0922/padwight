@@ -64,22 +64,7 @@ fn soak_config() -> String {
 fn soak_run() {
     let _serial = serial();
     assert_no_other_daemon();
-    let seed = env_u64("PADWIGHT_SOAK_SEED").unwrap_or_else(|| SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos() as u64 & 0xffff_ffff);
-    let seconds = env_u64("PADWIGHT_SOAK_SECONDS").unwrap_or(60);
-    let max_steps = env_u64("PADWIGHT_SOAK_STEPS");
-    let check_every = Duration::from_secs(env_u64("PADWIGHT_SOAK_CHECK_SECONDS").unwrap_or(120));
-    let check_steps = env_u64("PADWIGHT_SOAK_CHECK_STEPS");
-    let pads = env_u64("PADWIGHT_SOAK_PADS").unwrap_or(4).clamp(1, 4) as usize;
-    let bounds = Bounds {
-        rss_kb: env_u64("PADWIGHT_SOAK_RSS_KB").unwrap_or(40_000),
-        fds: env_u64("PADWIGHT_SOAK_FDS").unwrap_or(8),
-        threads: env_u64("PADWIGHT_SOAK_THREADS").unwrap_or(6),
-    };
-    let out: PathBuf = std::env::var_os("PADWIGHT_SOAK_OUT").map_or_else(|| std::env::temp_dir().join("padwight-soak"), PathBuf::from);
-    fs::create_dir_all(&out).unwrap();
-    let length = max_steps.map_or(format!("{seconds} s"), |n| format!("{n} steps"));
-    let every = check_steps.map_or(format!("{} s", check_every.as_secs()), |n| format!("{n} steps"));
-    eprintln!("soak: seed {seed}, {length}, check every {every}, up to {pads} pads");
+    let Settings { seed, seconds, max_steps, check_every, check_steps, pads, bounds, out } = Settings::from_env();
 
     let root = temp_root();
     let config = root.join("config/padwight");
@@ -109,7 +94,7 @@ fn soak_run() {
     let mut count = 0u64;
     let failure = loop {
         let done = max_steps.map_or_else(|| began.elapsed() >= Duration::from_secs(seconds), |n| count >= n);
-        let due = check_steps.map_or_else(|| last_check.elapsed() >= check_every, |n| count > 0 && count % n == 0);
+        let due = check_steps.map_or_else(|| last_check.elapsed() >= check_every, |n| count > 0 && count.is_multiple_of(n));
         if done || due {
             match check_invariants(&mut world, &mut daemon.0, start, bounds) {
                 Ok(s) => {
@@ -138,4 +123,38 @@ fn soak_run() {
     }
     eprintln!("soak: passed, {count} steps in {} s, seed {seed}", began.elapsed().as_secs());
     let _ = fs::remove_dir_all(&root);
+}
+
+/// How long and how hard a run goes, from the `PADWIGHT_SOAK_*` variables; prints the run's plan.
+struct Settings {
+    seed: u64,
+    seconds: u64,
+    max_steps: Option<u64>,
+    check_every: Duration,
+    check_steps: Option<u64>,
+    pads: usize,
+    bounds: Bounds,
+    out: PathBuf,
+}
+
+impl Settings {
+    fn from_env() -> Self {
+        let seed = env_u64("PADWIGHT_SOAK_SEED").unwrap_or_else(|| SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos() as u64 & 0xffff_ffff);
+        let seconds = env_u64("PADWIGHT_SOAK_SECONDS").unwrap_or(60);
+        let max_steps = env_u64("PADWIGHT_SOAK_STEPS");
+        let check_every = Duration::from_secs(env_u64("PADWIGHT_SOAK_CHECK_SECONDS").unwrap_or(120));
+        let check_steps = env_u64("PADWIGHT_SOAK_CHECK_STEPS");
+        let pads = env_u64("PADWIGHT_SOAK_PADS").unwrap_or(4).clamp(1, 4) as usize;
+        let bounds = Bounds {
+            rss_kb: env_u64("PADWIGHT_SOAK_RSS_KB").unwrap_or(40_000),
+            fds: env_u64("PADWIGHT_SOAK_FDS").unwrap_or(8),
+            threads: env_u64("PADWIGHT_SOAK_THREADS").unwrap_or(6),
+        };
+        let out: PathBuf = std::env::var_os("PADWIGHT_SOAK_OUT").map_or_else(|| std::env::temp_dir().join("padwight-soak"), PathBuf::from);
+        fs::create_dir_all(&out).unwrap();
+        let length = max_steps.map_or(format!("{seconds} s"), |n| format!("{n} steps"));
+        let every = check_steps.map_or(format!("{} s", check_every.as_secs()), |n| format!("{n} steps"));
+        eprintln!("soak: seed {seed}, {length}, check every {every}, up to {pads} pads");
+        Settings { seed, seconds, max_steps, check_every, check_steps, pads, bounds, out }
+    }
 }

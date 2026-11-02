@@ -83,19 +83,21 @@ pub fn render<M>(element: Element<'_, M>, size: Size, scale: f32, background: Co
 
 /// Like `render`, with the widgets styled for `theme`.
 pub fn render_themed<M>(element: Element<'_, M>, size: Size, scale: f32, background: Color, theme: &Theme) -> Result<Image> {
-    render_probed(element, size, scale, background, theme, &mut Nothing)
+    render_probed(element, &Canvas { size, scale, background }, theme, &mut Nothing)
+}
+
+/// The screen `render_probed` draws on: its size in logical pixels, physical pixels per logical
+/// one, and the color behind everything.
+pub struct Canvas {
+    pub size: Size,
+    pub scale: f32,
+    pub background: Color,
 }
 
 /// Like `render_themed`, and the laid-out widget tree is walked by `probe` once the interface has
 /// settled (`()` walks nothing). For the layout checks.
-pub fn render_probed<M>(
-    element: Element<'_, M>,
-    size: Size,
-    scale: f32,
-    background: Color,
-    theme: &Theme,
-    probe: &mut dyn Operation,
-) -> Result<Image> {
+pub fn render_probed<M>(element: Element<'_, M>, canvas: &Canvas, theme: &Theme, probe: &mut dyn Operation) -> Result<Image> {
+    let &Canvas { size, scale, background } = canvas;
     // The renderer panics on an empty image, and a huge one runs out of memory.
     let physical = Size::new((size.width * scale).round() as u32, (size.height * scale).round() as u32);
     if scale.is_nan() || scale <= 0.0 || !(1..=MAX_SIDE).contains(&physical.width) || !(1..=MAX_SIDE).contains(&physical.height) {

@@ -76,7 +76,8 @@ pub struct Finding {
 }
 
 impl Finding {
-    pub fn new(scene: &str, theme: &'static str, kind: Kind, text: &str, detail: String, bounds: Rectangle) -> Self {
+    /// A finding in `scene` drawn in `theme` (the pair says where it was seen).
+    pub fn new((scene, theme): (&str, &'static str), kind: Kind, text: &str, detail: String, bounds: Rectangle) -> Self {
         Finding { scene: scene.into(), theme, kind, text: text.into(), detail, bounds }
     }
 }
