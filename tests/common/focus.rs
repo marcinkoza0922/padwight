@@ -86,6 +86,12 @@ pub fn status(runtime: &Path) -> String {
     String::from_utf8_lossy(&out.stdout).into_owned()
 }
 
+/// Runs `padwight <args>` against the daemon whose runtime dir is `runtime`; its output.
+pub fn cli(runtime: &Path, args: &[&str]) -> String {
+    let out = Command::new(env!("CARGO_BIN_EXE_padwight")).args(args).env("XDG_RUNTIME_DIR", runtime).output().unwrap();
+    String::from_utf8_lossy(&out.stdout).into_owned()
+}
+
 /// Waits until `padwight status` has `line`; on a timeout the failure shows the last status and the log.
 pub fn wait_for_status(root: &Path, runtime: &Path, line: &str) {
     let deadline = Instant::now() + TIMEOUT;

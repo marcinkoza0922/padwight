@@ -18,7 +18,7 @@ use std::{
 
 use common::{
     Daemon, assert_log_clean, install_config, serial, spawn_daemon_env, temp_root, wait_for,
-    focus::{DEFAULT_LINE, GAME_LINE, GameProcess, game_config, status, wait_for_log, wait_for_status},
+    focus::{DEFAULT_LINE, GAME_LINE, GameProcess, cli, game_config, status, wait_for_log, wait_for_status},
     standin::{Compositor, wlroots::{OutputSpec, Wlroots}, bus::SessionBus, cinnamon::Cinnamon, kwin::Kwin, Window, hyprland::Hyprland, niri::Niri, sway::Sway},
 };
 
@@ -179,5 +179,64 @@ fn compositor_wlroots_focus_switches_the_profile() {
     let name = PathBuf::from("wayland-test");
     let daemon = start_daemon(&s, &[("WAYLAND_DISPLAY", &name)]);
     walk(&s, &wl, "wlroots", &daemon);
+    stop(daemon, &s);
+}
+
+/// The overlay's surface is made on the output of the focused window (`overlay/wayland/monitors.rs`),
+/// whichever of the two monitors that is. Each output gets its own daemon: in the stand-in the
+/// overlay does not hide again after it closes, so one surface per run is what can be checked.
+#[test]
+#[ignore]
+fn compositor_wlroots_overlay_follows_the_focused_windows_output() {
+    let _serial = serial();
+    for output in [1, 0] {
+        let s = setup();
+        let outputs = [
+            OutputSpec { x: 0, y: 0, width: 1280, height: 800, scale: 1 },
+            OutputSpec { x: 1280, y: 0, width: 1024, height: 768, scale: 1 },
+        ];
+        let wl = Wlroots::start(&s.runtime.join("wayland-test"), &outputs);
+        wl.focus_on(&Window::new(1, std::process::id(), "foot", "~"), output);
+        let name = PathBuf::from("wayland-test");
+        let daemon = start_daemon(&s, &[("WAYLAND_DISPLAY", &name)]);
+        wait_for_log(&s.root, "focus tracking: focused window (wlroots)");
+        // Opens the keyboard overlay: the overlay process starts, and makes its surface again
+        // for the first frame, now that it knows which window has focus.
+        cli(&s.runtime, &["overlay-toggle"]);
+        wait_for("an overlay surface made for an output", || wl.layer_surfaces().iter().any(|l| l.output.is_some()).then_some(()));
+        assert_eq!(wl.layer_surfaces().last().unwrap().output, Some(output), "the overlay is on the focused window's output");
+        stop(daemon, &s);
+    }
+}
+
+/// The GNOME and Cinnamon overlay hands the extension a picture of the monitor's size at its
+/// scale, and presents it.
+#[test]
+#[ignore]
+fn compositor_cinnamon_overlay_hands_over_a_picture_of_the_monitors_size() {
+    use common::standin::overlay::Call;
+
+    let _serial = serial();
+    let s = setup();
+    let bus = SessionBus::start(&s.runtime.join("bus"));
+    let cinnamon = Cinnamon::start(&bus, &s.root.join("cin"), &s.root.join("data"), true);
+    cinnamon.overlay().set_monitor(1280, 720, 1.5);
+    let path = std::env::var("PATH").unwrap_or_default();
+    let path = PathBuf::from(format!("{}:{path}", cinnamon.bin_dir().display()));
+    let daemon = start_daemon_on(&s, &[("PATH", &path)], Some(&bus));
+    wait_for_log(&s.root, "focus tracking: focused window (Cinnamon)");
+    cli(&s.runtime, &["overlay-toggle"]);
+    wait_for("the overlay to present a frame", || cinnamon.overlay().calls().contains(&Call::Present).then_some(()));
+    let calls = cinnamon.overlay().calls();
+    let buffer = calls.iter().find_map(|c| match c {
+        Call::SetBuffer { width, height, bytes } => Some((*width, *height, *bytes)),
+        _ => None,
+    });
+    let (width, height, bytes) = buffer.unwrap_or_else(|| panic!("no SetBuffer in {calls:?}"));
+    assert_eq!((width, height), (1920, 1080), "1280x720 logical at scale 1.5 is 1920x1080 device pixels");
+    assert!(bytes >= 1920 * 1080 * 4, "the memfd holds the picture: {bytes} bytes");
+    let set = calls.iter().position(|c| matches!(c, Call::SetBuffer { .. })).unwrap();
+    let present = calls.iter().position(|c| *c == Call::Present).unwrap();
+    assert!(set < present, "the buffer is set before the first present: {calls:?}");
     stop(daemon, &s);
 }

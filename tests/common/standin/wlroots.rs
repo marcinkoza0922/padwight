@@ -12,20 +12,30 @@ use std::{
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
+        Mutex, PoisonError,
         mpsc::{Receiver, Sender, channel},
     },
     thread::{self, JoinHandle},
     time::Duration,
 };
 
+use wayland_protocols_wlr::layer_shell::v1::server::zwlr_layer_shell_v1::ZwlrLayerShellV1;
 use wayland_protocols_wlr::foreign_toplevel::v1::server::{
     zwlr_foreign_toplevel_handle_v1::{self, ZwlrForeignToplevelHandleV1},
     zwlr_foreign_toplevel_manager_v1::{self, ZwlrForeignToplevelManagerV1},
 };
 use wayland_server::{
     Client, DataInit, Dispatch, DisplayHandle, GlobalDispatch, ListeningSocket, New, Resource,
-    protocol::wl_output::{self, WlOutput},
+    protocol::{
+        wl_compositor::WlCompositor,
+        wl_output::{self, WlOutput},
+        wl_shm::WlShm,
+    },
 };
+
+mod layer;
+
+pub use layer::LayerSurface;
 
 use super::{Compositor, Window};
 
@@ -61,9 +71,14 @@ struct State {
     managers: Vec<ZwlrForeignToplevelManagerV1>,
     windows: Vec<Win>,
     active: Option<u64>,
+    /// Frame callbacks waiting for the next refresh.
+    frame_callbacks: Vec<wayland_server::protocol::wl_callback::WlCallback>,
+    /// The layer surfaces clients have made, in order.
+    layer_surfaces: Arc<Mutex<Vec<LayerSurface>>>,
 }
 
 pub struct Wlroots {
+    layers: Arc<Mutex<Vec<LayerSurface>>>,
     commands: Sender<Command>,
     stop: Arc<AtomicBool>,
     thread: Option<JoinHandle<()>>,
@@ -79,13 +94,21 @@ impl Wlroots {
         let stop = Arc::new(AtomicBool::new(false));
         let outputs = outputs.to_vec();
         let flag = stop.clone();
-        let thread = thread::spawn(move || serve(&listener, outputs, &receiver, &flag));
-        Self { commands, stop, thread: Some(thread), socket: socket.to_path_buf() }
+        let layers = Arc::new(Mutex::new(Vec::new()));
+        let shared = layers.clone();
+        let thread = thread::spawn(move || serve(&listener, &outputs, &receiver, &flag, shared));
+        Self { layers, commands, stop, thread: Some(thread), socket: socket.to_path_buf() }
     }
 
     /// Focuses `window`, which is on output `output` (an index into the specs given to `start`).
     pub fn focus_on(&self, window: &Window, output: usize) {
         let _ = self.commands.send(Command::Focus(window.clone(), output));
+    }
+
+    /// The layer surfaces made so far, each with the output it asked for: the overlay process
+    /// makes a new one whenever it shows after being hidden, on the focused window's output.
+    pub fn layer_surfaces(&self) -> Vec<LayerSurface> {
+        self.layers.lock().unwrap_or_else(PoisonError::into_inner).clone()
     }
 
     pub fn socket(&self) -> &Path {
@@ -116,14 +139,17 @@ impl Drop for Wlroots {
     }
 }
 
-fn serve(listener: &ListeningSocket, outputs: Vec<OutputSpec>, commands: &Receiver<Command>, stop: &AtomicBool) {
+fn serve(listener: &ListeningSocket, outputs: &[OutputSpec], commands: &Receiver<Command>, stop: &AtomicBool, layer_surfaces: Arc<Mutex<Vec<LayerSurface>>>) {
     let mut display = wayland_server::Display::<State>::new().expect("creating the Wayland display");
-    let mut state = State { outputs: outputs.clone(), bound: Vec::new(), managers: Vec::new(), windows: Vec::new(), active: None };
+    let mut state = State { outputs: outputs.to_vec(), bound: Vec::new(), managers: Vec::new(), windows: Vec::new(), active: None, frame_callbacks: Vec::new(), layer_surfaces };
     let handle = display.handle();
     for index in 0..outputs.len() {
         handle.create_global::<State, WlOutput, usize>(4, index);
     }
     handle.create_global::<State, ZwlrForeignToplevelManagerV1, ()>(3, ());
+    handle.create_global::<State, WlCompositor, ()>(6, ());
+    handle.create_global::<State, WlShm, ()>(1, ());
+    handle.create_global::<State, ZwlrLayerShellV1, ()>(4, ());
     while !stop.load(Ordering::Relaxed) {
         while let Ok(Some(stream)) = listener.accept() {
             let _ = display.handle().insert_client(stream, Arc::new(Nothing));
@@ -133,6 +159,7 @@ fn serve(listener: &ListeningSocket, outputs: Vec<OutputSpec>, commands: &Receiv
         }
         let _ = display.dispatch_clients(&mut state);
         let _ = display.flush_clients();
+        state.tick();
         thread::sleep(Duration::from_millis(5));
     }
 }
