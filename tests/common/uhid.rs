@@ -90,8 +90,8 @@ fn replica_mac(n: u8) -> [u8; 6] {
 }
 
 /// What the kernel needs to make one device.
-struct Spec {
-    uniq: &'static str,
+struct Spec<'a> {
+    uniq: &'a str,
     bus: u16,
     vendor: u32,
     product: u32,
@@ -112,11 +112,17 @@ pub struct HidPad {
 impl HidPad {
     /// A controller named `name`. Dropping it removes the device, as an unplug does.
     pub fn new(name: &str) -> Self {
-        let spec = Spec { uniq: TEST_UNIQ, bus: BUS_USB, vendor: 0x045e, product: 0x028e, descriptor: DESCRIPTOR };
+        Self::with_uniq(name, TEST_UNIQ)
+    }
+
+    /// A controller called `name` with its own unique id, for tests that run several at once (the
+    /// daemon tells controllers apart by it).
+    pub fn with_uniq(name: &str, uniq: &str) -> Self {
+        let spec = Spec { uniq, bus: BUS_USB, vendor: 0x045e, product: 0x028e, descriptor: DESCRIPTOR };
         Self::create(&spec, name, None)
     }
 
-    fn create(spec: &Spec, name: &str, responder: Option<Box<dyn Responder>>) -> Self {
+    fn create(spec: &Spec<'_>, name: &str, responder: Option<Box<dyn Responder>>) -> Self {
         let file = OpenOptions::new().read(true).write(true).open("/dev/uhid").expect("opening /dev/uhid (needs root or the uhid device)");
         let file = Arc::new(file);
         let outputs = Arc::new(Mutex::new(Vec::new()));

@@ -22,6 +22,7 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
 - Game detection, no controller needed: `cargo run -q -- debug focus [pid [class]]|processes`;
   `scripts/sandbox-pid.sh` runs a program in its own pid namespace (see
   `docs/development/code-review-plan.md`, which also tracks the review passes)
+- Soak and chaos run (Docker, seeded, `PADWIGHT_SOAK_SECONDS`/`_SEED`/`_STEPS`): `scripts/soak.sh`; see `docs/development/qa-tooling.md` T-6
 - Input latency, CPU and memory (Docker, uhid pad): `scripts/profile.sh [filter]`
   (`PADWIGHT_PROFILE_OUT=dir`); a daemon with `PADWIGHT_INPUT_TIMING=file` logs each input's stages
 - Overlay CPU and memory on a headless KWin: `PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh
