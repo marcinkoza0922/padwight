@@ -1,0 +1,6 @@
+"w"				"+forward"
+"UPARROW"		"+forward"
+"SPACE"			"+jump"
+"e"				"+use"
+"MOUSE2"		"+attack2"
+"\\"			"+attack2"

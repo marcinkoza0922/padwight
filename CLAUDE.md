@@ -30,6 +30,8 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
   Discord's detectable-games list in `pcgamingwiki/`, see its `README.md`; never read `games.jsonl` whole
 - Pack identity audit (Steam ids, executables, release, controller support vs the PCGamingWiki snapshot; keeps the
   manual columns of `docs/development/pack-qa.tsv`): `python3 -I scripts/pack-audit.py [-v|--check|--self-test]`
+- Pack keys against the game's own bindings: `python3 -I scripts/binding-compare.py list|compare [game]|self-test`
+  (readers for Unreal `User.ini`, Dark engine `.bnd`, id Tech/Source cfg, F.E.A.R. profile, Max Payne registry)
 - Long files: `scripts/long-files.sh` (lists files over 400 lines; split them when you work in them)
 
 Filter tests to the module you touched (e.g. `engine::`) unless the change is broad.
