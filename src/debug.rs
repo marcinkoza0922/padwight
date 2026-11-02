@@ -13,6 +13,8 @@ mod bridge;
 mod focus;
 mod glyphs;
 mod install;
+mod layout;
+mod media;
 mod motion_shot;
 mod overlay_compare;
 mod overlay_shot;
@@ -68,7 +70,7 @@ Without a session:
 ";
 
 fn usage() -> String {
-    format!("{USAGE}{}{}{}{}{}{}{}{}{}\nWith a session:\n{}", recording::USAGE, focus::USAGE, sound::USAGE, overlay_shot::USAGE, overlay_compare::USAGE, regression::USAGE, motion_shot::USAGE, crate::gui::shoot::USAGE, crate::gui::layout_check::USAGE, protocol::COMMANDS)
+    format!("{USAGE}{}{}{}{}{}{}{}{}{}{}{}\nWith a session:\n{}", recording::USAGE, focus::USAGE, layout::USAGE, media::USAGE, sound::USAGE, overlay_shot::USAGE, overlay_compare::USAGE, regression::USAGE, motion_shot::USAGE, crate::gui::shoot::USAGE, crate::gui::layout_check::USAGE, protocol::COMMANDS)
 }
 
 #[expect(clippy::print_stdout, reason = "CLI output")]
@@ -88,6 +90,8 @@ pub fn run(args: &[&str]) -> Result<()> {
         ["svg", name] => println!("{}", rest_svg(parse_model(name)?)),
         ["focus", rest @ ..] => focus::run(rest)?,
         ["install-pack", rest @ ..] => install::run(rest)?,
+        ["layout", rest @ ..] => layout::run(rest)?,
+        ["media", rest @ ..] => media::run(rest)?,
         ["sound", rest @ ..] => sound::run(rest)?,
         ["overlay", rest @ ..] => overlay_shot::run(rest)?,
         ["motion", rest @ ..] => motion_shot::run(rest)?,
