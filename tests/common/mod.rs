@@ -226,3 +226,30 @@ pub fn assert_log_clean(root: &Path) {
     assert!(!log.contains("panicked"), "the daemon panicked:\n{log}");
     assert!(!log.contains("output error"), "the daemon failed to send input:\n{log}");
 }
+
+/// What a test run's daemon says in its log that is not trouble: this machine has no compositor,
+/// no session bus and (with `--fake-clock`) no virtual devices.
+const EXPECTED_IN_LOGS: &[&str] = &[
+    "needs a Wayland session",
+    "no system tray",
+    "Could not find wayland compositor",
+    "focus tracking",
+    // The scenarios point the session bus at a path that does not exist.
+    "padwight-scenario-bus",
+    // Real-time scheduling is the machine's to grant (rtkit may be absent, busy or refuse).
+    "rtkit",
+    "input threads:",
+];
+
+/// The lines of a daemon log that read as trouble: a panic, or an error, failure or warning that
+/// this kind of test run does not expect (INS-9: after a scripted session the log has none, and
+/// each message is worded for a player). Call it once the daemon has stopped.
+pub fn log_problems(log: &str) -> Vec<&str> {
+    const WORDS: &[&str] = &["panicked", "error", "failed", "failure", "warning", "warn:", "can't", "cannot", "couldn't", "unable"];
+    log.lines()
+        .filter(|line| {
+            let lower = line.to_lowercase();
+            WORDS.iter().any(|w| lower.contains(w)) && !line.starts_with("sound:") && !EXPECTED_IN_LOGS.iter().any(|e| line.contains(e))
+        })
+        .collect()
+}
