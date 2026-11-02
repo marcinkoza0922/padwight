@@ -76,6 +76,14 @@ impl PairedNode {
     }
 }
 
+/// Whether the motion-sensor or touchpad node `sibling` belongs to the controller whose gamepad node is
+/// `pad`, by the rule the daemon pairs them with (see [`PairedNode::belongs_to`]). `padwight debug record`
+/// uses it to gather one controller's nodes.
+pub(crate) fn same_controller(sibling: (&Path, &str, Option<&str>), pad: (&Path, &str, Option<&str>)) -> bool {
+    let node = PairedNode { path: sibling.0.to_path_buf(), name: sibling.1.to_string(), parent: hid_parent(sibling.0), uniq: sibling.2.map(str::to_string) };
+    node.matches(pad.1, &hid_parent(pad.0), &pad.2.map(str::to_string))
+}
+
 impl Daemon {
     /// Notes a controller's motion sensor we may not open, so the GUI can say how to fix it.
     fn note_denied_sensor(&mut self, key: NodeKey, path: &Path) {
