@@ -19,7 +19,7 @@ use std::{
 use common::{
     Daemon, assert_log_clean, install_config, serial, spawn_daemon_env, temp_root, wait_for,
     focus::{DEFAULT_LINE, GAME_LINE, GameProcess, game_config, status, wait_for_log, wait_for_status},
-    standin::{Compositor, Window, hyprland::Hyprland, niri::Niri, sway::Sway},
+    standin::{Compositor, bus::SessionBus, cinnamon::Cinnamon, kwin::Kwin, Window, hyprland::Hyprland, niri::Niri, sway::Sway},
 };
 
 /// A desktop-like window owned by this test process, which no rule matches.
@@ -47,14 +47,17 @@ fn setup() -> Setup {
     Setup { root, runtime }
 }
 
-fn start_daemon(s: &Setup, env: &[(&str, &Path)]) -> Daemon {
-    let bus = s.root.join("no-bus");
+/// The daemon, with `bus` as its session bus; without one it gets a dead address, so the test
+/// never reaches the desktop it runs on.
+fn start_daemon_on(s: &Setup, env: &[(&str, &Path)], bus: Option<&SessionBus>) -> Daemon {
+    let address = PathBuf::from(bus.map_or_else(|| format!("unix:path={}", s.root.join("no-bus").display()), |b| b.address.clone()));
     let mut env = env.to_vec();
-    // No session bus: the test must not reach the desktop it runs on.
-    let address = format!("unix:path={}", bus.display());
-    let address = PathBuf::from(address);
     env.push(("DBUS_SESSION_BUS_ADDRESS", &address));
     spawn_daemon_env(&s.root, Some(&s.runtime), &[], &env)
+}
+
+fn start_daemon(s: &Setup, env: &[(&str, &Path)]) -> Daemon {
+    start_daemon_on(s, env, None)
 }
 
 fn stop(mut daemon: Daemon, s: &Setup) {
@@ -126,5 +129,33 @@ fn compositor_niri_focus_switches_the_profile() {
     let niri = Niri::start(&socket);
     let daemon = start_daemon(&s, &[("NIRI_SOCKET", &socket)]);
     walk(&s, &niri, "niri", &daemon);
+    stop(daemon, &s);
+}
+
+#[test]
+#[ignore]
+fn compositor_kwin_focus_switches_the_profile() {
+    let _serial = serial();
+    let s = setup();
+    let bus = SessionBus::start(&s.runtime.join("bus"));
+    let kwin = Kwin::start(&bus);
+    let daemon = start_daemon_on(&s, &[], Some(&bus));
+    walk(&s, &kwin, "KWin", &daemon);
+    assert!(kwin.script_running());
+    assert_eq!(kwin.loads(), 1, "the daemon loads its script once");
+    stop(daemon, &s);
+}
+
+#[test]
+#[ignore]
+fn compositor_cinnamon_focus_switches_the_profile() {
+    let _serial = serial();
+    let s = setup();
+    let bus = SessionBus::start(&s.runtime.join("bus"));
+    let cinnamon = Cinnamon::start(&bus, &s.root.join("cin"), &s.root.join("data"), true);
+    let path = std::env::var("PATH").unwrap_or_default();
+    let path = PathBuf::from(format!("{}:{path}", cinnamon.bin_dir().display()));
+    let daemon = start_daemon_on(&s, &[("PATH", &path)], Some(&bus));
+    walk(&s, &cinnamon, "Cinnamon", &daemon);
     stop(daemon, &s);
 }

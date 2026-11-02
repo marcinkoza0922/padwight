@@ -17,8 +17,12 @@ use std::{
     thread::{self, JoinHandle},
 };
 
+pub mod bus;
+pub mod cinnamon;
 pub mod hyprland;
+pub mod kwin;
 pub mod niri;
+pub mod overlay;
 pub mod sway;
 
 /// A window a stand-in compositor shows. The pid should belong to a process that exists (see
