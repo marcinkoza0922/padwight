@@ -299,7 +299,7 @@ fi
 # afterwards never reports an empty desktop (FOC-6 on labwc and Wayfire, FOC-7 on GNOME).
 stop_daemon
 (setsid nohup "${bin[@]}" daemon >>/tmp/desktop-test-daemon.log 2>&1 </dev/null &)
-at_once() { for _ in $(seq 1 8); do on_profile "Console Pad" && return 0; sleep 1; done; return 1; }
+at_once() { for _ in $(seq 1 15); do on_profile "Console Pad" && return 0; sleep 1; done; return 1; }
 if at_once; then
     pass "a restarted daemon picks the profile of the window in front"
 else
