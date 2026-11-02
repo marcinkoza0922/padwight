@@ -118,6 +118,7 @@ fn write_all(fd: i32, events: &[InputEvent]) -> io::Result<()> {
     // SAFETY: `InputEvent` is `repr(transparent)` over the kernel's `input_event`, so the slice is
     // that many plain structs, laid out as the uinput device reads them.
     let mut bytes = unsafe { std::slice::from_raw_parts(events.as_ptr().cast::<u8>(), std::mem::size_of_val(events)) };
+    crate::faults::io("uinput.write")?;
     while !bytes.is_empty() {
         // SAFETY: the pointer and length describe the live slice above.
         let n = unsafe { libc::write(fd, bytes.as_ptr().cast(), bytes.len()) };

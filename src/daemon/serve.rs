@@ -56,6 +56,9 @@ fn serve_client(mut conn: &UnixStream, tx: &Tx) -> Result<()> {
         }
         Err(e) => Response::Error(format!("bad request: {e}")),
     };
+    if crate::faults::hit("ipc.reply").is_some() {
+        return Ok(()); // the socket closes with no answer
+    }
     let mut out = serde_json::to_string(&response)?;
     out.push('\n');
     conn.write_all(out.as_bytes())?;
@@ -81,7 +84,7 @@ fn watch_overlay(mut conn: &UnixStream, tx: &Tx) -> Result<()> {
             view.leave_out_doodles_sent(&mut doodles_sent);
             let mut line = serde_json::to_string(view)?;
             line.push('\n');
-            if conn.write_all(line.as_bytes()).is_err() {
+            if crate::faults::io("overlay.frame").is_err() || conn.write_all(line.as_bytes()).is_err() {
                 return Ok(());
             }
         }

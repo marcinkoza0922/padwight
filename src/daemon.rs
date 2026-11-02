@@ -666,6 +666,9 @@ fn set_shortcut_labels(shortcuts: &crate::config::Shortcuts) {
 
 /// Runs the service. With `debug`, controllers can also be injected over IPC (`padwight debug`).
 pub fn run(debug: bool) -> Result<()> {
+    if debug {
+        crate::faults::arm();
+    }
     let config = Config::load()?;
     config.log_unreadable();
     let (tx, rx) = inbox::channel().context("making the main loop's wake-up")?;
