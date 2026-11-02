@@ -23,6 +23,10 @@ mod live;
 pub use live::*;
 
 /// What a point does when it fires.
+#[cfg_attr(
+    not(any(test, debug_assertions)),
+    expect(dead_code, reason = "release builds compile the points out, so nothing builds an Action; call sites still name the type")
+)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Action {
     Fail,
