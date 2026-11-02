@@ -16,6 +16,11 @@ value = "kenshi_x64.exe"
 profile = "Kenshi"
 
 [[rules]]
+kind = "executable"
+value = "kenshi_gog_x64.exe"
+profile = "Kenshi"
+
+[[rules]]
 kind = "steam_app_id"
 value = "233860"
 profile = "Kenshi"

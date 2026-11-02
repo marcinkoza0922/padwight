@@ -546,3 +546,15 @@ Follow-up the same day:
   `config_load` 26k (slow: each run writes and loads a folder), `ipc_request` 110M, `tokens` 3.7M,
   `calculator` 2.1M, `engine_input` 1.3M. No crash, hang or OOM; `fuzz/artifacts` is empty.
   Five minutes each is a smoke run, not coverage: run longer before a release.
+
+Follow-up 2026-11-02 (no hardware): `debug overlay diff` against the baseline: 137 of 137 identical.
+Settings tabs looked at, light and dark: touchpad (light), cycles and macros (dark); text reads, nothing
+clipped. The pack audit now flags 67 of 231 (was 79); the categories are unchanged. Still open: motion
+strips, the other settings tabs, every hardware check.
+
+Pack follow-up 2026-11-02: `scripts/store-check.py` (stores, GOG ids, GitHub for source ports) and
+`scripts/find-executables.py` (executables from GOG depot manifests and installed Steam copies; its
+`store-executables.tsv` is read by `pack-audit.py`). The audit now flags 51 of 231 (`exe_unseen` 49,
+was 69). Packs changed: `alan-wake` and `mirrors-edge` (PC release years in the description),
+`banished` (GOG executables) and `kenshi` (`kenshi_gog_x64.exe`). Not changed: rules that GOG's build
+doesn't ship (Steam-only or Linux names), and folder-prefixed rules, which name Steam install folders.

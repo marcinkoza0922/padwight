@@ -117,8 +117,9 @@ def load_snapshot(wiki):
     appids = [(r["steam_appid"], r["title"], r["file"]) for r in tsv("steam-appids.tsv")]
     redirects = [(r["from"], r["to"]) for r in tsv("redirects.tsv")]
     exes = tsv("executables.tsv")
-    if (wiki / "steam-executables.tsv").is_file():  # scripts/steam-executables.py, optional
-        exes += tsv("steam-executables.tsv")
+    for extra in ("steam-executables.tsv", "store-executables.tsv"):  # the fetch scripts, optional
+        if (wiki / extra).is_file():  # steam-executables.py, find-executables.py
+            exes += tsv(extra)
     return Snapshot(games, appids, redirects, exes)
 
 

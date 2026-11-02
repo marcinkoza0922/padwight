@@ -47,6 +47,10 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
 - Pack identity audit (Steam ids, executables vs Discord's list and Steam's launch data
   (`python3 -I scripts/steam-executables.py` fetches the latter), release, controller support vs the PCGamingWiki snapshot; keeps the
   manual columns of `docs/development/pack-qa.tsv`): `python3 -I scripts/pack-audit.py [-v|--check|--self-test]`
+- Other stores: `python3 -I scripts/store-check.py [--missing-steam] [--online] [--github]` (GOG, Epic, Battle.net ids
+  from the wiki; `--online` checks GOG ids; `--github` finds the project of a source port or a game the wiki
+  has no store for). Executables from GOG's depot manifests and installed Steam copies:
+  `python3 -I scripts/find-executables.py [pack] [--write]` (`--write` feeds `pack-audit.py`)
 - Pack keys against the game's own bindings: `python3 -I scripts/binding-compare.py list|compare [game]|self-test`
   (readers for Unreal `User.ini`, Dark engine `.bnd`, id Tech/Source cfg, F.E.A.R. profile, Max Payne registry)
 - Fuzzing (needs `cargo install cargo-fuzz` and nightly): `scripts/fuzz.sh [target [seconds]]` runs one or all seven

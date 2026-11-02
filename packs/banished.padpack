@@ -21,6 +21,16 @@ value = "application-steam-x32.exe"
 profile = "Banished"
 
 [[rules]]
+kind = "executable"
+value = "application-x64.exe"
+profile = "Banished"
+
+[[rules]]
+kind = "executable"
+value = "application-x32.exe"
+profile = "Banished"
+
+[[rules]]
 kind = "steam_app_id"
 value = "242920"
 profile = "Banished"
@@ -111,7 +121,7 @@ notes = '''The right stick {rs} moves the cursor: {rt} or {south} picks and plac
 While placing a building, {lb} and {rb} turn it, and {west} switches between the house designs.
 {select} lists the toolbar's menus: speed, tools and reports, housing, roads, storage and trade, town services, food, resources and removal (tap it, pick with {south}). Each opens the game's own menu, where you pick with the cursor. {east} closes a window; {start} is the options menu.
 Banished has no controller support, so the controller works through these keys. It has no quick save: save from the options menu. The camera's tilt (Page Up and Page Down) isn't on the pad; hold {guide} and press {west} for the on-screen keyboard to use it, or to name a save.
-The keys come from the Banished wiki's controls list, not checked on an install: 1 to 4 for the speeds most of all (some players say Space pauses and + and - change the speed in newer versions). If a key does nothing, look in the input settings and set it to the key in this setup. The Linux and GOG executable names are not covered: only the Steam one, Application-steam-x64.exe, is from Discord's list (the 32-bit Application-steam-x32.exe is a guess).'''
+The keys come from the Banished wiki's controls list, not checked on an install: 1 to 4 for the speeds most of all (some players say Space pauses and + and - change the speed in newer versions). If a key does nothing, look in the input settings and set it to the key in this setup. The Linux executable name is not covered. The Steam one, Application-steam-x64.exe, is from Discord's list (the 32-bit Application-steam-x32.exe is a guess); the GOG ones, application-x64.exe and application-x32.exe, are read from GOG's depot manifest.'''
 
 [profiles.guide.edits]
 "stick:Left" = { text = "Move the camera" }
@@ -234,7 +244,7 @@ The right stick {rs} moves the cursor: {rt} or {south} picks and places (left cl
 While placing a building, {lb} and {rb} turn it, and {west} switches between the house designs.
 {select} lists the toolbar's menus: speed, tools and reports, housing, roads, storage and trade, town services, food, resources and removal (tap it, pick with {south}). Each opens the game's own menu, where you pick with the cursor. {east} closes a window; {start} is the options menu.
 Banished has no controller support, so the controller works through these keys. It has no quick save: save from the options menu. The camera's tilt (Page Up and Page Down) isn't on the pad; hold {guide} and press {west} for the on-screen keyboard to use it, or to name a save.
-The keys come from the Banished wiki's controls list, not checked on an install: 1 to 4 for the speeds most of all (some players say Space pauses and + and - change the speed in newer versions). If a key does nothing, look in the input settings and set it to the key in this setup. The Linux and GOG executable names are not covered: only the Steam one, Application-steam-x64.exe, is from Discord's list (the 32-bit Application-steam-x32.exe is a guess).'''
+The keys come from the Banished wiki's controls list, not checked on an install: 1 to 4 for the speeds most of all (some players say Space pauses and + and - change the speed in newer versions). If a key does nothing, look in the input settings and set it to the key in this setup. The Linux executable name is not covered. The Steam one, Application-steam-x64.exe, is from Discord's list (the 32-bit Application-steam-x32.exe is a guess); the GOG ones, application-x64.exe and application-x32.exe, are read from GOG's depot manifest.'''
 
 [profiles.guide.edits]
 "stick:Left" = { text = "Move the camera" }
