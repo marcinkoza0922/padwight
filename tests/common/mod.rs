@@ -12,7 +12,11 @@ use std::{
 };
 
 #[cfg(target_os = "linux")]
+pub mod focus;
+#[cfg(target_os = "linux")]
 pub mod input;
+#[cfg(target_os = "linux")]
+pub mod standin;
 #[cfg(target_os = "linux")]
 pub mod uhid;
 
@@ -167,6 +171,13 @@ pub fn spawn_daemon(root: &Path, runtime: Option<&Path>) -> Daemon {
 
 /// [`spawn_daemon`] with more arguments for `padwight daemon`, such as `--debug`.
 pub fn spawn_daemon_with(root: &Path, runtime: Option<&Path>, args: &[&str]) -> Daemon {
+    spawn_daemon_env(root, runtime, args, &[])
+}
+
+/// [`spawn_daemon_with`] with environment variables set. The desktop the test runs on never leaks
+/// in: the compositor sockets and Wayland display are removed first, so a stand-in compositor
+/// (see [`standin`]) is the only one the daemon can find.
+pub fn spawn_daemon_env(root: &Path, runtime: Option<&Path>, args: &[&str], env: &[(&str, &Path)]) -> Daemon {
     let config = root.join("config/padwight");
     if !config.join("config.toml").exists() {
         install_config(&config, &default_config());
@@ -182,6 +193,11 @@ pub fn spawn_daemon_with(root: &Path, runtime: Option<&Path>, args: &[&str]) -> 
         .env("XDG_STATE_HOME", root.join("state"))
         .env("XDG_DATA_HOME", root.join("data"))
         .env("TMPDIR", &tmp)
+        .env_remove("SWAYSOCK")
+        .env_remove("NIRI_SOCKET")
+        .env_remove("HYPRLAND_INSTANCE_SIGNATURE")
+        .env_remove("WAYLAND_DISPLAY")
+        .envs(env.iter().copied())
         .stdin(Stdio::null())
         .stdout(log.try_clone().unwrap())
         .stderr(log);

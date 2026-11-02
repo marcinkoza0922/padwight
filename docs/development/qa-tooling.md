@@ -249,6 +249,42 @@ Each test starts the stand-in, starts the daemon, sends a focus change for a win
 stand-in process named like a game, and checks the profile with `padwight status`. This also
 drives T-6's focus changes.
 
+**Status.** Built, all in `tests/common/standin/` behind one `Compositor` trait (`focus`, `unfocus`,
+`close`, with a `Window` of id, pid, class and title): Sway, Hyprland and niri (socket servers),
+KWin and Cinnamon (on a private `dbus-daemon` session bus; Cinnamon has a fake `gsettings` and
+plays the extension, owning its bus name and serving the overlay object), wlroots (a
+`wayland-server` with two outputs, `wlr-foreign-toplevel-management`, and enough layer shell,
+`wl_shm` and compositor to run the overlay process) and COSMIC (`ext-foreign-toplevel-list` plus
+`cosmic-toplevel-info`, generated from `tests/fixtures/cosmic-toplevel-info-server.xml`). The GNOME
+overlay mock is the Cinnamon stand-in's overlay object (same D-Bus interface), recording
+`SetBuffer`, `Present`, `Geometry` and `Hide`.
+
+`tests/compositor_focus.rs` has nine tests. Seven walk a stand-in through game focused before the
+daemon starts, desktop, game, nothing, game, close, checking `padwight status` each time (wlroots
+and COSMIC carry no pid, so their game rule is a class rule). One checks the overlay's surface is
+made on the focused window's output, for each of two outputs. One runs the real overlay process
+against the Cinnamon stand-in and checks the picture is the monitor's size at its scale and is set
+before the first `Present`. Run:
+`cargo nextest run --profile agent --run-ignored ignored-only compositor_` (about two seconds).
+
+They need no display, session bus on the host, or controller (the daemon gets a dead or private bus
+address and no compositor variables; `spawn_daemon_env` scrubs `SWAYSOCK`, `NIRI_SOCKET`,
+`HYPRLAND_INSTANCE_SIGNATURE`, `WAYLAND_DISPLAY`). They do need `/dev/uinput`, because the daemon
+exits at start-up when it cannot create its virtual keyboard and mouse (checked with the device
+masked: "Inappropriate ioctl for device"), so they stay `#[ignore]`d like the other daemon tests.
+`dbus-daemon` is needed for the KWin and Cinnamon ones. Keep socket paths under 107 bytes (a long
+`TMPDIR` breaks them). Shared helpers: `tests/common/focus.rs` (game config, `GameProcess`,
+`status`, `cli`, `wait_for_status`).
+
+Left: the overlay does not hide again in the wlroots stand-in after `close-overlays` (it never
+asks for the 1x1 corner), so the overlay's monitor follow is tested once per daemon, not as a
+window moves; whether that is the stand-in or the overlay is not known. The Cinnamon stand-in's
+first-run path (daemon installs and enables the extension through `gsettings set`, the stand-in loads
+it, the daemon looks again after its ten-second watchdog) is built but not tested. The Cinnamon
+overlay keeps presenting about 16 times a second while the keyboard is open and still, so "redraws
+only on change" is not asserted. The GNOME Shell stand-in (the daemon only trusts an
+`org.gnome.Shell` owned by a process named `gnome-shell`) is not built.
+
 ## T-8: Picture regression
 
 **Gap.** `debug overlay compare` checks the new renderer against iced, not against itself last

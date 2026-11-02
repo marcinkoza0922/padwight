@@ -10,64 +10,12 @@
 
 mod common;
 
-use std::{
-    fs,
-    path::Path,
-    process::{Child, Command},
-    thread,
-    time::{Duration, Instant},
+use std::fs;
+
+use common::{
+    Daemon, assert_log_clean, install_config, serial, spawn_daemon, temp_root, wait_for,
+    focus::{GAME, GAME_EXE, GAME_PROFILE, GameProcess, game_config, wait_for_log},
 };
-
-use common::{install_config, Daemon, TIMEOUT, assert_log_clean, daemon_log, default_config, serial, spawn_daemon, temp_root, wait_for};
-
-/// The stand-in game's file name, which the rule matches.
-const GAME_EXE: &str = "padwight-fake-game";
-const GAME: &str = "Fake Game";
-const GAME_PROFILE: &str = "Fake Pad";
-
-/// The default config with one game added: a rule that matches [`GAME_EXE`], and a profile copied
-/// from the General Gamepad profile, so it maps the same buttons under another name.
-fn game_config() -> String {
-    // The default config has an empty `setups` list, which the game's `[[setups]]` would repeat.
-    let text = default_config();
-    assert!(text.contains("\nsetups = []\n"), "the default config has an empty setups list");
-    let text = text.replace("\nsetups = []\n", "\n");
-    let mut general = Vec::new();
-    let mut in_profile = false;
-    for line in text.lines() {
-        if line.starts_with("[[general.profiles]]") {
-            in_profile = true;
-        } else if line.starts_with('[') && !line.starts_with("[general.profiles.") && !line.starts_with("[[general.profiles.") {
-            in_profile = false;
-        }
-        if in_profile {
-            general.push(line);
-        }
-    }
-    let profile = general.join("\n").replace("general.profiles", "setups.profiles").replace("name = \"Gamepad\"", &format!("name = \"{GAME_PROFILE}\""));
-    assert!(profile.contains(&format!("name = \"{GAME_PROFILE}\"")), "the default config has a Gamepad profile");
-    format!(
-        "{text}\n[[setups]]\nname = \"{GAME}\"\n\n[[setups.rules]]\nkind = \"executable\"\nvalue = \"{GAME_EXE}\"\nprofile = \"{GAME_PROFILE}\"\n\n{profile}\n"
-    )
-}
-
-/// A process that runs as [`GAME_EXE`]: a copy of `sleep` under that name, so the daemon sees the
-/// name in the process's executable.
-fn start_game(root: &Path) -> Child {
-    let sleep = ["/bin/sleep", "/usr/bin/sleep"].into_iter().find(|p| Path::new(p).exists()).expect("a sleep binary");
-    let game = root.join(GAME_EXE);
-    fs::copy(sleep, &game).unwrap();
-    Command::new(&game).arg("60").spawn().unwrap()
-}
-
-/// Waits until the daemon's log has `line`. On a timeout the failure shows the whole log.
-fn wait_for_log(root: &Path, line: &str) {
-    let deadline = Instant::now() + TIMEOUT;
-    while !daemon_log(root).contains(line) {
-        assert!(Instant::now() < deadline, "timed out waiting for the log to say {line:?}: {}", daemon_log(root));
-        thread::sleep(Duration::from_millis(20));
-    }
-}
 
 #[test]
 #[ignore]
@@ -82,11 +30,10 @@ fn a_game_process_switches_the_profile_and_back() {
     // With no session and no tracker, the daemon falls back to scanning processes.
     wait_for_log(&root, "focus tracking: running processes");
 
-    let mut game = start_game(&root);
+    let game = GameProcess::start(&root);
     wait_for_log(&root, &format!("which matches Executable “{GAME_EXE}” → profile {GAME} › {GAME_PROFILE}"));
 
-    game.kill().unwrap();
-    game.wait().unwrap();
+    drop(game);
     wait_for_log(&root, "no game running, so the default profile takes over → profile");
 
     // SIGTERM is the normal stop, so the log is complete once it exits.
