@@ -510,6 +510,21 @@ same capabilities and plays the events at their times (or on T-2's clock, exactl
 from a player's DualSense then runs in the container against the daemon, and with T-1 its output
 becomes a test. Record the formats `evemu-record` writes too, so existing recordings can be used.
 
+**Status.** Built (untested with a real controller; none was at hand). `padwight debug record <file>
+[--device <node|name>] [--seconds <s>]` reads the gamepad node and the motion-sensor and touchpad nodes
+the daemon would pair with it (`daemon::same_controller`), without grabbing, and writes a text file
+(format in `src/debug/recording/format.rs`: device lines with IDs and capabilities including absinfo,
+then `time device type code value` lines with the code name as a comment). `padwight debug replay <file>
+[--uhid] [--speed x] [--lead-in ms] [--hold ms] [--uniq id]` makes uinput devices with the recorded
+capabilities, or with `--uhid` a HID gamepad built from them (buttons, six axes, GAS/BRAKE, one D-pad
+hat), which is what the daemon grabs; it reads `evemu-record` files too. Use a lead-in of 3 s or more
+for a daemon to grab the pad before the first frame. `replay::play` takes a `Clock` and a `Sink`, the
+seam for T-2's fake clock. Test: `scripts/kernel-test-docker.sh record_replay` (records a uinput pad,
+replays it as uhid, checks a daemon types the mapped key); unit tests cover the file format, the evemu
+parser, the scheduler and the HID report. Left: motion sensors and touchpads replay through uinput only
+(a daemon ignores those), uinput can't set the unique ID or force feedback, back paddles have no HID
+usage here, and no `--loop` or fake-clock mode yet.
+
 ## T-19: Coverage and mutation testing
 
 **Gap.** Test counts per module ([qa-plan.md section 3](qa-plan.md#3-coverage-by-feature-area))

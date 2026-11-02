@@ -55,6 +55,7 @@ pub(crate) mod raw_readers;
 /// The controllers themselves: evdev nodes.
 #[path = "daemon/evdev.rs"]
 mod devices;
+pub(crate) use devices::same_controller;
 mod inbox;
 mod inject;
 mod input_timing;

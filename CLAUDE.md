@@ -19,6 +19,8 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
 - How loud and how grating cues are, no speakers needed: `python3 -I scripts/sound-audit.py [--level 60] path...`
   (loudness in sone, sharpness, roughness; writes a listening page to `sound-previews/audit/`). Render the
   kinds and default cues first with `PADWIGHT_PREVIEW_DIR=dir` and the ignored `sound::tests::render_previews`
+- Real input: `cargo run -q -- debug record <file> [--device name]` saves a controller's events and capabilities
+  (no grab); `debug replay <file> --uhid` plays them back as a HID pad (also reads `evemu-record` files)
 - Game detection, no controller needed: `cargo run -q -- debug focus [pid [class]]|processes`;
   `scripts/sandbox-pid.sh` runs a program in its own pid namespace (see
   `docs/development/code-review-plan.md`, which also tracks the review passes)
