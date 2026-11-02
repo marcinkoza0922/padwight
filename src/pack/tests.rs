@@ -388,3 +388,16 @@ fn a_pack_with_a_number_that_isn_t_finite_is_refused() {
     let text = export(&config.games[0], &draft(&config.games[0], false)).pack.to_toml().unwrap();
     assert!(parse(&text).unwrap_err().to_string().contains("menu_style.scale"));
 }
+
+#[test]
+fn the_preview_names_host_program_actions_wherever_they_hide() {
+    let mut config = setup();
+    let game = &mut config.games[0];
+    assert!(export(game, &draft(game, false)).pack.host_powers().is_empty());
+
+    game.profiles[0].set_button(Button::North, ButtonAction::Multi(vec![ButtonAction::Screenshot]));
+    game.menus.push(menu("Quit", vec![ButtonAction::ForceQuit]));
+    game.macros.push(Macro { name: "Rec".into(), steps: vec![MacroStep::Tap { action: ButtonAction::ToggleRecording, hold_ms: 10 }] });
+    let powers = export(game, &draft(game, false)).pack.host_powers();
+    assert_eq!(powers, ["force quit the focused game", "start and stop screen recording", "take screenshots"]);
+}

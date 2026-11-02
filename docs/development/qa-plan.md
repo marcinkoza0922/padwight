@@ -558,3 +558,37 @@ Pack follow-up 2026-11-02: `scripts/store-check.py` (stores, GOG ids, GitHub for
 was 69). Packs changed: `alan-wake` and `mirrors-edge` (PC release years in the description),
 `banished` (GOG executables) and `kenshi` (`kenshi_gog_x64.exe`). Not changed: rules that GOG's build
 doesn't ship (Steam-only or Linux names), and folder-prefixed rules, which name Steam install folders.
+
+SEC pass 2026-11-02 (no hardware; read from the source and docs, plus `dashboard` test, which passed):
+
+- **SEC-1, control socket.** `bind_socket_at` makes the directory 0700 (refusing one another user owns), then
+  sets the socket 0600. The socket exists briefly with the umask's mode, but the directory is closed to others
+  until then. A second daemon is refused if the socket answers. Reads time out after 2 s, but the line is
+  unbounded (`read_line`) and a client that trickles bytes keeps its thread: only this user can do it, so low.
+  No peer-credential check; the directory and mode are the whole line, which `docs/protocol.md` ("Security")
+  states plainly. Verdict: the right line. Open: cap the request line (say 1 MiB).
+- **SEC-2, packs.** No pack action names a program; Screenshot and ToggleRecording run fixed helpers. The
+  import preview (`pack_summary`) lists profiles, modes, layers, macros, menus and info overlays by count and
+  the rules it switches on, but not what the buttons do. So a pack's macros and key actions, which can press
+  shortcuts or type text into the focused window, are not shown before Import, and neither are its
+  Screenshot and recording buttons. Open: decide whether the preview should flag macros, typed text and
+  host-program actions. SVG, WAV and font parsing: fuzzed (`pack_assets`, 138M runs, no crash).
+- **SEC-3, virtual input.** README and the docs say padwight emits through uinput devices and needs write
+  access to `/dev/uinput`, but nowhere say that this lets any local program do the same. Open: add a line to
+  the README's uinput requirement. `protocol.md` already covers the socket.
+- **SEC-6, dependencies.** Licenses of the 540 crates in the graph: all permissive, or dual-licensed with a
+  permissive option. The copyleft ones: `option-ext` (MPL-2.0, file-level, compatible with GPLv3),
+  `r-efi` (an LGPL option beside MIT) and `self_cell` (a GPL-2.0-only option beside Apache-2.0), all usable under
+  their permissive terms. `Cargo.toml` has no `license` field while `LICENSE` is GPLv3. Warnings: the
+  reachability read above. Not run: `cargo deny` (not installed).
+- **SEC-9, dashboard.** Binds 127.0.0.1; every request needs a `Host` of `127.0.0.1:<port>` or
+  `localhost:<port>`, and an `Origin`, when sent, equal to it; POST needs `application/json`; only six
+  actions are forwarded, with values checked; `SetConfig` is the daemon's own config with those keys changed.
+  Matches what the docs claim. Not run live against a browser or a rebinding page.
+
+Done after that pass: the control socket reads at most 8 MiB per request line (`MAX_REQUEST`, `daemon/serve.rs`;
+a `SetConfig` carrying base64 pack sounds can be large, so not 1 MiB; no test for the cap yet). The pack import preview
+now says a pack's buttons can press shortcuts outside the game and names the host-program actions it uses
+(`Pack::host_powers`: screenshots, recording, force quit; test `the_preview_names_host_program_actions_wherever_they_hide`);
+not looked at as a picture. The README's uinput paragraph says any local program can make virtual input devices. Still open:
+`Cargo.toml` has no `license` field.

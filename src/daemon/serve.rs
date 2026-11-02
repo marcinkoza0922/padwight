@@ -2,7 +2,7 @@
 //! and streaming what the watch requests ask for.
 
 use std::{
-    io::{BufRead, BufReader, Write},
+    io::{BufRead, BufReader, Read, Write},
     sync::mpsc,
     thread,
     time::Duration,
@@ -22,6 +22,9 @@ const WATCH_INTERVAL: Duration = Duration::from_millis(16);
 /// A watcher that takes nothing for this long (a stopped or hung GUI) is let go, so its updates
 /// don't pile up in the daemon. The GUI connects again when it can; the overlay is restarted.
 const WATCH_STALL: Duration = Duration::from_secs(10);
+/// The longest request line read. A whole configuration (`SetConfig`) is far smaller; a client
+/// that sends more is answered with an error instead of filling the daemon's memory.
+const MAX_REQUEST: u64 = 8 << 20;
 
 pub(super) fn ipc_server(listener: &UnixListener, tx: &Tx) {
     for conn in listener.incoming() {
@@ -40,7 +43,7 @@ fn serve_client(mut conn: &UnixStream, tx: &Tx) -> Result<()> {
     conn.set_read_timeout(Some(Duration::from_secs(2)))?;
     conn.set_write_timeout(Some(WATCH_STALL))?;
     let mut line = String::new();
-    BufReader::new(conn).read_line(&mut line)?;
+    BufReader::new(conn.take(MAX_REQUEST)).read_line(&mut line)?;
     let response = match serde_json::from_str::<Request>(&line) {
         Ok(Request::WatchInput) => return watch_input(conn, tx),
         Ok(Request::WatchOverlay) => return watch_overlay(conn, tx),

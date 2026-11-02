@@ -685,6 +685,12 @@ pub(super) fn pack_summary<'a>(p: &pack::Pack, pad_has: impl Fn(pack::Feature) -
         col = col.push(text(h.description.clone()).size(14));
     }
     col = col.push(text(contents_line(p)).size(13));
+    let powers = p.host_powers();
+    let mut caution = String::from("Its buttons can press keys, including shortcuts that act outside the game");
+    if !powers.is_empty() {
+        caution.push_str(&format!(", and can {}", powers.join(", ")));
+    }
+    col = col.push(text(format!("{caution}. Look at the profiles before you Save & apply a pack you didn't make.")).size(13).style(muted));
     let ids: Vec<String> = p.rules.iter().map(|r| format!("{} “{}”", r.kind, r.value)).collect();
     if !ids.is_empty() {
         col = col.push(text(format!("Switches on for: {}", ids.join(", "))).size(13).style(muted));

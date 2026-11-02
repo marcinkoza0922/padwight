@@ -354,6 +354,38 @@ fn uses_paddles(buttons: &BTreeMap<Button, ButtonAction>, gestures: &BTreeMap<Bu
 }
 
 impl Pack {
+    /// What the pack's buttons can do beyond the game, for the import preview: the host-program
+    /// actions it uses ("take screenshots", "start recording", "force quit"), each once.
+    pub fn host_powers(&self) -> Vec<&'static str> {
+        let mut found = std::collections::BTreeSet::new();
+        let mut note = |a: &ButtonAction| {
+            a.walk(&mut |a| match a {
+                ButtonAction::Screenshot => {
+                    found.insert("take screenshots");
+                }
+                ButtonAction::ToggleRecording => {
+                    found.insert("start and stop screen recording");
+                }
+                ButtonAction::ForceQuit => {
+                    found.insert("force quit the focused game");
+                }
+                _ => {}
+            });
+        };
+        for p in &self.profiles {
+            p.actions().into_iter().for_each(&mut note);
+        }
+        for l in &self.layers {
+            l.actions().into_iter().for_each(&mut note);
+        }
+        for m in &self.menus {
+            m.items.iter().for_each(|i| note(&i.action));
+        }
+        for m in &self.macros {
+            m.steps.iter().filter_map(MacroStep::action).for_each(&mut note);
+        }
+        found.into_iter().collect()
+    }
 
     /// The names of the profiles that need `feature`.
     pub fn needing(&self, feature: Feature) -> Vec<&str> {
