@@ -186,10 +186,12 @@ impl Daemon {
             return focus::game_launch_in(&self.config, &focus::running_processes()).filter(|(game, _)| game == active);
         }
         let window = self.focused.as_ref()?;
-        if let Some(game) = focus::game_launch(&self.config, window) {
+        // A rule matching doesn't make the desktop, a launcher or this app fair game.
+        let off_limits = window.pid == 0 || focus::is_own_window(window);
+        if let Some(game) = focus::game_launch(&self.config, window).filter(|_| !off_limits && !crate::quit::protected_name(&window.exe)) {
             return Some(game);
         }
-        if window.pid == 0 || crate::quit::protected(&window.exe) || focus::is_own_window(window) {
+        if off_limits || crate::quit::protected(&window.exe) {
             return None;
         }
         let name = [&window.title, &window.exe, &window.class].into_iter().find(|n| !n.is_empty())?;
