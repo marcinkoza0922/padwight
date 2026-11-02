@@ -139,7 +139,12 @@ impl Daemon {
                 self.apply_keyboard(actions);
                 log!("on-screen {} closed", layout_name(k.layout()));
             }
-            Some(Active::Menu { .. } | Active::Tools(..)) => {}
+            Some(Active::Menu { device, .. }) => {
+                if let Some(dev) = self.devices.get_mut(&device) {
+                    dev.engine.latch_sticks();
+                }
+            }
+            Some(Active::Tools(..)) => {}
             Some(Active::Media(_)) => log!("media controls closed"),
             Some(Active::Offer(_) | Active::Settings(..) | Active::NewPad(..)) => {}
             None => return,

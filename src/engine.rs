@@ -142,6 +142,9 @@ pub struct Engine {
     /// Virtual-pad stick each physical stick feeds in gamepad mode, so it can be recentered
     /// when a layer gives the stick another mode.
     pad_feeds: HashMap<Stick, Stick>,
+    /// Sticks a menu was aimed with, silent until they return to rest, so letting the menu go
+    /// doesn't hand the game wherever the stick still points.
+    stick_latched: HashSet<Stick>,
     /// Virtual-pad trigger each physical trigger feeds, likewise.
     trigger_feeds: HashMap<Trigger, Trigger>,
     /// Press threshold of each trigger whose button action is held: it releases below that,
@@ -1258,6 +1261,17 @@ impl Engine {
     /// the Tools menu, would open it again on the next Guide press.
     pub fn note_axis(&mut self, axis: Axis, value: f32) {
         self.axes.insert(axis, value);
+    }
+
+    /// Keeps each deflected stick quiet until it next rests (a menu closed under it).
+    pub fn latch_sticks(&mut self) {
+        for s in [Stick::Left, Stick::Right] {
+            let (ax, ay) = stick_axes(s);
+            let held = [ax, ay].iter().any(|a| self.axes.get(a).is_some_and(|v| *v != 0.0));
+            if held {
+                self.stick_latched.insert(s);
+            }
+        }
     }
 
     /// Re-applies current analog state under a (new) profile, e.g. after switching.

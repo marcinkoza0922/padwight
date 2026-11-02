@@ -14,8 +14,6 @@ sound menu Step click                  @100
 overlay menu "Radial" selected "Right" @100
 sound menu Pick pop                    @200
 overlay none                           @200
-pad-axis RightX 1.00                   @200
 sound menu Close pop                   @200
 key KEY_R down                         @200
 key KEY_R up                           @200
-pad-axis RightX 0.00                   @300

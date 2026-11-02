@@ -59,7 +59,13 @@ impl Engine {
 
     pub(super) fn stick(&mut self, profile: &Profile, s: Stick, out: &mut Vec<OutEvent>) {
         let cfg = &*self.stick_cfg(profile, s);
-        let (x, y) = self.stick_pos(s, cfg);
+        let (mut x, mut y) = self.stick_pos(s, cfg);
+        if self.stick_latched.contains(&s) {
+            if x == 0.0 && y == 0.0 {
+                self.stick_latched.remove(&s);
+            }
+            (x, y) = (0.0, 0.0);
+        }
         // A virtual stick no longer fed (a layer changed this stick's mode) recenters.
         let target = match &cfg.action {
             StickAction::Gamepad { stick, .. } => Some(*stick),
