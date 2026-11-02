@@ -19,7 +19,7 @@ use std::{
 use common::{
     Daemon, assert_log_clean, install_config, serial, spawn_daemon_env, temp_root, wait_for,
     focus::{DEFAULT_LINE, GAME_LINE, GameProcess, cli, game_config, status, wait_for_log, wait_for_status},
-    standin::{Compositor, wlroots::{OutputSpec, Wlroots}, bus::SessionBus, cinnamon::Cinnamon, kwin::Kwin, Window, hyprland::Hyprland, niri::Niri, sway::Sway},
+    standin::{Compositor, cosmic::Cosmic, wlroots::{OutputSpec, Wlroots}, bus::SessionBus, cinnamon::Cinnamon, kwin::Kwin, Window, hyprland::Hyprland, niri::Niri, sway::Sway},
 };
 
 /// A desktop-like window owned by this test process, which no rule matches.
@@ -238,5 +238,23 @@ fn compositor_cinnamon_overlay_hands_over_a_picture_of_the_monitors_size() {
     let set = calls.iter().position(|c| matches!(c, Call::SetBuffer { .. })).unwrap();
     let present = calls.iter().position(|c| *c == Call::Present).unwrap();
     assert!(set < present, "the buffer is set before the first present: {calls:?}");
+    stop(daemon, &s);
+}
+
+/// COSMIC has no pid either: the rule matches the window class.
+#[test]
+#[ignore]
+fn compositor_cosmic_focus_switches_the_profile() {
+    let _serial = serial();
+    let s = setup();
+    let config = s.root.join("config/padwight");
+    let class_rule = game_config().replace("kind = \"executable\"\nvalue = \"padwight-fake-game\"", "kind = \"window_class\"\nvalue = \"padwight_game\"");
+    assert!(class_rule.contains("window_class"), "the game's rule became a class rule");
+    fs::remove_dir_all(&config).unwrap();
+    install_config(&config, &class_rule);
+    let cosmic = Cosmic::start(&s.runtime.join("wayland-test"));
+    let name = PathBuf::from("wayland-test");
+    let daemon = start_daemon(&s, &[("WAYLAND_DISPLAY", &name)]);
+    walk(&s, &cosmic, "COSMIC", &daemon);
     stop(daemon, &s);
 }

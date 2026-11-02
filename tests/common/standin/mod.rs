@@ -18,6 +18,7 @@ use std::{
 };
 
 pub mod bus;
+pub mod cosmic;
 pub mod cinnamon;
 pub mod hyprland;
 pub mod kwin;

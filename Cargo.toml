@@ -66,5 +66,6 @@ toml = "1.1.6"
 
 [dev-dependencies]
 iced_test = "0.14"
+wayland-protocols = { version = "0.32", features = ["server", "staging"] }
 wayland-protocols-wlr = { version = "0.3", features = ["server"] }
 wayland-server = "0.31"
