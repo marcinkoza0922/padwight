@@ -13,6 +13,9 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 export const BUS_NAME = 'io.github.marcinkoza0922.Padwight.Shell';
 const OBJECT_PATH = '/Overlay';
 
+// Larger than any screen: keeps width * height * 4 well inside what a number holds exactly.
+const MAX_SIDE = 32768;
+
 const INTERFACE_XML = `
 <node>
   <interface name="io.github.marcinkoza0922.Padwight.Overlay">
@@ -68,8 +71,18 @@ export class Overlay {
             const real = fdList.get(fd);
             // Reopening the memfd through /proc maps it, without copying it into JS. The mapping
             // is kept: every frame is drawn into it.
-            this._picture = new GLib.MappedFile(`/proc/self/fd/${real}`, false).get_bytes();
-            GLib.close(real);
+            let picture;
+            try {
+                picture = new GLib.MappedFile(`/proc/self/fd/${real}`, false).get_bytes();
+            } finally {
+                GLib.close(real);
+            }
+            // Any program on the bus can call this: refuse sizes the buffer can't back, since
+            // the picture is read as width x height x 4 bytes.
+            if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0 ||
+                width > MAX_SIDE || height > MAX_SIDE || picture.get_size() < width * height * 4)
+                throw new Error(`picture of ${picture.get_size()} bytes is too small for ${width}x${height}`);
+            this._picture = picture;
             this._size = [width, height];
         } catch (e) {
             logError(e, 'padwight overlay buffer');
