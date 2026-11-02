@@ -3,6 +3,7 @@
 
 Usage: fake-pad.py <fifo>   (creates the device, then reads commands from the FIFO)
   echo press > <fifo>   presses South once
+  echo "hold 3" > <fifo>  holds South for 3 seconds (for a hold-to-act button such as Force Quit)
   echo quit > <fifo>    removes the device and exits
 
 The kernel drops reports until the daemon has opened the device, so send `press` again until the
@@ -60,6 +61,13 @@ def main():
                 if command == "press":
                     report(fd, SOUTH)
                     time.sleep(0.15)
+                    report(fd, 0)
+                elif command.startswith("hold "):
+                    # Reports repeat, so the daemon sees the button whenever it opens the device.
+                    end = time.monotonic() + float(command.split()[1])
+                    while time.monotonic() < end:
+                        report(fd, SOUTH)
+                        time.sleep(0.1)
                     report(fd, 0)
                 elif command == "quit":
                     send(fd, UHID_DESTROY)
