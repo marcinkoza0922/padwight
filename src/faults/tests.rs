@@ -75,10 +75,12 @@ fn a_failed_save_leaves_the_old_setups_and_reports_an_error() {
             assert!(newer(&base).save_to(&path).is_err(), "{what}: the save reported no error");
         }
         let loaded = Config::load_from(&path).unwrap();
-        // Before the first swap the old setups are untouched; after it, each part is whole.
-        if point == "save.write" || (point == "save.fsync" && skip == 0) || (point == "save.set_aside" && skip == 0) {
+        // Before the new tree is complete the old setups are untouched; after it, the next load
+        // finishes the swap, so it is the new version whole, never a mix of the two.
+        if point == "save.write" || (point == "save.fsync" && skip == 0) {
             assert_eq!(loaded, old, "{what}: the old setups are intact");
         } else {
+            assert_eq!(loaded, new, "{what}: the swap is finished on load");
             assert_whole(&loaded, &old, &new, &what);
         }
         // The next save, with the disk fine again, finishes the job and leaves nothing behind.
