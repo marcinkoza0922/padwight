@@ -21,6 +21,9 @@ use crate::{
 pub const USAGE: &str = "
 Drawing the overlay without a display (no compositor or overlay window needed):
   overlay list                    list the scenes
+  overlay state [--wait <ms>]     print what a running daemon's overlay shows as JSON
+                                  (panels up, a menu's rows and selection, the keyboard's key
+                                  and latches, info cells as text); see debug/overlay_state.rs
   overlay <what>... [options]     draw each to <out>/<name>.png and print the paths
      <what> is a scene, `all` (every scene), `glyphs` (every glyph the overlays draw),
      `live` (what a running daemon's overlay shows: the first frame with something
@@ -44,6 +47,9 @@ pub(super) struct Options {
 pub fn run(args: &[&str]) -> Result<()> {
     if let ["compare", rest @ ..] = args {
         return super::overlay_compare::run(rest);
+    }
+    if let ["state", rest @ ..] = args {
+        return super::overlay_state::run(rest);
     }
     if args == ["list"] {
         for (name, about) in scenes::SCENES {

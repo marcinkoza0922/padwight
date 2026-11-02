@@ -144,6 +144,9 @@ impl Session {
         if let Expectation::Output(_) | Expectation::NoOutput = e {
             return self.expect_output(e);
         }
+        if let Expectation::Overlay { path, value } = e {
+            return Self::expect_overlay(path, value);
+        }
         let pad = self.pad();
         let held = |buttons: &[Button], want: bool| {
             let wrong: Vec<String> = buttons.iter().filter(|&&b| pad.is_pressed(b) != want).map(|b| format!("{b:?}")).collect();
@@ -167,13 +170,32 @@ impl Session {
                 let v = pad.trigger(*trigger);
                 (!near(v, *value)).then(|| format!("{trigger} is at {v}"))
             }
-            Expectation::Model(_) | Expectation::Output(_) | Expectation::NoOutput => None,
+            Expectation::Model(_) | Expectation::Output(_) | Expectation::NoOutput | Expectation::Overlay { .. } => None,
         };
         failure.map_or(DebugResponse::Ok, |why| DebugResponse::Error(format!("expectation failed: {why}")))
     }
 }
 
 impl Session {
+    /// Asks the daemon's overlay, trying again for a moment: the overlay follows the input a
+    /// beat behind it.
+    fn expect_overlay(path: &str, value: &str) -> DebugResponse {
+        let end = std::time::Instant::now() + Duration::from_millis(500);
+        loop {
+            let failure = match super::overlay_state::current(Duration::from_secs(2)) {
+                Ok(doc) => match super::overlay_state::check(&doc, path, value) {
+                    Ok(()) => return DebugResponse::Ok,
+                    Err(why) => why,
+                },
+                Err(e) => return DebugResponse::Error(format!("{e:#}")),
+            };
+            if std::time::Instant::now() >= end {
+                return DebugResponse::Error(format!("expectation failed: {failure}"));
+            }
+            thread::sleep(Duration::from_millis(25));
+        }
+    }
+
     fn expect_output(&self, e: &Expectation) -> DebugResponse {
         let lines = match self.output(false) {
             Ok(lines) => lines,

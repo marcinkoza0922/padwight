@@ -15,6 +15,7 @@ mod glyphs;
 mod motion_shot;
 mod overlay_compare;
 mod overlay_shot;
+mod overlay_state;
 mod pack_scenes;
 mod pad;
 mod protocol;
