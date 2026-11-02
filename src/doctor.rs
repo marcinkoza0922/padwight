@@ -2,7 +2,7 @@
 //! controllers and to their motion sensors, and the udev rules that grant it) and says what to
 //! change, why, and the exact commands.
 
-mod devices;
+pub(crate) mod devices;
 mod reference;
 mod report;
 mod scrub;

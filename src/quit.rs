@@ -31,7 +31,7 @@ pub fn protected_name(exe: &str) -> bool {
 /// `pid` and all its descendants (children first, so a launcher can't respawn them), given
 /// each process's parent. `me` (this program, should a game have started it) and what it started
 /// are left out.
-fn tree(pid: u32, parents: &HashMap<u32, u32>, me: u32) -> Vec<u32> {
+pub(crate) fn tree(pid: u32, parents: &HashMap<u32, u32>, me: u32) -> Vec<u32> {
     if pid == me {
         return Vec::new();
     }
