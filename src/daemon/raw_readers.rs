@@ -32,6 +32,18 @@ impl Watch {
     }
 }
 
+/// Which programs have each raw HID node open, by process name (the bug report asks the same
+/// question as the daemon's scan, without a daemon).
+#[cfg(target_os = "linux")]
+pub(crate) fn hidraw_openers() -> std::collections::HashMap<std::path::PathBuf, Vec<String>> {
+    linux::openers(std::path::Path::new("/proc"), std::process::id())
+}
+
+#[cfg(not(target_os = "linux"))]
+pub(crate) fn hidraw_openers() -> std::collections::HashMap<std::path::PathBuf, Vec<String>> {
+    std::collections::HashMap::new()
+}
+
 impl Daemon {
     /// Looks for programs reading a managed controller's raw node, when it's time to.
     #[cfg(target_os = "linux")]

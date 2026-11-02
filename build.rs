@@ -13,8 +13,23 @@ fn main() {
     let packs = files(&root.join("packs"), "padpack");
     let mut library = embed(&packs, "FILES", true);
     library.push_str(&index(&packs));
+    commit(&root);
     fs::write(out.join("library.rs"), library).unwrap();
     fs::write(out.join("icons.rs"), embed(&files(&root.join("assets/icons"), "svg"), "BUILT_IN", false)).unwrap();
+}
+
+/// Hands the commit this build is of to the program as `PADWIGHT_COMMIT`, for bug reports. A build
+/// outside a checkout (a source tarball) has none.
+fn commit(root: &Path) {
+    let run = |args: &[&str]| {
+        let out = std::process::Command::new("git").args(args).current_dir(root).output().ok()?;
+        out.status.success().then(|| String::from_utf8_lossy(&out.stdout).trim().to_owned()).filter(|s| !s.is_empty())
+    };
+    if let Some(head) = run(&["rev-parse", "--git-path", "HEAD"]) {
+        println!("cargo:rerun-if-changed={}", root.join(head).display());
+    }
+    let hash = run(&["rev-parse", "--short=10", "HEAD"]).unwrap_or_else(|| "unknown".into());
+    println!("cargo:rustc-env=PADWIGHT_COMMIT={hash}");
 }
 
 /// The `extension` files in `dir`, sorted.

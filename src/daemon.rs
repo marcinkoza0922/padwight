@@ -51,7 +51,7 @@ mod overlay;
 mod overlay_input;
 mod previews;
 mod updates;
-mod raw_readers;
+pub(crate) mod raw_readers;
 /// The controllers themselves: evdev nodes.
 #[path = "daemon/evdev.rs"]
 mod devices;
@@ -589,7 +589,7 @@ pub fn ensure_running() -> Result<()> {
     Ok(())
 }
 
-fn log_path() -> PathBuf {
+pub(crate) fn log_path() -> PathBuf {
     dirs::state_dir().or_else(dirs::data_local_dir).unwrap_or_else(std::env::temp_dir).join("padwight").join("daemon.log")
 }
 

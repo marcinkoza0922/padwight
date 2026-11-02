@@ -321,6 +321,16 @@ version, focus backend, the doctor checks, the controllers with their IDs, drive
 else reads their hidraw nodes, the last thousand lines of the daemon log, and the active setup's
 files with rule values kept and nothing else personal. One file to attach to an issue.
 
+**Status.** Built: `padwight doctor --report <file>` (`src/doctor/report.rs`, `system.rs`, `scrub.rs`).
+Each section is gathered on its own and a failing one says so; with no daemon the report says that
+and reads the rest from the system. `scrub.rs` (unit-tested) turns the home folder into `~`, other
+home folders and the user name into `<user>`, the host name into `<host>`, MAC and Bluetooth
+addresses, UUIDs, machine ids, IPv4 addresses, e-mail addresses and Steam ids into placeholders,
+replaces every serial or `uniq` string the machine reports, redacts values of keys such as
+`nickname`, and hides quoted text on log lines that mention a window title. The focused window and
+recent windows are left out. Not collected: display scale and refresh rate, controller firmware,
+keyboard layout. `build.rs` now embeds the short commit as `PADWIGHT_COMMIT`.
+
 ## T-18: Record and replay real input
 
 **Gap.** The code review plan's missing tool: a bug seen on a real controller can't be turned into

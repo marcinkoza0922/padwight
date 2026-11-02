@@ -154,9 +154,11 @@ Each run records: date, commit, OS and kernel, desktop and its version, display 
 rate, controller model, connection (USB or Bluetooth) and firmware, the pad's kernel driver
 (`udevadm info` on its event node), GPU and driver, audio server, keyboard layout, init system,
 whether Steam (and which package: native, Flatpak, Snap) or another remapper was running, and
-for each check: pass, fail (with the issue number) or skipped (with why). Attach `padwight doctor`
-output and `~/.local/state/padwight/daemon.log`. A bug report bundle that collects all of this in one
-command is T-17.
+for each check: pass, fail (with the issue number) or skipped (with why). Attach the output of
+`padwight doctor --report <file>` (T-17): it collects the version and commit, OS, kernel, desktop and
+version, the pad's driver and connection, GPU and driver, audio server, init system, Steam and other
+remappers, the doctor checks, the daemon log and the active setup, scrubbed of personal details. Add
+by hand what it doesn't know: display scale and refresh rate, controller firmware, keyboard layout.
 
 ### 5.1 Controller matrix
 
