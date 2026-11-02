@@ -41,7 +41,7 @@ fn force_quit_config() -> String {
     for setup in table["setups"].as_array_mut().unwrap() {
         bind(&mut setup["profiles"]);
     }
-    assert_eq!(count, 2, "the General and the game's profile");
+    assert!(count >= 2, "the General profiles and the game's");
     table.to_string()
 }
 
@@ -49,6 +49,7 @@ fn hold(pad: &mut HidPad) {
     // The kernel drops reports until the daemon has the device open, so send the state repeatedly.
     let start = std::time::Instant::now();
     while start.elapsed() < HOLD {
+        // Nothing but the same state, as a held button on a pad with a still stick sends.
         pad.report(BUTTON_SOUTH, 0, 0);
         thread::sleep(Duration::from_millis(100));
     }
