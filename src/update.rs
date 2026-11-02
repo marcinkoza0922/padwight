@@ -188,10 +188,22 @@ fn restart_service() {
 struct Scratch(PathBuf);
 
 impl Scratch {
+    /// A fresh folder only this user can reach. It is never under a shared place like `/tmp`:
+    /// someone else could plant the folder and swap the download after its checksum was checked.
     fn new() -> Result<Self> {
-        let dir = dirs::cache_dir().unwrap_or_else(std::env::temp_dir).join("padwight").join(format!("update-{}", std::process::id()));
+        use std::os::unix::fs::{DirBuilderExt, MetadataExt};
+        let base = dirs::cache_dir().or_else(dirs::runtime_dir).context("no cache or runtime folder to download into")?.join("padwight");
+        std::fs::DirBuilder::new().recursive(true).mode(0o700).create(&base).with_context(|| format!("making {}", base.display()))?;
+        // SAFETY: getuid has no arguments and cannot fail.
+        let me = unsafe { libc::getuid() };
+        let meta = std::fs::symlink_metadata(&base)?;
+        if !meta.is_dir() || meta.uid() != me {
+            bail!("{} isn't a folder of yours", base.display());
+        }
+        let dir = base.join(format!("update-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).with_context(|| format!("making {}", dir.display()))?;
+        // Not recursive: it fails if anything, a link included, is already there.
+        std::fs::DirBuilder::new().mode(0o700).create(&dir).with_context(|| format!("making {}", dir.display()))?;
         Ok(Self(dir))
     }
 }
@@ -205,6 +217,17 @@ impl Drop for Scratch {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_scratch_folder_is_private() {
+        use std::os::unix::fs::PermissionsExt;
+        let scratch = Scratch::new().unwrap();
+        let mode = std::fs::metadata(&scratch.0).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o700);
+        let dir = scratch.0.clone();
+        drop(scratch);
+        assert!(!dir.exists());
+    }
 
     #[test]
     fn reads_the_version_from_the_redirect() {
