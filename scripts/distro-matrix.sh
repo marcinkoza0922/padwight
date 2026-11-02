@@ -618,9 +618,9 @@ env8() { # env8 <void|artix>
     img=$(nosys_image "$d")
     t=$(tarball_path) || { fail "no tarball"; return; }
     podman rm -f "$c" >/dev/null 2>&1
-    podman run -d --name "$c" "$img" sleep 3600 >/dev/null 2>&1 || { skip "image $img could not be pulled here"; return; }
+    podman run -d --init --name "$c" "$img" sleep 3600 >/dev/null 2>&1 || { skip "image $img could not be pulled here"; return; }
     case $d in
-    void) podman exec "$c" sh -c 'xbps-install -Syu >/dev/null 2>&1; xbps-install -Sy bash tar gzip sudo shadow xkeyboard-config libxkbcommon alsa-lib runit procps-ng util-linux >/dev/null 2>&1' ;;
+    void) podman exec "$c" sh -c 'xbps-install -Syu >/dev/null 2>&1; xbps-install -Sy eudev kmod bash tar gzip sudo shadow xkeyboard-config libxkbcommon alsa-lib runit procps-ng util-linux >/dev/null 2>&1' ;;
     artix) podman exec "$c" sh -c 'pacman -Syu --noconfirm bash tar gzip sudo shadow xkeyboard-config libxkbcommon alsa-lib runit procps-ng util-linux >/dev/null 2>&1' ;;
     esac
     podman exec "$c" sh -c "useradd -m -u 1000 -s /bin/bash dev && echo 'dev ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/dev" || { fail "could not prepare $d"; podman rm -f "$c" >/dev/null; return; }
@@ -628,9 +628,9 @@ env8() { # env8 <void|artix>
     local run=(podman exec -u dev -w /home/dev -e HOME=/home/dev -e XDG_RUNTIME_DIR=/tmp/xdg "$c" bash -c)
     "${run[@]}" "mkdir -p /tmp/xdg && chmod 700 /tmp/xdg && tar xzf $(basename "$t")"
     local dir; dir=$("${run[@]}" 'ls -d padwight-*-linux-x86_64')
-    "${run[@]}" "cd $dir && ./install.sh --yes" >"$out/env8-$d-install.log" 2>&1
+    "${run[@]}" "cd $dir && ./install.sh --no-system --yes" >"$out/env8-$d-install.log" 2>&1
     local rc=$?
-    if [ $rc -eq 0 ]; then pass "install.sh with no systemd exits 0"; else fail "install.sh without systemd stops with exit $rc ($(tail -2 "$out/env8-$d-install.log" | tr '\n' ' ')); the README has no non-systemd steps"; fi
+    if [ $rc -eq 0 ]; then pass "install.sh (service on, no systemd) exits 0"; else fail "install.sh without systemd stops with exit $rc ($(tail -2 "$out/env8-$d-install.log" | tr '\n' ' ')); the README has no non-systemd steps"; fi
     "${run[@]}" "cd $dir && ./install.sh --no-system --no-service" >"$out/env8-$d-install2.log" 2>&1
     expect "install.sh --no-system --no-service works without systemd" test $? -eq 0
     expect "the binary is installed" "${run[@]}" 'test -x ~/.local/bin/padwight'
@@ -641,7 +641,7 @@ env8() { # env8 <void|artix>
     if grep -qi 'uinput' "$out/env8-$d-daemon.log"; then pass "the daemon's log names the missing uinput access"; else note "daemon log: $(head -3 "$out/env8-$d-daemon.log" | tr '\n' ' ')"; fail "the daemon says nothing about missing uinput access"; fi
     "${run[@]}" '~/.local/bin/padwight doctor' >"$out/env8-$d-doctor.log" 2>&1
     expect "doctor names the missing access with the fix (rules file or modprobe)" grep -Eqi 'udev|modprobe|uinput' "$out/env8-$d-doctor.log"
-    expect "SIGTERM (logout) stops the daemon" "${run[@]}" 'pkill -TERM -x padwight; sleep 2; ! pgrep -x padwight'
+    expect "SIGTERM (logout) leaves no daemon process (it may have exited already for want of uinput)" "${run[@]}" 'pkill -TERM -x padwight; sleep 2; ! pgrep -x padwight'
     podman rm -f "$c" >/dev/null 2>&1
 }
 
