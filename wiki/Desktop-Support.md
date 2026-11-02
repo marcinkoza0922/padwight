@@ -1,23 +1,44 @@
 # Desktop support
 
+padwight needs a Wayland session. X11 sessions (Xorg, XLibre) aren't supported, but games running under Xwayland, which includes every Proton game, work as usual.
+
 Automatic profile switching needs to know which window has focus. padwight picks the right tracker for your desktop by itself, and logs which one it's using. `padwight status` shows it too.
 
-| Desktop | Focus tracking | Automatic switching | On-screen keyboard, menus and overlays |
+| Desktop | Focus tracking | Rules that match | On-screen keyboard, menus and overlays |
 |---|---|---|---|
-| **KDE Plasma** (Wayland or X11) | A small KWin script reports focus changes over D-Bus | Yes | Yes |
-| **Sway** | The compositor's IPC socket (`$SWAYSOCK`) | Yes | Yes |
-| **Hyprland** | Its event and command sockets | Yes | Yes |
-| **GNOME** | GNOME Shell extension | Yes | Experimental, through the extension |
-| **wlroots compositors** (labwc, Wayfire, river, …) | The `wlr-foreign-toplevel-management` protocol. Matches by window class, not executable | Yes | Yes |
+| **KDE Plasma** | A small KWin script reports focus changes over D-Bus | All | Yes |
+| **Sway** | The compositor's IPC socket (`$SWAYSOCK`) | All | Yes |
+| **Hyprland** | Its event and command sockets | All | Yes |
+| **niri** | Its IPC socket's event stream | All | Yes |
+| **GNOME** | GNOME Shell extension | All | Experimental, through the extension |
+| **Cinnamon** (Wayland) | Cinnamon extension | All | Experimental, through the extension |
+| **COSMIC** | The `cosmic-toplevel-info` protocol | Window class only | Yes |
+| **wlroots compositors** (labwc, Wayfire, river, …) and **Budgie** 10.10 and later, which runs on labwc | The `wlr-foreign-toplevel-management` protocol | Window class only | Yes |
 | Other desktops | None | Only the fallback below | Only if the compositor supports layer-shell |
 
-## GNOME
+"Window class only" means the desktop doesn't say which process owns a window, so executable and Steam App ID rules don't match there. Give the game a window class rule instead (a setup's Details tab offers one for each recent window).
 
-Focus tracking works through a small GNOME Shell extension, which padwight installs and enables itself. Mutter has no layer-shell, so the overlay can't be a window of its own: the extension shows the frames the overlay draws instead (experimental: checked on GNOME 51 in a VM: the keyboard, the Guide shortcuts and menus show over a fullscreen window and hide again, on the focused window's monitor, at fractional scales too. The extension was checked against GNOME Shell 45 to 51 headless; only 51 was run in a full session).
+## GNOME and Cinnamon
+
+Focus tracking works through a small extension, which padwight installs and enables itself. A log out and back in may be needed the first time. Mutter and Muffin have no layer-shell, so the overlay can't be a window of its own: the extension shows the frames the overlay draws instead. This is experimental. It was checked in VMs on GNOME 51 and Cinnamon 6.6: the keyboard, the Guide shortcuts and menus show over a fullscreen window and hide again, on the focused window's monitor, at fractional scales too. The GNOME extension was also checked against GNOME Shell 45 to 51 headless.
+
+Uninstalling padwight (`padwight-uninstall`) removes the extension too.
 
 ## Tested
 
-The desktop checks last ran on 2026-10-09 with kernel 7.2.9. GNOME 51.0, KDE Plasma 6.7.5, Sway 1.12, Hyprland 0.56.2 and labwc 0.20.2 pass the focus, profile and input checks (the overlay is skipped on GNOME).
+The desktop checks run the daemon in a VM of each desktop and check that the tracker is found, a window's rule switches the profile, the profile falls back when the window closes, and the overlay runs.
+
+| Desktop | Version | Last passed |
+|---|---|---|
+| GNOME | 51.0 | 2026-10-09 |
+| KDE Plasma | 6.7.5 | 2026-10-09 |
+| Sway | 1.12 | 2026-10-09 |
+| Hyprland | 0.56.2 | 2026-10-09 |
+| labwc | 0.20.2 | 2026-10-09 |
+| Cinnamon | 6.6.9 | 2026-10-30 |
+| COSMIC | cosmic-comp 1.10.0 | 2026-10-31 |
+| Budgie | 10.10.2 (also Ubuntu Budgie 26.04.1) | 2026-10-31 |
+| niri | 26.04 | 2026-10-31 |
 
 ## Fallback
 
