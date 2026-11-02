@@ -7,6 +7,7 @@
 
 use std::{
     io,
+    os::fd::AsRawFd,
     os::unix::net::{UnixListener, UnixStream},
     path::{Path, PathBuf},
     sync::{
@@ -51,6 +52,7 @@ pub trait Compositor {
 pub struct Server {
     path: PathBuf,
     stop: Arc<AtomicBool>,
+    waker: UnixListener,
     accept: Option<JoinHandle<()>>,
 }
 
@@ -63,6 +65,7 @@ impl Server {
         let listener = UnixListener::bind(path)?;
         let stop = Arc::new(AtomicBool::new(false));
         let handler = Arc::new(handler);
+        let waker = listener.try_clone()?;
         let flag = stop.clone();
         let accept = thread::spawn(move || {
             for stream in listener.incoming() {
@@ -74,15 +77,16 @@ impl Server {
                 thread::spawn(move || handler(stream));
             }
         });
-        Ok(Self { path: path.to_path_buf(), stop, accept: Some(accept) })
+        Ok(Self { path: path.to_path_buf(), stop, waker, accept: Some(accept) })
     }
 }
 
 impl Drop for Server {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::Relaxed);
-        // Wakes the accept loop so it sees the flag.
-        let _ = UnixStream::connect(&self.path);
+        // Shutting the listening socket down wakes the accept loop, even if the socket file is gone.
+        // SAFETY: the descriptor is owned by `self.waker`, which is open.
+        unsafe { libc::shutdown(self.waker.as_raw_fd(), libc::SHUT_RDWR) };
         if let Some(accept) = self.accept.take() {
             let _ = accept.join();
         }

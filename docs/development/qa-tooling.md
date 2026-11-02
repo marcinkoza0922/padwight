@@ -198,6 +198,19 @@ Each test starts the stand-in, starts the daemon, sends a focus change for a win
 stand-in process named like a game, and checks the profile with `padwight status`. This also
 drives T-6's focus changes.
 
+**Status.** Sway, Hyprland and niri are built: `tests/common/standin/{sway,hyprland,niri}.rs`, each a
+socket server behind the `Compositor` trait (`focus`, `unfocus`, `close` with a `Window` of id, pid,
+class and title). `tests/compositor_focus.rs` walks each one through game focused before the daemon
+starts, desktop, game, nothing, game, close, and checks `padwight status`. Run with
+`cargo nextest run --profile agent --run-ignored ignored-only compositor_` (about a second). They need
+no display, session bus (the daemon gets a dead bus address) or controller; they are `#[ignore]`d only
+like the other daemon tests, and need `/dev/uinput` only if the daemon does at start-up. Shared
+helpers are in `tests/common/focus.rs` (game config, `GameProcess`, `status`, `wait_for_status`);
+`spawn_daemon_env` scrubs `SWAYSOCK`, `NIRI_SOCKET`, `HYPRLAND_INSTANCE_SIGNATURE` and
+`WAYLAND_DISPLAY`. Keep socket paths under 108 bytes (a long `TMPDIR` breaks `SWAYSOCK`). Left:
+KWin, Cinnamon (D-Bus), wlroots and COSMIC (Wayland servers, two outputs for the overlay's monitor
+pick), and the GNOME overlay mock.
+
 ## T-8: Picture regression
 
 **Gap.** `debug overlay compare` checks the new renderer against iced, not against itself last
