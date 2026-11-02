@@ -54,7 +54,9 @@ pub fn pack_assets(data: &[u8]) {
     match kind % 5 {
         0 => drop(crate::icons::check_svg(&text)),
         1 => drop(crate::sound::decode_wav(rest)),
-        2 => drop(crate::font::load_for_overlay(rest)),
+        // The parser alone: `load_for_overlay` keeps every valid font for good, which would only
+        // fill the fuzzer's memory.
+        2 => drop(crate::font::family_of(rest)),
         3 => {
             // Whole assets as a pack holds them: base64 text under names, one per line.
             let mut assets = crate::config::PackAssets::default();

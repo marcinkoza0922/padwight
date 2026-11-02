@@ -4,6 +4,7 @@
 #![allow(warnings, reason = "the whole program is compiled, but only the fuzz targets use any of it")]
 
 pub mod capture;
+pub mod clock;
 pub mod clipboard;
 pub mod config;
 pub mod controller_id;
@@ -12,6 +13,7 @@ pub mod debug;
 #[cfg(target_os = "linux")]
 pub mod doctor;
 pub mod engine;
+pub mod faults;
 pub mod figures;
 pub mod focus;
 pub mod assets;

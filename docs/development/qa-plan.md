@@ -496,11 +496,40 @@ Open from this pass:
   are passthrough packs where the wiki doesn't confirm native support; `control-resonant`
   and `final-doom` have no executable rule.
 - `cargo audit`: nine allowed warnings (six unmaintained crates, `lru` and tokio unsound, one
-  yanked). Nobody has read them for reachability (SEC-6).
+  yanked). Read for reachability afterward, see the follow-up below (SEC-6).
 - Old vs new overlay renderer: `doodle-*` scenes differ 4 to 7% (the old renderer draws no doodles,
   probably), `quick-styled` 4.9% (not looked at).
 - Motion strips weren't opened. Most settings tabs weren't looked at: the `tab` step needs a
   profile or game opened first.
-- The overlay picture baseline doesn't exist yet; run `debug overlay baseline <dir>` once so the
-  next pass can diff.
-- The settings pages after the contrast work haven't been looked at in the dark theme.
+- ~~Baseline~~, ~~dark theme~~, ~~audit reachability~~: done in the follow-up below.
+
+Follow-up the same day:
+
+- **Baseline** written: 137 pictures in `screenshots/regression/baseline` (untracked). Next pass:
+  `debug overlay diff screenshots/regression/baseline`.
+- **Dark settings pages** looked at (log overlays, menus, app settings, system check): text reads,
+  no clipping seen. The system check dialog dims the page behind it as intended. Other tabs not opened.
+- **SEC-6, reachability** (read from `cargo tree` and the crate sources, not run):
+  - `tokio` `AsyncFd::new` is called only by evdev's async streams. `Cargo.toml` enables no async
+    feature for `evdev`, and `src/` never uses `AsyncFd`. Not reachable.
+  - `lru` is used only by `cryoglyph`'s glyph cache (`LruCache::unbounded_with_hasher`); nothing here
+    calls `pop()` on it. Not reachable from our code.
+  - `rustybuzz`, `ttf-parser`: unmaintained, parse fonts through `resvg`/`cosmic-text` (system and
+    bundled fonts, and pack SVG assets via `usvg`). Pack SVGs are untrusted input, so this one
+    is worth a fuzz run (T-5 covers SVG assets).
+  - `zbus_names`, `zvariant`, `zvariant_derive`, `paste`: unmaintained only, no advisory about a
+    defect.
+  - `clipboard-win` (yanked) is not in the Linux dependency graph.
+- **Fuzz `pack_assets`** (SVG, WAV, font, base64 assets; no sanitizer): two workers, 600 s, 138M
+  runs, no crash, hang or OOM. Two things on the way:
+  - `src/fuzz_lib.rs` lacked the `clock` and `faults` modules, so the fuzz crate hadn't built
+    since they were added. Fixed; keep its list equal to `main.rs`'s.
+  - A first 300 s run reported an OOM that didn't replay. Cause: `font::register` keeps every
+    distinct valid font, and leaks its family name, for the life of the process, so the fuzzer's
+    thousands of valid fonts filled memory. The target now calls `font::family_of` (the parser)
+    alone. In the app the growth is bounded by the fonts a user imports. Not looked at: whether
+    a pack update that swaps fonts repeatedly in one daemon run adds up.
+- **Fuzz, the other six targets** (300 s each, two workers, no sanitizer): `pack_parse` 1.96M runs,
+  `config_load` 26k (slow: each run writes and loads a folder), `ipc_request` 110M, `tokens` 3.7M,
+  `calculator` 2.1M, `engine_input` 1.3M. No crash, hang or OOM; `fuzz/artifacts` is empty.
+  Five minutes each is a smoke run, not coverage: run longer before a release.

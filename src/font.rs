@@ -113,7 +113,7 @@ fn register(bytes: &[u8], iced: bool) -> Result<&'static str, String> {
 }
 
 /// The family name a font file draws as, read without any renderer.
-fn family_of(bytes: &[u8]) -> Option<String> {
+pub(crate) fn family_of(bytes: &[u8]) -> Option<String> {
     // A collection says how many fonts it holds, and the parser walks that many offsets: a tiny
     // file claiming millions stalls it (found by fuzzing). The offsets must fit in the file.
     if bytes.starts_with(b"ttcf") {
