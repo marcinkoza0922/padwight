@@ -1,6 +1,6 @@
 # Command line
 
-Every command except `padwight` (which opens the settings window) and `padwight daemon` talks to the running service, sends one request, and exits.
+Every command except `padwight` (which opens the settings window), `padwight daemon`, `padwight doctor` and `padwight update` talks to the running service, sends one request, and exits.
 
 | Command | What it does |
 |---|---|
@@ -15,6 +15,9 @@ Every command except `padwight` (which opens the settings window) and `padwight 
 | `padwight overlay-toggle` | Open or close the on-screen keyboard |
 | `padwight numpad-toggle` | Open or close the on-screen numpad |
 | `padwight close-overlays` | Close every overlay and menu. Bind it to a key in your desktop's shortcut settings to close them from the keyboard |
+| `padwight doctor` | Check permissions, udev rules, the uinput module and the daemon, and print the command that fixes each problem. `--explain` says what each piece is for; `--files` lists only installed system files that differ from this version's |
+| `padwight update` | Install the latest release, if this copy came from the release installer, and restart the service. `--check` only says whether there is one. See [Installation](Installation#update) |
+| `padwight-uninstall` | Remove padwight; `--purge` also deletes your settings. See [Installation](Installation#uninstall) |
 
 ## Finding profiles and menus
 

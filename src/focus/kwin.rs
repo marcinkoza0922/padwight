@@ -1,4 +1,4 @@
-//! KDE Plasma (Wayland or X11): a KWin script reports every focus change to our D-Bus service.
+//! KDE Plasma: a KWin script reports every focus change to our D-Bus service.
 
 use std::{fs, path::PathBuf};
 
