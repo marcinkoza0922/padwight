@@ -479,8 +479,10 @@ Fixed:
 - **SEC-7.** A window that matched a game rule skipped Force Quit's protected-name check. It no
   longer does; the list gained the session plumbing and the launchers; `force_quit` refuses a
   protected process by its own name; the SIGKILL goes only to processes whose start time hasn't
-  changed since the SIGTERM. Still open: a sandboxed game that reports its in-sandbox pid can
-  resolve to an unrelated process of the same user (`focus/identify.rs` `host_pid`).
+  changed since the SIGTERM. A sandboxed game's in-sandbox pid (`focus/identify.rs` `host_pid`)
+  now resolves only among this user's processes, and an unfitting sandboxed process is taken only
+  when it is the single candidate. Still open: a pid that names a process here which doesn't fit the
+  class, while the sandboxed candidates don't fit either, is kept as reported.
 - **SEC-5.** A save writes a `complete` marker last; the next load finishes a swap cut short after
   it, so General and the setups are never one old and one new.
 - **SEC-10.** The update's scratch folder is private (0700) and never in a shared temp folder. An

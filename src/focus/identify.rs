@@ -37,21 +37,28 @@ fn host_pid(pid: u32, class: &str) -> u32 {
 }
 
 /// Which process owns a window that reported `pid`: a sandboxed one (`nested`, by their pids
-/// here) that looks like the window, else the process here if there is one, else the first
-/// sandboxed one.
+/// here) that looks like the window, else the process here if there is one, else the sandboxed
+/// one if it is the only candidate. With several that don't look like the window, none is
+/// guessed: any of them could belong to another program, and the pid is kept.
 fn pick_pid(pid: u32, exists_here: bool, nested: &[WindowInfo], class: &str) -> u32 {
     nested
         .iter()
         .find(|p| fits(p, class))
-        .or_else(|| nested.first().filter(|_| !exists_here))
+        .or(match nested {
+            [only] if !exists_here => Some(only),
+            _ => None,
+        })
         .map_or(pid, |p| p.pid)
 }
 
-/// The processes whose pid in a namespace below ours is `pid`.
+/// This user's processes whose pid in a namespace below ours is `pid`. Another user's process
+/// is never a candidate, however its pid reads.
 fn nested_processes(pid: u32) -> Vec<WindowInfo> {
     let Ok(entries) = fs::read_dir("/proc") else { return Vec::new() };
+    let uid = unsafe { libc::getuid() };
     entries
         .flatten()
+        .filter(|e| e.metadata().is_ok_and(|m| m.uid() == uid))
         .filter_map(|e| e.file_name().to_str()?.parse::<u32>().ok())
         .filter(|&p| fs::read_to_string(format!("/proc/{p}/status")).is_ok_and(|s| nested_pid(&s) == Some(pid)))
         .filter_map(process_info)
@@ -249,6 +256,8 @@ mod tests {
         assert_eq!(pick_pid(3467, true, std::slice::from_ref(&other), "gpp.exe"), 3467);
         assert_eq!(pick_pid(3467, false, std::slice::from_ref(&other), "gpp.exe"), 20_001);
         assert_eq!(pick_pid(3467, true, &[], "gpp.exe"), 3467);
+        // Several that don't fit and none here: no guess, whoever they belong to.
+        assert_eq!(pick_pid(3467, false, &[other.clone(), process(20_002, "tail", None)], "gpp.exe"), 3467);
     }
 
     #[test]
