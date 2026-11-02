@@ -12,6 +12,9 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
   and a `.padpack` path draws that pack's menus, keyboard, numpad and info overlays in its own look)
 - Old vs new overlay renderer: `cargo run -q -- debug overlay compare all|<scene>` (iced | new | difference PNGs and
   a score in `screenshots/compare/`, worst first; scenes the new renderer can't draw yet are listed as not ported)
+- Picture regression, no display needed: `cargo run -q -- debug overlay baseline <dir>` (scenes, glyphs, motion strips,
+  settings tabs light and dark; `debug gui baseline <dir>` for the settings window alone), later
+  `debug overlay diff <dir>` (changed pictures worst first, difference PNGs in `screenshots/regression/diff`, exit 1 if any)
 - Motion styles, no display needed: `cargo run -q -- debug motion <style>|all` (animated PNG + frame strip in
   `screenshots/motion/`; `--from/--until/--every` pick the strip's span, `--scene keyboard`, `--trace` prints numbers)
 - Which overlay cue plays, no display or speakers needed: `scripts/sound-trace.sh [config.toml]` (a `--debug` daemon

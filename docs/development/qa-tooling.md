@@ -211,6 +211,22 @@ build artefact, runs the diff on a pull request, and posts the list of changed s
 fine when it is meant; the point is to see it. The CPU renderer and the bundled fonts make the
 pictures the same on every machine; check that once before trusting it.
 
+**Status.** Built. `padwight debug overlay baseline <dir>` writes every overlay scene and the glyph
+sheet (`overlay/`), a frame strip per motion style for `menu-list` and `keyboard` (`motion/`), and
+the settings window's pages and tabs in light and dark (`gui/light`, `gui/dark`), plus
+`manifest.json` (tool version, renderer, hash of each bundled font, size and hash of each picture).
+`debug overlay diff <dir>` draws them again into `screenshots/regression/new`, scores them with the
+compare tool's scoring, and lists added and removed pictures, changed fonts and the pictures that
+moved, worst first, with `baseline | new | difference` PNGs in `screenshots/regression/diff`;
+it exits 1 when anything moved. Options: `--only overlay,motion,gui`, `--out`, `--min-over <percent>`,
+`--exact` (any difference at all). `debug gui baseline|diff <dir>` is the same for the window alone.
+Code: `src/debug/regression.rs`. CI recipe (not wired): on `main`, run `baseline base/` and upload
+`base/` as an artefact; on a pull request, download it, run `diff base/ --out regression/`, upload
+`regression/diff` and post the printed list as the comment; the exit status says whether to flag it.
+Left: the window shots use whatever fonts the machine has beyond the bundled ones, so a CI baseline
+must be made on the same image that runs the diff; more GUI states (dialogs, stage editor) and
+motion scenes can be added to `GUI_STEPS` and `MOTION_SCENES`.
+
 ## T-9: Fault injection
 
 **Gap.** `output::tests` covers a refused uinput write. Nothing tests a full disk or a crash during
