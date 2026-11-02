@@ -2,7 +2,7 @@
 
 Both pads open over everything, including fullscreen games. They are layer-shell surfaces that never take keyboard focus, so keys go to the window underneath.
 
-They need a compositor with layer-shell support: KDE Plasma, Sway, Hyprland and similar. GNOME doesn't have it. See [Desktop support](Desktop-Support).
+They need a compositor with layer-shell support: KDE Plasma, Sway, Hyprland, niri, COSMIC, labwc and similar. GNOME and Cinnamon don't have it, so padwight's extension shows them there instead (experimental). See [Desktop support](Desktop-Support).
 
 ## Opening them
 
@@ -23,6 +23,8 @@ Opening one closes the other.
 | LB / RB | Move the text cursor left / right |
 | Hold LT | Hold Shift |
 | Hold B, or press Guide | Close |
+
+The keyboard shows the line you've typed so far, with a blinking caret. LB and RB move the caret as well as sending Left and Right to the game, so both stay in step; so do the keyboard's own arrow keys, and Home and End on the full keyboard. Typing, Backspace and Delete act at the caret.
 
 The hints at the bottom show your controller's own buttons.
 
