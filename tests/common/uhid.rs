@@ -54,6 +54,12 @@ pub struct HidPad {
 impl HidPad {
     /// A controller named `name`. Dropping it removes the device, as an unplug does.
     pub fn new(name: &str) -> Self {
+        Self::with_uniq(name, TEST_UNIQ)
+    }
+
+    /// A controller called `name` with its own unique id, for tests that run several at once (the
+    /// daemon tells controllers apart by it).
+    pub fn with_uniq(name: &str, uniq: &str) -> Self {
         let file = OpenOptions::new().read(true).write(true).open("/dev/uhid").expect("opening /dev/uhid (needs root or the uhid device)");
         let mut pad = HidPad { file };
         let mut event = vec![0u8; UHID_EVENT_SIZE];
@@ -62,7 +68,7 @@ impl HidPad {
         event[4..4 + name.len()].copy_from_slice(name.as_bytes());
         // A unique id of its own, so a real pad with the same vendor and product (ignored by
         // `default_config`) doesn't take this one's id.
-        event[196..196 + TEST_UNIQ.len()].copy_from_slice(TEST_UNIQ.as_bytes());
+        event[196..196 + uniq.len()].copy_from_slice(uniq.as_bytes());
         event[260..262].copy_from_slice(&(DESCRIPTOR.len() as u16).to_le_bytes()); // rd_size
         event[262..264].copy_from_slice(&0x0003u16.to_le_bytes()); // bus: USB
         event[264..268].copy_from_slice(&0x045eu32.to_le_bytes()); // vendor
