@@ -56,6 +56,8 @@ pub fn grabbed(path: &Path) -> bool {
 pub struct Reader {
     pub dev: Device,
     pub pressed: BTreeSet<u16>,
+    /// Total relative motion (REL_X, REL_Y) seen so far, for the mouse.
+    pub moved: (i64, i64),
 }
 
 impl Reader {
@@ -72,7 +74,7 @@ impl Reader {
     fn at(path: &Path) -> Self {
         let dev = Device::open(path).unwrap();
         dev.set_nonblocking(true).unwrap();
-        Reader { dev, pressed: BTreeSet::new() }
+        Reader { dev, pressed: BTreeSet::new(), moved: (0, 0) }
     }
 
     /// Reads what is queued. Returns true once the device has gone (its read fails with ENODEV).
@@ -86,6 +88,13 @@ impl Reader {
             };
             if events.is_empty() {
                 return false;
+            }
+            for ev in events.iter().filter(|ev| ev.event_type() == EventType::RELATIVE) {
+                match ev.code() {
+                    0 => self.moved.0 += i64::from(ev.value()),
+                    1 => self.moved.1 += i64::from(ev.value()),
+                    _ => {}
+                }
             }
             for ev in events.iter().filter(|ev| ev.event_type() == EventType::KEY) {
                 match ev.value() {

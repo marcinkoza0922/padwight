@@ -1,10 +1,30 @@
 //! A gamepad made through the kernel's uhid, so the daemon sees a HID device like a real controller.
 //! The daemon ignores uinput devices (they count as its own), so a uinput stand-in won't be grabbed.
+//!
+//! [`HidPad::new`] makes a plain generic pad. [`HidPad::dualsense`], [`HidPad::dualshock4`] and
+//! [`HidPad::switch_pro`] make replicas of real controllers: same vendor and product ids, and
+//! the feature and output reports their kernel drivers (`hid-playstation`, `hid-nintendo`) ask
+//! for while probing are answered, so the kernel binds the real driver. That driver then makes
+//! the gamepad, motion-sensor and touchpad nodes a real controller has. It needs the driver's
+//! module on the host (the kernel loads it when the device appears).
+
+mod dualsense;
+mod responder;
 
 use std::{
     fs::{File, OpenOptions},
-    io::Write,
+    io::{Read, Write},
+    os::fd::AsRawFd,
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
+    },
+    thread::{self, JoinHandle},
 };
+
+#[allow(unused_imports, reason = "each test binary uses a different subset")]
+pub use dualsense::DualSenseState;
+pub use responder::Responder;
 
 /// Report descriptor of a plain gamepad: four buttons (the first four are South, East, North and
 /// West once the kernel maps them) and an X/Y stick, with one button byte then two 16-bit axes.
@@ -39,49 +59,176 @@ pub const BUTTON_EAST: u8 = 0b0010;
 
 /// Size of the kernel's `struct uhid_event` (packed): a type, then the largest payload.
 const UHID_EVENT_SIZE: usize = 4376;
+const UHID_DESTROY: u32 = 1;
+const UHID_OUTPUT: u32 = 6;
+const UHID_GET_REPORT: u32 = 9;
+const UHID_GET_REPORT_REPLY: u32 = 10;
 const UHID_CREATE2: u32 = 11;
 const UHID_INPUT2: u32 = 12;
+const UHID_SET_REPORT: u32 = 13;
+const UHID_SET_REPORT_REPLY: u32 = 14;
+
+const BUS_USB: u16 = 0x0003;
 
 /// The unique id every test pad reports, which its controller id becomes.
 pub const TEST_UNIQ: &str = "padwight-test-pad";
 
+/// What every replica's unique id (the MAC address its driver reads from the pad) starts with. A
+/// locally administered address, so it never equals a real controller's.
+const REPLICA_MAC_PREFIX: &str = "02:70:61:64:";
+
+/// True for the unique id of a pad this module made, whichever kind.
+pub fn is_test_uniq(uniq: &str) -> bool {
+    uniq == TEST_UNIQ || uniq.starts_with(REPLICA_MAC_PREFIX)
+}
+
+/// The MAC address (least significant byte first, as a controller reports it) of the `n`th replica.
+/// The drivers refuse two pads with one address, and show it reversed as the pad's unique id:
+/// `02:70:61:64:00:nn`.
+fn replica_mac(n: u8) -> [u8; 6] {
+    [n, 0x00, 0x64, 0x61, 0x70, 0x02]
+}
+
+/// What the kernel needs to make one device.
+struct Spec {
+    uniq: &'static str,
+    bus: u16,
+    vendor: u32,
+    product: u32,
+    descriptor: &'static [u8],
+}
+
 /// A gamepad made through the kernel's uhid, so it is a HID device like a real controller. The
 /// daemon ignores uinput devices (they count as its own), so a uinput stand-in won't be grabbed.
 pub struct HidPad {
-    file: File,
+    file: Arc<File>,
+    /// Answers the driver while it probes; present for replicas.
+    server: Option<JoinHandle<()>>,
+    stop: Arc<AtomicBool>,
+    /// Output reports the driver (or the daemon, through the driver) has sent.
+    outputs: Arc<Mutex<Vec<Vec<u8>>>>,
 }
 
 impl HidPad {
     /// A controller named `name`. Dropping it removes the device, as an unplug does.
     pub fn new(name: &str) -> Self {
+        let spec = Spec { uniq: TEST_UNIQ, bus: BUS_USB, vendor: 0x045e, product: 0x028e, descriptor: DESCRIPTOR };
+        Self::create(&spec, name, None)
+    }
+
+    fn create(spec: &Spec, name: &str, responder: Option<Box<dyn Responder>>) -> Self {
         let file = OpenOptions::new().read(true).write(true).open("/dev/uhid").expect("opening /dev/uhid (needs root or the uhid device)");
-        let mut pad = HidPad { file };
+        let file = Arc::new(file);
+        let outputs = Arc::new(Mutex::new(Vec::new()));
+        let stop = Arc::new(AtomicBool::new(false));
+        // The driver asks its questions while the kernel adds the device, so the answering thread
+        // runs before the device is created.
+        let server = responder.map(|responder| {
+            let (file, outputs, stop) = (Arc::clone(&file), Arc::clone(&outputs), Arc::clone(&stop));
+            thread::spawn(move || serve(&file, responder, &outputs, &stop))
+        });
         let mut event = vec![0u8; UHID_EVENT_SIZE];
         event[0..4].copy_from_slice(&UHID_CREATE2.to_le_bytes());
         // Packed `uhid_create2_req`, starting after the type: name[128], phys[64], uniq[64], then:
         event[4..4 + name.len()].copy_from_slice(name.as_bytes());
         // A unique id of its own, so a real pad with the same vendor and product (ignored by
-        // `default_config`) doesn't take this one's id.
-        event[196..196 + TEST_UNIQ.len()].copy_from_slice(TEST_UNIQ.as_bytes());
-        event[260..262].copy_from_slice(&(DESCRIPTOR.len() as u16).to_le_bytes()); // rd_size
-        event[262..264].copy_from_slice(&0x0003u16.to_le_bytes()); // bus: USB
-        event[264..268].copy_from_slice(&0x045eu32.to_le_bytes()); // vendor
-        event[268..272].copy_from_slice(&0x028eu32.to_le_bytes()); // product
+        // `default_config`) doesn't take this one's id. Replicas' drivers replace it with the MAC.
+        event[196..196 + spec.uniq.len()].copy_from_slice(spec.uniq.as_bytes());
+        event[260..262].copy_from_slice(&(spec.descriptor.len() as u16).to_le_bytes()); // rd_size
+        event[262..264].copy_from_slice(&spec.bus.to_le_bytes());
+        event[264..268].copy_from_slice(&spec.vendor.to_le_bytes());
+        event[268..272].copy_from_slice(&spec.product.to_le_bytes());
         event[272..276].copy_from_slice(&1u32.to_le_bytes()); // version
-        event[280..280 + DESCRIPTOR.len()].copy_from_slice(DESCRIPTOR); // rd_data
-        pad.file.write_all(&event).unwrap();
-        pad
+        event[280..280 + spec.descriptor.len()].copy_from_slice(spec.descriptor); // rd_data
+        (&*file).write_all(&event).unwrap();
+        HidPad { file, server, stop, outputs }
     }
 
     /// Sends the controller's state. The kernel drops reports until the daemon has opened the
     /// device, so callers send the state again until it shows up.
     pub fn report(&mut self, buttons: u8, x: i16, y: i16) {
+        let mut data = vec![buttons];
+        data.extend(x.to_le_bytes());
+        data.extend(y.to_le_bytes());
+        self.send(&data);
+    }
+
+    /// Sends an input report as it is on the wire, report id first (if the device uses ids).
+    pub fn send(&mut self, data: &[u8]) {
+        write_input(&self.file, data);
+    }
+
+    /// The output reports (rumble, lightbar, subcommands) the driver has sent so far, oldest first.
+    pub fn outputs(&self) -> Vec<Vec<u8>> {
+        self.outputs.lock().unwrap().clone()
+    }
+}
+
+impl Drop for HidPad {
+    fn drop(&mut self) {
+        // The answering thread holds the file too, so closing it isn't enough to remove the device.
+        let Some(server) = self.server.take() else { return };
+        self.stop.store(true, Ordering::Relaxed);
         let mut event = vec![0u8; UHID_EVENT_SIZE];
-        event[0..4].copy_from_slice(&UHID_INPUT2.to_le_bytes());
-        event[4..6].copy_from_slice(&5u16.to_le_bytes()); // size: buttons, then X and Y
-        event[6] = buttons;
-        event[7..9].copy_from_slice(&x.to_le_bytes());
-        event[9..11].copy_from_slice(&y.to_le_bytes());
-        self.file.write_all(&event).unwrap();
+        event[0..4].copy_from_slice(&UHID_DESTROY.to_le_bytes());
+        let _ = (&*self.file).write_all(&event);
+        let _ = server.join();
+    }
+}
+
+fn write_input(file: &File, data: &[u8]) {
+    let mut event = vec![0u8; UHID_EVENT_SIZE];
+    event[0..4].copy_from_slice(&UHID_INPUT2.to_le_bytes());
+    event[4..6].copy_from_slice(&(data.len() as u16).to_le_bytes());
+    event[6..6 + data.len()].copy_from_slice(data);
+    let _ = (&*file).write_all(&event);
+}
+
+/// Reads what the kernel asks of the device until it is destroyed, and answers.
+fn serve(file: &File, mut responder: Box<dyn Responder>, outputs: &Mutex<Vec<Vec<u8>>>, stop: &AtomicBool) {
+    let mut event = vec![0u8; UHID_EVENT_SIZE];
+    while !stop.load(Ordering::Relaxed) {
+        // Waits a little, so the thread notices it is to stop; a read would wait for ever.
+        let mut poll = libc::pollfd { fd: file.as_raw_fd(), events: libc::POLLIN, revents: 0 };
+        // SAFETY: one valid pollfd, and the count says so.
+        if unsafe { libc::poll(&raw mut poll, 1, 100) } <= 0 {
+            continue;
+        }
+        if !matches!((&*file).read(&mut event), Ok(n) if n >= 4) {
+            return;
+        }
+        let kind = u32::from_le_bytes(event[0..4].try_into().unwrap());
+        match kind {
+            UHID_GET_REPORT => {
+                let id: [u8; 4] = event[4..8].try_into().unwrap();
+                let number = event[8];
+                let mut reply = vec![0u8; UHID_EVENT_SIZE];
+                reply[0..4].copy_from_slice(&UHID_GET_REPORT_REPLY.to_le_bytes());
+                reply[4..8].copy_from_slice(&id);
+                match responder.get_report(number) {
+                    Some(data) => {
+                        reply[10..12].copy_from_slice(&(data.len() as u16).to_le_bytes());
+                        reply[12..12 + data.len()].copy_from_slice(&data);
+                    }
+                    None => reply[8..10].copy_from_slice(&5u16.to_le_bytes()), // EIO
+                }
+                let _ = (&*file).write_all(&reply);
+            }
+            UHID_SET_REPORT => {
+                let mut reply = vec![0u8; UHID_EVENT_SIZE];
+                reply[0..4].copy_from_slice(&UHID_SET_REPORT_REPLY.to_le_bytes());
+                reply[4..8].copy_from_slice(&event[4..8]);
+                let _ = (&*file).write_all(&reply);
+            }
+            UHID_OUTPUT => {
+                let size = u16::from_le_bytes(event[4100..4102].try_into().unwrap()) as usize;
+                let data = event[4..4 + size.min(4096)].to_vec();
+                for answer in responder.output(&data) {
+                    write_input(file, &answer);
+                }
+                outputs.lock().unwrap().push(data);
+            }
+            _ => {}
+        }
     }
 }

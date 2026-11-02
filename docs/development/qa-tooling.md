@@ -119,6 +119,19 @@ node arriving after the pad (HW-4) and the gyro fallback on replug can't be test
    (`uhubctl`) for real unplugs. It tests the whole USB path on the real machine, and can measure
    press-to-output latency including USB polling, which the uhid profiling run leaves out.
 
+**Status.** Step 1 is built for the DualSense. `HidPad::dualsense(n)` in `tests/common/uhid.rs`
+(with `uhid/dualsense.rs`) creates a 054c:0ce6 pad on USB and answers the calibration, pairing and
+firmware feature reports from a thread, so the host's `hid-playstation` binds and makes the
+gamepad, "... Motion Sensors" (INPUT_PROP_ACCELEROMETER) and "... Touchpad" nodes. `DualSenseState`
+builds input reports (gyro, accel, two fingers, click). The pad's unique id is its MAC,
+`02:70:61:64:00:nn`, which `default_config` recognises as a test pad. Run it with
+`scripts/kernel-test-docker.sh replica_` (`tests/replica.rs`): real-driver nodes, gyro and
+touchpad reaching the engine (pointer motion, click), and the sensor pairing across four plugs.
+Not done: the DualShock 4 (same driver; feature reports 0x02, 0x12, 0xa3 and a 64-byte input report
+with three touch reports, laid out in `hid-playstation.c`) and the Switch Pro (`hid-nintendo`
+needs a reply to each output subcommand). The motion node's lateness (HW-4) is a race inside the
+kernel's probe, not forced, and the gyro-fallback on replug needs a profile that requires gyro.
+
 **Closes.** HW-4, HW-5, HW-7's suspend and resume (with the rig), the gyro-fallback gap noted for
 the hot-plug tests, and FEEL-5's measurement.
 
