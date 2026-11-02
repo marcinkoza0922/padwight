@@ -17,6 +17,7 @@ mod overlay_compare;
 mod overlay_shot;
 mod pack_scenes;
 mod pad;
+mod regression;
 mod protocol;
 mod server;
 pub(crate) mod scenes;
@@ -63,7 +64,7 @@ Without a session:
 ";
 
 fn usage() -> String {
-    format!("{USAGE}{}{}{}{}{}{}\nWith a session:\n{}", focus::USAGE, sound::USAGE, overlay_shot::USAGE, overlay_compare::USAGE, motion_shot::USAGE, crate::gui::shoot::USAGE, protocol::COMMANDS)
+    format!("{USAGE}{}{}{}{}{}{}{}\nWith a session:\n{}", focus::USAGE, sound::USAGE, overlay_shot::USAGE, overlay_compare::USAGE, regression::USAGE, motion_shot::USAGE, crate::gui::shoot::USAGE, protocol::COMMANDS)
 }
 
 #[expect(clippy::print_stdout, reason = "CLI output")]
@@ -85,6 +86,7 @@ pub fn run(args: &[&str]) -> Result<()> {
         ["sound", rest @ ..] => sound::run(rest)?,
         ["overlay", rest @ ..] => overlay_shot::run(rest)?,
         ["motion", rest @ ..] => motion_shot::run(rest)?,
+        ["gui", mode @ ("baseline" | "diff"), rest @ ..] => regression::run(mode, rest, Some("gui"))?,
         ["gui", rest @ ..] => crate::gui::shoot::run(rest)?,
         ["detach-all"] => ipc::request(&ipc::Request::DebugDetach("all".into())).map(drop)?,
         [] => start(&[])?,

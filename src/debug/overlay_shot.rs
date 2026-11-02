@@ -45,6 +45,9 @@ pub fn run(args: &[&str]) -> Result<()> {
     if let ["compare", rest @ ..] = args {
         return super::overlay_compare::run(rest);
     }
+    if let [mode @ ("baseline" | "diff"), rest @ ..] = args {
+        return super::regression::run(mode, rest, None);
+    }
     if args == ["list"] {
         for (name, about) in scenes::SCENES {
             println!("{name:<20}{about}");
@@ -181,7 +184,7 @@ fn live(socket: &Path, wait: Duration) -> Result<OverlayFrame> {
 }
 
 /// Every glyph sheet, both layouts, side by side, sized to fit them.
-fn glyph_sheets(options: &Options) -> Result<crate::snapshot::Image> {
+pub(super) fn glyph_sheets(options: &Options) -> Result<crate::snapshot::Image> {
     let font = iced::Font::DEFAULT;
     let panel = |v: &crate::info::InfoView| -> Element<'static, ()> { container(draw::info_panel(v, font, &Fit::contents(), &Anim::still())).into() };
     let sheets = glyphs::sheets(false);
