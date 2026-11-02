@@ -1428,3 +1428,5 @@ mod tests;
 mod edge_tests;
 #[cfg(test)]
 mod cycle_tests;
+#[cfg(test)]
+mod feel_tests;
