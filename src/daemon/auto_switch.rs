@@ -128,7 +128,7 @@ impl Daemon {
         }
         log!("{game} started");
         self.toast_profile();
-        self.info_timers.game_started(&self.scope.info, Instant::now());
+        self.info_timers.game_started(&self.scope.info, crate::clock::now());
         for dev in self.devices.values_mut() {
             let Some(base) = self.config.profile_for(&dev.id) else { continue };
             let mut out = Vec::new();

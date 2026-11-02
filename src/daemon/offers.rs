@@ -36,7 +36,7 @@ impl Daemon {
             _ => window.title.trim().to_owned(),
         };
         log!("hinting that Guide adds the library setup for {}", describe(window));
-        self.toast = Some(crate::offer::hint(&name, Instant::now()));
+        self.toast = Some(crate::offer::hint(&name, crate::clock::now()));
         self.broadcast_overlay();
     }
 
@@ -54,7 +54,7 @@ impl Daemon {
         log!("offering library profiles for {}", describe(&window));
         self.release_mappings();
         let all: Vec<usize> = (0..found.len()).collect();
-        let session = OfferSession::new(&found, &all, have.as_deref(), Instant::now());
+        let session = OfferSession::new(&found, &all, have.as_deref(), crate::clock::now());
         self.offers.shown = found;
         self.offers.shown_pid = window.pid;
         self.driving.owner = Some(by);

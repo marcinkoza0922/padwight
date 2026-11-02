@@ -1,4 +1,5 @@
 mod capture;
+mod clock;
 mod clipboard;
 mod config;
 mod controller_id;

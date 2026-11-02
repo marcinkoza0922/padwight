@@ -5,29 +5,29 @@ use super::*;
 
 impl Daemon {
     pub(super) fn run(&mut self, rx: &Receiver<Msg>) {
-        let mut next_scan = Instant::now() + SCAN_INTERVAL;
-        let mut last_tick = Instant::now();
+        let mut next_scan = crate::clock::now() + SCAN_INTERVAL;
+        let mut last_tick = crate::clock::now();
         loop {
             crate::priority::keep_up();
             let ticking = self.needs_tick();
             let period = if self.config.fast_tick { FAST_TICK } else { TICK };
             let mut timeout = if ticking {
-                period.saturating_sub(last_tick.elapsed())
+                period.saturating_sub(crate::clock::since(last_tick))
             } else {
-                next_scan.saturating_duration_since(Instant::now())
+                next_scan.saturating_duration_since(crate::clock::now())
             };
             if let Some(deadline) = self.next_deadline() {
-                timeout = timeout.min(deadline.saturating_duration_since(Instant::now()));
+                timeout = timeout.min(deadline.saturating_duration_since(crate::clock::now()));
             }
             if !self.wait_and_handle(rx, timeout) {
                 return;
             }
 
             self.run_timers();
-            self.check_fallbacks(Instant::now());
+            self.check_fallbacks(crate::clock::now());
             self.finish_stop();
             self.catch_up_on_focus();
-            let now = Instant::now();
+            let now = crate::clock::now();
             if ticking {
                 let dt = now.duration_since(last_tick);
                 if dt >= period {
@@ -76,7 +76,7 @@ impl Daemon {
 
     /// Fires combo members whose combo window has expired.
     fn run_timers(&mut self) {
-        let now = Instant::now();
+        let now = crate::clock::now();
         self.tick_overlays(now);
         if self.config.active().is_none() {
             return;
@@ -132,11 +132,11 @@ impl Daemon {
         if self.lens_active() {
             self.broadcast_overlay();
         }
-        if self.last_draw.elapsed() >= STATUS_REDRAW
+        if crate::clock::since(self.last_draw) >= STATUS_REDRAW
             && let Some(dev) = self.last_active.and_then(|id| self.devices.get(&id))
         {
             dev.draw_status();
-            self.last_draw = Instant::now();
+            self.last_draw = crate::clock::now();
         }
     }
 }

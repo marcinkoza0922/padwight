@@ -24,14 +24,14 @@ impl Daemon {
         let (b, down) = match ev {
             InputEvent::Button(b, down) => (b, down),
             InputEvent::Axis(axis, value) => {
-                session.axis(&mut self.doodles, axis, value, Instant::now());
+                session.axis(&mut self.doodles, axis, value, crate::clock::now());
                 return false;
             }
             InputEvent::Touchpad(_) => return false,
         };
         let before = session.cursor();
         let doodling = session.in_doodle();
-        let outcome = session.handle(b, down, &mut self.doodles, Instant::now());
+        let outcome = session.handle(b, down, &mut self.doodles, crate::clock::now());
         let (picked, moved) = (down && b == Button::South, session.cursor() != before);
         if !doodling {
             self.overlay_sound(sound::SoundOverlay::Menu, sound::Feedback::of(picked, moved));
@@ -49,7 +49,7 @@ impl Daemon {
     /// that East has left, or Guide has, closes the menu.
     pub(super) fn tick_doodle(&mut self, dt: f32) {
         let Some(Active::Tools(session, _)) = &mut self.active else { return };
-        match session.tick(&mut self.doodles, dt, Instant::now()) {
+        match session.tick(&mut self.doodles, dt, crate::clock::now()) {
             Some(outcome) => {
                 self.tools_outcome(outcome);
             }

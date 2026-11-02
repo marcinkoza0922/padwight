@@ -35,7 +35,7 @@ impl Daemon {
 
     /// Opens the question for a controller that has none answered, when nothing else is up.
     pub(super) fn ask_pending_pad(&mut self) {
-        let now = Instant::now();
+        let now = crate::clock::now();
         if self.active.is_some() || !self.config.enabled || self.offers.new_pad_after.is_some_and(|t| t > now) {
             return;
         }

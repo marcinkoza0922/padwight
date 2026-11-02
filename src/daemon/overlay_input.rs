@@ -188,7 +188,7 @@ impl Daemon {
     /// While the overlay shows something, controller input drives it instead of the mappings.
     /// (Every way out redraws, so the input log's view of it shows too.)
     pub(super) fn overlay_input(&mut self, id: u64, events: Vec<InputEvent>, fires: &[bool]) {
-        let now = Instant::now();
+        let now = crate::clock::now();
         if let Some(dev) = self.devices.get_mut(&id) {
             for ev in &events {
                 dev.view.apply(ev);
