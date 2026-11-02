@@ -12,6 +12,8 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
   and a `.padpack` path draws that pack's menus, keyboard, numpad and info overlays in its own look)
 - What the overlay shows, as text: `cargo run -q -- debug overlay state` (JSON of a running daemon's overlay);
   in debug sessions `expect overlay <path> <value>` (shape in `src/debug/overlay_state.rs`)
+- Settings window layout and contrast, no display needed: `cargo run -q -- debug gui-check [--strict]` (clipped or
+  wrapped text, WCAG AA, color-blind menu tones; findings boxed in `screenshots/gui-check/`)
 - Old vs new overlay renderer: `cargo run -q -- debug overlay compare all|<scene>` (iced | new | difference PNGs and
   a score in `screenshots/compare/`, worst first; scenes the new renderer can't draw yet are listed as not ported)
 - Picture regression, no display needed: `cargo run -q -- debug overlay baseline <dir>` (scenes, glyphs, motion strips,

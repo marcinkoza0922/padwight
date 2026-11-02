@@ -422,6 +422,22 @@ window size: for each text widget, check its laid-out text fits its bounds (from
 tree, not the pixels), and check the contrast of text against its background meets WCAG AA. The
 color-blind menu colors get the same contrast check, plus a simulated deuteranopia pass.
 
+**Status.** Built: `cargo run -q -- debug gui-check [--size WxH] [--scene text] [--light|--dark]
+[--list] [--out dir] [--strict]` (`src/gui/layout_check/`). It replays 36 `debug gui` scenes (every
+page, game tab and profile sub-tab, popups, dialogs, the on-screen editor) in light and dark at
+900x600 (iced sets no minimum window size; only the width matters, the page scrolls). Layout comes
+from iced's widget tree through an `Operation` that records every text widget's bounds, its
+scrolled-viewport clip and its parent container. Wrapping is found by laying the same view out
+again 3600 px wide and comparing heights, since `Operation::text` gives no font size. Findings:
+off-screen, clipped, out-of-container, wrapped short labels, low contrast, theme palette pairs, and
+the menu tones with and without color-blind mode (text contrast, plus CIE delta E under Machado
+deuteranopia). Contrast reads the text and background colors from the drawn image inside each text's
+bounds, because iced's tree does not expose text colors; one-character icons need 3:1. Pictures with
+findings boxed in red go to `screenshots/gui-check/`. `--strict` exits non-zero on any finding.
+Left: a minimum window size to check at (needs deciding), markdown text (the Manual) is not in the
+tree, disabled controls are not exempted from contrast, texts drawn over previews can read falsely,
+and wiring `--strict` into CI.
+
 ## T-12: Scheduled runs and performance baselines
 
 **Gap.** Layers L3 and L5 to L8 run by hand. `scripts/profile.sh` writes numbers but nothing
