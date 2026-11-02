@@ -1,0 +1,21 @@
+# FEEL-4 / known finding: the stick is pushed only while the radial menu is open, then let go
+# before the menu button, so the pick has to be made and the stick must be quiet afterwards.
+setup tests/scenarios/packs/menus.padpack Menus
+press rb
+advance 100
+stick right 1 0
+advance 100
+stick right 0 0
+advance 100
+release rb
+advance 100
+---
+overlay menu "Radial"                  @0
+sound menu Open pop                    @0
+sound menu Step click                  @100
+overlay menu "Radial" selected "Right" @100
+sound menu Pick pop                    @300
+overlay none                           @300
+sound menu Close pop                   @300
+key KEY_R down                         @300
+key KEY_R up                           @300

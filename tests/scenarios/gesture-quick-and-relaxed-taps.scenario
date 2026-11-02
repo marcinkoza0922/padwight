@@ -1,0 +1,25 @@
+# FEEL-4: East has a double tap (F) and a triple tap (G). Quick taps (10 ms down, 30 ms apart) and
+# relaxed ones (150 ms down, 100 ms apart) both count as a double tap; a gap longer than the 250 ms
+# window makes two single taps instead (E, E) with nothing else fired.
+setup tests/scenarios/packs/input.padpack Gestures
+tap east 10
+advance 20
+tap east 10
+advance 400
+tap east 150
+advance 100
+tap east 150
+advance 400
+tap east 30
+advance 400
+tap east 30
+advance 400
+---
+key KEY_F down @290
+key KEY_F up   @290
+key KEY_F down @1090
+key KEY_F up   @1090
+key KEY_E down @1520
+key KEY_E up   @1520
+key KEY_E down @1950
+key KEY_E up   @1950
