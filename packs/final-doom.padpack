@@ -15,6 +15,11 @@ kind = "steam_app_id"
 value = "2290"
 profile = "Final Doom"
 
+[[rules]]
+kind = "executable"
+value = "Final Doom/base/dosbox.exe"
+profile = "Final Doom"
+
 [[profiles]]
 name = "Final Doom"
 combos = []

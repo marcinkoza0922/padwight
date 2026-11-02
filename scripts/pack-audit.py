@@ -5,7 +5,8 @@ For every library pack (packs/*.padpack) find the game in the local PCGamingWiki
 report, offline and without guessing:
 
   * Steam app ids the wiki doesn't list for the game (or doesn't know at all),
-  * executable names Discord's detectable-games list never saw for the game,
+  * executable names neither Discord's detectable-games list nor Steam's launch data
+    (pcgamingwiki/steam-executables.tsv, optional, see steam-executables.py) lists for the game,
   * a release year or native controller support that disagrees with the pack's own text and shape,
   * packs whose game can't be found, or matches several games (reported, never picked).
 
@@ -115,7 +116,10 @@ def load_snapshot(wiki):
     games = tsv("games.tsv")
     appids = [(r["steam_appid"], r["title"], r["file"]) for r in tsv("steam-appids.tsv")]
     redirects = [(r["from"], r["to"]) for r in tsv("redirects.tsv")]
-    return Snapshot(games, appids, redirects, tsv("executables.tsv"))
+    exes = tsv("executables.tsv")
+    if (wiki / "steam-executables.tsv").is_file():  # scripts/steam-executables.py, optional
+        exes += tsv("steam-executables.tsv")
+    return Snapshot(games, appids, redirects, exes)
 
 
 def find_wiki(arg):
@@ -230,7 +234,7 @@ def check_executables(pack, snap, games, add):
         return
     seen = snap.exes_for(games, pack["ids"])
     if not seen:
-        add("exe_no_data", "info", "Discord's list has no executables for this game")
+        add("exe_no_data", "info", "neither Discord's list nor Steam's launch data has executables for this game")
         return
     for e in pack["exes"]:
         if not exe_ok(e, seen):
