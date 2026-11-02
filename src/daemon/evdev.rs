@@ -36,6 +36,8 @@ pub(super) struct Nodes {
     pub(super) touch: HashMap<NodeKey, PairedNode>,
     /// Controller motion sensors we lack permission to open (names), for the GUI to explain.
     denied: HashMap<NodeKey, String>,
+    /// The last grab failure logged for each node, so a pad held elsewhere logs once.
+    grab_failures: super::grab_failures::GrabFailures,
 }
 
 /// A plain Xbox 360 pad, for an injected controller whose output goes out for real.
@@ -174,6 +176,7 @@ impl Daemon {
         self.nodes.motion.retain(|k, _| present.contains(k));
         self.nodes.touch.retain(|k, _| present.contains(k));
         self.nodes.denied.retain(|k, _| present.contains(k));
+        self.nodes.grab_failures.retain_present(&present.iter().map(|(p, _)| p.clone()).collect());
         self.attach_motion();
         self.attach_touchpad();
         self.gamepads.retain(|k, _| present.contains(k));
@@ -217,9 +220,15 @@ impl Daemon {
         let uniq = dev.unique_name().map(str::to_string);
         let paddles = input::has_paddles(&dev);
         if let Err(e) = dev.grab() {
-            log!("cannot grab {name} ({}): {e}", path.display());
+            if self.nodes.grab_failures.note(&path, &e.to_string()) {
+                match super::grab_failures::holder(&path) {
+                    Some(holder) => log!("cannot grab {name} ({}): {e}; {holder} has it open (retrying quietly)", path.display()),
+                    None => log!("cannot grab {name} ({}): {e} (retrying quietly)", path.display()),
+                }
+            }
             return;
         }
+        self.nodes.grab_failures.recovered(&path);
         let ff = FfSpec::of(&dev);
         let identity = PadIdentity::resolve(self.identity_override, model, self.active_support());
         let Some(new_pad) = self.pad_for_new(ff.as_ref(), identity, self.config.controller(&pad_id).and_then(|c| c.player)) else { return };
