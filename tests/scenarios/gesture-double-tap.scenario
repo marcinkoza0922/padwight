@@ -1,0 +1,13 @@
+# South taps A; a second tap inside the window makes it B instead (decided once the window ends).
+setup tests/scenarios/packs/input.padpack Gestures
+tap south 30
+advance 400
+tap south 30
+advance 100
+tap south 30
+advance 400
+---
+key KEY_A down @280
+key KEY_A up   @280
+key KEY_B down @560
+key KEY_B up   @590

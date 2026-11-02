@@ -1,0 +1,23 @@
+# Two layers at once: the newest wins where they disagree, the other fills the rest.
+setup tests/scenarios/packs/layers.padpack Base
+press lb
+press rb
+tap south 30
+tap east 30
+tap north 30
+release rb
+tap south 30
+release lb
+---
+shifts mode - layers Hotkeys        @0
+shifts mode - layers Hotkeys, Extra @0
+key KEY_F5 down                     @0
+key KEY_F5 up                       @30
+key KEY_F2 down                     @30
+key KEY_F2 up                       @60
+key KEY_F6 down                     @60
+key KEY_F6 up                       @90
+shifts mode - layers Hotkeys        @90
+key KEY_F1 down                     @90
+key KEY_F1 up                       @120
+shifts mode - layers -              @120

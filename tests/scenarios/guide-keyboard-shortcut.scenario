@@ -1,0 +1,24 @@
+# Guide + X opens the on-screen keyboard; the controller types a key and B closes it.
+tap lb 40
+press guide
+advance 100
+tap west 60
+release guide
+advance 400
+tap south 60
+advance 100
+press east
+advance 700
+release east
+advance 200
+---
+pad LeftBumper down        @0
+pad LeftBumper up          @40
+shifts mode Guide layers - @40
+overlay none + info 1      @140
+shifts mode - layers -     @140
+overlay keyboard           @140
+sound keyboard Open pop    @140
+sound keyboard Pick pop    @600
+overlay none               @1460
+sound keyboard Close pop   @1460

@@ -1,0 +1,13 @@
+# A repeating macro loops while West is held and stops when it is let go.
+setup tests/scenarios/packs/layers.padpack Base
+press west
+advance 250
+release west
+advance 300
+---
+key KEY_L down @0
+key KEY_L up   @20
+key KEY_L down @101
+key KEY_L up   @121
+key KEY_L down @201
+key KEY_L up   @221

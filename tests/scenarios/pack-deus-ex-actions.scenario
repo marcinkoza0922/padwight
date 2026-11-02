@@ -1,0 +1,35 @@
+# Deus Ex (P1, Unreal engine): use, jump, lean, toggle run, a long press for a hotkey, and Start's gestures.
+setup packs/deus-ex.padpack Deus Ex
+model dualsense
+tap south 40
+tap east 40
+tap dpad-left 40
+tap dpad-right 40
+tap ls 40
+tap ls 40
+press west
+advance 600
+release west
+tap start 30
+advance 400
+tap start 30
+advance 100
+tap start 30
+advance 400
+---
+mouse Right down        @0
+mouse Right up          @40
+key KEY_SPACE down      @40
+key KEY_SPACE up        @80
+key KEY_Q down          @80
+key KEY_Q up            @120
+key KEY_E down          @120
+key KEY_E up            @160
+key KEY_X down          @160
+key KEY_X up            @200
+key KEY_APOSTROPHE down @740
+key KEY_APOSTROPHE up   @840
+key KEY_ESC down        @1120
+key KEY_ESC up          @1120
+key KEY_KPPLUS down     @1400
+key KEY_KPPLUS up       @1430

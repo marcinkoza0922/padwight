@@ -1,0 +1,21 @@
+# Up steps through the Speed cycle (2, 3, 1), Down steps back.
+setup tests/scenarios/packs/layers.padpack Base
+tap dpad-up 30
+tap dpad-up 30
+tap dpad-up 30
+tap dpad-up 30
+tap dpad-down 30
+tap dpad-down 30
+---
+key KEY_2 down @0
+key KEY_2 up   @30
+key KEY_3 down @30
+key KEY_3 up   @60
+key KEY_1 down @60
+key KEY_1 up   @90
+key KEY_2 down @90
+key KEY_2 up   @120
+key KEY_1 down @120
+key KEY_1 up   @150
+key KEY_3 down @150
+key KEY_3 up   @180

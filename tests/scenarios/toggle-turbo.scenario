@@ -1,0 +1,15 @@
+# North toggles an auto-fire C: on with one press, off with the next.
+setup tests/scenarios/packs/input.padpack Toggle and turbo
+tap north 30
+advance 350
+tap north 30
+advance 300
+---
+key KEY_C down @0
+key KEY_C up   @51
+key KEY_C down @101
+key KEY_C up   @151
+key KEY_C down @201
+key KEY_C up   @251
+key KEY_C down @301
+key KEY_C up   @351

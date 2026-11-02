@@ -1,0 +1,23 @@
+# Tapping Guide opens the Guide overlay; the D-pad steps through it and B closes it.
+model dualsense
+tap guide 60
+advance 400
+tap dpad-down 40
+tap dpad-down 40
+tap dpad-up 40
+tap east 40
+advance 200
+---
+shifts mode Guide layers -                                  @0
+sound guide Open rise                                       @60
+overlay menu "Guide" selected "Quick Settings"              @60
+overlay menu "Guide" selected "Quick Settings" + info 1     @100
+sound guide Step pulse                                      @460
+overlay menu "Guide" selected "Edit Controls" + info 1      @460
+sound guide Step pulse                                      @500
+overlay menu "Guide" selected "On-screen keyboard" + info 1 @500
+sound guide Step pulse                                      @540
+overlay menu "Guide" selected "Edit Controls" + info 1      @540
+shifts mode - layers -                                      @580
+sound guide Close fall                                      @580
+overlay none                                                @580

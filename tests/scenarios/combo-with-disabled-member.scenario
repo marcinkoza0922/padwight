@@ -1,0 +1,11 @@
+# East is disabled alone, so it works as a modifier with no time limit: East then South is F2.
+setup tests/scenarios/packs/input.padpack Combos
+press east
+advance 2000
+press south
+advance 100
+release south east
+advance 100
+---
+key KEY_F2 down @2000
+key KEY_F2 up   @2100

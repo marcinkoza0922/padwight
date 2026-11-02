@@ -1,0 +1,201 @@
+format = 20
+macros = []
+[pack]
+id = "6e12161b-5e75-517d-b0e4-016b04a19f55"
+name = "Scenario menus"
+version = "1.0"
+author = "Padwight"
+description = "Scenario test pack: Scenario menus."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "scenario-scenario-menus.exe"
+profile = "Menus"
+
+[[profiles]]
+name = "Menus"
+
+[profiles.buttons]
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {open_menu = "Buttons"}
+West = {open_menu = "Directional"}
+LeftBumper = {open_menu = "List"}
+RightBumper = {open_menu = "Radial"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {open_menu = "Grid"}
+Start = {open_menu = "Carousel"}
+DpadUp = {keys = ["KEY_U"]}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[[menus]]
+name = "List"
+
+kind = "list"
+
+[[menus.items]]
+label = "Alpha"
+action = { keys = ["KEY_A"]}
+
+[[menus.items]]
+label = "Bravo"
+action = { keys = ["KEY_B"]}
+
+[[menus.items]]
+label = "Charlie"
+action = { keys = ["KEY_C"]}
+
+[[menus]]
+name = "Radial"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "Up"
+action = { keys = ["KEY_U"]}
+
+[[menus.items]]
+label = "Right"
+action = { keys = ["KEY_R"]}
+
+[[menus.items]]
+label = "Down"
+action = { keys = ["KEY_D"]}
+
+[[menus.items]]
+label = "Left"
+action = { keys = ["KEY_L"]}
+
+[[menus]]
+name = "Carousel"
+
+[menus.kind.carousel]
+controls = "Bumpers"
+
+[[menus.items]]
+label = "One"
+action = { keys = ["KEY_O"]}
+
+[[menus.items]]
+label = "Two"
+action = { keys = ["KEY_T"]}
+
+[[menus.items]]
+label = "Three"
+action = { keys = ["KEY_T"]}
+
+[[menus]]
+name = "Directional"
+
+[menus.kind.directional]
+cluster = "DPad"
+
+[[menus.items]]
+label = "Up"
+action = { keys = ["KEY_U"]}
+
+[[menus.items]]
+label = "Right"
+action = { keys = ["KEY_R"]}
+
+[[menus.items]]
+label = "Down"
+action = { keys = ["KEY_D"]}
+
+[[menus.items]]
+label = "Left"
+action = { keys = ["KEY_L"]}
+
+[[menus]]
+name = "Grid"
+
+[menus.kind.grid]
+columns = 2
+
+[[menus.items]]
+label = "Aa"
+action = { keys = ["KEY_A"]}
+
+[[menus.items]]
+label = "Bb"
+action = { keys = ["KEY_B"]}
+
+[[menus.items]]
+label = "Cc"
+action = { keys = ["KEY_C"]}
+
+[[menus.items]]
+label = "Dd"
+action = { keys = ["KEY_D"]}
+
+[[menus]]
+name = "Buttons"
+
+kind = "buttons"
+
+[[menus.items]]
+label = "Sa"
+action = { keys = ["KEY_S"]}
+button = "South"
+
+[[menus.items]]
+label = "Eb"
+action = { keys = ["KEY_E"]}
+button = "East"
+
+[[menus.items]]
+label = "Nc"
+action = { keys = ["KEY_N"]}
+button = "North"
+
+[[menus.items]]
+label = "Wd"
+action = { keys = ["KEY_W"]}
+button = "West"
+
+[[menus]]
+name = "Pad"
+
+kind = "list"
+
+[[menus.items]]
+label = "Pa"
+action = { keys = ["KEY_P"]}
+
+[[menus.items]]
+label = "Pb"
+action = { keys = ["KEY_P"]}

@@ -1,0 +1,16 @@
+# A directional menu: a D-pad direction picks that slot.
+setup tests/scenarios/packs/menus.padpack Menus
+press west
+advance 100
+tap dpad-right 30
+advance 100
+release west
+---
+overlay menu "Directional"                  @0
+sound menu Open pop                         @0
+sound menu Pick pop                         @100
+overlay menu "Directional" selected "Right" @100
+overlay none                                @100
+sound menu Close pop                        @100
+key KEY_R down                              @100
+key KEY_R up                                @100

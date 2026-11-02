@@ -1,0 +1,20 @@
+# A carousel: the bumpers cycle, A picks.
+setup tests/scenarios/packs/menus.padpack Menus
+tap start 30
+advance 100
+tap rb 30
+tap rb 30
+tap south 30
+advance 100
+---
+overlay menu "Carousel" selected "One"   @0
+sound menu Open pop                      @0
+sound menu Step click                    @130
+overlay menu "Carousel" selected "Two"   @130
+sound menu Step click                    @160
+overlay menu "Carousel" selected "Three" @160
+sound menu Pick pop                      @190
+overlay none                             @190
+sound menu Close pop                     @190
+key KEY_T down                           @190
+key KEY_T up                             @190

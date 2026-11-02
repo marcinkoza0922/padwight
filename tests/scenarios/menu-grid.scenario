@@ -1,0 +1,23 @@
+# A two-column grid: move in all four directions, A picks.
+setup tests/scenarios/packs/menus.padpack Menus
+tap select 30
+advance 100
+tap dpad-right 30
+tap dpad-down 30
+tap dpad-left 30
+tap south 30
+advance 100
+---
+overlay menu "Grid" selected "Aa" @0
+sound menu Open pop               @0
+sound menu Step click             @130
+overlay menu "Grid" selected "Bb" @130
+sound menu Step click             @160
+overlay menu "Grid" selected "Dd" @160
+sound menu Step click             @190
+overlay menu "Grid" selected "Cc" @190
+sound menu Pick pop               @220
+overlay none                      @220
+sound menu Close pop              @220
+key KEY_C down                    @220
+key KEY_C up                      @220

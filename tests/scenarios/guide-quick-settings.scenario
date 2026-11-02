@@ -1,0 +1,19 @@
+# Guide + Start opens Quick Settings over the game; B closes it.
+press guide
+advance 100
+tap start 60
+release guide
+advance 400
+tap dpad-down 40
+tap east 40
+advance 200
+---
+shifts mode Guide layers -                            @0
+overlay none + info 1                                 @100
+shifts mode - layers -                                @100
+overlay menu "In-game menu" selected "Quick Settings" @100
+sound guide Open rise                                 @100
+sound guide Step pulse                                @560
+overlay menu "In-game menu" selected "Edit Controls"  @560
+overlay none                                          @600
+sound guide Close fall                                @600

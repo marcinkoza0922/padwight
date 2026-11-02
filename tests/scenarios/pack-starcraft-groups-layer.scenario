@@ -1,0 +1,25 @@
+# StarCraft: holding LB lays the control-group keys over the face buttons; RB holds Shift.
+setup packs/starcraft.padpack Gameplay
+tap south 40
+press lb
+tap south 40
+tap west 40
+release lb
+press rb
+tap south 40
+release rb
+---
+key KEY_A down              @0
+key KEY_A up                @40
+shifts mode - layers Groups @40
+overlay none + info 1       @40
+key KEY_1 down              @40
+key KEY_1 up                @80
+key KEY_2 down              @80
+key KEY_2 up                @120
+shifts mode - layers -      @120
+overlay none                @120
+key KEY_LEFTSHIFT down      @120
+key KEY_A down              @120
+key KEY_A up                @160
+key KEY_LEFTSHIFT up        @160
