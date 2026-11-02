@@ -63,11 +63,16 @@ impl Session {
             pad.model
         };
         let path = attach_pad(model, live)?;
-        *link = Some(Bridge { path: path.clone(), model, live, stale: false });
-        drop(link);
-        // Whatever is already held starts out held.
-        let rebuilt = self.pad().state_events();
-        self.send(&path, rebuilt)?;
+        // Whatever is already held starts out held. The link stays locked until that is sent, and
+        // the changes queued so far are dropped (the rebuild has them): a flush in between would
+        // send a press the rebuild sends again, and a button's On press would fire twice.
+        let rebuilt = {
+            let mut pad = self.pad();
+            pad.take_events();
+            pad.state_events()
+        };
+        let stale = self.send(&path, rebuilt).is_err();
+        *link = Some(Bridge { path: path.clone(), model, live, stale });
         Ok(path)
     }
 

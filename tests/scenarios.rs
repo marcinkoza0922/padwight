@@ -36,7 +36,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use common::{Daemon, install_config, spawn_daemon_with, temp_root, wait_for};
+use common::{Daemon, install_config, spawn_daemon_env, temp_root, wait_for};
 
 const BIN: &str = env!("CARGO_BIN_EXE_padwight");
 
@@ -132,7 +132,10 @@ fn run(s: &Scenario) -> Result<String, String> {
 
     // The daemon, and the controller attached to it.
     let _daemon: Daemon = {
-        let daemon = spawn_daemon_with(&root, Some(&run_dir), &["--debug", "--fake-clock"]);
+        // No session bus either, so the desktop the tests run on can't switch profiles under a
+        // scenario by focusing a window.
+        let no_bus = Path::new("unix:path=/nonexistent/padwight-scenario-bus");
+        let daemon = spawn_daemon_env(&root, Some(&run_dir), &["--debug", "--fake-clock"], &[("DBUS_SESSION_BUS_ADDRESS", no_bus)]);
         wait_for("the daemon to answer", || {
             let mut command = Command::new(BIN);
             env_of(&mut command);
