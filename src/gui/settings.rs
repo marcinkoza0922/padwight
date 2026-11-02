@@ -58,7 +58,7 @@ impl App {
     /// none of them plays.
     pub(super) fn sounds_off_note(&self) -> Option<Element<'_, Message>> {
         self.config.performance.quiet.then(|| {
-            text("Sounds are off under App settings → Performance, so none of these play.").size(13).color(WARNING_COLOR).into()
+            text("Sounds are off under App settings → Performance, so none of these play.").size(13).style(warning_text).into()
         })
     }
 

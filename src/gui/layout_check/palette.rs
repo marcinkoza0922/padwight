@@ -20,7 +20,7 @@ fn finding(scene: &str, theme: &'static str, kind: Kind, name: &str, detail: Str
 
 /// Every text/background pair the window's theme defines.
 pub fn theme(dark: bool, name: &'static str) -> Vec<Finding> {
-    let theme = <iced::Theme as iced::theme::Base>::default(if dark { iced::theme::Mode::Dark } else { iced::theme::Mode::Light });
+    let theme = crate::gui::app_theme(if dark { iced::theme::Mode::Dark } else { iced::theme::Mode::Light });
     let p = theme.extended_palette();
     let pair = |n: &str, pair: iced::theme::palette::Pair| (n.to_string(), pair.text, pair.color);
     let mut pairs = vec![];
@@ -41,7 +41,9 @@ pub fn theme(dark: bool, name: &'static str) -> Vec<Finding> {
             }
         )*};
     }
-    levels!("primary" p.primary, "secondary" p.secondary, "success" p.success, "warning" p.warning, "danger" p.danger);
+    // The window draws its secondary buttons from the background levels, so the palette's own
+    // secondary pair (derived by iced from the page and text colors) is never used.
+    levels!("primary" p.primary, "success" p.success, "warning" p.warning, "danger" p.danger);
     pairs
         .into_iter()
         .filter_map(|(n, text, bg)| {

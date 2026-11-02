@@ -249,7 +249,7 @@ impl App {
                 // The dot alone doesn't say what it means, so it says so on hover.
                 let why = if note.contains('●') { "In use: the active profile is one of this setup's." } else if note.contains('⚠') { "One of its profiles uses what opens the Guide overlay." } else { "A newer version is in the library." };
                 line = line.push(tooltip(
-                    text(note).size(12).color(style_accent()),
+                    text(note).size(12).style(accent_text),
                     container(text(why).size(13)).padding(8).style(style::tooltip),
                     tooltip::Position::Right,
                 ));
@@ -301,7 +301,7 @@ impl App {
         // A sidebar entry in the accent color rather than a filled button, which would look like
         // the search field above it.
         col = col.push(
-            button(text("+ Add setup").color(style_accent()))
+            button(text("+ Add setup").style(accent_text))
                 .width(Length::Fill)
                 .padding([6, 10])
                 .style(style::nav(false))

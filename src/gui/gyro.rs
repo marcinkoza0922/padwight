@@ -281,7 +281,7 @@ fn advanced<'a>(cfg: &'a GyroConfig, open: bool, with: impl Fn(&dyn Fn(&mut Gyro
 fn pictures<'a>(cfg: &GyroConfig, ui: &Ui) -> Element<'a, Message> {
     let pics = super::gyro_graph::figures(cfg, ui.live_gyro, ui.gyro_trail);
     let why = if ui.any_gyro { "Turn the controller to see the gyro at work. The live parts follow the active profile's saved settings." } else { "Connect a controller with a gyro to see it live." };
-    let status = ui.gyro_note.filter(|_| ui.any_gyro).map(|why| text(why).size(13).color(style_accent()).into());
+    let status = ui.gyro_note.filter(|_| ui.any_gyro).map(|why| text(why).size(13).style(accent_text).into());
     visualizer_panel(pics, Some(why), status)
 }
 

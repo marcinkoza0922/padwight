@@ -186,11 +186,40 @@ fn error_text(_: &iced::Theme) -> iced::widget::text::Style {
 }
 
 fn muted(theme: &iced::Theme) -> iced::widget::text::Style {
-    let color = if theme.extended_palette().is_dark { Color::from_rgb(0.7, 0.7, 0.75) } else { Color::from_rgb(0.33, 0.33, 0.38) };
+    let color = if theme.extended_palette().is_dark { Color::from_rgb(0.81, 0.81, 0.85) } else { Color::from_rgb(0.28, 0.28, 0.33) };
     iced::widget::text::Style { color: Some(color) }
 }
+/// Text in the accent, moved to read on the theme's surfaces.
+fn accent_text(theme: &iced::Theme) -> iced::widget::text::Style {
+    iced::widget::text::Style { color: Some(style::accent(theme)) }
+}
+
+/// The window's theme: iced's own for `mode`, with the colors nudged where the built-in pairs
+/// leave text just short of AA (4.5:1).
+pub(crate) fn app_theme(mode: iced::theme::Mode) -> iced::Theme {
+    let mut palette = <iced::Theme as iced::theme::Base>::default(mode).palette();
+    palette.primary = Color::from_rgb8(0x55, 0x64, 0xed);
+    palette.success = Color::from_rgb8(0x1c, 0x7a, 0x62);
+    iced::Theme::custom("Padwight", palette)
+}
+
 /// Something that saves but likely won't work as meant, such as a menu item nothing can pick.
 const WARNING_COLOR: Color = Color::from_rgb(0.85, 0.58, 0.1);
+/// Warning text on the light theme, where the amber above is too pale to read.
+const WARNING_COLOR_LIGHT: Color = Color::from_rgb(0.54, 0.35, 0.0);
+/// Text that says something is fine, and the same on the light theme.
+const OK_COLOR: Color = Color::from_rgb(0.3, 0.7, 0.4);
+const OK_COLOR_LIGHT: Color = Color::from_rgb(0.12, 0.48, 0.23);
+
+/// Text in the warning amber, deepened on the light theme.
+fn warning_text(theme: &iced::Theme) -> iced::widget::text::Style {
+    iced::widget::text::Style { color: Some(if theme.extended_palette().is_dark { WARNING_COLOR } else { WARNING_COLOR_LIGHT }) }
+}
+
+/// Text in the "all good" green, deepened on the light theme.
+fn ok_text(theme: &iced::Theme) -> iced::widget::text::Style {
+    iced::widget::text::Style { color: Some(if theme.extended_palette().is_dark { OK_COLOR } else { OK_COLOR_LIGHT }) }
+}
 
 /// A controller as the editor sees it: its model (`None` for a generic pad) and the family whose
 /// button glyphs it uses.
@@ -951,7 +980,7 @@ impl App {
             Appearance::Light => iced::theme::Mode::Light,
             Appearance::Dark => iced::theme::Mode::Dark,
         };
-        <iced::Theme as iced::theme::Base>::default(mode)
+        app_theme(mode)
     }
 
     fn theme_for(&self, window: iced::window::Id) -> iced::Theme {
@@ -1466,6 +1495,12 @@ impl App {
     }
 
     fn view(&self) -> Element<'_, Message> {
+        self.view_with_popups(true)
+    }
+
+    /// The window as `view` draws it, with the popup and the tour left off when `popups` is false
+    /// (the layout check tells the page's own text from what a popup covers).
+    fn view_with_popups(&self, popups: bool) -> Element<'_, Message> {
         let page: Element<'_, Message> = match &self.page {
             // Each part in a card, as every other page's parts are.
             Page::Overview => column![
@@ -1504,10 +1539,10 @@ impl App {
         let base = row![self.view_sidebar(), rule::vertical(1), main];
         let mut layers = stack![base];
         // While the stage is up, what it opens shows over it instead.
-        if let Some(popup) = self.popup().filter(|_| self.stage.is_none()) {
+        if let Some(popup) = self.popup().filter(|_| popups && self.stage.is_none()) {
             layers = layers.push(popup);
         }
-        if let Some(step) = self.tour {
+        if let Some(step) = self.tour.filter(|_| popups) {
             layers = layers.push(self.view_tour(step));
         }
         layers.into()

@@ -9,7 +9,7 @@ use super::*;
 /// A "▸ Label" / "▾ Label" toggle for an optional section.
 pub(super) fn disclosure<'a>(label: &str, open: bool, message: Message) -> Element<'a, Message> {
     let chevron = if open { "▾" } else { "▸" };
-    button(text(format!("{chevron} {label}")).size(14)).style(button::text).padding([4, 0]).on_press(message).into()
+    button(text(format!("{chevron} {label}")).size(14)).style(style::link).padding([4, 0]).on_press(message).into()
 }
 
 /// The preview keeps the real colors but caps the size so it fits the window.
@@ -286,7 +286,7 @@ fn item_tutorial(kind: ItemKind) -> &'static str {
 /// An ⓘ that explains a section on hover, instead of a paragraph of gray text.
 pub(super) fn help<'a>(explanation: String) -> Element<'a, Message> {
     tooltip(
-        text("ⓘ").size(16).color(style_accent()),
+        text("ⓘ").size(16).style(accent_text),
         container(text(explanation).size(13)).padding(10).max_width(420.0).style(style::tooltip),
         tooltip::Position::Bottom,
     )

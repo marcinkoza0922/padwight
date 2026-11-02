@@ -257,7 +257,7 @@ impl ActionKind {
 /// for the action at `place` that `on_change` writes back.
 pub(super) fn kind_button<'a>(place: Place<'static>, action: &ButtonAction, names: &Names, on_change: OnAction<'a>) -> Element<'a, Message> {
     let kind = action_kind(action);
-    let arrow = text("▾").size(14).style(|theme: &iced::Theme| text::Style { color: Some(theme.extended_palette().primary.base.color) });
+    let arrow = text("▾").size(14).style(accent_text);
     let (action, names) = (action.clone(), names.clone());
     // What each pick sends is worked out on the click, not on every redraw of every editor.
     button(row![icon(kind, 16.0), text(kind.name()).width(Length::Fill), arrow].spacing(8).align_y(Alignment::Center))
@@ -314,7 +314,7 @@ pub(super) fn stick_button<'a>(current: StickKind, title: String, on_pick: impl 
 
 /// A dropdown-looking button that opens a dialog built when it's clicked.
 fn field<'a>(face: Element<'a, Message>, label: String, width: f32, picker: impl Fn() -> ActionPicker + 'a) -> Element<'a, Message> {
-    let arrow = text("▾").size(14).style(|theme: &iced::Theme| text::Style { color: Some(theme.extended_palette().primary.base.color) });
+    let arrow = text("▾").size(14).style(accent_text);
     button(row![face, text(label).width(Length::Fill), arrow].spacing(8).align_y(Alignment::Center))
         .style(style::field_button)
         .padding([6, 10])
@@ -326,7 +326,7 @@ fn field<'a>(face: Element<'a, Message>, label: String, width: f32, picker: impl
 /// The button a "Gamepad button" action shows its button with: the glyph the game will see and
 /// where the button sits. It opens the dialog of every controller button.
 pub(super) fn pad_button<'a>(current: Button, glyphs: Glyphs, on_change: OnAction<'a>) -> Element<'a, Message> {
-    let arrow = text("▾").size(14).style(|theme: &iced::Theme| text::Style { color: Some(theme.extended_palette().primary.base.color) });
+    let arrow = text("▾").size(14).style(accent_text);
     button(row![pad_chip(current, glyphs), text(picked_name(current)).width(Length::Fill), arrow].spacing(8).align_y(Alignment::Center))
         .style(style::field_button)
         .padding([4, 10])

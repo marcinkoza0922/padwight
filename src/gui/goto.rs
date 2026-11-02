@@ -54,7 +54,7 @@ impl App {
 pub(super) fn goto_button<'a>(kind: ItemKind, name: &str, exists: bool) -> Option<Element<'a, Message>> {
     let built_in = kind == ItemKind::Mode && crate::config::built_in_modes().iter().any(|m| m.name == name);
     (exists && !built_in).then(|| {
-        button(text(format!("Go to {} ›", kind.noun())).size(13).color(style_accent()))
+        button(text(format!("Go to {} ›", kind.noun())).size(13).style(accent_text))
             .style(style::secondary)
             .padding([2, 10])
             .on_press(Message::GoToItem(kind, name.to_string()))

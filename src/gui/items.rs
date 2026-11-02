@@ -1037,11 +1037,11 @@ impl App {
             return Some(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR).into());
         }
         if let Some(warning) = menu_gyro_warning(self.game(), names, menu) {
-            return Some(text(format!("⚠ {warning}")).size(12).color(WARNING_COLOR).into());
+            return Some(text(format!("⚠ {warning}")).size(12).style(warning_text).into());
         }
         let openers = menu_openers(self.game(), &menu.name);
         let warning = (0..menu.items.len()).find_map(|i| button_item_warning(menu, i, &openers))?;
-        Some(text(format!("⚠ {warning}")).size(12).color(WARNING_COLOR).into())
+        Some(text(format!("⚠ {warning}")).size(12).style(warning_text).into())
     }
 
     pub(super) fn view_menu_editor<'a>(&'a self, mi: usize, menu: &'a Menu, names: &Names) -> Element<'a, Message> {
@@ -1266,10 +1266,10 @@ fn item_button_picker<'a>(mi: usize, i: usize, button: Option<Button>) -> Elemen
 /// What's wrong with item `i` of `menu`, under its row: a problem that stops saving, or a warning
 /// that nothing can pick it.
 fn item_note<'a>(menu: &Menu, i: usize, reachable: &[&Menu], names: &Names, openers: &[Vec<Button>]) -> Option<Element<'a, Message>> {
-    let note = |t: String, color| text(format!("⚠ {t}")).size(12).color(color).into();
+    let note = |t: String, style: fn(&iced::Theme) -> iced::widget::text::Style| text(format!("⚠ {t}")).size(12).style(style).into();
     match item_problem(menu, &menu.items[i].action, reachable, names) {
-        Some(problem) => Some(note(problem, ERROR_COLOR)),
-        None => button_item_warning(menu, i, openers).map(|w| note(w, WARNING_COLOR)),
+        Some(problem) => Some(note(problem, |_| iced::widget::text::Style { color: Some(ERROR_COLOR) })),
+        None => button_item_warning(menu, i, openers).map(|w| note(w, warning_text)),
     }
 }
 

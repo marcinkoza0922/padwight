@@ -83,6 +83,11 @@ impl Finding {
 }
 
 /// What the window draws now: its element, the theme, and the color behind it.
+pub(super) fn page_only(app: &App) -> Element<'_, Message> {
+    if app.stage.is_some() { app.view_stage() } else { app.view_with_popups(false) }
+}
+
+/// What the window draws now: its element, the theme, and the color behind it.
 fn drawn(app: &App) -> (Element<'_, Message>, Theme, Color) {
     let theme = app.theme();
     if app.stage.is_some() {

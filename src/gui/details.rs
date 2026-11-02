@@ -168,7 +168,7 @@ impl App {
             if let Some(entry) = update.map(|(_, i)| &self.library[i]) {
                 pack_rows.push(
                     row![
-                        text(format!("The library has version {}.", entry.version)).color(style_accent()),
+                        text(format!("The library has version {}.", entry.version)).style(accent_text),
                         button(text("Update…").size(13)).on_press(Message::UpdateFromLibrary(game.name.clone())),
                     ]
                     .spacing(10)

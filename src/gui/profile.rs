@@ -107,7 +107,7 @@ pub(super) fn layer_part<'a>(ui: &Ui, part: LayerPart, label: String, summary: S
     if marks.overrides(part) {
         let mut rows = vec![
             row![
-                text(label).size(13).color(style_accent()),
+                text(label).size(13).style(accent_text),
                 space::horizontal(),
                 button(text("Back to base").size(13)).style(button::text).on_press(Message::RevertInput(part)),
             ]
@@ -901,7 +901,7 @@ impl App {
     fn find_and_search<'a>(&self) -> Element<'a, Message> {
         let find: Element<'_, Message> = if self.finding {
             row![
-                text("Press a button or push a stick on your controller…").color(style_accent()),
+                text("Press a button or push a stick on your controller…").style(accent_text),
                 button(text("Cancel")).style(style::secondary).on_press(Message::CancelFind),
             ]
             .spacing(10)
@@ -1055,7 +1055,7 @@ impl App {
         let active = self.profile_ref().is_some_and(|at| at == self.saved.active);
         // Nothing is active while the daemon is down, as the header's status says.
         let activate: Element<'_, Message> = if active && self.status.is_some() {
-            text("● active").size(13).color(style_accent()).into()
+            text("● active").size(13).style(accent_text).into()
         } else {
             space().into()
         };

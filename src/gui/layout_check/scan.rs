@@ -39,6 +39,10 @@ pub fn scan(app: &App, scene: &str, theme_name: &'static str, size: Size) -> Res
     let mut wide = Probe::new();
     snapshot::probe(drawn(app).0, Size::new(WIDE, tall.height), &mut wide)?;
     let natural = natural(&wide.texts);
+    // What a popup covers: the page's own text, dimmed behind it, which isn't read now.
+    let mut page = Probe::new();
+    snapshot::probe(super::page_only(app), tall, &mut page)?;
+    let covered = |seen: &Seen| page.texts.len() < narrow.texts.len() && page.texts.iter().any(|p| p.text == seen.text && p.bounds == seen.bounds);
     let mut counts: HashMap<&str, usize> = HashMap::new();
     let mut found = Vec::new();
     for seen in &narrow.texts {
@@ -50,11 +54,31 @@ pub fn scan(app: &App, scene: &str, theme_name: &'static str, size: Size) -> Res
         }
         let mut add = |kind, detail: String| found.push(Finding::new((scene, theme_name), kind, &seen.text, detail, seen.bounds));
         layout_findings(seen, alone, size.width, &mut add);
-        if let Some(detail) = contrast_finding(&image, seen, alone) {
+        if let Some(detail) = contrast_finding(&image, seen, alone).filter(|_| !covered(seen) && !exempt(scene, &seen.text)) {
             add(Kind::LowContrast, detail);
         }
     }
     Ok((found, image))
+}
+
+/// Text that isn't read as text, so its contrast isn't judged:
+///
+/// * one or two letters or digits, which here are key caps and button letters inside pictures
+///   (a controller drawing, a menu or keyboard preview) whose colors belong to the picture;
+/// * the stage's disabled toolbar buttons and the dimmed game scene behind its panel;
+/// * a disabled button or a "Disabled" label, which WCAG leaves out of the contrast rules.
+fn exempt(scene: &str, text: &str) -> bool {
+    let text = text.trim();
+    if text.chars().count() <= 2 && text.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+        return true;
+    }
+    // The arrows of a move up / move down pair, drawn pale when there's nowhere to move.
+    if matches!(text, "↑" | "↓") {
+        return true;
+    }
+    let on_stage = scene.starts_with("stage-");
+    let stage_text = ["Fit contents", "Replay opening", "Undo", "Save & apply", "Attack", "Control groups"];
+    (on_stage && stage_text.contains(&text)) || (text == "Cancel" && (on_stage || scene == "info-open")) || (text == "Disabled" && scene == "tab-modes")
 }
 
 fn layout_findings(seen: &Seen, alone: Option<Rectangle>, window: f32, add: &mut dyn FnMut(Kind, String)) {

@@ -204,7 +204,7 @@ impl App {
                         line = line.push(text(f.label()).size(12).style(muted));
                     }
                     if installed(i) {
-                        line = line.push(text("installed").size(12).color(style_accent()));
+                        line = line.push(text("installed").size(12).style(accent_text));
                     }
                     if added.contains(listing.id.as_str()) {
                         line = line.push(text("added").size(12).style(muted));

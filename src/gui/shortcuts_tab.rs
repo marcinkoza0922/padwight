@@ -140,12 +140,12 @@ impl App {
             page = page.push(
                 text("⚠ Nothing opens the Guide overlay, so its menu, Notes, Mappings, the Guide shortcuts and mouse mode are out of reach.")
                     .size(13)
-                    .color(WARNING_COLOR),
+                    .style(warning_text),
             );
         }
         if clashes > 0 {
             let which = if clashes == 1 { "One shortcut shares an input" } else { &format!("{clashes} shortcuts share an input") };
-            page = page.push(text(format!("⚠ {which} with another. They're marked below.")).size(13).color(WARNING_COLOR));
+            page = page.push(text(format!("⚠ {which} with another. They're marked below.")).size(13).style(warning_text));
         }
         page = page.push(self.view_opener());
         for group in [Group::Guide, Group::Mouse, Group::Media, Group::Numpad, Group::Keyboard, Group::Menu] {
@@ -162,10 +162,10 @@ impl App {
         let mut rows = vec![self.shortcut_row(s)];
         let conflicts = self.opener_conflicts();
         if !conflicts.is_empty() {
-            rows.push(text("These setups already use that input in a profile, so it will do both. Move one:").size(13).color(WARNING_COLOR).into());
+            rows.push(text("These setups already use that input in a profile, so it will do both. Move one:").size(13).style(warning_text).into());
             for (setup, profiles) in conflicts {
                 let detail: Vec<String> = profiles.into_iter().map(|(profile, why)| format!("{profile}: {why}")).collect();
-                rows.push(text(format!("⚠ {setup} — {}", detail.join(" "))).size(13).color(WARNING_COLOR).into());
+                rows.push(text(format!("⚠ {setup} — {}", detail.join(" "))).size(13).style(warning_text).into());
             }
         }
         section(
@@ -275,7 +275,7 @@ impl App {
         }
         let mut out = column![labeled_in(190.0, row_label(s), line.wrap().into())].spacing(2);
         for w in self.config.shortcuts.warnings(s) {
-            out = out.push(text(format!("⚠ {w}")).size(13).color(WARNING_COLOR));
+            out = out.push(text(format!("⚠ {w}")).size(13).style(warning_text));
         }
         out.into()
     }
@@ -332,10 +332,10 @@ impl App {
         }
         let mut out = column![labeled_in(190.0, row_label(s), line.wrap().into())].spacing(2);
         for w in self.config.shortcuts.warnings(s) {
-            out = out.push(text(format!("⚠ {w}")).size(13).color(WARNING_COLOR));
+            out = out.push(text(format!("⚠ {w}")).size(13).style(warning_text));
         }
         if kind == InputKind::Off && opener {
-            out = out.push(text("⚠ Not set: nothing opens the Guide overlay.").size(13).color(WARNING_COLOR));
+            out = out.push(text("⚠ Not set: nothing opens the Guide overlay.").size(13).style(warning_text));
         }
         out.into()
     }
