@@ -40,11 +40,13 @@ pub struct Session {
     pad: Arc<Mutex<VirtualPad>>,
     quit: Arc<AtomicBool>,
     pub(super) link: Arc<Link>,
+    /// Whether the daemon runs on the manual clock, once asked.
+    pub(super) fake: Arc<std::sync::OnceLock<bool>>,
 }
 
 impl Session {
     pub fn new(pad: VirtualPad) -> Self {
-        Self { pad: Arc::new(Mutex::new(pad)), quit: Arc::default(), link: Arc::default() }
+        Self { pad: Arc::new(Mutex::new(pad)), quit: Arc::default(), link: Arc::default(), fake: Arc::default() }
     }
 
     pub fn pad(&self) -> MutexGuard<'_, VirtualPad> {
@@ -74,6 +76,9 @@ impl Session {
             DebugRequest::Expect(e) => return Ok(self.expect(&e)),
             DebugRequest::Output { clear } => return Ok(DebugResponse::Text(self.output(clear)?.join("\n"))),
             DebugRequest::Identify(identity) => self.identify(identity)?,
+            DebugRequest::Advance(ms) => self.advance(ms)?,
+            DebugRequest::Wait(ms) => self.pause(ms)?,
+            DebugRequest::Transcript { clear } => return Ok(DebugResponse::Text(self.transcript(clear)?.join("\n"))),
             DebugRequest::Tap { buttons, ms } => self.hold(ms, |pad| buttons.iter().for_each(|&b| pad.press(b)), |pad| buttons.iter().for_each(|&b| pad.release(b)))?,
             DebugRequest::Gyro { rates, ms } if self.attached().is_some() => self.turn(rates, if ms == 0 { 100 } else { ms })?,
             DebugRequest::PadClick { ms: Some(ms), .. } => self.hold(ms, |pad| pad.set_touch_click(true), |pad| pad.set_touch_click(false))?,
@@ -109,10 +114,7 @@ impl Session {
     /// `down`, so a failed send never leaves a button held.
     fn hold(&self, ms: u64, down: impl FnOnce(&mut VirtualPad), up: impl FnOnce(&mut VirtualPad)) -> Result<()> {
         down(&mut self.pad());
-        let sent = self.flush();
-        if sent.is_ok() {
-            thread::sleep(Duration::from_millis(ms));
-        }
+        let sent = self.flush().and_then(|()| self.pause(ms));
         up(&mut self.pad());
         sent.and(self.flush())
     }
@@ -126,7 +128,7 @@ impl Session {
             self.pad().touch(0, (from.0 + (to.0 - from.0) * t, from.1 + (to.1 - from.1) * t));
             self.flush()?;
             if i < STEPS {
-                thread::sleep(Duration::from_millis(ms) / STEPS);
+                self.pause(ms / u64::from(STEPS))?;
             }
             Ok::<_, anyhow::Error>(())
         });

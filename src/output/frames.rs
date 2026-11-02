@@ -82,6 +82,12 @@ impl Frames {
         written
     }
 
+    /// Drops every report waiting, for output that goes nowhere.
+    pub(super) fn discard(&mut self) {
+        self.events.clear();
+        self.open = 0;
+    }
+
     /// Ends the open report, unless it is empty (zero motion merged away included).
     fn end(&mut self) {
         let open = &self.events[self.open..];

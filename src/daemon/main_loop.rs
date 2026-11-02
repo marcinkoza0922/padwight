@@ -3,51 +3,109 @@
 
 use super::*;
 
+/// Where the loop stands between rounds: when it last ticked, and when it next scans for controllers.
+pub(super) struct Pace {
+    next_scan: Instant,
+    last_tick: Instant,
+}
+
+impl Pace {
+    pub(super) fn new() -> Self {
+        let now = crate::clock::now();
+        Self { next_scan: now + SCAN_INTERVAL, last_tick: now }
+    }
+}
+
+/// How long a daemon on the manual clock waits for a message before looking again: time never
+/// passes by itself there, so deadlines are no reason to wake.
+const MANUAL_POLL: Duration = Duration::from_millis(50);
+
 impl Daemon {
     pub(super) fn run(&mut self, rx: &Receiver<Msg>) {
-        let mut next_scan = crate::clock::now() + SCAN_INTERVAL;
-        let mut last_tick = crate::clock::now();
         loop {
             crate::priority::keep_up();
             let ticking = self.needs_tick();
-            let period = if self.config.fast_tick { FAST_TICK } else { TICK };
-            let mut timeout = if ticking {
-                period.saturating_sub(crate::clock::since(last_tick))
-            } else {
-                next_scan.saturating_duration_since(crate::clock::now())
-            };
-            if let Some(deadline) = self.next_deadline() {
-                timeout = timeout.min(deadline.saturating_duration_since(crate::clock::now()));
-            }
+            let timeout = if crate::clock::is_manual() { MANUAL_POLL } else { self.sleep_time(ticking) };
             if !self.wait_and_handle(rx, timeout) {
                 return;
             }
+            self.step(ticking);
+        }
+    }
 
-            self.run_timers();
-            self.check_fallbacks(crate::clock::now());
-            self.finish_stop();
-            self.catch_up_on_focus();
+    fn tick_period(&self) -> Duration {
+        if self.config.fast_tick { FAST_TICK } else { TICK }
+    }
+
+    /// How long until the loop has something to do without a message: the next tick, scan or deadline.
+    fn sleep_time(&self, ticking: bool) -> Duration {
+        let mut timeout = if ticking {
+            self.tick_period().saturating_sub(crate::clock::since(self.pace.last_tick))
+        } else {
+            self.pace.next_scan.saturating_duration_since(crate::clock::now())
+        };
+        if let Some(deadline) = self.next_deadline() {
+            timeout = timeout.min(deadline.saturating_duration_since(crate::clock::now()));
+        }
+        timeout
+    }
+
+    /// One round of the loop after the wait: timers, then the tick and the scan if they are due.
+    fn step(&mut self, ticking: bool) {
+        self.run_timers();
+        self.check_fallbacks(crate::clock::now());
+        self.finish_stop();
+        self.catch_up_on_focus();
+        let now = crate::clock::now();
+        let period = self.tick_period();
+        if ticking {
+            let dt = now.duration_since(self.pace.last_tick);
+            if dt >= period {
+                // Clamp so a stall never turns into a huge cursor jump.
+                self.tick(dt.min(Duration::from_millis(20)).as_secs_f32());
+                self.pace.last_tick = now;
+            }
+        } else {
+            self.pace.last_tick = now;
+        }
+        if now >= self.pace.next_scan {
+            self.scan();
+            // A release the kernel refused is sent again here, not only on the next key.
+            if let Err(e) = self.kbm.sync() {
+                log!("output error: {e:#}");
+            }
+            self.ask_pending_pad();
+            crate::priority::check();
+            self.pace.next_scan = now + SCAN_INTERVAL;
+        }
+    }
+
+    /// On the manual clock: moves time forward by `by`, stopping at every tick, scan and deadline
+    /// on the way to run it at its exact time. A `--debug --fake-clock` daemon's only way to pass time.
+    pub(super) fn advance(&mut self, by: Duration) {
+        let target = crate::clock::now() + by;
+        let mut stepped_at = None;
+        loop {
+            let ticking = self.needs_tick();
             let now = crate::clock::now();
+            let mut next = target.min(self.pace.next_scan);
             if ticking {
-                let dt = now.duration_since(last_tick);
-                if dt >= period {
-                    // Clamp so a stall never turns into a huge cursor jump.
-                    self.tick(dt.min(Duration::from_millis(20)).as_secs_f32());
-                    last_tick = now;
-                }
-            } else {
-                last_tick = now;
+                next = next.min(self.pace.last_tick + self.tick_period());
             }
-            if now >= next_scan {
-                self.scan();
-                // A release the kernel refused is sent again here, not only on the next key.
-                if let Err(e) = self.kbm.sync() {
-                    log!("output error: {e:#}");
-                }
-                self.ask_pending_pad();
-                crate::priority::check();
-                next_scan = now + SCAN_INTERVAL;
+            if let Some(deadline) = self.next_deadline() {
+                next = next.min(deadline);
             }
+            let mut next = next.max(now);
+            if stepped_at == Some(next) {
+                // Already ran here: whatever is due didn't clear, so it can't hold time back.
+                if next >= target {
+                    return;
+                }
+                next = (next + Duration::from_millis(1)).min(target);
+            }
+            crate::clock::set(next);
+            self.step(ticking);
+            stepped_at = Some(next);
         }
     }
 

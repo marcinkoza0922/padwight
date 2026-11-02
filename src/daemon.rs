@@ -60,6 +60,7 @@ mod inject;
 mod input_timing;
 mod logs;
 mod main_loop;
+mod transcript;
 mod requests;
 mod serve;
 mod stop;
@@ -294,7 +295,10 @@ impl Managed {
         let shifts: Shifts = (self.engine.mode().map(str::to_string), self.engine.layers());
         self.log_dirty |= self.shifts.shifts(shifts.0.as_deref(), &shifts.1, crate::clock::now());
         let current = self.layered.as_ref().map(|(shifts, _)| shifts);
-        let plain = shifts.0.is_none() && shifts.1.is_empty() && !config.shortcuts.injects();
+        if self.recorded.is_some() && current.is_none_or(|c| *c != shifts) && (current.is_some() || shifts.0.is_some() || !shifts.1.is_empty()) {
+            transcript::shifts(shifts.0.as_deref(), &shifts.1);
+        }
+        let plain =shifts.0.is_none() && shifts.1.is_empty() && !config.shortcuts.injects();
         if current == Some(&shifts) || (current.is_none() && plain) {
             return false;
         }
@@ -496,6 +500,8 @@ struct Daemon {
     /// Device whose input watchers are shown.
     last_active: Option<u64>,
     last_draw: Instant,
+    /// The main loop's place between rounds (see `main_loop`).
+    pace: main_loop::Pace,
     focus_backend: FocusBackend,
     focused: Option<WindowInfo>,
     /// Focus moved while the in-game menu was open; it's handled once the menu closes.
@@ -615,7 +621,7 @@ impl Daemon {
             feed_watchers: Vec::new(),
             activity: activity::Activity::default(),
             last_active: None,
-            last_draw: crate::clock::now(),
+            last_draw: crate::clock::now(), pace: main_loop::Pace::new(),
             focus_backend: FocusBackend::ProcessScan,
             focused: None,
             focus_waited: false,
@@ -665,7 +671,10 @@ fn set_shortcut_labels(shortcuts: &crate::config::Shortcuts) {
 }
 
 /// Runs the service. With `debug`, controllers can also be injected over IPC (`padwight debug`).
-pub fn run(debug: bool) -> Result<()> {
+pub fn run(debug: bool, fake_clock: bool) -> Result<()> {
+    if fake_clock {
+        crate::clock::use_manual();
+    }
     let config = Config::load()?;
     config.log_unreadable();
     let (tx, rx) = inbox::channel().context("making the main loop's wake-up")?;
@@ -673,7 +682,8 @@ pub fn run(debug: bool) -> Result<()> {
     os::stop_on_signals(move || stop.send(Msg::Stop).is_ok())?;
     serve_ipc(tx.clone())?;
 
-    let kbm = VirtualKbm::new().map_err(explain_kbm_failure)?;
+    // On the manual clock the output is only recorded (see `debug --attach` without --live).
+    let kbm = if fake_clock { VirtualKbm::unplugged() } else { VirtualKbm::new().map_err(explain_kbm_failure)? };
     crate::priority::set_realtime(config.realtime_input);
     let mut daemon = Daemon::new(config, kbm, inject::Injection::new(debug)?, tx);
     log!("padwight daemon started, socket at {}", ipc::socket_path().display());
@@ -746,6 +756,7 @@ impl Daemon {
 
     /// Shows `lines` in a toast.
     fn say(&mut self, lines: Vec<String>) {
+        transcript::note(&format!("toast {:?}", lines.join(" | ")));
         self.toast = Some(crate::info::Toast::new(lines, crate::clock::now()));
         self.broadcast_overlay();
     }
@@ -1240,6 +1251,7 @@ impl Daemon {
             return false;
         }
         log!("switching to profile {target}");
+        transcript::note(&format!("profile {target}"));
         // A new profile starts unlocked: the lock was for the one that was active.
         self.profile_locked = false;
         // An open menu refers to menus by position, which another game's list changes.
@@ -1381,6 +1393,11 @@ impl Daemon {
     /// Looks for new controllers and takes the ones we should manage, then catches up on the rest
     /// of what the scan watches.
     fn scan(&mut self) {
+        // On the manual clock nothing outside the process may steer the daemon: no real controllers,
+        // no overlay process, no running games. Only injected controllers exist.
+        if crate::clock::is_manual() {
+            return;
+        }
         let known: HashSet<u64> = self.devices.keys().copied().collect();
         // Each step, timed for the input timing log: the scan holds up input while it runs.
         let mut step = input_timing::Steps::new("scan");

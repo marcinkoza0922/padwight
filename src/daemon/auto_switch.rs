@@ -1,7 +1,7 @@
 //! Following focus: which game is in front, switching to its profile (or back to the default),
 //! and noticing when a game starts.
 
-use std::{collections::HashMap, time::Instant};
+use std::collections::HashMap;
 
 use super::{Active, Daemon, RECENT_WINDOWS, describe, layered, with_fallback};
 use crate::{

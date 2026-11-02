@@ -1,6 +1,6 @@
 //! Requests on the control socket: from the GUI, the tray and the command line.
 
-use std::{path::PathBuf, time::Instant};
+use std::path::PathBuf;
 
 use super::{Active, BY_HAND, Calibration, Daemon};
 use crate::{
@@ -161,7 +161,10 @@ impl Daemon {
             | Request::DebugInput { .. }
             | Request::DebugOutput { .. }
             | Request::DebugDetach(_)
-            | Request::DebugIdentify(_) => {
+            | Request::DebugIdentify(_)
+            | Request::DebugAdvance(_)
+            | Request::DebugClock
+            | Request::DebugTranscript { .. } => {
                 self.debug_request(req)
             }
             Request::CalibrateGyro(path) => {

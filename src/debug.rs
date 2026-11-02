@@ -12,6 +12,7 @@ use anyhow::{Context, Result, bail};
 mod bridge;
 mod focus;
 mod glyphs;
+mod install;
 mod motion_shot;
 mod overlay_compare;
 mod overlay_shot;
@@ -60,6 +61,7 @@ Without a session:
   models                         list the model names
   svg [model]                    print a model's drawing at rest, as SVG
   detach-all                     remove controllers a session left in the daemon
+  install-pack <file> [profile]  import a .padpack into the config folder and activate its profile
 ";
 
 fn usage() -> String {
@@ -82,6 +84,7 @@ pub fn run(args: &[&str]) -> Result<()> {
         ["svg"] => println!("{}", rest_svg(None)),
         ["svg", name] => println!("{}", rest_svg(parse_model(name)?)),
         ["focus", rest @ ..] => focus::run(rest)?,
+        ["install-pack", rest @ ..] => install::run(rest)?,
         ["sound", rest @ ..] => sound::run(rest)?,
         ["overlay", rest @ ..] => overlay_shot::run(rest)?,
         ["motion", rest @ ..] => motion_shot::run(rest)?,

@@ -22,6 +22,9 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
 - Game detection, no controller needed: `cargo run -q -- debug focus [pid [class]]|processes`;
   `scripts/sandbox-pid.sh` runs a program in its own pid namespace (see
   `docs/development/code-review-plan.md`, which also tracks the review passes)
+- Scenario tests, no display or devices needed: `RUST_BACKTRACE=0 cargo nextest run --profile agent --hide-progress-bar --cargo-quiet scenarios`
+  runs `tests/scenarios/*.scenario` (script plus saved transcript); `UPDATE_SCENARIOS=1` rewrites them, `SCENARIO=name` picks some.
+  They run a `--debug --fake-clock` daemon: `advance <ms>`/`wait <ms>` in a debug script move its clock exactly, `debug transcript` prints what it did
 - Input latency, CPU and memory (Docker, uhid pad): `scripts/profile.sh [filter]`
   (`PADWIGHT_PROFILE_OUT=dir`); a daemon with `PADWIGHT_INPUT_TIMING=file` logs each input's stages
 - Overlay CPU and memory on a headless KWin: `PADWIGHT_HARNESS_RELEASE=1 scripts/overlay-harness.sh

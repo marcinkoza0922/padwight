@@ -241,6 +241,7 @@ impl Daemon {
         if self.last_frame.as_ref() == Some(&frame) {
             return;
         }
+        super::transcript::overlay(&frame);
         self.overlay_watchers.retain(|w| w.send(frame.clone()).is_ok());
         self.last_frame = Some(frame);
     }
@@ -344,6 +345,18 @@ impl Daemon {
                 );
             }
             self.sounds.play(&spec);
+        }
+        if self.injection.enabled()
+            && let Some(f) = feedback
+        {
+            if let Some(cue) = self.scope.rumble.cue(overlay, f) {
+                super::transcript::note(&format!("rumble {} {cue:?}", overlay.key()));
+            } else if f == sound::Feedback::Pick && self.config.pick_rumble {
+                super::transcript::note(&format!("rumble {} pick", overlay.key()));
+            }
+            if let Some(spec) = self.scope.sounds.cue(overlay, f) {
+                super::transcript::note(&format!("sound {} {f:?} {}", overlay.key(), spec.kind.label().to_lowercase()));
+            }
         }
         let Some(dev) = self.overlay_driver().and_then(|id| self.devices.get(&id)).filter(|dev| dev.ff.is_some()) else { return };
         match feedback.and_then(|f| self.scope.rumble.cue(overlay, f)) {

@@ -80,6 +80,24 @@ their main actions. Every T1 bug fixed gets a scenario.
 `--live`), and needs no controller scan. If the daemon can be started without `/dev/input` access,
 this runs in plain CI.
 
+**Status.** Built: `tests/scenarios.rs` runs every `tests/scenarios/*.scenario` (32 now) in one test,
+`cargo nextest run --profile agent scenarios`; `SCENARIO=name` runs the ones whose name contains it,
+`UPDATE_SCENARIOS=1` rewrites the expected parts. The header takes `setup <pack> [profile]` (a pack
+from `packs/` or `tests/scenarios/packs/`, imported with the new `padwight debug install-pack`),
+`config hold` (South is KEY_A, East the left button) or `config <file>`, and `model <name>`; every
+other line goes to the debug session unchanged (`press`, `tap`, `wait`, `advance`, `stick`, `expect`
+and whatever words are added to it later). The daemon runs `--debug --fake-clock`, so stamps are
+exact and the whole set takes about 7 s. The expected part is the new `transcript` word's output: the
+injected controller's output plus `profile`, `shifts` (mode and layers), `overlay` (the panel in front
+and its selection), `toast`, `sound` and `rumble` lines, each with `@ms`. Pad axes sent a value they
+already have are left out. Seed set: keys and mouse, each gesture, combo-window edges, toggle and
+turbo, ring and zones, trigger button and zones, layers, modes, macros, cycles, the six menu styles,
+five library packs (Deus Ex x3, Civilization VI, StarCraft, Doom) and the Guide overlay, keyboard
+and Quick Settings. Left: typing on the on-screen keyboard is not in the transcript (it goes to the
+virtual keyboard directly, not through an injected controller); info overlays show as a count;
+rumble lines appear only where a setup defines a cue; `expect overlay` (T-4) will slot in as a
+script word; more library packs and every fixed T1 bug still to be added.
+
 ## T-2: A clock the daemon can be handed
 
 **Gap.** The engine takes `now: Instant` as an argument, which is why its timing tests are
@@ -94,6 +112,17 @@ and timer that falls inside, then answers. Scripts then say `advance 59` and `ad
 sides of the 60 ms combo window exactly.
 
 **Closes.** Daemon-level timing tests; makes T-1 fast (no real sleeps) and stable.
+
+**Status.** Built. `src/clock.rs` holds the clock (`clock::now()`; the daemon reads it everywhere it
+used to read `Instant::now()`). `padwight daemon --debug --fake-clock` makes it manual, so time moves
+only when a session says `advance <ms>` (runs every tick, timer and scan that falls inside, each at
+its exact time, then answers) or `wait <ms>` (an `advance` on a fake clock, a real wait otherwise;
+`tap`, `swipe` and `gyro <..> <ms>` use it too). On the fake clock the daemon scans for no real
+controllers, games or overlay process, and its keyboard and mouse exist only in memory, so it needs
+neither /dev/uinput nor /dev/input. The loop's body is `Daemon::step` (`daemon/main_loop.rs`);
+`Daemon::advance` is the fake clock's only driver. Left: the overlay process and the settings window
+still read the real clock (they are separate programs), and a few daemon threads (the update check,
+the rumble and sound threads) sleep for real.
 
 ## T-3: Controllers with real kernel drivers
 
