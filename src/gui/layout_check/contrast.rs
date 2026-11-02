@@ -18,12 +18,6 @@ pub fn ratio(a: Color, b: Color) -> f32 {
     (la.max(lb) + 0.05) / (la.min(lb) + 0.05)
 }
 
-/// `c` over `under`, as it is drawn.
-pub fn over(c: Color, under: Color) -> Color {
-    let mix = |a: f32, b: f32| a * c.a + b * (1.0 - c.a);
-    Color { r: mix(c.r, under.r), g: mix(c.g, under.g), b: mix(c.b, under.b), a: 1.0 }
-}
-
 fn rgb(p: [u8; 4]) -> Color {
     Color::from_rgb8(p[0], p[1], p[2])
 }

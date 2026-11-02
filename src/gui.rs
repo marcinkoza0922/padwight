@@ -47,7 +47,7 @@ mod activity;
 mod chars;
 mod controllers;
 mod checks;
-mod layout_check;
+pub(crate) mod layout_check;
 mod cycles;
 mod font_menu;
 mod games;
