@@ -223,6 +223,17 @@ setups, that refused writes are sent again (as `output::tests` does), and that a
 doesn't stall input. For a crash between staging and swap, kill the daemon at the point instead of
 failing, and check the folder on restart (SEC-5).
 
+**Status.** Built: `src/faults.rs` (+ `faults/live.rs`). Spec grammar `point=action[+skip][:N/M]`,
+comma-separated, `*` suffix matches a prefix; actions `fail`, `hang`, `close`, `crash` (abort). It is
+compiled in under `cfg(any(test, debug_assertions))`, so release builds get empty inline functions and
+ignore `PADWIGHT_FAULTS`; a debug build reads it only when the daemon starts with `--debug`. Points:
+`save.write`, `save.fsync`, `save.set_aside`, `save.remove_old`, `save.rename`, `save.cleanup`,
+`save.settings_rename`, `uinput.write`, `ipc.reply`, `overlay.frame`. Run:
+`cargo nextest run --profile agent faults:: frames:: serve::`. The save is now flushed with `syncfs`
+before the swap (it had no fsync). The crash test re-runs the test binary as a child that aborts at each
+stage. Left: points on the gui-to-daemon client side, overlay process hang (only the daemon's stream
+is covered), and a fault point per uinput device other than the shared frame writer.
+
 ## T-10: GUI tests that check the saved config
 
 **Gap.** Every page builds, and screenshots show it, but no test clicks through an editor and

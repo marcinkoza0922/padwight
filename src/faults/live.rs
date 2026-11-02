@@ -37,11 +37,14 @@ static RULES: Mutex<Vec<Rule>> = Mutex::new(Vec::new());
 static SERIAL: Mutex<()> = Mutex::new(());
 
 fn rules() -> MutexGuard<'static, Vec<Rule>> {
-    RULES.lock().unwrap_or_else(|e| e.into_inner())
+    RULES.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
+/// A parsed rule: point, action, hits to skip, and the N and M of `:N/M`.
+pub type Parsed = (String, Action, u64, u64, u64);
+
 /// Parses a spec (see the module above). An empty spec is no rules.
-pub fn parse(spec: &str) -> Result<Vec<(String, Action, u64, u64, u64)>, String> {
+pub fn parse(spec: &str) -> Result<Vec<Parsed>, String> {
     let mut out = Vec::new();
     for part in spec.split(',').map(str::trim).filter(|p| !p.is_empty()) {
         let (point, what) = part.split_once('=').ok_or_else(|| format!("“{part}” has no ="))?;
@@ -87,7 +90,7 @@ pub fn arm() {
 
 /// Holds a spec in place until dropped, and keeps other tests from setting theirs meanwhile.
 #[cfg(test)]
-pub struct Guard(MutexGuard<'static, ()>);
+pub struct Guard(#[expect(dead_code, reason = "held for its lock")] MutexGuard<'static, ()>);
 
 #[cfg(test)]
 impl Drop for Guard {
@@ -103,7 +106,7 @@ impl Drop for Guard {
 /// When the spec doesn't parse.
 #[cfg(test)]
 pub fn set(spec: &str) -> Guard {
-    let guard = Guard(SERIAL.lock().unwrap_or_else(|e| e.into_inner()));
+    let guard = Guard(SERIAL.lock().unwrap_or_else(std::sync::PoisonError::into_inner));
     install(spec).unwrap_or_else(|e| panic!("bad fault spec: {e}"));
     guard
 }

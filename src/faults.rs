@@ -51,3 +51,6 @@ mod off {
 }
 #[cfg(not(any(test, debug_assertions)))]
 pub use off::*;
+
+#[cfg(test)]
+mod tests;
