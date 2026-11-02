@@ -7,6 +7,7 @@ mod debug;
 #[cfg(target_os = "linux")]
 mod doctor;
 mod engine;
+mod faults;
 mod figures;
 mod focus;
 mod assets;

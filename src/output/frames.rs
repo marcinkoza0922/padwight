@@ -118,6 +118,7 @@ fn write_all(fd: i32, events: &[InputEvent]) -> io::Result<()> {
     // SAFETY: `InputEvent` is `repr(transparent)` over the kernel's `input_event`, so the slice is
     // that many plain structs, laid out as the uinput device reads them.
     let mut bytes = unsafe { std::slice::from_raw_parts(events.as_ptr().cast::<u8>(), std::mem::size_of_val(events)) };
+    crate::faults::io("uinput.write")?;
     while !bytes.is_empty() {
         // SAFETY: the pointer and length describe the live slice above.
         let n = unsafe { libc::write(fd, bytes.as_ptr().cast(), bytes.len()) };
@@ -203,4 +204,17 @@ mod tests {
         let a = KeyCode::KEY_A.0;
         assert_eq!(frames.waiting(), vec![(ABS, 0, 7), SYN, (KEY, a, 1), SYN, (ABS, 0, 5), SYN]);
     }
+
+#[test]
+fn refused_uinput_writes_fail_one_flush_and_the_next_resends_the_axes() {
+    let mut frames = Frames::default();
+    let null = std::fs::OpenOptions::new().write(true).open("/dev/null").unwrap();
+    let _faults = crate::faults::set("uinput.write=fail:1/2");
+    frames.abs(Abs::ABS_X, 5);
+    assert!(frames.flush(&null).is_err(), "the first write is refused");
+    // The kernel's value is unknown after a refusal, so the same value is sent again.
+    frames.abs(Abs::ABS_X, 5);
+    frames.key(KeyCode::KEY_A, true);
+    assert!(frames.flush(&null).is_ok(), "the second goes through");
+}
 }
