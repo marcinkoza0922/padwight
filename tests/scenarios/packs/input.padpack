@@ -1,0 +1,352 @@
+format = 20
+macros = []
+[pack]
+id = "d56780ca-620c-5b89-93cc-fc49567bdbad"
+name = "Scenario input"
+version = "1.0"
+author = "Padwight"
+description = "Scenario test pack: Scenario input."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "scenario-scenario-input.exe"
+profile = "Keys"
+
+[[profiles]]
+name = "Keys"
+
+[profiles.buttons]
+South = {keys = ["KEY_A"]}
+East = {mouse = "Left"}
+North = {keys = ["KEY_LEFTCTRL", "KEY_C"]}
+West = {multi = [{keys = ["KEY_X"]}, {mouse = "Right"}]}
+LeftBumper = {wheel = "Up"}
+RightBumper = {wheel = "Down"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = "disabled"
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[[profiles]]
+name = "Gestures"
+
+[profiles.buttons]
+South = {keys = ["KEY_A"]}
+East = {keys = ["KEY_E"]}
+North = {keys = ["KEY_N"]}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gestures.South.double_tap]
+keys = ["KEY_B"]
+
+[profiles.gestures.South.long_press]
+keys = ["KEY_C"]
+
+[profiles.gestures.East.double_tap]
+keys = ["KEY_F"]
+
+[profiles.gestures.East.triple_tap]
+keys = ["KEY_G"]
+
+[profiles.gestures.North.on_press]
+keys = ["KEY_P"]
+
+[profiles.gestures.North.on_release]
+keys = ["KEY_R"]
+
+[[profiles]]
+name = "Combos"
+combos = [{buttons = ["LeftBumper", "RightBumper"], action = {keys = ["KEY_F1"]}}, {buttons = ["East", "South"], action = {keys = ["KEY_F2"]}}]
+
+[profiles.buttons]
+South = {keys = ["KEY_A"]}
+East = "disabled"
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {keys = ["KEY_Q"]}
+RightBumper = {keys = ["KEY_E"]}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[[profiles]]
+name = "Toggle and turbo"
+
+[profiles.buttons]
+South = {toggle = {keys = ["KEY_A"]}}
+East = {turbo = {action = {keys = ["KEY_B"]}, rate = 10.0}}
+North = {toggle = {turbo = {action = {keys = ["KEY_C"]}, rate = 10.0}}}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[[profiles]]
+name = "Stick keys"
+
+[profiles.buttons]
+South = {keys = ["KEY_SPACE"]}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.1
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action.ring]
+sectors = 4
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.zones]]
+min = 0.9
+max = 1.0
+action = {keys = ["KEY_LEFTSHIFT"]}
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.0
+key_threshold = 0.5
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[[profiles]]
+name = "Triggers"
+
+[profiles.buttons]
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger.action.button]
+action = {mouse = "Right"}
+threshold = 0.5
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[[profiles.right_trigger.zones]]
+min = 0.2
+max = 0.7
+action = {keys = ["KEY_Z"]}
+
+[[profiles.right_trigger.zones]]
+min = 0.7
+max = 1.0
+action = {keys = ["KEY_X"]}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0

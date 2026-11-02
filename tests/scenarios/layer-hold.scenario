@@ -1,0 +1,19 @@
+# Holding LB puts the Hotkeys layer over the profile; letting go brings the profile back.
+setup tests/scenarios/packs/layers.padpack Base
+tap south 30
+press lb
+tap south 30
+tap east 30
+release lb
+tap south 30
+---
+key KEY_A down               @0
+key KEY_A up                 @30
+shifts mode - layers Hotkeys @30
+key KEY_F1 down              @30
+key KEY_F1 up                @60
+key KEY_F2 down              @60
+key KEY_F2 up                @90
+shifts mode - layers -       @90
+key KEY_A down               @90
+key KEY_A up                 @120

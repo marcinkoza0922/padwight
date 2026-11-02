@@ -1,0 +1,13 @@
+# North taps P as it goes down and R as it is let go, without waiting.
+setup tests/scenarios/packs/input.padpack Gestures
+press north
+advance 200
+release north
+advance 100
+---
+key KEY_P down @0
+key KEY_P up   @0
+key KEY_N down @0
+key KEY_R down @200
+key KEY_R up   @200
+key KEY_N up   @200

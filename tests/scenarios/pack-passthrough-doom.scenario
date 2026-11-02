@@ -1,0 +1,17 @@
+# Doom (a game with native controller support): the controller goes through to the game untouched.
+setup packs/doom-and-doom-2.padpack
+tap south 40
+tap lb 40
+stick left 1 0
+trigger right 0.5
+stick left 0 0
+trigger right 0
+---
+pad South down             @0
+pad South up               @40
+pad LeftBumper down        @40
+pad LeftBumper up          @80
+pad-axis LeftX 1.00        @80
+pad-axis RightTrigger 0.50 @80
+pad-axis LeftX 0.00        @80
+pad-axis RightTrigger 0.00 @80

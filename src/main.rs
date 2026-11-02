@@ -1,4 +1,5 @@
 mod capture;
+mod clock;
 mod clipboard;
 mod config;
 mod controller_id;
@@ -63,7 +64,7 @@ usage: padwight [command]
 
 commands:
   gui              open the settings window (default)
-  daemon [--debug] run the background remapping service (--debug lets `debug --attach` inject controllers)
+  daemon [--debug [--fake-clock]] run the background remapping service (--debug lets `debug --attach` inject controllers; --fake-clock makes time move only on `debug advance`)
   status           show daemon status and detected controllers
   doctor [--explain] check the permissions padwight needs and say how to fix them (Linux)
   update [--check] check GitHub for a newer release and install it (only a copy the release installer made)
@@ -83,8 +84,9 @@ fn main() -> Result<()> {
     let args: Vec<&str> = args.iter().map(String::as_str).collect();
     match args.as_slice() {
         [] | ["gui"] => gui::run().map_err(Into::into),
-        ["daemon"] => daemon::run(false),
-        ["daemon", "--debug"] => daemon::run(true),
+        ["daemon"] => daemon::run(false, false),
+        ["daemon", "--debug"] => daemon::run(true, false),
+        ["daemon", "--debug", "--fake-clock"] => daemon::run(true, true),
         ["status"] => status(),
         #[cfg(target_os = "linux")]
         ["doctor", rest @ ..] => doctor::run(rest),

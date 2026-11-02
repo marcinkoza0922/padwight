@@ -100,7 +100,7 @@ impl Daemon {
         linux::notify(summary.clone(), body, move || {
             let _ = tx.send(super::Msg::Tray(crate::tray::Command::OpenSettings));
         });
-        self.toast = Some(crate::info::Toast::lasting(vec![summary, "Open Padwight's settings to fix it".into()], Instant::now(), PROMPT_TIME));
+        self.toast = Some(crate::info::Toast::lasting(vec![summary, "Open Padwight's settings to fix it".into()], crate::clock::now(), PROMPT_TIME));
         self.broadcast_overlay();
     }
 }

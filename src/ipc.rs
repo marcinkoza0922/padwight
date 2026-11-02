@@ -97,6 +97,14 @@ pub enum Request {
     /// Debug mode only: the identity every virtual pad presents as, whatever the game and the
     /// controller say; `None` goes back to choosing.
     DebugIdentify(Option<crate::pad_identity::PadIdentity>),
+    /// Debug mode only, on a daemon started with `--fake-clock`: moves its clock forward this many
+    /// milliseconds, running every tick and timer that falls inside.
+    DebugAdvance(u64),
+    /// Debug mode only: whether the daemon runs on the manual clock, as `Lines(["manual"])` or `Lines(["real"])`.
+    DebugClock,
+    /// Debug mode only: the transcript of what the daemon did (output, profile, mode and layer
+    /// changes, overlays, toasts, cues), as `Lines`; `clear` forgets what was returned.
+    DebugTranscript { clear: bool },
 }
 
 /// One input from an injected controller.

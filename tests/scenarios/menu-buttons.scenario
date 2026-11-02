@@ -1,0 +1,16 @@
+# A button menu: each item has its own button; East picks the second without moving.
+setup tests/scenarios/packs/menus.padpack Menus
+press north
+advance 100
+tap east 30
+advance 100
+release north
+---
+overlay menu "Buttons"               @0
+sound menu Open pop                  @0
+sound menu Pick pop                  @100
+overlay menu "Buttons" selected "Eb" @100
+overlay none                         @100
+sound menu Close pop                 @100
+key KEY_E down                       @100
+key KEY_E up                         @100

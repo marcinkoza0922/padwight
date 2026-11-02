@@ -1,0 +1,15 @@
+# A macro plays through even if the button is let go early, and releases what it still holds.
+setup tests/scenarios/packs/layers.padpack Base
+press north
+advance 20
+release north
+advance 400
+---
+key KEY_1 down         @0
+key KEY_1 up           @30
+key KEY_2 down         @81
+key KEY_2 up           @111
+key KEY_LEFTSHIFT down @111
+key KEY_3 down         @111
+key KEY_3 up           @141
+key KEY_LEFTSHIFT up   @141

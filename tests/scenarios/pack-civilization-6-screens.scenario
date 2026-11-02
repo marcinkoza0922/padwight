@@ -1,0 +1,20 @@
+# Civilization VI (strategy, mouse): A clicks, B is Esc, the D-pad zooms, a long press steps forward.
+setup packs/civilization-6.padpack Civilization VI
+model xbox360
+tap south 40
+tap east 40
+tap dpad-up 40
+tap dpad-down 40
+press dpad-left
+advance 600
+release dpad-left
+advance 300
+---
+mouse Left down        @0
+mouse Left up          @40
+key KEY_ESC down       @40
+key KEY_ESC up         @80
+wheel 120 0            @80
+wheel -120 0           @120
+key KEY_LEFTBRACE down @660
+key KEY_LEFTBRACE up   @760

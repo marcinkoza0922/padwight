@@ -1,0 +1,24 @@
+# Buttons map to keys, key combos, mouse buttons, the wheel, and several outputs at once.
+setup tests/scenarios/packs/input.padpack Keys
+model dualsense
+tap south 40
+tap east 40
+tap north 40
+tap west 40
+tap lb 40
+tap rb 40
+---
+key KEY_A down        @0
+key KEY_A up          @40
+mouse Left down       @40
+mouse Left up         @80
+key KEY_LEFTCTRL down @80
+key KEY_C down        @80
+key KEY_C up          @120
+key KEY_LEFTCTRL up   @120
+key KEY_X down        @120
+mouse Right down      @120
+mouse Right up        @160
+key KEY_X up          @160
+wheel 120 0           @160
+wheel -120 0          @200

@@ -115,7 +115,7 @@ impl Daemon {
 
     /// Adds a watcher of the feeds, sending it the current ones first.
     pub(super) fn watch_feed(&mut self, pick: Option<String>, watcher: Sender<Option<Feeds>>) {
-        if watcher.send(self.feeds(pick.as_deref(), Instant::now())).is_ok() {
+        if watcher.send(self.feeds(pick.as_deref(), crate::clock::now())).is_ok() {
             self.feed_watchers.push((pick, watcher));
         }
     }
@@ -125,7 +125,7 @@ impl Daemon {
         if self.feed_watchers.is_empty() {
             return;
         }
-        let now = Instant::now();
+        let now = crate::clock::now();
         let watchers = std::mem::take(&mut self.feed_watchers);
         self.feed_watchers = watchers.into_iter().filter(|(pick, w)| w.send(self.feeds(pick.as_deref(), now)).is_ok()).collect();
     }

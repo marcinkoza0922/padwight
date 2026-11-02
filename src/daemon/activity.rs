@@ -47,7 +47,7 @@ mod tests {
     #[test]
     fn switches_are_newest_first_with_their_age_and_reason() {
         let mut activity = Activity::default();
-        let start = Instant::now();
+        let start = crate::clock::now();
         activity.switched(start, &at("Doom", "Play"), "Doom matches Executable “doom.exe”");
         activity.switched(start + Duration::from_secs(5), &ProfileRef::new(None, "Gamepad"), "Doom lost focus");
 
@@ -63,7 +63,7 @@ mod tests {
     #[test]
     fn only_the_newest_switches_are_kept() {
         let mut activity = Activity::default();
-        let start = Instant::now();
+        let start = crate::clock::now();
         for i in 0..SWITCHES + 5 {
             activity.switched(start, &at("Doom", &format!("P{i}")), "why");
         }

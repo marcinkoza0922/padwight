@@ -241,7 +241,7 @@ impl MenuSession {
             stick_step: crate::nav::StickDir::default(),
             trigger_step: None,
             picks: 0,
-            last_input: Instant::now(),
+            last_input: crate::clock::now(),
         };
         // Until `prime` says otherwise, the opener is taken to be held (it just fired).
         for b in session.opener.buttons.clone() {

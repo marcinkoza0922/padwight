@@ -1,0 +1,20 @@
+# LB + RB inside the 60 ms combo window is F1; one tick past it, the buttons act on their own.
+setup tests/scenarios/packs/input.padpack Combos
+press lb
+advance 59
+press rb
+advance 100
+release lb rb
+advance 100
+press lb
+advance 61
+press rb
+advance 100
+release lb rb
+---
+key KEY_F1 down @59
+key KEY_F1 up   @159
+key KEY_Q down  @319
+key KEY_E down  @380
+key KEY_Q up    @420
+key KEY_E up    @420

@@ -31,7 +31,7 @@ impl Daemon {
 
     /// Runs one event on the Guide + Start menu. `true` when the menu closed.
     pub(super) fn settings_input(&mut self, ev: InputEvent) -> bool {
-        let now = Instant::now();
+        let now = crate::clock::now();
         let peeking = self.peeking();
         self.menu_live.input(ev);
         let closed = self.settings_step(|menu, config| menu.handle(ev, now, config));
@@ -139,7 +139,7 @@ impl Daemon {
     /// The controller driving the in-game menu turned: the editor's gyro picture follows it,
     /// redrawn at most every [`LIVE_REDRAW`].
     pub(super) fn menu_turned(&mut self, gyro: [f32; 3]) {
-        let now = Instant::now();
+        let now = crate::clock::now();
         self.menu_live.turning(gyro, now);
         let live = matches!(&self.active, Some(Active::Settings(m, _)) if m.live_picture(&self.config));
         if live && self.live_drawn.is_none_or(|t| now.duration_since(t) >= LIVE_REDRAW) {

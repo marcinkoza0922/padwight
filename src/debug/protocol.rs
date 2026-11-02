@@ -48,6 +48,12 @@ pub enum DebugRequest {
     /// What the daemon's mappings have output for this controller, one event per line; needs
     /// `--attach`. `clear` forgets what was returned.
     Output { clear: bool },
+    /// Moves a `--fake-clock` daemon's clock forward `ms`, running every tick and timer inside.
+    Advance(u64),
+    /// Lets `ms` pass: `Advance` on a fake clock, a real wait otherwise.
+    Wait(u64),
+    /// What the daemon did, with times; needs no controller. `clear` forgets what was returned.
+    Transcript { clear: bool },
     /// Fails unless the virtual controller is as described.
     Expect(Expectation),
 }
@@ -109,6 +115,11 @@ pub const COMMANDS: &str = "\
   swipe <x0> <y0> <x1> <y1> [ms] stroke a finger across the touchpad over ms (default 150)
   output [clear]                 attached: print what the daemon's mappings have output
                                  (key KEY_A down, pad South up, mouse-move 3 -2, ...)
+  advance <ms>                   attached to a `daemon --debug --fake-clock`: move its clock forward,
+                                 running every tick and timer that falls inside, then answer
+  wait <ms>                      let time pass: `advance` on a fake clock, a real wait otherwise
+  transcript [clear]             print what the daemon did with times (@ms): output, profile, mode
+                                 and layer changes, overlays, toasts, sound and rumble cues
   expect model <name>            exit with an error unless the pad is that model
   expect pressed <button>...     ... unless these buttons are down
   expect released <button>...    ... unless these buttons are up
@@ -169,6 +180,10 @@ pub fn parse(words: &[&str]) -> Result<Command> {
                 _ => bail!("swipe takes two points and how long, in milliseconds"),
             },
         },
+        ["advance", ms] => DebugRequest::Advance(millis(ms)?),
+        ["wait", ms] => DebugRequest::Wait(millis(ms)?),
+        ["transcript"] => DebugRequest::Transcript { clear: false },
+        ["transcript", "clear"] => DebugRequest::Transcript { clear: true },
         ["output"] => DebugRequest::Output { clear: false },
         ["output", "clear"] => DebugRequest::Output { clear: true },
         ["expect", rest @ ..] => DebugRequest::Expect(expectation(rest)?),

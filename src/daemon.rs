@@ -61,6 +61,7 @@ mod inject;
 mod input_timing;
 mod logs;
 mod main_loop;
+mod transcript;
 mod requests;
 mod serve;
 mod stop;
@@ -252,7 +253,7 @@ impl Managed {
     /// Sends what the mappings output to the virtual devices; an injected controller's output
     /// is also recorded, and without a pad it goes no further.
     fn dispatch(&mut self, kbm: &mut VirtualKbm, out: Vec<OutEvent>) {
-        let now = Instant::now();
+        let now = crate::clock::now();
         // What the game is sent, gamepad and keyboard and mouse alike, for the Overview's feed.
         for ev in &out {
             self.log_dirty |= self.exports.output(ev, now);
@@ -272,7 +273,7 @@ impl Managed {
         let mut out = Vec::new();
         for ev in events {
             self.view.apply(&ev);
-            self.engine.handle(layered(&self.layered, base), ev, Instant::now(), &mut out);
+            self.engine.handle(layered(&self.layered, base), ev, crate::clock::now(), &mut out);
             // A layer started or ended: the next events use it, and sticks, triggers and
             // gyro switch modes right away.
             if self.refresh_layers(config) {
@@ -293,9 +294,12 @@ impl Managed {
     /// Brings `layered` up to date with the engine's mode and layers. True if they changed.
     fn refresh_layers(&mut self, config: &Config) -> bool {
         let shifts: Shifts = (self.engine.mode().map(str::to_string), self.engine.layers());
-        self.log_dirty |= self.shifts.shifts(shifts.0.as_deref(), &shifts.1, Instant::now());
+        self.log_dirty |= self.shifts.shifts(shifts.0.as_deref(), &shifts.1, crate::clock::now());
         let current = self.layered.as_ref().map(|(shifts, _)| shifts);
-        let plain = shifts.0.is_none() && shifts.1.is_empty() && !config.shortcuts.injects();
+        if self.recorded.is_some() && current.is_none_or(|c| *c != shifts) && (current.is_some() || shifts.0.is_some() || !shifts.1.is_empty()) {
+            transcript::shifts(shifts.0.as_deref(), &shifts.1);
+        }
+        let plain =shifts.0.is_none() && shifts.1.is_empty() && !config.shortcuts.injects();
         if current == Some(&shifts) || (current.is_none() && plain) {
             return false;
         }
@@ -497,6 +501,8 @@ struct Daemon {
     /// Device whose input watchers are shown.
     last_active: Option<u64>,
     last_draw: Instant,
+    /// The main loop's place between rounds (see `main_loop`).
+    pace: main_loop::Pace,
     focus_backend: FocusBackend,
     focused: Option<WindowInfo>,
     /// Focus moved while the in-game menu was open; it's handled once the menu closes.
@@ -616,7 +622,7 @@ impl Daemon {
             feed_watchers: Vec::new(),
             activity: activity::Activity::default(),
             last_active: None,
-            last_draw: Instant::now(),
+            last_draw: crate::clock::now(), pace: main_loop::Pace::new(),
             focus_backend: FocusBackend::ProcessScan,
             focused: None,
             focus_waited: false,
@@ -666,9 +672,12 @@ fn set_shortcut_labels(shortcuts: &crate::config::Shortcuts) {
 }
 
 /// Runs the service. With `debug`, controllers can also be injected over IPC (`padwight debug`).
-pub fn run(debug: bool) -> Result<()> {
+pub fn run(debug: bool, fake_clock: bool) -> Result<()> {
     if debug {
         crate::faults::arm();
+    }
+    if fake_clock {
+        crate::clock::use_manual();
     }
     let config = Config::load()?;
     config.log_unreadable();
@@ -677,7 +686,8 @@ pub fn run(debug: bool) -> Result<()> {
     os::stop_on_signals(move || stop.send(Msg::Stop).is_ok())?;
     serve_ipc(tx.clone())?;
 
-    let kbm = VirtualKbm::new().map_err(explain_kbm_failure)?;
+    // On the manual clock the output is only recorded (see `debug --attach` without --live).
+    let kbm = if fake_clock { VirtualKbm::unplugged() } else { VirtualKbm::new().map_err(explain_kbm_failure)? };
     crate::priority::set_realtime(config.realtime_input);
     let mut daemon = Daemon::new(config, kbm, inject::Injection::new(debug)?, tx);
     log!("padwight daemon started, socket at {}", ipc::socket_path().display());
@@ -717,7 +727,7 @@ impl Daemon {
     /// Starts, cancels or completes the countdown of a ForceQuit action being held.
     fn update_force_quit(&mut self) {
         let held = self.devices.values().any(|d| d.engine.force_quit_held());
-        let now = Instant::now();
+        let now = crate::clock::now();
         match (held, self.quit_hold) {
             // Let go before it fired: the countdown goes at once.
             (false, Some((_, false))) => {
@@ -750,7 +760,8 @@ impl Daemon {
 
     /// Shows `lines` in a toast.
     fn say(&mut self, lines: Vec<String>) {
-        self.toast = Some(crate::info::Toast::new(lines, Instant::now()));
+        transcript::note(&format!("toast {:?}", lines.join(" | ")));
+        self.toast = Some(crate::info::Toast::new(lines, crate::clock::now()));
         self.broadcast_overlay();
     }
 
@@ -1008,7 +1019,7 @@ impl Daemon {
                 *sum += v as f64;
             }
             cal.samples += 1;
-            if cal.started.elapsed() < GYRO_CALIBRATION {
+            if crate::clock::since(cal.started) < GYRO_CALIBRATION {
                 return;
             }
             let n = cal.samples.max(1) as f64;
@@ -1036,9 +1047,9 @@ impl Daemon {
         let mut out = Vec::new();
         dev.engine.motion(layered(&dev.layered, base), sample, &mut out);
         dev.dispatch(&mut self.kbm, out);
-        if self.last_draw.elapsed() >= STATUS_REDRAW {
+        if crate::clock::since(self.last_draw) >= STATUS_REDRAW {
             dev.draw_status();
-            self.last_draw = Instant::now();
+            self.last_draw = crate::clock::now();
         }
         if self.last_active == Some(id) && !self.watchers.is_empty() {
             let snapshot = dev.snapshot();
@@ -1054,7 +1065,7 @@ impl Daemon {
             .into_iter()
             .chain(active.game.map(|game| format!("Setup: {game}")))
             .collect();
-        self.toast = Some(crate::info::Toast::new(lines, Instant::now()));
+        self.toast = Some(crate::info::Toast::new(lines, crate::clock::now()));
         self.broadcast_overlay();
     }
 
@@ -1068,7 +1079,7 @@ impl Daemon {
             return;
         }
         let received = input_timing::enabled().then(input_timing::now_ns);
-        let logged = self.log_input(id, &events, Instant::now());
+        let logged = self.log_input(id, &events, crate::clock::now());
         let fires: Vec<bool> = events.iter().map(|ev| self.opener_fired(id, ev)).collect();
         let tapped = self.opener_tapped(&events, &fires);
         self.note_activity(&events);
@@ -1084,7 +1095,7 @@ impl Daemon {
             dev.out_view.stop_motion();
         }
         dev.draw_status();
-        self.last_draw = Instant::now();
+        self.last_draw = crate::clock::now();
         self.last_active = Some(id);
         if !self.watchers.is_empty() {
             let snapshot = dev.snapshot();
@@ -1138,7 +1149,7 @@ impl Daemon {
             .active()
             .map(|p| crate::opener_watch::Timing { tap: Duration::from_millis(p.tap_window_ms), long: Duration::from_millis(p.long_press_ms) })
             .unwrap_or_default();
-        self.devices.get_mut(&id).is_some_and(|d| d.opener_watch.feed(ev, Instant::now(), timing))
+        self.devices.get_mut(&id).is_some_and(|d| d.opener_watch.feed(ev, crate::clock::now(), timing))
     }
 
     /// Whether these events use the Guide opener the way a tap does, which offers a library game
@@ -1146,7 +1157,7 @@ impl Daemon {
     /// pressed in between (a held one with another button is a shortcut, not a tap); a gesture
     /// or a combo counts when it completes.
     fn opener_tapped(&mut self, events: &[InputEvent], fires: &[bool]) -> bool {
-        let now = Instant::now();
+        let now = crate::clock::now();
         let held_opener = self.guide_chord_button();
         let mut tapped = false;
         for (ev, fired) in events.iter().zip(fires) {
@@ -1244,6 +1255,7 @@ impl Daemon {
             return false;
         }
         log!("switching to profile {target}");
+        transcript::note(&format!("profile {target}"));
         // A new profile starts unlocked: the lock was for the one that was active.
         self.profile_locked = false;
         // An open menu refers to menus by position, which another game's list changes.
@@ -1257,7 +1269,7 @@ impl Daemon {
         }
         // Modes belong to a game: the mode stays on within it.
         self.release_all(!game_changes);
-        self.activity.switched(Instant::now(), &target, why);
+        self.activity.switched(crate::clock::now(), &target, why);
         self.config.active = target;
         if game_changes {
             self.refresh_scope();
@@ -1377,7 +1389,7 @@ impl Daemon {
             numpad_visible: matches!(&self.active, Some(Active::Keyboard(k)) if k.layout() == Layout::Numpad),
             stop_pending: self.stop_asked,
             profile_locked: self.profile_locked,
-            switches: self.activity.switches(Instant::now()),
+            switches: self.activity.switches(crate::clock::now()),
             update: self.update_info(),
         }
     }
@@ -1385,6 +1397,11 @@ impl Daemon {
     /// Looks for new controllers and takes the ones we should manage, then catches up on the rest
     /// of what the scan watches.
     fn scan(&mut self) {
+        // On the manual clock nothing outside the process may steer the daemon: no real controllers,
+        // no overlay process, no running games. Only injected controllers exist.
+        if crate::clock::is_manual() {
+            return;
+        }
         let known: HashSet<u64> = self.devices.keys().copied().collect();
         // Each step, timed for the input timing log: the scan holds up input while it runs.
         let mut step = input_timing::Steps::new("scan");
@@ -1394,7 +1411,7 @@ impl Daemon {
         self.scan_devices();
         step.done("devices");
         #[cfg(target_os = "linux")]
-        self.check_raw_readers(Instant::now());
+        self.check_raw_readers(crate::clock::now());
         step.done("raw_readers");
         self.check_overlay_process();
         self.check_recorded_game();

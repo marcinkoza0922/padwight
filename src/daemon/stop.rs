@@ -21,7 +21,7 @@ impl Daemon {
     /// A stop was asked for (a signal, or the tray's Quit): ends the daemon now, or once the
     /// settings window has dealt with its unsaved edits.
     pub(super) fn stop(&mut self) {
-        if !held(self.unsaved_at, Instant::now()) {
+        if !held(self.unsaved_at, crate::clock::now()) {
             self.shut_down();
         }
         if !self.stop_asked {
@@ -32,7 +32,7 @@ impl Daemon {
 
     /// Ends the daemon once a stop that was asked for is no longer held up by unsaved edits.
     pub(super) fn finish_stop(&mut self) {
-        if self.stop_asked && !held(self.unsaved_at, Instant::now()) {
+        if self.stop_asked && !held(self.unsaved_at, crate::clock::now()) {
             self.shut_down();
         }
     }
@@ -47,7 +47,7 @@ impl Daemon {
 
     /// Records whether the settings window has unsaved edits (`Request::Unsaved`).
     pub(super) fn report_unsaved(&mut self, unsaved: bool) {
-        self.unsaved_at = unsaved.then(Instant::now);
+        self.unsaved_at = unsaved.then(crate::clock::now);
     }
 
     /// When a stop that was asked for needs checking again: when the window's last report goes
@@ -63,7 +63,7 @@ mod tests {
 
     #[test]
     fn unsaved_edits_hold_the_daemon_only_while_the_window_reports_them() {
-        let now = Instant::now();
+        let now = crate::clock::now();
         assert!(!held(None, now), "no window has unsaved edits");
         assert!(held(Some(now), now), "a fresh report holds it");
         assert!(held(Some(now - Duration::from_secs(1)), now), "a report a second old still holds it");

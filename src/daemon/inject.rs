@@ -19,7 +19,10 @@ const OFF: &str = "debug injection is off; start the daemon with `padwight daemo
 
 /// Adds `out` to the record, as the lines `describe` writes.
 pub(super) fn record(recorded: &mut Vec<String>, out: &[OutEvent]) {
-    recorded.extend(out.iter().map(describe));
+    for line in out.iter().map(describe) {
+        super::transcript::output(&line);
+        recorded.push(line);
+    }
     if recorded.len() > RECORDED_MAX {
         recorded.drain(..recorded.len() - RECORDED_MAX);
     }
@@ -56,6 +59,7 @@ impl Injection {
             prepare_private_dir(&dir)?;
             log!("debug mode: screenshots and recordings go to {}", dir.display());
             crate::capture::redirect_to(dir);
+            super::transcript::start();
         }
         Ok(Self { enabled, next: 0 })
     }
@@ -79,6 +83,13 @@ impl Daemon {
             Request::DebugOutput { path, clear } => self.debug_output(&path, clear),
             Request::DebugDetach(path) => self.debug_detach(&path),
             Request::DebugIdentify(identity) => self.debug_identify(identity),
+            Request::DebugAdvance(ms) if crate::clock::is_manual() => {
+                self.advance(Duration::from_millis(ms));
+                Response::Ok
+            }
+            Request::DebugAdvance(_) => Response::Error("the daemon runs on the real clock; start it with `padwight daemon --debug --fake-clock`".into()),
+            Request::DebugTranscript { clear } => Response::Lines(super::transcript::take(clear)),
+            Request::DebugClock => Response::Lines(vec![if crate::clock::is_manual() { "manual" } else { "real" }.into()]),
             _ => Response::Error("not a debug request".into()),
         }
     }
@@ -118,7 +129,9 @@ impl Daemon {
             managed.touchpad = Some(path.clone().into());
         }
         managed.recorded = Some(Vec::new());
+        let mark = super::transcript::mark();
         self.add_managed(id, managed);
+        super::transcript::forget_since(mark);
         // What it output while settling into the active profile isn't what a test asks about.
         if let Some(recorded) = self.devices.get_mut(&id).and_then(|d| d.recorded.as_mut()) {
             recorded.clear();

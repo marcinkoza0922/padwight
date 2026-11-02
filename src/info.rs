@@ -1065,7 +1065,7 @@ impl Sampler {
         self.stats.gpu = gpu_busy();
         self.stats.battery = battery();
         self.stats.wifi = wifi_strength();
-        self.sampled_at = Some(Instant::now());
+        self.sampled_at = Some(crate::clock::now());
     }
 }
 

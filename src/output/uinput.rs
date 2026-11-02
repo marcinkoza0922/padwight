@@ -186,11 +186,11 @@ const POINTER_MAX: i32 = 65535;
 /// press or release the kernel refused is sent again by `sync`. Keys, buttons and motion are
 /// queued and written by `flush`.
 pub struct VirtualKbm {
-    keyboard: VirtualDevice,
-    mouse: VirtualDevice,
+    keyboard: Option<VirtualDevice>,
+    mouse: Option<VirtualDevice>,
     /// Absolute axes, for putting the pointer in a place. It has a left button only so the desktop
     /// takes it for a mouse (as a virtual machine's tablet is); the mouse sends the clicks.
-    pointer: VirtualDevice,
+    pointer: Option<VirtualDevice>,
     press: PressState,
     /// Hi-res wheel units not yet emitted as whole REL_WHEEL notches.
     wheel_acc: (i32, i32),
@@ -202,7 +202,34 @@ pub struct VirtualKbm {
     confirmed: Option<HashSet<KeyCode>>,
 }
 
+/// Writes the reports to `dev`, or drops them when there is none (see [`VirtualKbm::unplugged`]).
+fn flush_to(frames: &mut Frames, dev: Option<&VirtualDevice>) -> std::io::Result<()> {
+    match dev {
+        Some(dev) => frames.flush(dev),
+        None => {
+            frames.discard();
+            Ok(())
+        }
+    }
+}
+
 impl VirtualKbm {
+    /// A keyboard and mouse that exist only in memory, for a `--debug --fake-clock` daemon whose
+    /// output is only recorded: it needs no /dev/uinput.
+    pub fn unplugged() -> Self {
+        VirtualKbm {
+            keyboard: None,
+            mouse: None,
+            pointer: None,
+            press: PressState::default(),
+            wheel_acc: (0, 0),
+            keyboard_frames: Frames::default(),
+            mouse_frames: Frames::default(),
+            pointer_frames: Frames::default(),
+            confirmed: None,
+        }
+    }
+
     pub fn new() -> Result<Self> {
         let mut keys = AttributeSet::<KeyCode>::new();
         // Every regular keyboard key (KEY_ESC..KEY_MICMUTE).
@@ -242,9 +269,9 @@ impl VirtualKbm {
             .build()?;
 
         Ok(VirtualKbm {
-            keyboard,
-            mouse,
-            pointer,
+            keyboard: Some(keyboard),
+            mouse: Some(mouse),
+            pointer: Some(pointer),
             press: PressState::default(),
             wheel_acc: (0, 0),
             keyboard_frames: Frames::default(),
@@ -282,9 +309,9 @@ impl VirtualKbm {
     /// Writes everything queued, the keyboard's and the mouse's each in one go. If a write fails,
     /// the presses in it count as not sent, so the next `sync` sends them again.
     pub fn flush(&mut self) -> Result<()> {
-        let keyboard = self.keyboard_frames.flush(&self.keyboard);
-        let mouse = self.mouse_frames.flush(&self.mouse);
-        let pointer = self.pointer_frames.flush(&self.pointer);
+        let keyboard = flush_to(&mut self.keyboard_frames, self.keyboard.as_ref());
+        let mouse = flush_to(&mut self.mouse_frames, self.mouse.as_ref());
+        let pointer = flush_to(&mut self.pointer_frames, self.pointer.as_ref());
         let confirmed = self.confirmed.take();
         if (keyboard.is_err() || mouse.is_err())
             && let Some(sent) = confirmed
@@ -314,13 +341,13 @@ impl VirtualKbm {
     #[cfg(test)]
     pub(crate) fn event_nodes(&mut self) -> (std::path::PathBuf, std::path::PathBuf) {
         let node = |dev: &mut VirtualDevice| dev.enumerate_dev_nodes_blocking().unwrap().flatten().next().unwrap();
-        (node(&mut self.keyboard), node(&mut self.mouse))
+        (node(self.keyboard.as_mut().unwrap()), node(self.mouse.as_mut().unwrap()))
     }
 
     /// The absolute pointer's event node, for tests that read what the kernel got.
     #[cfg(test)]
     pub(crate) fn pointer_node(&mut self) -> std::path::PathBuf {
-        self.pointer.enumerate_dev_nodes_blocking().unwrap().flatten().next().unwrap()
+        self.pointer.as_mut().unwrap().enumerate_dev_nodes_blocking().unwrap().flatten().next().unwrap()
     }
 
     /// Queues motion, for the next `flush`.

@@ -1,0 +1,17 @@
+# East has a double and a triple tap: three quick taps fire only the triple.
+setup tests/scenarios/packs/input.padpack Gestures
+tap east 30
+advance 50
+tap east 30
+advance 50
+tap east 30
+advance 400
+tap east 30
+advance 50
+tap east 30
+advance 400
+---
+key KEY_G down @160
+key KEY_G up   @190
+key KEY_F down @950
+key KEY_F up   @950

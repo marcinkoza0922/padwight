@@ -1,0 +1,18 @@
+# The left trigger is a right click past half; the right trigger keeps its analog value and adds Z then X by depth.
+setup tests/scenarios/packs/input.padpack Triggers
+trigger left 0.4
+trigger left 0.6
+trigger left 0
+trigger right 0.4
+trigger right 0.9
+trigger right 0
+---
+mouse Right down           @0
+mouse Right up             @0
+pad-axis RightTrigger 0.40 @0
+key KEY_Z down             @0
+pad-axis RightTrigger 0.90 @0
+key KEY_Z up               @0
+key KEY_X down             @0
+pad-axis RightTrigger 0.00 @0
+key KEY_X up               @0

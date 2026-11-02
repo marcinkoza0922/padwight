@@ -1,0 +1,120 @@
+format = 20
+
+[pack]
+id = "0a5e6bc3-5b54-55d2-acb0-620b06ae3967"
+name = "Scenario layers"
+version = "1.0"
+author = "Padwight"
+description = "Scenario test pack: Scenario layers."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "scenario-scenario-layers.exe"
+profile = "Base"
+
+[[profiles]]
+name = "Base"
+
+[profiles.buttons]
+South = {keys = ["KEY_A"]}
+East = {keys = ["KEY_B"]}
+North = {macro = {name = "Combo hit"}}
+West = {macro = {name = "Loop", repeat = true}}
+LeftBumper = {layer = "Hotkeys"}
+RightBumper = {layer = "Extra"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {mode = "Alt"}
+Start = {mode = "Other"}
+DpadUp = {cycle = {name = "Speed"}}
+DpadDown = {cycle = {name = "Speed", back = true}}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[[macros]]
+name = "Combo hit"
+steps = [
+    {tap = {action = {keys = ["KEY_1"]}, hold_ms = 30}},
+    {wait = 50},
+    {tap = {action = {keys = ["KEY_2"]}, hold_ms = 30}},
+    {press = {keys = ["KEY_LEFTSHIFT"]}},
+    {tap = {action = {keys = ["KEY_3"]}, hold_ms = 30}},
+    {release = {keys = ["KEY_LEFTSHIFT"]}},
+]
+
+[[macros]]
+name = "Loop"
+steps = [
+    {tap = {action = {keys = ["KEY_L"]}, hold_ms = 20}},
+    {wait = 80},
+]
+
+[[cycles]]
+name = "Speed"
+steps = [
+    {keys = ["KEY_2"]},
+    {keys = ["KEY_3"]},
+    {keys = ["KEY_1"]},
+]
+
+[[layers]]
+name = "Hotkeys"
+indicator = "off"
+
+[layers.buttons]
+South = {keys = ["KEY_F1"]}
+East = {keys = ["KEY_F2"]}
+
+[[layers]]
+name = "Extra"
+indicator = "off"
+
+[layers.buttons]
+South = {keys = ["KEY_F5"]}
+North = {keys = ["KEY_F6"]}
+
+[[modes]]
+name = "Alt"
+indicator = "off"
+
+[modes.buttons]
+South = {keys = ["KEY_M"]}
+East = {keys = ["KEY_N"]}
+
+[[modes]]
+name = "Other"
+indicator = "off"
+swallow_unbound = true
+
+[modes.buttons]
+South = {keys = ["KEY_O"]}

@@ -114,7 +114,7 @@ A client that edits the configuration should tell the daemon when it has changes
 Not covered by the version; they can change in any release.
 
 - `"WatchOverlay"`, `{"WatchFeed": …}`: the streams of what the overlay window and the Overview page draw. Their lines are drawing instructions in the app's own renderer types.
-- `DebugAttach`, `DebugInput`, `DebugOutput`, `DebugDetach`, `DebugIdentify`: debug mode only (the daemon must have been started with `--debug`); they add and drive controllers no hardware backs. Their replies are `{"Attached": "<path>"}` and `{"Lines": ["…"]}`.
+- `DebugAttach`, `DebugInput`, `DebugOutput`, `DebugDetach`, `DebugIdentify`, `DebugAdvance`, `DebugClock`, `DebugTranscript`: debug mode only (the daemon must have been started with `--debug`); they add and drive controllers no hardware backs. Their replies are `{"Attached": "<path>"}` and `{"Lines": ["…"]}`. `DebugAdvance(ms)` works only on a daemon started with `--debug --fake-clock`, whose clock moves only when told: it runs every tick, timer and scan that falls inside the span, each at its exact time, then answers.
 
 ## Replies in detail
 

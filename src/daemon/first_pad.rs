@@ -79,13 +79,13 @@ impl Daemon {
             return virtual_pad_for(ff, identity).map(|pad| NewPad { pad, first: false, refit_at: None });
         };
         let fits = ff.is_none() && pad.identity() == identity;
-        let refit_at = (!fits).then(|| Instant::now() + REFIT_DELAY);
+        let refit_at = (!fits).then(|| crate::clock::now() + REFIT_DELAY);
         Some(NewPad { pad, first, refit_at })
     }
 
     /// Rebuilds the pads of controllers that took the kept pad over and are due.
     pub(super) fn refit_pads(&mut self) {
-        let now = Instant::now();
+        let now = crate::clock::now();
         let (forced, support) = (self.identity_override, self.active_support());
         for dev in self.devices.values_mut().filter(|d| d.refit_at.is_some_and(|at| at <= now)) {
             log!("fitting the first virtual pad to {}", dev.name);
