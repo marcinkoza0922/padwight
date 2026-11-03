@@ -8,7 +8,7 @@
 # devices, which would take over your own desktop.
 #
 # Usage: DESKTOP_TEST_HOST=dev@127.0.0.1 DESKTOP_TEST_SSH_OPTS="-p 2457 -i vms/id_ed25519" \
-#        scripts/desktop-test.sh <gnome|cinnamon|budgie|cosmic|kde|sway|hyprland|niri|labwc>
+#        scripts/desktop-test.sh <gnome|cinnamon|budgie|cosmic|kde|sway|hyprland|niri|labwc|wayfire>
 #   DESKTOP_TEST_QMP=<qmp socket>  optional: sends Escape through QEMU first, to close GNOME's
 #                                  Overview after login (VMs started by vms/vm.sh have one).
 #
@@ -23,9 +23,9 @@
 # the input stack gets a new release. Record the versions it prints with the result.
 set -euo pipefail
 
-desktop=${1:?usage: scripts/desktop-test.sh gnome|cinnamon|budgie|cosmic|kde|sway|hyprland|niri|labwc}
+desktop=${1:?usage: scripts/desktop-test.sh gnome|cinnamon|budgie|cosmic|kde|sway|hyprland|niri|labwc|wayfire}
 case $desktop in
-gnome | cinnamon | budgie | cosmic | kde | sway | hyprland | niri | labwc) ;;
+gnome | cinnamon | budgie | cosmic | kde | sway | hyprland | niri | labwc | wayfire) ;;
 *)
     echo "unknown desktop: $desktop" >&2
     exit 2
@@ -99,6 +99,7 @@ sway) window=foot; class=foot; tracker=Sway; launch=(foot bash -c "$read_key") ;
 hyprland) window=kitty; class=kitty; tracker=Hyprland; launch=(kitty bash -c "$read_key") ;;
 niri) window=foot; class=foot; tracker=niri; launch=(foot bash -c "$read_key") ;;
 labwc) window=foot; class=foot; tracker=wlroots; launch=(foot bash -c "$read_key") ;;
+wayfire) window=foot; class=foot; tracker=wlroots; launch=(foot bash -c "$read_key") ;;
 esac
 
 # A second window that no rule matches, and the program name that closes it. The first installed
@@ -109,7 +110,7 @@ cinnamon) other_candidates=("nemo" "xed" "gnome-calculator") ;;
 budgie) other_candidates=("nautilus" "nemo" "gnome-calculator" "gnome-text-editor") ;;
 cosmic) other_candidates=("cosmic-files" "cosmic-edit") ;;
 kde) other_candidates=("dolphin" "kate" "kwrite") ;;
-sway | niri | labwc) other_candidates=("foot --app-id padwight-other") ;;
+sway | niri | labwc | wayfire) other_candidates=("foot --app-id padwight-other") ;;
 hyprland) other_candidates=("kitty --class padwight-other") ;;
 esac
 other_cmd=()
@@ -140,7 +141,7 @@ stop_daemon() { pkill -x padwight 2>/dev/null || true; sleep 1; }
 
 echo "== versions"
 echo "kernel $(uname -r)"
-for tool in gnome-shell cinnamon budgie-desktop cosmic-comp plasmashell sway Hyprland niri labwc; do
+for tool in gnome-shell cinnamon budgie-desktop cosmic-comp plasmashell sway Hyprland niri labwc wayfire; do
     command -v "$tool" >/dev/null && echo "$tool: $("$tool" --version 2>/dev/null | head -1)"
 done
 

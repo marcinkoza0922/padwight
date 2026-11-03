@@ -28,6 +28,7 @@ ROWS = {
     "sway": "Sway",
     "hyprland": "Hyprland",
     "labwc": "labwc",
+    "wayfire": "Wayfire",
 }
 FAILED = re.compile(r"^FAILED .*? check\(s\) failed\.\s*")
 PASS = re.compile(r"all pass(?: \(\d{4}-\d{2}-\d{2}(?:, kernel [^)\s;]+)?)?")

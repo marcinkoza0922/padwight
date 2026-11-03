@@ -34,6 +34,7 @@ latest_tag() {
 }
 echo "Sway: latest release is $(latest_tag swaywm/sway). Run scripts/desktop-test.sh sway when it changes."
 echo "Hyprland: latest release is $(latest_tag hyprwm/Hyprland). Run scripts/desktop-test.sh hyprland when it changes."
+echo "Wayfire: latest release is $(latest_tag WayfireWM/wayfire). Run scripts/desktop-test.sh wayfire when it changes."
 echo "Kernel: this machine runs $(uname -r). Run the desktop checks on a VM with the kernel you ship."
 
 exit "$status"
