@@ -1,0 +1,403 @@
+format = 20
+macros = []
+overlay_font = "Special Elite"
+
+[pack]
+id = "13045561-55d4-4b81-9d83-234c97bf4aec"
+name = "Left 4 Dead"
+version = "1.0"
+author = "Padwight"
+description = "Left 4 Dead (2008) on an Xbox-style pad. The game has its own controller support (it came out on the Xbox 360 too), so the controller passes through untouched and the game's Keyboard / Mouse and gamepad options set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard for chat and the media controls, in the blood red of a safe room. Gyro and flick stick profiles are included to try; they move the mouse beside the pad."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "500"
+profile = "Left 4 Dead"
+
+[[rules]]
+kind = "executable"
+value = "left4dead.exe"
+profile = "Left 4 Dead"
+
+[[profiles]]
+name = "Left 4 Dead"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''Left 4 Dead has its own controller support, so the controller goes to the game as it is. Set the sensitivity and look inversion ({b}Reverse Gamepad Up-Down Axis{/b}) in the game's options. If the game ignores the pad in play, open {b}Options → Keyboard/Mouse{/b} and make sure the controller is enabled there.
+It only knows Xbox pads; a DualShock or DualSense is shown to the game as an Xbox controller.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[[profiles]]
+name = "Left 4 Dead + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 5455.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. The gyro moves the mouse, which the game reads beside the pad.
+Left 4 Dead has its own controller support, so the controller goes to the game as it is. Set the sensitivity and look inversion ({b}Reverse Gamepad Up-Down Axis{/b}) in the game's options. If the game ignores the pad in play, open {b}Options → Keyboard/Mouse{/b} and make sure the controller is enabled there.
+It only knows Xbox pads; a DualShock or DualSense is shown to the game as an Xbox controller.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[[profiles]]
+name = "Left 4 Dead + Flick stick"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 5455.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 5455.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming. Both move the mouse, which the game reads beside the pad.
+Left 4 Dead has its own controller support, so the controller goes to the game as it is. Set the sensitivity and look inversion ({b}Reverse Gamepad Up-Down Axis{/b}) in the game's options. If the game ignores the pad in play, open {b}Options → Keyboard/Mouse{/b} and make sure the controller is enabled there.
+It only knows Xbox pads; a DualShock or DualSense is shown to the game as an Xbox controller.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[keyboard_style]
+corners = 0.1
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0b0707"
+opacity = 0.9
+
+[keyboard_style.items]
+color = "#241010"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#d1242c"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#d1242c"
+opacity = 0.5
+
+[keyboard_style.gradient]
+color = "#160b0b"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4d1a1a"
+
+[keyboard_style.type]
+letter_spacing = 2
+case = "upper"
+
+[numpad_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0b0707"
+opacity = 0.9
+
+[numpad_style.items]
+color = "#241010"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#d1242c"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#d1242c"
+opacity = 0.5
+
+[numpad_style.gradient]
+color = "#160b0b"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4d1a1a"
+
+[numpad_style.type]
+letter_spacing = 2
+case = "upper"
+
+[media_style]
+corners = 0.1
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0b0707"
+opacity = 0.9
+
+[media_style.items]
+color = "#241010"
+opacity = 0.95
+
+[media_style.selected]
+color = "#d1242c"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#d1242c"
+opacity = 0.5
+
+[media_style.gradient]
+color = "#160b0b"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4d1a1a"
+
+[media_style.type]
+letter_spacing = 2
+case = "upper"
+
+[menu_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0b0707"
+opacity = 0.9
+
+[menu_style.items]
+color = "#241010"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#d1242c"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#d1242c"
+opacity = 0.5
+
+[menu_style.gradient]
+color = "#160b0b"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4d1a1a"
+
+[menu_style.glow]
+color = "#d1242c"
+opacity = 0.45
+blur = 20
+
+[menu_style.type]
+letter_spacing = 2
+case = "upper"
+
+[menu_style.ornament]
+scanlines = {spacing = 4, opacity = 0.1, color = "#000000"}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.1, pitch = 0.8}
+pick = {kind = "thud", volume = 0.2, pitch = 0.8}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "beep", volume = 0.15, pitch = 0.8}
+
+[sounds.media]
+pick = {kind = "beep", volume = 0.15, pitch = 0.8}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 18}
+pick = {strength = 0.4, length_ms = 40}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 14}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 14}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}
