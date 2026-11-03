@@ -179,6 +179,12 @@ if [ "$desktop" = cinnamon ]; then
     fi
 fi
 
+# Budgie must run without our GNOME extension: drop one an older build left behind (FOC-3).
+if [ "$desktop" = budgie ]; then
+    stop_daemon
+    rm -rf "${XDG_DATA_HOME:-$HOME/.local/share}"/gnome-shell/extensions/padwight*
+fi
+
 # The daemon makes the config on its first start, and that start would clear setups written before
 # it, so make the config first.
 stop_daemon
