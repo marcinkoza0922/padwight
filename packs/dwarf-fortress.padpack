@@ -1,0 +1,604 @@
+format = 20
+macros = []
+overlay_font = "VT323"
+
+[pack]
+id = "ba2da02a-a6c1-5a1b-8d72-bb0e7fe160fa"
+name = "Dwarf Fortress"
+version = "1.0"
+author = "Padwight"
+description = "Dwarf Fortress (Steam, 2022 premium release) on an Xbox-style pad. The right stick moves the pointer, the left stick pans the map with the arrow keys, A or RT left-clicks, LT right-clicks. B backs out, Y pauses, the d-pad changes the z-level and zooms. LB opens the main modes, Select the screens. The \"+ Gyro\" profile also moves the pointer by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "dwarf fortress.exe"
+profile = "Dwarf Fortress"
+
+[[rules]]
+kind = "steam_app_id"
+value = "975370"
+profile = "Dwarf Fortress"
+
+[[profiles]]
+name = "Dwarf Fortress"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_LEFTSHIFT"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { open_menu = "Modes" }
+RightBumper = { keys = ["KEY_ENTER"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_LEFTCTRL"] }
+RightStick = { mouse = "Middle" }
+DpadUp = { keys = ["KEY_LEFTSHIFT", "KEY_DOT"] }
+DpadDown = { keys = ["KEY_LEFTSHIFT", "KEY_COMMA"] }
+DpadLeft = { wheel = "Down" }
+DpadRight = { wheel = "Up" }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer: {rt} or {south} is a left click, {lt} a right click. The left stick {ls} pans the map with the arrow keys; hold {west} (Shift) to pan faster.
+{north} pauses and unpauses. {updown} on the d-pad changes the z-level (Shift with period or comma, the less-than and greater-than keys); {leftright} zooms the map like the mouse wheel.
+{rb} is Enter. {east} or {start} is Escape: it backs out of a menu, and on the map opens the game menu.
+Hold {lb} for the main modes (aimed with {rs}, picked with {south}). {select} lists the screens (tap it, pick with {south}).
+Hold {l3} for Ctrl, click {r3} for the middle mouse button.
+Hold {guide} and press {west} for the on-screen keyboard (naming fortresses, dwarves, searches).
+Dwarf Fortress has no controller support. Its keys can be remapped in data/init/interface.txt; these are the premium defaults as remembered. INFERRED, not checked on an install: every letter in the Modes and Screens menus and the z-level keys. If the game's own button tooltips show other keys, edit the menus.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"stick:Left" = { text = "Pan the map" }
+"trigger:Right" = { text = "Left click" }
+"trigger:Left" = { text = "Right click" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Back" }
+"button:West" = { text = "Hold: Shift (pan fast)" }
+"button:North" = { text = "{icon:pause} Pause" }
+"button:LeftBumper" = { text = "Hold: main modes" }
+"button:RightBumper" = { text = "Enter" }
+"button:Select" = { text = "Screens" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "Hold: Ctrl" }
+"button:RightStick" = { text = "Middle click" }
+"button:DpadUp" = { text = "{icon:height} Level up" }
+"button:DpadDown" = { text = "{icon:height} Level down" }
+"button:DpadLeft" = { text = "Zoom out" }
+"button:DpadRight" = { text = "Zoom in" }
+
+[[profiles]]
+name = "Dwarf Fortress + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_LEFTSHIFT"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { open_menu = "Modes" }
+RightBumper = { keys = ["KEY_ENTER"] }
+Select = { open_menu = "Screens" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_LEFTCTRL"] }
+RightStick = { mouse = "Middle" }
+DpadUp = { keys = ["KEY_LEFTSHIFT", "KEY_DOT"] }
+DpadDown = { keys = ["KEY_LEFTSHIFT", "KEY_COMMA"] }
+DpadLeft = { wheel = "Down" }
+DpadRight = { wheel = "Up" }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Gyro variant: the plain profile plus pointer movement by tilting the controller. Hold Select and Start together to pause the gyro (clutch).
+The right stick {rs} moves the pointer: {rt} or {south} is a left click, {lt} a right click. The left stick {ls} pans the map with the arrow keys; hold {west} (Shift) to pan faster.
+{north} pauses and unpauses. {updown} on the d-pad changes the z-level (Shift with period or comma, the less-than and greater-than keys); {leftright} zooms the map like the mouse wheel.
+{rb} is Enter. {east} or {start} is Escape: it backs out of a menu, and on the map opens the game menu.
+Hold {lb} for the main modes (aimed with {rs}, picked with {south}). {select} lists the screens (tap it, pick with {south}).
+Hold {l3} for Ctrl, click {r3} for the middle mouse button.
+Hold {guide} and press {west} for the on-screen keyboard (naming fortresses, dwarves, searches).
+Dwarf Fortress has no controller support. Its keys can be remapped in data/init/interface.txt; these are the premium defaults as remembered. INFERRED, not checked on an install: every letter in the Modes and Screens menus and the z-level keys. If the game's own button tooltips show other keys, edit the menus.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"stick:Left" = { text = "Pan the map" }
+"trigger:Right" = { text = "Left click" }
+"trigger:Left" = { text = "Right click" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Back" }
+"button:West" = { text = "Hold: Shift (pan fast)" }
+"button:North" = { text = "{icon:pause} Pause" }
+"button:LeftBumper" = { text = "Hold: main modes" }
+"button:RightBumper" = { text = "Enter" }
+"button:Select" = { text = "Screens" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "Hold: Ctrl" }
+"button:RightStick" = { text = "Middle click" }
+"button:DpadUp" = { text = "{icon:height} Level up" }
+"button:DpadDown" = { text = "{icon:height} Level down" }
+"button:DpadLeft" = { text = "Zoom out" }
+"button:DpadRight" = { text = "Zoom in" }
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[[menus]]
+name = "Modes"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:pick} Designations"
+action = { keys = ["KEY_D"] }
+
+[[menus.items]]
+label = "{icon:hammer} Build"
+action = { keys = ["KEY_B"] }
+
+[[menus.items]]
+label = "{icon:box} Stockpiles"
+action = { keys = ["KEY_P"] }
+
+[[menus.items]]
+label = "{icon:region} Zones"
+action = { keys = ["KEY_Z"] }
+
+[[menus.items]]
+label = "{icon:search} Look"
+action = { keys = ["KEY_K"] }
+
+[[menus.items]]
+label = "{icon:scroll} Orders"
+action = { keys = ["KEY_O"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#101410"
+opacity = 0.94
+
+[menus.style.items]
+color = "#1d261d"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#4c8a3a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8fbf6a"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#151b15"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3a4a34"
+
+[menus.style.glow]
+color = "#8fbf6a"
+opacity = 0.5
+blur = 14
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#8fbf6a", opacity = 0.45}
+frame = {kind = "brackets", size = 14, width = 2, color = "#8fbf6a"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[[menus]]
+name = "Screens"
+kind = "list"
+
+[[menus.items]]
+label = "{icon:people} Units {color:gray}U{/color}"
+action = { keys = ["KEY_U"] }
+
+[[menus.items]]
+label = "{icon:storage} Stocks {color:gray}T{/color}"
+action = { keys = ["KEY_T"] }
+
+[[menus.items]]
+label = "{icon:wrench} Labor {color:gray}Y{/color}"
+action = { keys = ["KEY_Y"] }
+
+[[menus.items]]
+label = "{icon:crown} Nobles {color:gray}N{/color}"
+action = { keys = ["KEY_N"] }
+
+[[menus.items]]
+label = "{icon:scroll} Orders {color:gray}O{/color}"
+action = { keys = ["KEY_O"] }
+
+[[menus.items]]
+label = "{icon:book} Announcements {color:gray}A{/color}"
+action = { keys = ["KEY_A"] }
+
+[[menus.items]]
+label = "{icon:map} World {color:gray}M{/color}"
+action = { keys = ["KEY_M"] }
+
+[menus.style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#101410"
+opacity = 0.94
+
+[menus.style.items]
+color = "#1d261d"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#4c8a3a"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#8fbf6a"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#151b15"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#3a4a34"
+
+[menus.style.glow]
+color = "#8fbf6a"
+opacity = 0.5
+blur = 14
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#8fbf6a", opacity = 0.45}
+frame = {kind = "brackets", size = 14, width = 2, color = "#8fbf6a"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[keyboard_style]
+corners = 0.0
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#101410"
+opacity = 0.94
+
+[keyboard_style.items]
+color = "#1d261d"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#4c8a3a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8fbf6a"
+opacity = 0.9
+
+[keyboard_style.gradient]
+color = "#151b15"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3a4a34"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#101410"
+opacity = 0.94
+
+[numpad_style.items]
+color = "#1d261d"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#4c8a3a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8fbf6a"
+opacity = 0.9
+
+[numpad_style.gradient]
+color = "#151b15"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3a4a34"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[media_style]
+corners = 0.0
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#101410"
+opacity = 0.94
+
+[media_style.items]
+color = "#1d261d"
+opacity = 0.95
+
+[media_style.selected]
+color = "#4c8a3a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8fbf6a"
+opacity = 0.9
+
+[media_style.gradient]
+color = "#151b15"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3a4a34"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.0
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#101410"
+opacity = 0.94
+
+[menu_style.items]
+color = "#1d261d"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#4c8a3a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8fbf6a"
+opacity = 0.9
+
+[menu_style.gradient]
+color = "#151b15"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3a4a34"
+
+[menu_style.glow]
+color = "#8fbf6a"
+opacity = 0.5
+blur = 14
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#8fbf6a", opacity = 0.45}
+frame = {kind = "brackets", size = 14, width = 2, color = "#8fbf6a"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[motion]
+keyboard = "retro"
+numpad = "retro"
+menu = "retro"
+media = "retro"
+offer = "retro"
+info = "retro"
+log = "retro"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.05, pitch = 0.9}
+pick = {kind = "blip", volume = 0.1, pitch = 1.0}
+open = {kind = "rise", volume = 0.05}
+close = {kind = "fall", volume = 0.04}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.05, pitch = 0.9}
+pick = {kind = "blip", volume = 0.1, pitch = 1.0}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.05, pitch = 0.9}
+pick = {kind = "tick", volume = 0.06, pitch = 1.1}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.2, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.2, length_ms = 60}
