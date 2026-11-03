@@ -271,7 +271,7 @@ label = "{icon:people} Select all"
 action = {keys = ["KEY_LEFTCTRL","KEY_A"]}
 
 [[menus.items]]
-label = "{icon:target} Center on selection"
+label = "{icon:crosshair} Center on selection"
 action = {keys = ["KEY_SPACE"]}
 
 [[menus.items]]
