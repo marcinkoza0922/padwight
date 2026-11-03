@@ -69,6 +69,9 @@ impl Rig {
         let state = DualSenseState { touch: [f0, f1], touch_click: click, timestamp: common::ds::clock(self.tick), ..DualSenseState::default() };
         self.pad.send(&state.report());
         thread::sleep(Duration::from_millis(8));
+        // Read as it goes: a reader that is left alone through a long stroke overflows its
+        // kernel queue (SYN_DROPPED) and loses the motion.
+        self.drain();
     }
 
     /// Reports for `ms` with the fingers where they are.
@@ -92,6 +95,15 @@ impl Rig {
             let f0 = (p.0 as u16, p.1 as u16);
             let f1 = second.map(|(dx, dy)| ((i32::from(f0.0) + dx).clamp(0, i32::from(W) - 1) as u16, (i32::from(f0.1) + dy).clamp(0, i32::from(H) - 1) as u16));
             self.frame(Some(f0), f1, false);
+        }
+    }
+
+    /// Lets `ms` pass with no report, reading what the daemon makes as it goes (a glide sends
+    /// hundreds of events a second, more than a reader left alone for a while can hold).
+    fn pause(&mut self, ms: u64) {
+        for _ in 0..ms / 8 {
+            thread::sleep(Duration::from_millis(8));
+            self.drain();
         }
     }
 
@@ -188,7 +200,8 @@ fn touchpad_mouse_mode_glides_taps_and_ignores_the_second_finger() {
     for i in 0..30u16 {
         rig.frame(Some((c.0 + i * 20, c.1)), Some(b), false);
     }
-    rig.settle();
+    // Not `settle`: that would lift both fingers, and the pair would land again together.
+    rig.pause(80);
     assert_eq!(rig.mouse.moved, before, "the new finger doesn't move the pointer");
     let end_c = (c.0 + 29 * 20, c.1);
     for i in 0..30u16 {
@@ -219,15 +232,12 @@ fn touchpad_mouse_mode_scrolls_with_two_fingers_and_glides_after_a_flick() {
     rig.wait(40);
     rig.drain();
     let at_lift = rig.mouse.moved;
-    thread::sleep(Duration::from_millis(200));
-    rig.drain();
+    rig.pause(200);
     assert!(rig.mouse.moved.0 > at_lift.0 + 20, "the pointer glides on after the finger lifts: {at_lift:?} then {:?}", rig.mouse.moved);
     // ...and slows to a stop.
-    thread::sleep(Duration::from_millis(3000));
-    rig.drain();
+    rig.pause(3000);
     let stopped = rig.mouse.moved;
-    thread::sleep(Duration::from_millis(500));
-    rig.drain();
+    rig.pause(500);
     assert_eq!(rig.mouse.moved, stopped, "the glide dies away");
 
     quiet(&rig.root);
