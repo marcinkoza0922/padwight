@@ -119,7 +119,10 @@ pub const COMMANDS: &str = "\
   output [clear]                 attached: print what the daemon's mappings have output
                                  (key KEY_A down, pad South up, mouse-move 3 -2, ...)
   advance <ms>                   attached to a `daemon --debug --fake-clock`: move its clock forward,
-                                 running every tick and timer that falls inside, then answer
+                                 running every tick and timer that falls inside, then answer.
+                                 A live info overlay's one-second refresh starts with the first
+                                 overlay frame; a session that begins in a setup has built none
+                                 until something changes the overlay, so `expect overlay ...` first
   wait <ms>                      let time pass: `advance` on a fake clock, a real wait otherwise
   transcript [clear]             print what the daemon did with times (@ms): output, profile, mode
                                  and layer changes, overlays, toasts, sound and rumble cues

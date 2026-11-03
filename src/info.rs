@@ -1053,6 +1053,10 @@ pub struct SystemStats {
     pub wifi: Option<u8>,
 }
 
+/// How long the first sample waits to measure CPU load against: long enough for a few jiffies on
+/// every core, short enough not to be felt once.
+const FIRST_CPU_WINDOW: std::time::Duration = std::time::Duration::from_millis(40);
+
 /// Samples CPU, memory and GPU load from /proc and /sys. CPU load is the change since the
 /// previous sample.
 #[derive(Default)]
@@ -1064,6 +1068,12 @@ pub struct Sampler {
 
 impl Sampler {
     pub fn sample(&mut self) {
+        // The first sample has nothing to compare with: take a baseline and a short second look
+        // so CPU shows a real value from the first display rather than "n/a" for a second.
+        if self.last_cpu.is_none() {
+            self.last_cpu = cpu_times();
+            std::thread::sleep(FIRST_CPU_WINDOW);
+        }
         let cpu = cpu_times();
         self.stats.cpu = match (self.last_cpu, cpu) {
             (Some((busy0, total0)), Some((busy1, total1))) if total1 > total0 => {
