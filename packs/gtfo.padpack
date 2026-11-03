@@ -1,0 +1,618 @@
+format = 20
+macros = []
+overlay_font = "TitilliumWeb"
+
+[pack]
+id = "e1c7617d-f960-42ac-b2c8-e38368d7a17b"
+name = "GTFO"
+version = "1.0"
+author = "Padwight"
+description = "GTFO (2021) on an Xbox-style pad, mapped to the game's default keyboard and mouse bindings. The game's own pad support only reads buttons, not the sticks, so Padwight sends keys and mouse movement instead. Gyro and flick stick profiles are there to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "493520"
+profile = "GTFO"
+
+[[rules]]
+kind = "executable"
+value = "GTFO.exe"
+profile = "GTFO"
+
+[[profiles]]
+name = "GTFO"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_SPACE"] }
+East = { keys = ["KEY_LEFTCTRL"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_E"] }
+LeftBumper = { wheel = "Up" }
+RightBumper = { wheel = "Down" }
+LeftStick = { keys = ["KEY_LEFTSHIFT"] }
+RightStick = { keys = ["KEY_V"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_2"] }
+DpadDown = { keys = ["KEY_1"] }
+DpadLeft = { keys = ["KEY_3"] }
+DpadRight = { keys = ["KEY_4"] }
+
+[profiles.gestures.DpadUp]
+long_press = { keys = ["KEY_F"] }
+
+[profiles.gestures.DpadDown]
+long_press = { keys = ["KEY_Q"] }
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu. GTFO keeps running while it is open, so it is no pause.
+{south} jumps, {east} crouches, {west} reloads and {north} interacts: hold it to pick up a resource pack, open a box or revive a teammate. {rs} shoves enemies away and {l3} sprints.
+{down} brings out your melee weapon, {up} the primary, {left} the special and {right} your tool. Tap the D-pad to switch; hold {up} for the flashlight and {down} to ping what you're looking at. {lb} and {rb} step through the slots.
+Hold {lt} to aim down the sights. The right stick turns more finely while it's held.
+The game has its own pad support, but it only reads buttons, not the sticks, and would fight this setup. If it reacts to the pad as well, switch the pad's buttons off in the game's Controls options.
+These are the default PC keys written from memory and not checked in the game (shove, ping, the flashlight, the tool and the map key especially). The game lets you rebind every key in its settings.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Aim" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Crouch" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Interact" }
+"button:LeftBumper" = { text = "Previous weapon" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Sprint" }
+"button:RightStick" = { text = "Shove" }
+"button:DpadUp" = { text = "Primary" }
+"gesture:button:DpadUp:long_press" = { text = "Flashlight" }
+"button:DpadDown" = { text = "Melee" }
+"gesture:button:DpadDown:long_press" = { text = "Ping" }
+"button:DpadLeft" = { text = "Special" }
+"button:DpadRight" = { text = "Tool" }
+"button:Select" = { text = "Map · status" }
+"button:Start" = { text = "Pause" }
+
+[[profiles]]
+name = "GTFO + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_SPACE"] }
+East = { keys = ["KEY_LEFTCTRL"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_E"] }
+LeftBumper = { wheel = "Up" }
+RightBumper = { wheel = "Down" }
+LeftStick = { keys = ["KEY_LEFTSHIFT"] }
+RightStick = { keys = ["KEY_V"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_2"] }
+DpadDown = { keys = ["KEY_1"] }
+DpadLeft = { keys = ["KEY_3"] }
+DpadRight = { keys = ["KEY_4"] }
+
+[profiles.gestures.DpadUp]
+long_press = { keys = ["KEY_F"] }
+
+[profiles.gestures.DpadDown]
+long_press = { keys = ["KEY_Q"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.08
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { multi = [{ layer = "Aim" }, { mouse = "Right" }] }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 3600.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+{start} (Escape) opens the game's menu. GTFO keeps running while it is open, so it is no pause.
+{south} jumps, {east} crouches, {west} reloads and {north} interacts: hold it to pick up a resource pack, open a box or revive a teammate. {rs} shoves enemies away and {l3} sprints.
+{down} brings out your melee weapon, {up} the primary, {left} the special and {right} your tool. Tap the D-pad to switch; hold {up} for the flashlight and {down} to ping what you're looking at. {lb} and {rb} step through the slots.
+Hold {lt} to aim down the sights. The right stick turns more finely while it's held.
+The game has its own pad support, but it only reads buttons, not the sticks, and would fight this setup. If it reacts to the pad as well, switch the pad's buttons off in the game's Controls options.
+These are the default PC keys written from memory and not checked in the game (shove, ping, the flashlight, the tool and the map key especially). The game lets you rebind every key in its settings.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Aim" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Crouch" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Interact" }
+"button:LeftBumper" = { text = "Previous weapon" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Sprint" }
+"button:RightStick" = { text = "Shove" }
+"button:DpadUp" = { text = "Primary" }
+"gesture:button:DpadUp:long_press" = { text = "Flashlight" }
+"button:DpadDown" = { text = "Melee" }
+"gesture:button:DpadDown:long_press" = { text = "Ping" }
+"button:DpadLeft" = { text = "Special" }
+"button:DpadRight" = { text = "Tool" }
+"button:Select" = { text = "Map · status" }
+"button:Start" = { text = "Pause" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles]]
+name = "GTFO + Flick stick"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 300
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { keys = ["KEY_SPACE"] }
+East = { keys = ["KEY_LEFTCTRL"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_E"] }
+LeftBumper = { wheel = "Up" }
+RightBumper = { wheel = "Down" }
+LeftStick = { keys = ["KEY_LEFTSHIFT"] }
+RightStick = { keys = ["KEY_V"] }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+DpadUp = { keys = ["KEY_2"] }
+DpadDown = { keys = ["KEY_1"] }
+DpadLeft = { keys = ["KEY_3"] }
+DpadRight = { keys = ["KEY_4"] }
+
+[profiles.gestures.DpadUp]
+long_press = { keys = ["KEY_F"] }
+
+[profiles.gestures.DpadDown]
+long_press = { keys = ["KEY_Q"] }
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 3600.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 3600.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+{start} (Escape) opens the game's menu. GTFO keeps running while it is open, so it is no pause.
+{south} jumps, {east} crouches, {west} reloads and {north} interacts: hold it to pick up a resource pack, open a box or revive a teammate. {rs} shoves enemies away and {l3} sprints.
+{down} brings out your melee weapon, {up} the primary, {left} the special and {right} your tool. Tap the D-pad to switch; hold {up} for the flashlight and {down} to ping what you're looking at. {lb} and {rb} step through the slots.
+Hold {lt} to aim down the sights. The right stick turns more finely while it's held.
+The game has its own pad support, but it only reads buttons, not the sticks, and would fight this setup. If it reacts to the pad as well, switch the pad's buttons off in the game's Controls options.
+These are the default PC keys written from memory and not checked in the game (shove, ping, the flashlight, the tool and the map key especially). The game lets you rebind every key in its settings.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Aim" }
+"button:South" = { text = "Jump" }
+"button:East" = { text = "Crouch" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Interact" }
+"button:LeftBumper" = { text = "Previous weapon" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Sprint" }
+"button:RightStick" = { text = "Shove" }
+"button:DpadUp" = { text = "Primary" }
+"gesture:button:DpadUp:long_press" = { text = "Flashlight" }
+"button:DpadDown" = { text = "Melee" }
+"gesture:button:DpadDown:long_press" = { text = "Ping" }
+"button:DpadLeft" = { text = "Special" }
+"button:DpadRight" = { text = "Tool" }
+"button:Select" = { text = "Map · status" }
+"button:Start" = { text = "Pause" }
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[layers]]
+name = "Aim"
+indicator = "off"
+
+[layers.right_stick]
+deadzone = 0.08
+curve = 2.8
+key_threshold = 0.5
+
+[layers.right_stick.action.mouse]
+speed = 1300.0
+accel = 0.0
+
+[keyboard_style]
+corners = 0.1
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0a0d0c"
+opacity = 0.9
+
+[keyboard_style.items]
+color = "#171d1b"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#d4781c"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#6f9a84"
+opacity = 0.45
+
+[keyboard_style.gradient]
+color = "#101513"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#2f3d37"
+
+[keyboard_style.type]
+case = "upper"
+letter_spacing = 2
+
+[numpad_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0a0d0c"
+opacity = 0.9
+
+[numpad_style.items]
+color = "#171d1b"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#d4781c"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#6f9a84"
+opacity = 0.45
+
+[numpad_style.gradient]
+color = "#101513"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#2f3d37"
+
+[numpad_style.type]
+case = "upper"
+letter_spacing = 2
+
+[media_style]
+corners = 0.1
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0a0d0c"
+opacity = 0.9
+
+[media_style.items]
+color = "#171d1b"
+opacity = 0.95
+
+[media_style.selected]
+color = "#d4781c"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#6f9a84"
+opacity = 0.45
+
+[media_style.gradient]
+color = "#101513"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#2f3d37"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0a0d0c"
+opacity = 0.9
+
+[menu_style.items]
+color = "#171d1b"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#d4781c"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#6f9a84"
+opacity = 0.45
+
+[menu_style.gradient]
+color = "#101513"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#2f3d37"
+
+[menu_style.glow]
+color = "#6f9a84"
+opacity = 0.25
+blur = 20
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+frame = {kind = "brackets", size = 14, width = 2, color = "#6f9a84"}
+vignette = {color = "#000000", opacity = 0.45, reach = 26}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.08, pitch = 1.1}
+pick = {kind = "click", volume = 0.25}
+open = {kind = "click", volume = 0.08}
+close = {kind = "swish", volume = 0.03, pitch = 1.3}
+
+[sounds.guide]
+open = {kind = "click", volume = 0.1}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.08, pitch = 1.1}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.08, pitch = 1.1}
+pick = {kind = "beep", volume = 0.15, pitch = 1.1}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}
