@@ -1,7 +1,7 @@
 //! Following focus: which game is in front, switching to its profile (or back to the default),
 //! and noticing when a game starts.
 
-use std::{collections::HashMap, time::Instant};
+use std::collections::HashMap;
 
 use super::{Active, Daemon, RECENT_WINDOWS, describe, layered, with_fallback};
 use crate::{
@@ -128,7 +128,7 @@ impl Daemon {
         }
         log!("{game} started");
         self.toast_profile();
-        self.info_timers.game_started(&self.scope.info, Instant::now());
+        self.info_timers.game_started(&self.scope.info, crate::clock::now());
         for dev in self.devices.values_mut() {
             let Some(base) = self.config.profile_for(&dev.id) else { continue };
             let mut out = Vec::new();
@@ -186,10 +186,12 @@ impl Daemon {
             return focus::game_launch_in(&self.config, &focus::running_processes()).filter(|(game, _)| game == active);
         }
         let window = self.focused.as_ref()?;
-        if let Some(game) = focus::game_launch(&self.config, window) {
+        // A rule matching doesn't make the desktop, a launcher or this app fair game.
+        let off_limits = window.pid == 0 || focus::is_own_window(window);
+        if let Some(game) = focus::game_launch(&self.config, window).filter(|_| !off_limits && !crate::quit::protected_name(&window.exe)) {
             return Some(game);
         }
-        if window.pid == 0 || crate::quit::protected(&window.exe) || focus::is_own_window(window) {
+        if off_limits || crate::quit::protected(&window.exe) {
             return None;
         }
         let name = [&window.title, &window.exe, &window.class].into_iter().find(|n| !n.is_empty())?;

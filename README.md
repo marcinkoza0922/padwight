@@ -52,6 +52,8 @@ The library is `packs/*.padpack` in this repository, embedded at build time. See
 
 ## Install
 
+padwight needs a Wayland session; X11 sessions (Xorg, XLibre) aren't supported. Games running under Xwayland, which includes every Proton game, work as usual.
+
 From a release tarball (Linux, x86_64):
 
 ```sh
@@ -63,6 +65,17 @@ cd padwight-*-linux-x86_64
 Or in one line: `curl -fsSL https://github.com/marcinkoza0922/padwight/releases/latest/download/get.sh | sh` (it checks the tarball's checksum and runs the same installer).
 
 It installs padwight for your user, starts the background service at login, and, after asking, copies three small system files with `sudo` (see Permissions below). `padwight-uninstall` (or `./install.sh --uninstall`) removes it, and `--purge` also deletes your settings. `scripts/package.sh` builds the tarball; build it on the oldest distro you want to support, as the binary needs at least the glibc it was built against.
+
+### Runtime libraries
+
+The binary links two libraries beyond glibc, and won't start (not even `padwight doctor`) without them. A minimal install, such as a cloud image, may lack `libasound`:
+
+| Library | Fedora | Debian / Ubuntu | Arch | Void |
+| --- | --- | --- | --- | --- |
+| `libasound.so.2` (overlay sounds) | `alsa-lib` | `libasound2` (`libasound2t64` on 24.04+) | `alsa-lib` | `alsa-lib` |
+| `libxkbcommon.so.0` (keyboard layouts) | `libxkbcommon` | `libxkbcommon0` | `libxkbcommon` | `libxkbcommon` |
+
+`libgcc_s.so.1` and `libm` come with every glibc system. The sound library is linked at build time (rodio/cpal), so it can't be made optional without a code change; with no sound device the overlay is simply silent. `scripts/check-install.sh` fails if the binary needs a library this table doesn't list.
 
 From source:
 
@@ -89,7 +102,7 @@ If the pad that comes back (or replaces it) lacks something the active profile n
 
 `padwight doctor` checks all of this and prints the exact commands for whatever is missing; `padwight doctor --explain` says what each permission is for. The settings window also lists what's missing while the daemon isn't running, and the daemon logs it if it can't start.
 
-- **Write access to `/dev/uinput`**, to create the virtual gamepad, keyboard and mouse. On most desktops (systemd-logind with `uaccess`) you already have it. If not, install `dist/70-padwight-uinput.rules`, which tags the node for `uaccess` so the user at the machine gets access. If `/dev/uinput` doesn't exist, the `uinput` kernel module isn't loaded: `dist/padwight-uinput.conf` in `/etc/modules-load.d/` loads it at boot.
+- **Write access to `/dev/uinput`**, to create the virtual gamepad, keyboard and mouse. On most desktops (systemd-logind with `uaccess`) you already have it. If not, install `dist/70-padwight-uinput.rules`, which tags the node for `uaccess` so the user at the machine gets access. If `/dev/uinput` doesn't exist, the `uinput` kernel module isn't loaded: `dist/padwight-uinput.conf` in `/etc/modules-load.d/` loads it at boot. That access is not specific to padwight: any program you run can create virtual keyboards and mice the same way, and padwight's devices are no more protected than theirs.
 - **Read access to the controller's `/dev/input/event*` node.** `uaccess` covers joysticks. If yours doesn't, add yourself to the `input` group (`sudo usermod -aG input $USER`) and log in again.
 - **Read access to the controller's motion sensor**, for gyro on PlayStation and Switch controllers. It's a separate node that `uaccess` doesn't cover. Install `dist/70-padwight-motion.rules`, which grants it for the `playstation`, `sony` and `nintendo` drivers only, so a laptop's tilt sensor is untouched. Without it, everything but gyro works.
 - **Optional: no access to PlayStation and Switch controllers' raw HID node** (`/dev/hidraw*`). Steam, SDL games and Chromium browsers read those controllers there, past padwight's hold on the input node, so they see every press as well as padwight's virtual pad. `dist/72-padwight-hidraw.rules` closes the raw node to every program (padwight doesn't use it), so they read the input node, which padwight holds. Turn the controller off and on after installing it. The cost: while padwight is off, Steam has no gyro or lightbar control for those controllers either. When padwight finds a program reading a controller this way, it says so in a desktop notification (with a button that opens the settings window) and on screen, and the settings window names it in a banner across the top.
@@ -264,14 +277,14 @@ A setup's Details tab lists recently focused windows, each with a one-click "+ R
 
 Focus tracking depends on your desktop. The daemon picks the right method by itself and logs which one it uses (`padwight status` shows it):
 
-- **KDE Plasma** (Wayland or X11): a small KWin script.
+- **KDE Plasma**: a small KWin script.
 - **Sway**: the compositor's IPC socket (`$SWAYSOCK`).
 - **Hyprland**: its event and command sockets.
 - **niri**: its IPC socket's event stream.
 - **wlroots compositors** (labwc, Wayfire, river, Budgie 10.10 and later, which runs on labwc, and others that offer `wlr-foreign-toplevel-management`): the protocol's window list. It doesn't say which process owns a window, so these match windows by class only, and executable-name rules don't match.
 - **COSMIC**: its toplevel info protocol (`cosmic-toplevel-info`); class rules only, like wlroots. The overlays are ordinary layer-shell windows there.
 - **GNOME** (Mutter): a small GNOME Shell extension, which the daemon installs and enables itself. A log out and back in may be needed the first time.
-- **Cinnamon** (Muffin, Wayland or X11): the same, as a Cinnamon extension, enabled through the `enabled-extensions` setting.
+- **Cinnamon** (Muffin): the same, as a Cinnamon extension, enabled through the `enabled-extensions` setting.
 
 GNOME and Cinnamon can't show the on-screen keyboard, menus or overlays as windows, because Mutter and Muffin have no layer-shell; the same extension shows them instead (experimental). Focus tracking works, through the extension. On other desktops, rules apply while a matching process is running.
 

@@ -257,7 +257,7 @@ impl ActionKind {
 /// for the action at `place` that `on_change` writes back.
 pub(super) fn kind_button<'a>(place: Place<'static>, action: &ButtonAction, names: &Names, on_change: OnAction<'a>) -> Element<'a, Message> {
     let kind = action_kind(action);
-    let arrow = text("▾").size(14).style(|theme: &iced::Theme| text::Style { color: Some(theme.extended_palette().primary.base.color) });
+    let arrow = text("▾").size(14).style(accent_text);
     let (action, names) = (action.clone(), names.clone());
     // What each pick sends is worked out on the click, not on every redraw of every editor.
     button(row![icon(kind, 16.0), text(kind.name()).width(Length::Fill), arrow].spacing(8).align_y(Alignment::Center))
@@ -314,7 +314,7 @@ pub(super) fn stick_button<'a>(current: StickKind, title: String, on_pick: impl 
 
 /// A dropdown-looking button that opens a dialog built when it's clicked.
 fn field<'a>(face: Element<'a, Message>, label: String, width: f32, picker: impl Fn() -> ActionPicker + 'a) -> Element<'a, Message> {
-    let arrow = text("▾").size(14).style(|theme: &iced::Theme| text::Style { color: Some(theme.extended_palette().primary.base.color) });
+    let arrow = text("▾").size(14).style(accent_text);
     button(row![face, text(label).width(Length::Fill), arrow].spacing(8).align_y(Alignment::Center))
         .style(style::field_button)
         .padding([6, 10])
@@ -326,7 +326,7 @@ fn field<'a>(face: Element<'a, Message>, label: String, width: f32, picker: impl
 /// The button a "Gamepad button" action shows its button with: the glyph the game will see and
 /// where the button sits. It opens the dialog of every controller button.
 pub(super) fn pad_button<'a>(current: Button, glyphs: Glyphs, on_change: OnAction<'a>) -> Element<'a, Message> {
-    let arrow = text("▾").size(14).style(|theme: &iced::Theme| text::Style { color: Some(theme.extended_palette().primary.base.color) });
+    let arrow = text("▾").size(14).style(accent_text);
     button(row![pad_chip(current, glyphs), text(picked_name(current)).width(Length::Fill), arrow].spacing(8).align_y(Alignment::Center))
         .style(style::field_button)
         .padding([4, 10])
@@ -340,15 +340,15 @@ pub(super) fn pad_button<'a>(current: Button, glyphs: Glyphs, on_change: OnActio
 fn tile<'a>(choice: &Choice, glyphs: Glyphs) -> Element<'a, Message> {
     let (content, width, height): (Element<'a, Message>, f32, f32) = match choice.face {
         Face::Kind(kind) => {
-            let words = column![text(kind.name()).size(14), text(kind.about()).size(12).color(MUTED_COLOR)].spacing(2);
+            let words = column![text(kind.name()).size(14), text(kind.about()).size(12).style(muted)].spacing(2);
             (row![icon(kind, 20.0), words].spacing(10).align_y(Alignment::Center).into(), TILE_WIDTH, 62.0)
         }
         Face::Stick(k) => {
-            let words = column![text(k.to_string()).size(14), text(k.about()).size(12).color(MUTED_COLOR)].spacing(2);
+            let words = column![text(k.to_string()).size(14), text(k.about()).size(12).style(muted)].spacing(2);
             (row![stick_icon(k, 20.0), words].spacing(10).align_y(Alignment::Center).into(), TILE_WIDTH, 62.0)
         }
         Face::Analog(out) => {
-            let words = column![text(format!("Gamepad {} (analog)", trigger_short(out))).size(14), text("Sends the pull as it is, with zones.").size(12).color(MUTED_COLOR)].spacing(2);
+            let words = column![text(format!("Gamepad {} (analog)", trigger_short(out))).size(14), text("Sends the pull as it is, with zones.").size(12).style(muted)].spacing(2);
             (row![icon(ActionKind::PadTrigger, 20.0), words].spacing(10).align_y(Alignment::Center).into(), TILE_WIDTH, 62.0)
         }
         Face::Pad(b) => (row![pad_chip(b, glyphs), text(position_name(b)).size(14)].spacing(10).align_y(Alignment::Center).into(), PAD_TILE_WIDTH, 40.0),
@@ -368,7 +368,7 @@ pub(super) fn view_action_picker(picker: &ActionPicker) -> Element<'_, Message> 
     let mut groups = column![].spacing(14);
     for (title, choices) in &picker.groups {
         let tiles = choices.iter().map(|c| tile(c, picker.glyphs));
-        groups = groups.push(column![text(*title).size(13).color(MUTED_COLOR), row(tiles).spacing(8).wrap().vertical_spacing(8)].spacing(6));
+        groups = groups.push(column![text(*title).size(13).style(muted), row(tiles).spacing(8).wrap().vertical_spacing(8)].spacing(6));
     }
     let dialog = container(
         column![

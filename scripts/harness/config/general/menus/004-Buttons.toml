@@ -1,0 +1,46 @@
+name = "Buttons"
+kind = "buttons"
+
+[[items]]
+label = "Sa"
+button = "South"
+
+[items.action]
+keys = ["KEY_S"]
+
+[[items]]
+label = "Eb"
+button = "East"
+
+[items.action]
+keys = ["KEY_E"]
+
+[[items]]
+label = "Nc"
+button = "North"
+
+[items.action]
+keys = ["KEY_N"]
+
+[[items]]
+label = "Wd"
+button = "West"
+
+[items.action]
+keys = ["KEY_W"]
+
+[style]
+position = "center"
+scale = 1.0
+
+[style.background]
+color = "#16181c"
+opacity = 0.92
+
+[style.items]
+color = "#30343c"
+opacity = 0.95
+
+[style.selected]
+color = "#2f5db0"
+opacity = 1.0

@@ -159,6 +159,7 @@ fn menu_kind_row<'a>(mi: usize, menu: &Menu) -> Element<'a, Message> {
             kind_row = kind_row.push(
                 checkbox(boxes)
                     .label("Use boxes")
+                    .text_wrapping(text::Wrapping::None)
                     .on_toggle(move |b| Message::SetMenuKind(mi, MenuKind::Radial { stick, boxes: b })),
             );
         }
@@ -186,7 +187,7 @@ fn menu_kind_row<'a>(mi: usize, menu: &Menu) -> Element<'a, Message> {
         }
         MenuKind::List | MenuKind::Buttons => {}
     }
-kind_row.into()
+    kind_row.wrap().vertical_spacing(6).into()
 }
 
 /// A menu's item boxes, one under another, or for a grid, grouped by row under a "Row N" heading
@@ -200,7 +201,7 @@ fn item_boxes<'a>(kind: MenuKind, boxes: Vec<Element<'a, Message>>) -> Element<'
     for r in 0..rest.len().div_ceil(per_row) {
         let tail = rest.split_off(per_row.min(rest.len()));
         let group = std::mem::replace(&mut rest, tail);
-        let heading = text(format!("Row {}", r + 1)).size(12).color(MUTED_COLOR);
+        let heading = text(format!("Row {}", r + 1)).size(12).style(muted);
         rows = rows.push(container(column![heading, column(group).spacing(6)].spacing(6)).padding(8).style(style::card));
     }
     rows.into()
@@ -214,7 +215,7 @@ fn add_menu_item_row<'a>(mi: usize, menu: &Menu) -> Element<'a, Message> {
         .align_y(Alignment::Center);
     if full {
         let more = if menu.kind.grid_columns() < Some(GRID_MAX) { "; add columns to fit more" } else { "" };
-        add = add.push(text(format!("A grid holds up to {GRID_MAX} rows{more}.")).size(12).color(MUTED_COLOR));
+        add = add.push(text(format!("A grid holds up to {GRID_MAX} rows{more}.")).size(12).style(muted));
     }
     add.into()
 }
@@ -663,7 +664,7 @@ impl App {
             card_title(open, title).on_press(Message::ToggleMacro(mi)),
             text(format!("{n} step{} · {total} ms", if n == 1 { "" } else { "s" }))
             .size(13)
-            .color(MUTED_COLOR),
+            .style(muted),
             space::horizontal(),
         ]
         .spacing(12)
@@ -814,7 +815,7 @@ impl App {
                     "{unreleased} held input(s) have no release step; they're released when the macro ends."
                 ))
                 .size(12)
-                .color(MUTED_COLOR),
+                .style(muted),
             );
         }
         column![
@@ -862,7 +863,7 @@ impl App {
         let summary = format!("{rows} row{} · {shown}{lingers}", if rows == 1 { "" } else { "s" });
         let mut header = row![
             card_title(open, title).on_press(Message::ToggleInfo(i)),
-            text(summary).size(13).color(MUTED_COLOR),
+            text(summary).size(13).style(muted),
             space::horizontal(),
         ]
         .spacing(12)
@@ -1011,7 +1012,7 @@ impl App {
             card_title(open, title).on_press(Message::ToggleMenu(mi)),
             text(format!("{} · {items} item{}", menu.kind.tag().short(), if items == 1 { "" } else { "s" }))
                 .size(13)
-                .color(MUTED_COLOR),
+                .style(muted),
             space::horizontal(),
         ]
         .spacing(12)
@@ -1036,17 +1037,17 @@ impl App {
             return Some(text(format!("⚠ {problem}")).size(12).color(ERROR_COLOR).into());
         }
         if let Some(warning) = menu_gyro_warning(self.game(), names, menu) {
-            return Some(text(format!("⚠ {warning}")).size(12).color(WARNING_COLOR).into());
+            return Some(text(format!("⚠ {warning}")).size(12).style(warning_text).into());
         }
         let openers = menu_openers(self.game(), &menu.name);
         let warning = (0..menu.items.len()).find_map(|i| button_item_warning(menu, i, &openers))?;
-        Some(text(format!("⚠ {warning}")).size(12).color(WARNING_COLOR).into())
+        Some(text(format!("⚠ {warning}")).size(12).style(warning_text).into())
     }
 
     pub(super) fn view_menu_editor<'a>(&'a self, mi: usize, menu: &'a Menu, names: &Names) -> Element<'a, Message> {
         let mut rows = menu_basics(mi, menu);
 
-        rows.push(self.menu_items_editor(mi, menu, names, false));
+        rows.push(self.menu_items_editor(mi, menu, names, true));
 
         // Appearance, with a live preview under it.
         let appearance_open = self.open_appearance.contains(&Some(mi));
@@ -1104,48 +1105,46 @@ impl App {
                 Some(slots) => (format!("{}  {}", crate::menu::button_badge(slots[i]), ["up", "right", "down", "left"][i]), 70.0),
                 None => (format!("{}.", i + 1), 32.0),
             };
-            let mut line = row![
-                container(text(name)).width(name_width).padding(iced::Padding::ZERO.top(6)),
-                field("Label", &item.label).on_input(move |l| Message::SetMenuItemLabel(mi, i, l)).id(stage::item_field(mi, i)).width(230),
-                container(row![insert_button(TokenTarget::MenuLabel(mi, i)), char_button(TokenTarget::MenuLabel(mi, i))].spacing(4)),
-            ]
-            .push(token_preview(&item.label, self.config.info_glyphs, self.preview_font()).map(|p| container(p).padding(iced::Padding::ZERO.top(4))))
-            .spacing(8)
-            .align_y(Alignment::Start);
+            let mut line: Vec<Element<'a, Message>> = vec![
+                container(text(name)).width(name_width).padding(iced::Padding::ZERO.top(6)).into(),
+                field("Label", &item.label).on_input(move |l| Message::SetMenuItemLabel(mi, i, l)).id(stage::item_field(mi, i)).width(230).into(),
+                container(row![insert_button(TokenTarget::MenuLabel(mi, i)), char_button(TokenTarget::MenuLabel(mi, i))].spacing(4)).into(),
+            ];
+            line.push(token_preview(&item.label, self.config.info_glyphs, self.preview_font()).map(|p| container(p).padding(iced::Padding::ZERO.top(4))).into());
             if weighted {
                 // The arc's size, with its value beside it so the slider says what it is.
                 let size = row![
                     slider(0.25..=4.0, item.weight, move |w| Message::SetMenuItemWeight(mi, i, w)).step(0.25_f32).width(90),
-                    text(format!("Size {:.2}×", item.weight)).size(13),
+                    text(format!("Size {:.2}×", item.weight)).size(13).wrapping(text::Wrapping::None),
                 ]
                 .spacing(6)
                 .align_y(Alignment::Center);
-                line = line.push(tooltip(
+                line.push(tooltip(
                     container(size).padding(iced::Padding::ZERO.top(6)),
                     container(text(format!("Arc size: {:.2}× an equal share", item.weight)).size(13)).padding(8).style(style::tooltip),
                     tooltip::Position::Top,
-                ));
+                ).into());
             }
             if quick {
-                line = line.push(item_button_picker(mi, i, item.button));
+                line.push(item_button_picker(mi, i, item.button));
             }
             let action = fill_x(action_editor(&item.action, Button::South, item_kinds, set_action(target), KeyField::root(target), &item_names));
             let below = if narrow { Some(action) } else {
-                line = line.push(action);
+                line.push(action);
                 None
             };
             if let Some(grid) = &grid {
-                line = line.push(merge_buttons(mi, i, item.span, grid));
+                line.push(merge_buttons(mi, i, item.span, grid));
             }
             if direction_slots.is_none() {
                 let small = |label: &'static str, msg: Option<Message>| {
                     button(text(label).size(13)).style(style::secondary).on_press_maybe(msg)
                 };
-                line = line
-                    .push(small("↑", (i > 0).then_some(Message::MoveMenuItem(mi, i, true))))
-                    .push(small("↓", (i < last).then_some(Message::MoveMenuItem(mi, i, false))))
-                    .push(small("✕", Some(Message::RemoveMenuItem(mi, i))));
+                line.push(small("↑", (i > 0).then_some(Message::MoveMenuItem(mi, i, true))).into());
+                line.push(small("↓", (i < last).then_some(Message::MoveMenuItem(mi, i, false))).into());
+                line.push(small("✕", Some(Message::RemoveMenuItem(mi, i))).into());
             }
+            let line = row(line).spacing(8).align_y(Alignment::Start).wrap().vertical_spacing(4);
             let boxed = column![line].spacing(4).push(below).push(item_note(menu, i, reachable, names, &openers));
             boxes.push(container(boxed).padding(8).style(style::inset).into());
         }
@@ -1154,7 +1153,7 @@ impl App {
             items = items.push(add_menu_item_row(mi, menu));
         } else {
             items = items.push(
-                text("Set a direction to \"Open menu…\" to open another menu with the same close button.").size(12).color(MUTED_COLOR),
+                text("Set a direction to \"Open menu…\" to open another menu with the same close button.").size(12).style(muted),
             );
         }
         items.into()
@@ -1267,10 +1266,10 @@ fn item_button_picker<'a>(mi: usize, i: usize, button: Option<Button>) -> Elemen
 /// What's wrong with item `i` of `menu`, under its row: a problem that stops saving, or a warning
 /// that nothing can pick it.
 fn item_note<'a>(menu: &Menu, i: usize, reachable: &[&Menu], names: &Names, openers: &[Vec<Button>]) -> Option<Element<'a, Message>> {
-    let note = |t: String, color| text(format!("⚠ {t}")).size(12).color(color).into();
+    let note = |t: String, style: fn(&iced::Theme) -> iced::widget::text::Style| text(format!("⚠ {t}")).size(12).style(style).into();
     match item_problem(menu, &menu.items[i].action, reachable, names) {
-        Some(problem) => Some(note(problem, ERROR_COLOR)),
-        None => button_item_warning(menu, i, openers).map(|w| note(w, WARNING_COLOR)),
+        Some(problem) => Some(note(problem, |_| iced::widget::text::Style { color: Some(ERROR_COLOR) })),
+        None => button_item_warning(menu, i, openers).map(|w| note(w, warning_text)),
     }
 }
 

@@ -1010,15 +1010,26 @@ fn reading_text(reading: &Icon) -> String {
     }
 }
 
+/// When set (seconds since the epoch), the clock readings show this moment in UTC instead of the
+/// local time now, so that pictures drawn for regression checks are the same every time.
+static PINNED_TIME: std::sync::atomic::AtomicI64 = std::sync::atomic::AtomicI64::new(i64::MIN);
+
+/// Makes the time and date readings show `secs` since the epoch, in UTC, from now on.
+pub fn pin_time(secs: i64) {
+    PINNED_TIME.store(secs, std::sync::atomic::Ordering::Relaxed);
+}
+
 /// Formats the local time with a `strftime` pattern.
 #[cfg(target_os = "linux")]
 fn local_time(pattern: &str) -> String {
     let Ok(pattern) = std::ffi::CString::new(pattern) else { return String::new() };
     // SAFETY: localtime_r and strftime write into the buffers given; tm is plain data.
     unsafe {
-        let now = libc::time(std::ptr::null_mut());
+        let pinned = PINNED_TIME.load(std::sync::atomic::Ordering::Relaxed);
+        let now = if pinned == i64::MIN { libc::time(std::ptr::null_mut()) } else { pinned as libc::time_t };
         let mut tm: libc::tm = std::mem::zeroed();
-        if libc::localtime_r(&now, &mut tm).is_null() {
+        let done = if pinned == i64::MIN { libc::localtime_r(&now, &mut tm) } else { libc::gmtime_r(&now, &mut tm) };
+        if done.is_null() {
             return String::new();
         }
         let mut buf = [0u8; 64];
@@ -1042,6 +1053,10 @@ pub struct SystemStats {
     pub wifi: Option<u8>,
 }
 
+/// How long the first sample waits to measure CPU load against: long enough for a few jiffies on
+/// every core, short enough not to be felt once.
+const FIRST_CPU_WINDOW: std::time::Duration = std::time::Duration::from_millis(40);
+
 /// Samples CPU, memory and GPU load from /proc and /sys. CPU load is the change since the
 /// previous sample.
 #[derive(Default)]
@@ -1053,6 +1068,12 @@ pub struct Sampler {
 
 impl Sampler {
     pub fn sample(&mut self) {
+        // The first sample has nothing to compare with: take a baseline and a short second look
+        // so CPU shows a real value from the first display rather than "n/a" for a second.
+        if self.last_cpu.is_none() {
+            self.last_cpu = cpu_times();
+            std::thread::sleep(FIRST_CPU_WINDOW);
+        }
         let cpu = cpu_times();
         self.stats.cpu = match (self.last_cpu, cpu) {
             (Some((busy0, total0)), Some((busy1, total1))) if total1 > total0 => {
@@ -1065,7 +1086,7 @@ impl Sampler {
         self.stats.gpu = gpu_busy();
         self.stats.battery = battery();
         self.stats.wifi = wifi_strength();
-        self.sampled_at = Some(Instant::now());
+        self.sampled_at = Some(crate::clock::now());
     }
 }
 

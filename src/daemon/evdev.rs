@@ -36,6 +36,8 @@ pub(super) struct Nodes {
     pub(super) touch: HashMap<NodeKey, PairedNode>,
     /// Controller motion sensors we lack permission to open (names), for the GUI to explain.
     denied: HashMap<NodeKey, String>,
+    /// The last grab failure logged for each node, so a pad held elsewhere logs once.
+    grab_failures: super::grab_failures::GrabFailures,
 }
 
 /// A plain Xbox 360 pad, for an injected controller whose output goes out for real.
@@ -74,6 +76,14 @@ impl PairedNode {
         let named_after = !comparable && self.name.len() > name.len() && self.name.starts_with(name);
         same_parent || same_uniq || named_after
     }
+}
+
+/// Whether the motion-sensor or touchpad node `sibling` belongs to the controller whose gamepad node is
+/// `pad`, by the rule the daemon pairs them with (see [`PairedNode::belongs_to`]). `padwight debug record`
+/// uses it to gather one controller's nodes.
+pub(crate) fn same_controller(sibling: (&Path, &str, Option<&str>), pad: (&Path, &str, Option<&str>)) -> bool {
+    let node = PairedNode { path: sibling.0.to_path_buf(), name: sibling.1.to_string(), parent: hid_parent(sibling.0), uniq: sibling.2.map(str::to_string) };
+    node.matches(pad.1, &hid_parent(pad.0), &pad.2.map(str::to_string))
 }
 
 impl Daemon {
@@ -166,6 +176,7 @@ impl Daemon {
         self.nodes.motion.retain(|k, _| present.contains(k));
         self.nodes.touch.retain(|k, _| present.contains(k));
         self.nodes.denied.retain(|k, _| present.contains(k));
+        self.nodes.grab_failures.retain_present(&present.iter().map(|(p, _)| p.clone()).collect());
         self.attach_motion();
         self.attach_touchpad();
         self.gamepads.retain(|k, _| present.contains(k));
@@ -209,9 +220,15 @@ impl Daemon {
         let uniq = dev.unique_name().map(str::to_string);
         let paddles = input::has_paddles(&dev);
         if let Err(e) = dev.grab() {
-            log!("cannot grab {name} ({}): {e}", path.display());
+            if self.nodes.grab_failures.note(&path, &e.to_string()) {
+                match super::grab_failures::holder(&path) {
+                    Some(holder) => log!("cannot grab {name} ({}): {e}; {holder} has it open (retrying quietly)", path.display()),
+                    None => log!("cannot grab {name} ({}): {e} (retrying quietly)", path.display()),
+                }
+            }
             return;
         }
+        self.nodes.grab_failures.recovered(&path);
         let ff = FfSpec::of(&dev);
         let identity = PadIdentity::resolve(self.identity_override, model, self.active_support());
         let Some(new_pad) = self.pad_for_new(ff.as_ref(), identity, self.config.controller(&pad_id).and_then(|c| c.player)) else { return };

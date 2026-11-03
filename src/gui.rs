@@ -47,6 +47,7 @@ mod activity;
 mod chars;
 mod controllers;
 mod checks;
+pub(crate) mod layout_check;
 mod cycles;
 mod font_menu;
 mod games;
@@ -65,6 +66,10 @@ mod mouse_region;
 mod menu_grid;
 #[cfg(test)]
 mod menu_suite;
+#[cfg(test)]
+mod harness;
+#[cfg(test)]
+mod save_tests;
 mod open_cards;
 mod keys;
 mod layers;
@@ -128,6 +133,12 @@ use search::*;
 use stage::{StageMessage, StageTarget, appearance_row};
 use widgets::*;
 
+/// Why the window can't open, when the session has neither a Wayland nor an X11 display.
+pub fn missing_display(wayland: Option<&str>, x11: Option<&str>) -> Option<&'static str> {
+    let set = |v: Option<&str>| v.is_some_and(|s| !s.is_empty());
+    (!set(wayland) && !set(x11)).then_some("no graphical session found: run padwight gui from your desktop (the background service doesn't need one)")
+}
+
 pub fn run() -> iced::Result {
     // scripts/headless.sh sets PADWIGHT_NO_DAEMON: a daemon started from there would outlive the
     // virtual display and take the real controllers.
@@ -172,8 +183,49 @@ const LABEL_WIDTH: f32 = 170.0;
 const SIDEBAR_WIDTH: f32 = 210.0;
 const ERROR_COLOR: Color = Color::from_rgb(0.9, 0.3, 0.3);
 const MUTED_COLOR: Color = Color::from_rgb(0.55, 0.55, 0.6);
+
+/// De-emphasised text: grey, but dark enough on a light window and light enough on a dark one to
+/// keep WCAG AA contrast (`MUTED_COLOR` alone cannot do both).
+/// Error text in the same way.
+fn error_text(_: &iced::Theme) -> iced::widget::text::Style {
+    iced::widget::text::Style { color: Some(ERROR_COLOR) }
+}
+
+fn muted(theme: &iced::Theme) -> iced::widget::text::Style {
+    let color = if theme.extended_palette().is_dark { Color::from_rgb(0.81, 0.81, 0.85) } else { Color::from_rgb(0.28, 0.28, 0.33) };
+    iced::widget::text::Style { color: Some(color) }
+}
+/// Text in the accent, moved to read on the theme's surfaces.
+fn accent_text(theme: &iced::Theme) -> iced::widget::text::Style {
+    iced::widget::text::Style { color: Some(style::accent(theme)) }
+}
+
+/// The window's theme: iced's own for `mode`, with the colors nudged where the built-in pairs
+/// leave text just short of AA (4.5:1).
+pub(crate) fn app_theme(mode: iced::theme::Mode) -> iced::Theme {
+    let mut palette = <iced::Theme as iced::theme::Base>::default(mode).palette();
+    palette.primary = Color::from_rgb8(0x55, 0x64, 0xed);
+    palette.success = Color::from_rgb8(0x1c, 0x7a, 0x62);
+    iced::Theme::custom("Padwight", palette)
+}
+
 /// Something that saves but likely won't work as meant, such as a menu item nothing can pick.
 const WARNING_COLOR: Color = Color::from_rgb(0.85, 0.58, 0.1);
+/// Warning text on the light theme, where the amber above is too pale to read.
+const WARNING_COLOR_LIGHT: Color = Color::from_rgb(0.54, 0.35, 0.0);
+/// Text that says something is fine, and the same on the light theme.
+const OK_COLOR: Color = Color::from_rgb(0.3, 0.7, 0.4);
+const OK_COLOR_LIGHT: Color = Color::from_rgb(0.12, 0.48, 0.23);
+
+/// Text in the warning amber, deepened on the light theme.
+fn warning_text(theme: &iced::Theme) -> iced::widget::text::Style {
+    iced::widget::text::Style { color: Some(if theme.extended_palette().is_dark { WARNING_COLOR } else { WARNING_COLOR_LIGHT }) }
+}
+
+/// Text in the "all good" green, deepened on the light theme.
+fn ok_text(theme: &iced::Theme) -> iced::widget::text::Style {
+    iced::widget::text::Style { color: Some(if theme.extended_palette().is_dark { OK_COLOR } else { OK_COLOR_LIGHT }) }
+}
 
 /// A controller as the editor sees it: its model (`None` for a generic pad) and the family whose
 /// button glyphs it uses.
@@ -934,7 +986,7 @@ impl App {
             Appearance::Light => iced::theme::Mode::Light,
             Appearance::Dark => iced::theme::Mode::Dark,
         };
-        <iced::Theme as iced::theme::Base>::default(mode)
+        app_theme(mode)
     }
 
     fn theme_for(&self, window: iced::window::Id) -> iced::Theme {
@@ -1234,7 +1286,11 @@ impl App {
                 self.unreadable = err;
             }
             Message::SetEnabled(on) => return call_ok(Request::SetEnabled(on)),
-            Message::InstallUpdate => return call_ok(Request::InstallUpdate),
+            Message::InstallUpdate => {
+                // The daemon answers once the update has started, not when it is done.
+                self.message = Some(("Updating padwight: it restarts when the update is installed. If it doesn't, run `padwight update` to see why.".into(), false));
+                return call_ok(Request::InstallUpdate);
+            }
             Message::SetProfileLock(on) => return Task::batch([call_ok(Request::SetProfileLock(on)), Task::done(Message::Poll)]),
             Message::ActivateProfile(at) => {
                 if self.saved.profile(&at).is_some() {
@@ -1449,6 +1505,12 @@ impl App {
     }
 
     fn view(&self) -> Element<'_, Message> {
+        self.view_with_popups(true)
+    }
+
+    /// The window as `view` draws it, with the popup and the tour left off when `popups` is false
+    /// (the layout check tells the page's own text from what a popup covers).
+    fn view_with_popups(&self, popups: bool) -> Element<'_, Message> {
         let page: Element<'_, Message> = match &self.page {
             // Each part in a card, as every other page's parts are.
             Page::Overview => column![
@@ -1487,10 +1549,10 @@ impl App {
         let base = row![self.view_sidebar(), rule::vertical(1), main];
         let mut layers = stack![base];
         // While the stage is up, what it opens shows over it instead.
-        if let Some(popup) = self.popup().filter(|_| self.stage.is_none()) {
+        if let Some(popup) = self.popup().filter(|_| popups && self.stage.is_none()) {
             layers = layers.push(popup);
         }
-        if let Some(step) = self.tour {
+        if let Some(step) = self.tour.filter(|_| popups) {
             layers = layers.push(self.view_tour(step));
         }
         layers.into()
@@ -1537,7 +1599,7 @@ impl App {
         let shown = self.picked_controller().map(|d| &d.profile).filter(|p| !p.is_empty());
         let setup = pick.setup_box().input_style(style::text_field).menu_style(style::dropdown_menu).padding([6, 10]).width(SETTING_WIDTH);
         let profile = pick.profile_box(shown).input_style(style::text_field).menu_style(style::dropdown_menu).padding([6, 10]).width(SETTING_WIDTH);
-        let pair = row![setup, text("›").size(20).color(MUTED_COLOR), profile].spacing(8).align_y(Alignment::Center);
+        let pair = row![setup, text("›").size(20).style(muted), profile].spacing(8).align_y(Alignment::Center);
         let Some(status) = self.status.as_ref().filter(|s| s.devices.iter().filter(|d| !d.id.is_empty()).count() > 0) else {
             return labelled("Active profile", pair);
         };
@@ -1594,7 +1656,7 @@ impl App {
                 code("padwight daemon"),
                 ". You can still edit: your changes are saved and take effect once it starts.",
             ];
-            header = header.push(how.size(13).color(MUTED_COLOR));
+            header = header.push(how.size(13).style(muted));
         }
         if self.page == Page::Overview
             && let Some(banner) = self.view_system_check_banner()
@@ -1607,8 +1669,8 @@ impl App {
     fn view_footer(&self) -> Element<'_, Message> {
         let dirty = self.config != self.saved;
         let msg: Element<'_, Message> = match &self.message {
-            Some((m, is_err)) => text(m).color(if *is_err { ERROR_COLOR } else { MUTED_COLOR }).into(),
-            None if dirty => text("Unsaved changes").color(MUTED_COLOR).into(),
+            Some((m, is_err)) => text(m).style(if *is_err { error_text } else { muted }).into(),
+            None if dirty => text("Unsaved changes").style(muted).into(),
             None => space().into(),
         };
         let mut actions = row![msg, space::horizontal()].spacing(8).align_y(Alignment::Center);
@@ -1629,7 +1691,7 @@ impl App {
 
 /// A control with a small muted label above it.
 fn labelled<'a>(label: &'static str, control: impl Into<Element<'a, Message>>) -> Element<'a, Message> {
-    column![text(label).size(11).color(MUTED_COLOR), control.into()].spacing(2).into()
+    column![text(label).size(11).style(muted), control.into()].spacing(2).into()
 }
 
 /// Ctrl+Z, without Shift, undoes the last edit.
@@ -1713,3 +1775,15 @@ fn watch<T: serde::de::DeserializeOwned + Send + 'static>(
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod display_tests {
+    use super::missing_display;
+
+    #[test]
+    fn no_display_is_named_and_a_display_is_not() {
+        assert!(missing_display(None, Some("")).unwrap().starts_with("no graphical session found"));
+        assert!(missing_display(Some("wayland-0"), None).is_none());
+        assert!(missing_display(None, Some(":0")).is_none());
+    }
+}

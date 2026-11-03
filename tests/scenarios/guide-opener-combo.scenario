@@ -1,0 +1,28 @@
+# OVL-6: the Guide opener moved to the combo LB + RB. The Guide button does nothing any more;
+# the combo opens the overlay and again closes it.
+append tests/scenarios/fragments/opener-combo-bumpers.toml
+tap guide 60
+advance 300
+expect overlay showing none
+press lb
+advance 20
+press rb
+advance 300
+release lb rb
+advance 300
+expect overlay showing guide
+press lb
+advance 20
+press rb
+advance 300
+release lb rb
+advance 300
+expect overlay showing none
+---
+shifts mode Guide layers -                              @380
+sound guide Open rise                                   @380
+overlay menu "Guide" selected "Quick Settings"          @380
+overlay menu "Guide" selected "Quick Settings" + info 1 @480
+shifts mode - layers -                                  @1000
+sound guide Close fall                                  @1000
+overlay none                                            @1000

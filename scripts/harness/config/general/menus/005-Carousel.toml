@@ -1,0 +1,38 @@
+name = "Carousel"
+
+[kind.carousel]
+controls = "Bumpers"
+
+[[items]]
+label = "One"
+
+[items.action]
+keys = ["KEY_O"]
+
+[[items]]
+label = "Two"
+
+[items.action]
+keys = ["KEY_T"]
+
+[[items]]
+label = "Three"
+
+[items.action]
+keys = ["KEY_T"]
+
+[style]
+position = "center"
+scale = 1.0
+
+[style.background]
+color = "#16181c"
+opacity = 0.92
+
+[style.items]
+color = "#30343c"
+opacity = 0.95
+
+[style.selected]
+color = "#2f5db0"
+opacity = 1.0

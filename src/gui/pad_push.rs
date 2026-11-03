@@ -43,6 +43,6 @@ pub(super) fn stick_editor<'a>(stick: Stick, angle: f32, amount: f32, on_change:
         slider_editor(0.0..=359.0, angle.rem_euclid(360.0).round(), 1.0, "°", move |a| set(&on_change, stick, a, amount))
     };
     let how_far = fraction_editor(0.0..=1.0, amount, 0.01, "pushed", move |a| set(&on_change, stick, angle, a));
-    let toward = text(format!("Toward {}", angle_name(angle))).size(12).color(MUTED_COLOR);
+    let toward = text(format!("Toward {}", angle_name(angle))).size(12).style(muted);
     column![which, compass, aim, toward, how_far].spacing(6).into()
 }

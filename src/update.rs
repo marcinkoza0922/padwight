@@ -152,11 +152,23 @@ fn install(version: &str) -> Result<()> {
     for file in [format!("{name}.tar.gz"), format!("{name}.tar.gz.sha256")] {
         run_tool(Command::new("curl").args(["-fsSL", "--max-time", "300", "-o"]).arg(work.0.join(&file)).arg(format!("{base}/{file}")), "download")?;
     }
-    run_tool(Command::new("sha256sum").args(["-c", &format!("{name}.tar.gz.sha256")]).current_dir(&work.0), "checksum check: the download doesn't match")?;
+    check_checksum(&work.0, &name)?;
     run_tool(Command::new("tar").arg("-C").arg(&work.0).arg("-xzf").arg(work.0.join(format!("{name}.tar.gz"))), "unpacking")?;
     // The installer refreshes the binary, the service file, the icon and the menu entry. It leaves
     // the system files and the restart to us.
     run_tool(Command::new(work.0.join(&name).join("install.sh")).arg("--update"), "install")
+}
+
+/// Checks the downloaded archive against its published checksum.
+fn check_checksum(dir: &Path, name: &str) -> Result<()> {
+    let mut cmd = Command::new("sha256sum");
+    cmd.args(["-c", &format!("{name}.tar.gz.sha256")]).current_dir(dir);
+    checksum_result(run_tool(&mut cmd, "checksum check"))
+}
+
+/// Turns a failed checksum run into a sentence a player understands.
+fn checksum_result(run: Result<()>) -> Result<()> {
+    run.map_err(|_| anyhow::anyhow!("the download doesn't match its checksum, so it may be damaged; nothing was installed. Try again"))
 }
 
 fn run_tool(cmd: &mut Command, what: &str) -> Result<()> {
@@ -188,10 +200,22 @@ fn restart_service() {
 struct Scratch(PathBuf);
 
 impl Scratch {
+    /// A fresh folder only this user can reach. It is never under a shared place like `/tmp`:
+    /// someone else could plant the folder and swap the download after its checksum was checked.
     fn new() -> Result<Self> {
-        let dir = dirs::cache_dir().unwrap_or_else(std::env::temp_dir).join("padwight").join(format!("update-{}", std::process::id()));
+        use std::os::unix::fs::{DirBuilderExt, MetadataExt};
+        let base = dirs::cache_dir().or_else(dirs::runtime_dir).context("no cache or runtime folder to download into")?.join("padwight");
+        std::fs::DirBuilder::new().recursive(true).mode(0o700).create(&base).with_context(|| format!("making {}", base.display()))?;
+        // SAFETY: getuid has no arguments and cannot fail.
+        let me = unsafe { libc::getuid() };
+        let meta = std::fs::symlink_metadata(&base)?;
+        if !meta.is_dir() || meta.uid() != me {
+            bail!("{} isn't a folder of yours", base.display());
+        }
+        let dir = base.join(format!("update-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).with_context(|| format!("making {}", dir.display()))?;
+        // Not recursive: it fails if anything, a link included, is already there.
+        std::fs::DirBuilder::new().mode(0o700).create(&dir).with_context(|| format!("making {}", dir.display()))?;
         Ok(Self(dir))
     }
 }
@@ -205,6 +229,23 @@ impl Drop for Scratch {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_checksum_failure_reads_as_a_sentence() {
+        let err = checksum_result(run_tool(&mut Command::new("false"), "checksum check")).unwrap_err().to_string();
+        assert!(err.contains("doesn't match its checksum") && !err.contains("match failed"), "{err}");
+    }
+
+    #[test]
+    fn the_scratch_folder_is_private() {
+        use std::os::unix::fs::PermissionsExt;
+        let scratch = Scratch::new().unwrap();
+        let mode = std::fs::metadata(&scratch.0).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o700);
+        let dir = scratch.0.clone();
+        drop(scratch);
+        assert!(!dir.exists());
+    }
 
     #[test]
     fn reads_the_version_from_the_redirect() {

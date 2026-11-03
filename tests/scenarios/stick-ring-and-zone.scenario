@@ -1,0 +1,17 @@
+# The left stick is a ring of four keys, and a full push adds Shift.
+setup tests/scenarios/packs/input.padpack Stick keys
+stick left 0 -0.6
+advance 50
+stick left 0.6 0
+advance 50
+stick left 1 0
+advance 50
+stick left 0 0
+advance 50
+---
+key KEY_W down         @0
+key KEY_W up           @50
+key KEY_D down         @50
+key KEY_LEFTSHIFT down @100
+key KEY_D up           @150
+key KEY_LEFTSHIFT up   @150

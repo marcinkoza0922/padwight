@@ -18,7 +18,7 @@ pub(super) fn figures<'a>(shown: Shown) -> [Element<'a, Message>; 2] {
         .on_exit(Message::ProbeStick(1.0));
     let shape_pic = svg(svg::Handle::from_memory(shape_svg(&shown).into_bytes())).width(SIDE).height(SIDE);
 
-    let faint = |s: &'static str| text(s).size(11).color(MUTED_COLOR);
+    let faint = |s: &'static str| text(s).size(11).style(muted);
     let ticks = row![faint("0%"), space().width(Length::Fill), faint("Stick push"), space().width(Length::Fill), faint("100%")].width(W);
     let sideways = shown.held(shown.push());
     let across = format!("{sideways:.0} px/s across, {:.0} up and down", sideways * shown.response.y_scale);

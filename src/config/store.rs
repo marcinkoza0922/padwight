@@ -64,6 +64,7 @@ pub fn root_of(path: &Path) -> &Path {
 /// `setup.toml` gives the default General's settings, with its items read as usual. A setup that
 /// couldn't be saved as it is (see [`super::problems`]) is left out and kept with its folder too.
 pub fn load(root: &Path, config: &mut Config) -> Result<()> {
+    recover(root);
     let mut reading = Reading { root, kept: Vec::new() };
     let general = saved(root, GENERAL);
     config.general = if general.join(SETUP_FILE).exists() {
@@ -140,6 +141,9 @@ fn copy_item(to: &mut Game, from: &Game, kind: ItemKind, name: &str, new: &str) 
     }
 }
 
+/// Written last into the staging folder: the new tree is complete.
+const COMPLETE: &str = "complete";
+
 /// Writes every setup under `root`, replacing what is there. The new tree is built
 /// beside the old one and then swapped in, so a save that fails part way leaves the old setups.
 pub fn save(root: &Path, config: &Config) -> Result<()> {
@@ -154,26 +158,70 @@ pub fn save(root: &Path, config: &Config) -> Result<()> {
         write_setup(&staging.join(SETUPS).join(numbered(i, &game.name)), game)?;
     }
     unreadable::put_back(&staging, &config.unreadable)?;
-    for part in [GENERAL, SETUPS] {
-        // The old folder is set aside, not deleted, until the new one is in place: at every
-        // moment one of them is whole, and `saved` reads whichever is there.
-        let (target, old) = (root.join(part), previous(root, part));
-        if target.exists() {
-            if old.exists() {
-                fs::remove_dir_all(&old).with_context(|| format!("removing {}", old.display()))?;
-            }
-            fs::rename(&target, &old).with_context(|| format!("replacing {}", target.display()))?;
-        }
-        fs::rename(staging.join(part), &target).with_context(|| format!("writing {}", target.display()))?;
-        if old.exists() {
-            fs::remove_dir_all(&old).with_context(|| format!("removing {}", old.display()))?;
-        }
-    }
+    sync_to_disk(&staging)?;
+    // From here the new tree is whole on disk: a swap that is cut short is finished by the next
+    // load (`recover`), so General and the setups are never one old and one new.
+    write_private(&staging.join(COMPLETE), "")?;
+    sync_to_disk(&staging)?;
+    swap_in(root, &staging)?;
+    sync_to_disk(root)?;
     fs::remove_dir_all(&staging)?;
     // Folded into the setups when it was loaded.
     let shared = root.join(SHARED);
     if shared.exists() {
         fs::remove_dir_all(&shared).with_context(|| format!("removing {}", shared.display()))?;
+    }
+    Ok(())
+}
+
+/// Puts the staged General and setups in place of the saved ones, each by setting the old folder
+/// aside, renaming the new one in and deleting the old. A part already moved is skipped, so it
+/// can be run again after a crash.
+fn swap_in(root: &Path, staging: &Path) -> Result<()> {
+    for part in [GENERAL, SETUPS] {
+        if !staging.join(part).exists() {
+            continue;
+        }
+        // The old folder is set aside, not deleted, until the new one is in place: at every
+        // moment one of them is whole, and `saved` reads whichever is there.
+        let (target, old) = (root.join(part), previous(root, part));
+        if target.exists() {
+            if old.exists() {
+                crate::faults::io("save.remove_old")?;
+                fs::remove_dir_all(&old).with_context(|| format!("removing {}", old.display()))?;
+            }
+            crate::faults::io("save.set_aside")?;
+            fs::rename(&target, &old).with_context(|| format!("replacing {}", target.display()))?;
+        }
+        crate::faults::io("save.rename")?;
+        fs::rename(staging.join(part), &target).with_context(|| format!("writing {}", target.display()))?;
+        if old.exists() {
+            crate::faults::io("save.cleanup")?;
+            fs::remove_dir_all(&old).with_context(|| format!("removing {}", old.display()))?;
+        }
+    }
+    Ok(())
+}
+
+/// Finishes a save that was cut short after its new tree was complete (the marker is the last
+/// thing written to the staging folder), so the setups load as the saved version, not a mix.
+/// Best effort: a load must not fail over it. An incomplete staging folder is left for the next
+/// save to clear.
+fn recover(root: &Path) {
+    let staging = root.join(".saving");
+    if staging.join(COMPLETE).exists() && swap_in(root, &staging).is_ok() {
+        let _ = fs::remove_dir_all(&staging);
+    }
+}
+
+/// Flushes everything written to the filesystem `dir` is on, so a crash or power cut after the
+/// swap can't leave the new folders with empty files. One call covers the whole staged tree.
+fn sync_to_disk(dir: &Path) -> Result<()> {
+    crate::faults::io("save.fsync")?;
+    let dir = fs::File::open(dir)?;
+    // SAFETY: syncfs takes only the open descriptor, which `dir` keeps alive.
+    if unsafe { libc::syncfs(std::os::fd::AsRawFd::as_raw_fd(&dir)) } != 0 {
+        return Err(std::io::Error::last_os_error()).context("flushing the config folder to disk");
     }
     Ok(())
 }
@@ -197,6 +245,7 @@ pub fn app_settings(config: &Config) -> Result<String> {
 
 /// Writes `text` to `path`, readable only by its owner.
 pub fn write_private(path: &Path, text: impl AsRef<[u8]>) -> Result<()> {
+    crate::faults::io("save.write")?;
     private_file(path)?.write_all(text.as_ref())?;
     Ok(())
 }

@@ -10,21 +10,28 @@ const GRACE: Duration = Duration::from_secs(3);
 /// Programs that must never be force quit: the desktop itself, so a stray hold with no
 /// window in front (or the shell focused) can't take the session down.
 const PROTECTED: &[&str] = &[
-    "plasmashell", "kwin_wayland", "kwin_wayland_wrapper", "kwin_x11", "krunner", "xorg", "xwayland", "gnome-shell",
+    "plasmashell", "kwin_wayland", "kwin_wayland_wrapper", "krunner", "xwayland", "gnome-shell",
     "mutter", "sway", "hyprland", "weston", "labwc", "river", "niri", "cosmic-comp", "wayfire", "systemd", "sddm",
     "gdm", "lightdm", "login", "pipewire", "wireplumber", "padwight",
+    // The session's plumbing and the launchers: ending one takes every game under it too.
+    "xorg", "dbus-daemon", "dbus-broker", "ksmserver", "kded5", "kded6", "gnome-session", "gnome-session-b",
+    "steam", "steamwebhelper", "heroic", "lutris", "bottles",
 ];
 
 /// Whether a window of this executable is off limits to force quit.
 pub fn protected(exe: &str) -> bool {
-    let exe = exe.trim().to_ascii_lowercase();
-    exe.is_empty() || PROTECTED.contains(&exe.as_str())
+    exe.trim().is_empty() || protected_name(exe)
+}
+
+/// Whether this executable name is on the list (an unknown, empty one is not).
+pub fn protected_name(exe: &str) -> bool {
+    PROTECTED.contains(&exe.trim().to_ascii_lowercase().as_str())
 }
 
 /// `pid` and all its descendants (children first, so a launcher can't respawn them), given
 /// each process's parent. `me` (this program, should a game have started it) and what it started
 /// are left out.
-fn tree(pid: u32, parents: &HashMap<u32, u32>, me: u32) -> Vec<u32> {
+pub(crate) fn tree(pid: u32, parents: &HashMap<u32, u32>, me: u32) -> Vec<u32> {
     if pid == me {
         return Vec::new();
     }
@@ -81,19 +88,36 @@ fn alive(pid: u32) -> bool {
     unsafe { libc::kill(pid as libc::pid_t, 0) == 0 }
 }
 
+/// The kernel's name for `pid` (its first 15 bytes), as `/proc/<pid>/comm` has it.
+#[cfg(target_os = "linux")]
+fn comm(pid: u32) -> Option<String> {
+    fs::read_to_string(format!("/proc/{pid}/comm")).ok().map(|c| c.trim().to_string())
+}
+
+/// When `pid` started, in clock ticks since boot: tells a process from a later one that got the
+/// same pid.
+#[cfg(target_os = "linux")]
+fn start_time(pid: u32) -> Option<u64> {
+    let stat = fs::read_to_string(format!("/proc/{pid}/stat")).ok()?;
+    stat[stat.rfind(')')? + 1..].split_whitespace().nth(19)?.parse().ok()
+}
+
 /// Asks the game's process and its descendants to exit, and kills what is still there after a
 /// few seconds. Returns at once: reading every process's parent and the kill follow on a
-/// thread. Does nothing for pid 0, 1 or this program.
+/// thread. Does nothing for pid 0, 1, this program or a protected program (the window's
+/// reported pid can be wrong). The kill only goes to processes that are still the ones asked.
 #[cfg(target_os = "linux")]
 pub fn force_quit(pid: u32) {
-    if pid <= 1 {
+    if pid <= 1 || comm(pid).is_some_and(|name| protected_name(&name)) {
         return;
     }
     thread::spawn(move || {
         let pids = tree(pid, &parents(), std::process::id());
+        let started: Vec<(u32, Option<u64>)> = pids.iter().map(|p| (*p, start_time(*p))).collect();
         signal(&pids, libc::SIGTERM);
         thread::sleep(GRACE);
-        let left: Vec<u32> = pids.into_iter().filter(|p| alive(*p)).collect();
+        // A pid freed and reused during the grace period is someone else now.
+        let left: Vec<u32> = started.into_iter().filter(|(p, t)| t.is_some() && start_time(*p) == *t && alive(*p)).map(|(p, _)| p).collect();
         signal(&left, libc::SIGKILL);
     });
 }
@@ -147,6 +171,9 @@ mod tests {
         for exe in ["plasmashell", "KWin_Wayland", "Hyprland", "", "padwight"] {
             assert!(protected(exe), "{exe}");
         }
+        for exe in ["steam", "Xorg", "dbus-daemon"] {
+            assert!(protected(exe), "{exe}");
+        }
         assert!(!protected("eldenring.exe") && !protected("firefox"));
     }
 
@@ -159,6 +186,18 @@ mod tests {
         child.wait().unwrap();
         assert!(!is_running(pid), "reaped");
         assert!(!is_running(u32::MAX - 1));
+    }
+
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn force_quit_leaves_a_protected_program_alone() {
+        let mut child = std::process::Command::new("sleep").arg("30").spawn().unwrap();
+        // Not protected by name: its name is `sleep`; one that is must be refused.
+        assert!(!comm(child.id()).is_some_and(|n| protected_name(&n)));
+        assert!(start_time(child.id()).is_some());
+        assert!(comm(std::process::id()).is_some());
+        child.kill().unwrap();
+        child.wait().unwrap();
     }
 
     #[test]

@@ -108,13 +108,13 @@ fn usual(b: Button) -> ButtonAction {
 
 /// A row's name column: its glyph as the overlays draw it, then its name. `toggle` makes it a
 /// button that opens and closes the row; without it, a chevron's width of space keeps it in line.
-fn name_column<'a>(b: Button, ui: &Ui, toggle: Option<bool>, color: Option<Color>) -> Element<'a, Message> {
+fn name_column<'a>(b: Button, ui: &Ui, toggle: Option<bool>, color: Option<fn(&iced::Theme) -> iced::widget::text::Style>) -> Element<'a, Message> {
     let chevron: Element<'a, Message> = match toggle {
         Some(open) => text(if open { "▾" } else { "▸" }).size(14).width(CHEVRON_WIDTH).into(),
         None => space().width(CHEVRON_WIDTH).into(),
     };
     let glyph = container(input_chip(GuideInput::Button(b), ui.family, ui.swap)).center_x(GLYPH_WIDTH);
-    let content = row![chevron, glyph, text(button_name(b, ui.in_use)).color_maybe(color)].spacing(4).align_y(Alignment::Center);
+    let content = row![chevron, glyph, text(button_name(b, ui.in_use)).style(move |t: &iced::Theme| color.map_or_else(|| iced::widget::text::base(t), |c| c(t)))].spacing(4).align_y(Alignment::Center);
     let Some(_) = toggle else { return container(content).padding([4, 0]).width(NAME_WIDTH).into() };
     button(content).style(button::text).padding([4, 0]).width(NAME_WIDTH).on_press(Message::ToggleExpanded(Target::Button(b))).into()
 }
@@ -143,14 +143,14 @@ fn collapsed_row<'a>(p: &'a Profile, b: Button, ui: &Ui, from_base: bool) -> Vec
     };
     let unchanged = *shown.button(b) == usual(b) && gestures.is_none_or(crate::config::Gestures::is_empty);
     let name_color = if problem.is_some() {
-        Some(ERROR_COLOR)
+        Some(error_text as fn(&iced::Theme) -> iced::widget::text::Style)
     } else {
-        (unchanged || from_base).then_some(MUTED_COLOR)
+        (unchanged || from_base).then_some(muted as fn(&iced::Theme) -> iced::widget::text::Style)
     };
     // A button left as itself would show only its own glyph, which reads like the button's icon
     // rather than what it does, so it says so in words.
     let press: Element<'a, Message> = if *shown.button(b) == ButtonAction::Gamepad(b) {
-        text("Same button").color(MUTED_COLOR).into()
+        text("Same button").style(muted).into()
     } else {
         piece_wrap(shown.button(b).pieces(), ui.family, ui.swap, from_base || matches!(shown.button(b), ButtonAction::Disabled))
     };
@@ -182,7 +182,7 @@ fn collapsed_row<'a>(p: &'a Profile, b: Button, ui: &Ui, from_base: bool) -> Vec
     // Each gesture sits under the action it extends, indented to the glyph and named in muted text.
     let mut lines: Vec<Element<'a, Message>> = vec![line.into()];
     for (kind, action) in GestureKind::ALL.into_iter().filter_map(|k| gesture(k).map(|a| (k, a))) {
-        let name = container(text(kind.to_string()).size(13).color(MUTED_COLOR)).padding(iced::Padding::default().left(CHEVRON_WIDTH + 24.0)).width(NAME_WIDTH);
+        let name = container(text(kind.to_string()).size(13).style(muted)).padding(iced::Padding::default().left(CHEVRON_WIDTH + 24.0)).width(NAME_WIDTH);
         let mut line = row![name, container(piece_wrap(action.pieces(), ui.family, ui.swap, from_base)).width(Length::Fill)]
             .spacing(10)
             .align_y(Alignment::Center);
@@ -232,7 +232,7 @@ pub(super) fn timing_row<'a>(
     let line = if overridden {
         row![slider, button(text("Use profile's").size(13)).style(style::secondary).on_press(message(None))]
     } else {
-        row![slider, text("profile's").size(13).color(MUTED_COLOR)]
+        row![slider, text("profile's").size(13).style(muted)]
     };
     fold_row(label, line.spacing(10).align_y(Alignment::Center).into())
 }
@@ -247,7 +247,7 @@ fn open_row<'a>(p: &'a Profile, b: Button, ui: &Ui) -> Vec<Element<'a, Message>>
     let problem = std::iter::once(p.button(b)).chain(set_gestures.iter().map(|(_, a)| *a)).find_map(|a| action_problem(a, ui.names));
     let missing: Vec<GestureKind> = GestureKind::ALL.into_iter().filter(|k| gestures.and_then(|g| g.get(*k)).is_none()).collect();
     // The name gets a line of its own so the open editor reads as sitting under it.
-    let mut header = row![name_column(b, ui, Some(true), problem.is_some().then_some(ERROR_COLOR)), space::horizontal()]
+    let mut header = row![name_column(b, ui, Some(true), problem.is_some().then_some(error_text as fn(&iced::Theme) -> iced::widget::text::Style)), space::horizontal()]
         .spacing(10)
         .align_y(Alignment::Center);
     if ui.layer.is_some() {
@@ -286,7 +286,7 @@ fn open_row<'a>(p: &'a Profile, b: Button, ui: &Ui) -> Vec<Element<'a, Message>>
     if !missing.is_empty() {
         rows.push(rule::horizontal(1).into());
         let adds = missing.into_iter().map(|k| {
-            button(text(format!("+ {k}")).size(13)).style(style::secondary).padding([3, 10]).on_press(Message::AddGesture(b, k)).into()
+            button(text(format!("+ {k}")).size(13).wrapping(text::Wrapping::None)).style(style::secondary).padding([3, 10]).on_press(Message::AddGesture(b, k)).into()
         });
         rows.push(labeled("", row(adds).spacing(6).into()));
     }

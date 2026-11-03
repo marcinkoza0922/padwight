@@ -160,7 +160,7 @@ impl App {
         let next = if last { (text("Done").size(14), TourMove::End) } else { (text("Next").size(14), TourMove::Next) };
         buttons = buttons.push(button(next.0).style(style::primary).on_press(Message::Tour(next.1)));
         let card = column![
-            text(format!("Tour · {} of {}", i + 1, STEPS.len())).size(12).color(style_accent()),
+            text(format!("Tour · {} of {}", i + 1, STEPS.len())).size(12).style(accent_text),
             text(step.title).size(20),
             text(step.body).size(14),
             buttons,

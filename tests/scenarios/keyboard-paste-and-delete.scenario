@@ -1,0 +1,118 @@
+# OVL-1 on the full keyboard: Delete takes the character after the caret, an arrow key on the
+# board moves the caret, and Paste sends Ctrl+V and leaves the typed line alone.
+full-keyboard
+tap lb 40
+press guide
+advance 100
+tap west 60
+release guide
+advance 400
+expect overlay showing keyboard
+tap south 60
+tap right 40
+tap south 60
+tap right 40
+tap south 60
+advance 100
+expect overlay keyboard.typed qwe
+expect overlay keyboard.caret 3
+tap lb 40
+tap lb 40
+expect overlay keyboard.caret 1
+# W, Q, Tab, PgDn, End, Del: six steps left of E.
+tap left 40
+tap left 40
+tap left 40
+tap left 40
+tap left 40
+tap left 40
+expect overlay keyboard.key KEY_DELETE
+tap south 60
+expect overlay keyboard.typed qe
+expect overlay keyboard.caret 1
+# Delete at the end of the line does nothing to the text.
+tap rb 40
+tap rb 40
+expect overlay keyboard.caret 2
+tap south 60
+expect overlay keyboard.typed qe
+# Down to the bottom row, Paste is next to the right Ctrl.
+tap down 40
+tap down 40
+tap down 40
+expect overlay keyboard.key KEY_RIGHTCTRL
+tap right 40
+expect overlay keyboard.key PASTE
+tap south 60
+expect overlay keyboard.typed qe
+expect overlay keyboard.caret 2
+# The arrow keys on the board move the caret like the bumpers do.
+tap right 40
+expect overlay keyboard.key KEY_LEFT
+tap south 60
+expect overlay keyboard.caret 1
+tap south 60
+tap south 60
+expect overlay keyboard.caret 0
+---
+pad LeftBumper down        @0
+pad LeftBumper up          @40
+shifts mode Guide layers - @40
+overlay none + info 1      @140
+shifts mode - layers -     @140
+overlay keyboard           @140
+sound keyboard Open pop    @140
+sound keyboard Pick pop    @600
+key KEY_Q down             @600
+key KEY_Q up               @660
+sound keyboard Step click  @660
+sound keyboard Pick pop    @700
+key KEY_W down             @700
+key KEY_W up               @760
+sound keyboard Step click  @760
+sound keyboard Pick pop    @800
+key KEY_E down             @800
+key KEY_E up               @860
+sound keyboard Pick pop    @960
+key KEY_LEFT down          @960
+key KEY_LEFT up            @960
+sound keyboard Pick pop    @1000
+key KEY_LEFT down          @1000
+key KEY_LEFT up            @1000
+sound keyboard Step click  @1040
+sound keyboard Step click  @1080
+sound keyboard Step click  @1120
+sound keyboard Step click  @1160
+sound keyboard Step click  @1200
+sound keyboard Step click  @1240
+sound keyboard Pick pop    @1280
+key KEY_DELETE down        @1280
+key KEY_DELETE up          @1340
+sound keyboard Pick pop    @1340
+key KEY_RIGHT down         @1340
+key KEY_RIGHT up           @1340
+sound keyboard Pick pop    @1380
+key KEY_RIGHT down         @1380
+key KEY_RIGHT up           @1380
+sound keyboard Pick pop    @1420
+key KEY_DELETE down        @1420
+key KEY_DELETE up          @1480
+sound keyboard Step click  @1480
+sound keyboard Step click  @1520
+sound keyboard Step click  @1560
+sound keyboard Step click  @1600
+sound keyboard Pick pop    @1640
+key KEY_LEFTCTRL down      @1640
+key KEY_V down             @1640
+key KEY_V up               @1640
+key KEY_LEFTCTRL up        @1640
+sound keyboard Step click  @1700
+sound keyboard Pick pop    @1740
+key KEY_LEFT down          @1740
+key KEY_LEFT up            @1800
+sound keyboard Pick pop    @1800
+key KEY_LEFT down          @1800
+key KEY_LEFT up            @1860
+sound keyboard Pick pop    @1860
+key KEY_LEFT down          @1860
+key KEY_LEFT up            @1920

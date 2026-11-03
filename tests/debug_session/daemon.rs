@@ -9,7 +9,7 @@ use super::{BIN, Env};
 use crate::common::{Daemon, hold_config, install_config, input::{Reader, nodes}, serial, spawn_daemon, spawn_daemon_with, wait_for};
 
 /// A daemon started with `--debug`, running `config`, and ready for requests.
-fn debug_daemon(env: &Env, config: &str) -> Daemon {
+pub(super) fn debug_daemon(env: &Env, config: &str) -> Daemon {
     let dir = env.root.join("config/padwight");
     fs::create_dir_all(&dir).unwrap();
     install_config(&dir, config);

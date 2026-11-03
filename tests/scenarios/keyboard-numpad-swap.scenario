@@ -1,0 +1,36 @@
+# OVL-2: asking for the numpad while the keyboard is up (the CLI is the only way in, since the
+# pad's buttons all belong to the keyboard then) closes the keyboard and opens the numpad; asking
+# for the keyboard again swaps back. Never both.
+press guide
+advance 100
+tap west 60
+release guide
+advance 400
+expect overlay showing keyboard
+cli numpad-toggle
+advance 100
+expect overlay showing numpad
+expect overlay keyboard.board numpad
+cli overlay-toggle
+advance 100
+expect overlay showing keyboard
+expect overlay keyboard.board basic
+cli overlay-toggle
+advance 100
+expect overlay showing none
+---
+shifts mode Guide layers - @0
+overlay none + info 1      @100
+shifts mode - layers -     @100
+overlay keyboard           @100
+sound keyboard Open pop    @100
+overlay none               @560
+sound keyboard Close pop   @560
+overlay keyboard           @560
+sound numpad Open pop      @560
+overlay none               @660
+sound numpad Close pop     @660
+overlay keyboard           @660
+sound keyboard Open pop    @660
+overlay none               @760
+sound keyboard Close pop   @760

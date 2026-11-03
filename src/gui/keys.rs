@@ -70,7 +70,7 @@ pub(super) fn view_picker(picker: &KeyPicker) -> Element<'_, Message> {
     let dialog = container(
         column![
             text(title).size(20),
-            text(hint).size(13).color(MUTED_COLOR),
+            text(hint).size(13).style(muted),
             text(selection).size(16),
             keyboard::view(&picker.keys, Message::PickerKey),
             actions,

@@ -7,7 +7,7 @@ id = "c3454eb5-2c0d-4872-9d0d-b482d2e98241"
 name = "Alan Wake"
 version = "1.0"
 author = "Padwight"
-description = "Alan Wake (2010) on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and you set the buttons in the game's controls options. Padwight adds the Guide overlay on top, in flashlight yellow on the dark of Bright Falls. Gyro and flick stick profiles are included to try; they move the mouse beside the pad."
+description = "Alan Wake (2010 on Xbox 360, 2012 on PC) on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and you set the buttons in the game's controls options. Padwight adds the Guide overlay on top, in flashlight yellow on the dark of Bright Falls. Gyro and flick stick profiles are included to try; they move the mouse beside the pad."
 made_with = "Xbox controller"
 
 [[rules]]

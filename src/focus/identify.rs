@@ -3,7 +3,7 @@
 use std::{
     fs,
     os::unix::fs::MetadataExt,
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 use super::base_name;
@@ -11,8 +11,16 @@ use crate::ipc::WindowInfo;
 
 /// Builds a [`WindowInfo`] for a window owned by `pid`, reading its process from /proc.
 pub fn identify(class: String, title: String, pid: u32) -> WindowInfo {
-    let pid = host_pid(pid, &class);
-    let mut info = process_info(pid).unwrap_or_default();
+    identify_in(Path::new(PROC), class, title, pid)
+}
+
+/// Where the kernel lists processes.
+const PROC: &str = "/proc";
+
+/// [`identify`] reading the process list under `proc`, so a made-up tree can stand in for /proc.
+pub(super) fn identify_in(proc: &Path, class: String, title: String, pid: u32) -> WindowInfo {
+    let pid = host_pid(proc, pid, &class);
+    let mut info = process_info(proc, pid).unwrap_or_default();
     // Proton names its windows `steam_app_<id>` even when the environment is unreadable.
     if info.steam_app_id.is_none() {
         info.steam_app_id = class.strip_prefix("steam_app_").filter(|id| is_app_id(id)).map(str::to_string);
@@ -25,36 +33,43 @@ pub fn identify(class: String, title: String, pid: u32) -> WindowInfo {
 /// which names no process here or an unrelated one: sandboxes count from 1, so small pids are
 /// nearly always taken here too. When the process here doesn't look like the window's, the
 /// processes that have that pid in a namespace below ours are candidates too.
-fn host_pid(pid: u32, class: &str) -> u32 {
+fn host_pid(proc: &Path, pid: u32, class: &str) -> u32 {
     if pid == 0 {
         return pid;
     }
-    let here = process_info(pid);
+    let here = process_info(proc, pid);
     if here.as_ref().is_some_and(|p| fits(p, class)) {
         return pid;
     }
-    pick_pid(pid, here.is_some(), &nested_processes(pid), class)
+    pick_pid(pid, here.is_some(), &nested_processes(proc, pid), class)
 }
 
 /// Which process owns a window that reported `pid`: a sandboxed one (`nested`, by their pids
-/// here) that looks like the window, else the process here if there is one, else the first
-/// sandboxed one.
+/// here) that looks like the window, else the process here if there is one, else the sandboxed
+/// one if it is the only candidate. With several that don't look like the window, none is
+/// guessed: any of them could belong to another program, and the pid is kept.
 fn pick_pid(pid: u32, exists_here: bool, nested: &[WindowInfo], class: &str) -> u32 {
     nested
         .iter()
         .find(|p| fits(p, class))
-        .or_else(|| nested.first().filter(|_| !exists_here))
+        .or(match nested {
+            [only] if !exists_here => Some(only),
+            _ => None,
+        })
         .map_or(pid, |p| p.pid)
 }
 
-/// The processes whose pid in a namespace below ours is `pid`.
-fn nested_processes(pid: u32) -> Vec<WindowInfo> {
-    let Ok(entries) = fs::read_dir("/proc") else { return Vec::new() };
+/// This user's processes whose pid in a namespace below ours is `pid`. Another user's process
+/// is never a candidate, however its pid reads.
+fn nested_processes(proc: &Path, pid: u32) -> Vec<WindowInfo> {
+    let Ok(entries) = fs::read_dir(proc) else { return Vec::new() };
+    let uid = unsafe { libc::getuid() };
     entries
         .flatten()
+        .filter(|e| e.metadata().is_ok_and(|m| m.uid() == uid))
         .filter_map(|e| e.file_name().to_str()?.parse::<u32>().ok())
-        .filter(|&p| fs::read_to_string(format!("/proc/{p}/status")).is_ok_and(|s| nested_pid(&s) == Some(pid)))
-        .filter_map(process_info)
+        .filter(|&p| fs::read_to_string(proc.join(p.to_string()).join("status")).is_ok_and(|s| nested_pid(&s) == Some(pid)))
+        .filter_map(|p| process_info(proc, p))
         .collect()
 }
 
@@ -86,11 +101,11 @@ fn nested_pid(status: &str) -> Option<u32> {
 }
 
 /// Executable and Steam App ID of a process, or `None` if it is gone or not ours.
-fn process_info(pid: u32) -> Option<WindowInfo> {
+fn process_info(proc: &Path, pid: u32) -> Option<WindowInfo> {
     if pid == 0 {
         return None;
     }
-    let dir = PathBuf::from(format!("/proc/{pid}"));
+    let dir = proc.join(pid.to_string());
     let cmdline = fs::read(dir.join("cmdline")).ok()?;
     let exe_path = fs::read_link(dir.join("exe")).ok();
     let environ = fs::read(dir.join("environ")).unwrap_or_default();
@@ -177,17 +192,25 @@ pub fn is_own_window(info: &WindowInfo) -> bool {
 
 /// This user's running processes.
 pub fn running_processes() -> Vec<WindowInfo> {
+    running_processes_in(Path::new(PROC))
+}
+
+/// [`running_processes`] reading the process list under `proc`.
+pub(super) fn running_processes_in(proc: &Path) -> Vec<WindowInfo> {
     let uid = unsafe { libc::getuid() };
-    let Ok(entries) = fs::read_dir("/proc") else { return Vec::new() };
+    let Ok(entries) = fs::read_dir(proc) else { return Vec::new() };
     entries
         .flatten()
         .filter_map(|e| {
             let pid: u32 = e.file_name().to_str()?.parse().ok()?;
             (e.metadata().ok()?.uid() == uid).then_some(pid)
         })
-        .filter_map(process_info)
+        .filter_map(|p| process_info(proc, p))
         .collect()
 }
+
+#[cfg(test)]
+mod sandbox_tests;
 
 #[cfg(test)]
 mod tests {
@@ -249,6 +272,8 @@ mod tests {
         assert_eq!(pick_pid(3467, true, std::slice::from_ref(&other), "gpp.exe"), 3467);
         assert_eq!(pick_pid(3467, false, std::slice::from_ref(&other), "gpp.exe"), 20_001);
         assert_eq!(pick_pid(3467, true, &[], "gpp.exe"), 3467);
+        // Several that don't fit and none here: no guess, whoever they belong to.
+        assert_eq!(pick_pid(3467, false, &[other.clone(), process(20_002, "tail", None)], "gpp.exe"), 3467);
     }
 
     #[test]

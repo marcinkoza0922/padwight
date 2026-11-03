@@ -93,7 +93,7 @@ impl App {
                 return None;
             }
             let cards = iced::widget::row(choices.into_iter().map(|c| card(c).into())).spacing(6).wrap().vertical_spacing(6);
-            let head = row![text(title).size(15), text(blurb).size(12).color(MUTED_COLOR)].spacing(10).align_y(Alignment::Center);
+            let head = row![text(title).size(15), text(blurb).size(12).style(muted)].spacing(10).align_y(Alignment::Center);
             Some(container(column![head, cards].spacing(8)).padding(10).width(Length::Fill).style(style::inset).into())
         };
         let (recorded, synthesized): (Vec<_>, Vec<_>) = SoundKind::ALL.into_iter().partition(|k| k.is_recording());
@@ -112,11 +112,11 @@ impl App {
         let dialog = container(
             column![
                 text("Choose a sound").size(20),
-                row![text("Now").size(13).color(MUTED_COLOR), text(now.to_string()).size(14)].spacing(10).align_y(Alignment::Center),
+                row![text("Now").size(13).style(muted), text(now.to_string()).size(14)].spacing(10).align_y(Alignment::Center),
                 field("Search sounds", &picker.query).on_input(Message::SoundSearch).width(Length::Fill),
                 scrollable(groups).height(Length::Fixed(430.0)),
                 row![
-                    text("Each click plays the sound and sets the cue to it.").size(12).color(MUTED_COLOR),
+                    text("Each click plays the sound and sets the cue to it.").size(12).style(muted),
                     space::horizontal(),
                     button(text("Done")).on_press(Message::CloseSoundPicker),
                 ]

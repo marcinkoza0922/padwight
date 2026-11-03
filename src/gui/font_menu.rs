@@ -29,7 +29,7 @@ impl App {
         let shown = text(current.unwrap_or(unset).to_string()).font(crate::font::resolve(current)).width(Length::Fill);
         let open = self.font_menu == Some(slot);
         // The arrow in the accent color, as every other dropdown's is.
-        let arrow = text(if open { "▴" } else { "▾" }).size(14).style(|theme: &iced::Theme| text::Style { color: Some(theme.extended_palette().primary.base.color) });
+        let arrow = text(if open { "▴" } else { "▾" }).size(14).style(accent_text);
         let head = button(row![shown, arrow].spacing(8).align_y(Alignment::Center))
             .style(style::field_button)
             .padding([6, 10])

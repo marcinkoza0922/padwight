@@ -1,6 +1,11 @@
 //! Finding out about new releases (once a day) and installing one on request. See `update.rs`.
 
-use std::{process::Stdio, thread, time::Duration};
+use std::{
+    process::Stdio,
+    sync::atomic::{AtomicBool, Ordering},
+    thread,
+    time::Duration,
+};
 
 use super::{Daemon, Msg};
 use crate::{
@@ -11,6 +16,8 @@ use crate::{
 
 /// Wait this long after start-up before the first look, so it never competes with start-up work.
 const FIRST_CHECK: Duration = Duration::from_secs(120);
+/// An update is running: another request waits for it.
+static INSTALLING: AtomicBool = AtomicBool::new(false);
 const EVERY: Duration = Duration::from_secs(24 * 60 * 60);
 
 impl Daemon {
@@ -50,13 +57,30 @@ impl Daemon {
         if !Source::detect().self_updating() {
             return Response::Error(format!("not updated: {}", Source::detect().advice()));
         }
+        // A replaced binary reads back as "<path> (deleted)": the new one is at the path.
         let exe = std::env::current_exe().unwrap_or_default();
+        let exe = std::path::PathBuf::from(exe.to_string_lossy().trim_end_matches(" (deleted)"));
+        if INSTALLING.swap(true, Ordering::SeqCst) {
+            return Response::Error("an update is already running".into());
+        }
         match std::process::Command::new(exe).arg("update").stdin(Stdio::null()).spawn() {
-            Ok(_) => {
+            Ok(mut child) => {
                 log!("installing the update");
+                // Reaped here, so a failed update doesn't linger as a zombie, and says so in the log.
+                thread::spawn(move || {
+                    match child.wait() {
+                        Ok(status) if !status.success() => log!("the update failed ({status}); run `padwight update` to see why"),
+                        Err(e) => log!("couldn't wait for the update: {e}"),
+                        Ok(_) => {}
+                    }
+                    INSTALLING.store(false, Ordering::SeqCst);
+                });
                 Response::Ok
             }
-            Err(e) => Response::Error(format!("couldn't start the update: {e}")),
+            Err(e) => {
+                INSTALLING.store(false, Ordering::SeqCst);
+                Response::Error(format!("couldn't start the update: {e}"))
+            }
         }
     }
 }

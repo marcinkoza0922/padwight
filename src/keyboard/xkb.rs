@@ -1,7 +1,7 @@
 //! What each key types in the user's XKB layout, for the on-screen keyboard's labels.
 //!
-//! The layout is the first one the desktop is set to use (KDE, GNOME, Sway, Hyprland, the X11 or
-//! console settings), else the one the locale suggests, else US. `PADWIGHT_KEYBOARD_LAYOUT`
+//! The layout is the first one the desktop is set to use (KDE, GNOME, Sway, Hyprland, the system
+//! keymap `localectl` sets, or the console's), else the one the locale suggests, else US. `PADWIGHT_KEYBOARD_LAYOUT`
 //! (`de`, `fr(azerty)`) overrides it.
 
 use std::{collections::HashMap, str::FromStr};
@@ -18,6 +18,11 @@ pub(super) fn labels() -> HashMap<&'static str, Typed> {
 
 /// What every key of the keyboards types in `layout` (and `variant`), or `None` if XKB doesn't
 /// know the layout.
+#[cfg(test)]
+pub(super) fn compile_for_tests(layout: &str) -> Option<HashMap<&'static str, Typed>> {
+    compile(layout, "")
+}
+
 fn compile(layout: &str, variant: &str) -> Option<HashMap<&'static str, Typed>> {
     let context = xkb::Context::new(xkb::CONTEXT_NO_FLAGS);
     let keymap = xkb::Keymap::new_from_names(&context, "", "", layout, variant, None, xkb::KEYMAP_COMPILE_NO_FLAGS)?;
@@ -144,7 +149,8 @@ fn setting_anywhere(text: &str, key: &str) -> Option<String> {
     })
 }
 
-/// The X11 settings `localectl` writes, then the console's.
+/// The system keymap `localectl set-x11-keymap` writes (compositors that read no setting of
+/// their own fall back to it, so its X11 file name doesn't mean an X11 session), then the console's.
 fn from_system() -> Option<(String, String)> {
     let xorg = std::fs::read_to_string("/etc/X11/xorg.conf.d/00-keyboard.conf").ok().and_then(|text| {
         let option = |name: &str| {

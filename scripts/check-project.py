@@ -5,10 +5,13 @@
   - the pack format number agrees across the code and the docs
   - relative and github.com/…/blob/main links in the docs resolve (and their #anchors)
   - every bundled font has a license file
+  - docs/protocol.md: its version agrees with src/ipc.rs, and its marked `json request|reply|Type` examples
+    are JSON (the Rust test `ipc::tests::protocol_doc` parses them with the real types)
 
 Run from anywhere: `scripts/check-project.py`. Exits 1 and lists each problem it finds.
 """
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -126,8 +129,26 @@ def check_font_licenses():
             fail(f"assets/fonts/{font.name}: no {family}-LICENSE file beside it")
 
 
+def check_protocol_doc():
+    doc = (ROOT / "docs/protocol.md").read_text()
+    code = (ROOT / "src/ipc.rs").read_text()
+    major = re.search(r"PROTOCOL_MAJOR: u32 = (\d+)", code)
+    minor = re.search(r"PROTOCOL_MINOR: u32 = (\d+)", code)
+    says = re.search(r"^# Control protocol \(version (\d+)\.(\d+)\)", doc, re.M)
+    if not (major and minor and says):
+        fail("docs/protocol.md or src/ipc.rs: protocol version not found")
+    elif (says.group(1), says.group(2)) != (major.group(1), minor.group(1)):
+        fail(f"docs/protocol.md says protocol {says.group(1)}.{says.group(2)}, src/ipc.rs has {major.group(1)}.{minor.group(1)}")
+    for m in re.finditer(r"^```json ([A-Za-z]+)\n(.*?)^```", doc, re.M | re.S):
+        line = doc[: m.start()].count("\n") + 1
+        try:
+            json.loads(m.group(2))
+        except ValueError as e:
+            fail(f"docs/protocol.md:{line}: the {m.group(1)} example isn't JSON: {e}")
+
+
 def main():
-    for check in (check_commands, check_format_versions, check_links, check_font_licenses):
+    for check in (check_commands, check_format_versions, check_links, check_font_licenses, check_protocol_doc):
         check()
     if problems:
         print("\n".join(problems))

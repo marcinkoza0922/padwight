@@ -154,7 +154,7 @@ fn material(label: &'static str, get: fn(&OverlayStyle) -> Option<&Texture>, put
 
 /// Each group's buttons on a row under its name, then the editors of the filters that are on.
 fn grouped<'a>(groups: [(&'static str, Vec<Filter<'a>>); 3]) -> Element<'a, Message> {
-    let mut rows = column![text("    Filters").size(14).color(MUTED_COLOR)].spacing(8);
+    let mut rows = column![text("    Filters").size(14).style(muted)].spacing(8);
     let mut editors = Vec::new();
     for (label, filters) in groups {
         let mut buttons = Vec::new();
@@ -191,7 +191,7 @@ fn filter<'a, T: Clone + Covers + 'a>(
     let toggled = set(value.is_none().then(|| (slot.start)(style)));
     let button = button(text(label).size(13)).style(look).on_press(toggled).into();
     // Its name over a rule, in the editors' column, sets each filter's rows apart.
-    let heading = row![text(slot.label).size(13).color(MUTED_COLOR), iced::widget::rule::horizontal(1)].spacing(8).align_y(Alignment::Center).width(Length::Fixed(540.0));
+    let heading = row![text(slot.label).size(13).style(muted), iced::widget::rule::horizontal(1)].spacing(8).align_y(Alignment::Center).width(Length::Fixed(540.0));
     let heading = container(heading).padding(iced::Padding::ZERO.top(6));
     let editor = value.map(|v| {
         let set: Rc<dyn Fn(T) -> Message + 'a> = Rc::new(move |v| set(Some(v)));

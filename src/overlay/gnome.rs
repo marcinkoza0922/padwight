@@ -144,13 +144,20 @@ impl Picture {
     fn new((width, height): (u32, u32)) -> Result<Picture> {
         let len = width as usize * height as usize * 4;
         // SAFETY: memfd_create takes a NUL-terminated name and flags, and returns a new fd or -1.
-        let fd = unsafe { libc::memfd_create(c"padwight-overlay".as_ptr(), libc::MFD_CLOEXEC) };
+        let fd = unsafe { libc::memfd_create(c"padwight-overlay".as_ptr(), libc::MFD_CLOEXEC | libc::MFD_ALLOW_SEALING) };
         if fd < 0 {
             return Err(std::io::Error::last_os_error()).context("memfd_create");
         }
         // SAFETY: `fd` is a new descriptor nothing else owns.
         let file = unsafe { File::from_raw_fd(fd) };
         file.set_len(len as u64).context("sizing the picture's memfd")?;
+        // Seal it against shrinking, for good: the extension maps it, and a shrunk file would
+        // kill the Shell on its next read. It refuses a buffer that isn't sealed. Writing and
+        // the mapping below are unaffected.
+        // SAFETY: F_ADD_SEALS on a memfd we own, with flags only.
+        if unsafe { libc::fcntl(file.as_raw_fd(), libc::F_ADD_SEALS, libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL) } < 0 {
+            return Err(std::io::Error::last_os_error()).context("sealing the picture's memfd");
+        }
         // SAFETY: a shared mapping of the whole memfd, which is `len` bytes; unmapped on drop.
         let map = unsafe { libc::mmap(std::ptr::null_mut(), len, libc::PROT_READ | libc::PROT_WRITE, libc::MAP_SHARED, file.as_raw_fd(), 0) };
         if map == libc::MAP_FAILED {

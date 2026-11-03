@@ -1,0 +1,74 @@
+# OVL-9: Guide + right trigger opens Tools; the calculator takes 6 x 7 = and Send types the
+# answer into the game as keys and closes the menu. (Copy asks the desktop's clipboard tool and
+# is left to the unit tests and a desktop run.)
+press guide
+advance 100
+trigger right 1
+advance 100
+trigger right 0
+release guide
+advance 400
+expect overlay showing tools
+expect overlay tools.selected Calculator
+tap south 60
+expect overlay menu.crumbs Tools
+tap down 40
+tap right 40
+tap right 40
+expect overlay menu.selected 6
+tap south 60
+tap right 40
+expect overlay menu.selected ×
+tap south 60
+tap up 40
+tap right 40
+expect overlay menu.selected 7
+tap south 60
+expect overlay menu.about "6×7 = 42"
+tap up 40
+tap right 40
+expect overlay menu.selected =
+tap south 60
+expect overlay menu.about 42
+tap right 40
+expect overlay menu.selected Send
+tap south 60
+advance 200
+expect overlay showing none
+---
+shifts mode Guide layers -                 @0
+overlay none + info 1                      @100
+shifts mode - layers -                     @100
+overlay menu "Tools" selected "Calculator" @100
+sound menu Open pop                        @100
+sound menu Pick pop                        @600
+overlay menu "Calculator" selected "7"     @600
+sound menu Step click                      @660
+overlay menu "Calculator" selected "4"     @660
+sound menu Step click                      @700
+overlay menu "Calculator" selected "5"     @700
+sound menu Step click                      @740
+overlay menu "Calculator" selected "6"     @740
+sound menu Pick pop                        @780
+sound menu Step click                      @840
+overlay menu "Calculator" selected "×"     @840
+sound menu Pick pop                        @880
+sound menu Step click                      @940
+overlay menu "Calculator" selected "÷"     @940
+sound menu Step click                      @980
+overlay menu "Calculator" selected "7"     @980
+sound menu Pick pop                        @1020
+sound menu Step click                      @1080
+overlay menu "Calculator" selected "C"     @1080
+sound menu Step click                      @1120
+overlay menu "Calculator" selected "="     @1120
+sound menu Pick pop                        @1160
+sound menu Step click                      @1220
+overlay menu "Calculator" selected "Send"  @1220
+sound menu Pick pop                        @1260
+overlay none                               @1260
+sound menu Close pop                       @1260
+key KEY_4 down                             @1260
+key KEY_4 up                               @1260
+key KEY_2 down                             @1260
+key KEY_2 up                               @1260

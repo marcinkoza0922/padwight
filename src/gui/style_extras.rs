@@ -25,7 +25,7 @@ pub(super) fn typography_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>)
         stepped_slider(50.0..=200.0, t.size * 100.0, format!("{:.0}%", t.size * 100.0), move |v| set(Typography { size: (v / 5.0).round() * 0.05, ..t.clone() }))
     };
     column![
-        text("    Type").size(14).color(MUTED_COLOR),
+        text("    Type").size(14).style(muted),
         labeled("        Case", row![case("As typed", Case::None), case("CAPITALS", Case::Upper), case("lower", Case::Lower)].spacing(4).into()),
         labeled("        Spacing", spacing),
         labeled("        Size", size),
@@ -77,7 +77,7 @@ pub(super) fn ornament_rows<'a>(style: &OverlayStyle, on_change: &OnStyle<'a>, i
         style,
         on_change,
     );
-    column![text("    Ornaments").size(14).color(MUTED_COLOR), picture]
+    column![text("    Ornaments").size(14).style(muted), picture]
         .extend(items.then(|| bevel_rows(style, on_change)))
         .extend(items.then_some(dividers))
         .push(frame)

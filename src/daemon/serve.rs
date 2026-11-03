@@ -2,7 +2,7 @@
 //! and streaming what the watch requests ask for.
 
 use std::{
-    io::{BufRead, BufReader, Write},
+    io::{BufRead, BufReader, Read, Write},
     sync::mpsc,
     thread,
     time::Duration,
@@ -22,6 +22,9 @@ const WATCH_INTERVAL: Duration = Duration::from_millis(16);
 /// A watcher that takes nothing for this long (a stopped or hung GUI) is let go, so its updates
 /// don't pile up in the daemon. The GUI connects again when it can; the overlay is restarted.
 const WATCH_STALL: Duration = Duration::from_secs(10);
+/// The longest request line read. A whole configuration (`SetConfig`) is far smaller; a client
+/// that sends more is answered with an error instead of filling the daemon's memory.
+const MAX_REQUEST: u64 = 8 << 20;
 
 pub(super) fn ipc_server(listener: &UnixListener, tx: &Tx) {
     for conn in listener.incoming() {
@@ -40,7 +43,7 @@ fn serve_client(mut conn: &UnixStream, tx: &Tx) -> Result<()> {
     conn.set_read_timeout(Some(Duration::from_secs(2)))?;
     conn.set_write_timeout(Some(WATCH_STALL))?;
     let mut line = String::new();
-    BufReader::new(conn).read_line(&mut line)?;
+    BufReader::new(conn.take(MAX_REQUEST)).read_line(&mut line)?;
     let response = match serde_json::from_str::<Request>(&line) {
         Ok(Request::WatchInput) => return watch_input(conn, tx),
         Ok(Request::WatchOverlay) => return watch_overlay(conn, tx),
@@ -56,6 +59,9 @@ fn serve_client(mut conn: &UnixStream, tx: &Tx) -> Result<()> {
         }
         Err(e) => Response::Error(format!("bad request: {e}")),
     };
+    if crate::faults::hit("ipc.reply").is_some() {
+        return Ok(()); // the socket closes with no answer
+    }
     let mut out = serde_json::to_string(&response)?;
     out.push('\n');
     conn.write_all(out.as_bytes())?;
@@ -81,7 +87,7 @@ fn watch_overlay(mut conn: &UnixStream, tx: &Tx) -> Result<()> {
             view.leave_out_doodles_sent(&mut doodles_sent);
             let mut line = serde_json::to_string(view)?;
             line.push('\n');
-            if conn.write_all(line.as_bytes()).is_err() {
+            if crate::faults::io("overlay.frame").is_err() || conn.write_all(line.as_bytes()).is_err() {
                 return Ok(());
             }
         }
@@ -139,6 +145,7 @@ fn stream_latest<T: serde::Serialize>(mut conn: &UnixStream, rx: &mpsc::Receiver
 #[cfg(test)]
 mod tests {
     use std::io::Read;
+    use std::time::Instant;
 
     use super::*;
 
@@ -203,4 +210,61 @@ mod tests {
         assert!(streaming.join().unwrap());
         drop(client);
     }
+
+/// An event loop that answers every request it is sent.
+fn answer_requests(rx: mpsc::Receiver<Msg>) {
+    thread::spawn(move || {
+        while let Ok(msg) = rx.recv() {
+            if let Msg::Ipc { reply, .. } = msg {
+                let _ = reply.send(Response::Ok);
+            }
+        }
+    });
+}
+
+fn ask(tx: &super::super::inbox::Tx) -> String {
+    let (mut client, server) = UnixStream::pair().unwrap();
+    client.write_all(b"\"Status\"\n").unwrap();
+    serve_client(&server, tx).unwrap();
+    drop(server);
+    let mut text = String::new();
+    client.read_to_string(&mut text).unwrap();
+    text
+}
+
+#[test]
+fn a_socket_closed_mid_request_doesn_t_wedge_the_daemon() {
+    let (tx, rx) = super::super::inbox::channel().unwrap();
+    answer_requests(rx);
+    let _faults = crate::faults::set("ipc.reply=close:1/2");
+    assert_eq!(ask(&tx), "", "the first connection closes with no answer");
+    assert!(ask(&tx).contains("Ok"), "the next one is served");
+    // A client that goes away before sending anything doesn't hang the thread either.
+    let (client, server) = UnixStream::pair().unwrap();
+    drop(client);
+    let started = Instant::now();
+    let _ = serve_client(&server, &tx);
+    assert!(started.elapsed() < Duration::from_secs(1));
+}
+
+#[test]
+fn a_hung_overlay_stream_doesn_t_stall_the_event_loop_or_other_clients() {
+    
+    let (tx, rx) = super::super::inbox::channel().unwrap();
+    let _faults = crate::faults::set("overlay.frame=hang");
+    let (_client, server) = UnixStream::pair().unwrap();
+    let stream_tx = tx.clone();
+    thread::spawn(move || {
+        let _ = watch_overlay(&server, &stream_tx);
+    });
+    let Ok(Msg::WatchOverlay(frames)) = rx.recv() else { panic!("no watcher") };
+    let started = Instant::now();
+    for _ in 0..2000 {
+        frames.send(OverlayFrame::default()).unwrap();
+    }
+    assert!(started.elapsed() < Duration::from_secs(1), "sending frames to a hung overlay blocks the sender");
+    // Another client is still answered while that stream is stuck.
+    answer_requests(rx);
+    assert!(ask(&tx).contains("Ok"));
+}
 }

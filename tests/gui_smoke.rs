@@ -30,6 +30,24 @@ const OPEN_FOR: Duration = Duration::from_secs(5);
 #[test]
 #[ignore]
 fn gui_opens_and_keeps_running() {
+    open_and_keep_running(&[]);
+}
+
+/// ENV-7 with no GPU: the same window with software GL, no Vulkan driver and iced told to use its
+/// CPU renderer. (The container has no GPU either way; this also holds on a machine that has one.)
+#[test]
+#[ignore]
+fn gui_software_opens_and_keeps_running_without_a_gpu() {
+    open_and_keep_running(&[
+        ("LIBGL_ALWAYS_SOFTWARE", "1"),
+        ("GALLIUM_DRIVER", "llvmpipe"),
+        ("VK_ICD_FILENAMES", "/nonexistent"),
+        ("WGPU_BACKEND", "gl"),
+        ("ICED_BACKEND", "tiny-skia"),
+    ]);
+}
+
+fn open_and_keep_running(gui_env: &[(&str, &str)]) {
     let _serial = serial();
     assert!(std::env::var_os("DISPLAY").is_some(), "the window needs a display: run under xvfb-run");
     let root = temp_root();
@@ -56,6 +74,7 @@ fn gui_opens_and_keeps_running() {
         .env("XDG_STATE_HOME", root.join("state"))
         .env("XDG_RUNTIME_DIR", &run)
         .env("TMPDIR", &tmp)
+        .envs(gui_env.iter().copied())
         .stdin(Stdio::null())
         .stdout(fs::File::create(&gui_log).unwrap())
         .stderr(fs::File::create(root.join("gui.err")).unwrap())

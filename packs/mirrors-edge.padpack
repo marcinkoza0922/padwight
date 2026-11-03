@@ -7,7 +7,7 @@ id = "fac67fc5-ce01-4f4a-8a1a-290a970a600d"
 name = "Mirror's Edge"
 version = "1.0"
 author = "Padwight"
-description = "Mirror's Edge (2008) on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and you set the buttons in the game's Controls options. Padwight adds the Guide overlay on top, in stark white and runner red. Gyro and flick stick profiles are included to try; they move the mouse beside the pad."
+description = "Mirror's Edge (2008 on consoles, 2009 on PC) on an Xbox-style pad. The game has its own controller support, so the controller passes through untouched and you set the buttons in the game's Controls options. Padwight adds the Guide overlay on top, in stark white and runner red. Gyro and flick stick profiles are included to try; they move the mouse beside the pad."
 made_with = "Xbox controller"
 
 [[rules]]

@@ -21,7 +21,9 @@ main() {
         latest() { curl -fsSLI -o /dev/null -w '%{url_effective}' "https://github.com/$repo/releases/latest"; }
     elif command -v wget >/dev/null 2>&1; then
         fetch() { wget -q -O "$2" "$1"; }
-        latest() { wget -q --max-redirect=0 -S -O /dev/null "https://github.com/$repo/releases/latest" 2>&1 | sed -n 's/^ *[Ll]ocation: *//p' | tr -d '\r' | head -1; }
+        # wget 1 prints the redirect's Location header; wget 2 (the `wget` of newer Fedora) prints no headers and, without
+        # -q, says "URL '...' not followed".
+        latest() { wget --max-redirect=0 -S -O /dev/null "https://github.com/$repo/releases/latest" 2>&1 | sed -n -e 's/^ *[Ll]ocation: *//p' -e "s/^URL '\\(.*\\)' not followed.*/\\1/p" | tr -d '\r' | head -1; }
     else
         echo "need curl or wget to download padwight" >&2; exit 1
     fi
@@ -32,9 +34,13 @@ main() {
     if [ -z "$version" ]; then
         tag=$(latest | sed 's|.*/||')
         version=${tag#v}
-        [ -n "$version" ] && [ "$version" != latest ] || { echo "couldn't find the latest padwight release" >&2; exit 1; }
+        [ -n "$version" ] && [ "$version" != latest ] && [ "$version" != releases ] || { echo "couldn't find the latest padwight release" >&2; exit 1; }
     fi
     version=${version#v}
+    # It goes into a URL and a file name: digits, dots and a pre-release suffix, nothing else.
+    case $version in
+        ""|*[!0-9A-Za-z.+-]*|[!0-9]*) echo "not a padwight version: $version" >&2; exit 1 ;;
+    esac
     name=padwight-$version-linux-$arch
     base=https://github.com/$repo/releases/download/v$version
 

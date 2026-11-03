@@ -63,11 +63,16 @@ impl Session {
             pad.model
         };
         let path = attach_pad(model, live)?;
-        *link = Some(Bridge { path: path.clone(), model, live, stale: false });
-        drop(link);
-        // Whatever is already held starts out held.
-        let rebuilt = self.pad().state_events();
-        self.send(&path, rebuilt)?;
+        // Whatever is already held starts out held. The link stays locked until that is sent, and
+        // the changes queued so far are dropped (the rebuild has them): a flush in between would
+        // send a press the rebuild sends again, and a button's On press would fire twice.
+        let rebuilt = {
+            let mut pad = self.pad();
+            pad.take_events();
+            pad.state_events()
+        };
+        let stale = self.send(&path, rebuilt).is_err();
+        *link = Some(Bridge { path: path.clone(), model, live, stale });
         Ok(path)
     }
 
@@ -150,25 +155,81 @@ impl Session {
         }
     }
 
+    /// The daemon's transcript (see `padwight debug help`); needs no controller.
+    pub fn transcript(&self, clear: bool) -> Result<Vec<String>> {
+        match ask(&Request::DebugTranscript { clear })? {
+            Response::Lines(lines) => Ok(lines),
+            Response::Error(e) => bail!(e),
+            _ => bail!("unexpected reply from the daemon"),
+        }
+    }
+
+    /// Moves a `--fake-clock` daemon's clock forward `ms`, running everything due on the way.
+    pub fn advance(&self, ms: u64) -> Result<()> {
+        match ask(&Request::DebugAdvance(ms))? {
+            Response::Ok => Ok(()),
+            Response::Error(e) => bail!(e),
+            _ => bail!("unexpected reply from the daemon"),
+        }
+    }
+
+    /// Whether the daemon this session is attached to runs on the manual clock. Asked once.
+    fn fake_clock(&self) -> bool {
+        if self.attached().is_none() {
+            return false;
+        }
+        if let Some(known) = self.fake.get() {
+            return *known;
+        }
+        let manual = matches!(ask(&Request::DebugClock), Ok(Response::Lines(l)) if l.first().is_some_and(|s| s == "manual"));
+        let _ = self.fake.set(manual);
+        manual
+    }
+
+    /// Lets `ms` pass: on the daemon's manual clock if it has one, otherwise by waiting.
+    pub fn pause(&self, ms: u64) -> Result<()> {
+        if self.fake_clock() {
+            self.advance(ms)
+        } else {
+            std::thread::sleep(Duration::from_millis(ms));
+            Ok(())
+        }
+    }
+
     /// Turns the pad at `rates` (degrees per second) for `ms`, as a stream of motion readings
     /// like a real controller's, then lets it stop.
     pub fn turn(&self, rates: [f32; 3], ms: u64) -> Result<()> {
         const STEP: Duration = Duration::from_millis(4);
         let Some(path) = self.attached() else { return Ok(()) };
         self.pad().set_gyro(Some(rates));
+        let fake = self.fake_clock();
         let (start, mut last) = (Instant::now(), Instant::now());
+        let mut passed = 0u64;
         let result = loop {
-            std::thread::sleep(STEP);
-            let now = Instant::now();
-            let step = DebugEvent::Motion { gyro: rates, ms: now.duration_since(last).as_millis().max(1) as u32 };
-            last = now;
+            let step_ms = if fake {
+                // Exact: the daemon's time moves by the reading's length.
+                let step_ms = STEP.as_millis() as u64;
+                if let Err(e) = self.advance(step_ms) {
+                    break Err(e);
+                }
+                passed += step_ms;
+                step_ms as u32
+            } else {
+                std::thread::sleep(STEP);
+                let now = Instant::now();
+                let d = now.duration_since(last).as_millis().max(1) as u32;
+                last = now;
+                d
+            };
+            let step = DebugEvent::Motion { gyro: rates, ms: step_ms };
             if let Err(e) = self.send(&path, vec![step]) {
                 if let Some(bridge) = self.link.lock().as_mut() {
                     bridge.stale = true;
                 }
                 break Err(e);
             }
-            if now.duration_since(start) >= Duration::from_millis(ms) {
+            let elapsed = if fake { Duration::from_millis(passed) } else { start.elapsed() };
+            if elapsed >= Duration::from_millis(ms) {
                 break Ok(());
             }
         };

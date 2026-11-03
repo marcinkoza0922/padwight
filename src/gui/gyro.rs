@@ -235,13 +235,13 @@ fn curve_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(
 fn activation_rows<'a>(rows: Column<'a, Message>, cfg: &'a GyroConfig, with: impl Fn(&dyn Fn(&mut GyroConfig)) -> Message + Copy + 'a) -> Column<'a, Message> {
     let starts = row![
         checkbox(cfg.toggle_rumble).label("Rumble on gyro active / inactive").on_toggle(move |v| with(&|c| c.toggle_rumble = v)),
-        text("assign Gyro active / inactive, clutch, hold and recenter to any button, gesture, combo or menu item").size(12).color(MUTED_COLOR),
+        text("assign Gyro active / inactive, clutch, hold and recenter to any button, gesture, combo or menu item").size(12).style(muted),
     ]
     .spacing(14)
     .align_y(Alignment::Center);
     let pause_choices = [Optional(None), Optional(Some(Stick::Left)), Optional(Some(Stick::Right))];
     let hinted = |picker: Element<'a, Message>, hint: &'a str| -> Element<'a, Message> {
-        row![picker, text(hint).size(12).color(MUTED_COLOR)].spacing(10).align_y(Alignment::Center).into()
+        row![picker, text(hint).size(12).style(muted)].spacing(10).align_y(Alignment::Center).into()
     };
     rows.push(box_row("Switching", starts.into()))
         .push(box_row(
@@ -281,7 +281,7 @@ fn advanced<'a>(cfg: &'a GyroConfig, open: bool, with: impl Fn(&dyn Fn(&mut Gyro
 fn pictures<'a>(cfg: &GyroConfig, ui: &Ui) -> Element<'a, Message> {
     let pics = super::gyro_graph::figures(cfg, ui.live_gyro, ui.gyro_trail);
     let why = if ui.any_gyro { "Turn the controller to see the gyro at work. The live parts follow the active profile's saved settings." } else { "Connect a controller with a gyro to see it live." };
-    let status = ui.gyro_note.filter(|_| ui.any_gyro).map(|why| text(why).size(13).color(style_accent()).into());
+    let status = ui.gyro_note.filter(|_| ui.any_gyro).map(|why| text(why).size(13).style(accent_text).into());
     visualizer_panel(pics, Some(why), status)
 }
 

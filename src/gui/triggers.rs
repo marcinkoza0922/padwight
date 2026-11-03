@@ -52,7 +52,7 @@ fn edge_rows<'a>(t: Trigger, gestures: &'a Gestures, default_button: Button, nam
     let adds: Vec<Element<'a, Message>> = GestureKind::EDGES
         .into_iter()
         .filter(|k| gestures.get(*k).is_none())
-        .map(|k| button(text(format!("+ {k}")).size(13)).style(style::secondary).padding([3, 10]).on_press(Message::AddTriggerGesture(t, k)).into())
+        .map(|k| button(text(format!("+ {k}")).size(13).wrapping(text::Wrapping::None)).style(style::secondary).padding([3, 10]).on_press(Message::AddTriggerGesture(t, k)).into())
         .collect();
     if !adds.is_empty() {
         rows.push(labeled("", row(adds).spacing(6).into()));
@@ -167,7 +167,7 @@ pub(super) fn trigger_editor<'a>(t: Trigger, cfg: &'a TriggerConfig, analog: boo
         "",
         text("Your controller's triggers are on/off only, so pull thresholds and zones don't apply.")
             .size(12)
-            .color(MUTED_COLOR)
+            .style(muted)
             .into(),
     ));
     // Keep existing zones reachable so they can be removed rather than silently lingering.

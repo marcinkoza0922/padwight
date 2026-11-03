@@ -227,9 +227,9 @@ fn header<'a>(s: Stick, cfg: &StickConfig, with: impl Fn(StickAction) -> Message
     };
     // Shortcuts that turn the stick into a button ring: one press and the sectors are bound.
     if !matches!(cfg.action, StickAction::Ring { .. }) {
-        options.push(text("Use as").size(13).color(MUTED_COLOR).into());
+        options.push(text("Use as").size(13).style(muted).into());
         for (label, ring) in [("WASD", StickAction::wasd as fn() -> StickAction), ("Arrows", StickAction::arrows), ("D-pad", StickAction::dpad)] {
-            options.push(button(text(label).size(13)).style(style::secondary).on_press(with(ring())).into());
+            options.push(button(text(label).size(13).wrapping(text::Wrapping::None)).style(style::secondary).on_press(with(ring())).into());
         }
     }
     header_with(s.to_string(), super::action_picker::stick_button(kind, format!("What the {s} does"), pick), options)
@@ -313,10 +313,10 @@ fn ring_sectors<'a>(
     rows = rows.push(box_row(
         "Sector actions",
         row![
-            text("Fill with").size(13).color(MUTED_COLOR),
+            text("Fill with").size(13).style(muted),
             button(text("WASD").size(13)).style(style::secondary).on_press(with(StickAction::wasd())),
             button(text("Arrows").size(13)).style(style::secondary).on_press(with(StickAction::arrows())),
-            button(text("D-pad").size(13)).style(style::secondary).on_press(with(StickAction::dpad())),
+            button(text("D-pad").size(13).wrapping(text::Wrapping::None)).style(style::secondary).on_press(with(StickAction::dpad())),
         ]
         .spacing(8)
         .align_y(Alignment::Center)

@@ -2305,6 +2305,7 @@ impl Config {
         // Write-then-rename so the daemon never reads a half-written file.
         let tmp = path.with_extension("toml.tmp");
         store::write_private(&tmp, &store::app_settings(self)?)?;
+        crate::faults::io("save.settings_rename")?;
         std::fs::rename(&tmp, path)?;
         Ok(())
     }

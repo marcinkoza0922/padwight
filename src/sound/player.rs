@@ -18,6 +18,12 @@ pub struct Sounds {
 }
 
 impl Sounds {
+    /// Cues that make no sound: a daemon on the manual clock is a test, and a real audio device
+    /// would put its own underrun lines in the log (and wake the speakers of whoever runs it).
+    pub fn for_clock(manual: bool) -> Self {
+        if manual { Sounds { tx: None } } else { Self::start() }
+    }
+
     pub fn start() -> Self {
         let (tx, rx) = mpsc::channel::<SoundSpec>();
         let spawned = thread::Builder::new().name("padwight-sound".into()).spawn(move || {
@@ -83,6 +89,11 @@ const MONO: std::num::NonZero<u16> = std::num::NonZero::<u16>::MIN;
 mod tests {
     use super::*;
     use crate::sound::SoundKind;
+
+    #[test]
+    fn a_daemon_on_the_manual_clock_opens_no_audio_device() {
+        assert!(Sounds::for_clock(true).tx.is_none());
+    }
 
     #[test]
     fn a_device_that_won_t_open_drops_that_cue_and_the_next_tries_again() {

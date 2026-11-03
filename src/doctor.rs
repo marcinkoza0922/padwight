@@ -2,7 +2,13 @@
 //! controllers and to their motion sensors, and the udev rules that grant it) and says what to
 //! change, why, and the exact commands.
 
-mod devices;
+pub(crate) mod devices;
+mod reference;
+mod report;
+mod scrub;
+mod service;
+mod system;
+mod udev_rules;
 #[cfg(test)]
 mod tests;
 
@@ -24,46 +30,6 @@ const HIDRAW_RULE_NAME: &str = "72-padwight-hidraw.rules";
 const HIDRAW_RULE: &str = include_str!("../dist/72-padwight-hidraw.rules");
 const MODULES_CONF_NAME: &str = "padwight-uinput.conf";
 const MODULES_CONF: &str = include_str!("../dist/padwight-uinput.conf");
-
-/// What the daemon needs and why, for `padwight doctor --explain`.
-const REFERENCE: &str = "\
-What padwight needs from the system, and why
-
-1. Write access to /dev/uinput.
-   padwight reads your real controller and shows games a virtual gamepad, plus a virtual keyboard
-   and mouse for the keys and clicks your mappings send. The kernel makes virtual input devices
-   only through /dev/uinput, which needs the uinput kernel module loaded.
-   Granted by: dist/70-padwight-uinput.rules (systemd-logind's `uaccess` tag gives the user at
-   the machine access and nobody else), and dist/padwight-uinput.conf (loads the module at boot).
-   Most desktops already do both.
-
-2. Read access to the controller's /dev/input/eventN node.
-   That is where its buttons and sticks come from. padwight also takes the node exclusively, so
-   games see only the virtual gamepad and not both. systemd's own rules give the logged-in user
-   access to joysticks. Without that, `sudo usermod -aG input $USER` and a new login does.
-
-3. Read access to the controller's motion sensor, for gyro (PlayStation and Switch controllers).
-   The motion sensor is a separate input node, classed as an accelerometer, which systemd's rules
-   leave to root. dist/70-padwight-motion.rules tags it for the logged-in user, only for the
-   playstation, sony and nintendo drivers, so a laptop's tilt sensor is untouched.
-   Without it, everything but gyro works.
-
-4. Optional: no access to PlayStation and Switch controllers' raw HID node (/dev/hidrawN).
-   Steam and SDL games read those controllers there instead of through the input node, so taking
-   the input node doesn't stop them: they see every press as well as the virtual gamepad.
-   dist/72-padwight-hidraw.rules closes the raw node to every program (padwight doesn't use it),
-   so they read the input node, which padwight holds. While padwight is off they then read it
-   there too, which costs Steam's own gyro and lightbar control for those controllers.
-
-5. A graphical session, for the settings window, the on-screen keyboard and the overlays.
-   The overlays need a Wayland compositor with layer-shell (KDE Plasma, COSMIC, Sway, Hyprland,
-   labwc and other wlroots compositors). GNOME and Cinnamon have none: their overlays are shown by
-   padwight's shell extension instead (experimental).
-
-6. Optional: the daemon running. `systemctl --user enable --now padwight` starts it at login.
-
-All udev rules go in /etc/udev/rules.d/ and need root once. `padwight doctor` prints the
-exact commands for whatever is missing.";
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Level {
@@ -253,8 +219,8 @@ fn check_controllers(roots: &Roots) -> Vec<Finding> {
             "Connect one, then run this again to check that padwight can open it.",
         ));
     }
-    findings.push(check_motion_rule(roots, &nodes));
-    findings.push(check_hidraw_rule(roots, &nodes));
+    findings.push(udev_rules::check_motion_rule(roots, &nodes));
+    findings.push(udev_rules::check_hidraw_rule(roots, &nodes));
     findings
 }
 
@@ -303,112 +269,52 @@ tilt sensor is untouched. Without it, everything but gyro works.";
     .fix(fix)
 }
 
-/// Reports whether the motion-sensor rule is installed. A missing rule is a problem only when a
-/// pad that needs it is connected (that is reported by its node), so here it's a note.
-fn check_motion_rule(roots: &Roots, nodes: &[Node]) -> Finding {
-    match file_state(&roots.rule_dirs, MOTION_RULE_NAME, MOTION_RULE) {
-        RuleState::Current => Finding::new(Level::Ok, format!("Gyro: {MOTION_RULE_NAME} is installed"), ""),
-        RuleState::Outdated => Finding::new(
-            Level::Note,
-            format!("Gyro: the installed {MOTION_RULE_NAME} differs from this version's"),
-            "Install this version's to be sure gyro access keeps working.",
-        )
-        .fix(install_rule(MOTION_RULE_NAME, MOTION_RULE))
-        .stale(),
-        RuleState::Missing => {
-            let needed = if nodes.iter().any(Node::is_pad_motion) {
-                "A PlayStation or Switch controller is connected."
-            } else {
-                "You need it only for gyro on PlayStation and Switch controllers."
-            };
-            Finding::new(
-                Level::Note,
-                format!("Gyro: {MOTION_RULE_NAME} isn't installed"),
-                // The report's last line already points to `--explain`, as the window's dialog does.
-                format!("{needed} Without it, their motion sensors are root-only."),
-            )
-            .fix(install_rule(MOTION_RULE_NAME, MOTION_RULE))
-        }
-    }
-}
-
-/// Reports whether the rule closing PlayStation and Switch controllers' raw HID nodes is installed.
-/// Nothing padwight needs depends on it, so a missing rule is a note.
-fn check_hidraw_rule(roots: &Roots, nodes: &[Node]) -> Finding {
-    match file_state(&roots.rule_dirs, HIDRAW_RULE_NAME, HIDRAW_RULE) {
-        RuleState::Current => Finding::new(Level::Ok, format!("Raw controller access: {HIDRAW_RULE_NAME} is installed"), ""),
-        RuleState::Outdated => Finding::new(
-            Level::Note,
-            format!("Raw controller access: the installed {HIDRAW_RULE_NAME} differs from this version's"),
-            "Install this version's to be sure Steam and games keep reading those controllers through padwight.",
-        )
-        .fix(install_rule(HIDRAW_RULE_NAME, HIDRAW_RULE))
-        .stale(),
-        RuleState::Missing => {
-            let connected = if nodes.iter().any(Node::is_hidraw_pad) {
-                "A PlayStation or Switch controller is connected. "
-            } else {
-                ""
-            };
-            Finding::new(
-                Level::Note,
-                format!("Raw controller access: {HIDRAW_RULE_NAME} isn't installed"),
-                format!(
-                    "{connected}Steam and SDL games read PlayStation and Switch controllers through their raw HID node, which padwight \
-can't take, so they see your presses as well as the virtual gamepad. The rule closes that node. Turn the controller off and \
-on after installing it."
-                ),
-            )
-            .fix(install_rule(HIDRAW_RULE_NAME, HIDRAW_RULE))
-        }
-    }
-}
-
-/// Everything the settings window shows: the permissions, and whether there is a desktop.
+/// Everything the settings window shows: the permissions, the desktop and the helper programs.
 pub fn check_all() -> Vec<Finding> {
     let mut findings = check_permissions(&Roots::system());
     findings.push(check_desktop());
+    findings.push(clipboard_finding(crate::capture::on_path(crate::clipboard::TOOL)));
     findings
 }
 
 fn check_desktop() -> Finding {
-    let graphical = ["WAYLAND_DISPLAY", "DISPLAY"].iter().any(|v| std::env::var_os(v).is_some_and(|s| !s.is_empty()));
-    if graphical {
-        Finding::new(Level::Ok, "Desktop session: found", "")
+    let set = |v: &str| std::env::var_os(v).is_some_and(|s| !s.is_empty());
+    desktop_finding(set("WAYLAND_DISPLAY"), set("DISPLAY"))
+}
+
+/// What the session variables say: Wayland is needed, an X11 session alone isn't supported.
+fn desktop_finding(wayland: bool, x11: bool) -> Finding {
+    if wayland {
+        Finding::new(Level::Ok, "Desktop session: Wayland", "")
+    } else if x11 {
+        Finding::new(
+            Level::Problem,
+            "Desktop session: X11, which isn't supported",
+            "padwight needs a Wayland session for the settings window, the on-screen keyboard and the overlays \
+(DISPLAY is set, WAYLAND_DISPLAY isn't). Log in to your desktop's Wayland session instead. Games running under Xwayland are fine.",
+        )
     } else {
         Finding::new(
             Level::Note,
             "Desktop session: none found here",
-            "The settings window and overlays need a graphical session (neither WAYLAND_DISPLAY nor DISPLAY is set). \
-The daemon itself doesn't.",
+            "The settings window and overlays need a Wayland session (WAYLAND_DISPLAY isn't set). The daemon itself doesn't.",
         )
     }
 }
 
-fn check_daemon() -> Finding {
-    match crate::ipc::request(&crate::ipc::Request::Status) {
-        Ok(_) => Finding::new(Level::Ok, "Daemon: running", ""),
-        Err(_) => daemon_down(),
-    }
-}
-
-fn daemon_down() -> Finding {
-    let unit = home_unit_exists();
-    let fix = if unit { "systemctl --user enable --now padwight" } else { "padwight daemon" };
-    let detail = if unit {
-        "Start it now and at every login."
+/// Whether the calculator's Copy can reach the clipboard. Nothing else needs it, so a missing
+/// tool is a note; the package's name is the same on every major distro, the install command isn't.
+fn clipboard_finding(found: bool) -> Finding {
+    if found {
+        Finding::new(Level::Ok, format!("Clipboard: {} found", crate::clipboard::TOOL), "")
     } else {
-        "No padwight.service is installed for your user. Start it by hand, or install the unit (the release tarball's install.sh does)."
-    };
-    Finding::new(Level::Note, "Daemon: not running", detail).fix(fix.to_owned())
-}
-
-fn home_unit_exists() -> bool {
-    dirs::config_dir()
-        .map(|d| d.join("systemd/user"))
-        .into_iter()
-        .chain(["/etc/systemd/user", "/usr/lib/systemd/user"].map(PathBuf::from))
-        .any(|dir| dir.join("padwight.service").exists())
+        Finding::new(
+            Level::Note,
+            format!("Clipboard: {} isn't installed", crate::clipboard::TOOL),
+            "The calculator's Copy puts its answer on the clipboard through wl-copy. Install your distro's \
+wl-clipboard package to use it. Everything else, Paste included, works without it.",
+        )
+    }
 }
 
 /// Turns findings into the text `padwight doctor` prints.
@@ -458,15 +364,15 @@ pub fn run(args: &[&str]) -> Result<()> {
     match args {
         ["--files"] => return print_stale_files(),
         ["--explain"] => {
-            println!("{REFERENCE}");
+            println!("{}", reference::REFERENCE);
             return Ok(());
         }
+        ["--report", file] => return report::run(file),
         [] => {}
-        _ => bail!("usage: padwight doctor [--explain|--files]"),
+        _ => bail!("usage: padwight doctor [--explain|--files|--report <file>]"),
     }
-    let mut findings = check_permissions(&Roots::system());
-    findings.push(check_desktop());
-    findings.push(check_daemon());
+    let mut findings = check_all();
+    findings.push(service::check_daemon());
     print!("{}", render(&findings));
     let problems = findings.iter().filter(|f| f.level == Level::Problem).count();
     match problems {

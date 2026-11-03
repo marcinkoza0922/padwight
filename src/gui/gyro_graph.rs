@@ -23,7 +23,7 @@ pub(super) fn figures<'a>(cfg: &GyroConfig, live: Option<GyroOut>, trail: &Trail
             Some(out) => format!("Turning {:.0}°/s: {:.2}× sensitivity", out.speed, cfg.curve.gain(out.speed)),
             None => format!("{:.2}× slow, {:.2}× fast", cfg.curve.slow_gain, cfg.curve.fast_gain),
         };
-        let faint = |s: String| text(s).size(11).color(MUTED_COLOR);
+        let faint = |s: String| text(s).size(11).style(muted);
         let ticks = row![faint("0°/s".into()), space().width(Length::Fill), faint("Turning speed".into()), space().width(Length::Fill), faint(format!("{:.0}°/s", top_speed(&cfg.curve)))].width(W);
         pics.push(figure("Sensitivity by speed", column![picture(curve_svg(&cfg.curve, live.map(|o| o.speed)), W, H), ticks].spacing(2), Some(readout), W));
     }

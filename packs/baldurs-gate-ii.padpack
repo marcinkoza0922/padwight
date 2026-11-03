@@ -4,7 +4,7 @@ overlay_font = "Cinzel"
 
 [pack]
 id = "24164b45-9ad0-4114-8c72-22fd57bb2b34"
-name = "Baldur's Gate II"
+name = "Baldur's Gate II: Enhanced Edition"
 version = "1.0"
 author = "Padwight"
 description = "Baldur's Gate II on an Xbox-style pad, for the Infinity Engine's mouse and keyboard controls. The right stick moves the pointer, the left stick scrolls the map, RT or A left-clicks and LT right-clicks. B pauses, X selects the whole party, Y is the inventory and hold RB to highlight what you can use. Hold LB to pick a party member. Select lists the character record, spells, map, journal and rest. Start is the options and backs out of every screen; double tap it to quick save, hold it to quick load."

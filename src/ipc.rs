@@ -97,6 +97,14 @@ pub enum Request {
     /// Debug mode only: the identity every virtual pad presents as, whatever the game and the
     /// controller say; `None` goes back to choosing.
     DebugIdentify(Option<crate::pad_identity::PadIdentity>),
+    /// Debug mode only, on a daemon started with `--fake-clock`: moves its clock forward this many
+    /// milliseconds, running every tick and timer that falls inside.
+    DebugAdvance(u64),
+    /// Debug mode only: whether the daemon runs on the manual clock, as `Lines(["manual"])` or `Lines(["real"])`.
+    DebugClock,
+    /// Debug mode only: the transcript of what the daemon did (output, profile, mode and layer
+    /// changes, overlays, toasts, cues), as `Lines`; `clear` forgets what was returned.
+    DebugTranscript { clear: bool },
 }
 
 /// One input from an injected controller.
@@ -226,11 +234,11 @@ pub struct SwitchEvent {
 /// How the daemon learns which game is active.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FocusBackend {
-    /// KWin script reports focus changes (KDE Plasma, Wayland or X11).
+    /// KWin script reports focus changes (KDE Plasma).
     Kwin,
-    /// Our GNOME Shell extension reports focus changes (GNOME, Wayland or X11).
+    /// Our GNOME Shell extension reports focus changes (GNOME).
     GnomeShell,
-    /// Our Cinnamon extension reports focus changes (Cinnamon, Wayland or X11).
+    /// Our Cinnamon extension reports focus changes (Cinnamon).
     Cinnamon,
     /// COSMIC's toplevel info protocol reports focus changes.
     Cosmic,

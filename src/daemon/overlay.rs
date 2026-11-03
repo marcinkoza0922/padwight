@@ -52,7 +52,7 @@ impl Daemon {
         thread::spawn(move || crate::media::worker(&requests, |state| tx.send(Msg::Media(state)).is_ok()));
         let guide = self.guide_chord_button();
         let guide_held = guide.is_some_and(|g| self.devices.values().any(|d| d.view.buttons().any(|b| b == g)));
-        let session = MediaSession::new(commands, guide_held, Instant::now()).with_chord(guide, self.shortcut_button(Shortcut::Media));
+        let session = MediaSession::new(commands, guide_held, crate::clock::now()).with_chord(guide, self.shortcut_button(Shortcut::Media));
         self.active = Some(Active::Media(session));
         self.broadcast_overlay();
         self.overlay_sound(sound::SoundOverlay::Media, Some(sound::Feedback::Open));
@@ -101,7 +101,7 @@ impl Daemon {
         match std::env::current_exe().and_then(|exe| std::process::Command::new(exe).arg("overlay").spawn()) {
             Ok(child) => {
                 self.overlay_process = Some(child);
-                self.overlay_started = Some(Instant::now());
+                self.overlay_started = Some(crate::clock::now());
                 true
             }
             Err(e) => {
@@ -139,7 +139,12 @@ impl Daemon {
                 self.apply_keyboard(actions);
                 log!("on-screen {} closed", layout_name(k.layout()));
             }
-            Some(Active::Menu { .. } | Active::Tools(..)) => {}
+            Some(Active::Menu { device, .. }) => {
+                if let Some(dev) = self.devices.get_mut(&device) {
+                    dev.engine.latch_sticks();
+                }
+            }
+            Some(Active::Tools(..)) => {}
             Some(Active::Media(_)) => log!("media controls closed"),
             Some(Active::Offer(_) | Active::Settings(..) | Active::NewPad(..)) => {}
             None => return,
@@ -155,7 +160,13 @@ impl Daemon {
     pub(super) fn apply_keyboard(&mut self, actions: Vec<OverlayAction>) {
         for action in actions {
             match action {
-                OverlayAction::Key(k, pressed) => self.kbm.key(k, pressed),
+                OverlayAction::Key(k, pressed) => {
+                    // A debug daemon's transcript shows what the overlay types, like any other output.
+                    if super::transcript::on() {
+                        super::transcript::output(&format!("key {k:?} {}", if pressed { "down" } else { "up" }));
+                    }
+                    self.kbm.key(k, pressed);
+                }
                 OverlayAction::Close => self.close_overlay(),
             }
         }
@@ -187,7 +198,7 @@ impl Daemon {
     pub(super) fn overlay_view(&self) -> Option<OverlayView> {
         match &self.active {
             Some(Active::Keyboard(k)) => {
-                let mut view = k.view(Instant::now());
+                let mut view = k.view(crate::clock::now());
                 view.style = match k.layout() {
                     Layout::Keyboard => self.config.active_keyboard_style().clone(),
                     Layout::Numpad => self.config.active_numpad_style().clone(),
@@ -203,7 +214,7 @@ impl Daemon {
             Some(Active::Offer(o)) => Some(o.view(self.config.active_menu_style())),
             Some(Active::Settings(m, _)) => Some(m.overlay_view(&self.config, &self.menu_live)),
             Some(Active::NewPad(s, _)) => Some(s.view(self.config.active_menu_style())),
-            Some(Active::Tools(session, _)) => match session.keyboard(Instant::now()) {
+            Some(Active::Tools(session, _)) => match session.keyboard(crate::clock::now()) {
                 Some(mut view) => {
                     view.style = self.config.active_keyboard_style().clone();
                     Some(OverlayView::Keyboard(view))
@@ -234,24 +245,25 @@ impl Daemon {
         let frame = self.overlay_frame();
         if (!frame.info.is_empty() || !frame.logs.is_empty() || !frame.doodles.is_empty())
             && self.overlay_process.is_none()
-            && self.overlay_started.is_none_or(|t| t.elapsed() > Duration::from_secs(10))
+            && self.overlay_started.is_none_or(|t| crate::clock::since(t) > Duration::from_secs(10))
         {
             self.ensure_overlay_process();
         }
         if self.last_frame.as_ref() == Some(&frame) {
             return;
         }
+        super::transcript::overlay(&frame);
         self.overlay_watchers.retain(|w| w.send(frame.clone()).is_ok());
         self.last_frame = Some(frame);
     }
 
     pub(super) fn overlay_frame(&mut self) -> OverlayFrame {
-        let now = Instant::now();
+        let now = crate::clock::now();
         let shown = self.timed_info(now);
         // Live values (clock, CPU, …) refresh every second while shown.
         let live = shown.iter().any(|(o, _)| crate::info::is_live(o));
         let fast = shown.iter().any(|(o, _)| crate::info::is_fast(o));
-        self.info_refresh = live.then(|| Instant::now() + if fast { FAST_INFO_REFRESH } else { INFO_REFRESH });
+        self.info_refresh = live.then(|| crate::clock::now() + if fast { FAST_INFO_REFRESH } else { INFO_REFRESH });
         if live && self.sampler.sampled_at.is_none() {
             self.sampler.sample();
         }
@@ -277,7 +289,7 @@ impl Daemon {
             info.push(crate::info::lens_notice_view());
         }
         let (mut info, logs) = self.with_preview(info, logs, &values);
-        let now = Instant::now();
+        let now = crate::clock::now();
         let glyphs = crate::info::Glyphs { family: values.family, nintendo_layout: values.nintendo_layout };
         let toast = self.toast.as_ref().and_then(|t| Some((t.view(now, glyphs)?, t.next_redraw(now, FADE_FRAME))));
         match toast {
@@ -344,6 +356,18 @@ impl Daemon {
                 );
             }
             self.sounds.play(&spec);
+        }
+        if self.injection.enabled()
+            && let Some(f) = feedback
+        {
+            if let Some(cue) = self.scope.rumble.cue(overlay, f) {
+                super::transcript::note(&format!("rumble {} {cue:?}", overlay.key()));
+            } else if f == sound::Feedback::Pick && self.config.pick_rumble {
+                super::transcript::note(&format!("rumble {} pick", overlay.key()));
+            }
+            if let Some(spec) = self.scope.sounds.cue(overlay, f) {
+                super::transcript::note(&format!("sound {} {f:?} {}", overlay.key(), spec.kind.label().to_lowercase()));
+            }
         }
         let Some(dev) = self.overlay_driver().and_then(|id| self.devices.get(&id)).filter(|dev| dev.ff.is_some()) else { return };
         match feedback.and_then(|f| self.scope.rumble.cue(overlay, f)) {

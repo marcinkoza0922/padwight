@@ -2,6 +2,8 @@ use std::io::Read;
 
 use super::*;
 
+mod protocol_doc;
+
 #[test]
 fn a_daemon_that_hangs_up_without_replying_is_reported_as_such() {
     let dir = std::env::temp_dir().join(format!("padwight-ipc-hangup-{}", std::process::id()));

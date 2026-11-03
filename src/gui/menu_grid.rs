@@ -63,7 +63,7 @@ pub(super) fn merge_buttons<'a>(mi: usize, i: usize, span: Span, grid: &GridLayo
 pub(super) fn covered_cell<'a>(i: usize, owner: usize) -> Element<'a, Message> {
     let line = row![
         container(text(format!("{}.", i + 1))).width(70),
-        text(format!("Merged into item {}. Split that item to use this cell again.", owner + 1)).size(13).color(MUTED_COLOR),
+        text(format!("Merged into item {}. Split that item to use this cell again.", owner + 1)).size(13).style(muted),
     ]
     .spacing(8);
     container(line).padding(8).style(style::inset).into()

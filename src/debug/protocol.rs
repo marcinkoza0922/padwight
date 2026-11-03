@@ -48,6 +48,12 @@ pub enum DebugRequest {
     /// What the daemon's mappings have output for this controller, one event per line; needs
     /// `--attach`. `clear` forgets what was returned.
     Output { clear: bool },
+    /// Moves a `--fake-clock` daemon's clock forward `ms`, running every tick and timer inside.
+    Advance(u64),
+    /// Lets `ms` pass: `Advance` on a fake clock, a real wait otherwise.
+    Wait(u64),
+    /// What the daemon did, with times; needs no controller. `clear` forgets what was returned.
+    Transcript { clear: bool },
     /// Fails unless the virtual controller is as described.
     Expect(Expectation),
 }
@@ -65,6 +71,9 @@ pub enum Expectation {
     Output(String),
     /// They have output nothing since then.
     NoOutput,
+    /// The overlay of the running daemon shows `value` at `path` of its state document (see
+    /// `overlay_state`). Needs no attached controller.
+    Overlay { path: String, value: String },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -109,6 +118,14 @@ pub const COMMANDS: &str = "\
   swipe <x0> <y0> <x1> <y1> [ms] stroke a finger across the touchpad over ms (default 150)
   output [clear]                 attached: print what the daemon's mappings have output
                                  (key KEY_A down, pad South up, mouse-move 3 -2, ...)
+  advance <ms>                   attached to a `daemon --debug --fake-clock`: move its clock forward,
+                                 running every tick and timer that falls inside, then answer.
+                                 A live info overlay's one-second refresh starts with the first
+                                 overlay frame; a session that begins in a setup has built none
+                                 until something changes the overlay, so `expect overlay ...` first
+  wait <ms>                      let time pass: `advance` on a fake clock, a real wait otherwise
+  transcript [clear]             print what the daemon did with times (@ms): output, profile, mode
+                                 and layer changes, overlays, toasts, sound and rumble cues
   expect model <name>            exit with an error unless the pad is that model
   expect pressed <button>...     ... unless these buttons are down
   expect released <button>...    ... unless these buttons are up
@@ -117,6 +134,12 @@ pub const COMMANDS: &str = "\
   expect trigger <left|right> <0..1>  ... unless the trigger is pulled that far
   expect output <line>           attached: ... unless the mappings have output that line
   expect no-output               attached: ... if they have output anything
+  expect overlay <path> <value>  ... unless the daemon's overlay state (`debug overlay state`)
+                                 has <value> at <path>, e.g. `showing guide`, `guide.selected
+                                 Keyboard`, `keyboard.latched KEY_LEFTSHIFT`, `showing none`;
+                                 retried for half a second; `glob:@@:@@|n/a` matches a shape (`*` any run,
+                                 `?` any character, `@` any digit, `|` between alternatives);
+                                 `not:<value>` holds where the value doesn't
   run [file]                     run commands, one per line, from a file or stdin;
                                  blank lines and # comments are skipped; `sleep <ms>` waits
 
@@ -169,6 +192,10 @@ pub fn parse(words: &[&str]) -> Result<Command> {
                 _ => bail!("swipe takes two points and how long, in milliseconds"),
             },
         },
+        ["advance", ms] => DebugRequest::Advance(millis(ms)?),
+        ["wait", ms] => DebugRequest::Wait(millis(ms)?),
+        ["transcript"] => DebugRequest::Transcript { clear: false },
+        ["transcript", "clear"] => DebugRequest::Transcript { clear: true },
         ["output"] => DebugRequest::Output { clear: false },
         ["output", "clear"] => DebugRequest::Output { clear: true },
         ["expect", rest @ ..] => DebugRequest::Expect(expectation(rest)?),
@@ -186,9 +213,10 @@ fn expectation(words: &[&str]) -> Result<Expectation> {
         ["idle"] => Expectation::Idle,
         ["output", line @ ..] if !line.is_empty() => Expectation::Output(line.join(" ")),
         ["no-output"] => Expectation::NoOutput,
+        ["overlay", path, value @ ..] if !value.is_empty() => Expectation::Overlay { path: (*path).into(), value: value.join(" ") },
         ["stick", side, x, y] => Expectation::Stick { stick: stick(side)?, x: number(x)?, y: number(y)? },
         ["trigger", side, value] => Expectation::Trigger { trigger: trigger(side)?, value: number(value)? },
-        _ => bail!("expect what? model, pressed, released, idle, stick, trigger, output or no-output"),
+        _ => bail!("expect what? model, pressed, released, idle, stick, trigger, output, no-output or overlay"),
     })
 }
 
@@ -314,6 +342,10 @@ mod tests {
         assert_eq!(req("expect idle"), DebugRequest::Expect(Expectation::Idle));
         assert_eq!(req("expect output key KEY_A down"), DebugRequest::Expect(Expectation::Output("key KEY_A down".into())));
         assert_eq!(req("expect no-output"), DebugRequest::Expect(Expectation::NoOutput));
+        assert_eq!(
+            req("expect overlay guide.selected \"Quick settings\""),
+            DebugRequest::Expect(Expectation::Overlay { path: "guide.selected".into(), value: "\"Quick settings\"".into() })
+        );
         assert_eq!(req("output clear"), DebugRequest::Output { clear: true });
         assert_eq!(req("gyro 1 2 3 250"), DebugRequest::Gyro { rates: [1.0, 2.0, 3.0], ms: 250 });
         assert_eq!(parse(&["sleep", "20"]).unwrap(), Command::Sleep(20));

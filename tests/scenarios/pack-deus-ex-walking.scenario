@@ -1,0 +1,17 @@
+# Deus Ex: the left stick is a ring of keys; a half push walks and a full push runs (Shift via zone).
+setup packs/deus-ex.padpack Deus Ex
+stick left 0 -1
+advance 60
+stick left 0.7 -0.7
+advance 60
+stick left 0 0
+advance 60
+---
+key KEY_W down @0
+key KEY_W up   @60
+key KEY_W down @60
+key KEY_D down @60
+key KEY_D up   @120
+key KEY_W up   @120
+key KEY_W down @120
+key KEY_W up   @120

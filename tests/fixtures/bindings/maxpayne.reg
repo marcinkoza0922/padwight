@@ -1,0 +1,31 @@
+WINE REGISTRY Version 2
+;; Test registry, written for the binding-compare self-test
+
+[Software\\Remedy Entertainment\\Max Payne\\Input Settings] 1791519837
+#time=1dd57a6003c0956
+" 0 Button0 type"=dword:00000001
+" 0 Button0 value"=dword:00000011
+" 0 Button1 type"=dword:00000001
+" 0 Button1 value"=dword:0000001f
+" 0 Button2 type"=dword:00000001
+" 0 Button2 value"=dword:000000c8
+" 13 Button0 type"=dword:00000001
+" 13 Button0 value"=dword:00000012
+" 31 Button0 type"=dword:00000002
+" 31 Button0 value"=dword:00000001
+" 31 Button2 type"=dword:00000001
+" 31 Button2 value"=dword:0000002a
+"Invert Mouse"=dword:00000000
+
+[Software\\Remedy Entertainment\\Max Payne 2\\Input Settings] 1782762344
+#time=1dd07ffdf93ef98
+"CROUCH Button0 type"=dword:00000001
+"CROUCH Button0 value"=dword:0000002e
+"CROUCH Button1 type"=dword:00000001
+"CROUCH Button1 value"=dword:000000b8
+"ATTACK Button0 type"=dword:00000001
+"ATTACK Button0 value"=dword:00000021
+"ATTACK Button1 type"=dword:00000002
+"ATTACK Button1 value"=dword:00000002
+"BULLETTIME Button0 type"=dword:00000000
+"BULLETTIME Button0 value"=dword:00000000

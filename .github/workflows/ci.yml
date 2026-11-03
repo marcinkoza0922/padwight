@@ -87,6 +87,55 @@ jobs:
       - name: Tests
         run: cargo nextest run --profile agent --hide-progress-bar --cargo-quiet
 
+  # T-8: draws the overlay and window again and lists what changed against the newest baseline
+  # from the nightly run on main. A change is fine when it's meant; this only shows it, so the job
+  # doesn't fail the pull request.
+  overlay-diff:
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Newest baseline from main
+        id: base
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Until nightly.yml is on main the list call fails with a 404: that means no baseline yet.
+          run=$(gh run list --workflow nightly.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty' || true)
+          if [ -n "$run" ] && gh run download "$run" -n overlay-baseline -D overlay-baseline; then
+            echo present=true >> "$GITHUB_OUTPUT"
+          else
+            echo "No nightly baseline yet; skipping." >> "$GITHUB_STEP_SUMMARY"
+            echo present=false >> "$GITHUB_OUTPUT"
+          fi
+      - name: System packages
+        if: steps.base.outputs.present == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libxkbcommon-dev libwayland-dev libudev-dev libfontconfig1-dev libdbus-1-dev libasound2-dev
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.base.outputs.present == 'true'
+      - uses: Swatinem/rust-cache@v2
+        if: steps.base.outputs.present == 'true'
+      - name: Compare with the baseline
+        if: steps.base.outputs.present == 'true'
+        run: |
+          set +e
+          cargo run -q -- debug overlay diff overlay-baseline --out regression > diff.txt 2>&1
+          status=$?
+          { echo '### Overlay and window pictures against main'; echo '```'; cat diff.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+      - uses: actions/upload-artifact@v4
+        if: failure() && steps.base.outputs.present == 'true'
+        with:
+          name: overlay-diff
+          path: regression/diff
+
   project-checks:
     runs-on: ubuntu-latest
     steps:

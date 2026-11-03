@@ -1,7 +1,7 @@
 //! Finding the daemon's virtual devices, and reading the keys and buttons the kernel reports on them.
 
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeMap, BTreeSet},
     fs,
     io::ErrorKind,
     path::{Path, PathBuf},
@@ -56,6 +56,14 @@ pub fn grabbed(path: &Path) -> bool {
 pub struct Reader {
     pub dev: Device,
     pub pressed: BTreeSet<u16>,
+    /// Total relative motion (REL_X, REL_Y) seen so far, for the mouse.
+    pub moved: (i64, i64),
+    /// The last value seen on each absolute axis (sticks, triggers, hat), by code.
+    pub abs: BTreeMap<u16, i32>,
+    /// How many times each key or button went down.
+    pub downs: BTreeMap<u16, u32>,
+    /// Total wheel motion (REL_WHEEL, REL_HWHEEL) seen so far, for the mouse.
+    pub wheel: (i64, i64),
 }
 
 impl Reader {
@@ -72,7 +80,7 @@ impl Reader {
     fn at(path: &Path) -> Self {
         let dev = Device::open(path).unwrap();
         dev.set_nonblocking(true).unwrap();
-        Reader { dev, pressed: BTreeSet::new() }
+        Reader { dev, pressed: BTreeSet::new(), moved: (0, 0), abs: BTreeMap::new(), downs: BTreeMap::new(), wheel: (0, 0) }
     }
 
     /// Reads what is queued. Returns true once the device has gone (its read fails with ENODEV).
@@ -87,9 +95,22 @@ impl Reader {
             if events.is_empty() {
                 return false;
             }
+            for ev in events.iter().filter(|ev| ev.event_type() == EventType::RELATIVE) {
+                match ev.code() {
+                    0 => self.moved.0 += i64::from(ev.value()),
+                    1 => self.moved.1 += i64::from(ev.value()),
+                    8 => self.wheel.0 += i64::from(ev.value()),
+                    6 => self.wheel.1 += i64::from(ev.value()),
+                    _ => {}
+                }
+            }
+            for ev in events.iter().filter(|ev| ev.event_type() == EventType::ABSOLUTE) {
+                self.abs.insert(ev.code(), ev.value());
+            }
             for ev in events.iter().filter(|ev| ev.event_type() == EventType::KEY) {
                 match ev.value() {
                     1 => {
+                        *self.downs.entry(ev.code()).or_default() += 1;
                         self.pressed.insert(ev.code());
                     }
                     0 => {

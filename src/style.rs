@@ -90,9 +90,7 @@ pub fn fold_header(theme: &Theme, status: button::Status) -> button::Style {
     let p = theme.extended_palette();
     let hovered = matches!(status, button::Status::Hovered | button::Status::Pressed);
     let accent = p.primary.base.color;
-    // Lifted toward white in dark mode, where the accent itself is too dark to read.
-    let lift = |c: f32| c + (1.0 - c) * 0.5;
-    let text_color = if p.is_dark { Color { r: lift(accent.r), g: lift(accent.g), b: lift(accent.b), ..accent } } else { accent };
+    let text_color = self::accent(theme);
     button::Style {
         background: hovered.then(|| Color { a: 0.08, ..accent }.into()),
         text_color,
@@ -185,7 +183,7 @@ pub fn segment(selected: bool) -> impl Fn(&Theme, button::Status) -> button::Sty
         };
         button::Style {
             background,
-            text_color: if selected { selected_text } else { p.background.weak.text },
+            text_color: if selected { legible(selected_text, chip) } else { p.background.weak.text },
             border: Border {
                 width: if selected { 1.0 } else { 0.0 },
                 radius: 6.0.into(),
@@ -225,7 +223,7 @@ pub fn secondary(theme: &Theme, status: button::Status) -> button::Style {
 pub fn primary(theme: &Theme, status: button::Status) -> button::Style {
     match status {
         button::Status::Disabled => disabled(theme),
-        _ => button::primary(theme, status),
+        _ => readable(button::primary(theme, status)),
     }
 }
 
@@ -234,8 +232,70 @@ pub fn primary(theme: &Theme, status: button::Status) -> button::Style {
 pub fn danger(theme: &Theme, status: button::Status) -> button::Style {
     match status {
         button::Status::Disabled => disabled(theme),
-        _ => button::danger(theme, status),
+        _ => readable(button::danger(theme, status)),
     }
+}
+
+/// WCAG relative luminance.
+fn luminance(c: Color) -> f32 {
+    let lin = |v: f32| if v <= 0.04045 { v / 12.92 } else { ((v + 0.055) / 1.055).powf(2.4) };
+    0.2126 * lin(c.r) + 0.7152 * lin(c.g) + 0.0722 * lin(c.b)
+}
+
+/// WCAG contrast ratio, 1 to 21.
+fn contrast(a: Color, b: Color) -> f32 {
+    let (a, b) = (luminance(a), luminance(b));
+    (a.max(b) + 0.05) / (a.min(b) + 0.05)
+}
+
+/// The contrast aimed for between button text and its fill: WCAG AA is 4.5:1, and glyph edges
+/// blend into the fill, so the pixels read a little lower than the colors do.
+const AA: f32 = 4.8;
+
+/// `text` moved toward white (on a dark fill) or black (on a light one) until it reads on `fill`.
+pub fn legible(text: Color, fill: Color) -> Color {
+    let toward = if luminance(fill) < 0.4 { 1.0 } else { 0.0 };
+    let mut c = text;
+    for _ in 0..20 {
+        if contrast(c, fill) >= AA {
+            break;
+        }
+        c = Color { r: c.r + (toward - c.r) * 0.15, g: c.g + (toward - c.g) * 0.15, b: c.b + (toward - c.b) * 0.15, ..c };
+    }
+    c
+}
+
+/// The accent for text and small marks on the page: the theme's primary, moved until it reads
+/// on the lightest surface it sits on (the card's hover fill in dark mode, the page's panel in
+/// light mode).
+pub fn accent(theme: &Theme) -> Color {
+    let p = theme.extended_palette();
+    let surface = if p.is_dark { p.background.stronger.color } else { p.background.weak.color };
+    legible(p.primary.base.color, surface)
+}
+
+/// A button that is only a colored label, like a "▸ Advanced" toggle.
+pub fn link(theme: &Theme, status: button::Status) -> button::Style {
+    match status {
+        button::Status::Disabled => disabled(theme),
+        _ => button::Style { text_color: accent(theme), ..button::Style::default() },
+    }
+}
+
+/// A solid button whose text falls short of AA: the text is moved first, and when it is already
+/// white (or black) the fill is deepened a little at a time.
+fn readable(mut style: button::Style) -> button::Style {
+    let Some(Background::Color(mut fill)) = style.background else { return style };
+    style.text_color = legible(style.text_color, fill);
+    for _ in 0..20 {
+        if contrast(style.text_color, fill) >= AA {
+            break;
+        }
+        let away = if luminance(style.text_color) > luminance(fill) { 0.0 } else { 1.0 };
+        fill = Color { r: fill.r + (away - fill.r) * 0.03, g: fill.g + (away - fill.g) * 0.03, b: fill.b + (away - fill.b) * 0.03, ..fill };
+    }
+    style.background = Some(fill.into());
+    style
 }
 
 /// Every disabled button, whatever its style: no fill and a faint edge, so it doesn't read as
@@ -267,7 +327,7 @@ pub fn quiet_danger(theme: &Theme, status: button::Status) -> button::Style {
     };
     button::Style {
         background: Some(fill.into()),
-        text_color,
+        text_color: legible(text_color, fill),
         border: Border { width: 1.0, radius: 5.0.into(), color: edge },
         ..button::Style::default()
     }
@@ -373,5 +433,26 @@ pub fn tickbox(theme: &Theme, status: checkbox::Status) -> checkbox::Style {
             checkbox::Style { border: Border { color: Color { a: 0.5, ..p.background.base.text }, ..base.border }, ..base }
         }
         _ => base,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn button_text_is_moved_until_it_reads() {
+        let fill = Color::from_rgb8(0x9d, 0x3b, 0x3a);
+        let text = legible(Color::from_rgb8(0xe3, 0xa9, 0xa8), fill);
+        assert!(contrast(text, fill) >= AA);
+        // Text that already reads is left alone.
+        assert_eq!(legible(Color::WHITE, Color::from_rgb8(0x20, 0x20, 0x20)), Color::WHITE);
+    }
+
+    #[test]
+    fn a_fill_is_deepened_when_white_text_still_falls_short() {
+        let style = readable(button::Style { background: Some(Color::from_rgb8(0x58, 0x65, 0xf2).into()), text_color: Color::WHITE, ..button::Style::default() });
+        let Some(Background::Color(fill)) = style.background else { panic!("a solid fill") };
+        assert!(contrast(style.text_color, fill) >= AA);
     }
 }

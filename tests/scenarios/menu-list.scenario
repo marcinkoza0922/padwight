@@ -1,0 +1,21 @@
+# A list menu: shown while LB is held, D-pad moves, A picks and closes it.
+setup tests/scenarios/packs/menus.padpack Menus
+press lb
+advance 100
+tap dpad-down 30
+tap dpad-down 30
+tap south 30
+advance 100
+release lb
+---
+overlay menu "List" selected "Alpha"   @0
+sound menu Open pop                    @0
+sound menu Step click                  @100
+overlay menu "List" selected "Bravo"   @100
+sound menu Step click                  @130
+overlay menu "List" selected "Charlie" @130
+sound menu Pick pop                    @160
+overlay none                           @160
+sound menu Close pop                   @160
+key KEY_C down                         @160
+key KEY_C up                           @160

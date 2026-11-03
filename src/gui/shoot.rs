@@ -39,10 +39,10 @@ Drawing the settings window without a display or a daemon (for the manual's scre
   options: --out <dir> (default screenshots/manual)   --size <w>x<h> (default 1280x2600)
            --dark (default is light)";
 
-struct Options {
-    out: PathBuf,
-    size: Size,
-    dark: bool,
+pub(super) struct Options {
+    pub out: PathBuf,
+    pub size: Size,
+    pub dark: bool,
 }
 
 pub fn run(args: &[&str]) -> Result<()> {
@@ -70,7 +70,7 @@ pub fn run(args: &[&str]) -> Result<()> {
 }
 
 /// The window as it starts: no config of the user's, a controller connected, no daemon.
-fn new_app(dark: bool) -> App {
+pub(super) fn new_app(dark: bool) -> App {
     let mut app = App::boot().0;
     app.config.appearance = if dark { Appearance::Dark } else { Appearance::Light };
     app.status = Some(crate::ipc::Status {
@@ -123,7 +123,7 @@ fn open_outputs(app: &mut App, button: Button) -> Result<()> {
 }
 
 /// One step: `step`, and the values it takes from `steps`.
-fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut impl Iterator<Item = &'a str>) -> Result<()> {
+pub(super) fn run_step<'a>(app: &mut App, options: &mut Options, step: &str, steps: &mut impl Iterator<Item = &'a str>) -> Result<()> {
     let mut arg = || steps.next().with_context(|| format!("{step} needs a value"));
     match step {
         "library" => {
@@ -299,7 +299,7 @@ fn send(app: &mut App, message: Message) {
     let _ = app.update(message);
 }
 
-fn tab_word(tab: GameTab) -> &'static str {
+pub(super) fn tab_word(tab: GameTab) -> &'static str {
     match tab {
         GameTab::Profiles => "profiles",
         GameTab::Modes => "modes",

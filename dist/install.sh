@@ -158,6 +158,10 @@ if [ "$update" -eq 1 ]; then
     fi
     exit 0
 fi
+if [ "$service" -eq 1 ] && ! command -v systemctl >/dev/null 2>&1; then
+    echo "note: no systemd here, so no background service. Start \`padwight daemon\` from your session's autostart (for example an entry in ~/.config/autostart)."
+    service=0
+fi
 if [ "$service" -eq 1 ]; then
     install_service
     systemctl --user restart padwight || echo "note: the service didn't start; \`padwight doctor\` says why"

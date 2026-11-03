@@ -125,7 +125,7 @@ impl App {
         let current = self.token_target_text(&picker.target);
         let family = self.config.info_glyphs;
         let mine = if current.is_empty() {
-            text("(empty)").size(13).color(MUTED_COLOR).into()
+            text("(empty)").size(13).style(muted).into()
         } else {
             chip(&current, family, font)
         };
@@ -139,7 +139,7 @@ impl App {
             let open = !query.is_empty() || picker.open.contains(fold.id);
             let mut block = column![row![
                 disclosure(&format!("{} ({})", fold.title, entries.len()), open, Message::ToggleTokenFold(fold.id)),
-                text(fold.blurb).size(12).color(MUTED_COLOR)
+                text(fold.blurb).size(12).style(muted)
             ]
             .spacing(10)
             .align_y(Alignment::Center)]
@@ -152,11 +152,11 @@ impl App {
         let dialog = container(
             column![
                 text("Insert a token").size(20),
-                row![text("Your text").size(13).color(MUTED_COLOR), mine].spacing(10).align_y(Alignment::Center),
+                row![text("Your text").size(13).style(muted), mine].spacing(10).align_y(Alignment::Center),
                 field("Search tokens", &picker.query).on_input(Message::TokenSearch).width(Length::Fill),
                 scrollable(folds).height(Length::Fixed(430.0)),
                 row![
-                    text("Each click adds the token to the end of your text.").size(12).color(MUTED_COLOR),
+                    text("Each click adds the token to the end of your text.").size(12).style(muted),
                     space::horizontal(),
                     button(text("Done")).on_press(Message::CloseTokenPicker),
                 ]
@@ -201,7 +201,7 @@ fn fold_body<'a>(fold: &Fold, entries: &[&Entry], family: PadFamily, font: iced:
                 .into()
         });
         let mut grid = column![iced::widget::row(cards).spacing(6).wrap().vertical_spacing(6)].spacing(6);
-        grid = grid.push(text("★ carried by this game's pack: it works in this game only. Add your own under Details → Pack files.").size(12).color(MUTED_COLOR));
+        grid = grid.push(text("★ carried by this game's pack: it works in this game only. Add your own under Details → Pack files.").size(12).style(muted));
         return grid.into();
     }
     let families = fold.families();
@@ -209,14 +209,14 @@ fn fold_body<'a>(fold: &Fold, entries: &[&Entry], family: PadFamily, font: iced:
     if !families.is_empty() {
         let mut head = row![space().width(Length::Fixed(190.0))].spacing(8);
         for f in families {
-            head = head.push(text(f.to_string()).size(12).color(MUTED_COLOR).width(Length::Fixed(110.0)));
+            head = head.push(text(f.to_string()).size(12).style(muted).width(Length::Fixed(110.0)));
         }
         body = body.push(head);
     }
     for e in entries {
         let mut line = row![text(e.insert.clone()).font(iced::Font::MONOSPACE).size(13).width(Length::Fixed(190.0))].spacing(8).align_y(Alignment::Center);
         if families.is_empty() {
-            let shown: Element<'a, Message> = if e.sample.is_empty() { text("—").color(MUTED_COLOR).into() } else { chip(&e.sample, family, font) };
+            let shown: Element<'a, Message> = if e.sample.is_empty() { text("—").style(muted).into() } else { chip(&e.sample, family, font) };
             line = line.push(container(shown).width(Length::Fixed(150.0)));
         } else {
             for f in families {
@@ -224,14 +224,14 @@ fn fold_body<'a>(fold: &Fold, entries: &[&Entry], family: PadFamily, font: iced:
             }
         }
         if families.is_empty() {
-            line = line.push(text(e.about).size(12).color(MUTED_COLOR).width(Length::Fill));
+            line = line.push(text(e.about).size(12).style(muted).width(Length::Fill));
         } else {
             line = line.push(space::horizontal());
         }
         line = line.push(button(text("Insert").size(13)).style(style::secondary).on_press(Message::PickToken(e.insert.clone())));
         let mut item = column![line].spacing(2);
         if !families.is_empty() {
-            item = item.push(row![space().width(Length::Fixed(190.0)), text(e.about).size(12).color(MUTED_COLOR)].spacing(8));
+            item = item.push(row![space().width(Length::Fixed(190.0)), text(e.about).size(12).style(muted)].spacing(8));
         }
         body = body.push(item);
     }

@@ -5,7 +5,21 @@
 #   padwight debug focus <inner pid> <window class>
 # Usage: scripts/sandbox-pid.sh [program [args...]]   (default: sleep 60)
 # Needs unprivileged user namespaces (unshare --user). Ctrl+C stops the program.
+# Exit status: 0 ok, 1 no sandboxed process found, 77 user namespaces are refused (Ubuntu's AppArmor
+# restriction or a kernel switch); the distro matrix reports 77 as a skip.
 [ $# -eq 0 ] && set -- sleep 60
+userns_refused() {
+    echo "user namespaces are refused here: $1" >&2
+    exit 77
+}
+[ "$(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns 2>/dev/null)" = 1 ] &&
+    userns_refused "kernel.apparmor_restrict_unprivileged_userns=1; run 'sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0' or give unshare an AppArmor profile with 'userns,'"
+[ "$(cat /proc/sys/kernel/unprivileged_userns_clone 2>/dev/null)" = 0 ] &&
+    userns_refused "kernel.unprivileged_userns_clone=0; run 'sudo sysctl kernel.unprivileged_userns_clone=1'"
+probe=$(unshare --user --map-root-user true 2>&1) ||
+    case $probe in
+    *uid_map* | *"Operation not permitted"*) userns_refused "$probe (on Ubuntu: kernel.apparmor_restrict_unprivileged_userns=1, see above)" ;;
+    esac
 tag="padwight-sandbox-$$"
 PADWIGHT_SANDBOX_TAG=$tag unshare --user --map-root-user --pid --fork --kill-child --mount-proc "$@" &
 outer=$!

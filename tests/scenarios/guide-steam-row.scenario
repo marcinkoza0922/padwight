@@ -1,0 +1,11 @@
+# OVL-11: the Guide overlay has a Steam overlay row while a process named steam runs.
+steam running
+tap guide 60
+advance 400
+expect overlay showing guide
+expect overlay guide.labels "Steam overlay"
+---
+shifts mode Guide layers -                              @0
+sound guide Open rise                                   @60
+overlay menu "Guide" selected "Quick Settings"          @60
+overlay menu "Guide" selected "Quick Settings" + info 1 @100

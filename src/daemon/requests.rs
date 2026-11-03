@@ -1,6 +1,6 @@
 //! Requests on the control socket: from the GUI, the tray and the command line.
 
-use std::{path::PathBuf, time::Instant};
+use std::path::PathBuf;
 
 use super::{Active, BY_HAND, Calibration, Daemon};
 use crate::{
@@ -161,7 +161,10 @@ impl Daemon {
             | Request::DebugInput { .. }
             | Request::DebugOutput { .. }
             | Request::DebugDetach(_)
-            | Request::DebugIdentify(_) => {
+            | Request::DebugIdentify(_)
+            | Request::DebugAdvance(_)
+            | Request::DebugClock
+            | Request::DebugTranscript { .. } => {
                 self.debug_request(req)
             }
             Request::CalibrateGyro(path) => {
@@ -169,7 +172,7 @@ impl Daemon {
                 match dev {
                     Some(dev) if dev.motion.is_some() => {
                         log!("calibrating gyro for {}: keep it still", dev.name);
-                        dev.calibrating = Some(Calibration { started: Instant::now(), sum: [0.0; 3], samples: 0 });
+                        dev.calibrating = Some(Calibration { started: crate::clock::now(), sum: [0.0; 3], samples: 0 });
                         Response::Ok
                     }
                     Some(_) => Response::Error(format!("{path} has no gyro")),

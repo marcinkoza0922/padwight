@@ -1,0 +1,15 @@
+# Holding South past the long-press time (500 ms) presses C; letting go earlier taps A.
+setup tests/scenarios/packs/input.padpack Gestures
+press south
+advance 499
+release south
+advance 400
+press south
+advance 501
+release south
+advance 100
+---
+key KEY_A down @749
+key KEY_A up   @749
+key KEY_C down @1399
+key KEY_C up   @1400

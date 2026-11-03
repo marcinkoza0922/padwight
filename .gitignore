@@ -35,3 +35,6 @@ rustc-ice-*.txt
 # Release tarballs (scripts/package.sh)
 /release/
 __pycache__/
+
+# Soak run results
+/soak-runs/

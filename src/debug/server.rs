@@ -22,7 +22,7 @@ use super::{
 use crate::{
     config::Button,
     info::Glyphs,
-    ipc::{self, UnixStream},
+    ipc::{self, UnixListener, UnixStream},
     pad_svg,
 };
 
@@ -40,11 +40,13 @@ pub struct Session {
     pad: Arc<Mutex<VirtualPad>>,
     quit: Arc<AtomicBool>,
     pub(super) link: Arc<Link>,
+    /// Whether the daemon runs on the manual clock, once asked.
+    pub(super) fake: Arc<std::sync::OnceLock<bool>>,
 }
 
 impl Session {
     pub fn new(pad: VirtualPad) -> Self {
-        Self { pad: Arc::new(Mutex::new(pad)), quit: Arc::default(), link: Arc::default() }
+        Self { pad: Arc::new(Mutex::new(pad)), quit: Arc::default(), link: Arc::default(), fake: Arc::default() }
     }
 
     pub fn pad(&self) -> MutexGuard<'_, VirtualPad> {
@@ -74,6 +76,9 @@ impl Session {
             DebugRequest::Expect(e) => return Ok(self.expect(&e)),
             DebugRequest::Output { clear } => return Ok(DebugResponse::Text(self.output(clear)?.join("\n"))),
             DebugRequest::Identify(identity) => self.identify(identity)?,
+            DebugRequest::Advance(ms) => self.advance(ms)?,
+            DebugRequest::Wait(ms) => self.pause(ms)?,
+            DebugRequest::Transcript { clear } => return Ok(DebugResponse::Text(self.transcript(clear)?.join("\n"))),
             DebugRequest::Tap { buttons, ms } => self.hold(ms, |pad| buttons.iter().for_each(|&b| pad.press(b)), |pad| buttons.iter().for_each(|&b| pad.release(b)))?,
             DebugRequest::Gyro { rates, ms } if self.attached().is_some() => self.turn(rates, if ms == 0 { 100 } else { ms })?,
             DebugRequest::PadClick { ms: Some(ms), .. } => self.hold(ms, |pad| pad.set_touch_click(true), |pad| pad.set_touch_click(false))?,
@@ -109,10 +114,7 @@ impl Session {
     /// `down`, so a failed send never leaves a button held.
     fn hold(&self, ms: u64, down: impl FnOnce(&mut VirtualPad), up: impl FnOnce(&mut VirtualPad)) -> Result<()> {
         down(&mut self.pad());
-        let sent = self.flush();
-        if sent.is_ok() {
-            thread::sleep(Duration::from_millis(ms));
-        }
+        let sent = self.flush().and_then(|()| self.pause(ms));
         up(&mut self.pad());
         sent.and(self.flush())
     }
@@ -126,7 +128,7 @@ impl Session {
             self.pad().touch(0, (from.0 + (to.0 - from.0) * t, from.1 + (to.1 - from.1) * t));
             self.flush()?;
             if i < STEPS {
-                thread::sleep(Duration::from_millis(ms) / STEPS);
+                self.pause(ms / u64::from(STEPS))?;
             }
             Ok::<_, anyhow::Error>(())
         });
@@ -143,6 +145,9 @@ impl Session {
     fn expect(&self, e: &Expectation) -> DebugResponse {
         if let Expectation::Output(_) | Expectation::NoOutput = e {
             return self.expect_output(e);
+        }
+        if let Expectation::Overlay { path, value } = e {
+            return Self::expect_overlay(path, value);
         }
         let pad = self.pad();
         let held = |buttons: &[Button], want: bool| {
@@ -167,13 +172,32 @@ impl Session {
                 let v = pad.trigger(*trigger);
                 (!near(v, *value)).then(|| format!("{trigger} is at {v}"))
             }
-            Expectation::Model(_) | Expectation::Output(_) | Expectation::NoOutput => None,
+            Expectation::Model(_) | Expectation::Output(_) | Expectation::NoOutput | Expectation::Overlay { .. } => None,
         };
         failure.map_or(DebugResponse::Ok, |why| DebugResponse::Error(format!("expectation failed: {why}")))
     }
 }
 
 impl Session {
+    /// Asks the daemon's overlay, trying again for a moment: the overlay follows the input a
+    /// beat behind it.
+    fn expect_overlay(path: &str, value: &str) -> DebugResponse {
+        let end = std::time::Instant::now() + Duration::from_millis(500);
+        loop {
+            let failure = match super::overlay_state::current(Duration::from_secs(2)) {
+                Ok(doc) => match super::overlay_state::check(&doc, path, value) {
+                    Ok(()) => return DebugResponse::Ok,
+                    Err(why) => why,
+                },
+                Err(e) => return DebugResponse::Error(format!("{e:#}")),
+            };
+            if std::time::Instant::now() >= end {
+                return DebugResponse::Error(format!("expectation failed: {failure}"));
+            }
+            thread::sleep(Duration::from_millis(25));
+        }
+    }
+
     fn expect_output(&self, e: &Expectation) -> DebugResponse {
         let lines = match self.output(false) {
             Ok(lines) => lines,
@@ -188,10 +212,15 @@ impl Session {
     }
 }
 
-/// Starts listening at `path`; every connection is served on its own thread, any number of
-/// requests per connection.
-pub fn serve(session: &Session, path: &Path) -> Result<()> {
-    let listener = crate::daemon::bind_socket_at(path)?;
+/// Takes the socket at `path` without answering on it yet: clients that connect wait in the
+/// socket's queue until [`accept`] runs.
+pub fn bind(path: &Path) -> Result<UnixListener> {
+    crate::daemon::bind_socket_at(path)
+}
+
+/// Serves what connects to `listener`; every connection is served on its own thread, any number
+/// of requests per connection.
+pub fn accept(session: &Session, listener: UnixListener) {
     let session = session.clone();
     thread::spawn(move || {
         for stream in listener.incoming().flatten() {
@@ -201,6 +230,12 @@ pub fn serve(session: &Session, path: &Path) -> Result<()> {
             });
         }
     });
+}
+
+/// Starts listening at `path`.
+#[cfg(test)]
+pub fn serve(session: &Session, path: &Path) -> Result<()> {
+    accept(session, bind(path)?);
     Ok(())
 }
 

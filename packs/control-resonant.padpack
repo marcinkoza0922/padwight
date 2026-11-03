@@ -19,6 +19,11 @@ kind = "steam_app_id"
 value = "3669870"
 profile = "Control Resonant"
 
+[[rules]]
+kind = "executable"
+value = "CONTROLResonant.exe"
+profile = "Control Resonant"
+
 [[profiles]]
 name = "Control Resonant"
 combos = []

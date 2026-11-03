@@ -12,6 +12,47 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 export const BUS_NAME = 'io.github.marcinkoza0922.Padwight.Shell';
 const OBJECT_PATH = '/Overlay';
+const DAEMON_BUS = 'io.github.marcinkoza0922.Padwight';
+
+// Larger than any screen: keeps width * height * 4 well inside what a number holds exactly.
+const MAX_SIDE = 32768;
+
+// Any program on the bus can call SetBuffer, and one that shrinks its memfd after it is mapped
+// would kill the Shell with SIGBUS on the next read. The overlay process seals its memfd against
+// shrinking (F_SEAL_SHRINK, which can't be undone). GJS has no fcntl to read the seals, so this
+// tries to shrink the file by a byte: it fails only on a sealed one. On an unsealed memfd it
+// succeeds, which refuses the buffer (and cuts only the sender's own file).
+function requireShrinkSeal(path) {
+    const file = Gio.File.new_for_path(path).open_readwrite(null);
+    try {
+        const size = file.query_info('standard::size', null).get_size();
+        let shrank = false;
+        try {
+            shrank = file.truncate(size - 1, null);
+        } catch (e) {
+            // Refused (EPERM): the file is sealed against shrinking.
+        }
+        if (shrank)
+            throw new Error('the picture\'s memfd is not sealed against shrinking');
+    } finally {
+        file.close(null);
+    }
+}
+
+// Any program of the user's on the bus can call this object, and the overlay process is the only
+// one that should. The bus can say which process a sender is, so a call is served only when that
+// process runs the same executable as the daemon (the one that owns the Focus name, and starts
+// the overlay process from its own binary). A copy of the file, or any other program, is refused.
+const DBUS_NAME = 'org.freedesktop.DBus';
+function exeOf(name) {
+    try {
+        const reply = Gio.DBus.session.call_sync(DBUS_NAME, '/org/freedesktop/DBus', DBUS_NAME,
+            'GetConnectionCredentials', new GLib.Variant('(s)', [name]), null, Gio.DBusCallFlags.NONE, -1, null);
+        return GLib.file_read_link(`/proc/${reply.recursiveUnpack()[0].ProcessID}/exe`);
+    } catch (e) {
+        return null;
+    }
+}
 
 const INTERFACE_XML = `
 <node>
@@ -49,9 +90,25 @@ export class Overlay {
         this._actor.set_content(this._content);
         this._actor.set_content_scaling_filters(Clutter.ScalingFilter.NEAREST, Clutter.ScalingFilter.NEAREST);
 
+        this._trusted = new Set();
         this._dbus = Gio.DBusExportedObject.wrapJSObject(INTERFACE_XML, this);
         this._dbus.export(Gio.DBus.session, OBJECT_PATH);
         this._ownerId = Gio.bus_own_name_on_connection(Gio.DBus.session, BUS_NAME, Gio.BusNameOwnerFlags.NONE, null, null);
+    }
+
+    // True when the caller is padwight's own overlay process; otherwise answers the call with an error.
+    _allowed(invocation) {
+        const sender = invocation.get_sender();
+        if (!this._trusted.has(sender)) {
+            const daemon = exeOf(DAEMON_BUS);
+            if (daemon === null || daemon !== exeOf(sender)) {
+                invocation.return_dbus_error('org.freedesktop.DBus.Error.AccessDenied', 'only padwight draws on its overlay');
+                return false;
+            }
+            // A unique name is never handed out twice, so the answer holds for as long as it lives.
+            this._trusted.add(sender);
+        }
+        return true;
     }
 
     destroy() {
@@ -62,17 +119,33 @@ export class Overlay {
         this._actor = null;
     }
 
-    // `fdList` is the message's Gio.UnixFDList; `fd` is an index into it.
-    SetBuffer(fd, width, height, fdList) {
+    // `parameters` is [index into the message's Gio.UnixFDList, width, height]. Served as
+    // an async handler to see who the sender is.
+    SetBufferAsync([fd, width, height], invocation) {
+        if (!this._allowed(invocation))
+            return;
         try {
-            const real = fdList.get(fd);
+            const real = invocation.get_message().get_unix_fd_list().get(fd);
             // Reopening the memfd through /proc maps it, without copying it into JS. The mapping
             // is kept: every frame is drawn into it.
-            this._picture = new GLib.MappedFile(`/proc/self/fd/${real}`, false).get_bytes();
-            GLib.close(real);
+            let picture;
+            try {
+                requireShrinkSeal(`/proc/self/fd/${real}`);
+                picture = new GLib.MappedFile(`/proc/self/fd/${real}`, false).get_bytes();
+            } finally {
+                GLib.close(real);
+            }
+            // Any program on the bus can call this: refuse sizes the buffer can't back, since
+            // the picture is read as width x height x 4 bytes.
+            if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0 ||
+                width > MAX_SIDE || height > MAX_SIDE || picture.get_size() < width * height * 4)
+                throw new Error(`picture of ${picture.get_size()} bytes is too small for ${width}x${height}`);
+            this._picture = picture;
             this._size = [width, height];
+            invocation.return_value(null);
         } catch (e) {
             logError(e, 'padwight overlay buffer');
+            invocation.return_dbus_error('org.freedesktop.DBus.Error.InvalidArgs', String(e.message ?? e));
         }
     }
 
@@ -100,9 +173,13 @@ export class Overlay {
         }
     }
 
-    Present() {
-        if (!this._picture)
+    PresentAsync(_parameters, invocation) {
+        if (!this._allowed(invocation))
             return;
+        if (!this._picture) {
+            invocation.return_value(null);
+            return;
+        }
         try {
             const [width, height] = this._size;
             this._setBytes(width, height);
@@ -115,18 +192,25 @@ export class Overlay {
         } catch (e) {
             logError(e, 'padwight overlay frame');
         }
+        // Answered only now: the daemon paints on the picture again once this returns.
+        invocation.return_value(null);
     }
 
-    Geometry() {
+    GeometryAsync(_parameters, invocation) {
+        if (!this._allowed(invocation))
+            return;
         const layout = Main.layoutManager;
         const focused = global.display.focus_window?.get_monitor() ?? -1;
         this._monitor = focused >= 0 && focused < layout.monitors.length ? focused : layout.primaryIndex;
         const monitor = layout.monitors[this._monitor];
         const scale = global.display.get_monitor_scale?.(this._monitor) ?? monitor.geometry_scale;
-        return [monitor.width, monitor.height, scale];
+        invocation.return_value(new GLib.Variant('(iid)', [monitor.width, monitor.height, scale]));
     }
 
-    Hide() {
+    HideAsync(_parameters, invocation) {
+        if (!this._allowed(invocation))
+            return;
+        invocation.return_value(null);
         this._actor.hide();
         this._picture = null;
     }

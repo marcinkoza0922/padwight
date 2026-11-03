@@ -9,7 +9,7 @@ use super::*;
 /// A "▸ Label" / "▾ Label" toggle for an optional section.
 pub(super) fn disclosure<'a>(label: &str, open: bool, message: Message) -> Element<'a, Message> {
     let chevron = if open { "▾" } else { "▸" };
-    button(text(format!("{chevron} {label}")).size(14)).style(button::text).padding([4, 0]).on_press(message).into()
+    button(text(format!("{chevron} {label}")).size(14)).style(style::link).padding([4, 0]).on_press(message).into()
 }
 
 /// The preview keeps the real colors but caps the size so it fits the window.
@@ -30,7 +30,7 @@ pub(super) fn menu_preview_style(style: &OverlayStyle) -> OverlayStyle {
 /// slab in light mode.
 pub(super) fn preview<'a>(panel: Element<'a, Message>) -> Element<'a, Message> {
     column![
-        text("Preview").size(12).color(MUTED_COLOR),
+        text("Preview").size(12).style(muted),
         container(container(panel).center_x(Length::Fill))
             .padding(16)
             .width(Length::Fill)
@@ -110,7 +110,7 @@ where
 pub(super) fn curve_preset_picker<'a>(selected: crate::config::CurvePreset, on_pick: impl Fn(crate::config::CurvePreset) -> Message + 'a) -> Element<'a, Message> {
     let mut choices = crate::config::CurvePreset::NAMED.to_vec();
     choices.push(crate::config::CurvePreset::Custom);
-    row![dropdown(choices, Some(selected), on_pick).width(170), text(selected.about()).size(12).color(MUTED_COLOR)]
+    row![dropdown(choices, Some(selected), on_pick).width(170), text(selected.about()).size(12).style(muted)]
         .spacing(10)
         .align_y(Alignment::Center)
         .into()
@@ -193,9 +193,9 @@ pub(super) fn items_header<'a>(
     explain: String,
     empty: Option<&'static str>,
 ) -> Element<'a, Message> {
-    let mut left = column![add, text(blurb).size(13).color(MUTED_COLOR)].spacing(6);
+    let mut left = column![add, text(blurb).size(13).style(muted)].spacing(6);
     if let Some(empty) = empty {
-        left = left.push(text(empty).color(MUTED_COLOR));
+        left = left.push(text(empty).style(muted));
     }
     container(
         row![
@@ -249,7 +249,7 @@ pub(super) fn card_title<'a>(open: bool, title: iced::widget::Text<'a>) -> iced:
 pub(super) fn own_rows<'a>(what: &str, follows: &str, own: bool, on_toggle: impl Fn(bool) -> Message + 'a) -> Vec<Element<'a, Message>> {
     let mut rows = vec![toggler(own).label(format!("Use its own {what} in this setup")).on_toggle(on_toggle).into()];
     if !own {
-        rows.push(text(format!("Following {follows}.")).size(13).color(MUTED_COLOR).into());
+        rows.push(text(format!("Following {follows}.")).size(13).style(muted).into());
     }
     rows
 }
@@ -263,7 +263,7 @@ pub(super) fn delete_item<'a>(label: &'static str, message: Message) -> Element<
 /// tutorial's chapter file.
 pub(super) fn tutorial_link<'a>(file: &'static str) -> Element<'a, Message> {
     tooltip(
-        button(text("Tutorial ↗").size(12).color(MUTED_COLOR)).style(button::text).padding([2, 4]).on_press(Message::OpenTutorial(file)),
+        button(text("Tutorial ↗").size(12).style(muted)).style(button::text).padding([2, 4]).on_press(Message::OpenTutorial(file)),
         container(text("Open the step-by-step tutorial in the Manual").size(12)).padding(6).style(style::tooltip),
         tooltip::Position::Bottom,
     )
@@ -286,7 +286,7 @@ fn item_tutorial(kind: ItemKind) -> &'static str {
 /// An ⓘ that explains a section on hover, instead of a paragraph of gray text.
 pub(super) fn help<'a>(explanation: String) -> Element<'a, Message> {
     tooltip(
-        text("ⓘ").size(16).color(style_accent()),
+        text("ⓘ").size(16).style(accent_text),
         container(text(explanation).size(13)).padding(10).max_width(420.0).style(style::tooltip),
         tooltip::Position::Bottom,
     )

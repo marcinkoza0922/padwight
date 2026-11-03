@@ -1,0 +1,12 @@
+# cargo-mutants settings (T-19 in docs/development/qa-tooling.md). Run one area at a time:
+#   scripts/mutants.sh engine|menu|gui-checks|config-store [extra cargo-mutants args]
+test_tool = "nextest"
+# A mutant that makes a test loop forever is caught by the timeout: this many times the
+# unmutated suite's time.
+timeout_multiplier = 3.0
+# Mutating how a value prints changes nothing a test should pin.
+exclude_re = [
+    "impl (Debug|Display) for .*::fmt",
+    "<impl Debug for .*>::fmt",
+    "<impl Display for .*>::fmt",
+]

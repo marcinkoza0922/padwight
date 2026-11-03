@@ -58,7 +58,7 @@ impl App {
     /// none of them plays.
     pub(super) fn sounds_off_note(&self) -> Option<Element<'_, Message>> {
         self.config.performance.quiet.then(|| {
-            text("Sounds are off under App settings → Performance, so none of these play.").size(13).color(WARNING_COLOR).into()
+            text("Sounds are off under App settings → Performance, so none of these play.").size(13).style(warning_text).into()
         })
     }
 
@@ -207,7 +207,7 @@ impl App {
         ];
         let shown: Vec<Element<'_, Message>> = cards.into_iter().filter(|(words, _)| matches_query(query, words)).map(|(_, card)| card).collect();
         let body: Element<'_, Message> = if shown.is_empty() {
-            text("No settings match.").color(MUTED_COLOR).into()
+            text("No settings match.").style(muted).into()
         } else {
             column(shown).spacing(16).into()
         };
@@ -220,7 +220,7 @@ impl App {
         row![
             text("Rumble strength").width(140),
             iced::widget::slider(0.0..=1.0, strength, Message::SetRumbleStrength).step(0.05_f32).width(240),
-            text(format!("{:.0}%", strength * 100.0)).size(13).color(MUTED_COLOR),
+            text(format!("{:.0}%", strength * 100.0)).size(13).style(muted),
             checkbox(self.config.pick_rumble).label("Pulse when picking an overlay item").on_toggle(Message::SetPickRumble),
         ]
         .spacing(12)
@@ -266,7 +266,7 @@ impl App {
                     };
                     list = list.push(
                         row![
-                            column![text(&d.name), text(if d.path.is_empty() { state } else { format!("{} · {state}", d.path) }).size(12).color(MUTED_COLOR)]
+                            column![text(&d.name), text(if d.path.is_empty() { state } else { format!("{} · {state}", d.path) }).size(12).style(muted)]
                                 .width(Length::Fill),
                             calibrate,
                             rumble,
@@ -279,8 +279,8 @@ impl App {
                     );
                 }
             }
-            Some(_) => list = list.push(text("No controllers detected.").color(MUTED_COLOR)),
-            None => list = list.push(text(NEEDS_DAEMON).size(13).color(MUTED_COLOR)),
+            Some(_) => list = list.push(text("No controllers detected.").style(muted)),
+            None => list = list.push(text(NEEDS_DAEMON).size(13).style(muted)),
         }
         list = list.push(self.rumble_strength_row());
         list.into()
@@ -348,7 +348,7 @@ impl App {
             // The dropdown sits in the label column's layout, as every other setting's does.
             vec![
                 toggler(auto.enabled).label("Switch profiles automatically").on_toggle(Message::SetAutoSwitch).into(),
-                text(how).size(13).color(MUTED_COLOR).into(),
+                text(how).size(13).style(muted).into(),
                 labeled("Default profile", dropdown(defaults, Some(default), Message::SetDefaultProfile).width(SETTING_WIDTH).into()),
             ],
         )

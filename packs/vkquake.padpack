@@ -37,9 +37,9 @@ Guide = { mode = "Guide" }
 South = { multi = [{ keys = ["KEY_SPACE"] }, { keys = ["KEY_ENTER"] }] }
 East = { keys = ["KEY_7"] }
 West = { keys = ["KEY_3"] }
-North = { wheel = "Down" }
+North = { wheel = "Up" }
 LeftBumper = { open_menu = "Weapons" }
-RightBumper = { wheel = "Up" }
+RightBumper = { wheel = "Down" }
 Select = { keys = ["KEY_TAB"] }
 Start = { keys = ["KEY_ESC"] }
 LeftStick = { keys = ["KEY_END"] }
@@ -157,9 +157,9 @@ Guide = { mode = "Guide" }
 South = { multi = [{ keys = ["KEY_SPACE"] }, { keys = ["KEY_ENTER"] }] }
 East = { keys = ["KEY_7"] }
 West = { keys = ["KEY_3"] }
-North = { wheel = "Down" }
+North = { wheel = "Up" }
 LeftBumper = { open_menu = "Weapons" }
-RightBumper = { wheel = "Up" }
+RightBumper = { wheel = "Down" }
 Select = { keys = ["KEY_TAB"] }
 Start = { keys = ["KEY_ESC"] }
 LeftStick = { keys = ["KEY_END"] }
@@ -288,9 +288,9 @@ Guide = { mode = "Guide" }
 South = { multi = [{ keys = ["KEY_SPACE"] }, { keys = ["KEY_ENTER"] }] }
 East = { keys = ["KEY_7"] }
 West = { keys = ["KEY_3"] }
-North = { wheel = "Down" }
+North = { wheel = "Up" }
 LeftBumper = { open_menu = "Weapons" }
-RightBumper = { wheel = "Up" }
+RightBumper = { wheel = "Down" }
 Select = { keys = ["KEY_TAB"] }
 Start = { keys = ["KEY_ESC"] }
 LeftStick = { keys = ["KEY_END"] }

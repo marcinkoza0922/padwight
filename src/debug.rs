@@ -12,12 +12,18 @@ use anyhow::{Context, Result, bail};
 mod bridge;
 mod focus;
 mod glyphs;
+mod install;
+mod layout;
+mod media;
 mod motion_shot;
 mod overlay_compare;
 mod overlay_shot;
+mod overlay_state;
 mod pack_scenes;
 mod pad;
+mod regression;
 mod protocol;
+mod recording;
 mod server;
 pub(crate) mod scenes;
 mod sound;
@@ -60,10 +66,11 @@ Without a session:
   models                         list the model names
   svg [model]                    print a model's drawing at rest, as SVG
   detach-all                     remove controllers a session left in the daemon
+  install-pack <file> [profile]  import a .padpack into the config folder and activate its profile
 ";
 
 fn usage() -> String {
-    format!("{USAGE}{}{}{}{}{}{}\nWith a session:\n{}", focus::USAGE, sound::USAGE, overlay_shot::USAGE, overlay_compare::USAGE, motion_shot::USAGE, crate::gui::shoot::USAGE, protocol::COMMANDS)
+    format!("{USAGE}{}{}{}{}{}{}{}{}{}{}{}\nWith a session:\n{}", recording::USAGE, focus::USAGE, layout::USAGE, media::USAGE, sound::USAGE, overlay_shot::USAGE, overlay_compare::USAGE, regression::USAGE, motion_shot::USAGE, crate::gui::shoot::USAGE, crate::gui::layout_check::USAGE, protocol::COMMANDS)
 }
 
 #[expect(clippy::print_stdout, reason = "CLI output")]
@@ -82,10 +89,17 @@ pub fn run(args: &[&str]) -> Result<()> {
         ["svg"] => println!("{}", rest_svg(None)),
         ["svg", name] => println!("{}", rest_svg(parse_model(name)?)),
         ["focus", rest @ ..] => focus::run(rest)?,
+        ["install-pack", rest @ ..] => install::run(rest)?,
+        ["layout", rest @ ..] => layout::run(rest)?,
+        ["media", rest @ ..] => media::run(rest)?,
         ["sound", rest @ ..] => sound::run(rest)?,
         ["overlay", rest @ ..] => overlay_shot::run(rest)?,
         ["motion", rest @ ..] => motion_shot::run(rest)?,
+        ["record", rest @ ..] => recording::run_record(rest)?,
+        ["replay", rest @ ..] => recording::run_replay(rest)?,
+        ["gui", mode @ ("baseline" | "diff"), rest @ ..] => regression::run(mode, rest, Some("gui"))?,
         ["gui", rest @ ..] => crate::gui::shoot::run(rest)?,
+        ["gui-check", rest @ ..] => crate::gui::layout_check::run(rest)?,
         ["detach-all"] => ipc::request(&ipc::Request::DebugDetach("all".into())).map(drop)?,
         [] => start(&[])?,
         [first, ..] if first.starts_with("--") => start(args)?,
@@ -124,7 +138,10 @@ fn start(args: &[&str]) -> Result<()> {
     let session = Session::new(VirtualPad::of(model));
     // The socket first: attaching first left the controller in the daemon when another session
     // already had the socket.
-    server::serve(&session, &path)?;
+    // Taken, but not answered on until the controller is attached: a script that connects in
+    // between would otherwise run its first steps with no daemon behind them, and `pause` would
+    // sleep for real instead of moving the fake clock.
+    let listener = server::bind(&path)?;
     log!("debug session listening on {}", path.display());
     // Ctrl+C ends the session the way `quit` does, so an attached controller lets go of what it holds.
     let quit = session.clone();
@@ -141,6 +158,7 @@ fn start(args: &[&str]) -> Result<()> {
             }
         }
     }
+    server::accept(&session, listener);
     let result = if headless {
         while !session.quitting() {
             std::thread::sleep(Duration::from_millis(50));

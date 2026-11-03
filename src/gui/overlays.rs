@@ -61,7 +61,7 @@ impl App {
         let others = self.sharing_spot(position, panel);
         (!others.is_empty()).then(|| {
             let note = format!("⚠ {position} also has {}: they overlap if they're on screen together.", others.join(", "));
-            text(note).size(12).color(WARNING_COLOR).into()
+            text(note).size(12).style(warning_text).into()
         })
     }
 

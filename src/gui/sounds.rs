@@ -93,7 +93,7 @@ fn cue_row<'a>(label: &'static str, spec: SoundSpec, editing: bool, target: Soun
             })
             .step(step)
             .width(90),
-            text(shown).size(13).color(MUTED_COLOR).width(48),
+            text(shown).size(13).style(muted).width(48),
         ]
         .spacing(6)
         .align_y(Alignment::Center)

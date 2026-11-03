@@ -76,6 +76,26 @@ pub fn run(args: &[&str]) -> Result<()> {
     Ok(())
 }
 
+/// The frame strip of `scene` in every motion style, each with the name it is saved under, for
+/// picture regression. The strip is cropped to what the run draws.
+pub(super) fn strips(scene: &str) -> Result<Vec<(String, Image)>> {
+    let mut options = parse(&["all", "--scene", scene])?;
+    options.trace = false;
+    let base = scenes::frame(scene)?;
+    let [r, g, b] = BACKGROUND;
+    let mut out = Vec::new();
+    for &style in &options.styles {
+        let script = script(&base, style)?;
+        let end = length(&script, style);
+        let times: Vec<f32> = (0..).map(|i| i as f32 * options.every / 1000.0).take_while(|&t| t <= end).collect();
+        let strip = overlay::film(&script, &times, options.size, 1.0, Color::from_rgb8(r, g, b))?;
+        let area = drawn_area(strip.iter(), 12).context("nothing was drawn")?;
+        let name = format!("{scene}-{}-strip", style.to_string().to_lowercase());
+        out.push((name, tile(&strip.iter().map(|i| crop(i, area)).collect::<Vec<_>>(), 6)));
+    }
+    Ok(out)
+}
+
 fn parse(args: &[&str]) -> Result<Options> {
     let mut options = Options {
         styles: Vec::new(),

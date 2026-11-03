@@ -42,3 +42,15 @@ echo "ok: desktop entry"
 # --no-net: no network access in CI. Pedantic hints are not failures.
 appstreamcli validate --no-net dist/io.github.marcinkoza0922.Padwight.metainfo.xml
 echo "ok: metainfo"
+
+# Every shared library the release binary needs, besides glibc's, is in the README's runtime table.
+bin=${PADWIGHT_BIN:-target/release/padwight}
+if [ -x "$bin" ] && command -v readelf >/dev/null 2>&1; then
+    for lib in $(readelf -d "$bin" | sed -n 's/.*Shared library: \[\(.*\)\]/\1/p'); do
+        case $lib in libc.so.* | libm.so.* | libgcc_s.so.* | ld-linux* | libpthread.so.* | libdl.so.* | librt.so.*) continue ;; esac
+        grep -q "\`$lib\`" README.md || { echo "README.md's Runtime libraries table lacks $lib" >&2; exit 1; }
+    done
+    echo "ok: runtime libraries documented"
+else
+    echo "skip: runtime libraries (no built binary at $bin; set PADWIGHT_BIN)"
+fi

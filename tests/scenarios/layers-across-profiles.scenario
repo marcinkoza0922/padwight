@@ -1,0 +1,27 @@
+# OVL-8: switching profile ends a held layer (docs/development/layers.md). Base: LB holds
+# Hotkeys (A is F1 then). Second maps A to Z. Letting go of LB afterwards changes nothing, and
+# going back to Base does not bring the layer back. The transcript says the layer ended (a
+# `shifts` line) as the profile changes.
+setup tests/scenarios/packs/layers-across.padpack Base
+press lb
+tap south 30
+cli profile Second
+tap south 30
+release lb
+tap south 30
+cli profile Base
+tap south 30
+---
+shifts mode - layers Hotkeys                     @0
+key KEY_F1 down                                  @0
+key KEY_F1 up                                    @30
+profile Scenario layers across profiles › Second @30
+shifts mode - layers -                           @30
+overlay none + info 1                            @30
+key KEY_Z down                                   @30
+key KEY_Z up                                     @60
+key KEY_Z down                                   @60
+key KEY_Z up                                     @90
+profile Scenario layers across profiles › Base   @90
+key KEY_A down                                   @90
+key KEY_A up                                     @120

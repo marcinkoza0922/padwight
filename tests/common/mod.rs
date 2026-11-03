@@ -12,7 +12,13 @@ use std::{
 };
 
 #[cfg(target_os = "linux")]
+pub mod focus;
+#[cfg(target_os = "linux")]
+pub mod ds;
+#[cfg(target_os = "linux")]
 pub mod input;
+#[cfg(target_os = "linux")]
+pub mod standin;
 #[cfg(target_os = "linux")]
 pub mod uhid;
 
@@ -102,7 +108,7 @@ fn real_gamepads() -> Vec<String> {
                 && axes.contains(evdev::AbsoluteAxisCode::ABS_X)
                 && axes.contains(evdev::AbsoluteAxisCode::ABS_Y);
             let name = dev.name()?;
-            let ours = name.starts_with("Padwight Virtual") || dev.unique_name() == Some(uhid::TEST_UNIQ);
+            let ours = name.starts_with("Padwight Virtual") || dev.unique_name().is_some_and(uhid::is_test_uniq);
             let id = dev.input_id();
             let uniq = dev.unique_name().map(str::trim).filter(|u| !u.is_empty());
             (gamepad && !ours).then(|| uniq.map_or_else(|| format!("{:04x}:{:04x}", id.vendor(), id.product()), str::to_string))
@@ -167,6 +173,39 @@ pub fn spawn_daemon(root: &Path, runtime: Option<&Path>) -> Daemon {
 
 /// [`spawn_daemon`] with more arguments for `padwight daemon`, such as `--debug`.
 pub fn spawn_daemon_with(root: &Path, runtime: Option<&Path>, args: &[&str]) -> Daemon {
+    spawn_daemon_env(root, runtime, args, &[])
+}
+
+/// [`spawn_daemon_with`] with environment variables set. The desktop the test runs on never leaks
+/// in: the compositor sockets and Wayland display are removed first, so a stand-in compositor
+/// (see [`standin`]) is the only one the daemon can find.
+pub fn spawn_daemon_env(root: &Path, runtime: Option<&Path>, args: &[&str], env: &[(&str, &Path)]) -> Daemon {
+    spawn_daemon_command(root, runtime, args, env, None)
+}
+
+/// [`spawn_daemon_env`] in a pid namespace of its own, so the daemon sees only its own processes
+/// and not the machine's (whether Steam runs there, say). With `fake_steam` a process named
+/// `steam` runs in there too. Needs unprivileged user namespaces.
+#[cfg(target_os = "linux")]
+pub fn spawn_daemon_alone(root: &Path, runtime: Option<&Path>, args: &[&str], env: &[(&str, &Path)], fake_steam: bool) -> Daemon {
+    spawn_daemon_command(root, runtime, args, env, Some(fake_steam))
+}
+
+/// Whether [`spawn_daemon_alone`] can work here. Ubuntu 24.04 (GitHub's runners too) refuses
+/// unprivileged user namespaces unless `kernel.apparmor_restrict_unprivileged_userns` is 0, and a
+/// container's seccomp profile may refuse them: `unshare` then fails and the daemon never starts.
+#[cfg(target_os = "linux")]
+pub fn pid_namespace_available() -> bool {
+    Command::new("unshare")
+        .args(["--user", "--map-root-user", "--pid", "--fork", "--kill-child", "--mount-proc", "true"])
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .is_ok_and(|s| s.success())
+}
+
+fn spawn_daemon_command(root: &Path, runtime: Option<&Path>, args: &[&str], env: &[(&str, &Path)], alone: Option<bool>) -> Daemon {
     let config = root.join("config/padwight");
     if !config.join("config.toml").exists() {
         install_config(&config, &default_config());
@@ -174,7 +213,22 @@ pub fn spawn_daemon_with(root: &Path, runtime: Option<&Path>, args: &[&str]) -> 
     let tmp = root.join("tmp");
     fs::create_dir_all(&tmp).unwrap();
     let log = fs::File::create(root.join("daemon.log")).unwrap();
-    let mut command = Command::new(env!("CARGO_BIN_EXE_padwight"));
+    let exe = env!("CARGO_BIN_EXE_padwight");
+    let mut command = match alone {
+        None => Command::new(exe),
+        Some(fake_steam) => {
+            // A copy of `sleep` under the name `steam`, which Padwight looks for by process name.
+            let steam = if fake_steam { "cp \"$(command -v sleep)\" \"$1/steam\"; \"$1/steam\" 600 &" } else { "" };
+            let mut command = Command::new("unshare");
+            command
+                .args(["--user", "--map-root-user", "--pid", "--fork", "--kill-child", "--mount-proc", "sh", "-c"])
+                .arg(format!("{steam} shift; exec \"$@\""))
+                .arg("sh")
+                .arg(&tmp)
+                .arg(exe);
+            command
+        }
+    };
     command
         .arg("daemon")
         .args(args)
@@ -182,6 +236,11 @@ pub fn spawn_daemon_with(root: &Path, runtime: Option<&Path>, args: &[&str]) -> 
         .env("XDG_STATE_HOME", root.join("state"))
         .env("XDG_DATA_HOME", root.join("data"))
         .env("TMPDIR", &tmp)
+        .env_remove("SWAYSOCK")
+        .env_remove("NIRI_SOCKET")
+        .env_remove("HYPRLAND_INSTANCE_SIGNATURE")
+        .env_remove("WAYLAND_DISPLAY")
+        .envs(env.iter().copied())
         .stdin(Stdio::null())
         .stdout(log.try_clone().unwrap())
         .stderr(log);
@@ -209,4 +268,33 @@ pub fn assert_log_clean(root: &Path) {
     let log = daemon_log(root);
     assert!(!log.contains("panicked"), "the daemon panicked:\n{log}");
     assert!(!log.contains("output error"), "the daemon failed to send input:\n{log}");
+}
+
+/// What a test run's daemon says in its log that is not trouble: this machine has no compositor,
+/// no session bus and (with `--fake-clock`) no virtual devices.
+const EXPECTED_IN_LOGS: &[&str] = &[
+    "needs a Wayland session",
+    "no system tray",
+    "Could not find wayland compositor",
+    "focus tracking",
+    // No /dev/uinput (a container, a CI runner): the scripted controller has no virtual pad.
+    "cannot create virtual pad",
+    // The scenarios point the session bus at a path that does not exist.
+    "padwight-scenario-bus",
+    // Real-time scheduling is the machine's to grant (rtkit may be absent, busy or refuse).
+    "rtkit",
+    "input threads:",
+];
+
+/// The lines of a daemon log that read as trouble: a panic, or an error, failure or warning that
+/// this kind of test run does not expect (INS-9: after a scripted session the log has none, and
+/// each message is worded for a player). Call it once the daemon has stopped.
+pub fn log_problems(log: &str) -> Vec<&str> {
+    const WORDS: &[&str] = &["panicked", "error", "failed", "failure", "warning", "warn:", "can't", "cannot", "couldn't", "unable"];
+    log.lines()
+        .filter(|line| {
+            let lower = line.to_lowercase();
+            WORDS.iter().any(|w| lower.contains(w)) && !line.starts_with("sound:") && !EXPECTED_IN_LOGS.iter().any(|e| line.contains(e))
+        })
+        .collect()
 }

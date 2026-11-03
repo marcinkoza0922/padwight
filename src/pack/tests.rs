@@ -388,3 +388,44 @@ fn a_pack_with_a_number_that_isn_t_finite_is_refused() {
     let text = export(&config.games[0], &draft(&config.games[0], false)).pack.to_toml().unwrap();
     assert!(parse(&text).unwrap_err().to_string().contains("menu_style.scale"));
 }
+
+#[test]
+fn the_preview_names_host_program_actions_wherever_they_hide() {
+    let mut config = setup();
+    let game = &mut config.games[0];
+    assert!(export(game, &draft(game, false)).pack.host_powers().is_empty());
+
+    game.profiles[0].set_button(Button::North, ButtonAction::Multi(vec![ButtonAction::Screenshot]));
+    game.menus.push(menu("Quit", vec![ButtonAction::ForceQuit]));
+    game.macros.push(Macro { name: "Rec".into(), steps: vec![MacroStep::Tap { action: ButtonAction::ToggleRecording, hold_ms: 10 }] });
+    let powers = export(game, &draft(game, false)).pack.host_powers();
+    assert_eq!(powers, ["force quit the focused game", "start and stop screen recording", "take screenshots"]);
+}
+
+/// FOC-5: two setups with rules for the same window. The preview names the clash, and the imported
+/// setup's rule takes over only when the user does not choose to keep their own.
+#[test]
+fn an_imported_rule_for_the_same_window_wins_only_if_chosen() {
+    use crate::{focus, ipc::WindowInfo};
+
+    let window = WindowInfo { exe: "doom.exe".into(), ..WindowInfo::default() };
+    let mut config = setup();
+    let mut pack = export(&config.games[0], &draft(&config.games[0], false)).pack;
+    pack.pack.id = new_id();
+    pack.pack.name = "Doom Remix".into();
+    let p = plan(&config, pack, false);
+    assert!(!p.name_clash, "a different name: only the rule clashes");
+    assert_eq!(p.rule_clashes, [RuleClash { rule: 0, other_game: "Doom".into() }], "the preview lists the clash");
+    assert_eq!(focus::matching_rule(&config, &window).map(|(game, _)| game), Some("Doom"));
+
+    // The default: the import takes over and the other setup's rule is switched off.
+    let mut taken = config.clone();
+    assert_eq!(apply(&mut taken, &p, &Choices { replace: false, keep_mine: vec![false] }), "Doom Remix");
+    assert_eq!(focus::matching_rule(&taken, &window).map(|(game, _)| game), Some("Doom Remix"));
+    assert!(!taken.games[0].rules[0].enabled && taken.games[1].rules[0].enabled);
+
+    // Keeping the user's own: the imported rule comes in switched off and the window still goes to Doom.
+    apply(&mut config, &p, &Choices { replace: false, keep_mine: vec![true] });
+    assert_eq!(focus::matching_rule(&config, &window).map(|(game, _)| game), Some("Doom"));
+    assert!(config.games[0].rules[0].enabled && !config.games[1].rules[0].enabled);
+}

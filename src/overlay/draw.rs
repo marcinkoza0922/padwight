@@ -256,6 +256,22 @@ fn framed<'a, M: 'a>(body: Element<'a, M>, c: Colors, style: &OverlayStyle, padd
     boxed.into()
 }
 
+/// What a menu row looks like in each tone on `style`: the row's color and its text's, for the
+/// contrast and color-blindness checks (`padwight debug gui-check`).
+pub fn tone_swatches(style: &OverlayStyle, colorblind: bool) -> Vec<(&'static str, Color, Color)> {
+    use crate::menu::Tone;
+    let base = Colors { colorblind, ..colors(style, Font::DEFAULT) };
+    let row = |name, c: Colors| (name, c.item, c.item_text);
+    let selected = (base.selected, base.selected_text);
+    vec![
+        ("panel", base.background, base.background_text),
+        row("normal row", base),
+        row("adding row", toned(base, Tone::Add)),
+        row("removing row", toned(base, Tone::Remove)),
+        ("selected row", selected.0, selected.1),
+    ]
+}
+
 /// The colors of a row of this kind: adding rows are tinted green and removing ones red, so
 /// they stand out from the items they act on.
 fn toned(c: Colors, tone: crate::menu::Tone) -> Colors {

@@ -15,7 +15,7 @@ use crate::{
     input::InputEvent,
 };
 
-mod mixer;
+pub(crate) mod mixer;
 #[cfg(target_os = "linux")]
 mod mpris;
 

@@ -12,7 +12,7 @@ made_with = "Xbox controller"
 
 [[rules]]
 kind = "steam_app_id"
-value = "73000"
+value = "48705"
 profile = "Mount & Blade: Warband - Napoleonic Wars"
 
 [[profiles]]

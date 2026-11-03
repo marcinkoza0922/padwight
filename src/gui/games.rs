@@ -249,7 +249,7 @@ impl App {
                 // The dot alone doesn't say what it means, so it says so on hover.
                 let why = if note.contains('●') { "In use: the active profile is one of this setup's." } else if note.contains('⚠') { "One of its profiles uses what opens the Guide overlay." } else { "A newer version is in the library." };
                 line = line.push(tooltip(
-                    text(note).size(12).color(style_accent()),
+                    text(note).size(12).style(accent_text),
                     container(text(why).size(13)).padding(8).style(style::tooltip),
                     tooltip::Position::Right,
                 ));
@@ -279,13 +279,13 @@ impl App {
             entry("App settings".into(), Page::Settings, None),
             entry("Manual".into(), Page::Manual, None),
             rule::horizontal(1),
-            text("Setups").size(13).color(MUTED_COLOR),
+            text("Setups").size(13).style(muted),
             entry("General".into(), Page::Game(None), warned(&self.config.general, playing(&None))),
         ]
         .spacing(6);
         // General is always listed, so the search box and the empty note are about the games.
         if self.config.games.is_empty() {
-            col = col.push(text("No game setups yet.").size(13).color(MUTED_COLOR));
+            col = col.push(text("No game setups yet.").size(13).style(muted));
         } else {
             col = col.push(field("Search setups…", &self.game_search).on_input(Message::SetGameSearch).size(14));
         }
@@ -301,7 +301,7 @@ impl App {
         // A sidebar entry in the accent color rather than a filled button, which would look like
         // the search field above it.
         col = col.push(
-            button(text("+ Add setup").color(style_accent()))
+            button(text("+ Add setup").style(accent_text))
                 .width(Length::Fill)
                 .padding([6, 10])
                 .style(style::nav(false))
@@ -319,7 +319,7 @@ impl App {
             .spacing(12)
             .align_y(Alignment::Center);
         if let Some(note) = origin_note(game) {
-            title = title.push(text(note).size(13).color(MUTED_COLOR));
+            title = title.push(text(note).size(13).style(muted));
         }
         // Every setup's title has an ⓘ saying what the page holds.
         title = title.push(help(if general {

@@ -6,7 +6,6 @@ use iced::widget::{column, row};
 
 use super::*;
 
-const OK_COLOR: Color = Color::from_rgb(0.3, 0.7, 0.4);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum Severity {
@@ -108,7 +107,7 @@ impl App {
         let headline = if n == 1 { "One thing Padwight needs isn't set up".to_owned() } else { format!("{n} things Padwight needs aren't set up") };
         let strip = row![
             text("✗").size(18).color(ERROR_COLOR),
-            column![text(headline), text(first.title.clone()).size(13).color(MUTED_COLOR)].spacing(2).width(Length::Fill),
+            column![text(headline), text(first.title.clone()).size(13).style(muted)].spacing(2).width(Length::Fill),
             button(text("Review…")).style(style::primary).on_press(Message::OpenSystemCheck),
         ]
         .spacing(12)
@@ -120,9 +119,9 @@ impl App {
     pub(super) fn system_check_row(&self) -> Element<'_, Message> {
         let n = self.problem_count();
         let summary = if self.system_checks.is_empty() {
-            text("Nothing to check on this system.").color(MUTED_COLOR)
+            text("Nothing to check on this system.").style(muted)
         } else if n == 0 {
-            text("✓ Everything Padwight needs is in place.").color(OK_COLOR)
+            text("✓ Everything Padwight needs is in place.").style(ok_text)
         } else {
             text(format!("✗ {n} to fix.")).color(ERROR_COLOR)
         };
@@ -140,7 +139,7 @@ impl App {
                  commands that set it up. ✗ doesn't work yet · • worth knowing · ✓ in place."
             )
             .size(13)
-            .color(MUTED_COLOR),
+            .style(muted),
         ]
         .spacing(12);
         // Problems first, then notes, then what's fine.
@@ -150,7 +149,7 @@ impl App {
             }
         }
         if self.system_checks.is_empty() {
-            body = body.push(text("Nothing to check on this system.").color(MUTED_COLOR));
+            body = body.push(text("Nothing to check on this system.").style(muted));
         }
         body = body
             .push(
@@ -160,7 +159,7 @@ impl App {
                     " in a terminal."
                 ]
                     .size(12)
-                    .color(MUTED_COLOR),
+                    .style(muted),
             )
             .push(
                 row![
@@ -175,18 +174,18 @@ impl App {
 }
 
 fn view_check(i: usize, check: &Check) -> Element<'_, Message> {
-    let (mark, color) = match check.severity {
-        Severity::Ok => ("✓", OK_COLOR),
-        Severity::Note => ("•", WARNING_COLOR),
-        Severity::Problem => ("✗", ERROR_COLOR),
+    let (mark, style): (_, fn(&iced::Theme) -> iced::widget::text::Style) = match check.severity {
+        Severity::Ok => ("✓", ok_text),
+        Severity::Note => ("•", warning_text),
+        Severity::Problem => ("✗", |_| iced::widget::text::Style { color: Some(ERROR_COLOR) }),
     };
-    let head = row![text(mark).color(color).width(18), text(check.title.clone()).width(Length::Fill)].spacing(6);
+    let head = row![text(mark).style(style).width(18), text(check.title.clone()).width(Length::Fill)].spacing(6);
     if check.severity == Severity::Ok {
         return head.into();
     }
     let mut lines = column![].spacing(4);
     for line in check.detail.lines().filter(|l| !l.is_empty()) {
-        lines = lines.push(text(line.to_owned()).size(13).color(MUTED_COLOR));
+        lines = lines.push(text(line.to_owned()).size(13).style(muted));
     }
     let mut card = column![head, lines].spacing(6);
     if let Some(fix) = &check.fix {

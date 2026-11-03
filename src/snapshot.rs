@@ -12,6 +12,7 @@ use iced::{
         graphics::text::font_system,
         mouse,
         renderer::{self, Headless},
+        widget::Operation,
     },
     window,
 };
@@ -82,6 +83,21 @@ pub fn render<M>(element: Element<'_, M>, size: Size, scale: f32, background: Co
 
 /// Like `render`, with the widgets styled for `theme`.
 pub fn render_themed<M>(element: Element<'_, M>, size: Size, scale: f32, background: Color, theme: &Theme) -> Result<Image> {
+    render_probed(element, &Canvas { size, scale, background }, theme, &mut Nothing)
+}
+
+/// The screen `render_probed` draws on: its size in logical pixels, physical pixels per logical
+/// one, and the color behind everything.
+pub struct Canvas {
+    pub size: Size,
+    pub scale: f32,
+    pub background: Color,
+}
+
+/// Like `render_themed`, and the laid-out widget tree is walked by `probe` once the interface has
+/// settled (`()` walks nothing). For the layout checks.
+pub fn render_probed<M>(element: Element<'_, M>, canvas: &Canvas, theme: &Theme, probe: &mut dyn Operation) -> Result<Image> {
+    let &Canvas { size, scale, background } = canvas;
     // The renderer panics on an empty image, and a huge one runs out of memory.
     let physical = Size::new((size.width * scale).round() as u32, (size.height * scale).round() as u32);
     if scale.is_nan() || scale <= 0.0 || !(1..=MAX_SIDE).contains(&physical.width) || !(1..=MAX_SIDE).contains(&physical.height) {
@@ -94,6 +110,7 @@ pub fn render_themed<M>(element: Element<'_, M>, size: Size, scale: f32, backgro
     // A redraw request lets widgets that animate or measure on redraw settle first.
     let _ = ui.update(&[Event::Window(window::Event::RedrawRequested(Instant::now()))], mouse::Cursor::Unavailable, &mut renderer, &mut clipboard::Null, &mut Vec::new());
     ui.draw(&mut renderer, theme, &renderer::Style { text_color: theme.palette().text }, mouse::Cursor::Unavailable);
+    ui.operate(&renderer, probe);
     let rgba = renderer.screenshot(physical, scale, background);
     Ok(Image { width: physical.width, height: physical.height, rgba })
 }
@@ -104,6 +121,26 @@ fn load_fonts() {
     // Loading the same bytes again is skipped by the font list itself.
     for bundled in &crate::font::BUNDLED {
         fonts.load_font(bundled.bytes.into());
+    }
+}
+
+/// Lays `element` out on a `size` screen and walks the tree with `probe`, drawing nothing.
+pub fn probe<M>(element: Element<'_, M>, size: Size, probe: &mut dyn Operation) -> Result<()> {
+    load_fonts();
+    let mut renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(Font::DEFAULT, Pixels(16.0), Some("tiny-skia")))
+        .context("the offscreen renderer did not start")?;
+    let mut ui = UserInterface::build(element, size, Cache::default(), &mut renderer);
+    let _ = ui.update(&[Event::Window(window::Event::RedrawRequested(Instant::now()))], mouse::Cursor::Unavailable, &mut renderer, &mut clipboard::Null, &mut Vec::new());
+    ui.operate(&renderer, probe);
+    Ok(())
+}
+
+/// Walks nothing: `render_themed`'s probe.
+struct Nothing;
+
+impl Operation for Nothing {
+    fn traverse(&mut self, operate: &mut dyn FnMut(&mut dyn Operation)) {
+        operate(self);
     }
 }
 
