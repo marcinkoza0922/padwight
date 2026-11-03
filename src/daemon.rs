@@ -607,7 +607,7 @@ impl Daemon {
         Daemon {
             pack_fonts: config.active_game().assets.activate_headless(),
             scope: config.scope(),
-            sounds: sound::Sounds::start(),
+            sounds: sound::Sounds::for_clock(crate::clock::is_manual()),
             config,
             kbm,
             devices: HashMap::new(),
