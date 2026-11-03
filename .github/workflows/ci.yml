@@ -105,7 +105,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          run=$(gh run list --workflow nightly.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          # Until nightly.yml is on main the list call fails with a 404: that means no baseline yet.
+          run=$(gh run list --workflow nightly.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty' || true)
           if [ -n "$run" ] && gh run download "$run" -n overlay-baseline -D overlay-baseline; then
             echo present=true >> "$GITHUB_OUTPUT"
           else

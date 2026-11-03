@@ -10,6 +10,7 @@
 
 mod common;
 
+use std::os::unix::net::UnixStream;
 use std::process::Command;
 
 use common::{serial, spawn_daemon_with, temp_root, wait_for};
@@ -23,7 +24,8 @@ fn the_dashboard_client_speaks_the_documented_protocol() {
     let run = root.join("run");
     let daemon = spawn_daemon_with(&root, Some(&run), &["--debug"]);
     let socket = run.join("padwight.sock");
-    wait_for("the daemon's socket", || socket.exists().then_some(()));
+    // The file appears at bind(), before listen(): wait until a connection is accepted.
+    wait_for("the daemon's socket", || UnixStream::connect(&socket).ok().map(drop));
 
     let script = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/dashboard_client/check.py");
     let out = Command::new("python3").args(["-I", script]).env("XDG_RUNTIME_DIR", &run).output().expect("running python3");
