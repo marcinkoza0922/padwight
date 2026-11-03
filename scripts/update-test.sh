@@ -171,7 +171,7 @@ test_update() {
     for mode in checksum truncated missing; do
         new_world "u-$mode"; install_old
         case $mode in
-            checksum) want="checksum check: the download doesn.t match"
+            checksum) want="the download doesn.t match its checksum"
                 mkdir -p "$T/rel-bad"; cp "$T/rel"/*0.2.0*.tar.gz* "$T/rel-bad/"
                 echo "0000000000000000000000000000000000000000000000000000000000000000  padwight-0.2.0-linux-x86_64.tar.gz" > "$T/rel-bad/padwight-0.2.0-linux-x86_64.tar.gz.sha256"
                 serve "$mode" --dir "$T/rel-bad" --latest 0.2.0 ;;

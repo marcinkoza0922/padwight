@@ -345,7 +345,7 @@ fn hw_8_a_program_reading_the_raw_node_is_warned_about_unless_the_udev_rule_hide
 
     // With the rule: the node is mode 0000, which the daemon's scan skips. The rule also keeps
     // a program from opening it, so none has it open; the scan reports nothing.
-    fs::set_permissions(&node, fs::Permissions::from_mode(0)).unwrap();
+    fs::set_permissions(&node, fs::Permissions::from_mode(0o000)).unwrap();
     let before = daemon_log(&root).matches("also reads").count();
     let mut steam = fake_steam(&root, &node);
     // A scan runs every few seconds; wait for two.
