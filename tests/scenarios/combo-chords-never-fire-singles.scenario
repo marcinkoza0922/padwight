@@ -1,0 +1,32 @@
+# FEEL-4: LB + RB is F1 however the pair is pressed inside the 60 ms window: together, one or the
+# other first, 59 ms apart, and let go in either order or held long. No chord leaves a stray Q or E
+# (their single-button keys) behind. The rest-of-the-window cases are in combo-window-edges.
+setup tests/scenarios/packs/input.padpack Combos
+press lb
+press rb
+advance 80
+release lb rb
+advance 200
+press rb
+advance 30
+press lb
+advance 80
+release lb
+advance 20
+release rb
+advance 200
+press lb
+advance 59
+press rb
+advance 1500
+release rb
+advance 20
+release lb
+advance 200
+---
+key KEY_F1 down @0
+key KEY_F1 up   @80
+key KEY_F1 down @310
+key KEY_F1 up   @390
+key KEY_F1 down @669
+key KEY_F1 up   @2169

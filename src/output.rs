@@ -112,21 +112,31 @@ pub(crate) fn mouse_code(b: MouseButton) -> KeyCode {
 pub fn test_turn(px: i32) {
     use std::{thread, time::Duration};
     const WAIT: Duration = Duration::from_secs(3);
-    const STEPS: i32 = 100;
     thread::spawn(move || {
         let Ok(mut kbm) = VirtualKbm::new() else { return };
         thread::sleep(WAIT);
-        let mut sent = 0;
-        for step in 1..=STEPS {
-            let target = (i64::from(px) * i64::from(step) / i64::from(STEPS)) as i32;
-            kbm.mouse_move(target - sent, 0);
+        for step in test_turn_steps(px) {
+            kbm.mouse_move(step, 0);
             if kbm.flush().is_err() {
                 return;
             }
-            sent = target;
             thread::sleep(Duration::from_millis(10));
         }
     });
+}
+
+/// The pixel steps `test_turn` sends, one every 10 ms: they add up to exactly `px`.
+pub(crate) fn test_turn_steps(px: i32) -> Vec<i32> {
+    const STEPS: i32 = 100;
+    let mut sent = 0;
+    (1..=STEPS)
+        .map(|step| {
+            let target = (i64::from(px) * i64::from(step) / i64::from(STEPS)) as i32;
+            let move_by = target - sent;
+            sent = target;
+            move_by
+        })
+        .collect()
 }
 
 #[cfg(test)]

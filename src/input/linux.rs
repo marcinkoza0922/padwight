@@ -42,12 +42,23 @@ pub struct Normalizer {
 /// buttons by their Xbox *label* report X (physically west) as "north" and Y as "west".
 /// Positional drivers (hid-playstation, hid-nintendo, ...) follow the gamepad spec instead.
 pub fn uses_xbox_labels(dev_path: &Path) -> bool {
-    let Some(node) = dev_path.file_name() else { return false };
-    let driver = Path::new("/sys/class/input").join(node).join("device/device/driver");
-    std::fs::canonicalize(driver)
-        .ok()
-        .and_then(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()))
-        .is_some_and(|name| name == "xpad")
+    uses_xbox_labels_in(Path::new(SYSFS_INPUT), dev_path)
+}
+
+/// The kernel's list of input nodes, which names each node's driver.
+const SYSFS_INPUT: &str = "/sys/class/input";
+
+/// The name of the driver bound to the HID or USB device behind the input node at `dev_path`,
+/// read under `sysfs` (/sys/class/input).
+fn parent_driver(sysfs: &Path, dev_path: &Path) -> Option<String> {
+    let node = dev_path.file_name()?;
+    let driver = std::fs::canonicalize(sysfs.join(node).join("device/device/driver")).ok()?;
+    Some(driver.file_name()?.to_string_lossy().into_owned())
+}
+
+/// [`uses_xbox_labels`] reading sysfs under `sysfs`.
+fn uses_xbox_labels_in(sysfs: &Path, dev_path: &Path) -> bool {
+    parent_driver(sysfs, dev_path).is_some_and(|name| name == "xpad")
 }
 
 /// Returns true if the device looks like a gamepad per the kernel gamepad spec
@@ -186,10 +197,12 @@ pub fn inaccessible_motion_sensor(dev_path: &Path) -> Option<String> {
 impl MotionFrame {
     /// Frame of the motion-sensor device at `dev_path`, from its driver.
     pub fn of(dev_path: &Path) -> Self {
-        let driver = dev_path
-            .file_name()
-            .and_then(|node| std::fs::canonicalize(Path::new("/sys/class/input").join(node).join("device/device/driver")).ok());
-        match driver.as_deref().and_then(|d| d.file_name()).and_then(|n| n.to_str()) {
+        Self::of_in(Path::new(SYSFS_INPUT), dev_path)
+    }
+
+    /// [`Self::of`] reading sysfs under `sysfs`.
+    fn of_in(sysfs: &Path, dev_path: &Path) -> Self {
+        match parent_driver(sysfs, dev_path).as_deref() {
             Some("nintendo") => MotionFrame::Nintendo,
             _ => MotionFrame::PlayStation,
         }
@@ -402,3 +415,6 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+mod variants_tests;

@@ -3,6 +3,8 @@
 and flags each measurement that got worse by more than its noise.
 
 Usage: python3 -I scripts/profile-compare.py [--json] [--all] old/ new/
+       python3 -I scripts/profile-compare.py --budget new/      (FEEL-5: an absolute latency budget)
+       python3 -I scripts/profile-compare.py --self-test
 
 Both folders hold the JSON files tests/profile writes (input_latency.json, resources.json, ...).
 A measurement is flagged when new - old (in the bad direction) is larger than both its limit
@@ -20,6 +22,19 @@ and its noise:
 Idle CPU over 1% of a core is flagged whatever the old value was. Folders from different machines,
 kernels or build kinds are not comparable; the script says so and stops. Latency on shared CI runners
 is too noisy to compare: run this on the same machine each week.
+
+--budget judges one folder against fixed numbers instead of an older run, so "input latency feels
+like a wired pad" has a pass/fail: from the press written to the pad to the daemon's virtual pad
+reporting it (input_latency.json), in each condition (idle, a 1 kHz stick flood, every CPU busy):
+
+  p50        at most 500 us    a wired pad's own USB poll is 1 to 8 ms; the daemon adds well under that
+  p99        at most 2 ms      still a fraction of a poll interval
+  max        at most 16.6 ms   never a whole 60 Hz frame late (a rare scheduler stall is the limit)
+  missed presses and dropped output events: none
+
+The measured figures (a 12th-gen i7, Docker, 900 presses per condition) were p50 25 to 55 us and
+p99 56 to 91 us, so the budget has ten times of room and fails on a real regression, not on a noisy
+neighbour. This measures the daemon, not the player: whether it feels right in a game stays manual.
 
 Exit status: 0 nothing worse, 1 something flagged, 2 the folders can't be compared.
 """
@@ -145,7 +160,68 @@ def fmt(value, rule):
     return f"{value:.1f} {rule.unit}".strip()
 
 
+# FEEL-5: the absolute input-latency budget, in microseconds.
+BUDGET_US = {"p50_us": 500, "p99_us": 2000, "max_us": 16600}
+CONDITIONS = ("idle", "flood_1khz", "cpu_load")
+
+
+def over_budget(doc):
+    """The (condition, measurement, value, limit) that break the latency budget in an input_latency.json."""
+    found = []
+    for condition in CONDITIONS:
+        node = doc.get(condition)
+        if not isinstance(node, dict):
+            found.append((condition, "present", 0, 1))
+            continue
+        for key, limit in BUDGET_US.items():
+            value = node.get("latency", {}).get(key)
+            if not isinstance(value, (int, float)) or value > limit:
+                found.append((condition, key, value, limit))
+        for key in ("missed", "dropped_output_events"):
+            if node.get(key, 0) != 0:
+                found.append((condition, key, node.get(key), 0))
+    return found
+
+
+def budget(folder):
+    doc = load(folder).get("input_latency")
+    if doc is None or "skipped" in doc:
+        print(f"no input_latency.json in {folder} (run scripts/profile.sh profile_input_latency)", file=sys.stderr)
+        return 2
+    found = over_budget(doc)
+    for condition, key, value, limit in found:
+        print(f"OVER BUDGET {condition}.{key}: {value} (limit {limit})")
+    if not found:
+        idle = doc["idle"]["latency"]
+        print(f"within the latency budget (idle p50 {idle['p50_us']:.0f} us, p99 {idle['p99_us']:.0f} us)")
+    return 1 if found else 0
+
+
+def self_test():
+    good = {c: {"latency": {"p50_us": 55, "p99_us": 91, "max_us": 304}, "missed": 0, "dropped_output_events": 0} for c in CONDITIONS}
+    assert over_budget(good) == [], over_budget(good)
+    slow = json.loads(json.dumps(good))
+    slow["cpu_load"]["latency"]["p99_us"] = 2500
+    slow["idle"]["missed"] = 1
+    del slow["flood_1khz"]
+    names = {(c, k) for c, k, _, _ in over_budget(slow)}
+    assert names == {("cpu_load", "p99_us"), ("idle", "missed"), ("flood_1khz", "present")}, names
+    stall = json.loads(json.dumps(good))
+    stall["idle"]["latency"]["max_us"] = 20000
+    assert [(c, k) for c, k, _, _ in over_budget(stall)] == [("idle", "max_us")]
+    print("profile-compare budget self-test passed")
+    return 0
+
+
 def main(argv):
+    if "--self-test" in argv:
+        return self_test()
+    if "--budget" in argv:
+        folders = [a for a in argv if not a.startswith("--")]
+        if len(folders) != 1:
+            print(__doc__, file=sys.stderr)
+            return 2
+        return budget(folders[0])
     args = [a for a in argv if not a.startswith("--")]
     flags = {a for a in argv if a.startswith("--")}
     if len(args) != 2:

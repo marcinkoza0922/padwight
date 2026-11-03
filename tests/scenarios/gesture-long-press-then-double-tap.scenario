@@ -1,0 +1,22 @@
+# FEEL-4 / known finding: South has a double tap (B) and a long press (C). A long press that is
+# released fires C at once and nothing else; a tap after a long press is a single tap and waits out
+# the double-tap window; a press held 300 ms (shorter than a long press) then released fires its tap
+# only after the double-tap window.
+setup tests/scenarios/packs/input.padpack Gestures
+press south
+advance 600
+release south
+advance 400
+tap south 30
+advance 400
+press south
+advance 300
+release south
+advance 400
+---
+key KEY_C down @500
+key KEY_C up   @600
+key KEY_A down @1280
+key KEY_A up   @1280
+key KEY_A down @1980
+key KEY_A up   @1980
