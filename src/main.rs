@@ -83,7 +83,13 @@ fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let args: Vec<&str> = args.iter().map(String::as_str).collect();
     match args.as_slice() {
-        [] | ["gui"] => gui::run().map_err(Into::into),
+        [] | ["gui"] => {
+            let var = |v| std::env::var(v).ok();
+            if let Some(why) = gui::missing_display(var("WAYLAND_DISPLAY").as_deref(), var("DISPLAY").as_deref()) {
+                bail!(why);
+            }
+            gui::run().map_err(Into::into)
+        }
         ["daemon"] => daemon::run(false, false),
         ["daemon", "--debug"] => daemon::run(true, false),
         ["daemon", "--debug", "--fake-clock"] => daemon::run(true, true),

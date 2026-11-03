@@ -41,6 +41,7 @@ mod activity;
 mod auto_switch;
 mod close_all;
 mod first_pad;
+mod grab_failures;
 mod guide;
 mod in_game_menu;
 mod info_overlays;

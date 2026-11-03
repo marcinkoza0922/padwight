@@ -133,6 +133,12 @@ use search::*;
 use stage::{StageMessage, StageTarget, appearance_row};
 use widgets::*;
 
+/// Why the window can't open, when the session has neither a Wayland nor an X11 display.
+pub fn missing_display(wayland: Option<&str>, x11: Option<&str>) -> Option<&'static str> {
+    let set = |v: Option<&str>| v.is_some_and(|s| !s.is_empty());
+    (!set(wayland) && !set(x11)).then_some("no graphical session found: run padwight gui from your desktop (the background service doesn't need one)")
+}
+
 pub fn run() -> iced::Result {
     // scripts/headless.sh sets PADWIGHT_NO_DAEMON: a daemon started from there would outlive the
     // virtual display and take the real controllers.
@@ -1769,3 +1775,15 @@ fn watch<T: serde::de::DeserializeOwned + Send + 'static>(
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod display_tests {
+    use super::missing_display;
+
+    #[test]
+    fn no_display_is_named_and_a_display_is_not() {
+        assert!(missing_display(None, Some("")).unwrap().starts_with("no graphical session found"));
+        assert!(missing_display(Some("wayland-0"), None).is_none());
+        assert!(missing_display(None, Some(":0")).is_none());
+    }
+}
