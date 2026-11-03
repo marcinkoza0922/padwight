@@ -1,0 +1,441 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "ff810e33-62bc-485a-b6e6-9adfb4b41154"
+name = "Call of Duty: Black Ops"
+version = "1.0"
+author = "Padwight"
+description = "Call of Duty: Black Ops (2010) on an Xbox-style pad. The PC game has its own XInput support during play, so the controller passes through untouched and you pick one of the game's controller presets in its options. Padwight adds the Guide overlay on top, with mouse mode for the menus the game's pad support can't drive. Gyro and flick stick profiles are there to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "42700"
+profile = "Call of Duty: Black Ops"
+
+[[rules]]
+kind = "steam_app_id"
+value = "42710"
+profile = "Call of Duty: Black Ops"
+
+[[rules]]
+kind = "executable"
+value = "BlackOps.exe"
+profile = "Call of Duty: Black Ops"
+
+[[rules]]
+kind = "executable"
+value = "BlackOpsMP.exe"
+profile = "Call of Duty: Black Ops"
+
+[[profiles]]
+name = "Call of Duty: Black Ops"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''Black Ops has its own XInput support, so the controller goes to the game as it is. The game offers five button layouts and four stick presets in its controller options; pick them there.
+The pad only works during play, not in the menus: press {guide} + {rs} for mouse mode to click through the menus and the lobby, and {guide} to leave it. Chat in multiplayer needs typing: open the on-screen keyboard with {guide} + {west}.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[[profiles]]
+name = "Call of Duty: Black Ops + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 3272.7
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+Black Ops has its own XInput support, so the controller goes to the game as it is. The game offers five button layouts and four stick presets in its controller options; pick them there.
+The pad only works during play, not in the menus: press {guide} + {rs} for mouse mode to click through the menus and the lobby, and {guide} to leave it. Chat in multiplayer needs typing: open the on-screen keyboard with {guide} + {west}.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[profiles.guide.edits]
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[[profiles]]
+name = "Call of Duty: Black Ops + Flick stick"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+
+[profiles.gestures.Start]
+long_press = "gyro_toggle"
+
+[profiles.gestures.RightStick]
+long_press = "gyro_recenter"
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 3272.7
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 3272.7
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Hold {start} to switch the gyro off or on, and hold {r3} to recenter it.
+Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; turn it around the rim to keep turning. The gyro aims up, down and finely.
+Black Ops has its own XInput support, so the controller goes to the game as it is. The game offers five button layouts and four stick presets in its controller options; pick them there.
+The pad only works during play, not in the menus: press {guide} + {rs} for mouse mode to click through the menus and the lobby, and {guide} to leave it. Chat in multiplayer needs typing: open the on-screen keyboard with {guide} + {west}.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[profiles.guide.edits]
+"gesture:button:Start:long_press" = { text = "Gyro active / inactive" }
+"gesture:button:RightStick:long_press" = { text = "Recenter gyro" }
+
+[keyboard_style]
+corners = 0.1
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0e110d"
+opacity = 0.9
+
+[keyboard_style.items]
+color = "#1c2118"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#7d8f3a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#b7b08a"
+opacity = 0.45
+
+[keyboard_style.gradient]
+color = "#141810"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3a4231"
+
+[keyboard_style.type]
+case = "upper"
+letter_spacing = 2
+
+[numpad_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0e110d"
+opacity = 0.9
+
+[numpad_style.items]
+color = "#1c2118"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#7d8f3a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#b7b08a"
+opacity = 0.45
+
+[numpad_style.gradient]
+color = "#141810"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3a4231"
+
+[numpad_style.type]
+case = "upper"
+letter_spacing = 2
+
+[media_style]
+corners = 0.1
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0e110d"
+opacity = 0.9
+
+[media_style.items]
+color = "#1c2118"
+opacity = 0.95
+
+[media_style.selected]
+color = "#7d8f3a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#b7b08a"
+opacity = 0.45
+
+[media_style.gradient]
+color = "#141810"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3a4231"
+
+[media_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0e110d"
+opacity = 0.9
+
+[menu_style.items]
+color = "#1c2118"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#7d8f3a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#b7b08a"
+opacity = 0.45
+
+[menu_style.gradient]
+color = "#141810"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3a4231"
+
+[menu_style.glow]
+color = "#b7b08a"
+opacity = 0.25
+blur = 20
+
+[menu_style.type]
+case = "upper"
+letter_spacing = 2
+
+[menu_style.ornament]
+frame = {kind = "brackets", size = 14, width = 2, color = "#b7b08a"}
+vignette = {color = "#000000", opacity = 0.45, reach = 26}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "tick", volume = 0.08, pitch = 1.1}
+pick = {kind = "casing", volume = 0.25}
+open = {kind = "radio", volume = 0.08}
+close = {kind = "swish", volume = 0.03, pitch = 1.3}
+
+[sounds.guide]
+open = {kind = "radio", volume = 0.1}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.08, pitch = 1.1}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.08, pitch = 1.1}
+pick = {kind = "beep", volume = 0.15, pitch = 1.1}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 16}
+pick = {strength = 0.4, length_ms = 35}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 12}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}
