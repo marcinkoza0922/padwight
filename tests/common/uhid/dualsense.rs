@@ -74,6 +74,17 @@ pub struct DualSenseState {
     pub cross: bool,
     pub circle: bool,
     pub ps: bool,
+    /// Square and triangle (the other two face buttons).
+    pub square: bool,
+    pub triangle: bool,
+    /// The d-pad: 0 is up, then clockwise in steps of 45 degrees; 8 is centred.
+    pub hat: u8,
+    /// The byte of shoulder buttons: bit 0 L1, 1 R1, 2 L2, 3 R2, 4 create, 5 options, 6 L3, 7 R3.
+    pub shoulders: u8,
+    /// Left stick x and y, right stick x and y (128 is centred).
+    pub sticks: [u8; 4],
+    /// The analog triggers, left then right.
+    pub triggers: [u8; 2],
     /// The touchpad pressed down.
     pub touch_click: bool,
     /// Raw gyro readings (pitch, yaw, roll); the driver scales them with the calibration above.
@@ -88,7 +99,7 @@ pub struct DualSenseState {
 impl Default for DualSenseState {
     fn default() -> Self {
         // Lying flat: gravity on the accelerometer's z axis.
-        DualSenseState { cross: false, circle: false, ps: false, touch_click: false, gyro: [0; 3], accel: [0, 0, 8192], touch: [None; 2], timestamp: 0 }
+        DualSenseState { cross: false, circle: false, ps: false, square: false, triangle: false, hat: 8, shoulders: 0, sticks: [128; 4], triggers: [0; 2], touch_click: false, gyro: [0; 3], accel: [0, 0, 8192], touch: [None; 2], timestamp: 0 }
     }
 }
 
@@ -97,8 +108,14 @@ impl DualSenseState {
     pub fn report(&self) -> Vec<u8> {
         let mut r = vec![0u8; 64];
         r[0] = INPUT_ID;
-        r[1..5].fill(128); // sticks centred; the triggers (5 and 6) stay released
-        r[8] = 0x08 | if self.cross { 0x20 } else { 0 } | if self.circle { 0x40 } else { 0 }; // hat centred
+        r[1..5].copy_from_slice(&self.sticks);
+        r[5..7].copy_from_slice(&self.triggers);
+        r[8] = self.hat & 0x0f
+            | if self.square { 0x10 } else { 0 }
+            | if self.cross { 0x20 } else { 0 }
+            | if self.circle { 0x40 } else { 0 }
+            | if self.triangle { 0x80 } else { 0 };
+        r[9] = self.shoulders;
         r[10] = u8::from(self.ps) | if self.touch_click { 0x02 } else { 0 };
         for (i, v) in self.gyro.iter().chain(&self.accel).enumerate() {
             r[16 + 2 * i..18 + 2 * i].copy_from_slice(&v.to_le_bytes());
