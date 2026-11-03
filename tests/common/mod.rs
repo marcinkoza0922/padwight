@@ -191,6 +191,20 @@ pub fn spawn_daemon_alone(root: &Path, runtime: Option<&Path>, args: &[&str], en
     spawn_daemon_command(root, runtime, args, env, Some(fake_steam))
 }
 
+/// Whether [`spawn_daemon_alone`] can work here. Ubuntu 24.04 (GitHub's runners too) refuses
+/// unprivileged user namespaces unless `kernel.apparmor_restrict_unprivileged_userns` is 0, and a
+/// container's seccomp profile may refuse them: `unshare` then fails and the daemon never starts.
+#[cfg(target_os = "linux")]
+pub fn pid_namespace_available() -> bool {
+    Command::new("unshare")
+        .args(["--user", "--map-root-user", "--pid", "--fork", "--kill-child", "--mount-proc", "true"])
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .is_ok_and(|s| s.success())
+}
+
 fn spawn_daemon_command(root: &Path, runtime: Option<&Path>, args: &[&str], env: &[(&str, &Path)], alone: Option<bool>) -> Daemon {
     let config = root.join("config/padwight");
     if !config.join("config.toml").exists() {
@@ -263,6 +277,8 @@ const EXPECTED_IN_LOGS: &[&str] = &[
     "no system tray",
     "Could not find wayland compositor",
     "focus tracking",
+    // No /dev/uinput (a container, a CI runner): the scripted controller has no virtual pad.
+    "cannot create virtual pad",
     // The scenarios point the session bus at a path that does not exist.
     "padwight-scenario-bus",
     // Real-time scheduling is the machine's to grant (rtkit may be absent, busy or refuse).

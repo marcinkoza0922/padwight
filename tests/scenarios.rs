@@ -268,6 +268,10 @@ fn scenarios() {
         if only.as_ref().is_some_and(|o| !s.name.contains(o.as_str())) {
             continue;
         }
+        if s.steam.is_some() && !common::pid_namespace_available() {
+            let _ = writeln!(std::io::stderr(), "skipped {}: no pid namespace (unprivileged user namespaces are refused here)", s.name);
+            continue;
+        }
         match run(&s) {
             Ok(transcript) if update => {
                 let head = fs::read_to_string(&s.path).unwrap();
@@ -287,6 +291,6 @@ fn scenarios() {
 
 #[test]
 fn the_log_check_flags_trouble_and_lets_the_environment_through() {
-    let log = "padwight daemon started\nrtkit: refused\nFailed to save the config\nthread 'main' panicked at x\nNo focus tracking\nAll fine\n";
+    let log = "padwight daemon started\nrtkit: refused\ncannot create virtual pad: No such file or directory (os error 2)\nFailed to save the config\nthread 'main' panicked at x\nNo focus tracking\nAll fine\n";
     assert_eq!(common::log_problems(log), ["Failed to save the config", "thread 'main' panicked at x"]);
 }

@@ -22,7 +22,7 @@ fn the_dashboard_client_speaks_the_documented_protocol() {
     let _serial = serial();
     let root = temp_root();
     let run = root.join("run");
-    let daemon = spawn_daemon_with(&root, Some(&run), &["--debug"]);
+    let daemon = spawn_daemon_with(&root, Some(&run), &["--debug", "--fake-clock"]);
     let socket = run.join("padwight.sock");
     // The file appears at bind(), before listen(): wait until a connection is accepted.
     wait_for("the daemon's socket", || UnixStream::connect(&socket).ok().map(drop));
