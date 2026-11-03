@@ -138,7 +138,10 @@ fn start(args: &[&str]) -> Result<()> {
     let session = Session::new(VirtualPad::of(model));
     // The socket first: attaching first left the controller in the daemon when another session
     // already had the socket.
-    server::serve(&session, &path)?;
+    // Taken, but not answered on until the controller is attached: a script that connects in
+    // between would otherwise run its first steps with no daemon behind them, and `pause` would
+    // sleep for real instead of moving the fake clock.
+    let listener = server::bind(&path)?;
     log!("debug session listening on {}", path.display());
     // Ctrl+C ends the session the way `quit` does, so an attached controller lets go of what it holds.
     let quit = session.clone();
@@ -155,6 +158,7 @@ fn start(args: &[&str]) -> Result<()> {
             }
         }
     }
+    server::accept(&session, listener);
     let result = if headless {
         while !session.quitting() {
             std::thread::sleep(Duration::from_millis(50));

@@ -22,7 +22,7 @@ use super::{
 use crate::{
     config::Button,
     info::Glyphs,
-    ipc::{self, UnixStream},
+    ipc::{self, UnixListener, UnixStream},
     pad_svg,
 };
 
@@ -212,10 +212,15 @@ impl Session {
     }
 }
 
-/// Starts listening at `path`; every connection is served on its own thread, any number of
-/// requests per connection.
-pub fn serve(session: &Session, path: &Path) -> Result<()> {
-    let listener = crate::daemon::bind_socket_at(path)?;
+/// Takes the socket at `path` without answering on it yet: clients that connect wait in the
+/// socket's queue until [`accept`] runs.
+pub fn bind(path: &Path) -> Result<UnixListener> {
+    crate::daemon::bind_socket_at(path)
+}
+
+/// Serves what connects to `listener`; every connection is served on its own thread, any number
+/// of requests per connection.
+pub fn accept(session: &Session, listener: UnixListener) {
     let session = session.clone();
     thread::spawn(move || {
         for stream in listener.incoming().flatten() {
@@ -225,6 +230,12 @@ pub fn serve(session: &Session, path: &Path) -> Result<()> {
             });
         }
     });
+}
+
+/// Starts listening at `path`.
+#[cfg(test)]
+pub fn serve(session: &Session, path: &Path) -> Result<()> {
+    accept(session, bind(path)?);
     Ok(())
 }
 
