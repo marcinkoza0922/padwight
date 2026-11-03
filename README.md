@@ -66,6 +66,17 @@ Or in one line: `curl -fsSL https://github.com/marcinkoza0922/padwight/releases/
 
 It installs padwight for your user, starts the background service at login, and, after asking, copies three small system files with `sudo` (see Permissions below). `padwight-uninstall` (or `./install.sh --uninstall`) removes it, and `--purge` also deletes your settings. `scripts/package.sh` builds the tarball; build it on the oldest distro you want to support, as the binary needs at least the glibc it was built against.
 
+### Runtime libraries
+
+The binary links two libraries beyond glibc, and won't start (not even `padwight doctor`) without them. A minimal install, such as a cloud image, may lack `libasound`:
+
+| Library | Fedora | Debian / Ubuntu | Arch | Void |
+| --- | --- | --- | --- | --- |
+| `libasound.so.2` (overlay sounds) | `alsa-lib` | `libasound2` (`libasound2t64` on 24.04+) | `alsa-lib` | `alsa-lib` |
+| `libxkbcommon.so.0` (keyboard layouts) | `libxkbcommon` | `libxkbcommon0` | `libxkbcommon` | `libxkbcommon` |
+
+`libgcc_s.so.1` and `libm` come with every glibc system. The sound library is linked at build time (rodio/cpal), so it can't be made optional without a code change; with no sound device the overlay is simply silent. `scripts/check-install.sh` fails if the binary needs a library this table doesn't list.
+
 From source:
 
 ```sh
