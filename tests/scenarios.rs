@@ -149,6 +149,16 @@ fn run_script(script: &[String], debug: &Debug, cli: &dyn Fn(&[&str]) -> std::pr
     run_chunk(&mut chunk)
 }
 
+/// The transcript, unless the daemon panicked or logged trouble while the script ran.
+fn verdict(transcript: Result<String, String>, log: &str) -> Result<String, String> {
+    match transcript {
+        Ok(t) if log.contains("panicked") => Err(format!("the daemon panicked:\n{log}\ntranscript:\n{t}")),
+        // INS-9: a scripted session leaves no error, failure or warning in the daemon's log.
+        Ok(_) if !common::log_problems(log).is_empty() => Err(format!("the daemon logged trouble:\n{}", common::log_problems(log).join("\n"))),
+        other => other,
+    }
+}
+
 /// What went wrong running a scenario's script.
 fn run(s: &Scenario) -> Result<String, String> {
     let root = temp_root();
@@ -213,12 +223,7 @@ fn run(s: &Scenario) -> Result<String, String> {
     let _ = session.wait();
     let log = common::daemon_log(&root);
     let _ = fs::remove_dir_all(&root);
-    match transcript {
-        Ok(t) if log.contains("panicked") => Err(format!("the daemon panicked:\n{log}\ntranscript:\n{t}")),
-        // INS-9: a scripted session leaves no error, failure or warning in the daemon's log.
-        Ok(_) if !common::log_problems(&log).is_empty() => Err(format!("the daemon logged trouble:\n{}", common::log_problems(&log).join("\n"))),
-        other => other,
-    }
+    verdict(transcript, &log)
 }
 
 /// Lines aligned so the `@ms` stamps line up in a column, for reading.

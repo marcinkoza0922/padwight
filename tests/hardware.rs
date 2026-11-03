@@ -214,6 +214,12 @@ fn hold_south(pad: &mut HidPad, what: &str, mut done: impl FnMut() -> bool) {
     });
 }
 
+/// Reads whatever both virtual devices have said since last time.
+fn drain_both(keys: &mut Reader, mouse: &mut Reader) {
+    keys.drain();
+    mouse.drain();
+}
+
 #[test]
 #[ignore]
 fn hw_3_two_pads_follow_their_own_setups_and_the_second_survives_the_first_leaving() {
@@ -237,14 +243,12 @@ fn hw_3_two_pads_follow_their_own_setups_and_the_second_survives_the_first_leavi
 
     // Each pad follows its own profile: A's South is a key, B's is a mouse button.
     hold_south(&mut a, "pad A's South to hold KEY_A", || {
-        keys.drain();
-        mouse.drain();
+        drain_both(&mut keys, &mut mouse);
         keys.pressed.contains(&KeyCode::KEY_A.0)
     });
     assert!(!mouse.pressed.contains(&KeyCode::BTN_LEFT.0), "pad A doesn't use pad B's profile");
     hold_south(&mut b, "pad B's South to hold the left button", || {
-        keys.drain();
-        mouse.drain();
+        drain_both(&mut keys, &mut mouse);
         mouse.pressed.contains(&KeyCode::BTN_LEFT.0)
     });
     assert!(keys.pressed.contains(&KeyCode::KEY_A.0), "both are held at once");
@@ -253,8 +257,7 @@ fn hw_3_two_pads_follow_their_own_setups_and_the_second_survives_the_first_leavi
     drop(a);
     wait_for("pad A's node to go", || find_node("Pad A").is_none().then_some(()));
     wait_for("KEY_A to be released", || {
-        keys.drain();
-        mouse.drain();
+        drain_both(&mut keys, &mut mouse);
         keys.pressed.is_empty().then_some(())
     });
     assert!(mouse.pressed.contains(&KeyCode::BTN_LEFT.0), "pad B keeps holding its button");
@@ -272,16 +275,14 @@ fn hw_3_two_pads_follow_their_own_setups_and_the_second_survives_the_first_leavi
     });
     b.report(0, 0, 0);
     wait_for("nothing held", || {
-        keys.drain();
-        mouse.drain();
+        drain_both(&mut keys, &mut mouse);
         (keys.pressed.is_empty() && mouse.pressed.is_empty()).then_some(())
     });
 
     // The first comes back and gets its own profile again, not the survivor's.
     let mut a = connect("Pad A", ID_A);
     hold_south(&mut a, "the returned pad A to hold KEY_A", || {
-        keys.drain();
-        mouse.drain();
+        drain_both(&mut keys, &mut mouse);
         keys.pressed.contains(&KeyCode::KEY_A.0)
     });
     assert!(mouse.pressed.is_empty(), "the returned pad uses its own profile");
@@ -503,21 +504,12 @@ enum Signal {
     Kill,
 }
 
-fn restart_case(moment: Moment, signal: Signal) {
-    let _serial = serial();
-    let root = temp_root();
-    let snap = Snapshot::take();
-    let mut daemon = start(&root, &with_known_dualsense(&restart_config(), 1));
-    let mut keys = snap.open(KEYBOARD);
-    let mut mouse = snap.open(MOUSE);
-    let mut pad = connect_dualsense(1);
-    let pad_node = find_node(DUALSENSE).unwrap();
-
-    // Get into the moment, and stay in it: the pad keeps reporting what it held.
+/// Gets the daemon into `moment` and keeps it there: the pad keeps reporting what it held.
+fn enter_moment(moment: Moment, pad: &mut HidPad, keys: &mut Reader, root: &Path) {
     match moment {
         Moment::Macro => {
             let square = DualSenseState { square: true, ..DualSenseState::default() };
-            drive(&mut pad, "the macro to hold KEY_M", |_| square.clone(), || {
+            drive(pad, "the macro to hold KEY_M", |_| square.clone(), || {
                 keys.drain();
                 keys.pressed.contains(&KeyCode::KEY_M.0)
             });
@@ -527,21 +519,22 @@ fn restart_case(moment: Moment, signal: Signal) {
             // L1 first, so the layer is up before circle goes down; then both stay held.
             let bumper = DualSenseState { shoulders: 0x01, ..DualSenseState::default() };
             let both = DualSenseState { shoulders: 0x01, circle: true, ..DualSenseState::default() };
-            drive(&mut pad, "the layer to hold KEY_H", |t| if t < 25 { bumper.clone() } else { both.clone() }, || {
+            drive(pad, "the layer to hold KEY_H", |t| if t < 25 { bumper.clone() } else { both.clone() }, || {
                 keys.drain();
                 keys.pressed.contains(&KeyCode::KEY_H.0)
             });
         }
         Moment::Menu => {
             let press = DualSenseState { triangle: true, ..DualSenseState::default() };
-            drive(&mut pad, "the menu to open", |_| press.clone(), || menu_up(&root));
+            drive(pad, "the menu to open", |_| press.clone(), || menu_up(root));
             pad.send(&DualSenseState::default().report());
-            assert!(menu_up(&root), "the menu stays open: {}", overlay_state(&root));
+            assert!(menu_up(root), "the menu stays open: {}", overlay_state(root));
         }
     }
+}
 
-    // Stop it the way a restart does. SIGTERM must release the keys before the daemon is gone.
-    let old_keys = snap.mine(KEYBOARD);
+/// Stops the daemon the way a restart does. SIGTERM must release the keys before it is gone.
+fn stop_and_watch(daemon: &mut Daemon, signal: Signal, moment: Moment, keys: &mut Reader, mouse: &mut Reader) {
     match signal {
         Signal::Kill => daemon.0.kill().unwrap(),
         // SAFETY: `kill` only sends a signal, to a child we started and have not yet waited for.
@@ -562,6 +555,22 @@ fn restart_case(moment: Moment, signal: Signal) {
     if matches!(signal, Signal::Term) {
         assert!(released_before_exit, "{moment:?}/SIGTERM: keys still held when the daemon exited: {:?}", keys.pressed);
     }
+}
+
+fn restart_case(moment: Moment, signal: Signal) {
+    let _serial = serial();
+    let root = temp_root();
+    let snap = Snapshot::take();
+    let mut daemon = start(&root, &with_known_dualsense(&restart_config(), 1));
+    let mut keys = snap.open(KEYBOARD);
+    let mut mouse = snap.open(MOUSE);
+    let mut pad = connect_dualsense(1);
+    let pad_node = find_node(DUALSENSE).unwrap();
+
+    enter_moment(moment, &mut pad, &mut keys, &root);
+
+    let old_keys = snap.mine(KEYBOARD);
+    stop_and_watch(&mut daemon, signal, moment, &mut keys, &mut mouse);
     wait_for("the old virtual devices to go", || (keys.drain() && mouse.drain()).then_some(()));
     wait_for("the daemon's devices to disappear", || (snap.mine(KEYBOARD).is_empty() && snap.mine(MOUSE).is_empty() && snap.mine(PAD).is_empty()).then_some(()));
     assert!(old_keys.len() == 1);
