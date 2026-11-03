@@ -3,8 +3,10 @@
 # value where the machine has the hardware and "n/a" where it hasn't, so those accept either.
 # Each second the daemon refreshes the values: the layer, mode and profile follow the pad.
 setup tests/scenarios/packs/info.padpack Base
-# The daemon schedules the one-second refresh when it first builds the frame (asking for it
-# does), and CPU load is the change between two samples, so it reads n/a until the second one.
+# The daemon schedules the one-second refresh when it builds its first frame. A real daemon
+# builds one when a pad connects or a game's setup switches on; a debug session that starts
+# straight into a setup has built none yet, so the script asks for one (`expect overlay`)
+# before advancing the clock.
 expect overlay showing info:Tokens
 sleep 300
 advance 1000
