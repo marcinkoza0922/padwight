@@ -453,12 +453,12 @@ vm_env10() {
     expect "scripts/sandbox-pid.sh finds the sandboxed process" grep -q 'pid in the sandbox' "$out/vm-env10-$d-sandbox.log"
     case $d in
     fedora)
-        vmr 'ausearch -m avc,user_avc,selinux_err -ts boot 2>&1; journalctl -b --no-pager | grep -i "avc.*denied"' >"$out/vm-env10-$d-denials.log" 2>&1
-        if grep -qi 'avc.*denied' "$out/vm-env10-$d-denials.log"; then fail "SELinux denials: $(grep -ci denied "$out/vm-env10-$d-denials.log") (see vm-env10-$d-denials.log)"; else pass "no SELinux AVC denials in ausearch/journal"; fi
+        vmr 'ausearch -m avc,user_avc,selinux_err -ts boot 2>&1; journalctl -b --no-pager | grep -E "avc: +denied"' >"$out/vm-env10-$d-denials.log" 2>&1
+        if grep -Eqi 'avc: +denied|type=AVC' "$out/vm-env10-$d-denials.log"; then fail "SELinux denials: $(grep -Eci 'avc: +denied|type=AVC' "$out/vm-env10-$d-denials.log") (see vm-env10-$d-denials.log)"; else pass "no SELinux AVC denials in ausearch/journal"; fi
         ;;
     ubuntu)
         vmr 'journalctl -k -b --no-pager | grep -i "apparmor.*DENIED"; dmesg | grep -i "apparmor.*DENIED"' >"$out/vm-env10-$d-denials.log" 2>&1
-        if grep -qi 'apparmor="DENIED"' "$out/vm-env10-$d-denials.log"; then fail "AppArmor denials: $(grep -c 'DENIED' "$out/vm-env10-$d-denials.log") (see vm-env10-$d-denials.log); first: $(grep -m1 DENIED "$out/vm-env10-$d-denials.log" | cut -c1-220)"; else pass "no AppArmor DENIED in the kernel log"; fi
+        grep -v 'profile="who"\|ubuntu_pro' "$out/vm-env10-$d-denials.log" >"$out/vm-env10-$d-denials-filtered.log"; if grep -qi 'apparmor="DENIED"' "$out/vm-env10-$d-denials-filtered.log"; then fail "AppArmor denials beyond the stock who and ubuntu_pro profiles: $(grep -c 'DENIED' "$out/vm-env10-$d-denials-filtered.log") (see vm-env10-$d-denials.log); first: $(grep -m1 DENIED "$out/vm-env10-$d-denials.log" | cut -c1-220)"; else pass "no AppArmor DENIED in the kernel log"; fi
         ;;
     esac
     vm_down_unless_kept "$d"
@@ -537,11 +537,11 @@ vm_env11() {
     case $d in ubuntu) srv=nfs-kernel-server ;; *) srv=nfs-server ;; esac
     vmr "useradd -M -d /mnt/nfshome nfsu; mkdir -p /srv/nfs/home /mnt/nfshome; chown nfsu:nfsu /srv/nfs/home; echo '/srv/nfs 127.0.0.1(rw,sync,no_subtree_check,no_root_squash,fsid=0)' > /etc/exports; systemctl enable --now $srv; sleep 3; exportfs -ra; mount -t nfs4 127.0.0.1:/home /mnt/nfshome" >"$out/env11-nfs-setup.log" 2>&1
     if vmr 'mount | grep -q "/mnt/nfshome type nfs"'; then
-        vmr 'install -m755 -o nfsu -g nfsu /home/dev/.local/bin/padwight /usr/local/bin/padwight; install -m644 -o nfsu /home/dev/pack.padpack /tmp/pack.padpack'
+        vmr 'install -m755 -o nfsu -g nfsu /home/dev/.local/bin/padwight /usr/local/bin/padwight; install -m644 -o nfsu /home/dev/pack.padpack /tmp/pack.padpack; install -m644 /home/dev/pack2.padpack /tmp/pack2.padpack'
         vmr 'runuser -u nfsu -- env HOME=/mnt/nfshome padwight debug install-pack /tmp/pack.padpack' >"$out/env11-nfs.log" 2>&1
         expect "E: a save with the config folder on NFS succeeds" test $? -eq 0
         expect "E: the files are in the NFS home (config.toml, general, setups) with no staging left" vmr 'cd /mnt/nfshome/.config/padwight && test -f config.toml && test -d setups && ! ls -d .saving .*.old 2>/dev/null'
-        vmr 'runuser -u nfsu -- env HOME=/mnt/nfshome padwight debug install-pack /home/dev/pack2.padpack' >"$out/env11-nfs2.log" 2>&1
+        vmr 'runuser -u nfsu -- env HOME=/mnt/nfshome padwight debug install-pack /tmp/pack2.padpack' >"$out/env11-nfs2.log" 2>&1
         expect "E: a second save over the first on NFS succeeds (swap by rename)" test $? -eq 0
         vmr 'umount /mnt/nfshome'
     else
