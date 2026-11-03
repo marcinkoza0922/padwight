@@ -1,0 +1,393 @@
+format = 20
+macros = []
+overlay_font = "Special Elite"
+
+[pack]
+id = "10081996-0a34-4ce4-bf3d-db78a0d9a9ea"
+name = "Besiege"
+version = "1.0"
+author = "Padwight"
+description = "Besiege on an Xbox-style pad. The game has no controller support, so the pad drives the keyboard and mouse. The right stick moves the pointer, RT clicks and LT holds the right button to orbit the camera. The left stick pans the camera, or steers a machine in Driving mode. Overlays in warm wood and brass."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "346010"
+profile = "Besiege"
+
+[[rules]]
+kind = "executable"
+value = "besiege.exe"
+profile = "Besiege"
+
+[[profiles]]
+name = "Besiege"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_DELETE"]}
+West = {keys = ["KEY_LEFTCTRL", "KEY_Z"]}
+North = {keys = ["KEY_SPACE"]}
+LeftBumper = {keys = ["KEY_LEFTSHIFT"]}
+RightBumper = {keys = ["KEY_LEFTCTRL"]}
+Select = {open_menu = "Machine"}
+Start = {keys = ["KEY_ESC"]}
+LeftStick = {mode = "Driving"}
+RightStick = {mouse = "Middle"}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+DpadLeft = {keys = ["KEY_LEFT"]}
+DpadRight = {keys = ["KEY_RIGHT"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.4
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The pad drives the keyboard and mouse. {rs} moves the pointer: {rt} or {south} clicks, and {lt} holds the right button, so moving {rs} meanwhile orbits the camera. Press {r3} and move {rs} to pan; {up} and {down} zoom. The left stick {ls} pans the camera with W, A, S and D.
+Building: {west} undoes (Ctrl+Z), {east} deletes the block under the pointer, {north} is Space. {lb} holds Shift and {rb} Ctrl, for selecting several blocks. {left} and {right} are the arrow keys, which turn a block in hand. {select} lists machine commands, {start} is Esc.
+Driving: press {l3} to switch to Driving mode, where {ls} presses the arrow keys that wheels and steering blocks listen to by default, and {west} presses X. Press {l3} again to go back to building.
+Every key here is from memory of Besiege's defaults and none were read from an install: Besiege lets you rebind keys per block with the wrench tool, so check the Controls listing in the machine editor and each block's own keys if one is off.
+Naming a machine or a save: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan camera (WASD)"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Click"}
+"trigger:Left" = {text = "Hold: orbit camera"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "{icon:trash} {color:red}Delete block{/color}"}
+"button:West" = {text = "Undo"}
+"button:North" = {text = "Space"}
+"button:LeftBumper" = {text = "Hold: Shift"}
+"button:RightBumper" = {text = "Hold: Ctrl"}
+"button:Select" = {text = "Machine commands"}
+"button:Start" = {text = "Esc"}
+"button:LeftStick" = {text = "Driving mode"}
+"button:RightStick" = {text = "Hold: pan camera"}
+"button:DpadLeft" = {text = "Left arrow"}
+"button:DpadRight" = {text = "Right arrow"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[menus]]
+name = "Machine"
+kind = "list"
+
+[[menus.items]]
+label = "Undo"
+action = {keys = ["KEY_LEFTCTRL", "KEY_Z"]}
+
+[[menus.items]]
+label = "Redo"
+action = {keys = ["KEY_LEFTCTRL", "KEY_Y"]}
+
+[[menus.items]]
+label = "{icon:save} Save"
+action = {keys = ["KEY_LEFTCTRL", "KEY_S"]}
+
+[[menus.items]]
+label = "{icon:trash} {color:red}Delete block{/color}"
+action = {keys = ["KEY_DELETE"]}
+
+[[modes]]
+name = "Driving"
+indicator = "name"
+
+[modes.buttons]
+LeftStick = {mode = "Driving"}
+West = {keys = ["KEY_X"]}
+
+[modes.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.4
+
+[modes.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[modes.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[modes.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[modes.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[modes.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_RIGHT"] },
+]
+
+[[modes.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[modes.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_DOWN"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[[modes.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[modes.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_UP"] },
+    { keys = ["KEY_LEFT"] },
+]
+
+[keyboard_style]
+corners = 0.1
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1d140c"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#3a2916"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c99a3e"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8a6a2c"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#271a0f"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5a4326"
+
+[numpad_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1d140c"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#3a2916"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c99a3e"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8a6a2c"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#271a0f"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5a4326"
+
+[media_style]
+corners = 0.1
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1d140c"
+opacity = 0.92
+
+[media_style.items]
+color = "#3a2916"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c99a3e"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8a6a2c"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#271a0f"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5a4326"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.1
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1d140c"
+opacity = 0.92
+
+[menu_style.items]
+color = "#3a2916"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c99a3e"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8a6a2c"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#271a0f"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menu_style.item_border]
+width = 1
+color = "#5a4326"
+
+[menu_style.glow]
+color = "#c99a3e"
+opacity = 0.5
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+vignette = {color = "#000000", opacity = 0.4, reach = 25}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.06}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.06}
+pick = {kind = "glass", volume = 0.1}
+
+[sounds.media]
+pick = {kind = "glass", volume = 0.1, pitch = 1.2}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.25, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.25, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.25, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.25, length_ms = 60}
