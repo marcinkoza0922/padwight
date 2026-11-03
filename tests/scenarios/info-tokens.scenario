@@ -7,7 +7,9 @@ setup tests/scenarios/packs/info.padpack Base
 # builds one when a pad connects or a game's setup switches on; a debug session that starts
 # straight into a setup has built none yet, so the script asks for one (`expect overlay`)
 # before advancing the clock.
+# CPU load is measured over a short first window, so it is real from the first display.
 expect overlay showing info:Tokens
+expect overlay info.0.rows.5.0 glob:@%|@@%|@@@%
 sleep 300
 advance 1000
 expect overlay info.0.title Live
