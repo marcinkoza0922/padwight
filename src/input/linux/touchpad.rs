@@ -39,6 +39,9 @@ pub struct TouchNormalizer {
     reported: Vec<Contact>,
     /// Slot that the next position events apply to (ABS_MT_SLOT).
     slot: usize,
+    /// A click press or release of the report being read. Sent after the report's fingers, so a
+    /// press that comes with a finger landing finds that finger on the pad.
+    click: Option<bool>,
 }
 
 impl TouchNormalizer {
@@ -56,19 +59,22 @@ impl TouchNormalizer {
     }
 
     fn with_size(origin: (i32, i32), size: (f32, f32)) -> Self {
-        TouchNormalizer { origin, size, contacts: Vec::new(), reported: Vec::new(), slot: 0 }
+        TouchNormalizer { origin, size, contacts: Vec::new(), reported: Vec::new(), slot: 0, click: None }
     }
 
     pub fn translate(&mut self, ev: evdev::InputEvent, out: &mut Vec<InputEvent>) {
         match ev.destructure() {
             EventSummary::Key(_, KeyCode::BTN_LEFT, value) if value <= 1 => {
-                out.push(InputEvent::Touchpad(TouchpadEvent::Click(value == 1)));
+                self.click = Some(value == 1);
             }
             EventSummary::AbsoluteAxis(_, Abs::ABS_MT_SLOT, value) => self.slot = value.max(0) as usize,
             EventSummary::AbsoluteAxis(_, Abs::ABS_MT_TRACKING_ID, value) => self.contact().tracking = value,
             EventSummary::AbsoluteAxis(_, Abs::ABS_MT_POSITION_X, value) => self.contact().x = value,
             EventSummary::AbsoluteAxis(_, Abs::ABS_MT_POSITION_Y, value) => self.contact().y = value,
-            EventSummary::Synchronization(..) => self.finish_report(out),
+            EventSummary::Synchronization(..) => {
+                self.finish_report(out);
+                out.extend(self.click.take().map(|pressed| InputEvent::Touchpad(TouchpadEvent::Click(pressed))));
+            }
             _ => {}
         }
     }
@@ -181,6 +187,14 @@ mod tests {
         let mut n = norm();
         touch(&mut n, 0, 7, 100, 100);
         assert_eq!(touch(&mut n, 0, 8, 900, 400), [lift(0), at(0, 0.9, 0.8)]);
+    }
+
+    #[test]
+    fn a_click_that_comes_with_a_landing_finger_is_reported_after_the_finger() {
+        let mut n = norm();
+        let key = Raw::new(EventType::KEY.0, KeyCode::BTN_LEFT.0, 1);
+        let landing = [key, abs(Abs::ABS_MT_SLOT, 0), abs(Abs::ABS_MT_TRACKING_ID, 3), abs(Abs::ABS_MT_POSITION_X, 800), abs(Abs::ABS_MT_POSITION_Y, 100)];
+        assert_eq!(report(&mut n, &landing), [at(0, 0.8, 0.2), InputEvent::Touchpad(TouchpadEvent::Click(true))]);
     }
 
     #[test]
