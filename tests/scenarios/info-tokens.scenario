@@ -1,0 +1,47 @@
+# OVL-7: an info overlay with every live token. The clock, profile, layer, mode, CPU and memory
+# show real values on any machine; the GPU (AMD only), Wi-Fi and the two batteries show a real
+# value where the machine has the hardware and "n/a" where it hasn't, so those accept either.
+# Each second the daemon refreshes the values: the layer, mode and profile follow the pad.
+setup tests/scenarios/packs/info.padpack Base
+# The daemon schedules the one-second refresh when it first builds the frame (asking for it
+# does), and CPU load is the change between two samples, so it reads n/a until the second one.
+expect overlay showing info:Tokens
+sleep 300
+advance 1000
+expect overlay info.0.title Live
+expect overlay info.0.rows.0.0 glob:@@:@@
+expect overlay info.0.rows.1.0 Base
+expect overlay info.0.rows.2.0 —
+expect overlay info.0.rows.3.0 Default
+expect overlay info.0.rows.5.0 glob:@%|@@%|@@@%
+expect overlay info.0.rows.6.0 glob:*.*/*.* GB
+expect overlay info.0.rows.7.0 glob:n/a|@%|@@%|@@@%
+expect overlay info.0.rows.8.0 glob:n/a|[icon:wifi]n/a|[icon:wifi]@%|[icon:wifi]@@%|[icon:wifi]@@@%
+expect overlay info.0.rows.9.0 glob:n/a|@%|@@%|@@@%
+expect overlay info.0.rows.10.0 glob:n/a|[icon:battery*
+expect overlay info.0.rows.11.0 glob:n/a|~@%|~@@%|~@@@%|@%|@@%|@@@%
+expect overlay info.0.rows.12.0 glob:n/a|[icon:battery*
+# A held layer, a mode and another profile show in their cells within a second.
+press lb
+advance 1000
+expect overlay info.0.rows.2.0 Hotkeys
+release lb
+advance 1000
+expect overlay info.0.rows.2.0 —
+tap select 30
+advance 1000
+expect overlay info.0.rows.3.0 Alt
+tap select 30
+advance 1000
+expect overlay info.0.rows.3.0 Default
+cli profile Second
+advance 1000
+expect overlay info.0.rows.1.0 Second
+---
+overlay none + info 1                 @1000
+shifts mode - layers Hotkeys          @1000
+shifts mode - layers -                @2000
+shifts mode Alt layers -              @3000
+shifts mode - layers -                @4030
+profile Scenario info tokens › Second @5060
+overlay none + info 2                 @5060

@@ -20,5 +20,7 @@ shifts mode - layers -     @140
 overlay keyboard           @140
 sound keyboard Open pop    @140
 sound keyboard Pick pop    @600
+key KEY_Q down             @600
+key KEY_Q up               @660
 overlay none               @1460
 sound keyboard Close pop   @1460

@@ -1,0 +1,1061 @@
+# OVL-3, the state half: every menu style opened and closed twelve times in quick succession.
+# Each opening must show the menu and each closing must leave nothing up (no stale panel). The
+# harness half (flicker, fades, CPU while holding) is scripts/harness/menu-styles-check.sh.
+setup tests/scenarios/packs/menus.padpack Menus
+press lb
+advance 150
+expect overlay showing list
+tap south 30
+release lb
+advance 300
+expect overlay showing none
+press rb
+advance 150
+expect overlay showing radial
+stick right 1 0
+advance 100
+release rb
+stick right 0 0
+advance 300
+expect overlay showing none
+press north
+advance 150
+expect overlay showing buttons
+tap east 30
+release north
+advance 300
+expect overlay showing none
+press west
+advance 150
+expect overlay showing directional
+tap dpad-right 30
+release west
+advance 300
+expect overlay showing none
+tap select 30
+advance 150
+expect overlay showing grid
+tap south 30
+advance 300
+expect overlay showing none
+tap start 30
+advance 150
+expect overlay showing carousel
+tap south 30
+advance 300
+expect overlay showing none
+press lb
+advance 150
+expect overlay showing list
+tap south 30
+release lb
+advance 300
+expect overlay showing none
+press rb
+advance 150
+expect overlay showing radial
+stick right 1 0
+advance 100
+release rb
+stick right 0 0
+advance 300
+expect overlay showing none
+press north
+advance 150
+expect overlay showing buttons
+tap east 30
+release north
+advance 300
+expect overlay showing none
+press west
+advance 150
+expect overlay showing directional
+tap dpad-right 30
+release west
+advance 300
+expect overlay showing none
+tap select 30
+advance 150
+expect overlay showing grid
+tap south 30
+advance 300
+expect overlay showing none
+tap start 30
+advance 150
+expect overlay showing carousel
+tap south 30
+advance 300
+expect overlay showing none
+press lb
+advance 150
+expect overlay showing list
+tap south 30
+release lb
+advance 300
+expect overlay showing none
+press rb
+advance 150
+expect overlay showing radial
+stick right 1 0
+advance 100
+release rb
+stick right 0 0
+advance 300
+expect overlay showing none
+press north
+advance 150
+expect overlay showing buttons
+tap east 30
+release north
+advance 300
+expect overlay showing none
+press west
+advance 150
+expect overlay showing directional
+tap dpad-right 30
+release west
+advance 300
+expect overlay showing none
+tap select 30
+advance 150
+expect overlay showing grid
+tap south 30
+advance 300
+expect overlay showing none
+tap start 30
+advance 150
+expect overlay showing carousel
+tap south 30
+advance 300
+expect overlay showing none
+press lb
+advance 150
+expect overlay showing list
+tap south 30
+release lb
+advance 300
+expect overlay showing none
+press rb
+advance 150
+expect overlay showing radial
+stick right 1 0
+advance 100
+release rb
+stick right 0 0
+advance 300
+expect overlay showing none
+press north
+advance 150
+expect overlay showing buttons
+tap east 30
+release north
+advance 300
+expect overlay showing none
+press west
+advance 150
+expect overlay showing directional
+tap dpad-right 30
+release west
+advance 300
+expect overlay showing none
+tap select 30
+advance 150
+expect overlay showing grid
+tap south 30
+advance 300
+expect overlay showing none
+tap start 30
+advance 150
+expect overlay showing carousel
+tap south 30
+advance 300
+expect overlay showing none
+press lb
+advance 150
+expect overlay showing list
+tap south 30
+release lb
+advance 300
+expect overlay showing none
+press rb
+advance 150
+expect overlay showing radial
+stick right 1 0
+advance 100
+release rb
+stick right 0 0
+advance 300
+expect overlay showing none
+press north
+advance 150
+expect overlay showing buttons
+tap east 30
+release north
+advance 300
+expect overlay showing none
+press west
+advance 150
+expect overlay showing directional
+tap dpad-right 30
+release west
+advance 300
+expect overlay showing none
+tap select 30
+advance 150
+expect overlay showing grid
+tap south 30
+advance 300
+expect overlay showing none
+tap start 30
+advance 150
+expect overlay showing carousel
+tap south 30
+advance 300
+expect overlay showing none
+press lb
+advance 150
+expect overlay showing list
+tap south 30
+release lb
+advance 300
+expect overlay showing none
+press rb
+advance 150
+expect overlay showing radial
+stick right 1 0
+advance 100
+release rb
+stick right 0 0
+advance 300
+expect overlay showing none
+press north
+advance 150
+expect overlay showing buttons
+tap east 30
+release north
+advance 300
+expect overlay showing none
+press west
+advance 150
+expect overlay showing directional
+tap dpad-right 30
+release west
+advance 300
+expect overlay showing none
+tap select 30
+advance 150
+expect overlay showing grid
+tap south 30
+advance 300
+expect overlay showing none
+tap start 30
+advance 150
+expect overlay showing carousel
+tap south 30
+advance 300
+expect overlay showing none
+press lb
+advance 150
+expect overlay showing list
+tap south 30
+release lb
+advance 300
+expect overlay showing none
+press rb
+advance 150
+expect overlay showing radial
+stick right 1 0
+advance 100
+release rb
+stick right 0 0
+advance 300
+expect overlay showing none
+press north
+advance 150
+expect overlay showing buttons
+tap east 30
+release north
+advance 300
+expect overlay showing none
+press west
+advance 150
+expect overlay showing directional
+tap dpad-right 30
+release west
+advance 300
+expect overlay showing none
+tap select 30
+advance 150
+expect overlay showing grid
+tap south 30
+advance 300
+expect overlay showing none
+tap start 30
+advance 150
+expect overlay showing carousel
+tap south 30
+advance 300
+expect overlay showing none
+press lb
+advance 150
+expect overlay showing list
+tap south 30
+release lb
+advance 300
+expect overlay showing none
+press rb
+advance 150
+expect overlay showing radial
+stick right 1 0
+advance 100
+release rb
+stick right 0 0
+advance 300
+expect overlay showing none
+press north
+advance 150
+expect overlay showing buttons
+tap east 30
+release north
+advance 300
+expect overlay showing none
+press west
+advance 150
+expect overlay showing directional
+tap dpad-right 30
+release west
+advance 300
+expect overlay showing none
+tap select 30
+advance 150
+expect overlay showing grid
+tap south 30
+advance 300
+expect overlay showing none
+tap start 30
+advance 150
+expect overlay showing carousel
+tap south 30
+advance 300
+expect overlay showing none
+press lb
+advance 150
+expect overlay showing list
+tap south 30
+release lb
+advance 300
+expect overlay showing none
+press rb
+advance 150
+expect overlay showing radial
+stick right 1 0
+advance 100
+release rb
+stick right 0 0
+advance 300
+expect overlay showing none
+press north
+advance 150
+expect overlay showing buttons
+tap east 30
+release north
+advance 300
+expect overlay showing none
+press west
+advance 150
+expect overlay showing directional
+tap dpad-right 30
+release west
+advance 300
+expect overlay showing none
+tap select 30
+advance 150
+expect overlay showing grid
+tap south 30
+advance 300
+expect overlay showing none
+tap start 30
+advance 150
+expect overlay showing carousel
+tap south 30
+advance 300
+expect overlay showing none
+press lb
+advance 150
+expect overlay showing list
+tap south 30
+release lb
+advance 300
+expect overlay showing none
+press rb
+advance 150
+expect overlay showing radial
+stick right 1 0
+advance 100
+release rb
+stick right 0 0
+advance 300
+expect overlay showing none
+press north
+advance 150
+expect overlay showing buttons
+tap east 30
+release north
+advance 300
+expect overlay showing none
+press west
+advance 150
+expect overlay showing directional
+tap dpad-right 30
+release west
+advance 300
+expect overlay showing none
+tap select 30
+advance 150
+expect overlay showing grid
+tap south 30
+advance 300
+expect overlay showing none
+tap start 30
+advance 150
+expect overlay showing carousel
+tap south 30
+advance 300
+expect overlay showing none
+press lb
+advance 150
+expect overlay showing list
+tap south 30
+release lb
+advance 300
+expect overlay showing none
+press rb
+advance 150
+expect overlay showing radial
+stick right 1 0
+advance 100
+release rb
+stick right 0 0
+advance 300
+expect overlay showing none
+press north
+advance 150
+expect overlay showing buttons
+tap east 30
+release north
+advance 300
+expect overlay showing none
+press west
+advance 150
+expect overlay showing directional
+tap dpad-right 30
+release west
+advance 300
+expect overlay showing none
+tap select 30
+advance 150
+expect overlay showing grid
+tap south 30
+advance 300
+expect overlay showing none
+tap start 30
+advance 150
+expect overlay showing carousel
+tap south 30
+advance 300
+expect overlay showing none
+press lb
+advance 150
+expect overlay showing list
+tap south 30
+release lb
+advance 300
+expect overlay showing none
+press rb
+advance 150
+expect overlay showing radial
+stick right 1 0
+advance 100
+release rb
+stick right 0 0
+advance 300
+expect overlay showing none
+press north
+advance 150
+expect overlay showing buttons
+tap east 30
+release north
+advance 300
+expect overlay showing none
+press west
+advance 150
+expect overlay showing directional
+tap dpad-right 30
+release west
+advance 300
+expect overlay showing none
+tap select 30
+advance 150
+expect overlay showing grid
+tap south 30
+advance 300
+expect overlay showing none
+tap start 30
+advance 150
+expect overlay showing carousel
+tap south 30
+advance 300
+expect overlay showing none
+---
+overlay menu "List" selected "Alpha"        @0
+sound menu Open pop                         @0
+sound menu Pick pop                         @150
+overlay none                                @150
+sound menu Close pop                        @150
+key KEY_A down                              @150
+key KEY_A up                                @150
+overlay menu "Radial"                       @480
+sound menu Open pop                         @480
+sound menu Step click                       @630
+overlay menu "Radial" selected "Right"      @630
+sound menu Pick pop                         @730
+overlay none                                @730
+sound menu Close pop                        @730
+key KEY_R down                              @730
+key KEY_R up                                @730
+overlay menu "Buttons"                      @1030
+sound menu Open pop                         @1030
+sound menu Pick pop                         @1180
+overlay menu "Buttons" selected "Eb"        @1180
+overlay none                                @1180
+sound menu Close pop                        @1180
+key KEY_E down                              @1180
+key KEY_E up                                @1180
+overlay menu "Directional"                  @1510
+sound menu Open pop                         @1510
+sound menu Pick pop                         @1660
+overlay menu "Directional" selected "Right" @1660
+overlay none                                @1660
+sound menu Close pop                        @1660
+key KEY_R down                              @1660
+key KEY_R up                                @1660
+overlay menu "Grid" selected "Aa"           @1990
+sound menu Open pop                         @1990
+sound menu Pick pop                         @2170
+overlay none                                @2170
+sound menu Close pop                        @2170
+key KEY_A down                              @2170
+key KEY_A up                                @2170
+overlay menu "Carousel" selected "One"      @2500
+sound menu Open pop                         @2500
+sound menu Pick pop                         @2680
+overlay none                                @2680
+sound menu Close pop                        @2680
+key KEY_O down                              @2680
+key KEY_O up                                @2680
+overlay menu "List" selected "Alpha"        @3010
+sound menu Open pop                         @3010
+sound menu Pick pop                         @3160
+overlay none                                @3160
+sound menu Close pop                        @3160
+key KEY_A down                              @3160
+key KEY_A up                                @3160
+overlay menu "Radial"                       @3490
+sound menu Open pop                         @3490
+sound menu Step click                       @3640
+overlay menu "Radial" selected "Right"      @3640
+sound menu Pick pop                         @3740
+overlay none                                @3740
+sound menu Close pop                        @3740
+key KEY_R down                              @3740
+key KEY_R up                                @3740
+overlay menu "Buttons"                      @4040
+sound menu Open pop                         @4040
+sound menu Pick pop                         @4190
+overlay menu "Buttons" selected "Eb"        @4190
+overlay none                                @4190
+sound menu Close pop                        @4190
+key KEY_E down                              @4190
+key KEY_E up                                @4190
+overlay menu "Directional"                  @4520
+sound menu Open pop                         @4520
+sound menu Pick pop                         @4670
+overlay menu "Directional" selected "Right" @4670
+overlay none                                @4670
+sound menu Close pop                        @4670
+key KEY_R down                              @4670
+key KEY_R up                                @4670
+overlay menu "Grid" selected "Aa"           @5000
+sound menu Open pop                         @5000
+sound menu Pick pop                         @5180
+overlay none                                @5180
+sound menu Close pop                        @5180
+key KEY_A down                              @5180
+key KEY_A up                                @5180
+overlay menu "Carousel" selected "One"      @5510
+sound menu Open pop                         @5510
+sound menu Pick pop                         @5690
+overlay none                                @5690
+sound menu Close pop                        @5690
+key KEY_O down                              @5690
+key KEY_O up                                @5690
+overlay menu "List" selected "Alpha"        @6020
+sound menu Open pop                         @6020
+sound menu Pick pop                         @6170
+overlay none                                @6170
+sound menu Close pop                        @6170
+key KEY_A down                              @6170
+key KEY_A up                                @6170
+overlay menu "Radial"                       @6500
+sound menu Open pop                         @6500
+sound menu Step click                       @6650
+overlay menu "Radial" selected "Right"      @6650
+sound menu Pick pop                         @6750
+overlay none                                @6750
+sound menu Close pop                        @6750
+key KEY_R down                              @6750
+key KEY_R up                                @6750
+overlay menu "Buttons"                      @7050
+sound menu Open pop                         @7050
+sound menu Pick pop                         @7200
+overlay menu "Buttons" selected "Eb"        @7200
+overlay none                                @7200
+sound menu Close pop                        @7200
+key KEY_E down                              @7200
+key KEY_E up                                @7200
+overlay menu "Directional"                  @7530
+sound menu Open pop                         @7530
+sound menu Pick pop                         @7680
+overlay menu "Directional" selected "Right" @7680
+overlay none                                @7680
+sound menu Close pop                        @7680
+key KEY_R down                              @7680
+key KEY_R up                                @7680
+overlay menu "Grid" selected "Aa"           @8010
+sound menu Open pop                         @8010
+sound menu Pick pop                         @8190
+overlay none                                @8190
+sound menu Close pop                        @8190
+key KEY_A down                              @8190
+key KEY_A up                                @8190
+overlay menu "Carousel" selected "One"      @8520
+sound menu Open pop                         @8520
+sound menu Pick pop                         @8700
+overlay none                                @8700
+sound menu Close pop                        @8700
+key KEY_O down                              @8700
+key KEY_O up                                @8700
+overlay menu "List" selected "Alpha"        @9030
+sound menu Open pop                         @9030
+sound menu Pick pop                         @9180
+overlay none                                @9180
+sound menu Close pop                        @9180
+key KEY_A down                              @9180
+key KEY_A up                                @9180
+overlay menu "Radial"                       @9510
+sound menu Open pop                         @9510
+sound menu Step click                       @9660
+overlay menu "Radial" selected "Right"      @9660
+sound menu Pick pop                         @9760
+overlay none                                @9760
+sound menu Close pop                        @9760
+key KEY_R down                              @9760
+key KEY_R up                                @9760
+overlay menu "Buttons"                      @10060
+sound menu Open pop                         @10060
+sound menu Pick pop                         @10210
+overlay menu "Buttons" selected "Eb"        @10210
+overlay none                                @10210
+sound menu Close pop                        @10210
+key KEY_E down                              @10210
+key KEY_E up                                @10210
+overlay menu "Directional"                  @10540
+sound menu Open pop                         @10540
+sound menu Pick pop                         @10690
+overlay menu "Directional" selected "Right" @10690
+overlay none                                @10690
+sound menu Close pop                        @10690
+key KEY_R down                              @10690
+key KEY_R up                                @10690
+overlay menu "Grid" selected "Aa"           @11020
+sound menu Open pop                         @11020
+sound menu Pick pop                         @11200
+overlay none                                @11200
+sound menu Close pop                        @11200
+key KEY_A down                              @11200
+key KEY_A up                                @11200
+overlay menu "Carousel" selected "One"      @11530
+sound menu Open pop                         @11530
+sound menu Pick pop                         @11710
+overlay none                                @11710
+sound menu Close pop                        @11710
+key KEY_O down                              @11710
+key KEY_O up                                @11710
+overlay menu "List" selected "Alpha"        @12040
+sound menu Open pop                         @12040
+sound menu Pick pop                         @12190
+overlay none                                @12190
+sound menu Close pop                        @12190
+key KEY_A down                              @12190
+key KEY_A up                                @12190
+overlay menu "Radial"                       @12520
+sound menu Open pop                         @12520
+sound menu Step click                       @12670
+overlay menu "Radial" selected "Right"      @12670
+sound menu Pick pop                         @12770
+overlay none                                @12770
+sound menu Close pop                        @12770
+key KEY_R down                              @12770
+key KEY_R up                                @12770
+overlay menu "Buttons"                      @13070
+sound menu Open pop                         @13070
+sound menu Pick pop                         @13220
+overlay menu "Buttons" selected "Eb"        @13220
+overlay none                                @13220
+sound menu Close pop                        @13220
+key KEY_E down                              @13220
+key KEY_E up                                @13220
+overlay menu "Directional"                  @13550
+sound menu Open pop                         @13550
+sound menu Pick pop                         @13700
+overlay menu "Directional" selected "Right" @13700
+overlay none                                @13700
+sound menu Close pop                        @13700
+key KEY_R down                              @13700
+key KEY_R up                                @13700
+overlay menu "Grid" selected "Aa"           @14030
+sound menu Open pop                         @14030
+sound menu Pick pop                         @14210
+overlay none                                @14210
+sound menu Close pop                        @14210
+key KEY_A down                              @14210
+key KEY_A up                                @14210
+overlay menu "Carousel" selected "One"      @14540
+sound menu Open pop                         @14540
+sound menu Pick pop                         @14720
+overlay none                                @14720
+sound menu Close pop                        @14720
+key KEY_O down                              @14720
+key KEY_O up                                @14720
+overlay menu "List" selected "Alpha"        @15050
+sound menu Open pop                         @15050
+sound menu Pick pop                         @15200
+overlay none                                @15200
+sound menu Close pop                        @15200
+key KEY_A down                              @15200
+key KEY_A up                                @15200
+overlay menu "Radial"                       @15530
+sound menu Open pop                         @15530
+sound menu Step click                       @15680
+overlay menu "Radial" selected "Right"      @15680
+sound menu Pick pop                         @15780
+overlay none                                @15780
+sound menu Close pop                        @15780
+key KEY_R down                              @15780
+key KEY_R up                                @15780
+overlay menu "Buttons"                      @16080
+sound menu Open pop                         @16080
+sound menu Pick pop                         @16230
+overlay menu "Buttons" selected "Eb"        @16230
+overlay none                                @16230
+sound menu Close pop                        @16230
+key KEY_E down                              @16230
+key KEY_E up                                @16230
+overlay menu "Directional"                  @16560
+sound menu Open pop                         @16560
+sound menu Pick pop                         @16710
+overlay menu "Directional" selected "Right" @16710
+overlay none                                @16710
+sound menu Close pop                        @16710
+key KEY_R down                              @16710
+key KEY_R up                                @16710
+overlay menu "Grid" selected "Aa"           @17040
+sound menu Open pop                         @17040
+sound menu Pick pop                         @17220
+overlay none                                @17220
+sound menu Close pop                        @17220
+key KEY_A down                              @17220
+key KEY_A up                                @17220
+overlay menu "Carousel" selected "One"      @17550
+sound menu Open pop                         @17550
+sound menu Pick pop                         @17730
+overlay none                                @17730
+sound menu Close pop                        @17730
+key KEY_O down                              @17730
+key KEY_O up                                @17730
+overlay menu "List" selected "Alpha"        @18060
+sound menu Open pop                         @18060
+sound menu Pick pop                         @18210
+overlay none                                @18210
+sound menu Close pop                        @18210
+key KEY_A down                              @18210
+key KEY_A up                                @18210
+overlay menu "Radial"                       @18540
+sound menu Open pop                         @18540
+sound menu Step click                       @18690
+overlay menu "Radial" selected "Right"      @18690
+sound menu Pick pop                         @18790
+overlay none                                @18790
+sound menu Close pop                        @18790
+key KEY_R down                              @18790
+key KEY_R up                                @18790
+overlay menu "Buttons"                      @19090
+sound menu Open pop                         @19090
+sound menu Pick pop                         @19240
+overlay menu "Buttons" selected "Eb"        @19240
+overlay none                                @19240
+sound menu Close pop                        @19240
+key KEY_E down                              @19240
+key KEY_E up                                @19240
+overlay menu "Directional"                  @19570
+sound menu Open pop                         @19570
+sound menu Pick pop                         @19720
+overlay menu "Directional" selected "Right" @19720
+overlay none                                @19720
+sound menu Close pop                        @19720
+key KEY_R down                              @19720
+key KEY_R up                                @19720
+overlay menu "Grid" selected "Aa"           @20050
+sound menu Open pop                         @20050
+sound menu Pick pop                         @20230
+overlay none                                @20230
+sound menu Close pop                        @20230
+key KEY_A down                              @20230
+key KEY_A up                                @20230
+overlay menu "Carousel" selected "One"      @20560
+sound menu Open pop                         @20560
+sound menu Pick pop                         @20740
+overlay none                                @20740
+sound menu Close pop                        @20740
+key KEY_O down                              @20740
+key KEY_O up                                @20740
+overlay menu "List" selected "Alpha"        @21070
+sound menu Open pop                         @21070
+sound menu Pick pop                         @21220
+overlay none                                @21220
+sound menu Close pop                        @21220
+key KEY_A down                              @21220
+key KEY_A up                                @21220
+overlay menu "Radial"                       @21550
+sound menu Open pop                         @21550
+sound menu Step click                       @21700
+overlay menu "Radial" selected "Right"      @21700
+sound menu Pick pop                         @21800
+overlay none                                @21800
+sound menu Close pop                        @21800
+key KEY_R down                              @21800
+key KEY_R up                                @21800
+overlay menu "Buttons"                      @22100
+sound menu Open pop                         @22100
+sound menu Pick pop                         @22250
+overlay menu "Buttons" selected "Eb"        @22250
+overlay none                                @22250
+sound menu Close pop                        @22250
+key KEY_E down                              @22250
+key KEY_E up                                @22250
+overlay menu "Directional"                  @22580
+sound menu Open pop                         @22580
+sound menu Pick pop                         @22730
+overlay menu "Directional" selected "Right" @22730
+overlay none                                @22730
+sound menu Close pop                        @22730
+key KEY_R down                              @22730
+key KEY_R up                                @22730
+overlay menu "Grid" selected "Aa"           @23060
+sound menu Open pop                         @23060
+sound menu Pick pop                         @23240
+overlay none                                @23240
+sound menu Close pop                        @23240
+key KEY_A down                              @23240
+key KEY_A up                                @23240
+overlay menu "Carousel" selected "One"      @23570
+sound menu Open pop                         @23570
+sound menu Pick pop                         @23750
+overlay none                                @23750
+sound menu Close pop                        @23750
+key KEY_O down                              @23750
+key KEY_O up                                @23750
+overlay menu "List" selected "Alpha"        @24080
+sound menu Open pop                         @24080
+sound menu Pick pop                         @24230
+overlay none                                @24230
+sound menu Close pop                        @24230
+key KEY_A down                              @24230
+key KEY_A up                                @24230
+overlay menu "Radial"                       @24560
+sound menu Open pop                         @24560
+sound menu Step click                       @24710
+overlay menu "Radial" selected "Right"      @24710
+sound menu Pick pop                         @24810
+overlay none                                @24810
+sound menu Close pop                        @24810
+key KEY_R down                              @24810
+key KEY_R up                                @24810
+overlay menu "Buttons"                      @25110
+sound menu Open pop                         @25110
+sound menu Pick pop                         @25260
+overlay menu "Buttons" selected "Eb"        @25260
+overlay none                                @25260
+sound menu Close pop                        @25260
+key KEY_E down                              @25260
+key KEY_E up                                @25260
+overlay menu "Directional"                  @25590
+sound menu Open pop                         @25590
+sound menu Pick pop                         @25740
+overlay menu "Directional" selected "Right" @25740
+overlay none                                @25740
+sound menu Close pop                        @25740
+key KEY_R down                              @25740
+key KEY_R up                                @25740
+overlay menu "Grid" selected "Aa"           @26070
+sound menu Open pop                         @26070
+sound menu Pick pop                         @26250
+overlay none                                @26250
+sound menu Close pop                        @26250
+key KEY_A down                              @26250
+key KEY_A up                                @26250
+overlay menu "Carousel" selected "One"      @26580
+sound menu Open pop                         @26580
+sound menu Pick pop                         @26760
+overlay none                                @26760
+sound menu Close pop                        @26760
+key KEY_O down                              @26760
+key KEY_O up                                @26760
+overlay menu "List" selected "Alpha"        @27090
+sound menu Open pop                         @27090
+sound menu Pick pop                         @27240
+overlay none                                @27240
+sound menu Close pop                        @27240
+key KEY_A down                              @27240
+key KEY_A up                                @27240
+overlay menu "Radial"                       @27570
+sound menu Open pop                         @27570
+sound menu Step click                       @27720
+overlay menu "Radial" selected "Right"      @27720
+sound menu Pick pop                         @27820
+overlay none                                @27820
+sound menu Close pop                        @27820
+key KEY_R down                              @27820
+key KEY_R up                                @27820
+overlay menu "Buttons"                      @28120
+sound menu Open pop                         @28120
+sound menu Pick pop                         @28270
+overlay menu "Buttons" selected "Eb"        @28270
+overlay none                                @28270
+sound menu Close pop                        @28270
+key KEY_E down                              @28270
+key KEY_E up                                @28270
+overlay menu "Directional"                  @28600
+sound menu Open pop                         @28600
+sound menu Pick pop                         @28750
+overlay menu "Directional" selected "Right" @28750
+overlay none                                @28750
+sound menu Close pop                        @28750
+key KEY_R down                              @28750
+key KEY_R up                                @28750
+overlay menu "Grid" selected "Aa"           @29080
+sound menu Open pop                         @29080
+sound menu Pick pop                         @29260
+overlay none                                @29260
+sound menu Close pop                        @29260
+key KEY_A down                              @29260
+key KEY_A up                                @29260
+overlay menu "Carousel" selected "One"      @29590
+sound menu Open pop                         @29590
+sound menu Pick pop                         @29770
+overlay none                                @29770
+sound menu Close pop                        @29770
+key KEY_O down                              @29770
+key KEY_O up                                @29770
+overlay menu "List" selected "Alpha"        @30100
+sound menu Open pop                         @30100
+sound menu Pick pop                         @30250
+overlay none                                @30250
+sound menu Close pop                        @30250
+key KEY_A down                              @30250
+key KEY_A up                                @30250
+overlay menu "Radial"                       @30580
+sound menu Open pop                         @30580
+sound menu Step click                       @30730
+overlay menu "Radial" selected "Right"      @30730
+sound menu Pick pop                         @30830
+overlay none                                @30830
+sound menu Close pop                        @30830
+key KEY_R down                              @30830
+key KEY_R up                                @30830
+overlay menu "Buttons"                      @31130
+sound menu Open pop                         @31130
+sound menu Pick pop                         @31280
+overlay menu "Buttons" selected "Eb"        @31280
+overlay none                                @31280
+sound menu Close pop                        @31280
+key KEY_E down                              @31280
+key KEY_E up                                @31280
+overlay menu "Directional"                  @31610
+sound menu Open pop                         @31610
+sound menu Pick pop                         @31760
+overlay menu "Directional" selected "Right" @31760
+overlay none                                @31760
+sound menu Close pop                        @31760
+key KEY_R down                              @31760
+key KEY_R up                                @31760
+overlay menu "Grid" selected "Aa"           @32090
+sound menu Open pop                         @32090
+sound menu Pick pop                         @32270
+overlay none                                @32270
+sound menu Close pop                        @32270
+key KEY_A down                              @32270
+key KEY_A up                                @32270
+overlay menu "Carousel" selected "One"      @32600
+sound menu Open pop                         @32600
+sound menu Pick pop                         @32780
+overlay none                                @32780
+sound menu Close pop                        @32780
+key KEY_O down                              @32780
+key KEY_O up                                @32780
+overlay menu "List" selected "Alpha"        @33110
+sound menu Open pop                         @33110
+sound menu Pick pop                         @33260
+overlay none                                @33260
+sound menu Close pop                        @33260
+key KEY_A down                              @33260
+key KEY_A up                                @33260
+overlay menu "Radial"                       @33590
+sound menu Open pop                         @33590
+sound menu Step click                       @33740
+overlay menu "Radial" selected "Right"      @33740
+sound menu Pick pop                         @33840
+overlay none                                @33840
+sound menu Close pop                        @33840
+key KEY_R down                              @33840
+key KEY_R up                                @33840
+overlay menu "Buttons"                      @34140
+sound menu Open pop                         @34140
+sound menu Pick pop                         @34290
+overlay menu "Buttons" selected "Eb"        @34290
+overlay none                                @34290
+sound menu Close pop                        @34290
+key KEY_E down                              @34290
+key KEY_E up                                @34290
+overlay menu "Directional"                  @34620
+sound menu Open pop                         @34620
+sound menu Pick pop                         @34770
+overlay menu "Directional" selected "Right" @34770
+overlay none                                @34770
+sound menu Close pop                        @34770
+key KEY_R down                              @34770
+key KEY_R up                                @34770
+overlay menu "Grid" selected "Aa"           @35100
+sound menu Open pop                         @35100
+sound menu Pick pop                         @35280
+overlay none                                @35280
+sound menu Close pop                        @35280
+key KEY_A down                              @35280
+key KEY_A up                                @35280
+overlay menu "Carousel" selected "One"      @35610
+sound menu Open pop                         @35610
+sound menu Pick pop                         @35790
+overlay none                                @35790
+sound menu Close pop                        @35790
+key KEY_O down                              @35790
+key KEY_O up                                @35790

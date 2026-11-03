@@ -233,14 +233,40 @@ fn word(v: &Value) -> String {
     }
 }
 
+/// Whether `text` fits `pattern`: `*` is any run of characters, `?` any one, `@` any digit (not
+/// `#`, where a script line ends), and the rest stands for itself.
+fn glob(pattern: &[char], text: &[char]) -> bool {
+    match pattern.split_first() {
+        None => text.is_empty(),
+        Some(('*', rest)) => (0..=text.len()).any(|n| glob(rest, &text[n..])),
+        Some((p, rest)) => text.split_first().is_some_and(|(t, more)| {
+            (*p == '?' || (*p == '@' && t.is_ascii_digit()) || p == t) && glob(rest, more)
+        }),
+    }
+}
+
 /// Fails with a message unless the value at `path` is `want`. Strings match exactly (a script's
 /// double quotes around `want` are dropped); numbers match within 0.01; `none` matches null and
-/// an empty list; a list matches when one of its items does.
+/// an empty list; a list matches when one of its items does. `glob:<pattern>|<pattern>` matches
+/// a string that fits one of the patterns (`*` any run, `?` any character, `@` any digit), such
+/// as `glob:@@:@@` for a clock. `not:<want>` holds where `<want>` does not.
 pub fn check(doc: &Value, path: &str, want: &str) -> Result<(), String> {
     let want = want.trim();
+    // `not:<want>` holds where `<want>` does not (the path must still exist).
+    if let Some(rest) = want.strip_prefix("not:") {
+        lookup(doc, path)?;
+        return match check(doc, path, rest) {
+            Ok(()) => Err(format!("overlay {path} is {rest:?}, which it should not be")),
+            Err(_) => Ok(()),
+        };
+    }
     let want = want.strip_prefix('"').and_then(|w| w.strip_suffix('"')).unwrap_or(want);
     let got = lookup(doc, path)?;
     let same = |v: &Value| match v {
+        Value::String(text) if want.starts_with("glob:") => {
+            let text: Vec<char> = text.chars().collect();
+            want["glob:".len()..].split('|').any(|p| glob(&p.chars().collect::<Vec<_>>(), &text))
+        }
         Value::Number(n) => n.as_f64().zip(want.parse::<f64>().ok()).is_some_and(|(a, b)| (a - b).abs() <= 0.01),
         other => word(other) == want,
     };
@@ -278,6 +304,26 @@ mod tests {
         check(&d, "menu.selected", &label).unwrap();
         check(&d, "menu.selected", &format!("\"{label}\"")).unwrap();
         assert!(check(&d, "menu.selected", "no such label").unwrap_err().contains("not \"no such label\""));
+    }
+
+    #[test]
+    fn a_glob_matches_the_shape_of_a_string() {
+        let doc = json!({ "clock": "17:10", "ram": "6.2/15.4 GB", "n": 3 });
+        check(&doc, "clock", "glob:@@:@@").unwrap();
+        check(&doc, "ram", "glob:*.*/*.* GB").unwrap();
+        check(&doc, "ram", "glob:n/a|*GB").unwrap();
+        assert!(check(&doc, "clock", "glob:@@").is_err());
+        assert!(check(&doc, "clock", "glob:@:@@").is_err());
+        assert!(check(&doc, "n", "glob:@").is_err(), "a number is not a string");
+    }
+
+    #[test]
+    fn not_inverts_a_check_but_still_needs_the_path() {
+        let doc = json!({ "labels": ["a", "b"], "clock": "17:10" });
+        check(&doc, "labels", "not:c").unwrap();
+        assert!(check(&doc, "labels", "not:b").is_err());
+        check(&doc, "clock", "not:glob:@@").unwrap();
+        assert!(check(&doc, "nope", "not:x").is_err());
     }
 
     #[test]

@@ -11,16 +11,16 @@ open_menu = "Directional"
 open_menu = "Radial"
 
 [buttons.North]
-gamepad = "North"
+open_menu = "Buttons"
 
 [buttons.West]
-gamepad = "West"
+open_menu = "List"
 
 [buttons.LeftBumper]
-gamepad = "LeftBumper"
+open_menu = "Carousel"
 
 [buttons.RightBumper]
-gamepad = "RightBumper"
+open_menu = "Grid"
 
 [buttons.Select]
 gamepad = "Select"
@@ -76,7 +76,7 @@ gamepad = "Right"
 [gestures]
 
 [gyro]
-mode = "off"
+enabled = false
 horizontal = "yaw"
 invert_x = false
 invert_y = false

@@ -1,0 +1,28 @@
+# OVL-6: the Guide opener moved to a double tap of Select. The Guide button no longer opens the
+# overlay, a single Select tap does nothing, and a double tap opens it.
+append tests/scenarios/fragments/opener-double-tap-select.toml
+tap guide 60
+advance 300
+expect overlay showing none
+tap select 40
+advance 500
+expect overlay showing none
+tap select 40
+advance 60
+tap select 40
+advance 300
+expect overlay showing guide
+expect overlay guide.selected "Quick Settings"
+tap east 40
+advance 200
+expect overlay showing none
+---
+pad Select down                                         @650
+pad Select up                                           @650
+shifts mode Guide layers -                              @1000
+sound guide Open rise                                   @1000
+overlay menu "Guide" selected "Quick Settings"          @1000
+overlay menu "Guide" selected "Quick Settings" + info 1 @1100
+shifts mode - layers -                                  @1340
+sound guide Close fall                                  @1340
+overlay none                                            @1340

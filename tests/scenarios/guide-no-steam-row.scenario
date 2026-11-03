@@ -1,0 +1,13 @@
+# OVL-11: and has none without it (the daemon runs alone in a pid namespace, so a Steam on the
+# machine running the test cannot show).
+steam not-running
+tap guide 60
+advance 400
+expect overlay showing guide
+expect overlay guide.labels "Quick Settings"
+expect overlay guide.labels not:"Steam overlay"
+---
+shifts mode Guide layers -                              @0
+sound guide Open rise                                   @60
+overlay menu "Guide" selected "Quick Settings"          @60
+overlay menu "Guide" selected "Quick Settings" + info 1 @100

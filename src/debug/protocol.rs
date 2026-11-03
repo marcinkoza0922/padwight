@@ -134,7 +134,9 @@ pub const COMMANDS: &str = "\
   expect overlay <path> <value>  ... unless the daemon's overlay state (`debug overlay state`)
                                  has <value> at <path>, e.g. `showing guide`, `guide.selected
                                  Keyboard`, `keyboard.latched KEY_LEFTSHIFT`, `showing none`;
-                                 retried for half a second
+                                 retried for half a second; `glob:@@:@@|n/a` matches a shape (`*` any run,
+                                 `?` any character, `@` any digit, `|` between alternatives);
+                                 `not:<value>` holds where the value doesn't
   run [file]                     run commands, one per line, from a file or stdin;
                                  blank lines and # comments are skipped; `sleep <ms>` waits
 
