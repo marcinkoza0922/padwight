@@ -161,6 +161,8 @@ fn run(s: &Scenario) -> Result<String, String> {
     let _ = fs::remove_dir_all(&root);
     match transcript {
         Ok(t) if log.contains("panicked") => Err(format!("the daemon panicked:\n{log}\ntranscript:\n{t}")),
+        // INS-9: a scripted session leaves no error, failure or warning in the daemon's log.
+        Ok(_) if !common::log_problems(&log).is_empty() => Err(format!("the daemon logged trouble:\n{}", common::log_problems(&log).join("\n"))),
         other => other,
     }
 }
@@ -222,4 +224,10 @@ fn scenarios() {
         }
     }
     assert!(failures.is_empty(), "\n{}", failures.join("\n\n"));
+}
+
+#[test]
+fn the_log_check_flags_trouble_and_lets_the_environment_through() {
+    let log = "padwight daemon started\nrtkit: refused\nFailed to save the config\nthread 'main' panicked at x\nNo focus tracking\nAll fine\n";
+    assert_eq!(common::log_problems(log), ["Failed to save the config", "thread 'main' panicked at x"]);
 }

@@ -199,6 +199,23 @@ mod tests {
         assert_eq!(folder_name("con"), "con");
     }
 
+    /// INS-11: a game with a colon in its name (Windows support is gone, so nothing replaces the
+    /// colon on Linux), for a screenshot and a recording.
+    #[test]
+    fn a_game_with_a_colon_gets_a_folder_and_both_kinds_of_file_are_saved() {
+        let base = std::env::temp_dir().join(format!("padwight-colon-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        for (kind, ext) in [("Screenshots", "png"), ("Recordings", "mp4")] {
+            let claim = claim_media_path(&base, kind, "Thief II: The Metal Age", "2026-10-07_19-58-03", ext);
+            let path = claim.path();
+            assert_eq!(path.parent().and_then(Path::file_name).and_then(|n| n.to_str()), Some("Thief II: The Metal Age"));
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, b"data").unwrap();
+            assert_eq!(std::fs::read(path).unwrap(), b"data");
+        }
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
     #[test]
     fn two_captures_in_one_second_get_a_file_each() {
         let base = std::env::temp_dir().join(format!("padwight-claim-{}", std::process::id()));
