@@ -1308,7 +1308,11 @@ impl Daemon {
     fn resync_all(&mut self) {
         for dev in self.devices.values_mut() {
             let Some(base) = self.config.profile_for(&dev.id) else { continue };
-            dev.layered = None;
+            let had_shifts = dev.layered.take().is_some();
+            // Rebuilding finds nothing to compare an ended layer with, so it says so itself.
+            if had_shifts && dev.recorded.is_some() && dev.engine.mode().is_none() && dev.engine.layers().is_empty() {
+                transcript::shifts(None, &[]);
+            }
             dev.refresh_layers(&self.config);
             let mut out = Vec::new();
             dev.engine.resync(layered(&dev.layered, base), &mut out);
