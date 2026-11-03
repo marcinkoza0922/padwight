@@ -54,6 +54,10 @@ impl Daemon {
     fn step(&mut self, ticking: bool) {
         self.run_timers();
         self.check_fallbacks(crate::clock::now());
+        // The two-second hold ends on a deadline, with no input to carry the check along.
+        if self.quit_hold.is_some() {
+            self.update_force_quit();
+        }
         self.finish_stop();
         self.catch_up_on_focus();
         let now = crate::clock::now();

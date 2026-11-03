@@ -292,3 +292,29 @@ fn compositor_cosmic_focus_switches_the_profile() {
     walk(&s, &cosmic, "COSMIC", &daemon);
     stop(daemon, &s);
 }
+
+/// FOC-3: Budgie's power dialog answers as `org.gnome.Shell` on the bus, and the desktop may call
+/// itself `Budgie:GNOME`. The daemon must still use the wlroots tracker (a class rule matches), put
+/// no GNOME extension in place, and log no `overlay:` error when the overlay opens.
+#[test]
+#[ignore]
+fn compositor_budgie_uses_the_wlroots_tracker_and_installs_no_gnome_extension() {
+    let _serial = serial();
+    let s = setup();
+    let config = s.root.join("config/padwight");
+    let class_rule = game_config().replace("kind = \"executable\"\nvalue = \"padwight-fake-game\"", "kind = \"window_class\"\nvalue = \"padwight_game\"");
+    fs::remove_dir_all(&config).unwrap();
+    install_config(&config, &class_rule);
+    let bus = SessionBus::start(&s.runtime.join("bus"));
+    let _power_dialog = bus.connect(Some("org.gnome.Shell"));
+    let wl = Wlroots::start(&s.runtime.join("wayland-test"), &[OutputSpec { x: 0, y: 0, width: 1280, height: 800, scale: 1 }]);
+    let name = PathBuf::from("wayland-test");
+    let desktop = PathBuf::from("Budgie:GNOME");
+    let daemon = start_daemon_on(&s, &[("WAYLAND_DISPLAY", &name), ("XDG_CURRENT_DESKTOP", &desktop)], Some(&bus));
+    walk(&s, &wl, "wlroots", &daemon);
+    cli(&s.runtime, &["overlay-toggle"]);
+    wait_for("an overlay surface made", || (!wl.layer_surfaces().is_empty()).then_some(()));
+    assert!(!s.root.join("data/gnome-shell").exists(), "no GNOME extension was installed");
+    assert!(!common::daemon_log(&s.root).contains("overlay:"), "no overlay error:\n{}", common::daemon_log(&s.root));
+    stop(daemon, &s);
+}
