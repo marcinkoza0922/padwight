@@ -448,9 +448,13 @@ vm_env10() {
     expect "debug overlay renders on this distro (no GPU needed)" grep -qiv 'error' "$out/vm-env10-$d-overlay.log"
     # scripts/sandbox-pid.sh as a Flatpak-like sandbox would run.
     scp -q -i "$vms/id_ed25519" -P "$port" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "$root/scripts/sandbox-pid.sh" dev@127.0.0.1: 2>/dev/null
-    vmx 'timeout 20 sh ./sandbox-pid.sh sleep 6' >"$out/vm-env10-$d-sandbox.log" 2>&1
-    cat "$out/vm-env10-$d-sandbox.log" | head -5
-    expect "scripts/sandbox-pid.sh finds the sandboxed process" grep -q 'pid in the sandbox' "$out/vm-env10-$d-sandbox.log"
+    vmx 'timeout 20 sh ./sandbox-pid.sh sleep 6; echo "exit=$?"' >"$out/vm-env10-$d-sandbox.log" 2>&1
+    head -5 "$out/vm-env10-$d-sandbox.log"
+    if grep -q '^exit=77' "$out/vm-env10-$d-sandbox.log"; then
+        skip "scripts/sandbox-pid.sh: user namespaces are refused on this distro ($(grep -m1 'refused' "$out/vm-env10-$d-sandbox.log"))"
+    else
+        expect "scripts/sandbox-pid.sh finds the sandboxed process" grep -q 'pid in the sandbox' "$out/vm-env10-$d-sandbox.log"
+    fi
     case $d in
     fedora)
         vmr 'ausearch -m avc,user_avc,selinux_err -ts boot 2>&1; journalctl -b --no-pager | grep -E "avc: +denied"' >"$out/vm-env10-$d-denials.log" 2>&1
