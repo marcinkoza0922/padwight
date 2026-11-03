@@ -476,6 +476,9 @@ fi
 
 stop_daemon
 stop_pad
+# A copy stays in /tmp for scripts/cinnamon-relogin.sh, which checks FOC-10 after a log out and in.
+rm -rf /tmp/desktop-test-setup-saved
+cp -r "$setup" /tmp/desktop-test-setup-saved
 rm -rf "$setup"
 echo "== $failures failure(s)"
 exit "$failures"
