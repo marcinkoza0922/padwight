@@ -325,9 +325,9 @@ vm_up() { # vm_up <arch|ubuntu|fedora>
     # Two consoles on seat0 (dev on tty1, dev2 on tty2) are logged in by getty, so logind has real seat sessions.
     vmr 'useradd -m dev2; for t in 1 2; do u=dev; [ $t = 2 ] && u=dev2; mkdir -p /etc/systemd/system/getty@tty$t.service.d; printf "[Service]\nExecStart=\nExecStart=-/sbin/agetty -o \"-p -f -- \\\\\\\\u\" --noclear --autologin $u %%I \$TERM\n" > /etc/systemd/system/getty@tty$t.service.d/autologin.conf; done; systemctl daemon-reload; systemctl restart getty@tty1 getty@tty2' >"$out/vm-$d-provision.log" 2>&1
     case $d in
-    arch) vmr 'pacman -Sy --noconfirm acl nfs-utils rsync' ;;
-    ubuntu) vmr 'export DEBIAN_FRONTEND=noninteractive; apt-get update -qq && apt-get install -y -qq acl nfs-kernel-server' ;;
-    fedora) vmr 'dnf -y -q install acl nfs-utils audit policycoreutils' ;;
+    arch) vmr 'pacman -Sy --noconfirm acl nfs-utils rsync alsa-lib libxkbcommon xkeyboard-config' ;;
+    ubuntu) vmr 'export DEBIAN_FRONTEND=noninteractive; apt-get update -qq && apt-get install -y -qq acl nfs-kernel-server libxkbcommon0 xkb-data $(apt-cache show libasound2t64 >/dev/null 2>&1 && echo libasound2t64 || echo libasound2)' ;;
+    fedora) vmr 'dnf -y -q install acl nfs-utils audit policycoreutils alsa-lib libxkbcommon' ;;
     esac >>"$out/vm-$d-provision.log" 2>&1
     sleep 3
 }
