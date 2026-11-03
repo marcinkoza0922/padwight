@@ -374,7 +374,7 @@ wayland_launch=() x11_launch=()
 xwayland=$(pgrep -a Xwayland | head -1)
 xenv=(env "DISPLAY=$(grep -o ' :[0-9]*' <<<"$xwayland" | head -1 | tr -d ' ')" "XAUTHORITY=$(sed -n 's/.*-auth \([^ ]*\).*/\1/p' <<<"$xwayland")")
 case $desktop in
-gnome) wayland_launch=(env GDK_BACKEND=wayland "${launch[@]}"); x11_launch=("${xenv[@]}" GDK_BACKEND=x11 "${launch[@]}") ;;
+gnome) wayland_launch=(env GDK_BACKEND=wayland "${launch[@]}"); x11_launch=(dbus-run-session -- "${xenv[@]}" GDK_BACKEND=x11 "${launch[@]}") ;;  # own session bus: kgx is single-instance and would reuse the Wayland process
 kde) wayland_launch=(env QT_QPA_PLATFORM=wayland konsole --separate -e bash -c "$read_key"); x11_launch=("${xenv[@]}" QT_QPA_PLATFORM=xcb konsole --separate -e bash -c "$read_key") ;;
 hyprland) wayland_launch=(kitty --override linux_display_server=wayland bash -c "$read_key"); x11_launch=("${xenv[@]}" kitty --override linux_display_server=x11 bash -c "$read_key") ;;
 esac
