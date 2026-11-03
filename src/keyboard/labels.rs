@@ -29,8 +29,19 @@ pub fn cap_label(key: &Key, board: Board, shift: bool, caps: bool) -> String {
 }
 
 /// The key of the basic keyboard that types `c` in the user's layout, and whether Shift has to be
-/// held for it. `None` when no key there types it.
+/// held for it. `None` when no key there types it. Space, Tab and Enter have no label to look up
+/// (they type no drawable character), and sit on the same key in every layout.
 pub fn key_for(c: char) -> Option<(&'static str, bool)> {
+    key_in(c, typed)
+}
+
+fn key_in(c: char, typed: impl Fn(&str, bool, bool) -> Option<String>) -> Option<(&'static str, bool)> {
+    match c {
+        ' ' => return Some(("KEY_SPACE", false)),
+        '\t' => return Some(("KEY_TAB", false)),
+        '\n' => return Some(("KEY_ENTER", false)),
+        _ => {}
+    }
     let text = c.to_string();
     super::Board::Basic.rows().iter().flat_map(|row| row.iter()).filter(|key| !key.code.is_empty()).find_map(|key| {
         [false, true].into_iter().find(|&shift| typed(key.code, shift, false).as_deref() == Some(text.as_str())).map(|shift| (key.code, shift))
@@ -82,6 +93,23 @@ mod tests {
         assert_eq!(pick(&letter, true, true), "q", "Shift with Caps Lock types small letters");
         assert_eq!(pick(&digit, false, true), "1", "Caps Lock leaves digits alone");
         assert_eq!(pick(&digit, true, false), "!");
+    }
+
+    #[test]
+    fn space_tab_and_enter_have_their_keys_in_any_layout() {
+        assert_eq!(key_for(' '), Some(("KEY_SPACE", false)));
+        assert_eq!(key_for('\t'), Some(("KEY_TAB", false)));
+        assert_eq!(key_for('\n'), Some(("KEY_ENTER", false)));
+    }
+
+    #[test]
+    fn every_printable_ascii_character_has_a_key_on_a_us_layout() {
+        let Some(us) = crate::keyboard::layout::compile_for_tests("us") else { return };
+        let lookup = |code: &str, shift, caps| us.get(code).map(|t| pick(t, shift, caps).to_string());
+        let missing: String = (' '..='~').filter(|&c| key_in(c, lookup).is_none()).collect();
+        assert_eq!(missing, "", "characters with no key on the US layout");
+        assert_eq!(key_in('~', lookup), Some(("KEY_GRAVE", true)));
+        assert_eq!(key_in('|', lookup), Some(("KEY_BACKSLASH", true)));
     }
 
     #[test]

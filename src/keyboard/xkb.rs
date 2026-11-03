@@ -18,6 +18,11 @@ pub(super) fn labels() -> HashMap<&'static str, Typed> {
 
 /// What every key of the keyboards types in `layout` (and `variant`), or `None` if XKB doesn't
 /// know the layout.
+#[cfg(test)]
+pub(super) fn compile_for_tests(layout: &str) -> Option<HashMap<&'static str, Typed>> {
+    compile(layout, "")
+}
+
 fn compile(layout: &str, variant: &str) -> Option<HashMap<&'static str, Typed>> {
     let context = xkb::Context::new(xkb::CONTEXT_NO_FLAGS);
     let keymap = xkb::Keymap::new_from_names(&context, "", "", layout, variant, None, xkb::KEYMAP_COMPILE_NO_FLAGS)?;
