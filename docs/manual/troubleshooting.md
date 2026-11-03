@@ -41,6 +41,8 @@ The keyboard is labeled for your desktop's first layout. To pick another, such a
 Environment=PADWIGHT_KEYBOARD_LAYOUT=de
 ```
 
+Only the first layout counts. If it isn't Latin (Russian, Greek), the on-screen keyboard is labeled in that script, and text you send through it (the keyboard's typing and the calculator) can only use characters that layout types: Latin letters are dropped, while digits, `-` and `.` still work in Russian and Greek. Space, Tab and Enter work in every layout. Keys you map on a controller and macros are key positions, not characters, so they are not affected. To type Latin letters, set `PADWIGHT_KEYBOARD_LAYOUT=us` as above; the game receives the same key positions, so it types Latin letters when its own layout is Latin.
+
 ## Gyro does nothing on a PlayStation or Switch controller
 
 Those controllers' motion sensors need a permission rule of their own. `padwight doctor` tells you whether it's installed and prints the commands if not. Install it, reconnect the controller, then press **Calibrate gyro**.

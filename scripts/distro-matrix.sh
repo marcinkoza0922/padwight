@@ -253,7 +253,8 @@ env5() {
     expect "Dvorak: e is KEY_D, s is KEY_SEMICOLON, q is KEY_X, KEY_Q is labelled '" has "$o" 'type e KEY_D plain' 'type s KEY_SEMICOLON plain' 'type q KEY_X plain' "label KEY_Q ' "
     o=$(lay "$d" ru '1-.+*/a'); echo "$o" >"$out/env5-$d-ru.txt"
     expect "Russian: KEY_Q is labelled in Cyrillic; the calculator's digits, minus and point have keys" has "$o" 'label KEY_Q й' 'type 1 KEY_1 plain' 'type - KEY_MINUS' 'type . KEY_SLASH'
-    expect "Russian: a Latin letter has no key (only the first layout counts; ru,us behaves as ru)" has "$o" 'type a none'
+    expect "Russian: a Latin letter has no key (only the first layout counts; ru,us behaves as ru; documented in troubleshooting.md)" has "$o" 'type a none'
+    expect "Russian: space, tab and enter are typeable in any layout" has "$(lay "$d" ru ' ')" 'type   KEY_SPACE plain'
     o=$(lay "$d" 'gr,us' '1-.'); echo "$o" >"$out/env5-$d-gr.txt"
     expect "Greek (gr,us): KEY_Q is labelled ; and the calculator's characters are typeable" has "$o" 'label KEY_Q ;' 'type 1 KEY_1 plain'
     expect "Greek: minus and point are typeable" lacks "$o" 'type - none' 'type . none'
