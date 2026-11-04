@@ -283,6 +283,8 @@ const EXPECTED_IN_LOGS: &[&str] = &[
     "padwight-scenario-bus",
     // Real-time scheduling is the machine's to grant (rtkit may be absent, busy or refuse).
     "rtkit",
+    // The D-Bus error text for the same absence, logged without the "rtkit:" prefix on some paths.
+    "org.freedesktop.RealtimeKit1",
     "input threads:",
 ];
 
