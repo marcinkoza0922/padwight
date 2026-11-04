@@ -20,6 +20,11 @@ kind = "steam_app_id"
 value = "975370"
 profile = "Dwarf Fortress"
 
+[[rules]]
+kind = "executable"
+value = "dwarfort"
+profile = "Dwarf Fortress"
+
 [[profiles]]
 name = "Dwarf Fortress"
 combos = []

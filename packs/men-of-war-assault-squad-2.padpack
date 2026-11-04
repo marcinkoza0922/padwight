@@ -25,11 +25,6 @@ kind = "steam_app_id"
 value = "244450"
 profile = "Men of War: Assault Squad 2"
 
-[[rules]]
-kind = "steam_app_id"
-value = "271850"
-profile = "Men of War: Assault Squad 2"
-
 [[profiles]]
 name = "Men of War: Assault Squad 2"
 combos = []

@@ -20,6 +20,11 @@ kind = "executable"
 value = "besiege.exe"
 profile = "Besiege"
 
+[[rules]]
+kind = "executable"
+value = "Besiege.x86_64"
+profile = "Besiege"
+
 [[profiles]]
 name = "Besiege"
 combos = []

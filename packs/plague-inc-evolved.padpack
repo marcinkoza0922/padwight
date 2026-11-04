@@ -20,6 +20,11 @@ kind = "steam_app_id"
 value = "246620"
 profile = "Plague Inc: Evolved"
 
+[[rules]]
+kind = "executable"
+value = "PlagueIncEvolved.x86_64"
+profile = "Plague Inc: Evolved"
+
 [[profiles]]
 name = "Plague Inc: Evolved"
 combos = []
