@@ -75,6 +75,19 @@ def left_stick(mode):
     for s in sec: o += "[[profiles.left_stick.action.ring.actions]]\n%s\n\n" % s
     return o
 
+PT_BUTTONS = ["South","East","North","West","LeftBumper","RightBumper","LeftStick","RightStick","Select","Start","DpadUp","DpadDown","DpadLeft","DpadRight"]
+def profile_pt(g):
+    """Passthrough: every control goes to the game as it is; only the Guide overlay sits on top."""
+    o = [f'[[profiles]]\nname = "{g["name"]}"\ncombos = []\ncombo_window_ms = 120\ntap_window_ms = 250\nlong_press_ms = 500\n\n[profiles.buttons]']
+    o += [f'{b} = {{gamepad = "{b}"}}' for b in PT_BUTTONS]
+    o.append('Guide = {mode = "Guide"}\n')
+    for side in ("left", "right"):
+        o.append(f'[profiles.{side}_stick]\ndeadzone = 0.05\ncurve = 1.0\nkey_threshold = 0.3\n\n[profiles.{side}_stick.action]\ngamepad = {{stick = "{side.capitalize()}", invert_y = false}}\n')
+    o.append('[profiles.left_trigger]\naction = {gamepad = "Left"}\n\n[profiles.right_trigger]\naction = {gamepad = "Right"}\n')
+    o.append('[profiles.gyro]\nenabled = false\nhorizontal = "yaw"\ninvert_x = false\ninvert_y = false\nnoise_threshold = 1.0\n')
+    o.append(f"[profiles.guide]\nnotes = '''{g['notes']}'''\n")
+    return "\n".join(o) + "\n"
+
 def profile(g, gyro):
     name = g["name"] + (" + Gyro" if gyro else "")
     B = g["buttons"]   # dict Button -> (action, label, icon)
@@ -136,8 +149,10 @@ def build(g):
     o.append(f'[pack]\nid = "{pid}"\nname = "{g["name"]}"\nversion = "1.0"\nauthor = "Padwight"\ndescription = "{g["desc"]}"\nmade_with = "Xbox controller"\n')
     for i in g["ids"]: o.append(f'[[rules]]\nkind = "steam_app_id"\nvalue = "{i}"\nprofile = "{g["name"]}"\n')
     for e in g["exes"]: o.append(f'[[rules]]\nkind = "executable"\nvalue = "{e}"\nprofile = "{g["name"]}"\n')
-    o.append(profile(g, False))
-    if g.get("gyro"): o.append(profile(g, True))
+    if g.get("pt"): o.append(profile_pt(g))
+    else:
+        o.append(profile(g, False))
+        if g.get("gyro"): o.append(profile(g, True))
     if g.get("cyc"):
         steps = "\n".join(f"    {act(s)}," for s in g["cyc"][2])
         o.append(f'[[cycles]]\nname = "{g["cyc"][1]}"\nsteps = [\n{steps}\n]\n')
