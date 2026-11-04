@@ -101,7 +101,7 @@ def profile(g, gyro):
         out += "[profiles.gyro]\nenabled = false\nhorizontal = \"yaw\"\ninvert_x = false\ninvert_y = false\nnoise_threshold = 1.0\n\n"
     # notes
     L = []
-    if gyro: L.append("Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.")
+    if gyro: L.append("Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller " + ("aims, for fine adjustments next to the right stick {rs}." if g.get("fps") else "moves the pointer, as a fine pointer next to the right stick {rs}."))
     L.append(g["intro"])
     lines = []
     for b, (a, l, ic) in B.items():
@@ -114,7 +114,7 @@ def profile(g, gyro):
     L.append("Typing a name or text: {guide} + {west} opens the on-screen keyboard.")
     notes = "\n".join(L).replace("'''", "'")
     out += f"[profiles.guide]\nnotes = '''{notes}'''\n\n[profiles.guide.edits]\n"
-    ed = ['"stick:Right" = {text = "Pointer"}', '"trigger:Right" = {text = "%s"}' % g.get("rtl","Left click"), '"trigger:Left" = {text = "%s"}' % g.get("ltl","Right click")]
+    ed = ['"stick:Right" = {text = "%s"}' % ("Look" if g.get("fps") else "Pointer"), '"trigger:Right" = {text = "%s"}' % g.get("rtl","Left click"), '"trigger:Left" = {text = "%s"}' % g.get("ltl","Right click")]
     if g["left"] == "none": ed.insert(0, '"stick:Left" = {text = "Fine pointer"}')
     else: ed.insert(0, '"stick:Left" = {text = "%s"}' % ("Pan the view" if g["left"]=="wasd" and g["arch"]=="strat" else ("Move" if g["arch"]!="strat" else "Pan the view")))
     for b, (a, l, ic) in B.items():
