@@ -19,11 +19,6 @@ kind = "steam_app_id"
 value = "420"
 profile = "Half-Life 2: Episode Two"
 
-[[rules]]
-kind = "executable"
-value = "ep2.exe"
-profile = "Half-Life 2: Episode Two"
-
 [[profiles]]
 name = "Half-Life 2: Episode Two"
 combos = []

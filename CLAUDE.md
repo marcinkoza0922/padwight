@@ -47,6 +47,8 @@ Keep output short. Use these exact commands, never plain `cargo build` or `cargo
 - Pack identity audit (Steam ids, executables vs Discord's list and Steam's launch data
   (`python3 -I scripts/steam-executables.py` fetches the latter), release, controller support vs the PCGamingWiki snapshot; keeps the
   manual columns of `docs/development/pack-qa.tsv`): `python3 -I scripts/pack-audit.py [-v|--check|--self-test]`
+- Live store lookup when the wiki is unclear (Steam controller flags, launch executables, editions/DLC ids, GOG;
+  `--discord`, `--github`): `python3 -I scripts/game-lookup.py "<title>"|<appid>...`
 - Other stores: `python3 -I scripts/store-check.py [--missing-steam] [--online] [--github]` (GOG, Epic, Battle.net ids
   from the wiki; `--online` checks GOG ids; `--github` finds the project of a source port or a game the wiki
   has no store for). Executables from GOG's depot manifests and installed Steam copies:

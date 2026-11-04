@@ -9,6 +9,18 @@ Before writing or changing a pack, check the local references in `pcgamingwiki/`
 - **`games.tsv` and the article in `pages/`**: Steam app ids, release date, engine, and the Input section's native controller facts (XInput, DualShock/DualSense, Nintendo, Steam Input), which the rules below depend on.
 - **`executables.tsv`**: executable names from Discord's game-detection list, joined to the wiki by Steam app id. Names are lowercased; executable rules match without case, so any case works. Use the file name only, not a leading folder such as `control/`, unless the name is one other games share (an engine's or runtime's generic `nw.exe`, `game.exe`, `xrEngine.exe`): then keep the game's install folder in front of it (`game dev tycoon/nw.exe`), so the rule picks out this game only.
 
+## When the wiki data isn't enough
+
+Run `python3 -I scripts/game-lookup.py "<title>" | <steam id>` (add `--discord` and `--github` when they help) whenever the snapshot leaves a question open. It asks the live Steam store, Steam's app info, the GOG catalog and, on request, Discord's detectable-games list and GitHub. Reach for it when:
+
+- **The wiki says `unknown`, `limited` or `hackable` for controller support.** Steam's `controller_support` and its flags (Full/Partial controller support, DualShock, DualSense, Steam Input API) are the publisher's own claim. They settle whether a store badge exists, not whether the pad works (the pre-2006 rule above still applies).
+- **There is no executable, or only a generic one.** Steam's `launch:` lines give the developer's executable per OS, with arguments. Prefer them to a guessed name, and use the Linux entry for the Linux process name.
+- **The Steam id is missing, or several ids exist.** Search results show editions, remasters, demos and DLC. A `dlc of` or demo id must not become a pack rule; use the parent app.
+- **The release date is missing.** Steam and GOG both give one.
+- **The game isn't on Steam.** GOG gives its product id and OS support; `--github` finds the project of a source port.
+
+The output is still the publisher's or a store's word: put in the pack's notes what came only from it and what was checked on an install. `store-check.py` and `find-executables.py` do the same for packs that already exist.
+
 These are community data, so they're a starting point, not proof. Say in the commit what came from them and what was checked on an install.
 
 ## Games with native controller support
