@@ -57,10 +57,10 @@ fn a_library_setup_added_and_one_button_changed() {
     assert!(!first.is_empty() && first.iter().all(|d| d.starts_with("setups/") && d.contains("(new file)")), "{first:#?}");
     rig.assert_round_trip();
     // One button changed in the new setup: one line in one file.
-    let before = rig.app.profile().unwrap().button(Button::North).clone();
+    let before = rig.app.profile().unwrap().button(Button::South).clone();
     let after = keys("KEY_F13");
     assert_ne!(before, after);
-    let diff = saved_after(&mut rig, vec![Message::SetAction(Target::Button(Button::North), after)]);
+    let diff = saved_after(&mut rig, vec![Message::SetAction(Target::Button(Button::South), after)]);
     assert_eq!(diff.len(), 2, "{diff:#?}");
     assert!(diff.iter().all(|d| d.starts_with("setups/") && d.contains("profiles/")), "{diff:#?}");
     assert!(diff.iter().any(|d| d.contains("+ keys = [\"KEY_F13\"]")), "{diff:#?}");
