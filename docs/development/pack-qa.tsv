@@ -1620,3 +1620,141 @@ zumas-revenge.padpack	Zuma's Revenge!	name	Zuma's Revenge!	pages/z/Zuma's Reveng
 zup.padpack	Zup!	name	Zup!	pages/z/Zup!.wiki	533300	zup!.exe	ok						
 zwei-the-arges-adventure.padpack	Zwei: The Arges Adventure	name	Zwei: The Arges Adventure	pages/z/Zwei: The Arges Adventure.wiki	427680		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2018				
 zwei-the-ilvard-insurrection.padpack	Zwei: The Ilvard Insurrection	name	Zwei: The Ilvard Insurrection	pages/z/Zwei: The Ilvard Insurrection.wiki	427700		info	no_exe	no_exe: pack has no executable rule				
+anno-117-pax-romana.padpack	Anno 117: Pax Romana	name	Anno 117: Pax Romana	pages/a/Anno 117: Pax Romana.wiki	3274580	anno117.exe	ok						
+anno-1404-history-edition.padpack	Anno 1404: History Edition	name	Anno 1404: History Edition	pages/a/Anno 1404: History Edition.wiki	1281630	anno1404.exe,anno1404addon.exe	ok						
+anno-1404.padpack	Anno 1404	name	Anno 1404	pages/a/Anno 1404.wiki	33210	anno4.exe	ok						
+anno-1503-history-edition.padpack	Anno 1503: History Edition	name	Anno 1503: History Edition	pages/a/Anno 1503: History Edition.wiki	2820110	anno1503.exe	ok						
+anno-1602-history-edition.padpack	Anno 1602: History Edition	name	Anno 1602: History Edition	pages/a/Anno 1602: History Edition.wiki	2820130	anno1602.exe	ok						
+anno-1701-history-edition.padpack	Anno 1701: History Edition	name	Anno 1701: History Edition	pages/a/Anno 1701: History Edition.wiki	2820140	anno1701.exe	ok						
+anno-2205.padpack	Anno 2205	name	Anno 2205	pages/a/Anno 2205.wiki	375910	anno2205.exe	ok						
+assassins-creed-black-flag-resynced.padpack	Assassin's Creed: Black Flag Resynced	name	Assassin's Creed: Black Flag Resynced	pages/a/Assassin's Creed: Black Flag Resynced.wiki	3751950	acblackflag.exe	ok						
+assassins-creed-brotherhood.padpack	Assassin's Creed: Brotherhood	name	Assassin's Creed: Brotherhood	pages/a/Assassin's Creed: Brotherhood.wiki	48190	acbsp.exe,acbmp.exe	ok						
+assassins-creed-chronicles-china.padpack	Assassin's Creed Chronicles: China	name	Assassin's Creed Chronicles: China	pages/a/Assassin's Creed Chronicles: China.wiki	354380		info	no_exe	no_exe: pack has no executable rule				
+assassins-creed-chronicles-india.padpack	Assassin's Creed Chronicles: India	name	Assassin's Creed Chronicles: India	pages/a/Assassin's Creed Chronicles: India.wiki	359610		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2016				
+assassins-creed-chronicles-russia.padpack	Assassin's Creed Chronicles: Russia	name	Assassin's Creed Chronicles: Russia	pages/a/Assassin's Creed Chronicles: Russia.wiki	359600		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2016				
+assassins-creed-freedom-cry.padpack	Assassin's Creed: Freedom Cry	name	Assassin's Creed: Freedom Cry	pages/a/Assassin's Creed: Freedom Cry.wiki	277590	acfc.exe	ok						
+assassins-creed-iii-remastered.padpack	Assassin's Creed III Remastered	name	Assassin's Creed III Remastered	pages/a/Assassin's Creed III Remastered.wiki	911400	aciii.exe,acliberation.exe	ok						
+assassins-creed-iii.padpack	Assassin's Creed III	name	Assassin's Creed III	pages/a/Assassin's Creed III.wiki	208480	ac3mp.exe,ac3sp.exe	ok						
+assassins-creed-iv-black-flag.padpack	Assassin's Creed IV: Black Flag	name	Assassin's Creed IV: Black Flag	pages/a/Assassin's Creed IV: Black Flag.wiki	242050	ac4bfmp.exe,ac4bfsp.exe	ok						
+assassins-creed-liberation-hd.padpack	Assassin's Creed: Liberation HD	name	Assassin's Creed: Liberation HD	pages/a/Assassin's Creed: Liberation HD.wiki	260210	ac3lhd_32.exe	ok						
+assassins-creed-mirage.padpack	Assassin's Creed Mirage	name	Assassin's Creed Mirage	pages/a/Assassin's Creed Mirage.wiki	3035570	acmirage.exe	ok						
+assassins-creed-odyssey.padpack	Assassin's Creed Odyssey	name	Assassin's Creed Odyssey	pages/a/Assassin's Creed Odyssey.wiki	812140	acodyssey.exe	ok						
+assassins-creed-origins.padpack	Assassin's Creed Origins	name	Assassin's Creed Origins	pages/a/Assassin's Creed Origins.wiki	582160	acorigins.exe	ok						
+assassins-creed-revelations.padpack	Assassin's Creed: Revelations	name	Assassin's Creed: Revelations	pages/a/Assassin's Creed: Revelations.wiki	201870	acrmp.exe,acrsp.exe	ok						
+assassins-creed-rogue.padpack	Assassin's Creed Rogue	name	Assassin's Creed Rogue	pages/a/Assassin's Creed Rogue.wiki	311560	acc.exe	ok						
+assassins-creed-shadows.padpack	Assassin's Creed Shadows	name	Assassin's Creed Shadows	pages/a/Assassin's Creed Shadows.wiki	3159330	acshadows.exe	ok						
+assassins-creed-syndicate.padpack	Assassin's Creed Syndicate	name	Assassin's Creed Syndicate	pages/a/Assassin's Creed Syndicate.wiki	368500	acs.exe	ok						
+assassins-creed-unity.padpack	Assassin's Creed Unity	name	Assassin's Creed Unity	pages/a/Assassin's Creed Unity.wiki	289650	acu.exe	ok						
+assassins-creed-valhalla.padpack	Assassin's Creed Valhalla	name	Assassin's Creed Valhalla	pages/a/Assassin's Creed Valhalla.wiki	2208920	acvalhalla.exe	ok						
+assassins-creed.padpack	Assassin's Creed	name	Assassin's Creed	pages/a/Assassin's Creed.wiki	15100	assassinscreed_game.exe,assassinscreed_dx10.exe	ok						
+atomega.padpack	Atomega	name	Atomega	pages/a/Atomega.wiki	619880	atomega.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2017				
+avatar-frontiers-of-pandora.padpack	Avatar: Frontiers of Pandora	name	Avatar: Frontiers of Pandora	pages/a/Avatar: Frontiers of Pandora.wiki	2840770	afop.exe	ok						
+battlecore-arena.padpack	BattleCore Arena	name	BattleCore Arena	pages/b/BattleCore Arena.wiki	2613870	battlecorearena.exe,battlecorearenaclient-win64-shipping.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2025				
+beyond-good-evil-20th-anniversary-edition.padpack	Beyond Good & Evil: 20th Anniversary Edition	name	Beyond Good & Evil: 20th Anniversary Edition	pages/b/Beyond Good & Evil: 20th Anniversary Edition.wiki	2556990		info	no_exe	no_exe: pack has no executable rule				
+bloody-good-time.padpack	Bloody Good Time	name	Bloody Good Time	pages/b/Bloody Good Time.wiki	2450	bgt.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2010				
+brawlhalla.padpack	Brawlhalla	name	Brawlhalla	pages/b/Brawlhalla.wiki	291550	brawlhalla.exe,brawlhallagame.exe	ok						
+brothers-in-arms-earned-in-blood.padpack	Brothers in Arms: Earned in Blood	name	Brothers in Arms: Earned in Blood	pages/b/Brothers in Arms: Earned in Blood.wiki	19800	eib.exe	ok						
+brothers-in-arms-hells-highway.padpack	Brothers in Arms: Hell's Highway	name	Brothers in Arms: Hell's Highway	pages/b/Brothers in Arms: Hell's Highway.wiki	15390	biahh.exe	ok						
+bump-superbrawl.padpack	BUMP! Superbrawl	name	BUMP! Superbrawl	pages/b/BUMP! Superbrawl.wiki	2887910	bump! superbrawl.exe	ok						
+champions-of-anteria.padpack	Champions of Anteria	name	Champions of Anteria	pages/c/Champions of Anteria.wiki	374520	coa.exe	ok						
+champions-tactics-reforged.padpack	Champions Tactics Reforged	name	Champions Tactics Reforged	pages/c/Champions Tactics Reforged.wiki	3546740	championstacticsgame.exe	ok						
+child-of-light.padpack	Child of Light	name	Child of Light	pages/c/Child of Light.wiki	256290	childoflight.exe	ok						
+cloudberry-kingdom.padpack	Cloudberry Kingdom	name	Cloudberry Kingdom	pages/c/Cloudberry Kingdom.wiki	210870	cloudberrykingdom.exe	ok						
+cold-fear.padpack	Cold Fear	name	Cold Fear	pages/c/Cold Fear.wiki	15270	coldfear_retail.exe	ok						
+discovery-tour-ancient-egypt.padpack	Discovery Tour: Ancient Egypt	name	Discovery Tour: Ancient Egypt	pages/d/Discovery Tour: Ancient Egypt.wiki	775430		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2018				
+driver-parallel-lines.padpack	Driver: Parallel Lines	name	Driver: Parallel Lines	pages/d/Driver: Parallel Lines.wiki	21780	driverparallellines.exe	ok						
+far-cry-2.padpack	Far Cry 2	name	Far Cry 2	pages/f/Far Cry 2.wiki	19900	farcry2.exe	ok						
+far-cry-3-blood-dragon.padpack	Far Cry 3 Blood Dragon	name	Far Cry 3 Blood Dragon	pages/f/Far Cry 3 Blood Dragon.wiki	233270	fc3_blooddragon_d3d11.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2013				
+far-cry-4.padpack	Far Cry 4	name	Far Cry 4	pages/f/Far Cry 4.wiki	298110	farcry4.exe	ok						
+far-cry-6.padpack	Far Cry 6	name	Far Cry 6	pages/f/Far Cry 6.wiki	2369390	farcry6.exe	ok						
+far-cry-new-dawn.padpack	Far Cry New Dawn	name	Far Cry New Dawn	pages/f/Far Cry New Dawn.wiki	939960	farcrynewdawn.exe	ok						
+far-cry-primal.padpack	Far Cry Primal	name	Far Cry Primal	pages/f/Far Cry Primal.wiki	371660	fcprimal.exe	ok						
+flashback-2013.padpack	Flashback (2013)	name	Flashback (2013)	pages/f/Flashback (2013).wiki	245730	flashback.exe	ok						
+from-dust.padpack	From Dust	name	From Dust	pages/f/From Dust.wiki	33460	from_dust.exe	ok						
+growtopia.padpack	Growtopia	name	Growtopia	pages/g/Growtopia.wiki	866020	growtopia.exe	ok						
+heroes-of-might-and-magic-iii-remake.padpack	Heroes of Might and Magic III Remake	name	Heroes of Might and Magic III Remake	pages/h/Heroes of Might and Magic III Remake.wiki	3809850		info	no_exe	no_exe: pack has no executable rule				
+i-am-alive.padpack	I Am Alive	name	I Am Alive	pages/i/I Am Alive.wiki	214250	iamalive_game.exe	ok						
+immortals-fenyx-rising.padpack	Immortals Fenyx Rising	name	Immortals Fenyx Rising	pages/i/Immortals Fenyx Rising.wiki	2221920	immortalsfenyxrising.exe	ok						
+just-dance-2017.padpack	Just Dance 2017	name	Just Dance 2017	pages/j/Just Dance 2017.wiki	446560	jd2017.exe	ok						
+might-magic-clash-of-heroes.padpack	Might & Magic: Clash of Heroes	name	Might & Magic: Clash of Heroes	pages/m/Might & Magic: Clash of Heroes.wiki	61700	clashofheroes.exe	ok						
+might-magic-fates-tcg.padpack	Might & Magic: Fates TCG	name	Might & Magic: Fates TCG	pages/m/Might & Magic: Fates TCG.wiki	3918850	fates.exe	ok						
+might-magic-heroes-vi-shades-of-darkness.padpack	Might & Magic Heroes VI: Shades of Darkness	name	Might & Magic Heroes VI: Shades of Darkness	pages/m/Might & Magic Heroes VI: Shades of Darkness.wiki	229790		info	no_exe	no_exe: pack has no executable rule				
+might-magic-heroes-vii-trial-by-fire.padpack	Might & Magic Heroes VII: Trial by Fire	name	Might & Magic Heroes VII: Trial by Fire	pages/m/Might & Magic Heroes VII: Trial by Fire.wiki	445310		info	no_exe	no_exe: pack has no executable rule				
+might-magic-x-legacy.padpack	Might & Magic X - Legacy	name	Might & Magic X - Legacy	pages/m/Might & Magic X - Legacy.wiki	238750	might and magic x legacy.exe	ok						
+monopoly-2024.padpack	Monopoly (2024)	name	Monopoly (2024)	pages/m/Monopoly (2024).wiki	2929170		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2024				
+monopoly-madness.padpack	Monopoly Madness	name	Monopoly Madness	pages/m/Monopoly Madness.wiki	2383760	monopolymadness.exe	ok						
+monopoly-plus.padpack	Monopoly Plus	name	Monopoly Plus	pages/m/Monopoly Plus.wiki	562810	monopoly.exe	ok						
+monopoly-star-wars-heroes-vs-villains.padpack	Monopoly: Star Wars - Heroes vs. Villains	name	Monopoly: Star Wars - Heroes vs. Villains	pages/m/Monopoly: Star Wars - Heroes vs. Villains.wiki	3936610	monopolysw.exe	ok						
+morbid-metal.padpack	Morbid Metal	name	Morbid Metal	pages/m/Morbid Metal.wiki	1866130	morbid metal.exe	ok						
+myst-iii-exile.padpack	Myst III: Exile	name	Myst III: Exile	pages/m/Myst III: Exile.wiki	925930		warn	no_exe,passthrough_pre2006	no_exe: pack has no executable rule | passthrough_pre2006: passthrough pack, but controller_support=true xinput=- released=2001				
+prince-of-persia-2008.padpack	Prince of Persia (2008)	name	Prince of Persia (2008)	pages/p/Prince of Persia (2008).wiki	19980	princeofpersia_launcher.exe	ok						
+prince-of-persia-the-forgotten-sands.padpack	Prince of Persia: The Forgotten Sands	name	Prince of Persia: The Forgotten Sands	pages/p/Prince of Persia: The Forgotten Sands.wiki	33320	prince of persia.exe	ok						
+prince-of-persia-the-lost-crown.padpack	Prince of Persia: The Lost Crown	name	Prince of Persia: The Lost Crown	pages/p/Prince of Persia: The Lost Crown.wiki	2751000	thelostcrown.exe	ok						
+rayman-30th-anniversary-edition.padpack	Rayman: 30th Anniversary Edition	name	Rayman: 30th Anniversary Edition	pages/r/Rayman: 30th Anniversary Edition.wiki	4094670	rayman30th.exe	ok						
+rayman-legends-retold.padpack	Rayman Legends Retold	name	Rayman Legends Retold	pages/r/Rayman Legends Retold.wiki	4084710		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=unknown xinput=unknown released=2026				
+rayman-legends.padpack	Rayman Legends	name	Rayman Legends	pages/r/Rayman Legends.wiki	242550	rayman legends.exe	ok						
+rayman-origins.padpack	Rayman Origins	name	Rayman Origins	pages/r/Rayman Origins.wiki	207490	rayman origins.exe	ok						
+rayman-raving-rabbids.padpack	Rayman Raving Rabbids	name	Rayman Raving Rabbids	pages/r/Rayman Raving Rabbids.wiki	15080		info	no_exe	no_exe: pack has no executable rule				
+riders-republic.padpack	Riders Republic	name	Riders Republic	pages/r/Riders Republic.wiki	2290180	ridersrepublic.exe	ok						
+rocksmith-2014.padpack	Rocksmith 2014	name	Rocksmith 2014	pages/r/Rocksmith 2014.wiki	221680	rocksmith2014.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2013				
+rocksmith-plus.padpack	Rocksmith+	name+ids	Rocksmith+	pages/r/Rocksmith+.wiki	2834910	rocksmith+.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=unknown xinput=unknown released=2022				
+rocksmith.padpack	Rocksmith	name+ids	Rocksmith	pages/r/Rocksmith.wiki	205190	rocksmith.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2012				
+roller-champions.padpack	Roller Champions	name	Roller Champions	pages/r/Roller Champions.wiki	2211280	roller.exe	ok						
+scott-pilgrim-vs-the-world-the-game.padpack	Scott Pilgrim vs. The World: The Game	name	Scott Pilgrim vs. The World: The Game	pages/s/Scott Pilgrim vs. The World: The Game.wiki	2215260	scott.exe	ok						
+shootmania-storm.padpack	ShootMania: Storm	name	ShootMania: Storm	pages/s/ShootMania: Storm.wiki	229870		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2013				
+silent-hunter-4-wolves-of-the-pacific.padpack	Silent Hunter 4: Wolves of the Pacific	name	Silent Hunter 4: Wolves of the Pacific	pages/s/Silent Hunter 4: Wolves of the Pacific.wiki	15200	sh4.exe	ok						
+silent-hunter-5-battle-of-the-atlantic.padpack	Silent Hunter 5: Battle of the Atlantic	name	Silent Hunter 5: Battle of the Atlantic	pages/s/Silent Hunter 5: Battle of the Atlantic.wiki	48110	sh5.exe	ok						
+skull-and-bones.padpack	Skull and Bones	name	Skull and Bones	pages/s/Skull and Bones.wiki	2853730	skullandbones.exe	ok						
+south-park-the-stick-of-truth.padpack	South Park: The Stick of Truth	name	South Park: The Stick of Truth	pages/s/South Park: The Stick of Truth.wiki	213670	south park - the stick of truth.exe	ok						
+star-wars-outlaws.padpack	Star Wars Outlaws	name	Star Wars Outlaws	pages/s/Star Wars Outlaws.wiki	2842040	outlaws.exe	ok						
+starlink-battle-for-atlas.padpack	Starlink: Battle for Atlas	name	Starlink: Battle for Atlas	pages/s/Starlink: Battle for Atlas.wiki	950050	starlink.exe	ok						
+steep.padpack	Steep	name	Steep	pages/s/Steep.wiki	460920	steep.exe	ok						
+tetris-ultimate.padpack	Tetris Ultimate	name	Tetris Ultimate	pages/t/Tetris Ultimate.wiki	316750	tetrisultimate.exe	ok						
+the-crew-2.padpack	The Crew 2	name	The Crew 2	pages/t/The Crew 2.wiki	646910	thecrew2.exe	ok						
+the-crew-motorfest.padpack	The Crew Motorfest	name	The Crew Motorfest	pages/t/The Crew Motorfest.wiki	2698940	thecrewmotorfest.exe	ok						
+the-crew.padpack	The Crew	name	The Crew	pages/t/The Crew.wiki	241560	thecrew.exe	ok						
+the-rogue-prince-of-persia.padpack	The Rogue Prince of Persia	name	The Rogue Prince of Persia	pages/t/The Rogue Prince of Persia.wiki	2717880	the rogue prince of persia.exe	ok						
+the-settlers-7-history-edition.padpack	The Settlers 7: History Edition	name	The Settlers 7: History Edition	pages/t/The Settlers 7: History Edition.wiki	965320	settlers7r.exe	ok						
+the-settlers-heritage-of-kings-history-edition.padpack	The Settlers: Heritage of Kings - History Edition	name	The Settlers: Heritage of Kings - History Edition	pages/t/The Settlers: Heritage of Kings - History Edition.wiki	965300	settlershok.exe	ok						
+the-settlers-new-allies.padpack	The Settlers: New Allies	name	The Settlers: New Allies	pages/t/The Settlers: New Allies.wiki	2750080	the_settlers.exe	warn	passthrough_no_support	passthrough_no_support: passthrough pack, but controller_support=false xinput=unknown released=2023				
+the-settlers-rise-of-an-empire-history-edition.padpack	The Settlers: Rise of an Empire - History Edition	name	The Settlers: Rise of an Empire - History Edition	pages/t/The Settlers: Rise of an Empire - History Edition.wiki	965310	settlers6r.exe	ok						
+the-sum-of-all-fears.padpack	The Sum of All Fears	name	The Sum of All Fears	pages/t/The Sum of All Fears.wiki	19810	soaf.exe	ok						
+tom-clancys-endwar.padpack	Tom Clancy's EndWar	name	Tom Clancy's EndWar	pages/t/Tom Clancy's EndWar.wiki	21800	endwar.exe	ok						
+tom-clancys-ghost-recon-breakpoint.padpack	Tom Clancy's Ghost Recon Breakpoint	name	Tom Clancy's Ghost Recon Breakpoint	pages/t/Tom Clancy's Ghost Recon Breakpoint.wiki	2231380	grb.exe,grb_vulkan.exe	ok						
+tom-clancys-ghost-recon-future-soldier.padpack	Tom Clancy's Ghost Recon: Future Soldier	name	Tom Clancy's Ghost Recon: Future Soldier	pages/t/Tom Clancy's Ghost Recon: Future Soldier.wiki	212630	future soldier.exe,future soldier dx11.exe	ok						
+tom-clancys-ghost-recon-wildlands.padpack	Tom Clancy's Ghost Recon Wildlands	name	Tom Clancy's Ghost Recon Wildlands	pages/t/Tom Clancy's Ghost Recon Wildlands.wiki	460930	grw.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2017				
+tom-clancys-ghost-recon.padpack	Tom Clancy's Ghost Recon	name	Tom Clancy's Ghost Recon	pages/t/Tom Clancy's Ghost Recon.wiki	15300	ghostrecon.exe	ok						
+tom-clancys-rainbow-6-tactics.padpack	Tom Clancy's Rainbow 6 Tactics	name	Tom Clancy's Rainbow 6 Tactics	pages/t/Tom Clancy's Rainbow 6 Tactics.wiki	3621390		info	no_exe	no_exe: pack has no executable rule				
+tom-clancys-rainbow-six-extraction.padpack	Tom Clancy's Rainbow Six Extraction	name	Tom Clancy's Rainbow Six Extraction	pages/t/Tom Clancy's Rainbow Six Extraction.wiki	2379390	r6-extraction.exe	ok						
+tom-clancys-rainbow-six-lockdown.padpack	Tom Clancy's Rainbow Six: Lockdown	name	Tom Clancy's Rainbow Six: Lockdown	pages/t/Tom Clancy's Rainbow Six: Lockdown.wiki	15000	lockdown.exe	ok						
+tom-clancys-rainbow-six-siege.padpack	Tom Clancy's Rainbow Six Siege	name	Tom Clancy's Rainbow Six Siege	pages/t/Tom Clancy's Rainbow Six Siege.wiki	359550	rainbowsix.exe,rainbowsix_vulkan.exe	ok						
+tom-clancys-rainbow-six-vegas-2.padpack	Tom Clancy's Rainbow Six: Vegas 2	name	Tom Clancy's Rainbow Six: Vegas 2	pages/t/Tom Clancy's Rainbow Six: Vegas 2.wiki	15120	r6vegas2_game.exe	ok						
+tom-clancys-rainbow-six-vegas.padpack	Tom Clancy's Rainbow Six: Vegas	name	Tom Clancy's Rainbow Six: Vegas	pages/t/Tom Clancy's Rainbow Six: Vegas.wiki	13540	r6vegas_game.exe	ok						
+tom-clancys-splinter-cell-blacklist.padpack	Tom Clancy's Splinter Cell: Blacklist	name	Tom Clancy's Splinter Cell: Blacklist	pages/t/Tom Clancy's Splinter Cell: Blacklist.wiki	235600	blacklist_dx11_game.exe,blacklist_launcher.exe	ok						
+tom-clancys-splinter-cell-chaos-theory.padpack	Tom Clancy's Splinter Cell: Chaos Theory	name	Tom Clancy's Splinter Cell: Chaos Theory	pages/t/Tom Clancy's Splinter Cell: Chaos Theory.wiki	13570	splintercell3.exe	ok						
+tom-clancys-splinter-cell-conviction.padpack	Tom Clancy's Splinter Cell: Conviction	name	Tom Clancy's Splinter Cell: Conviction	pages/t/Tom Clancy's Splinter Cell: Conviction.wiki	33229		info	no_exe	no_exe: pack has no executable rule				
+tom-clancys-splinter-cell-double-agent.padpack	Tom Clancy's Splinter Cell: Double Agent	name	Tom Clancy's Splinter Cell: Double Agent	pages/t/Tom Clancy's Splinter Cell: Double Agent.wiki	13580	scdalauncher.exe	ok						
+tom-clancys-splinter-cell-pandora-tomorrow.padpack	Tom Clancy's Splinter Cell: Pandora Tomorrow	name	Tom Clancy's Splinter Cell: Pandora Tomorrow	pages/t/Tom Clancy's Splinter Cell: Pandora Tomorrow.wiki	3929740	splintercell2.exe	ok						
+tom-clancys-the-division-2.padpack	Tom Clancy's The Division 2	name	Tom Clancy's The Division 2	pages/t/Tom Clancy's The Division 2.wiki	2221490	thedivision2.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2019				
+tom-clancys-the-division-resurgence.padpack	Tom Clancy's The Division Resurgence	name	Tom Clancy's The Division Resurgence	pages/t/Tom Clancy's The Division Resurgence.wiki	3749720		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=limited xinput=true released=2026				
+tom-clancys-the-division.padpack	Tom Clancy's The Division	name	Tom Clancy's The Division	pages/t/Tom Clancy's The Division.wiki	365590	the division.exe,thedivision.exe	ok						
+trackmania-2-canyon.padpack	TrackMania 2: Canyon	name	TrackMania 2: Canyon	pages/t/TrackMania 2: Canyon.wiki	228760		info	no_exe	no_exe: pack has no executable rule				
+trackmania-2-lagoon.padpack	Trackmania 2: Lagoon	name	Trackmania 2: Lagoon	pages/t/Trackmania 2: Lagoon.wiki	600720		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2017				
+trackmania-2-stadium.padpack	TrackMania 2: Stadium	name	TrackMania 2: Stadium	pages/t/TrackMania 2: Stadium.wiki	232910		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2013				
+trackmania-2-valley.padpack	TrackMania 2: Valley	name	TrackMania 2: Valley	pages/t/TrackMania 2: Valley.wiki	243360		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2013				
+trackmania-2020.padpack	Trackmania (2020)	name	Trackmania (2020)	pages/t/Trackmania (2020).wiki	2225070	trackmania.exe	ok						
+trackmania-nations-forever.padpack	TrackMania Nations Forever	name	TrackMania Nations Forever	pages/t/TrackMania Nations Forever.wiki	11020		info	no_exe	no_exe: pack has no executable rule				
+trackmania-turbo.padpack	Trackmania Turbo	name	Trackmania Turbo	pages/t/Trackmania Turbo.wiki	375900	trackmaniaturbo.exe	ok						
+trackmania-united-forever.padpack	TrackMania United Forever	name	TrackMania United Forever	pages/t/TrackMania United Forever.wiki	7200		info	no_exe	no_exe: pack has no executable rule				
+trials-evolution-gold-edition.padpack	Trials Evolution: Gold Edition	name	Trials Evolution: Gold Edition	pages/t/Trials Evolution: Gold Edition.wiki	220160	trialsfmx.exe	ok						
+trials-fusion.padpack	Trials Fusion	name	Trials Fusion	pages/t/Trials Fusion.wiki	245490	trials_fusion.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2014				
+trials-of-the-blood-dragon.padpack	Trials of the Blood Dragon	name	Trials of the Blood Dragon	pages/t/Trials of the Blood Dragon.wiki	435480	trialsblooddragon.exe	ok						
+trials-rising.padpack	Trials Rising	name	Trials Rising	pages/t/Trials Rising.wiki	641080	trialsrising.exe	ok						
+valiant-hearts-coming-home.padpack	Valiant Hearts: Coming Home	name	Valiant Hearts: Coming Home	pages/v/Valiant Hearts: Coming Home.wiki	2741360	valiant hearts coming home.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2024				
+valiant-hearts-the-great-war.padpack	Valiant Hearts: The Great War	name	Valiant Hearts: The Great War	pages/v/Valiant Hearts: The Great War.wiki	260230	valiant hearts.exe	ok						
+voodoo-dice.padpack	Voodoo Dice	name	Voodoo Dice	pages/v/Voodoo Dice.wiki	48150	voodoodice.exe	ok						
+watch-dogs-2.padpack	Watch Dogs 2	name	Watch Dogs 2	pages/w/Watch Dogs 2.wiki	447040	watchdogs2.exe	ok						
+watch-dogs-legion.padpack	Watch Dogs: Legion	name	Watch Dogs: Legion	pages/w/Watch Dogs: Legion.wiki	2239550	watchdogslegion.exe	ok						
+watch-dogs.padpack	Watch Dogs	name	Watch Dogs	pages/w/Watch Dogs.wiki	243470	watch_dogs.exe	ok						
+zeit.padpack	Zeit²	name	Zeit²	pages/z/Zeit².wiki	33390	zeit2.exe	ok						
+zombi-2015.padpack	Zombi (2015)	name	Zombi (2015)	pages/z/Zombi (2015).wiki	339230	zombi.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2015				
