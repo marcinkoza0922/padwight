@@ -1,6 +1,7 @@
 pack	name	match	game	wiki_file	steam_ids	executables	status	findings	details	bindings_checked	last_smoke	last_full_play	manual_notes
 .padpack	觅长生	name+ids	觅长生	pages/_/觅长生.wiki	1189490		info	no_exe	no_exe: pack has no executable rule				
 100-orange-juice.padpack	100% Orange Juice!	name	100% Orange Juice!	pages/0-9/100% Orange Juice!.wiki	282800	100orange.exe	ok						
+11-11-memories-retold.padpack	11-11 Memories Retold	name	11-11 Memories Retold	pages/0-9/11-11 Memories Retold.wiki	735580	11-11 memories retold.exe	ok						
 20-minutes-till-dawn.padpack	20 Minutes Till Dawn	name	20 Minutes till Dawn	pages/0-9/20 Minutes till Dawn.wiki	1966900		info	no_exe	no_exe: pack has no executable rule				
 5d-chess-with-multiverse-time-travel.padpack	5D Chess With Multiverse Time Travel	name	5D Chess With Multiverse Time Travel	pages/0-9/5D Chess With Multiverse Time Travel.wiki	1349230	5dchesswithmultiversetimetravel.exe	ok						
 60-seconds-reatomized.padpack	60 Seconds! Reatomized	name	60 Seconds! Reatomized	pages/0-9/60 Seconds! Reatomized.wiki	1012880	60secondsreatomized.exe	ok						
@@ -8,7 +9,12 @@ pack	name	match	game	wiki_file	steam_ids	executables	status	findings	details	bin
 911-operator.padpack	911 Operator	name	911 Operator	pages/0-9/911 Operator.wiki	503560	911.exe	ok						
 a-dance-of-fire-and-ice.padpack	A Dance of Fire and Ice	name	A Dance of Fire and Ice	pages/a/A Dance of Fire and Ice.wiki	977950	a dance of fire and ice/a dance of fire and ice.exe	ok						
 abuse.padpack	Abuse	name	Abuse	pages/a/Abuse.wiki		abuse.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
+accel-world-vs-sword-art-online.padpack	Accel World vs. Sword Art Online	name	Accel World vs. Sword Art Online	pages/a/Accel World vs. Sword Art Online.wiki	607880		info	no_exe	no_exe: pack has no executable rule				
 ace-attorney-investigations-collection.padpack	Ace Attorney Investigations Collection	name	Ace Attorney Investigations Collection	pages/a/Ace Attorney Investigations Collection.wiki	2401970	gk12.exe	ok						
+ace-combat-7-skies-unknown.padpack	Ace Combat 7: Skies Unknown	name	Ace Combat 7: Skies Unknown	pages/a/Ace Combat 7: Skies Unknown.wiki	502500	ace7game.exe	ok						
+ace-combat-8-wings-of-theve.padpack	Ace Combat 8: Wings of Theve	name	Ace Combat 8: Wings of Theve	pages/a/Ace Combat 8: Wings of Theve.wiki	2288340	acecombat8.exe	ok						
+ace-combat-assault-horizon-enhanced-edition.padpack	Ace Combat: Assault Horizon - Enhanced Edition	name	Ace Combat: Assault Horizon - Enhanced Edition	pages/a/Ace Combat: Assault Horizon - Enhanced Edition.wiki	228400	ace combat_ah.exe	ok						
+ace-combat-zero-the-belkan-war.padpack	Ace Combat Zero: The Belkan War	name	Ace Combat Zero: The Belkan War	pages/a/Ace Combat Zero: The Belkan War.wiki	5370600	acz.exe	ok						
 ace-of-spades-battle-builder.padpack	Ace of Spades: Battle Builder	name	Ace of Spades: Battle Builder	pages/a/Ace of Spades: Battle Builder.wiki	224540		info	no_exe	no_exe: pack has no executable rule				
 across-the-obelisk.padpack	Across the Obelisk	name	Across the Obelisk	pages/a/Across the Obelisk.wiki	1385380	acrosstheobelisk.exe	ok						
 actraiser-renaissance.padpack	Actraiser Renaissance	name	Actraiser Renaissance	pages/a/Actraiser Renaissance.wiki	1393370		info	no_exe	no_exe: pack has no executable rule				
@@ -53,11 +59,16 @@ apb-reloaded.padpack	APB Reloaded	name	APB Reloaded	pages/a/APB Reloaded.wiki	11
 apollo-justice-ace-attorney-trilogy.padpack	Apollo Justice: Ace Attorney Trilogy	name	Apollo Justice: Ace Attorney Trilogy	pages/a/Apollo Justice: Ace Attorney Trilogy.wiki	2187220	gs456.exe	ok						
 ar-nosurge-ode-to-an-unborn-star-dx.padpack	Ar Nosurge: Ode to an Unborn Star DX	name	Ar Nosurge: Ode to an Unborn Star DX	pages/a/Ar Nosurge: Ode to an Unborn Star DX.wiki	1477490		info	no_exe	no_exe: pack has no executable rule				
 arcade-classics-anniversary-collection.padpack	Arcade Classics Anniversary Collection	name	Arcade Classics Anniversary Collection	pages/a/Arcade Classics Anniversary Collection.wiki	1018000	aa_ac_arcadeclassics.exe	info	exe_no_data,passthrough_unconfirmed	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2019				
+arcade-game-series-dig-dug.padpack	Arcade Game Series: Dig Dug	name	Arcade Game Series: Dig Dug	pages/a/Arcade Game Series: Dig Dug.wiki	403400	dig dug.exe	ok						
+arcade-game-series-galaga.padpack	Arcade Game Series: Galaga	name	Arcade Game Series: Galaga	pages/a/Arcade Game Series: Galaga.wiki	403430	galaga.exe	ok						
+arcade-game-series-ms-pac-man.padpack	Arcade Game Series: Ms. Pac-Man	name	Arcade Game Series: Ms. Pac-Man	pages/a/Arcade Game Series: Ms. Pac-Man.wiki	403410	ms. pac-man.exe	ok						
+arcade-game-series-pac-man.padpack	Arcade Game Series: Pac-Man	name	Arcade Game Series: Pac-Man	pages/a/Arcade Game Series: Pac-Man.wiki	394160	pac-man/pac-man.exe	ok						
 arcanum-of-steamworks-magick-obscura.padpack	Arcanum: Of Steamworks & Magick Obscura	name	Arcanum: Of Steamworks & Magick Obscura	pages/a/Arcanum: Of Steamworks & Magick Obscura.wiki	500810		info	no_exe	no_exe: pack has no executable rule				
 archeage.padpack	ArcheAge	name	ArcheAge	pages/a/ArcheAge.wiki	304030		info	no_exe	no_exe: pack has no executable rule				
 area-51-2005.padpack	Area 51 (2005)	name	Area 51 (2005)	pages/a/Area 51 (2005).wiki		area51.exe,area 51.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 arma-2.padpack	Arma 2	name	Arma 2	pages/a/Arma 2.wiki	33900	arma2.exe	ok						
 arma-3.padpack	Arma 3	name	Arma 3	pages/a/Arma 3.wiki	107410	arma3_x64.exe,arma3.exe	ok						
+armored-core-vi-fires-of-rubicon.padpack	Armored Core VI: Fires of Rubicon	name	Armored Core VI: Fires of Rubicon	pages/a/Armored Core VI: Fires of Rubicon.wiki	1888160	armoredcore6.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=limited xinput=limited released=2023				
 art-of-war-red-tides.padpack	Art of War: Red Tides	name	Art of War: Red Tides	pages/a/Art of War: Red Tides.wiki	558100	u1game.exe	ok						
 artifact.padpack	Artifact	name+ids	Artifact	pages/a/Artifact.wiki	583950	dcg.exe	ok						
 arx-fatalis.padpack	Arx Fatalis	name	Arx Fatalis	pages/a/Arx Fatalis.wiki	1700	arx.exe	ok						
@@ -91,6 +102,7 @@ atelier-yumia-the-alchemist-of-memories-the-envisioned-land.padpack	Atelier Yumi
 atlantis-the-lost-tales.padpack	Atlantis: The Lost Tales	name	Atlantis: The Lost Tales	pages/a/Atlantis: The Lost Tales.wiki		atlantis.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 atlas.padpack	Atlas	name	Atlas	pages/a/Atlas.wiki	834910		info	no_exe	no_exe: pack has no executable rule				
 atri-my-dear-moments.padpack	ATRI -My Dear Moments-	name	ATRI -My Dear Moments-	pages/a/ATRI -My Dear Moments-.wiki	1230140		info	no_exe	no_exe: pack has no executable rule				
+attractio.padpack	Attractio	name	Attractio	pages/a/Attractio.wiki	317060	attractio.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2016				
 aura-kingdom.padpack	Aura Kingdom	name	Aura Kingdom	pages/a/Aura Kingdom.wiki	268420		info	no_exe	no_exe: pack has no executable rule				
 automation-the-car-company-tycoon-game.padpack	Automation - The Car Company Tycoon Game	name	Automation - The Car Company Tycoon Game	pages/a/Automation - The Car Company Tycoon Game.wiki	293760	automationgame-win64-shipping.exe	ok						
 babylons-fall.padpack	Babylon's Fall	name	Babylon's Fall	pages/b/Babylon's Fall.wiki	889750		info	no_exe	no_exe: pack has no executable rule				
@@ -107,6 +119,7 @@ ballisticng.padpack	BallisticNG	name	BallisticNG	pages/b/BallisticNG.wiki	473770
 banished.padpack	Banished	name	Banished	pages/b/Banished.wiki	242920	application-steam-x64.exe,application-steam-x32.exe,application-x64.exe,application-x32.exe	ok						
 barnyard.padpack	Barnyard	name	Barnyard	pages/b/Barnyard.wiki		barnyard.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 barotrauma.padpack	Barotrauma	name	Barotrauma	pages/b/Barotrauma.wiki	602960	Barotrauma.exe,Barotrauma	ok						
+baten-kaitos-i-ii-hd-remaster.padpack	Baten Kaitos I & II HD Remaster	name	Baten Kaitos I & II HD Remaster	pages/b/Baten Kaitos I & II HD Remaster.wiki	2146170	batenkaitos1/batenkaitos.exe,batenkaitos2/batenkaitos.exe	ok						
 batman-arkham-asylum.padpack	Batman: Arkham Asylum	name	Batman: Arkham Asylum	pages/b/Batman: Arkham Asylum.wiki	35140	shippingpc-bmgame.exe	ok						
 battalion-1944.padpack	Battalion 1944	name	Battalion 1944	pages/b/Battalion 1944.wiki	489940	battalionclient-win64-shipping.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2019				
 battle-brothers.padpack	Battle Brothers	name	Battle Brothers	pages/b/Battle Brothers.wiki	365360	battlebrothers.exe	ok						
@@ -126,8 +139,10 @@ bendy-and-the-ink-machine.padpack	Bendy and the Ink Machine	name	Bendy and the I
 besiege.padpack	Besiege	name	Besiege	pages/b/Besiege.wiki	346010	besiege.exe,Besiege.x86_64	warn	exe_unseen	exe_unseen: Besiege.x86_64 (seen: besiege.exe)				
 beyond-good-and-evil.padpack	Beyond Good & Evil	name	Beyond Good & Evil	pages/b/Beyond Good & Evil.wiki	15130	BGE.exe	ok						
 bigfoot.padpack	Bigfoot	name	Bigfoot	pages/b/Bigfoot.wiki	509980	bigfoot-win64-shipping.exe	ok						
+billion-road.padpack	Billion Road	name	Billion Road	pages/b/Billion Road.wiki	1163040		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2020				
 bionic-commando-2009.padpack	Bionic Commando (2009)	name	Bionic Commando (2009)	pages/b/Bionic Commando (2009).wiki	21670	bionic_commando.exe	ok						
 bionic-commando-rearmed.padpack	Bionic Commando Rearmed	name	Bionic Commando Rearmed	pages/b/Bionic Commando Rearmed.wiki	21680	bcr.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
+black-clover-quartet-knights.padpack	Black Clover: Quartet Knights	name	Black Clover: Quartet Knights	pages/b/Black Clover: Quartet Knights.wiki	714080	quartetknights.exe	ok						
 black-desert.padpack	Black Desert	name	Black Desert	pages/b/Black Desert.wiki	582660		info	no_exe	no_exe: pack has no executable rule				
 black-squad.padpack	Black Squad	name	Black Squad	pages/b/Black Squad.wiki	550650		info	no_exe	no_exe: pack has no executable rule				
 black-the-fall.padpack	Black the Fall	name	Black the Fall	pages/b/Black the Fall.wiki	308060	blackthefall.exe	ok						
@@ -137,6 +152,7 @@ blackshot-mercenary-warfare-fps.padpack	BlackShot: Mercenary Warfare FPS	name	Bl
 blackwake.padpack	Blackwake	name	Blackwake	pages/b/Blackwake.wiki	420290	blackwake.exe	ok						
 blade-of-darkness.padpack	Blade of Darkness	name	Blade of Darkness	pages/b/Blade of Darkness.wiki	1710170		info	no_exe	no_exe: pack has no executable rule				
 blade-sorcery.padpack	Blade & Sorcery	name	Blade & Sorcery	pages/b/Blade & Sorcery.wiki	629730		info	no_exe	no_exe: pack has no executable rule				
+bleach-rebirth-of-souls.padpack	Bleach: Rebirth of Souls	name	Bleach: Rebirth of Souls	pages/b/Bleach: Rebirth of Souls.wiki	1689620	bleach_rebirth_of_souls.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=limited xinput=limited released=2025				
 blitzkrieg-3.padpack	Blitzkrieg 3	name	Blitzkrieg 3	pages/b/Blitzkrieg 3.wiki	235380		info	no_exe	no_exe: pack has no executable rule				
 block-n-load.padpack	Block N Load	name	Block N Load	pages/b/Block N Load.wiki	299360		info	no_exe	no_exe: pack has no executable rule				
 blockland.padpack	Blockland	name	Blockland	pages/b/Blockland.wiki	250340	blockland.exe	ok						
@@ -150,6 +166,7 @@ blue-reflection-second-light.padpack	Blue Reflection: Second Light	name	Blue Ref
 blue-reflection.padpack	Blue Reflection	name+ids	Blue Reflection	pages/b/Blue Reflection.wiki	658260		info	no_exe	no_exe: pack has no executable rule				
 bodycam.padpack	Bodycam	name	Bodycam	pages/b/Bodycam.wiki	2406770	win64/bodycam-win64-shipping.exe	ok						
 bomb-rush-cyberfunk.padpack	Bomb Rush Cyberfunk	name	Bomb Rush Cyberfunk	pages/b/Bomb Rush Cyberfunk.wiki	1353230	Bomb Rush Cyberfunk.exe	ok						
+boomeroad.padpack	Boomeroad	name	Boomeroad	pages/b/Boomeroad.wiki	2512820	boomeroad.exe	ok						
 borderlands-game-of-the-year-enhanced.padpack	Borderlands: Game of the Year Enhanced	name	Borderlands: Game of the Year Enhanced	pages/b/Borderlands: Game of the Year Enhanced.wiki	729040	borderlandsgoty.exe	ok						
 botanicula.padpack	Botanicula	name	Botanicula	pages/b/Botanicula.wiki	207690	botanicula.exe	ok						
 boundless.padpack	Boundless	name	Boundless	pages/b/Boundless.wiki	324510	boundless.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2018				
@@ -179,6 +196,8 @@ capcom-arcade-stadium.padpack	Capcom Arcade Stadium	name	Capcom Arcade Stadium	p
 capcom-beat-em-up-bundle.padpack	Capcom Beat 'Em Up Bundle	name	Capcom Beat 'Em Up Bundle	pages/c/Capcom Beat 'Em Up Bundle.wiki	885150	cbeub.exe	ok						
 capcom-fighting-collection-2.padpack	Capcom Fighting Collection 2	name	Capcom Fighting Collection 2	pages/c/Capcom Fighting Collection 2.wiki	2400430	capcomfightingcollection2.exe	ok						
 capcom-fighting-collection.padpack	Capcom Fighting Collection	name	Capcom Fighting Collection	pages/c/Capcom Fighting Collection.wiki	1685750	capcomfightingcollection.exe	ok						
+captain-tsubasa-2-world-fighters.padpack	Captain Tsubasa 2: World Fighters	name	Captain Tsubasa 2: World Fighters	pages/c/Captain Tsubasa 2: World Fighters.wiki	2172910		info	no_exe	no_exe: pack has no executable rule				
+captain-tsubasa-rise-of-new-champions.padpack	Captain Tsubasa: Rise of New Champions	name	Captain Tsubasa: Rise of New Champions	pages/c/Captain Tsubasa: Rise of New Champions.wiki	1163550	captain tsubasa rise of new champions.exe	ok						
 car-mechanic-simulator-2015.padpack	Car Mechanic Simulator 2015	name	Car Mechanic Simulator 2015	pages/c/Car Mechanic Simulator 2015.wiki	320300	cms2015.exe	ok						
 car-mechanic-simulator-2018.padpack	Car Mechanic Simulator 2018	name	Car Mechanic Simulator 2018	pages/c/Car Mechanic Simulator 2018.wiki	645630	cms2018.exe	ok						
 car-mechanic-simulator-2021.padpack	Car Mechanic Simulator 2021	name	Car Mechanic Simulator 2021	pages/c/Car Mechanic Simulator 2021.wiki	1190000		warn	mapped_but_native,no_exe	no_exe: pack has no executable rule | mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2021				
@@ -216,6 +235,8 @@ clicker-heroes.padpack	Clicker Heroes	name	Clicker Heroes	pages/c/Clicker Heroes
 clive-barkers-undying.padpack	Clive Barker's Undying	name	Clive Barker's Undying	pages/c/Clive Barker's Undying.wiki		undying.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 clock-tower-rewind.padpack	Clock Tower: Rewind	name	Clock Tower: Rewind	pages/c/Clock Tower: Rewind.wiki	2794770	clocktower.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 close-quarters-conflict.padpack	Close Quarters Conflict	name	Close Quarters Conflict	pages/c/Close Quarters Conflict.wiki		cqc.exe,closequarters.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
+code-vein-ii.padpack	Code Vein II	name	Code Vein II	pages/c/Code Vein II.wiki	2362060	codevein2-win64-shipping.exe,codevein2.exe	ok						
+code-vein.padpack	Code Vein	name	Code Vein	pages/c/Code Vein.wiki	678960	codevein-win64-shipping.exe,codevein.exe	ok						
 codename-cure.padpack	Codename CURE	name	Codename CURE	pages/c/Codename CURE.wiki	355180		info	no_exe	no_exe: pack has no executable rule				
 collection-of-saga-final-fantasy-legend.padpack	Collection of SaGa: Final Fantasy Legend	name	Collection of SaGa: Final Fantasy Legend	pages/c/Collection of SaGa: Final Fantasy Legend.wiki	1642620		info	no_exe	no_exe: pack has no executable rule				
 colony-survival.padpack	Colony Survival	name	Colony Survival	pages/c/Colony Survival.wiki	366090	colonyclient.exe	ok						
@@ -282,8 +303,11 @@ danganronpa-2-goodbye-despair.padpack	Danganronpa 2: Goodbye Despair	name	Dangan
 danganronpa-trigger-happy-havoc.padpack	Danganronpa: Trigger Happy Havoc	name	Danganronpa: Trigger Happy Havoc	pages/d/Danganronpa: Trigger Happy Havoc.wiki	413410	danganronpa.exe	warn	mapped_but_native	mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2016				
 dark-deception.padpack	Dark Deception	name	Dark Deception	pages/d/Dark Deception.wiki	332950	ddeception-win64-shipping.exe	ok						
 dark-messiah-of-might-and-magic.padpack	Dark Messiah of Might and Magic	name	Dark Messiah of Might and Magic	pages/d/Dark Messiah of Might and Magic.wiki	2100	Dark Messiah Might and Magic Single Player/mm.exe	ok						
+dark-souls-ii-scholar-of-the-first-sin.padpack	Dark Souls II: Scholar of the First Sin	name	Dark Souls II: Scholar of the First Sin	pages/d/Dark Souls II: Scholar of the First Sin.wiki	335300	dark souls ii scholar of the first sin/game/darksoulsii.exe	ok						
+dark-souls-ii.padpack	Dark Souls II	name	Dark Souls II	pages/d/Dark Souls II.wiki	236430	dark souls ii/game/darksoulsii.exe	ok						
 dark-souls-iii.padpack	Dark Souls III	name	Dark Souls III	pages/d/Dark Souls III.wiki	374320	darksoulsiii.exe	ok						
 dark-souls-prepare-to-die-edition.padpack	Dark Souls: Prepare to Die Edition	name	Dark Souls: Prepare to Die Edition	pages/d/Dark Souls: Prepare to Die Edition.wiki	211420	darksouls.exe	ok						
+dark-souls-remastered.padpack	Dark Souls Remastered	name	Dark Souls Remastered	pages/d/Dark Souls Remastered.wiki	570940	darksoulsremastered.exe	ok						
 dark-void-zero.padpack	Dark Void Zero	name	Dark Void Zero	pages/d/Dark Void Zero.wiki	45730	darkvoidzero.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 dark-void.padpack	Dark Void	name	Dark Void	pages/d/Dark Void.wiki	45710		info	no_exe	no_exe: pack has no executable rule				
 darwins-paradox.padpack	Darwin's Paradox!	name	Darwin's Paradox!	pages/d/Darwin's Paradox!.wiki	2989180	darwin's paradox.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
@@ -308,6 +332,7 @@ dead-space.padpack	Dead Space	name	Dead Space	pages/d/Dead Space.wiki	17470	Dead
 deadbeat-heroes.padpack	Deadbeat Heroes	name	Deadbeat Heroes	pages/d/Deadbeat Heroes.wiki	614090		info	no_exe	no_exe: pack has no executable rule				
 deadside.padpack	Deadside	name	Deadside	pages/d/Deadside.wiki	895400		info	no_exe	no_exe: pack has no executable rule				
 death-and-taxes.padpack	Death and Taxes	name	Death and Taxes	pages/d/Death and Taxes.wiki	1166290	death and taxes.exe	ok						
+death-note-killer-within.padpack	Death Note: Killer Within	name	Death Note: Killer Within	pages/d/Death Note: Killer Within.wiki	2213190	death note killer within.exe	ok						
 deathmatch-classic.padpack	Deathmatch Classic	name	Deathmatch Classic	pages/d/Deathmatch Classic.wiki	40		info	no_exe	no_exe: pack has no executable rule				
 deathtrap-dungeon.padpack	Deathtrap Dungeon	name	Deathtrap Dungeon	pages/d/Deathtrap Dungeon.wiki	245010		info	no_exe	no_exe: pack has no executable rule				
 deceit.padpack	Deceit	name	Deceit	pages/d/Deceit.wiki	466240	deceit.exe	ok						
@@ -338,6 +363,10 @@ devour.padpack	Devour	name	Devour	pages/d/Devour.wiki	1274570		info	no_exe	no_ex
 diablo-ii.padpack	Diablo II	name	Diablo II	pages/d/Diablo II.wiki		diablo ii.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 diablo.padpack	Diablo	name	Diablo	pages/d/Diablo.wiki		diablo.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 digger-online.padpack	Digger Online	name	Digger Online	pages/d/Digger Online.wiki	278970	digger.exe	ok						
+digimon-story-cyber-sleuth-complete-edition.padpack	Digimon Story: Cyber Sleuth Complete Edition	name	Digimon Story: Cyber Sleuth Complete Edition	pages/d/Digimon Story: Cyber Sleuth Complete Edition.wiki	1042550	digimon story cs.exe	ok						
+digimon-story-time-stranger.padpack	Digimon Story: Time Stranger	name	Digimon Story: Time Stranger	pages/d/Digimon Story: Time Stranger.wiki	1984270	digimon story time stranger.exe	ok						
+digimon-survive.padpack	Digimon Survive	name	Digimon Survive	pages/d/Digimon Survive.wiki	871980	digimonsurvive.exe	ok						
+digimon-world-next-order.padpack	Digimon World: Next Order	name	Digimon World: Next Order	pages/d/Digimon World: Next Order.wiki	1530160	digimon world next order.exe	ok						
 dino-crisis-2.padpack	Dino Crisis 2	name	Dino Crisis 2	pages/d/Dino Crisis 2.wiki	4249140	4249140_launcher.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 dino-crisis.padpack	Dino Crisis	name	Dino Crisis	pages/d/Dino Crisis.wiki	4249130	4249130_launcher.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 dirty-bomb.padpack	Dirty Bomb	name	Dirty Bomb	pages/d/Dirty Bomb.wiki	333930		info	no_exe	no_exe: pack has no executable rule				
@@ -359,11 +388,22 @@ doom-and-doom-2.padpack	Doom + Doom II	name	Doom + Doom II	pages/d/Doom + Doom I
 doom-eternal.padpack	Doom Eternal	name	Doom Eternal	pages/d/Doom Eternal.wiki	782330	DOOMEternalx64vk.exe	ok						
 doom-the-dark-ages.padpack	Doom: The Dark Ages	name	Doom: The Dark Ages	pages/d/Doom: The Dark Ages.wiki	3017860	DOOMTheDarkAges.exe	ok						
 door-kickers.padpack	Door Kickers	name	Door Kickers	pages/d/Door Kickers.wiki	248610	doorkickers.exe	ok						
+doraemon-story-of-seasons-friends-of-the-great-kingdom.padpack	Doraemon Story of Seasons: Friends of the Great Kingdom	name	Doraemon Story of Seasons: Friends of the Great Kingdom	pages/d/Doraemon Story of Seasons: Friends of the Great Kingdom.wiki	1492730	doraemon story of seasons fotgk.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2022				
+doraemon-story-of-seasons.padpack	Doraemon: Story of Seasons	name	Doraemon: Story of Seasons	pages/d/Doraemon: Story of Seasons.wiki	965230	doraemon story of seasons.exe	ok						
 dorfromantik.padpack	Dorfromantik	name	Dorfromantik	pages/d/Dorfromantik.wiki	1455840		warn	mapped_but_native,no_exe	no_exe: pack has no executable rule | mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2022				
+doronko-wanko.padpack	Doronko Wanko	name	Doronko Wanko	pages/d/Doronko Wanko.wiki	2512840	doronkowanko.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=unknown xinput=unknown released=2024				
 dota-underlords.padpack	Dota Underlords	name	Dota Underlords	pages/d/Dota Underlords.wiki	1046930	underlords.exe	ok						
 double-action-boogaloo.padpack	Double Action: Boogaloo	name	Double Action: Boogaloo	pages/d/Double Action: Boogaloo.wiki	317360		info	no_exe	no_exe: pack has no executable rule				
 dragon-age-ii.padpack	Dragon Age II	name	Dragon Age II	pages/d/Dragon Age II.wiki	47900	dragonage2.exe	ok						
 dragon-age-origins.padpack	Dragon Age: Origins	name	Dragon Age: Origins	pages/d/Dragon Age: Origins.wiki	47810,17450	daorigins.exe	ok						
+dragon-ball-fighterz.padpack	Dragon Ball FighterZ	name	Dragon Ball FighterZ	pages/d/Dragon Ball FighterZ.wiki	678950	dbfighterz.exe,red-win64-shipping.exe	ok						
+dragon-ball-gekishin-squadra.padpack	Dragon Ball: Gekishin Squadra	name	Dragon Ball: Gekishin Squadra	pages/d/Dragon Ball: Gekishin Squadra.wiki	2072560	dragon ball gekishin squadra/game.exe	ok						
+dragon-ball-sparking-zero.padpack	Dragon Ball: Sparking! Zero	name	Dragon Ball: Sparking! Zero	pages/d/Dragon Ball: Sparking! Zero.wiki	1790600	sparkingzero-win64-shipping.exe	ok						
+dragon-ball-the-breakers.padpack	Dragon Ball: The Breakers	name	Dragon Ball: The Breakers	pages/d/Dragon Ball: The Breakers.wiki	1276760	dragon ball the breakers.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2022				
+dragon-ball-xenoverse-2.padpack	Dragon Ball Xenoverse 2	name	Dragon Ball Xenoverse 2	pages/d/Dragon Ball Xenoverse 2.wiki	454650	dbxv2.exe	ok						
+dragon-ball-xenoverse-3.padpack	Dragon Ball Xenoverse 3	name	Dragon Ball Xenoverse 3	pages/d/Dragon Ball Xenoverse 3.wiki	1857810		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=unknown xinput=unknown released=2027				
+dragon-ball-xenoverse.padpack	Dragon Ball Xenoverse	name	Dragon Ball Xenoverse	pages/d/Dragon Ball Xenoverse.wiki	323470	dbxv.exe	ok						
+dragon-ball-z-kakarot.padpack	Dragon Ball Z: Kakarot	name	Dragon Ball Z: Kakarot	pages/d/Dragon Ball Z: Kakarot.wiki	851850	at-win64-shipping.exe	ok						
 dragon-quest-builders-2.padpack	Dragon Quest Builders 2	name	Dragon Quest Builders 2	pages/d/Dragon Quest Builders 2.wiki	1072420	dqb2_eu.exe	ok						
 dragon-quest-builders.padpack	Dragon Quest Builders	name	Dragon Quest Builders	pages/d/Dragon Quest Builders.wiki	2436570		info	no_exe	no_exe: pack has no executable rule				
 dragon-quest-heroes-ii.padpack	Dragon Quest Heroes II	name	Dragon Quest Heroes II	pages/d/Dragon Quest Heroes II.wiki	574050		info	no_exe	no_exe: pack has no executable rule				
@@ -398,11 +438,14 @@ dwarf-fortress.padpack	Dwarf Fortress	name	Dwarf Fortress	pages/d/Dwarf Fortress
 dynasty-warriors-origins.padpack	Dynasty Warriors: Origins	name	Dynasty Warriors: Origins	pages/d/Dynasty Warriors: Origins.wiki	2384580	dwo.exe	warn	exe_unseen	exe_unseen: dwo.exe (seen: dworigins demo/dworigins_demo.exe, dworigins/dworigins.exe)				
 dyson-sphere-program.padpack	Dyson Sphere Program	name	Dyson Sphere Program	pages/d/Dyson Sphere Program.wiki	1366540	DSPGAME.exe	ok						
 ebaseball-pro-spirit.padpack	Ebaseball: Pro Spirit	name	Ebaseball: Pro Spirit	pages/e/Ebaseball: Pro Spirit.wiki	4128400	prospi.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
+echoes-of-aincrad.padpack	Echoes of Aincrad	name	Echoes of Aincrad	pages/e/Echoes of Aincrad.wiki	2244210	echoesofaincrad.exe	ok						
 eco.padpack	Eco	name	Eco	pages/e/Eco.wiki	382310	eco.exe	ok						
 edens-zero.padpack	Edens Zero	name	Edens Zero	pages/e/Edens Zero.wiki	3125750	edenszero.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 efootball-pes-2020.padpack	eFootball PES 2020	name	EFootball PES 2020	pages/e/EFootball PES 2020.wiki	996470	pes2020.exe	ok						
 efootball-pes-2021-season-update.padpack	eFootball PES 2021 Season Update	name	EFootball PES 2021 Season Update	pages/e/EFootball PES 2021 Season Update.wiki	1259970	pes2021.exe	ok						
 efootball.padpack	eFootball	name	EFootball	pages/e/EFootball.wiki	1665460	efootball.exe	ok						
+elden-ring-nightreign.padpack	Elden Ring Nightreign	name	Elden Ring Nightreign	pages/e/Elden Ring Nightreign.wiki	2622380	nightreign.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=always on xinput=limited released=2025				
+elden-ring.padpack	Elden Ring	name	Elden Ring	pages/e/Elden Ring.wiki	1245620	eldenring.exe	ok						
 elin.padpack	Elin	name	Elin	pages/e/Elin.wiki	2135150	elin.exe	ok						
 emergency-4-global-fighters-for-life.padpack	Emergency 4: Global Fighters for Life	name	Emergency 4: Global Fighters for Life	pages/e/Emergency 4: Global Fighters for Life.wiki	323610	em4.exe	ok						
 emily-is-away.padpack	Emily Is Away	name	Emily Is Away	pages/e/Emily Is Away.wiki	417860	emily is away.exe	ok						
@@ -414,6 +457,7 @@ endless-sky.padpack	Endless Sky	name	Endless Sky	pages/e/Endless Sky.wiki	404410
 endless-space-2.padpack	Endless Space 2	name	Endless Space 2	pages/e/Endless Space 2.wiki	392110	endlessspace2.exe	ok						
 endless-space.padpack	Endless Space	name	Endless Space	pages/e/Endless Space.wiki	208140	endlessspace.exe	ok						
 endzone-a-world-apart.padpack	Endzone - A World Apart	name	Endzone - A World Apart	pages/e/Endzone - A World Apart.wiki	933820	endzone.exe	ok						
+enslaved-odyssey-to-the-west.padpack	Enslaved: Odyssey to the West	name	Enslaved: Odyssey to the West	pages/e/Enslaved: Odyssey to the West.wiki	245280	enslaved.exe	ok						
 epistory-typing-chronicles.padpack	Epistory - Typing Chronicles	name	Epistory - Typing Chronicles	pages/e/Epistory - Typing Chronicles.wiki	398850	epistory.exe	ok						
 escape-the-backrooms.padpack	Escape the Backrooms	name	Escape the Backrooms	pages/e/Escape the Backrooms.wiki	1943950		info	no_exe	no_exe: pack has no executable rule				
 eternal-return-black-survival.padpack	Eternal Return: Black Survival	name	Eternal Return: Black Survival	pages/e/Eternal Return: Black Survival.wiki	1049590	eternalreturn.exe	ok						
@@ -424,6 +468,7 @@ europa-universalis-iv.padpack	Europa Universalis IV	name	Europa Universalis IV	p
 eve-online.padpack	EVE Online	name	EVE Online	pages/e/EVE Online.wiki	8500	exefile.exe	ok						
 everquest-ii.padpack	EverQuest II	name	EverQuest II	pages/e/EverQuest II.wiki	201230	everquest2.exe	ok						
 everquest.padpack	EverQuest	name	EverQuest	pages/e/EverQuest.wiki	205710		info	no_exe	no_exe: pack has no executable rule				
+everybodys-golf-hot-shots.padpack	Everybody's Golf: Hot Shots	name	Everybody's Golf: Hot Shots	pages/e/Everybody's Golf: Hot Shots.wiki	2730810		info	no_exe	no_exe: pack has no executable rule				
 evil-genius.padpack	Evil Genius	name	Evil Genius	pages/e/Evil Genius.wiki	3720	evilgeniusexestub-release.exe	ok						
 exoprimal.padpack	Exoprimal	name	Exoprimal	pages/e/Exoprimal.wiki	1286320	exoprimal.exe	warn	exe_unseen,passthrough_unconfirmed	exe_unseen: exoprimal.exe (seen: exoprimal(betatest)/exoprimal_beta.exe) | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2023				
 fable-the-lost-chapters.padpack	Fable: The Lost Chapters	name	Fable: The Lost Chapters	pages/f/Fable: The Lost Chapters.wiki	204030	fable.exe	ok						
@@ -448,6 +493,7 @@ farming-simulator-19.padpack	Farming Simulator 19	name	Farming Simulator 19	page
 farming-simulator-22.padpack	Farming Simulator 22	name	Farming Simulator 22	pages/f/Farming Simulator 22.wiki	1248130		warn	mapped_but_native,no_exe	no_exe: pack has no executable rule | mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2021				
 farming-simulator-25.padpack	Farming Simulator 25	name	Farming Simulator 25	pages/f/Farming Simulator 25.wiki	2300320		warn	mapped_but_native,no_exe	no_exe: pack has no executable rule | mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2024				
 farthest-frontier.padpack	Farthest Frontier	name	Farthest Frontier	pages/f/Farthest Frontier.wiki	1044720	farthest frontier.exe	ok						
+fast-furious-crossroads.padpack	Fast & Furious Crossroads	name	Fast & Furious Crossroads	pages/f/Fast & Furious Crossroads.wiki	678030	ffcrossroads.exe	ok						
 fate.padpack	FATE	name	FATE	pages/f/FATE.wiki	246840	fate.exe	ok						
 fear-2-project-origin.padpack	F.E.A.R. 2: Project Origin	name	F.E.A.R. 2: Project Origin	pages/f/F.E.A.R. 2: Project Origin.wiki	16450	FEAR2.exe	ok						
 fear-effect-sedna.padpack	Fear Effect Sedna	name	Fear Effect Sedna	pages/f/Fear Effect Sedna.wiki	546900		info	no_exe	no_exe: pack has no executable rule				
@@ -510,6 +556,7 @@ foundation.padpack	Foundation	name	Foundation	pages/f/Foundation.wiki	690830	fou
 foxhole.padpack	Foxhole	name	Foxhole	pages/f/Foxhole.wiki	505460	war-win64-shipping.exe	ok						
 freddy-fazbears-pizzeria-simulator.padpack	Freddy Fazbear's Pizzeria Simulator	name	Freddy Fazbear's Pizzeria Simulator	pages/f/Freddy Fazbear's Pizzeria Simulator.wiki	738060	pizzeria simulator.exe	ok						
 freedom-fighters.padpack	Freedom Fighters	name	Freedom Fighters	pages/f/Freedom Fighters.wiki	1347780		info	no_exe	no_exe: pack has no executable rule				
+freedom-wars-remastered.padpack	Freedom Wars Remastered	name	Freedom Wars Remastered	pages/f/Freedom Wars Remastered.wiki	3004100		info	no_exe	no_exe: pack has no executable rule				
 freelancer.padpack	Freelancer	name	Freelancer	pages/f/Freelancer.wiki		freelancer.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 freeman-guerrilla-warfare.padpack	Freeman: Guerrilla Warfare	name	Freeman: Guerrilla Warfare	pages/f/Freeman: Guerrilla Warfare.wiki	773951		info	no_exe	no_exe: pack has no executable rule				
 from-the-depths.padpack	From the Depths	name	From the Depths	pages/f/From the Depths.wiki	268650	from_the_depths.exe	ok						
@@ -526,6 +573,7 @@ gas-station-simulator.padpack	Gas Station Simulator	name	Gas Station Simulator	p
 gates-of-hell.padpack	Gates of Hell	name	Gates of Hell	pages/g/Gates of Hell.wiki	400750	call_to_arms_ed.exe	ok						
 gems-of-war.padpack	Gems of War	name	Gems of War	pages/g/Gems of War.wiki	329110	gemsofwar.exe	ok						
 generation-zero.padpack	Generation Zero	name	Generation Zero	pages/g/Generation Zero.wiki	704270	generationzero/generationzero_f.exe	ok						
+get-even.padpack	Get Even	name	Get Even	pages/g/Get Even.wiki	299950	geteven.exe,getevengame.exe	ok						
 getsufumaden-undying-moon.padpack	GetsuFumaDen: Undying Moon	name	GetsuFumaDen: Undying Moon	pages/g/GetsuFumaDen: Undying Moon.wiki	1323470	getsufumaden.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 getting-over-it-with-bennett-foddy.padpack	Getting Over It with Bennett Foddy	name	Getting Over It with Bennett Foddy	pages/g/Getting Over It with Bennett Foddy.wiki	240720	getting over it/gettingoverit.exe	ok						
 ghost-master.padpack	Ghost Master	name	Ghost Master	pages/g/Ghost Master.wiki	6200	ghost.exe	ok						
@@ -533,6 +581,8 @@ ghost-trick-phantom-detective.padpack	Ghost Trick: Phantom Detective	name	Ghost 
 ghosts-n-goblins-resurrection.padpack	Ghosts 'n Goblins Resurrection	name	Ghosts 'n Goblins Resurrection	pages/g/Ghosts 'n Goblins Resurrection.wiki	1375400	makaimura_gg_re.exe	ok						
 glass-masquerade.padpack	Glass Masquerade	name	Glass Masquerade	pages/g/Glass Masquerade.wiki	511470	glass.exe	ok						
 gloria-victis.padpack	Gloria Victis	name	Gloria Victis	pages/g/Gloria Victis.wiki	327070	gv.exe	ok						
+god-eater-2-rage-burst.padpack	God Eater 2: Rage Burst	name	God Eater 2: Rage Burst	pages/g/God Eater 2: Rage Burst.wiki	438490	ge2rb.exe	ok						
+god-eater-3.padpack	God Eater 3	name	God Eater 3	pages/g/God Eater 3.wiki	899440	ge3.exe	ok						
 godus.padpack	Godus	name	Godus	pages/g/Godus.wiki	232810	godus.exe	ok						
 goetia.padpack	Goetia	name	Goetia	pages/g/Goetia.wiki	421740		info	no_exe	no_exe: pack has no executable rule				
 going-medieval.padpack	Going Medieval	name	Going Medieval	pages/g/Going Medieval.wiki	1029780	going medieval.exe	ok						
@@ -557,11 +607,14 @@ ground-branch.padpack	Ground Branch	name	Ground Branch	pages/g/Ground Branch.wik
 gtfo.padpack	GTFO	name	GTFO	pages/g/GTFO.wiki	493520	GTFO.exe	ok						
 guild-wars-2.padpack	Guild Wars 2	name	Guild Wars 2	pages/g/Guild Wars 2.wiki	1284210	gw2-64.exe,gw2.exe	ok						
 gujian-3.padpack	GuJian 3	name	GuJian 3	pages/g/GuJian 3.wiki	994280		info	no_exe	no_exe: pack has no executable rule				
+gundam-breaker-4.padpack	Gundam Breaker 4	name	Gundam Breaker 4	pages/g/Gundam Breaker 4.wiki	1672500	gb4-win64-shipping.exe,gb4.exe	ok						
+gundam-rogue-orbit.padpack	Gundam Rogue Orbit	name	Gundam Rogue Orbit	pages/g/Gundam Rogue Orbit.wiki	1963680		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=unknown xinput=unknown released=2027				
 gunpoint.padpack	Gunpoint	name	Gunpoint	pages/g/Gunpoint.wiki	206190	gunpoint.exe	ok						
 gurumin-a-monstrous-adventure.padpack	Gurumin: A Monstrous Adventure	name	Gurumin: A Monstrous Adventure	pages/g/Gurumin: A Monstrous Adventure.wiki	322290		warn	no_exe,passthrough_pre2006	no_exe: pack has no executable rule | passthrough_pre2006: passthrough pack, but controller_support=true xinput=true released=2004				
 gwent-the-witcher-card-game.padpack	Gwent: The Witcher Card Game	name	Gwent: The Witcher Card Game	pages/g/Gwent: The Witcher Card Game.wiki	1284410	gwent.exe	warn	mapped_but_native	mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2018				
 gyromancer.padpack	Gyromancer	name	Gyromancer	pages/g/Gyromancer.wiki	23380		info	no_exe	no_exe: pack has no executable rule				
 gzdoom.padpack	GZDoom	none				gzdoom.exe,gzdoom	warn	no_match,no_steam_id	no_match: no wiki article by name or Steam id | no_steam_id: pack has no steam_app_id rule				
+hack-g-u-last-recode.padpack	.hack//G.U. Last Recode	name	.hack//G.U. Last Recode	pages/h/_hack__G.U. Last Recode.wiki	525480	hackgu.exe	ok						
 hacknet.padpack	Hacknet	name	Hacknet	pages/h/Hacknet.wiki	365450	hacknet.exe	ok						
 half-life-2-episode-two.padpack	Half-Life 2: Episode Two	name	Half-Life 2: Episode Two	pages/h/Half-Life 2: Episode Two.wiki	420		info	no_exe	no_exe: pack has no executable rule				
 half-life-2.padpack	Half-Life 2	name	Half-Life 2	pages/h/Half-Life 2.wiki	220	Half-Life 2/hl2_linux,Half-Life 2/hl2.exe	warn	exe_unseen,passthrough_pre2006	exe_unseen: Half-Life 2/hl2_linux (seen: >hl2.exe, >hl2_osx, half-life 2 update/hl2.exe, hl2.exe, hl2.sh, hl2hl2.exe) | passthrough_pre2006: passthrough pack, but controller_support=limited xinput=limited released=2004				
@@ -592,7 +645,9 @@ heroes-of-might-and-magic-iv.padpack	Heroes of Might and Magic IV	name	Heroes of
 heroes-of-might-and-magic-v-tribes-of-the-east.padpack	Heroes of Might and Magic V: Tribes of the East	name	Heroes of Might and Magic V: Tribes of the East	pages/h/Heroes of Might and Magic V: Tribes of the East.wiki	15370		info	no_exe	no_exe: pack has no executable rule				
 heroes-of-might-and-magic-v.padpack	Heroes of Might and Magic V	name	Heroes of Might and Magic V	pages/h/Heroes of Might and Magic V.wiki	15170	h5_game.exe	ok						
 heros-adventure-road-to-passion.padpack	Hero's Adventure: Road to Passion	name	Hero's Adventure: Road to Passion	pages/h/Hero's Adventure: Road to Passion.wiki	1948980	wulin.exe	ok						
+hexodius.padpack	Hexodius	name	Hexodius	pages/h/Hexodius.wiki	236490	hexodius.exe	warn	passthrough_no_support	passthrough_no_support: passthrough pack, but controller_support=false xinput=unknown released=2013				
 hired-ops.padpack	Hired Ops	name	Hired Ops	pages/h/Hired Ops.wiki	374280		info	no_exe	no_exe: pack has no executable rule				
+hirogami.padpack	Hirogami	name	Hirogami	pages/h/Hirogami.wiki	3135840	hirogami.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2025				
 hitman-2-silent-assassin.padpack	Hitman 2: Silent Assassin	name	Hitman 2: Silent Assassin	pages/h/Hitman 2: Silent Assassin.wiki	6850	Hitman 2 Silent Assassin/hitman2.exe	ok						
 hitman-absolution.padpack	Hitman: Absolution	name	Hitman: Absolution	pages/h/Hitman: Absolution.wiki	203140	HMA.exe	ok						
 hitman-blood-money.padpack	Hitman: Blood Money	name	Hitman: Blood Money	pages/h/Hitman: Blood Money.wiki	6860	HitmanBloodMoney.exe	ok						
@@ -609,6 +664,7 @@ homeworld-deserts-of-kharak.padpack	Homeworld: Deserts of Kharak	name	Homeworld:
 homeworld-remastered-collection.padpack	Homeworld Remastered Collection	ids	Homeworld 2 Remastered Edition; Homeworld 2; Homeworld Remastered Edition; Homeworld	pages/h/Homeworld 2 Remastered Edition.wiki; pages/h/Homeworld 2.wiki; pages/h/Homeworld Remastered Edition.wiki; pages/h/Homeworld.wiki	244160	homeworldrm.exe	info	multi_game	multi_game: ids span Homeworld; Homeworld 2; Homeworld 2 Remastered Edition; Homeworld Remastered Edition				
 hook.padpack	Hook	name	Hook	pages/h/Hook.wiki	367580	hook.exe	error	id_wrong_game	id_wrong_game: no Steam id is listed for 'Hook'; they belong to Hook (2015)				
 house-flipper.padpack	House Flipper	name	House Flipper	pages/h/House Flipper.wiki	613100	houseflipper.exe	ok						
+house-of-ashes.padpack	House of Ashes	name	House of Ashes	pages/h/House of Ashes.wiki	1281590	houseofashes.exe	ok						
 humankind.padpack	Humankind	name	Humankind	pages/h/Humankind.wiki	1124300	humankind.exe	ok						
 huniecam-studio.padpack	HunieCam Studio	name	HunieCam Studio	pages/h/HunieCam Studio.wiki	426000	huniecamstudio.exe	ok						
 hurtworld.padpack	Hurtworld	name	Hurtworld	pages/h/Hurtworld.wiki	393420	hurtworld.exe	ok						
@@ -620,6 +676,7 @@ icarus.padpack	Icarus	name	Icarus	pages/i/Icarus.wiki	1149460		info	no_exe	no_ex
 icewind-dale-ii.padpack	Icewind Dale II	name	Icewind Dale II	pages/i/Icewind Dale II.wiki		iwd2.exe	info	no_steam_id	no_steam_id: pack has no steam_app_id rule				
 icewind-dale.padpack	Icewind Dale: Enhanced Edition	name	Icewind Dale: Enhanced Edition	pages/i/Icewind Dale: Enhanced Edition.wiki	321800	IDMain.exe,Icewind Dale Enhanced Edition/Baldur.exe,Icewind Dale - Enhanced Edition/Baldur.exe,Icewind.exe	warn	exe_unseen	exe_unseen: IDMain.exe (seen: icewind dale enhanced edition/icewind.exe, icewind.exe, icewinddale, oalinst.exe) | exe_unseen: Icewind Dale Enhanced Edition/Baldur.exe (seen: icewind dale enhanced edition/icewind.exe, icewind.exe, icewinddale, oalinst.exe) | exe_unseen: Icewind Dale - Enhanced Edition/Baldur.exe (seen: icewind dale enhanced edition/icewind.exe, icewind.exe, icewinddale, oalinst.exe)				
 idleon.padpack	IdleOn	ids	IdleOn - The Idle MMO	pages/i/IdleOn - The Idle MMO.wiki	1476970	legendsofidleon.exe	info	name_differs	name_differs: wiki title is 'IdleOn - The Idle MMO'				
+impact-winter.padpack	Impact Winter	name	Impact Winter	pages/i/Impact Winter.wiki	468000		info	no_exe	no_exe: pack has no executable rule				
 imperator-rome.padpack	Imperator: Rome	name	Imperator: Rome	pages/i/Imperator: Rome.wiki	859580	imperator.exe	ok						
 impossible-creatures.padpack	Impossible Creatures	name	Impossible Creatures	pages/i/Impossible Creatures.wiki	324680	ic.exe	ok						
 infection-free-zone.padpack	Infection Free Zone	name	Infection Free Zone	pages/i/Infection Free Zone.wiki	1465460	infection free zone.exe	ok						
@@ -631,6 +688,7 @@ inside-the-backrooms.padpack	Inside the Backrooms	name	Inside the Backrooms	page
 insurgency-sandstorm.padpack	Insurgency: Sandstorm	name	Insurgency: Sandstorm	pages/i/Insurgency: Sandstorm.wiki	581320	insurgencyclient-win64-shipping.exe	ok						
 insurgency.padpack	Insurgency	name	Insurgency	pages/i/Insurgency.wiki	222880	insurgency.exe,insurgency_BE.exe,insurgency_linux	warn	exe_unseen	exe_unseen: insurgency_linux (seen: insurgency.exe, insurgency.sh, insurgency_be.exe)				
 intruder.padpack	Intruder	name	Intruder	pages/i/Intruder.wiki	518150		info	no_exe	no_exe: pack has no executable rule				
+inversion.padpack	Inversion	name	Inversion	pages/i/Inversion.wiki	212410	bin/inversion.exe	ok						
 inzoi.padpack	InZOI	name	InZOI	pages/i/InZOI.wiki	2456740	inzoi-win64-shipping.exe	ok						
 iratus-lord-of-the-dead.padpack	Iratus: Lord of the Dead	name	Iratus: Lord of the Dead	pages/i/Iratus: Lord of the Dead.wiki	807120	iratus.exe	ok						
 iron-snout.padpack	Iron Snout	name	Iron Snout	pages/i/Iron Snout.wiki	424280	ironsnout.exe	ok						
@@ -639,6 +697,9 @@ ironwail.padpack	Ironwail	none				ironwail.exe,ironwail	warn	no_match,no_steam_i
 ixion.padpack	IXION	name	IXION	pages/i/IXION.wiki	1113120	ixion.exe	ok						
 jagged-alliance-2-wildfire.padpack	Jagged Alliance 2: Wildfire	name	Jagged Alliance 2: Wildfire	pages/j/Jagged Alliance 2: Wildfire.wiki	215930	wf6.exe	ok						
 james-bond-007-nightfire.padpack	James Bond 007: Nightfire	name	James Bond 007: Nightfire	pages/j/James Bond 007: Nightfire.wiki		nightfire.exe,bond.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
+jojos-bizarre-adventure-all-star-battle-r.padpack	JoJo's Bizarre Adventure: All Star Battle R	name	JoJo's Bizarre Adventure: All Star Battle R	pages/j/JoJo's Bizarre Adventure: All Star Battle R.wiki	1372110	asbr.exe	ok						
+jujutsu-kaisen-cursed-clash.padpack	Jujutsu Kaisen: Cursed Clash	name	Jujutsu Kaisen: Cursed Clash	pages/j/Jujutsu Kaisen: Cursed Clash.wiki	1877020	jujutsu kaisen cc.exe	ok						
+jump-force.padpack	Jump Force	name	Jump Force	pages/j/Jump Force.wiki	816020	jump_force.exe,jump_force-win64-shipping.exe	ok						
 jurassic-park-trespasser.padpack	Jurassic Park: Trespasser	name	Jurassic Park: Trespasser	pages/j/Jurassic Park: Trespasser.wiki		trespass.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 jurassic-world-evolution-2.padpack	Jurassic World Evolution 2	name	Jurassic World Evolution 2	pages/j/Jurassic World Evolution 2.wiki	1244460		info	no_exe	no_exe: pack has no executable rule				
 jurassic-world-evolution.padpack	Jurassic World Evolution	name	Jurassic World Evolution	pages/j/Jurassic World Evolution.wiki	648350	jwe.exe	ok						
@@ -650,6 +711,7 @@ just-survive.padpack	Just Survive	name	Just Survive	pages/j/Just Survive.wiki	29
 kane-lynch-2-dog-days.padpack	Kane & Lynch 2: Dog Days	name	Kane & Lynch 2: Dog Days	pages/k/Kane & Lynch 2: Dog Days.wiki	28000	kl2.exe	ok						
 kane-lynch-dead-men.padpack	Kane & Lynch: Dead Men	name	Kane & Lynch: Dead Men	pages/k/Kane & Lynch: Dead Men.wiki	8080	kaneandlynch.exe	ok						
 kards.padpack	Kards	name	Kards	pages/k/Kards.wiki	544810	kards-win64-shipping.exe	ok						
+katamari-damacy-reroll.padpack	Katamari Damacy Reroll	name	Katamari Damacy Reroll	pages/k/Katamari Damacy Reroll.wiki	848350	katamari damacy reroll/katamari.exe	ok						
 kenshi.padpack	Kenshi	name	Kenshi	pages/k/Kenshi.wiki	233860	kenshi_x64.exe,kenshi_gog_x64.exe	ok						
 kerbal-space-program-2.padpack	Kerbal Space Program 2	name	Kerbal Space Program 2	pages/k/Kerbal Space Program 2.wiki	954850	ksp2_x64.exe	ok						
 kerbal-space-program.padpack	Kerbal Space Program	name	Kerbal Space Program	pages/k/Kerbal Space Program.wiki	220200	ksp_x64.exe,ksp.exe	ok						
@@ -666,6 +728,7 @@ kingdom-rush.padpack	Kingdom Rush	name	Kingdom Rush	pages/k/Kingdom Rush.wiki	24
 kingdoms-and-castles.padpack	Kingdoms and Castles	name	Kingdoms and Castles	pages/k/Kingdoms and Castles.wiki	569480	kingdomsandcastles.exe	ok						
 kings-bounty-the-legend.padpack	King's Bounty: The Legend	name	King's Bounty: The Legend	pages/k/King's Bounty: The Legend.wiki	25900	kb.exe	ok						
 kinitopet.padpack	KinitoPET	name	KinitoPET	pages/k/KinitoPET.wiki	2075070	kinitopet.exe	ok						
+klonoa-phantasy-reverie-series.padpack	Klonoa Phantasy Reverie Series	name	Klonoa Phantasy Reverie Series	pages/k/Klonoa Phantasy Reverie Series.wiki	1730680	klonoa/klonoa.exe	ok						
 knight-online.padpack	Knight Online	name	Knight Online	pages/k/Knight Online.wiki	389430	knightonline.exe	ok						
 knights-and-merchants.padpack	Knights and Merchants	name	Knights and Merchants	pages/k/Knights and Merchants.wiki	253900		info	no_exe	no_exe: pack has no executable rule				
 knights-of-honor.padpack	Knights of Honor	name	Knights of Honor	pages/k/Knights of Honor.wiki	25830	koh.exe	ok						
@@ -706,7 +769,13 @@ life-is-strange.padpack	Life Is Strange	name	Life Is Strange	pages/l/Life Is Str
 lightning-returns-final-fantasy-xiii.padpack	Lightning Returns: Final Fantasy XIII	name	Lightning Returns: Final Fantasy XIII	pages/l/Lightning Returns: Final Fantasy XIII.wiki	345350	lrff13.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2015				
 line-of-sight.padpack	Line of Sight	name	Line of Sight	pages/l/Line of Sight.wiki	436520		info	no_exe	no_exe: pack has no executable rule				
 little-goody-two-shoes.padpack	Little Goody Two Shoes	name	Little Goody Two Shoes	pages/l/Little Goody Two Shoes.wiki	1812370	lgts.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2023				
+little-hope.padpack	Little Hope	name	Little Hope	pages/l/Little Hope.wiki	1194630	littlehope.exe	ok						
 little-inferno.padpack	Little Inferno	name	Little Inferno	pages/l/Little Inferno.wiki	221260		info	no_exe	no_exe: pack has no executable rule				
+little-nightmares-enhanced-edition.padpack	Little Nightmares Enhanced Edition	name	Little Nightmares Enhanced Edition	pages/l/Little Nightmares Enhanced Edition.wiki	2149010	little_nightmares_enhanced.exe,atlas-win64-shipping.exe	ok						
+little-nightmares-ii.padpack	Little Nightmares II	name	Little Nightmares II	pages/l/Little Nightmares II.wiki	860510	little nightmares ii.exe,little_nightmares_ii_enhanced.exe	ok						
+little-nightmares-iii.padpack	Little Nightmares III	name	Little Nightmares III	pages/l/Little Nightmares III.wiki	1392860	littlenightmaresiii.exe	ok						
+little-nightmares.padpack	Little Nightmares	name	Little Nightmares	pages/l/Little Nightmares.wiki	424840	littlenightmares.exe	ok						
+little-witch-academia-chamber-of-time.padpack	Little Witch Academia: Chamber of Time	name	Little Witch Academia: Chamber of Time	pages/l/Little Witch Academia: Chamber of Time.wiki	710470	lwa.exe	ok						
 live-a-live.padpack	Live A Live	name	Live A Live	pages/l/Live A Live.wiki	2014380		info	no_exe	no_exe: pack has no executable rule				
 loading-screen-simulator.padpack	Loading Screen Simulator	name	Loading Screen Simulator	pages/l/Loading Screen Simulator.wiki	652980	lss.exe	ok						
 loadout.padpack	Loadout	name	Loadout	pages/l/Loadout.wiki	208090	loadout.exe	ok						
@@ -723,6 +792,7 @@ lucy-the-eternity-she-wished-for.padpack	Lucy -The Eternity She Wished For-	name
 mabinogi.padpack	Mabinogi	name	Mabinogi	pages/m/Mabinogi.wiki	212200	mabinogi.exe	ok						
 mad-games-tycoon-2.padpack	Mad Games Tycoon 2	name	Mad Games Tycoon 2	pages/m/Mad Games Tycoon 2.wiki	1342330	mad games tycoon 2.exe	ok						
 magic-duels.padpack	Magic Duels	name	Magic Duels	pages/m/Magic Duels.wiki	316010	magicduels.exe	warn	mapped_but_native	mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2015				
+man-of-medan.padpack	Man of Medan	name	Man of Medan	pages/m/Man of Medan.wiki	939850	manofmedan.exe,manofmedan-win64-shipping.exe	ok						
 manhunt-2.padpack	Manhunt 2	name	Manhunt 2	pages/m/Manhunt 2.wiki		manhunt2.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 manor-lords.padpack	Manor Lords	name	Manor Lords	pages/m/Manor Lords.wiki	1363080	ManorLords-Win64-Shipping.exe	ok						
 marauders.padpack	Marauders	name	Marauders	pages/m/Marauders.wiki	1789480		info	no_exe	no_exe: pack has no executable rule				
@@ -792,9 +862,13 @@ mini-ninjas.padpack	Mini Ninjas	name	Mini Ninjas	pages/m/Mini Ninjas.wiki	35000	
 minion-masters.padpack	Minion Masters	name	Minion Masters	pages/m/Minion Masters.wiki	489520	minionmasters.exe	ok						
 mirrors-edge.padpack	Mirror's Edge	name	Mirror's Edge	pages/m/Mirror's Edge.wiki	17410	MirrorsEdge.exe	ok						
 miscreated.padpack	Miscreated	name	Miscreated	pages/m/Miscreated.wiki	299740		info	no_exe	no_exe: pack has no executable rule				
+mishap-2-an-intentional-haunting.padpack	Mishap 2: An Intentional Haunting	name	Mishap 2: An Intentional Haunting	pages/m/Mishap 2: An Intentional Haunting.wiki	47570	mishap2.exe	ok						
+mishap-an-accidental-haunting.padpack	Mishap: An Accidental Haunting	name	Mishap: An Accidental Haunting	pages/m/Mishap: An Accidental Haunting.wiki	47500	mishap.exe	ok						
 miside.padpack	MiSide	name	MiSide	pages/m/MiSide.wiki	2527500	MiSideFull.exe	ok						
 mist-survival.padpack	Mist Survival	name	Mist Survival	pages/m/Mist Survival.wiki	914620	mistsurv-win64-shipping.exe	ok						
 mitos-is-the-game.padpack	Mitos.is: The Game	name	Mitos.is: The Game	pages/m/Mitos.is: The Game.wiki	389570	mitosis.exe	ok						
+mobile-suit-gundam-battle-operation-2.padpack	Mobile Suit Gundam Battle Operation 2	name	Mobile Suit Gundam Battle Operation 2	pages/m/Mobile Suit Gundam Battle Operation 2.wiki	1367080	msgbo2.exe	ok						
+mobile-suit-gundam-seed-battle-destiny-remastered.padpack	Mobile Suit Gundam SEED Battle Destiny Remastered	name	Mobile Suit Gundam SEED Battle Destiny Remastered	pages/m/Mobile Suit Gundam SEED Battle Destiny Remastered.wiki	1857740	seed battle destiny remastered.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=unknown xinput=unknown released=2025				
 monopoly-tycoon.padpack	Monopoly Tycoon	name	Monopoly Tycoon	pages/m/Monopoly Tycoon.wiki		monopolytycoon.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 monster-hunter-rise.padpack	Monster Hunter Rise	name	Monster Hunter Rise	pages/m/Monster Hunter Rise.wiki	1446780	monsterhunterrise.exe	ok						
 monster-hunter-stories-2-wings-of-ruin.padpack	Monster Hunter Stories 2: Wings of Ruin	name	Monster Hunter Stories 2: Wings of Ruin	pages/m/Monster Hunter Stories 2: Wings of Ruin.wiki	1277400	monster hunter stories 2/game.exe	ok						
@@ -816,15 +890,30 @@ mount-and-blade-viking-conquest.padpack	Mount & Blade: Warband - Viking Conquest
 mount-and-blade-warband.padpack	Mount & Blade: Warband	name	Mount & Blade: Warband	pages/m/Mount & Blade: Warband.wiki	48700	mb_warband.exe	ok						
 mount-and-blade-with-fire-and-sword.padpack	Mount & Blade: With Fire and Sword	name	Mount & Blade: With Fire & Sword	pages/m/Mount & Blade: With Fire & Sword.wiki	48720	mb_wfas.exe	ok						
 mount-and-blade.padpack	Mount & Blade	name	Mount & Blade	pages/m/Mount & Blade.wiki	22100	mount&blade.exe	ok						
+mr-driller-drill-land.padpack	Mr. Driller Drill Land	name	Mr. Driller Drill Land	pages/m/Mr. Driller Drill Land.wiki	1126750	drillland.exe	ok						
 murdered-soul-suspect.padpack	Murdered: Soul Suspect	name	Murdered: Soul Suspect	pages/m/Murdered: Soul Suspect.wiki	233290	murdered.exe	ok						
 muv-luv-alternative.padpack	Muv-Luv Alternative	name	Muv-Luv Alternative	pages/m/Muv-Luv Alternative.wiki	802890		info	no_exe	no_exe: pack has no executable rule				
+my-hero-academia-alls-justice.padpack	My Hero Academia: All's Justice	name	My Hero Academia: All's Justice	pages/m/My Hero Academia: All's Justice.wiki	2362050	ajgame.exe	ok						
+my-hero-ones-justice-2.padpack	My Hero: One's Justice 2	name	My Hero: One's Justice 2	pages/m/My Hero: One's Justice 2.wiki	1058450	mhoj2.exe	ok						
+my-hero-ones-justice.padpack	My Hero: One's Justice	name	My Hero: One's Justice	pages/m/My Hero: One's Justice.wiki	748360	mhoj.exe	ok						
+my-hero-ultra-rumble.padpack	My Hero: Ultra Rumble	name	My Hero: Ultra Rumble	pages/m/My Hero: Ultra Rumble.wiki	1607250	mhur.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2023				
 my-singing-monsters.padpack	My Singing Monsters	name	My Singing Monsters	pages/m/My Singing Monsters.wiki	1419170	mysingingmonsters.exe	ok						
 my-summer-car.padpack	My Summer Car	name	My Summer Car	pages/m/My Summer Car.wiki	516750		info	no_exe	no_exe: pack has no executable rule				
 my-time-at-portia.padpack	My Time at Portia	name	My Time at Portia	pages/m/My Time at Portia.wiki	666140	portia.exe	ok						
 my-time-at-sandrock.padpack	My Time at Sandrock	name	My Time at Sandrock	pages/m/My Time at Sandrock.wiki	1084600		warn	mapped_but_native,no_exe	no_exe: pack has no executable rule | mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2023				
+namco-museum-archives-vol-1.padpack	Namco Museum Archives Vol. 1	name	Namco Museum Archives Vol. 1	pages/n/Namco Museum Archives Vol. 1.wiki	1250250	nma1.exe	ok						
+namco-museum-archives-vol-2.padpack	Namco Museum Archives Vol. 2	name	Namco Museum Archives Vol. 2	pages/n/Namco Museum Archives Vol. 2.wiki	1254620	nma2.exe	ok						
 napoleon-total-war.padpack	Napoleon: Total War	name	Napoleon: Total War	pages/n/Napoleon: Total War.wiki	34030		info	no_exe	no_exe: pack has no executable rule				
+naruto-shippuden-ultimate-ninja-storm-2.padpack	Naruto Shippuden: Ultimate Ninja Storm 2	name	Naruto Shippuden: Ultimate Ninja Storm 2	pages/n/Naruto Shippuden: Ultimate Ninja Storm 2.wiki	543870	nsuns2.exe	ok						
+naruto-shippuden-ultimate-ninja-storm-3-full-burst.padpack	Naruto Shippuden: Ultimate Ninja Storm 3 Full Burst	name	Naruto Shippuden: Ultimate Ninja Storm 3 Full Burst	pages/n/Naruto Shippuden: Ultimate Ninja Storm 3 Full Burst.wiki	234670	nsuns3.exe	ok						
+naruto-shippuden-ultimate-ninja-storm-4.padpack	Naruto Shippuden: Ultimate Ninja Storm 4	name	Naruto Shippuden: Ultimate Ninja Storm 4	pages/n/Naruto Shippuden: Ultimate Ninja Storm 4.wiki	349040	nsuns4.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2016				
+naruto-shippuden-ultimate-ninja-storm-revolution.padpack	Naruto Shippuden: Ultimate Ninja Storm Revolution	name	Naruto Shippuden: Ultimate Ninja Storm Revolution	pages/n/Naruto Shippuden: Ultimate Ninja Storm Revolution.wiki	272510	nsunsr.exe	ok						
+naruto-to-boruto-shinobi-striker.padpack	Naruto to Boruto: Shinobi Striker	name	Naruto to Boruto: Shinobi Striker	pages/n/Naruto to Boruto: Shinobi Striker.wiki	633230	naruto-win64-shipping.exe,naruto.exe	ok						
+naruto-ultimate-ninja-storm.padpack	Naruto: Ultimate Ninja Storm	name	Naruto: Ultimate Ninja Storm	pages/n/Naruto: Ultimate Ninja Storm.wiki	495140	nsuns1.exe	ok						
+naruto-x-boruto-ultimate-ninja-storm-connections.padpack	Naruto X Boruto: Ultimate Ninja Storm Connections	name	Naruto X Boruto: Ultimate Ninja Storm Connections	pages/n/Naruto X Boruto: Ultimate Ninja Storm Connections.wiki	1020790	nsunsc.exe	ok						
 natural-selection-2.padpack	Natural Selection 2	name	Natural Selection 2	pages/n/Natural Selection 2.wiki	4920	ns2.exe	ok						
 naval-action.padpack	Naval Action	name	Naval Action	pages/n/Naval Action.wiki	311310		info	no_exe	no_exe: pack has no executable rule				
+necropolis.padpack	Necropolis	name	Necropolis	pages/n/Necropolis.wiki	384490	necropolis.exe	ok						
 necrovision.padpack	NecroVisioN	name	NecroVisioN	pages/n/NecroVisioN.wiki	7860		info	no_exe	no_exe: pack has no executable rule				
 needy-streamer-overload.padpack	Needy Streamer Overload	name	Needy Streamer Overload	pages/n/Needy Streamer Overload.wiki	1451940		warn	mapped_but_native,no_exe	no_exe: pack has no executable rule | mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2022				
 neighbours-from-hell.padpack	Neighbours from Hell	name	Neighbours from Hell	pages/n/Neighbours from Hell.wiki	260750	neighbours from hell/bin/game.exe,neighbours back from hell/neighbours back from hell.exe	ok						
@@ -832,9 +921,12 @@ nelke-the-legendary-alchemists-ateliers-of-the-new-world.padpack	Nelke & the Leg
 neo-the-world-ends-with-you.padpack	NEO: The World Ends with You	name	NEO: The World Ends with You	pages/n/NEO: The World Ends with You.wiki	1647550	neo the world ends with you.exe	ok						
 neverwinter-nights-enhanced-edition.padpack	Neverwinter Nights: Enhanced Edition	name	Neverwinter Nights: Enhanced Edition	pages/n/Neverwinter Nights: Enhanced Edition.wiki	704450	nwmain.exe	ok						
 neverwinter.padpack	Neverwinter	name	Neverwinter	pages/n/Neverwinter.wiki	109600	gameclient.exe	ok						
+new-gundam-breaker.padpack	New Gundam Breaker	name	New Gundam Breaker	pages/n/New Gundam Breaker.wiki	738530	newgundambreaker.exe	ok						
 new-world.padpack	New World	name+ids	New World	pages/n/New World.wiki	1063730	newworld.exe	ok						
 next-day-survival.padpack	Next Day: Survival	name	Next Day: Survival	pages/n/Next Day: Survival.wiki	519190	nextday_game.exe	ok						
 ngu-idle.padpack	NGU Idle	name	NGU Idle	pages/n/NGU Idle.wiki	1147690	nguidle.exe	ok						
+ni-no-kuni-ii-revenant-kingdom.padpack	Ni no Kuni II: Revenant Kingdom	name	Ni no Kuni II: Revenant Kingdom	pages/n/Ni no Kuni II: Revenant Kingdom.wiki	589360	nino2.exe	ok						
+ni-no-kuni-wrath-of-the-white-witch-remastered.padpack	Ni no Kuni: Wrath of the White Witch Remastered	name	Ni no Kuni: Wrath of the White Witch Remastered	pages/n/Ni no Kuni: Wrath of the White Witch Remastered.wiki	798460	ninokuni_wotww_remastered.exe	ok						
 nights-of-azure-2-bride-of-the-new-moon.padpack	Nights of Azure 2: Bride of the New Moon	name	Nights of Azure 2: Bride of the New Moon	pages/n/Nights of Azure 2: Bride of the New Moon.wiki	636570		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2017				
 nights-of-azure.padpack	Nights of Azure	name	Nights of Azure	pages/n/Nights of Azure.wiki	527280		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2017				
 ninja-five-o.padpack	Ninja Five-O	name	Ninja Five-O	pages/n/Ninja Five-O.wiki	2728200	ninjafiveo.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
@@ -855,7 +947,17 @@ oh-my-godheads.padpack	Oh My Godheads	name	Oh My Godheads	pages/o/Oh My Godheads
 okami-hd.padpack	Okami HD	name	Okami HD	pages/o/Okami HD.wiki	587620	okami.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=always on xinput=limited released=2017				
 old-school-runescape.padpack	Old School RuneScape	name	Old School RuneScape	pages/o/Old School RuneScape.wiki	1343370	osclient.exe	ok						
 omikron-the-nomad-soul.padpack	Omikron: The Nomad Soul	name	Omikron: The Nomad Soul	pages/o/Omikron: The Nomad Soul.wiki	243000		info	no_exe	no_exe: pack has no executable rule				
+once-upon-a-katamari.padpack	Once Upon a Katamari	name	Once Upon a Katamari	pages/o/Once Upon a Katamari.wiki	1880620	onceuponakatamari.exe	ok						
 one-armed-robber.padpack	One-armed robber	name	One-armed robber	pages/o/One-armed robber.wiki	2551020		info	no_exe	no_exe: pack has no executable rule				
+one-piece-bounty-rush.padpack	One Piece: Bounty Rush	name	One Piece: Bounty Rush	pages/o/One Piece: Bounty Rush.wiki	2918150	bountyrush.exe	ok						
+one-piece-burning-blood.padpack	One Piece: Burning Blood	name	One Piece: Burning Blood	pages/o/One Piece: Burning Blood.wiki	425220	opbb.exe	ok						
+one-piece-grand-gourmet.padpack	One Piece: Grand Gourmet	name	One Piece: Grand Gourmet	pages/o/One Piece: Grand Gourmet.wiki	3905010	opgg.exe	ok						
+one-piece-odyssey.padpack	One Piece Odyssey	name	One Piece Odyssey	pages/o/One Piece Odyssey.wiki	814000	odyssey-win64-shipping.exe,odyssey.exe	ok						
+one-piece-pirate-warriors-3.padpack	One Piece: Pirate Warriors 3	name	One Piece: Pirate Warriors 3	pages/o/One Piece: Pirate Warriors 3.wiki	331600	oppw3.exe	ok						
+one-piece-pirate-warriors-4.padpack	One Piece: Pirate Warriors 4	name	One Piece: Pirate Warriors 4	pages/o/One Piece: Pirate Warriors 4.wiki	1089090	oppw4.exe	ok						
+one-piece-unlimited-world-red-deluxe-edition.padpack	One Piece: Unlimited World Red Deluxe Edition	name	One Piece: Unlimited World Red Deluxe Edition	pages/o/One Piece: Unlimited World Red Deluxe Edition.wiki	571720	opu3.exe	ok						
+one-piece-world-seeker.padpack	One Piece: World Seeker	name	One Piece: World Seeker	pages/o/One Piece: World Seeker.wiki	755500	opws.exe	ok						
+one-punch-man-a-hero-nobody-knows.padpack	One-Punch Man: A Hero Nobody Knows	name	One-Punch Man: A Hero Nobody Knows	pages/o/One-Punch Man: A Hero Nobody Knows.wiki	991560	one punch man a hero nobody knows.exe,opm.exe	ok						
 oneshot.padpack	OneShot	name	OneShot	pages/o/OneShot.wiki	420530		info	no_exe	no_exe: pack has no executable rule				
 oni.padpack	Oni	name	Oni	pages/o/Oni.wiki		oni.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 onimusha-2-samurais-destiny.padpack	Onimusha 2: Samurai's Destiny	name	Onimusha 2: Samurai's Destiny	pages/o/Onimusha 2: Samurai's Destiny.wiki	3046600	onimusha2.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
@@ -870,6 +972,15 @@ original-war.padpack	Original War	name	Original War	pages/o/Original War.wiki	23
 orwell-keeping-an-eye-on-you.padpack	Orwell: Keeping an Eye on You	name	Orwell: Keeping an Eye on You	pages/o/Orwell: Keeping an Eye on You.wiki	491950	orwell.exe	ok						
 outriders.padpack	Outriders	name	Outriders	pages/o/Outriders.wiki	680420	outriders-win64-shipping.exe	ok						
 oxygen-not-included.padpack	Oxygen Not Included	name	Oxygen Not Included	pages/o/Oxygen Not Included.wiki	457140	OxygenNotIncluded.exe,OxygenNotIncluded	ok						
+pac-man-256.padpack	Pac-Man 256	name	Pac-Man 256	pages/p/Pac-Man 256.wiki	455400	pac-man256.exe	ok						
+pac-man-and-the-ghostly-adventures.padpack	Pac-Man and the Ghostly Adventures	name	Pac-Man and the Ghostly Adventures	pages/p/Pac-Man and the Ghostly Adventures.wiki	239720		info	no_exe	no_exe: pack has no executable rule				
+pac-man-championship-edition-2.padpack	Pac-Man Championship Edition 2	name	Pac-Man Championship Edition 2	pages/p/Pac-Man Championship Edition 2.wiki	441380	pce2.exe	ok						
+pac-man-championship-edition-dx.padpack	Pac-Man Championship Edition DX+	name	Pac-Man Championship Edition DX+	pages/p/Pac-Man Championship Edition DX+.wiki	236450	pac-man championship edition dx+/pac-man.exe	ok						
+pac-man-mega-tunnel-battle-chomp-champs.padpack	Pac-Man Mega Tunnel Battle: Chomp Champs	name	Pac-Man Mega Tunnel Battle: Chomp Champs	pages/p/Pac-Man Mega Tunnel Battle: Chomp Champs.wiki	2095950	pacmanchompchamps.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=unknown xinput=unknown released=2024				
+pac-man-museum-plus.padpack	Pac-Man Museum Plus	name	Pac-Man Museum Plus	pages/p/Pac-Man Museum Plus.wiki	1665130	pac-man museum+.exe	ok						
+pac-man-museum.padpack	Pac-Man Museum	name+ids	Pac-Man Museum	pages/p/Pac-Man Museum.wiki	236470	pacmuseum.exe	ok						
+pac-man-world-2-re-pac.padpack	Pac-Man World 2 Re-Pac	name	Pac-Man World 2 Re-Pac	pages/p/Pac-Man World 2 Re-Pac.wiki	2324290	pac-man world 2 re-pac.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=limited xinput=limited released=2025				
+pac-man-world-re-pac.padpack	Pac-Man World Re-Pac	name	Pac-Man World Re-Pac	pages/p/Pac-Man World Re-Pac.wiki	1859470	pac-man world re-pac.exe	ok						
 painkiller.padpack	Painkiller	name	Painkiller	pages/p/Painkiller.wiki	39530		info	no_exe	no_exe: pack has no executable rule				
 paladins-champions-of-the-realm.padpack	Paladins: Champions of the Realm	name	Paladins: Champions of the Realm	pages/p/Paladins: Champions of the Realm.wiki	444090	paladins.exe	ok						
 palworld.padpack	Palworld	name	Palworld	pages/p/Palworld.wiki	1623730	win64/palworld-win64-shipping.exe	ok						
@@ -879,9 +990,11 @@ papers-please.padpack	Papers, Please	name	Papers, Please	pages/p/Papers, Please.
 paranormasight-the-mermaids-curse.padpack	Paranormasight: The Mermaid's Curse	name	Paranormasight: The Mermaid's Curse	pages/p/Paranormasight: The Mermaid's Curse.wiki	2701440		info	no_exe	no_exe: pack has no executable rule				
 paranormasight-the-seven-mysteries-of-honjo.padpack	Paranormasight: The Seven Mysteries of Honjo	name	Paranormasight: The Seven Mysteries of Honjo	pages/p/Paranormasight: The Seven Mysteries of Honjo.wiki	2106840	paranormasight.exe	ok						
 paraworld.padpack	ParaWorld	name	ParaWorld	pages/p/ParaWorld.wiki		paraworld.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
+park-beyond.padpack	Park Beyond	name	Park Beyond	pages/p/Park Beyond.wiki	1368130	parkbeyond.exe,parkbeyond-win64-shipping.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2023				
 parking-garage-rally-circuit.padpack	Parking Garage Rally Circuit	name	Parking Garage Rally Circuit	pages/p/Parking Garage Rally Circuit.wiki	2737300	garagerally.x86_64,garagerally.exe	ok						
 parkitect.padpack	Parkitect	name	Parkitect	pages/p/Parkitect.wiki	453090	Parkitect.x86_64,Parkitect.exe	ok						
 partisans-1941.padpack	Partisans 1941	name	Partisans 1941	pages/p/Partisans 1941.wiki	1227530	partisans-win64-shipping.exe	ok						
+patapon-1-2-replay.padpack	Patapon 1 + 2 Replay	name	Patapon 1 + 2 Replay	pages/p/Patapon 1 + 2 Replay.wiki	2383200	patapon12_replay.exe	ok						
 path-of-exile-2.padpack	Path of Exile 2	name	Path of Exile 2	pages/p/Path of Exile 2.wiki	2694490		info	no_exe	no_exe: pack has no executable rule				
 path-of-exile.padpack	Path of Exile	name	Path of Exile	pages/p/Path of Exile.wiki	238960	pathofexile_x64steam.exe	ok						
 path-of-wuxia.padpack	Path of Wuxia	name	Path of Wuxia	pages/p/Path of Wuxia.wiki	1189630		info	no_exe	no_exe: pack has no executable rule				
@@ -914,6 +1027,7 @@ planetbase.padpack	Planetbase	name	Planetbase	pages/p/Planetbase.wiki	403190	pla
 planetside-2.padpack	PlanetSide 2	name	PlanetSide 2	pages/p/PlanetSide 2.wiki	218230	planetside2_x64.exe	ok						
 plants-vs-zombies.padpack	Plants vs. Zombies	name	Plants vs. Zombies	pages/p/Plants vs. Zombies.wiki	3590	PlantsVsZombies.exe,popcapgame1.exe	ok						
 plateup.padpack	PlateUp!	name	PlateUp!	pages/p/PlateUp!.wiki	1599600		info	no_exe	no_exe: pack has no executable rule				
+platformines.padpack	Platformines	name	Platformines	pages/p/Platformines.wiki	264540	platformines.exe	ok						
 poker-night-at-the-inventory.padpack	Poker Night at the Inventory	name	Poker Night at the Inventory	pages/p/Poker Night at the Inventory.wiki	31280	celebritypoker.exe	ok						
 poly-bridge-2.padpack	Poly Bridge 2	name	Poly Bridge 2	pages/p/Poly Bridge 2.wiki	1062160	poly bridge 2.exe	ok						
 poly-bridge.padpack	Poly Bridge	name	Poly Bridge	pages/p/Poly Bridge.wiki	367450	polybridge.exe	ok						
@@ -930,6 +1044,9 @@ prince-of-persia-warrior-within.padpack	Prince of Persia: Warrior Within	name	Pr
 prison-architect.padpack	Prison Architect	name	Prison Architect	pages/p/Prison Architect.wiki	233450	Prison Architect.exe,Prison Architect64.exe,PrisonArchitect,PrisonArchitect.x86_64	warn	exe_unseen	exe_unseen: PrisonArchitect.x86_64 (seen: crashpad_handler32.exe, crashpad_handler64.exe, launcher/dowser, launcher/dowser.exe, prison architect.exe, prison architect64.exe, ...)				
 pro-evolution-soccer-2018.padpack	Pro Evolution Soccer 2018	name	Pro Evolution Soccer 2018	pages/p/Pro Evolution Soccer 2018.wiki	592580	pes2018.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 pro-evolution-soccer-2019.padpack	Pro Evolution Soccer 2019	name	Pro Evolution Soccer 2019	pages/p/Pro Evolution Soccer 2019.wiki	770240	pes2019.exe	ok						
+professional-lumberjack-2015.padpack	Professional Lumberjack 2015	name	Professional Lumberjack 2015	pages/p/Professional Lumberjack 2015.wiki	316240	woodcutter2015.exe	warn	passthrough_no_support	passthrough_no_support: passthrough pack, but controller_support=false xinput=unknown released=2015				
+project-cars-2.padpack	Project CARS 2	name	Project CARS 2	pages/p/Project CARS 2.wiki	378860	pcars2avx.exe,pcars2.exe	ok						
+project-cars-3.padpack	Project CARS 3	name	Project CARS 3	pages/p/Project CARS 3.wiki	958400	pcars3.exe	ok						
 project-i-g-i-im-going-in.padpack	Project I.G.I.: I'm Going In	name	Project I.G.I.: I'm Going In	pages/p/Project I.G.I.: I'm Going In.wiki		igi.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 project-snowblind.padpack	Project Snowblind	name	Project Snowblind	pages/p/Project Snowblind.wiki	7010		info	no_exe	no_exe: pack has no executable rule				
 project-zomboid.padpack	Project Zomboid	name	Project Zomboid	pages/p/Project Zomboid.wiki	108600	projectzomboid64.exe	ok						
@@ -939,6 +1056,7 @@ pubg-battlegrounds.padpack	PUBG: Battlegrounds	name	PUBG: Battlegrounds	pages/p/
 punch-club.padpack	Punch Club	name	Punch Club	pages/p/Punch Club.wiki	394310	punch club.exe	ok						
 puzzle-chronicles.padpack	Puzzle Chronicles	name	Puzzle Chronicles	pages/p/Puzzle Chronicles.wiki	19020	puzzlechronicles.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 puzzle-pirates.padpack	Puzzle Pirates	name	Puzzle Pirates	pages/p/Puzzle Pirates.wiki	99910		info	no_exe	no_exe: pack has no executable rule				
+puzzle-quest-2.padpack	Puzzle Quest 2	name	Puzzle Quest 2	pages/p/Puzzle Quest 2.wiki	47540	puzzlequest2.exe	ok						
 q2pro.padpack	Q2PRO	none				q2pro.exe,q2pro	warn	no_match,no_steam_id	no_match: no wiki article by name or Steam id | no_steam_id: pack has no steam_app_id rule				
 quake-4.padpack	Quake 4	name	Quake 4	pages/q/Quake 4.wiki	2210		info	no_exe	no_exe: pack has no executable rule				
 quake-champions.padpack	Quake Champions	name	Quake Champions	pages/q/Quake Champions.wiki	611500	QuakeChampions.exe	ok						
@@ -948,12 +1066,14 @@ quake.padpack	Quake	name	Quake	pages/q/Quake.wiki	2310	Quake_x64_steam.exe	warn	
 quantum-break.padpack	Quantum Break	name	Quantum Break	pages/q/Quantum Break.wiki	474960	QuantumBreak.exe	ok						
 quantum-conundrum.padpack	Quantum Conundrum	name	Quantum Conundrum	pages/q/Quantum Conundrum.wiki	200010	trygame-win32-shipping.exe	ok						
 quaver.padpack	Quaver	name	Quaver	pages/q/Quaver.wiki	980610	quaver.exe	ok						
+rad.padpack	Rad	name	Rad	pages/r/Rad.wiki	722560	win64/rad.exe	ok						
 raft.padpack	Raft	name	Raft	pages/r/Raft.wiki	648800	Raft.exe	ok						
 ragnarok-online.padpack	Ragnarok Online	name	Ragnarok Online	pages/r/Ragnarok Online.wiki	250740	ragnarok.exe	ok						
 railroad-tycoon-3.padpack	Railroad Tycoon 3	name	Railroad Tycoon 3	pages/r/Railroad Tycoon 3.wiki	7610		info	no_exe	no_exe: pack has no executable rule				
 rain-world.padpack	Rain World	name	Rain World	pages/r/Rain World.wiki	312520	rainworld.exe	ok						
 ranch-simulator.padpack	Ranch Simulator	name	Ranch Simulator	pages/r/Ranch Simulator.wiki	1119730	ranch_simulator-win64-shipping.exe	ok						
 ravenfield.padpack	Ravenfield	name	Ravenfield	pages/r/Ravenfield.wiki	636480		info	no_exe	no_exe: pack has no executable rule				
+ray-gigant.padpack	Ray Gigant	name	Ray Gigant	pages/r/Ray Gigant.wiki	421600		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2016				
 rct1.padpack	RollerCoaster Tycoon	name	RollerCoaster Tycoon	pages/r/RollerCoaster Tycoon.wiki	285310	RCT.EXE	ok						
 rct2.padpack	RollerCoaster Tycoon 2	name	RollerCoaster Tycoon 2	pages/r/RollerCoaster Tycoon 2.wiki	285330	RCT2.EXE	ok						
 realm-of-the-mad-god.padpack	Realm of the Mad God	name	Realm of the Mad God	pages/r/Realm of the Mad God.wiki	200210		info	no_exe	no_exe: pack has no executable rule				
@@ -989,6 +1109,7 @@ return-of-the-obra-dinn.padpack	Return of the Obra Dinn	name	Return of the Obra 
 return-to-castle-wolfenstein.padpack	Return to Castle Wolfenstein	name	Return to Castle Wolfenstein	pages/r/Return to Castle Wolfenstein.wiki	9010	WolfSP.exe	ok						
 return-to-monkey-island.padpack	Return to Monkey Island	name	Return to Monkey Island	pages/r/Return to Monkey Island.wiki	2060130		warn	mapped_but_native,no_exe	no_exe: pack has no executable rule | mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2022				
 rhapsody-in-scarlet.padpack	Rhapsody in Scarlet	name	Rhapsody in Scarlet	pages/r/Rhapsody in Scarlet.wiki	3353430		info	no_exe	no_exe: pack has no executable rule				
+ridge-racer-unbounded.padpack	Ridge Racer Unbounded	name	Ridge Racer Unbounded	pages/r/Ridge Racer Unbounded.wiki	202310	rru.exe	ok						
 rift.padpack	Rift	name+ids	Rift	pages/r/Rift.wiki	39120	rift_x64.exe,rift.exe	ok						
 rimworld.padpack	RimWorld	name	RimWorld	pages/r/RimWorld.wiki	294100	RimWorldLinux,RimWorldWin64.exe,RimWorldWin.exe	warn	exe_unseen	exe_unseen: RimWorldLinux (seen: rimworld, rimworld.exe, rimworld914win.exe, rimworldwin.exe, rimworldwin64.exe, start_rimworld.sh, ...)				
 rise-of-nations-extended-edition.padpack	Rise of Nations: Extended Edition	name	Rise of Nations: Extended Edition	pages/r/Rise of Nations: Extended Edition.wiki	287450	riseofnations.exe	ok						
@@ -1023,26 +1144,32 @@ saga-emerald-beyond.padpack	SaGa Emerald Beyond	name	SaGa Emerald Beyond	pages/s
 saga-frontier-2-remastered.padpack	SaGa Frontier 2 Remastered	name	SaGa Frontier 2 Remastered	pages/s/SaGa Frontier 2 Remastered.wiki	2452080		info	no_exe	no_exe: pack has no executable rule				
 saga-frontier-remastered.padpack	SaGa Frontier Remastered	name	SaGa Frontier Remastered	pages/s/SaGa Frontier Remastered.wiki	1295270		info	no_exe	no_exe: pack has no executable rule				
 saga-scarlet-grace-ambitions.padpack	SaGa Scarlet Grace: Ambitions	name	SaGa Scarlet Grace: Ambitions	pages/s/SaGa Scarlet Grace: Ambitions.wiki	686720		info	no_exe	no_exe: pack has no executable rule				
+saint-seiya-soldiers-soul.padpack	Saint Seiya: Soldiers' Soul	name	Saint Seiya: Soldiers' Soul	pages/s/Saint Seiya: Soldiers' Soul.wiki	348710	ssss.exe	ok						
 saints-row-the-third.padpack	Saints Row: The Third	name	Saints Row: The Third	pages/s/Saints Row: The Third.wiki	55230	saintsrowthethird_dx11.exe	ok						
 salt-and-sanctuary.padpack	Salt and Sanctuary	name	Salt and Sanctuary	pages/s/Salt and Sanctuary.wiki	283640	salt and sanctuary/salt.exe	ok						
 samorost-2.padpack	Samorost 2	name	Samorost 2	pages/s/Samorost 2.wiki	40720	samorost2.exe	ok						
 samsara-room.padpack	Samsara Room	name	Samsara Room	pages/s/Samsara Room.wiki	1281800	samsararoom.exe	ok						
 sanabi.padpack	Sanabi	name	Sanabi	pages/s/Sanabi.wiki	1562700	sanabi/snb.exe	ok						
+sand-land.padpack	Sand Land	name	Sand Land	pages/s/Sand Land.wiki	1979440	sandland-win64-shipping.exe,sandland.exe	ok						
 sands-of-salzaar.padpack	Sands of Salzaar	name	Sands of Salzaar	pages/s/Sands of Salzaar.wiki	1094520	desertlegend.exe	ok						
 sanity-aikens-artifact.padpack	Sanity: Aiken's Artifact	name	Sanity: Aiken's Artifact	pages/s/Sanity: Aiken's Artifact.wiki		sanity.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 satazius.padpack	Satazius	name	Satazius	pages/s/Satazius.wiki	203990	satazius.exe	info	exe_no_data,passthrough_unconfirmed	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2011				
 satisfactory.padpack	Satisfactory	name	Satisfactory	pages/s/Satisfactory.wiki	526870	FactoryGameSteam-Win64-Shipping.exe,FactoryGame-Win64-Shipping.exe,FactoryGameEGS-Win64-Shipping.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=limited xinput=true released=2024				
 savage-lands.padpack	Savage Lands	name	Savage Lands	pages/s/Savage Lands.wiki	307880	savagelands.exe	ok						
+scarlet-nexus.padpack	Scarlet Nexus	name	Scarlet Nexus	pages/s/Scarlet Nexus.wiki	775500	scarletnexus.exe,scarletnexus-win64-shipping.exe	ok						
 scarygirl.padpack	Scarygirl	name	Scarygirl	pages/s/Scarygirl.wiki	202370		info	no_exe	no_exe: pack has no executable rule				
 schedule-i.padpack	Schedule I	name	Schedule I	pages/s/Schedule I.wiki	3164500	schedule i/schedule i.exe	ok						
 scp-secret-laboratory.padpack	SCP: Secret Laboratory	name	SCP: Secret Laboratory	pages/s/SCP: Secret Laboratory.wiki	700330	SCPSL.exe	ok						
 scrap-mechanic.padpack	Scrap Mechanic	name	Scrap Mechanic	pages/s/Scrap Mechanic.wiki	387990	ScrapMechanic.exe	ok						
 scribblenauts-unlimited.padpack	Scribblenauts Unlimited	name	Scribblenauts Unlimited	pages/s/Scribblenauts Unlimited.wiki	218680	scribble.exe	ok						
 scum.padpack	Scum	name	Scum	pages/s/Scum.wiki	513710	scum.exe	ok						
+sd-gundam-battle-alliance.padpack	SD Gundam Battle Alliance	name	SD Gundam Battle Alliance	pages/s/SD Gundam Battle Alliance.wiki	824550	sdgundamba-win64-shipping.exe,sdgundamba.exe	ok						
+sd-gundam-g-generation-cross-rays.padpack	SD Gundam G Generation Cross Rays	name	SD Gundam G Generation Cross Rays	pages/s/SD Gundam G Generation Cross Rays.wiki	728530	togg.exe	ok						
 season-of-mystery-the-cherry-blossom-murders.padpack	Season of Mystery: The Cherry Blossom Murders	name	Season of Mystery: The Cherry Blossom Murders	pages/s/Season of Mystery: The Cherry Blossom Murders.wiki	39110		info	no_exe	no_exe: pack has no executable rule				
 secret-neighbor.padpack	Secret Neighbor	name	Secret Neighbor	pages/s/Secret Neighbor.wiki	859570,999730	secret neighbor/secret neighbour.exe	ok						
 secret-of-mana.padpack	Secret of Mana	name	Secret of Mana	pages/s/Secret of Mana.wiki	637670	secret_of_mana.exe	ok						
 settlement-survival.padpack	Settlement Survival	name	Settlement Survival	pages/s/Settlement Survival.wiki	1509510	settlement survival.exe	ok						
+shadow-labyrinth.padpack	Shadow Labyrinth	name	Shadow Labyrinth	pages/s/Shadow Labyrinth.wiki	1859430	shadow labyrinth.exe	ok						
 shadow-of-the-tomb-raider.padpack	Shadow of the Tomb Raider	name	Shadow of the Tomb Raider	pages/s/Shadow of the Tomb Raider.wiki	750920	sottr.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 shadow-tactics-blades-of-the-shogun.padpack	Shadow Tactics: Blades of the Shogun	name	Shadow Tactics: Blades of the Shogun	pages/s/Shadow Tactics: Blades of the Shogun.wiki	418240	shadow tactics.exe	warn	mapped_but_native	mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2016				
 shadowrun-dragonfall-directors-cut.padpack	Shadowrun: Dragonfall - Director's Cut	name	Shadowrun: Dragonfall - Director's Cut	pages/s/Shadowrun: Dragonfall - Director's Cut.wiki	300550	dragonfall.exe	ok						
@@ -1081,6 +1208,7 @@ software-inc.padpack	Software Inc.	name	Software Inc.	pages/s/Software Inc..wiki
 solasta-crown-of-the-magister.padpack	Solasta: Crown of the Magister	name	Solasta: Crown of the Magister	pages/s/Solasta: Crown of the Magister.wiki	1096530	solasta.exe	ok						
 soldat.padpack	Soldat	name	Soldat	pages/s/Soldat.wiki	638490	soldat.exe	ok						
 soldier-of-fortune-ii-double-helix.padpack	Soldier of Fortune II: Double Helix	name	Soldier of Fortune II: Double Helix	pages/s/Soldier of Fortune II: Double Helix.wiki		sof2mp.exe,sof2.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
+soulcalibur-vi.padpack	Soulcalibur VI	name	Soulcalibur VI	pages/s/Soulcalibur VI.wiki	544750	soulcaliburvi.exe	ok						
 soulstone-survivors.padpack	Soulstone Survivors	name	Soulstone Survivors	pages/s/Soulstone Survivors.wiki	2066020		info	no_exe	no_exe: pack has no executable rule				
 south-park-the-fractured-but-whole.padpack	South Park: The Fractured but Whole	name	South Park: The Fractured but Whole	pages/s/South Park: The Fractured but Whole.wiki	488790		info	no_exe	no_exe: pack has no executable rule				
 space-engineers.padpack	Space Engineers	name	Space Engineers	pages/s/Space Engineers.wiki	244850	spaceengineers.exe	ok						
@@ -1091,6 +1219,7 @@ spider-man-2-the-game.padpack	Spider-Man 2: The Game	name	Spider-Man 2: The Game
 spiral-knights.padpack	Spiral Knights	name	Spiral Knights	pages/s/Spiral Knights.wiki	99900		info	no_exe	no_exe: pack has no executable rule				
 spirit-city-lofi-sessions.padpack	Spirit City: Lofi Sessions	name	Spirit City: Lofi Sessions	pages/s/Spirit City: Lofi Sessions.wiki	2113850	spiritcity-win64-shipping.exe	ok						
 spore.padpack	Spore	name	Spore	pages/s/Spore.wiki	17390,17440,24720	SporeApp.exe	ok						
+spyxanya-operation-memories.padpack	SPYxANYA: Operation Memories	name	SPYxANYA: Operation Memories	pages/s/SPYxANYA: Operation Memories.wiki	2170370	spyxanya.exe	ok						
 squad-44.padpack	Squad 44	name	Squad 44	pages/s/Squad 44.wiki	736220	postscriptum.exe,win64/postscriptum.exe	ok						
 squad.padpack	Squad	name	Squad	pages/s/Squad.wiki	393380	squad/squadgame/binaries/win64/squadgame.exe	ok						
 square-enix-ai-tech-preview-the-portopia-serial-murder-case.padpack	SQUARE ENIX AI Tech Preview: THE PORTOPIA SERIAL MURDER CASE	name	SQUARE ENIX AI Tech Preview: THE PORTOPIA SERIAL MURDER CASE	pages/s/SQUARE ENIX AI Tech Preview: THE PORTOPIA SERIAL MURDER CASE.wiki	2280000		info	no_exe	no_exe: pack has no executable rule				
@@ -1156,6 +1285,9 @@ super-bomberman-collection.padpack	Super Bomberman Collection	name	Super Bomberm
 super-bomberman-r-2.padpack	Super Bomberman R 2	name	Super Bomberman R 2	pages/s/Super Bomberman R 2.wiki	1913740	superbombermanr2.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 super-bomberman-r.padpack	Super Bomberman R	name	Super Bomberman R	pages/s/Super Bomberman R.wiki	702700	superbombermanr.exe,super bomberman r/superbombermanr.exe	ok						
 super-crazy-rhythm-castle.padpack	Super Crazy Rhythm Castle	name	Super Crazy Rhythm Castle	pages/s/Super Crazy Rhythm Castle.wiki	1812560	super crazy rhythm castle.exe	warn	exe_unseen	exe_unseen: super crazy rhythm castle.exe (seen: titus/rhythm castle.exe)				
+super-dragon-ball-heroes-world-mission.padpack	Super Dragon Ball Heroes: World Mission	name	Super Dragon Ball Heroes: World Mission	pages/s/Super Dragon Ball Heroes: World Mission.wiki	798510	sdbheroes_worldmission.exe	ok						
+super-robot-wars-30.padpack	Super Robot Wars 30	name	Super Robot Wars 30	pages/s/Super Robot Wars 30.wiki	898750	srw30.exe	ok						
+super-robot-wars-y.padpack	Super Robot Wars Y	name	Super Robot Wars Y	pages/s/Super Robot Wars Y.wiki	1909950	super robot wars y.exe	ok						
 super-street-fighter-iv-arcade-edition.padpack	Super Street Fighter IV: Arcade Edition	name	Super Street Fighter IV: Arcade Edition	pages/s/Super Street Fighter IV: Arcade Edition.wiki	45760	ssfiv.exe	ok						
 superhot.padpack	Superhot	name	Superhot	pages/s/Superhot.wiki	322500	superhot.exe	ok						
 superliminal.padpack	Superliminal	name	Superliminal	pages/s/Superliminal.wiki	1049410		warn	mapped_but_native,no_exe	no_exe: pack has no executable rule | mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2019				
@@ -1172,15 +1304,34 @@ survival-postapocalypse-now.padpack	Survival: Postapocalypse Now	name	Survival: 
 surviving-mars.padpack	Surviving Mars	name	Surviving Mars	pages/s/Surviving Mars.wiki	464920	marssteam.exe	warn	mapped_but_native	mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2018				
 sven-co-op.padpack	Sven Co-op	name	Sven Co-op	pages/s/Sven Co-op.wiki	225840	svencoop.exe	ok						
 swat-4.padpack	SWAT 4	name	SWAT 4	pages/s/SWAT 4.wiki		Swat4.exe,Swat4X.exe	info	no_steam_id	no_steam_id: pack has no steam_app_id rule				
+sword-art-online-alicization-lycoris.padpack	Sword Art Online Alicization Lycoris	name	Sword Art Online Alicization Lycoris	pages/s/Sword Art Online Alicization Lycoris.wiki	1009290	sao_al.exe	ok						
+sword-art-online-fatal-bullet.padpack	Sword Art Online: Fatal Bullet	name	Sword Art Online: Fatal Bullet	pages/s/Sword Art Online: Fatal Bullet.wiki	626690	saofb-win64-shipping.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2018				
+sword-art-online-fractured-daydream.padpack	Sword Art Online: Fractured Daydream	name	Sword Art Online: Fractured Daydream	pages/s/Sword Art Online: Fractured Daydream.wiki	1858630	saofd.exe	ok						
+sword-art-online-hollow-realization.padpack	Sword Art Online: Hollow Realization	name	Sword Art Online: Hollow Realization	pages/s/Sword Art Online: Hollow Realization.wiki	607890	sao_hr.exe	ok						
+sword-art-online-integral-factor.padpack	Sword Art Online: Integral Factor	name	Sword Art Online: Integral Factor	pages/s/Sword Art Online: Integral Factor.wiki	2371630	saoif.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2023				
+sword-art-online-last-recollection.padpack	Sword Art Online: Last Recollection	name	Sword Art Online: Last Recollection	pages/s/Sword Art Online: Last Recollection.wiki	1566880	sao_lr.exe	ok						
+sword-art-online-lost-song.padpack	Sword Art Online: Lost Song	name	Sword Art Online: Lost Song	pages/s/Sword Art Online: Lost Song.wiki	840720	saols.exe	ok						
+sword-art-online-re-hollow-fragment.padpack	Sword Art Online Re: Hollow Fragment	name	Sword Art Online Re: Hollow Fragment	pages/s/Sword Art Online Re: Hollow Fragment.wiki	638650	saohf.exe	ok						
 syberia-ii.padpack	Syberia II	name	Syberia II	pages/s/Syberia II.wiki	46510	syberia 2/game.exe	ok						
 syberia.padpack	Syberia	name	Syberia	pages/s/Syberia.wiki	46500	game.exe	ok						
+synduality-echo-of-ada.padpack	Synduality: Echo of Ada	name	Synduality: Echo of Ada	pages/s/Synduality: Echo of Ada.wiki	1245480		info	no_exe	no_exe: pack has no executable rule				
 system-shock-2.padpack	System Shock 2	name	System Shock 2	pages/s/System Shock 2.wiki	238210	SS2.exe,Shock2.exe	ok						
 tabletop-simulator.padpack	Tabletop Simulator	name	Tabletop Simulator	pages/t/Tabletop Simulator.wiki	286160		info	no_exe	no_exe: pack has no executable rule				
 tactics-ogre-reborn.padpack	Tactics Ogre: Reborn	name	Tactics Ogre: Reborn	pages/t/Tactics Ogre: Reborn.wiki	1451090	tactics ogre reborn.exe	ok						
+taiko-no-tatsujin-rhythm-festival.padpack	Taiko no Tatsujin: Rhythm Festival	name	Taiko no Tatsujin: Rhythm Festival	pages/t/Taiko no Tatsujin: Rhythm Festival.wiki	2288630	taiko no tatsujin rhythm festival.exe	ok						
 tale-of-immortal.padpack	Tale of Immortal	name	Tale of Immortal	pages/t/Tale of Immortal.wiki	1468810		info	no_exe	no_exe: pack has no executable rule				
 tale-of-wuxia.padpack	Tale of Wuxia	name	Tale of Wuxia	pages/t/Tale of Wuxia.wiki	377530	wuxia.exe	ok						
+tales-of-arise.padpack	Tales of Arise	name	Tales of Arise	pages/t/Tales of Arise.wiki	740130	tales of arise.exe	ok						
+tales-of-berseria-remastered.padpack	Tales of Berseria Remastered	name	Tales of Berseria Remastered	pages/t/Tales of Berseria Remastered.wiki	2331020	tales of berseria remastered.exe	ok						
+tales-of-berseria.padpack	Tales of Berseria	name	Tales of Berseria	pages/t/Tales of Berseria.wiki	429660	tales of berseria.exe	ok						
+tales-of-eternia-remastered.padpack	Tales of Eternia Remastered	name	Tales of Eternia Remastered	pages/t/Tales of Eternia Remastered.wiki	3470960	tales of eternia remastered.exe	ok						
+tales-of-graces-f-remastered.padpack	Tales of Graces f Remastered	name	Tales of Graces f Remastered	pages/t/Tales of Graces f Remastered.wiki	2530980	tales of graces f remastered.exe	ok						
 tales-of-majeyal.padpack	Tales of Maj'Eyal	name	Tales of Maj'Eyal	pages/t/Tales of Maj'Eyal.wiki	259680	t-engine.exe	ok						
 tales-of-monkey-island.padpack	Tales of Monkey Island	name	Tales of Monkey Island	pages/t/Tales of Monkey Island.wiki	31170		info	no_exe	no_exe: pack has no executable rule				
+tales-of-symphonia.padpack	Tales of Symphonia	name	Tales of Symphonia	pages/t/Tales of Symphonia.wiki	372360	tales of symphonia/tos.exe	ok						
+tales-of-vesperia-definitive-edition.padpack	Tales of Vesperia: Definitive Edition	name	Tales of Vesperia: Definitive Edition	pages/t/Tales of Vesperia: Definitive Edition.wiki	738540	tales of vesperia definitive edition/tov_de.exe	ok						
+tales-of-xillia-remastered.padpack	Tales of Xillia Remastered	name	Tales of Xillia Remastered	pages/t/Tales of Xillia Remastered.wiki	2246670	tales of xillia remastered.exe	ok						
+tales-of-zestiria.padpack	Tales of Zestiria	name	Tales of Zestiria	pages/t/Tales of Zestiria.wiki	351970	tales of zestiria.exe	ok						
 tanki-online.padpack	Tanki Online	name	Tanki Online	pages/t/Tanki Online.wiki	562010	tankionline.exe	ok						
 tavern-master.padpack	Tavern Master	name	Tavern Master	pages/t/Tavern Master.wiki	1525700	tavern master.exe	ok						
 tcg-card-shop-simulator.padpack	TCG Card Shop Simulator	name	TCG Card Shop Simulator	pages/t/TCG Card Shop Simulator.wiki	3070070		warn	mapped_but_native,no_exe	no_exe: pack has no executable rule | mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2026				
@@ -1189,19 +1340,24 @@ team-fortress-classic.padpack	Team Fortress Classic	name	Team Fortress Classic	p
 teardown.padpack	Teardown	name	Teardown	pages/t/Teardown.wiki	1167630	teardown.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=limited xinput=true released=2022				
 teenage-mutant-ninja-turtles-the-cowabunga-collection.padpack	Teenage Mutant Ninja Turtles: The Cowabunga Collection	name	Teenage Mutant Ninja Turtles: The Cowabunga Collection	pages/t/Teenage Mutant Ninja Turtles: The Cowabunga Collection.wiki	1659600	tmnt_cowabunga.exe	ok						
 teeworlds.padpack	Teeworlds	name	Teeworlds	pages/t/Teeworlds.wiki	380840	teeworlds.exe	ok						
+tekken-7.padpack	Tekken 7	name	Tekken 7	pages/t/Tekken 7.wiki	389730	tekkengame-win64-shipping.exe	ok						
+tekken-8.padpack	Tekken 8	name	Tekken 8	pages/t/Tekken 8.wiki	1778820	tekken 8.exe,polaris-win64-shipping.exe	ok						
 tempest-rising.padpack	Tempest Rising	name	Tempest Rising	pages/t/Tempest Rising.wiki	1486920	tempest-win64-shipping.exe	ok						
 temtem.padpack	Temtem	name	Temtem	pages/t/Temtem.wiki	745920		info	no_exe	no_exe: pack has no executable rule				
 terra-invicta.padpack	Terra Invicta	name	Terra Invicta	pages/t/Terra Invicta.wiki	1176470	terrainvicta.exe	ok						
 terra-nil.padpack	Terra Nil	name	Terra Nil	pages/t/Terra Nil.wiki	1593030	terra nil.exe	ok						
 terraforming-mars.padpack	Terraforming Mars	name	Terraforming Mars	pages/t/Terraforming Mars.wiki	800270	terraformingmars.exe	ok						
 terratech.padpack	TerraTech	name	TerraTech	pages/t/TerraTech.wiki	285920	terratechwin32.exe	ok						
+that-time-i-got-reincarnated-as-a-slime-isekai-chronicles.padpack	That Time I Got Reincarnated as a Slime: Isekai Chronicles	name	That Time I Got Reincarnated as a Slime: Isekai Chronicles	pages/t/That Time I Got Reincarnated as a Slime: Isekai Chronicles.wiki	2197680		info	no_exe	no_exe: pack has no executable rule				
 the-adventures-of-elliot-the-millennium-tales.padpack	The Adventures of Elliot: The Millennium Tales	name	The Adventures of Elliot: The Millennium Tales	pages/t/The Adventures of Elliot: The Millennium Tales.wiki	3483510	elliot.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 the-awesome-adventures-of-captain-spirit.padpack	The Awesome Adventures of Captain Spirit	name	The Awesome Adventures of Captain Spirit	pages/t/The Awesome Adventures of Captain Spirit.wiki	845070	captainspirit-win64-shipping.exe	ok						
 the-battle-for-wesnoth.padpack	The Battle for Wesnoth	name	The Battle for Wesnoth	pages/t/The Battle for Wesnoth.wiki	599390	wesnoth.exe	ok						
 the-binding-of-isaac.padpack	The Binding of Isaac	name	The Binding of Isaac	pages/t/The Binding of Isaac.wiki	113200	Isaac.exe,binding_of_isaac.exe,isaac,IsaacRecomp.exe	warn	exe_unseen	exe_unseen: isaac (seen: binding_of_isaac.exe, isaac.app, isaac.exe) | exe_unseen: IsaacRecomp.exe (seen: binding_of_isaac.exe, isaac.app, isaac.exe)				
+the-blood-of-dawnwalker.padpack	The Blood of Dawnwalker	name	The Blood of Dawnwalker	pages/t/The Blood of Dawnwalker.wiki	3751260	dawnwalker.exe	ok						
 the-book-of-unwritten-tales.padpack	The Book of Unwritten Tales	name	The Book of Unwritten Tales	pages/t/The Book of Unwritten Tales.wiki	215160		info	no_exe	no_exe: pack has no executable rule				
 the-centennial-case-a-shijima-story.padpack	The Centennial Case: A Shijima Story	name	The Centennial Case: A Shijima Story	pages/t/The Centennial Case: A Shijima Story.wiki	1612780		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2022				
 the-coffin-of-andy-and-leyley.padpack	The Coffin of Andy and Leyley	name	The Coffin of Andy and Leyley	pages/t/The Coffin of Andy and Leyley.wiki	2378900		info	no_exe	no_exe: pack has no executable rule				
+the-devil-in-me.padpack	The Devil in Me	name	The Devil in Me	pages/t/The Devil in Me.wiki	1567020	thedevilinme.exe,thedevilinme-win64-shipping.exe	ok						
 the-diofield-chronicle.padpack	The DioField Chronicle	name	The DioField Chronicle	pages/t/The DioField Chronicle.wiki	1399080		info	no_exe	no_exe: pack has no executable rule				
 the-disney-afternoon-collection.padpack	The Disney Afternoon Collection	name	The Disney Afternoon Collection	pages/t/The Disney Afternoon Collection.wiki	525040	capcom_disney_afternoon.exe	ok						
 the-elder-scrolls-legends.padpack	The Elder Scrolls: Legends	name	The Elder Scrolls: Legends	pages/t/The Elder Scrolls: Legends.wiki	364470	the elder scrolls legends.exe	ok						
@@ -1244,6 +1400,7 @@ the-lord-of-the-rings-the-fellowship-of-the-ring-2002.padpack	The Lord of the Ri
 the-lost-village.padpack	The Lost Village	name	The Lost Village	pages/t/The Lost Village.wiki	1963040		info	no_exe	no_exe: pack has no executable rule				
 the-mysterious-island.padpack	The Mysterious Island	name	The Mysterious Island	pages/t/The Mysterious Island.wiki		mysterious island.exe,island.exe	info	exe_no_data,no_steam_id	no_steam_id: pack has no steam_app_id rule | exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
 the-noexistencen-of-you-and-me.padpack	The Noexistencen of You and Me	name	The Noexistencen of You and Me	pages/t/The Noexistencen of You and Me.wiki	2873080	thenoexistencenofyouandme.exe	ok						
+the-otherside-realm-of-eons.padpack	The Otherside: Realm of Eons	name	The Otherside: Realm of Eons	pages/t/The Otherside: Realm of Eons.wiki	47520	theotherside.exe	ok						
 the-past-within.padpack	The Past Within	name	The Past Within	pages/t/The Past Within.wiki	1515210	the past within.exe	ok						
 the-plan.padpack	The Plan	name	Th3 Plan	pages/t/Th3 Plan.wiki	250600	the plan/the plan.exe	error	id_wrong_game	id_wrong_game: no Steam id is listed for 'Th3 Plan'; they belong to The Plan (2013)				
 the-prince-of-tennis-doki-doki-survival-eternal-passion.padpack	The Prince of Tennis Doki Doki Survival Eternal Passion	name	The Prince of Tennis Doki Doki Survival Eternal Passion	pages/t/The Prince of Tennis Doki Doki Survival Eternal Passion.wiki	3907380	dokisaba.exe	info	exe_no_data	exe_no_data: neither Discord's list nor Steam's launch data has executables for this game				
@@ -1292,6 +1449,7 @@ titan-quest-anniversary-edition.padpack	Titan Quest Anniversary Edition	name	Tit
 titanfall-2.padpack	Titanfall 2	name	Titanfall 2	pages/t/Titanfall 2.wiki	1237970	Titanfall2.exe	ok						
 to-the-moon.padpack	To the Moon	name	To the Moon	pages/t/To the Moon.wiki	206440	to the moon.exe	warn	mapped_but_native	mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2011				
 tokyo-dark.padpack	Tokyo Dark	name	Tokyo Dark	pages/t/Tokyo Dark.wiki	687260	tokyo dark/nw.exe	ok						
+tokyo-ghoul-re-call-to-exist.padpack	Tokyo Ghoul: re Call to Exist	name	Tokyo Ghoul: re Call to Exist	pages/t/Tokyo Ghoul: re Call to Exist.wiki	756530	call to exist.exe	ok						
 tokyo-xanadu-ex.padpack	Tokyo Xanadu eX+	name	Tokyo Xanadu eX+	pages/t/Tokyo Xanadu eX+.wiki	587260	tokyo xanadu ex+/tokyoxanadu.exe	ok						
 tom-clancys-rainbow-six-3-raven-shield.padpack	Tom Clancy's Rainbow Six 3: Raven Shield	name	Tom Clancy's Rainbow Six 3: Raven Shield	pages/t/Tom Clancy's Rainbow Six 3: Raven Shield.wiki	19830		info	no_exe	no_exe: pack has no executable rule				
 tom-clancys-splinter-cell.padpack	Tom Clancy's Splinter Cell	name	Tom Clancy's Splinter Cell	pages/t/Tom Clancy's Splinter Cell.wiki	13560	splintercell.exe	ok						
@@ -1323,6 +1481,7 @@ total-war-warhammer.padpack	Total War: Warhammer	name	Total War: Warhammer	pages
 totally-accurate-battle-simulator.padpack	Totally Accurate Battle Simulator	name	Totally Accurate Battle Simulator	pages/t/Totally Accurate Battle Simulator.wiki	508440		info	no_exe	no_exe: pack has no executable rule				
 totally-accurate-battlegrounds.padpack	Totally Accurate Battlegrounds	name	Totally Accurate Battlegrounds	pages/t/Totally Accurate Battlegrounds.wiki	823130	totallyaccuratebattlegrounds.exe	ok						
 touhou-mystias-izakaya.padpack	Touhou Mystia's Izakaya	name	Touhou Mystia's Izakaya	pages/t/Touhou Mystia's Izakaya.wiki	1584090		warn	mapped_but_native,no_exe	no_exe: pack has no executable rule | mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2021				
+towa-and-the-guardians-of-the-sacred-tree.padpack	Towa and the Guardians of the Sacred Tree	name	Towa and the Guardians of the Sacred Tree	pages/t/Towa and the Guardians of the Sacred Tree.wiki	1910090	towa and the guardians of the sacred tree.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2025				
 town-of-salem.padpack	Town of Salem	name	Town of Salem	pages/t/Town of Salem.wiki	334230	townofsalem.exe	ok						
 trails-in-the-sky-1st-chapter.padpack	Trails in the Sky 1st Chapter	name	Trails in the Sky 1st Chapter	pages/t/Trails in the Sky 1st Chapter.wiki	3375780	trails in the sky 1st chapter/sora_1st.exe	ok						
 trails-in-the-sky-2nd-chapter.padpack	Trails in the Sky 2nd Chapter	name	Trails in the Sky 2nd Chapter	pages/t/Trails in the Sky 2nd Chapter.wiki	4225980		info	no_exe	no_exe: pack has no executable rule				
@@ -1356,6 +1515,7 @@ underrail.padpack	Underrail	name	Underrail	pages/u/Underrail.wiki	250520	underra
 undertale.padpack	Undertale	name	Undertale	pages/u/Undertale.wiki	391540	undertale.exe	ok						
 unheard.padpack	Unheard	name	Unheard	pages/u/Unheard.wiki	942970	unheard.exe	ok						
 universe-sandbox.padpack	Universe Sandbox	name	Universe Sandbox	pages/u/Universe Sandbox.wiki	230290		info	no_exe	no_exe: pack has no executable rule				
+unknown-9-awakening.padpack	Unknown 9: Awakening	name	Unknown 9: Awakening	pages/u/Unknown 9: Awakening.wiki	1477940	u9-win64-shipping.exe,unknown 9 awakening.exe	ok						
 uno-2016.padpack	Uno (2016)	name	Uno (2016)	pages/u/Uno (2016).wiki	470220	uno.exe	warn	mapped_but_native	mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2016				
 unpacking.padpack	Unpacking	name	Unpacking	pages/u/Unpacking.wiki	1135690		warn	mapped_but_native,no_exe	no_exe: pack has no executable rule | mapped_but_native: remapped pack, but wiki lists full controller support: controller_support=true xinput=true released=2021				
 unturned.padpack	Unturned	name	Unturned	pages/u/Unturned.wiki	304930	Unturned.exe,Unturned_BE.exe,Unturned.x86_64	ok						
@@ -1396,11 +1556,13 @@ warhammer-40000-dawn-of-war.padpack	Warhammer 40,000: Dawn of War	name	Warhammer
 warno.padpack	WARNO	name	WARNO	pages/w/WARNO.wiki	1611600	warno.exe	ok						
 wartales.padpack	Wartales	name	Wartales	pages/w/Wartales.wiki	1527950	wartales.exe	ok						
 wasteland-3.padpack	Wasteland 3	name	Wasteland 3	pages/w/Wasteland 3.wiki	719040		info	no_exe	no_exe: pack has no executable rule				
+we-love-katamari-reroll-royal-reverie.padpack	We Love Katamari Reroll+ Royal Reverie	name	We Love Katamari Reroll+ Royal Reverie	pages/w/We Love Katamari Reroll+ Royal Reverie.wiki	1730700	wlkrr.exe	ok						
 we-were-here-expeditions-the-friendship.padpack	We Were Here Expeditions: The FriendShip	name	We Were Here Expeditions: The FriendShip	pages/w/We Were Here Expeditions: The FriendShip.wiki	2296990		info	no_exe	no_exe: pack has no executable rule				
 we-were-here.padpack	We Were Here	name	We Were Here	pages/w/We Were Here.wiki	582500	we were here.exe	ok						
 webfishing.padpack	Webfishing	name	Webfishing	pages/w/Webfishing.wiki	3146520	webfishing.exe	ok						
 while-true-learn.padpack	While True: learn()	name	While True: learn()	pages/w/While True: learn().wiki	619150	wtl.exe	ok						
 whos-your-daddy.padpack	Who's Your Daddy	name	Who's Your Daddy	pages/w/Who's Your Daddy.wiki	427730	whosyourdaddy.exe	ok						
+winning-putt.padpack	Winning Putt	name	Winning Putt	pages/w/Winning Putt.wiki	458960		info	no_exe	no_exe: pack has no executable rule				
 wizard101.padpack	Wizard101	name	Wizard101	pages/w/Wizard101.wiki	799960	wizard101.exe	ok						
 wobbly-life.padpack	Wobbly Life	name	Wobbly Life	pages/w/Wobbly Life.wiki	1211020	wobbly life.exe	ok						
 wolcen-lords-of-mayhem.padpack	Wolcen: Lords of Mayhem	name	Wolcen: Lords of Mayhem	pages/w/Wolcen: Lords of Mayhem.wiki	424370	Wolcen.exe	ok						

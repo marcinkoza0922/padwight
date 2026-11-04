@@ -179,6 +179,8 @@ def build(g):
     pid = str(uuid.uuid5(uuid.NAMESPACE_URL, "padwight-pack/" + slug))
     o = [f'format = 20\nmacros = []\noverlay_font = "{th["font"]}"\n']
     o.append(f'[pack]\nid = "{pid}"\nname = "{g["name"]}"\nversion = "1.0"\nauthor = "Padwight"\ndescription = "{g["desc"]}"\nmade_with = "Xbox controller"\n')
+    if g.get("ctl"):  # native pad kinds the game supports: ("dualshock", "dualsense", "switch_pro")
+        o.append("[controllers]\n" + "".join(f"{k} = true\n" for k in g["ctl"]))
     for i in g["ids"]: o.append(f'[[rules]]\nkind = "steam_app_id"\nvalue = "{i}"\nprofile = "{g["name"]}"\n')
     for e in g["exes"]: o.append(f'[[rules]]\nkind = "executable"\nvalue = "{e}"\nprofile = "{g["name"]}"\n')
     if g.get("pt"):
