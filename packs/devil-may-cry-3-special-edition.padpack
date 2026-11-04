@@ -1,0 +1,294 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "5db3a8cc-7324-5a36-b485-c492521320ae"
+name = "Devil May Cry 3: Special Edition"
+version = "1.0"
+author = "Padwight"
+description = "Devil May Cry 3: Special Edition on an Xbox-style pad. The pad sends the keyboard keys the game uses: the arrows move."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "6550"
+profile = "Devil May Cry 3: Special Edition"
+
+[[rules]]
+kind = "executable"
+value = "dmc3se.exe"
+profile = "Devil May Cry 3: Special Edition"
+
+[[profiles]]
+name = "Devil May Cry 3: Special Edition"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_SPACE"]}
+East = {keys = ["KEY_C"]}
+DpadUp = {keys = ["KEY_UP"]}
+DpadDown = {keys = ["KEY_DOWN"]}
+Start = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_Z"]}
+North = {keys = ["KEY_X"]}
+LeftBumper = {keys = ["KEY_LEFTSHIFT"]}
+RightBumper = {keys = ["KEY_A"]}
+Select = {keys = ["KEY_TAB"]}
+DpadLeft = {keys = ["KEY_LEFT"]}
+DpadRight = {keys = ["KEY_RIGHT"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_UP"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_RIGHT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_RIGHT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_DOWN"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_LEFT"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_LEFT"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_LEFT"] }]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {keys = ["KEY_A"]}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {keys = ["KEY_LEFTSHIFT"]}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The stick and {dpad} move on the arrows. {south} jumps, {west} swings the melee weapon, {north} fires, {lb} locks on.
+Buttons: {south} Jump; {east} Style; {start} Menu; {west} Melee; {north} Gun; {lb} Lock on; {rb} Devil Trigger; {select} Status.
+Released in June 2006; the wiki gives XInput as hackable only, so the pad sends keys. The keys are a guess at the keyboard defaults, not checked on an install: open the game's keyboard options and make the buttons here match. Keys are the game's defaults as remembered, not read from an install; if one doesn't answer, check the game's controls options and change the buttons here to match. The Windows executable is from Discord's list. The game reads the pad only through DirectInput, so the pad sends the keys its controls use.
+Typing a name or text: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Lock on"}
+"trigger:Left" = {text = "Devil Trigger"}
+"button:South" = {text = "{icon:arrow} Jump"}
+"button:East" = {text = "Style"}
+"button:Start" = {text = "Menu"}
+"button:West" = {text = "{icon:dagger} Melee"}
+"button:North" = {text = "{icon:crosshair} Gun"}
+"button:LeftBumper" = {text = "{icon:crosshair} Lock on"}
+"button:RightBumper" = {text = "Devil Trigger"}
+"button:Select" = {text = "Status"}
+
+
+
+[keyboard_style]
+corners = 0.04
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#10142e"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#232a54"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#d2463f"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8a96dc"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#090b1e"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#3b4584"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+[numpad_style]
+corners = 0.04
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#10142e"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#232a54"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#d2463f"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8a96dc"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#090b1e"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#3b4584"
+
+[numpad_style.type]
+letter_spacing = 0
+
+[media_style]
+corners = 0.04
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#10142e"
+opacity = 0.93
+
+[media_style.items]
+color = "#232a54"
+opacity = 0.95
+
+[media_style.selected]
+color = "#d2463f"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8a96dc"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#090b1e"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#3b4584"
+
+[media_style.type]
+letter_spacing = 0
+
+[menu_style]
+corners = 0.04
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#10142e"
+opacity = 0.93
+
+[menu_style.items]
+color = "#232a54"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#d2463f"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8a96dc"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#090b1e"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#3b4584"
+
+[menu_style.glow]
+color = "#aab4ff"
+opacity = 0.45
+blur = 16
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#3b4584", opacity = 0.8}
+
+[motion]
+keyboard = "grim"
+numpad = "grim"
+menu = "grim"
+media = "grim"
+offer = "grim"
+info = "grim"
+log = "grim"
+
+[sounds.menu]
+step = {kind = "thud", volume = 0.06, pitch = 0.9}
+pick = {kind = "bell", volume = 0.09}
+open = {kind = "heartbeat", volume = 0.06}
+close = {kind = "thud", volume = 0.05, pitch = 0.7}
+
+[sounds.numpad]
+step = {kind = "thud", volume = 0.06, pitch = 0.9}
+pick = {kind = "bell", volume = 0.09}
+
+[sounds.keyboard]
+step = {kind = "thud", volume = 0.06, pitch = 0.9}
+pick = {kind = "keys", volume = 0.12, pitch = 0.9}
+
+[sounds.media]
+pick = {kind = "bell", volume = 0.09}

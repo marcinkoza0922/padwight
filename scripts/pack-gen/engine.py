@@ -54,6 +54,12 @@ THEMES = {
     snd=dict(step=("thud",0.06,0.9), pick=("knock",0.09,1.0), open=("heartbeat",0.06,1.0), close=("thud",0.05,0.7), kbpick=("keys",0.12,0.9)), frame=None, case=None),
  "paper": dict(font="Inter", bg="#2a2a33", item="#3d3d4a", sel="#f0c05a", border="#9a9ab0", grad="#1e1e26", itemb="#555566", glow=None, corners=0.15, motion="subtle",
     snd=dict(step=("click",0.05,1.1), pick=("select",0.08,1.0), open=("pop",0.06,1.0), close=("pop",0.05,0.8), kbpick=("keys",0.12,1.0)), frame=None, case=None),
+ "typewriter": dict(font="Special Elite", bg="#e8dfc6", item="#d6cbab", sel="#1d1b18", border="#3a342a", grad="#f3ecd8", itemb="#b9ad8c", glow=None, corners=0.05, motion="retro",
+    snd=dict(step=("typewriter",0.09,1.3), pick=("typewriter",0.24,0.95), open=("carriage",0.1,1.0), close=("bell",0.05,1.5), kbpick=("typewriter",0.3,0.9)), frame=("brackets",12,"#3a342a"), case=None),
+ "fighter": dict(font="Bangers", bg="#1a1230", item="#2c2050", sel="#ffd21f", border="#e03a2e", grad="#0f0a20", itemb="#4a3a86", glow=None, corners=0.06, motion="brutal",
+    snd=dict(step=("click",0.06,1.1), pick=("select",0.09,1.0), open=("pop",0.07,1.0), close=("pop",0.06,0.8), kbpick=("keys",0.12,1.0)), frame=None, case="upper"),
+ "samurai": dict(font="Cinzel", bg="#1b1511", item="#32261d", sel="#c8372d", border="#d9b36a", grad="#110d0a", itemb="#55402e", glow=None, corners=0.04, motion="grim",
+    snd=dict(step=("wood",0.06,1.0), pick=("shing",0.08,0.9), open=("page",0.07,1.0), close=("wood",0.05,0.8), kbpick=("keys",0.12,1.0)), frame=("brackets",12,"#d9b36a"), case=None),
  "casino": dict(font="Bangers", bg="#13321f", item="#1f4e31", sel="#e8c547", border="#c9a227", grad="#0c2315", itemb="#2f6b45", glow=None, corners=0.15, motion="playful",
     snd=dict(step=("card",0.07,1.0), pick=("coin",0.09,1.0), open=("card",0.07,1.1), close=("card",0.06,0.8), kbpick=("keys",0.12,1.0)), frame=None, case=None),
 }
