@@ -1,6 +1,6 @@
 format = 20
 macros = []
-overlay_font = "Creepster"
+overlay_font = "Cinzel"
 
 [pack]
 id = "36c67155-1d23-5ea3-9915-ad559f7896d5"
@@ -73,143 +73,148 @@ notes = '''Partial support in the wiki: some menus may still want the keyboard. 
 
 
 [keyboard_style]
-corners = 0.02
+corners = 0.04
 position = "bottom_center"
 scale = 1.0
 
 [keyboard_style.background]
-color = "#1a0f12"
+color = "#10142e"
 opacity = 0.93
 
 [keyboard_style.items]
-color = "#35181e"
+color = "#232a54"
 opacity = 0.95
 
 [keyboard_style.selected]
-color = "#c23b3b"
+color = "#d2463f"
 opacity = 1.0
 
 [keyboard_style.border]
 width = 1
-color = "#7d2a2a"
+color = "#8a96dc"
 opacity = 0.8
 
 [keyboard_style.gradient]
-color = "#0e0709"
+color = "#090b1e"
 opacity = 1.0
 angle = 180
 
 [keyboard_style.item_border]
 width = 1
-color = "#55252c"
+color = "#3b4584"
 
 [keyboard_style.type]
 letter_spacing = 0
 
 [numpad_style]
-corners = 0.02
+corners = 0.04
 position = "center"
 scale = 1.0
 
 [numpad_style.background]
-color = "#1a0f12"
+color = "#10142e"
 opacity = 0.93
 
 [numpad_style.items]
-color = "#35181e"
+color = "#232a54"
 opacity = 0.95
 
 [numpad_style.selected]
-color = "#c23b3b"
+color = "#d2463f"
 opacity = 1.0
 
 [numpad_style.border]
 width = 1
-color = "#7d2a2a"
+color = "#8a96dc"
 opacity = 0.8
 
 [numpad_style.gradient]
-color = "#0e0709"
+color = "#090b1e"
 opacity = 1.0
 angle = 180
 
 [numpad_style.item_border]
 width = 1
-color = "#55252c"
+color = "#3b4584"
 
 [numpad_style.type]
 letter_spacing = 0
 
 [media_style]
-corners = 0.02
+corners = 0.04
 position = "top_right"
 scale = 0.9
 
 [media_style.background]
-color = "#1a0f12"
+color = "#10142e"
 opacity = 0.93
 
 [media_style.items]
-color = "#35181e"
+color = "#232a54"
 opacity = 0.95
 
 [media_style.selected]
-color = "#c23b3b"
+color = "#d2463f"
 opacity = 1.0
 
 [media_style.border]
 width = 1
-color = "#7d2a2a"
+color = "#8a96dc"
 opacity = 0.8
 
 [media_style.gradient]
-color = "#0e0709"
+color = "#090b1e"
 opacity = 1.0
 angle = 180
 
 [media_style.item_border]
 width = 1
-color = "#55252c"
+color = "#3b4584"
 
 [media_style.type]
 letter_spacing = 0
 
 [menu_style]
-corners = 0.02
+corners = 0.04
 position = "center"
 scale = 1.0
 
 [menu_style.background]
-color = "#1a0f12"
+color = "#10142e"
 opacity = 0.93
 
 [menu_style.items]
-color = "#35181e"
+color = "#232a54"
 opacity = 0.95
 
 [menu_style.selected]
-color = "#c23b3b"
+color = "#d2463f"
 opacity = 1.0
 
 [menu_style.border]
 width = 1
-color = "#7d2a2a"
+color = "#8a96dc"
 opacity = 0.8
 
 [menu_style.gradient]
-color = "#0e0709"
+color = "#090b1e"
 opacity = 1.0
 angle = 180
 
 [menu_style.item_border]
 width = 1
-color = "#55252c"
+color = "#3b4584"
+
+[menu_style.glow]
+color = "#aab4ff"
+opacity = 0.45
+blur = 16
 
 [menu_style.type]
 letter_spacing = 0
 
 [menu_style.ornament]
-dividers = {width = 1, color = "#55252c", opacity = 0.8}
+dividers = {width = 1, color = "#3b4584", opacity = 0.8}
 
 [motion]
 keyboard = "grim"
@@ -222,17 +227,17 @@ log = "grim"
 
 [sounds.menu]
 step = {kind = "thud", volume = 0.06, pitch = 0.9}
-pick = {kind = "knock", volume = 0.09}
+pick = {kind = "bell", volume = 0.09}
 open = {kind = "heartbeat", volume = 0.06}
 close = {kind = "thud", volume = 0.05, pitch = 0.7}
 
 [sounds.numpad]
 step = {kind = "thud", volume = 0.06, pitch = 0.9}
-pick = {kind = "knock", volume = 0.09}
+pick = {kind = "bell", volume = 0.09}
 
 [sounds.keyboard]
 step = {kind = "thud", volume = 0.06, pitch = 0.9}
 pick = {kind = "keys", volume = 0.12, pitch = 0.9}
 
 [sounds.media]
-pick = {kind = "knock", volume = 0.09}
+pick = {kind = "bell", volume = 0.09}

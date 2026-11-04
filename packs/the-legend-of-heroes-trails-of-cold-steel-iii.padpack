@@ -78,30 +78,30 @@ position = "bottom_center"
 scale = 1.0
 
 [keyboard_style.background]
-color = "#1f2418"
+color = "#1b1e24"
 opacity = 0.93
 
 [keyboard_style.items]
-color = "#343b27"
+color = "#32363f"
 opacity = 0.95
 
 [keyboard_style.selected]
-color = "#b5c25a"
+color = "#cf3a35"
 opacity = 1.0
 
 [keyboard_style.border]
 width = 1
-color = "#7d8a45"
+color = "#8d93a1"
 opacity = 0.8
 
 [keyboard_style.gradient]
-color = "#151910"
+color = "#121418"
 opacity = 1.0
 angle = 180
 
 [keyboard_style.item_border]
 width = 1
-color = "#4d5736"
+color = "#4d525e"
 
 [keyboard_style.type]
 letter_spacing = 1
@@ -113,30 +113,30 @@ position = "center"
 scale = 1.0
 
 [numpad_style.background]
-color = "#1f2418"
+color = "#1b1e24"
 opacity = 0.93
 
 [numpad_style.items]
-color = "#343b27"
+color = "#32363f"
 opacity = 0.95
 
 [numpad_style.selected]
-color = "#b5c25a"
+color = "#cf3a35"
 opacity = 1.0
 
 [numpad_style.border]
 width = 1
-color = "#7d8a45"
+color = "#8d93a1"
 opacity = 0.8
 
 [numpad_style.gradient]
-color = "#151910"
+color = "#121418"
 opacity = 1.0
 angle = 180
 
 [numpad_style.item_border]
 width = 1
-color = "#4d5736"
+color = "#4d525e"
 
 [numpad_style.type]
 letter_spacing = 1
@@ -148,30 +148,30 @@ position = "top_right"
 scale = 0.9
 
 [media_style.background]
-color = "#1f2418"
+color = "#1b1e24"
 opacity = 0.93
 
 [media_style.items]
-color = "#343b27"
+color = "#32363f"
 opacity = 0.95
 
 [media_style.selected]
-color = "#b5c25a"
+color = "#cf3a35"
 opacity = 1.0
 
 [media_style.border]
 width = 1
-color = "#7d8a45"
+color = "#8d93a1"
 opacity = 0.8
 
 [media_style.gradient]
-color = "#151910"
+color = "#121418"
 opacity = 1.0
 angle = 180
 
 [media_style.item_border]
 width = 1
-color = "#4d5736"
+color = "#4d525e"
 
 [media_style.type]
 letter_spacing = 1
@@ -183,38 +183,38 @@ position = "center"
 scale = 1.0
 
 [menu_style.background]
-color = "#1f2418"
+color = "#1b1e24"
 opacity = 0.93
 
 [menu_style.items]
-color = "#343b27"
+color = "#32363f"
 opacity = 0.95
 
 [menu_style.selected]
-color = "#b5c25a"
+color = "#cf3a35"
 opacity = 1.0
 
 [menu_style.border]
 width = 1
-color = "#7d8a45"
+color = "#8d93a1"
 opacity = 0.8
 
 [menu_style.gradient]
-color = "#151910"
+color = "#121418"
 opacity = 1.0
 angle = 180
 
 [menu_style.item_border]
 width = 1
-color = "#4d5736"
+color = "#4d525e"
 
 [menu_style.type]
 letter_spacing = 1
 case = "upper"
 
 [menu_style.ornament]
-frame = {kind = "brackets", size = 12, width = 2, color = "#7d8a45"}
-dividers = {width = 1, color = "#4d5736", opacity = 0.8}
+frame = {kind = "brackets", size = 12, width = 2, color = "#cf3a35"}
+dividers = {width = 1, color = "#4d525e", opacity = 0.8}
 
 [motion]
 keyboard = "swift"

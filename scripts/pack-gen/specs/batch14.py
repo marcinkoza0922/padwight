@@ -1,7 +1,7 @@
 from helpers import *
 # Nihon Falcom and Gust developed games with a Windows release (wiki publisher or developer: Nihon Falcom, Gust Co. Ltd.).
 # P = passthrough, for games whose wiki entry says the game has controller support (see PT_NOTE).
-# G = generated pointer or keyboard pack, for games with no native controller support, or that predate XInput (Dec 2005).
+# G = generated pointer or keyboard pack, for games with no native controller support.
 # Games with no Steam id and no executable in the wiki (DOS and early Windows releases, the 2013 Zero no Kiseki) are left out
 # until their ids are known; see the batch14 note in docs/development/pack-qa.tsv.
 S = []
@@ -41,48 +41,48 @@ G("Atelier Resleriana: Forgotten Alchemy and the Polar Night Liberator", ["25949
 # --- Ar Nosurge / Ciel Nosurge / Blue Reflection (Gust), sci-fi and mystic
 P("Ar Nosurge: Ode to an Unborn Star DX", ["1477490"], [], "scifi", "starship blue and white."),
 P("Ciel Nosurge: Requiem for a Lost Star DX", ["1477480"], [], "scifi", "starship blue and white."),
-P("Blue Reflection", ["658260"], [], "mystic", "magical girl pastel and violet."),
-P("Blue Reflection: Second Light", ["1423600"], [], "mystic", "magical girl pastel and violet."),
-P("Blue Reflection Quartet", ["3825390"], [], "mystic", "magical girl pastel and violet."),
+P("Blue Reflection", ["658260"], [], "reflection", "magical girl pastel pink and sky blue."),
+P("Blue Reflection: Second Light", ["1423600"], [], "reflection", "magical girl pastel pink and sky blue."),
+P("Blue Reflection Quartet", ["3825390"], [], "reflection", "magical girl pastel pink and sky blue."),
 # --- Gust action and other
-P("Fairy Tail", ["1233260"], ["fairy tail/fairy_tail.exe"], "parchment", "guild red and gold."),
-P("Fairy Tail 2", ["3002850"], [], "parchment", "guild red and gold."),
-P("Nights of Azure", ["527280"], [], "horror", "gothic crimson and bone.", n="Partial support in the wiki: some menus may still want the keyboard."),
-P("Nights of Azure 2: Bride of the New Moon", ["636570"], [], "horror", "gothic crimson and bone.", n="Partial support in the wiki: some menus may still want the keyboard."),
+P("Fairy Tail", ["1233260"], ["fairy tail/fairy_tail.exe"], "guild", "guild red and gold."),
+P("Fairy Tail 2", ["3002850"], [], "guild", "guild red and gold."),
+P("Nights of Azure", ["527280"], [], "moonlit", "moonlit night blue and crimson.", n="Partial support in the wiki: some menus may still want the keyboard."),
+P("Nights of Azure 2: Bride of the New Moon", ["636570"], [], "moonlit", "moonlit night blue and crimson.", n="Partial support in the wiki: some menus may still want the keyboard."),
 # --- Falcom: Trails series (Legend of Heroes)
-P("The Legend of Heroes: Trails in the Sky SC", ["251290"], ["ed6_win2.exe"], "parchment", "Erebonia grey and blue, the Bracer's guild."),
-P("The Legend of Heroes: Trails in the Sky the 3rd", ["436670"], ["trails in the sky the 3rd/ed6_win3_dx9.exe"], "parchment", "Erebonia grey and blue.", n="Partial support in the wiki: some menus may still want the keyboard."),
-P("Trails in the Sky 1st Chapter", ["3375780"], ["trails in the sky 1st chapter/sora_1st.exe"], "parchment", "Liberl blue and gold."),
-P("Trails in the Sky 2nd Chapter", ["4225980"], [], "parchment", "Liberl blue and gold."),
-P("The Legend of Heroes: Trails of Cold Steel", ["538680"], ["trails of cold steel/ed8.exe"], "military", "Erebonia military grey and red."),
-P("The Legend of Heroes: Trails of Cold Steel II", ["748490"], [], "military", "Erebonia military grey and red."),
-P("The Legend of Heroes: Trails of Cold Steel III", ["991270"], [], "military", "Erebonia military grey and red."),
-P("The Legend of Heroes: Trails of Cold Steel IV", ["1198090"], [], "military", "Erebonia military grey and red."),
-P("The Legend of Heroes: Trails through Daybreak", ["2138610"], ["the legend of heroes trails through daybreak/kuro.exe"], "parchment", "Crossbell grey and gold."),
-P("The Legend of Heroes: Trails through Daybreak II", ["2113920"], [], "parchment", "Crossbell grey and gold."),
-P("The Legend of Heroes: Trails from Zero", ["1668510"], ["the legend of heroes trails from zero/zero.exe"], "parchment", "Crossbell grey and gold."),
-P("The Legend of Heroes: Trails to Azure", ["1668520"], [], "parchment", "Crossbell grey and gold."),
-P("The Legend of Heroes: Trails into Reverie", ["1668540"], [], "parchment", "Crossbell grey and gold."),
-P("The Legend of Heroes: Trails Beyond the Horizon", ["3316940"], [], "parchment", "Crossbell grey and gold."),
+P("The Legend of Heroes: Trails in the Sky SC", ["251290"], ["ed6_win2.exe"], "liberl", "Liberl sky blue and gold, the Bracer's guild."),
+P("The Legend of Heroes: Trails in the Sky the 3rd", ["436670"], ["trails in the sky the 3rd/ed6_win3_dx9.exe"], "liberl", "Liberl sky blue and gold, the Bracer's guild.", n="Partial support in the wiki: some menus may still want the keyboard."),
+P("Trails in the Sky 1st Chapter", ["3375780"], ["trails in the sky 1st chapter/sora_1st.exe"], "liberl", "Liberl sky blue and gold."),
+P("Trails in the Sky 2nd Chapter", ["4225980"], [], "liberl", "Liberl sky blue and gold."),
+P("The Legend of Heroes: Trails of Cold Steel", ["538680"], ["trails of cold steel/ed8.exe"], "coldsteel", "Erebonia steel grey and imperial red."),
+P("The Legend of Heroes: Trails of Cold Steel II", ["748490"], [], "coldsteel", "Erebonia steel grey and imperial red."),
+P("The Legend of Heroes: Trails of Cold Steel III", ["991270"], [], "coldsteel", "Erebonia steel grey and imperial red."),
+P("The Legend of Heroes: Trails of Cold Steel IV", ["1198090"], [], "coldsteel", "Erebonia steel grey and imperial red."),
+P("The Legend of Heroes: Trails through Daybreak", ["2138610"], ["the legend of heroes trails through daybreak/kuro.exe"], "crossbell", "Crossbell steel grey and gold."),
+P("The Legend of Heroes: Trails through Daybreak II", ["2113920"], [], "crossbell", "Crossbell steel grey and gold."),
+P("The Legend of Heroes: Trails from Zero", ["1668510"], ["the legend of heroes trails from zero/zero.exe"], "crossbell", "Crossbell steel grey and gold."),
+P("The Legend of Heroes: Trails to Azure", ["1668520"], [], "azure", "Crossbell azure blue and silver, the sea-and-sky of Azure."),
+P("The Legend of Heroes: Trails into Reverie", ["1668540"], [], "crossbell", "Crossbell steel grey and gold."),
+P("The Legend of Heroes: Trails Beyond the Horizon", ["3316940"], [], "crossbell", "Crossbell steel grey and gold."),
 P("The Legend of Nayuta: Boundless Trails", ["1668530"], [], "nature", "forest green and gold."),
-P("Ys vs. Trails in the Sky: Alternative Saga", ["1794880"], [], "parchment", "Ys and Trails crossover, red and gold."),
+P("Ys vs. Trails in the Sky: Alternative Saga", ["1794880"], [], "ys", "Ys and Trails crossover, red and gold."),
 # --- Falcom: Ys series
-P("Ys I & II Chronicles+", ["223810", "223870"], ["ys i/ys1plus.exe"], "mystic", "Adol red and gold, Ys ancient gold."),
-P("Ys: Memories of Celceta", ["587110"], [], "mystic", "Ys ancient gold and red."),
-P("Ys Origin", ["207350"], ["ys origin/yso_win.exe"], "mystic", "Ys ancient gold and red.", n="Partial support in the wiki: some menus may still want the keyboard."),
-P("Ys Seven", ["587100"], [], "mystic", "Ys ancient gold and red.", n="Partial support in the wiki: some menus may still want the keyboard."),
-P("Ys VIII: Lacrimosa of DANA", ["579180"], ["ys viii lacrimosa of dana/ys8.exe"], "mystic", "Ys ancient gold and red."),
+P("Ys I & II Chronicles+", ["223810", "223870"], ["ys i/ys1plus.exe"], "ys", "Adol red and gold, Ys ancient gold."),
+P("Ys: Memories of Celceta", ["587110"], [], "ys", "Ys ancient gold and red."),
+P("Ys Origin", ["207350"], ["ys origin/yso_win.exe"], "ys", "Ys ancient gold and red.", n="Partial support in the wiki: some menus may still want the keyboard."),
+P("Ys Seven", ["587100"], [], "ys", "Ys ancient gold and red.", n="Partial support in the wiki: some menus may still want the keyboard."),
+P("Ys VIII: Lacrimosa of DANA", ["579180"], ["ys viii lacrimosa of dana/ys8.exe"], "ys", "Ys ancient gold and red."),
 P("Ys IX: Monstrum Nox", ["1351630"], [], "horror", "Ys dark red and bone."),
-P("Ys X: Nordics", ["2731870"], [], "mystic", "Ys ancient gold and red."),
-P("Ys X: Proud Nordics", ["3949290"], [], "mystic", "Ys ancient gold and red."),
+P("Ys X: Nordics", ["2731870"], [], "ys", "Ys ancient gold and red."),
+P("Ys X: Proud Nordics", ["3949290"], [], "ys", "Ys ancient gold and red."),
 # --- Falcom: Zwei and Tokyo Xanadu
 P("Zwei: The Arges Adventure", ["427680"], [], "military", "Zwei battle grey and gold.", n="Partial support in the wiki: some menus may still want the keyboard."),
 P("Zwei: The Ilvard Insurrection", ["427700"], [], "military", "Zwei battle grey and gold."),
 P("Tokyo Xanadu eX+", ["587260"], ["tokyo xanadu ex+/tokyoxanadu.exe"], "scifi", "Tokyo night neon blue and pink."),
-# --- Falcom: older Windows games with no native controller support (pre-XInput or none)
-KB("The Legend of Heroes: Trails in the Sky", ["251150"], ["ed6_win.exe", "ed6_win_dx9.exe"], "parchment", "Liberl blue and gold.", n="Released 2004, before XInput, so the pad sends keys."),
-KB("Ys VI: The Ark of Napishtim", ["312540"], [], "parchment", "Ys ancient gold and red.", n="Released 2003, before XInput, so the pad sends keys."),
-KB("Ys: The Oath in Felghana", ["207320"], ["ys the oath in felghana/ysf_win_dx9.exe"], "parchment", "Ys ancient gold and red.", n="Released 2005, before XInput, so the pad sends keys."),
-KB("Gurumin: A Monstrous Adventure", ["322290"], [], "pixel", "pixel-art gold and blue.", n="Released 2004, before XInput, so the pad sends keys."),
-KB("Xanadu Next", ["312560"], [], "scifi", "Xanadu blue and gold.", n="Released 2005, before XInput, so the pad sends keys."),
+# --- Falcom: older Windows games; the wiki lists native controller support for all of them (DirectInput; XInput limited or hackable for some)
+P("The Legend of Heroes: Trails in the Sky", ["251150"], ["ed6_win.exe", "ed6_win_dx9.exe"], "liberl", "Liberl sky blue and gold."),
+P("Ys VI: The Ark of Napishtim", ["312540"], [], "ys", "Ys ancient gold and red."),
+P("Ys: The Oath in Felghana", ["207320"], ["ys the oath in felghana/ysf_win_dx9.exe"], "ys", "Ys ancient gold and red.", n="XInput support is limited in the wiki: some buttons may need the game's own options."),
+P("Gurumin: A Monstrous Adventure", ["322290"], [], "nature", "Gurumin forest green and gold."),
+P("Xanadu Next", ["312560"], [], "liberl", "Xanadu blue and gold.", n="XInput support is only hackable in the wiki: some buttons may need the game's own options."),
 ]

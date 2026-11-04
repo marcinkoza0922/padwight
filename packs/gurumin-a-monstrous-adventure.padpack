@@ -1,13 +1,13 @@
 format = 20
 macros = []
-overlay_font = "Silkscreen"
+overlay_font = "Kreon"
 
 [pack]
 id = "b7a87728-c80b-55af-808d-d0b909d691ce"
 name = "Gurumin: A Monstrous Adventure"
 version = "1.0"
 author = "Padwight"
-description = "Gurumin: A Monstrous Adventure on an Xbox-style pad. The game's own pad support predates XInput, so the pad sends its keyboard keys: arrows walk and the face buttons act."
+description = "Gurumin: A Monstrous Adventure with its own controller support. The controller passes through to the game untouched; the game's options set the buttons. Padwight adds the Guide overlay in the game's colors."
 made_with = "Xbox controller"
 
 [[rules]]
@@ -23,63 +23,43 @@ tap_window_ms = 250
 long_press_ms = 500
 
 [profiles.buttons]
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
 Guide = {mode = "Guide"}
-South = {keys = ["KEY_Z"]}
-East = {keys = ["KEY_X"]}
-Start = {keys = ["KEY_ESC"]}
-West = {keys = ["KEY_C"]}
 
 [profiles.left_stick]
-deadzone = 0.15
+deadzone = 0.05
 curve = 1.0
-key_threshold = 0.35
+key_threshold = 0.3
 
-[profiles.left_stick.action.ring]
-sectors = 8
-start_angle = 0.0
-inner_radius = 0.35
-hysteresis = 0.1
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_UP"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_RIGHT"] }]
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_RIGHT"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_RIGHT"] }]
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_DOWN"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [{ keys = ["KEY_DOWN"] }, { keys = ["KEY_LEFT"] }]
-
-[[profiles.left_stick.action.ring.actions]]
-keys = ["KEY_LEFT"]
-
-[[profiles.left_stick.action.ring.actions]]
-multi = [{ keys = ["KEY_UP"] }, { keys = ["KEY_LEFT"] }]
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
 
 [profiles.right_stick]
-deadzone = 0.12
-curve = 1.7
-key_threshold = 0.5
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
 
-[profiles.right_stick.action.mouse]
-speed = 1400.0
-accel = 0.3
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
 
-[profiles.left_trigger.action.button]
-threshold = 0.4
-action = {mouse = "Right"}
+[profiles.left_trigger]
+action = {gamepad = "Left"}
 
-[profiles.right_trigger.action.button]
-threshold = 0.3
-action = {mouse = "Left"}
+[profiles.right_trigger]
+action = {gamepad = "Right"}
 
 [profiles.gyro]
 enabled = false
@@ -89,185 +69,170 @@ invert_y = false
 noise_threshold = 1.0
 
 [profiles.guide]
-notes = '''The arrow keys move. {south} confirms, {east} cancels, {west} acts, and {start} opens the menu.
-Buttons: {south} Confirm; {east} Cancel; {start} Menu; {west} Action.
-Released 2004, before XInput, so the pad sends keys. The keys are the usual defaults for the series, not checked on an install. Keys are the game's defaults as remembered, not read from an install; if one doesn't answer, check the game's controls options and change the buttons here to match. The game predates XInput, so the pad sends the keys its controls use.
-Typing a name or text: {guide} + {west} opens the on-screen keyboard.'''
-
-[profiles.guide.edits]
-"stick:Left" = {text = "Move"}
-"stick:Right" = {text = "Pointer"}
-"trigger:Right" = {text = "Left click"}
-"trigger:Left" = {text = "Right click"}
-"button:South" = {text = "Confirm"}
-"button:East" = {text = "Cancel"}
-"button:Start" = {text = "Menu"}
-"button:West" = {text = "Action"}
-
+notes = '''The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. {guide} still works over the game: {guide} + {west} opens the on-screen keyboard for names and text, and {guide} + {lb} the media controls.'''
 
 
 [keyboard_style]
-corners = 0.0
+corners = 0.2
 position = "bottom_center"
 scale = 1.0
 
 [keyboard_style.background]
-color = "#1a1a2e"
+color = "#1c2b1c"
 opacity = 0.93
 
 [keyboard_style.items]
-color = "#2b2b4d"
+color = "#2f4a2a"
 opacity = 0.95
 
 [keyboard_style.selected]
-color = "#f4c542"
+color = "#d4b84a"
 opacity = 1.0
 
 [keyboard_style.border]
 width = 1
-color = "#7a7ae0"
+color = "#7fb069"
 opacity = 0.8
 
 [keyboard_style.gradient]
-color = "#10101e"
+color = "#122012"
 opacity = 1.0
 angle = 180
 
 [keyboard_style.item_border]
 width = 1
-color = "#3f3f78"
+color = "#41643a"
 
 [keyboard_style.type]
 letter_spacing = 0
 
 [numpad_style]
-corners = 0.0
+corners = 0.2
 position = "center"
 scale = 1.0
 
 [numpad_style.background]
-color = "#1a1a2e"
+color = "#1c2b1c"
 opacity = 0.93
 
 [numpad_style.items]
-color = "#2b2b4d"
+color = "#2f4a2a"
 opacity = 0.95
 
 [numpad_style.selected]
-color = "#f4c542"
+color = "#d4b84a"
 opacity = 1.0
 
 [numpad_style.border]
 width = 1
-color = "#7a7ae0"
+color = "#7fb069"
 opacity = 0.8
 
 [numpad_style.gradient]
-color = "#10101e"
+color = "#122012"
 opacity = 1.0
 angle = 180
 
 [numpad_style.item_border]
 width = 1
-color = "#3f3f78"
+color = "#41643a"
 
 [numpad_style.type]
 letter_spacing = 0
 
 [media_style]
-corners = 0.0
+corners = 0.2
 position = "top_right"
 scale = 0.9
 
 [media_style.background]
-color = "#1a1a2e"
+color = "#1c2b1c"
 opacity = 0.93
 
 [media_style.items]
-color = "#2b2b4d"
+color = "#2f4a2a"
 opacity = 0.95
 
 [media_style.selected]
-color = "#f4c542"
+color = "#d4b84a"
 opacity = 1.0
 
 [media_style.border]
 width = 1
-color = "#7a7ae0"
+color = "#7fb069"
 opacity = 0.8
 
 [media_style.gradient]
-color = "#10101e"
+color = "#122012"
 opacity = 1.0
 angle = 180
 
 [media_style.item_border]
 width = 1
-color = "#3f3f78"
+color = "#41643a"
 
 [media_style.type]
 letter_spacing = 0
 
 [menu_style]
-corners = 0.0
+corners = 0.2
 position = "center"
 scale = 1.0
 
 [menu_style.background]
-color = "#1a1a2e"
+color = "#1c2b1c"
 opacity = 0.93
 
 [menu_style.items]
-color = "#2b2b4d"
+color = "#2f4a2a"
 opacity = 0.95
 
 [menu_style.selected]
-color = "#f4c542"
+color = "#d4b84a"
 opacity = 1.0
 
 [menu_style.border]
 width = 1
-color = "#7a7ae0"
+color = "#7fb069"
 opacity = 0.8
 
 [menu_style.gradient]
-color = "#10101e"
+color = "#122012"
 opacity = 1.0
 angle = 180
 
 [menu_style.item_border]
 width = 1
-color = "#3f3f78"
+color = "#41643a"
 
 [menu_style.type]
 letter_spacing = 0
 
 [menu_style.ornament]
-frame = {kind = "brackets", size = 8, width = 2, color = "#7a7ae0"}
-dividers = {width = 1, color = "#3f3f78", opacity = 0.8}
+dividers = {width = 1, color = "#41643a", opacity = 0.8}
 
 [motion]
-keyboard = "retro"
-numpad = "retro"
-menu = "retro"
-media = "retro"
-offer = "retro"
-info = "retro"
-log = "retro"
+keyboard = "subtle"
+numpad = "subtle"
+menu = "subtle"
+media = "subtle"
+offer = "subtle"
+info = "subtle"
+log = "subtle"
 
 [sounds.menu]
-step = {kind = "beep", volume = 0.05, pitch = 1.3}
-pick = {kind = "blip", volume = 0.08, pitch = 1.1}
-open = {kind = "blip", volume = 0.06, pitch = 1.3}
-close = {kind = "blip", volume = 0.05, pitch = 0.8}
+step = {kind = "wood", volume = 0.06, pitch = 1.1}
+pick = {kind = "pluck", volume = 0.09}
+open = {kind = "pluck", volume = 0.06, pitch = 1.1}
+close = {kind = "wood", volume = 0.05, pitch = 0.8}
 
 [sounds.numpad]
-step = {kind = "beep", volume = 0.05, pitch = 1.3}
-pick = {kind = "blip", volume = 0.08, pitch = 1.1}
+step = {kind = "wood", volume = 0.06, pitch = 1.1}
+pick = {kind = "pluck", volume = 0.09}
 
 [sounds.keyboard]
-step = {kind = "beep", volume = 0.05, pitch = 1.3}
-pick = {kind = "beep", volume = 0.1}
+step = {kind = "wood", volume = 0.06, pitch = 1.1}
+pick = {kind = "keys", volume = 0.12}
 
 [sounds.media]
-pick = {kind = "blip", volume = 0.08, pitch = 1.1}
+pick = {kind = "pluck", volume = 0.09}
