@@ -76,16 +76,26 @@ def left_stick(mode):
     return o
 
 PT_BUTTONS = ["South","East","North","West","LeftBumper","RightBumper","LeftStick","RightStick","Select","Start","DpadUp","DpadDown","DpadLeft","DpadRight"]
-def profile_pt(g):
-    """Passthrough: every control goes to the game as it is; only the Guide overlay sits on top."""
-    o = [f'[[profiles]]\nname = "{g["name"]}"\ncombos = []\ncombo_window_ms = 120\ntap_window_ms = 250\nlong_press_ms = 500\n\n[profiles.buttons]']
+GYRO_PT_COMBOS = 'combos = [\n    {buttons = ["Select", "Start"], action = "gyro_clutch"},\n    {buttons = ["Select", "RightStick"], action = "gyro_recenter"},\n]'
+GYRO_PT_NOTE = ("Gyro aim, an extra profile for a shooter (the game's own scheme stays the default): tilting the controller turns the view through a virtual right stick, "
+    "assumed to match a linear stick response with a 0.2 dead zone; change Game's curve and Anti-deadzone under Gyro if the view turns too far or too little. "
+    "Hold {select} and {start} together to pause the gyro while you reposition the controller; {select} + {r3} recenters it.")
+def profile_pt(g, gyro=False):
+    """Passthrough: every control goes to the game as it is; only the Guide overlay sits on top. With gyro, a virtual right stick turns the view."""
+    name = g["name"] + (" + Gyro" if gyro else "")
+    combos = GYRO_PT_COMBOS if gyro else "combos = []"
+    o = [f'[[profiles]]\nname = "{name}"\n{combos}\ncombo_window_ms = 120\ntap_window_ms = 250\nlong_press_ms = 500\n' + ('requires = ["gyro"]\n' if gyro else '') + '\n[profiles.buttons]']
     o += [f'{b} = {{gamepad = "{b}"}}' for b in PT_BUTTONS]
     o.append('Guide = {mode = "Guide"}\n')
     for side in ("left", "right"):
         o.append(f'[profiles.{side}_stick]\ndeadzone = 0.05\ncurve = 1.0\nkey_threshold = 0.3\n\n[profiles.{side}_stick.action]\ngamepad = {{stick = "{side.capitalize()}", invert_y = false}}\n')
     o.append('[profiles.left_trigger]\naction = {gamepad = "Left"}\n\n[profiles.right_trigger]\naction = {gamepad = "Right"}\n')
-    o.append('[profiles.gyro]\nenabled = false\nhorizontal = "yaw"\ninvert_x = false\ninvert_y = false\nnoise_threshold = 1.0\n')
-    o.append(f"[profiles.guide]\nnotes = '''{g['notes']}'''\n")
+    if gyro:
+        o.append('[profiles.gyro]\nhorizontal = "yaw"\ninvert_x = false\ninvert_y = false\nnoise_threshold = 1.0\n\n[profiles.gyro.mode.stick]\nstick = "Right"\nfull_rate = 360.0\nanti_deadzone = 0.2\ngame_curve = 1.0\n')
+    else:
+        o.append('[profiles.gyro]\nenabled = false\nhorizontal = "yaw"\ninvert_x = false\ninvert_y = false\nnoise_threshold = 1.0\n')
+    notes = g['notes'] + ("\n" + GYRO_PT_NOTE if gyro else "")
+    o.append(f"[profiles.guide]\nnotes = '''{notes}'''\n")
     return "\n".join(o) + "\n"
 
 def profile(g, gyro):
@@ -149,7 +159,9 @@ def build(g):
     o.append(f'[pack]\nid = "{pid}"\nname = "{g["name"]}"\nversion = "1.0"\nauthor = "Padwight"\ndescription = "{g["desc"]}"\nmade_with = "Xbox controller"\n')
     for i in g["ids"]: o.append(f'[[rules]]\nkind = "steam_app_id"\nvalue = "{i}"\nprofile = "{g["name"]}"\n')
     for e in g["exes"]: o.append(f'[[rules]]\nkind = "executable"\nvalue = "{e}"\nprofile = "{g["name"]}"\n')
-    if g.get("pt"): o.append(profile_pt(g))
+    if g.get("pt"):
+        o.append(profile_pt(g))
+        if g.get("gyro_pt"): o.append(profile_pt(g, True))
     else:
         o.append(profile(g, False))
         if g.get("gyro"): o.append(profile(g, True))

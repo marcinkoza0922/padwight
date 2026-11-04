@@ -43,3 +43,21 @@ def KB(name, ids, exes, theme, palette, n="", **kw):
     return G(name, ids, exes, "click", theme, "The game's own pad support predates XInput, so the pad sends its keyboard keys: arrows walk and the face buttons act.", b=b, left="arrows", intro=intro,
              n=(n + " " if n else "") + "The keys are the usual defaults for the series, not checked on an install.",
              pad=" The game predates XInput, so the pad sends the keys its controls use.", **kw)
+
+def PS(name, ids, exes, theme, palette, n="", **kw):
+    """Passthrough for a shooter: the plain profile plus a '+ Gyro' one that turns the view through a virtual right stick."""
+    return P(name, ids, exes, theme, palette, n=n, gyro_pt=True, **kw)
+
+# Mouse-and-keyboard shooters (also used by specs/batch10.py, which defines the same names for itself)
+GUESS = "Typical defaults for the genre, not checked against the game."
+NAT = " The game has some controller support of its own; this pack plays it with the pointer and keyboard keys for the parts the pad handles badly."
+NOPAD = " The game has no controller support, so the pad plays it with the mouse and keyboard keys."
+FPS_INTRO = "The left stick {ls} walks on WASD and the right stick {rs} looks around. {rt} fires and {lt} aims or fires the alternate mode. {up} and {down} change weapon on the wheel."
+FB = {"South": ("k:SPACE", "Jump", "arrow"), "East": ("k:LEFTCTRL", "Crouch", None), "West": ("k:R", "Reload", "rotate"),
+      "North": ("k:E", "Use", "hand"), "LeftBumper": ("k:Q", "Last weapon", None), "RightBumper": ("k:G", "Grenade", None),
+      "LeftStick": ("k:LEFTSHIFT", "Sprint", None), "RightStick": ("k:V", "Melee", None), "Select": ("k:TAB", "Scoreboard", None)}
+def F(name, ids, exes, theme, mood, b=None, n="", nat=False, **kw):
+    """Mouse-and-keyboard shooters: stick look plus a gyro profile."""
+    tail = f"The left stick walks on WASD and the right stick looks; RT fires, LT aims, the gyro aims finely. Overlays in {mood}."
+    return G(name, ids, exes, "click", theme, tail, b={**FB, **(b or {})}, n=(n + " " if n else "") + GUESS, left="wasd", gyro=True,
+             intro=FPS_INTRO, pad=NAT if nat else NOPAD, fps=True, rspeed=900.0, rtl="Fire", ltl="Aim / alt fire", **kw)
