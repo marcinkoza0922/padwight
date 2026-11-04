@@ -1,0 +1,719 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "00208920-9c32-4f40-bd13-1ab18841b824"
+name = "Half-Life"
+version = "1.0"
+author = "Padwight"
+description = "Half-Life (1998) on an Xbox-style pad, for the game's default keys. The game has no real controller support, so the pad plays the keyboard and mouse. A uses, B jumps, X reloads, Y is the flashlight, RT fires and LT is the alternate fire. A light push of the left stick walks, L3 toggles crouch and R3 pulls out the crowbar. LB and RB step through weapons, and the D-pad up opens the weapon slot ring. Start is the menu, a double tap quick saves and a long press quick loads. Gyro and flick stick profiles are included to try."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "70"
+profile = "Half-Life"
+
+[[rules]]
+kind = "executable"
+value = "hl.exe"
+profile = "Half-Life"
+
+[[rules]]
+kind = "executable"
+value = "hl_linux"
+profile = "Half-Life"
+
+[[profiles]]
+name = "Half-Life"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_F"] }
+LeftBumper = { wheel = "Up" }
+RightBumper = { wheel = "Down" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_1"] }
+DpadUp = { open_menu = "Weapons" }
+DpadDown = { keys = ["KEY_T"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_GRAVE"] }
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F6"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F7"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''{start} (Escape) opens the game's menu and backs out of every screen in it.
+{south} uses (buttons, ladders, pick-ups), {east} jumps, {west} reloads and {north} is the flashlight. {lt} is the right mouse button, the alternate fire of the weapons that have one (the .357's scope, the MP5 grenade launcher, the crossbow's zoom).
+A light push of the left stick {ls} walks slowly (Shift); a full push runs. {l3} toggles crouch, and it stays on until you click it again.
+{lb} and {rb} step to the previous and next weapon (mouse wheel). {r3} selects the crowbar (slot 1), {left} jumps back to the last weapon and {up} opens a ring of the weapon slots, aimed with the right stick {rs}; pressing a slot again steps through the weapons in it.
+Quick save is a double tap of {start} (F6), and quick load a long press of {start} (F7). {down} sprays your logo (T) and {right} opens the developer console (~), if you turned it on in the game's options.
+The keys are the game's defaults. If you changed them in Options → Controls, change them here too. Half-Life: Source and the expansions (Opposing Force, Blue Shift) use the same keys.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push walks" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Alt fire" }
+"button:South" = { text = "Use" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Flashlight" }
+"button:LeftBumper" = { text = "Previous weapon" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:fist} Crowbar" }
+"button:DpadUp" = { text = "Weapon slots" }
+"button:DpadDown" = { text = "Spray logo" }
+"button:DpadLeft" = { text = "Last weapon" }
+"button:DpadRight" = { text = "Console" }
+"button:Select" = { text = "Scores" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles]]
+name = "Half-Life + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_F"] }
+LeftBumper = { wheel = "Up" }
+RightBumper = { wheel = "Down" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_1"] }
+DpadUp = { open_menu = "Weapons" }
+DpadDown = { keys = ["KEY_T"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_GRAVE"] }
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F6"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F7"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1100.0
+accel = 0.2
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 5455.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. The gyro moves the mouse, which the game reads beside the pad.
+{start} (Escape) opens the game's menu and backs out of every screen in it.
+{south} uses (buttons, ladders, pick-ups), {east} jumps, {west} reloads and {north} is the flashlight. {lt} is the right mouse button, the alternate fire of the weapons that have one (the .357's scope, the MP5 grenade launcher, the crossbow's zoom).
+A light push of the left stick {ls} walks slowly (Shift); a full push runs. {l3} toggles crouch, and it stays on until you click it again.
+{lb} and {rb} step to the previous and next weapon (mouse wheel). {r3} selects the crowbar (slot 1), {left} jumps back to the last weapon and {up} opens a ring of the weapon slots, aimed with the right stick {rs}; pressing a slot again steps through the weapons in it.
+Quick save is a double tap of {start} (F6), and quick load a long press of {start} (F7). {down} sprays your logo (T) and {right} opens the developer console (~), if you turned it on in the game's options.
+The keys are the game's defaults. If you changed them in Options → Controls, change them here too. Half-Life: Source and the expansions (Opposing Force, Blue Shift) use the same keys.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push walks" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Alt fire" }
+"button:South" = { text = "Use" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Flashlight" }
+"button:LeftBumper" = { text = "Previous weapon" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:fist} Crowbar" }
+"button:DpadUp" = { text = "Weapon slots" }
+"button:DpadDown" = { text = "Spray logo" }
+"button:DpadLeft" = { text = "Last weapon" }
+"button:DpadRight" = { text = "Console" }
+"button:Select" = { text = "Scores" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[profiles]]
+name = "Half-Life + Flick stick"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+South = { keys = ["KEY_E"] }
+East = { keys = ["KEY_SPACE"] }
+West = { keys = ["KEY_R"] }
+North = { keys = ["KEY_F"] }
+LeftBumper = { wheel = "Up" }
+RightBumper = { wheel = "Down" }
+Select = { keys = ["KEY_TAB"] }
+Start = { keys = ["KEY_ESC"] }
+Guide = { mode = "Guide" }
+LeftStick = { toggle = { action = { keys = ["KEY_LEFTCTRL"] } } }
+RightStick = { keys = ["KEY_1"] }
+DpadUp = { open_menu = "Weapons" }
+DpadDown = { keys = ["KEY_T"] }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_GRAVE"] }
+
+[profiles.gestures.Start.double_tap]
+keys = ["KEY_F6"]
+
+[profiles.gestures.Start.long_press]
+keys = ["KEY_F7"]
+
+[profiles.left_stick]
+deadzone = 0.12
+curve = 1.0
+key_threshold = 0.25
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.25
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.zones]]
+min = 0.0
+max = 0.6
+action = { keys = ["KEY_LEFTSHIFT"] }
+
+[profiles.right_stick]
+deadzone = 0.1
+curve = 2.0
+key_threshold = 0.5
+
+[profiles.right_stick.action.flick]
+full_turn_px = 5455.0
+flick_threshold = 0.9
+flick_time_ms = 100
+rotate_smoothing_ms = 0
+forward_deadzone = 0.0
+vertical = "off"
+vertical_speed = 1200.0
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.gyro]
+horizontal = "player_space"
+invert_x = false
+invert_y = false
+full_turn_px = 5455.0
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 1.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Flick stick: push the right stick {rs} toward where you want to face and the view turns to it; the gyro does the fine aiming. Both move the mouse, which the game reads beside the pad.
+{start} (Escape) opens the game's menu and backs out of every screen in it.
+{south} uses (buttons, ladders, pick-ups), {east} jumps, {west} reloads and {north} is the flashlight. {lt} is the right mouse button, the alternate fire of the weapons that have one (the .357's scope, the MP5 grenade launcher, the crossbow's zoom).
+A light push of the left stick {ls} walks slowly (Shift); a full push runs. {l3} toggles crouch, and it stays on until you click it again.
+{lb} and {rb} step to the previous and next weapon (mouse wheel). {r3} selects the crowbar (slot 1), {left} jumps back to the last weapon and {up} opens a ring of the weapon slots, aimed with the right stick {rs}; pressing a slot again steps through the weapons in it.
+Quick save is a double tap of {start} (F6), and quick load a long press of {start} (F7). {down} sprays your logo (T) and {right} opens the developer console (~), if you turned it on in the game's options.
+The keys are the game's defaults. If you changed them in Options → Controls, change them here too. Half-Life: Source and the expansions (Opposing Force, Blue Shift) use the same keys.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard and {guide} + {lb} the media controls.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[profiles.guide.edits]
+"stick:Left" = { text = "Move · light push walks" }
+"stick:Right" = { text = "Look" }
+"trigger:Right" = { text = "Fire" }
+"trigger:Left" = { text = "Alt fire" }
+"button:South" = { text = "Use" }
+"button:East" = { text = "Jump" }
+"button:West" = { text = "Reload" }
+"button:North" = { text = "Flashlight" }
+"button:LeftBumper" = { text = "Previous weapon" }
+"button:RightBumper" = { text = "Next weapon" }
+"button:LeftStick" = { text = "Crouch (toggle)" }
+"button:RightStick" = { text = "{icon:fist} Crowbar" }
+"button:DpadUp" = { text = "Weapon slots" }
+"button:DpadDown" = { text = "Spray logo" }
+"button:DpadLeft" = { text = "Last weapon" }
+"button:DpadRight" = { text = "Console" }
+"button:Select" = { text = "Scores" }
+"button:Start" = { text = "Menu / back out" }
+"gesture:button:Start:double_tap" = { text = "{icon:save} Quick save" }
+"gesture:button:Start:long_press" = { text = "{icon:load} Quick load" }
+
+[[menus]]
+name = "Weapons"
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:fist} Slot 1 · melee"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:pistol} Slot 2 · handguns"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:rifle} Slot 3 · SMG, shotgun"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Slot 4 · crossbow, launcher"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:flame} Slot 5 · energy weapons"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:grenade} Slot 6 · grenades, traps"
+action = { keys = ["KEY_6"] }
+
+[[menus.items]]
+label = "{icon:rotate} Last weapon"
+action = { keys = ["KEY_Q"] }
+
+[[menus.items]]
+label = "{icon:drop-item} {color:gray}Spray logo{/color}"
+action = { keys = ["KEY_T"] }
+
+[menus.style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#0c0a06"
+opacity = 0.9
+
+[menus.style.items]
+color = "#2a2110"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#ff9d1f"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#ff9d1f"
+opacity = 0.5
+
+[menus.style.gradient]
+color = "#17120a"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5a4217"
+
+[menus.style.glow]
+color = "#ff9d1f"
+opacity = 0.45
+blur = 20
+
+[menus.style.type]
+letter_spacing = 1
+
+[menus.style.ornament]
+scanlines = {spacing = 4, opacity = 0.1, color = "#000000"}
+
+[keyboard_style]
+corners = 0.2
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0c0a06"
+opacity = 0.9
+
+[keyboard_style.items]
+color = "#2a2110"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#ff9d1f"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#ff9d1f"
+opacity = 0.5
+
+[keyboard_style.gradient]
+color = "#17120a"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5a4217"
+
+[keyboard_style.type]
+letter_spacing = 1
+
+[numpad_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0c0a06"
+opacity = 0.9
+
+[numpad_style.items]
+color = "#2a2110"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#ff9d1f"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#ff9d1f"
+opacity = 0.5
+
+[numpad_style.gradient]
+color = "#17120a"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5a4217"
+
+[numpad_style.type]
+letter_spacing = 1
+
+[media_style]
+corners = 0.2
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0c0a06"
+opacity = 0.9
+
+[media_style.items]
+color = "#2a2110"
+opacity = 0.95
+
+[media_style.selected]
+color = "#ff9d1f"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#ff9d1f"
+opacity = 0.5
+
+[media_style.gradient]
+color = "#17120a"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5a4217"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0c0a06"
+opacity = 0.9
+
+[menu_style.items]
+color = "#2a2110"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#ff9d1f"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#ff9d1f"
+opacity = 0.5
+
+[menu_style.gradient]
+color = "#17120a"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5a4217"
+
+[menu_style.glow]
+color = "#ff9d1f"
+opacity = 0.45
+blur = 20
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+scanlines = {spacing = 4, opacity = 0.1, color = "#000000"}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "geiger", volume = 0.1, pitch = 1.0}
+pick = {kind = "beep", volume = 0.2, pitch = 1.0}
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.07, pitch = 1.2}
+pick = {kind = "beep", volume = 0.15, pitch = 1.0}
+
+[sounds.media]
+pick = {kind = "beep", volume = 0.15, pitch = 1.0}
+
+[rumble.menu]
+step = {strength = 0.1, length_ms = 18}
+pick = {strength = 0.4, length_ms = 40}
+
+[rumble.keyboard]
+step = {strength = 0.08, length_ms = 14}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.08, length_ms = 14}
+pick = {strength = 0.3, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.3, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.3, length_ms = 60}

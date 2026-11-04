@@ -8,7 +8,7 @@ use super::*;
 
 mod blocks;
 
-const GAMEPAD: &str = "general/profiles/001-Gamepad.toml";
+const GAMEPAD: &str = "general/profiles/0001-Gamepad.toml";
 
 fn keys(k: &str) -> ButtonAction {
     ButtonAction::Keys(vec![k.into()])
@@ -57,10 +57,10 @@ fn a_library_setup_added_and_one_button_changed() {
     assert!(!first.is_empty() && first.iter().all(|d| d.starts_with("setups/") && d.contains("(new file)")), "{first:#?}");
     rig.assert_round_trip();
     // One button changed in the new setup: one line in one file.
-    let before = rig.app.profile().unwrap().button(Button::North).clone();
+    let before = rig.app.profile().unwrap().button(Button::South).clone();
     let after = keys("KEY_F13");
     assert_ne!(before, after);
-    let diff = saved_after(&mut rig, vec![Message::SetAction(Target::Button(Button::North), after)]);
+    let diff = saved_after(&mut rig, vec![Message::SetAction(Target::Button(Button::South), after)]);
     assert_eq!(diff.len(), 2, "{diff:#?}");
     assert!(diff.iter().all(|d| d.starts_with("setups/") && d.contains("profiles/")), "{diff:#?}");
     assert!(diff.iter().any(|d| d.contains("+ keys = [\"KEY_F13\"]")), "{diff:#?}");
@@ -124,10 +124,10 @@ fn combos_save_their_change() {
 fn layers_and_modes_save_their_change() {
     let mut rig = Rig::with_game();
     let diff = saved_after(&mut rig, vec![Message::SelectGameTab(GameTab::Layers), Message::NewLayer]);
-    assert_diff(&diff, &["setups/001-Doom/"], &["(new file)"]);
+    assert_diff(&diff, &["setups/0001-Doom/"], &["(new file)"]);
     assert!(diff.iter().any(|d| d.contains("layers/")), "{diff:#?}");
     let diff = saved_after(&mut rig, vec![Message::SelectGameTab(GameTab::Modes), Message::NewLayer]);
-    assert_diff(&diff, &["setups/001-Doom/"], &["(new file)"]);
+    assert_diff(&diff, &["setups/0001-Doom/"], &["(new file)"]);
     assert!(diff.iter().any(|d| d.contains("modes/")), "{diff:#?}");
     // A change inside the layer touches that layer's file only.
     let diff = saved_after(&mut rig, vec![Message::SelectGameTab(GameTab::Layers), Message::OverrideInput(LayerPart::Button(Button::South))]);

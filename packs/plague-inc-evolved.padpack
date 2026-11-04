@@ -1,0 +1,257 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "5c9e7d1d-40db-4485-9197-23c1dea962c7"
+name = "Plague Inc: Evolved"
+version = "1.0"
+author = "Padwight"
+description = "Plague Inc: Evolved (Steam) on an Xbox-style pad. The game reads controllers through the Steam Input API, so the controller passes through untouched and the game's own controller options set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard for naming a disease and the media controls, in the game's biohazard colors."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "PlagueIncEvolved.exe"
+profile = "Plague Inc: Evolved"
+
+[[rules]]
+kind = "steam_app_id"
+value = "246620"
+profile = "Plague Inc: Evolved"
+
+[[rules]]
+kind = "executable"
+value = "PlagueIncEvolved.x86_64"
+profile = "Plague Inc: Evolved"
+
+[[profiles]]
+name = "Plague Inc: Evolved"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+Guide = {mode = "Guide"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''Plague Inc: Evolved has its own controller support (limited: the game reads the pad through the Steam Input API), so the controller goes to the game as it is. Set the buttons in the game's controller options.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard for naming a disease, and {guide} + {lb} the media controls.
+If the game ignores the pad, check that Steam Input is enabled for it in Steam (Properties, Controller): the game only sees a controller through Steam. If Steam also remaps the pad, one of the two will fight the other. Not tested on an install.'''
+
+[keyboard_style]
+corners = 0.2
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#0d1215"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#1c2a2e"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c0392b"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8c2a20"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#141d20"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#33474c"
+
+[numpad_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#0d1215"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#1c2a2e"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c0392b"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8c2a20"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#141d20"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#33474c"
+
+[media_style]
+corners = 0.2
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#0d1215"
+opacity = 0.92
+
+[media_style.items]
+color = "#1c2a2e"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c0392b"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8c2a20"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#141d20"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#33474c"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.2
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#0d1215"
+opacity = 0.92
+
+[menu_style.items]
+color = "#1c2a2e"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c0392b"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8c2a20"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#141d20"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menu_style.item_border]
+width = 1
+color = "#33474c"
+
+[menu_style.glow]
+color = "#c09af0"
+opacity = 0.6
+blur = 18
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+vignette = {color = "#000000", opacity = 0.45, reach = 25}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.keyboard]
+step = {kind = "drop", volume = 0.06, pitch = 1.3}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "drop", volume = 0.06, pitch = 1.3}
+pick = {kind = "glass", volume = 0.1}
+
+[sounds.media]
+pick = {kind = "glass", volume = 0.1, pitch = 1.2}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.25, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.25, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.25, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.25, length_ms = 60}

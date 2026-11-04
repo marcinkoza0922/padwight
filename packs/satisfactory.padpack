@@ -1,0 +1,266 @@
+format = 20
+macros = []
+overlay_font = "Titillium Web"
+
+[pack]
+id = "24bc0cb3-391b-4e68-b415-642ae2332c63"
+name = "Satisfactory"
+version = "1.0"
+author = "Padwight"
+description = "Satisfactory on an Xbox-style pad or a DualSense. The game has its own controller support, so the controller passes through untouched and the game's Controls options set the buttons. Padwight adds the Guide overlay on top, with the on-screen keyboard for names and the media controls, in the factory's orange and steel."
+made_with = "Xbox controller"
+
+[controllers]
+dualsense = true
+
+[[rules]]
+kind = "steam_app_id"
+value = "526870"
+profile = "Satisfactory"
+
+[[rules]]
+kind = "executable"
+value = "FactoryGameSteam-Win64-Shipping.exe"
+profile = "Satisfactory"
+
+[[rules]]
+kind = "executable"
+value = "FactoryGame-Win64-Shipping.exe"
+profile = "Satisfactory"
+
+[[rules]]
+kind = "executable"
+value = "FactoryGameEGS-Win64-Shipping.exe"
+profile = "Satisfactory"
+
+[[profiles]]
+name = "Satisfactory"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+Guide = {mode = "Guide"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''Satisfactory has its own controller support, so the controller goes to the game as it is. It is switched on in the Controls section of the game's options, and the game then ignores the keyboard and mouse except in text boxes. Set the buttons there too.
+{guide} still works over the game: {guide} + {west} opens the on-screen keyboard for naming a blueprint, sign or save, and {guide} + {lb} the media controls.
+A DualSense is shown to the game as itself, with PlayStation prompts.
+If the game stops answering the pad, check that Steam Input or another remapper isn't also running for it.'''
+
+[keyboard_style]
+corners = 0.15
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#16181c"
+opacity = 0.92
+
+[keyboard_style.items]
+color = "#2a2d33"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#f0963a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#c9792a"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#1e2126"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#41454d"
+
+[numpad_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#16181c"
+opacity = 0.92
+
+[numpad_style.items]
+color = "#2a2d33"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#f0963a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#c9792a"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#1e2126"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#41454d"
+
+[media_style]
+corners = 0.15
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#16181c"
+opacity = 0.92
+
+[media_style.items]
+color = "#2a2d33"
+opacity = 0.95
+
+[media_style.selected]
+color = "#f0963a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#c9792a"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#1e2126"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#41454d"
+
+[media_style.type]
+letter_spacing = 1
+
+[menu_style]
+corners = 0.15
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#16181c"
+opacity = 0.92
+
+[menu_style.items]
+color = "#2a2d33"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#f0963a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#c9792a"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#1e2126"
+opacity = 1.0
+angle = 180
+drift = true
+
+[menu_style.item_border]
+width = 1
+color = "#41454d"
+
+[menu_style.glow]
+color = "#f0963a"
+opacity = 0.5
+blur = 16
+
+[menu_style.type]
+letter_spacing = 1
+
+[menu_style.ornament]
+vignette = {color = "#000000", opacity = 0.4, reach = 25}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.keyboard]
+step = {kind = "tick", volume = 0.06}
+pick = {kind = "keys", volume = 0.2}
+
+[sounds.numpad]
+step = {kind = "tick", volume = 0.06}
+pick = {kind = "glass", volume = 0.1}
+
+[sounds.media]
+pick = {kind = "glass", volume = 0.1, pitch = 1.2}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.25, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.25, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.25, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.25, length_ms = 60}

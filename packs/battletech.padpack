@@ -1,0 +1,539 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "a30cb398-236a-555e-bcd5-7bb25541db81"
+name = "BattleTech"
+version = "1.0"
+author = "Padwight"
+description = "BattleTech (Steam, 2018) on an Xbox-style pad. The right stick moves the pointer, the left stick pans the camera, A or RT left-clicks, LT right-clicks. Y confirms (Space), B backs out, LB and RB step through your units, the d-pad zooms and rotates the camera. Select opens the weapon list. The \"+ Gyro\" profile also moves the pointer by tilting the controller."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "executable"
+value = "battletech.exe"
+profile = "BattleTech"
+
+[[rules]]
+kind = "steam_app_id"
+value = "637090"
+profile = "BattleTech"
+
+[[rules]]
+kind = "executable"
+value = "BattleTech"
+profile = "BattleTech"
+
+[[profiles]]
+name = "BattleTech"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_LEFTSHIFT"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { keys = ["KEY_LEFTSHIFT", "KEY_TAB"] }
+RightBumper = { keys = ["KEY_TAB"] }
+Select = { open_menu = "Weapons" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_LEFTALT"] }
+RightStick = { mouse = "Middle" }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer: {rt} or {south} is a left click (select a unit, a hex or a target), {lt} a right click. The left stick {ls} pans the camera.
+{north} is Space, which confirms a move or attack and ends actions. {east} or {start} is Escape: it cancels, and opens the game menu.
+{lb} and {rb} step back and forward through your units (Shift Tab and Tab). The {updown} d-pad zooms and {leftright} rotates the camera (Q and E).
+{select} lists the weapon keys 1 to 6 (tap it, pick with {south}). Hold {west} for Shift, hold {l3} for Alt, and click {r3} for the middle mouse button (drag to orbit).
+Hold {guide} and press {west} for the on-screen keyboard (naming mechs and pilots).
+BattleTech has no controller support. INFERRED, not checked on an install: Space as confirm, Tab and Shift Tab for unit cycling, Q and E rotation, Alt for details, and the number keys for weapons. The game has key remapping in its options; edit these to match.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"stick:Left" = { text = "Pan the camera" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Cancel" }
+"button:West" = { text = "Hold: Shift" }
+"button:North" = { text = "Confirm (Space)" }
+"button:LeftBumper" = { text = "Previous unit" }
+"button:RightBumper" = { text = "Next unit" }
+"button:Select" = { text = "{icon:crosshair} Weapons" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "Hold: Alt" }
+"button:RightStick" = { text = "Middle click (orbit)" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate camera"
+
+[[profiles]]
+name = "BattleTech + Gyro"
+combos = [{buttons = ["Select", "Start"], action = "gyro_clutch"}]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = { mode = "Guide" }
+South = { mouse = "Left" }
+East = { keys = ["KEY_ESC"] }
+West = { keys = ["KEY_LEFTSHIFT"] }
+North = { keys = ["KEY_SPACE"] }
+LeftBumper = { keys = ["KEY_LEFTSHIFT", "KEY_TAB"] }
+RightBumper = { keys = ["KEY_TAB"] }
+Select = { open_menu = "Weapons" }
+Start = { keys = ["KEY_ESC"] }
+LeftStick = { keys = ["KEY_LEFTALT"] }
+RightStick = { mouse = "Middle" }
+DpadUp = { wheel = "Up" }
+DpadDown = { wheel = "Down" }
+DpadLeft = { keys = ["KEY_Q"] }
+DpadRight = { keys = ["KEY_E"] }
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_D"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_S"] },
+    { keys = ["KEY_A"] },
+]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [
+    { keys = ["KEY_W"] },
+    { keys = ["KEY_A"] },
+]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.8
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1500.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = { mouse = "Right" }
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = { mouse = "Left" }
+
+[profiles.guide]
+notes = '''Gyro variant: the plain profile plus pointer movement by tilting the controller. Hold Select and Start together to pause the gyro (clutch).
+The right stick {rs} moves the pointer: {rt} or {south} is a left click (select a unit, a hex or a target), {lt} a right click. The left stick {ls} pans the camera.
+{north} is Space, which confirms a move or attack and ends actions. {east} or {start} is Escape: it cancels, and opens the game menu.
+{lb} and {rb} step back and forward through your units (Shift Tab and Tab). The {updown} d-pad zooms and {leftright} rotates the camera (Q and E).
+{select} lists the weapon keys 1 to 6 (tap it, pick with {south}). Hold {west} for Shift, hold {l3} for Alt, and click {r3} for the middle mouse button (drag to orbit).
+Hold {guide} and press {west} for the on-screen keyboard (naming mechs and pilots).
+BattleTech has no controller support. INFERRED, not checked on an install: Space as confirm, Tab and Shift Tab for unit cycling, Q and E rotation, Alt for details, and the number keys for weapons. The game has key remapping in its options; edit these to match.'''
+
+[profiles.guide.edits]
+"stick:Right" = { text = "Pointer" }
+"stick:Left" = { text = "Pan the camera" }
+"trigger:Right" = { text = "Left click (select)" }
+"trigger:Left" = { text = "Right click" }
+"button:South" = { text = "Left click" }
+"button:East" = { text = "Cancel" }
+"button:West" = { text = "Hold: Shift" }
+"button:North" = { text = "Confirm (Space)" }
+"button:LeftBumper" = { text = "Previous unit" }
+"button:RightBumper" = { text = "Next unit" }
+"button:Select" = { text = "{icon:crosshair} Weapons" }
+"button:Start" = { text = "Game menu" }
+"button:LeftStick" = { text = "Hold: Alt" }
+"button:RightStick" = { text = "Middle click (orbit)" }
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadLeft", "button:DpadRight"]
+text = "Rotate camera"
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[[menus]]
+name = "Weapons"
+
+[menus.kind.radial]
+stick = "Right"
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 1"
+action = { keys = ["KEY_1"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 2"
+action = { keys = ["KEY_2"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 3"
+action = { keys = ["KEY_3"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 4"
+action = { keys = ["KEY_4"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 5"
+action = { keys = ["KEY_5"] }
+
+[[menus.items]]
+label = "{icon:crosshair} Weapon 6"
+action = { keys = ["KEY_6"] }
+
+[menus.style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[menus.style.background]
+color = "#14110b"
+opacity = 0.94
+
+[menus.style.items]
+color = "#2a2316"
+opacity = 0.95
+
+[menus.style.selected]
+color = "#c47a14"
+opacity = 1.0
+
+[menus.style.border]
+width = 1
+color = "#f0a830"
+opacity = 0.9
+
+[menus.style.gradient]
+color = "#1c170e"
+opacity = 1.0
+angle = 180
+
+[menus.style.item_border]
+width = 1
+color = "#5a4720"
+
+[menus.style.glow]
+color = "#f0a830"
+opacity = 0.5
+blur = 14
+
+[menus.style.type]
+letter_spacing = 2
+
+[menus.style.ornament]
+dividers = {width = 1, color = "#f0a830", opacity = 0.45}
+frame = {kind = "chamfer", size = 14, width = 2, color = "#f0a830"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[keyboard_style]
+corners = 0.05
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#14110b"
+opacity = 0.94
+
+[keyboard_style.items]
+color = "#2a2316"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#c47a14"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#f0a830"
+opacity = 0.9
+
+[keyboard_style.gradient]
+color = "#1c170e"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5a4720"
+
+[keyboard_style.type]
+letter_spacing = 2
+
+[numpad_style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#14110b"
+opacity = 0.94
+
+[numpad_style.items]
+color = "#2a2316"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#c47a14"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#f0a830"
+opacity = 0.9
+
+[numpad_style.gradient]
+color = "#1c170e"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5a4720"
+
+[numpad_style.type]
+letter_spacing = 2
+
+[media_style]
+corners = 0.05
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#14110b"
+opacity = 0.94
+
+[media_style.items]
+color = "#2a2316"
+opacity = 0.95
+
+[media_style.selected]
+color = "#c47a14"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#f0a830"
+opacity = 0.9
+
+[media_style.gradient]
+color = "#1c170e"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5a4720"
+
+[media_style.type]
+letter_spacing = 2
+
+[menu_style]
+corners = 0.05
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#14110b"
+opacity = 0.94
+
+[menu_style.items]
+color = "#2a2316"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#c47a14"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#f0a830"
+opacity = 0.9
+
+[menu_style.gradient]
+color = "#1c170e"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5a4720"
+
+[menu_style.glow]
+color = "#f0a830"
+opacity = 0.5
+blur = 14
+
+[menu_style.type]
+letter_spacing = 2
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#f0a830", opacity = 0.45}
+frame = {kind = "chamfer", size = 14, width = 2, color = "#f0a830"}
+vignette = {color = "#000000", opacity = 0.35, reach = 20}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "beep", volume = 0.05, pitch = 0.9}
+pick = {kind = "radio", volume = 0.1, pitch = 1.0}
+open = {kind = "rise", volume = 0.05}
+close = {kind = "fall", volume = 0.04}
+
+[sounds.numpad]
+step = {kind = "beep", volume = 0.05, pitch = 0.9}
+pick = {kind = "radio", volume = 0.1, pitch = 1.0}
+
+[sounds.keyboard]
+step = {kind = "beep", volume = 0.05, pitch = 0.9}
+pick = {kind = "beep", volume = 0.06, pitch = 1.1}
+
+[rumble.menu]
+step = {strength = 0.08, length_ms = 18}
+pick = {strength = 0.3, length_ms = 35}
+open = {strength = 0.07, length_ms = 25}
+
+[rumble.keyboard]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.numpad]
+step = {strength = 0.06, length_ms = 14}
+pick = {strength = 0.2, length_ms = 22}
+
+[rumble.media]
+pick = {strength = 0.2, length_ms = 25}
+
+[rumble.guide]
+mode = {strength = 0.2, length_ms = 60}

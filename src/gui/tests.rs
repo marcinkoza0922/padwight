@@ -190,7 +190,7 @@ fn a_daemon_stop_waiting_on_unsaved_edits_asks_first() {
 #[test]
 fn a_config_that_failed_to_load_is_never_saved_over() {
     let mut app = app();
-    let _ = app.update(Message::ConfigLoaded(Box::default(), Some("parsing setups/001-Doom/setup.toml".into())));
+    let _ = app.update(Message::ConfigLoaded(Box::default(), Some("parsing setups/0001-Doom/setup.toml".into())));
     let _ = app.update(Message::SetAction(Target::Button(Button::South), ButtonAction::Keys(vec!["KEY_A".into()])));
     let _ = app.update(Message::Save);
     assert!(app.message.as_ref().is_some_and(|(m, err)| *err && m.starts_with("Not saved")), "{:?}", app.message);
@@ -250,7 +250,7 @@ fn an_edit_made_while_saving_stays_unsaved() {
 #[test]
 fn ignoring_a_controller_never_saves_over_an_unreadable_config() {
     let mut app = app();
-    let _ = app.update(Message::ConfigLoaded(Box::default(), Some("parsing setups/001-Doom/setup.toml".into())));
+    let _ = app.update(Message::ConfigLoaded(Box::default(), Some("parsing setups/0001-Doom/setup.toml".into())));
     app.status = Some(Status { devices: vec![device("Pad", true, false)], ..Default::default() });
     let _ = app.update(Message::SetIgnored("Pad".into(), true));
     assert!(app.saved.ignored_devices.is_empty() && app.config.ignored_devices.is_empty());
@@ -315,10 +315,10 @@ fn a_pack_file_goes_to_the_setup_it_was_added_from() {
 fn files_left_out_of_the_config_are_named_on_load() {
     let mut app = app();
     let mut config = Config::default();
-    let left_out = |error: &str| serde_json::from_value(serde_json::json!({ "path": "setups/001-Doom", "error": error, "files": [] })).unwrap();
-    config.unreadable = vec![left_out("parsing setups/001-Doom/setup.toml"), left_out("parsing general/macros/001-Heal.toml")];
+    let left_out = |error: &str| serde_json::from_value(serde_json::json!({ "path": "setups/0001-Doom", "error": error, "files": [] })).unwrap();
+    config.unreadable = vec![left_out("parsing setups/0001-Doom/setup.toml"), left_out("parsing general/macros/0001-Heal.toml")];
     let _ = app.update(Message::ConfigLoaded(Box::new(config), None));
     let (message, err) = app.message.clone().unwrap();
-    assert!(err && message.contains("001-Doom/setup.toml") && message.contains("1 more"), "{message}");
+    assert!(err && message.contains("0001-Doom/setup.toml") && message.contains("1 more"), "{message}");
     assert!(app.unreadable.is_none(), "the rest can be saved");
 }
