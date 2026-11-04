@@ -43,11 +43,11 @@ fn a_config_is_saved_as_folders_and_loads_back_unchanged() {
     assert!(!app.contains("[general") && !app.contains("[[setups"));
     // Each setup is a folder: setup.toml, then a subfolder per kind of item, numbered.
     assert!(dir.join("general/setup.toml").is_file());
-    assert!(dir.join("general/profiles/001-Gamepad.toml").is_file());
-    assert!(dir.join("setups/001-Doom/setup.toml").is_file());
-    assert!(dir.join("setups/001-Doom/profiles/002-Desktop.toml").is_file());
-    assert!(dir.join("setups/002-Hades/profiles/001-Gamepad.toml").is_file());
-    assert!(dir.join("setups/001-Doom/cycles/001-Game speed.toml").is_file());
+    assert!(dir.join("general/profiles/0001-Gamepad.toml").is_file());
+    assert!(dir.join("setups/0001-Doom/setup.toml").is_file());
+    assert!(dir.join("setups/0001-Doom/profiles/0002-Desktop.toml").is_file());
+    assert!(dir.join("setups/0002-Hades/profiles/0001-Gamepad.toml").is_file());
+    assert!(dir.join("setups/0001-Doom/cycles/0001-Game speed.toml").is_file());
 
     let loaded = Config::load_from(&path).unwrap();
     assert_eq!(loaded, config);
@@ -63,7 +63,7 @@ fn a_removed_setup_leaves_no_folder_behind() {
     config.save_to(&path).unwrap();
     config.games.clear();
     config.save_to(&path).unwrap();
-    assert!(!dir.join("setups/001-Doom").exists());
+    assert!(!dir.join("setups/0001-Doom").exists());
     assert_eq!(Config::load_from(&path).unwrap().games.len(), 0);
     let _ = fs::remove_dir_all(&dir);
 }
@@ -114,7 +114,7 @@ fn old_shared_items_go_to_the_setups_that_use_them() {
 fn names_with_slashes_make_safe_file_names() {
     assert_eq!(slug("Dark Souls: Remastered/2"), "Dark Souls_ Remastered_2");
     assert_eq!(slug("  "), "item");
-    assert_eq!(numbered(0, "Doom"), "001-Doom");
+    assert_eq!(numbered(0, "Doom"), "0001-Doom");
 }
 
 #[test]
@@ -126,9 +126,9 @@ fn a_file_that_doesn_t_load_is_left_out_and_kept_on_disk() {
     config.games.push(Game::new("Hades", vec![Profile::passthrough("Gamepad")]));
     config.save_to(&path).unwrap();
     // A hand edit gone wrong, and a setup from a newer version.
-    let profile = dir.join("setups/001-Doom/profiles/002-Desktop.toml");
+    let profile = dir.join("setups/0001-Doom/profiles/0002-Desktop.toml");
     fs::write(&profile, "name = \"Desktop\"\nbuttons = [").unwrap();
-    let hades = dir.join("setups/002-Hades/setup.toml");
+    let hades = dir.join("setups/0002-Hades/setup.toml");
     fs::write(&hades, "name = \"Hades\"\nrules = 3\n").unwrap();
 
     let mut loaded = Config::load_from(&path).unwrap();
@@ -136,18 +136,18 @@ fn a_file_that_doesn_t_load_is_left_out_and_kept_on_disk() {
     let profiles = |c: &Config| c.games[0].profiles.iter().map(|p| p.name.clone()).collect::<Vec<_>>();
     assert_eq!(profiles(&loaded), ["Gamepad"]);
     let kept: Vec<_> = loaded.unreadable.iter().map(|u| u.path.clone()).collect();
-    assert_eq!(kept, [PathBuf::from("setups/001-Doom/profiles/002-Desktop.toml"), PathBuf::from("setups/002-Hades")]);
-    assert!(loaded.unreadable[0].error.contains("002-Desktop.toml"), "{}", loaded.unreadable[0].error);
+    assert_eq!(kept, [PathBuf::from("setups/0001-Doom/profiles/0002-Desktop.toml"), PathBuf::from("setups/0002-Hades")]);
+    assert!(loaded.unreadable[0].error.contains("0002-Desktop.toml"), "{}", loaded.unreadable[0].error);
 
     // A save puts both back. A new profile saved in the left-out one's place keeps it, and the
     // left-out one goes beside it.
     loaded.games[0].profiles.push(Profile::desktop("Desktop"));
     loaded.save_to(&path).unwrap();
     assert!(Config::load_from(&path).unwrap().games[0].profiles.len() == 2);
-    let beside = dir.join("setups/001-Doom/profiles/002-Desktop (2).toml");
+    let beside = dir.join("setups/0001-Doom/profiles/0002-Desktop (2).toml");
     assert_eq!(fs::read_to_string(&beside).unwrap(), "name = \"Desktop\"\nbuttons = [");
     assert_eq!(fs::read_to_string(&hades).unwrap(), "name = \"Hades\"\nrules = 3\n");
-    assert!(dir.join("setups/002-Hades/profiles/001-Gamepad.toml").is_file(), "with the rest of its folder");
+    assert!(dir.join("setups/0002-Hades/profiles/0001-Gamepad.toml").is_file(), "with the rest of its folder");
     let again = Config::load_from(&path).unwrap();
     assert_eq!(profiles(&again), ["Gamepad", "Desktop"]);
     assert_eq!(again.unreadable.len(), 2, "and they're tried again");
@@ -184,7 +184,7 @@ fn general_keeps_a_profile_when_its_own_are_left_out() {
     let mut config = Config::default();
     config.general.profiles.truncate(1);
     config.save_to(&path).unwrap();
-    fs::write(dir.join("general/profiles/001-Gamepad.toml"), "?").unwrap();
+    fs::write(dir.join("general/profiles/0001-Gamepad.toml"), "?").unwrap();
     let loaded = Config::load_from(&path).unwrap();
     assert_eq!(loaded.general.profiles, Config::default().general.profiles);
     let _ = fs::remove_dir_all(&dir);
@@ -194,6 +194,6 @@ fn general_keeps_a_profile_when_its_own_are_left_out() {
 fn left_out_files_go_back_where_a_save_reads_them() {
     let root = Path::new("/c");
     assert_eq!(unreadable::kept_at(root, Path::new("/c/.setups.old/001-Doom")), Path::new("setups/001-Doom"));
-    assert_eq!(unreadable::kept_at(root, Path::new("/c/shared/macros/001-Heal.toml")), Path::new("general/macros/001-Heal.toml"));
+    assert_eq!(unreadable::kept_at(root, Path::new("/c/shared/macros/0001-Heal.toml")), Path::new("general/macros/0001-Heal.toml"));
     assert_eq!(unreadable::kept_at(root, Path::new("/c/general/setup.toml")), Path::new("general/setup.toml"));
 }

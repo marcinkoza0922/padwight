@@ -16,8 +16,8 @@ use super::{GENERAL, SETUP_FILE, SETUPS, SHARED, previous, write_private};
 /// A file, or a setup's whole folder when its `setup.toml` doesn't load, that loading left out.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Unreadable {
-    /// Where the next save puts it back, from the config folder: `setups/003-Doom/profiles/002-Aim.toml`,
-    /// or `setups/003-Doom` for a whole setup.
+    /// Where the next save puts it back, from the config folder: `setups/0003-Doom/profiles/0002-Aim.toml`,
+    /// or `setups/0003-Doom` for a whole setup.
     pub path: PathBuf,
     /// Why it didn't load, with the file it was read from.
     pub error: String,
