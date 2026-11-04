@@ -1758,3 +1758,132 @@ watch-dogs-legion.padpack	Watch Dogs: Legion	name	Watch Dogs: Legion	pages/w/Wat
 watch-dogs.padpack	Watch Dogs	name	Watch Dogs	pages/w/Watch Dogs.wiki	243470	watch_dogs.exe	ok						
 zeit.padpack	Zeit²	name	Zeit²	pages/z/Zeit².wiki	33390	zeit2.exe	ok						
 zombi-2015.padpack	Zombi (2015)	name	Zombi (2015)	pages/z/Zombi (2015).wiki	339230	zombi.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2015				
+a-way-out.padpack	A Way Out	name	A Way Out	pages/a/A Way Out.wiki	1222700	awayout.exe	ok						
+amazing-adventures-around-the-world.padpack	Amazing Adventures Around the World	name	Amazing Adventures: Around the World	pages/a/Amazing Adventures: Around the World.wiki	3530		info	no_exe	no_exe: pack has no executable rule				
+apex-legends.padpack	Apex Legends	name	Apex Legends	pages/a/Apex Legends.wiki	1172470	r5apex.exe,r5apex_dx12.exe	ok						
+battlefield-1.padpack	Battlefield 1	name	Battlefield 1	pages/b/Battlefield 1.wiki	1238840		info	no_exe	no_exe: pack has no executable rule				
+battlefield-2042.padpack	Battlefield 2042	name	Battlefield 2042	pages/b/Battlefield 2042.wiki	1517290	bf2042.exe	ok						
+battlefield-3.padpack	Battlefield 3	name	Battlefield 3	pages/b/Battlefield 3.wiki	1238820		info	no_exe	no_exe: pack has no executable rule				
+battlefield-6.padpack	Battlefield 6	name	Battlefield 6	pages/b/Battlefield 6.wiki	2807960	bf6event.exe,bf6.exe	ok						
+battlefield-hardline.padpack	Battlefield Hardline	name	Battlefield Hardline	pages/b/Battlefield Hardline.wiki	1238880	bfh.exe	ok						
+battlefield-redsec.padpack	Battlefield REDSEC	name	Battlefield REDSEC	pages/b/Battlefield REDSEC.wiki	3028330		info	no_exe	no_exe: pack has no executable rule				
+battlefield-v.padpack	Battlefield V	name	Battlefield V	pages/b/Battlefield V.wiki	1238810		info	no_exe	no_exe: pack has no executable rule				
+bejeweled-2-deluxe.padpack	Bejeweled 2 Deluxe	ids	Bejeweled 2	pages/b/Bejeweled 2.wiki	3300		info	name_differs,no_exe	name_differs: wiki title is 'Bejeweled 2' | no_exe: pack has no executable rule				
+bejeweled-deluxe.padpack	Bejeweled Deluxe	ids	Bejeweled	pages/b/Bejeweled.wiki	3350		info	name_differs,no_exe	name_differs: wiki title is 'Bejeweled' | no_exe: pack has no executable rule				
+burnout-paradise-remastered.padpack	Burnout Paradise Remastered	name	Burnout Paradise Remastered	pages/b/Burnout Paradise Remastered.wiki	1238080	burnoutpr.exe	ok						
+burnout-paradise-the-ultimate-box.padpack	Burnout Paradise: The Ultimate Box	name	Burnout Paradise	pages/b/Burnout Paradise.wiki	24740	burnoutparadise.exe	ok						
+chuzzle-deluxe.padpack	Chuzzle Deluxe	ids	Chuzzle	pages/c/Chuzzle.wiki	3310		info	name_differs,no_exe	name_differs: wiki title is 'Chuzzle' | no_exe: pack has no executable rule				
+command-conquer-4-tiberian-twilight.padpack	Command & Conquer 4 Tiberian Twilight	name	Command & Conquer 4: Tiberian Twilight	pages/c/Command & Conquer 4: Tiberian Twilight.wiki	47700	cnc4.exe	ok						
+command-conquer-and-the-covert-operations.padpack	Command & Conquer and The Covert Operations	ids	Command & Conquer	pages/c/Command & Conquer.wiki	2229830		info	name_differs,no_exe	name_differs: wiki title is 'Command & Conquer' | no_exe: pack has no executable rule				
+command-conquer-generals.padpack	Command & Conquer Generals	name	Command & Conquer: Generals	pages/c/Command & Conquer: Generals.wiki	2229870		info	no_exe	no_exe: pack has no executable rule				
+command-conquer-red-alert-2-and-yuri-s-revenge.padpack	Command & Conquer Red Alert 2 and Yuri’s Revenge	ids	Command & Conquer: Red Alert 2	pages/c/Command & Conquer: Red Alert 2.wiki	2229850		info	name_differs,no_exe	name_differs: wiki title is 'Command & Conquer: Red Alert 2' | no_exe: pack has no executable rule				
+command-conquer-red-alert-counterstrike-and-the-aftermath.padpack	Command & Conquer Red Alert, Counterstrike and The Aftermath	ids	Command & Conquer: Red Alert	pages/c/Command & Conquer: Red Alert.wiki	2229840		info	name_differs,no_exe	name_differs: wiki title is 'Command & Conquer: Red Alert' | no_exe: pack has no executable rule				
+command-conquer-renegade.padpack	Command & Conquer Renegade	name	Command & Conquer: Renegade	pages/c/Command & Conquer: Renegade.wiki	2229890		info	no_exe	no_exe: pack has no executable rule				
+command-conquer-tiberian-sun-and-firestorm.padpack	Command & Conquer Tiberian Sun and Firestorm	ids	Command & Conquer: Tiberian Sun	pages/c/Command & Conquer: Tiberian Sun.wiki	2229880		info	name_differs,no_exe	name_differs: wiki title is 'Command & Conquer: Tiberian Sun' | no_exe: pack has no executable rule				
+damnation.padpack	Damnation	name	Damnation	pages/d/Damnation.wiki	12790		info	no_exe	no_exe: pack has no executable rule				
+dead-space-2023.padpack	Dead Space (2023)	name	Dead Space (2023)	pages/d/Dead Space (2023).wiki	1693980		info	no_exe	no_exe: pack has no executable rule				
+dead-space-3.padpack	Dead Space 3	name	Dead Space 3	pages/d/Dead Space 3.wiki	1238060	deadspace3.exe	ok						
+deathspank-thongs-of-virtue.padpack	DeathSpank: Thongs of Virtue	name	DeathSpank: Thongs of Virtue	pages/d/DeathSpank: Thongs of Virtue.wiki	18050		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2010				
+deathspank.padpack	DeathSpank	name	DeathSpank	pages/d/DeathSpank.wiki	18040		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2010				
+dirt-5.padpack	DIRT 5	name	DIRT 5	pages/d/DIRT 5.wiki	1038250	dirt5.exe	ok						
+dragon-age-inquisition.padpack	Dragon Age Inquisition	name	Dragon Age: Inquisition	pages/d/Dragon Age: Inquisition.wiki	1222690		info	no_exe	no_exe: pack has no executable rule				
+dragon-age-the-veilguard.padpack	Dragon Age: The Veilguard	name	Dragon Age: The Veilguard	pages/d/Dragon Age: The Veilguard.wiki	1845910	dragon age the veilguard.exe	ok						
+dungeon-keeper-2.padpack	Dungeon Keeper 2	name	Dungeon Keeper 2	pages/d/Dungeon Keeper 2.wiki	2616460	dkii-dx.exe	ok						
+dungeon-keeper-gold.padpack	Dungeon Keeper Gold	name	Dungeon Keeper	pages/d/Dungeon Keeper.wiki	1996630		info	no_exe	no_exe: pack has no executable rule				
+ea-sports-college-football-27.padpack	EA SPORTS College Football 27	name	EA Sports College Football 27	pages/e/EA Sports College Football 27.wiki	4032350		info	no_exe	no_exe: pack has no executable rule				
+ea-sports-fc-24.padpack	EA SPORTS FC 24	name	EA Sports FC 24	pages/e/EA Sports FC 24.wiki	2195250	fc24.exe	ok						
+ea-sports-fc-25.padpack	EA SPORTS FC 25	name	EA Sports FC 25	pages/e/EA Sports FC 25.wiki	2669320	fc25.exe	ok						
+ea-sports-fc-26.padpack	EA SPORTS FC 26	name	EA Sports FC 26	pages/e/EA Sports FC 26.wiki	3405690	fc26.exe	ok						
+ea-sports-fifa-21.padpack	EA SPORTS FIFA 21	ids	FIFA 21	pages/f/FIFA 21.wiki	1313860	fifa21.exe	info	name_differs	name_differs: wiki title is 'FIFA 21'				
+ea-sports-fifa-23.padpack	EA SPORTS FIFA 23	ids	FIFA 23	pages/f/FIFA 23.wiki	1811260	fifa23.exe	info	name_differs	name_differs: wiki title is 'FIFA 23'				
+ea-sports-madden-nfl-25.padpack	EA SPORTS Madden NFL 25	ids	Madden NFL 25	pages/m/Madden NFL 25.wiki	2582560		info	name_differs,no_exe	name_differs: wiki title is 'Madden NFL 25' | no_exe: pack has no executable rule				
+ea-sports-madden-nfl-26.padpack	EA SPORTS Madden NFL 26	ids	Madden NFL 26	pages/m/Madden NFL 26.wiki	3230400		info	name_differs,no_exe	name_differs: wiki title is 'Madden NFL 26' | no_exe: pack has no executable rule				
+ea-sports-madden-nfl-27.padpack	EA SPORTS Madden NFL 27	name	Madden NFL 27	pages/m/Madden NFL 27.wiki	3940610		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=unknown xinput=unknown released=2026				
+ea-sports-pga-tour.padpack	EA SPORTS PGA TOUR	name	EA Sports PGA Tour	pages/e/EA Sports PGA Tour.wiki	1677350		info	no_exe	no_exe: pack has no executable rule				
+ea-sports-wrc.padpack	EA SPORTS WRC	name	EA Sports WRC	pages/e/EA Sports WRC.wiki	1849250	wrc.exe	ok						
+escape-rosecliff-island.padpack	Escape Rosecliff Island	name	Escape Rosecliff Island	pages/e/Escape Rosecliff Island.wiki	3600		info	no_exe	no_exe: pack has no executable rule				
+f1-2012.padpack	F1 2012	name	F1 2012	pages/f/F1 2012.wiki	208500	f1_2012.exe	ok						
+f1-2014.padpack	F1 2014	name	F1 2014	pages/f/F1 2014.wiki	226580	f1_2014.exe	ok						
+f1-2018.padpack	F1 2018	name	F1 2018	pages/f/F1 2018.wiki	737800	f1_2018.exe	ok						
+f1-2020.padpack	F1 2020	name	F1 2020	pages/f/F1 2020.wiki	1080110	f1_2020.exe,f1_2020_dx12.exe	ok						
+f1-2021.padpack	F1 2021	name	F1 2021	pages/f/F1 2021.wiki	1134570	f1_2021_dx12.exe	ok						
+f1-22.padpack	F1 22	name	F1 22	pages/f/F1 22.wiki	1692250	f1_22.exe	ok						
+f1-23.padpack	F1 23	name	F1 23	pages/f/F1 23.wiki	2108330	f1_23.exe	ok						
+f1-24.padpack	F1 24	name	F1 24	pages/f/F1 24.wiki	2488620	f1_24.exe	ok						
+f1-25.padpack	F1 25	name	F1 25	pages/f/F1 25.wiki	3059520	f1_25.exe	ok						
+f1-race-stars.padpack	F1 RACE STARS	name	F1 Race Stars	pages/f/F1 Race Stars.wiki	203680	f1racestars.exe	ok						
+fe.padpack	Fe	name	Fe	pages/f/Fe.wiki	1225580	fe.exe	ok						
+fifa-22.padpack	FIFA 22	name	FIFA 22	pages/f/FIFA 22.wiki	1506830	fifa22.exe	ok						
+grid-legends.padpack	GRID Legends	name	GRID Legends	pages/g/GRID Legends.wiki	1307710	gridlegends.exe	ok						
+grid.padpack	GRID	ambiguous			703860	grid_dx12.exe	warn	ambiguous	ambiguous: name matches Race Driver: Grid [12750]; The Grid [884910]				
+hospital-tycoon.padpack	Hospital Tycoon	name	Hospital Tycoon	pages/h/Hospital Tycoon.wiki	11590		info	no_exe	no_exe: pack has no executable rule				
+iggle-pop-deluxe.padpack	Iggle Pop Deluxe	ids	Iggle Pop!	pages/i/Iggle Pop!.wiki	3420		info	name_differs,no_exe	name_differs: wiki title is 'Iggle Pop!' | no_exe: pack has no executable rule				
+immortals-of-aveum.padpack	Immortals of Aveum	name	Immortals of Aveum	pages/i/Immortals of Aveum.wiki	2009100	immortalsofaveum-win64-shipping.exe	ok						
+it-takes-two.padpack	It Takes Two	name	It Takes Two	pages/i/It Takes Two.wiki	1426210	ittakestwo.exe	ok						
+jade-empire-special-edition.padpack	Jade Empire: Special Edition	name	Jade Empire: Special Edition	pages/j/Jade Empire: Special Edition.wiki	7110	jadeempire.exe	ok						
+kingdoms-of-amalur-reckoning.padpack	Kingdoms of Amalur: Reckoning	name	Kingdoms of Amalur: Reckoning	pages/k/Kingdoms of Amalur: Reckoning.wiki	102500	reckoning.exe	ok						
+lost-in-random.padpack	Lost in Random	name	Lost in Random	pages/l/Lost in Random.wiki	1462570	lost in random.exe	ok						
+madden-nfl-21.padpack	Madden NFL 21	name	Madden NFL 21	pages/m/Madden NFL 21.wiki	1239520	madden21.exe	ok						
+madden-nfl-22.padpack	Madden NFL 22	name	Madden NFL 22	pages/m/Madden NFL 22.wiki	1519350	madden22.exe	ok						
+madden-nfl-23.padpack	Madden NFL 23	name	Madden NFL 23	pages/m/Madden NFL 23.wiki	1760250	madden23.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2022				
+madden-nfl-24.padpack	Madden NFL 24	name	Madden NFL 24	pages/m/Madden NFL 24.wiki	2140330	madden24.exe	ok						
+maelstrom-the-battle-for-earth-begins.padpack	Maelstrom: The Battle for Earth Begins	name	Maelstrom: The Battle for Earth Begins	pages/m/Maelstrom: The Battle for Earth Begins.wiki	11560		info	no_exe	no_exe: pack has no executable rule				
+mass-effect-3-n7-digital-deluxe-edition-2012.padpack	Mass Effect 3 N7 Digital Deluxe Edition (2012)	ids	Mass Effect 3	pages/m/Mass Effect 3.wiki	1238020	masseffect3.exe	info	name_differs	name_differs: wiki title is 'Mass Effect 3'				
+mass-effect-andromeda-deluxe-edition.padpack	Mass Effect: Andromeda Deluxe Edition	ids	Mass Effect: Andromeda	pages/m/Mass Effect: Andromeda.wiki	1238000	masseffectandromeda.exe	info	name_differs	name_differs: wiki title is 'Mass Effect: Andromeda'				
+mass-effect-legendary-edition.padpack	Mass Effect Legendary Edition	name	Mass Effect Legendary Edition	pages/m/Mass Effect Legendary Edition.wiki	1328670		info	no_exe	no_exe: pack has no executable rule				
+medal-of-honor-above-and-beyond.padpack	Medal of Honor: Above and Beyond	name	Medal of Honor: Above and Beyond	pages/m/Medal of Honor: Above and Beyond.wiki	1402320	mohab-win64-shipping.exe	warn	passthrough_no_support	passthrough_no_support: passthrough pack, but controller_support=false xinput=unknown released=2020				
+medal-of-honor-airborne.padpack	Medal of Honor: Airborne	name	Medal of Honor: Airborne	pages/m/Medal of Honor: Airborne.wiki	24840		info	no_exe	no_exe: pack has no executable rule				
+medal-of-honor.padpack	Medal of Honor	name	Medal of Honor (2010)	pages/m/Medal of Honor (2010).wiki	47790		info	no_exe	no_exe: pack has no executable rule				
+micro-machines-world-series.padpack	Micro Machines World Series	name	Micro Machines World Series	pages/m/Micro Machines World Series.wiki	535850	micromachines.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2017				
+mirrors-edge-catalyst.padpack	Mirror's Edge Catalyst	name	Mirror's Edge Catalyst	pages/m/Mirror's Edge Catalyst.wiki	1233570	mirrorsedgecatalyst.exe	ok						
+mysims-kingdom.padpack	MySims Kingdom	name	MySims Kingdom	pages/m/MySims Kingdom.wiki	3328910		info	no_exe	no_exe: pack has no executable rule				
+mysims.padpack	MySims	name	MySims	pages/m/MySims.wiki	3328900	mysims.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=limited xinput=limited released=2008				
+mystery-p-i-lost-in-los-angeles.padpack	Mystery P.I. - Lost in Los Angeles	name	Mystery P.I. - Lost in Los Angeles	pages/m/Mystery P.I. - Lost in Los Angeles.wiki	3610		info	no_exe	no_exe: pack has no executable rule				
+mystery-p-i-the-lottery-ticket.padpack	Mystery P.I. - The Lottery Ticket	name	Mystery P.I. - The Lottery Ticket	pages/m/Mystery P.I. - The Lottery Ticket.wiki	3500		info	no_exe	no_exe: pack has no executable rule				
+mystery-p-i-the-new-york-fortune.padpack	Mystery P.I. - The New York Fortune	name	Mystery P.I. - The New York Fortune	pages/m/Mystery P.I. - The New York Fortune.wiki	3570		info	no_exe	no_exe: pack has no executable rule				
+mystery-p-i-the-vegas-heist.padpack	Mystery P.I. - The Vegas Heist	name	Mystery P.I. - The Vegas Heist	pages/m/Mystery P.I. - The Vegas Heist.wiki	3520		info	no_exe	no_exe: pack has no executable rule				
+need-for-speed-heat.padpack	Need for Speed Heat	name	Need for Speed Heat	pages/n/Need for Speed Heat.wiki	1222680	needforspeedheat.exe	ok						
+need-for-speed-hot-pursuit-remastered.padpack	Need for Speed Hot Pursuit Remastered	name	Need for Speed: Hot Pursuit Remastered	pages/n/Need for Speed: Hot Pursuit Remastered.wiki	1328660		info	no_exe	no_exe: pack has no executable rule				
+need-for-speed-hot-pursuit.padpack	Need For Speed: Hot Pursuit	name	Need for Speed: Hot Pursuit	pages/n/Need for Speed: Hot Pursuit.wiki	47870	nfs11.exe	ok						
+need-for-speed-most-wanted.padpack	Need for Speed Most Wanted	name	Need for Speed: Most Wanted	pages/n/Need for Speed: Most Wanted.wiki	1262560		error	id_wrong_game,no_exe,passthrough_pre2006	id_wrong_game: no Steam id is listed for 'Need for Speed: Most Wanted'; they belong to Need for Speed: Most Wanted (2012) | no_exe: pack has no executable rule | passthrough_pre2006: passthrough pack, but controller_support=true xinput=hackable released=2005				
+need-for-speed-payback.padpack	Need for Speed Payback	name	Need for Speed Payback	pages/n/Need for Speed Payback.wiki	1262580	needforspeedpayback.exe	ok						
+need-for-speed-rivals.padpack	Need for Speed Rivals	name	Need for Speed Rivals	pages/n/Need for Speed Rivals.wiki	1262600		info	no_exe	no_exe: pack has no executable rule				
+need-for-speed-shift.padpack	Need for Speed: Shift	name	Need for Speed: Shift	pages/n/Need for Speed: Shift.wiki	24870	shift.exe	ok						
+need-for-speed-unbound.padpack	Need for Speed Unbound	name	Need for Speed Unbound	pages/n/Need for Speed Unbound.wiki	1846380	needforspeedunbound.exe	ok						
+need-for-speed-undercover.padpack	Need for Speed Undercover	name	Need for Speed: Undercover	pages/n/Need for Speed: Undercover.wiki	17430	nfs.exe	ok						
+need-for-speed.padpack	Need for Speed	name	The Need for Speed	pages/t/The Need for Speed.wiki	1262540	nfs16.exe	error	id_wrong_game,passthrough_pre2006	id_wrong_game: no Steam id is listed for 'The Need for Speed'; they belong to Need for Speed (2016) | passthrough_pre2006: passthrough pack, but controller_support=true xinput=unknown released=1995				
+overlord-ii.padpack	Overlord II	name	Overlord II	pages/o/Overlord II.wiki	12810		info	no_exe	no_exe: pack has no executable rule				
+overlord.padpack	Overlord	name	Overlord (2007)	pages/o/Overlord (2007).wiki	11450	overlord.exe	ok						
+pizza-frenzy-deluxe.padpack	Pizza Frenzy Deluxe	ids	Pizza Frenzy	pages/p/Pizza Frenzy.wiki	3430		info	name_differs,no_exe	name_differs: wiki title is 'Pizza Frenzy' | no_exe: pack has no executable rule				
+plants-vs-zombies-battle-for-neighborville.padpack	Plants vs. Zombies: Battle for Neighborville	name	Plants vs. Zombies: Battle for Neighborville	pages/p/Plants vs. Zombies: Battle for Neighborville.wiki	1262240		info	no_exe	no_exe: pack has no executable rule				
+plants-vs-zombies-garden-warfare-2-deluxe-edition.padpack	Plants vs. Zombies Garden Warfare 2: Deluxe Edition	ids	Plants vs. Zombies: Garden Warfare 2	pages/p/Plants vs. Zombies: Garden Warfare 2.wiki	1922560	gw2.main_win64_retail.exe	info	name_differs	name_differs: wiki title is 'Plants vs. Zombies: Garden Warfare 2'				
+plants-vs-zombies-replanted.padpack	Plants vs. Zombies: Replanted	name	Plants vs. Zombies: Replanted	pages/p/Plants vs. Zombies: Replanted.wiki	3654560	replanted.exe	ok						
+populous-ii-trials-of-the-olympian-gods.padpack	Populous II: Trials of the Olympian Gods	name	Populous II: Trials of the Olympian Gods	pages/p/Populous II: Trials of the Olympian Gods.wiki	2616450		info	no_exe	no_exe: pack has no executable rule				
+populous-the-beginning.padpack	Populous: The Beginning	name	Populous: The Beginning	pages/p/Populous: The Beginning.wiki	2616430		info	no_exe	no_exe: pack has no executable rule				
+populous.padpack	Populous	name	Populous	pages/p/Populous.wiki	2203860		info	no_exe	no_exe: pack has no executable rule				
+rise-of-the-argonauts.padpack	Rise of the Argonauts	name	Rise of the Argonauts	pages/r/Rise of the Argonauts.wiki	12770		info	no_exe	no_exe: pack has no executable rule				
+rocket-arena.padpack	Rocket Arena	name	Rocket Arena	pages/r/Rocket Arena.wiki	1233550	mariner-win64-shipping.exe	ok						
+sea-of-solitude.padpack	Sea of Solitude	name	Sea of Solitude	pages/s/Sea of Solitude.wiki	1225590	seaofsolitude.exe	ok						
+shift-2-unleashed.padpack	Shift 2 Unleashed	name	Shift 2 Unleashed	pages/s/Shift 2 Unleashed.wiki	47920		info	no_exe	no_exe: pack has no executable rule				
+skate.padpack	skate.	name	Skate	pages/s/Skate.wiki	3354750	skate.exe	ok						
+split-fiction.padpack	Split Fiction	name	Split Fiction	pages/s/Split Fiction.wiki	2001120	splitfiction.exe	ok						
+star-wars-battlefront-ii.padpack	STAR WARS Battlefront II	name	Star Wars: Battlefront II	pages/s/Star Wars: Battlefront II.wiki	1237950		error	id_wrong_game,no_exe,passthrough_pre2006	id_wrong_game: no Steam id is listed for 'Star Wars: Battlefront II'; they belong to Star Wars Battlefront II (2017) | no_exe: pack has no executable rule | passthrough_pre2006: passthrough pack, but controller_support=true xinput=unknown released=2005				
+star-wars-battlefront.padpack	STAR WARS Battlefront	name	Star Wars: Battlefront	pages/s/Star Wars: Battlefront.wiki	1237980	starwarsbattlefront.exe	error	id_wrong_game,passthrough_pre2006	id_wrong_game: no Steam id is listed for 'Star Wars: Battlefront'; they belong to Star Wars Battlefront (2015) | passthrough_pre2006: passthrough pack, but controller_support=true xinput=true released=2004				
+star-wars-jedi-fallen-order.padpack	STAR WARS Jedi: Fallen Order	name	Star Wars Jedi: Fallen Order	pages/s/Star Wars Jedi: Fallen Order.wiki	1172380	starwarsjedifallenorder.exe	ok						
+star-wars-jedi-survivor.padpack	STAR WARS Jedi: Survivor	name	Star Wars Jedi: Survivor	pages/s/Star Wars Jedi: Survivor.wiki	1774580		info	no_exe	no_exe: pack has no executable rule				
+star-wars-squadrons.padpack	STAR WARS: Squadrons	name	Star Wars: Squadrons	pages/s/Star Wars: Squadrons.wiki	1222730	starwarssquadrons.exe	ok						
+star-wars-zero-company.padpack	STAR WARS Zero Company	name	Star Wars: Zero Company	pages/s/Star Wars: Zero Company.wiki	2075800		info	no_exe	no_exe: pack has no executable rule				
+super-mega-baseball-2.padpack	Super Mega Baseball 2	name	Super Mega Baseball 2	pages/s/Super Mega Baseball 2.wiki	414870	supermegabaseball.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=unknown xinput=unknown released=2018				
+super-mega-baseball-3.padpack	Super Mega Baseball 3	name	Super Mega Baseball 3	pages/s/Super Mega Baseball 3.wiki	988910		info	no_exe	no_exe: pack has no executable rule				
+super-mega-baseball-4.padpack	Super Mega Baseball 4	name	Super Mega Baseball 4	pages/s/Super Mega Baseball 4.wiki	1487210		info	no_exe	no_exe: pack has no executable rule				
+super-mega-baseball-extra-innings.padpack	Super Mega Baseball: Extra Innings	name	Super Mega Baseball: Extra Innings	pages/s/Super Mega Baseball: Extra Innings.wiki	314070		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2015				
+tales-of-kenzera-zau.padpack	Tales of Kenzera: ZAU	name	Tales of Kenzera: ZAU	pages/t/Tales of Kenzera: ZAU.wiki	2316580		info	no_exe	no_exe: pack has no executable rule				
+talismania-deluxe.padpack	Talismania Deluxe	ids	Talismania	pages/t/Talismania.wiki	3460		info	name_differs,no_exe	name_differs: wiki title is 'Talismania' | no_exe: pack has no executable rule				
+the-saboteur.padpack	The Saboteur	name+ids	The Saboteur	pages/t/The Saboteur.wiki	24880	saboteur.exe	ok						
+the-sims-2-legacy-collection.padpack	The Sims 2 Legacy Collection	name	The Sims 2 Legacy Collection	pages/t/The Sims 2 Legacy Collection.wiki	3314070		info	no_exe	no_exe: pack has no executable rule				
+the-sims-legacy-collection.padpack	The Sims Legacy Collection	name	The Sims Legacy Collection	pages/t/The Sims Legacy Collection.wiki	3314060		info	no_exe	no_exe: pack has no executable rule				
+titanfall.padpack	Titanfall	name	Titanfall	pages/t/Titanfall.wiki	1454890		info	no_exe	no_exe: pack has no executable rule				
+unravel-two.padpack	Unravel Two	name	Unravel Two	pages/u/Unravel Two.wiki	1225570	unraveltwo.exe	ok						
+unravel.padpack	Unravel	name	Unravel	pages/u/Unravel.wiki	1225560	unravel.exe	ok						
+warp.padpack	Warp	name	Warp	pages/w/Warp.wiki	102850		info	no_exe	no_exe: pack has no executable rule				
+wild-hearts.padpack	WILD HEARTS	name	Wild Hearts	pages/w/Wild Hearts.wiki	1938010	wild hearts.exe	ok						
