@@ -1,0 +1,415 @@
+format = 20
+macros = []
+overlay_font = "Rajdhani"
+
+[pack]
+id = "d66eede0-bb20-5de0-8b4b-0e898dea4c6d"
+name = "KILLRUN"
+version = "1.0"
+author = "Padwight"
+description = "KILLRUN on an Xbox-style pad. The left stick walks on WASD and the right stick looks; RT fires, LT aims, the gyro aims finely. Overlays in olive drab and khaki."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "1442170"
+profile = "KILLRUN"
+
+[[rules]]
+kind = "executable"
+value = "killrunclient.exe"
+profile = "KILLRUN"
+
+[[profiles]]
+name = "KILLRUN"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_SPACE"]}
+East = {keys = ["KEY_LEFTCTRL"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+Start = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_R"]}
+North = {keys = ["KEY_E"]}
+LeftBumper = {keys = ["KEY_Q"]}
+RightBumper = {keys = ["KEY_G"]}
+LeftStick = {keys = ["KEY_LEFTSHIFT"]}
+RightStick = {keys = ["KEY_V"]}
+Select = {keys = ["KEY_TAB"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 900.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The left stick {ls} walks on WASD and the right stick {rs} looks around. {rt} fires and {lt} aims or fires the alternate mode. {up} and {down} change weapon on the wheel.
+Buttons: {south} Jump; {east} Crouch; {start} Menu; {west} Reload; {north} Use; {lb} Last weapon; {rb} Grenade; {l3} Sprint; {r3} Melee; {select} Scoreboard.
+Typical defaults for the genre, not checked against the game. Keys are the game's defaults as remembered, not read from an install; if one doesn't answer, check the game's controls options and change the buttons here to match. The Windows executable is from Steam's launch data. The game has no controller support, so the pad plays it with the mouse and keyboard keys.
+Typing a name or text: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move"}
+"stick:Right" = {text = "Look"}
+"trigger:Right" = {text = "Fire"}
+"trigger:Left" = {text = "Aim / alt fire"}
+"button:South" = {text = "{icon:arrow} Jump"}
+"button:East" = {text = "Crouch"}
+"button:Start" = {text = "Menu"}
+"button:West" = {text = "{icon:rotate} Reload"}
+"button:North" = {text = "{icon:hand} Use"}
+"button:LeftBumper" = {text = "Last weapon"}
+"button:RightBumper" = {text = "Grenade"}
+"button:LeftStick" = {text = "Sprint"}
+"button:RightStick" = {text = "Melee"}
+"button:Select" = {text = "Scoreboard"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+
+
+[[profiles]]
+name = "KILLRUN + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {keys = ["KEY_SPACE"]}
+East = {keys = ["KEY_LEFTCTRL"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+Start = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_R"]}
+North = {keys = ["KEY_E"]}
+LeftBumper = {keys = ["KEY_Q"]}
+RightBumper = {keys = ["KEY_G"]}
+LeftStick = {keys = ["KEY_LEFTSHIFT"]}
+RightStick = {keys = ["KEY_V"]}
+Select = {keys = ["KEY_TAB"]}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 900.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller aims, for fine adjustments next to the right stick {rs}.
+The left stick {ls} walks on WASD and the right stick {rs} looks around. {rt} fires and {lt} aims or fires the alternate mode. {up} and {down} change weapon on the wheel.
+Buttons: {south} Jump; {east} Crouch; {start} Menu; {west} Reload; {north} Use; {lb} Last weapon; {rb} Grenade; {l3} Sprint; {r3} Melee; {select} Scoreboard.
+Typical defaults for the genre, not checked against the game. Keys are the game's defaults as remembered, not read from an install; if one doesn't answer, check the game's controls options and change the buttons here to match. The Windows executable is from Steam's launch data. The game has no controller support, so the pad plays it with the mouse and keyboard keys.
+Typing a name or text: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move"}
+"stick:Right" = {text = "Look"}
+"trigger:Right" = {text = "Fire"}
+"trigger:Left" = {text = "Aim / alt fire"}
+"button:South" = {text = "{icon:arrow} Jump"}
+"button:East" = {text = "Crouch"}
+"button:Start" = {text = "Menu"}
+"button:West" = {text = "{icon:rotate} Reload"}
+"button:North" = {text = "{icon:hand} Use"}
+"button:LeftBumper" = {text = "Last weapon"}
+"button:RightBumper" = {text = "Grenade"}
+"button:LeftStick" = {text = "Sprint"}
+"button:RightStick" = {text = "Melee"}
+"button:Select" = {text = "Scoreboard"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+
+
+[keyboard_style]
+corners = 0.03
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1f2418"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#343b27"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#b5c25a"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#7d8a45"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#151910"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4d5736"
+
+[keyboard_style.type]
+letter_spacing = 1
+case = "upper"
+
+[numpad_style]
+corners = 0.03
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1f2418"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#343b27"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#b5c25a"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#7d8a45"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#151910"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4d5736"
+
+[numpad_style.type]
+letter_spacing = 1
+case = "upper"
+
+[media_style]
+corners = 0.03
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1f2418"
+opacity = 0.93
+
+[media_style.items]
+color = "#343b27"
+opacity = 0.95
+
+[media_style.selected]
+color = "#b5c25a"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#7d8a45"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#151910"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4d5736"
+
+[media_style.type]
+letter_spacing = 1
+case = "upper"
+
+[menu_style]
+corners = 0.03
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1f2418"
+opacity = 0.93
+
+[menu_style.items]
+color = "#343b27"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#b5c25a"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#7d8a45"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#151910"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4d5736"
+
+[menu_style.type]
+letter_spacing = 1
+case = "upper"
+
+[menu_style.ornament]
+frame = {kind = "brackets", size = 12, width = 2, color = "#7d8a45"}
+dividers = {width = 1, color = "#4d5736", opacity = 0.8}
+
+[motion]
+keyboard = "swift"
+numpad = "swift"
+menu = "swift"
+media = "swift"
+offer = "swift"
+info = "swift"
+log = "swift"
+
+[sounds.menu]
+step = {kind = "click", volume = 0.06, pitch = 0.9}
+pick = {kind = "radio", volume = 0.09}
+open = {kind = "radio", volume = 0.07}
+close = {kind = "click", volume = 0.06, pitch = 0.8}
+
+[sounds.numpad]
+step = {kind = "click", volume = 0.06, pitch = 0.9}
+pick = {kind = "radio", volume = 0.09}
+
+[sounds.keyboard]
+step = {kind = "click", volume = 0.06, pitch = 0.9}
+pick = {kind = "keys", volume = 0.13}
+
+[sounds.media]
+pick = {kind = "radio", volume = 0.09}

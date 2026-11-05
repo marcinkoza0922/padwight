@@ -1,0 +1,243 @@
+format = 20
+macros = []
+overlay_font = "Cinzel"
+
+[pack]
+id = "33301b37-5d48-5f93-9654-15f961fdf7f4"
+name = "8Doors: Arum's Afterlife Adventure"
+version = "1.0"
+author = "Padwight"
+description = "8Doors: Arum's Afterlife Adventure with its own controller support. The controller passes through to the game untouched; the game's options set the buttons. Padwight adds the Guide overlay in the game's colors."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "668550"
+profile = "8Doors: Arum's Afterlife Adventure"
+
+[[profiles]]
+name = "8Doors: Arum's Afterlife Adventure"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+South = {gamepad = "South"}
+East = {gamepad = "East"}
+North = {gamepad = "North"}
+West = {gamepad = "West"}
+LeftBumper = {gamepad = "LeftBumper"}
+RightBumper = {gamepad = "RightBumper"}
+LeftStick = {gamepad = "LeftStick"}
+RightStick = {gamepad = "RightStick"}
+Select = {gamepad = "Select"}
+Start = {gamepad = "Start"}
+DpadUp = {gamepad = "DpadUp"}
+DpadDown = {gamepad = "DpadDown"}
+DpadLeft = {gamepad = "DpadLeft"}
+DpadRight = {gamepad = "DpadRight"}
+Guide = {mode = "Guide"}
+
+[profiles.left_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.left_stick.action]
+gamepad = {stick = "Left", invert_y = false}
+
+[profiles.right_stick]
+deadzone = 0.05
+curve = 1.0
+key_threshold = 0.3
+
+[profiles.right_stick.action]
+gamepad = {stick = "Right", invert_y = false}
+
+[profiles.left_trigger]
+action = {gamepad = "Left"}
+
+[profiles.right_trigger]
+action = {gamepad = "Right"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard. The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. {guide} still works over the game: {guide} + {west} opens the on-screen keyboard for names and text, and {guide} + {lb} the media controls.'''
+
+
+[keyboard_style]
+corners = 0.12
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#1d1530"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#33274f"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#b58cf0"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#8661c9"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#130d22"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#4e3b7a"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+[numpad_style]
+corners = 0.12
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#1d1530"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#33274f"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#b58cf0"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#8661c9"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#130d22"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#4e3b7a"
+
+[numpad_style.type]
+letter_spacing = 0
+
+[media_style]
+corners = 0.12
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#1d1530"
+opacity = 0.93
+
+[media_style.items]
+color = "#33274f"
+opacity = 0.95
+
+[media_style.selected]
+color = "#b58cf0"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#8661c9"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#130d22"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#4e3b7a"
+
+[media_style.type]
+letter_spacing = 0
+
+[menu_style]
+corners = 0.12
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#1d1530"
+opacity = 0.93
+
+[menu_style.items]
+color = "#33274f"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#b58cf0"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#8661c9"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#130d22"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#4e3b7a"
+
+[menu_style.glow]
+color = "#c9a9ff"
+opacity = 0.45
+blur = 16
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#4e3b7a", opacity = 0.8}
+
+[motion]
+keyboard = "dreamy"
+numpad = "dreamy"
+menu = "dreamy"
+media = "dreamy"
+offer = "dreamy"
+info = "dreamy"
+log = "dreamy"
+
+[sounds.menu]
+step = {kind = "glass", volume = 0.06, pitch = 1.1}
+pick = {kind = "bell", volume = 0.08}
+open = {kind = "chime", volume = 0.06}
+close = {kind = "chime", volume = 0.05, pitch = 0.8}
+
+[sounds.numpad]
+step = {kind = "glass", volume = 0.06, pitch = 1.1}
+pick = {kind = "bell", volume = 0.08}
+
+[sounds.keyboard]
+step = {kind = "glass", volume = 0.06, pitch = 1.1}
+pick = {kind = "keys", volume = 0.12}
+
+[sounds.media]
+pick = {kind = "bell", volume = 0.08}
