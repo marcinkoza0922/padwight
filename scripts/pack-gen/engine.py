@@ -30,6 +30,22 @@ THEMES = {
     snd=dict(step=("beep",0.05,1.3), pick=("blip",0.08,1.1), open=("blip",0.06,1.3), close=("blip",0.05,0.8), kbpick=("beep",0.1,1.0)), frame=("brackets",8,"#7a7ae0"), case=None),
  "military": dict(font="Rajdhani", bg="#1f2418", item="#343b27", sel="#b5c25a", border="#7d8a45", grad="#151910", itemb="#4d5736", glow=None, corners=0.03, motion="swift",
     snd=dict(step=("click",0.06,0.9), pick=("radio",0.09,1.0), open=("radio",0.07,1.0), close=("click",0.06,0.8), kbpick=("keys",0.13,1.0)), frame=("brackets",12,"#7d8a45"), case="upper"),
+ "azure": dict(font="Cinzel", bg="#0b1d3a", item="#14386a", sel="#3fb0ff", border="#6cc4f0", grad="#071428", itemb="#2a5f9e", glow="#9adcff", corners=0.08, motion="swift",
+    snd=dict(step=("glass",0.06,1.1), pick=("bell",0.08,1.0), open=("chime",0.06,1.0), close=("chime",0.05,0.8), kbpick=("keys",0.12,1.0)), frame=("brackets",12,"#6cc4f0"), case=None),
+ "liberl": dict(font="Cinzel", bg="#16284a", item="#22406f", sel="#e3b94c", border="#7fb0e0", grad="#0f1b34", itemb="#3b5f96", glow=None, corners=0.1, motion="stagger",
+    snd=dict(step=("wood",0.07,1.0), pick=("page",0.09,1.0), open=("page",0.07,1.0), close=("wood",0.06,0.8), kbpick=("keys",0.12,1.0)), frame=("brackets",12,"#e3b94c"), case=None),
+ "crossbell": dict(font="Cinzel", bg="#1c2128", item="#323a46", sel="#d8ad4a", border="#8c9aae", grad="#13171c", itemb="#4a5666", glow=None, corners=0.06, motion="stagger",
+    snd=dict(step=("click",0.06,1.0), pick=("page",0.09,1.0), open=("page",0.07,1.0), close=("click",0.06,0.8), kbpick=("keys",0.12,1.0)), frame=("chamfer",10,"#8c9aae"), case=None),
+ "coldsteel": dict(font="Rajdhani", bg="#1b1e24", item="#32363f", sel="#cf3a35", border="#8d93a1", grad="#121418", itemb="#4d525e", glow=None, corners=0.03, motion="swift",
+    snd=dict(step=("click",0.06,0.9), pick=("radio",0.09,1.0), open=("radio",0.07,1.0), close=("click",0.06,0.8), kbpick=("keys",0.13,1.0)), frame=("brackets",12,"#cf3a35"), case="upper"),
+ "ys": dict(font="Cinzel", bg="#2a1512", item="#4a241d", sel="#ebb94a", border="#c9402f", grad="#1a0c0a", itemb="#7a3a2c", glow=None, corners=0.08, motion="stagger",
+    snd=dict(step=("shing",0.06,0.9), pick=("bell",0.08,1.0), open=("page",0.07,1.0), close=("wood",0.06,0.8), kbpick=("keys",0.12,1.0)), frame=("brackets",12,"#c9402f"), case=None),
+ "guild": dict(font="Bangers", bg="#3a1219", item="#5c1f2a", sel="#f5b03c", border="#e0603c", grad="#26090f", itemb="#8a3340", glow=None, corners=0.15, motion="playful",
+    snd=dict(step=("wood",0.07,1.0), pick=("select",0.09,1.0), open=("page",0.07,1.0), close=("wood",0.06,0.8), kbpick=("keys",0.12,1.0)), frame=None, case=None),
+ "moonlit": dict(font="Cinzel", bg="#10142e", item="#232a54", sel="#d2463f", border="#8a96dc", grad="#090b1e", itemb="#3b4584", glow="#aab4ff", corners=0.04, motion="grim",
+    snd=dict(step=("thud",0.06,0.9), pick=("bell",0.09,1.0), open=("heartbeat",0.06,1.0), close=("thud",0.05,0.7), kbpick=("keys",0.12,0.9)), frame=None, case=None),
+ "reflection": dict(font="Comfortaa", bg="#1b2745", item="#2d3f6e", sel="#f4a9d2", border="#9fd4f2", grad="#121b33", itemb="#4a62a0", glow="#cfe8ff", corners=0.2, motion="dreamy",
+    snd=dict(step=("glass",0.06,1.1), pick=("chime",0.08,1.0), open=("chime",0.06,1.0), close=("pop",0.05,0.8), kbpick=("keys",0.14,1.0)), frame=None, case=None),
  "mystic": dict(font="Cinzel", bg="#1d1530", item="#33274f", sel="#b58cf0", border="#8661c9", grad="#130d22", itemb="#4e3b7a", glow="#c9a9ff", corners=0.12, motion="dreamy",
     snd=dict(step=("glass",0.06,1.1), pick=("bell",0.08,1.0), open=("chime",0.06,1.0), close=("chime",0.05,0.8), kbpick=("keys",0.12,1.0)), frame=None, case=None),
  "nature": dict(font="Kreon", bg="#1c2b1c", item="#2f4a2a", sel="#d4b84a", border="#7fb069", grad="#122012", itemb="#41643a", glow=None, corners=0.2, motion="subtle",
@@ -38,6 +54,12 @@ THEMES = {
     snd=dict(step=("thud",0.06,0.9), pick=("knock",0.09,1.0), open=("heartbeat",0.06,1.0), close=("thud",0.05,0.7), kbpick=("keys",0.12,0.9)), frame=None, case=None),
  "paper": dict(font="Inter", bg="#2a2a33", item="#3d3d4a", sel="#f0c05a", border="#9a9ab0", grad="#1e1e26", itemb="#555566", glow=None, corners=0.15, motion="subtle",
     snd=dict(step=("click",0.05,1.1), pick=("select",0.08,1.0), open=("pop",0.06,1.0), close=("pop",0.05,0.8), kbpick=("keys",0.12,1.0)), frame=None, case=None),
+ "typewriter": dict(font="Special Elite", bg="#e8dfc6", item="#d6cbab", sel="#1d1b18", border="#3a342a", grad="#f3ecd8", itemb="#b9ad8c", glow=None, corners=0.05, motion="retro",
+    snd=dict(step=("typewriter",0.09,1.3), pick=("typewriter",0.24,0.95), open=("carriage",0.1,1.0), close=("bell",0.05,1.5), kbpick=("typewriter",0.3,0.9)), frame=("brackets",12,"#3a342a"), case=None),
+ "fighter": dict(font="Bangers", bg="#1a1230", item="#2c2050", sel="#ffd21f", border="#e03a2e", grad="#0f0a20", itemb="#4a3a86", glow=None, corners=0.06, motion="brutal",
+    snd=dict(step=("click",0.06,1.1), pick=("select",0.09,1.0), open=("pop",0.07,1.0), close=("pop",0.06,0.8), kbpick=("keys",0.12,1.0)), frame=None, case="upper"),
+ "samurai": dict(font="Cinzel", bg="#1b1511", item="#32261d", sel="#c8372d", border="#d9b36a", grad="#110d0a", itemb="#55402e", glow=None, corners=0.04, motion="grim",
+    snd=dict(step=("wood",0.06,1.0), pick=("shing",0.08,0.9), open=("page",0.07,1.0), close=("wood",0.05,0.8), kbpick=("keys",0.12,1.0)), frame=("brackets",12,"#d9b36a"), case=None),
  "casino": dict(font="Bangers", bg="#13321f", item="#1f4e31", sel="#e8c547", border="#c9a227", grad="#0c2315", itemb="#2f6b45", glow=None, corners=0.15, motion="playful",
     snd=dict(step=("card",0.07,1.0), pick=("coin",0.09,1.0), open=("card",0.07,1.1), close=("card",0.06,0.8), kbpick=("keys",0.12,1.0)), frame=None, case=None),
 }
@@ -74,6 +96,29 @@ def left_stick(mode):
     o = "[profiles.left_stick]\ndeadzone = 0.15\ncurve = 1.0\nkey_threshold = 0.35\n\n[profiles.left_stick.action.ring]\nsectors = 8\nstart_angle = 0.0\ninner_radius = 0.35\nhysteresis = 0.1\n\n"
     for s in sec: o += "[[profiles.left_stick.action.ring.actions]]\n%s\n\n" % s
     return o
+
+PT_BUTTONS = ["South","East","North","West","LeftBumper","RightBumper","LeftStick","RightStick","Select","Start","DpadUp","DpadDown","DpadLeft","DpadRight"]
+GYRO_PT_COMBOS = 'combos = [\n    {buttons = ["Select", "Start"], action = "gyro_clutch"},\n    {buttons = ["Select", "RightStick"], action = "gyro_recenter"},\n]'
+GYRO_PT_NOTE = ("Gyro aim, an extra profile for a shooter (the game's own scheme stays the default): tilting the controller turns the view through a virtual right stick, "
+    "assumed to match a linear stick response with a 0.2 dead zone; change Game's curve and Anti-deadzone under Gyro if the view turns too far or too little. "
+    "Hold {select} and {start} together to pause the gyro while you reposition the controller; {select} + {r3} recenters it.")
+def profile_pt(g, gyro=False):
+    """Passthrough: every control goes to the game as it is; only the Guide overlay sits on top. With gyro, a virtual right stick turns the view."""
+    name = g["name"] + (" + Gyro" if gyro else "")
+    combos = GYRO_PT_COMBOS if gyro else "combos = []"
+    o = [f'[[profiles]]\nname = "{name}"\n{combos}\ncombo_window_ms = 120\ntap_window_ms = 250\nlong_press_ms = 500\n' + ('requires = ["gyro"]\n' if gyro else '') + '\n[profiles.buttons]']
+    o += [f'{b} = {{gamepad = "{b}"}}' for b in PT_BUTTONS]
+    o.append('Guide = {mode = "Guide"}\n')
+    for side in ("left", "right"):
+        o.append(f'[profiles.{side}_stick]\ndeadzone = 0.05\ncurve = 1.0\nkey_threshold = 0.3\n\n[profiles.{side}_stick.action]\ngamepad = {{stick = "{side.capitalize()}", invert_y = false}}\n')
+    o.append('[profiles.left_trigger]\naction = {gamepad = "Left"}\n\n[profiles.right_trigger]\naction = {gamepad = "Right"}\n')
+    if gyro:
+        o.append('[profiles.gyro]\nhorizontal = "yaw"\ninvert_x = false\ninvert_y = false\nnoise_threshold = 1.0\n\n[profiles.gyro.mode.stick]\nstick = "Right"\nfull_rate = 360.0\nanti_deadzone = 0.2\ngame_curve = 1.0\n')
+    else:
+        o.append('[profiles.gyro]\nenabled = false\nhorizontal = "yaw"\ninvert_x = false\ninvert_y = false\nnoise_threshold = 1.0\n')
+    notes = g['notes'] + ("\n" + GYRO_PT_NOTE if gyro else "")
+    o.append(f"[profiles.guide]\nnotes = '''{notes}'''\n")
+    return "\n".join(o) + "\n"
 
 def profile(g, gyro):
     name = g["name"] + (" + Gyro" if gyro else "")
@@ -134,10 +179,16 @@ def build(g):
     pid = str(uuid.uuid5(uuid.NAMESPACE_URL, "padwight-pack/" + slug))
     o = [f'format = 20\nmacros = []\noverlay_font = "{th["font"]}"\n']
     o.append(f'[pack]\nid = "{pid}"\nname = "{g["name"]}"\nversion = "1.0"\nauthor = "Padwight"\ndescription = "{g["desc"]}"\nmade_with = "Xbox controller"\n')
+    if g.get("ctl"):  # native pad kinds the game supports: ("dualshock", "dualsense", "switch_pro")
+        o.append("[controllers]\n" + "".join(f"{k} = true\n" for k in g["ctl"]))
     for i in g["ids"]: o.append(f'[[rules]]\nkind = "steam_app_id"\nvalue = "{i}"\nprofile = "{g["name"]}"\n')
     for e in g["exes"]: o.append(f'[[rules]]\nkind = "executable"\nvalue = "{e}"\nprofile = "{g["name"]}"\n')
-    o.append(profile(g, False))
-    if g.get("gyro"): o.append(profile(g, True))
+    if g.get("pt"):
+        o.append(profile_pt(g))
+        if g.get("gyro_pt"): o.append(profile_pt(g, True))
+    else:
+        o.append(profile(g, False))
+        if g.get("gyro"): o.append(profile(g, True))
     if g.get("cyc"):
         steps = "\n".join(f"    {act(s)}," for s in g["cyc"][2])
         o.append(f'[[cycles]]\nname = "{g["cyc"][1]}"\nsteps = [\n{steps}\n]\n')

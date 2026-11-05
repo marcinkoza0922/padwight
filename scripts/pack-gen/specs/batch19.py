@@ -1,0 +1,175 @@
+from helpers import *
+# Games Ubisoft developed or published (the wiki's publisher or developer field, and Steam's publisher field), not covered by an earlier pack.
+# P = passthrough, for games the wiki or Steam say have controller support and that came out after XInput (Dec 2005).
+# PS = passthrough plus a gyro profile, for shooters (see GYRO_PT_NOTE in engine.py).
+# F = mouse-and-keyboard shooter with a gyro profile; T = strategy with a pointer; C / CW = pointer (and WASD) pack; W = walk-and-look.
+# ctl= ticks the pad kinds the game supports itself: dualshock when the wiki says PlayStation controllers are supported, dualsense when Steam
+# also lists DualSense, switch_pro when the wiki says Nintendo controllers are supported. A Steam badge alone does not count.
+# Left out: VR games (Age-Old Cities VR, AGOS, Eagle Flight, Space Junkies, Star Trek: Bridge Crew, Transference, Werewolves Within, Notre-Dame
+# de Paris: Journey Back in Time), shut-down online games (Anno Online, The Settlers Online, Might & Magic Heroes Online, Duel of Champions),
+# games whose Steam page is gone or only an advertising stub (Anno 1701 original, Blazing Angels 1 and 2, the CSI games, Call of Juarez: The
+# Cartel, Driver: San Francisco, Duke Nukem: Manhattan Project, Ghost Recon Advanced Warfighter 1 and 2, H.A.W.X. 1 and 2, Lost: Via Domus, Lumines,
+# Mad Riders, Rainbow Six 1 and Rogue Spear, Shaun White Snowboarding, Tintin, TMNT, The Settlers: Heritage of Kings and Rise of an Empire
+# originals, The Settlers 7 original, Toy Soldiers: War Chest, Wheelman, Onimusha 3, ...), cancelled games (Might & Magic Showdown), and games
+# where Steam credits another publisher and the wiki names Ubisoft only for a regional or retail release (Call of Juarez: Bound in Blood and
+# Gunslinger, Grow Home and Grow Up, Trine 2, Myst, Myst IV and V, Riven, Uru, XIII, R.U.S.E., IL-2 Sturmovik, King Arthur, World in Conflict,
+# Heroes of Might and Magic: Olden Era, The Bard's Tale, Worms Blast, ...), plus Cave to Kingdom and 1428: Shadows over Silesia (wiki matches on
+# "Ubisoft" inside another company's name).
+# Steam ids are each game's base app; demos, DLC and editions are not rules.
+S = []
+PART = "The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."
+XI = "The wiki lists controller support but is not sure the game reads XInput: if the pad does nothing in the game, set the controller type in its options or run it through Steam Input."
+SOON = "Not out yet: Steam gives a date still ahead and no controller details, so this pack assumes the controller support of the earlier games and is ready before the game is."
+SOON_NOPAD = "Not out yet: Steam gives a date still ahead and no controller details, so this pack plays it with the pointer and is ready before the game is."
+RES = "The wiki lists limited controller support. Steam's only executable is TheDivision.exe, the same name as the first Division's, so this pack matches by Steam id alone."
+GUESS = "Typical defaults for the genre, not checked against the game."
+def T(name, ids, exes, theme, mood, n="", **kw):
+    return G(name, ids, exes, "strat", theme, f"The left stick pans, the right stick points; RT and A click, LT right-clicks. Overlays in {mood}.", n=(n + " " if n else "") + GUESS, **kw)
+def C(name, ids, exes, theme, mood, n="", **kw):
+    return G(name, ids, exes, "click", theme, f"The right stick points; A and RT click, LT right-clicks. Overlays in {mood}.", n=n or "A mouse-driven game; no keys are mapped beyond the mouse.", **kw)
+def CW(name, ids, exes, theme, mood, n="", **kw):
+    return G(name, ids, exes, "click", theme, f"The left stick walks on WASD and the right stick points or looks; RT and A click, LT right-clicks. Overlays in {mood}.", left="wasd", n=(n + " " if n else "") + GUESS, **kw)
+def W(name, ids, exes, theme, mood, n="", **kw):
+    """Walk with the left stick, point or look with the right (third person, stealth)."""
+    b = {"North": ("k:SPACE", "Jump", "arrow"), "West": ("k:E", "Use", "hand"), "LeftBumper": ("k:TAB", "Map / list", "map"), "RightBumper": ("k:I", "Inventory", "bag"), **kw.pop("b", {})}
+    return G(name, ids, exes, "click", theme, f"The left stick walks on WASD and the right stick points or looks; RT and A click, LT right-clicks. Overlays in {mood}.", left="wasd", b=b, n=(n + " " if n else "") + "Space, E, Tab and I are common defaults. " + GUESS, **kw)
+S += [
+P("Assassin's Creed", ["15100"], ["assassinscreed_game.exe", "assassinscreed_dx10.exe"], "parchment", "Third Crusade sand and gold.", n=PART),
+P("Assassin's Creed: Brotherhood", ["48190"], ["acbsp.exe", "acbmp.exe"], "parchment", "Rome crimson and gold.", n=PART),
+P("Assassin's Creed: Revelations", ["201870"], ["acrmp.exe", "acrsp.exe"], "parchment", "Constantinople red and gold."),
+P("Assassin's Creed III", ["208480"], ["ac3mp.exe", "ac3sp.exe"], "military", "Revolution blue and white.", n=PART),
+P("Assassin's Creed III Remastered", ["911400"], ["aciii.exe", "acliberation.exe"], "military", "Revolution blue and white.", n=PART),
+P("Assassin's Creed: Liberation HD", ["260210"], ["ac3lhd_32.exe"], "nature", "bayou green and ivory."),
+P("Assassin's Creed IV: Black Flag", ["242050"], ["ac4bfmp.exe", "ac4bfsp.exe"], "azure", "Caribbean teal and gold."),
+P("Assassin's Creed: Freedom Cry", ["277590"], ["acfc.exe"], "nature", "Haiti jungle green and gold."),
+P("Assassin's Creed: Black Flag Resynced", ["3751950"], ["acblackflag.exe"], "azure", "Caribbean teal and gold.", n=PART, ctl=["dualshock", "dualsense"]),
+P("Assassin's Creed Rogue", ["311560"], ["acc.exe"], "coldsteel", "North Atlantic ice and steel.", n=PART),
+P("Assassin's Creed Unity", ["289650"], ["acu.exe"], "parchment", "Paris revolution blue and gold.", n=PART, ctl=["dualshock"]),
+P("Assassin's Creed Syndicate", ["368500"], ["acs.exe"], "industrial", "Victorian London soot and brass.", n=PART),
+P("Assassin's Creed Origins", ["582160"], ["acorigins.exe"], "parchment", "Egyptian sand and gold.", n=PART),
+P("Discovery Tour: Ancient Egypt", ["775430"], [], "parchment", "Egyptian sand and gold.", n=PART + " " + XI),
+P("Assassin's Creed Odyssey", ["812140"], ["acodyssey.exe"], "azure", "Aegean blue and bronze.", n=PART),
+P("Assassin's Creed Valhalla", ["2208920"], ["acvalhalla.exe"], "moonlit", "Norse winter blue and silver.", n=PART, ctl=["dualshock", "dualsense"]),
+P("Assassin's Creed Mirage", ["3035570"], ["acmirage.exe"], "parchment", "Baghdad sand and teal.", n=PART, ctl=["dualshock", "dualsense"]),
+P("Assassin's Creed Shadows", ["3159330"], ["acshadows.exe"], "samurai", "Sengoku ink and crimson.", n=PART, ctl=["dualshock", "dualsense"]),
+P("Assassin's Creed Chronicles: China", ["354380"], [], "samurai", "ink-wash red and black.", n=PART),
+P("Assassin's Creed Chronicles: India", ["359610"], [], "parchment", "Mughal saffron and gold.", n=PART + " " + XI),
+P("Assassin's Creed Chronicles: Russia", ["359600"], [], "coldsteel", "Soviet red and grey.", n=PART + " " + XI),
+P("Anno 117: Pax Romana", ["3274580"], ["anno117.exe"], "parchment", "Roman marble and gold."),
+T("Anno 1404", ["33210"], ["anno4.exe"], "parchment", "Orient and Occident gold and teal", b={"North": ("k:SPACE", "Pause", "pause")}, n="Space pausing is a guess."),
+T("Anno 1404: History Edition", ["1281630"], ["anno1404.exe", "anno1404addon.exe"], "parchment", "Orient and Occident gold and teal", b={"North": ("k:SPACE", "Pause", "pause")}, n="Space pausing is a guess."),
+T("Anno 1503: History Edition", ["2820110"], ["anno1503.exe"], "parchment", "Colonial gold and green", b={"North": ("k:SPACE", "Pause", "pause")}, n="Space pausing is a guess."),
+T("Anno 1602: History Edition", ["2820130"], ["anno1602.exe"], "parchment", "Colonial gold and green", b={"North": ("k:SPACE", "Pause", "pause")}, n="Space pausing is a guess."),
+T("Anno 1701: History Edition", ["2820140"], ["anno1701.exe"], "parchment", "Colonial gold and green", b={"North": ("k:SPACE", "Pause", "pause")}, n="Space pausing is a guess."),
+T("Anno 2205", ["375910"], ["anno2205.exe"], "scifi", "lunar silver and blue", b={"North": ("k:SPACE", "Pause", "pause")}, n="Space pausing is a guess."),
+T("The Settlers: Heritage of Kings - History Edition", ["965300"], ["settlershok.exe"], "nature", "meadow green and brown", b={"North": ("k:SPACE", "Pause", "pause")}, n="Space pausing is a guess."),
+T("The Settlers: Rise of an Empire - History Edition", ["965310"], ["settlers6r.exe"], "nature", "meadow green and brown", b={"North": ("k:SPACE", "Pause", "pause")}, n="Space pausing is a guess."),
+T("The Settlers 7: History Edition", ["965320"], ["settlers7r.exe"], "nature", "meadow green and brown", b={"North": ("k:SPACE", "Pause", "pause")}, n="Space pausing is a guess."),
+P("The Settlers: New Allies", ["2750080"], ["the_settlers.exe"], "nature", "meadow green and brown.", n=PART),
+T("Might & Magic Heroes VI: Shades of Darkness", ["229790"], [], "parchment", "heraldic blue and gold", b={"North": ("k:SPACE", "End turn", "hourglass")}, n="End turn on Space is a guess."),
+T("Might & Magic Heroes VII: Trial by Fire", ["445310"], [], "parchment", "heraldic blue and gold", b={"North": ("k:SPACE", "End turn", "hourglass")}, n="Steam lists partial controller support while the wiki lists none. " + "End turn on Space is a guess."),
+T("Heroes of Might and Magic III Remake", ["3809850"], [], "parchment", "heraldic blue and gold", b={"North": ("k:SPACE", "End turn", "hourglass")}, n=SOON_NOPAD + " " + "End turn on Space is a guess."),
+P("Might & Magic: Clash of Heroes", ["61700"], ["clashofheroes.exe"], "mystic", "puzzle-quest violet and gold.", n=PART),
+CW("Might & Magic X - Legacy", ["238750"], ["might and magic x legacy.exe"], "parchment", "Ashan stone and gold", b={"LeftBumper": ("k:Q", "Turn left", "rotate-left"), "RightBumper": ("k:E", "Turn right", "rotate"), "West": ("k:SPACE", "Interact", "hand")}, n="Q and E turning and Space interacting are guesses at the usual keys."),
+C("Might & Magic: Fates TCG", ["3918850"], ["fates.exe"], "mystic", "card-battle violet and gold"),
+PS("Far Cry 2", ["19900"], ["farcry2.exe"], "industrial", "savanna dust and rust."),
+PS("Far Cry 3 Blood Dragon", ["233270"], ["fc3_blooddragon_d3d11.exe"], "scifi", "neon magenta and cyan.", n=PART + " " + XI),
+PS("Far Cry 4", ["298110"], ["farcry4.exe"], "mystic", "Kyrat pink and gold.", n=PART),
+PS("Far Cry Primal", ["371660"], ["fcprimal.exe"], "nature", "Stone Age ochre and green.", n=PART),
+PS("Far Cry New Dawn", ["939960"], ["farcrynewdawn.exe"], "scifi", "superbloom pink and teal.", n=PART),
+PS("Far Cry 6", ["2369390"], ["farcry6.exe"], "nature", "Yara green and red.", n=PART, ctl=["dualshock", "dualsense"]),
+P("Myst III: Exile", ["925930"], [], "mystic", "Atlantic tower blue and gold.", n=PART + " " + XI),
+F("Tom Clancy's Ghost Recon", ["15300"], ["ghostrecon.exe"], "military", "Georgia olive and amber"),
+PS("Tom Clancy's Ghost Recon: Future Soldier", ["212630"], ["future soldier.exe", "future soldier dx11.exe"], "military", "Ghost grey and orange."),
+PS("Tom Clancy's Ghost Recon Wildlands", ["460930"], ["grw.exe"], "military", "Bolivia dust and green.", n=PART + " " + XI),
+PS("Tom Clancy's Ghost Recon Breakpoint", ["2231380"], ["grb.exe", "grb_vulkan.exe"], "military", "Auroa pine and grey.", n=PART),
+F("The Sum of All Fears", ["19810"], ["soaf.exe"], "military", "situation-room grey and amber"),
+F("Tom Clancy's Rainbow Six: Lockdown", ["15000"], ["lockdown.exe"], "military", "team black and steel"),
+PS("Tom Clancy's Rainbow Six: Vegas", ["13540"], ["r6vegas_game.exe"], "casino", "Vegas gold and red.", n=PART),
+PS("Tom Clancy's Rainbow Six: Vegas 2", ["15120"], ["r6vegas2_game.exe"], "casino", "Vegas gold and red.", n=PART),
+PS("Tom Clancy's Rainbow Six Extraction", ["2379390"], ["r6-extraction.exe"], "scifi", "quarantine green and orange.", n=PART, ctl=["dualshock", "dualsense"]),
+PS("Tom Clancy's Rainbow Six Siege", ["359550"], ["rainbowsix.exe", "rainbowsix_vulkan.exe"], "coldsteel", "operator black and steel.", ctl=["dualshock", "dualsense"]),
+T("Tom Clancy's Rainbow 6 Tactics", ["3621390"], [], "military", "team black and steel", b={"North": ("k:SPACE", "Pause", "pause")}, n=SOON_NOPAD + " " + "Space pausing is a guess."),
+T("Tom Clancy's EndWar", ["21800"], ["endwar.exe"], "military", "war-room blue and orange", b={"North": ("k:SPACE", "Pause", "pause")}, n="Space pausing is a guess."),
+PS("Tom Clancy's The Division", ["365590"], ["the division.exe", "thedivision.exe"], "industrial", "New York winter grey and orange."),
+PS("Tom Clancy's The Division 2", ["2221490"], ["thedivision2.exe"], "industrial", "Washington grey and orange.", n=PART + " " + XI),
+P("Tom Clancy's The Division Resurgence", ["3749720"], [], "industrial", "New York winter grey and orange.", n=RES),
+W("Tom Clancy's Splinter Cell: Chaos Theory", ["13570"], ["splintercell3.exe"], "noir", "night-vision green", n="Crouch on C is a guess. The game predates XInput, so its own pad support is not used.", b={"West": ("k:C", "Crouch", "footprints")}),
+W("Tom Clancy's Splinter Cell: Pandora Tomorrow", ["3929740"], ["splintercell2.exe"], "noir", "night-vision green", n="Crouch on C is a guess. The game predates XInput, so its own pad support is not used.", b={"West": ("k:C", "Crouch", "footprints")}),
+P("Tom Clancy's Splinter Cell: Double Agent", ["13580"], ["scdalauncher.exe"], "noir", "night-vision green."),
+P("Tom Clancy's Splinter Cell: Conviction", ["33229"], [], "noir", "night-vision green."),
+P("Tom Clancy's Splinter Cell: Blacklist", ["235600"], ["blacklist_dx11_game.exe", "blacklist_launcher.exe"], "noir", "night-vision green."),
+P("Watch Dogs", ["243470"], ["watch_dogs.exe"], "scifi", "Chicago ctOS blue and white.", n=PART),
+P("Watch Dogs 2", ["447040"], ["watchdogs2.exe"], "scifi", "Bay Area pink and cyan.", n=PART, ctl=["dualshock"]),
+P("Watch Dogs: Legion", ["2239550"], ["watchdogslegion.exe"], "scifi", "London red and cyan.", n=PART),
+PS("Avatar: Frontiers of Pandora", ["2840770"], ["afop.exe"], "nature", "Pandora bioluminescent teal.", n=PART, ctl=["dualshock", "dualsense"]),
+PS("Star Wars Outlaws", ["2842040"], ["outlaws.exe"], "scifi", "Outer Rim orange and grey.", ctl=["dualshock", "dualsense"]),
+P("Skull and Bones", ["2853730"], ["skullandbones.exe"], "azure", "Indian Ocean teal and gold.", ctl=["dualshock", "dualsense"]),
+P("Immortals Fenyx Rising", ["2221920"], ["immortalsfenyxrising.exe"], "azure", "Olympian blue and gold."),
+P("Starlink: Battle for Atlas", ["950050"], ["starlink.exe"], "scifi", "Atlas blue and orange.", n=PART),
+P("Steep", ["460920"], ["steep.exe"], "coldsteel", "alpine white and blue.", n=PART),
+P("Riders Republic", ["2290180"], ["ridersrepublic.exe"], "nature", "canyon orange and sky.", n=PART, ctl=["dualshock", "dualsense"]),
+P("The Crew", ["241560"], ["thecrew.exe"], "industrial", "road asphalt and orange.", n=PART),
+P("The Crew 2", ["646910"], ["thecrew2.exe"], "industrial", "road asphalt and orange.", n=PART),
+P("The Crew Motorfest", ["2698940"], ["thecrewmotorfest.exe"], "casino", "Hawaii sunset orange and teal.", ctl=["dualshock", "dualsense"]),
+P("Driver: Parallel Lines", ["21780"], ["driverparallellines.exe"], "industrial", "New York asphalt and orange.", n=PART),
+P("Prince of Persia: The Forgotten Sands", ["33320"], ["prince of persia.exe"], "parchment", "Persian sand and gold."),
+P("Prince of Persia (2008)", ["19980"], ["princeofpersia_launcher.exe"], "calm", "Ahura light gold and teal.", n=PART),
+P("Prince of Persia: The Lost Crown", ["2751000"], ["thelostcrown.exe"], "parchment", "Mount Qaf gold and teal.", ctl=["dualshock", "dualsense"]),
+P("The Rogue Prince of Persia", ["2717880"], ["the rogue prince of persia.exe"], "parchment", "Persian sand and gold.", ctl=["dualshock", "dualsense"]),
+P("I Am Alive", ["214250"], ["iamalive_game.exe"], "noir", "ash grey and amber.", n=PART, ctl=["dualshock", "switch_pro"]),
+F("Cold Fear", ["15270"], ["coldfear_retail.exe"], "horror", "storm grey and rust", nat=True),
+F("Brothers in Arms: Earned in Blood", ["19800"], ["eib.exe"], "military", "Normandy olive"),
+PS("Brothers in Arms: Hell's Highway", ["15390"], ["biahh.exe"], "military", "Market Garden olive and amber."),
+PS("Zombi (2015)", ["339230"], ["zombi.exe"], "horror", "London dusk and blood-red.", n=PART + " " + XI),
+PS("Bloody Good Time", ["2450"], ["bgt.exe"], "horror", "pulp red and black.", n=PART + " " + XI),
+PS("Atomega", ["619880"], ["atomega.exe"], "scifi", "arena cyan and magenta.", n=XI),
+P("BattleCore Arena", ["2613870"], ["battlecorearena.exe", "battlecorearenaclient-win64-shipping.exe"], "scifi", "arena violet and cyan.", n=PART + " " + XI),
+F("BUMP! Superbrawl", ["2887910"], ["bump! superbrawl.exe"], "fighter", "arena orange and blue"),
+PS("ShootMania: Storm", ["229870"], [], "scifi", "arena blue and orange.", n=PART + " " + XI),
+P("Rayman Legends", ["242550"], ["rayman legends.exe"], "calm", "Glade green and gold."),
+P("Rayman Origins", ["207490"], ["rayman origins.exe"], "calm", "Glade green and gold.", n=PART),
+P("Rayman: 30th Anniversary Edition", ["4094670"], ["rayman30th.exe"], "calm", "Glade green and gold.", ctl=["dualshock", "dualsense"]),
+P("Rayman Legends Retold", ["4084710"], [], "calm", "Glade green and gold.", n=SOON),
+P("Rayman Raving Rabbids", ["15080"], [], "fighter", "rabbid white and purple.", n=PART),
+P("Child of Light", ["256290"], ["childoflight.exe"], "mystic", "storybook blue and gold.", n=PART),
+P("Valiant Hearts: The Great War", ["260230"], ["valiant hearts.exe"], "paper", "trench sepia and red."),
+P("Valiant Hearts: Coming Home", ["2741360"], ["valiant hearts coming home.exe"], "paper", "trench sepia and red.", n=PART + " " + XI),
+P("Beyond Good & Evil: 20th Anniversary Edition", ["2556990"], [], "scifi", "Hillys teal and orange.", ctl=["dualshock", "dualsense"]),
+P("From Dust", ["33460"], ["from_dust.exe"], "nature", "tribal ochre and green."),
+P("Flashback (2013)", ["245730"], ["flashback.exe"], "scifi", "Conrad blue and orange."),
+P("Cloudberry Kingdom", ["210870"], ["cloudberrykingdom.exe"], "paper", "cloud blue and white."),
+P("Scott Pilgrim vs. The World: The Game", ["2215260"], ["scott.exe"], "pixel", "pixel pink and blue."),
+P("South Park: The Stick of Truth", ["213670"], ["south park - the stick of truth.exe"], "paper", "paper-cutout blue and cream."),
+P("Zeit\u00b2", ["33390"], ["zeit2.exe"], "scifi", "space blue and orange.", n=PART),
+P("Roller Champions", ["2211280"], ["roller.exe"], "fighter", "arena blue and orange.", n=PART),
+P("Brawlhalla", ["291550"], ["brawlhalla.exe", "brawlhallagame.exe"], "fighter", "Valhalla blue and gold.", n=PART, ctl=["dualshock", "dualsense"]),
+P("Morbid Metal", ["1866130"], ["morbid metal.exe"], "industrial", "rust and neon cyan.", n=PART, ctl=["dualshock", "dualsense"]),
+P("Tetris Ultimate", ["316750"], ["tetrisultimate.exe"], "pixel", "block blue and magenta.", n=PART),
+P("Just Dance 2017", ["446560"], ["jd2017.exe"], "fighter", "disco pink and yellow.", n=PART),
+P("Monopoly (2024)", ["2929170"], [], "casino", "board red and green.", n=PART + " " + XI),
+P("Monopoly Madness", ["2383760"], ["monopolymadness.exe"], "casino", "board red and green."),
+P("Monopoly Plus", ["562810"], ["monopoly.exe"], "casino", "board red and green."),
+P("Monopoly: Star Wars - Heroes vs. Villains", ["3936610"], ["monopolysw.exe"], "casino", "board red and green.", ctl=["dualshock", "dualsense"]),
+P("Rocksmith", ["205190"], ["rocksmith.exe"], "industrial", "amp black and orange.", n=PART + " " + XI),
+P("Rocksmith 2014", ["221680"], ["rocksmith2014.exe"], "industrial", "amp black and orange.", n=PART + " " + XI),
+P("Rocksmith+", ["2834910"], ["rocksmith+.exe"], "industrial", "amp black and orange.", slug="rocksmith-plus", n=PART),
+P("TrackMania 2: Canyon", ["228760"], [], "scifi", "ManiaPlanet blue and orange.", n=PART),
+P("TrackMania 2: Stadium", ["232910"], [], "scifi", "ManiaPlanet blue and orange.", n=PART + " " + XI),
+P("TrackMania 2: Valley", ["243360"], [], "scifi", "ManiaPlanet blue and orange.", n=PART + " " + XI),
+P("Trackmania 2: Lagoon", ["600720"], [], "scifi", "ManiaPlanet blue and orange.", n=PART + " " + XI),
+P("TrackMania Nations Forever", ["11020"], [], "scifi", "Stadium blue and orange."),
+P("TrackMania United Forever", ["7200"], [], "scifi", "Stadium blue and orange.", n=PART),
+P("Trackmania (2020)", ["2225070"], ["trackmania.exe"], "scifi", "Stadium blue and orange.", n=PART),
+P("Trackmania Turbo", ["375900"], ["trackmaniaturbo.exe"], "scifi", "Stadium blue and orange.", n=PART),
+P("Trials Evolution: Gold Edition", ["220160"], ["trialsfmx.exe"], "industrial", "dirt-bike orange and grey.", n=PART),
+P("Trials Fusion", ["245490"], ["trials_fusion.exe"], "scifi", "dirt-bike orange and cyan.", n=PART + " " + XI),
+P("Trials Rising", ["641080"], ["trialsrising.exe"], "industrial", "dirt-bike orange and grey.", n=PART),
+P("Trials of the Blood Dragon", ["435480"], ["trialsblooddragon.exe"], "scifi", "neon magenta and cyan.", n=PART),
+C("Silent Hunter 4: Wolves of the Pacific", ["15200"], ["sh4.exe"], "military", "U-boat grey", b={"North": ("k:P", "Pause", "pause")}, n="P pausing is a guess."),
+C("Silent Hunter 5: Battle of the Atlantic", ["48110"], ["sh5.exe"], "military", "U-boat grey", b={"North": ("k:P", "Pause", "pause")}, n="P pausing is a guess."),
+C("Champions of Anteria", ["374520"], ["coa.exe"], "parchment", "Anteria stone and gold"),
+C("Champions Tactics Reforged", ["3546740"], ["championstacticsgame.exe"], "mystic", "Grimoria violet and gold"),
+CW("Growtopia", ["866020"], ["growtopia.exe"], "paper", "sandbox blue and green", b={"North": ("k:SPACE", "Jump", "arrow")}),
+C("Voodoo Dice", ["48150"], ["voodoodice.exe"], "horror", "voodoo green and purple"),
+]

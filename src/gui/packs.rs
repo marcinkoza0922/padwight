@@ -931,17 +931,27 @@ mod tests {
         assert_eq!(app.validate(), None);
     }
 
+    /// Every library game, added and shown. Each check costs time in proportion to the games
+    /// already in the config (validating, the undo snapshot, the unsaved-changes test), so a
+    /// config holding all of them would make the sweep quadratic: it goes in chunks, each with
+    /// its own app and config, and the chunks run side by side. That every pack's name is unique,
+    /// and that all of them together save and load, is the library tests' job.
     #[test]
     fn every_library_game_adds_and_saves_cleanly() {
-        let mut app = app();
-        assert!(!app.library.is_empty());
-        for i in 0..app.library.len() {
-            let _ = app.update(Message::PreviewLibrary(i));
-            let _ = app.view();
-            let _ = app.update(Message::ConfirmImport);
-            assert_eq!(app.validate(), None, "{}", app.library[i].file);
-            let _ = app.update(Message::SelectGameTab(GameTab::Info));
-            let _ = app.view();
-        }
+        use rayon::prelude::*;
+        const CHUNK: usize = 100;
+        let total = app().library.len();
+        assert!(total > 0);
+        (0..total.div_ceil(CHUNK)).into_par_iter().for_each(|chunk| {
+            let mut app = app();
+            for i in chunk * CHUNK..(chunk * CHUNK + CHUNK).min(total) {
+                let _ = app.update(Message::PreviewLibrary(i));
+                let _ = app.view();
+                let _ = app.update(Message::ConfirmImport);
+                assert_eq!(app.validate(), None, "{}", app.library[i].file);
+                let _ = app.update(Message::SelectGameTab(GameTab::Info));
+                let _ = app.view();
+            }
+        });
     }
 }

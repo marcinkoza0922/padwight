@@ -40,6 +40,8 @@ use std::{
     process::{Command, Stdio},
 };
 
+use rayon::prelude::*;
+
 use common::{Daemon, install_config, spawn_daemon_alone, spawn_daemon_env, temp_root, wait_for};
 
 const BIN: &str = env!("CARGO_BIN_EXE_padwight");
@@ -262,30 +264,33 @@ fn scenarios() {
     assert!(!files.is_empty(), "no scenarios in {}", dir.display());
     let update = std::env::var_os("UPDATE_SCENARIOS").is_some();
     let only = std::env::var("SCENARIO").ok();
-    let mut failures = Vec::new();
-    for path in files {
-        let s = parse(&path);
-        if only.as_ref().is_some_and(|o| !s.name.contains(o.as_str())) {
-            continue;
-        }
-        if s.steam.is_some() && !common::pid_namespace_available() {
-            let _ = writeln!(std::io::stderr(), "skipped {}: no pid namespace (unprivileged user namespaces are refused here)", s.name);
-            continue;
-        }
-        match run(&s) {
-            Ok(transcript) if update => {
-                let head = fs::read_to_string(&s.path).unwrap();
-                let head = head.split_once("\n---\n").map_or(head.trim_end_matches("---\n").trim_end().to_string(), |(h, _)| h.to_string());
-                fs::write(&s.path, format!("{head}\n---\n{}", align(&transcript))).unwrap();
+    // Each scenario has its own daemon, directories and socket, so they run side by side.
+    let failures: Vec<String> = files
+        .par_iter()
+        .filter_map(|path| {
+            let s = parse(path);
+            if only.as_ref().is_some_and(|o| !s.name.contains(o.as_str())) {
+                return None;
             }
-            Ok(transcript) => {
-                if normal(&transcript) != normal(&s.expected) {
-                    failures.push(format!("{}: the transcript changed (UPDATE_SCENARIOS=1 rewrites it)\n--- expected\n{}\n--- got\n{}", s.name, s.expected.trim(), align(&transcript).trim()));
+            if s.steam.is_some() && !common::pid_namespace_available() {
+                let _ = writeln!(std::io::stderr(), "skipped {}: no pid namespace (unprivileged user namespaces are refused here)", s.name);
+                return None;
+            }
+            match run(&s) {
+                Ok(transcript) if update => {
+                    let head = fs::read_to_string(&s.path).unwrap();
+                    let head = head.split_once("\n---\n").map_or(head.trim_end_matches("---\n").trim_end().to_string(), |(h, _)| h.to_string());
+                    fs::write(&s.path, format!("{head}\n---\n{}", align(&transcript))).unwrap();
+                    None
                 }
+                Ok(transcript) if normal(&transcript) != normal(&s.expected) => {
+                    Some(format!("{}: the transcript changed (UPDATE_SCENARIOS=1 rewrites it)\n--- expected\n{}\n--- got\n{}", s.name, s.expected.trim(), align(&transcript).trim()))
+                }
+                Ok(_) => None,
+                Err(e) => Some(format!("{}: {e}", s.name)),
             }
-            Err(e) => failures.push(format!("{}: {e}", s.name)),
-        }
-    }
+        })
+        .collect();
     assert!(failures.is_empty(), "\n{}", failures.join("\n\n"));
 }
 

@@ -6,7 +6,10 @@ use std::{
     fs,
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
-    sync::{Mutex, MutexGuard},
+    sync::{
+        Mutex, MutexGuard,
+        atomic::{AtomicUsize, Ordering},
+    },
     thread,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
@@ -146,8 +149,10 @@ impl Drop for Daemon {
 
 /// A fresh directory for one test's files; everything the daemon touches lives under it.
 pub fn temp_root() -> PathBuf {
+    // The counter keeps tests that start in the same nanosecond (scenarios run side by side) apart.
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
     let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
-    let dir = std::env::temp_dir().join(format!("padwight-test-{}-{nanos}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("padwight-test-{}-{nanos}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
     fs::create_dir_all(&dir).unwrap();
     dir
 }
