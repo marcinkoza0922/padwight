@@ -1,5 +1,5 @@
-//! The built-in game library: packs embedded from `packs/` at build time, each with its
-//! listing read there (see `build.rs`).
+//! The built-in game library: packs compressed from `packs/` at build time (see `build.rs` and
+//! `archive.rs`), each with its listing read there.
 
 use std::sync::LazyLock;
 
@@ -9,7 +9,10 @@ use crate::{
 };
 
 mod files {
+    use crate::archive::{Archive, Item};
     include!(concat!(env!("OUT_DIR"), "/library.rs"));
+    /// The packs, compressed with a dictionary they share.
+    pub static ARCHIVE: Archive = Archive::new(BLOB, DICT, ITEMS);
 }
 
 /// Damaged copies of `text` for robustness tests: cut at every fourth line, and with a character
@@ -40,7 +43,7 @@ pub struct Entry {
 /// A pack's listing as `build.rs` reads it, in the binary: what a list of packs shows and what
 /// finding one for a window takes.
 struct Indexed {
-    /// Its place in `files::FILES`.
+    /// Its place in `files::ITEMS`.
     at: usize,
     id: &'static str,
     name: &'static str,
@@ -89,8 +92,8 @@ impl Listing {
 
     /// The whole pack, parsed from the build.
     pub fn entry(&self) -> Option<Entry> {
-        let (file, text) = files::FILES.iter().find(|(file, _)| *file == self.file)?;
-        pack::parse(text).ok().map(|pack| Entry { file, pack })
+        let at = files::ARCHIVE.find(self.file)?;
+        pack::parse(&files::ARCHIVE.text(at)).ok().map(|pack| Entry { file: files::ITEMS[at].name, pack })
     }
 }
 
@@ -102,7 +105,7 @@ pub fn listings() -> &'static [Listing] {
         files::INDEX
             .iter()
             .map(|p| Listing {
-                file: files::FILES[p.at].0,
+                file: files::ITEMS[p.at].name,
                 id: p.id.into(),
                 name: p.name.into(),
                 version: p.version.into(),
@@ -175,10 +178,17 @@ mod tests {
     use super::*;
     use crate::config::{Button, ButtonAction, Game, Profile, Rule, RuleKind};
 
+    /// Every library pack's file name and text, unpacked once and in parallel for all the tests below.
+    fn texts() -> &'static [(&'static str, String)] {
+        static TEXTS: LazyLock<Vec<(&'static str, String)>> =
+            LazyLock::new(|| (0..files::ITEMS.len()).into_par_iter().map(|i| (files::ITEMS[i].name, files::ARCHIVE.text(i))).collect());
+        &TEXTS
+    }
+
     /// Every library pack, parsed once and in parallel for all the tests below.
     fn parsed() -> &'static [(&'static str, Pack)] {
         static PARSED: LazyLock<Vec<(&'static str, Pack)>> = LazyLock::new(|| {
-            files::FILES.par_iter().map(|(file, text)| (*file, pack::parse(text).unwrap_or_else(|e| panic!("{file}: {e:#}")))).collect()
+            texts().par_iter().map(|(file, text)| (*file, pack::parse(text).unwrap_or_else(|e| panic!("{file}: {e:#}")))).collect()
         });
         &PARSED
     }
@@ -194,7 +204,7 @@ mod tests {
         }
         let bad: Vec<_> = parsed().par_iter().map(|(file, pack)| (file, problems(pack))).filter(|(_, p)| !p.is_empty()).collect();
         assert_eq!(bad, Vec::<(&&str, Vec<String>)>::new());
-        assert_eq!(listings().len(), files::FILES.len(), "build.rs read every pack's listing");
+        assert_eq!(listings().len(), files::ITEMS.len(), "build.rs read every pack's listing");
     }
 
     /// The app's own packs add their icons, sounds and fonts to the built-in set (`assets/`) for
@@ -220,7 +230,7 @@ mod tests {
 
     #[test]
     fn library_packs_use_only_built_in_assets() {
-        for ((file, text), (_, pack)) in files::FILES.iter().zip(parsed()) {
+        for ((file, text), (_, pack)) in texts().iter().zip(parsed()) {
             assert!(pack.assets.is_empty(), "{file}: move its icons, sounds and fonts into assets/");
             for name in text.split("{icon:").skip(1).filter_map(|rest| rest.split_once('}').map(|(name, _)| name)) {
                 assert!(crate::icons::svg(name, [0, 0, 0]).is_some(), "{file}: no built-in icon {name:?}");
@@ -233,7 +243,7 @@ mod tests {
     fn library_packs_write_only_known_tokens() {
         let word = |c: char| c.is_ascii_alphanumeric() || "_/:#.-".contains(c);
         let mut unknown = BTreeSet::new();
-        for (file, text) in files::FILES {
+        for (file, text) in texts() {
             for rest in text.split('{').skip(1) {
                 let Some((inner, _)) = rest.split_once('}') else { continue };
                 if inner.is_empty() || !inner.chars().all(word) {
@@ -275,7 +285,7 @@ mod tests {
             "call-of-duty-2", "rising-storm-2-vietnam", "gray-zone-warfare", "quake-champions", "far-cry",
             "medal-of-honor-allied-assault", "dark-messiah-of-might-and-magic", "fear-2-project-origin"];
         for file in shooters {
-            let text = files::FILES.iter().find(|(f, _)| *f == format!("{file}.padpack")).map(|(_, t)| t).unwrap();
+            let text = texts().iter().find(|(f, _)| *f == format!("{file}.padpack")).map(|(_, t)| t).unwrap();
             let pack = pack::parse(text).unwrap();
             let flick = |p: &Profile| [&p.left_stick, &p.right_stick].iter().any(|s| matches!(s.action, StickAction::Flick { .. }));
             let gyro = |p: &Profile| p.gyro.enabled;
@@ -291,7 +301,7 @@ mod tests {
     #[test]
     fn starcraft_has_a_gyro_pointer_profile_that_declares_gyro() {
         use crate::config::{Feature, GyroMode};
-        let text = files::FILES.iter().find(|(f, _)| f.contains("starcraft")).map(|(_, t)| t).unwrap();
+        let text = texts().iter().find(|(f, _)| f.contains("starcraft")).map(|(_, t)| t).unwrap();
         let pack = pack::parse(text).unwrap();
         let p = pack.profiles.iter().find(|p| p.name == "Gameplay + Gyro").unwrap();
         assert!(matches!(p.gyro.mode, GyroMode::Mouse { .. }));
@@ -357,7 +367,7 @@ mod tests {
             pack::apply(&mut config, &plan, &pack::Choices::default());
             assert!(config.games.last().is_some_and(|g| g.origin.is_some()), "{file} was added");
         }
-        assert_eq!(config.games.len(), files::FILES.len());
+        assert_eq!(config.games.len(), files::ITEMS.len());
 
         let dir = std::env::temp_dir().join(format!("padwight-library-roundtrip-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
@@ -399,7 +409,7 @@ mod tests {
     fn damaged_packs_are_refused_or_handled_without_panicking() {
         let every = if std::env::var_os("PADWIGHT_FULL_PACK_SWEEP").is_some() { 1 } else { 20 };
         let base = Config::default();
-        let checked: usize = files::FILES
+        let checked: usize = texts()
             .par_iter()
             .enumerate()
             .filter(|(i, _)| i % every == 0)

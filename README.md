@@ -48,7 +48,7 @@ Whether a pack needs more than a plain XInput pad (gyro, back paddles, or a touc
 
 Imported setups are ordinary, editable setups that remember their pack. When a newer version of the same pack turns up, or an app update ships a newer library version (marked "update" in the sidebar), you're offered the update, along with a list of what you've changed since. A pack made by a newer app version is refused, with a request to update the app.
 
-The library is `packs/*.padpack` in this repository, embedded at build time. See `packs/README.md`.
+The library is `packs/*.padpack` in this repository, compressed into the binary at build time. See `packs/README.md`.
 
 ## Install
 

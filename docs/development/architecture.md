@@ -185,7 +185,8 @@ Quick test loop: `padwight debug --headless &`, then `padwight debug --wait 3000
 |---|---|
 | `pack.rs` | `.padpack` parse, check, export, import planning and apply, versioning (`FORMAT`). Includes most of the pack tests. |
 | `library.rs` | The built-in library, embedded at build time, and library update detection. Its checks run in `cargo test`. |
-| `build.rs` | Embeds every `packs/*.padpack` into the binary. |
+| `build.rs` | Compresses every `packs/*.padpack` (with a shared zstd dictionary) and `assets/` (icons, fonts, sounds) into archives the binary embeds, and reads each pack's listing. |
+| `archive.rs` | Unpacks single files from those archives on demand. |
 | `packs/` | The shipped library packs. |
 
 ### GUI (`gui.rs` and `gui/`)
@@ -223,7 +224,7 @@ A pack is a game in a file: TOML in the same shapes as the config, extension `.p
 - `export` lists references to missing items, and keeps the pack ID on re-export.
 - `plan` and `apply` do an import: they report name clashes and rule clashes, and `apply` writes the chosen result into the config.
 
-Library packs are read at build time (`build.rs`) and checked by `cargo test` (`library.rs`). Adding a file to `packs/` is enough for it to appear in the picker; the tests say what it must satisfy.
+Library packs are read and compressed at build time (`build.rs`) and checked by `cargo test` (`library.rs`). Adding a file to `packs/` is enough for it to appear in the picker; the tests say what it must satisfy.
 
 ## Testing and checks
 

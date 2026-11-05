@@ -1,3 +1,4 @@
+mod archive;
 mod capture;
 mod clock;
 mod clipboard;

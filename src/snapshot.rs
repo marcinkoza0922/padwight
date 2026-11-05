@@ -119,7 +119,7 @@ pub fn render_probed<M>(element: Element<'_, M>, canvas: &Canvas, theme: &Theme,
 fn load_fonts() {
     let mut fonts = font_system().write().unwrap_or_else(std::sync::PoisonError::into_inner);
     // Loading the same bytes again is skipped by the font list itself.
-    for bundled in &crate::font::BUNDLED {
+    for bundled in crate::font::BUNDLED.iter() {
         fonts.load_font(bundled.bytes.into());
     }
 }

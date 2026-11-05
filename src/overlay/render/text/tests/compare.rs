@@ -21,7 +21,7 @@ fn iced_font(s: &Spec) -> Font {
 }
 
 fn load_iced_fonts() {
-    for bundled in &font::BUNDLED {
+    for bundled in font::BUNDLED.iter() {
         font::load(bundled.bytes).unwrap();
     }
 }

@@ -17,6 +17,7 @@ pub mod faults;
 pub mod figures;
 pub mod focus;
 pub mod assets;
+pub mod archive;
 pub mod font;
 pub mod gui;
 pub mod guide_menu;

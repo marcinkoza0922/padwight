@@ -1,15 +1,15 @@
 //! Cues that are samples rather than synthesis: short CC0 files bundled in `assets/sounds`
-//! (see the README there for where each came from), decoded once on first use.
+//! (see the README there for where each came from), unpacked and decoded once on first use.
 
 use std::sync::OnceLock;
 
 use super::{SoundKind, wav::decode_wav};
 
 /// The WAV file a kind plays, if it is a recording.
-fn bytes(kind: SoundKind) -> Option<&'static [u8]> {
+fn bytes(kind: SoundKind) -> Option<Vec<u8>> {
     macro_rules! wav {
         ($name:literal) => {
-            Some(include_bytes!(concat!("../../assets/sounds/", $name, ".wav")).as_slice())
+            crate::archive::assets::ARCHIVE.get(concat!("sounds/", $name, ".wav"))
         };
     }
     match kind {
@@ -52,6 +52,6 @@ fn bytes(kind: SoundKind) -> Option<&'static [u8]> {
 /// The samples of a recorded kind, mono at the cue rate and at the file's own level.
 pub(super) fn samples(kind: SoundKind) -> Option<&'static [f32]> {
     static DECODED: OnceLock<Vec<(SoundKind, Vec<f32>)>> = OnceLock::new();
-    let all = DECODED.get_or_init(|| SoundKind::ALL.into_iter().filter_map(|k| Some((k, decode_wav(bytes(k)?).expect("bundled sounds are valid WAV files")))).collect());
+    let all = DECODED.get_or_init(|| SoundKind::ALL.into_iter().filter_map(|k| Some((k, decode_wav(&bytes(k)?).expect("bundled sounds are valid WAV files")))).collect());
     all.iter().find(|(k, _)| *k == kind).map(|(_, s)| s.as_slice())
 }
