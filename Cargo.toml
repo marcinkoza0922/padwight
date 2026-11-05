@@ -65,7 +65,17 @@ print_stderr = "warn"
 toml = "1.1.6"
 
 [dev-dependencies]
+# Runs the per-pack library tests across all cores (library.rs tests).
+rayon = "1.10"
 iced_test = "0.14"
 wayland-protocols = { version = "0.32", features = ["server", "staging"] }
 wayland-protocols-wlr = { version = "0.3", features = ["server"] }
 wayland-server = "0.31"
+
+# Tests walk every library pack (thousands) through the parser, so they run optimized a little;
+# dependencies more, since they're built once and rarely change.
+[profile.test]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 2

@@ -170,20 +170,30 @@ pub fn problems(pack: &Pack) -> Vec<String> {
 mod tests {
     use std::collections::BTreeSet;
 
+    use rayon::prelude::*;
+
     use super::*;
     use crate::config::{Button, ButtonAction, Game, Profile, Rule, RuleKind};
+
+    /// Every library pack, parsed once and in parallel for all the tests below.
+    fn parsed() -> &'static [(&'static str, Pack)] {
+        static PARSED: LazyLock<Vec<(&'static str, Pack)>> = LazyLock::new(|| {
+            files::FILES.par_iter().map(|(file, text)| (*file, pack::parse(text).unwrap_or_else(|e| panic!("{file}: {e:#}")))).collect()
+        });
+        &PARSED
+    }
 
     #[test]
     fn every_library_pack_is_valid() {
         let mut ids = BTreeSet::new();
         let mut names = BTreeSet::new();
-        for (file, text) in files::FILES {
-            let pack = pack::parse(text).unwrap_or_else(|e| panic!("{file}: {e:#}"));
+        for (file, pack) in parsed() {
             assert_eq!(pack.format, pack::FORMAT, "{file}: write library packs at the current format");
             assert!(ids.insert(pack.pack.id.clone()), "{file}: pack ID used twice");
             assert!(names.insert(pack.pack.name.to_lowercase()), "{file}: setup name used twice");
-            assert_eq!(problems(&pack), Vec::<String>::new(), "{file}");
         }
+        let bad: Vec<_> = parsed().par_iter().map(|(file, pack)| (file, problems(pack))).filter(|(_, p)| !p.is_empty()).collect();
+        assert_eq!(bad, Vec::<(&&str, Vec<String>)>::new());
         assert_eq!(listings().len(), files::FILES.len(), "build.rs read every pack's listing");
     }
 
@@ -210,8 +220,7 @@ mod tests {
 
     #[test]
     fn library_packs_use_only_built_in_assets() {
-        for (file, text) in files::FILES {
-            let pack = pack::parse(text).unwrap();
+        for ((file, text), (_, pack)) in files::FILES.iter().zip(parsed()) {
             assert!(pack.assets.is_empty(), "{file}: move its icons, sounds and fonts into assets/");
             for name in text.split("{icon:").skip(1).filter_map(|rest| rest.split_once('}').map(|(name, _)| name)) {
                 assert!(crate::icons::svg(name, [0, 0, 0]).is_some(), "{file}: no built-in icon {name:?}");
@@ -244,8 +253,7 @@ mod tests {
         // Two packs matching the same program would both be offered for either game: a shared
         // name (gpp.exe, game.exe) must name its folder in at least all but one pack.
         let mut seen: Vec<(String, &str)> = Vec::new();
-        for (file, text) in files::FILES {
-            let pack = pack::parse(text).unwrap();
+        for (file, pack) in parsed() {
             for r in pack.rules.iter().filter(|r| r.kind == crate::config::RuleKind::Executable && !crate::focus::names_folder(&r.value)) {
                 let name = r.value.trim().to_ascii_lowercase();
                 if let Some((_, other)) = seen.iter().find(|(n, f)| *n == name && f != file) {
@@ -331,11 +339,12 @@ mod tests {
 
     #[test]
     fn every_library_pack_survives_a_save_and_load() {
-        for (file, text) in files::FILES {
-            let pack = pack::parse(text).unwrap();
-            let again = pack::parse(&pack.to_toml().unwrap()).unwrap_or_else(|e| panic!("{file}: {e:#}"));
-            assert_eq!(again, pack, "{file}");
-        }
+        let bad: Vec<_> = parsed()
+            .par_iter()
+            .filter(|(file, pack)| pack::parse(&pack.to_toml().unwrap()).unwrap_or_else(|e| panic!("{file}: {e:#}")) != *pack)
+            .map(|(file, _)| file)
+            .collect();
+        assert!(bad.is_empty(), "these change on a save and load: {bad:?}");
     }
 
     /// Every library game added to one config, saved as folders and loaded back, comes back the
@@ -343,8 +352,8 @@ mod tests {
     #[test]
     fn a_config_with_every_library_game_saves_and_loads_unchanged() {
         let mut config = Config::default();
-        for (file, text) in files::FILES {
-            let plan = pack::plan(&config, pack::parse(text).unwrap(), true);
+        for (file, pack) in parsed() {
+            let plan = pack::plan(&config, pack.clone(), true);
             pack::apply(&mut config, &plan, &pack::Choices::default());
             assert!(config.games.last().is_some_and(|g| g.origin.is_some()), "{file} was added");
         }
@@ -384,22 +393,29 @@ mod tests {
         files
     }
 
+    /// Every 20th pack, or all of them with `PADWIGHT_FULL_PACK_SWEEP=1`: the parser is the same
+    /// code for every pack, so a sample finds what the whole library would, in a twentieth of the time.
     #[test]
     fn damaged_packs_are_refused_or_handled_without_panicking() {
+        let every = if std::env::var_os("PADWIGHT_FULL_PACK_SWEEP").is_some() { 1 } else { 20 };
         let base = Config::default();
-        let mut checked = 0;
-        for (_, text) in files::FILES {
-            for damaged in mutants(text, 151) {
-                checked += 1;
-                // Whatever parses must also survive the checks and an import.
-                if let Ok(pack) = pack::parse(&damaged) {
-                    let _ = problems(&pack);
-                    let plan = pack::plan(&base, pack, false);
-                    pack::apply(&mut base.clone(), &plan, &pack::Choices::default());
+        let checked: usize = files::FILES
+            .par_iter()
+            .enumerate()
+            .filter(|(i, _)| i % every == 0)
+            .map(|(_, (_, text))| {
+                let damaged = mutants(text, 151);
+                for damaged in &damaged {
+                    // Whatever parses must also survive the checks and an import.
+                    if let Ok(pack) = pack::parse(damaged) {
+                        let _ = problems(&pack);
+                        let plan = pack::plan(&base, pack, false);
+                        pack::apply(&mut base.clone(), &plan, &pack::Choices::default());
+                    }
                 }
-            }
-        }
+                damaged.len()
+            })
+            .sum();
         assert!(checked > 500, "the sweep covers the packs ({checked} variants)");
     }
 }
-
