@@ -395,7 +395,7 @@ fn write_items<T: Serialize + Named>(dir: &Path, items: &[T]) -> Result<()> {
 
 /// A file or folder name for the item at `index`: its position, then its name.
 fn numbered(index: usize, name: &str) -> String {
-    format!("{:04}-{}", index + 1, slug(name))
+    format!("{:05}-{}", index + 1, slug(name))
 }
 
 /// `name` with anything that isn't a letter, digit, space, dash or underscore as an underscore.

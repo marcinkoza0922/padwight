@@ -1,0 +1,382 @@
+format = 20
+macros = []
+overlay_font = "Kreon"
+
+[pack]
+id = "79a2b470-614e-56bf-b734-e0cfc0b49e76"
+name = "Definitely Not Fried Chicken"
+version = "1.0"
+author = "Padwight"
+description = "Definitely Not Fried Chicken on an Xbox-style pad. The left stick pans, the right stick points; RT and A click, LT right-clicks. Overlays in steel grey and orange."
+made_with = "Xbox controller"
+
+[[rules]]
+kind = "steam_app_id"
+value = "1036240"
+profile = "Definitely Not Fried Chicken"
+
+[[rules]]
+kind = "executable"
+value = "dnfc.exe"
+profile = "Definitely Not Fried Chicken"
+
+[[profiles]]
+name = "Definitely Not Fried Chicken"
+combos = []
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+enabled = false
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.guide]
+notes = '''The right stick {rs} moves the pointer and the left stick {ls} pans the view. {rt} or {south} clicks, {lt} right-clicks (orders, cancel). Scroll zooms on {up} and {down}.
+Buttons: {south} Click; {east} Back / close; {start} Menu.
+Typical defaults for the genre, not checked against the game. Keys are the game's defaults as remembered, not read from an install; if one doesn't answer, check the game's controls options and change the buttons here to match. The Windows executable is from Steam's launch data. The game has no controller support, so the pad plays it with the pointer.
+Typing a name or text: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan the view"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Left click"}
+"trigger:Left" = {text = "Right click"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Back / close"}
+"button:Start" = {text = "Menu"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+
+
+[[profiles]]
+name = "Definitely Not Fried Chicken + Gyro"
+combos = [
+    {buttons = ["Select", "Start"], action = "gyro_clutch"},
+]
+combo_window_ms = 120
+tap_window_ms = 250
+long_press_ms = 500
+requires = ["gyro"]
+
+[profiles.buttons]
+Guide = {mode = "Guide"}
+South = {mouse = "Left"}
+East = {keys = ["KEY_ESC"]}
+Start = {keys = ["KEY_ESC"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+
+[profiles.left_stick]
+deadzone = 0.15
+curve = 1.0
+key_threshold = 0.35
+
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
+
+[profiles.right_stick]
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
+
+[profiles.right_stick.action.mouse]
+speed = 1400.0
+accel = 0.3
+
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
+
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
+
+[profiles.gyro]
+horizontal = "yaw"
+invert_x = false
+invert_y = false
+noise_threshold = 1.0
+
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
+
+[profiles.guide]
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller moves the pointer, as a fine pointer next to the right stick {rs}.
+The right stick {rs} moves the pointer and the left stick {ls} pans the view. {rt} or {south} clicks, {lt} right-clicks (orders, cancel). Scroll zooms on {up} and {down}.
+Buttons: {south} Click; {east} Back / close; {start} Menu.
+Typical defaults for the genre, not checked against the game. Keys are the game's defaults as remembered, not read from an install; if one doesn't answer, check the game's controls options and change the buttons here to match. The Windows executable is from Steam's launch data. The game has no controller support, so the pad plays it with the pointer.
+Typing a name or text: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Pan the view"}
+"stick:Right" = {text = "Pointer"}
+"trigger:Right" = {text = "Left click"}
+"trigger:Left" = {text = "Right click"}
+"button:South" = {text = "Click"}
+"button:East" = {text = "Back / close"}
+"button:Start" = {text = "Menu"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
+
+
+[keyboard_style]
+corners = 0.04
+position = "bottom_center"
+scale = 1.0
+
+[keyboard_style.background]
+color = "#232323"
+opacity = 0.93
+
+[keyboard_style.items]
+color = "#3b3631"
+opacity = 0.95
+
+[keyboard_style.selected]
+color = "#e08a2e"
+opacity = 1.0
+
+[keyboard_style.border]
+width = 1
+color = "#a8641c"
+opacity = 0.8
+
+[keyboard_style.gradient]
+color = "#171717"
+opacity = 1.0
+angle = 180
+
+[keyboard_style.item_border]
+width = 1
+color = "#5a4a38"
+
+[keyboard_style.type]
+letter_spacing = 0
+
+[numpad_style]
+corners = 0.04
+position = "center"
+scale = 1.0
+
+[numpad_style.background]
+color = "#232323"
+opacity = 0.93
+
+[numpad_style.items]
+color = "#3b3631"
+opacity = 0.95
+
+[numpad_style.selected]
+color = "#e08a2e"
+opacity = 1.0
+
+[numpad_style.border]
+width = 1
+color = "#a8641c"
+opacity = 0.8
+
+[numpad_style.gradient]
+color = "#171717"
+opacity = 1.0
+angle = 180
+
+[numpad_style.item_border]
+width = 1
+color = "#5a4a38"
+
+[numpad_style.type]
+letter_spacing = 0
+
+[media_style]
+corners = 0.04
+position = "top_right"
+scale = 0.9
+
+[media_style.background]
+color = "#232323"
+opacity = 0.93
+
+[media_style.items]
+color = "#3b3631"
+opacity = 0.95
+
+[media_style.selected]
+color = "#e08a2e"
+opacity = 1.0
+
+[media_style.border]
+width = 1
+color = "#a8641c"
+opacity = 0.8
+
+[media_style.gradient]
+color = "#171717"
+opacity = 1.0
+angle = 180
+
+[media_style.item_border]
+width = 1
+color = "#5a4a38"
+
+[media_style.type]
+letter_spacing = 0
+
+[menu_style]
+corners = 0.04
+position = "center"
+scale = 1.0
+
+[menu_style.background]
+color = "#232323"
+opacity = 0.93
+
+[menu_style.items]
+color = "#3b3631"
+opacity = 0.95
+
+[menu_style.selected]
+color = "#e08a2e"
+opacity = 1.0
+
+[menu_style.border]
+width = 1
+color = "#a8641c"
+opacity = 0.8
+
+[menu_style.gradient]
+color = "#171717"
+opacity = 1.0
+angle = 180
+
+[menu_style.item_border]
+width = 1
+color = "#5a4a38"
+
+[menu_style.type]
+letter_spacing = 0
+
+[menu_style.ornament]
+dividers = {width = 1, color = "#5a4a38", opacity = 0.8}
+
+[motion]
+keyboard = "brutal"
+numpad = "brutal"
+menu = "brutal"
+media = "brutal"
+offer = "brutal"
+info = "brutal"
+log = "brutal"
+
+[sounds.menu]
+step = {kind = "clank", volume = 0.06, pitch = 1.1}
+pick = {kind = "latch", volume = 0.09}
+open = {kind = "switch", volume = 0.07}
+close = {kind = "switch", volume = 0.06, pitch = 0.8}
+
+[sounds.numpad]
+step = {kind = "clank", volume = 0.06, pitch = 1.1}
+pick = {kind = "latch", volume = 0.09}
+
+[sounds.keyboard]
+step = {kind = "clank", volume = 0.06, pitch = 1.1}
+pick = {kind = "keys", volume = 0.13}
+
+[sounds.media]
+pick = {kind = "latch", volume = 0.09}
