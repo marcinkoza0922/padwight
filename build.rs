@@ -1,21 +1,73 @@
-//! Embeds the built-in game library (`packs/*.padpack`) and the built-in icons
-//! (`assets/icons/*.svg`) in the binary, with each library pack's listing read here, so the
-//! program can list thousands of packs without parsing them.
+//! Compresses the built-in game library (`packs/*.padpack`) and the built-in icons, fonts and
+//! sounds (`assets/`) into archives the binary embeds (see `src/archive.rs`), with each library
+//! pack's listing read here, so the program can list thousands of packs without unpacking them.
 
 use std::{
     env, fs,
     path::{Path, PathBuf},
 };
 
+/// How hard to compress: the packs are many and alike, and a dictionary does most of the work.
+const LEVEL: i32 = 12;
+/// The size of the dictionary the packs share, and how many packs it is trained on.
+const DICT_BYTES: usize = 256 * 1024;
+const DICT_SAMPLES: usize = 1500;
+
 fn main() {
     let root = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let out = PathBuf::from(env::var("OUT_DIR").unwrap());
     let packs = files(&root.join("packs"), "padpack");
-    let mut library = embed(&packs, "FILES", true);
-    library.push_str(&index(&packs));
-    commit(&root);
+    let texts: Vec<String> = packs.iter().map(|p| fs::read_to_string(p).unwrap()).collect();
+    let named: Vec<(String, Vec<u8>)> = packs.iter().zip(&texts).map(|(p, t)| (name(p), t.clone().into_bytes())).collect();
+
+    let dict = train(&named);
+    let mut library = archive(&out, "library", &named, &dict);
+    library.push_str(&index(&texts, &packs));
     fs::write(out.join("library.rs"), library).unwrap();
-    fs::write(out.join("icons.rs"), embed(&files(&root.join("assets/icons"), "svg"), "BUILT_IN", false)).unwrap();
+
+    let mut assets = Vec::new();
+    for dir in ["icons", "fonts", "sounds"] {
+        for path in files_in(&root.join("assets").join(dir)) {
+            assets.push((format!("{dir}/{}", name(&path)), fs::read(&path).unwrap()));
+        }
+    }
+    fs::write(out.join("assets.rs"), archive(&out, "assets", &assets, &[])).unwrap();
+    commit(&root);
+}
+
+/// The file's name.
+fn name(path: &Path) -> String {
+    path.file_name().unwrap().to_string_lossy().into_owned()
+}
+
+/// A dictionary for the library packs: they share most of their text. Empty if there are too
+/// few to train on.
+fn train(packs: &[(String, Vec<u8>)]) -> Vec<u8> {
+    let step = packs.len().div_ceil(DICT_SAMPLES).max(1);
+    let samples: Vec<&[u8]> = packs.iter().step_by(step).map(|(_, bytes)| bytes.as_slice()).collect();
+    zstd::dict::from_samples(&samples, DICT_BYTES).unwrap_or_default()
+}
+
+/// Packs each of `files` (name, contents) on its own, writes the blob and the dictionary to
+/// `out/<label>.bin` and `out/<label>.dict`, and returns the code that names them and says where
+/// each file is: `BLOB`, `DICT` and `ITEMS`.
+fn archive(out: &Path, label: &str, files: &[(String, Vec<u8>)], dict: &[u8]) -> String {
+    let mut compressor = if dict.is_empty() { zstd::bulk::Compressor::new(LEVEL) } else { zstd::bulk::Compressor::with_dictionary(LEVEL, dict) }.unwrap();
+    let mut blob = Vec::new();
+    let mut items = String::new();
+    for (name, bytes) in files {
+        let packed = compressor.compress(bytes).unwrap();
+        items.push_str(&format!("    Item {{ name: {name:?}, at: {}, packed: {}, raw: {} }},\n", blob.len(), packed.len(), bytes.len()));
+        blob.extend(packed);
+    }
+    let (blob_path, dict_path) = (out.join(format!("{label}.bin")), out.join(format!("{label}.dict")));
+    fs::write(&blob_path, blob).unwrap();
+    fs::write(&dict_path, dict).unwrap();
+    format!(
+        "pub static BLOB: &[u8] = include_bytes!({:?});\npub static DICT: &[u8] = include_bytes!({:?});\npub static ITEMS: &[Item] = &[\n{items}];\n",
+        blob_path.display().to_string(),
+        dict_path.display().to_string()
+    )
 }
 
 /// Hands the commit this build is of to the program as `PADWIGHT_COMMIT`, for bug reports. A build
@@ -34,34 +86,26 @@ fn commit(root: &Path) {
 
 /// The `extension` files in `dir`, sorted.
 fn files(dir: &Path, extension: &str) -> Vec<PathBuf> {
-    println!("cargo:rerun-if-changed={}", dir.display());
-    let mut files: Vec<_> = fs::read_dir(dir)
-        .map(|entries| entries.flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|x| x == extension)).collect())
-        .unwrap_or_default();
-    files.sort();
-    files
+    files_in(dir).into_iter().filter(|p| p.extension().is_some_and(|x| x == extension)).collect()
 }
 
-/// A static `name` listing each of `files` as (name, contents): the file name with its
-/// extension when `keep_extension`, without it otherwise.
-fn embed(files: &[PathBuf], name: &str, keep_extension: bool) -> String {
-    let mut out = format!("pub static {name}: &[(&str, &str)] = &[\n");
-    for path in files {
-        println!("cargo:rerun-if-changed={}", path.display());
-        let label = if keep_extension { path.file_name() } else { path.file_stem() }.unwrap().to_string_lossy();
-        out.push_str(&format!("    ({label:?}, include_str!({:?})),\n", path.display().to_string()));
+/// Every file in `dir`, sorted. Each is watched, so changing one rebuilds.
+fn files_in(dir: &Path) -> Vec<PathBuf> {
+    println!("cargo:rerun-if-changed={}", dir.display());
+    let mut files: Vec<_> = fs::read_dir(dir).map(|entries| entries.flatten().map(|e| e.path()).filter(|p| p.is_file()).collect()).unwrap_or_default();
+    files.sort();
+    for file in &files {
+        println!("cargo:rerun-if-changed={}", file.display());
     }
-    out.push_str("];\n");
-    out
+    files
 }
 
 /// `INDEX`: each pack's listing (`library::Indexed`), sorted by name. A pack this can't read is
 /// left out with a warning; the library's tests say what's wrong with it.
-fn index(packs: &[PathBuf]) -> String {
+fn index(texts: &[String], packs: &[PathBuf]) -> String {
     let mut listed: Vec<(String, String)> = Vec::new();
-    for (at, path) in packs.iter().enumerate() {
-        let text = fs::read_to_string(path).unwrap();
-        match listing(at, &text) {
+    for (at, (path, text)) in packs.iter().zip(texts).enumerate() {
+        match listing(at, text) {
             Ok(found) => listed.push(found),
             Err(why) => println!("cargo:warning={}: {why}", path.display()),
         }
@@ -75,7 +119,7 @@ fn index(packs: &[PathBuf]) -> String {
     out
 }
 
-/// The pack's lowercase name, to sort by, and its `Indexed` as code. `at` is its place in `FILES`.
+/// The pack's lowercase name, to sort by, and its `Indexed` as code. `at` is its place in `ITEMS`.
 fn listing(at: usize, text: &str) -> Result<(String, String), String> {
     let table: toml::Table = toml::from_str(text).map_err(|e| e.to_string())?;
     let header = table.get("pack").and_then(toml::Value::as_table).ok_or("no [pack] table")?;

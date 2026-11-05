@@ -5,14 +5,22 @@
 
 use std::{
     collections::BTreeMap,
-    sync::{Mutex, RwLock},
+    sync::{LazyLock, Mutex, RwLock},
 };
 
-/// The icons built into the app (`assets/icons`, embedded by `build.rs`), by name, sorted.
-mod built_in {
-    include!(concat!(env!("OUT_DIR"), "/icons.rs"));
-}
-use built_in::BUILT_IN;
+/// The icons built into the app (`assets/icons`, compressed into the binary by `build.rs`), by
+/// name, sorted, unpacked on first use.
+static BUILT_IN: LazyLock<Vec<(&'static str, String)>> = LazyLock::new(|| {
+    let archive = &crate::archive::assets::ARCHIVE;
+    let mut icons: Vec<_> = archive
+        .items()
+        .iter()
+        .enumerate()
+        .filter_map(|(i, item)| Some((item.name.strip_prefix("icons/")?.strip_suffix(".svg")?, archive.text(i))))
+        .collect();
+    icons.sort();
+    icons
+});
 
 /// The icons of the game in use, by name.
 static PACK: RwLock<BTreeMap<String, String>> = RwLock::new(BTreeMap::new());
@@ -50,7 +58,7 @@ pub fn svg(name: &str, [r, g, b]: [u8; 3]) -> Option<String> {
     let own = PACK.read().ok().and_then(|pack| pack.get(name).cloned());
     let body = match own {
         Some(body) => body,
-        None => BUILT_IN.iter().find(|(known, _)| *known == name).map(|(_, body)| (*body).to_string())?,
+        None => BUILT_IN.iter().find(|(known, _)| *known == name).map(|(_, body)| body.clone())?,
     };
     Some(body.replace("currentColor", &format!("#{r:02x}{g:02x}{b:02x}")))
 }
@@ -102,7 +110,7 @@ mod tests {
     #[test]
     fn every_built_in_icon_is_clean_and_tinted() {
         assert!(BUILT_IN.len() > 100, "build.rs embeds the whole assets/icons folder");
-        for (name, body) in BUILT_IN {
+        for (name, body) in BUILT_IN.iter() {
             assert!(valid_name(name), "{name}");
             check_svg(body).unwrap_or_else(|e| panic!("{name}: {e}"));
             assert!(body.contains("currentColor"), "{name} takes the text's color");

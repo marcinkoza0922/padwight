@@ -36,6 +36,7 @@ serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 tokio = { version = "1.53.2", features = ["io-util", "net", "rt", "time"] }
 toml = "1.1.6"
+zstd = { version = "0.13", default-features = false }
 rodio = { version = "0.22", default-features = false, features = ["playback"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
@@ -61,6 +62,7 @@ xkbcommon = "0.8"
 
 [build-dependencies]
 toml = "1.1.6"
+zstd = "0.13"
 
 [workspace]
 

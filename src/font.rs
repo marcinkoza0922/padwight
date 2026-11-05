@@ -6,7 +6,7 @@ use std::{
     collections::{BTreeMap, HashMap},
     path::PathBuf,
     sync::{
-        Mutex, OnceLock, RwLock,
+        LazyLock, Mutex, OnceLock, RwLock,
         atomic::{AtomicU64, Ordering},
     },
 };
@@ -19,27 +19,39 @@ pub struct Bundled {
     pub bytes: &'static [u8],
 }
 
-pub const BUNDLED: [Bundled; 19] = [
-    Bundled { name: "Inter", bytes: include_bytes!("../assets/fonts/Inter-Regular.ttf") },
-    Bundled { name: "Cantarell", bytes: include_bytes!("../assets/fonts/Cantarell-VF.otf") },
-    Bundled { name: "Comfortaa", bytes: include_bytes!("../assets/fonts/Comfortaa-Regular.otf") },
-    Bundled { name: "Source Code Pro", bytes: include_bytes!("../assets/fonts/SourceCodePro-Regular.otf") },
-    Bundled { name: "Rajdhani", bytes: include_bytes!("../assets/fonts/Rajdhani-Medium.ttf") },
-    Bundled { name: "Press Start 2P", bytes: include_bytes!("../assets/fonts/PressStart2P-Regular.ttf") },
-    Bundled { name: "VT323", bytes: include_bytes!("../assets/fonts/VT323-Regular.ttf") },
-    Bundled { name: "Silkscreen", bytes: include_bytes!("../assets/fonts/Silkscreen-Regular.ttf") },
-    Bundled { name: "Monoton", bytes: include_bytes!("../assets/fonts/Monoton-Regular.ttf") },
-    Bundled { name: "Creepster", bytes: include_bytes!("../assets/fonts/Creepster-Regular.ttf") },
-    Bundled { name: "Nosifer", bytes: include_bytes!("../assets/fonts/Nosifer-Regular.ttf") },
-    Bundled { name: "Eater", bytes: include_bytes!("../assets/fonts/Eater-Regular.ttf") },
-    Bundled { name: "UnifrakturMaguntia", bytes: include_bytes!("../assets/fonts/UnifrakturMaguntia-Book.ttf") },
-    Bundled { name: "Cinzel", bytes: include_bytes!("../assets/fonts/Cinzel-VF.ttf") },
-    Bundled { name: "Bangers", bytes: include_bytes!("../assets/fonts/Bangers-Regular.ttf") },
-    Bundled { name: "Kreon", bytes: include_bytes!("../assets/fonts/Kreon-Regular.ttf") },
-    Bundled { name: "Orbitron", bytes: include_bytes!("../assets/fonts/Orbitron-VF.ttf") },
-    Bundled { name: "Titillium Web", bytes: include_bytes!("../assets/fonts/TitilliumWeb-Regular.ttf") },
-    Bundled { name: "Special Elite", bytes: include_bytes!("../assets/fonts/SpecialElite-Regular.ttf") },
+const BUNDLED_FILES: [(&str, &str); 19] = [
+    ("Inter", "Inter-Regular.ttf"),
+    ("Cantarell", "Cantarell-VF.otf"),
+    ("Comfortaa", "Comfortaa-Regular.otf"),
+    ("Source Code Pro", "SourceCodePro-Regular.otf"),
+    ("Rajdhani", "Rajdhani-Medium.ttf"),
+    ("Press Start 2P", "PressStart2P-Regular.ttf"),
+    ("VT323", "VT323-Regular.ttf"),
+    ("Silkscreen", "Silkscreen-Regular.ttf"),
+    ("Monoton", "Monoton-Regular.ttf"),
+    ("Creepster", "Creepster-Regular.ttf"),
+    ("Nosifer", "Nosifer-Regular.ttf"),
+    ("Eater", "Eater-Regular.ttf"),
+    ("UnifrakturMaguntia", "UnifrakturMaguntia-Book.ttf"),
+    ("Cinzel", "Cinzel-VF.ttf"),
+    ("Bangers", "Bangers-Regular.ttf"),
+    ("Kreon", "Kreon-Regular.ttf"),
+    ("Orbitron", "Orbitron-VF.ttf"),
+    ("Titillium Web", "TitilliumWeb-Regular.ttf"),
+    ("Special Elite", "SpecialElite-Regular.ttf"),
 ];
+
+/// The bundled fonts, unpacked from the binary on first use and kept for the life of the process
+/// (the font systems want `'static` bytes).
+pub static BUNDLED: LazyLock<Vec<Bundled>> = LazyLock::new(|| {
+    BUNDLED_FILES
+        .iter()
+        .map(|(name, file)| {
+            let bytes = crate::archive::assets::ARCHIVE.get(&format!("fonts/{file}")).unwrap_or_else(|| panic!("fonts/{file} is in the binary"));
+            Bundled { name, bytes: Box::leak(bytes.into_boxed_slice()) }
+        })
+        .collect()
+});
 
 /// Names offered in the font dropdowns: the bundled fonts, then the ones the game in use carries.
 pub fn names() -> Vec<String> {
@@ -281,7 +293,7 @@ mod tests {
     #[test]
     fn the_loaded_files_are_the_bundled_ones_then_a_game_s() {
         assert_eq!(files().len(), BUNDLED.len());
-        assert!(files().iter().zip(&BUNDLED).all(|(f, b)| f.as_ref() == b.bytes));
+        assert!(files().iter().zip(BUNDLED.iter()).all(|(f, b)| f.as_ref() == b.bytes));
         load(BUNDLED[0].bytes).unwrap();
         assert_eq!(files().len(), BUNDLED.len(), "a bundled file loaded is not listed twice");
         let path = std::env::temp_dir().join(format!("padwight-font-list-{}.font", std::process::id()));
@@ -299,7 +311,7 @@ mod tests {
 
     #[test]
     fn every_bundled_font_draws_as_its_name() {
-        for font in &BUNDLED {
+        for font in BUNDLED.iter() {
             assert_eq!(load(font.bytes), Ok(font.name), "{}: use a file whose family is the name", font.name);
         }
     }
