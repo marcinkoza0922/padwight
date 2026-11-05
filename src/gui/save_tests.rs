@@ -8,7 +8,7 @@ use super::*;
 
 mod blocks;
 
-const GAMEPAD: &str = "general/profiles/0001-Gamepad.toml";
+const GAMEPAD: &str = "general/profiles/00001-Gamepad.toml";
 
 fn keys(k: &str) -> ButtonAction {
     ButtonAction::Keys(vec![k.into()])
@@ -124,10 +124,10 @@ fn combos_save_their_change() {
 fn layers_and_modes_save_their_change() {
     let mut rig = Rig::with_game();
     let diff = saved_after(&mut rig, vec![Message::SelectGameTab(GameTab::Layers), Message::NewLayer]);
-    assert_diff(&diff, &["setups/0001-Doom/"], &["(new file)"]);
+    assert_diff(&diff, &["setups/00001-Doom/"], &["(new file)"]);
     assert!(diff.iter().any(|d| d.contains("layers/")), "{diff:#?}");
     let diff = saved_after(&mut rig, vec![Message::SelectGameTab(GameTab::Modes), Message::NewLayer]);
-    assert_diff(&diff, &["setups/0001-Doom/"], &["(new file)"]);
+    assert_diff(&diff, &["setups/00001-Doom/"], &["(new file)"]);
     assert!(diff.iter().any(|d| d.contains("modes/")), "{diff:#?}");
     // A change inside the layer touches that layer's file only.
     let diff = saved_after(&mut rig, vec![Message::SelectGameTab(GameTab::Layers), Message::OverrideInput(LayerPart::Button(Button::South))]);

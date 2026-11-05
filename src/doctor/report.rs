@@ -365,16 +365,16 @@ mod tests {
     fn finds_the_folder_of_a_setup_by_its_name() {
         let root = std::env::temp_dir().join(format!("padwight-report-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
-        fs::create_dir_all(root.join("setups/0001-Doom")).unwrap();
-        fs::create_dir_all(root.join("setups/0002-Quake")).unwrap();
-        fs::write(root.join("setups/0001-Doom/setup.toml"), "name = \"Doom\"\n").unwrap();
-        fs::write(root.join("setups/0002-Quake/setup.toml"), "name = \"Quake\"\n").unwrap();
-        assert_eq!(setup_folder(&root, Some("Quake")), Some(root.join("setups/0002-Quake")));
+        fs::create_dir_all(root.join("setups/00001-Doom")).unwrap();
+        fs::create_dir_all(root.join("setups/00002-Quake")).unwrap();
+        fs::write(root.join("setups/00001-Doom/setup.toml"), "name = \"Doom\"\n").unwrap();
+        fs::write(root.join("setups/00002-Quake/setup.toml"), "name = \"Quake\"\n").unwrap();
+        assert_eq!(setup_folder(&root, Some("Quake")), Some(root.join("setups/00002-Quake")));
         assert_eq!(setup_folder(&root, None), Some(root.join("general")));
         assert_eq!(setup_folder(&root, Some("Nope")), None);
         let mut found = Vec::new();
-        files_under(&root.join("setups/0001-Doom"), &mut found);
-        assert_eq!(found, [root.join("setups/0001-Doom/setup.toml")]);
+        files_under(&root.join("setups/00001-Doom"), &mut found);
+        assert_eq!(found, [root.join("setups/00001-Doom/setup.toml")]);
         fs::remove_dir_all(&root).unwrap();
     }
 
