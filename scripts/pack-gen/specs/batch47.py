@@ -1,0 +1,71 @@
+from helpers import *
+# Games Nacon publishes, not covered by an earlier pack.
+# Selection: a live Steam game whose Steam publisher is Nacon (wiki names it too), no pack by Steam id or name.
+# P = passthrough, for games with controller support (PS = passthrough plus a gyro profile, for shooters); T = strategy with a pointer;
+# C / CW = pointer (and WASD) pack; F = mouse-and-keyboard shooter with a gyro profile; KB = keyboard game (pad support before XInput or none).
+# Controller support: Steam's flag (full or partial) when it has one, else the PCGamingWiki snapshot; "dualshock" / "switch_pro" are ticked only where the wiki says so.
+# Steam ids are each game's base app; executables come from Steam's launch data (Discord's list where Steam has none) and are left out when the name is generic
+# or another pack already uses it (that pack then matches by Steam id alone). Genre-based kind and theme were assigned by script and corrected by hand for the
+# pointer and keyboard games.
+# Left out everywhere: VR games, DLC, demos, tools and soundtracks, games with no release date or not out yet, games delisted from Steam, and games that already have a pack.
+S = []
+S += [
+T("Aarklash: Legacy", ["222640"], ["aarklash.exe"], "mystic", "violet and gold", exenote=" The Windows executable is from Steam's launch data."),
+P("Ad Infinitum", ["1234430"], ["adinfinitum.exe"], "horror", "blood red and grey.", ctl=["dualshock"]),
+P("AFL 23", ["2337630"], ["afl2.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("AFL 26", ["3468640"], ["afl25.exe"], "coldsteel", "steel blue and grey."),
+PS("Baby Redemption", ["1029040"], ["baby redemption.exe"], "coldsteel", "steel blue and grey."),
+T("Basketball Pro Management 2015", ["310880"], ["bpm2015.exe"], "fighter", "arena red and gold", exenote=" The Windows executable is from Steam's launch data."),
+P("Clash: Artifacts of Chaos", ["1430680"], ["clash.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Cricket 22", ["1701380"], ["cricket22.exe"], "fighter", "arena red and gold."),
+P("Cricket 24", ["2358260"], ["cricket24.exe"], "fighter", "arena red and gold."),
+P("Cricket 26 - The Official Game of the Ashes", ["3468650"], ["cricket26.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Cthulhu: The Cosmic Abyss", ["2760560"], ["cthulhutca.exe"], "coldsteel", "steel blue and grey.", ctl=["dualshock"]),
+P("Edge of Eternity", ["269190"], ["edgeofeternity.exe"], "mystic", "violet and gold.", ctl=["dualshock"]),
+T("Front Page Sports Football", ["316700"], [], "fighter", "arena red and gold"),
+PS("Gangs of Sherwood", ["1351000"], [], "mystic", "violet and gold.", ctl=["dualshock"]),
+P("Gear.Club Unlimited 3", ["3659460"], [], "coldsteel", "steel blue and grey."),
+P("GreedFall: The Dying World", ["1997660"], ["greedfall2.exe", "greedfall2do.exe"], "horror", "blood red and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard.", ctl=["dualshock"]),
+P("Handball 21", ["891020"], ["handball 21.exe"], "coldsteel", "steel blue and grey."),
+P("Hell is Us", ["1620730"], ["hellisus.exe"], "mystic", "violet and gold.", ctl=["dualshock"]),
+P("Hover (2017)", ["280180"], ["hover.exe"], "coldsteel", "steel blue and grey."),
+P("Monster Truck Championship", ["1209360"], ["monstertruck.exe"], "coldsteel", "steel blue and grey."),
+P("Mordheim: City of the Damned", ["276810"], ["mordheim.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("MXGP 24", ["2603040"], ["mxgp.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+PS("Nova Strike", ["2320280"], ["nova strike.exe"], "coldsteel", "steel blue and grey."),
+P("Of Orcs and Men", ["216910"], ["oforcsandmen_steam.exe"], "mystic", "violet and gold."),
+PS("Outcast: Second Contact", ["618970"], ["outcast.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard.", ctl=["dualshock"]),
+T("Paranoia: Happiness is Mandatory", ["858030"], ["paranoia.exe"], "scifi", "cold blue and cyan", exenote=" The Windows executable is from Steam's launch data."),
+T("Pro Basketball Manager 2016", ["347060"], ["pbm2016.exe"], "fighter", "arena red and gold", exenote=" The Windows executable is from Steam's launch data."),
+T("Pro Cycling Manager 2016", ["408760"], [], "nature", "leaf green and earth brown"),
+P("Ravenswatch", ["2071280"], ["ravenswatch.exe"], "mystic", "violet and gold.", ctl=["dualshock"]),
+P("RiMS Racing", ["1346010"], ["rims.exe"], "fighter", "arena red and gold.", ctl=["dualshock"]),
+PS("RoboCop: Rogue City", ["1681430"], ["robocop.exe"], "coldsteel", "steel blue and grey."),
+PS("RoboCop: Rogue City - Unfinished Business", ["3527760"], ["robocopunfinishedbusiness.exe"], "coldsteel", "steel blue and grey.", ctl=["dualshock"]),
+P("Rogue Lords", ["1069690"], ["rogue lords.exe"], "mystic", "violet and gold."),
+P("Roguebook", ["1076200"], ["roguebook.exe"], "mystic", "violet and gold."),
+P("Rugby 20", ["846730"], [], "coldsteel", "steel blue and grey."),
+P("Session", ["861650"], ["sessiongame.exe"], "coldsteel", "steel blue and grey."),
+P("Solitaire (Sanuk Games)", ["539300"], ["solitaire.exe"], "coldsteel", "steel blue and grey."),
+P("Steelrising", ["1283400"], ["steelrising.exe", "steelrisingdo.exe"], "mystic", "violet and gold."),
+P("Styx: Blades of Greed", ["3290690"], ["styx3.exe"], "coldsteel", "steel blue and grey.", ctl=["dualshock"]),
+P("Styx: Master of Shadows", ["242640"], ["styxgame.exe"], "coldsteel", "steel blue and grey."),
+P("Styx: Shards of Darkness", ["355790"], ["styx2.exe"], "coldsteel", "steel blue and grey."),
+P("Tennis World Tour", ["692030"], ["wttpc.exe"], "fighter", "arena red and gold."),
+P("Tennis World Tour 2", ["1223910"], ["twt2.exe"], "fighter", "arena red and gold."),
+P("Tetraminos", ["539280"], ["tetraminos.exe"], "coldsteel", "steel blue and grey."),
+P("The Mound: Omen of Cthulhu", ["2569760"], ["themound.exe"], "coldsteel", "steel blue and grey.", ctl=["dualshock"]),
+P("Tour de France 2026", ["3936520"], ["tdf.exe"], "fighter", "arena red and gold.", ctl=["dualshock", "switch_pro"]),
+P("Train Life: A Railway Simulator", ["1330660"], ["trainlife.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("TT Isle of Man: Ride on the Edge 3", ["1924170"], ["tt3.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Vampire: The Masquerade - Swansong", ["1299510"], ["swansong.exe"], "horror", "blood red and grey."),
+P("War Hospital", ["1553000"], ["war hospital.exe"], "coldsteel", "steel blue and grey."),
+P("Warhammer: Chaosbane", ["774241"], ["chaosbane.exe"], "mystic", "violet and gold."),
+P("Werewolf: The Apocalypse - Earthblood", ["679110"], ["ww.exe"], "mystic", "violet and gold."),
+P("WRC 10: FIA World Rally Championship", ["1462810"], ["wrc10.exe"], "fighter", "arena red and gold.", ctl=["dualshock"]),
+P("WRC 4: FIA World Rally Championship", ["256330"], ["wrc4.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("WRC 5: FIA World Rally Championship", ["354160"], ["wrc5.exe"], "fighter", "arena red and gold."),
+P("WRC 9: FIA World Rally Championship", ["1267540"], ["wrc9.exe"], "fighter", "arena red and gold."),
+P("WRC Generations", ["1953520"], ["wrcg.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard.", ctl=["dualshock"]),
+P("Zorro: The Chronicles", ["1571460"], ["zorro_the_chronicles.exe"], "coldsteel", "steel blue and grey."),
+]

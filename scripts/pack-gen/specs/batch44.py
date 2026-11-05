@@ -1,0 +1,70 @@
+from helpers import *
+# Games NIS America publishes, not covered by an earlier pack.
+# Selection: a live Steam game whose Steam publisher is NIS America (wiki names it too), no pack by Steam id or name.
+# P = passthrough, for games with controller support (PS = passthrough plus a gyro profile, for shooters); T = strategy with a pointer;
+# C / CW = pointer (and WASD) pack; F = mouse-and-keyboard shooter with a gyro profile; KB = keyboard game (pad support before XInput or none).
+# Controller support: Steam's flag (full or partial) when it has one, else the PCGamingWiki snapshot; "dualshock" / "switch_pro" are ticked only where the wiki says so.
+# Steam ids are each game's base app; executables come from Steam's launch data (Discord's list where Steam has none) and are left out when the name is generic
+# or another pack already uses it (that pack then matches by Steam id alone). Genre-based kind and theme were assigned by script and corrected by hand for the
+# pointer and keyboard games.
+# Left out everywhere: VR games, DLC, demos, tools and soundtracks, games with no release date or not out yet, games delisted from Steam, and games that already have a pack.
+S = []
+S += [
+P("A Rose in the Twilight", ["548840"], ["rose.exe"], "coldsteel", "steel blue and grey."),
+P("Assault Spy", ["767930"], ["assault_spy.exe"], "fighter", "arena red and gold."),
+P("Birthdays the Beginning", ["525700"], [], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Brigandine Abyss", ["3211430"], ["brigandineabyss.exe"], "coldsteel", "steel blue and grey."),
+P("Cladun Returns: This Is Sengoku!", ["506260"], ["cladun returns this is sengoku.exe"], "samurai", "ink black and crimson."),
+P("Cladun X2", ["206250"], ["cladunx2.exe"], "coldsteel", "steel blue and grey."),
+P("Cladun X3", ["3812660"], ["cladun_x3.exe"], "mystic", "violet and gold.", ctl=["dualshock"]),
+CW("Clan of Champions", ["206230"], ["clanofchampions.exe"], "fighter", "arena red and gold", exenote=" The Windows executable is from Steam's launch data."),
+P("Criminal Girls: Invite Only", ["409850"], ["steam_criminal.exe"], "mystic", "violet and gold."),
+P("Crymachina", ["2258500"], ["machina.exe"], "coldsteel", "steel blue and grey."),
+P("Disaster Report 4: Summer Memories", ["1060210"], ["disasterreport4.exe", "disasterreport4vr.exe"], "scifi", "cold blue and cyan.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard.", ctl=["dualshock"]),
+P("Disgaea 2 PC", ["495280"], ["disgaea2.exe"], "mystic", "violet and gold."),
+P("Disgaea 4 Complete+", ["1233880"], ["disgaea4pc.exe"], "mystic", "violet and gold."),
+P("Disgaea 5 Complete", ["803600"], ["disgaea5.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Disgaea 6 Complete", ["1749750"], ["disgaea6.exe", "disgaea6d.exe", "disgaea6r.exe"], "mystic", "violet and gold."),
+P("Disgaea 7: Vows of the Virtueless", ["2250600"], ["disgaea7.exe", "disgaea7r.exe"], "mystic", "violet and gold."),
+P("Disgaea Mayhem", ["4402250"], ["disgaea_mayhem.exe", "disgaea_mayhemr.exe"], "mystic", "violet and gold.", ctl=["dualshock"]),
+P("Disgaea PC", ["405900"], ["dis1_st.exe"], "mystic", "violet and gold."),
+P("Etrange Overlord", ["3515480"], ["etrangeoverlord.exe"], "mystic", "violet and gold.", ctl=["dualshock"]),
+P("Fallen Legion: Revenants", ["1921340"], ["fallen legion revenants.exe"], "mystic", "violet and gold."),
+P("Hotaru no Nikki: The Firefly Diary", ["368640"], ["hotaru.exe"], "paper", "paper cream and ink."),
+P("Kamiwaza: Way of the Thief", ["1924810"], ["kamiwaza.exe"], "coldsteel", "steel blue and grey."),
+PS("Killer7", ["868520"], ["killer7win.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard.", ctl=["dualshock"]),
+P("La Pucelle: Ragnarok", ["1866420"], ["lapucelle_debug_en.exe", "lapucelle_en.exe"], "mystic", "violet and gold."),
+P("Labyrinth of Galleria: The Moon Society", ["1998340"], ["labyrinthofgalleria.exe", "labyrinthofgalleriad.exe", "labyrinthofgalleriar.exe"], "mystic", "violet and gold."),
+P("Labyrinth of Refrain: Coven of Dusk", ["566540"], ["refrain.exe"], "mystic", "violet and gold."),
+P("Langrisser I & II", ["1060220"], ["langrisser i & ii.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Makai Kingdom: Reclaimed and Rebound", ["1732060"], ["makaikingdom.exe"], "mystic", "violet and gold."),
+P("Monark", ["1539620"], ["monark.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Operation Abyss: New Tokyo Legacy", ["541450"], ["operation abyss.exe"], "mystic", "violet and gold."),
+P("Operation Babel: New Tokyo Legacy", ["548810"], ["operation babel.exe"], "coldsteel", "steel blue and grey."),
+P("Phantom Brave PC", ["409870"], ["phantom brave pc.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Phantom Brave: The Lost Hero", ["3049990"], ["phantombravethelosthero.exe", "phantombravethelostheror.exe"], "mystic", "violet and gold.", ctl=["dualshock"]),
+P("Psycho-Pass: Mandatory Happiness", ["522880"], ["psy.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+PS("R-Type Final 2", ["1442820"], ["rtypefinal2.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+PS("Raiden III x MIKADO MANIAX", ["2002860"], ["raiden3.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+PS("Raiden IV x MIKADO remix", ["2002850"], ["raidenivx.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Reynatis", ["2738750"], ["reynatis.exe"], "mystic", "violet and gold.", ctl=["dualshock"]),
+P("Rhapsody II: Ballad of the Little Princess", ["2002870"], ["rhapsody2_debug_en.exe", "rhapsody2_en.exe"], "mystic", "violet and gold."),
+P("Rhapsody III: Memories of Marl Kingdom", ["2002880"], ["rhapsody3_debug_en.exe", "rhapsody3_en.exe"], "scifi", "cold blue and cyan."),
+P("Rhapsody: A Musical Adventure", ["1866430"], ["rhapsody_debug_en.exe", "rhapsody_en.exe"], "mystic", "violet and gold."),
+P("Saviors of Sapphire Wings / Stranger of Sword City Revisited", ["1363840"], [], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Soul Nomad & the World Eaters", ["1535610"], ["soulnomad.exe"], "mystic", "violet and gold."),
+P("Starbites", ["2199080"], ["starbites.exe"], "scifi", "cold blue and cyan.", ctl=["dualshock"]),
+P("Stranger of Sword City", ["409890"], ["strangerofswordcity.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("The 25th Ward: The Silver Case", ["697650"], ["the25thward.exe"], "coldsteel", "steel blue and grey."),
+P("The Alliance Alive HD Remastered", ["1027250"], ["thealliancealivehd.exe"], "coldsteel", "steel blue and grey."),
+P("The Caligula Effect: Overdose", ["889600"], [], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("The Legend of Legacy HD Remastered", ["2516220"], ["the legend of legacy hd remastered.exe"], "mystic", "violet and gold.", ctl=["dualshock"]),
+P("The Liar Princess and the Blind Prince", ["3901910"], ["princessandprince.exe"], "nature", "leaf green and earth brown.", ctl=["dualshock"]),
+P("The Longest Five Minutes", ["504110"], [], "mystic", "violet and gold."),
+P("Tokyo Tattoo Girls", ["552910"], [], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Village in the Shade", ["3934250"], ["village.exe", "villager.exe"], "nature", "leaf green and earth brown."),
+P("Yomawari: Lost in the Dark", ["1998330"], ["yomawaridebug.exe", "yomawarimaster.exe"], "horror", "blood red and grey."),
+P("Yomawari: Midnight Shadows", ["625980"], ["yomawari2.exe"], "coldsteel", "steel blue and grey."),
+P("Yomawari: Night Alone", ["477870"], ["yomawari-steam.exe"], "horror", "blood red and grey."),
+P("ZHP: Unlosing Ranger vs. Darkdeath Evilman", ["1732070"], ["zhp.exe"], "mystic", "violet and gold."),
+]

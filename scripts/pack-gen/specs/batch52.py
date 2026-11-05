@@ -1,0 +1,71 @@
+from helpers import *
+# Games Marvelous and XSEED publishes, not covered by an earlier pack.
+# Selection: a live Steam game whose Steam publisher is Marvelous or XSEED (wiki names it too), no pack by Steam id or name.
+# P = passthrough, for games with controller support (PS = passthrough plus a gyro profile, for shooters); T = strategy with a pointer;
+# C / CW = pointer (and WASD) pack; F = mouse-and-keyboard shooter with a gyro profile; KB = keyboard game (pad support before XInput or none).
+# Controller support: Steam's flag (full or partial) when it has one, else the PCGamingWiki snapshot; "dualshock" / "switch_pro" are ticked only where the wiki says so.
+# Steam ids are each game's base app; executables come from Steam's launch data (Discord's list where Steam has none) and are left out when the name is generic
+# or another pack already uses it (that pack then matches by Steam id alone). Genre-based kind and theme were assigned by script and corrected by hand for the
+# pointer and keyboard games.
+# Left out everywhere: VR games, DLC, demos, tools and soundtracks, games with no release date or not out yet, games delisted from Steam, and games that already have a pack.
+S = []
+S += [
+P("Akiba's Trip: Hellbound & Debriefed", ["1236780"], ["akibahd.exe"], "fighter", "arena red and gold."),
+P("Akiba's Trip: Undead & Undressed", ["333980"], ["akibauu.exe", "radiationnext_win32d3d11.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Assault Gunners HD Edition", ["751340"], ["game_x64.exe", "game_x86.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+PS("Bullet Witch", ["696180"], ["witch.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard.", ctl=["dualshock"]),
+P("Corpse Party", ["251270"], [], "horror", "blood red and grey."),
+P("Corpse Party (2021)", ["1273260"], [], "coldsteel", "steel blue and grey."),
+P("Corpse Party 2: Dead Patient", ["940310"], ["corpseparty2.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Corpse Party: Blood Drive", ["824830"], ["corpseparty_blooddrive.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Corpse Party: Book of Shadows", ["778390"], ["bookofshadows.exe"], "paper", "paper cream and ink."),
+P("Corpse Party: Sweet Sachiko's Hysteric Birthday Bash", ["778400"], ["hystericbirthday.exe"], "coldsteel", "steel blue and grey."),
+P("Cuisineer", ["1963570"], ["cuisineer.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+PS("Daemon X Machina", ["1167450"], ["dxm.exe"], "industrial", "steel grey and orange.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+PS("Daemon X Machina: Titanic Scion", ["1342490"], [], "scifi", "cold blue and cyan.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard.", ctl=["dualshock"]),
+P("Exile's End", ["382130"], ["exiles_end.exe"], "coldsteel", "steel blue and grey."),
+P("Fairy Bloom Freesia", ["214590"], ["fairybloomfreesia.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Farmagia", ["2508770"], ["farmagia.exe"], "mystic", "violet and gold.", ctl=["dualshock"]),
+P("Fate/Extella: Link", ["622220"], ["fateextellalink.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Fate/Extella: The Umbral Star", ["511680"], [], "scifi", "cold blue and cyan.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Granblue Fantasy: Versus", ["1090630"], ["gbvs.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard.", ctl=["dualshock"]),
+P("Half-Minute Hero: Super Mega Neo Climax Ultimate Boy", ["214830"], ["hmh.exe"], "coldsteel", "steel blue and grey.", n="The wiki lists controller support but is not sure the game reads XInput: if the pad does nothing in the game, set the controller type in its options or run it through Steam Input."),
+P("Half-Minute Hero: The Second Coming", ["240970"], ["hmh2.exe"], "coldsteel", "steel blue and grey."),
+P("Heroland", ["1066030"], [], "coldsteel", "steel blue and grey."),
+P("Kandagawa Jet Girls", ["1233800"], ["kandagawa jet girls.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Little King's Story", ["390310"], ["rungame.exe"], "paper", "paper cream and ink.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+C("London Detective Mysteria", ["627350"], ["mysteria.exe"], "noir", "noir grey and amber", exenote=" The Windows executable is from Steam's launch data."),
+P("Milano's Odd Job Collection", ["3582980"], ["milano.exe"], "coldsteel", "steel blue and grey.", ctl=["dualshock"]),
+P("Moonlight Peaks", ["2209900"], ["moonlight peaks.exe"], "coldsteel", "steel blue and grey."),
+P("Nitroplus Blasterz: Heroines Infinite Duel", ["482450"], ["nitroplus blasterz.exe"], "fighter", "arena red and gold."),
+P("No More Heroes", ["1420290"], ["nmh.exe"], "coldsteel", "steel blue and grey."),
+P("No More Heroes 2: Desperate Struggle", ["1420300"], ["nmh2.exe"], "coldsteel", "steel blue and grey."),
+P("No More Heroes 3", ["1744330"], ["nmh3.exe"], "coldsteel", "steel blue and grey."),
+P("Potionomics", ["1874490"], ["potionomics.exe"], "mystic", "violet and gold."),
+P("Rune Factory 3 Special", ["2243710"], ["rune factory 3 special.exe"], "mystic", "violet and gold."),
+P("Rune Factory 4 Special", ["1580240"], ["rf4s.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Rune Factory 5", ["1702330"], ["rune factory 5.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Rune Factory: Guardians of Azuma", ["2864560"], [], "mystic", "violet and gold.", ctl=["dualshock"]),
+P("Sakuna: Of Rice and Ruin", ["1356670"], ["sakuna.exe"], "nature", "leaf green and earth brown."),
+P("Senran Kagura Bon App\u00e9tit! - Full Course", ["514310"], ["skbonappetit.exe"], "coldsteel", "steel blue and grey.", slug="senran-kagura-bon-appetit-full-course"),
+P("Senran Kagura Burst Re:Newal", ["889510"], ["skburstrenewal.exe"], "fighter", "arena red and gold."),
+P("Senran Kagura Estival Versus", ["502800"], ["skestivalversus.exe"], "coldsteel", "steel blue and grey."),
+P("Senran Kagura Peach Ball", ["1074080"], ["skpeachball.exe"], "coldsteel", "steel blue and grey."),
+PS("Senran Kagura Peach Beach Splash", ["696170"], ["skpeachbeachsplash.exe"], "coldsteel", "steel blue and grey."),
+P("Senran Kagura Reflexions", ["981770"], ["skreflexions.exe"], "coldsteel", "steel blue and grey."),
+P("Senran Kagura Shinovi Versus", ["411830"], ["skshinoviversus.exe"], "fighter", "arena red and gold."),
+P("Silent Hope", ["1960110"], ["nr.exe"], "horror", "blood red and grey."),
+P("Story of Seasons: A Wonderful Life", ["2111170"], ["story of seasons a wonderful life.exe"], "nature", "leaf green and earth brown.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard.", ctl=["dualshock"]),
+P("Story of Seasons: Friends of Mineral Town", ["978780"], ["story of seasons friends of mineral town.exe", "story of seasons friends of mineral town_compatibility.exe"], "nature", "leaf green and earth brown.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Story Of Seasons: Grand Bazaar", ["2508780"], ["fo.exe", "sosgrandbazaar.exe"], "nature", "leaf green and earth brown.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard.", ctl=["dualshock"]),
+P("Story of Seasons: Pioneers of Olive Town", ["1392960"], ["story of seasons pioneers of olive town.exe"], "nature", "leaf green and earth brown.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("The Big Catch: Tacklebox", ["2985610"], ["the big catch tacklebox.exe"], "coldsteel", "steel blue and grey.", ctl=["dualshock", "switch_pro"]),
+C("The Last Alchemist", ["1536570"], ["the_alchemist.exe"], "mystic", "violet and gold", exenote=" The Windows executable is from Steam's launch data."),
+P("Touhou: New World", ["2150660"], [], "mystic", "violet and gold."),
+P("Touhou: Scarlet Curiosity", ["845880"], ["scarletcuriosity.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Travis Strikes Again: No More Heroes", ["961490"], ["tsanmh.exe"], "coldsteel", "steel blue and grey."),
+P("Trinity Trigger", ["2176930"], ["trinity trigger.exe"], "mystic", "violet and gold."),
+P("Uppers", ["795760"], [], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Valkyrie Drive: Bhikkhuni", ["550080"], ["vd_bhikkhuni.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Wizardry: Labyrinth of Lost Souls", ["948640"], ["lols_win32.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+]

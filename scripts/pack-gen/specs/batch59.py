@@ -1,0 +1,73 @@
+from helpers import *
+# Games Headup publishes, not covered by an earlier pack.
+# Selection: a live Steam game whose Steam publisher is Headup (wiki names it too), no pack by Steam id or name.
+# P = passthrough, for games with controller support (PS = passthrough plus a gyro profile, for shooters); T = strategy with a pointer;
+# C / CW = pointer (and WASD) pack; F = mouse-and-keyboard shooter with a gyro profile; KB = keyboard game (pad support before XInput or none).
+# Controller support: Steam's flag (full or partial) when it has one, else the PCGamingWiki snapshot; "dualshock" / "switch_pro" are ticked only where the wiki says so.
+# Steam ids are each game's base app; executables come from Steam's launch data (Discord's list where Steam has none) and are left out when the name is generic
+# or another pack already uses it (that pack then matches by Steam id alone). Genre-based kind and theme were assigned by script and corrected by hand for the
+# pointer and keyboard games.
+# Left out everywhere: VR games, DLC, demos, tools and soundtracks, games with no release date or not out yet, games delisted from Steam, and games that already have a pack.
+S = []
+S += [
+P("Aerial Knight's We Never Yield", ["2804740"], ["aerial_knight's we never yield.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+T("Autonauts", ["979120"], ["autonauts.exe"], "nature", "leaf green and earth brown", exenote=" The Windows executable is from Steam's launch data."),
+T("Autonauts vs Piratebots", ["1907720"], ["autonauts vs pirate bots.exe"], "nature", "leaf green and earth brown", exenote=" The Windows executable is from Steam's launch data."),
+PS("Bloodshed", ["2747550"], ["bloodshed.exe"], "coldsteel", "steel blue and grey.", ctl=["dualshock"]),
+P("Bridge Constructor", ["250460"], ["bridgeconstructor.exe"], "calm", "soft pastel tones."),
+C("Bridge Constructor Medieval", ["319850"], ["bridgeconstructormedieval.exe"], "parchment", "parchment brown and gold", exenote=" The Windows executable is from Steam's launch data."),
+C("Bridge Constructor Playground", ["279990"], ["bridgeconstructorplayground.exe"], "calm", "soft pastel tones", exenote=" The Windows executable is from Steam's launch data."),
+P("Bridge Constructor Portal", ["684410"], ["bridge_constructor_portal.exe"], "scifi", "cold blue and cyan."),
+P("Bridge Constructor Stunts", ["419080"], ["bridge_constructor_stunts.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Bridge Constructor: The Walking Dead", ["1336120"], ["bc_twd.exe"], "calm", "soft pastel tones."),
+P("Cardaclysm", ["1252710"], ["cardaclysm - shards of the four.exe"], "calm", "soft pastel tones."),
+P("Causal Loop", ["3374460"], ["causalloop.exe"], "calm", "soft pastel tones.", ctl=["dualshock"]),
+PS("Colt Canyon", ["940710"], ["coltcanyon.exe"], "coldsteel", "steel blue and grey."),
+P("Crowns and Pawns: Kingdom of Deceit", ["1125910"], ["crowns and pawns.exe"], "coldsteel", "steel blue and grey."),
+P("Dead Age", ["363930"], ["deadage.exe"], "mystic", "violet and gold."),
+P("Dead Age 2", ["951430"], ["deadage2.exe"], "mystic", "violet and gold.", n="The wiki lists controller support but is not sure the game reads XInput: if the pad does nothing in the game, set the controller type in its options or run it through Steam Input."),
+P("Doodle Derby", ["916180"], ["doodlederby.exe"], "fighter", "arena red and gold."),
+P("Dr. Fetus' Mean Meat Machine", ["2228030"], ["dr. fetus' mean meat machine.exe"], "calm", "soft pastel tones."),
+P("Dub Dash", ["406940"], ["dubdash.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+PS("Earth Atlantis", ["997030"], ["earthatlantis.exe"], "coldsteel", "steel blue and grey."),
+KB("Escape from Naraka", ["1390670"], ["leyak.exe"], "pixel", "bright pixel-art colors", exenote=" The Windows executable is from Steam's launch data."),
+PS("Everreach: Project Eden", ["915670"], ["everreach.exe"], "coldsteel", "steel blue and grey."),
+C("Game Royale 2: The Secret of Jannis Island", ["567010"], ["gameroyale2.exe"], "calm", "soft pastel tones", exenote=" The Windows executable is from Steam's launch data."),
+P("Gigapocalypse", ["1543240"], ["gigapocalypse.exe"], "coldsteel", "steel blue and grey."),
+CW("Grimmwood", ["850290"], [], "horror", "blood red and grey"),
+CW("Grimmwood - They Come at Night", ["809280"], [], "horror", "blood red and grey"),
+P("Hell Pie", ["889910"], ["hellpie.exe"], "coldsteel", "steel blue and grey."),
+P("Inayah: Life after Gods", ["3199390"], ["inayah.exe"], "coldsteel", "steel blue and grey.", ctl=["dualshock"]),
+PS("Industria", ["1172650"], ["industria.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+PS("Industria 2", ["2154070"], ["industria_2.exe"], "horror", "blood red and grey.", ctl=["dualshock"]),
+P("Lawn Mowing Simulator", ["1480560"], ["lawn mowing simulator.exe"], "coldsteel", "steel blue and grey."),
+P("Lost at Sea", ["1278750"], ["lost_at_sea.exe"], "calm", "soft pastel tones."),
+T("Meridian: New World", ["265120"], ["meridian - new world.exe"], "scifi", "cold blue and cyan", exenote=" The Windows executable is from Steam's launch data."),
+T("Meridian: Squad 22", ["451400"], ["squad22.exe"], "scifi", "cold blue and cyan", exenote=" The Windows executable is from Steam's launch data."),
+P("Outbuddies", ["1083310"], ["outbuddies.exe"], "coldsteel", "steel blue and grey."),
+P("Pixel Heroes: Byte & Magic", ["338320"], ["pixel heroes - byte and magic.exe"], "pixel", "bright pixel-art colors."),
+P("Pumpkin Jack", ["1186640"], ["pumpkinjack.exe"], "coldsteel", "steel blue and grey.", ctl=["dualshock"]),
+T("Rockfest", ["754640"], ["rockfest.exe"], "calm", "soft pastel tones", exenote=" The Windows executable is from Steam's launch data."),
+C("Runes", ["548050"], ["runes.exe"], "mystic", "violet and gold", exenote=" The Windows executable is from Steam's launch data."),
+P("Safety First!", ["497700"], ["safetyfirst.exe"], "coldsteel", "steel blue and grey."),
+P("Scarlet Hood and the Wicked Wood", ["1141120"], ["scarlethood.exe"], "coldsteel", "steel blue and grey."),
+P("Shiny the Firefly", ["277510"], ["shiny.exe"], "coldsteel", "steel blue and grey."),
+P("Silver Chains", ["975470"], ["silverchains.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Slime-san", ["473530"], ["slime-san.exe"], "coldsteel", "steel blue and grey."),
+P("Slime-san: Blackbird's Kraken", ["649820"], ["slime-san blackbirds kraken.exe"], "coldsteel", "steel blue and grey."),
+P("Slime-san: Creator", ["924130"], ["slime-san creator.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Slime-san: Sheeple's Sequel", ["766010"], ["slime-san sheeples sequel.exe"], "coldsteel", "steel blue and grey."),
+P("Solar Shifter EX", ["363940"], ["solarshifter.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+PS("Soulslinger: Envoy of Death", ["2429240"], ["soulslinger.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Super Meat Boy 3D", ["3288210"], ["smb.exe"], "coldsteel", "steel blue and grey.", ctl=["dualshock"]),
+P("Symphonia (2024)", ["1865960"], ["symphonia.exe"], "coldsteel", "steel blue and grey.", ctl=["dualshock"]),
+P("The Coma 2: Vicious Sisters", ["1045720"], ["thecoma2vicioussisters.exe"], "horror", "blood red and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("The Coma 2B: Catacomb", ["1781890"], ["thecoma2b.exe"], "horror", "blood red and grey.", ctl=["dualshock"]),
+C("The Fabled Woods", ["1299480"], ["thefabledwoods.exe"], "horror", "blood red and grey", exenote=" The Windows executable is from Steam's launch data."),
+C("The Inner World", ["251430"], ["theinnerworld.exe"], "calm", "soft pastel tones", exenote=" The Windows executable is from Steam's launch data."),
+P("The Inner World: The Last Wind Monk", ["613470"], ["the last wind monk.exe"], "coldsteel", "steel blue and grey."),
+P("The Textorcist: The Story of Ray Bibbia", ["940680"], ["textorcist.exe"], "paper", "paper cream and ink."),
+P("Tr\u00fcberbrook", ["757300"], ["truberbrook.exe"], "coldsteel", "steel blue and grey.", slug="truberbrook"),
+P("Vambrace: Cold Soul", ["904380"], ["vambracecoldsoul.exe"], "mystic", "violet and gold.", ctl=["dualshock"]),
+C("Vambrace: Dungeon Monarch", ["2753600"], ["dungeonmonarch.exe"], "mystic", "violet and gold", exenote=" The Windows executable is from Steam's launch data."),
+]
