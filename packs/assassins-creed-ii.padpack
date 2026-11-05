@@ -19,6 +19,10 @@ profile = "Assassin's Creed II"
 kind = "executable"
 value = "acii_game.exe"
 profile = "Assassin's Creed II"
+[[rules]]
+kind = "executable"
+value = "assassinscreediigame.exe"
+profile = "Assassin's Creed II"
 
 [[profiles]]
 name = "Assassin's Creed II"

@@ -12,7 +12,7 @@ made_with = "Xbox controller"
 
 [[rules]]
 kind = "steam_app_id"
-value = "17510"
+value = "13140"
 profile = "America's Army 3"
 
 [[rules]]
