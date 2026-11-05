@@ -4,67 +4,95 @@ overlay_font = "Orbitron"
 
 [pack]
 id = "6507d8a2-368b-55eb-8ee9-ba0aa42487aa"
-name = "STAR WARS Battlefront"
+name = "Star Wars: Battlefront"
 version = "1.0"
 author = "Padwight"
-description = "STAR WARS Battlefront with its own controller support. The controller passes through to the game untouched; the game's options set the buttons. Padwight adds the Guide overlay in the game's colors."
+description = "Star Wars: Battlefront on an Xbox-style pad. The left stick walks on WASD and the right stick looks; RT fires, LT aims, the gyro aims finely. Overlays in cold blue and cyan."
 made_with = "Xbox controller"
 
 [[rules]]
 kind = "steam_app_id"
-value = "1237980"
-profile = "STAR WARS Battlefront"
+value = "1058020"
+profile = "Star Wars: Battlefront"
 
 [[rules]]
 kind = "executable"
-value = "starwarsbattlefront.exe"
-profile = "STAR WARS Battlefront"
+value = "battlefront.exe"
+profile = "Star Wars: Battlefront"
 
 [[profiles]]
-name = "STAR WARS Battlefront"
+name = "Star Wars: Battlefront"
 combos = []
 combo_window_ms = 120
 tap_window_ms = 250
 long_press_ms = 500
 
 [profiles.buttons]
-South = {gamepad = "South"}
-East = {gamepad = "East"}
-North = {gamepad = "North"}
-West = {gamepad = "West"}
-LeftBumper = {gamepad = "LeftBumper"}
-RightBumper = {gamepad = "RightBumper"}
-LeftStick = {gamepad = "LeftStick"}
-RightStick = {gamepad = "RightStick"}
-Select = {gamepad = "Select"}
-Start = {gamepad = "Start"}
-DpadUp = {gamepad = "DpadUp"}
-DpadDown = {gamepad = "DpadDown"}
-DpadLeft = {gamepad = "DpadLeft"}
-DpadRight = {gamepad = "DpadRight"}
 Guide = {mode = "Guide"}
+South = {keys = ["KEY_SPACE"]}
+East = {keys = ["KEY_LEFTCTRL"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+Start = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_R"]}
+North = {keys = ["KEY_E"]}
+LeftBumper = {keys = ["KEY_Q"]}
+RightBumper = {keys = ["KEY_G"]}
+LeftStick = {keys = ["KEY_LEFTSHIFT"]}
+RightStick = {keys = ["KEY_V"]}
+Select = {keys = ["KEY_TAB"]}
 
 [profiles.left_stick]
-deadzone = 0.05
+deadzone = 0.15
 curve = 1.0
-key_threshold = 0.3
+key_threshold = 0.35
 
-[profiles.left_stick.action]
-gamepad = {stick = "Left", invert_y = false}
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
 
 [profiles.right_stick]
-deadzone = 0.05
-curve = 1.0
-key_threshold = 0.3
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
 
-[profiles.right_stick.action]
-gamepad = {stick = "Right", invert_y = false}
+[profiles.right_stick.action.mouse]
+speed = 900.0
+accel = 0.3
 
-[profiles.left_trigger]
-action = {gamepad = "Left"}
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
 
-[profiles.right_trigger]
-action = {gamepad = "Right"}
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
 
 [profiles.gyro]
 enabled = false
@@ -74,14 +102,37 @@ invert_y = false
 noise_threshold = 1.0
 
 [profiles.guide]
-notes = '''The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. {guide} still works over the game: {guide} + {west} opens the on-screen keyboard for names and text, and {guide} + {lb} the media controls.'''
+notes = '''The left stick {ls} walks on WASD and the right stick {rs} looks around. {rt} fires and {lt} aims or fires the alternate mode. {up} and {down} change weapon on the wheel.
+Buttons: {south} Jump; {east} Crouch; {start} Menu; {west} Reload; {north} Use; {lb} Last weapon; {rb} Grenade; {l3} Sprint; {r3} Melee; {select} Scoreboard.
+Typical defaults for the genre, not checked against the game. Keys are the game's defaults as remembered, not read from an install; if one doesn't answer, check the game's controls options and change the buttons here to match. The Windows executable is from Steam's launch data. The game has no controller support, so the pad plays it with the mouse and keyboard keys.
+Typing a name or text: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move"}
+"stick:Right" = {text = "Look"}
+"trigger:Right" = {text = "Fire"}
+"trigger:Left" = {text = "Aim / alt fire"}
+"button:South" = {text = "{icon:arrow} Jump"}
+"button:East" = {text = "Crouch"}
+"button:Start" = {text = "Menu"}
+"button:West" = {text = "{icon:rotate} Reload"}
+"button:North" = {text = "{icon:hand} Use"}
+"button:LeftBumper" = {text = "Last weapon"}
+"button:RightBumper" = {text = "Grenade"}
+"button:LeftStick" = {text = "Sprint"}
+"button:RightStick" = {text = "Melee"}
+"button:Select" = {text = "Scoreboard"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
 
 
 [[profiles]]
-name = "STAR WARS Battlefront + Gyro"
+name = "Star Wars: Battlefront + Gyro"
 combos = [
     {buttons = ["Select", "Start"], action = "gyro_clutch"},
-    {buttons = ["Select", "RightStick"], action = "gyro_recenter"},
 ]
 combo_window_ms = 120
 tap_window_ms = 250
@@ -89,43 +140,71 @@ long_press_ms = 500
 requires = ["gyro"]
 
 [profiles.buttons]
-South = {gamepad = "South"}
-East = {gamepad = "East"}
-North = {gamepad = "North"}
-West = {gamepad = "West"}
-LeftBumper = {gamepad = "LeftBumper"}
-RightBumper = {gamepad = "RightBumper"}
-LeftStick = {gamepad = "LeftStick"}
-RightStick = {gamepad = "RightStick"}
-Select = {gamepad = "Select"}
-Start = {gamepad = "Start"}
-DpadUp = {gamepad = "DpadUp"}
-DpadDown = {gamepad = "DpadDown"}
-DpadLeft = {gamepad = "DpadLeft"}
-DpadRight = {gamepad = "DpadRight"}
 Guide = {mode = "Guide"}
+South = {keys = ["KEY_SPACE"]}
+East = {keys = ["KEY_LEFTCTRL"]}
+DpadUp = {wheel = "Up"}
+DpadDown = {wheel = "Down"}
+Start = {keys = ["KEY_ESC"]}
+West = {keys = ["KEY_R"]}
+North = {keys = ["KEY_E"]}
+LeftBumper = {keys = ["KEY_Q"]}
+RightBumper = {keys = ["KEY_G"]}
+LeftStick = {keys = ["KEY_LEFTSHIFT"]}
+RightStick = {keys = ["KEY_V"]}
+Select = {keys = ["KEY_TAB"]}
 
 [profiles.left_stick]
-deadzone = 0.05
+deadzone = 0.15
 curve = 1.0
-key_threshold = 0.3
+key_threshold = 0.35
 
-[profiles.left_stick.action]
-gamepad = {stick = "Left", invert_y = false}
+[profiles.left_stick.action.ring]
+sectors = 8
+start_angle = 0.0
+inner_radius = 0.35
+hysteresis = 0.1
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_W"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_D"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_D"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_S"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_S"] }, { keys = ["KEY_A"] }]
+
+[[profiles.left_stick.action.ring.actions]]
+keys = ["KEY_A"]
+
+[[profiles.left_stick.action.ring.actions]]
+multi = [{ keys = ["KEY_W"] }, { keys = ["KEY_A"] }]
 
 [profiles.right_stick]
-deadzone = 0.05
-curve = 1.0
-key_threshold = 0.3
+deadzone = 0.12
+curve = 1.7
+key_threshold = 0.5
 
-[profiles.right_stick.action]
-gamepad = {stick = "Right", invert_y = false}
+[profiles.right_stick.action.mouse]
+speed = 900.0
+accel = 0.3
 
-[profiles.left_trigger]
-action = {gamepad = "Left"}
+[profiles.left_trigger.action.button]
+threshold = 0.4
+action = {mouse = "Right"}
 
-[profiles.right_trigger]
-action = {gamepad = "Right"}
+[profiles.right_trigger.action.button]
+threshold = 0.3
+action = {mouse = "Left"}
 
 [profiles.gyro]
 horizontal = "yaw"
@@ -133,15 +212,36 @@ invert_x = false
 invert_y = false
 noise_threshold = 1.0
 
-[profiles.gyro.mode.stick]
-stick = "Right"
-full_rate = 360.0
-anti_deadzone = 0.2
-game_curve = 1.0
+[profiles.gyro.mode.mouse]
+sensitivity = 20.0
 
 [profiles.guide]
-notes = '''The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. {guide} still works over the game: {guide} + {west} opens the on-screen keyboard for names and text, and {guide} + {lb} the media controls.
-Gyro aim, an extra profile for a shooter (the game's own scheme stays the default): tilting the controller turns the view through a virtual right stick, assumed to match a linear stick response with a 0.2 dead zone; change Game's curve and Anti-deadzone under Gyro if the view turns too far or too little. Hold {select} and {start} together to pause the gyro while you reposition the controller; {select} + {r3} recenters it.'''
+notes = '''Hold {select} and {start} together to pause the gyro while you reposition the controller. Tilting the controller aims, for fine adjustments next to the right stick {rs}.
+The left stick {ls} walks on WASD and the right stick {rs} looks around. {rt} fires and {lt} aims or fires the alternate mode. {up} and {down} change weapon on the wheel.
+Buttons: {south} Jump; {east} Crouch; {start} Menu; {west} Reload; {north} Use; {lb} Last weapon; {rb} Grenade; {l3} Sprint; {r3} Melee; {select} Scoreboard.
+Typical defaults for the genre, not checked against the game. Keys are the game's defaults as remembered, not read from an install; if one doesn't answer, check the game's controls options and change the buttons here to match. The Windows executable is from Steam's launch data. The game has no controller support, so the pad plays it with the mouse and keyboard keys.
+Typing a name or text: {guide} + {west} opens the on-screen keyboard.'''
+
+[profiles.guide.edits]
+"stick:Left" = {text = "Move"}
+"stick:Right" = {text = "Look"}
+"trigger:Right" = {text = "Fire"}
+"trigger:Left" = {text = "Aim / alt fire"}
+"button:South" = {text = "{icon:arrow} Jump"}
+"button:East" = {text = "Crouch"}
+"button:Start" = {text = "Menu"}
+"button:West" = {text = "{icon:rotate} Reload"}
+"button:North" = {text = "{icon:hand} Use"}
+"button:LeftBumper" = {text = "Last weapon"}
+"button:RightBumper" = {text = "Grenade"}
+"button:LeftStick" = {text = "Sprint"}
+"button:RightStick" = {text = "Melee"}
+"button:Select" = {text = "Scoreboard"}
+
+[[profiles.guide.merged]]
+inputs = ["button:DpadUp", "button:DpadDown"]
+text = "Zoom in / out"
+
 
 
 [keyboard_style]

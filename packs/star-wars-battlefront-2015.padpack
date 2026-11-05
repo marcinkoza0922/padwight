@@ -3,20 +3,25 @@ macros = []
 overlay_font = "Orbitron"
 
 [pack]
-id = "2d917070-4444-549d-9da4-1921a8a82643"
-name = "STAR WARS Battlefront II"
+id = "38ba8b38-bedd-5f7c-8a00-0af690d37f97"
+name = "Star Wars Battlefront (2015)"
 version = "1.0"
 author = "Padwight"
-description = "STAR WARS Battlefront II with its own controller support. The controller passes through to the game untouched; the game's options set the buttons. Padwight adds the Guide overlay in the game's colors."
+description = "Star Wars Battlefront (2015) with its own controller support. The controller passes through to the game untouched; the game's options set the buttons. Padwight adds the Guide overlay in the game's colors."
 made_with = "Xbox controller"
 
 [[rules]]
 kind = "steam_app_id"
-value = "1237950"
-profile = "STAR WARS Battlefront II"
+value = "1237980"
+profile = "Star Wars Battlefront (2015)"
+
+[[rules]]
+kind = "executable"
+value = "starwarsbattlefront.exe"
+profile = "Star Wars Battlefront (2015)"
 
 [[profiles]]
-name = "STAR WARS Battlefront II"
+name = "Star Wars Battlefront (2015)"
 combos = []
 combo_window_ms = 120
 tap_window_ms = 250
@@ -69,11 +74,11 @@ invert_y = false
 noise_threshold = 1.0
 
 [profiles.guide]
-notes = '''The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard. The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. {guide} still works over the game: {guide} + {west} opens the on-screen keyboard for names and text, and {guide} + {lb} the media controls.'''
+notes = '''The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. {guide} still works over the game: {guide} + {west} opens the on-screen keyboard for names and text, and {guide} + {lb} the media controls.'''
 
 
 [[profiles]]
-name = "STAR WARS Battlefront II + Gyro"
+name = "Star Wars Battlefront (2015) + Gyro"
 combos = [
     {buttons = ["Select", "Start"], action = "gyro_clutch"},
     {buttons = ["Select", "RightStick"], action = "gyro_recenter"},
@@ -135,7 +140,7 @@ anti_deadzone = 0.2
 game_curve = 1.0
 
 [profiles.guide]
-notes = '''The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard. The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. {guide} still works over the game: {guide} + {west} opens the on-screen keyboard for names and text, and {guide} + {lb} the media controls.
+notes = '''The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. {guide} still works over the game: {guide} + {west} opens the on-screen keyboard for names and text, and {guide} + {lb} the media controls.
 Gyro aim, an extra profile for a shooter (the game's own scheme stays the default): tilting the controller turns the view through a virtual right stick, assumed to match a linear stick response with a 0.2 dead zone; change Game's curve and Anti-deadzone under Gyro if the view turns too far or too little. Hold {select} and {start} together to pause the gyro while you reposition the controller; {select} + {r3} recenters it.'''
 
 

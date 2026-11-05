@@ -103,4 +103,5 @@ P("WALL-E", ["331750"], ["wall-e.exe"], "scifi", "cold blue and cyan.", ctl=["du
 CW("Winnie the Pooh", ["319400"], ["game-winnie.exe"], "nature", "leaf green and earth brown", exenote=" The Windows executable is from Steam's launch data."),
 C("Zak McKracken and the Alien Mindbenders", ["559070"], [], "pixel", "bright pixel-art colors"),
 PS("Zombies Ate My Neighbors and Ghoul Patrol", ["1137970"], ["zamn_gp.exe"], "horror", "blood red and grey."),
+F("Star Wars: Battlefront", ["1058020"], ["battlefront.exe"], "scifi", "cold blue and cyan", exenote=" The Windows executable is from Steam's launch data."),
 ]

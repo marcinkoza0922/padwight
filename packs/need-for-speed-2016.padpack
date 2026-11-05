@@ -3,20 +3,25 @@ macros = []
 overlay_font = "Kreon"
 
 [pack]
-id = "43360f77-f19b-55be-a1ef-93b926c609c2"
-name = "Need for Speed Most Wanted"
+id = "7ab348af-f1d7-58b5-b6f4-e320f55f743e"
+name = "Need for Speed (2016)"
 version = "1.0"
 author = "Padwight"
-description = "Need for Speed Most Wanted with its own controller support. The controller passes through to the game untouched; the game's options set the buttons. Padwight adds the Guide overlay in the game's colors."
+description = "Need for Speed (2016) with its own controller support. The controller passes through to the game untouched; the game's options set the buttons. Padwight adds the Guide overlay in the game's colors."
 made_with = "Xbox controller"
 
 [[rules]]
 kind = "steam_app_id"
-value = "1262560"
-profile = "Need for Speed Most Wanted"
+value = "1262540"
+profile = "Need for Speed (2016)"
+
+[[rules]]
+kind = "executable"
+value = "nfs16.exe"
+profile = "Need for Speed (2016)"
 
 [[profiles]]
-name = "Need for Speed Most Wanted"
+name = "Need for Speed (2016)"
 combos = []
 combo_window_ms = 120
 tap_window_ms = 250
@@ -69,7 +74,7 @@ invert_y = false
 noise_threshold = 1.0
 
 [profiles.guide]
-notes = '''The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard. The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. {guide} still works over the game: {guide} + {west} opens the on-screen keyboard for names and text, and {guide} + {lb} the media controls.'''
+notes = '''The game has its own controller support, so the controller passes through untouched and the game's own options set the buttons. {guide} still works over the game: {guide} + {west} opens the on-screen keyboard for names and text, and {guide} + {lb} the media controls.'''
 
 
 [keyboard_style]
