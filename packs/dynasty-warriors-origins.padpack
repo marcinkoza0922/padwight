@@ -19,6 +19,10 @@ profile = "Dynasty Warriors: Origins"
 kind = "executable"
 value = "dwo.exe"
 profile = "Dynasty Warriors: Origins"
+[[rules]]
+kind = "executable"
+value = "dworigins.exe"
+profile = "Dynasty Warriors: Origins"
 
 [[profiles]]
 name = "Dynasty Warriors: Origins"

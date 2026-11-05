@@ -24,6 +24,10 @@ profile = "Quake II"
 kind = "executable"
 value = "Quake2_x64.exe"
 profile = "Quake II"
+[[rules]]
+kind = "executable"
+value = "quake2ex_steam.exe"
+profile = "Quake II"
 
 [[profiles]]
 name = "Quake II"

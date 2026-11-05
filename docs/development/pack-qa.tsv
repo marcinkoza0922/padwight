@@ -132,7 +132,7 @@ assassins-creed-chronicles-china.padpack	Assassin's Creed Chronicles: China	name
 assassins-creed-chronicles-india.padpack	Assassin's Creed Chronicles: India	name	Assassin's Creed Chronicles: India	pages/a/Assassin's Creed Chronicles: India.wiki	359610		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2016				
 assassins-creed-chronicles-russia.padpack	Assassin's Creed Chronicles: Russia	name	Assassin's Creed Chronicles: Russia	pages/a/Assassin's Creed Chronicles: Russia.wiki	359600		info	no_exe,passthrough_unconfirmed	no_exe: pack has no executable rule | passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2016				
 assassins-creed-freedom-cry.padpack	Assassin's Creed: Freedom Cry	name	Assassin's Creed: Freedom Cry	pages/a/Assassin's Creed: Freedom Cry.wiki	277590	acfc.exe	ok						
-assassins-creed-ii.padpack	Assassin's Creed II	name	Assassin's Creed II	pages/a/Assassin's Creed II.wiki	33230	acii_game.exe	warn	exe_unseen	exe_unseen: acii_game.exe (seen: assassinscreediigame.exe)				
+assassins-creed-ii.padpack	Assassin's Creed II	name	Assassin's Creed II	pages/a/Assassin's Creed II.wiki	33230	acii_game.exe,assassinscreediigame.exe	warn	exe_unseen	exe_unseen: acii_game.exe (seen: assassinscreediigame.exe)				
 assassins-creed-iii-remastered.padpack	Assassin's Creed III Remastered	name	Assassin's Creed III Remastered	pages/a/Assassin's Creed III Remastered.wiki	911400	aciii.exe,acliberation.exe	ok						
 assassins-creed-iii.padpack	Assassin's Creed III	name	Assassin's Creed III	pages/a/Assassin's Creed III.wiki	208480	ac3mp.exe,ac3sp.exe	ok						
 assassins-creed-iv-black-flag.padpack	Assassin's Creed IV: Black Flag	name	Assassin's Creed IV: Black Flag	pages/a/Assassin's Creed IV: Black Flag.wiki	242050	ac4bfmp.exe,ac4bfsp.exe	ok						
@@ -743,7 +743,7 @@ dynasty-warriors-8-empires.padpack	Dynasty Warriors 8: Empires	name	Dynasty Warr
 dynasty-warriors-8-xtreme-legends.padpack	Dynasty Warriors 8: Xtreme Legends	name	Dynasty Warriors 8: Xtreme Legends	pages/d/Dynasty Warriors 8: Xtreme Legends.wiki	278080		info	no_exe	no_exe: pack has no executable rule				
 dynasty-warriors-9-empires.padpack	Dynasty Warriors 9: Empires	name	Dynasty Warriors 9: Empires	pages/d/Dynasty Warriors 9: Empires.wiki	1341200	dw9emp.exe	ok						
 dynasty-warriors-9.padpack	Dynasty Warriors 9	name	Dynasty Warriors 9	pages/d/Dynasty Warriors 9.wiki	730310	dw9.exe,epic_debugpkg.exe	info	passthrough_unconfirmed	passthrough_unconfirmed: passthrough pack, wiki unsure: controller_support=true xinput=unknown released=2018				
-dynasty-warriors-origins.padpack	Dynasty Warriors: Origins	name	Dynasty Warriors: Origins	pages/d/Dynasty Warriors: Origins.wiki	2384580	dwo.exe	warn	exe_unseen	exe_unseen: dwo.exe (seen: dworigins demo/dworigins_demo.exe, dworigins.exe, dworigins/dworigins.exe)				
+dynasty-warriors-origins.padpack	Dynasty Warriors: Origins	name	Dynasty Warriors: Origins	pages/d/Dynasty Warriors: Origins.wiki	2384580	dwo.exe,dworigins.exe	warn	exe_unseen	exe_unseen: dwo.exe (seen: dworigins demo/dworigins_demo.exe, dworigins.exe, dworigins/dworigins.exe)				
 dyson-sphere-program.padpack	Dyson Sphere Program	name	Dyson Sphere Program	pages/d/Dyson Sphere Program.wiki	1366540	DSPGAME.exe	ok						
 ea-sports-college-football-27.padpack	EA SPORTS College Football 27	name	EA Sports College Football 27	pages/e/EA Sports College Football 27.wiki	4032350		info	no_exe	no_exe: pack has no executable rule				
 ea-sports-fc-24.padpack	EA SPORTS FC 24	name	EA Sports FC 24	pages/e/EA Sports FC 24.wiki	2195250	fc24.exe	ok						
@@ -1911,7 +1911,7 @@ q2pro.padpack	Q2PRO	none				q2pro.exe,q2pro	warn	no_match,no_steam_id	no_match: 
 qliphah-in-providences-shadow.padpack	Qliphah in Providence's Shadow	name	Qliphah in Providence's Shadow	pages/q/Qliphah in Providence's Shadow.wiki	3882410	qliphah.exe	ok						
 quake-4.padpack	Quake 4	name	Quake 4	pages/q/Quake 4.wiki	2210		info	no_exe	no_exe: pack has no executable rule				
 quake-champions.padpack	Quake Champions	name	Quake Champions	pages/q/Quake Champions.wiki	611500	QuakeChampions.exe	ok						
-quake-ii.padpack	Quake II	name	Quake II	pages/q/Quake II.wiki	2320	Quake2_x64.exe	warn	exe_unseen,passthrough_pre2006	exe_unseen: Quake2_x64.exe (seen: quake2.exe, rerelease/quake2ex_steam.exe) | passthrough_pre2006: passthrough pack, but controller_support=true xinput=hackable released=1997				
+quake-ii.padpack	Quake II	name	Quake II	pages/q/Quake II.wiki	2320	Quake2_x64.exe,quake2ex_steam.exe	warn	exe_unseen,passthrough_pre2006	exe_unseen: Quake2_x64.exe (seen: quake2.exe, rerelease/quake2ex_steam.exe) | passthrough_pre2006: passthrough pack, but controller_support=true xinput=hackable released=1997				
 quake-iii-arena.padpack	Quake III Arena	name	Quake III Arena	pages/q/Quake III Arena.wiki	2200	quake3.exe	ok						
 quake-live.padpack	Quake Live	name	Quake Live	pages/q/Quake Live.wiki	282440		info	no_exe	no_exe: pack has no executable rule				
 quake.padpack	Quake	name	Quake	pages/q/Quake.wiki	2310	Quake_x64_steam.exe	warn	passthrough_pre2006	passthrough_pre2006: passthrough pack, but controller_support=true xinput=hackable released=1996				
