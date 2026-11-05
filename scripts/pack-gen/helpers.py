@@ -38,7 +38,7 @@ def P(name, ids, exes, theme, palette, n="", **kw):
     return g
 def KB(name, ids, exes, theme, palette, n="", **kw):
     """Keyboard-only game (its pad support predates XInput, so the pad sends keys): arrows walk, face buttons act."""
-    b = {"South": ("k:Z", "Confirm", None), "East": ("k:X", "Cancel", None), "West": ("k:C", "Action", None), "DpadUp": None, "DpadDown": None}
+    b = {"South": ("k:Z", "Confirm", None), "East": ("k:X", "Cancel", None), "West": ("k:C", "Action", None), "DpadUp": None, "DpadDown": None, **kw.pop("b", {})}
     intro = "The arrow keys move. {south} confirms, {east} cancels, {west} acts, and {start} opens the menu."
     return G(name, ids, exes, "click", theme, "The game's own pad support predates XInput, so the pad sends its keyboard keys: arrows walk and the face buttons act.", b=b, left="arrows", intro=intro,
              n=(n + " " if n else "") + "The keys are the usual defaults for the series, not checked on an install.",
