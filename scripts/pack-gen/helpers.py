@@ -61,3 +61,11 @@ def F(name, ids, exes, theme, mood, b=None, n="", nat=False, **kw):
     tail = f"The left stick walks on WASD and the right stick looks; RT fires, LT aims, the gyro aims finely. Overlays in {mood}."
     return G(name, ids, exes, "click", theme, tail, b={**FB, **(b or {})}, n=(n + " " if n else "") + GUESS, left="wasd", gyro=True,
              intro=FPS_INTRO, pad=NAT if nat else NOPAD, fps=True, rspeed=900.0, rtl="Fire", ltl="Aim / alt fire", **kw)
+
+# Pointer-driven games with no pad support (also defined in specs/batch22.py, which keeps its own copies)
+def T(name, ids, exes, theme, mood, n="", **kw):
+    return G(name, ids, exes, "strat", theme, f"The left stick pans, the right stick points; RT and A click, LT right-clicks. Overlays in {mood}.", n=(n + " " if n else "") + GUESS, **kw)
+def C(name, ids, exes, theme, mood, n="", **kw):
+    return G(name, ids, exes, "click", theme, f"The right stick points; A and RT click, LT right-clicks. Overlays in {mood}.", n=n or "A mouse-driven game; no keys are mapped beyond the mouse.", **kw)
+def CW(name, ids, exes, theme, mood, n="", **kw):
+    return G(name, ids, exes, "click", theme, f"The left stick walks on WASD and the right stick points or looks; RT and A click, LT right-clicks. Overlays in {mood}.", left="wasd", n=(n + " " if n else "") + GUESS, **kw)

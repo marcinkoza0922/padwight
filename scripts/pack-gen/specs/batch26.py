@@ -1,0 +1,70 @@
+from helpers import *
+# Games Arc System Works publishes (Guilty Gear, BlazBlue, River City, Double Dragon), not covered by an earlier pack.
+# Selection: a live Steam game whose Steam publisher is Arc System Works.
+# P = passthrough, for games with controller support (PS = passthrough plus a gyro profile, for shooters); T = strategy with a pointer;
+# C / CW = pointer (and WASD) pack; F = mouse-and-keyboard shooter with a gyro profile; KB = keyboard game (pad support before XInput or none).
+# Controller support: Steam's flag (full or partial) when it has one, else the PCGamingWiki snapshot; "dualshock" / "switch_pro" are ticked only where the wiki says so.
+# Steam ids are each game's base app; executables come from Steam's launch data (Discord's list where Steam has none) and are left out when the name is generic
+# or another pack already uses it (that pack then matches by Steam id alone). Genre-based kind and theme were assigned by script and corrected by hand for the
+# pointer and keyboard games.
+# Left out everywhere: VR games, DLC, demos, tools and soundtracks, games with no release date or not out yet, games delisted from Steam, and games that already have a pack.
+S = []
+S += [
+P("Arcana Heart 3 LOVE MAX!!!!!", ["370460"], ["ah3lm.exe"], "fighter", "arena red and gold."),
+P("Arcana Heart 3 LOVEMAX SIXSTARS!!!!!! XTEND", ["661990"], ["aalib.exe"], "scifi", "cold blue and cyan."),
+P("Battle Fantasia -Revised Edition-", ["356910"], [], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("BlazBlue Centralfiction", ["586140"], ["bbcf.exe"], "fighter", "arena red and gold."),
+P("BlazBlue: Calamity Trigger", ["263300"], ["bbct.exe"], "fighter", "arena red and gold."),
+P("BlazBlue: Chronophantasma Extend", ["388750"], ["bbcpex.exe"], "fighter", "arena red and gold."),
+P("BlazBlue: Continuum Shift Extend", ["294810"], ["bbcse.exe"], "fighter", "arena red and gold."),
+P("BlazBlue: Cross Tag Battle", ["702890"], ["bbtag.exe"], "fighter", "arena red and gold."),
+P("Chaos Code: New Sign of Catastrophe", ["536560"], ["chaoscode.exe"], "fighter", "arena red and gold."),
+P("Code Shifter", ["976570"], ["codeshifter.exe"], "coldsteel", "steel blue and grey."),
+P("Cube Creator X", ["898430"], ["cubecreatorx.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Daedalus - The Awakening of Golden Jazz", ["836600"], ["sax.exe"], "coldsteel", "steel blue and grey."),
+P("Damascus Gear Operation Osaka HD Edition", ["707350"], ["dg_operationosaka.exe"], "coldsteel", "steel blue and grey."),
+P("Damascus Gear Operation Tokyo HD", ["648630"], [], "coldsteel", "steel blue and grey."),
+PS("Damon and Baby", ["3557460"], ["damonandbaby.exe"], "paper", "paper cream and ink."),
+P("Dear me, I was...", ["3891510"], ["dear me, i was.exe"], "paper", "paper cream and ink.", ctl=["dualshock"]),
+P("Double Dragon Advance", ["2086360"], ["doubledragonadvance.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Double Dragon Dodgeball", ["1053540"], ["double dragon dodgeball.exe"], "mystic", "violet and gold."),
+P("Double Dragon IV", ["528610"], ["sousairyu4.exe"], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Double Dragon Revive", ["3012220"], ["launchgame.exe"], "mystic", "violet and gold."),
+P("Getsuei Gakuen -kou-", ["411390"], ["getsuei.exe"], "coldsteel", "steel blue and grey.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Gotcha Racing 2nd", ["848960"], ["gotcha racing 2nd.exe"], "fighter", "arena red and gold."),
+P("Guilty Gear", ["850980"], ["guiltygear.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Guilty Gear 2: Overture", ["437000"], ["ggsx.exe"], "fighter", "arena red and gold."),
+P("Guilty Gear Isuka", ["267900"], ["ggdx.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Guilty Gear Strive", ["1384160"], ["ggst.exe"], "fighter", "arena red and gold.", ctl=["dualshock"]),
+P("Guilty Gear X2 Reload", ["314030"], ["ggx2.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Guilty Gear Xrd -Revelator-", ["520440"], [], "fighter", "arena red and gold."),
+P("Guilty Gear Xrd -SIGN-", ["376300"], [], "fighter", "arena red and gold."),
+P("Guilty Gear XX Accent Core Plus R", ["348550"], ["ggxxacpr_win.exe"], "fighter", "arena red and gold."),
+P("Hunter x Hunter: Nen x Impact", ["2456420"], ["hxhnenximpact.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Inferno Climber", ["433450"], ["arpg.exe"], "mystic", "violet and gold."),
+P("Kill la Kill -IF", ["922500"], ["killlakill_if.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Kowloon High-School Chronicle", ["1053390"], [], "mystic", "violet and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Melty Blood Actress Again Current Code", ["411370"], ["mbaa.exe"], "fighter", "arena red and gold."),
+T("Neo Atlas 1469", ["532690"], ["na1469.exe"], "parchment", "parchment brown and gold", exenote=" The Windows executable is from Steam's launch data."),
+P("New Frontier Days: Founding Pioneers", ["570790"], ["newfrontierdays.exe"], "coldsteel", "steel blue and grey."),
+P("Of Mice and Sand: Revised", ["785780"], ["sabakunonezumidan.exe"], "coldsteel", "steel blue and grey."),
+P("Qliphah in Providence's Shadow", ["3882410"], ["qliphah.exe"], "mystic", "violet and gold."),
+P("River City Girls", ["1049320"], ["rivercitygirls.exe"], "fighter", "arena red and gold."),
+P("River City Girls 2", ["1920480"], ["rcg2.exe"], "fighter", "arena red and gold."),
+P("River City Girls Zero", ["1851020"], ["rcgz.exe"], "fighter", "arena red and gold."),
+P("River City Melee Mach!!", ["763710"], ["river city melee mach!!.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("River City Saga: Journey to the West", ["4164020"], ["rcsjttw.exe"], "fighter", "arena red and gold."),
+P("River City Saga: Three Kingdoms", ["1013220"], ["river city saga three kingdoms.exe"], "samurai", "ink black and crimson.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("River City Saga: Three Kingdoms Next", ["2881520"], ["river city saga three kingdoms next.exe"], "samurai", "ink black and crimson."),
+P("River City: Rival Showdown", ["2090370"], ["river city rival showdown.exe"], "fighter", "arena red and gold."),
+P("RWBY: Arrowfell", ["1982150"], ["rwby_x64.exe"], "fighter", "arena red and gold."),
+P("Shephy", ["651340"], ["shephy.exe"], "calm", "soft pastel tones."),
+P("Stay Cool, Kobayashi-San!: A River City Ransom Story", ["836590"], ["stay cool, kobayashi-san!.exe"], "fighter", "arena red and gold.", n="The wiki or Steam gives only partial or limited controller support: some menus may still want the keyboard."),
+P("Super Double Dragon", ["2086370"], ["superdoubledragon.exe"], "mystic", "violet and gold."),
+P("Super Technos World: River City & Technos Arcade Classics", ["1053510"], ["super technos world.exe"], "fighter", "arena red and gold."),
+P("The Missing: J.J. Macfield and the Island of Memories", ["842910"], ["themissing.exe"], "scifi", "cold blue and cyan."),
+P("Tokyo Twilight Ghost Hunters Daybreak: Special Gigs", ["425460"], ["tokyo twilight ghost hunters daybreak special gigs.exe"], "coldsteel", "steel blue and grey."),
+P("Under Night In-Birth Exe:Late", ["452510"], ["uniel.exe"], "fighter", "arena red and gold."),
+P("Under Night In-Birth Exe:Late cl-r", ["801630"], ["unist.exe"], "fighter", "arena red and gold."),
+P("Under Night In-Birth II Sys:Celes", ["2076010"], ["uni2.exe"], "fighter", "arena red and gold.", ctl=["dualshock"]),
+]
