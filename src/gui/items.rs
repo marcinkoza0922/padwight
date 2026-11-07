@@ -106,13 +106,7 @@ pub(super) fn view_new_info_card<'a>(empty: bool) -> Element<'a, Message> {
 
 /// The menus tab's header: adds a menu of each kind, kept apart from the menus themselves.
 pub(super) fn view_new_menu_card<'a>(empty: bool) -> Element<'a, Message> {
-    let mut kinds = row![text("Add a menu:")].spacing(8).align_y(Alignment::Center);
-    for kind in MenuKindTag::ALL {
-        let label = text(format!("+ {}", kind.short())).wrapping(text::Wrapping::None);
-        kinds = kinds.push(button(label).style(style::secondary).on_press(Message::NewMenu(kind)));
-    }
-    // Six buttons don't fit beside the copy button in a narrow window, so they wrap.
-    let kinds = kinds.wrap().vertical_spacing(8);
+    let kinds = button(text("+ New menu")).style(style::secondary).on_press(Message::OpenNewMenu);
     let empty = empty.then_some("This setup has no menus yet.");
     items_header(ItemKind::Menu, kinds.into(), "A menu lists actions to pick from on screen.", MENUS_HELP.into(), empty)
 }
@@ -493,6 +487,7 @@ impl App {
                 self.menus_mut().insert(0, menu);
                 self.move_open_cards(ItemKind::Menu, open_cards::after_inserting(1));
                 self.open_menus.insert(0);
+                self.dialog = None;
             }
             Message::DeleteMenu(i) => {
                 if i < self.menus().len() {

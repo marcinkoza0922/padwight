@@ -755,6 +755,10 @@ enum Message {
     OpenAddGame,
     /// "Add new setup": the template picker.
     OpenNewSetup,
+    /// "New profile": the template picker.
+    OpenNewProfile,
+    /// "New menu": the menu kind picker.
+    OpenNewMenu,
     CloseDialog,
     SetLibrarySearch(String),
     /// Library entry to show details of (index in `App::library`).

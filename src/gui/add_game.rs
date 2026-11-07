@@ -73,6 +73,29 @@ impl Picker {
 }
 
 /// The list back at its top, as after a change to what it shows.
+/// A list of templates to start from; `pick` makes the message for one, `cancel` is where Cancel goes.
+fn template_picker<T: std::fmt::Display + Copy>(title: &str, blurb: &str, choices: &[T], pick: fn(T) -> Message, cancel: Message) -> Element<'static, Message> {
+    let mut list = column![].spacing(6);
+    for &template in choices {
+        list = list.push(
+            button(text(template.to_string()))
+                .width(Length::Fill)
+                .padding([6, 10])
+                .style(style::secondary)
+                .on_press(pick(template)),
+        );
+    }
+    column![
+        text(title.to_string()).size(22),
+        note(blurb.to_string()),
+        list,
+        row![space::horizontal(), button(text("Cancel")).style(style::secondary).on_press(cancel)],
+    ]
+    .spacing(12)
+    .width(420)
+    .into()
+}
+
 fn scroll_to_top(picker: &mut Picker) -> Task<Message> {
     picker.top = 0.0;
     iced::widget::operation::snap_to(LIST_ID, scrollable::RelativeOffset { x: Some(0.0), y: Some(0.0) })
@@ -184,25 +207,17 @@ impl App {
 
     /// The template picker behind "Add new setup".
     pub(super) fn view_new_setup(&self) -> Element<'_, Message> {
-        let mut list = column![].spacing(6);
-        for template in Template::NEW {
-            list = list.push(
-                button(text(template.to_string()))
-                    .width(Length::Fill)
-                    .padding([6, 10])
-                    .style(style::secondary)
-                    .on_press(Message::AddEmptyGame(template)),
-            );
-        }
-        column![
-            text("Add new setup").size(22),
-            note("Start an empty setup from a template. You can change everything afterwards."),
-            list,
-            row![space::horizontal(), button(text("Cancel")).style(style::secondary).on_press(Message::OpenAddGame)],
-        ]
-        .spacing(12)
-        .width(420)
-        .into()
+        template_picker("Add new setup", "Start an empty setup from a template. You can change everything afterwards.", &Template::NEW, Message::AddEmptyGame, Message::OpenAddGame)
+    }
+
+    /// The template picker behind "New profile".
+    pub(super) fn view_new_profile(&self) -> Element<'_, Message> {
+        template_picker("New profile", "Start the profile from a template. You can change everything afterwards.", &Template::NEW, Message::AddProfile, Message::CloseDialog)
+    }
+
+    /// The kind picker behind "New menu".
+    pub(super) fn view_new_menu(&self) -> Element<'_, Message> {
+        template_picker("New menu", "Pick how the menu looks and is used. You can change it afterwards.", &MenuKindTag::ALL, Message::NewMenu, Message::CloseDialog)
     }
 
     /// The scrolling list, built only where it's in view: space stands in for the rest.
