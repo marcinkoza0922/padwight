@@ -13,6 +13,8 @@ use crate::{
 
 pub(super) enum Dialog {
     AddGame(Box<AddGamePicker>),
+    /// Pick what a new, empty setup starts from.
+    NewSetup,
     Import { plan: Box<Plan>, choices: Choices },
     /// Export of the game with this name, and what it would write (kept up to date as the
     /// details are edited, rather than worked out every frame).
@@ -72,6 +74,7 @@ impl App {
                 return self.update_add_game(message);
             }
             Message::CloseDialog => self.dialog = None,
+            Message::OpenNewSetup => self.dialog = Some(Dialog::NewSetup),
             Message::AddEmptyGame(template) => {
                 let name = unique_name("New setup", |n| self.config.games.iter().any(|g| g.name == n));
                 let profile = template.make(template.base_name());
@@ -366,6 +369,7 @@ impl App {
     pub(super) fn view_dialog<'a>(&'a self, dialog: &'a Dialog) -> Element<'a, Message> {
         let body = match dialog {
             Dialog::AddGame(picker) => self.view_add_game(picker),
+            Dialog::NewSetup => self.view_new_setup(),
             Dialog::Import { plan, choices } => self.view_import(plan, choices),
             Dialog::Export { game, info, library, preview } => self.view_export(game, info, *library, preview),
             Dialog::DeleteGame(name) => self.view_delete(name),

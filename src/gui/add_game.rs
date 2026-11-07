@@ -129,7 +129,7 @@ impl App {
 
         let mut list = column![
             row![
-                dropdown(Template::NEW, None::<Template>, Message::AddEmptyGame).placeholder("Empty setup from a template…").style(style::action_dropdown).width(300),
+                button(text("Add new setup")).on_press(Message::OpenNewSetup),
                 button(text("Import a file…")).style(style::secondary).on_press(Message::ImportFile),
             ]
             .spacing(8),
@@ -179,6 +179,29 @@ impl App {
         ]
         .spacing(12)
         .width(820)
+        .into()
+    }
+
+    /// The template picker behind "Add new setup".
+    pub(super) fn view_new_setup(&self) -> Element<'_, Message> {
+        let mut list = column![].spacing(6);
+        for template in Template::NEW {
+            list = list.push(
+                button(text(template.to_string()))
+                    .width(Length::Fill)
+                    .padding([6, 10])
+                    .style(style::secondary)
+                    .on_press(Message::AddEmptyGame(template)),
+            );
+        }
+        column![
+            text("Add new setup").size(22),
+            note("Start an empty setup from a template. You can change everything afterwards."),
+            list,
+            row![space::horizontal(), button(text("Cancel")).style(style::secondary).on_press(Message::OpenAddGame)],
+        ]
+        .spacing(12)
+        .width(420)
         .into()
     }
 

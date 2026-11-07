@@ -753,6 +753,8 @@ enum Message {
     PickerClose { apply: bool },
     /// "+ Add game": the library picker.
     OpenAddGame,
+    /// "Add new setup": the template picker.
+    OpenNewSetup,
     CloseDialog,
     SetLibrarySearch(String),
     /// Library entry to show details of (index in `App::library`).
