@@ -26,11 +26,11 @@ The Overview page's **What's happening** lists the last profile switches, newest
 
 - Check the setup's rules on its **Details** tab, and that the rule is switched on.
 - Check that no other rule also matches the game.
-- Check that your desktop supports window tracking: KDE Plasma, GNOME, Hyprland, Sway, or a wlroots compositor such as labwc (which matches by window class only).
+- Check that your desktop supports window tracking: KDE Plasma, GNOME, Cinnamon, Hyprland, Sway, niri, COSMIC, or a wlroots compositor such as labwc, Wayfire or Budgie 10.10 and later. COSMIC and wlroots compositors match by window class only, so a rule on the executable name won't match there.
 
 ## The keyboard, menus or overlays don't appear
 
-They need KDE Plasma, Sway, Hyprland or labwc; GNOME lacks the layer-shell they use.
+On KDE Plasma, Sway, Hyprland, niri, COSMIC and wlroots compositors such as labwc, they are ordinary layer-shell windows. On GNOME and Cinnamon, padwight's desktop extension shows them instead. It's installed and enabled the first time the daemon runs there, and you need to log out and back in once before it works. `padwight status` says which method is in use.
 
 ## The on-screen keyboard shows the wrong letters
 
