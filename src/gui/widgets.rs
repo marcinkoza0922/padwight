@@ -180,12 +180,11 @@ pub(super) fn section<'a>(title: &'a str, help_text: Option<String>, rows: Vec<E
         .into()
 }
 
-/// The card at the top of an items tab (layers, macros, menus, info and log overlays): the add
+/// The header at the top of an items tab (layers, macros, menus, info and log overlays): the add
 /// buttons, a line on what the items are, the copy link and the tab's help. Every tab has this
 /// layout, so the controls sit in the same places. The add buttons and the blurb under them take
 /// the width the copy button leaves, and wrap there, so nothing is pushed out of a narrow window.
-/// `empty` is the note for a setup that has none yet, kept inside the card with the add button as
-/// the Combos card keeps its own.
+/// `empty` is the note for a setup that has none yet, kept beside the add button.
 pub(super) fn items_header<'a>(
     kind: ItemKind,
     add: Element<'a, Message>,
@@ -197,8 +196,7 @@ pub(super) fn items_header<'a>(
     if let Some(empty) = empty {
         left = left.push(text(empty).style(muted));
     }
-    container(
-        row![
+    row![
             container(left).width(Length::Fill),
             // The link sits under the copy button, so it takes no width from the blurb.
             column![
@@ -210,12 +208,9 @@ pub(super) fn items_header<'a>(
             .align_x(Alignment::End),
         ]
         .spacing(12)
-        .align_y(Alignment::Center),
-    )
-    .padding(14)
-    .width(Length::Fill)
-    .style(style::add_card)
-    .into()
+        .align_y(Alignment::Center)
+        .width(Length::Fill)
+        .into()
 }
 
 /// A bar of tabs (`segments`, made with `segment`) that wraps onto another line when the window is
