@@ -559,6 +559,7 @@ impl App {
                 };
                 self.game_mut().profiles.push(profile);
                 self.editing = self.game().profiles.len() - 1;
+                self.dialog = None;
             }
             Message::DeleteProfile => {
                 let editing = self.editing;
@@ -1065,11 +1066,7 @@ impl App {
                 text("Profile").width(PROFILE_LABEL),
                 dropdown(names, current.clone(), Message::EditProfile).width(170),
                 space::horizontal(),
-                // A list of what to start from, so it's a dropdown that says so.
-                dropdown(Template::NEW, None::<Template>, Message::AddProfile)
-                    .placeholder("+ New profile from…")
-                    .style(style::action_dropdown)
-                    .width(220),
+                button(text("New profile")).on_press(Message::OpenNewProfile),
                 button(text("Duplicate")).style(style::secondary).on_press(Message::AddProfile(Template::Duplicate)),
                 delete_profile_button(can_delete),
             ]

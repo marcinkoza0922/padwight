@@ -49,6 +49,7 @@ Unknown top-level keys are an error, so a typo fails the import rather than bein
 | `version` | Free text, compared as versions (`1.2` is newer than `1.1`). |
 | `author`, `description`, `made_with` | Shown in the import preview. `made_with` is informational, e.g. `"Xbox controller"`. |
 | `based_on` | Only on forks: a table with `id`, `name`, `author`, `version` of the original. |
+| `tested` | `true` once someone has played the game with the pack. The add-a-setup picker marks a library pack as *unverified* when it presses keys or works the mouse (anywhere but gyro) and doesn't say `tested = true`; packs that only pass the controller through are never marked. Exports leave it out. |
 
 ### Rules
 

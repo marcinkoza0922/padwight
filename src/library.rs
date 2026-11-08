@@ -52,6 +52,7 @@ struct Indexed {
     rules: &'static [(RuleKind, &'static str, &'static str, bool)],
     /// What each of its profiles needs of the controller.
     requires: &'static [&'static [Feature]],
+    unverified: bool,
 }
 
 /// What listing a library pack takes, without the rest of the pack.
@@ -64,6 +65,9 @@ pub struct Listing {
     pub rules: Vec<Rule>,
     /// What each of its profiles needs of the controller.
     pub requires: Vec<Vec<Feature>>,
+    /// It sends keys or the mouse, and nobody has played the game with it yet (see
+    /// [`Pack::sends_keys_or_mouse`](crate::pack::Pack::sends_keys_or_mouse)).
+    pub unverified: bool,
 }
 
 impl Listing {
@@ -77,6 +81,7 @@ impl Listing {
             version: pack.pack.version.clone(),
             rules: pack.rules.clone(),
             requires: pack.profiles.iter().map(|p| p.requires.clone()).collect(),
+            unverified: !pack.pack.tested && pack.sends_keys_or_mouse(),
         }
     }
 
@@ -111,6 +116,7 @@ pub fn listings() -> &'static [Listing] {
                 version: p.version.into(),
                 rules: p.rules.iter().map(|(kind, value, profile, enabled)| Rule { kind: *kind, value: (*value).into(), profile: (*profile).into(), enabled: *enabled }).collect(),
                 requires: p.requires.iter().map(|needs| needs.to_vec()).collect(),
+                unverified: p.unverified,
             })
             .collect()
     });
@@ -216,6 +222,20 @@ mod tests {
         let listed: Vec<Listing> = entries.iter().map(Listing::of).collect();
         assert_eq!(listings(), listed.as_slice());
         assert!(listings().is_sorted_by_key(|l| l.name.to_lowercase()));
+    }
+
+    /// Packs that pass the controller through aren't marked, even with a gyro profile; packs
+    /// that send keys are, until they say they've been tested.
+    #[test]
+    fn packs_that_send_keys_are_unverified_until_tested() {
+        let find = |file: &str| listings().iter().find(|l| l.file == file).unwrap_or_else(|| panic!("{file}"));
+        assert!(!find("deus-ex-breach.padpack").unverified, "passthrough with a gyro profile");
+        assert!(find("simcity-2000.padpack").unverified, "keyboard and mouse");
+        let mut pack = find("simcity-2000.padpack").entry().unwrap().pack;
+        pack.pack.tested = true;
+        assert!(!Listing::of(&Entry { file: "x", pack }).unverified);
+        assert!(!find("deus-ex.padpack").unverified, "played with");
+        assert!(!find("simcity-3000.padpack").unverified, "played with");
     }
 
     #[test]

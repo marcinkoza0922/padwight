@@ -16,6 +16,9 @@ const ROW_HEIGHT: f32 = 36.0;
 /// Rows built past each edge of the view, so a quick scroll doesn't show a blank frame.
 const OVERSCAN: usize = 4;
 const LIST_ID: &str = "library-list";
+/// The details pane's note on a library pack that sends keys or the mouse and that nobody has
+/// played the game with yet.
+const UNVERIFIED: &str = "Unverified: nobody has played the game with this setup yet. Its keys were chosen from what's known of the game's controls, so some may be wrong. Check them on the setup's Profiles tab.";
 
 pub(super) struct Picker {
     search: String,
@@ -73,6 +76,29 @@ impl Picker {
 }
 
 /// The list back at its top, as after a change to what it shows.
+/// A list of templates to start from; `pick` makes the message for one, `cancel` is where Cancel goes.
+fn template_picker<T: std::fmt::Display + Copy>(title: &str, blurb: &str, choices: &[T], pick: fn(T) -> Message, cancel: Message) -> Element<'static, Message> {
+    let mut list = column![].spacing(6);
+    for &template in choices {
+        list = list.push(
+            button(text(template.to_string()))
+                .width(Length::Fill)
+                .padding([6, 10])
+                .style(style::secondary)
+                .on_press(pick(template)),
+        );
+    }
+    column![
+        text(title.to_string()).size(22),
+        note(blurb.to_string()),
+        list,
+        row![space::horizontal(), button(text("Cancel")).style(style::secondary).on_press(cancel)],
+    ]
+    .spacing(12)
+    .width(420)
+    .into()
+}
+
 fn scroll_to_top(picker: &mut Picker) -> Task<Message> {
     picker.top = 0.0;
     iced::widget::operation::snap_to(LIST_ID, scrollable::RelativeOffset { x: Some(0.0), y: Some(0.0) })
@@ -129,7 +155,7 @@ impl App {
 
         let mut list = column![
             row![
-                dropdown(Template::NEW, None::<Template>, Message::AddEmptyGame).placeholder("Empty setup from a template…").style(style::action_dropdown).width(300),
+                button(text("Add new setup")).on_press(Message::OpenNewSetup),
                 button(text("Import a file…")).style(style::secondary).on_press(Message::ImportFile),
             ]
             .spacing(8),
@@ -162,7 +188,11 @@ impl App {
             Some((i, entry)) => {
                 let i = *i;
                 let p = &entry.pack;
-                details = details.push(text(p.pack.name.clone()).size(20)).push(pack_summary(p, |f| self.pad_has(f)));
+                details = details.push(text(p.pack.name.clone()).size(20));
+                if self.library.get(i).is_some_and(|l| l.unverified) {
+                    details = details.push(note(UNVERIFIED));
+                }
+                details = details.push(pack_summary(p, |f| self.pad_has(f)));
                 action = Some(match added(&p.pack.id) {
                     Some(g) => button(text("Open it")).on_press(Message::SelectPage(Page::Game(Some(g.name.clone())))),
                     None => button(text("Preview & add…")).on_press(Message::PreviewLibrary(i)),
@@ -180,6 +210,21 @@ impl App {
         .spacing(12)
         .width(820)
         .into()
+    }
+
+    /// The template picker behind "Add new setup".
+    pub(super) fn view_new_setup(&self) -> Element<'_, Message> {
+        template_picker("Add new setup", "Start an empty setup from a template. You can change everything afterwards.", &Template::NEW, Message::AddEmptyGame, Message::OpenAddGame)
+    }
+
+    /// The template picker behind "New profile".
+    pub(super) fn view_new_profile(&self) -> Element<'_, Message> {
+        template_picker("New profile", "Start the profile from a template. You can change everything afterwards.", &Template::NEW, Message::AddProfile, Message::CloseDialog)
+    }
+
+    /// The kind picker behind "New menu".
+    pub(super) fn view_new_menu(&self) -> Element<'_, Message> {
+        template_picker("New menu", "Pick how the menu looks and is used. You can change it afterwards.", &MenuKindTag::ALL, Message::NewMenu, Message::CloseDialog)
     }
 
     /// The scrolling list, built only where it's in view: space stands in for the rest.
@@ -202,6 +247,9 @@ impl App {
                     let mut line = row![text(listing.name.as_str()).size(15).width(Length::Fill)].spacing(8).align_y(Alignment::Center);
                     for f in listing.required_by_all() {
                         line = line.push(text(f.label()).size(12).style(muted));
+                    }
+                    if listing.unverified {
+                        line = line.push(text("unverified").size(12).style(muted));
                     }
                     if installed(i) {
                         line = line.push(text("installed").size(12).style(accent_text));

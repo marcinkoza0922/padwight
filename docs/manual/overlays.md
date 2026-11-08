@@ -2,7 +2,7 @@
 
 Padwight can draw on top of a game, even a fullscreen one, without taking keyboard focus. Your key presses still go to the game underneath.
 
-This works on KDE Plasma, Sway, Hyprland and labwc. On GNOME it is experimental: padwight's Shell extension shows the overlay, and log out and back in once after it is installed.
+This works on KDE Plasma, Sway, Hyprland, niri, COSMIC and wlroots compositors such as labwc. On GNOME and Cinnamon, padwight's desktop extension shows the overlay instead; log out and back in once after it is installed.
 
 ## On-screen keyboard
 

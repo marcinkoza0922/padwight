@@ -108,6 +108,10 @@ pub struct Header {
     pub made_with: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub based_on: Option<PackRef>,
+    /// Someone has played the game with it. Only the library's packs set it: without it, the
+    /// add-a-setup picker marks a pack that sends keys or the mouse as unverified.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub tested: bool,
 }
 
 pub use crate::config::Feature;
@@ -387,6 +391,35 @@ impl Pack {
         found.into_iter().collect()
     }
 
+    /// Whether it presses keys or works the mouse anywhere, leaving out gyro. A pack that only
+    /// passes the controller through leaves the buttons to the game's own options; one that
+    /// sends keys has to guess the game's bindings, so it can be wrong until someone plays it.
+    /// `build.rs` works this out for the library's listings; tests check that the two agree.
+    pub fn sends_keys_or_mouse(&self) -> bool {
+        use crate::config::{StickAction, StickConfig};
+        let mut found = false;
+        let mut note = |a: &ButtonAction| a.walk(&mut |a| found |= matches!(a, ButtonAction::Keys(_) | ButtonAction::Mouse(_) | ButtonAction::Wheel(_)));
+        let pc_stick = |s: &StickConfig| !matches!(s.action, StickAction::Disabled | StickAction::Gamepad { .. } | StickAction::Ring { .. });
+        let mut sticks = false;
+        for p in &self.profiles {
+            // The default touchpad works the desktop pointer, and packs leave it out.
+            let mut p = p.clone();
+            if p.touchpad.is_default() {
+                p.touchpad.click = ButtonAction::Disabled;
+            }
+            p.actions().into_iter().for_each(&mut note);
+            sticks |= pc_stick(&p.left_stick) || pc_stick(&p.right_stick);
+        }
+        for l in self.layers.iter().chain(&self.modes) {
+            l.actions().into_iter().for_each(&mut note);
+            sticks |= [&l.left_stick, &l.right_stick].into_iter().flatten().any(pc_stick);
+        }
+        self.menus.iter().flat_map(|m| &m.items).for_each(|i| note(&i.action));
+        self.macros.iter().flat_map(|m| &m.steps).filter_map(MacroStep::action).for_each(&mut note);
+        self.cycles.iter().flat_map(|c| &c.steps).for_each(&mut note);
+        found || sticks
+    }
+
     /// The names of the profiles that need `feature`.
     pub fn needing(&self, feature: Feature) -> Vec<&str> {
         self.profiles.iter().filter(|p| p.requires.contains(&feature)).map(|p| p.name.as_str()).collect()
@@ -450,6 +483,7 @@ pub fn export(game: &Game, info: &PackInfo) -> Export {
             description: info.description.clone(),
             made_with: info.made_with.clone(),
             based_on: info.based_on.clone(),
+            tested: false,
         },
         rules: pack_game.rules.iter().map(|r| Rule { enabled: true, ..r.clone() }).collect(),
         profiles: pack_game.profiles,

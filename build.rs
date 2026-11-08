@@ -148,10 +148,36 @@ fn listing(at: usize, text: &str) -> Result<(String, String), String> {
             .collect::<Result<_, _>>()?;
         requires.push_str(&format!("&[{}], ", needs.join(", ")));
     }
+    let tested = header.get("tested").and_then(toml::Value::as_bool).unwrap_or(false);
+    let sends = ["profiles", "modes", "layers", "menus", "macros", "cycles"].iter().any(|key| tables(key).iter().any(sends_keys_or_mouse));
+    let unverified = !tested && sends;
     let code = format!(
-        "    super::Indexed {{ at: {at}, id: {id:?}, name: {name:?}, version: {version:?}, rules: &[{rules}], requires: &[{requires}] }},\n"
+        "    super::Indexed {{ at: {at}, id: {id:?}, name: {name:?}, version: {version:?}, rules: &[{rules}], requires: &[{requires}], unverified: {unverified} }},\n"
     );
     Ok((name.to_lowercase(), code))
+}
+
+/// `Pack::sends_keys_or_mouse` on the TOML: a `keys`, `mouse` or `wheel` action anywhere but
+/// gyro, or a stick that moves the mouse, scrolls, flicks or presses keys by region.
+fn sends_keys_or_mouse(table: &toml::Table) -> bool {
+    table.iter().any(|(key, value)| match key.as_str() {
+        "gyro" => false,
+        "keys" | "mouse" | "wheel" => true,
+        "left_stick" | "right_stick" => {
+            let action = value.get("action");
+            let pc = |a: &toml::Table| a.keys().any(|k| ["mouse", "scroll", "flick", "region"].contains(&k.as_str()));
+            action.and_then(toml::Value::as_table).is_some_and(pc) || value_sends(value)
+        }
+        _ => value_sends(value),
+    })
+}
+
+fn value_sends(value: &toml::Value) -> bool {
+    match value {
+        toml::Value::Table(t) => sends_keys_or_mouse(t),
+        toml::Value::Array(a) => a.iter().any(value_sends),
+        _ => false,
+    }
 }
 
 /// The enum variant a snake_case name in a pack stands for, if it's one of `known`.
