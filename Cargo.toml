@@ -11,29 +11,29 @@ iced = { version = "0.14", features = ["svg", "image-without-codecs", "tokio", "
 # through iced, so the lock file doesn't change.
 iced_runtime = "0.14"
 # Reads a font file's family name without a renderer (font.rs); same version iced already locks.
-fontdb = "0.23"
-png = "0.17"
+fontdb = "0.24"
+png = "0.18"
 # Decodes the background pictures (PNG and JPEG only, so no AVIF or other codecs come along).
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 # Rasterizes the app icon for the tray and window (iced already pulls it in).
-resvg = "0.45"
+resvg = "0.49"
 # The overlay's own renderer (overlay/render): shapes text, and draws everything on the CPU.
 # Both are already in the lock file through iced, so the lock file doesn't change.
-cosmic-text = "0.15"
-tiny-skia = "0.11"
+cosmic-text = "0.19"
+tiny-skia = "0.12"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 tokio = { version = "1.53.2", features = ["io-util", "net", "rt", "time"] }
 toml = "1.1.6"
 # Unpacks the library packs, icons, fonts and sounds that `build.rs` compresses into the binary (archive.rs).
-zstd = { version = "0.13", default-features = false }
-rodio = { version = "0.22", default-features = false, features = ["playback"] }
+zstd = { version = "0.14", default-features = false }
+rodio = { version = "0.23", default-features = false, features = ["playback"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 evdev = "0.13"
 libc = "0.2.190"
 # File chooser for importing and exporting packs, through the desktop portal.
-rfd = { version = "0.17", default-features = false, features = ["xdg-portal"] }
+rfd = { version = "0.18", default-features = false, features = ["xdg-portal"] }
 zbus = "5"
 # wlroots focus tracking (focus/wlroots.rs). Both are already in the lock file through
 # iced's winit and smithay-client-toolkit, so the lock file doesn't change.
@@ -47,7 +47,7 @@ wayland-protocols = { version = "0.32", features = ["client", "staging"] }
 # StatusNotifierItem tray icon.
 ksni = { version = "0.3.6", features = ["blocking"] }
 # Labels the on-screen keyboard's keys in the user's layout (keyboard/xkb.rs).
-xkbcommon = "0.8"
+xkbcommon = "0.9"
 
 [lints.clippy]
 # Keep code compact and units small so they are cheaper to read.
@@ -66,7 +66,7 @@ print_stderr = "warn"
 # Reads each library pack's listing at build time (`build.rs`).
 toml = "1.1.6"
 # Compresses them (with a dictionary trained on the packs).
-zstd = "0.13"
+zstd = "0.14"
 
 [dev-dependencies]
 # Runs the per-pack library tests across all cores (library.rs tests).

@@ -203,7 +203,7 @@ fn gui_pictures(dir: &Path) -> Result<Vec<String>> {
 fn load(path: &Path) -> Result<Image> {
     let file = std::fs::File::open(path).with_context(|| format!("cannot read {}", path.display()))?;
     let mut reader = png::Decoder::new(std::io::BufReader::new(file)).read_info()?;
-    let mut rgba = vec![0; reader.output_buffer_size()];
+    let mut rgba = vec![0; reader.output_buffer_size().context("picture too large")?];
     let info = reader.next_frame(&mut rgba)?;
     if info.color_type != png::ColorType::Rgba || info.bit_depth != png::BitDepth::Eight {
         bail!("{} is not an 8-bit RGBA picture", path.display());
