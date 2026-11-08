@@ -230,10 +230,12 @@ mod tests {
     fn packs_that_send_keys_are_unverified_until_tested() {
         let find = |file: &str| listings().iter().find(|l| l.file == file).unwrap_or_else(|| panic!("{file}"));
         assert!(!find("deus-ex-breach.padpack").unverified, "passthrough with a gyro profile");
-        assert!(find("deus-ex.padpack").unverified, "keyboard and mouse");
-        let mut pack = find("deus-ex.padpack").entry().unwrap().pack;
+        assert!(find("simcity-2000.padpack").unverified, "keyboard and mouse");
+        let mut pack = find("simcity-2000.padpack").entry().unwrap().pack;
         pack.pack.tested = true;
         assert!(!Listing::of(&Entry { file: "x", pack }).unverified);
+        assert!(!find("deus-ex.padpack").unverified, "played with");
+        assert!(!find("simcity-3000.padpack").unverified, "played with");
     }
 
     #[test]
