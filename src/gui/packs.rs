@@ -674,6 +674,22 @@ fn feature_notes<'a>(mut col: Column<'a, Message>, out: &pack::Export) -> Column
 }
 
 /// A pack's description, contents, game IDs and controller needs, for the picker and preview.
+/// What a pack's buttons can do outside the game, if anything: a pack that only passes the
+/// controller through, with nothing like screenshots, gets no warning.
+fn caution(sends_keys: bool, powers: &[&str]) -> Option<String> {
+    let mut can = Vec::new();
+    if sends_keys {
+        can.push("press keys, including shortcuts that act outside the game".to_string());
+    }
+    if !powers.is_empty() {
+        can.push(powers.join(", "));
+    }
+    if can.is_empty() {
+        return None;
+    }
+    Some(format!("Its buttons can {}. Look at the profiles before you Save & apply a pack you didn't make.", can.join(", and can ")))
+}
+
 pub(super) fn pack_summary<'a>(p: &pack::Pack, pad_has: impl Fn(pack::Feature) -> Option<bool>) -> Element<'a, Message> {
     let h = &p.pack;
     let mut col = column![].spacing(6);
@@ -697,12 +713,9 @@ pub(super) fn pack_summary<'a>(p: &pack::Pack, pad_has: impl Fn(pack::Feature) -
         col = col.push(text(h.description.clone()).size(14));
     }
     col = col.push(text(contents_line(p)).size(13));
-    let powers = p.host_powers();
-    let mut caution = String::from("Its buttons can press keys, including shortcuts that act outside the game");
-    if !powers.is_empty() {
-        caution.push_str(&format!(", and can {}", powers.join(", ")));
+    if let Some(caution) = caution(p.sends_keys_or_mouse(), &p.host_powers()) {
+        col = col.push(text(caution).size(13).style(muted));
     }
-    col = col.push(text(format!("{caution}. Look at the profiles before you Save & apply a pack you didn't make.")).size(13).style(muted));
     let ids: Vec<String> = p.rules.iter().map(|r| format!("{} “{}”", r.kind, r.value)).collect();
     if !ids.is_empty() {
         col = col.push(text(format!("Switches on for: {}", ids.join(", "))).size(13).style(muted));
@@ -842,6 +855,14 @@ async fn save_pack(file_name: String, text: String, dir: Option<PathBuf>) -> Opt
 mod tests {
     use super::*;
     use crate::gui::tests::*;
+
+    #[test]
+    fn only_packs_that_act_outside_the_game_get_a_caution() {
+        assert_eq!(caution(false, &[]), None, "a passthrough pack");
+        assert!(caution(true, &[]).unwrap().starts_with("Its buttons can press keys, including shortcuts that act outside the game. "));
+        assert!(caution(false, &["take screenshots"]).unwrap().starts_with("Its buttons can take screenshots. "));
+        assert!(caution(true, &["take screenshots"]).unwrap().contains("outside the game, and can take screenshots. "));
+    }
 
     #[test]
     fn pack_file_names_are_tidy() {

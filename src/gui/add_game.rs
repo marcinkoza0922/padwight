@@ -16,6 +16,9 @@ const ROW_HEIGHT: f32 = 36.0;
 /// Rows built past each edge of the view, so a quick scroll doesn't show a blank frame.
 const OVERSCAN: usize = 4;
 const LIST_ID: &str = "library-list";
+/// The details pane's note on a library pack that sends keys or the mouse and that nobody has
+/// played the game with yet.
+const UNVERIFIED: &str = "Unverified: nobody has played the game with this setup yet. Its keys were chosen from what's known of the game's controls, so some may be wrong. Check them on the setup's Profiles tab.";
 
 pub(super) struct Picker {
     search: String,
@@ -185,7 +188,11 @@ impl App {
             Some((i, entry)) => {
                 let i = *i;
                 let p = &entry.pack;
-                details = details.push(text(p.pack.name.clone()).size(20)).push(pack_summary(p, |f| self.pad_has(f)));
+                details = details.push(text(p.pack.name.clone()).size(20));
+                if self.library.get(i).is_some_and(|l| l.unverified) {
+                    details = details.push(note(UNVERIFIED));
+                }
+                details = details.push(pack_summary(p, |f| self.pad_has(f)));
                 action = Some(match added(&p.pack.id) {
                     Some(g) => button(text("Open it")).on_press(Message::SelectPage(Page::Game(Some(g.name.clone())))),
                     None => button(text("Preview & add…")).on_press(Message::PreviewLibrary(i)),
@@ -240,6 +247,9 @@ impl App {
                     let mut line = row![text(listing.name.as_str()).size(15).width(Length::Fill)].spacing(8).align_y(Alignment::Center);
                     for f in listing.required_by_all() {
                         line = line.push(text(f.label()).size(12).style(muted));
+                    }
+                    if listing.unverified {
+                        line = line.push(text("unverified").size(12).style(muted));
                     }
                     if installed(i) {
                         line = line.push(text("installed").size(12).style(accent_text));
