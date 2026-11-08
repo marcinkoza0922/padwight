@@ -407,7 +407,7 @@ fn slug(name: &str) -> String {
 
 /// `value` as a TOML table, without the `keys`.
 fn without<T: Serialize>(value: &T, keys: &[&str]) -> Result<toml::Table> {
-    let mut table: toml::Table = toml::from_str(&toml::to_string(value)?)?;
+    let mut table = toml::Table::try_from(value)?;
     for key in keys {
         table.remove(*key);
     }

@@ -48,6 +48,9 @@ fn families() -> impl Iterator<Item = Option<&'static str>> {
     std::iter::once(None).chain(font::BUNDLED.iter().map(|b| Some(b.name)))
 }
 
+/// Bundled variable fonts whose bold iced can't pick (see the test below).
+const VARIABLE_BOLD: [&str; 3] = ["Cantarell", "Cinzel", "Orbitron"];
+
 #[test]
 fn every_font_measures_as_iced_measures_it() {
     load_iced_fonts();
@@ -55,7 +58,15 @@ fn every_font_measures_as_iced_measures_it() {
         for (text, size, width) in [("The quick brown fox, 0123", 18.0, None), ("Ünïcödé — “quotes” …", 13.0, None), ("a line that wraps between its words", 15.0, Some(90.0))] {
             for (bold, italic) in [(false, false), (true, false), (false, true)] {
                 let s = Spec { family, bold, italic, width, ..Spec::new(text, size) };
-                let (ours, iced) = (shape(&s).size, iced_size(&s));
+                let ours = shape(&s).size;
+                if bold && VARIABLE_BOLD.contains(&family.unwrap_or("")) {
+                    // iced's cosmic-text (0.15) can't pick the bold instance of a variable font; it
+                    // takes a system face of the family if there is one, else the default font, so
+                    // what it measures depends on the machine. Ours uses the `wght` axis.
+                    assert!(ours.x > 0.0 && ours.y > 0.0, "{s:?}: measures nothing ({ours:?})");
+                    continue;
+                }
+                let iced = iced_size(&s);
                 assert!((ours.x - iced.x).abs() < 0.01 && (ours.y - iced.y).abs() < 0.01, "{s:?}: {ours:?}, iced {iced:?}");
             }
         }

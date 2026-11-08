@@ -92,12 +92,12 @@ fn attrs(spec: &Spec, spacing: f32) -> Attrs<'static> {
 fn laid(fonts: &mut FontSystem, spec: &Spec, text: &str, spacing: f32, pad: f32) -> (Vec<Line>, Vec<f32>, f32) {
     let size = spec.size;
     let mut buffer = Buffer::new(fonts, Metrics::new(size, size * LINE_HEIGHT));
-    buffer.set_wrap(fonts, Wrap::Word);
-    buffer.set_size(fonts, spec.width.filter(|w| w.is_finite()).map(|w| w.max(0.0) + pad), None);
+    buffer.set_wrap(Wrap::Word);
+    buffer.set_size(spec.width.filter(|w| w.is_finite()).map(|w| w.max(0.0) + pad), None);
     // Iced's `Shaping::Auto`, except that iced underlines through rich text, which it always
     // shapes in full (kerning included).
     let shaping = if text.is_ascii() && !spec.underline { Shaping::Basic } else { Shaping::Advanced };
-    buffer.set_text(fonts, text, &attrs(spec, spacing), shaping, None);
+    buffer.set_text(text, &attrs(spec, spacing), shaping, None);
     buffer.shape_until_scroll(fonts, false);
     let mut lines = Vec::new();
     let mut widths = Vec::new();
