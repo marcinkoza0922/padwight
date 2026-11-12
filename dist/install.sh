@@ -55,7 +55,12 @@ padwight needs four small system files, which take root to copy:
   /etc/udev/rules.d/72-padwight-hidraw.rules   keeps Steam and games from reading those controllers
                                                around padwight (their raw /dev/hidraw node)
   /etc/modules-load.d/padwight-uinput.conf     loads the uinput kernel module at boot
-The first two only give access to you, the user at the machine. `padwight doctor --explain` says more.
+The first two grant access to the active local user, for all programs that user runs.
+The hidraw rule also disables Steam's own gyro and light controls while padwight is off.
+Existing copies of these files will be replaced, with permissions 0644.
+Then: modprobe uinput; udevadm control --reload; udevadm trigger (all as root).
+Reconnect your controller afterwards; if access is still missing, log out and back in.
+`padwight doctor --explain` says more.
 TEXT
     printf 'Install them with sudo? [Y/n] '
     read -r answer || answer=n

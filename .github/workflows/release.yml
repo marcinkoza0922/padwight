@@ -9,9 +9,13 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  build:
     # The oldest runner image we have: the binary needs at least the glibc it was built against.
-    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-22.04, ubuntu-22.04-arm]
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
 
@@ -29,8 +33,30 @@ jobs:
           version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
           [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "tag $GITHUB_REF_NAME but Cargo.toml says $version" >&2; exit 1; }
 
+      - name: Test system setup
+        run: cargo test --locked --bin padwight doctor::
+
       - name: Build the tarball
         run: scripts/package.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ runner.arch }}
+          path: |
+            release/*.tar.gz
+            release/*.sha256
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release
+          merge-multiple: true
 
       - name: Publish
         env:

@@ -226,3 +226,23 @@ fn every_installed_system_file_that_differs_is_stale() {
     tree.put("rules", HIDRAW_RULE_NAME, HIDRAW_RULE);
     assert_eq!(stale(), 0);
 }
+
+#[test]
+fn setup_script_writes_shipped_rules_with_correct_permissions() {
+    use std::os::unix::fs::PermissionsExt;
+    let root = std::env::temp_dir().join(format!("padwight-setup-test-{}", std::process::id()));
+    std::fs::create_dir_all(&root).unwrap();
+    let script = super::setup_script()
+        .replace("mkdir -p /etc/udev/rules.d /etc/modules-load.d", &format!("mkdir -p {0}/udev/rules.d {0}/modules-load.d", root.display()))
+        .replace("> /etc/", &format!("> {}/", root.display()))
+        .replace("chmod 644 /etc/", &format!("chmod 644 {}/", root.display()))
+        .replace("modprobe uinput\nudevadm control --reload\nudevadm trigger\n", "");
+    let status = std::process::Command::new("/bin/sh").args(["-c", &script]).status().unwrap();
+    assert!(status.success());
+    for (path, expected) in super::setup_files() {
+        let path = root.join(path.strip_prefix("/etc/").unwrap());
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), format!("{}\n", super::rules(expected).join("\n")));
+        assert_eq!(std::fs::metadata(path).unwrap().permissions().mode() & 0o777, 0o644);
+    }
+    std::fs::remove_dir_all(root).unwrap();
+}

@@ -14,7 +14,11 @@ main() {
     repo=marcinkoza0922/padwight
     arch=$(uname -m)
     [ "$(uname -s)" = Linux ] || { echo "padwight runs on Linux only" >&2; exit 1; }
-    [ "$arch" = x86_64 ] || { echo "no padwight release for $arch yet: build it from source (see the README)" >&2; exit 1; }
+
+    case $arch in
+        x86_64|aarch64) ;;
+        *) echo "no padwight release for $arch: expected x86_64 or aarch64" >&2; exit 1 ;;
+    esac
 
     if command -v curl >/dev/null 2>&1; then
         fetch() { curl -fsSL -o "$2" "$1"; }

@@ -43,7 +43,7 @@ impl App {
                 self.message = Some(("Calibrating gyro: keep the controller still for 2 seconds.".into(), false));
                 return call_ok(Request::CalibrateGyro(path));
             }
-            Message::OpenSystemCheck | Message::RecheckSystem | Message::CopyFix(_) => return self.update_system_check(&message),
+            Message::OpenSystemCheck | Message::RecheckSystem | Message::CopyFix(_) | Message::ApplySystemSetup | Message::CopySystemSetup | Message::SystemSetupDone(_) => return self.update_system_check(&message),
             Message::SelectPage(page) => {
                 // Also how a dialog's "Open it" leaves it.
                 self.dialog = None;

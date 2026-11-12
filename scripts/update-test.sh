@@ -273,9 +273,14 @@ test_getsh() {
     new_world g-notar; tool_path "$W/bin" tar
     out=$(WPATH=$W/bin stdin_pipe 2>&1); rc=$?
     check "no tar: says so, installs nothing" test $rc -ne 0 -a "$(echo "$out" | grep -c 'need tar')" -eq 1 -a ! -e "$(installed)"
+    # Package a shell stub with the ARM64 name to exercise asset selection and installation.
+    # This checks the installer, not whether an ARM64 executable runs on this host.
     new_world g-arm
+    FAKE_ARCH=aarch64 PATH="$W/shims:$SYSPATH" PADWIGHT_PACKAGE_BINARY=$T/stub-0.2.0 \
+        PADWIGHT_PACKAGE_VERSION=0.2.0 PADWIGHT_PACKAGE_OUT=$T/rel scripts/package.sh >/dev/null 2>&1
     out=$(FAKE_ARCH=aarch64 stdin_pipe 2>&1); rc=$?
-    check "aarch64: says there is no release for it, installs nothing" test $rc -ne 0 -a "$(echo "$out" | grep -c 'no padwight release for aarch64')" -eq 1 -a ! -e "$(installed)"
+    check "aarch64: downloads and installs its release" test $rc -eq 0
+    check "aarch64: the requested version is installed" is_stub 0.2.0
 
     # Failures.
     new_world g-sum

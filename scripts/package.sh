@@ -27,7 +27,7 @@ install -m644 LICENSE "$stage/LICENSE"
 cat > "$stage/README.txt" <<TEXT
 padwight $version
 
-Run ./install.sh. It installs padwight for your user and, with your OK, three small system files
+Run ./install.sh. It installs padwight for your user and, with your OK, four small system files
 (udev rules and a module list) that let it create a virtual gamepad and read your controller.
 Afterwards, \`padwight\` opens the settings window, and \`padwight doctor\` checks that everything
 it needs is in place. ./install.sh --uninstall removes it again.

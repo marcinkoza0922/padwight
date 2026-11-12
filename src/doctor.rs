@@ -31,6 +31,46 @@ const HIDRAW_RULE: &str = include_str!("../dist/72-padwight-hidraw.rules");
 const MODULES_CONF_NAME: &str = "padwight-uinput.conf";
 const MODULES_CONF: &str = include_str!("../dist/padwight-uinput.conf");
 
+/// Fixed system setup shared with the release installer's four files. No device names or
+/// diagnostic text are interpreted as shell commands.
+pub fn setup_script() -> String {
+    let mut script = String::from("set -eu\numask 022\nmkdir -p /etc/udev/rules.d /etc/modules-load.d\n");
+    for (path, contents) in setup_files() {
+        let contents = format!("{}\n", rules(contents).join("\n"));
+        let quoted = contents.replace('\'', "'\\''");
+        script.push_str(&format!("printf '%s' '{quoted}' > {path}\nchmod 644 {path}\n"));
+    }
+    script.push_str("modprobe uinput\nudevadm control --reload\nudevadm trigger\n");
+    script
+}
+
+fn setup_files() -> [(&'static str, &'static str); 4] {
+    [
+        ("/etc/udev/rules.d/70-padwight-uinput.rules", UINPUT_RULE),
+        ("/etc/udev/rules.d/70-padwight-motion.rules", MOTION_RULE),
+        ("/etc/udev/rules.d/72-padwight-hidraw.rules", HIDRAW_RULE),
+        ("/etc/modules-load.d/padwight-uinput.conf", MODULES_CONF),
+    ]
+}
+
+pub fn needs_setup() -> bool {
+    setup_files().iter().any(|(path, expected)| {
+        fs::read_to_string(path).map_or(true, |actual| rules(&actual) != rules(expected))
+    })
+}
+
+pub fn apply_setup() -> std::result::Result<(), String> {
+    let output = std::process::Command::new("pkexec")
+        .args(["/bin/sh", "-c", &setup_script()])
+        .output()
+        .map_err(|e| format!("Could not open administrator authorization: {e}. Install polkit (pkexec), or copy the commands into a terminal."))?;
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(format!("Setup was cancelled or failed ({}): {}. You can retry or copy the commands. Some files may already have been installed.", output.status, String::from_utf8_lossy(&output.stderr).trim()))
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Level {
     Ok,

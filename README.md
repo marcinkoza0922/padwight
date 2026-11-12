@@ -9,62 +9,32 @@ It's built for two kinds of game:
 
 It runs quietly in the background and has a settings window for the fiddly parts. Your setups are plain files, so they're easy to back up, share, or copy to another machine.
 
-Here's how it's put together:
-
-- **daemon**: grabs physical gamepads (evdev) so nothing else sees them, runs the active profile, and emits through virtual uinput devices (an Xbox 360-style pad plus a keyboard and a mouse).
-- **gui**: edits profiles and talks to the daemon over `$XDG_RUNTIME_DIR/padwight.sock`.
-- **config**: `~/.config/padwight/`. `config.toml` holds the app settings. Each setup is a folder under `setups/` (General is `general/`), with a `setup.toml` and one file per profile, mode, layer, macro, cycle, menu, overlay and log. To move a setup to another machine, copy its folder. The daemon is the only writer while it runs, so after editing by hand, run `padwight reload`.
-
-## Documentation
-
-For users:
-
-- **Manual**: a plain-language guide, shown on the Manual page of the settings window. Its source is [docs/manual/](docs/manual/), plain Markdown that is also built into the app, so the two can't drift apart. It has a step-by-step tutorial with annotated screenshots for every major feature (the `tutorial-*.md` chapters).
-- [docs/manual/tutorial-deus-ex.md](docs/manual/tutorial-deus-ex.md): a tutorial that walks through making a pack, using Deus Ex on an Xbox-style pad, with the reasons behind the less obvious mappings.
-- [docs/pack-format.md](docs/pack-format.md): reference for the `.padpack` format (format 20).
-- [docs/protocol.md](docs/protocol.md): the daemon's control protocol (version 1.0), for writing your own client, with [examples/dashboard/](examples/dashboard/), a browser dashboard in plain HTML and Python.
-
-For developers, in [docs/development/](docs/development/):
-
-- [architecture.md](docs/development/architecture.md): how the processes, input pipeline, config and focus tracking fit together, with a module map and test commands.
-- [specs.md](docs/development/specs.md), [modes.md](docs/development/modes.md), [layers.md](docs/development/layers.md), [sticks.md](docs/development/sticks.md), [guide.md](docs/development/guide.md): design notes for individual features.
-- [game-setup-guidelines.md](docs/development/game-setup-guidelines.md): where actions usually go when setting up a game's bindings (sticks, buttons, hotkeys, system buttons).
-- [overlay-debugging.md](docs/development/overlay-debugging.md): tools for checking the on-screen overlay's timing and fades without a monitor or controller: a headless harness, the overlay's timing log, and fade pictures.
-- [manual-screenshots.md](docs/development/manual-screenshots.md): how the manual's annotated screenshots are made, and made again when the window changes: `padwight debug gui` and `scripts/annotate.py`.
-
-## Setups
-
-Everything is organized into setups: one controller setup per game. Each game keeps its own bindings and switches to them when you start it. A setup holds its own profiles, macros, cycles, menus, info overlays, and the auto-switch rules that activate it. All of its profiles can use all of its items. **General** is a built-in setup with no rules, for the desktop and a plain gamepad. Names only need to be unique within a setup. To reuse items from another setup, use **Copy from another setup…** on its Modes, Layers, Macros, Cycles, Menus or Info overlays tab.
-
-The sidebar lists General and your setups (with a search). Each setup's page has nine tabs: **Profiles**, **Modes**, **Layers**, **Macros**, **Cycles**, **Menus**, **Info overlays**, **Log overlays** and **Details** (name, rules, export, delete). On every tab except Profiles and Details, "Copy from another setup…" previews another setup's items (or one from the library) and copies the ones you want in, so you can adapt them.
-
-## Packs and the library
-
-Found a setup worth sharing? Export it as a **pack**: **Details → Export…** writes a `.padpack` file (TOML). The export dialog warns you about references to missing items.
-
-Whether a pack needs more than a plain XInput pad (gyro, back paddles, or a touchpad) is something you declare on each **profile**, not on the pack. On the profile's Gyro tab, tick *Profile requires gyro* when it depends on gyro (a flick stick setup that turns up and down with gyro, say). Leave it unticked when gyro only adds to a scheme that works without it. The back paddles section of the Buttons tab and the Touchpad tab have the same box. It's your word, nothing is detected, and the export dialog just lists what you've declared. Players whose controller lacks a feature only see the profiles that don't need it, and Guide skips the others. Re-exporting your own setup keeps its pack ID. Exporting someone else's makes a fork with its own ID that credits the original.
-
-**+ Add setup** opens the picker. It offers the built-in library first (setups for games you have installed in Steam, Heroic or Lutris, or that are running), an empty setup from a template, or **Import a file…**. Library packs that press keys or work the mouse are marked *unverified* until someone has played the game with them (`tested = true` in the pack), since their keys are worked out from what's known of the game's controls; packs that pass the controller through to a game with its own controller support aren't marked. Importing shows a preview before anything changes: what's inside, what your controller lacks, whether a setup with the same name already exists (add under a new name, or replace yours), and other setups' rules for the same window (the imported game takes over unless you keep yours). Nothing changes until you choose Save & apply.
-
-Imported setups are ordinary, editable setups that remember their pack. When a newer version of the same pack turns up, or an app update ships a newer library version (marked "update" in the sidebar), you're offered the update, along with a list of what you've changed since. A pack made by a newer app version is refused, with a request to update the app.
-
-The library is `packs/*.padpack` in this repository, compressed into the binary at build time. See `packs/README.md`.
-
 ## Install
 
 padwight needs a Wayland session; X11 sessions (Xorg, XLibre) aren't supported. Games running under Xwayland, which includes every Proton game, work as usual.
 
-From a release tarball (Linux, x86_64):
+ARM64 Linux (aarch64) has not been tested with a real desktop or controller. CI is configured to build and run automated tests on both x86_64 and ARM64.
+
+**Recommended (Linux x64 and ARM64):**
 
 ```sh
-tar xzf padwight-*-linux-x86_64.tar.gz
-cd padwight-*-linux-x86_64
+curl -fsSL https://github.com/marcinkoza0922/padwight/releases/latest/download/get.sh | sh
+```
+
+The script downloads the matching release, verifies its checksum, and previews the system permission changes before asking for administrator access.
+
+Or download and unpack a release tarball (x86_64 or aarch64):
+
+```sh
+arch=$(uname -m)
+tar xzf padwight-*-linux-"$arch".tar.gz
+cd padwight-*-linux-"$arch"
 ./install.sh
 ```
 
-Or in one line: `curl -fsSL https://github.com/marcinkoza0922/padwight/releases/latest/download/get.sh | sh` (it checks the tarball's checksum and runs the same installer).
+If you run the binary directly, the settings window opens the system setup preview when the rules are missing or outdated. Review the exact files and commands, then choose **Apply setup…** to authorize the changes through your desktop. You can also copy the commands or skip setup and return through **System check…**. Reconnect your controller afterwards; if access is still missing, log out and back in.
 
-It installs padwight for your user, starts the background service at login, and, after asking, copies three small system files with `sudo` (see Permissions below). `padwight-uninstall` (or `./install.sh --uninstall`) removes it, and `--purge` also deletes your settings. `scripts/package.sh` builds the tarball; build it on the oldest distro you want to support, as the binary needs at least the glibc it was built against.
+It installs padwight for your user, starts the background service at login, and, after asking, copies four small system files with `sudo` (see Permissions below). `padwight-uninstall` (or `./install.sh --uninstall`) removes it, and `--purge` also deletes your settings. `scripts/package.sh` builds the tarball; build it on the oldest distro you want to support, as the binary needs at least the glibc it was built against.
 
 ### Runtime libraries
 
@@ -115,7 +85,49 @@ sudo udevadm control --reload && sudo udevadm trigger
 
 ### Immutable and atomic distros
 
-Padwight installs entirely into your home directory plus three small files in `/etc`, so it works on Silverblue, Kinoite, Bazzite, Aeon and similar systems without layering packages. The binary and the systemd user unit go in `~/.local`; the udev rules and `dist/padwight-uinput.conf` go in `/etc/udev/rules.d/` and `/etc/modules-load.d/`, which stay writable. On NixOS, declare the rules and the `uinput` module in your configuration instead. A Flatpak isn't offered: the sandbox would block `/dev/uinput`, the process list that game detection reads, and the overlay's layer-shell surface.
+Padwight installs entirely into your home directory plus four small files in `/etc`, so it works on Silverblue, Kinoite, Bazzite, Aeon and similar systems without layering packages. The binary and the systemd user unit go in `~/.local`; the udev rules and `dist/padwight-uinput.conf` go in `/etc/udev/rules.d/` and `/etc/modules-load.d/`, which stay writable. On NixOS, declare the rules and the `uinput` module in your configuration instead. A Flatpak isn't offered: the sandbox would block `/dev/uinput`, the process list that game detection reads, and the overlay's layer-shell surface.
+
+
+Here's how it's put together:
+
+- **daemon**: grabs physical gamepads (evdev) so nothing else sees them, runs the active profile, and emits through virtual uinput devices (an Xbox 360-style pad plus a keyboard and a mouse).
+- **gui**: edits profiles and talks to the daemon over `$XDG_RUNTIME_DIR/padwight.sock`.
+- **config**: `~/.config/padwight/`. `config.toml` holds the app settings. Each setup is a folder under `setups/` (General is `general/`), with a `setup.toml` and one file per profile, mode, layer, macro, cycle, menu, overlay and log. To move a setup to another machine, copy its folder. The daemon is the only writer while it runs, so after editing by hand, run `padwight reload`.
+
+## Documentation
+
+For users:
+
+- **Manual**: a plain-language guide, shown on the Manual page of the settings window. Its source is [docs/manual/](docs/manual/), plain Markdown that is also built into the app, so the two can't drift apart. It has a step-by-step tutorial with annotated screenshots for every major feature (the `tutorial-*.md` chapters).
+- [docs/manual/tutorial-deus-ex.md](docs/manual/tutorial-deus-ex.md): a tutorial that walks through making a pack, using Deus Ex on an Xbox-style pad, with the reasons behind the less obvious mappings.
+- [docs/pack-format.md](docs/pack-format.md): reference for the `.padpack` format (format 20).
+- [docs/protocol.md](docs/protocol.md): the daemon's control protocol (version 1.0), for writing your own client, with [examples/dashboard/](examples/dashboard/), a browser dashboard in plain HTML and Python.
+
+For developers, in [docs/development/](docs/development/):
+
+- [architecture.md](docs/development/architecture.md): how the processes, input pipeline, config and focus tracking fit together, with a module map and test commands.
+- [specs.md](docs/development/specs.md), [modes.md](docs/development/modes.md), [layers.md](docs/development/layers.md), [sticks.md](docs/development/sticks.md), [guide.md](docs/development/guide.md): design notes for individual features.
+- [game-setup-guidelines.md](docs/development/game-setup-guidelines.md): where actions usually go when setting up a game's bindings (sticks, buttons, hotkeys, system buttons).
+- [overlay-debugging.md](docs/development/overlay-debugging.md): tools for checking the on-screen overlay's timing and fades without a monitor or controller: a headless harness, the overlay's timing log, and fade pictures.
+- [manual-screenshots.md](docs/development/manual-screenshots.md): how the manual's annotated screenshots are made, and made again when the window changes: `padwight debug gui` and `scripts/annotate.py`.
+
+## Setups
+
+Everything is organized into setups: one controller setup per game. Each game keeps its own bindings and switches to them when you start it. A setup holds its own profiles, macros, cycles, menus, info overlays, and the auto-switch rules that activate it. All of its profiles can use all of its items. **General** is a built-in setup with no rules, for the desktop and a plain gamepad. Names only need to be unique within a setup. To reuse items from another setup, use **Copy from another setup…** on its Modes, Layers, Macros, Cycles, Menus or Info overlays tab.
+
+The sidebar lists General and your setups (with a search). Each setup's page has nine tabs: **Profiles**, **Modes**, **Layers**, **Macros**, **Cycles**, **Menus**, **Info overlays**, **Log overlays** and **Details** (name, rules, export, delete). On every tab except Profiles and Details, "Copy from another setup…" previews another setup's items (or one from the library) and copies the ones you want in, so you can adapt them.
+
+## Packs and the library
+
+Found a setup worth sharing? Export it as a **pack**: **Details → Export…** writes a `.padpack` file (TOML). The export dialog warns you about references to missing items.
+
+Whether a pack needs more than a plain XInput pad (gyro, back paddles, or a touchpad) is something you declare on each **profile**, not on the pack. On the profile's Gyro tab, tick *Profile requires gyro* when it depends on gyro (a flick stick setup that turns up and down with gyro, say). Leave it unticked when gyro only adds to a scheme that works without it. The back paddles section of the Buttons tab and the Touchpad tab have the same box. It's your word, nothing is detected, and the export dialog just lists what you've declared. Players whose controller lacks a feature only see the profiles that don't need it, and Guide skips the others. Re-exporting your own setup keeps its pack ID. Exporting someone else's makes a fork with its own ID that credits the original.
+
+**+ Add setup** opens the picker. It offers the built-in library first (setups for games you have installed in Steam, Heroic or Lutris, or that are running), an empty setup from a template, or **Import a file…**. Library packs that press keys or work the mouse are marked *unverified* until someone has played the game with them (`tested = true` in the pack), since their keys are worked out from what's known of the game's controls; packs that pass the controller through to a game with its own controller support aren't marked. Importing shows a preview before anything changes: what's inside, what your controller lacks, whether a setup with the same name already exists (add under a new name, or replace yours), and other setups' rules for the same window (the imported game takes over unless you keep yours). Nothing changes until you choose Save & apply.
+
+Imported setups are ordinary, editable setups that remember their pack. When a newer version of the same pack turns up, or an app update ships a newer library version (marked "update" in the sidebar), you're offered the update, along with a list of what you've changed since. A pack made by a newer app version is refused, with a request to update the app.
+
+The library is `packs/*.padpack` in this repository, compressed into the binary at build time. See `packs/README.md`.
 
 ## Profiles
 

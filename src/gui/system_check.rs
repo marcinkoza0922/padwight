@@ -72,7 +72,33 @@ pub(super) fn demo() -> Vec<Check> {
 
 impl App {
     pub(super) fn update_system_check(&mut self, message: &Message) -> Task<Message> {
-        match *message {
+        match message {
+            Message::CopySystemSetup => {
+                let script = crate::doctor::setup_script().replace('\'', "'\\''");
+                return iced::clipboard::write(format!("sudo /bin/sh -c '{script}'"));
+            }
+            Message::ApplySystemSetup if !self.setup_running => {
+                self.setup_running = true;
+                return Task::perform(async {
+                    tokio::task::spawn_blocking(crate::doctor::apply_setup)
+                        .await.map_err(|e| e.to_string())?
+                }, Message::SystemSetupDone);
+            }
+            Message::SystemSetupDone(result) => {
+                self.setup_running = false;
+                self.system_checks = run();
+                self.message = Some(match result {
+                    Ok(()) => ("Setup installed. Reconnect your controller. If access is still missing, log out and back in, then open Padwight again.".into(), false),
+                    Err(error) => (error.clone(), true),
+                });
+                if result.is_ok() && std::env::var_os("PADWIGHT_NO_DAEMON").is_none() {
+                    return Task::perform(async {
+                        tokio::task::spawn_blocking(crate::daemon::ensure_running)
+                            .await.map_err(|e| e.to_string())?
+                            .map_err(|e| format!("Setup installed, but the background service could not start: {e:#}"))
+                    }, Message::Done);
+                }
+            }
             Message::OpenSystemCheck => {
                 self.system_checks = run();
                 self.dialog = Some(Dialog::SystemCheck);
@@ -86,7 +112,7 @@ impl App {
                 ));
             }
             Message::CopyFix(i) => {
-                if let Some(fix) = self.system_checks.get(i).and_then(|c| c.fix.clone()) {
+                if let Some(fix) = self.system_checks.get(*i).and_then(|c| c.fix.clone()) {
                     self.message = Some(("Copied. Paste it into a terminal; sudo asks for your password.".into(), false));
                     return iced::clipboard::write(fix);
                 }
@@ -142,6 +168,13 @@ impl App {
             .style(muted),
         ]
         .spacing(12);
+        body = body.push(text("System setup preview").size(18))
+            .push(text("Apply setup writes or replaces the four files below (mode 0644). The uinput rule lets the active local user create virtual input devices; the motion rule permits PlayStation and Nintendo gyro access. The hidraw rule prevents duplicate input in Steam and games, but also disables their gyro and light controls while Padwight is off. The module file loads uinput at boot. The final commands load it now and reload and apply the rules. Reconnect your controller afterwards. Administrator authorization is required.").size(13))
+            .push(container(scrollable(text(crate::doctor::setup_script()).size(12).font(iced::Font::MONOSPACE)).height(200)).padding(8).style(style::inset))
+            .push(row![button(text("Copy setup commands")).style(style::secondary).on_press(Message::CopySystemSetup), {
+                let apply = button(text(if self.setup_running { "Applying setup…" } else { "Apply setup…" })).style(style::primary);
+                if self.setup_running { apply } else { apply.on_press(Message::ApplySystemSetup) }
+            }].spacing(8));
         // Problems first, then notes, then what's fine.
         for severity in [Severity::Problem, Severity::Note, Severity::Ok] {
             for (i, check) in self.system_checks.iter().enumerate().filter(|(_, c)| c.severity == severity) {
@@ -205,4 +238,22 @@ fn view_check(i: usize, check: &Check) -> Element<'_, Message> {
         );
     }
     container(card).padding(12).width(Length::Fill).style(style::card).into()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cancelled_setup_keeps_the_preview_open_and_allows_retry() {
+        let mut app = super::super::tests::app();
+        let _ = app.update(Message::OpenSystemCheck);
+        app.setup_running = true;
+        let _ = app.update(Message::SystemSetupDone(Err("Authorization cancelled".into())));
+        assert!(!app.setup_running);
+        assert!(matches!(app.dialog, Some(Dialog::SystemCheck)));
+        assert_eq!(app.message, Some(("Authorization cancelled".into(), true)));
+        // Rendering the preview after cancellation must remain possible.
+        let _ = app.view_system_check();
+    }
 }

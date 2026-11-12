@@ -142,9 +142,6 @@ pub fn run(args: &[&str]) -> Result<()> {
 /// Downloads release `version`, checks its checksum and runs the installer inside it.
 fn install(version: &str) -> Result<()> {
     let arch = std::env::consts::ARCH;
-    if arch != "x86_64" {
-        bail!("there is no release for {arch} yet; build it from source");
-    }
     let name = format!("padwight-{version}-linux-{arch}");
     let base = format!("https://github.com/{REPO}/releases/download/v{version}");
     let work = Scratch::new()?;

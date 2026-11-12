@@ -272,6 +272,7 @@ struct App {
     status: Option<Status>,
     /// What the system check found, when the window opened or it was last run.
     system_checks: Vec<system_check::Check>,
+    setup_running: bool,
     page: Page,
     /// The profile being edited, by index in the current game's profiles.
     editing: usize,
@@ -564,6 +565,9 @@ enum Message {
     CalibrateGyro(String),
     OpenSystemCheck,
     RecheckSystem,
+    ApplySystemSetup,
+    CopySystemSetup,
+    SystemSetupDone(Result<(), String>),
     CopyFix(usize),
     SetGyro(GyroConfig),
     SetTouchpad(TouchpadConfig),
@@ -843,12 +847,12 @@ impl App {
     fn boot() -> (Self, Task<Message>) {
         let config = Config::default();
         let (main_window, open) = iced::window::open(window_settings());
-        let app = App {
+        let mut app = App {
             main_window, stage: None,
             saved: config.clone(),
             config,
             sounds: crate::sound::Sounds::start(),
-            status: None, system_checks: system_check::run(),
+            status: None, system_checks: system_check::run(), setup_running: false,
             page: Page::Overview, header_pick: header_pick::HeaderPick::new(), controller: None, nick_drafts: std::collections::HashMap::new(),
             editing: 0,
             game_tab: GameTab::Profiles,
@@ -899,7 +903,9 @@ impl App {
             quit_after_save: false, unreadable: None,
             tour: None,
         };
-        let tour = if tour::first_run() { Task::done(Message::Tour(TourMove::Start)) } else { Task::none() };
+        let needs_setup = crate::doctor::needs_setup();
+        if needs_setup { app.dialog = Some(Dialog::SystemCheck); }
+        let tour = if !needs_setup && tour::first_run() { Task::done(Message::Tour(TourMove::Start)) } else { Task::none() };
         (app, Task::batch([open.discard(), load_config(), Task::done(Message::Poll), iced::system::theme().map(Message::SystemMode), tour]))
     }
 
