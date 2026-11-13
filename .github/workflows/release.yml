@@ -34,7 +34,8 @@ jobs:
           [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "tag $GITHUB_REF_NAME but Cargo.toml says $version" >&2; exit 1; }
 
       - name: Test system setup
-        run: cargo test --locked --bin padwight doctor::
+        run: |
+          cargo test --locked --bin padwight doctor::
 
       - name: Build the tarball
         run: scripts/package.sh
