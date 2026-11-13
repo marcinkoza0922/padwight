@@ -137,9 +137,9 @@ pub fn timestamp() -> String {
         let now = libc::time(std::ptr::null_mut());
         let mut tm: libc::tm = std::mem::zeroed();
         libc::localtime_r(&now, &mut tm);
-        let mut buf = [0 as libc::c_char; 32];
-        let len = libc::strftime(buf.as_mut_ptr(), buf.len(), c"%Y-%m-%d_%H-%M-%S".as_ptr(), &tm);
-        buf[..len].iter().map(|&c| c as u8 as char).collect()
+        let mut buf = [0u8; 32];
+        let len = libc::strftime(buf.as_mut_ptr().cast(), buf.len(), c"%Y-%m-%d_%H-%M-%S".as_ptr(), &tm);
+        String::from_utf8_lossy(&buf[..len]).into_owned()
     }
 }
 
