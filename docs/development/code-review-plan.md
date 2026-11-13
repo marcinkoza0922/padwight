@@ -335,7 +335,7 @@ Tools added in pass 0:
 | `padwight debug focus processes` | For desktops without focus tracking: which running processes each rule matches, and which one the process scan picks. |
 | `scripts/sandbox-pid.sh [program [args]]` | Runs a program in its own pid namespace (as a Flatpak game or the Steam runtime does) and prints its pid there and here, with the `debug focus` line to try. Needs unprivileged user namespaces; where they are refused (Ubuntu 24.04's `kernel.apparmor_restrict_unprivileged_userns=1`, `unprivileged_userns_clone=0`) it prints one line naming the sysctl and exits 77, which the distro matrix (ENV-10) records as a skip. |
 
-Earlier tools that later passes will need are listed in `CLAUDE.md` (overlay and motion screenshots, sound traces, long files), in `qa-plan.md` (project checks, container kernel tests with `scripts/kernel-test-docker.sh`), in `qa-tooling.md` (tools still to build, including the input replay below) and in `overlay-debugging.md`.
+Earlier tools that later passes will need are listed in `AGENTS.md` (overlay and motion screenshots, sound traces, long files), in `qa-plan.md` (project checks, container kernel tests with `scripts/kernel-test-docker.sh`), in `qa-tooling.md` (tools still to build, including the input replay below) and in `overlay-debugging.md`.
 
 Tools later passes are likely to want, to be built when a finding needs them:
 

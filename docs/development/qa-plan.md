@@ -403,7 +403,7 @@ Last full run 2026-10-09, kernel 7.2.9; the newer desktops have their own dates:
 
 ## 9. Commands
 
-From `CLAUDE.md`, plus the checks CI runs:
+From `AGENTS.md`, plus the checks CI runs:
 
 ```sh
 cargo check --all-targets --message-format=short 2>&1 | head -40

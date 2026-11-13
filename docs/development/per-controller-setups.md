@@ -44,7 +44,7 @@ A new per-controller table, keyed by device id, next to the packs:
     [controllers.profiles]     # pack id -> active profile name
     "Deus Ex" = "Gyro aim"
 
-Breaking changes are fine (see CLAUDE.md): the single active-profile-per-pack state moves into the
+Breaking changes are fine (see AGENTS.md): the single active-profile-per-pack state moves into the
 controller entry rather than staying as a second source of truth.
 
 ## Behaviour notes

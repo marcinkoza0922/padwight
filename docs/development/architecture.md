@@ -251,7 +251,7 @@ A few conventions to know:
 - **File size.** Files over about 400 lines are candidates for splitting. `scripts/long-files.sh` lists them. Several of the largest (`config.rs`, `daemon.rs`, `engine.rs`, `gui/profile.rs`) are already over that, so put new code in a submodule rather than adding to them.
 - **Warnings.** Clippy is kept at zero warnings. Fix a new warning rather than allowing it; use `#[expect(..., reason = "...")]` only where the lint is wrong for that code.
 - **CI.** `.github/workflows/ci.yml` runs check, clippy with warnings denied, the tests, the project checks and `cargo audit` on every push and pull request.
-- **Agents.** `CLAUDE.md` holds the commands and rules that automated agents in this repo follow.
+- **Agents.** `AGENTS.md` holds the commands and rules that automated agents in this repo follow.
 
 ## Focus tracking
 
