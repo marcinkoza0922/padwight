@@ -847,7 +847,7 @@ impl App {
     fn boot() -> (Self, Task<Message>) {
         let config = Config::default();
         let (main_window, open) = iced::window::open(window_settings());
-        let mut app = App {
+        let app = App {
             main_window, stage: None,
             saved: config.clone(),
             config,
@@ -867,7 +867,7 @@ impl App {
             pad_shown: None,
             feeds: None,
             picker: None, action_picker: None, token_picker: None, sound_picker: None, char_picker: None, font_menu: None, motion_demo: MotionDemo::new(),
-            dialog: None,
+            dialog: crate::doctor::needs_setup().then_some(Dialog::SystemCheck),
             profile_tab: ProfileTab::Buttons,
             guide_notes: iced::widget::text_editor::Content::new(),
             export_description: iced::widget::text_editor::Content::new(),
@@ -903,9 +903,7 @@ impl App {
             quit_after_save: false, unreadable: None,
             tour: None,
         };
-        let needs_setup = crate::doctor::needs_setup();
-        if needs_setup { app.dialog = Some(Dialog::SystemCheck); }
-        let tour = if !needs_setup && tour::first_run() { Task::done(Message::Tour(TourMove::Start)) } else { Task::none() };
+        let tour = if app.dialog.is_none() && tour::first_run() { Task::done(Message::Tour(TourMove::Start)) } else { Task::none() };
         (app, Task::batch([open.discard(), load_config(), Task::done(Message::Poll), iced::system::theme().map(Message::SystemMode), tour]))
     }
 
